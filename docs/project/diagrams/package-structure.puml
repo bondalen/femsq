@@ -2,64 +2,68 @@
 
 title FEMSQ - Структура пакетов
 
+skinparam packageStyle rectangle
+skinparam classStyle rectangle
+skinparam classAttributeIconSize 0
+
 package "com.femsq" {
   
   package "database" {
     package "config" {
-      class DatabaseConfigurationService
-      class ConfigurationFileManager
-      class ConfigurationValidator
+      class "DatabaseConfiguration\nService" as DBCfgSvc
+      class "Configuration\nFileManager" as CfgFileMgr
+      class "Configuration\nValidator" as CfgValidator
     }
     
     package "connection" {
-      class ConnectionFactory
-      class ConnectionPoolManager
-      class ConnectionValidator
+      class "Connection\nFactory" as ConnFactory
+      class "ConnectionPool\nManager" as ConnPoolMgr
+      class "Connection\nValidator" as ConnValidator
     }
     
     package "auth" {
-      interface AuthenticationProvider
-      class IntegratedSecurityProvider
-      class TrustedConnectionProvider
-      class CredentialsAuthenticationProvider
-      class AuthenticationDetector
+      interface "Authentication\nProvider" as AuthProv
+      class "IntegratedSecurity\nProvider" as IntSecProv
+      class "TrustedConnection\nProvider" as TrustConnProv
+      class "CredentialsAuth\nProvider" as CredAuthProv
+      class "Authentication\nDetector" as AuthDetector
     }
     
     package "model" {
-      class DatabaseConfiguration
-      enum AuthenticationMethod
-      class ConnectionTestResult
-      class ConnectionStatus
+      class "Database\nConfiguration" as DBCfg
+      enum "Authentication\nMethod" as AuthMethod
+      class "ConnectionTest\nResult" as ConnTestRes
+      class "Connection\nStatus" as ConnStatus
     }
     
     package "exception" {
-      class DatabaseConfigurationException
-      class ConnectionFailedException
-      class AuthenticationFailedException
-      class ConfigurationFileException
+      class "DatabaseConfig\nException" as DBCfgEx
+      class "ConnectionFailed\nException" as ConnFailedEx
+      class "AuthFailed\nException" as AuthFailedEx
+      class "ConfigFile\nException" as CfgFileEx
     }
   }
   
   package "web" {
     package "controller" {
-      class SetupController
-      class ConfigurationApiController
-      class ConnectionStatusController
+      class "Setup\nController" as SetupCtrl
+      class "ConfigApi\nController" as CfgApiCtrl
+      class "ConnectionStatus\nController" as ConnStatusCtrl
     }
     
     package "lifecycle" {
-      class ApplicationStartupListener
-      class ConfigurationInitializer
-      class DatabaseConnectionInitializer
+      class "ApplicationStartup\nListener" as AppStartupLsnr
+      class "Configuration\nInitializer" as CfgInitializer
+      class "DatabaseConnection\nInitializer" as DBCnnInitializer
     }
     
     package "health" {
-      class DatabaseHealthIndicator
-      class ConfigurationHealthIndicator
+      class "DatabaseHealth\nIndicator" as DBHealthInd
+      class "ConfigurationHealth\nIndicator" as CfgHealthInd
     }
     
     package "exception" {
-      class GlobalExceptionHandler
+      class "GlobalException\nHandler" as GlobalExHndlr
     }
   }
 }
