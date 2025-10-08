@@ -64,141 +64,253 @@
     
     "modules": [
       {
+        "_comment": "Примеры всех поддерживаемых вариантов вложенности Java/Spring",
+        "_patterns": {
+          "recommended": "Модуль → Субмодуль → Компонент → Субкомпонент → Класс",
+          "acceptable": "Модуль → Компонент → Класс",
+          "not_recommended": "Прямое размещение классов в модуле"
+        },
+        "_warnings": {
+          "direct_classes_in_module": "Избегайте прямого размещения классов в модуле - используйте компоненты",
+          "deep_nesting": "Не рекомендуется глубже 5 уровней вложенности",
+          "mixed_artifacts": "Не смешивайте разные типы артефактов на одном уровне"
+        }
+      },
+      {
         "module": {
-          "displayName": "coreModule. № 01",
+          "displayName": "backendModule. № 01",
           "attributes": {
-            "id": "coreModule",
+            "id": "backend",
             "number": "01",
-            "name": "Основной модуль",
-            "description": "Описание модуля - что он делает, зачем нужен",
-            "purpose": "Конкретное назначение модуля в системе",
+            "name": "Backend Module",
+            "description": "Основной backend модуль приложения",
+            "purpose": "Серверная логика, API, работа с БД",
             "status": "planned|in-progress|completed",
-            "location": "src/main/java/com/example/core/",
-            "entryPoint": "src/main/java/com/example/core/CoreModule.java",
-            "dependencies": ["utilityModule", "dataModule"]
+            "location": "femsq-backend/",
+            "type": "maven-module",
+            "dependencies": []
           },
-          "components": [
+          
+          // ВАРИАНТ 1: Субмодули (рекомендуется)
+          "submodules": [
             {
-              "component": {
-                "displayName": "serviceComponent. № 01.01",
+              "submodule": {
+                "displayName": "databaseModule. № 01.01",
                 "attributes": {
-                  "id": "serviceComponent",
+                  "id": "database",
                   "number": "01.01",
-                  "name": "Компонент сервисов",
-                  "description": "Описание компонента - что содержит, какую роль играет",
-                  "type": "service|repository|controller|model|util|config",
-                  "location": "src/main/java/com/example/core/service/",
-                  "responsibilities": [
-                    "Бизнес-логика обработки данных",
-                    "Валидация входных параметров",
-                    "Координация между слоями"
-                  ],
-                  "status": "planned|in-progress|completed"
+                  "name": "Database Module",
+                  "description": "Модуль работы с базой данных",
+                  "purpose": "Управление подключением к MS SQL Server",
+                  "status": "planned",
+                  "location": "femsq-backend/femsq-database/",
+                  "type": "maven-submodule",
+                  "dependencies": []
                 },
-                "classes": [
+                "components": [
                   {
-                    "class": {
-                      "displayName": "ExampleService. № 01.01.01",
+                    "component": {
+                      "displayName": "configComponent. № 01.01.01",
                       "attributes": {
-                        "id": "ExampleService",
+                        "id": "config",
                         "number": "01.01.01",
-                        "name": "Сервис примера",
-                        "location": "src/main/java/com/example/core/service/ExampleService.java",
+                        "name": "Configuration Management",
+                        "description": "Управление конфигурацией подключения к БД",
+                        "type": "java-package",
+                        "location": "com.femsq.database.config",
                         "responsibilities": [
-                          "Обработка запросов от контроллера",
-                          "Применение бизнес-правил"
-                        ],
-                        "dependsOn": [
-                          "ExampleRepository",
-                          "ValidationUtil"
-                        ],
-                        "status": "planned|in-progress|completed"
-                      }
-                    }
-                  },
-                  {
-                    "class": {
-                      "displayName": "ExampleServiceImpl. № 01.01.02",
-                      "attributes": {
-                        "id": "ExampleServiceImpl",
-                        "number": "01.01.02",
-                        "name": "Реализация сервиса примера",
-                        "location": "src/main/java/com/example/core/service/impl/ExampleServiceImpl.java",
-                        "responsibilities": [
-                          "Конкретная реализация интерфейса ExampleService"
-                        ],
-                        "dependsOn": [
-                          "ExampleService",
-                          "ExampleRepository"
+                          "Чтение/запись конфигурации из ~/.femsq/database.properties",
+                          "Валидация параметров подключения",
+                          "Управление файлами конфигурации"
                         ],
                         "status": "planned"
-                      }
-                    }
-                  }
-                ],
-                "files": [
-                  {
-                    "file": {
-                      "displayName": "service-config.yml. № 01.01.a0",
-                      "attributes": {
-                        "id": "service-config",
-                        "number": "01.01.a0",
-                        "name": "Конфигурация сервисного слоя",
-                        "location": "src/main/resources/config/service-config.yml",
-                        "purpose": "Параметры настройки сервисов, таймауты, лимиты",
-                        "status": "planned"
-                      }
-                    }
-                  }
-                ],
-                "scripts": [
-                  {
-                    "script": {
-                      "displayName": "init_services.sh. № 01.01.aa",
-                      "attributes": {
-                        "id": "init-services",
-                        "number": "01.01.aa",
-                        "name": "Инициализация сервисов",
-                        "location": "scripts/init_services.sh",
-                        "purpose": "Предварительная настройка и инициализация сервисного слоя",
-                        "status": "planned"
-                      }
+                      },
+                      
+                      // ВАРИАНТ 2: Субкомпоненты
+                      "subcomponents": [
+                        {
+                          "subcomponent": {
+                            "displayName": "internalConfig. № 01.01.01.01",
+                            "attributes": {
+                              "id": "internal",
+                              "number": "01.01.01.01",
+                              "name": "Internal Configuration",
+                              "description": "Внутренние компоненты конфигурации",
+                              "type": "java-subpackage",
+                              "location": "com.femsq.database.config.internal",
+                              "responsibilities": [
+                                "Внутренняя логика работы с файлами",
+                                "Валидация параметров"
+                              ],
+                              "status": "planned"
+                            },
+                            "classes": [
+                              {
+                                "class": {
+                                  "displayName": "ConfigFileManager. № 01.01.01.01.01",
+                                  "attributes": {
+                                    "id": "ConfigFileManager",
+                                    "number": "01.01.01.01.01",
+                                    "name": "ConfigFileManager",
+                                    "location": "com.femsq.database.config.internal.ConfigFileManager",
+                                    "responsibilities": [
+                                      "Управление файлами конфигурации",
+                                      "Создание директорий",
+                                      "Установка прав доступа"
+                                    ],
+                                    "dependsOn": [],
+                                    "status": "planned"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      
+                      // ВАРИАНТ 3: Классы напрямую в компоненте
+                      "classes": [
+                        {
+                          "class": {
+                            "displayName": "DatabaseConfigService. № 01.01.01.01",
+                            "attributes": {
+                              "id": "DatabaseConfigService",
+                              "number": "01.01.01.01",
+                              "name": "DatabaseConfigService",
+                              "location": "com.femsq.database.config.DatabaseConfigService",
+                              "responsibilities": [
+                                "Загрузка конфигурации из файла",
+                                "Сохранение конфигурации в файл",
+                                "Валидация параметров подключения"
+                              ],
+                              "dependsOn": [
+                                "ConfigFileManager",
+                                "ConfigurationValidator"
+                              ],
+                              "status": "planned"
+                            }
+                          }
+                        }
+                      ]
                     }
                   }
                 ]
               }
-            },
+            }
+          ],
+          
+          // ВАРИАНТ 4: Компоненты напрямую в модуле (допустимо)
+          "components": [
             {
               "component": {
-                "displayName": "repositoryComponent. № 01.02",
+                "displayName": "sharedComponent. № 01.02",
                 "attributes": {
-                  "id": "repositoryComponent",
+                  "id": "shared",
                   "number": "01.02",
-                  "name": "Компонент репозиториев",
-                  "description": "Слой доступа к данным",
-                  "type": "repository",
-                  "location": "src/main/java/com/example/core/repository/",
+                  "name": "Shared Components",
+                  "description": "Общие компоненты для всего backend",
+                  "type": "java-package",
+                  "location": "com.femsq.shared",
                   "responsibilities": [
-                    "CRUD операции с базой данных",
-                    "Выполнение запросов"
+                    "Общие утилиты",
+                    "Константы",
+                    "Общие модели данных"
                   ],
                   "status": "planned"
                 },
                 "classes": [
                   {
                     "class": {
-                      "displayName": "ExampleRepository. № 01.02.01",
+                      "displayName": "CommonUtil. № 01.02.01",
                       "attributes": {
-                        "id": "ExampleRepository",
+                        "id": "CommonUtil",
                         "number": "01.02.01",
-                        "name": "Репозиторий примера",
-                        "location": "src/main/java/com/example/core/repository/ExampleRepository.java",
+                        "name": "CommonUtil",
+                        "location": "com.femsq.shared.CommonUtil",
                         "responsibilities": [
-                          "Интерфейс для работы с таблицей examples"
+                          "Общие утилитарные методы",
+                          "Валидация данных",
+                          "Форматирование"
                         ],
-                        "dependsOn": [
-                          "JpaRepository"
+                        "dependsOn": [],
+                        "status": "planned"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          
+          // ВАРИАНТ 5: Классы напрямую в модуле (не рекомендуется)
+          "classes": [
+            {
+              "class": {
+                "displayName": "MainApplication. № 01.03",
+                "attributes": {
+                  "id": "MainApplication",
+                  "number": "01.03",
+                  "name": "MainApplication",
+                  "location": "com.femsq.MainApplication",
+                  "responsibilities": [
+                    "Главный класс приложения",
+                    "Инициализация Spring Boot"
+                  ],
+                  "dependsOn": [],
+                  "status": "planned",
+                  "warning": "Не рекомендуется - лучше разместить в компоненте"
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "module": {
+          "displayName": "frontendModule. № 02",
+          "attributes": {
+            "id": "frontend",
+            "number": "02",
+            "name": "Frontend Module",
+            "description": "Frontend модуль приложения на Vue.js",
+            "purpose": "Пользовательский интерфейс, компоненты Vue, API клиенты",
+            "status": "planned",
+            "location": "femsq-frontend/",
+            "type": "vue-module",
+            "dependencies": ["backend"]
+          },
+          "components": [
+            {
+              "component": {
+                "displayName": "setupComponents. № 02.01",
+                "attributes": {
+                  "id": "setup",
+                  "number": "02.01",
+                  "name": "Setup Components",
+                  "description": "Компоненты для настройки подключения к БД",
+                  "type": "vue-components",
+                  "location": "src/components/setup/",
+                  "responsibilities": [
+                    "Мастер настройки подключения",
+                    "Формы ввода параметров",
+                    "Тестирование подключения"
+                  ],
+                  "status": "planned"
+                },
+                "classes": [
+                  {
+                    "class": {
+                      "displayName": "SetupWizard.vue. № 02.01.01",
+                      "attributes": {
+                        "id": "SetupWizard",
+                        "number": "02.01.01",
+                        "name": "SetupWizard",
+                        "location": "src/components/setup/SetupWizard.vue",
+                        "responsibilities": [
+                          "Главный компонент мастера настройки",
+                          "Управление шагами настройки"
                         ],
+                        "dependsOn": [],
                         "status": "planned"
                       }
                     }
@@ -207,23 +319,6 @@
               }
             }
           ]
-        }
-      },
-      {
-        "module": {
-          "displayName": "utilityModule. № 02",
-          "attributes": {
-            "id": "utilityModule",
-            "number": "02",
-            "name": "Модуль утилит",
-            "description": "Вспомогательные классы и утилиты общего назначения",
-            "purpose": "Переиспользуемые компоненты для всех модулей",
-            "status": "planned",
-            "location": "src/main/java/com/example/util/",
-            "entryPoint": "src/main/java/com/example/util/package-info.java",
-            "dependencies": []
-          },
-          "components": []
         }
       }
     ],
