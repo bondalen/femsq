@@ -64,38 +64,57 @@
     
     "modules": [
       {
-        "_comment": "Примеры всех поддерживаемых вариантов вложенности Java/Spring",
-        "_patterns": {
-          "recommended": "Модуль → Субмодуль → Компонент → Субкомпонент → Класс",
-          "acceptable": "Модуль → Компонент → Класс",
-          "not_recommended": "Прямое размещение классов в модуле"
+        "_comment": "РЕКУРСИВНАЯ СТРУКТУРА: Всего 3 сущности с бесконечной вложенностью",
+        "_recursive_structure": {
+          "entities": [
+            {
+              "name": "Module",
+              "contains": ["modules", "components", "classes"],
+              "represents": "Maven modules, проекты, пакеты верхнего уровня"
+            },
+            {
+              "name": "Component", 
+              "contains": ["components", "classes"],
+              "represents": "Java packages, пакеты, модули приложения"
+            },
+            {
+              "name": "Class",
+              "contains": ["classes"],
+              "represents": "Java classes, interfaces, enums, вложенные классы"
+            }
+          ]
         },
-        "_warnings": {
-          "direct_classes_in_module": "Избегайте прямого размещения классов в модуле - используйте компоненты",
-          "deep_nesting": "Не рекомендуется глубже 5 уровней вложенности",
-          "mixed_artifacts": "Не смешивайте разные типы артефактов на одном уровне"
+        "_examples": {
+          "maven_structure": "Module (project) → Module (sub-module) → Component (package) → Class",
+          "java_packages": "Component (com.femsq) → Component (database) → Component (config) → Class",
+          "nested_classes": "Class → Class (nested) → Class (nested in nested)"
+        },
+        "_recommendations": {
+          "recommended": "Module → Module → Component → Component → Class",
+          "acceptable": "Module → Component → Class, Component → Class",
+          "not_recommended": "Слишком глубокая вложенность (более 7 уровней)"
         }
       },
       {
         "module": {
-          "displayName": "backendModule. № 01",
+          "displayName": "Backend Module. № 01",
           "attributes": {
             "id": "backend",
             "number": "01",
             "name": "Backend Module",
             "description": "Основной backend модуль приложения",
             "purpose": "Серверная логика, API, работа с БД",
-            "status": "planned|in-progress|completed",
+            "status": "planned",
             "location": "femsq-backend/",
             "type": "maven-module",
             "dependencies": []
           },
           
-          // ВАРИАНТ 1: Субмодули (рекомендуется)
-          "submodules": [
+          // РЕКУРСИЯ: Модули в модуле (Maven sub-modules)
+          "modules": [
             {
-              "submodule": {
-                "displayName": "databaseModule. № 01.01",
+              "module": {
+                "displayName": "Database Module. № 01.01",
                 "attributes": {
                   "id": "database",
                   "number": "01.01",
@@ -107,14 +126,15 @@
                   "type": "maven-submodule",
                   "dependencies": []
                 },
+                // РЕКУРСИЯ: Компоненты в модуле (Java packages)
                 "components": [
                   {
                     "component": {
-                      "displayName": "configComponent. № 01.01.01",
+                      "displayName": "Configuration Package. № 01.01.01",
                       "attributes": {
                         "id": "config",
                         "number": "01.01.01",
-                        "name": "Configuration Management",
+                        "name": "Configuration Package",
                         "description": "Управление конфигурацией подключения к БД",
                         "type": "java-package",
                         "location": "com.femsq.database.config",
@@ -126,17 +146,17 @@
                         "status": "planned"
                       },
                       
-                      // ВАРИАНТ 2: Субкомпоненты
-                      "subcomponents": [
+                      // РЕКУРСИЯ: Компоненты в компоненте (nested packages)
+                      "components": [
                         {
-                          "subcomponent": {
-                            "displayName": "internalConfig. № 01.01.01.01",
+                          "component": {
+                            "displayName": "Internal Package. № 01.01.01.01",
                             "attributes": {
                               "id": "internal",
                               "number": "01.01.01.01",
-                              "name": "Internal Configuration",
+                              "name": "Internal Package",
                               "description": "Внутренние компоненты конфигурации",
-                              "type": "java-subpackage",
+                              "type": "java-package",
                               "location": "com.femsq.database.config.internal",
                               "responsibilities": [
                                 "Внутренняя логика работы с файлами",
@@ -144,6 +164,7 @@
                               ],
                               "status": "planned"
                             },
+                            // РЕКУРСИЯ: Классы в компоненте
                             "classes": [
                               {
                                 "class": {
@@ -160,7 +181,41 @@
                                     ],
                                     "dependsOn": [],
                                     "status": "planned"
-                                  }
+                                  },
+                                  
+                                  // РЕКУРСИЯ: Вложенные классы
+                                  "classes": [
+                                    {
+                                      "class": {
+                                        "displayName": "ConfigValidator. № 01.01.01.01.01.01",
+                                        "attributes": {
+                                          "id": "ConfigValidator",
+                                          "number": "01.01.01.01.01.01",
+                                          "name": "ConfigValidator",
+                                          "description": "Вложенный класс для валидации",
+                                          "location": "com.femsq.database.config.internal.ConfigFileManager.ConfigValidator",
+                                          "type": "nested-class"
+                                        },
+                                        
+                                        // РЕКУРСИЯ: Классы в классе (nested в nested)
+                                        "classes": [
+                                          {
+                                            "class": {
+                                              "displayName": "ValidationResult. № 01.01.01.01.01.01.01",
+                                              "attributes": {
+                                                "id": "ValidationResult",
+                                                "number": "01.01.01.01.01.01.01",
+                                                "name": "ValidationResult",
+                                                "description": "Результат валидации (nested в nested)",
+                                                "location": "com.femsq.database.config.internal.ConfigFileManager.ConfigValidator.ValidationResult",
+                                                "type": "nested-class"
+                                              }
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
                                 }
                               }
                             ]
@@ -168,7 +223,7 @@
                         }
                       ],
                       
-                      // ВАРИАНТ 3: Классы напрямую в компоненте
+                      // РЕКУРСИЯ: Классы напрямую в компоненте
                       "classes": [
                         {
                           "class": {
@@ -199,11 +254,11 @@
             }
           ],
           
-          // ВАРИАНТ 4: Компоненты напрямую в модуле (допустимо)
+          // РЕКУРСИЯ: Компоненты напрямую в модуле
           "components": [
             {
               "component": {
-                "displayName": "sharedComponent. № 01.02",
+                "displayName": "Shared Components. № 01.02",
                 "attributes": {
                   "id": "shared",
                   "number": "01.02",
@@ -218,6 +273,7 @@
                   ],
                   "status": "planned"
                 },
+                // РЕКУРСИЯ: Классы в компоненте
                 "classes": [
                   {
                     "class": {
@@ -242,7 +298,7 @@
             }
           ],
           
-          // ВАРИАНТ 5: Классы напрямую в модуле (не рекомендуется)
+          // РЕКУРСИЯ: Классы напрямую в модуле
           "classes": [
             {
               "class": {
@@ -257,8 +313,7 @@
                     "Инициализация Spring Boot"
                   ],
                   "dependsOn": [],
-                  "status": "planned",
-                  "warning": "Не рекомендуется - лучше разместить в компоненте"
+                  "status": "planned"
                 }
               }
             }
@@ -267,7 +322,7 @@
       },
       {
         "module": {
-          "displayName": "frontendModule. № 02",
+          "displayName": "Frontend Module. № 02",
           "attributes": {
             "id": "frontend",
             "number": "02",
@@ -279,10 +334,11 @@
             "type": "vue-module",
             "dependencies": ["backend"]
           },
+          // РЕКУРСИЯ: Компоненты в модуле
           "components": [
             {
               "component": {
-                "displayName": "setupComponents. № 02.01",
+                "displayName": "Setup Components. № 02.01",
                 "attributes": {
                   "id": "setup",
                   "number": "02.01",
@@ -297,6 +353,7 @@
                   ],
                   "status": "planned"
                 },
+                // РЕКУРСИЯ: Классы в компоненте
                 "classes": [
                   {
                     "class": {
