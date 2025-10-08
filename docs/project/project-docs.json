@@ -27,7 +27,8 @@
                 "database": "MS SQL Server (внешняя)",
                 "database_driver": "Microsoft SQL Server JDBC Driver 12.x",
                 "api": "GraphQL",
-                "security": "на данном этапе не разрабатывается",
+                "security": "не разрабатывается - безопасная внутренняя сеть организации",
+                "authentication": "без аутентификации пользователей",
                 "migrations": "Liquibase (встроенные в JAR)",
                 "monitoring": "Spring Boot Actuator"
             },
@@ -430,6 +431,21 @@
             "extensions": [
                 "docs/project/extensions/network/corporate-network.json",
                 "docs/project/extensions/network/connection-detection.json"
+            ]
+        },
+        
+        "security": {
+            "scope": "internal_secure_network",
+            "description": "Проект предназначен для работы в безопасной внутренней сети организации",
+            "user_authentication": "не требуется",
+            "data_encryption": "не требуется",
+            "password_encryption": "не требуется (хранение в plain text допустимо)",
+            "network_security": "обеспечивается инфраструктурой организации",
+            "assumptions": [
+                "Приложение работает в защищенной корпоративной сети",
+                "Доступ к серверу БД ограничен на уровне сети",
+                "Пользователи имеют доверенный доступ",
+                "Файлы конфигурации защищены правами ОС (chmod 600)"
             ]
         },
         
