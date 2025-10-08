@@ -1,0 +1,67 @@
+@startuml Package Structure
+
+title FEMSQ - Структура пакетов
+
+package "com.femsq" {
+  
+  package "database" {
+    package "config" {
+      class DatabaseConfigurationService
+      class ConfigurationFileManager
+      class ConfigurationValidator
+    }
+    
+    package "connection" {
+      class ConnectionFactory
+      class ConnectionPoolManager
+      class ConnectionValidator
+    }
+    
+    package "auth" {
+      interface AuthenticationProvider
+      class IntegratedSecurityProvider
+      class TrustedConnectionProvider
+      class CredentialsAuthenticationProvider
+      class AuthenticationDetector
+    }
+    
+    package "model" {
+      class DatabaseConfiguration
+      enum AuthenticationMethod
+      class ConnectionTestResult
+      class ConnectionStatus
+    }
+    
+    package "exception" {
+      class DatabaseConfigurationException
+      class ConnectionFailedException
+      class AuthenticationFailedException
+      class ConfigurationFileException
+    }
+  }
+  
+  package "web" {
+    package "controller" {
+      class SetupController
+      class ConfigurationApiController
+      class ConnectionStatusController
+    }
+    
+    package "lifecycle" {
+      class ApplicationStartupListener
+      class ConfigurationInitializer
+      class DatabaseConnectionInitializer
+    }
+    
+    package "health" {
+      class DatabaseHealthIndicator
+      class ConfigurationHealthIndicator
+    }
+    
+    package "exception" {
+      class GlobalExceptionHandler
+    }
+  }
+}
+
+@enduml

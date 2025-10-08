@@ -1,0 +1,72 @@
+@startuml Database Module Class Diagram
+
+title Модуль Database - Диаграмма классов
+
+package "com.femsq.database" {
+  
+  package "config" <<Rectangle>> {
+    class DatabaseConfigurationService {
+      + loadConfiguration(): DatabaseConfiguration
+      + saveConfiguration(config): void
+      + validateConfiguration(config): boolean
+    }
+    
+    class ConfigurationFileManager {
+      + readProperties(): Properties
+      + writeProperties(props): void
+      + createConfigDirectory(): void
+    }
+    
+    class ConfigurationValidator {
+      + validateHost(host): boolean
+      + validatePort(port): boolean
+    }
+  }
+  
+  package "connection" <<Rectangle>> {
+    class ConnectionFactory {
+      + createConnection(config): Connection
+      + buildConnectionString(config): String
+    }
+    
+    class ConnectionPoolManager {
+      + getConnection(): Connection
+      + closePool(): void
+    }
+  }
+  
+  package "auth" <<Rectangle>> {
+    interface AuthenticationProvider {
+      + buildConnectionString(config): String
+      + validate(config): boolean
+    }
+    
+    class IntegratedSecurityProvider
+    class TrustedConnectionProvider
+    class CredentialsAuthenticationProvider
+  }
+  
+  package "model" <<Rectangle>> {
+    class DatabaseConfiguration {
+      + host: String
+      + port: int
+      + database: String
+    }
+    
+    enum AuthenticationMethod {
+      INTEGRATED_SECURITY
+      TRUSTED_CONNECTION
+      CREDENTIALS
+    }
+  }
+}
+
+IntegratedSecurityProvider ..|> AuthenticationProvider
+TrustedConnectionProvider ..|> AuthenticationProvider  
+CredentialsAuthenticationProvider ..|> AuthenticationProvider
+
+DatabaseConfigurationService --> ConfigurationFileManager
+DatabaseConfigurationService --> ConfigurationValidator
+ConnectionFactory --> AuthenticationProvider
+
+@enduml

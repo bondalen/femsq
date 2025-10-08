@@ -1,0 +1,41 @@
+@startuml First Run Sequence
+
+title FEMSQ - Последовательность первого запуска
+
+actor "Пользователь" as User
+participant "Browser" as BR
+participant "ApplicationStartup" as START
+participant "ConfigFileManager" as CFM
+participant "SetupController" as CTRL
+participant "DatabaseConfig\nService" as DCS
+participant "ConnectionValidator" as VAL
+participant "MS SQL Server" as DB
+
+User -> BR: java -jar femsq.jar
+BR -> START: Application starts
+START -> CFM: Check config exists
+CFM --> START: Config not found
+
+START -> BR: Open browser\nhttp://localhost:8080/setup
+BR -> User: Show setup form
+
+User -> BR: Fill form & click "Test"
+BR -> CTRL: POST /api/config/test
+CTRL -> DCS: Create config from form
+DCS -> VAL: Test connection
+VAL -> DB: Attempt connection
+DB --> VAL: Success/Failure
+VAL --> CTRL: ConnectionTestResult
+CTRL --> BR: JSON response
+BR -> User: Show result
+
+User -> BR: Click "Save"
+BR -> CTRL: POST /api/config/save
+CTRL -> DCS: Save configuration
+DCS -> CFM: Write to ~/.femsq/database.properties
+CFM --> DCS: Success
+DCS --> CTRL: Saved
+CTRL --> BR: Redirect to main app
+BR -> User: Application ready
+
+@enduml

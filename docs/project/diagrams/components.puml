@@ -1,0 +1,52 @@
+@startuml FEMSQ Component Diagram
+
+title FEMSQ - Диаграмма компонентов
+
+skinparam componentStyle rectangle
+
+package "Backend (Spring Boot)" {
+  component [Database Module] as DB {
+    [Configuration]
+    [Connection Pool]
+    [Auth Providers]
+  }
+  
+  component [Web API Module] as API {
+    [Setup Controllers]
+    [Health Endpoints]
+  }
+  
+  component [Lifecycle Module] as LC {
+    [Startup Listeners]
+    [Initializers]
+  }
+}
+
+package "Frontend (Vue.js)" {
+  component [Setup UI] as UI {
+    [Setup Wizard]
+    [Connection Form]
+    [Status Widget]
+  }
+  
+  component [API Services] as SVC {
+    [Configuration Service]
+    [Validation Service]
+  }
+}
+
+database "MS SQL Server\n(External)" as MSSQL {
+  [FishEye DB]
+  [Schema: ags]
+}
+
+file "~/.femsq/\ndatabase.properties" as CONFIG
+
+API --> DB : uses
+LC --> DB : initializes
+UI --> SVC : uses
+SVC --> API : HTTP/REST
+DB --> CONFIG : reads/writes
+DB --> MSSQL : connects
+
+@enduml
