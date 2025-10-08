@@ -1,0 +1,174 @@
+{
+    "development": {
+      "metadata": {
+        "version": "1.0.0",
+        "created": "2025-10-08",
+        "lastUpdated": "2025-10-078",
+        "description": "Иерархический план разработки FEMSQ на основе структуры модулей и компонентов"
+      },
+      "tasks": [
+        {
+          "task": {
+            "displayName": "Пример задачи А (pending, 40h, high). № 01",
+            "task-attributes": {
+              "id": "01",
+              "status": "pending",
+              "priority": "high",
+              "created": "2025-10-08",
+              "lastUpdated": "2025-10-07",
+              "owner": "Александр",
+              "estimate": "40h",
+              "predecessors": [],
+              "links": {
+                "projectDocsRefs": [
+                  "project.modules.list[1].module.attributes.location",
+                  "documentation.projectDocs.location"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              }
+            },
+            "non-subtasks": {
+              "extendedDescriptions": []
+            },
+            "subtasks": [
+              {
+                "task": {
+                  "displayName": "Пример задачи АА (pending, 8h, high). № 01.01",
+                  "task-attributes": {
+                    "id": "01.01",
+                    "status": "pending",
+                    "priority": "high",
+                    "created": "2025-10-06",
+                    "lastUpdated": "2025-10-07",
+                    "owner": "Александр",
+                    "estimate": "8h",
+                    "predecessors": [],
+                    "links": {
+                      "projectDocsRefs": [
+                        "project.modules.list[3].module.attributes.location",
+                        "project.modules.list[3].components[0].component.classes[0].class.attributes.location",
+                        "project.modules.list[3].components[1].component.classes[0].class.attributes.location"
+                      ],
+                      "journalRefs": [],
+                      "aiRuleRefs": []
+                    }
+                  },
+                  "non-subtasks": {},
+                  "subtasks": [
+                    {"task": {"displayName": "Пример задачи ААА (completed, 3h, high). № 01.01.01","task-attributes": {"id": "01.01.01","status": "completed","priority": "high","created": "2025-10-06","lastUpdated": "2025-10-07","owner": "Александр","estimate": "3h","actualTime": "3h","predecessors": [],"links": {"projectDocsRefs": ["project.modules.list[3].components[0].component.classes[0].class.attributes.location","project.resources.documentation.infrastructure"],"journalRefs": ["log-2025-10-07-002"],"aiRuleRefs": []}},"non-subtasks": {"description": "Реализован класс ConnectionManager с поддержкой connections.json, task_id=2 по умолчанию, управления подключениями к MS SQL и PostgreSQL. Создан ConnectionDiagnostics для диагностики. Все тесты пройдены успешно."},"subtasks": []}},
+                    {"task": {"displayName": "Пример задачи ААБ (completed, 3h, high). № 01.01.02","task-attributes": {"id": "01.01.02","status": "pending","priority": "high","created": "2025-10-06","lastUpdated": "2025-10-06","owner": "Александр","estimate": "2h","predecessors": [],"links": {"projectDocsRefs": ["project.modules.list[3].components[1].component.classes[0].class.attributes.location"],"journalRefs": [],"aiRuleRefs": []}},"non-subtasks": {},"subtasks": []}}
+                 ]
+                }
+              },
+              {
+                "task": {
+                  "displayName": "Пример задачи АБ (pending, 12h, high). № 01.02",
+                  "task-attributes": {
+                    "id": "01.02",
+                    "status": "pending",
+                    "priority": "high",
+                    "created": "2025-10-06",
+                    "lastUpdated": "2025-10-07",
+                    "owner": "Александр",
+                    "estimate": "12h",
+                    "predecessors": ["01.01"],
+                    "links": {
+                      "projectDocsRefs": [
+                        "project.modules.list[0].module.attributes.location",
+                        "project.modules.list[0].components[0].component.classes[0].class.attributes.location",
+                        "project.modules.list[0].components[1].component.classes[0].class.attributes.location",
+                        "project.modules.list[0].components[2].component.classes[0].class.attributes.location",
+                        "project.modules.list[0].components[2].component.scripts[0]"
+                      ],
+                      "journalRefs": [],
+                      "aiRuleRefs": []
+                    }
+                  },
+                  "non-subtasks": {},
+                  "subtasks": [
+                 ]
+                }
+              },
+              {
+                "task": {
+                  "displayName": "[🚚] Модуль миграции (pending, 20h, critical). № 01.03",
+                  "task-attributes": {
+                    "id": "01.03",
+                    "status": "pending",
+                    "priority": "critical",
+                    "created": "2025-10-06",
+                    "lastUpdated": "2025-10-07",
+                    "owner": "Александр",
+                    "estimate": "20h",
+                    "predecessors": ["01.01", "01.02"],
+                    "links": {
+                      "projectDocsRefs": [
+                        "project.modules.list[1].module.attributes.location",
+                        "project.modules.list[1].components[0].component.classes[0].class.attributes.location",
+                        "project.modules.list[1].components[1].component.classes[0].class.attributes.location"
+                      ],
+                      "journalRefs": [],
+                      "aiRuleRefs": []
+                    }
+                  },
+                  "non-subtasks": {},
+                  "subtasks": [
+                    {"task": {"displayName": "[🏛️] Основные классы таблиц (pending, 8h, critical). № 01.03.01","task-attributes": {"id": "01.03.01","status": "pending","priority": "critical","created": "2025-10-06","lastUpdated": "2025-10-06","owner": "Александр","estimate": "8h","predecessors": [],"links": {"projectDocsRefs": ["project.modules.list[1].components[1].component.classes[1].class.attributes.location","project.modules.list[1].components[1].component.classes[2].class.attributes.location","project.modules.list[1].components[1].component.classes[3].class.attributes.location"],"journalRefs": [],"aiRuleRefs": []}},"non-subtasks": {},"subtasks": [
+                      {"task": {"displayName": "[🧱] TableModel базовый класс (pending, 2h, critical). № 01.03.01.01","task-attributes": {"id": "01.03.01.01","status": "pending","priority": "critical","created": "2025-10-06","lastUpdated": "2025-10-06","owner": "Александр","estimate": "2h","predecessors": [],"links": {"projectDocsRefs": ["project.modules.list[1].components[1].component.classes[0].class.attributes.location"],"journalRefs": [],"aiRuleRefs": []}},"non-subtasks": {},"subtasks": []}},
+                      {"task": {"displayName": "[🧱] RegularTableModel класс (pending, 2h, high). № 01.03.01.02","task-attributes": {"id": "01.03.01.02","status": "pending","priority": "high","created": "2025-10-06","lastUpdated": "2025-10-06","owner": "Александр","estimate": "2h","predecessors": ["01.03.01.01"],"links": {"projectDocsRefs": ["project.modules.list[1].components[1].component.classes[1].class.attributes.location"],"journalRefs": [],"aiRuleRefs": []}},"non-subtasks": {},"subtasks": []}},
+                      {"task": {"displayName": "[🧱] BaseTableModel класс (pending, 2h, high). № 01.03.01.03","task-attributes": {"id": "01.03.01.03","status": "pending","priority": "high","created": "2025-10-06","lastUpdated": "2025-10-06","owner": "Александр","estimate": "2h","predecessors": ["01.03.01.01"],"links": {"projectDocsRefs": ["project.modules.list[1].components[1].component.classes[2].class.attributes.location"],"journalRefs": [],"aiRuleRefs": []}},"non-subtasks": {},"subtasks": []}},
+                      {"task": {"displayName": "[🧱] ViewModel класс (pending, 2h, high). № 01.03.01.04","task-attributes": {"id": "01.03.01.04","status": "pending","priority": "high","created": "2025-10-06","lastUpdated": "2025-10-06","owner": "Александр","estimate": "2h","predecessors": [],"links": {"projectDocsRefs": ["project.modules.list[1].components[1].component.classes[3].class.attributes.location"],"journalRefs": [],"aiRuleRefs": []}},"non-subtasks": {},"subtasks": []}}
+                    ]}},
+                    {"task": {"displayName": "[🧩] Модели элементов данных (pending, 8h, high). № 01.03.02","task-attributes": {"id": "01.03.02","status": "pending","priority": "high","created": "2025-10-06","lastUpdated": "2025-10-06","owner": "Александр","estimate": "8h","predecessors": ["01.03.01"],"links": {"projectDocsRefs": ["project.modules.list[1].components[2].component.classes[0].class.attributes.location","project.modules.list[1].components[2].component.classes[1].class.attributes.location","project.modules.list[1].components[2].component.classes[2].class.attributes.location","project.modules.list[1].components[2].component.classes[3].class.attributes.location","project.modules.list[1].components[2].component.classes[4].class.attributes.location","project.modules.list[1].components[2].component.classes[5].class.attributes.location","project.modules.list[1].components[2].component.classes[6].class.attributes.location","project.modules.list[1].components[2].component.classes[7].class.attributes.location","project.modules.list[1].components[2].component.classes[8].class.attributes.location","project.modules.list[1].components[2].component.classes[9].class.attributes.location"],"journalRefs": [],"aiRuleRefs": []}},"non-subtasks": {},"subtasks": [
+                      {"task": {"displayName": "[🧱] ColumnModel класс (pending, 1h, high). № 01.03.02.01","task-attributes": {"id": "01.03.02.01","status": "pending","priority": "high","created": "2025-10-06","lastUpdated": "2025-10-06","owner": "Александр","estimate": "1h","predecessors": [],"links": {"projectDocsRefs": ["project.modules.list[1].components[2].component.classes[0].class.attributes.location"],"journalRefs": [],"aiRuleRefs": []}},"non-subtasks": {},"subtasks": []}},
+                      {"task": {"displayName": "[🧮] ComputedColumnModel класс (pending, 1h, medium). № 01.03.02.02","task-attributes": {"id": "01.03.02.02","status": "pending","priority": "medium","created": "2025-10-06","lastUpdated": "2025-10-06","owner": "Александр","estimate": "1h","predecessors": [],"links": {"projectDocsRefs": ["project.modules.list[1].components[2].component.classes[1].class.attributes.location"],"journalRefs": [],"aiRuleRefs": []}},"non-subtasks": {},"subtasks": []}},
+                      {"task": {"displayName": "[🔎] IndexModel класс (pending, 1h, high). № 01.03.02.03","task-attributes": {"id": "01.03.02.03","status": "pending","priority": "high","created": "2025-10-06","lastUpdated": "2025-10-06","owner": "Александр","estimate": "1h","predecessors": [],"links": {"projectDocsRefs": ["project.modules.list[1].components[2].component.classes[2].class.attributes.location"],"journalRefs": [],"aiRuleRefs": []}},"non-subtasks": {},"subtasks": []}},
+                      {"task": {"displayName": "[🔎] IndexColumnModel класс (pending, 1h, medium). № 01.03.02.04","task-attributes": {"id": "01.03.02.04","status": "pending","priority": "medium","created": "2025-10-06","lastUpdated": "2025-10-06","owner": "Александр","estimate": "1h","predecessors": [],"links": {"projectDocsRefs": ["project.modules.list[1].components[2].component.classes[3].class.attributes.location"],"journalRefs": [],"aiRuleRefs": []}},"non-subtasks": {},"subtasks": []}},
+                      {"task": {"displayName": "[🔗] ForeignKeyModel класс (pending, 1h, high). № 01.03.02.05","task-attributes": {"id": "01.03.02.05","status": "pending","priority": "high","created": "2025-10-06","lastUpdated": "2025-10-06","owner": "Александр","estimate": "1h","predecessors": [],"links": {"projectDocsRefs": ["project.modules.list[1].components[2].component.classes[4].class.attributes.location"],"journalRefs": [],"aiRuleRefs": []}},"non-subtasks": {},"subtasks": []}},
+                      {"task": {"displayName": "[🔒] UniqueConstraintModel класс (pending, 1h, medium). № 01.03.02.06","task-attributes": {"id": "01.03.02.06","status": "pending","priority": "medium","created": "2025-10-06","lastUpdated": "2025-10-06","owner": "Александр","estimate": "1h","predecessors": [],"links": {"projectDocsRefs": ["project.modules.list[1].components[2].component.classes[5].class.attributes.location"],"journalRefs": [],"aiRuleRefs": []}},"non-subtasks": {},"subtasks": []}},
+                      {"task": {"displayName": "[✅] CheckConstraintModel класс (pending, 1h, medium). № 01.03.02.07","task-attributes": {"id": "01.03.02.07","status": "pending","priority": "medium","created": "2025-10-06","lastUpdated": "2025-10-06","owner": "Александр","estimate": "1h","predecessors": [],"links": {"projectDocsRefs": ["project.modules.list[1].components[2].component.classes[6].class.attributes.location"],"journalRefs": [],"aiRuleRefs": []}},"non-subtasks": {},"subtasks": []}},
+                      {"task": {"displayName": "[🧷] DefaultConstraintModel класс (pending, 1h, medium). № 01.03.02.08","task-attributes": {"id": "01.03.02.08","status": "pending","priority": "medium","created": "2025-10-06","lastUpdated": "2025-10-06","owner": "Александр","estimate": "1h","predecessors": [],"links": {"projectDocsRefs": ["project.modules.list[1].components[2].component.classes[7].class.attributes.location"],"journalRefs": [],"aiRuleRefs": []}},"non-subtasks": {},"subtasks": []}},
+                      {"task": {"displayName": "[🧯] TriggerModel класс (pending, 1h, medium). № 01.03.02.09","task-attributes": {"id": "01.03.02.09","status": "pending","priority": "medium","created": "2025-10-06","lastUpdated": "2025-10-06","owner": "Александр","estimate": "1h","predecessors": [],"links": {"projectDocsRefs": ["project.modules.list[1].components[2].component.classes[8].class.attributes.location"],"journalRefs": [],"aiRuleRefs": []}},"non-subtasks": {},"subtasks": []}},
+                      {"task": {"displayName": "[🔢] SequenceModel класс (pending, 1h, medium). № 01.03.02.0a","task-attributes": {"id": "01.03.02.0a","status": "pending","priority": "medium","created": "2025-10-06","lastUpdated": "2025-10-06","owner": "Александр","estimate": "1h","predecessors": [],"links": {"projectDocsRefs": ["project.modules.list[1].components[2].component.classes[9].class.attributes.location"],"journalRefs": [],"aiRuleRefs": []}},"non-subtasks": {},"subtasks": []}}
+                    ]}},
+                    {"task": {"displayName": "[🎛️] Оркестрация миграции (pending, 4h, critical). № 01.03.03","task-attributes": {"id": "01.03.03","status": "pending","priority": "critical","created": "2025-10-06","lastUpdated": "2025-10-06","owner": "Александр","estimate": "4h","predecessors": ["01.03.01","01.03.02"],"links": {"projectDocsRefs": ["project.modules.list[1].components[0].component.classes[0].class.attributes.location"],"journalRefs": [],"aiRuleRefs": []}},"non-subtasks": {},"subtasks": [
+                      {"task": {"displayName": "[🧭] TableMigrator класс (pending, 4h, critical). № 01.03.03.01","task-attributes": {"id": "01.03.03.01","status": "pending","priority": "critical","created": "2025-10-06","lastUpdated": "2025-10-06","owner": "Александр","estimate": "4h","predecessors": ["01.03.01","01.03.02"],"links": {"projectDocsRefs": ["project.modules.list[1].components[0].component.classes[0].class.attributes.location"],"journalRefs": [],"aiRuleRefs": []}},"non-subtasks": {},"subtasks": []}}
+                    ]}},
+                    {"task": {"displayName": "[📜] Скрипты миграции (pending, 2h, high). № 01.03.04","task-attributes": {"id": "01.03.04","status": "pending","priority": "high","created": "2025-10-06","lastUpdated": "2025-10-06","owner": "Александр","estimate": "2h","predecessors": ["01.03.03"],"links": {"projectDocsRefs": ["project.modules.list[1].components[0].component.scripts[0]"],"journalRefs": [],"aiRuleRefs": []}},"non-subtasks": {},"subtasks": [
+                      {"task": {"displayName": "[▶️] migrate_table.py скрипт (pending, 2h, high). № 01.03.04.01","task-attributes": {"id": "01.03.04.01","status": "pending","priority": "high","created": "2025-10-06","lastUpdated": "2025-10-06","owner": "Александр","estimate": "2h","predecessors": ["01.03.03.01"],"links": {"projectDocsRefs": ["project.modules.list[1].components[0].component.scripts[0]"],"journalRefs": [],"aiRuleRefs": []}},"non-subtasks": {},"subtasks": []}}
+                    ]}}
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "task": {
+            "displayName": "Пример задачи Б (pending, 12h, low). № 02",
+            "task-attributes": {
+              "id": "02",
+              "status": "pending",
+              "priority": "low",
+              "created": "2025-10-06",
+              "lastUpdated": "2025-10-07",
+              "owner": "Александр",
+              "estimate": "12h",
+              "predecessors": ["01", "02", "03"],
+              "links": {
+                "projectDocsRefs": [
+                  "documentation.projectDocs.location"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              }
+            },
+            "non-subtasks": {},
+            "subtasks": [
+            ]
+          }
+        }
+      ]
+    }
+  }

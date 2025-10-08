@@ -1,0 +1,76 @@
+{
+    "journal": {
+      "metadata": {
+        "version": "1.0.0",
+        "status": "active",
+        "lastUpdated": "2025-10-07"
+      },
+      "sessions": [
+        {
+          "chat": {
+            "displayName": "Пример чата А (active, medium). № chat-2025-10-06-001",
+            "chat-attributes": {
+              "id": "chat-2025-10-06-001",
+              "created": "2025-10-06",
+              "lastUpdated": "2025-10-07",
+              "owner": "Александр",
+              "tags": ["infrastructure", "connections", "start"],
+              "links": {
+                "projectDocsRefs": [
+                  "project.architecture.stages.rootStages[0].substages[0]",
+                  "project.modules.list[3].components[0].component.classes[0].class.attributes.location",
+                  "project.modules.list[3].components[1].component.classes[0].class.attributes.location"
+                ],
+                "developmentTasks": ["01.01.05", "02.06.04", "03.01.04"],
+                "aiRuleRefs": ["src/..."]
+              }
+            },
+            "entries": [
+              {
+                "log": {
+                  "displayName": "Пример лога А (info). № log-2025-10-06-001",
+                  "log-attributes": {
+                    "id": "log-2025-10-06-001",
+                    "timestamp": "2025-10-06T00:00:00Z",
+                    "level": "info",
+                    "effort": "15m",
+                    "status": "started",
+                    "links": {
+                      "projectDocsRefs": ["project.architecture.stages.rootStages[0].substages[0]"],
+                      "developmentTasks": ["01.01.05"],
+                      "aiRuleRefs": []
+                    }
+                  },
+                  "entries": [
+                    {
+                      "action": "Создание задач для проверки подключений в плане разработки",
+                      "details": "Добавлены подзадачи 01.01.05, 02.06.04, 03.01.04",
+                      "references": [
+                        "docs/development/project-development.json#01.01.05",
+                        "docs/development/project-development.json#02.06.04",
+                        "docs/development/project-development.json#03.01.04"
+                      ]
+                    },
+                    {
+                      "action": "Исправление статических метрик на динамические",
+                      "details": "Обновлен project-docs.json, создан MigrationMetrics класс, добавлены задачи 01.01.06, 01.01.07",
+                      "references": [
+                        "docs/project/project-docs.json#migrationStatus",
+                        "src/code/infrastructure/classes/migration_metrics.py",
+                        "docs/development/project-development.json#01.01.06",
+                        "docs/development/project-development.json#01.01.07"
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "links": {
+        "projectDocs": "../project/project-docs.json",
+        "development": "../development/project-development.json"
+      }
+    }
+  }

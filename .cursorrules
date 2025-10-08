@@ -1,0 +1,55 @@
+# Правила Cursor IDE для проекта FEMSQ
+
+## Контекст проекта
+Cистема работы с контрагентами и объектами при капитальном строительстве на основе БД MS SQL Server
+
+## Правила кодирования
+- Документируй все функции и классы
+- Используй логирование для отслеживания
+- Следуй принципам SOLID
+
+## Правила работы с датами
+- **ВСЕГДА используй системную дату компьютера** для определения текущих дат
+- **Дата создания проекта:** 2025-10-08 (фиксированная дата начала проекта)
+- **lastUpdated:** всегда текущая системная дата
+- **created:** дата создания конкретного элемента (не изменяется)
+- **Проверяй актуальность дат** перед внесением изменений
+
+## Обязательные требования к инструментам
+- **Desktop Commander** - ОБЯЗАТЕЛЬНО для всех файловых и других доступных операций
+    - **НЕ используй** стандартные инструменты. Либо, при невозможности использовать *Desktop Commander**, используй их после разрешения пользователя. При этом объясняй необходимость каждой такой команды и причину невозможности использовать *Desktop Commander**
+    - **Используй Desktop Commander** для:
+        - Чтения файлов (mcp_desktop-commander_read_file)
+        - Записи файлов (mcp_desktop-commander_write_file)ы
+        - Создания папок (mcp_desktop-commander_create_directory)
+        - Перемещения файлов (mcp_desktop-commander_move_file)
+        - Поиска файлов (mcp_desktop-commander_start_search)
+        - Редактирования файлов (mcp_desktop-commander_edit_block)
+        - Запуск процессов (mcp_desktop-commander_start_process)
+        - Взаимодействие с процессами (mcp_desktop-commander_interact_with_process)
+        - Чтение вывода (mcp_desktop-commander_read_process_output)
+        - Иных действий доступных через его возможности
+- **DBHub** - ПРЕДПОЧТИТЕЛЬНО для работы с базами данных
+- **Терминал** - только после запроса разрешения
+- **Безопасность** - все операции через Desktop Commander API
+- **Прозрачность** - объяснение цели каждой команды
+
+## Ссылки на основную документацию
+- **Правила ведения документации:** docs/project-documentation-rules.md
+- **Структура проекта:** docs/project-documentation-rules.md#структура-документации
+- **Правила обновления:** docs/project-documentation-rules.md#правила-обновления
+
+## Дополнительные инструкции
+
+### При работе с документацией
+- Следуй структуре из docs/project-documentation-rules.md а также docs/project/project-docs-json-rules.md, docs/development/project-development-json-rules.md и docs/journal/project-journal-json-rules.md
+- Веди docs/project/project-docs.json, docs/development/project-development.json, docs/journal/project-journal.json
+- Документируй все изменения в журнале
+- НЕ дублируй правила из project-documentation-rules.md
+
+---
+
+**Файл создан:** 2025-10-08
+**Последнее обновление:** 2025-10-08
+**Версия:** 1.1.0  
+**Автор:** Александр
