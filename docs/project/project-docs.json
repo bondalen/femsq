@@ -6,7 +6,7 @@
             "description": "Cистема работы с контрагентами и объектами при капитальном строительстве на основе БД MS SQL Server FEMSQ (Fish Eye MS SQL Server)",
             "author": "Александр",
             "created": "2025-10-08",
-            "lastUpdated": "2025-10-08",
+            "lastUpdated": "2025-01-27",
             "status": "planning",
             "repository": "https://github.com/bondalen/femsq.git",
             "license": "MIT",
@@ -24,11 +24,11 @@
             "backend": {
                 "framework": "Spring Boot 3.4.5",
                 "language": "Java 21 LTS",
-                "database": "PostgreSQL 16",
+                "database": "MS SQL Server (внешняя)",
+                "database_driver": "Microsoft SQL Server JDBC Driver 12.x",
                 "api": "GraphQL",
                 "security": "на данном этапе не разрабатывается",
-                "migrations": "Liquibase",
-                "reactive": "R2DBC",
+                "migrations": "Liquibase (встроенные в JAR)",
                 "monitoring": "Spring Boot Actuator"
             },
             "frontend": {
@@ -39,13 +39,14 @@
                 "build": "Vite",
                 "maps": "Leaflet",
                 "routing": "Vue Router",
-                "state": "Pinia"
+                "state": "Pinia",
+                "serving": "Spring Boot Static Resources"
             },
             "infrastructure": {
-                "database": "MS SQL Server",
+                "database": "MS SQL Server (внешняя)",
                 "monitoring": "Spring Boot Actuator",
                 "ai": "MCP Servers",
-                "deployment": "jar-файл"
+                "deployment": "Spring Boot Fat JAR"
             }
         },
         "features": {
@@ -121,14 +122,15 @@
             }
         ],
         "database": {
-            "schema": "fepro",
+            "schema": "ags",
             "version": "1.0.0",
-            "engine": "PostgreSQL 16",
-            "extensions": [
-                "PostGIS",
-                "uuid-ossp",
-                "pg_trgm"
-            ],
+            "engine": "MS SQL Server 2012+",
+            "target_version": "11.0.7507.2 (2012 SP4)",
+            "connection": {
+                "type": "external",
+                "driver": "com.microsoft.sqlserver.jdbc.SQLServerDriver",
+                "url_template": "jdbc:sqlserver://{host}:{port};databaseName=FishEye;encrypt=false;trustServerCertificate=true"
+            },
             "tables": [
                 {
                     "name": "contractors",
@@ -320,81 +322,55 @@
                 },
                 {
                     "version": "002",
-                    "description": "Add PostGIS support",
-                    "file": "002-add-postgis.xml",
+                    "description": "Add additional tables for CRM functionality",
+                    "file": "002-crm-tables.xml",
                     "status": "planned",
                     "changes": [
-                        "Enable PostGIS extension",
-                        "Add spatial indexes",
-                        "Create regions table"
+                        "Create documents table",
+                        "Create contracts table",
+                        "Add relationships between contractors and documents"
                     ]
                 }
+            ],
+            "extensions": [
+                "docs/project/extensions/database/connection-config.json",
+                "docs/project/extensions/database/authentication-methods.json",
+                "docs/project/extensions/database/migration-config.json",
+                "docs/project/extensions/database/compatibility.json"
             ]
         },
         "development": {
             "setup": {
                 "prerequisites": [
                     "Java 21 LTS",
-                    "Node.js 20+",
-                    "PostgreSQL 16",
-                    "Docker",
+                    "MS SQL Server (корпоративный или локальный)",
                     "Maven 3.9+",
                     "Git"
                 ],
                 "scripts": {
                     "dev": {
                         "command": "mvn spring-boot:run",
-                        "description": "Запуск Spring Boot приложения в режиме разработки",
-                        "location": "backend/",
-                        "usage": "Локальная разработка backend"
-                    },
-                    "frontend": {
-                        "command": "npm run dev",
-                        "description": "Запуск Vue.js приложения в режиме разработки",
-                        "location": "frontend/",
-                        "usage": "Локальная разработка frontend"
+                        "description": "Запуск в режиме разработки",
+                        "location": "project root",
+                        "usage": "Локальная разработка с встроенной формой настройки"
                     },
                     "build": {
                         "command": "mvn clean package",
-                        "description": "Сборка Spring Boot приложения в JAR файл",
-                        "location": "backend/",
-                        "usage": "Сборка для production"
+                        "description": "Сборка единого JAR-файла с встроенным frontend",
+                        "location": "project root",
+                        "usage": "Создание production-ready JAR файла"
+                    },
+                    "run": {
+                        "command": "java -jar target/femsq-{version}.jar",
+                        "description": "Запуск готового JAR-файла",
+                        "location": "project root",
+                        "usage": "Production запуск с внешней БД"
                     },
                     "test": {
                         "command": "mvn test",
                         "description": "Запуск unit тестов",
-                        "location": "backend/",
-                        "usage": "Тестирование backend кода"
-                    },
-                    "migrate": {
-                        "command": "mvn liquibase:update",
-                        "description": "Выполнение миграций базы данных",
-                        "location": "backend/",
-                        "usage": "Обновление схемы БД"
-                    },
-                    "deploy": {
-                        "command": "./scripts/deploy.sh",
-                        "description": "Полное развертывание приложения с проверками",
-                        "location": "scripts/",
-                        "usage": "Production развертывание"
-                    },
-                    "update": {
-                        "command": "./scripts/update.sh",
-                        "description": "Обновление приложения с сохранением данных",
-                        "location": "scripts/",
-                        "usage": "Обновление production версии"
-                    },
-                    "backup": {
-                        "command": "./scripts/backup.sh",
-                        "description": "Создание резервной копии базы данных",
-                        "location": "scripts/",
-                        "usage": "Резервное копирование данных"
-                    },
-                    "blue-green": {
-                        "command": "./scripts/blue-green-deploy.sh",
-                        "description": "Blue-Green развертывание без простоя",
-                        "location": "scripts/",
-                        "usage": "Безопасное обновление production"
+                        "location": "project root",
+                        "usage": "Тестирование кода"
                     }
                 }
             },
@@ -407,34 +383,71 @@
             }
         },
         "deployment": {
-            "strategy": "один jar-файл с подключением к внешней базе MS SQL Server",
+            "strategy": "Единый JAR-файл с веб-интерфейсом настройки БД",
             "architecture": {
-                "type": "monolithic"
+                "type": "monolithic",
+                "deployment_type": "fat-jar-corporate-network"
             },
             "environments": {
-                "database": "localhost:1433/FishEye",
-                "frontend": "http://localhost:3000",
+                "frontend": "http://localhost:8080 (встроенный в JAR)",
                 "backend": "http://localhost:8080"
             },
-            "monitoring": {
-                "health_checks": true,
-                "prometheus_metrics": true,
-                "logging": "file-rotation",
-                "backup": "daily-database"
+            "configuration": {
+                "jar_name": "femsq-{version}.jar",
+                "startup_command": "java -jar femsq-{version}.jar"
             },
-            "update_strategy": {
-                "type": "rolling-update",
-                "backup_before_update": true,
-                "health_check_after_update": true,
-                "rollback_on_failure": true
-            }
+            "extensions": [
+                "docs/project/extensions/deployment/deployment-config.json",
+                "docs/project/extensions/deployment/environments.json",
+                "docs/project/extensions/deployment/security-config.json"
+            ]
+        },
+        
+        "ui": {
+            "setup_interface": {
+                "url": "/setup",
+                "title": "Настройка подключения к базе данных FEMSQ",
+                "description": "Веб-интерфейс для настройки подключения к MS SQL Server"
+            },
+            "main_application": {
+                "url": "/",
+                "title": "FEMSQ - Система работы с контрагентами"
+            },
+            "extensions": [
+                "docs/project/extensions/ui/setup-forms.json",
+                "docs/project/extensions/ui/status-pages.json",
+                "docs/project/extensions/ui/user-experience.json"
+            ]
+        },
+        
+        "network": {
+            "type": "controlled_corporate_network",
+            "authentication_methods": [
+                "integrated_security",
+                "trusted_connection",
+                "username_password"
+            ],
+            "extensions": [
+                "docs/project/extensions/network/corporate-network.json",
+                "docs/project/extensions/network/connection-detection.json"
+            ]
+        },
+        
+        "monitoring": {
+            "health_checks": true,
+            "logging": "file-rotation",
+            "backup": "daily-database",
+            "extensions": [
+                "docs/project/extensions/monitoring/logging-config.json",
+                "docs/project/extensions/monitoring/health-checks.json"
+            ]
         },
         "timeline": {
             "phases": [
                 {
                     "name": "Phase 1: Foundation",
                     "duration": "2 weeks",
-                    "startDate": "2025-01-02",
+                    "startDate": "2025-01-27",
                     "tasks": [
                         "Настройка инфраструктуры",
                         "Базовая архитектура Backend",
@@ -443,12 +456,12 @@
                         "Создание JSON-документации"
                     ],
                     "status": "in_progress",
-                    "progress": 40
+                    "progress": 20
                 },
                 {
                     "name": "Phase 2: Core Features",
                     "duration": "4 weeks",
-                    "startDate": "2025-01-16",
+                    "startDate": "2025-02-10",
                     "tasks": [
                         "Модуль управления отношениями с контрагентами",
                         "Система аутентификации",
@@ -461,7 +474,7 @@
                 {
                     "name": "Phase 3: Advanced Features",
                     "duration": "3 weeks",
-                    "startDate": "2025-02-13",
+                    "startDate": "2025-03-10",
                     "tasks": [
                         "ГИС-аналитика",
                         "Документооборот",
@@ -506,8 +519,7 @@
                     "skills": [
                         "Java",
                         "Vue.js",
-                        "PostgreSQL",
-                        "Docker",
+                        "MS SQL Server",
                         "GraphQL"
                     ]
                 }
@@ -523,7 +535,8 @@
                 "GitHub"
             ],
             "documentation": {
-                "main": "docs"
+                "main": "docs",
+                "journal": "docs/journal/project-journal.json"
             }
         }
     }

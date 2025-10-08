@@ -232,6 +232,11 @@
       "schema": "app_schema",
       "version": "1.0.0",
       "engine": "PostgreSQL 16 | MySQL 8 | MS SQL Server 2022",
+      "connection": {
+        "type": "external | embedded",
+        "driver": "com.example.Driver",
+        "url_template": "jdbc:example://{host}:{port}/{database}"
+      },
       "extensions": ["PostGIS", "uuid-ossp", "pg_trgm"],
       "tables": [
         {
@@ -289,6 +294,10 @@
             "Create basic indexes"
           ]
         }
+      ],
+      "extensions": [
+        "docs/project/extensions/database/connection-config.json",
+        "docs/project/extensions/database/authentication-methods.json"
       ]
     },
     
@@ -341,6 +350,10 @@
         "frontend": "http://localhost:3000 | https://app.example.com",
         "backend": "http://localhost:8080 | https://api.example.com"
       },
+      "configuration": {
+        "jar_name": "app-{version}.jar",
+        "startup_command": "java -jar app-{version}.jar"
+      },
       "monitoring": {
         "health_checks": true,
         "prometheus_metrics": true,
@@ -352,7 +365,11 @@
         "backup_before_update": true,
         "health_check_after_update": true,
         "rollback_on_failure": true
-      }
+      },
+      "extensions": [
+        "docs/project/extensions/deployment/deployment-config.json",
+        "docs/project/extensions/deployment/environments.json"
+      ]
     },
     
     "timeline": {
@@ -427,6 +444,37 @@
       "documentation": {
         "main": "docs/"
       }
+    },
+    
+    "ui": {
+      "setup_interface": {
+        "url": "/setup",
+        "title": "Настройка приложения"
+      },
+      "main_application": {
+        "url": "/",
+        "title": "Главное приложение"
+      },
+      "extensions": [
+        "docs/project/extensions/ui/setup-forms.json",
+        "docs/project/extensions/ui/status-pages.json"
+      ]
+    },
+    
+    "network": {
+      "type": "corporate | public | hybrid",
+      "authentication_methods": ["method1", "method2"],
+      "extensions": [
+        "docs/project/extensions/network/corporate-network.json"
+      ]
+    },
+    
+    "monitoring": {
+      "health_checks": true,
+      "logging": "file-rotation | elk-stack",
+      "extensions": [
+        "docs/project/extensions/monitoring/logging-config.json"
+      ]
     }
   }
 }

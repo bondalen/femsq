@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "Информация о совместимости с различными версиями MS SQL Server",
+  
+  "compatibility": {
+    "production": {
+      "version": "11.0.7507.2",
+      "name": "MS SQL Server 2012 SP4",
+      "compatibility_level": "110",
+      "release_date": "2012-03-06",
+      "service_pack": "SP4",
+      "end_of_support": "2022-07-12"
+    },
+    "development": {
+      "version": "15.x.x+",
+      "name": "MS SQL Server 2019+",
+      "compatibility_level": "150",
+      "release_date": "2019-11-04"
+    },
+    
+    "target_compatibility": {
+      "min_version": "11.0.0",
+      "target_version": "11.0.7507.2",
+      "description": "Код должен быть совместим с MS SQL Server 2012 SP4"
+    },
+    
+    "limitations_2012": [
+      {
+        "feature": "JSON функции",
+        "description": "JSON_VALUE, JSON_QUERY, ISJSON и другие",
+        "available_since": "MS SQL Server 2016",
+        "workaround": "Использовать XML для сложных структур данных"
+      },
+      {
+        "feature": "STRING_SPLIT функция",
+        "description": "Разделение строк на части",
+        "available_since": "MS SQL Server 2016",
+        "workaround": "Использовать пользовательские функции или XML методы"
+      },
+      {
+        "feature": "DROP IF EXISTS",
+        "description": "Упрощенный синтаксис удаления объектов",
+        "available_since": "MS SQL Server 2016",
+        "workaround": "Проверять существование через sys.objects перед удалением"
+      },
+      {
+        "feature": "CONCAT_WS функция",
+        "description": "Конкатенация с разделителем",
+        "available_since": "MS SQL Server 2017",
+        "workaround": "Использовать CONCAT или оператор +"
+      },
+      {
+        "feature": "OFFSET-FETCH",
+        "description": "Постраничная навигация",
+        "status": "Частично доступна",
+        "notes": "Базовая поддержка есть, но с ограничениями"
+      }
+    ],
+    
+    "supported_features": [
+      {
+        "feature": "Common Table Expressions (CTE)",
+        "description": "Рекурсивные и обычные CTE",
+        "status": "Полная поддержка"
+      },
+      {
+        "feature": "Window Functions",
+        "description": "ROW_NUMBER, RANK, DENSE_RANK",
+        "status": "Базовая поддержка",
+        "notes": "Ограниченный набор по сравнению с 2016+"
+      },
+      {
+        "feature": "MERGE Statement",
+        "description": "Операция MERGE для INSERT/UPDATE/DELETE",
+        "status": "Полная поддержка"
+      },
+      {
+        "feature": "Sequences",
+        "description": "Объекты SEQUENCE для генерации последовательностей",
+        "status": "Полная поддержка"
+      },
+      {
+        "feature": "Paging with ROW_NUMBER",
+        "description": "Постраничная навигация через ROW_NUMBER()",
+        "status": "Полная поддержка"
+      }
+    ],
+    
+    "workarounds": {
+      "json_storage": {
+        "problem": "Нет нативных JSON функций",
+        "solution": "Использовать XML типы данных",
+        "example": "Хранить данные как XML и использовать XQuery для доступа"
+      },
+      "string_split": {
+        "problem": "Нет STRING_SPLIT функции",
+        "solution": "Создать пользовательскую функцию или использовать XML",
+        "example": "SELECT Split.a.value('.', 'VARCHAR(100)') FROM (SELECT CAST('<X>'+REPLACE(@string, @delimiter, '</X><X>')+'</X>' AS XML) AS String) AS A CROSS APPLY String.nodes('/X') AS Split(a)"
+      },
+      "drop_if_exists": {
+        "problem": "Нет синтаксиса DROP IF EXISTS",
+        "solution": "Проверять существование перед удалением",
+        "example": "IF OBJECT_ID('table_name', 'U') IS NOT NULL DROP TABLE table_name"
+      },
+      "concat_ws": {
+        "problem": "Нет CONCAT_WS функции",
+        "solution": "Использовать CONCAT или оператор +",
+        "example": "CONCAT(col1, ',', col2, ',', col3) или col1 + ',' + col2 + ',' + col3"
+      }
+    },
+    
+    "development_guidelines": [
+      "Всегда разрабатывать с учетом ограничений MS SQL Server 2012",
+      "Тестировать код на версии 2012 перед релизом в production",
+      "Избегать использования функций, появившихся после 2012",
+      "Документировать все workarounds для совместимости",
+      "Использовать SET COMPATIBILITY_LEVEL = 110 на dev окружении для тестов"
+    ],
+    
+    "testing_strategy": {
+      "approach": "Двойное тестирование",
+      "steps": [
+        "Разработка на MS SQL Server 2019+ с новыми возможностями",
+        "Рефакторинг кода для совместимости с 2012",
+        "Тестирование на MS SQL Server 2012 в staging окружении",
+        "Финальная проверка на production-like окружении"
+      ],
+      "ci_cd": "Настроить CI/CD с тестами на MS SQL Server 2012",
+      "compatibility_checks": "Автоматическая проверка использования несовместимых функций"
+    },
+    
+    "migration_notes": {
+      "future_upgrade": "При обновлении production до 2016+ можно будет:",
+      "benefits": [
+        "Использовать JSON функции для упрощения кода",
+        "Применить STRING_SPLIT для парсинга",
+        "Упростить DDL скрипты с DROP IF EXISTS",
+        "Улучшить производительность с новыми оптимизациями"
+      ]
+    }
+  }
+}
