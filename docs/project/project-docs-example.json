@@ -62,334 +62,77 @@
       ]
     },
     
-    "modules": [
-      {
-        "_comment": "РЕКУРСИВНАЯ СТРУКТУРА: Всего 3 сущности с бесконечной вложенностью",
-        "_recursive_structure": {
-          "entities": [
-            {
-              "name": "Module",
-              "contains": ["modules", "components", "classes"],
-              "represents": "Maven modules, проекты, пакеты верхнего уровня"
-            },
-            {
-              "name": "Component", 
-              "contains": ["components", "classes"],
-              "represents": "Java packages, пакеты, модули приложения"
-            },
-            {
-              "name": "Class",
-              "contains": ["classes"],
-              "represents": "Java classes, interfaces, enums, вложенные классы"
-            }
-          ]
-        },
-        "_examples": {
-          "maven_structure": "Module (project) → Module (sub-module) → Component (package) → Class",
-          "java_packages": "Component (com.femsq) → Component (database) → Component (config) → Class",
-          "nested_classes": "Class → Class (nested) → Class (nested in nested)"
-        },
-        "_recommendations": {
-          "recommended": "Module → Module → Component → Component → Class",
-          "acceptable": "Module → Component → Class, Component → Class",
-          "not_recommended": "Слишком глубокая вложенность (более 7 уровней)"
-        }
+    "modules": {
+      "description": "Структура модулей проекта FEMSQ",
+      "version": "1.0.0",
+      "lastUpdated": "2025-01-27",
+      "structure": {
+        "type": "recursive",
+        "entities": ["Module", "Component", "Class"],
+        "organization": "hierarchical_extensions"
       },
-      {
-        "module": {
-          "displayName": "Backend Module. № 01",
-          "attributes": {
-            "id": "backend",
-            "number": "01",
-            "name": "Backend Module",
-            "description": "Основной backend модуль приложения",
-            "purpose": "Серверная логика, API, работа с БД",
-            "status": "planned",
-            "location": "femsq-backend/",
-            "type": "maven-module",
-            "dependencies": []
+      "extensions": [
+        "docs/project/extensions/modules/modules.json"
+      ],
+      "diagrams": [
+        "docs/project/diagrams/database-module-classes.puml",
+        "docs/project/diagrams/components.puml",
+        "docs/project/diagrams/package-structure.puml"
+      ],
+      "_comment": "РЕКУРСИВНАЯ СТРУКТУРА: Всего 3 сущности с бесконечной вложенностью",
+      "_recursive_structure": {
+        "entities": [
+          {
+            "name": "Module",
+            "contains": ["modules", "components", "classes"],
+            "represents": "Maven modules, проекты, пакеты верхнего уровня"
           },
-          
-          // РЕКУРСИЯ: Модули в модуле (Maven sub-modules)
-          "modules": [
-            {
-              "module": {
-                "displayName": "Database Module. № 01.01",
-                "attributes": {
-                  "id": "database",
-                  "number": "01.01",
-                  "name": "Database Module",
-                  "description": "Модуль работы с базой данных",
-                  "purpose": "Управление подключением к MS SQL Server",
-                  "status": "planned",
-                  "location": "femsq-backend/femsq-database/",
-                  "type": "maven-submodule",
-                  "dependencies": []
-                },
-                // РЕКУРСИЯ: Компоненты в модуле (Java packages)
-                "components": [
-                  {
-                    "component": {
-                      "displayName": "Configuration Package. № 01.01.01",
-                      "attributes": {
-                        "id": "config",
-                        "number": "01.01.01",
-                        "name": "Configuration Package",
-                        "description": "Управление конфигурацией подключения к БД",
-                        "type": "java-package",
-                        "location": "com.femsq.database.config",
-                        "responsibilities": [
-                          "Чтение/запись конфигурации из ~/.femsq/database.properties",
-                          "Валидация параметров подключения",
-                          "Управление файлами конфигурации"
-                        ],
-                        "status": "planned"
-                      },
-                      
-                      // РЕКУРСИЯ: Компоненты в компоненте (nested packages)
-                      "components": [
-                        {
-                          "component": {
-                            "displayName": "Internal Package. № 01.01.01.01",
-                            "attributes": {
-                              "id": "internal",
-                              "number": "01.01.01.01",
-                              "name": "Internal Package",
-                              "description": "Внутренние компоненты конфигурации",
-                              "type": "java-package",
-                              "location": "com.femsq.database.config.internal",
-                              "responsibilities": [
-                                "Внутренняя логика работы с файлами",
-                                "Валидация параметров"
-                              ],
-                              "status": "planned"
-                            },
-                            // РЕКУРСИЯ: Классы в компоненте
-                            "classes": [
-                              {
-                                "class": {
-                                  "displayName": "ConfigFileManager. № 01.01.01.01.01",
-                                  "attributes": {
-                                    "id": "ConfigFileManager",
-                                    "number": "01.01.01.01.01",
-                                    "name": "ConfigFileManager",
-                                    "location": "com.femsq.database.config.internal.ConfigFileManager",
-                                    "responsibilities": [
-                                      "Управление файлами конфигурации",
-                                      "Создание директорий",
-                                      "Установка прав доступа"
-                                    ],
-                                    "dependsOn": [],
-                                    "status": "planned"
-                                  },
-                                  
-                                  // РЕКУРСИЯ: Вложенные классы
-                                  "classes": [
-                                    {
-                                      "class": {
-                                        "displayName": "ConfigValidator. № 01.01.01.01.01.01",
-                                        "attributes": {
-                                          "id": "ConfigValidator",
-                                          "number": "01.01.01.01.01.01",
-                                          "name": "ConfigValidator",
-                                          "description": "Вложенный класс для валидации",
-                                          "location": "com.femsq.database.config.internal.ConfigFileManager.ConfigValidator",
-                                          "type": "nested-class"
-                                        },
-                                        
-                                        // РЕКУРСИЯ: Классы в классе (nested в nested)
-                                        "classes": [
-                                          {
-                                            "class": {
-                                              "displayName": "ValidationResult. № 01.01.01.01.01.01.01",
-                                              "attributes": {
-                                                "id": "ValidationResult",
-                                                "number": "01.01.01.01.01.01.01",
-                                                "name": "ValidationResult",
-                                                "description": "Результат валидации (nested в nested)",
-                                                "location": "com.femsq.database.config.internal.ConfigFileManager.ConfigValidator.ValidationResult",
-                                                "type": "nested-class"
-                                              }
-                                            }
-                                          }
-                                        ]
-                                      }
-                                    }
-                                  ]
-                                }
-                              }
-                            ]
-                          }
-                        }
-                      ],
-                      
-                      // РЕКУРСИЯ: Классы напрямую в компоненте
-                      "classes": [
-                        {
-                          "class": {
-                            "displayName": "DatabaseConfigService. № 01.01.01.01",
-                            "attributes": {
-                              "id": "DatabaseConfigService",
-                              "number": "01.01.01.01",
-                              "name": "DatabaseConfigService",
-                              "location": "com.femsq.database.config.DatabaseConfigService",
-                              "responsibilities": [
-                                "Загрузка конфигурации из файла",
-                                "Сохранение конфигурации в файл",
-                                "Валидация параметров подключения"
-                              ],
-                              "dependsOn": [
-                                "ConfigFileManager",
-                                "ConfigurationValidator"
-                              ],
-                              "status": "planned"
-                            }
-                          }
-                        }
-                      ]
-                    }
-                  }
-                ]
-              }
-            }
-          ],
-          
-          // РЕКУРСИЯ: Компоненты напрямую в модуле
-          "components": [
-            {
-              "component": {
-                "displayName": "Shared Components. № 01.02",
-                "attributes": {
-                  "id": "shared",
-                  "number": "01.02",
-                  "name": "Shared Components",
-                  "description": "Общие компоненты для всего backend",
-                  "type": "java-package",
-                  "location": "com.femsq.shared",
-                  "responsibilities": [
-                    "Общие утилиты",
-                    "Константы",
-                    "Общие модели данных"
-                  ],
-                  "status": "planned"
-                },
-                // РЕКУРСИЯ: Классы в компоненте
-                "classes": [
-                  {
-                    "class": {
-                      "displayName": "CommonUtil. № 01.02.01",
-                      "attributes": {
-                        "id": "CommonUtil",
-                        "number": "01.02.01",
-                        "name": "CommonUtil",
-                        "location": "com.femsq.shared.CommonUtil",
-                        "responsibilities": [
-                          "Общие утилитарные методы",
-                          "Валидация данных",
-                          "Форматирование"
-                        ],
-                        "dependsOn": [],
-                        "status": "planned"
-                      }
-                    }
-                  }
-                ]
-              }
-            }
-          ],
-          
-          // РЕКУРСИЯ: Классы напрямую в модуле
-          "classes": [
-            {
-              "class": {
-                "displayName": "MainApplication. № 01.03",
-                "attributes": {
-                  "id": "MainApplication",
-                  "number": "01.03",
-                  "name": "MainApplication",
-                  "location": "com.femsq.MainApplication",
-                  "responsibilities": [
-                    "Главный класс приложения",
-                    "Инициализация Spring Boot"
-                  ],
-                  "dependsOn": [],
-                  "status": "planned"
-                }
-              }
-            }
-          ]
-        }
+          {
+            "name": "Component", 
+            "contains": ["components", "classes"],
+            "represents": "Java packages, пакеты, модули приложения"
+          },
+          {
+            "name": "Class",
+            "contains": ["classes"],
+            "represents": "Java classes, interfaces, enums, вложенные классы"
+          }
+        ]
       },
-      {
-        "module": {
-          "displayName": "Frontend Module. № 02",
-          "attributes": {
-            "id": "frontend",
-            "number": "02",
-            "name": "Frontend Module",
-            "description": "Frontend модуль приложения на Vue.js",
-            "purpose": "Пользовательский интерфейс, компоненты Vue, API клиенты",
-            "status": "planned",
-            "location": "femsq-frontend/",
-            "type": "vue-module",
-            "dependencies": ["backend"]
-          },
-          // РЕКУРСИЯ: Компоненты в модуле
-          "components": [
-            {
-              "component": {
-                "displayName": "Setup Components. № 02.01",
-                "attributes": {
-                  "id": "setup",
-                  "number": "02.01",
-                  "name": "Setup Components",
-                  "description": "Компоненты для настройки подключения к БД",
-                  "type": "vue-components",
-                  "location": "src/components/setup/",
-                  "responsibilities": [
-                    "Мастер настройки подключения",
-                    "Формы ввода параметров",
-                    "Тестирование подключения"
-                  ],
-                  "status": "planned"
-                },
-                // РЕКУРСИЯ: Классы в компоненте
-                "classes": [
-                  {
-                    "class": {
-                      "displayName": "SetupWizard.vue. № 02.01.01",
-                      "attributes": {
-                        "id": "SetupWizard",
-                        "number": "02.01.01",
-                        "name": "SetupWizard",
-                        "location": "src/components/setup/SetupWizard.vue",
-                        "responsibilities": [
-                          "Главный компонент мастера настройки",
-                          "Управление шагами настройки"
-                        ],
-                        "dependsOn": [],
-                        "status": "planned"
-                      }
-                    }
-                  }
-                ]
-              }
-            }
-          ]
-        }
+      "_examples": {
+        "maven_structure": "Module (project) → Module (sub-module) → Component (package) → Class",
+        "java_packages": "Component (com.femsq) → Component (database) → Component (config) → Class",
+        "nested_classes": "Class → Class (nested) → Class (nested in nested)"
+      },
+      "_recommendations": {
+        "recommended": "Module → Module → Component → Component → Class",
+        "acceptable": "Module → Component → Class, Component → Class",
+        "not_recommended": "Слишком глубокая вложенность (более 7 уровней)"
+      },
+      "_extension_examples": {
+        "main_modules_file": "docs/project/extensions/modules/modules.json",
+        "backend_module": "docs/project/extensions/modules/backend/backend-module.json",
+        "database_module": "docs/project/extensions/modules/backend/database/database-module.json",
+        "config_component": "docs/project/extensions/modules/backend/database/config/config-component.json"
+      },
+      "_hierarchical_structure": {
+        "principle": "Каждый артефакт в отдельном файле",
+        "organization": "Папки соответствуют структуре модулей",
+        "references": "Каждый уровень ссылается на свои расширения"
       }
-    ],
+    },
+
     
     "database": {
-      "schema": "app_schema",
+      "schema": "ags",
       "version": "1.0.0",
-      "engine": "PostgreSQL 16 | MySQL 8 | MS SQL Server 2022",
+      "engine": "MS SQL Server 2012+",
+      "target_version": "11.0.7507.2 (2012 SP4)",
       "connection": {
-        "type": "external | embedded",
-        "driver": "com.example.Driver",
-        "url_template": "jdbc:example://{host}:{port}/{database}"
+        "type": "external",
+        "driver": "com.microsoft.sqlserver.jdbc.SQLServerDriver",
+        "url_template": "jdbc:sqlserver://{host}:{port};databaseName=FishEye;encrypt=false;trustServerCertificate=true"
       },
-      "extensions": ["PostGIS", "uuid-ossp", "pg_trgm"],
       "tables": [
         {
           "name": "users",
@@ -456,10 +199,11 @@
     "development": {
       "setup": {
         "prerequisites": [
-          "Java 21 LTS | Node.js 20+ | Python 3.11+",
-          "PostgreSQL 16 | MySQL 8 | MongoDB 7",
+          "Java 21 LTS",
+          "Node.js 20+",
+          "MS SQL Server 2019+ (для разработки)",
           "Docker 24+",
-          "Maven 3.9+ | Gradle 8+ | npm 10+",
+          "Maven 3.9+",
           "Git 2.40+"
         ],
         "scripts": {
@@ -577,7 +321,7 @@
           "skills": [
             "Java",
             "Spring Boot",
-            "PostgreSQL"
+            "MS SQL Server"
           ]
         }
       ],
