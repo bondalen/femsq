@@ -5,48 +5,71 @@ title FEMSQ - Диаграмма компонентов
 skinparam componentStyle rectangle
 
 package "Backend (Spring Boot)" {
-  component [Database Module] as DB {
-    [Configuration]
-    [Connection Pool]
-    [Auth Providers]
-  }
+  component "Database Module" as DB
+  component "Configuration" as CONFIG_MOD
+  component "Connection Pool" as POOL
+  component "Auth Providers" as AUTH
   
-  component [Web API Module] as API {
-    [Setup Controllers]
-    [Health Endpoints]
-  }
+  component "Web API Module" as API
+  component "Setup Controllers" as CTRL
+  component "Health Endpoints" as HEALTH
   
-  component [Lifecycle Module] as LC {
-    [Startup Listeners]
-    [Initializers]
-  }
+  component "Lifecycle Module" as LC
+  component "Startup Listeners" as STARTUP
+  component "Initializers" as INIT
 }
 
 package "Frontend (Vue.js)" {
-  component [Setup UI] as UI {
-    [Setup Wizard]
-    [Connection Form]
-    [Status Widget]
-  }
+  component "Setup UI" as UI
+  component "Setup Wizard" as WIZARD
+  component "Connection Form" as FORM
+  component "Status Widget" as STATUS
   
-  component [API Services] as SVC {
-    [Configuration Service]
-    [Validation Service]
-  }
+  component "API Services" as SVC
+  component "Configuration Service" as CONFIG_SVC
+  component "Validation Service" as VALID_SVC
 }
 
-database "MS SQL Server\n(External)" as MSSQL {
-  [FishEye DB]
-  [Schema: ags]
-}
+database "MS SQL Server\n(External)" as MSSQL
+database "FishEye DB" as FISHEYE
+database "Schema: ags" as SCHEMA
 
 file "~/.femsq/\ndatabase.properties" as CONFIG
 
+' Backend connections
 API --> DB : uses
 LC --> DB : initializes
-UI --> SVC : uses
-SVC --> API : HTTP/REST
 DB --> CONFIG : reads/writes
 DB --> MSSQL : connects
+
+' Database module internal
+DB --> CONFIG_MOD
+DB --> POOL
+DB --> AUTH
+
+' Web API module internal
+API --> CTRL
+API --> HEALTH
+
+' Lifecycle module internal
+LC --> STARTUP
+LC --> INIT
+
+' Frontend connections
+UI --> SVC : uses
+SVC --> API : HTTP/REST
+
+' UI components
+UI --> WIZARD
+UI --> FORM
+UI --> STATUS
+
+' Services
+SVC --> CONFIG_SVC
+SVC --> VALID_SVC
+
+' Database structure
+MSSQL --> FISHEYE
+FISHEYE --> SCHEMA
 
 @enduml
