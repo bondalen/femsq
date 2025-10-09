@@ -1,13 +1,18 @@
 # Правила ведения проектной документации FEMSQ
 
-**Версия:** 1.0.0  
+**Версия:** 2.0.0  
 **Дата создания:** 2025-10-08  
-**Последнее обновление:** 2025-10-08  
+**Последнее обновление:** 2025-10-09  
 **Автор:** Александр  
 
 ## Обзор
 
 Данный документ описывает структуру, правила и порядок ведения проектной документации для "Cистемы работы с контрагентами и объектами при капитальном строительстве на основе БД MS SQL Server" FEMSQ (Fish Eye MS SQL Server). Система предназначена для организации взаимодействия с контрагентами и дочерними организациями при капитальном строительстве.
+
+## Связанные документы
+
+- **[Справочник по системе ссылок](project-documentation-rules-reference.md)** - таблица форматов ссылок, примеры, правила формирования ID
+- **[Система структурной нумерации](project-documentation-rules-structural-numbering.md)** - правила нумерации модулей, компонентов, классов
 
 ## Структура документации
 
@@ -34,43 +39,112 @@
 ### Обязательный чеклист при создании нового артефакта
 
 #### При создании нового модуля, компонента или класса:
-1. **Создать файл или папку артефакта** в соответствующей требованиям раздела "Кодовая база проекта" директории
+
+1. **Создать файл или папку артефакта** в соответствующей директории
+
 2. **Добавить в project-docs.json:**
-   - Найти соответствующий модуль в `project.architecture.modules.list[N]`
-   - Если нужен новый компонент или модуль- создать его
-   - Добавить артефакт в соответствующий массив, например класс в массив `classes` компонента
-   - Указать: `id`, `name`, `location`, `responsibilities`, `dependsOn`, `status`
+   - Найти соответствующий модуль в `project.modules.extensions`
+   - Добавить артефакт в файл расширения (например, modules.json)
+   - Указать: `id`, `number`, `name`, `artifact.location`, `responsibilities`, `dependsOn`, `status`
+   - ID должен быть уникальным в пределах родительского элемента
+
 3. **Создать задачу в project-development.json:**
-   - Добавить задачу разработки класса с ID, приоритетом, оценкой
-   - Указать ссылку на элемент в `projectDocsRefs`
-4. **Добавить запись в project-journal.json:**
-   - Создать лог о начале работы над классом
-   - Указать ссылки на задачу и элемент проекта
-5. **Обновить зависимости:**
-   - Если класс используется в других местах - добавить в `dependsOn`
-   - Если класс упоминается в стадиях - добавить ссылку на него в атрибуте `class`
+   - **Добавить задачу** в `tasks.items` с новым ID (сквозная нумерация)
+   - Указать `completionCriteria` вместо оценки времени
+   - Добавить ссылку на артефакт в формате: `class:module.component.class`
+   - **Обновить** `tasks.nextTaskId`
+
+4. **Создать пункт структуры:**
+   - Добавить `task-item` в соответствующее дерево (`structure.trees`)
+   - Указать `structureId` с номером дерева (например, 01.01.01)
+   - Указать `taskId` - ссылку на задачу
+   - Обновить `displayName` с эмодзи статуса
+
+5. **Добавить запись в project-journal.json:**
+   - Создать лог о начале работы
+   - Указать ссылки через иерархические пути:
+     - `projectDocsRefs`: `["class:module.component.class"]`
+     - `developmentTasks`: `["task:0004"]`
+
+6. **Обновить зависимости:**
+   - Если артефакт используется в других местах - добавить в `dependsOn`
+   - Если задача нужна в нескольких деревьях - создать дополнительные пункты с тем же `taskId`
 
 ### Контроль целостности ссылок
 
 При добавлении артефакта **ОБЯЗАТЕЛЬНО** проверить:
-- ✅ Есть ли описание в разделе модулей `project-docs.json`
-- ✅ Есть ли задача разработки в `project-development.json`
+- ✅ Есть ли описание в `project-docs.json` (или расширениях modules.json)
+- ✅ Есть ли задача в `project-development.json` → `tasks.items`
+- ✅ Есть ли пункт структуры в `structure.trees` со ссылкой на задачу
 - ✅ Есть ли запись в журнале `project-journal.json`
-- ✅ Корректны ли все ссылки (`projectDocsRefs`, `aiRuleRefs`, `journalRefs`)
-- ✅ Указаны ли зависимости (`dependsOn`, `predecessors`)
-- ✅ Обновлен ли статус (`status`: planned/in-progress/implemented)
+- ✅ Корректны ли все ссылки в формате `type:path`:
+  - `projectDocsRefs`: `class:module.component.class`, `table:tableName`
+  - `journalRefs`: `chat:chatId`, `log:logId`
+  - `developmentTasks`: `task:taskId`
+  - `aiRuleRefs`: `rule:ruleId`
+- ✅ Указаны ли зависимости (`dependsOn` в project-docs.json)
+- ✅ Синхронизированы ли статусы (задача и все её пункты имеют одинаковый статус в displayName)
+- ✅ Обновлен ли `tasks.nextTaskId`
+- ✅ Корректны ли структурные номера (начинаются с номера дерева)
 
 ## Связи между файлами
 
-### 1. **project-docs.json** → **project-development.json**
+### Принципы связей
+
+**Все связи выражаются через поле `links` с использованием иерархических путей:**
+
 ```json
 {
-  "project": {
-    "development-objects": {
-      "ai-rules": {
-        "location": "src/ai-rules/",
-        "development_status": "in-development",
-        "development_tasks": ["01.02", "01.02.01", "01.02.02"]
+  "links": {
+    "projectDocsRefs": ["class:backend.config.Service", "table:users"],
+    "journalRefs": ["chat:chat-2025-10-09-001", "log:log-2025-10-09-001"],
+    "developmentTasks": ["task:0004", "task:0005"],
+    "aiRuleRefs": ["rule:coding-standards"]
+  }
+}
+```
+
+**Формат ссылок:**
+- `class:module.component.class` - артефакт кода
+- `module:moduleId` - модуль проекта
+- `component:module.component` - компонент
+- `table:tableName` - таблица БД
+- `task:taskId` - задача разработки
+- `chat:chatId` или `log:logId` - запись журнала
+- `rule:ruleId` - правило AI
+
+### 1. **project-docs.json** → **project-development.json**
+
+Задачи разработки ссылаются на артефакты проекта:
+
+```json
+// modules.json (расширение project-docs.json)
+{
+  "class": {
+    "attributes": {
+      "id": "DatabaseConfigService",
+      "number": "01.01.01",
+      "artifact": {
+        "location": "com.femsq.database.config.DatabaseConfigService"
+      }
+    }
+  }
+}
+
+// project-development.json
+{
+  "tasks": {
+    "items": {
+      "0004": {
+        "task": {
+          "task-attributes": {
+            "links": {
+              "projectDocsRefs": [
+                "class:backend.database-config.DatabaseConfigService"
+              ]
+            }
+          }
+        }
       }
     }
   }
@@ -78,35 +152,138 @@
 ```
 
 ### 2. **project-development.json** → **project-journal.json**
+
+Задачи ссылаются на записи журнала:
+
 ```json
+// project-development.json
 {
-  "tasks": [
+  "tasks": {
+    "items": {
+      "0004": {
+        "task": {
+          "task-attributes": {
+            "links": {
+              "journalRefs": [
+                "chat:chat-2025-10-09-001",
+                "log:log-2025-10-09-001"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// project-journal.json
+{
+  "sessions": [
     {
-      "id": "01.02.01",
-      "object-type": "ai-rules",
-      "object-location": "src/ai-rules/migration/",
-      "developmentLogs": [
-        "log-2025-01-27-001",
-        "log-2025-01-27-002"
-      ]
+      "chat": {
+        "chat-attributes": {
+          "id": "chat-2025-10-09-001"
+        }
+      }
     }
   ]
 }
 ```
 
-### 3. **project-journal.json** → **project-docs.json**
+### 3. **project-journal.json** → **project-development.json**
+
+Записи журнала ссылаются на задачи:
+
 ```json
+// project-journal.json
 {
-  "entries": [
-    {
-      "id": "log-2025-01-27-001",
-      "object-type": "ai-rules",
-      "object-location": "src/ai-rules/migration/table-migration.md",
-      "projectElement": "project.development-objects.ai-rules"
+  "chat": {
+    "chat-attributes": {
+      "id": "chat-2025-10-09-001",
+      "links": {
+        "developmentTasks": [
+          "task:0004",
+          "task:0005"
+        ]
+      }
     }
-  ]
+  }
 }
 ```
+
+### 4. **project-journal.json** → **project-docs.json**
+
+Записи журнала ссылаются на артефакты и таблицы:
+
+```json
+// project-journal.json
+{
+  "log": {
+    "log-attributes": {
+      "id": "log-2025-10-09-001",
+      "links": {
+        "projectDocsRefs": [
+          "class:backend.database-config.DatabaseConfigService",
+          "table:contractors"
+        ]
+      }
+    }
+  }
+}
+```
+
+### Важно
+
+**Внутренняя организация project-development.json** (деревья структуры с пунктами) - это НЕ связь между файлами, а механизм организации задач для навигации. При изменении статуса задачи он автоматически синхронизируется во всех пунктах структуры, где эта задача используется.
+
+---
+
+## Система ссылок через иерархические пути
+
+### Формат ссылок
+
+Все ссылки используют формат `type:path`, где путь строится из ID элементов через точку.
+
+### Таблица форматов
+
+| Тип | Формат | Пример |
+|-----|--------|--------|
+| Модуль | `module:id` | `module:backend` |
+| Компонент | `component:module.component` | `component:backend.database-config` |
+| Класс | `class:module.component.class` | `class:backend.database-config.DatabaseConfigService` |
+| Вложенный класс | `class:module.component.class.nested` | `class:backend.config.Service.Validator` |
+| Таблица БД | `table:name` | `table:contractors` |
+| Задача | `task:id` | `task:0004` |
+| Дерево | `tree:number` | `tree:01` |
+| Пункт структуры | `item:tree.structure` | `item:01.01.01` |
+| Чат | `chat:id` | `chat:chat-2025-10-09-001` |
+| Лог | `log:id` | `log:log-2025-10-09-001` |
+| Правило AI | `rule:id` | `rule:coding-standards` |
+
+### Правила формирования ID
+
+**Для модулей и компонентов:**
+- Использовать kebab-case
+- Краткие, но понятные
+- Примеры: `backend`, `database-config`, `user-auth`
+
+**Для классов:**
+- PascalCase (как в коде)
+- Полное имя класса
+- Примеры: `DatabaseConfigService`, `ConnectionManager`, `UserRepository`
+
+**Для таблиц:**
+- snake_case (как в БД)
+- Множественное число
+- Примеры: `contractors`, `users`, `order_items`
+
+### Преимущества
+
+- ✅ **Устойчивость** - не зависит от порядка элементов в массивах
+- ✅ **Уникальность** - путь через точку гарантирует уникальность
+- ✅ **Читаемость** - понятна структура и местоположение
+- ✅ **Соответствие коду** - похоже на пути пакетов Java
+- ✅ **Гибкость** - можно ссылаться на любой уровень иерархии
 
 ## Правила обновления
 
@@ -206,6 +383,6 @@ docs/
 
 ---
 
-**Документ утвержден:** 2025-10-06  
-**Следующий пересмотр:** 2026-01-06  
+**Документ утвержден:** 2025-10-09  
+**Следующий пересмотр:** 2026-01-09  
 **Ответственный:** Александр
