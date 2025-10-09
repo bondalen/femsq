@@ -63,65 +63,25 @@
                 "Кэширование и оптимизация"
             ]
         },
-        "modules": [
-            {
-                "module": {
-                    "displayName": "exampleModuleA. № 01",
-                    "attributes": {
-                        "id": "exampleModuleA",
-                        "number": "01",
-                        "name": "Модуль, пример А",
-                        "description": "Создание чего-то А",
-                        "purpose": "Что то создано",
-                        "status": "planned",
-                        "location": "src/",
-                        "entryPoint": "src/exampleModuleA/...",
-                        "dependencies": []
-                    },
-                    "components": [
-                        {
-                            "component": {
-                                "displayName": "exampleComponentA. № 01.01",
-                                "attributes": {
-                                    "id": "exampleComponentA",
-                                    "number": "01.01",
-                                    "name": "Компонент, пример А",
-                                    "description": "Пример описания А",
-                                    "type": "classes",
-                                    "location": "src/...",
-                                    "responsibilities": [
-                                        "Пример ответственности А",
-                                        "Пример ответственности А1",
-                                        "Пример ответственности А2"
-                                    ],
-                                    "status": "planned"
-                                },
-                                "classes": [
-                                    {
-                                        "class": {
-                                            "displayName": "ExampleClassA. № 01.01.01",
-                                            "attributes": {
-                                                "id": "ExampleClassA",
-                                                "number": "01.01.01",
-                                                "name": "Класс, пример А",
-                                                "location": "src/...",
-                                                "responsibilities": [
-                                                    "Пример ответственности А"
-                                                ],
-                                                "dependsOn": [
-                                                    "ConnectionManager"
-                                                ],
-                                                "status": "planned"
-                                            }
-                                        }
-                                    }
-                                ]
-                            }
-                        }
-                    ]
-                }
-            }
-        ],
+        "modules": {
+            "description": "Структура модулей проекта FEMSQ",
+            "version": "1.0.0",
+            "lastUpdated": "2025-01-27",
+            "structure": {
+                "type": "recursive",
+                "entities": ["Module", "Component", "Class"],
+                "organization": "single_file",
+                "grouping": "artifact object for physical attributes"
+            },
+            "extensions": [
+                "docs/project/extensions/modules/modules.json"
+            ],
+            "diagrams": [
+                "docs/project/diagrams/database-module-classes.puml",
+                "docs/project/diagrams/components.puml",
+                "docs/project/diagrams/package-structure.puml"
+            ]
+        },
         "database": {
             "schema": "ags",
             "version": "1.0.0",

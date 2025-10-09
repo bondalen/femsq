@@ -1,3 +1,22 @@
+# Правила ведения файла project-docs.json
+
+**Версия:** 1.3.0  
+**Дата создания:** 2025-10-08  
+**Последнее обновление:** 2025-01-27
+
+---
+
+## Связанные документы
+
+- **[Общие правила документации](../project-documentation-rules.md)** - правила ведения всей проектной документации
+- **[Система структурной нумерации](../project-documentation-rules-structural-numbering.md)** - правила нумерации модулей, компонентов и классов
+- **[Типы артефактов модулей](project-docs-json-rules-af-types.md)** - универсальный справочник типов артефактов для различных технологий
+- **[Шаблон ADR](decisions/decision-template.md)** - шаблон для архитектурных решений
+
+---
+
+## О файле project-docs.json
+
 **Назначение:** Центральный файл с описанием архитектуры, технологий, модулей и конфигурации проекта.
 
 **Содержание:**
@@ -75,47 +94,43 @@
 ### Модульная структура расширений
 
 #### Принцип организации модулей
-- **Один артефакт = один файл** - каждый модуль, компонент, класс в отдельном файле
-- **Иерархическая структура папок** - папки соответствуют структуре модулей
-- **Ссылочная целостность** - каждый уровень ссылается на свои расширения
+- **Один файл для всех модулей** - `extensions/modules/modules.json`
+- **Группировка атрибутов** - физические атрибуты в объекте `artifact`
+- **Ссылочная целостность** - основной файл ссылается на `modules.json`
+- **Рекурсивная структура** - Module → Module → Component → Component → Class
 
-#### Структура файлов модулей
+#### Структура файла модулей
 ```
 modules/
-├── modules.json                    # Главный файл со ссылками
-├── backend/
-│   ├── backend-module.json         # Backend Module
-│   ├── database/
-│   │   ├── database-module.json    # Database SubModule
-│   │   ├── config/
-│   │   │   └── config-component.json # Config Component
-│   │   ├── connection/
-│   │   │   └── connection-component.json
-│   │   ├── auth/
-│   │   │   └── auth-component.json
-│   │   ├── model/
-│   │   │   └── model-component.json
-│   │   └── exception/
-│   │       └── exception-component.json
-│   └── web/
-│       ├── web-module.json         # Web API SubModule
-│       ├── controller/
-│       ├── lifecycle/
-│       └── health/
-└── frontend/
-    ├── frontend-module.json        # Frontend Module
-    ├── components/
-    │   ├── setup/
-    │   └── main/
-    └── services/
+├── modules-example.json            # Пример структуры модулей (шаблон)
+└── modules.json                    # Реальные модули проекта
 ```
 
+**Подробное описание типов артефактов и группировки `artifact`:** см. **[project-docs-json-rules-af-types.md](project-docs-json-rules-af-types.md)**
+
 #### Правила создания модульных расширений
-1. **Создать папку** для артефакта (module/component/class)
-2. **Создать JSON файл** с детальной структурой артефакта
-3. **Добавить ссылку** в родительский файл
-4. **Обновить главный файл** modules.json при необходимости
-5. **Документировать в журнале** создание расширения
+1. **Добавить артефакт** в файл `modules.json`
+2. **Использовать группировку** - физические атрибуты в объект `artifact`
+3. **Следовать рекурсивной структуре** - Module/Component/Class
+4. **Обновить зависимости** в других артефактах
+5. **Документировать в журнале** создание артефакта
+
+#### Файл примера модулей
+
+**Расположение:** `docs/project/extensions/modules/modules-example.json`
+
+**Назначение:**
+- Демонстрация структуры файла модулей
+- Примеры рекурсивной вложенности с группировкой `artifact`
+- Шаблон для создания нового проекта
+
+**Использование:**
+1. Скопируйте `modules-example.json` → `modules.json`
+2. Замените примеры на реальные модули вашего проекта
+3. Обновите нумерацию и атрибуты
+4. Добавьте ссылку в `project-docs.json`
+
+**Структура:** Один файл со всеми модулями проекта с группировкой физических атрибутов в `artifact`
 
 ### Контроль целостности ссылок (обновлено)
 
@@ -226,6 +241,34 @@ Class
 
 **Принцип:** Каждый уровень добавляет свой номер к родительскому
 
+### Группировка атрибутов артефактов
+
+Для улучшения читаемости и возможности сворачивания в IDE, физические атрибуты артефактов группируются в объект `artifact`:
+
+```json
+{
+  "attributes": {
+    "id": "DatabaseConfigService",
+    "number": "01.01.01.01",
+    "name": "DatabaseConfigService",
+    "description": "Сервис для работы с конфигурацией БД",
+    "status": "planned",
+    
+    "artifact": {
+      "location": "com.femsq.database.config.DatabaseConfigService",
+      "file_path": "src/main/java/com/femsq/database/config/DatabaseConfigService.java",
+      "type": "java-class",
+      "artifact_type": "file"
+    },
+    
+    "responsibilities": [...],
+    "dependsOn": [...]
+  }
+}
+```
+
+**Подробнее:** см. **[project-docs-json-rules-af-types.md](project-docs-json-rules-af-types.md)**
+
 ## 1.4. Пример структуры файла
 
 Полный образец структуры файла `project-docs.json` с описанием всех разделов и правильным применением системы структурной нумерации доступен в файле:
@@ -278,43 +321,26 @@ Class
 ### Организация расширений
 ```
 docs/project/extensions/
-├── modules/                        # НОВОЕ: Модули проекта
-│   ├── modules.json                # Главный файл модулей
-│   ├── backend/                    # Backend модули
-│   │   ├── backend-module.json
-│   │   ├── database/
-│   │   │   ├── database-module.json
-│   │   │   ├── config/
-│   │   │   │   └── config-component.json
-│   │   │   ├── connection/
-│   │   │   ├── auth/
-│   │   │   ├── model/
-│   │   │   └── exception/
-│   │   └── web/
-│   │       ├── web-module.json
-│   │       ├── controller/
-│   │       ├── lifecycle/
-│   │       └── health/
-│   └── frontend/                   # Frontend модули
-│       ├── frontend-module.json
-│       ├── components/
-│       └── services/
-├── deployment/                     # Существующие расширения
+├── modules/                        # Модули проекта
+│   ├── modules-example.json        # Пример структуры модулей
+│   └── modules.json                # Реальные модули проекта
+├── deployment/                     # Конфигурация развертывания
 │   ├── deployment-config.json
 │   ├── environments.json
 │   └── security-config.json
-├── database/                       # Существующие расширения
+├── database/                       # Конфигурация базы данных
 │   ├── connection-config.json
 │   ├── authentication-methods.json
-│   └── migration-config.json
-├── ui/                            # Существующие расширения
+│   ├── migration-config.json
+│   └── compatibility.json
+├── ui/                            # Конфигурация пользовательского интерфейса
 │   ├── setup-forms.json
 │   ├── status-pages.json
 │   └── user-experience.json
-├── network/                       # Существующие расширения
+├── network/                       # Сетевая конфигурация
 │   ├── corporate-network.json
 │   └── connection-detection.json
-└── monitoring/                    # Существующие расширения
+└── monitoring/                    # Мониторинг и логирование
     ├── logging-config.json
     └── health-checks.json
 ```

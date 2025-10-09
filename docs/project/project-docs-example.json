@@ -63,13 +63,14 @@
     },
     
     "modules": {
-      "description": "Структура модулей проекта FEMSQ",
+      "description": "Структура модулей проекта",
       "version": "1.0.0",
-      "lastUpdated": "2025-01-27",
+      "lastUpdated": "YYYY-MM-DD",
       "structure": {
         "type": "recursive",
         "entities": ["Module", "Component", "Class"],
-        "organization": "hierarchical_extensions"
+        "organization": "single_file",
+        "grouping": "artifact object for physical attributes"
       },
       "extensions": [
         "docs/project/extensions/modules/modules.json"
@@ -79,47 +80,9 @@
         "docs/project/diagrams/components.puml",
         "docs/project/diagrams/package-structure.puml"
       ],
-      "_comment": "РЕКУРСИВНАЯ СТРУКТУРА: Всего 3 сущности с бесконечной вложенностью",
-      "_recursive_structure": {
-        "entities": [
-          {
-            "name": "Module",
-            "contains": ["modules", "components", "classes"],
-            "represents": "Maven modules, проекты, пакеты верхнего уровня"
-          },
-          {
-            "name": "Component", 
-            "contains": ["components", "classes"],
-            "represents": "Java packages, пакеты, модули приложения"
-          },
-          {
-            "name": "Class",
-            "contains": ["classes"],
-            "represents": "Java classes, interfaces, enums, вложенные классы"
-          }
-        ]
-      },
-      "_examples": {
-        "maven_structure": "Module (project) → Module (sub-module) → Component (package) → Class",
-        "java_packages": "Component (com.femsq) → Component (database) → Component (config) → Class",
-        "nested_classes": "Class → Class (nested) → Class (nested in nested)"
-      },
-      "_recommendations": {
-        "recommended": "Module → Module → Component → Component → Class",
-        "acceptable": "Module → Component → Class, Component → Class",
-        "not_recommended": "Слишком глубокая вложенность (более 7 уровней)"
-      },
-      "_extension_examples": {
-        "main_modules_file": "docs/project/extensions/modules/modules.json",
-        "backend_module": "docs/project/extensions/modules/backend/backend-module.json",
-        "database_module": "docs/project/extensions/modules/backend/database/database-module.json",
-        "config_component": "docs/project/extensions/modules/backend/database/config/config-component.json"
-      },
-      "_hierarchical_structure": {
-        "principle": "Каждый артефакт в отдельном файле",
-        "organization": "Папки соответствуют структуре модулей",
-        "references": "Каждый уровень ссылается на свои расширения"
-      }
+      "_example": "См. docs/project/extensions/modules/modules-example.json",
+      "_note": "Для нового проекта скопируйте modules-example.json → modules.json",
+      "_documentation": "Типы артефактов описаны в project-docs-json-rules-af-types.md"
     },
 
     
