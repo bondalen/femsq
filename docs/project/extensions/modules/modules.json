@@ -151,7 +151,7 @@
                         "number": "01.01.02",
                         "name": "Connection Management",
                         "description": "Управление подключениями к базе данных",
-                        "status": "planned",
+                        "status": "completed",
                         "artifact": {
                           "location": "com.femsq.database.connection",
                           "file_path": "src/main/java/com/femsq/database/connection/",
@@ -159,9 +159,10 @@
                           "artifact_type": "directory"
                         },
                         "responsibilities": [
-                          "Создание подключений",
+                          "Создание JDBC подключений",
                           "Управление пулом соединений (HikariCP)",
-                          "Тестирование подключений"
+                          "Выбор стратегии аутентификации через AuthenticationProviderFactory",
+                          "Тестирование и проверка подключений"
                         ]
                       },
                       
@@ -174,14 +175,78 @@
                               "number": "01.01.02.01",
                               "name": "ConnectionFactory",
                               "description": "Фабрика подключений к БД",
-                              "status": "planned",
+                              "status": "completed",
                               "artifact": {
                                 "location": "com.femsq.database.connection.ConnectionFactory",
                                 "file_path": "src/main/java/com/femsq/database/connection/ConnectionFactory.java",
                                 "type": "java-class",
                                 "artifact_type": "file"
                               },
-                              "dependsOn": ["AuthenticationProvider"]
+                              "responsibilities": [
+                                "Создание подключений с учетом режима аутентификации",
+                                "Интеграция с AuthenticationProviderFactory",
+                                "Проверка соединений и управление ресурсами"
+                              ],
+                              "dependsOn": [
+                                "AuthenticationProviderFactory",
+                                "JdbcConnector",
+                                "DatabaseConfigurationService"
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "class": {
+                            "displayName": "JdbcConnector. № 01.01.02.02",
+                            "attributes": {
+                              "id": "JdbcConnector",
+                              "number": "01.01.02.02",
+                              "name": "JdbcConnector",
+                              "description": "Абстракция для создания JDBC соединений",
+                              "status": "completed",
+                              "artifact": {
+                                "location": "com.femsq.database.connection.JdbcConnector",
+                                "file_path": "src/main/java/com/femsq/database/connection/JdbcConnector.java",
+                                "type": "java-interface",
+                                "artifact_type": "file"
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "class": {
+                            "displayName": "HikariJdbcConnector. № 01.01.02.03",
+                            "attributes": {
+                              "id": "HikariJdbcConnector",
+                              "number": "01.01.02.03",
+                              "name": "HikariJdbcConnector",
+                              "description": "Реализация JdbcConnector на базе HikariCP",
+                              "status": "completed",
+                              "artifact": {
+                                "location": "com.femsq.database.connection.HikariJdbcConnector",
+                                "file_path": "src/main/java/com/femsq/database/connection/HikariJdbcConnector.java",
+                                "type": "java-class",
+                                "artifact_type": "file"
+                              },
+                              "dependsOn": ["JdbcConnector"]
+                            }
+                          }
+                        },
+                        {
+                          "class": {
+                            "displayName": "ConnectionFactoryException. № 01.01.02.04",
+                            "attributes": {
+                              "id": "ConnectionFactoryException",
+                              "number": "01.01.02.04",
+                              "name": "ConnectionFactoryException",
+                              "description": "Исключение при ошибках подключения",
+                              "status": "completed",
+                              "artifact": {
+                                "location": "com.femsq.database.connection.ConnectionFactoryException",
+                                "file_path": "src/main/java/com/femsq/database/connection/ConnectionFactoryException.java",
+                                "type": "java-class",
+                                "artifact_type": "file"
+                              }
                             }
                           }
                         }
@@ -196,7 +261,7 @@
                         "number": "01.01.03",
                         "name": "Authentication Providers",
                         "description": "Провайдеры аутентификации для MS SQL Server",
-                        "status": "planned",
+                        "status": "completed",
                         "artifact": {
                           "location": "com.femsq.database.auth",
                           "file_path": "src/main/java/com/femsq/database/auth/",
@@ -204,9 +269,10 @@
                           "artifact_type": "directory"
                         },
                         "responsibilities": [
-                          "Integrated Security аутентификация",
-                          "Trusted Connection аутентификация",
-                          "Credentials аутентификация"
+                          "Credentials аутентификация",
+                          "Windows Integrated Security",
+                          "Kerberos trusted connection",
+                          "Фабрика выбора провайдера аутентификации"
                         ]
                       },
                       
@@ -219,13 +285,94 @@
                               "number": "01.01.03.01",
                               "name": "AuthenticationProvider",
                               "description": "Интерфейс для провайдеров аутентификации",
-                              "status": "planned",
+                              "status": "completed",
                               "artifact": {
                                 "location": "com.femsq.database.auth.AuthenticationProvider",
                                 "file_path": "src/main/java/com/femsq/database/auth/AuthenticationProvider.java",
                                 "type": "java-interface",
                                 "artifact_type": "file"
                               }
+                            }
+                          }
+                        },
+                        {
+                          "class": {
+                            "displayName": "CredentialsAuthenticationProvider. № 01.01.03.02",
+                            "attributes": {
+                              "id": "CredentialsAuthenticationProvider",
+                              "number": "01.01.03.02",
+                              "name": "CredentialsAuthenticationProvider",
+                              "description": "Провайдер аутентификации по username/password",
+                              "status": "completed",
+                              "artifact": {
+                                "location": "com.femsq.database.auth.CredentialsAuthenticationProvider",
+                                "file_path": "src/main/java/com/femsq/database/auth/CredentialsAuthenticationProvider.java",
+                                "type": "java-class",
+                                "artifact_type": "file"
+                              },
+                              "dependsOn": ["AuthenticationProvider"]
+                            }
+                          }
+                        },
+                        {
+                          "class": {
+                            "displayName": "WindowsIntegratedAuthenticationProvider. № 01.01.03.03",
+                            "attributes": {
+                              "id": "WindowsIntegratedAuthenticationProvider",
+                              "number": "01.01.03.03",
+                              "name": "WindowsIntegratedAuthenticationProvider",
+                              "description": "Провайдер Windows Integrated Security",
+                              "status": "completed",
+                              "artifact": {
+                                "location": "com.femsq.database.auth.WindowsIntegratedAuthenticationProvider",
+                                "file_path": "src/main/java/com/femsq/database/auth/WindowsIntegratedAuthenticationProvider.java",
+                                "type": "java-class",
+                                "artifact_type": "file"
+                              },
+                              "dependsOn": ["AuthenticationProvider"]
+                            }
+                          }
+                        },
+                        {
+                          "class": {
+                            "displayName": "KerberosAuthenticationProvider. № 01.01.03.04",
+                            "attributes": {
+                              "id": "KerberosAuthenticationProvider",
+                              "number": "01.01.03.04",
+                              "name": "KerberosAuthenticationProvider",
+                              "description": "Провайдер Kerberos trusted connection",
+                              "status": "completed",
+                              "artifact": {
+                                "location": "com.femsq.database.auth.KerberosAuthenticationProvider",
+                                "file_path": "src/main/java/com/femsq/database/auth/KerberosAuthenticationProvider.java",
+                                "type": "java-class",
+                                "artifact_type": "file"
+                              },
+                              "dependsOn": ["AuthenticationProvider"]
+                            }
+                          }
+                        },
+                        {
+                          "class": {
+                            "displayName": "AuthenticationProviderFactory. № 01.01.03.05",
+                            "attributes": {
+                              "id": "AuthenticationProviderFactory",
+                              "number": "01.01.03.05",
+                              "name": "AuthenticationProviderFactory",
+                              "description": "Фабрика выбора провайдеров аутентификации",
+                              "status": "completed",
+                              "artifact": {
+                                "location": "com.femsq.database.auth.AuthenticationProviderFactory",
+                                "file_path": "src/main/java/com/femsq/database/auth/AuthenticationProviderFactory.java",
+                                "type": "java-class",
+                                "artifact_type": "file"
+                              },
+                              "dependsOn": [
+                                "AuthenticationProvider",
+                                "CredentialsAuthenticationProvider",
+                                "WindowsIntegratedAuthenticationProvider",
+                                "KerberosAuthenticationProvider"
+                              ]
                             }
                           }
                         }

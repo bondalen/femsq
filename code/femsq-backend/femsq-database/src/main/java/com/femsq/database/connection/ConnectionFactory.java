@@ -1,6 +1,7 @@
 package com.femsq.database.connection;
 
 import com.femsq.database.auth.AuthenticationProvider;
+import com.femsq.database.auth.AuthenticationProviderFactory;
 import com.femsq.database.config.DatabaseConfigurationService;
 import com.femsq.database.config.DatabaseConfigurationService.DatabaseConfigurationProperties;
 import java.sql.Connection;
@@ -14,24 +15,58 @@ import java.util.logging.Logger;
  * Factory responsible for creating JDBC connections to MS SQL Server using prepared configuration
  * and authentication providers.
  */
-public class ConnectionFactory {
+public class ConnectionFactory implements AutoCloseable {
 
     private static final Logger log = Logger.getLogger(ConnectionFactory.class.getName());
 
     private final JdbcConnector connector;
     private final DatabaseConfigurationService configurationService;
+    private final AuthenticationProviderFactory providerFactory;
+    private final boolean ownsConnector;
+
+    /**
+     * Создает фабрику с дефолтным пулом HikariCP и стандартной фабрикой провайдеров аутентификации.
+     */
+    public ConnectionFactory(DatabaseConfigurationService configurationService) {
+        this(new HikariJdbcConnector(), configurationService, AuthenticationProviderFactory.withDefaults(), true);
+    }
+
+    public ConnectionFactory(DatabaseConfigurationService configurationService, AuthenticationProviderFactory providerFactory) {
+        this(new HikariJdbcConnector(), configurationService, providerFactory, true);
+    }
 
     /**
      * @param connector             реализация подключения JDBC
      * @param configurationService  сервис доступа к конфигурации базы данных
      */
     public ConnectionFactory(JdbcConnector connector, DatabaseConfigurationService configurationService) {
+        this(connector, configurationService, AuthenticationProviderFactory.withDefaults(), false);
+    }
+
+    public ConnectionFactory(JdbcConnector connector, DatabaseConfigurationService configurationService, AuthenticationProviderFactory providerFactory) {
+        this(connector, configurationService, providerFactory, false);
+    }
+
+    private ConnectionFactory(JdbcConnector connector, DatabaseConfigurationService configurationService, AuthenticationProviderFactory providerFactory, boolean ownsConnector) {
         this.connector = Objects.requireNonNull(connector, "connector");
         this.configurationService = Objects.requireNonNull(configurationService, "configurationService");
+        this.providerFactory = Objects.requireNonNull(providerFactory, "providerFactory");
+        this.ownsConnector = ownsConnector;
     }
 
     /**
-     * Создает подключение, используя конфигурацию, загруженную из {@link DatabaseConfigurationService}.
+     * Создает подключение, используя конфигурацию, загруженную из {@link DatabaseConfigurationService}, и фабрику провайдеров.
+     *
+     * @return активное JDBC соединение
+     */
+    public Connection createConnection() {
+        DatabaseConfigurationProperties configuration = configurationService.loadConfig();
+        AuthenticationProvider provider = providerFactory.create(configuration);
+        return createConnection(configuration, provider);
+    }
+
+    /**
+     * Создает подключение, используя конфигурацию, загруженную из {@link DatabaseConfigurationService} и переданный провайдер.
      *
      * @param provider стратегия аутентификации
      * @return активное JDBC соединение
@@ -87,6 +122,26 @@ public class ConnectionFactory {
         } catch (SQLException sqlException) {
             log.log(Level.WARNING, "Connection validation failed", sqlException);
             return false;
+        }
+    }
+
+    public boolean testConnection(int timeoutSeconds) {
+        try (Connection connection = createConnection()) {
+            return connection != null && connection.isValid(timeoutSeconds);
+        } catch (SQLException sqlException) {
+            log.log(Level.WARNING, "Connection validation failed", sqlException);
+            return false;
+        }
+    }
+
+    @Override
+    public void close() {
+        try {
+            connector.close();
+        } catch (Exception exception) {
+            if (ownsConnector) {
+                log.log(Level.WARNING, "Failed to close JDBC connector", exception);
+            }
         }
     }
 }

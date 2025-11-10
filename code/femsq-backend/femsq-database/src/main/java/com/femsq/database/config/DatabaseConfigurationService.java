@@ -1,6 +1,7 @@
 package com.femsq.database.config;
 
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -60,6 +61,9 @@ public class DatabaseConfigurationService {
         if (properties.password() != null) {
             rawProperties.setProperty("password", properties.password());
         }
+        if (properties.authMode() != null) {
+            rawProperties.setProperty("authMode", properties.authMode().toLowerCase(Locale.ROOT));
+        }
         fileManager.writeProperties(rawProperties);
     }
 
@@ -75,12 +79,14 @@ public class DatabaseConfigurationService {
      * @param database имя базы данных
      * @param username имя пользователя (опционально)
      * @param password пароль (опционально)
+     * @param authMode режим аутентификации (credentials, windows-integrated, kerberos)
      */
     public record DatabaseConfigurationProperties(
             String host,
             Integer port,
             String database,
             String username,
-            String password) {
+            String password,
+            String authMode) {
     }
 }

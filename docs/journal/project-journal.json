@@ -399,18 +399,20 @@
                 "entries": [
                   {
                     "action": "Реализован ConnectionFactory и инфраструктура подключения",
-                    "details": "Добавлены классы ConnectionFactory, JdbcConnector, DriverManagerJdbcConnector, покрыты тестами взаимодействия.",
+                    "details": "Добавлены классы ConnectionFactory, JdbcConnector, HikariJdbcConnector, ConnectionFactoryException и тесты взаимодействия.",
                     "outcome": "Компонент Connection Management создает JDBC URL и умеет обрабатывать ошибки подключения",
                     "references": [
                       "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/connection/ConnectionFactory.java",
                       "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/connection/JdbcConnector.java",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/connection/HikariJdbcConnector.java",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/connection/ConnectionFactoryException.java",
                       "code/femsq-backend/femsq-database/src/test/java/com/femsq/database/connection/ConnectionFactoryTest.java"
                     ]
                   },
                   {
                     "action": "Добавлены провайдеры аутентификации",
-                    "details": "Реализованы CredentialsAuthenticationProvider, IntegratedSecurityAuthenticationProvider, TrustedConnectionAuthenticationProvider и тесты для них.",
-                    "outcome": "Компонент Authentication Providers покрывает три сценария авторизации",
+                    "details": "Реализованы CredentialsAuthenticationProvider, WindowsIntegratedAuthenticationProvider, KerberosAuthenticationProvider и базовые тесты.",
+                    "outcome": "Компонент Authentication Providers покрывает ключевые сценарии авторизации",
                     "references": [
                       "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/auth",
                       "code/femsq-backend/femsq-database/src/test/java/com/femsq/database/auth/AuthenticationProvidersTest.java"
@@ -422,6 +424,74 @@
                     "outcome": "Критерии задач 0004/0009 выполняются с учётом негативных сценариев",
                     "references": [
                       "code/femsq-backend/femsq-database/src/test/java/com/femsq/database/config/ConfigurationComponentTest.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Connection/Auth обновление: Hikari и фабрика (success). № log-2025-11-10-005",
+                "log-attributes": {
+                  "id": "log-2025-11-10-005",
+                  "timestamp": "2025-11-10T11:30:50Z",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "component:backend.database.connection",
+                      "component:backend.database.auth",
+                      "class:backend.database.connection.ConnectionFactory",
+                      "class:backend.database.auth.AuthenticationProviderFactory"
+                    ],
+                    "developmentTasks": [
+                      "task:0005",
+                      "task:0006",
+                      "task:0010"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Внедрён пул соединений HikariCP",
+                    "details": "ConnectionFactory по умолчанию использует HikariJdbcConnector, реализовано закрытие ресурсов и тестирование createConnection()/testConnection().",
+                    "outcome": "Подключения повторно используют пул и корректно освобождают ресурсы",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/connection/HikariJdbcConnector.java",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/connection/ConnectionFactory.java",
+                      "code/femsq-backend/femsq-database/src/test/java/com/femsq/database/connection/ConnectionFactoryTest.java"
+                    ]
+                  },
+                  {
+                    "action": "Реализована фабрика провайдеров аутентификации",
+                    "details": "Добавлена AuthenticationProviderFactory и новые провайдеры WindowsIntegratedAuthenticationProvider/KerberosAuthenticationProvider, обновлены тесты выборки.",
+                    "outcome": "Компонент Authentication Providers поддерживает выбор стратегии по authMode",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/auth/AuthenticationProviderFactory.java",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/auth/WindowsIntegratedAuthenticationProvider.java",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/auth/KerberosAuthenticationProvider.java",
+                      "code/femsq-backend/femsq-database/src/test/java/com/femsq/database/auth/AuthenticationProvidersTest.java"
+                    ]
+                  },
+                  {
+                    "action": "Расширена модель конфигурации c authMode",
+                    "details": "DatabaseConfigurationService и ConfigurationValidator поддерживают поле authMode, расширены негативные сценарии ConfigurationComponentTest.",
+                    "outcome": "Конфигурация поддерживает выбор режима аутентификации и предотвращает некорректные данные",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/config/DatabaseConfigurationService.java",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/config/ConfigurationValidator.java",
+                      "code/femsq-backend/femsq-database/src/test/java/com/femsq/database/config/ConfigurationComponentTest.java"
+                    ]
+                  },
+                  {
+                    "action": "Сборка и тесты модуля femsq-database",
+                    "details": "Выполнен source code/scripts/setup-java-home.sh && mvn -f code/pom.xml -pl femsq-backend/femsq-database -am test.",
+                    "outcome": "Все 28 юнит-тестов прошли успешно",
+                    "references": [
+                      "code/pom.xml",
+                      "code/femsq-backend/femsq-database/pom.xml"
                     ]
                   }
                 ]

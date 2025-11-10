@@ -7,24 +7,23 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Authentication provider that uses trusted connection (Kerberos/SSO) settings.
+ * Authentication provider for Windows integrated security.
  */
-public class TrustedConnectionAuthenticationProvider implements AuthenticationProvider {
+public class WindowsIntegratedAuthenticationProvider implements AuthenticationProvider {
 
-    private static final Logger log = Logger.getLogger(TrustedConnectionAuthenticationProvider.class.getName());
+    private static final Logger log = Logger.getLogger(WindowsIntegratedAuthenticationProvider.class.getName());
 
     @Override
     public Properties buildProperties(DatabaseConfigurationProperties configuration) {
         Objects.requireNonNull(configuration, "configuration");
         Properties properties = new Properties();
-        properties.setProperty("authenticationScheme", "JavaKerberos");
         properties.setProperty("integratedSecurity", "true");
-        log.log(Level.FINE, "Prepared trusted connection authentication properties");
+        log.log(Level.FINE, "Prepared windows integrated authentication properties");
         return properties;
     }
 
     @Override
     public String getName() {
-        return "trusted-connection";
+        return "windows-integrated";
     }
 }

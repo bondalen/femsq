@@ -1,72 +1,85 @@
-@startuml Database Module Class Diagram
-
 title Модуль Database - Диаграмма классов
 
 package "com.femsq.database" {
   
   package "config" <<Rectangle>> {
     class DatabaseConfigurationService {
-      + loadConfiguration(): DatabaseConfiguration
-      + saveConfiguration(config): void
-      + validateConfiguration(config): boolean
+      + loadConfig(): DatabaseConfigurationProperties
+      + saveConfig(props): void
     }
     
     class ConfigurationFileManager {
-      + readProperties(): Properties
+      + resolveConfigPath(): Path
+      + loadProperties(): Properties
       + writeProperties(props): void
-      + createConfigDirectory(): void
     }
     
     class ConfigurationValidator {
-      + validateHost(host): boolean
-      + validatePort(port): boolean
+      + map(props: Properties): DatabaseConfigurationProperties
+      + validate(props: DatabaseConfigurationProperties): void
+    }
+    
+    class DatabaseConfigurationProperties {
+      + host: String
+      + port: Integer
+      + database: String
+      + username: String
+      + password: String
+      + authMode: String
     }
   }
   
   package "connection" <<Rectangle>> {
     class ConnectionFactory {
-      + createConnection(config): Connection
-      + buildConnectionString(config): String
+      + createConnection(): Connection
+      + createConnection(provider): Connection
+      + testConnection(timeoutSeconds: int): boolean
+      + close(): void
     }
     
-    class ConnectionPoolManager {
-      + getConnection(): Connection
-      + closePool(): void
+    interface JdbcConnector {
+      + connect(url: String, props: Properties): Connection
+      + close(): void
     }
+    
+    class HikariJdbcConnector {
+      - dataSource: HikariDataSource
+    }
+    
+    class ConnectionFactoryException
   }
   
   package "auth" <<Rectangle>> {
     interface AuthenticationProvider {
-      + buildConnectionString(config): String
-      + validate(config): boolean
+      + buildProperties(config): Properties
+      + getName(): String
     }
     
-    class IntegratedSecurityProvider
-    class TrustedConnectionProvider
     class CredentialsAuthenticationProvider
-  }
-  
-  package "model" <<Rectangle>> {
-    class DatabaseConfiguration {
-      + host: String
-      + port: int
-      + database: String
-    }
+    class WindowsIntegratedAuthenticationProvider
+    class KerberosAuthenticationProvider
     
-    enum AuthenticationMethod {
-      INTEGRATED_SECURITY
-      TRUSTED_CONNECTION
-      CREDENTIALS
+    class AuthenticationProviderFactory {
+      + create(config): AuthenticationProvider
+      + withDefaults(): AuthenticationProviderFactory
     }
   }
 }
 
-IntegratedSecurityProvider ..|> AuthenticationProvider
-TrustedConnectionProvider ..|> AuthenticationProvider  
-CredentialsAuthenticationProvider ..|> AuthenticationProvider
-
 DatabaseConfigurationService --> ConfigurationFileManager
 DatabaseConfigurationService --> ConfigurationValidator
+ConfigurationValidator --> DatabaseConfigurationProperties
+
+ConnectionFactory --> DatabaseConfigurationService
+ConnectionFactory --> AuthenticationProviderFactory
 ConnectionFactory --> AuthenticationProvider
+ConnectionFactory --> JdbcConnector
+ConnectionFactory --> ConnectionFactoryException : throws
+HikariJdbcConnector ..|> JdbcConnector
+
+AuthenticationProviderFactory --> AuthenticationProvider
+CredentialsAuthenticationProvider ..|> AuthenticationProvider
+WindowsIntegratedAuthenticationProvider ..|> AuthenticationProvider
+KerberosAuthenticationProvider ..|> AuthenticationProvider
 
 @enduml

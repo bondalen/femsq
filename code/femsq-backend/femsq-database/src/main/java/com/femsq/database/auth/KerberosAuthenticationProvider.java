@@ -7,23 +7,24 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Authentication provider that relies on the current OS user via integrated security.
+ * Authentication provider for Kerberos-based trusted connections.
  */
-public class IntegratedSecurityAuthenticationProvider implements AuthenticationProvider {
+public class KerberosAuthenticationProvider implements AuthenticationProvider {
 
-    private static final Logger log = Logger.getLogger(IntegratedSecurityAuthenticationProvider.class.getName());
+    private static final Logger log = Logger.getLogger(KerberosAuthenticationProvider.class.getName());
 
     @Override
     public Properties buildProperties(DatabaseConfigurationProperties configuration) {
         Objects.requireNonNull(configuration, "configuration");
         Properties properties = new Properties();
         properties.setProperty("integratedSecurity", "true");
-        log.log(Level.FINE, "Prepared integrated security authentication properties");
+        properties.setProperty("authenticationScheme", "JavaKerberos");
+        log.log(Level.FINE, "Prepared kerberos authentication properties");
         return properties;
     }
 
     @Override
     public String getName() {
-        return "integrated-security";
+        return "kerberos";
     }
 }

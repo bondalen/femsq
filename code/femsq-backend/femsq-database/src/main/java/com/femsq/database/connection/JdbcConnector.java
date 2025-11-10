@@ -7,7 +7,7 @@ import java.util.Properties;
 /**
  * Abstraction over JDBC connection creation. Allows to plug different implementations (e.g. for tests).
  */
-public interface JdbcConnector {
+public interface JdbcConnector extends AutoCloseable {
 
     /**
      * Opens a JDBC connection using the provided URL and properties.
@@ -18,4 +18,9 @@ public interface JdbcConnector {
      * @throws SQLException при ошибке соединения
      */
     Connection connect(String url, Properties properties) throws SQLException;
+
+    @Override
+    default void close() {
+        // По умолчанию закрывать нечего
+    }
 }

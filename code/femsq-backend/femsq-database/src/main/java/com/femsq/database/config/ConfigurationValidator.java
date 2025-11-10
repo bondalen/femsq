@@ -1,8 +1,10 @@
 package com.femsq.database.config;
 
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -14,6 +16,7 @@ public class ConfigurationValidator {
 
     private static final Logger log = Logger.getLogger(ConfigurationValidator.class.getName());
     private static final Pattern HOST_PATTERN = Pattern.compile("^[a-zA-Z0-9-_.]+$");
+    private static final Set<String> SUPPORTED_AUTH_MODES = Set.of("credentials", "windows-integrated", "kerberos");
 
     /**
      * Валидирует переданные свойства и выбрасывает {@link IllegalArgumentException} при ошибках.
@@ -30,6 +33,7 @@ public class ConfigurationValidator {
 
         validateOptional("username", properties.username());
         validateOptional("password", properties.password());
+        validateAuthMode(properties);
     }
 
     /**
@@ -47,8 +51,9 @@ public class ConfigurationValidator {
         String database = properties.getProperty("database");
         String username = properties.getProperty("username");
         String password = properties.getProperty("password");
+        String authMode = normalizeAuthMode(properties.getProperty("authMode"), username);
 
-        var config = new DatabaseConfigurationService.DatabaseConfigurationProperties(host, port, database, username, password);
+        var config = new DatabaseConfigurationService.DatabaseConfigurationProperties(host, port, database, username, password, authMode);
         validate(config);
         return config;
     }
@@ -87,6 +92,25 @@ public class ConfigurationValidator {
                 });
     }
 
+    private void validateAuthMode(DatabaseConfigurationService.DatabaseConfigurationProperties properties) {
+        String authMode = properties.authMode();
+        if (authMode == null || authMode.isBlank()) {
+            throw new IllegalArgumentException("Режим аутентификации (authMode) не может быть пустым");
+        }
+        String normalized = authMode.trim().toLowerCase(Locale.ROOT);
+        if (!SUPPORTED_AUTH_MODES.contains(normalized)) {
+            throw new IllegalArgumentException("Неизвестный режим аутентификации: " + authMode);
+        }
+        if ("credentials".equals(normalized)) {
+            if (properties.username() == null || properties.username().isBlank()) {
+                throw new IllegalArgumentException("username обязателен для режима credentials");
+            }
+            if (properties.password() == null || properties.password().isBlank()) {
+                throw new IllegalArgumentException("password обязателен для режима credentials");
+            }
+        }
+    }
+
     private Integer parsePort(String portValue) {
         if (portValue == null || portValue.isBlank()) {
             return null;
@@ -96,5 +120,12 @@ public class ConfigurationValidator {
         } catch (NumberFormatException exception) {
             throw new IllegalArgumentException("Port должен быть целым числом", exception);
         }
+    }
+
+    private String normalizeAuthMode(String rawAuthMode, String username) {
+        if (rawAuthMode == null || rawAuthMode.isBlank()) {
+            return (username != null && !username.isBlank()) ? "credentials" : "windows-integrated";
+        }
+        return rawAuthMode.trim().toLowerCase(Locale.ROOT);
     }
 }

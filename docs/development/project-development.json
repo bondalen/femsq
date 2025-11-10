@@ -114,9 +114,9 @@
         
         "0005": {
           "task": {
-            "displayName": "Connection Management компонент (in-progress, critical). № 0005",
+            "displayName": "Connection Management компонент (completed, critical). № 0005",
             "task-attributes": {
-              "status": "in-progress",
+              "status": "completed",
               "priority": "critical",
               "owner": "Александр",
               "completionCriteria": [
@@ -128,7 +128,7 @@
               "description": "Компонент управления подключениями к базе данных - создание, пул соединений, тестирование",
               "links": {
                 "projectDocsRefs": ["component:backend.database.connection"],
-                "journalRefs": ["log:log-2025-11-10-004"],
+                "journalRefs": ["log:log-2025-11-10-004", "log:log-2025-11-10-005"],
                 "aiRuleRefs": []
               },
               "created": "2025-10-09",
@@ -139,22 +139,23 @@
         
         "0006": {
           "task": {
-            "displayName": "Authentication Providers компонент (in-progress, high). № 0006",
+            "displayName": "Authentication Providers компонент (completed, high). № 0006",
             "task-attributes": {
-              "status": "in-progress",
+              "status": "completed",
               "priority": "high",
               "owner": "Александр",
               "completionCriteria": [
                 "Пакет com.femsq.database.auth создан",
                 "AuthenticationProvider интерфейс реализован",
-                "Integrated Security провайдер реализован",
-                "Trusted Connection провайдер реализован",
-                "Credentials провайдер реализован"
+                "WindowsIntegratedAuthenticationProvider реализован",
+                "KerberosAuthenticationProvider реализован",
+                "CredentialsAuthenticationProvider реализован",
+                "AuthenticationProviderFactory реализована и покрыта тестами"
               ],
               "description": "Провайдеры аутентификации для MS SQL Server - поддержка разных методов аутентификации",
               "links": {
                 "projectDocsRefs": ["component:backend.database.auth"],
-                "journalRefs": ["log:log-2025-11-10-004"],
+                "journalRefs": ["log:log-2025-11-10-004", "log:log-2025-11-10-005"],
                 "aiRuleRefs": []
               },
               "created": "2025-10-09",
@@ -242,26 +243,26 @@
         
         "0010": {
           "task": {
-            "displayName": "ConnectionFactory класс (pending, critical). № 0010",
+            "displayName": "ConnectionFactory класс (completed, critical). № 0010",
             "task-attributes": {
-              "status": "pending",
+              "status": "completed",
               "priority": "critical",
               "owner": "Александр",
               "completionCriteria": [
                 "Класс создан в com.femsq.database.connection.ConnectionFactory",
-                "Методы createConnection() реализованы",
-                "Интеграция с AuthenticationProvider",
-                "HikariCP DataSource настроен",
-                "Unit-тесты написаны"
+                "Методы createConnection()/testConnection() реализованы",
+                "Интеграция с AuthenticationProviderFactory реализована",
+                "HikariJdbcConnector с пулом HikariCP настроен",
+                "Unit-тесты для ConnectionFactory проходят"
               ],
               "description": "Фабрика подключений к БД - создание connections с различными типами аутентификации",
               "links": {
                 "projectDocsRefs": ["class:backend.database.connection.ConnectionFactory"],
-                "journalRefs": [],
+                "journalRefs": ["log:log-2025-11-10-005"],
                 "aiRuleRefs": []
               },
               "created": "2025-10-09",
-              "lastUpdated": "2025-10-09"
+              "lastUpdated": "2025-11-10"
             }
           }
         }
@@ -325,7 +326,7 @@
                           },
                           {
                             "task-item": {
-                              "displayName": "🔄 Connection Management (in-progress, critical). № 01.01.01.02 → 0005",
+                              "displayName": "✅ Connection Management (completed, critical). № 01.01.01.02 → 0005",
                               "item-attributes": {
                                 "structureId": "01.01.01.02",
                                 "taskId": "0005",
@@ -334,7 +335,7 @@
                               "task-items": [
                                 {
                                   "task-item": {
-                                    "displayName": "⏳ ConnectionFactory (pending, critical). № 01.01.01.02.01 → 0010",
+                                    "displayName": "✅ ConnectionFactory (completed, critical). № 01.01.01.02.01 → 0010",
                                     "item-attributes": {
                                       "structureId": "01.01.01.02.01",
                                       "taskId": "0010",
@@ -424,7 +425,7 @@
                     },
                     {
                       "task-item": {
-                        "displayName": "⏳ Создание подключения (pending, critical). № 02.01.02 → 0010",
+                        "displayName": "✅ Создание подключения (completed, critical). № 02.01.02 → 0010",
                         "item-attributes": {
                           "structureId": "02.01.02",
                           "taskId": "0010",
@@ -436,7 +437,7 @@
                     },
                     {
                       "task-item": {
-                        "displayName": "🔄 Аутентификация (in-progress, high). № 02.01.03 → 0006",
+                        "displayName": "✅ Аутентификация (completed, high). № 02.01.03 → 0006",
                         "item-attributes": {
                           "structureId": "02.01.03",
                           "taskId": "0006",
@@ -498,7 +499,7 @@
                     },
                     {
                       "task-item": {
-                        "displayName": "🔄 Аутентификация (in-progress, high). № 0a.01.03 → 0006",
+                        "displayName": "✅ Аутентификация (completed, high). № 0a.01.03 → 0006",
                         "item-attributes": {
                           "structureId": "0a.01.03",
                           "taskId": "0006",
