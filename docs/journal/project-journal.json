@@ -373,6 +373,59 @@
                   }
                 ]
               }
+            },
+            {
+              "log": {
+                "displayName": "Connection/Auth компоненты и тесты (success). № log-2025-11-10-004",
+                "log-attributes": {
+                  "id": "log-2025-11-10-004",
+                  "timestamp": "2025-11-10T10:21:22Z",
+                  "level": "success",
+                  "effort": "3h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "component:backend.database.connection",
+                      "component:backend.database.auth",
+                      "class:backend.database.connection.ConnectionFactory"
+                    ],
+                    "developmentTasks": [
+                      "task:0005",
+                      "task:0006"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Реализован ConnectionFactory и инфраструктура подключения",
+                    "details": "Добавлены классы ConnectionFactory, JdbcConnector, DriverManagerJdbcConnector, покрыты тестами взаимодействия.",
+                    "outcome": "Компонент Connection Management создает JDBC URL и умеет обрабатывать ошибки подключения",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/connection/ConnectionFactory.java",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/connection/JdbcConnector.java",
+                      "code/femsq-backend/femsq-database/src/test/java/com/femsq/database/connection/ConnectionFactoryTest.java"
+                    ]
+                  },
+                  {
+                    "action": "Добавлены провайдеры аутентификации",
+                    "details": "Реализованы CredentialsAuthenticationProvider, IntegratedSecurityAuthenticationProvider, TrustedConnectionAuthenticationProvider и тесты для них.",
+                    "outcome": "Компонент Authentication Providers покрывает три сценария авторизации",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/auth",
+                      "code/femsq-backend/femsq-database/src/test/java/com/femsq/database/auth/AuthenticationProvidersTest.java"
+                    ]
+                  },
+                  {
+                    "action": "Расширены негативные сценарии конфигурационных тестов",
+                    "details": "Добавлены проверки валидации (пустые поля, некорректный порт, длинные значения) для ConfigurationComponentTest.",
+                    "outcome": "Критерии задач 0004/0009 выполняются с учётом негативных сценариев",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/test/java/com/femsq/database/config/ConfigurationComponentTest.java"
+                    ]
+                  }
+                ]
+              }
             }
           ]
         }

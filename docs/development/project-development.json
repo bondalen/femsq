@@ -114,9 +114,9 @@
         
         "0005": {
           "task": {
-            "displayName": "Connection Management компонент (pending, critical). № 0005",
+            "displayName": "Connection Management компонент (in-progress, critical). № 0005",
             "task-attributes": {
-              "status": "pending",
+              "status": "in-progress",
               "priority": "critical",
               "owner": "Александр",
               "completionCriteria": [
@@ -128,20 +128,20 @@
               "description": "Компонент управления подключениями к базе данных - создание, пул соединений, тестирование",
               "links": {
                 "projectDocsRefs": ["component:backend.database.connection"],
-                "journalRefs": [],
+                "journalRefs": ["log:log-2025-11-10-004"],
                 "aiRuleRefs": []
               },
               "created": "2025-10-09",
-              "lastUpdated": "2025-10-09"
+              "lastUpdated": "2025-11-10"
             }
           }
         },
         
         "0006": {
           "task": {
-            "displayName": "Authentication Providers компонент (pending, high). № 0006",
+            "displayName": "Authentication Providers компонент (in-progress, high). № 0006",
             "task-attributes": {
-              "status": "pending",
+              "status": "in-progress",
               "priority": "high",
               "owner": "Александр",
               "completionCriteria": [
@@ -154,11 +154,11 @@
               "description": "Провайдеры аутентификации для MS SQL Server - поддержка разных методов аутентификации",
               "links": {
                 "projectDocsRefs": ["component:backend.database.auth"],
-                "journalRefs": [],
+                "journalRefs": ["log:log-2025-11-10-004"],
                 "aiRuleRefs": []
               },
               "created": "2025-10-09",
-              "lastUpdated": "2025-10-09"
+              "lastUpdated": "2025-11-10"
             }
           }
         },
@@ -325,7 +325,7 @@
                           },
                           {
                             "task-item": {
-                              "displayName": "⏳ Connection Management (pending, critical). № 01.01.01.02 → 0005",
+                              "displayName": "🔄 Connection Management (in-progress, critical). № 01.01.01.02 → 0005",
                               "item-attributes": {
                                 "structureId": "01.01.01.02",
                                 "taskId": "0005",
@@ -436,7 +436,7 @@
                     },
                     {
                       "task-item": {
-                        "displayName": "⏳ Аутентификация (pending, high). № 02.01.03 → 0006",
+                        "displayName": "🔄 Аутентификация (in-progress, high). № 02.01.03 → 0006",
                         "item-attributes": {
                           "structureId": "02.01.03",
                           "taskId": "0006",
@@ -498,7 +498,7 @@
                     },
                     {
                       "task-item": {
-                        "displayName": "⏳ Аутентификация (pending, high). № 0a.01.03 → 0006",
+                        "displayName": "🔄 Аутентификация (in-progress, high). № 0a.01.03 → 0006",
                         "item-attributes": {
                           "structureId": "0a.01.03",
                           "taskId": "0006",
