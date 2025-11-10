@@ -71,13 +71,14 @@
               "completionCriteria": [
                 "Maven субмодуль femsq-database создан",
                 "Компоненты config/connection/auth завершены",
+                "Подготовлен тестовый контур ags_test (таблицы og/ogAg, скрипт seed)",
                 "Health-check и smoke-тесты подключения реализованы",
                 "DAO/репозитории подготовлены и покрыты тестами"
               ],
               "description": "Модуль работы с MS SQL Server: конфигурация, Hikari-пул, аутентификация и слой доступа к данным",
               "links": {
                 "projectDocsRefs": ["module:backend.database"],
-                "journalRefs": ["log:log-2025-11-10-004", "log:log-2025-11-10-005"],
+                "journalRefs": ["log:log-2025-11-10-004", "log:log-2025-11-10-005", "log:log-2025-11-10-006"],
                 "aiRuleRefs": []
               },
               "created": "2025-10-09",
@@ -349,11 +350,23 @@
                           },
                           {
                             "task-item": {
-                              "displayName": "⏳ Authentication Providers (pending, high). № 01.01.01.03 → 0006",
+                              "displayName": "✅ Authentication Providers (completed, high). № 01.01.01.03 → 0006",
                               "item-attributes": {
                                 "structureId": "01.01.01.03",
                                 "taskId": "0006",
                                 "positionInParent": 3
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "🔄 Data Access / DAO (in-progress, critical). № 01.01.01.04 → 0003",
+                              "item-attributes": {
+                                "structureId": "01.01.01.04",
+                                "taskId": "0003",
+                                "positionInParent": 4,
+                                "comment": "Подготовка DAO для og/ogAg и тестовых таблиц ags_test"
                               },
                               "task-items": []
                             }
@@ -446,6 +459,18 @@
                         },
                         "task-items": []
                       }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "🔄 Работа с данными (in-progress, critical). № 02.01.04 → 0003",
+                        "item-attributes": {
+                          "structureId": "02.01.04",
+                          "taskId": "0003",
+                          "positionInParent": 4,
+                          "comment": "DAO для og/ogAg и тестовые таблицы ags_test"
+                        },
+                        "task-items": []
+                      }
                     }
                   ]
                 }
@@ -488,7 +513,7 @@
                     },
                     {
                       "task-item": {
-                        "displayName": "⏳ Подключение к БД (pending, critical). № 0a.01.02 → 0005",
+                        "displayName": "✅ Подключение к БД (completed, critical). № 0a.01.02 → 0005",
                         "item-attributes": {
                           "structureId": "0a.01.02",
                           "taskId": "0005",
@@ -504,6 +529,17 @@
                           "structureId": "0a.01.03",
                           "taskId": "0006",
                           "positionInParent": 3
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "🔄 Доступ к данным (in-progress, critical). № 0a.01.04 → 0003",
+                        "item-attributes": {
+                          "structureId": "0a.01.04",
+                          "taskId": "0003",
+                          "positionInParent": 4
                         },
                         "task-items": []
                       }

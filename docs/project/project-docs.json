@@ -21,6 +21,7 @@
             "type": "full-stack",
             "pattern": "modular-monolith",
             "pattern_decision": "docs/decisions/007-modular-monolith-pattern.md",
+            "notes": "Приложение работает с уже существующей БД FishEye; создание или миграция схем выполняется сторонними процедурами (DBA).",
             "backend": {
                 "framework": "Spring Boot 3.4.5",
                 "language": "Java 21 LTS",
@@ -84,6 +85,8 @@
         },
         "database": {
             "schema": "ags",
+            "test_schema": "ags_test",
+            "schemaManagement": "external",
             "version": "1.0.0",
             "engine": "MS SQL Server 2012+",
             "target_version": "11.0.7507.2 (2012 SP4)",
@@ -269,6 +272,7 @@
                     ]
                 }
             ],
+            "notes": "Схема ags поддерживается существующей БД; тестовая схема ags_test содержит копии таблиц для интеграционных тестов (og, ogAg).",
             "migrations": [
                 {
                     "version": "001",
@@ -338,6 +342,12 @@
                         "description": "Определяет JAVA_HOME на основе установленного JDK",
                         "location": "project root",
                         "usage": "Подготовка окружения перед запуском Maven"
+                    },
+                    "seedTestData": {
+                        "command": "/opt/mssql-tools/bin/sqlcmd -S localhost,1433 -U sa -P $FEMSQ_DB_PASSWORD -i code/config/sql/ags_test_seed.sql",
+                        "description": "Создаёт тестовые таблицы ags_test.og/ogAg и наполняет их данными",
+                        "location": "project root",
+                        "usage": "Подготовка тестовой базы перед интеграционными тестами"
                     }
                 },
                 "repositoryStructure": [
