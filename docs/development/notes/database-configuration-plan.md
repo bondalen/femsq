@@ -1,37 +1,34 @@
-# План реализации конфигурационного сервиса FEMSQ
-
 **Дата:** 2025-11-10  
 **Автор:** Александр  
-**Связанные задачи:** task:0004, task:0009
+**Связанные задачи:** task:0004, task:0005, task:0006, task:0010
 
 ## Цели
-- Подготовить базовую реализацию пакета `com.femsq.database.config`
-- Обеспечить чтение и запись файла `~/.femsq/database.properties`
-- Настроить единый подход к логированию операций конфигурации
+- Поддерживать конфигурацию подключения (`DatabaseConfigurationService`) с параметром `authMode` и безопасным хранением секретов.
+- Обеспечить устойчивый пул соединений на базе HikariCP (`ConnectionFactory`, `HikariJdbcConnector`).
+- Реализовать фабрику аутентификации (`AuthenticationProviderFactory`) и покрыть её тестами, включая интеграционный smoke-тест с реальной БД.
 
-## Приоритетные шаги
-1. Создать класс `DatabaseConfigurationService` с методами `loadConfig()` и `saveConfig()`.
-2. Реализовать `ConfigurationFileManager` для работы с файловой системой.
-3. Реализовать `ConfigurationValidator` для проверки входных параметров.
-4. Обеспечить покрытие unit-тестами критических сценариев (позитивный/ошибочный).
+## Реализовано
+- `ConfigurationValidator` валидирует `host/port/database`, учетные данные и `authMode` (`credentials`, `windows-integrated`, `kerberos`).
+- `ConnectionFactory` использует HikariCP, поддерживает `createConnection()`, `testConnection()` и корректно закрывает пул.
+- `AuthenticationProviderFactory` подключает провайдеры `CredentialsAuthenticationProvider`, `WindowsIntegratedAuthenticationProvider`, `KerberosAuthenticationProvider`.
+- Интеграционный тест `ConnectionFactoryIntegrationTest` подключается к `FishEye`/`ags_test`, используя переменные окружения `FEMSQ_DB_*`.
 
-## Детализация методов
-- `loadConfig()`
-  - Проверяет наличие файла конфигурации (использует `ConfigurationFileManager`).
-  - Загружает свойства, валидирует их через `ConfigurationValidator`.
-  - Возвращает immutable-объект с параметрами подключения.
-- `saveConfig(configuration)`
-  - Валидирует входные данные.
-  - Обновляет или создаёт файл конфигурации с безопасными правами.
-  - Подтверждает успешное сохранение или выбрасывает информативное исключение.
-
-## Логирование
-- Использовать `org.slf4j.Logger`.
-- Уровень `INFO` для успешного старта/окончания операций `loadConfig` и `saveConfig`.
-- Уровень `WARN` для восстановимых проблем (не найден файл, создан заново).
-- Уровень `ERROR` для исключений ввода-вывода и нарушений валидации.
+## Настройки окружения
+- Обязательная переменная: `FEMSQ_DB_PASSWORD` (не хранить в репозитории, заводить через `export` / менеджер секретов).
+- Дополнительные (с дефолтами):  
+  `FEMSQ_DB_HOST=localhost`, `FEMSQ_DB_PORT=1433`, `FEMSQ_DB_NAME=FishEye`, `FEMSQ_DB_USER=sa`, `FEMSQ_DB_AUTH_MODE=credentials`.
 
 ## Следующие шаги
-- Сгенерировать DTO для конфигурации (`DatabaseConfigurationProperties`).
-- Разработать интеграцию с задачами по подключению (`task:0005`, `task:0010`).
-- Обновить `project-development.json` и журнал после реализации.
+1. **MS SQL Driver / Health**  
+   - Подготовить profile для интеграционных тестов (разделить unit и integration).  
+   - Добавить smoke-команду в CI (GitHub Actions) для запуска `mvn test` при наличии секретов.
+2. **DAO / Data Access (task:0003)**  
+   - Спроектировать слой доступа к данным (интерфейсы репозиториев, transaction scope).  
+   - Определить минимальные таблицы/процедуры для начального функционала.  
+   - Подготовить миграции (через Liquibase или SQL-скрипты) для схем `FishEye` и `ags_test`.
+3. **Web API подготовка (task:0007)**  
+   - Определить REST/GraphQL endpoint для проверки соединения.  
+   - Продумать передачу конфигурации с UI (будущий Vue мастер настройки).
+
+## Проверка
+- Команда `source ~/.bashrc && mvn -f code/pom.xml -pl femsq-backend/femsq-database -am test` — выполняет unit и интеграционные тесты (`29 tests`).

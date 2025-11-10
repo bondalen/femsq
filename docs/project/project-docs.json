@@ -329,7 +329,7 @@
                     },
                     "test": {
                         "command": "mvn test",
-                        "description": "Запуск unit тестов",
+                        "description": "Запуск unit и integration тестов (при наличии переменных FEMSQ_DB_*)",
                         "location": "code/femsq-backend",
                         "usage": "Тестирование кода"
                     },
@@ -356,6 +356,44 @@
                     {
                         "path": "code/config",
                         "description": "Конфигурационные шаблоны и параметры окружения"
+                    }
+                ],
+                "environmentVariables": [
+                    {
+                        "name": "FEMSQ_DB_PASSWORD",
+                        "scope": "local",
+                        "description": "Пароль пользователя MS SQL Server для интеграционных тестов и ConnectionFactory",
+                        "storage": "экспорт в shell / менеджер секретов, не хранить в репозитории"
+                    },
+                    {
+                        "name": "FEMSQ_DB_HOST",
+                        "scope": "optional",
+                        "description": "Хост MS SQL Server (по умолчанию localhost)",
+                        "storage": "настройка через shell"
+                    },
+                    {
+                        "name": "FEMSQ_DB_PORT",
+                        "scope": "optional",
+                        "description": "Порт MS SQL Server (по умолчанию 1433)",
+                        "storage": "настройка через shell"
+                    },
+                    {
+                        "name": "FEMSQ_DB_NAME",
+                        "scope": "optional",
+                        "description": "Имя базы данных (по умолчанию FishEye)",
+                        "storage": "настройка через shell"
+                    },
+                    {
+                        "name": "FEMSQ_DB_USER",
+                        "scope": "optional",
+                        "description": "Пользователь базы данных для режима credentials (по умолчанию sa)",
+                        "storage": "настройка через shell"
+                    },
+                    {
+                        "name": "FEMSQ_DB_AUTH_MODE",
+                        "scope": "optional",
+                        "description": "Режим аутентификации (credentials/windows-integrated/kerberos)",
+                        "storage": "настройка через shell"
                     }
                 ]
             },

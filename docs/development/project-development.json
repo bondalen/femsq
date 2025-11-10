@@ -63,25 +63,25 @@
         
         "0003": {
           "task": {
-            "displayName": "Database модуль (pending, critical). № 0003",
+            "displayName": "Database модуль (in-progress, critical). № 0003",
             "task-attributes": {
-              "status": "pending",
+              "status": "in-progress",
               "priority": "critical",
               "owner": "Александр",
               "completionCriteria": [
                 "Maven субмодуль femsq-database создан",
-                "Все компоненты модуля реализованы",
-                "Подключение к MS SQL Server работает",
-                "Unit-тесты написаны и проходят"
+                "Компоненты config/connection/auth завершены",
+                "Health-check и smoke-тесты подключения реализованы",
+                "DAO/репозитории подготовлены и покрыты тестами"
               ],
-              "description": "Модуль работы с базой данных MS SQL Server - управление подключением, конфигурация, аутентификация",
+              "description": "Модуль работы с MS SQL Server: конфигурация, Hikari-пул, аутентификация и слой доступа к данным",
               "links": {
                 "projectDocsRefs": ["module:backend.database"],
-                "journalRefs": [],
+                "journalRefs": ["log:log-2025-11-10-004", "log:log-2025-11-10-005"],
                 "aiRuleRefs": []
               },
               "created": "2025-10-09",
-              "lastUpdated": "2025-10-09"
+              "lastUpdated": "2025-11-10"
             }
           }
         },
@@ -294,7 +294,7 @@
                   "task-items": [
                     {
                       "task-item": {
-                        "displayName": "⏳ Database модуль (pending, critical). № 01.01.01 → 0003",
+                        "displayName": "🔄 Database модуль (in-progress, critical). № 01.01.01 → 0003",
                         "item-attributes": {
                           "structureId": "01.01.01",
                           "taskId": "0003",

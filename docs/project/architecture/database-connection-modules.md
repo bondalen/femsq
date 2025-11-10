@@ -16,9 +16,9 @@
 
 ### Модуль 01: Backend Module
 Субмодуль 01.01: Database (femsq-database)
-  - 01.01.01 config/ - Управление конфигурацией
-  - 01.01.02 connection/ - Пул соединений
-  - 01.01.03 auth/ - Провайдеры аутентификации
+  - 01.01.01 config/ - Управление конфигурацией (`DatabaseConfigurationService`, `ConfigurationValidator`, поддержка `authMode`)
+  - 01.01.02 connection/ - Пул соединений (HikariCP, `ConnectionFactory`, `HikariJdbcConnector`, smoke‑тесты)
+  - 01.01.03 auth/ - Провайдеры аутентификации (`AuthenticationProviderFactory`, credentials / Windows Integrated / Kerberos)
   - 01.01.04 model/ - Модели данных
   - 01.01.05 exception/ - Исключения
 
@@ -30,6 +30,14 @@
 ### Модуль 02: Frontend Module (femsq-frontend)
   - 02.01 components/ - Vue компоненты
   - 02.02 services/ - API клиенты
+
+---
+
+## Текущая реализация
+- Конфигурация хранится в `~/.femsq/database.properties`, поля `host/port/database`, учетные данные и `authMode` валидируются `ConfigurationValidator`.
+- `ConnectionFactory` использует HikariCP (`HikariJdbcConnector`) и `AuthenticationProviderFactory`, поддерживает `createConnection()`, `testConnection()` и корректно освобождает ресурсы.
+- Провайдеры аутентификации: `CredentialsAuthenticationProvider`, `WindowsIntegratedAuthenticationProvider`, `KerberosAuthenticationProvider`; выбор стратегии происходит фабрикой по `authMode`.
+- Интеграционный тест `ConnectionFactoryIntegrationTest` проверяет соединение с реальной БД и наличие схемы `ags_test` (использует переменные окружения `FEMSQ_DB_*`).
 
 ---
 
