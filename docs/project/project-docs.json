@@ -6,7 +6,7 @@
             "description": "Cистема работы с контрагентами и объектами при капитальном строительстве на основе БД MS SQL Server FEMSQ (Fish Eye MS SQL Server)",
             "author": "Александр",
             "created": "2025-10-08",
-            "lastUpdated": "2025-01-27",
+            "lastUpdated": "2025-11-10",
             "status": "planning",
             "repository": "https://github.com/bondalen/femsq.git",
             "license": "MIT",
@@ -66,7 +66,7 @@
         "modules": {
             "description": "Структура модулей проекта FEMSQ",
             "version": "1.0.0",
-            "lastUpdated": "2025-01-27",
+            "lastUpdated": "2025-11-10",
             "structure": {
                 "type": "recursive",
                 "entities": ["Module", "Component", "Class"],
@@ -312,28 +312,52 @@
                     "dev": {
                         "command": "mvn spring-boot:run",
                         "description": "Запуск в режиме разработки",
-                        "location": "project root",
+                        "location": "code/femsq-backend",
                         "usage": "Локальная разработка с встроенной формой настройки"
                     },
                     "build": {
                         "command": "mvn clean package",
                         "description": "Сборка единого JAR-файла с встроенным frontend",
-                        "location": "project root",
+                        "location": "code/femsq-backend",
                         "usage": "Создание production-ready JAR файла"
                     },
                     "run": {
                         "command": "java -jar target/femsq-{version}.jar",
                         "description": "Запуск готового JAR-файла",
-                        "location": "project root",
+                        "location": "code/femsq-backend",
                         "usage": "Production запуск с внешней БД"
                     },
                     "test": {
                         "command": "mvn test",
                         "description": "Запуск unit тестов",
-                        "location": "project root",
+                        "location": "code/femsq-backend",
                         "usage": "Тестирование кода"
+                    },
+                    "setJavaHome": {
+                        "command": "source code/scripts/setup-java-home.sh",
+                        "description": "Определяет JAVA_HOME на основе установленного JDK",
+                        "location": "project root",
+                        "usage": "Подготовка окружения перед запуском Maven"
                     }
-                }
+                },
+                "repositoryStructure": [
+                    {
+                        "path": "code/femsq-backend",
+                        "description": "Backend на Spring Boot и подмодули (database, web)"
+                    },
+                    {
+                        "path": "code/femsq-frontend",
+                        "description": "Frontend на Vue.js/Quasar"
+                    },
+                    {
+                        "path": "code/scripts",
+                        "description": "Папка для вспомогательных скриптов разработки и автоматизации"
+                    },
+                    {
+                        "path": "code/config",
+                        "description": "Конфигурационные шаблоны и параметры окружения"
+                    }
+                ]
             },
             "standards": {
                 "codeStyle": "Google Java Style + ESLint/Prettier",

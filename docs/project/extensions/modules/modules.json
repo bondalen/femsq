@@ -1,7 +1,7 @@
 {
   "modules": {
     "version": "1.0.0",
-    "lastUpdated": "2025-01-27",
+    "lastUpdated": "2025-11-10",
     "description": "Структура модулей проекта FEMSQ",
     
     "items": [
@@ -16,8 +16,8 @@
             "purpose": "Серверная логика, GraphQL API, работа с MS SQL Server",
             "status": "planned",
             "artifact": {
-              "location": "femsq-backend/",
-              "file_path": "femsq-backend/",
+              "location": "code/femsq-backend/",
+              "file_path": "code/femsq-backend/",
               "type": "maven-module",
               "artifact_type": "directory",
               "build_file": "pom.xml"
@@ -37,8 +37,8 @@
                   "purpose": "Управление подключением к MS SQL Server, конфигурация, аутентификация",
                   "status": "planned",
                   "artifact": {
-                    "location": "femsq-backend/femsq-database/",
-                    "file_path": "femsq-backend/femsq-database/",
+                    "location": "code/femsq-backend/femsq-database/",
+                    "file_path": "code/femsq-backend/femsq-database/",
                     "type": "maven-submodule",
                     "artifact_type": "directory",
                     "build_file": "pom.xml"
@@ -282,8 +282,8 @@
                   "purpose": "REST контроллеры, инициализация, health checks",
                   "status": "planned",
                   "artifact": {
-                    "location": "femsq-backend/femsq-web/",
-                    "file_path": "femsq-backend/femsq-web/",
+                    "location": "code/femsq-backend/femsq-web/",
+                    "file_path": "code/femsq-backend/femsq-web/",
                     "type": "maven-submodule",
                     "artifact_type": "directory",
                     "build_file": "pom.xml"
@@ -363,8 +363,8 @@
             "purpose": "Пользовательский интерфейс для работы с контрагентами и объектами",
             "status": "planned",
             "artifact": {
-              "location": "femsq-frontend/",
-              "file_path": "femsq-frontend/",
+              "location": "code/femsq-frontend/",
+              "file_path": "code/femsq-frontend/",
               "type": "vue-module",
               "artifact_type": "directory",
               "build_file": "package.json"

@@ -2,7 +2,7 @@
 
 **Версия:** 1.0.0  
 **Дата создания:** 2025-01-27  
-**Последнее обновление:** 2025-01-27  
+**Последнее обновление:** 2025-11-10  
 **Статус:** Активный  
 **Применимость:** Универсальный справочник для любых проектов
 
@@ -250,7 +250,7 @@
 
 | Артефакт | artifact_type | Физическое | location | file_path |
 |----------|---------------|------------|----------|-----------|
-| Module | directory | Папка с build файлом | femsq-backend/ | femsq-backend/ |
+| Module | directory | Папка с build файлом | code/femsq-backend/ | code/femsq-backend/ |
 | Component | directory | Папка с исходниками | com.femsq.database.config | src/main/java/com/femsq/database/config/ |
 | Class | file | Файл с кодом | com.femsq.database.config.DatabaseConfigService | src/.../DatabaseConfigService.java |
 | Nested Class | nested | Класс внутри файла | com.femsq...ConfigValidator | src/.../DatabaseConfigService.java |

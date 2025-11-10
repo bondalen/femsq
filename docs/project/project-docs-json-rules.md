@@ -2,7 +2,7 @@
 
 **Версия:** 1.3.0  
 **Дата создания:** 2025-10-08  
-**Последнее обновление:** 2025-01-27
+**Последнее обновление:** 2025-11-10
 
 ---
 
@@ -200,9 +200,9 @@ Class
 #### Соответствие Java/Spring
 
 **Module → Maven/Gradle:**
-- Корневые проекты: `femsq/`
-- Sub-modules: `femsq-backend/`, `femsq-frontend/`
-- Multi-module проекты: `backend/database/`, `backend/web/`
+- Корневые проекты: `code/`
+- Sub-modules: `code/femsq-backend/`, `code/femsq-frontend/`
+- Multi-module проекты: `code/femsq-backend/femsq-database/`, `code/femsq-backend/femsq-web/`
 
 **Component → Java Packages:**
 - `com.femsq.database.config`
