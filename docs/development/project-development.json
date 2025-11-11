@@ -9,7 +9,7 @@
     
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0011",
+      "nextTaskId": "0016",
       "items": {
         "0001": {
           "task": {
@@ -266,6 +266,153 @@
               "lastUpdated": "2025-11-10"
             }
           }
+        },
+        "0011": {
+          "task": {
+            "displayName": "Og DAO слой (completed, high). № 0011",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Интерфейс OgDao определён и задокументирован",
+                "Реализация JdbcOgDao выполняет CRUD-операции через ConnectionFactory",
+                "Интеграционные тесты JdbcOgDao проходят на схеме ags_test"
+              ],
+              "description": "Реализация слоя DAO для таблицы ags_test.og с покрытием интеграционными тестами",
+              "links": {
+                "projectDocsRefs": [
+                  "component:backend.database.data-access",
+                  "class:backend.database.data-access.OgDao",
+                  "class:backend.database.data-access.JdbcOgDao",
+                  "class:backend.database.model.Og"
+                ],
+                "journalRefs": [
+                  "log:log-2025-11-10-007"
+                ],
+                "aiRuleRefs": []
+              },
+              "created": "2025-11-10",
+              "lastUpdated": "2025-11-10"
+            }
+          }
+        },
+        
+        "0012": {
+          "task": {
+            "displayName": "OgAg DAO слой (completed, high). № 0012",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Интерфейс OgAgDao определён и задокументирован",
+                "Реализация JdbcOgAgDao поддерживает CRUD и выборки по организации",
+                "Интеграционные тесты JdbcOgAgDao выполняются со скриптом ags_test_seed.sql"
+              ],
+              "description": "Реализация DAO для таблицы ags_test.ogAg и поддержка каскадных сценариев",
+              "links": {
+                "projectDocsRefs": [
+                  "component:backend.database.data-access",
+                  "class:backend.database.data-access.OgAgDao",
+                  "class:backend.database.data-access.JdbcOgAgDao",
+                  "class:backend.database.model.OgAg"
+                ],
+                "journalRefs": [
+                  "log:log-2025-11-10-007"
+                ],
+                "aiRuleRefs": []
+              },
+              "created": "2025-11-10",
+              "lastUpdated": "2025-11-10"
+            }
+          }
+        },
+        "0013": {
+          "task": {
+            "displayName": "Og сервисный слой (completed, high). № 0013",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Интерфейс OgService определён и задокументирован",
+                "DefaultOgService реализует бизнес-валидацию и логирование",
+                "Интеграция с OgDao покрыта тестами сервисного уровня"
+              ],
+              "description": "Сервисный слой для организаций og с бизнес-валидацией",
+              "links": {
+                "projectDocsRefs": [
+                  "component:backend.database.service",
+                  "class:backend.database.service.OgService",
+                  "class:backend.database.service.DefaultOgService"
+                ],
+                "journalRefs": [
+                  "log:log-2025-11-10-008"
+                ],
+                "aiRuleRefs": []
+              },
+              "created": "2025-11-10",
+              "lastUpdated": "2025-11-10"
+            }
+          }
+        },
+        "0014": {
+          "task": {
+            "displayName": "OgAg сервисный слой (completed, high). № 0014",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Интерфейс OgAgService определён и задокументирован",
+                "DefaultOgAgService проверяет существование базовой организации",
+                "Обновлены тесты/валидация интеграции с OgDao"
+              ],
+              "description": "Сервисный слой для агентских организаций ogAg",
+              "links": {
+                "projectDocsRefs": [
+                  "component:backend.database.service",
+                  "class:backend.database.service.OgAgService",
+                  "class:backend.database.service.DefaultOgAgService"
+                ],
+                "journalRefs": [
+                  "log:log-2025-11-10-008"
+                ],
+                "aiRuleRefs": []
+              },
+              "created": "2025-11-10",
+              "lastUpdated": "2025-11-10"
+            }
+          }
+        },
+        "0015": {
+          "task": {
+            "displayName": "CI пайплайн для DAO (planned, medium). № 0015",
+            "task-attributes": {
+              "status": "planned",
+              "priority": "medium",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Добавлен профиль Maven для разделения unit/integration тестов",
+                "Настроен workflow GitHub Actions с шагом запуска ags_test_seed.sql",
+                "Документация по переменным окружения обновлена"
+              ],
+              "description": "Настройка CI для запуска DAO unit и integration тестов",
+              "links": {
+                "projectDocsRefs": [
+                  "component:backend.database.service",
+                  "component:backend.database.data-access"
+                ],
+                "journalRefs": [
+                  "log:log-2025-11-10-008"
+                ],
+                "aiRuleRefs": []
+              },
+              "created": "2025-11-10",
+              "lastUpdated": "2025-11-10"
+            }
+          }
         }
       }
     },
@@ -368,7 +515,76 @@
                                 "positionInParent": 4,
                                 "comment": "Подготовка DAO для og/ogAg и тестовых таблиц ags_test"
                               },
-                              "task-items": []
+                              "task-items": [
+                                {
+                                  "task-item": {
+                                    "displayName": "✅ Og DAO слой (completed, high). № 01.01.01.04.01 → 0011",
+                                    "item-attributes": {
+                                      "structureId": "01.01.01.04.01",
+                                      "taskId": "0011",
+                                      "positionInParent": 1
+                                    },
+                                    "task-items": []
+                                  }
+                                },
+                                {
+                                  "task-item": {
+                                    "displayName": "✅ OgAg DAO слой (completed, high). № 01.01.01.04.02 → 0012",
+                                    "item-attributes": {
+                                      "structureId": "01.01.01.04.02",
+                                      "taskId": "0012",
+                                      "positionInParent": 2
+                                    },
+                                    "task-items": []
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "🔄 Service Layer (in-progress, critical). № 01.01.01.05 → 0003",
+                              "item-attributes": {
+                                "structureId": "01.01.01.05",
+                                "taskId": "0003",
+                                "positionInParent": 5,
+                                "comment": "Бизнес-сервисы для работы с og и ogAg"
+                              },
+                              "task-items": [
+                                {
+                                  "task-item": {
+                                    "displayName": "✅ Og сервисный слой (completed, high). № 01.01.01.05.01 → 0013",
+                                    "item-attributes": {
+                                      "structureId": "01.01.01.05.01",
+                                      "taskId": "0013",
+                                      "positionInParent": 1
+                                    },
+                                    "task-items": []
+                                  }
+                                },
+                                {
+                                  "task-item": {
+                                    "displayName": "✅ OgAg сервисный слой (completed, high). № 01.01.01.05.02 → 0014",
+                                    "item-attributes": {
+                                      "structureId": "01.01.01.05.02",
+                                      "taskId": "0014",
+                                      "positionInParent": 2
+                                    },
+                                    "task-items": []
+                                  }
+                                },
+                                {
+                                  "task-item": {
+                                    "displayName": "⏳ DAO CI пайплайн (planned, medium). № 01.01.01.05.03 → 0015",
+                                    "item-attributes": {
+                                      "structureId": "01.01.01.05.03",
+                                      "taskId": "0015",
+                                      "positionInParent": 3
+                                    },
+                                    "task-items": []
+                                  }
+                                }
+                              ]
                             }
                           }
                         ]
@@ -469,7 +685,41 @@
                           "positionInParent": 4,
                           "comment": "DAO для og/ogAg и тестовые таблицы ags_test"
                         },
-                        "task-items": []
+                        "task-items": [
+                          {
+                            "task-item": {
+                              "displayName": "✅ Og сервисный слой (completed, high). № 02.01.04.01 → 0013",
+                              "item-attributes": {
+                                "structureId": "02.01.04.01",
+                                "taskId": "0013",
+                                "positionInParent": 1
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "✅ OgAg сервисный слой (completed, high). № 02.01.04.02 → 0014",
+                              "item-attributes": {
+                                "structureId": "02.01.04.02",
+                                "taskId": "0014",
+                                "positionInParent": 2
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "⏳ DAO CI пайплайн (planned, medium). № 02.01.04.03 → 0015",
+                              "item-attributes": {
+                                "structureId": "02.01.04.03",
+                                "taskId": "0015",
+                                "positionInParent": 3
+                              },
+                              "task-items": []
+                            }
+                          }
+                        ]
                       }
                     }
                   ]
@@ -541,7 +791,41 @@
                           "taskId": "0003",
                           "positionInParent": 4
                         },
-                        "task-items": []
+                        "task-items": [
+                          {
+                            "task-item": {
+                              "displayName": "✅ Og сервисный слой (completed, high). № 0a.01.04.01 → 0013",
+                              "item-attributes": {
+                                "structureId": "0a.01.04.01",
+                                "taskId": "0013",
+                                "positionInParent": 1
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "✅ OgAg сервисный слой (completed, high). № 0a.01.04.02 → 0014",
+                              "item-attributes": {
+                                "structureId": "0a.01.04.02",
+                                "taskId": "0014",
+                                "positionInParent": 2
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "⏳ DAO CI пайплайн (planned, medium). № 0a.01.04.03 → 0015",
+                              "item-attributes": {
+                                "structureId": "0a.01.04.03",
+                                "taskId": "0015",
+                                "positionInParent": 3
+                              },
+                              "task-items": []
+                            }
+                          }
+                        ]
                       }
                     }
                   ]

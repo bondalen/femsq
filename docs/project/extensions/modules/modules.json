@@ -387,7 +387,7 @@
                         "number": "01.01.04",
                         "name": "Data Access",
                         "description": "Слой доступа к данным для таблиц ags/ags_test",
-                        "status": "planned",
+                        "status": "in-progress",
                         "artifact": {
                           "location": "com.femsq.database.dao",
                           "file_path": "src/main/java/com/femsq/database/dao/",
@@ -409,7 +409,7 @@
                               "number": "01.01.04.01",
                               "name": "OgDao",
                               "description": "DAO для таблицы og",
-                              "status": "planned",
+                              "status": "completed",
                               "artifact": {
                                 "location": "com.femsq.database.dao.OgDao",
                                 "file_path": "src/main/java/com/femsq/database/dao/OgDao.java",
@@ -428,7 +428,7 @@
                               "number": "01.01.04.02",
                               "name": "OgAgDao",
                               "description": "DAO для таблицы ogAg",
-                              "status": "planned",
+                              "status": "completed",
                               "artifact": {
                                 "location": "com.femsq.database.dao.OgAgDao",
                                 "file_path": "src/main/java/com/femsq/database/dao/OgAgDao.java",
@@ -438,6 +438,54 @@
                               "dependsOn": [
                                 "ConnectionFactory",
                                 "OgDao"
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "class": {
+                            "displayName": "JdbcOgDao. № 01.01.04.03",
+                            "attributes": {
+                              "id": "JdbcOgDao",
+                              "number": "01.01.04.03",
+                              "name": "JdbcOgDao",
+                              "description": "JDBC-реализация OgDao",
+                              "status": "completed",
+                              "artifact": {
+                                "location": "com.femsq.database.dao.JdbcOgDao",
+                                "file_path": "src/main/java/com/femsq/database/dao/JdbcOgDao.java",
+                                "type": "java-class",
+                                "artifact_type": "file"
+                              },
+                              "dependsOn": [
+                                "OgDao",
+                                "ConnectionFactory",
+                                "Og",
+                                "DaoException"
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "class": {
+                            "displayName": "JdbcOgAgDao. № 01.01.04.04",
+                            "attributes": {
+                              "id": "JdbcOgAgDao",
+                              "number": "01.01.04.04",
+                              "name": "JdbcOgAgDao",
+                              "description": "JDBC-реализация OgAgDao",
+                              "status": "completed",
+                              "artifact": {
+                                "location": "com.femsq.database.dao.JdbcOgAgDao",
+                                "file_path": "src/main/java/com/femsq/database/dao/JdbcOgAgDao.java",
+                                "type": "java-class",
+                                "artifact_type": "file"
+                              },
+                              "dependsOn": [
+                                "OgAgDao",
+                                "ConnectionFactory",
+                                "OgAg",
+                                "DaoException"
                               ]
                             }
                           }
@@ -453,14 +501,52 @@
                         "number": "01.01.05",
                         "name": "Data Models",
                         "description": "Модели данных для конфигурации и статусов",
-                        "status": "planned",
+                        "status": "in-progress",
                         "artifact": {
                           "location": "com.femsq.database.model",
                           "file_path": "src/main/java/com/femsq/database/model/",
                           "type": "java-package",
                           "artifact_type": "directory"
                         }
-                      }
+                      },
+                      "classes": [
+                        {
+                          "class": {
+                            "displayName": "Og. № 01.01.05.01",
+                            "attributes": {
+                              "id": "Og",
+                              "number": "01.01.05.01",
+                              "name": "Og",
+                              "description": "Java-record для таблицы ags_test.og",
+                              "status": "completed",
+                              "artifact": {
+                                "location": "com.femsq.database.model.Og",
+                                "file_path": "src/main/java/com/femsq/database/model/Og.java",
+                                "type": "java-class",
+                                "artifact_type": "file"
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "class": {
+                            "displayName": "OgAg. № 01.01.05.02",
+                            "attributes": {
+                              "id": "OgAg",
+                              "number": "01.01.05.02",
+                              "name": "OgAg",
+                              "description": "Java-record для таблицы ags_test.ogAg",
+                              "status": "completed",
+                              "artifact": {
+                                "location": "com.femsq.database.model.OgAg",
+                                "file_path": "src/main/java/com/femsq/database/model/OgAg.java",
+                                "type": "java-class",
+                                "artifact_type": "file"
+                              }
+                            }
+                          }
+                        }
+                      ]
                     }
                   },
                   {
@@ -471,14 +557,151 @@
                         "number": "01.01.06",
                         "name": "Exception Handling",
                         "description": "Централизованная обработка исключений",
-                        "status": "planned",
+                        "status": "in-progress",
                         "artifact": {
                           "location": "com.femsq.database.exception",
                           "file_path": "src/main/java/com/femsq/database/exception/",
                           "type": "java-package",
                           "artifact_type": "directory"
                         }
-                      }
+                      },
+                      "classes": [
+                        {
+                          "class": {
+                            "displayName": "DaoException. № 01.01.06.01",
+                            "attributes": {
+                              "id": "DaoException",
+                              "number": "01.01.06.01",
+                              "name": "DaoException",
+                              "description": "Исключение уровня DAO",
+                              "status": "completed",
+                              "artifact": {
+                                "location": "com.femsq.database.exception.DaoException",
+                                "file_path": "src/main/java/com/femsq/database/exception/DaoException.java",
+                                "type": "java-class",
+                                "artifact_type": "file"
+                              },
+                              "dependsOn": []
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "component": {
+                      "displayName": "Service Layer. № 01.01.07",
+                      "attributes": {
+                        "id": "service",
+                        "number": "01.01.07",
+                        "name": "Service Layer",
+                        "description": "Бизнес-сервисы для работы с организациями и агентами",
+                        "status": "in-progress",
+                        "artifact": {
+                          "location": "com.femsq.database.service",
+                          "file_path": "src/main/java/com/femsq/database/service/",
+                          "type": "java-package",
+                          "artifact_type": "directory"
+                        },
+                        "responsibilities": [
+                          "Бизнес-валидация данных og и ogAg",
+                          "Оркестрация DAO операций",
+                          "Подготовка к экспонированию API"
+                        ]
+                      },
+                      "classes": [
+                        {
+                          "class": {
+                            "displayName": "OgService. № 01.01.07.01",
+                            "attributes": {
+                              "id": "OgService",
+                              "number": "01.01.07.01",
+                              "name": "OgService",
+                              "description": "Интерфейс сервисного слоя для og",
+                              "status": "completed",
+                              "artifact": {
+                                "location": "com.femsq.database.service.OgService",
+                                "file_path": "src/main/java/com/femsq/database/service/OgService.java",
+                                "type": "java-class",
+                                "artifact_type": "file"
+                              },
+                              "dependsOn": [
+                                "Og",
+                                "DaoException"
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "class": {
+                            "displayName": "DefaultOgService. № 01.01.07.02",
+                            "attributes": {
+                              "id": "DefaultOgService",
+                              "number": "01.01.07.02",
+                              "name": "DefaultOgService",
+                              "description": "Реализация сервисного слоя для og",
+                              "status": "completed",
+                              "artifact": {
+                                "location": "com.femsq.database.service.DefaultOgService",
+                                "file_path": "src/main/java/com/femsq/database/service/DefaultOgService.java",
+                                "type": "java-class",
+                                "artifact_type": "file"
+                              },
+                              "dependsOn": [
+                                "OgService",
+                                "OgDao",
+                                "Og"
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "class": {
+                            "displayName": "OgAgService. № 01.01.07.03",
+                            "attributes": {
+                              "id": "OgAgService",
+                              "number": "01.01.07.03",
+                              "name": "OgAgService",
+                              "description": "Интерфейс сервисного слоя для ogAg",
+                              "status": "completed",
+                              "artifact": {
+                                "location": "com.femsq.database.service.OgAgService",
+                                "file_path": "src/main/java/com/femsq/database/service/OgAgService.java",
+                                "type": "java-class",
+                                "artifact_type": "file"
+                              },
+                              "dependsOn": [
+                                "OgAg",
+                                "DaoException"
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "class": {
+                            "displayName": "DefaultOgAgService. № 01.01.07.04",
+                            "attributes": {
+                              "id": "DefaultOgAgService",
+                              "number": "01.01.07.04",
+                              "name": "DefaultOgAgService",
+                              "description": "Реализация сервисного слоя для ogAg",
+                              "status": "completed",
+                              "artifact": {
+                                "location": "com.femsq.database.service.DefaultOgAgService",
+                                "file_path": "src/main/java/com/femsq/database/service/DefaultOgAgService.java",
+                                "type": "java-class",
+                                "artifact_type": "file"
+                              },
+                              "dependsOn": [
+                                "OgAgService",
+                                "OgAgDao",
+                                "OgDao",
+                                "OgAg"
+                              ]
+                            }
+                          }
+                        }
+                      ]
                     }
                   }
                 ]

@@ -551,6 +551,178 @@
           ]
         }
       }
+      },
+      {
+        "chat": {
+          "displayName": "DAO уровень для таблиц (in-progress, high). № chat-2025-11-10-002",
+          "chat-attributes": {
+            "id": "chat-2025-11-10-002",
+            "created": "2025-11-10",
+            "lastUpdated": "2025-11-10",
+            "owner": "Александр",
+            "status": "in-progress",
+            "priority": "high",
+            "tags": [
+              "dao",
+              "database",
+              "testing",
+              "documentation"
+            ],
+            "links": {
+              "projectDocsRefs": [
+                "component:backend.database.data-access",
+                "class:backend.database.data-access.JdbcOgDao",
+                "class:backend.database.data-access.JdbcOgAgDao"
+              ],
+              "developmentTasks": [
+                "task:0011",
+                "task:0012"
+              ],
+              "aiRuleRefs": []
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Реализация DAO для og/ogAg (progress). № log-2025-11-10-007",
+                "log-attributes": {
+                  "id": "log-2025-11-10-007",
+                  "timestamp": "2025-11-10T13:45:00Z",
+                  "level": "progress",
+                  "effort": "3h30m",
+                  "status": "in-progress",
+                  "links": {
+                    "projectDocsRefs": [
+                      "component:backend.database.data-access",
+                      "class:backend.database.data-access.JdbcOgDao",
+                      "class:backend.database.data-access.JdbcOgAgDao",
+                      "class:backend.database.model.Og",
+                      "class:backend.database.model.OgAg",
+                      "class:backend.database.exception.DaoException"
+                    ],
+                    "developmentTasks": [
+                      "task:0003",
+                      "task:0011",
+                      "task:0012"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Созданы модели Og и OgAg",
+                    "details": "Добавлены Java-record классы для сущностей ags_test.og и ags_test.ogAg с проверками обязательных полей.",
+                    "outcome": "Слой DAO работает с типобезопасными моделями данных",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/model/Og.java",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/model/OgAg.java",
+                      "docs/project/extensions/modules/modules.json"
+                    ]
+                  },
+                  {
+                    "action": "Реализованы JDBC DAO и базовое исключение",
+                    "details": "Созданы OgDao/OgAgDao интерфейсы, JDBC-реализации и DaoException с логированием и обработкой SQL ошибок.",
+                    "outcome": "Слой доступа к данным поддерживает CRUD-операции для og и ogAg через ConnectionFactory",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/OgDao.java",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/OgAgDao.java",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcOgDao.java",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcOgAgDao.java",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/exception/DaoException.java"
+                    ]
+                  },
+                  {
+                    "action": "Подготовлены интеграционные тесты и инфраструктура",
+                    "details": "Добавлена утилита DaoIntegrationTestSupport, тесты JDBC DAO и запуск скрипта ags_test_seed.sql перед каждым тестом.",
+                    "outcome": "Интеграционные тесты проверяют CRUD и каскадные сценарии на реальной базе данных",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/test/java/com/femsq/database/dao/DaoIntegrationTestSupport.java",
+                      "code/femsq-backend/femsq-database/src/test/java/com/femsq/database/dao/JdbcOgDaoIntegrationTest.java",
+                      "code/femsq-backend/femsq-database/src/test/java/com/femsq/database/dao/JdbcOgAgDaoIntegrationTest.java",
+                      "code/config/sql/ags_test_seed.sql"
+                    ]
+                  },
+                  {
+                    "action": "Обновлена проектная документация и план разработки",
+                    "details": "modules.json, project-development.json и journal синхронизированы со статусами DAO, добавлены новые задачи и связи.",
+                    "outcome": "Документация отражает реализацию DAO и тестовые сценарии",
+                    "references": [
+                      "docs/project/extensions/modules/modules.json",
+                      "docs/development/project-development.json",
+                      "docs/journal/project-journal.json"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Сервисный слой для og/ogAg (progress). № log-2025-11-10-008",
+                "log-attributes": {
+                  "id": "log-2025-11-10-008",
+                  "timestamp": "2025-11-10T15:00:00Z",
+                  "level": "progress",
+                  "effort": "2h30m",
+                  "status": "in-progress",
+                  "links": {
+                    "projectDocsRefs": [
+                      "component:backend.database.service",
+                      "class:backend.database.service.DefaultOgService",
+                      "class:backend.database.service.DefaultOgAgService"
+                    ],
+                    "developmentTasks": [
+                      "task:0011",
+                      "task:0012",
+                      "task:0013",
+                      "task:0014"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Расширены интеграционные тесты DAO",
+                    "details": "Добавлены проверки каскадного удаления, отрицательные сценарии create/update и валидация обязательных полей для og и ogAg.",
+                    "outcome": "Слой DAO покрывает граничные случаи и подтверждает поведение ограничений БД",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/test/java/com/femsq/database/dao/JdbcOgDaoIntegrationTest.java",
+                      "code/femsq-backend/femsq-database/src/test/java/com/femsq/database/dao/JdbcOgAgDaoIntegrationTest.java"
+                    ]
+                  },
+                  {
+                    "action": "Реализован сервисный слой",
+                    "details": "Созданы OgService/OgAgService и реализации DefaultOgService/DefaultOgAgService с бизнес-валидацией и логированием.",
+                    "outcome": "Логика доступа к данным подготовлена к использованию в верхнем уровне приложения",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/service/OgService.java",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/service/DefaultOgService.java",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/service/OgAgService.java",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/service/DefaultOgAgService.java"
+                    ]
+                  },
+                  {
+                    "action": "Синхронизирована документация",
+                    "details": "Обновлены tasks/structure в project-development.json и modules.json для сервисного слоя, подготовлена запись в журнале.",
+                    "outcome": "Документация отражает текущее состояние сервисов и их зависимости",
+                    "references": [
+                      "docs/development/project-development.json",
+                      "docs/project/extensions/modules/modules.json"
+                    ]
+                  },
+                  {
+                    "action": "Подготовлен план CI для DAO",
+                    "details": "Описаны Maven профили, требования к переменным окружения и шаги GitHub Actions для запуска DAO unit/integration тестов.",
+                    "outcome": "Есть roadmap для автоматизации сборки и тестирования DAO в CI",
+                    "references": [
+                      "docs/development/notes/dao-ci-plan.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
       ],
       "links": {
         "projectDocs": "../project/project-docs.json",
