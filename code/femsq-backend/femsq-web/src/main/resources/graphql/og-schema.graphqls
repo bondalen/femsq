@@ -1,0 +1,82 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+scalar UUID
+
+type Query {
+  organizations: [Organization!]!
+  organization(id: Int!): Organization
+  agents: [Agent!]!
+  agent(id: Int!): Agent
+  organizationAgents(organizationId: Int!): [Agent!]!
+}
+
+type Mutation {
+  createOrganization(input: OgCreateRequest!): Organization!
+  updateOrganization(id: Int!, input: OgUpdateRequest!): Organization!
+  deleteOrganization(id: Int!): Boolean!
+  createAgent(input: OgAgCreateRequest!): Agent!
+  updateAgent(id: Int!, input: OgAgUpdateRequest!): Agent!
+  deleteAgent(id: Int!): Boolean!
+}
+
+type Organization {
+  ogKey: Int
+  ogName: String!
+  ogOfficialName: String!
+  ogFullName: String
+  ogDescription: String
+  inn: Float
+  kpp: Float
+  ogrn: Float
+  okpo: Float
+  oe: Int
+  registrationTaxType: String!
+}
+
+type Agent {
+  ogAgKey: Int
+  code: String!
+  organizationKey: Int!
+  legacyOid: UUID
+}
+
+input OgCreateRequest {
+  ogName: String!
+  ogOfficialName: String!
+  ogFullName: String
+  ogDescription: String
+  inn: Float
+  kpp: Float
+  ogrn: Float
+  okpo: Float
+  oe: Int
+  registrationTaxType: String!
+}
+
+input OgUpdateRequest {
+  ogName: String!
+  ogOfficialName: String!
+  ogFullName: String
+  ogDescription: String
+  inn: Float
+  kpp: Float
+  ogrn: Float
+  okpo: Float
+  oe: Int
+  registrationTaxType: String!
+}
+
+input OgAgCreateRequest {
+  code: String!
+  organizationKey: Int!
+  legacyOid: UUID
+}
+
+input OgAgUpdateRequest {
+  code: String!
+  organizationKey: Int!
+  legacyOid: UUID
+}

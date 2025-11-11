@@ -23,8 +23,8 @@ import java.util.logging.Logger;
 public class ConfigurationFileManager {
 
     private static final Logger log = Logger.getLogger(ConfigurationFileManager.class.getName());
-    private static final Path CONFIG_DIR = Paths.get(System.getProperty("user.home"), ".femsq");
-    private static final Path CONFIG_FILE = CONFIG_DIR.resolve("database.properties");
+    private static final String CONFIG_DIR_NAME = ".femsq";
+    private static final String CONFIG_FILE_NAME = "database.properties";
     private static final Set<PosixFilePermission> CONFIG_DIRECTORY_PERMISSIONS =
             PosixFilePermissions.fromString("rwx------");
     private static final Set<PosixFilePermission> CONFIG_FILE_PERMISSIONS =
@@ -36,7 +36,11 @@ public class ConfigurationFileManager {
      * @return путь к {@code database.properties}
      */
     public Path resolveConfigPath() {
-        return CONFIG_FILE;
+        return resolveConfigDirectory().resolve(CONFIG_FILE_NAME);
+    }
+
+    private Path resolveConfigDirectory() {
+        return Paths.get(System.getProperty("user.home"), CONFIG_DIR_NAME);
     }
 
     /**
@@ -45,18 +49,19 @@ public class ConfigurationFileManager {
      * @return прочитанные свойства
      */
     public Properties loadProperties() {
-        log.log(Level.INFO, "Loading configuration properties from {0}", CONFIG_FILE);
+        Path configFile = resolveConfigPath();
+        log.log(Level.INFO, "Loading configuration properties from {0}", configFile);
         Properties properties = new Properties();
-        if (Files.notExists(CONFIG_FILE)) {
-            log.log(Level.WARNING, "Configuration file {0} does not exist. Returning empty properties.", CONFIG_FILE);
+        if (Files.notExists(configFile)) {
+            log.log(Level.WARNING, "Configuration file {0} does not exist. Returning empty properties.", configFile);
             return properties;
         }
 
-        try (var inputStream = Files.newInputStream(CONFIG_FILE)) {
+        try (var inputStream = Files.newInputStream(configFile)) {
             properties.load(inputStream);
             return properties;
         } catch (IOException ioException) {
-            log.log(Level.SEVERE, "Failed to load configuration from " + CONFIG_FILE, ioException);
+            log.log(Level.SEVERE, "Failed to load configuration from " + configFile, ioException);
             throw new ConfigurationFileOperationException("Не удалось прочитать файл конфигурации", ioException);
         }
     }
@@ -68,33 +73,34 @@ public class ConfigurationFileManager {
      */
     public void writeProperties(Properties properties) {
         Objects.requireNonNull(properties, "properties");
-        log.log(Level.INFO, "Writing configuration properties to {0}", CONFIG_FILE);
+        Path configFile = resolveConfigPath();
+        log.log(Level.INFO, "Writing configuration properties to {0}", configFile);
 
         ensureDirectoryWithPermissions();
         var fileAttributes = new FileAttribute<?>[]{PosixFilePermissions.asFileAttribute(CONFIG_FILE_PERMISSIONS)};
 
         try {
-            if (Files.notExists(CONFIG_FILE)) {
+            if (Files.notExists(configFile)) {
                 try {
-                    Files.createFile(CONFIG_FILE, fileAttributes);
+                    Files.createFile(configFile, fileAttributes);
                 } catch (UnsupportedOperationException unsupportedOperationException) {
-                    Files.createFile(CONFIG_FILE);
+                    Files.createFile(configFile);
                 }
             }
         } catch (IOException createException) {
-            log.log(Level.SEVERE, "Failed to create configuration file " + CONFIG_FILE, createException);
+            log.log(Level.SEVERE, "Failed to create configuration file " + configFile, createException);
             throw new ConfigurationFileOperationException("Не удалось создать файл конфигурации", createException);
         }
 
-        try (var outputStream = Files.newOutputStream(CONFIG_FILE)) {
+        try (var outputStream = Files.newOutputStream(configFile)) {
             properties.store(outputStream, "FEMSQ database connection settings");
             try {
-                Files.setPosixFilePermissions(CONFIG_FILE, CONFIG_FILE_PERMISSIONS);
+                Files.setPosixFilePermissions(configFile, CONFIG_FILE_PERMISSIONS);
             } catch (UnsupportedOperationException ignored) {
                 // Игнорируем на платформах без POSIX прав
             }
         } catch (IOException ioException) {
-            log.log(Level.SEVERE, "Failed to write configuration to " + CONFIG_FILE, ioException);
+            log.log(Level.SEVERE, "Failed to write configuration to " + configFile, ioException);
             throw new ConfigurationFileOperationException("Не удалось записать файл конфигурации", ioException);
         }
     }
@@ -103,17 +109,18 @@ public class ConfigurationFileManager {
      * Обеспечивает наличие директории конфигурации и устанавливает безопасные права доступа.
      */
     public void ensureDirectoryWithPermissions() {
-        log.log(Level.FINE, "Ensuring configuration directory {0} exists with secure permissions", CONFIG_DIR);
-        if (Files.exists(CONFIG_DIR)) {
-            applyDirectoryPermissions(CONFIG_DIR);
+        Path configDirectory = resolveConfigDirectory();
+        log.log(Level.FINE, "Ensuring configuration directory {0} exists with secure permissions", configDirectory);
+        if (Files.exists(configDirectory)) {
+            applyDirectoryPermissions(configDirectory);
             return;
         }
 
         try {
-            Files.createDirectories(CONFIG_DIR);
-            applyDirectoryPermissions(CONFIG_DIR);
+            Files.createDirectories(configDirectory);
+            applyDirectoryPermissions(configDirectory);
         } catch (IOException ioException) {
-            log.log(Level.SEVERE, "Failed to create configuration directory " + CONFIG_DIR, ioException);
+            log.log(Level.SEVERE, "Failed to create configuration directory " + configDirectory, ioException);
             throw new ConfigurationFileOperationException("Не удалось создать директорию конфигурации", ioException);
         }
     }

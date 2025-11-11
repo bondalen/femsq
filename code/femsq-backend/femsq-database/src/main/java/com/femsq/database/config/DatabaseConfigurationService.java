@@ -39,6 +39,10 @@ public class DatabaseConfigurationService {
         Path configPath = fileManager.resolveConfigPath();
         log.log(Level.INFO, "Loading database configuration from {0}", configPath);
         var rawProperties = fileManager.loadProperties();
+        if (rawProperties.isEmpty()) {
+            log.log(Level.WARNING, "Database configuration file {0} is missing or empty", configPath);
+            throw new MissingConfigurationException(configPath);
+        }
         return validator.map(rawProperties);
     }
 
@@ -88,5 +92,20 @@ public class DatabaseConfigurationService {
             String username,
             String password,
             String authMode) {
+    }
+
+    /**
+     * Исключение, сигнализирующее об отсутствии пользовательского файла конфигурации.
+     */
+    public static class MissingConfigurationException extends RuntimeException {
+
+        /**
+         * Создает исключение с указанием пути отсутствующего файла.
+         *
+         * @param configPath путь к ожидаемому файлу конфигурации
+         */
+        public MissingConfigurationException(Path configPath) {
+            super("Файл конфигурации подключения к базе данных не найден: " + configPath);
+        }
     }
 }

@@ -58,6 +58,11 @@ class ConfigurationComponentTest {
     }
 
     @Test
+    void loadConfigThrowsWhenFileMissing() {
+        assertThrows(DatabaseConfigurationService.MissingConfigurationException.class, () -> configurationService.loadConfig());
+    }
+
+    @Test
     void writePropertiesCreatesFileAndPersistsValues() {
         Properties properties = new Properties();
         properties.setProperty("host", "db.server.local");
