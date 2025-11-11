@@ -1,7 +1,7 @@
 {
   "modules": {
     "version": "1.0.0",
-    "lastUpdated": "2025-11-10",
+    "lastUpdated": "2025-11-11",
     "description": "Структура модулей проекта FEMSQ",
     
     "items": [
@@ -847,6 +847,85 @@
                     "type": "typescript-modules",
                     "artifact_type": "directory"
                   }
+                }
+              }
+            },
+            {
+              "component": {
+                "displayName": "Application Layout. № 02.03",
+                "attributes": {
+                  "id": "layout",
+                  "number": "02.03",
+                  "name": "Application Layout",
+                  "description": "Постоянный каркас приложения с верхней панелью и строкой состояния",
+                  "status": "planned",
+                  "artifact": {
+                    "location": "src/components/layout/",
+                    "file_path": "src/components/layout/",
+                    "type": "vue-components",
+                    "artifact_type": "directory"
+                  },
+                  "responsibilities": [
+                    "Фиксированная верхняя панель с действиями",
+                    "Основная область контента",
+                    "Нижняя строка состояния соединения"
+                  ],
+                  "documentation": [
+                    "docs/development/notes/UI/02-1-1_app-layout.md"
+                  ]
+                }
+              }
+            },
+            {
+              "component": {
+                "displayName": "Connection Modal. № 02.04",
+                "attributes": {
+                  "id": "connectionModal",
+                  "number": "02.04",
+                  "name": "Connection Modal",
+                  "description": "Модальная форма подключения к базе данных",
+                  "status": "planned",
+                  "artifact": {
+                    "location": "src/components/setup/connection-modal/",
+                    "file_path": "src/components/setup/connection-modal/",
+                    "type": "vue-components",
+                    "artifact_type": "directory"
+                  },
+                  "responsibilities": [
+                    "Сбор параметров подключения к БД",
+                    "Валидация и отображение ошибок",
+                    "Инициация процесса подключения и обновление статуса"
+                  ],
+                  "documentation": [
+                    "docs/development/notes/UI/02-1-2_connection-modal.md"
+                  ]
+                }
+              }
+            },
+            {
+              "component": {
+                "displayName": "Organizations Screen. № 02.05",
+                "attributes": {
+                  "id": "organizationsScreen",
+                  "number": "02.05",
+                  "name": "Organizations Screen",
+                  "description": "Экран просмотра организаций и связанных агентов",
+                  "status": "planned",
+                  "artifact": {
+                    "location": "src/views/organizations/",
+                    "file_path": "src/views/organizations/",
+                    "type": "vue-views",
+                    "artifact_type": "directory"
+                  },
+                  "responsibilities": [
+                    "Отображение таблицы организаций",
+                    "Показ карточки с деталями",
+                    "Список агентов и фильтрация"
+                  ],
+                  "documentation": [
+                    "docs/development/notes/UI/02-1-3_organizations-screen.md",
+                    "docs/development/notes/UI/02-1-4_connection-to-organizations-flow.md"
+                  ]
                 }
               }
             }

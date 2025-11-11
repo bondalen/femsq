@@ -6,7 +6,7 @@
             "description": "Cистема работы с контрагентами и объектами при капитальном строительстве на основе БД MS SQL Server FEMSQ (Fish Eye MS SQL Server)",
             "author": "Александр",
             "created": "2025-10-08",
-            "lastUpdated": "2025-11-10",
+            "lastUpdated": "2025-11-11",
             "status": "planning",
             "repository": "https://github.com/bondalen/femsq.git",
             "license": "MIT",
@@ -67,7 +67,7 @@
         "modules": {
             "description": "Структура модулей проекта FEMSQ",
             "version": "1.0.0",
-            "lastUpdated": "2025-11-10",
+            "lastUpdated": "2025-11-11",
             "structure": {
                 "type": "recursive",
                 "entities": ["Module", "Component", "Class"],
@@ -531,6 +531,68 @@
                     ],
                     "status": "planned",
                     "progress": 0
+                }
+            ]
+        },
+        "quality": {
+            "lastUpdated": "2025-11-11",
+            "checkpoints": [
+                {
+                    "id": "K1",
+                    "name": "Контрольная точка K1 - Backend API",
+                    "date": "2025-11-11",
+                    "status": "completed",
+                    "description": "Backend REST/GraphQL API подтверждён интеграционным тестом ApiOrganizationsSuccessIT и ручной проверкой через временный database.properties.",
+                    "verification": {
+                        "automatedTests": [
+                            "ApiOrganizationsSuccessIT (Spring Boot, JUnit 5)"
+                        ],
+                        "manualSteps": [
+                            "GET /api/v1/organizations",
+                            "GET /api/v1/agents",
+                            "POST /graphql { organizations { ogKey ogName } }"
+                        ]
+                    },
+                    "links": {
+                        "projectDocsRefs": [
+                            "module:backend.web",
+                            "component:backend.web.api.rest",
+                            "component:backend.web.api.graphql"
+                        ],
+                        "developmentTasks": [
+                            "task:0017"
+                        ],
+                        "journalRefs": [
+                            "log:log-2025-11-11-001"
+                        ]
+                    }
+                }
+            ],
+            "tests": [
+                {
+                    "name": "ApiOrganizationsSuccessIT",
+                    "type": "integration",
+                    "scope": [
+                        "REST /api/v1/organizations",
+                        "REST /api/v1/agents",
+                        "GraphQL organizations query"
+                    ],
+                    "environment": "Схема ags_test, временный каталог user.home с database.properties",
+                    "automation": "JUnit 5 @SpringBootTest + TestRestTemplate",
+                    "manualMode": {
+                        "enabled": true,
+                        "timeoutMinutes": 3,
+                        "stopFile": "/tmp/femsq-api-stop"
+                    },
+                    "links": {
+                        "source": "code/femsq-backend/femsq-web/src/test/java/com/femsq/web/api/rest/ApiOrganizationsSuccessIT.java",
+                        "journalRefs": [
+                            "log:log-2025-11-11-001"
+                        ],
+                        "developmentTasks": [
+                            "task:0017"
+                        ]
+                    }
                 }
             ]
         },

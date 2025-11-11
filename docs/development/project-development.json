@@ -3,13 +3,13 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2025-10-09",
+      "lastUpdated": "2025-11-11",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0016",
+      "nextTaskId": "0020",
       "items": {
         "0001": {
           "task": {
@@ -413,6 +413,116 @@
               "lastUpdated": "2025-11-10"
             }
           }
+        },
+        "0016": {
+          "task": {
+            "displayName": "DTO и мапперы для Og/OgAg (pending, high). № 0016",
+            "task-attributes": {
+              "status": "pending",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Созданы DTO для чтения и записи организаций og и ogAg",
+                "Реализованы мапперы между DAO-моделями, DTO и GraphQL типами",
+                "Добавлены unit-тесты и JavaDoc для всех публичных методов мапперов",
+                "Описание DTO включено в документацию API"
+              ],
+              "description": "Подготовка DTO-слоя и мапперов для сервисов OgService/OgAgService под REST и GraphQL сценарии",
+              "links": {
+                "projectDocsRefs": [
+                  "component:backend.database.service",
+                  "module:backend.web"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-11-11",
+              "lastUpdated": "2025-11-11"
+            }
+          }
+        },
+        "0017": {
+          "task": {
+            "displayName": "REST/GraphQL API для Og/OgAg (completed, critical). № 0017",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "critical",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Реализованы REST эндпоинты для чтения и управления организациями og и ogAg",
+                "Определена GraphQL схема и резолверы для основных операций",
+                "Интеграционные тесты покрывают ключевые сценарии и проходят",
+                "Проведено ручное тестирование через браузер/REST-клиент и зафиксирована контрольная точка K1"
+              ],
+              "description": "Разработка REST и GraphQL API слоя для сервисов OgService/OgAgService с обеспечением контрольной точки K1",
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.web",
+                  "component:backend.database.service"
+                ],
+                "journalRefs": [
+                  "log:log-2025-11-11-001"
+                ],
+                "aiRuleRefs": []
+              },
+              "created": "2025-11-11",
+              "lastUpdated": "2025-11-11"
+            }
+          }
+        },
+        "0018": {
+          "task": {
+            "displayName": "Интерфейс просмотра организаций/агентов (pending, high). № 0018",
+            "task-attributes": {
+              "status": "pending",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Реализован UX-флоу подключения к базе с валидацией входных данных",
+                "Созданы компоненты списков и карточек организаций og и агентов ogAg",
+                "Интеграция с REST/GraphQL API для загрузки и обновления данных настроена",
+                "Проведены UX-проверки и зафиксирована контрольная точка K2"
+              ],
+              "description": "Разработка фронтенд-интерфейса для подключения к базе данных и работы с таблицами организаций и агентских организаций",
+              "links": {
+                "projectDocsRefs": [
+                  "module:frontend",
+                  "module:backend.web"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-11-11",
+              "lastUpdated": "2025-11-11"
+            }
+          }
+        },
+        "0019": {
+          "task": {
+            "displayName": "UX-макет подключения и просмотра организаций (completed, high). № 0019",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Зафиксирован layout экрана приложения с кнопками и строкой состояния",
+                "Описан сценарий модальной формы подключения к БД",
+                "Определена структура экрана организаций и списка агентов",
+                "Задокументированы пользовательские сценарии \"подключение → просмотр организаций\""
+              ],
+              "description": "Подготовка UX-макета и пользовательских сценариев блока 02.1 для интерфейса подключения и просмотра организаций в рамках задачи 0018",
+              "links": {
+                "projectDocsRefs": [
+                  "module:frontend",
+                  "module:backend.web"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-11-11",
+              "lastUpdated": "2025-11-11"
+            }
+          }
         }
       }
     },
@@ -583,6 +693,17 @@
                                     },
                                     "task-items": []
                                   }
+                                },
+                                {
+                                  "task-item": {
+                                    "displayName": "⏳ DTO и мапперы для Og/OgAg (pending, high). № 01.01.01.05.04 → 0016",
+                                    "item-attributes": {
+                                      "structureId": "01.01.01.05.04",
+                                      "taskId": "0016",
+                                      "positionInParent": 4
+                                    },
+                                    "task-items": []
+                                  }
                                 }
                               ]
                             }
@@ -592,13 +713,26 @@
                     },
                     {
                       "task-item": {
-                        "displayName": "⏳ Web API модуль (pending, high). № 01.01.02 → 0007",
+                        "displayName": "✅ Web API модуль (completed, high). № 01.01.02 → 0007",
                         "item-attributes": {
                           "structureId": "01.01.02",
                           "taskId": "0007",
                           "positionInParent": 2
                         },
-                        "task-items": []
+                        "task-items": [
+                          {
+                            "task-item": {
+                              "displayName": "✅ REST/GraphQL API для Og/OgAg (completed, critical). № 01.01.02.01 → 0017",
+                              "item-attributes": {
+                                "structureId": "01.01.02.01",
+                                "taskId": "0017",
+                                "positionInParent": 1,
+                                "comment": "Контрольная точка K1 закреплена 2025-11-11"
+                              },
+                              "task-items": []
+                            }
+                          }
+                        ]
                       }
                     }
                   ]
@@ -612,7 +746,31 @@
                     "taskId": "0008",
                     "positionInParent": 2
                   },
-                  "task-items": []
+                  "task-items": [
+                    {
+                      "task-item": {
+                        "displayName": "⏳ Интерфейс просмотра организаций/агентов (pending, high). № 01.02.01 → 0018",
+                        "item-attributes": {
+                          "structureId": "01.02.01",
+                          "taskId": "0018",
+                          "positionInParent": 1
+                        },
+                        "task-items": [
+                          {
+                            "task-item": {
+                              "displayName": "✅ UX-макет подключения и просмотра (completed, high). № 01.02.01.01 → 0019",
+                              "item-attributes": {
+                                "structureId": "01.02.01.01",
+                                "taskId": "0019",
+                                "positionInParent": 1
+                              },
+                              "task-items": []
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
                 }
               }
             ]
@@ -724,6 +882,54 @@
                     }
                   ]
                 }
+              },
+              {
+                "task-item": {
+                  "displayName": "Работа с организациями и UI (группировочный). № 02.02",
+                  "item-attributes": {
+                    "structureId": "02.02",
+                    "taskId": null,
+                    "positionInParent": 2,
+                    "comment": "Контрольные точки K1 и K2 для API и интерфейса"
+                  },
+                  "task-items": [
+                    {
+                      "task-item": {
+                        "displayName": "✅ REST/GraphQL API для Og/OgAg (completed, critical). № 02.02.01 → 0017",
+                        "item-attributes": {
+                          "structureId": "02.02.01",
+                          "taskId": "0017",
+                          "positionInParent": 1,
+                          "comment": "K1 выполнена 2025-11-11"
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "⏳ Интерфейс просмотра организаций/агентов (pending, high). № 02.02.02 → 0018",
+                        "item-attributes": {
+                          "structureId": "02.02.02",
+                          "taskId": "0018",
+                          "positionInParent": 2
+                        },
+                        "task-items": [
+                          {
+                            "task-item": {
+                              "displayName": "✅ UX-макет подключения и просмотра (completed, high). № 02.02.02.01 → 0019",
+                              "item-attributes": {
+                                "structureId": "02.02.02.01",
+                                "taskId": "0019",
+                                "positionInParent": 1
+                              },
+                              "task-items": []
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
               }
             ]
           }
@@ -824,6 +1030,17 @@
                               },
                               "task-items": []
                             }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "⏳ DTO и мапперы для Og/OgAg (pending, high). № 0a.01.04.04 → 0016",
+                              "item-attributes": {
+                                "structureId": "0a.01.04.04",
+                                "taskId": "0016",
+                                "positionInParent": 4
+                              },
+                              "task-items": []
+                            }
                           }
                         ]
                       }
@@ -833,13 +1050,26 @@
               },
               {
                 "task-item": {
-                  "displayName": "⏳ Web API модуль (pending, high). № 0a.02 → 0007",
+                  "displayName": "✅ Web API модуль (completed, high). № 0a.02 → 0007",
                   "item-attributes": {
                     "structureId": "0a.02",
                     "taskId": "0007",
                     "positionInParent": 2
                   },
-                  "task-items": []
+                  "task-items": [
+                    {
+                      "task-item": {
+                        "displayName": "✅ REST/GraphQL API для Og/OgAg (completed, critical). № 0a.02.01 → 0017",
+                        "item-attributes": {
+                          "structureId": "0a.02.01",
+                          "taskId": "0017",
+                          "positionInParent": 1,
+                          "comment": "REST/GraphQL API подтверждён (K1 2025-11-11)"
+                        },
+                        "task-items": []
+                      }
+                    }
+                  ]
                 }
               },
               {
@@ -850,7 +1080,31 @@
                     "taskId": "0008",
                     "positionInParent": 3
                   },
-                  "task-items": []
+                  "task-items": [
+                    {
+                      "task-item": {
+                        "displayName": "⏳ Интерфейс просмотра организаций/агентов (pending, high). № 0a.03.01 → 0018",
+                        "item-attributes": {
+                          "structureId": "0a.03.01",
+                          "taskId": "0018",
+                          "positionInParent": 1
+                        },
+                        "task-items": [
+                          {
+                            "task-item": {
+                              "displayName": "⏳ UX-макет подключения и просмотра (pending, high). № 0a.03.01.01 → 0019",
+                              "item-attributes": {
+                                "structureId": "0a.03.01.01",
+                                "taskId": "0019",
+                                "positionInParent": 1
+                              },
+                              "task-items": []
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
                 }
               }
             ]
