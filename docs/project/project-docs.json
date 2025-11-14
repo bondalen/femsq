@@ -6,7 +6,7 @@
             "description": "Cистема работы с контрагентами и объектами при капитальном строительстве на основе БД MS SQL Server FEMSQ (Fish Eye MS SQL Server)",
             "author": "Александр",
             "created": "2025-10-08",
-            "lastUpdated": "2025-11-11",
+            "lastUpdated": "2025-11-13",
             "status": "planning",
             "repository": "https://github.com/bondalen/femsq.git",
             "license": "MIT",
@@ -48,7 +48,76 @@
                 "database": "MS SQL Server (внешняя)",
                 "monitoring": "Spring Boot Actuator",
                 "ai": "MCP Servers",
-                "deployment": "Spring Boot Fat JAR"
+                "deployment": "Spring Boot Fat JAR",
+                "ci_cd": {
+                    "platform": "GitHub Actions",
+                    "workflow": ".github/workflows/ci.yml",
+                    "description": "Автоматический запуск тестов при PR и merge в main",
+                    "jobs": [
+                        {
+                            "name": "unit-tests",
+                            "trigger": "При каждом PR и push",
+                            "description": "Запуск unit-тестов"
+                        },
+                        {
+                            "name": "integration-tests",
+                            "trigger": "При merge в main или по требованию [test-integration]",
+                            "description": "Запуск integration-тестов с MS SQL Server в Docker"
+                        },
+                        {
+                            "name": "e2e-tests",
+                            "trigger": "При merge в main или по требованию [test-e2e]",
+                            "description": "Запуск E2E-тестов Playwright"
+                        },
+                        {
+                            "name": "code-coverage",
+                            "trigger": "При merge в main",
+                            "description": "Генерация отчетов о покрытии кода (JaCoCo)"
+                        }
+                    ]
+                },
+                "testing": {
+                    "framework": "JUnit 5",
+                    "unit_tests": {
+                        "tool": "Maven Surefire Plugin",
+                        "profile": "unit (по умолчанию)",
+                        "pattern": "**/*Test.java",
+                        "location": "src/test/java"
+                    },
+                    "integration_tests": {
+                        "tool": "Maven Failsafe Plugin",
+                        "profile": "integration",
+                        "pattern": "**/*IT.java, **/*IntegrationTest.java",
+                        "location": "src/test/java",
+                        "requirements": "Переменные FEMSQ_DB_*"
+                    },
+                    "e2e_tests": {
+                        "tool": "Playwright",
+                        "location": "code/femsq-frontend/tests/e2e",
+                        "requirements": "Запущенный backend на localhost:8080"
+                    },
+                    "coverage": {
+                        "tool": "JaCoCo",
+                        "profile": "ci",
+                        "reports": "target/site/jacoco/index.html",
+                        "minimum_coverage": "50%"
+                    },
+                    "scripts": {
+                        "location": "code/scripts/",
+                        "files": [
+                            "test-unit.sh",
+                            "test-integration.sh",
+                            "test-all.sh",
+                            "test-e2e.sh"
+                        ],
+                        "documentation": "code/scripts/README-TESTING.md"
+                    },
+                    "documentation": [
+                        "docs/development/notes/testing-strategy.md",
+                        "docs/development/notes/testing-recommendations.md",
+                        "docs/development/notes/testing-improvements-summary.md"
+                    ]
+                }
             }
         },
         "features": {
@@ -67,7 +136,7 @@
         "modules": {
             "description": "Структура модулей проекта FEMSQ",
             "version": "1.0.0",
-            "lastUpdated": "2025-11-11",
+            "lastUpdated": "2025-11-12",
             "structure": {
                 "type": "recursive",
                 "entities": ["Module", "Component", "Class"],
@@ -333,9 +402,39 @@
                     },
                     "test": {
                         "command": "mvn test",
-                        "description": "Запуск unit и integration тестов (при наличии переменных FEMSQ_DB_*)",
+                        "description": "Запуск unit-тестов (быстро, не требует БД)",
                         "location": "code/femsq-backend",
-                        "usage": "Тестирование кода"
+                        "usage": "Быстрое тестирование кода"
+                    },
+                    "testUnit": {
+                        "command": "./code/scripts/test-unit.sh",
+                        "description": "Запуск unit-тестов через скрипт",
+                        "location": "project root",
+                        "usage": "Удобный запуск unit-тестов"
+                    },
+                    "testIntegration": {
+                        "command": "./code/scripts/test-integration.sh",
+                        "description": "Запуск integration-тестов (требует переменные FEMSQ_DB_*)",
+                        "location": "project root",
+                        "usage": "Тестирование с реальной БД"
+                    },
+                    "testAll": {
+                        "command": "./code/scripts/test-all.sh",
+                        "description": "Запуск всех тестов (unit + integration)",
+                        "location": "project root",
+                        "usage": "Полная проверка перед коммитом"
+                    },
+                    "testE2E": {
+                        "command": "./code/scripts/test-e2e.sh",
+                        "description": "Запуск E2E-тестов Playwright (требует запущенный backend)",
+                        "location": "project root",
+                        "usage": "Тестирование UI через браузер"
+                    },
+                    "testWithCoverage": {
+                        "command": "mvn test -Pci",
+                        "description": "Запуск unit-тестов с генерацией отчета о покрытии кода",
+                        "location": "code/femsq-backend",
+                        "usage": "Анализ покрытия кода тестами"
                     },
                     "setJavaHome": {
                         "command": "source code/scripts/setup-java-home.sh",

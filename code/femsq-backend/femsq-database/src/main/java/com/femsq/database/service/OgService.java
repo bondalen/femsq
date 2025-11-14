@@ -18,6 +18,24 @@ public interface OgService {
     List<Og> getAll();
 
     /**
+     * Возвращает организации с пагинацией и сортировкой.
+     *
+     * @param page номер страницы (начиная с 0)
+     * @param size размер страницы
+     * @param sortField поле для сортировки (например, "ogNm")
+     * @param sortDirection направление сортировки ("asc" или "desc")
+     * @return список организаций для запрошенной страницы
+     */
+    List<Og> getAll(int page, int size, String sortField, String sortDirection);
+
+    /**
+     * Подсчитывает общее количество организаций.
+     *
+     * @return общее количество записей
+     */
+    long count();
+
+    /**
      * Ищет организацию по идентификатору.
      *
      * @param ogKey первичный ключ организации

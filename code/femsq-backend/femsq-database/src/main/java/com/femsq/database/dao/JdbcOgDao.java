@@ -1,5 +1,6 @@
 package com.femsq.database.dao;
 
+import com.femsq.database.config.DatabaseConfigurationService;
 import com.femsq.database.connection.ConnectionFactory;
 import com.femsq.database.exception.DaoException;
 import com.femsq.database.model.Og;
@@ -22,18 +23,35 @@ import java.util.logging.Logger;
 public class JdbcOgDao implements OgDao {
 
     private static final Logger log = Logger.getLogger(JdbcOgDao.class.getName());
-    private static final String TABLE_NAME = "ags_test.og";
+    private static final String TABLE_BASE_NAME = "og";
 
     private final ConnectionFactory connectionFactory;
+    private final DatabaseConfigurationService configurationService;
 
-    public JdbcOgDao(ConnectionFactory connectionFactory) {
+    public JdbcOgDao(ConnectionFactory connectionFactory, DatabaseConfigurationService configurationService) {
         this.connectionFactory = Objects.requireNonNull(connectionFactory, "connectionFactory");
+        this.configurationService = Objects.requireNonNull(configurationService, "configurationService");
+    }
+
+    /**
+     * Возвращает полное имя таблицы с учетом текущей схемы из конфигурации.
+     *
+     * @return полное имя таблицы в формате "schema.table"
+     */
+    private String getTableName() {
+        try {
+            String schema = configurationService.loadConfig().schema();
+            return schema + "." + TABLE_BASE_NAME;
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            log.log(Level.WARNING, "Configuration not found, using default schema", exception);
+            return "ags_test." + TABLE_BASE_NAME;
+        }
     }
 
     @Override
     public Optional<Og> findById(int ogKey) {
         String sql = "SELECT ogKey, ogNm, ogNmOf, ogNmFl, ogTxt, ogINN, ogKPP, ogOGRN, ogOKPO, ogOE, ogRgTaxType "
-                + "FROM " + TABLE_NAME + " WHERE ogKey = ?";
+                + "FROM " + getTableName() + " WHERE ogKey = ?";
         log.log(Level.FINE, "Executing findById for ogKey={0}", ogKey);
         try (Connection connection = connectionFactory.createConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -53,7 +71,7 @@ public class JdbcOgDao implements OgDao {
     @Override
     public List<Og> findAll() {
         String sql = "SELECT ogKey, ogNm, ogNmOf, ogNmFl, ogTxt, ogINN, ogKPP, ogOGRN, ogOKPO, ogOE, ogRgTaxType FROM "
-                + TABLE_NAME + " ORDER BY ogKey";
+                + getTableName() + " ORDER BY ogKey";
         log.fine("Executing findAll for og");
         try (Connection connection = connectionFactory.createConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
@@ -70,9 +88,83 @@ public class JdbcOgDao implements OgDao {
     }
 
     @Override
+    public List<Og> findAll(int page, int size, String sortField, String sortDirection) {
+        // Валидация и нормализация параметров
+        String safeSortField = validateSortField(sortField);
+        String safeSortDirection = "desc".equalsIgnoreCase(sortDirection) ? "DESC" : "ASC";
+        int offset = page * size;
+
+        // SQL Server требует OFFSET, даже если он равен 0
+        // Используем синтаксис совместимый с SQL Server 2012+
+        String sql = "SELECT ogKey, ogNm, ogNmOf, ogNmFl, ogTxt, ogINN, ogKPP, ogOGRN, ogOKPO, ogOE, ogRgTaxType FROM "
+                + getTableName() + " ORDER BY " + safeSortField + " " + safeSortDirection
+                + " OFFSET " + offset + " ROWS FETCH NEXT " + size + " ROWS ONLY";
+        log.fine(() -> String.format("Executing findAll with pagination: page=%d, size=%d, sort=%s %s, offset=%d", 
+                page, size, safeSortField, safeSortDirection, offset));
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+            List<Og> result = new ArrayList<>();
+            while (resultSet.next()) {
+                result.add(mapOg(resultSet));
+            }
+            return List.copyOf(result);
+        } catch (SQLException exception) {
+            log.log(Level.SEVERE, "Failed to execute findAll with pagination", exception);
+            log.log(Level.SEVERE, "SQL: " + sql, exception);
+            throw new DaoException("Не удалось получить список организаций с пагинацией: " + exception.getMessage(), exception);
+        }
+    }
+
+    @Override
+    public long count() {
+        String sql = "SELECT COUNT(*) FROM " + getTableName();
+        log.fine("Executing count for og");
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+            if (resultSet.next()) {
+                return resultSet.getLong(1);
+            }
+            return 0L;
+        } catch (SQLException exception) {
+            log.log(Level.SEVERE, "Failed to execute count", exception);
+            throw new DaoException("Не удалось подсчитать количество организаций", exception);
+        }
+    }
+
+    /**
+     * Валидирует и нормализует имя поля для сортировки.
+     * Разрешает только безопасные имена полей для предотвращения SQL-инъекций.
+     */
+    private String validateSortField(String sortField) {
+        if (sortField == null || sortField.trim().isEmpty()) {
+            return "ogKey";
+        }
+        String normalized = sortField.trim();
+        // Разрешаем только известные поля
+        switch (normalized.toLowerCase()) {
+            case "ogkey":
+            case "ognm":
+            case "ognmof":
+            case "ognmfl":
+            case "oginn":
+            case "ogkpp":
+            case "ogogrn":
+            case "ogokpo":
+            case "ogoe":
+            case "ogrgtaxtype":
+                return normalized;
+            default:
+                log.warning(() -> "Invalid sort field: " + normalized + ", using default: ogKey");
+                return "ogKey";
+        }
+    }
+
+    @Override
     public Og create(Og organization) {
         Objects.requireNonNull(organization, "organization");
-        String sql = "INSERT INTO " + TABLE_NAME + " (ogNm, ogNmOf, ogNmFl, ogTxt, ogINN, ogKPP, ogOGRN, ogOKPO, ogOE, ogRgTaxType) "
+        String sql = "INSERT INTO " + getTableName() + " (ogNm, ogNmOf, ogNmFl, ogTxt, ogINN, ogKPP, ogOGRN, ogOKPO, ogOE, ogRgTaxType) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         log.log(Level.INFO, "Creating organization {0}", organization.ogName());
         try (Connection connection = connectionFactory.createConnection();
@@ -98,7 +190,7 @@ public class JdbcOgDao implements OgDao {
         if (organization.ogKey() == null) {
             throw new DaoException("Для обновления организации необходим идентификатор");
         }
-        String sql = "UPDATE " + TABLE_NAME
+        String sql = "UPDATE " + getTableName()
                 + " SET ogNm = ?, ogNmOf = ?, ogNmFl = ?, ogTxt = ?, ogINN = ?, ogKPP = ?, ogOGRN = ?, ogOKPO = ?, ogOE = ?, ogRgTaxType = ?"
                 + " WHERE ogKey = ?";
         log.log(Level.INFO, "Updating organization {0}", organization.ogKey());
@@ -119,7 +211,7 @@ public class JdbcOgDao implements OgDao {
 
     @Override
     public boolean deleteById(int ogKey) {
-        String sql = "DELETE FROM " + TABLE_NAME + " WHERE ogKey = ?";
+        String sql = "DELETE FROM " + getTableName() + " WHERE ogKey = ?";
         log.log(Level.INFO, "Deleting organization {0}", ogKey);
         try (Connection connection = connectionFactory.createConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {

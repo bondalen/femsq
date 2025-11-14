@@ -1,0 +1,203 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+      
+      - name: Run unit tests
+        working-directory: code/femsq-backend
+        run: mvn test
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results
+          path: code/femsq-backend/**/target/surefire-reports/
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    # Запускаем только если изменены файлы, связанные с БД или API
+    if: |
+      contains(github.event.head_commit.message, '[test-integration]') ||
+      contains(github.event.pull_request.title, '[test-integration]') ||
+      github.event_name == 'push'
+    
+    services:
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          SA_PASSWORD: ${{ secrets.MSSQL_SA_PASSWORD || 'TestPassword123!' }}
+          MSSQL_PID: Developer
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P ${{ secrets.MSSQL_SA_PASSWORD || 'TestPassword123!' }} -Q 'SELECT 1' || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+      
+      - name: Wait for SQL Server
+        run: |
+          for i in {1..30}; do
+            if /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "${{ secrets.MSSQL_SA_PASSWORD || 'TestPassword123!' }}" -Q "SELECT 1" &>/dev/null; then
+              echo "SQL Server is ready"
+              exit 0
+            fi
+            echo "Waiting for SQL Server..."
+            sleep 2
+          done
+          exit 1
+      
+      - name: Setup test database
+        run: |
+          /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "${{ secrets.MSSQL_SA_PASSWORD || 'TestPassword123!' }}" -Q "CREATE DATABASE FishEye"
+          /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "${{ secrets.MSSQL_SA_PASSWORD || 'TestPassword123!' }}" -d FishEye -i code/config/sql/ags_test_seed.sql
+        continue-on-error: true
+      
+      - name: Run integration tests
+        working-directory: code/femsq-backend
+        env:
+          FEMSQ_DB_HOST: localhost
+          FEMSQ_DB_PORT: 1433
+          FEMSQ_DB_NAME: FishEye
+          FEMSQ_DB_SCHEMA: ags_test
+          FEMSQ_DB_USER: sa
+          FEMSQ_DB_PASSWORD: ${{ secrets.MSSQL_SA_PASSWORD || 'TestPassword123!' }}
+          FEMSQ_DB_AUTH_MODE: credentials
+        run: mvn verify -Pintegration
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: code/femsq-backend/**/target/failsafe-reports/
+
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    # Запускаем только при merge в main или по требованию
+    if: |
+      github.event_name == 'push' && github.ref == 'refs/heads/main' ||
+      contains(github.event.head_commit.message, '[test-e2e]')
+    
+    services:
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          SA_PASSWORD: ${{ secrets.MSSQL_SA_PASSWORD || 'TestPassword123!' }}
+          MSSQL_PID: Developer
+        ports:
+          - 1433:1433
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: code/femsq-frontend/package-lock.json
+      
+      - name: Build backend
+        working-directory: code/femsq-backend
+        run: mvn clean package -DskipTests
+      
+      - name: Start backend
+        working-directory: code/femsq-backend/femsq-web
+        env:
+          FEMSQ_DB_HOST: localhost
+          FEMSQ_DB_PORT: 1433
+          FEMSQ_DB_NAME: FishEye
+          FEMSQ_DB_SCHEMA: ags_test
+          FEMSQ_DB_USER: sa
+          FEMSQ_DB_PASSWORD: ${{ secrets.MSSQL_SA_PASSWORD || 'TestPassword123!' }}
+          FEMSQ_DB_AUTH_MODE: credentials
+        run: |
+          java -jar target/femsq-web-*.jar &
+          sleep 10
+          curl -f http://localhost:8080/api/v1/connection/status || exit 1
+      
+      - name: Install Playwright
+        working-directory: code/femsq-frontend
+        run: |
+          npm install
+          npx playwright install --with-deps
+      
+      - name: Run E2E tests
+        working-directory: code/femsq-frontend
+        run: npm run test:e2e
+      
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: code/femsq-frontend/playwright-report/
+
+  code-coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    # Запускаем только при merge в main
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+      
+      - name: Run tests with coverage
+        working-directory: code/femsq-backend
+        run: mvn test -Pci
+      
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: code/femsq-backend/**/target/site/jacoco/
+
+

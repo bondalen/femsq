@@ -1,5 +1,6 @@
 package com.femsq.database.dao;
 
+import com.femsq.database.config.DatabaseConfigurationService;
 import com.femsq.database.connection.ConnectionFactory;
 import com.femsq.database.exception.DaoException;
 import com.femsq.database.model.OgAg;
@@ -23,17 +24,34 @@ import java.util.logging.Logger;
 public class JdbcOgAgDao implements OgAgDao {
 
     private static final Logger log = Logger.getLogger(JdbcOgAgDao.class.getName());
-    private static final String TABLE_NAME = "ags_test.ogAg";
+    private static final String TABLE_BASE_NAME = "ogAg";
 
     private final ConnectionFactory connectionFactory;
+    private final DatabaseConfigurationService configurationService;
 
-    public JdbcOgAgDao(ConnectionFactory connectionFactory) {
+    public JdbcOgAgDao(ConnectionFactory connectionFactory, DatabaseConfigurationService configurationService) {
         this.connectionFactory = Objects.requireNonNull(connectionFactory, "connectionFactory");
+        this.configurationService = Objects.requireNonNull(configurationService, "configurationService");
+    }
+
+    /**
+     * Возвращает полное имя таблицы с учетом текущей схемы из конфигурации.
+     *
+     * @return полное имя таблицы в формате "schema.table"
+     */
+    private String getTableName() {
+        try {
+            String schema = configurationService.loadConfig().schema();
+            return schema + "." + TABLE_BASE_NAME;
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            log.log(Level.WARNING, "Configuration not found, using default schema", exception);
+            return "ags_test." + TABLE_BASE_NAME;
+        }
     }
 
     @Override
     public Optional<OgAg> findById(int ogAgKey) {
-        String sql = "SELECT ogaKey, ogaCode, ogaOg, ogaOidOld FROM " + TABLE_NAME + " WHERE ogaKey = ?";
+        String sql = "SELECT ogaKey, ogaCode, ogaOg, ogaOidOld FROM " + getTableName() + " WHERE ogaKey = ?";
         log.log(Level.FINE, "Executing findById for ogAgKey={0}", ogAgKey);
         try (Connection connection = connectionFactory.createConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -52,7 +70,7 @@ public class JdbcOgAgDao implements OgAgDao {
 
     @Override
     public List<OgAg> findByOrganization(int organizationKey) {
-        String sql = "SELECT ogaKey, ogaCode, ogaOg, ogaOidOld FROM " + TABLE_NAME + " WHERE ogaOg = ? ORDER BY ogaKey";
+        String sql = "SELECT ogaKey, ogaCode, ogaOg, ogaOidOld FROM " + getTableName() + " WHERE ogaOg = ? ORDER BY ogaKey";
         log.log(Level.FINE, "Executing findByOrganization for ogKey={0}", organizationKey);
         try (Connection connection = connectionFactory.createConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -72,7 +90,7 @@ public class JdbcOgAgDao implements OgAgDao {
 
     @Override
     public List<OgAg> findAll() {
-        String sql = "SELECT ogaKey, ogaCode, ogaOg, ogaOidOld FROM " + TABLE_NAME + " ORDER BY ogaKey";
+        String sql = "SELECT ogaKey, ogaCode, ogaOg, ogaOidOld FROM " + getTableName() + " ORDER BY ogaKey";
         log.fine("Executing findAll for ogAg");
         try (Connection connection = connectionFactory.createConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
@@ -91,7 +109,7 @@ public class JdbcOgAgDao implements OgAgDao {
     @Override
     public OgAg create(OgAg agent) {
         Objects.requireNonNull(agent, "agent");
-        String sql = "INSERT INTO " + TABLE_NAME + " (ogaCode, ogaOg, ogaOidOld) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO " + getTableName() + " (ogaCode, ogaOg, ogaOidOld) VALUES (?, ?, ?)";
         log.log(Level.INFO, "Creating agent for organization {0}", agent.organizationKey());
         try (Connection connection = connectionFactory.createConnection();
              PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -116,7 +134,7 @@ public class JdbcOgAgDao implements OgAgDao {
         if (agent.ogAgKey() == null) {
             throw new DaoException("Для обновления агентской организации необходим идентификатор");
         }
-        String sql = "UPDATE " + TABLE_NAME + " SET ogaCode = ?, ogaOg = ?, ogaOidOld = ? WHERE ogaKey = ?";
+        String sql = "UPDATE " + getTableName() + " SET ogaCode = ?, ogaOg = ?, ogaOidOld = ? WHERE ogaKey = ?";
         log.log(Level.INFO, "Updating agent {0}", agent.ogAgKey());
         try (Connection connection = connectionFactory.createConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -135,7 +153,7 @@ public class JdbcOgAgDao implements OgAgDao {
 
     @Override
     public boolean deleteById(int ogAgKey) {
-        String sql = "DELETE FROM " + TABLE_NAME + " WHERE ogaKey = ?";
+        String sql = "DELETE FROM " + getTableName() + " WHERE ogaKey = ?";
         log.log(Level.INFO, "Deleting agent {0}", ogAgKey);
         try (Connection connection = connectionFactory.createConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {

@@ -33,7 +33,7 @@ class ConnectionFactoryTest {
 
     @Test
     void buildJdbcUrlProducesExpectedFormat() {
-        DatabaseConfigurationProperties config = new DatabaseConfigurationProperties("db.local", 1433, "femsq", "alex", "secret", "credentials");
+        DatabaseConfigurationProperties config = new DatabaseConfigurationProperties("db.local", 1433, "femsq", null, "alex", "secret", "credentials");
         String url = connectionFactory.buildJdbcUrl(config);
         assertEquals("jdbc:sqlserver://db.local:1433;encrypt=false;trustServerCertificate=true", url);
     }
@@ -41,7 +41,7 @@ class ConnectionFactoryTest {
     @Test
     void createConnectionDelegatesToConnectorWithProperties() {
         AuthenticationProvider provider = new CredentialsAuthenticationProvider();
-        DatabaseConfigurationProperties config = new DatabaseConfigurationProperties("db.local", 1433, "femsq", "alex", "secret", "credentials");
+        DatabaseConfigurationProperties config = new DatabaseConfigurationProperties("db.local", 1433, "femsq", null, "alex", "secret", "credentials");
 
         Connection connection = connectionFactory.createConnection(config, provider);
         assertNull(connection, "Тестовый коннектор возвращает null");
@@ -55,7 +55,7 @@ class ConnectionFactoryTest {
     void createConnectionWrapsSqlException() {
         connector.shouldThrow = true;
         AuthenticationProvider provider = new CredentialsAuthenticationProvider();
-        DatabaseConfigurationProperties config = new DatabaseConfigurationProperties("db.local", 1433, "femsq", "alex", "secret", "credentials");
+        DatabaseConfigurationProperties config = new DatabaseConfigurationProperties("db.local", 1433, "femsq", null, "alex", "secret", "credentials");
 
         assertThrows(ConnectionFactoryException.class, () -> connectionFactory.createConnection(config, provider));
     }
@@ -104,7 +104,7 @@ class ConnectionFactoryTest {
 
         @Override
         public DatabaseConfigurationProperties loadConfig() {
-            return new DatabaseConfigurationProperties("stub.local", 1433, "femsq", "alex", "secret", "credentials");
+            return new DatabaseConfigurationProperties("stub.local", 1433, "femsq", null, "alex", "secret", "credentials");
         }
     }
 }

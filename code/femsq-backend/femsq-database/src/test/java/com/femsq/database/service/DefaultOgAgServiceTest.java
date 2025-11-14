@@ -108,6 +108,20 @@ class DefaultOgAgServiceTest {
         }
 
         @Override
+        public List<Og> findAll(int page, int size, String sortField, String sortDirection) {
+            int offset = page * size;
+            return byId.values().stream()
+                    .skip(offset)
+                    .limit(size)
+                    .toList();
+        }
+
+        @Override
+        public long count() {
+            return byId.size();
+        }
+
+        @Override
         public Og create(Og organization) {
             throw new UnsupportedOperationException();
         }

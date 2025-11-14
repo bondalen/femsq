@@ -1,9 +1,11 @@
 package com.femsq.web.config;
 
+import com.femsq.database.auth.AuthenticationProviderFactory;
 import com.femsq.database.config.ConfigurationFileManager;
 import com.femsq.database.config.ConfigurationValidator;
 import com.femsq.database.config.DatabaseConfigurationService;
 import com.femsq.database.connection.ConnectionFactory;
+import com.femsq.database.connection.ConnectionManager;
 import com.femsq.database.dao.JdbcOgAgDao;
 import com.femsq.database.dao.JdbcOgDao;
 import com.femsq.database.dao.OgAgDao;
@@ -57,36 +59,73 @@ public class DatabaseModuleConfiguration {
     }
 
     /**
+     * Создает фабрику провайдеров аутентификации.
+     *
+     * @return фабрика провайдеров аутентификации
+     */
+    @Bean
+    public AuthenticationProviderFactory authenticationProviderFactory() {
+        return AuthenticationProviderFactory.withDefaults();
+    }
+
+    /**
      * Создает фабрику JDBC-подключений. Bean закрывается при остановке контекста.
      *
      * @param configurationService сервис конфигурации базы данных
+     * @param providerFactory       фабрика провайдеров аутентификации
      * @return фабрика подключений
      */
     @Bean(destroyMethod = "close")
-    public ConnectionFactory connectionFactory(DatabaseConfigurationService configurationService) {
-        return new ConnectionFactory(configurationService);
+    public ConnectionFactory connectionFactory(
+            DatabaseConfigurationService configurationService,
+            AuthenticationProviderFactory providerFactory) {
+        return new ConnectionFactory(configurationService, providerFactory);
     }
 
     /**
-     * Регистрирует DAO для таблицы {@code ags_test.og}.
+     * Создает менеджер подключений для динамического переподключения.
      *
-     * @param connectionFactory фабрика подключений
+     * @param connectionFactory       фабрика подключений
+     * @param configurationService    сервис конфигурации
+     * @param configurationValidator  валидатор конфигурации
+     * @param providerFactory         фабрика провайдеров аутентификации
+     * @return менеджер подключений
+     */
+    @Bean
+    public ConnectionManager connectionManager(
+            ConnectionFactory connectionFactory,
+            DatabaseConfigurationService configurationService,
+            ConfigurationValidator configurationValidator,
+            AuthenticationProviderFactory providerFactory) {
+        return new ConnectionManager(
+                connectionFactory,
+                configurationService,
+                configurationValidator,
+                providerFactory);
+    }
+
+    /**
+     * Регистрирует DAO для таблицы {@code og} (схема определяется из конфигурации).
+     *
+     * @param connectionFactory       фабрика подключений
+     * @param configurationService    сервис конфигурации для получения схемы
      * @return реализация {@link OgDao}
      */
     @Bean
-    public OgDao ogDao(ConnectionFactory connectionFactory) {
-        return new JdbcOgDao(connectionFactory);
+    public OgDao ogDao(ConnectionFactory connectionFactory, DatabaseConfigurationService configurationService) {
+        return new JdbcOgDao(connectionFactory, configurationService);
     }
 
     /**
-     * Регистрирует DAO для таблицы {@code ags_test.ogAg}.
+     * Регистрирует DAO для таблицы {@code ogAg} (схема определяется из конфигурации).
      *
-     * @param connectionFactory фабрика подключений
+     * @param connectionFactory       фабрика подключений
+     * @param configurationService    сервис конфигурации для получения схемы
      * @return реализация {@link OgAgDao}
      */
     @Bean
-    public OgAgDao ogAgDao(ConnectionFactory connectionFactory) {
-        return new JdbcOgAgDao(connectionFactory);
+    public OgAgDao ogAgDao(ConnectionFactory connectionFactory, DatabaseConfigurationService configurationService) {
+        return new JdbcOgAgDao(connectionFactory, configurationService);
     }
 
     /**

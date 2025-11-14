@@ -112,6 +112,20 @@ class DefaultOgServiceTest {
         }
 
         @Override
+        public List<Og> findAll(int page, int size, String sortField, String sortDirection) {
+            int offset = page * size;
+            return all.stream()
+                    .skip(offset)
+                    .limit(size)
+                    .toList();
+        }
+
+        @Override
+        public long count() {
+            return all.size();
+        }
+
+        @Override
         public Og create(Og organization) {
             lastCreated = organization;
             if (nextCreated != null) {

@@ -17,7 +17,15 @@ import java.util.logging.Logger;
  * Менеджер файлов конфигурации FEMSQ.
  * <p>
  * Отвечает за создание директорий, установку безопасных прав доступа и
- * чтение/запись файла {@code ~/.femsq/database.properties}.
+ * чтение/запись файла конфигурации.
+ * </p>
+ * <p>
+ * Путь к конфигурации определяется в следующем порядке приоритета:
+ * <ol>
+ *   <li>Системное свойство {@code -Dfemsq.config.path} (наивысший приоритет)</li>
+ *   <li>Переменная окружения {@code FEMSQ_CONFIG_PATH}</li>
+ *   <li>Дефолтный путь {@code ~/.femsq/database.properties}</li>
+ * </ol>
  * </p>
  */
 public class ConfigurationFileManager {
@@ -25,6 +33,8 @@ public class ConfigurationFileManager {
     private static final Logger log = Logger.getLogger(ConfigurationFileManager.class.getName());
     private static final String CONFIG_DIR_NAME = ".femsq";
     private static final String CONFIG_FILE_NAME = "database.properties";
+    private static final String SYSTEM_PROPERTY_CONFIG_PATH = "femsq.config.path";
+    private static final String ENV_VAR_CONFIG_PATH = "FEMSQ_CONFIG_PATH";
     private static final Set<PosixFilePermission> CONFIG_DIRECTORY_PERMISSIONS =
             PosixFilePermissions.fromString("rwx------");
     private static final Set<PosixFilePermission> CONFIG_FILE_PERMISSIONS =
@@ -32,15 +42,61 @@ public class ConfigurationFileManager {
 
     /**
      * Возвращает путь к файлу конфигурации.
+     * <p>
+     * Путь определяется в следующем порядке:
+     * <ol>
+     *   <li>Системное свойство {@code -Dfemsq.config.path}</li>
+     *   <li>Переменная окружения {@code FEMSQ_CONFIG_PATH}</li>
+     *   <li>Дефолтный путь {@code ~/.femsq/database.properties}</li>
+     * </ol>
+     * </p>
      *
-     * @return путь к {@code database.properties}
+     * @return путь к файлу конфигурации
      */
     public Path resolveConfigPath() {
-        return resolveConfigDirectory().resolve(CONFIG_FILE_NAME);
+        // 1. Проверяем системное свойство (наивысший приоритет)
+        String systemPropertyPath = System.getProperty(SYSTEM_PROPERTY_CONFIG_PATH);
+        if (systemPropertyPath != null && !systemPropertyPath.isBlank()) {
+            Path configPath = Paths.get(systemPropertyPath);
+            log.log(Level.INFO, "Using configuration path from system property: {0}", configPath);
+            return configPath;
+        }
+
+        // 2. Проверяем переменную окружения
+        String envPath = System.getenv(ENV_VAR_CONFIG_PATH);
+        if (envPath != null && !envPath.isBlank()) {
+            Path configPath = Paths.get(envPath);
+            log.log(Level.INFO, "Using configuration path from environment variable: {0}", configPath);
+            return configPath;
+        }
+
+        // 3. Используем дефолтный путь
+        Path defaultPath = resolveConfigDirectory().resolve(CONFIG_FILE_NAME);
+        log.log(Level.FINE, "Using default configuration path: {0}", defaultPath);
+        return defaultPath;
     }
 
+    /**
+     * Возвращает директорию конфигурации для дефолтного пути.
+     * <p>
+     * Используется только если не указан внешний путь через системное свойство
+     * или переменную окружения.
+     * </p>
+     *
+     * @return путь к директории конфигурации
+     */
     private Path resolveConfigDirectory() {
         return Paths.get(System.getProperty("user.home"), CONFIG_DIR_NAME);
+    }
+
+    /**
+     * Определяет, используется ли внешний путь к конфигурации.
+     *
+     * @return {@code true} если используется внешний путь (не дефолтный)
+     */
+    public boolean isUsingExternalPath() {
+        return System.getProperty(SYSTEM_PROPERTY_CONFIG_PATH) != null
+                || System.getenv(ENV_VAR_CONFIG_PATH) != null;
     }
 
     /**
@@ -107,9 +163,20 @@ public class ConfigurationFileManager {
 
     /**
      * Обеспечивает наличие директории конфигурации и устанавливает безопасные права доступа.
+     * <p>
+     * Если используется внешний путь, создает директорию для этого пути.
+     * Если используется дефолтный путь, создает директорию {@code ~/.femsq}.
+     * </p>
      */
     public void ensureDirectoryWithPermissions() {
-        Path configDirectory = resolveConfigDirectory();
+        Path configPath = resolveConfigPath();
+        Path configDirectory = configPath.getParent();
+        
+        if (configDirectory == null) {
+            log.log(Level.WARNING, "Configuration path has no parent directory: {0}", configPath);
+            return;
+        }
+        
         log.log(Level.FINE, "Ensuring configuration directory {0} exists with secure permissions", configDirectory);
         if (Files.exists(configDirectory)) {
             applyDirectoryPermissions(configDirectory);

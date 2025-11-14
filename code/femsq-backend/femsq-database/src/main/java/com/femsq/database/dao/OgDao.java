@@ -26,6 +26,24 @@ public interface OgDao {
     List<Og> findAll();
 
     /**
+     * Возвращает организации с пагинацией и сортировкой.
+     *
+     * @param page номер страницы (начиная с 0)
+     * @param size размер страницы
+     * @param sortField поле для сортировки (например, "ogNm")
+     * @param sortDirection направление сортировки ("asc" или "desc")
+     * @return список организаций для запрошенной страницы
+     */
+    List<Og> findAll(int page, int size, String sortField, String sortDirection);
+
+    /**
+     * Подсчитывает общее количество организаций.
+     *
+     * @return общее количество записей
+     */
+    long count();
+
+    /**
      * Создает новую организацию.
      *
      * @param organization данные новой организации без идентификатора

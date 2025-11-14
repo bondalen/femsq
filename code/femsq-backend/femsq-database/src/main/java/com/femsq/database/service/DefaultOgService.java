@@ -28,6 +28,16 @@ public class DefaultOgService implements OgService {
     }
 
     @Override
+    public List<Og> getAll(int page, int size, String sortField, String sortDirection) {
+        return ogDao.findAll(page, size, sortField, sortDirection);
+    }
+
+    @Override
+    public long count() {
+        return ogDao.count();
+    }
+
+    @Override
     public Optional<Og> getById(int ogKey) {
         return ogDao.findById(ogKey);
     }

@@ -134,6 +134,25 @@ public class ConnectionFactory implements AutoCloseable {
         }
     }
 
+    /**
+     * Принудительно закрывает пул соединений для переподключения.
+     * <p>
+     * После вызова этого метода, при следующем создании соединения пул будет
+     * пересоздан с актуальной конфигурацией из {@link DatabaseConfigurationService}.
+     * </p>
+     * <p>
+     * Используется для динамического переподключения без перезапуска приложения.
+     * </p>
+     */
+    public void reloadConnectionPool() {
+        try {
+            connector.close();
+            log.log(Level.INFO, "Connection pool closed, will be recreated on next connection");
+        } catch (Exception exception) {
+            log.log(Level.WARNING, "Failed to close connection pool for reload", exception);
+        }
+    }
+
     @Override
     public void close() {
         try {

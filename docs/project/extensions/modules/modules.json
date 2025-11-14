@@ -1,7 +1,7 @@
 {
   "modules": {
     "version": "1.0.0",
-    "lastUpdated": "2025-11-11",
+    "lastUpdated": "2025-11-13",
     "description": "Структура модулей проекта FEMSQ",
     
     "items": [
@@ -781,6 +781,234 @@
                         }
                       }
                     }
+                  },
+                  {
+                    "component": {
+                      "displayName": "DTO Layer. № 01.02.04",
+                      "attributes": {
+                        "id": "dto",
+                        "number": "01.02.04",
+                        "name": "DTO Layer",
+                        "description": "Data Transfer Objects для REST и GraphQL API",
+                        "status": "completed",
+                        "artifact": {
+                          "location": "com.femsq.web.api.dto",
+                          "file_path": "src/main/java/com/femsq/web/api/dto/",
+                          "type": "java-package",
+                          "artifact_type": "directory"
+                        },
+                        "responsibilities": [
+                          "DTO для чтения данных (OgDto, OgAgDto)",
+                          "Request DTO для создания и обновления (OgCreateRequest, OgUpdateRequest, OgAgCreateRequest, OgAgUpdateRequest)",
+                          "Валидация входных данных через Jakarta Bean Validation"
+                        ]
+                      },
+                      "classes": [
+                        {
+                          "class": {
+                            "displayName": "OgDto. № 01.02.04.01",
+                            "attributes": {
+                              "id": "OgDto",
+                              "number": "01.02.04.01",
+                              "name": "OgDto",
+                              "description": "DTO для представления организации в API",
+                              "status": "completed",
+                              "artifact": {
+                                "location": "com.femsq.web.api.dto.OgDto",
+                                "file_path": "src/main/java/com/femsq/web/api/dto/OgDto.java",
+                                "type": "java-record",
+                                "artifact_type": "file"
+                              },
+                              "responsibilities": [
+                                "Представление организации в REST и GraphQL ответах"
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "class": {
+                            "displayName": "OgAgDto. № 01.02.04.02",
+                            "attributes": {
+                              "id": "OgAgDto",
+                              "number": "01.02.04.02",
+                              "name": "OgAgDto",
+                              "description": "DTO для представления агентской организации в API",
+                              "status": "completed",
+                              "artifact": {
+                                "location": "com.femsq.web.api.dto.OgAgDto",
+                                "file_path": "src/main/java/com/femsq/web/api/dto/OgAgDto.java",
+                                "type": "java-record",
+                                "artifact_type": "file"
+                              },
+                              "responsibilities": [
+                                "Представление агентской организации в REST и GraphQL ответах"
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "class": {
+                            "displayName": "OgCreateRequest. № 01.02.04.03",
+                            "attributes": {
+                              "id": "OgCreateRequest",
+                              "number": "01.02.04.03",
+                              "name": "OgCreateRequest",
+                              "description": "Request DTO для создания организации",
+                              "status": "completed",
+                              "artifact": {
+                                "location": "com.femsq.web.api.dto.OgCreateRequest",
+                                "file_path": "src/main/java/com/femsq/web/api/dto/OgCreateRequest.java",
+                                "type": "java-record",
+                                "artifact_type": "file"
+                              },
+                              "responsibilities": [
+                                "Валидация входных данных при создании организации"
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "class": {
+                            "displayName": "OgUpdateRequest. № 01.02.04.04",
+                            "attributes": {
+                              "id": "OgUpdateRequest",
+                              "number": "01.02.04.04",
+                              "name": "OgUpdateRequest",
+                              "description": "Request DTO для обновления организации",
+                              "status": "completed",
+                              "artifact": {
+                                "location": "com.femsq.web.api.dto.OgUpdateRequest",
+                                "file_path": "src/main/java/com/femsq/web/api/dto/OgUpdateRequest.java",
+                                "type": "java-record",
+                                "artifact_type": "file"
+                              },
+                              "responsibilities": [
+                                "Валидация входных данных при обновлении организации"
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "class": {
+                            "displayName": "OgAgCreateRequest. № 01.02.04.05",
+                            "attributes": {
+                              "id": "OgAgCreateRequest",
+                              "number": "01.02.04.05",
+                              "name": "OgAgCreateRequest",
+                              "description": "Request DTO для создания агентской организации",
+                              "status": "completed",
+                              "artifact": {
+                                "location": "com.femsq.web.api.dto.OgAgCreateRequest",
+                                "file_path": "src/main/java/com/femsq/web/api/dto/OgAgCreateRequest.java",
+                                "type": "java-record",
+                                "artifact_type": "file"
+                              },
+                              "responsibilities": [
+                                "Валидация входных данных при создании агентской организации"
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "class": {
+                            "displayName": "OgAgUpdateRequest. № 01.02.04.06",
+                            "attributes": {
+                              "id": "OgAgUpdateRequest",
+                              "number": "01.02.04.06",
+                              "name": "OgAgUpdateRequest",
+                              "description": "Request DTO для обновления агентской организации",
+                              "status": "completed",
+                              "artifact": {
+                                "location": "com.femsq.web.api.dto.OgAgUpdateRequest",
+                                "file_path": "src/main/java/com/femsq/web/api/dto/OgAgUpdateRequest.java",
+                                "type": "java-record",
+                                "artifact_type": "file"
+                              },
+                              "responsibilities": [
+                                "Валидация входных данных при обновлении агентской организации"
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "component": {
+                      "displayName": "Mappers. № 01.02.05",
+                      "attributes": {
+                        "id": "mapper",
+                        "number": "01.02.05",
+                        "name": "Mappers",
+                        "description": "Мапперы между доменными моделями и DTO",
+                        "status": "completed",
+                        "artifact": {
+                          "location": "com.femsq.web.api.mapper",
+                          "file_path": "src/main/java/com/femsq/web/api/mapper/",
+                          "type": "java-package",
+                          "artifact_type": "directory"
+                        },
+                        "responsibilities": [
+                          "Преобразование доменных моделей (Og, OgAg) в DTO",
+                          "Преобразование Request DTO в доменные модели",
+                          "Нормализация данных (например, registrationTaxType)"
+                        ],
+                        "dependsOn": ["dto", "database.model"]
+                      },
+                      "classes": [
+                        {
+                          "class": {
+                            "displayName": "OgMapper. № 01.02.05.01",
+                            "attributes": {
+                              "id": "OgMapper",
+                              "number": "01.02.05.01",
+                              "name": "OgMapper",
+                              "description": "Маппер для преобразования между Og и OgDto",
+                              "status": "completed",
+                              "artifact": {
+                                "location": "com.femsq.web.api.mapper.OgMapper",
+                                "file_path": "src/main/java/com/femsq/web/api/mapper/OgMapper.java",
+                                "type": "java-class",
+                                "artifact_type": "file"
+                              },
+                              "responsibilities": [
+                                "toDto(Og) - преобразование доменной модели в DTO",
+                                "toDto(List<Og>) - преобразование списка",
+                                "toDomain(OgCreateRequest) - создание доменной модели из запроса",
+                                "toDomain(int, OgUpdateRequest) - обновление доменной модели",
+                                "Нормализация registrationTaxType"
+                              ],
+                              "dependsOn": ["OgDto", "OgCreateRequest", "OgUpdateRequest"]
+                            }
+                          }
+                        },
+                        {
+                          "class": {
+                            "displayName": "OgAgMapper. № 01.02.05.02",
+                            "attributes": {
+                              "id": "OgAgMapper",
+                              "number": "01.02.05.02",
+                              "name": "OgAgMapper",
+                              "description": "Маппер для преобразования между OgAg и OgAgDto",
+                              "status": "completed",
+                              "artifact": {
+                                "location": "com.femsq.web.api.mapper.OgAgMapper",
+                                "file_path": "src/main/java/com/femsq/web/api/mapper/OgAgMapper.java",
+                                "type": "java-class",
+                                "artifact_type": "file"
+                              },
+                              "responsibilities": [
+                                "toDto(OgAg) - преобразование доменной модели в DTO",
+                                "toDto(List<OgAg>) - преобразование списка",
+                                "toDomain(OgAgCreateRequest) - создание доменной модели из запроса",
+                                "toDomain(int, OgAgUpdateRequest) - обновление доменной модели"
+                              ],
+                              "dependsOn": ["OgAgDto", "OgAgCreateRequest", "OgAgUpdateRequest"]
+                            }
+                          }
+                        }
+                      ]
+                    }
                   }
                 ]
               }
@@ -858,7 +1086,7 @@
                   "number": "02.03",
                   "name": "Application Layout",
                   "description": "Постоянный каркас приложения с верхней панелью и строкой состояния",
-                  "status": "planned",
+                  "status": "completed",
                   "artifact": {
                     "location": "src/components/layout/",
                     "file_path": "src/components/layout/",
@@ -874,7 +1102,63 @@
                     "docs/development/notes/UI/02-1-1_app-layout.md"
                   ]
                 }
-              }
+              },
+              "classes": [
+                {
+                  "class": {
+                    "displayName": "AppLayout.vue. № 02.03.01",
+                    "attributes": {
+                      "id": "AppLayout",
+                      "number": "02.03.01",
+                      "name": "AppLayout",
+                      "description": "Контейнер layout, объединяющий верхнюю панель, основной контент и строку состояния",
+                      "status": "completed",
+                      "artifact": {
+                        "location": "src/components/layout/AppLayout.vue",
+                        "file_path": "src/components/layout/AppLayout.vue",
+                        "type": "vue-component",
+                        "artifact_type": "file"
+                      }
+                    }
+                  }
+                },
+                {
+                  "class": {
+                    "displayName": "TopBar.vue. № 02.03.02",
+                    "attributes": {
+                      "id": "TopBar",
+                      "number": "02.03.02",
+                      "name": "TopBar",
+                      "description": "Верхняя панель с кнопками подключения и навигацией",
+                      "status": "completed",
+                      "artifact": {
+                        "location": "src/components/layout/TopBar.vue",
+                        "file_path": "src/components/layout/TopBar.vue",
+                        "type": "vue-component",
+                        "artifact_type": "file"
+                      }
+                    }
+                  }
+                },
+                {
+                  "class": {
+                    "displayName": "StatusBar.vue. № 02.03.03",
+                    "attributes": {
+                      "id": "StatusBar",
+                      "number": "02.03.03",
+                      "name": "StatusBar",
+                      "description": "Нижняя строка состояния с отображением текущего статуса подключения",
+                      "status": "completed",
+                      "artifact": {
+                        "location": "src/components/layout/StatusBar.vue",
+                        "file_path": "src/components/layout/StatusBar.vue",
+                        "type": "vue-component",
+                        "artifact_type": "file"
+                      }
+                    }
+                  }
+                }
+              ]
             },
             {
               "component": {
@@ -884,7 +1168,7 @@
                   "number": "02.04",
                   "name": "Connection Modal",
                   "description": "Модальная форма подключения к базе данных",
-                  "status": "planned",
+                  "status": "completed",
                   "artifact": {
                     "location": "src/components/setup/connection-modal/",
                     "file_path": "src/components/setup/connection-modal/",
@@ -899,7 +1183,253 @@
                   "documentation": [
                     "docs/development/notes/UI/02-1-2_connection-modal.md"
                   ]
-                }
+                },
+                "classes": [
+                  {
+                    "class": {
+                      "displayName": "ConnectionModal.vue. № 02.04.01",
+                      "attributes": {
+                        "id": "ConnectionModal",
+                        "number": "02.04.01",
+                        "name": "ConnectionModal",
+                        "description": "Модальное окно с формой подключения и обработкой статусов",
+                        "status": "completed",
+                        "artifact": {
+                          "location": "src/components/setup/connection-modal/ConnectionModal.vue",
+                          "file_path": "src/components/setup/connection-modal/ConnectionModal.vue",
+                          "type": "vue-component",
+                          "artifact_type": "file"
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "component": {
+                "displayName": "Quasar Frontend Module. № 02.06",
+                "attributes": {
+                  "id": "frontend.quasar",
+                  "number": "02.06",
+                  "name": "Quasar Frontend Module",
+                  "description": "Новый модуль пользовательского интерфейса на основе Quasar",
+                  "status": "completed",
+                  "artifact": {
+                    "location": "code/femsq-frontend-q/",
+                    "file_path": "code/femsq-frontend-q/",
+                    "type": "vue-module",
+                    "artifact_type": "directory"
+                  },
+                  "responsibilities": [
+                    "Vite + Quasar конфигурация",
+                    "Компоненты layout и системные диалоги",
+                    "Экран организаций на компонентах Quasar"
+                  ],
+                  "documentation": [
+                    "docs/development/notes/chats/chat-plan/chat-plan-25-1111.md#переход-на-quasar-ui-021q"
+                  ]
+                },
+                "classes": [
+                  {
+                    "class": {
+                      "displayName": "AppLayout.vue (Quasar). № 02.06.01",
+                      "attributes": {
+                        "id": "frontend.quasar.AppLayout",
+                        "number": "02.06.01",
+                        "name": "AppLayout",
+                        "description": "Контейнер приложения на QLayout",
+                        "status": "completed",
+                        "artifact": {
+                          "location": "src/components/layout/AppLayout.vue",
+                          "file_path": "code/femsq-frontend-q/src/components/layout/AppLayout.vue",
+                          "type": "vue-component",
+                          "artifact_type": "file"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "class": {
+                      "displayName": "TopBar.vue (Quasar). № 02.06.02",
+                      "attributes": {
+                        "id": "frontend.quasar.TopBar",
+                        "number": "02.06.02",
+                        "name": "TopBar",
+                        "description": "Верхняя панель на QToolbar с меню",
+                        "status": "completed",
+                        "artifact": {
+                          "location": "src/components/layout/TopBar.vue",
+                          "file_path": "code/femsq-frontend-q/src/components/layout/TopBar.vue",
+                          "type": "vue-component",
+                          "artifact_type": "file"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "class": {
+                      "displayName": "StatusBar.vue (Quasar). № 02.06.03",
+                      "attributes": {
+                        "id": "frontend.quasar.StatusBar",
+                        "number": "02.06.03",
+                        "name": "StatusBar",
+                        "description": "Строка состояния на QFooter",
+                        "status": "completed",
+                        "artifact": {
+                          "location": "src/components/layout/StatusBar.vue",
+                          "file_path": "code/femsq-frontend-q/src/components/layout/StatusBar.vue",
+                          "type": "vue-component",
+                          "artifact_type": "file"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "class": {
+                      "displayName": "ConnectionModal.vue (Quasar). № 02.06.04",
+                      "attributes": {
+                        "id": "frontend.quasar.ConnectionModal",
+                        "number": "02.06.04",
+                        "name": "ConnectionModal",
+                        "description": "Модальная форма подключения на компонентах Quasar",
+                        "status": "completed",
+                        "artifact": {
+                          "location": "src/components/setup/ConnectionModal.vue",
+                          "file_path": "code/femsq-frontend-q/src/components/setup/ConnectionModal.vue",
+                          "type": "vue-component",
+                          "artifact_type": "file"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "class": {
+                      "displayName": "OrganizationsView.vue (Quasar). № 02.06.05",
+                      "attributes": {
+                        "id": "frontend.quasar.OrganizationsView",
+                        "number": "02.06.05",
+                        "name": "OrganizationsView",
+                        "description": "Экран организаций на компонентах Quasar с фильтрами, пагинацией и состояниями загрузки",
+                        "status": "completed",
+                        "artifact": {
+                          "location": "src/views/organizations/OrganizationsView.vue",
+                          "file_path": "code/femsq-frontend-q/src/views/organizations/OrganizationsView.vue",
+                          "type": "vue-component",
+                          "artifact_type": "file"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "class": {
+                      "displayName": "organizations.ts (Quasar store). № 02.06.06",
+                      "attributes": {
+                        "id": "frontend.quasar.organizationsStore",
+                        "number": "02.06.06",
+                        "name": "useOrganizationsStore",
+                        "description": "Pinia-стор с интеграцией REST/GraphQL API для организаций и агентов",
+                        "status": "completed",
+                        "artifact": {
+                          "location": "src/stores/organizations.ts",
+                          "file_path": "code/femsq-frontend-q/src/stores/organizations.ts",
+                          "type": "ts-module",
+                          "artifact_type": "file"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "class": {
+                      "displayName": "http.ts (HTTP-клиент). № 02.06.07",
+                      "attributes": {
+                        "id": "frontend.quasar.httpClient",
+                        "number": "02.06.07",
+                        "name": "api/http",
+                        "description": "Обертка над fetch с таймаутами и обработкой ошибок для REST/GraphQL запросов",
+                        "status": "completed",
+                        "artifact": {
+                          "location": "src/api/http.ts",
+                          "file_path": "code/femsq-frontend-q/src/api/http.ts",
+                          "type": "ts-module",
+                          "artifact_type": "file"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "class": {
+                      "displayName": "OrganizationsView.spec.ts (component tests). № 02.06.08",
+                      "attributes": {
+                        "id": "frontend.quasar.organizationsComponentTests",
+                        "number": "02.06.08",
+                        "name": "OrganizationsView Component Tests",
+                        "description": "Компонентные тесты OrganizationsView с моками API",
+                        "status": "completed",
+                        "artifact": {
+                          "location": "tests/component/OrganizationsView.spec.ts",
+                          "file_path": "code/femsq-frontend-q/tests/component/OrganizationsView.spec.ts",
+                          "type": "vitest-spec",
+                          "artifact_type": "file"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "class": {
+                      "displayName": "organizations.spec.ts (e2e tests, Playwright). № 02.06.09",
+                      "attributes": {
+                        "id": "frontend.quasar.organizationsE2ETests",
+                        "number": "02.06.09",
+                        "name": "Organizations E2E Tests (Playwright)",
+                        "description": "E2E-сценарии K2 для OrganizationsView на Playwright (успех, пустая выборка, ошибка API, фильтр/пагинация)",
+                        "status": "completed",
+                        "artifact": {
+                          "location": "tests/e2e/organizations.spec.ts",
+                          "file_path": "code/femsq-frontend-q/tests/e2e/organizations.spec.ts",
+                          "type": "playwright-spec",
+                          "artifact_type": "file"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "class": {
+                      "displayName": "helpers.ts (e2e test helpers). № 02.06.10",
+                      "attributes": {
+                        "id": "frontend.quasar.e2eHelpers",
+                        "number": "02.06.10",
+                        "name": "E2E Test Helpers",
+                        "description": "Вспомогательные функции для e2e тестов Playwright (setupConnectionForOrganizations)",
+                        "status": "completed",
+                        "artifact": {
+                          "location": "tests/e2e/helpers.ts",
+                          "file_path": "code/femsq-frontend-q/tests/e2e/helpers.ts",
+                          "type": "typescript",
+                          "artifact_type": "file"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "class": {
+                      "displayName": "playwright.config.ts (e2e config). № 02.06.11",
+                      "attributes": {
+                        "id": "frontend.quasar.playwrightConfig",
+                        "number": "02.06.11",
+                        "name": "Playwright Configuration",
+                        "description": "Конфигурация Playwright для e2e тестирования (браузеры, baseURL, webServer)",
+                        "status": "completed",
+                        "artifact": {
+                          "location": "playwright.config.ts",
+                          "file_path": "code/femsq-frontend-q/playwright.config.ts",
+                          "type": "typescript-config",
+                          "artifact_type": "file"
+                        }
+                      }
+                    }
+                  }
+                ]
               }
             },
             {
@@ -910,7 +1440,7 @@
                   "number": "02.05",
                   "name": "Organizations Screen",
                   "description": "Экран просмотра организаций и связанных агентов",
-                  "status": "planned",
+                  "status": "in-progress",
                   "artifact": {
                     "location": "src/views/organizations/",
                     "file_path": "src/views/organizations/",
@@ -926,7 +1456,27 @@
                     "docs/development/notes/UI/02-1-3_organizations-screen.md",
                     "docs/development/notes/UI/02-1-4_connection-to-organizations-flow.md"
                   ]
-                }
+                },
+                "classes": [
+                  {
+                    "class": {
+                      "displayName": "OrganizationsView.vue. № 02.05.01",
+                      "attributes": {
+                        "id": "OrganizationsView",
+                        "number": "02.05.01",
+                        "name": "OrganizationsView",
+                        "description": "Компонент представления списка организаций с деталями и агентами",
+                        "status": "in-progress",
+                        "artifact": {
+                          "location": "src/views/organizations/OrganizationsView.vue",
+                          "file_path": "src/views/organizations/OrganizationsView.vue",
+                          "type": "vue-view",
+                          "artifact_type": "file"
+                        }
+                      }
+                    }
+                  }
+                ]
               }
             }
           ]

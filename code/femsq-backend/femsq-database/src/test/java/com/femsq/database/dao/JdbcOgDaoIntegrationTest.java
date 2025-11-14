@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.femsq.database.auth.AuthenticationProvider;
 import com.femsq.database.auth.AuthenticationProviderFactory;
+import com.femsq.database.config.DatabaseConfigurationService;
 import com.femsq.database.connection.ConnectionFactory;
 import com.femsq.database.exception.DaoException;
 import com.femsq.database.model.Og;
@@ -21,6 +22,7 @@ class JdbcOgDaoIntegrationTest {
     private static ConnectionFactory connectionFactory;
     private static AuthenticationProviderFactory providerFactory;
     private static AuthenticationProvider authenticationProvider;
+    private static DatabaseConfigurationService configurationService;
     private static JdbcOgDao dao;
 
     @BeforeAll
@@ -31,7 +33,8 @@ class JdbcOgDaoIntegrationTest {
         providerFactory = AuthenticationProviderFactory.withDefaults();
         connectionFactory = DaoIntegrationTestSupport.createConnectionFactory(configuration);
         authenticationProvider = providerFactory.create(configuration);
-        dao = new JdbcOgDao(connectionFactory);
+        configurationService = DaoIntegrationTestSupport.createConfigurationService(configuration);
+        dao = new JdbcOgDao(connectionFactory, configurationService);
     }
 
     @AfterAll
@@ -148,7 +151,7 @@ class JdbcOgDaoIntegrationTest {
 
     @Test
     void deleteOrganizationCascadeRemovesAgents() {
-        JdbcOgAgDao agentDao = new JdbcOgAgDao(connectionFactory);
+        JdbcOgAgDao agentDao = new JdbcOgAgDao(connectionFactory, configurationService);
         assertFalse(agentDao.findByOrganization(1).isEmpty(), "Предполагается, что у og=1 есть агент");
 
         boolean deleted = dao.deleteById(1);

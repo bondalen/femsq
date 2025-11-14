@@ -2,6 +2,7 @@ package com.femsq.database.dao;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.femsq.database.config.DatabaseConfigurationService;
 import com.femsq.database.connection.ConnectionFactory;
 import com.femsq.database.exception.DaoException;
 import com.femsq.database.model.Og;
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.Test;
 class JdbcOgAgDaoIntegrationTest {
 
     private static ConnectionFactory connectionFactory;
+    private static DatabaseConfigurationService configurationService;
     private static JdbcOgDao ogDao;
     private static JdbcOgAgDao dao;
 
@@ -28,8 +30,9 @@ class JdbcOgAgDaoIntegrationTest {
                 "FEMSQ_DB_PASSWORD must be set to run DAO integration tests");
         var configuration = DaoIntegrationTestSupport.configurationFromEnv();
         connectionFactory = DaoIntegrationTestSupport.createConnectionFactory(configuration);
-        ogDao = new JdbcOgDao(connectionFactory);
-        dao = new JdbcOgAgDao(connectionFactory);
+        configurationService = DaoIntegrationTestSupport.createConfigurationService(configuration);
+        ogDao = new JdbcOgDao(connectionFactory, configurationService);
+        dao = new JdbcOgAgDao(connectionFactory, configurationService);
     }
 
     @AfterAll

@@ -51,7 +51,7 @@ public class OgAgRestController {
      * Возвращает агентскую организацию по идентификатору.
      */
     @GetMapping("/{ogAgKey}")
-    public OgAgDto getAgent(@PathVariable int ogAgKey) {
+    public OgAgDto getAgent(@PathVariable("ogAgKey") int ogAgKey) {
         log.info(() -> "Handling GET /api/v1/agents/" + ogAgKey);
         return ogAgService.getById(ogAgKey)
                 .map(ogAgMapper::toDto)
@@ -78,7 +78,7 @@ public class OgAgRestController {
      * Обновляет существующую агентскую организацию.
      */
     @PutMapping("/{ogAgKey}")
-    public OgAgDto updateAgent(@PathVariable int ogAgKey, @Valid @RequestBody OgAgUpdateRequest request) {
+    public OgAgDto updateAgent(@PathVariable("ogAgKey") int ogAgKey, @Valid @RequestBody OgAgUpdateRequest request) {
         log.info(() -> "Handling PUT /api/v1/agents/" + ogAgKey);
         try {
             var updated = ogAgService.update(ogAgMapper.toDomain(ogAgKey, request));
@@ -94,7 +94,7 @@ public class OgAgRestController {
      * Удаляет агентскую организацию.
      */
     @DeleteMapping("/{ogAgKey}")
-    public ResponseEntity<Void> deleteAgent(@PathVariable int ogAgKey) {
+    public ResponseEntity<Void> deleteAgent(@PathVariable("ogAgKey") int ogAgKey) {
         log.info(() -> "Handling DELETE /api/v1/agents/" + ogAgKey);
         try {
             boolean deleted = ogAgService.delete(ogAgKey);

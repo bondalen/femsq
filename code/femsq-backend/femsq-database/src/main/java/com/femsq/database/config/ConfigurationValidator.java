@@ -16,6 +16,8 @@ public class ConfigurationValidator {
 
     private static final Logger log = Logger.getLogger(ConfigurationValidator.class.getName());
     private static final Pattern HOST_PATTERN = Pattern.compile("^[a-zA-Z0-9-_.]+$");
+    private static final Pattern SCHEMA_PATTERN = Pattern.compile("^[a-zA-Z0-9_]+$");
+    private static final String DEFAULT_SCHEMA = "ags_test";
     private static final Set<String> SUPPORTED_AUTH_MODES = Set.of("credentials", "windows-integrated", "kerberos");
 
     /**
@@ -30,6 +32,7 @@ public class ConfigurationValidator {
         validateHost(properties.host());
         validatePort(properties.port());
         validateRequired("database", properties.database());
+        validateSchema(properties.schema());
 
         validateOptional("username", properties.username());
         validateOptional("password", properties.password());
@@ -49,11 +52,12 @@ public class ConfigurationValidator {
         String host = properties.getProperty("host");
         Integer port = parsePort(properties.getProperty("port"));
         String database = properties.getProperty("database");
+        String schema = normalizeSchema(properties.getProperty("schema"));
         String username = properties.getProperty("username");
         String password = properties.getProperty("password");
         String authMode = normalizeAuthMode(properties.getProperty("authMode"), username);
 
-        var config = new DatabaseConfigurationService.DatabaseConfigurationProperties(host, port, database, username, password, authMode);
+        var config = new DatabaseConfigurationService.DatabaseConfigurationProperties(host, port, database, schema, username, password, authMode);
         validate(config);
         return config;
     }
@@ -120,6 +124,24 @@ public class ConfigurationValidator {
         } catch (NumberFormatException exception) {
             throw new IllegalArgumentException("Port должен быть целым числом", exception);
         }
+    }
+
+    private void validateSchema(String schema) {
+        if (schema != null && !schema.isBlank()) {
+            if (!SCHEMA_PATTERN.matcher(schema).matches()) {
+                throw new IllegalArgumentException("Schema содержит недопустимые символы: " + schema);
+            }
+            if (schema.length() > 128) {
+                throw new IllegalArgumentException("Schema превышает максимально допустимую длину 128 символов: " + schema);
+            }
+        }
+    }
+
+    private String normalizeSchema(String rawSchema) {
+        if (rawSchema == null || rawSchema.isBlank()) {
+            return DEFAULT_SCHEMA;
+        }
+        return rawSchema.trim();
     }
 
     private String normalizeAuthMode(String rawAuthMode, String username) {

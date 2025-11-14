@@ -23,6 +23,7 @@ class ConnectionFactoryIntegrationTest {
         String host = envOr("FEMSQ_DB_HOST", "localhost");
         int port = Integer.parseInt(envOr("FEMSQ_DB_PORT", "1433"));
         String database = envOr("FEMSQ_DB_NAME", "FishEye");
+        String schema = envOr("FEMSQ_DB_SCHEMA", "ags_test");
         String authMode = envOr("FEMSQ_DB_AUTH_MODE", "credentials").toLowerCase(Locale.ROOT);
         String username = "credentials".equals(authMode) ? envOr("FEMSQ_DB_USER", "sa") : null;
 
@@ -30,6 +31,7 @@ class ConnectionFactoryIntegrationTest {
                 host,
                 port,
                 database,
+                schema,
                 username,
                 "credentials".equals(authMode) ? password : null,
                 authMode

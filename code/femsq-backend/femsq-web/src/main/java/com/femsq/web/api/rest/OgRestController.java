@@ -7,6 +7,7 @@ import com.femsq.web.api.dto.OgAgDto;
 import com.femsq.web.api.dto.OgCreateRequest;
 import com.femsq.web.api.dto.OgDto;
 import com.femsq.web.api.dto.OgUpdateRequest;
+import com.femsq.web.api.dto.PageResponse;
 import com.femsq.web.api.mapper.OgAgMapper;
 import com.femsq.web.api.mapper.OgMapper;
 import jakarta.validation.Valid;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -46,19 +48,50 @@ public class OgRestController {
     }
 
     /**
-     * Возвращает список всех организаций.
+     * Возвращает список организаций с поддержкой пагинации и сортировки.
+     * По умолчанию возвращает первую страницу с 10 записями.
+     *
+     * @param page номер страницы (начиная с 0), опционально, по умолчанию 0
+     * @param size размер страницы, опционально, по умолчанию 10
+     * @param sort строка сортировки в формате "field,direction" (например, "ogNm,asc"), опционально
+     * @return объект с пагинацией
      */
     @GetMapping
-    public List<OgDto> getOrganizations() {
-        log.info("Handling GET /api/v1/organizations");
-        return ogMapper.toDto(ogService.getAll());
+    public PageResponse<OgDto> getOrganizations(
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @RequestParam(required = false, defaultValue = "10") Integer size,
+            @RequestParam(required = false) String sort) {
+        log.info(() -> String.format("Handling GET /api/v1/organizations?page=%s&size=%s&sort=%s", page, size, sort));
+        
+        // Параметры по умолчанию
+        int pageNum = Math.max(0, page != null ? page : 0);
+        int pageSize = size != null && size > 0 ? size : 10;
+        
+        // Парсинг сортировки
+        String sortField = "ogKey";
+        String sortDirection = "asc";
+        if (sort != null && !sort.trim().isEmpty()) {
+            String[] sortParts = sort.split(",");
+            if (sortParts.length > 0) {
+                sortField = sortParts[0].trim();
+            }
+            if (sortParts.length > 1) {
+                sortDirection = sortParts[1].trim();
+            }
+        }
+        
+        // Получаем данные с пагинацией
+        List<OgDto> content = ogMapper.toDto(ogService.getAll(pageNum, pageSize, sortField, sortDirection));
+        long totalElements = ogService.count();
+        
+        return PageResponse.of(content, pageNum, pageSize, (int) totalElements);
     }
 
     /**
      * Возвращает организацию по идентификатору.
      */
     @GetMapping("/{ogKey}")
-    public OgDto getOrganization(@PathVariable int ogKey) {
+    public OgDto getOrganization(@PathVariable("ogKey") int ogKey) {
         log.info(() -> "Handling GET /api/v1/organizations/" + ogKey);
         return ogService.getById(ogKey)
                 .map(ogMapper::toDto)
@@ -69,7 +102,7 @@ public class OgRestController {
      * Возвращает агентские организации базовой организации.
      */
     @GetMapping("/{ogKey}/agents")
-    public List<OgAgDto> getOrganizationAgents(@PathVariable int ogKey) {
+    public List<OgAgDto> getOrganizationAgents(@PathVariable("ogKey") int ogKey) {
         log.info(() -> "Handling GET /api/v1/organizations/" + ogKey + "/agents");
         return ogAgMapper.toDto(ogAgService.getForOrganization(ogKey));
     }
@@ -94,7 +127,7 @@ public class OgRestController {
      * Обновляет существующую организацию.
      */
     @PutMapping("/{ogKey}")
-    public OgDto updateOrganization(@PathVariable int ogKey, @Valid @RequestBody OgUpdateRequest request) {
+    public OgDto updateOrganization(@PathVariable("ogKey") int ogKey, @Valid @RequestBody OgUpdateRequest request) {
         log.info(() -> "Handling PUT /api/v1/organizations/" + ogKey);
         try {
             var updated = ogService.update(ogMapper.toDomain(ogKey, request));
@@ -110,7 +143,7 @@ public class OgRestController {
      * Удаляет организацию.
      */
     @DeleteMapping("/{ogKey}")
-    public ResponseEntity<Void> deleteOrganization(@PathVariable int ogKey) {
+    public ResponseEntity<Void> deleteOrganization(@PathVariable("ogKey") int ogKey) {
         log.info(() -> "Handling DELETE /api/v1/organizations/" + ogKey);
         try {
             boolean deleted = ogService.delete(ogKey);

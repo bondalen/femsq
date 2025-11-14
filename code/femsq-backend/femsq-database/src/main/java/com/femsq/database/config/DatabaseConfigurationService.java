@@ -59,6 +59,9 @@ public class DatabaseConfigurationService {
         rawProperties.setProperty("host", properties.host());
         rawProperties.setProperty("port", properties.port() == null ? "" : properties.port().toString());
         rawProperties.setProperty("database", properties.database());
+        if (properties.schema() != null) {
+            rawProperties.setProperty("schema", properties.schema());
+        }
         if (properties.username() != null) {
             rawProperties.setProperty("username", properties.username());
         }
@@ -81,6 +84,7 @@ public class DatabaseConfigurationService {
      * @param host     хост MS SQL Server
      * @param port     порт подключения
      * @param database имя базы данных
+     * @param schema   имя схемы (опционально, по умолчанию ags_test)
      * @param username имя пользователя (опционально)
      * @param password пароль (опционально)
      * @param authMode режим аутентификации (credentials, windows-integrated, kerberos)
@@ -89,6 +93,7 @@ public class DatabaseConfigurationService {
             String host,
             Integer port,
             String database,
+            String schema,
             String username,
             String password,
             String authMode) {

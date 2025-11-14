@@ -3,13 +3,13 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2025-11-11",
+      "lastUpdated": "2025-11-13",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0020",
+      "nextTaskId": "0022",
       "items": {
         "0001": {
           "task": {
@@ -416,9 +416,9 @@
         },
         "0016": {
           "task": {
-            "displayName": "DTO и мапперы для Og/OgAg (pending, high). № 0016",
+            "displayName": "DTO и мапперы для Og/OgAg (completed, high). № 0016",
             "task-attributes": {
-              "status": "pending",
+              "status": "completed",
               "priority": "high",
               "owner": "Александр",
               "completionCriteria": [
@@ -430,14 +430,17 @@
               "description": "Подготовка DTO-слоя и мапперов для сервисов OgService/OgAgService под REST и GraphQL сценарии",
               "links": {
                 "projectDocsRefs": [
-                  "component:backend.database.service",
+                  "component:backend.web.dto",
+                  "component:backend.web.mapper",
                   "module:backend.web"
                 ],
-                "journalRefs": [],
+                "journalRefs": [
+                  "log:log-2025-11-13-004"
+                ],
                 "aiRuleRefs": []
               },
               "created": "2025-11-11",
-              "lastUpdated": "2025-11-11"
+              "lastUpdated": "2025-11-13"
             }
           }
         },
@@ -472,15 +475,16 @@
         },
         "0018": {
           "task": {
-            "displayName": "Интерфейс просмотра организаций/агентов (pending, high). № 0018",
+            "displayName": "Интерфейс просмотра организаций/агентов (in-progress, high). № 0018",
             "task-attributes": {
-              "status": "pending",
+              "status": "in-progress",
               "priority": "high",
               "owner": "Александр",
               "completionCriteria": [
                 "Реализован UX-флоу подключения к базе с валидацией входных данных",
                 "Созданы компоненты списков и карточек организаций og и агентов ogAg",
                 "Интеграция с REST/GraphQL API для загрузки и обновления данных настроена",
+                "Компонентные и unit-тесты покрывают ключевые сценарии K2",
                 "Проведены UX-проверки и зафиксирована контрольная точка K2"
               ],
               "description": "Разработка фронтенд-интерфейса для подключения к базе данных и работы с таблицами организаций и агентских организаций",
@@ -493,7 +497,7 @@
                 "aiRuleRefs": []
               },
               "created": "2025-11-11",
-              "lastUpdated": "2025-11-11"
+              "lastUpdated": "2025-11-12"
             }
           }
         },
@@ -508,7 +512,8 @@
                 "Зафиксирован layout экрана приложения с кнопками и строкой состояния",
                 "Описан сценарий модальной формы подключения к БД",
                 "Определена структура экрана организаций и списка агентов",
-                "Задокументированы пользовательские сценарии \"подключение → просмотр организаций\""
+                "Задокументированы пользовательские сценарии \"подключение → просмотр организаций\"",
+                "Проведена проверка Quasar-реализации по сценариям UX"
               ],
               "description": "Подготовка UX-макета и пользовательских сценариев блока 02.1 для интерфейса подключения и просмотра организаций в рамках задачи 0018",
               "links": {
@@ -516,11 +521,70 @@
                   "module:frontend",
                   "module:backend.web"
                 ],
-                "journalRefs": [],
+                "journalRefs": [
+                  "log:log-2025-11-12-001"
+                ],
                 "aiRuleRefs": []
               },
               "created": "2025-11-11",
-              "lastUpdated": "2025-11-11"
+              "lastUpdated": "2025-11-12"
+            }
+          }
+        },
+        "0020": {
+          "task": {
+            "displayName": "Переход UI на Quasar (completed, high). № 0020",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Создан модуль `code/femsq-frontend-q/` с базовой конфигурацией Vite + Quasar",
+                "Перенесены общие stor'ы и mock-данные из текущего фронтенда",
+                "Реализованы layout, модальная форма подключения и экран организаций на компонентах Quasar",
+                "Обновлена документация и ссылки на новый модуль"
+              ],
+              "description": "Перевод пользовательского интерфейса FEMSQ на библиотеку Quasar в отдельном модуле с сохранением текущей версии в качестве резерва",
+              "links": {
+                "projectDocsRefs": [
+                  "component:frontend.quasar",
+                  "module:frontend"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-11-12",
+              "lastUpdated": "2025-11-12"
+            }
+          }
+        },
+        "0021": {
+          "task": {
+            "displayName": "Система тестирования и CI/CD (completed, high). № 0021",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Созданы Maven профили для разделения тестов (unit, integration, ci)",
+                "Созданы скрипты для запуска тестов (test-unit.sh, test-integration.sh, test-all.sh, test-e2e.sh)",
+                "Настроен GitHub Actions CI/CD workflow (.github/workflows/ci.yml)",
+                "Добавлена поддержка отчетов о покрытии кода (JaCoCo)",
+                "Создана документация по тестированию (testing-strategy.md, testing-recommendations.md)"
+              ],
+              "description": "Создание комплексной системы тестирования с автоматизацией запуска тестов в нужное время через CI/CD",
+              "links": {
+                "projectDocsRefs": [
+                  "infrastructure:testing",
+                  "infrastructure:ci_cd"
+                ],
+                "journalRefs": [
+                  "log:log-2025-11-13-001"
+                ],
+                "aiRuleRefs": []
+              },
+              "created": "2025-11-13",
+              "lastUpdated": "2025-11-13"
             }
           }
         }
@@ -696,7 +760,7 @@
                                 },
                                 {
                                   "task-item": {
-                                    "displayName": "⏳ DTO и мапперы для Og/OgAg (pending, high). № 01.01.01.05.04 → 0016",
+                                    "displayName": "✅ DTO и мапперы для Og/OgAg (completed, high). № 01.01.01.05.04 → 0016",
                                     "item-attributes": {
                                       "structureId": "01.01.01.05.04",
                                       "taskId": "0016",
@@ -749,7 +813,7 @@
                   "task-items": [
                     {
                       "task-item": {
-                        "displayName": "⏳ Интерфейс просмотра организаций/агентов (pending, high). № 01.02.01 → 0018",
+                        "displayName": "🔄 Интерфейс просмотра организаций/агентов (in-progress, high). № 01.02.01 → 0018",
                         "item-attributes": {
                           "structureId": "01.02.01",
                           "taskId": "0018",
@@ -763,6 +827,67 @@
                                 "structureId": "01.02.01.01",
                                 "taskId": "0019",
                                 "positionInParent": 1
+                              },
+                              "task-items": []
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "✅ Перевод UI на Quasar (completed, high). № 01.02.02 → 0020",
+                        "item-attributes": {
+                          "structureId": "01.02.02",
+                          "taskId": "0020",
+                          "positionInParent": 2,
+                          "comment": "Новый фронтенд-модуль на Quasar в каталоге code/femsq-frontend-q"
+                        },
+                        "task-items": [
+                          {
+                            "task-item": {
+                              "displayName": "✅ Подготовка модуля femsq-frontend-q (completed, high). № 01.02.02.01 → 0020",
+                              "item-attributes": {
+                                "structureId": "01.02.02.01",
+                                "taskId": "0020",
+                                "positionInParent": 1,
+                                "comment": "Соответствует 02.1.Q.0"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "✅ Каркас приложения на Quasar (completed, high). № 01.02.02.02 → 0020",
+                              "item-attributes": {
+                                "structureId": "01.02.02.02",
+                                "taskId": "0020",
+                                "positionInParent": 2,
+                                "comment": "Соответствует 02.1.Q.1"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "✅ Модальное подключение на Quasar (completed, high). № 01.02.02.03 → 0020",
+                              "item-attributes": {
+                                "structureId": "01.02.02.03",
+                                "taskId": "0020",
+                                "positionInParent": 3,
+                                "comment": "Соответствует 02.1.Q.2"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "✅ Экран организаций на Quasar (completed, high). № 01.02.02.04 → 0020",
+                              "item-attributes": {
+                                "structureId": "01.02.02.04",
+                                "taskId": "0020",
+                                "positionInParent": 4,
+                                "comment": "Соответствует 02.1.Q.3"
                               },
                               "task-items": []
                             }
@@ -907,7 +1032,7 @@
                     },
                     {
                       "task-item": {
-                        "displayName": "⏳ Интерфейс просмотра организаций/агентов (pending, high). № 02.02.02 → 0018",
+                        "displayName": "🔄 Интерфейс просмотра организаций/агентов (in-progress, high). № 02.02.02 → 0018",
                         "item-attributes": {
                           "structureId": "02.02.02",
                           "taskId": "0018",
@@ -921,6 +1046,175 @@
                                 "structureId": "02.02.02.01",
                                 "taskId": "0019",
                                 "positionInParent": 1
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "✅ Пользовательские сценарии подключения → организации (completed, high). № 02.02.02.02 → 0019",
+                              "item-attributes": {
+                                "structureId": "02.02.02.02",
+                                "taskId": "0019",
+                                "positionInParent": 2,
+                                "comment": "Соответствует 02.1.4"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "✅ Интеграция Pinia с REST/GraphQL API (completed, high). № 02.02.02.03 → 0018",
+                              "item-attributes": {
+                                "structureId": "02.02.02.03",
+                                "taskId": "0018",
+                                "positionInParent": 3,
+                                "comment": "Загрузка организаций и агентов, обработка ошибок"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "✅ Фильтры и пагинация OrganizationsView (completed, high). № 02.02.02.04 → 0018",
+                              "item-attributes": {
+                                "structureId": "02.02.02.04",
+                                "taskId": "0018",
+                                "positionInParent": 4,
+                                "comment": "Фильтр по ogName, параметры page/size/sort, состояния загрузки"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "✅ Инфраструктура тестирования (completed, high). № 02.02.02.05 → 0018",
+                              "item-attributes": {
+                                "structureId": "02.02.02.05",
+                                "taskId": "0018",
+                                "positionInParent": 5,
+                                "comment": "Vitest + Playwright, конфиги, npm-скрипты"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "✅ Unit-тесты useOrganizationsStore (completed, high). № 02.02.02.06 → 0018",
+                              "item-attributes": {
+                                "structureId": "02.02.02.06",
+                                "taskId": "0018",
+                                "positionInParent": 6,
+                                "comment": "Набор тестов на фильтры, пагинацию, обработку ошибок"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "✅ Компонентные тесты OrganizationsView (completed, high). № 02.02.02.07 → 0018",
+                              "item-attributes": {
+                                "structureId": "02.02.02.07",
+                                "taskId": "0018",
+                                "positionInParent": 7,
+                                "comment": "Соответствует 02.2.3.3"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "✅ E2E-сценарии K2 (completed, high). № 02.02.02.08 → 0018",
+                              "item-attributes": {
+                                "structureId": "02.02.02.08",
+                                "taskId": "0018",
+                                "positionInParent": 8,
+                                "comment": "Соответствует 02.2.3.4 (миграция на Playwright: 02.2.3.4.P)"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "✅ Чеклист K2 и закрытие контрольной точки (completed, high). № 02.02.02.09 → 0018",
+                              "item-attributes": {
+                                "structureId": "02.02.02.09",
+                                "taskId": "0018",
+                                "positionInParent": 9,
+                                "comment": "Соответствует 02.2.3.5. K2 закрыта 2025-11-13"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "✅ UX-тесты и обратная связь (completed, high). № 02.02.02.10 → 0018",
+                              "item-attributes": {
+                                "structureId": "02.02.02.10",
+                                "taskId": "0018",
+                                "positionInParent": 10,
+                                "comment": "Соответствует 02.3. Чеклист UX-тестов создан"
+                              },
+                              "task-items": []
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "✅ Переход UI на Quasar (completed, high). № 02.02.03 → 0020",
+                        "item-attributes": {
+                          "structureId": "02.02.03",
+                          "taskId": "0020",
+                          "positionInParent": 3,
+                          "comment": "Quasar-версия интерфейса в модуле code/femsq-frontend-q"
+                        },
+                        "task-items": [
+                          {
+                            "task-item": {
+                              "displayName": "✅ Подготовка модуля femsq-frontend-q (completed, high). № 02.02.03.01 → 0020",
+                              "item-attributes": {
+                                "structureId": "02.02.03.01",
+                                "taskId": "0020",
+                                "positionInParent": 1,
+                                "comment": "Соответствует 02.1.Q.0"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "✅ Каркас приложения на Quasar (completed, high). № 02.02.03.02 → 0020",
+                              "item-attributes": {
+                                "structureId": "02.02.03.02",
+                                "taskId": "0020",
+                                "positionInParent": 2,
+                                "comment": "Соответствует 02.1.Q.1"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "✅ Модальное подключение на Quasar (completed, high). № 02.02.03.03 → 0020",
+                              "item-attributes": {
+                                "structureId": "02.02.03.03",
+                                "taskId": "0020",
+                                "positionInParent": 3,
+                                "comment": "Соответствует 02.1.Q.2"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "✅ Экран организаций на Quasar (completed, high). № 02.02.03.04 → 0020",
+                              "item-attributes": {
+                                "structureId": "02.02.03.04",
+                                "taskId": "0020",
+                                "positionInParent": 4,
+                                "comment": "Соответствует 02.1.Q.3"
                               },
                               "task-items": []
                             }
@@ -1033,7 +1327,7 @@
                           },
                           {
                             "task-item": {
-                              "displayName": "⏳ DTO и мапперы для Og/OgAg (pending, high). № 0a.01.04.04 → 0016",
+                              "displayName": "✅ DTO и мапперы для Og/OgAg (completed, high). № 0a.01.04.04 → 0016",
                               "item-attributes": {
                                 "structureId": "0a.01.04.04",
                                 "taskId": "0016",
@@ -1105,6 +1399,17 @@
                       }
                     }
                   ]
+                }
+              },
+              {
+                "task-item": {
+                  "displayName": "✅ Система тестирования и CI/CD (completed, high). № 0a.04 → 0021",
+                  "item-attributes": {
+                    "structureId": "0a.04",
+                    "taskId": "0021",
+                    "positionInParent": 4
+                  },
+                  "task-items": []
                 }
               }
             ]
