@@ -9,7 +9,7 @@
     
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0022",
+      "nextTaskId": "0023",
       "items": {
         "0001": {
           "task": {
@@ -585,6 +585,38 @@
               },
               "created": "2025-11-13",
               "lastUpdated": "2025-11-13"
+            }
+          }
+        },
+        "0022": {
+          "task": {
+            "displayName": "Объединение Backend и Frontend в единый JAR (completed, critical). № 0022",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "critical",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Настроен Maven для автоматической сборки frontend (frontend-maven-plugin)",
+                "Настроено копирование статических ресурсов в JAR (maven-resources-plugin)",
+                "Создана конфигурация Spring Boot для обслуживания статических ресурсов (WebMvcConfig, SpaController)",
+                "Настроен frontend для production build (vite.config.ts, http.ts, .env.production)",
+                "Проверена сборка и запуск единого JAR-файла",
+                "Обновлена документация (deployment-guide.md, project-docs.json)"
+              ],
+              "description": "Создание единого исполняемого JAR-файла, содержащего backend и скомпилированный frontend, запускаемый одной командой",
+              "links": {
+                "projectDocsRefs": [
+                  "infrastructure:deployment",
+                  "frontend:serving",
+                  "frontend:deployment"
+                ],
+                "journalRefs": [
+                  "log:log-2025-11-14-001"
+                ],
+                "aiRuleRefs": []
+              },
+              "created": "2025-11-14",
+              "lastUpdated": "2025-11-14"
             }
           }
         }

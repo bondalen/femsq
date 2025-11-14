@@ -3,7 +3,7 @@
       "metadata": {
         "version": "1.0.0",
         "status": "active",
-        "lastUpdated": "2025-11-13"
+        "lastUpdated": "2025-11-14"
       },
       "sessions": [
         {
@@ -1388,6 +1388,94 @@
                     "outcome": "Структурный план синхронизирован с фактическим состоянием",
                     "references": [
                       "docs/development/notes/chats/chat-plan/chat-plan-25-1111.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Объединение Backend и Frontend в единый JAR (success). № log-2025-11-14-001",
+                "log-attributes": {
+                  "id": "log-2025-11-14-001",
+                  "timestamp": "2025-11-14T16:30:00Z",
+                  "level": "success",
+                  "effort": "4h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "infrastructure:deployment",
+                      "frontend:serving",
+                      "frontend:deployment"
+                    ],
+                    "developmentTasks": [
+                      "task:0022"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Настроен Maven для автоматической сборки frontend",
+                    "details": "Добавлен frontend-maven-plugin в femsq-web/pom.xml для автоматической установки Node.js/npm, установки зависимостей и сборки frontend. Настроены пути и версии (Node.js v22.20.0, npm 10.9.3).",
+                    "outcome": "Frontend автоматически собирается при выполнении mvn clean package",
+                    "references": [
+                      "code/femsq-backend/femsq-web/pom.xml",
+                      "docs/development/notes/chats/chat-plan/chat-plan-25-1114.md"
+                    ]
+                  },
+                  {
+                    "action": "Настроено копирование статических ресурсов в JAR",
+                    "details": "Добавлен maven-resources-plugin для копирования собранного frontend (dist/) в target/classes/static/ во время фазы process-resources.",
+                    "outcome": "Статические ресурсы frontend автоматически включаются в JAR",
+                    "references": [
+                      "code/femsq-backend/femsq-web/pom.xml"
+                    ]
+                  },
+                  {
+                    "action": "Создана конфигурация Spring Boot для статических ресурсов",
+                    "details": "Создан WebMvcConfig для обслуживания статических ресурсов из classpath:/static/ и перенаправления корневого пути на index.html. Создан SpaController для SPA routing (Vue Router) с поддержкой маршрутов /organizations, /connection и других.",
+                    "outcome": "Frontend доступен на корневом URL, Vue Router работает корректно",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/config/WebMvcConfig.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/config/SpaController.java"
+                    ]
+                  },
+                  {
+                    "action": "Настроен frontend для production build",
+                    "details": "Обновлен vite.config.ts с настройками base: '/', build.outDir: 'dist', rollupOptions для корректных путей к assets. Обновлен http.ts для использования относительных путей в production (/api/v1). Создан .env.production с VITE_API_BASE_URL=/api/v1.",
+                    "outcome": "Frontend собирается с относительными путями для встраивания в JAR",
+                    "references": [
+                      "code/femsq-frontend-q/vite.config.ts",
+                      "code/femsq-frontend-q/src/api/http.ts",
+                      "code/femsq-frontend-q/.env.production"
+                    ]
+                  },
+                  {
+                    "action": "Исправлена конфигурация spring-boot-maven-plugin",
+                    "details": "Добавлен execution с goal repackage для создания executable JAR. JAR теперь является fat JAR с размером ~29MB, содержащим все зависимости и frontend.",
+                    "outcome": "JAR является исполняемым и может быть запущен командой java -jar",
+                    "references": [
+                      "code/femsq-backend/femsq-web/pom.xml"
+                    ]
+                  },
+                  {
+                    "action": "Проверена сборка и запуск единого JAR",
+                    "details": "Выполнена сборка mvn clean package из корня проекта. Проверено, что frontend собирается автоматически, статические ресурсы копируются в JAR, JAR содержит все необходимые файлы. Приложение успешно запускается на порту 8080.",
+                    "outcome": "Единый JAR-файл успешно собирается и запускается, контрольная точка K3 закрыта",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-25-1114.md"
+                    ]
+                  },
+                  {
+                    "action": "Обновлена документация",
+                    "details": "Обновлен deployment-guide.md с разделом о сборке Full-Stack JAR. Обновлен project-docs.json с подтверждением реализации serving и deployment. Добавлена задача 0022 в project-development.json. Обновлен project-journal.json с записью о завершении.",
+                    "outcome": "Документация отражает новую архитектуру развертывания",
+                    "references": [
+                      "docs/development/deployment-guide.md",
+                      "docs/project/project-docs.json",
+                      "docs/development/project-development.json",
+                      "docs/journal/project-journal.json"
                     ]
                   }
                 ]

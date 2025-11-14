@@ -1,6 +1,21 @@
 const DEFAULT_TIMEOUT = 15_000;
 
-const RAW_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:8080';
+/**
+ * Определяет базовый URL для API-запросов.
+ * 
+ * <p>Логика определения:
+ * <ul>
+ *   <li>Если задан VITE_API_BASE_URL - используется он</li>
+ *   <li>В development режиме (import.meta.env.DEV) - используется http://localhost:8080</li>
+ *   <li>В production режиме (import.meta.env.PROD) - используется относительный путь /api/v1</li>
+ * </ul>
+ * 
+ * <p>В production режиме (когда frontend встроен в JAR) все запросы идут
+ * на относительные пути, что позволяет избежать проблем с CORS и упрощает развертывание.
+ */
+const RAW_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) 
+  ?? (import.meta.env.PROD ? '/api/v1' : 'http://localhost:8080/api/v1');
+
 const API_BASE_URL = RAW_BASE_URL.endsWith('/') ? RAW_BASE_URL : `${RAW_BASE_URL}/`;
 
 export interface RequestErrorOptions {

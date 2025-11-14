@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.Locale;
+import java.util.Objects;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -94,6 +95,7 @@ class ConnectionControllerReconnectionIT {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         ConnectionStatusResponse body = response.getBody();
         assertThat(body).isNotNull();
+        Objects.requireNonNull(body, "Response body must not be null");
         assertThat(body.connected()).isTrue();
         assertThat(body.schema()).isEqualTo(baseConfiguration.schema());
         assertThat(body.database()).isEqualTo(baseConfiguration.database());
@@ -123,6 +125,7 @@ class ConnectionControllerReconnectionIT {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         ConnectionStatusResponse body = response.getBody();
         assertThat(body).isNotNull();
+        Objects.requireNonNull(body, "Response body must not be null");
         assertThat(body.connected()).isTrue();
         assertThat(body.schema()).isEqualTo(baseConfiguration.schema());
         assertThat(body.error()).isNull();
@@ -152,6 +155,7 @@ class ConnectionControllerReconnectionIT {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         ConnectionStatusResponse body = response.getBody();
         assertThat(body).isNotNull();
+        Objects.requireNonNull(body, "Response body must not be null");
         assertThat(body.connected()).isFalse();
         assertThat(body.error()).isNotNull();
     }
@@ -180,6 +184,7 @@ class ConnectionControllerReconnectionIT {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         ConnectionStatusResponse body = response.getBody();
         assertThat(body).isNotNull();
+        Objects.requireNonNull(body, "Response body must not be null");
         assertThat(body.connected()).isTrue();
         assertThat(body.schema()).isEqualTo(baseConfiguration.schema());
         assertThat(body.message()).contains("Конфигурация применена");
@@ -211,6 +216,7 @@ class ConnectionControllerReconnectionIT {
         assertThat(firstResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         ConnectionStatusResponse firstBody = firstResponse.getBody();
         assertThat(firstBody).isNotNull();
+        Objects.requireNonNull(firstBody, "Response body must not be null");
         assertThat(firstBody.connected()).isTrue();
 
         // Проверяем, что статус обновился
@@ -223,6 +229,7 @@ class ConnectionControllerReconnectionIT {
         assertThat(statusResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         ConnectionStatusResponse statusBody = statusResponse.getBody();
         assertThat(statusBody).isNotNull();
+        Objects.requireNonNull(statusBody, "Response body must not be null");
         assertThat(statusBody.connected()).isTrue();
         assertThat(statusBody.schema()).isEqualTo(baseConfiguration.schema());
     }
@@ -259,6 +266,7 @@ class ConnectionControllerReconnectionIT {
         assertThat(configResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         ConnectionConfigResponse configBody = configResponse.getBody();
         assertThat(configBody).isNotNull();
+        Objects.requireNonNull(configBody, "Response body must not be null");
         assertThat(configBody.host()).isEqualTo(baseConfiguration.host());
         assertThat(configBody.port()).isEqualTo(baseConfiguration.port());
         assertThat(configBody.database()).isEqualTo(baseConfiguration.database());

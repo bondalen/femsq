@@ -136,17 +136,6 @@ class ConnectionControllerTest {
     void testConnection_WithValidRequest_ReturnsSuccess() {
         // Этот тест требует реального подключения к БД, так как testConnection создает временный ConnectionFactory
         // Поэтому пропускаем его в unit-тестах - он покрыт integration-тестами
-        // Вместо этого проверяем только валидацию
-        ConnectionTestRequest request = new ConnectionTestRequest(
-                "localhost",
-                1433,
-                "FishEye",
-                "ags_test",
-                "sa",
-                "password",
-                "credentials");
-
-        // Тест пропускается, так как требует реального подключения
         // Реальная проверка выполняется в ConnectionControllerReconnectionIT
         org.junit.jupiter.api.Assumptions.assumeTrue(false, 
                 "This test requires real database connection - covered by integration tests");
@@ -180,14 +169,6 @@ class ConnectionControllerTest {
     void testConnection_WhenConnectionFails_ReturnsError() {
         // Этот тест требует реального подключения к БД, так как testConnection создает временный ConnectionFactory
         // Поэтому пропускаем его в unit-тестах - он покрыт integration-тестами
-        ConnectionTestRequest request = new ConnectionTestRequest(
-                "localhost",
-                1433,
-                "FishEye",
-                "ags_test",
-                "sa",
-                "password",
-                "credentials");
 
         // Тест пропускается, так как требует реального подключения
         // Реальная проверка выполняется в ConnectionControllerReconnectionIT

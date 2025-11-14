@@ -6,7 +6,7 @@
             "description": "Cистема работы с контрагентами и объектами при капитальном строительстве на основе БД MS SQL Server FEMSQ (Fish Eye MS SQL Server)",
             "author": "Александр",
             "created": "2025-10-08",
-            "lastUpdated": "2025-11-13",
+            "lastUpdated": "2025-11-14",
             "status": "planning",
             "repository": "https://github.com/bondalen/femsq.git",
             "license": "MIT",
@@ -42,13 +42,14 @@
                 "maps": "Leaflet",
                 "routing": "Vue Router",
                 "state": "Pinia",
-                "serving": "Spring Boot Static Resources"
+                "serving": "Spring Boot Static Resources",
+                "deployment": "Встроен в Spring Boot JAR (единый артефакт)"
             },
             "infrastructure": {
                 "database": "MS SQL Server (внешняя)",
                 "monitoring": "Spring Boot Actuator",
                 "ai": "MCP Servers",
-                "deployment": "Spring Boot Fat JAR",
+                "deployment": "Spring Boot Fat JAR (Full-Stack: backend + frontend в едином JAR)",
                 "ci_cd": {
                     "platform": "GitHub Actions",
                     "workflow": ".github/workflows/ci.yml",
@@ -390,9 +391,9 @@
                     },
                     "build": {
                         "command": "mvn clean package",
-                        "description": "Сборка единого JAR-файла с встроенным frontend",
-                        "location": "code/femsq-backend",
-                        "usage": "Создание production-ready JAR файла"
+                        "description": "Сборка единого Full-Stack JAR-файла (backend + frontend)",
+                        "location": "code",
+                        "usage": "Создание production-ready JAR файла с встроенным frontend. Frontend собирается автоматически через frontend-maven-plugin."
                     },
                     "run": {
                         "command": "java -jar target/femsq-{version}.jar",
@@ -521,8 +522,11 @@
                 "deployment_type": "fat-jar-corporate-network"
             },
             "environments": {
-                "frontend": "http://localhost:8080 (встроенный в JAR)",
-                "backend": "http://localhost:8080"
+                "frontend": "http://localhost:8080 (встроенный в JAR, подтверждено 2025-11-14)",
+                "backend": "http://localhost:8080",
+                "api": "http://localhost:8080/api/v1",
+                "graphql": "http://localhost:8080/graphql",
+                "note": "Frontend и backend работают на одном порту (8080), единый JAR-файл"
             },
             "configuration": {
                 "jar_name": "femsq-{version}.jar",
