@@ -60,9 +60,14 @@ public class ConnectionFactory implements AutoCloseable {
      * @return активное JDBC соединение
      */
     public Connection createConnection() {
-        DatabaseConfigurationProperties configuration = configurationService.loadConfig();
-        AuthenticationProvider provider = providerFactory.create(configuration);
-        return createConnection(configuration, provider);
+        try {
+            DatabaseConfigurationProperties configuration = configurationService.loadConfig();
+            AuthenticationProvider provider = providerFactory.create(configuration);
+            return createConnection(configuration, provider);
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            // Пробрасываем MissingConfigurationException дальше для правильной обработки в ApiExceptionHandler
+            throw exception;
+        }
     }
 
     /**
@@ -72,8 +77,13 @@ public class ConnectionFactory implements AutoCloseable {
      * @return активное JDBC соединение
      */
     public Connection createConnection(AuthenticationProvider provider) {
-        DatabaseConfigurationProperties configuration = configurationService.loadConfig();
-        return createConnection(configuration, provider);
+        try {
+            DatabaseConfigurationProperties configuration = configurationService.loadConfig();
+            return createConnection(configuration, provider);
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            // Пробрасываем MissingConfigurationException дальше для правильной обработки в ApiExceptionHandler
+            throw exception;
+        }
     }
 
     /**

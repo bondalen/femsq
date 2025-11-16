@@ -6,7 +6,7 @@
             "description": "Cистема работы с контрагентами и объектами при капитальном строительстве на основе БД MS SQL Server FEMSQ (Fish Eye MS SQL Server)",
             "author": "Александр",
             "created": "2025-10-08",
-            "lastUpdated": "2025-11-14",
+            "lastUpdated": "2025-11-16",
             "status": "planning",
             "repository": "https://github.com/bondalen/femsq.git",
             "license": "MIT",
@@ -507,6 +507,83 @@
                     }
                 ]
             },
+            "environments": {
+                "description": "Машины разработки с порядком приоритета подключения. При начале работы AI проверяет машины в порядке check_order и использует первую подходящую.",
+                "check_order": [
+                    "workstation-fedora",
+                    "home-windows"
+                ],
+                "machines": {
+                    "workstation-fedora": {
+                        "name": "Основная рабочая машина",
+                        "hostname_pattern": ".*fedora.*|.*workstation.*|.*User-PC.*",
+                        "os_pattern": ".*Fedora.*|.*Linux.*|.*Ubuntu.*",
+                        "priority": 1,
+                        "database": {
+                            "type": "docker",
+                            "container_name": "vuege-mssql",
+                            "host": "localhost",
+                            "port": 1433,
+                            "database": "Fish_Eye",
+                            "username": "sa",
+                            "password": "kolob_OK1",
+                            "connection_string": "sqlserver://sa:kolob_OK1@localhost:1433/Fish_Eye?sslmode=disable&encrypt=false&trustServerCertificate=true",
+                            "check_commands": {
+                                "container_status": "docker ps --filter name=vuege-mssql --format '{{.Status}}'",
+                                "port_check": "timeout 2 bash -c 'cat < /dev/null > /dev/tcp/localhost/1433' 2>&1"
+                            }
+                        },
+                        "dbhub": {
+                            "type": "local",
+                            "path": ".cursor/dbhub",
+                            "package": "@bytebase/dbhub",
+                            "version": "latest",
+                            "install_command": "npm install @bytebase/dbhub --prefix .cursor/dbhub",
+                            "entry_point": ".cursor/dbhub/node_modules/@bytebase/dbhub/dist/index.js"
+                        },
+                        "notes": "Основная машина разработки, SQL Server в Docker контейнере vuege-mssql"
+                    },
+                    "home-windows": {
+                        "name": "Домашняя машина",
+                        "hostname_pattern": ".*home.*|.*windows.*",
+                        "os_pattern": ".*Windows.*",
+                        "priority": 2,
+                        "database": {
+                            "type": "local_service",
+                            "service_name": "MSSQLSERVER",
+                            "host": "localhost",
+                            "port": 1433,
+                            "database": "FishEye",
+                            "username": "sa",
+                            "password": "kolob_OK1",
+                            "connection_string": "sqlserver://sa:kolob_OK1@localhost:1433/FishEye?sslmode=disable&encrypt=false&trustServerCertificate=true",
+                            "check_commands": {
+                                "service_status": "powershell.exe -Command \"Get-Service -Name MSSQLSERVER | Select-Object -ExpandProperty Status\"",
+                                "port_check": "netstat -an | findstr :1433"
+                            }
+                        },
+                        "dbhub": {
+                            "type": "local",
+                            "path": ".cursor/dbhub",
+                            "package": "@bytebase/dbhub",
+                            "version": "latest",
+                            "install_command": "npm install @bytebase/dbhub --prefix .cursor/dbhub",
+                            "entry_point": ".cursor/dbhub/node_modules/@bytebase/dbhub/dist/index.js"
+                        },
+                        "notes": "Домашняя машина, SQL Server как служба Windows"
+                    }
+                },
+                "detection": {
+                    "method": "auto",
+                    "fallback": "ask_user",
+                    "checks": [
+                        "hostname",
+                        "os",
+                        "database_container",
+                        "database_service"
+                    ]
+                }
+            },
             "standards": {
                 "codeStyle": "Google Java Style + ESLint/Prettier",
                 "gitFlow": "GitHub Flow",
@@ -715,6 +792,55 @@
                 "impact": "medium",
                 "mitigation": "Оптимизация запросов и кэширование",
                 "status": "monitoring"
+            }
+        ],
+        "problems": [
+            {
+                "id": "P-2025-11-16-001",
+                "title": "Spring GraphQL: нестабильность интеграционных тестов (404 при запуске всего модуля)",
+                "status": "known_issue",
+                "discovered": "2025-11-15",
+                "lastUpdated": "2025-11-16",
+                "modules": [
+                    "femsq-backend/femsq-web"
+                ],
+                "scope": [
+                    "Интеграционные тесты GraphQL",
+                    "Spring Boot 3.4.5",
+                    "Spring GraphQL 1.3.5"
+                ],
+                "description": "GraphQL endpoint стабильно работает в production и при изолированном запуске тестового класса, но при запуске всех интеграционных тестов модуля возвращает 404 (endpoint не регистрируется). Проблема воспроизводится независимо от задержек/ретраев и аннотаций изоляции контекста.",
+                "reproduction": [
+                    "mvn -Pintegration -pl femsq-backend/femsq-web verify",
+                    "Падает тест GraphQL: 404 после нескольких ретраев"
+                ],
+                "attemptedSolutions": [
+                    "@DirtiesContext (BEFORE_CLASS/AFTER_CLASS/AFTER_EACH_TEST_METHOD) — не помогло",
+                    "Задержка 2с + 10 ретраев по 1с — не помогло",
+                    "Изменение порядка выполнения (имя класса, @Order) — Maven Failsafe игнорирует порядок",
+                    "Вынос теста в отдельный класс и модуль — в модуле возникли конфликты зависимостей Spring (BeanFactoryInitializer)"
+                ],
+                "currentWorkaround": "Тесты GraphQL отключены (@Disabled) в модуле femsq-web. Функциональность GraphQL подтверждена вручную и изолированными запусками.",
+                "impact": {
+                    "severity": "medium",
+                    "areas": ["интеграционные тесты GraphQL"],
+                    "notes": "Не влияет на production, но снижает автоматизированное покрытие GraphQL."
+                },
+                "recommendations": [
+                    "Добавить slice-тесты @GraphQlTest для контроллера OgGraphqlController",
+                    "Рассмотреть отдельный тестовый модуль только для GraphQL с корректной компоновкой зависимостей",
+                    "Отслеживать обновления Spring Boot/GraphQL и перепроверять проблему при следующем обновлении",
+                    "Альтернатива: E2E-проверка GraphQL через Playwright на живом приложении"
+                ],
+                "links": {
+                    "plan": "docs/development/notes/chats/chat-plan/chat-plan-25-1115.md",
+                    "tests": [
+                        "code/femsq-backend/femsq-web/src/test/java/com/femsq/web/api/rest/ApiOrganizationsSuccessIT.java",
+                        "code/femsq-backend/femsq-web/src/test/java/com/femsq/web/api/graphql/AGraphqlOrganizationsIT.java"
+                    ],
+                    "commits": [],
+                    "issues": []
+                }
             }
         ],
         "resources": {

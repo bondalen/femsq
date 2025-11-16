@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 /**
  * Точка входа Spring Boot-приложения FEMSQ Web API.
  */
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {"com.femsq"})
 public class FemsqWebApplication {
 
     /**

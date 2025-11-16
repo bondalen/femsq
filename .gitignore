@@ -28,6 +28,10 @@ dist/
 .output/
 .cache/
 
+# DBHub локальная установка (в проекте)
+.cursor/dbhub/node_modules/
+.cursor/dbhub/package-lock.json
+
 # Environment
 .env
 .env.local

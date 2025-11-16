@@ -47,9 +47,15 @@ final class DaoIntegrationTestSupport {
     }
 
     static void resetSchema(ConnectionFactory factory) throws IOException, SQLException {
+        DatabaseConfigurationProperties config = configurationFromEnv();
         List<String> lines = Files.readAllLines(SEED_SCRIPT);
+        // Заменяем жестко прописанное имя базы данных на реальное из конфигурации
+        List<String> processedLines = lines.stream()
+                .map(line -> line.replaceAll("\\[FishEye\\]", "[" + config.database() + "]")
+                        .replaceAll("FishEye\\.", config.database() + "."))
+                .toList();
         try (Connection connection = factory.createConnection()) {
-            executeScript(connection, lines);
+            executeScript(connection, processedLines);
         }
     }
 

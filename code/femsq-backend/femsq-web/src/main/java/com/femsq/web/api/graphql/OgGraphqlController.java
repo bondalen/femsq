@@ -1,5 +1,6 @@
 package com.femsq.web.api.graphql;
 
+import com.femsq.database.config.DatabaseConfigurationService.MissingConfigurationException;
 import com.femsq.database.exception.DaoException;
 import com.femsq.database.service.OgAgService;
 import com.femsq.database.service.OgService;
@@ -44,7 +45,12 @@ public class OgGraphqlController {
     @QueryMapping
     public List<OgDto> organizations() {
         log.info("GraphQL query organizations");
-        return ogMapper.toDto(ogService.getAll());
+        try {
+            return ogMapper.toDto(ogService.getAll());
+        } catch (MissingConfigurationException exception) {
+            log.warning("Database configuration is missing: " + exception.getMessage());
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage(), exception);
+        }
     }
 
     @QueryMapping

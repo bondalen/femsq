@@ -25,13 +25,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.ResponseEntity;
+import com.femsq.web.config.IntegrationTestConfiguration;
 
 /**
  * Интеграционный тест, фиксирующий ожидаемое поведение API при отсутствии конфигурации БД.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes = IntegrationTestConfiguration.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class ApiMissingConfigurationIT {
 
     private static final Logger log = Logger.getLogger(ApiMissingConfigurationIT.class.getName());

@@ -3,7 +3,7 @@
       "metadata": {
         "version": "1.0.0",
         "status": "active",
-        "lastUpdated": "2025-11-14"
+        "lastUpdated": "2025-11-15"
       },
       "sessions": [
         {
@@ -1474,6 +1474,98 @@
                     "references": [
                       "docs/development/deployment-guide.md",
                       "docs/project/project-docs.json",
+                      "docs/development/project-development.json",
+                      "docs/journal/project-journal.json"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "Исправление конфигурации Spring Boot для интеграционных тестов (completed, high). № chat-2025-11-15-001",
+          "chat-attributes": {
+            "id": "chat-2025-11-15-001",
+            "created": "2025-11-15",
+            "lastUpdated": "2025-11-15",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "high",
+            "tags": [
+              "spring-boot",
+              "testing",
+              "integration-tests",
+              "configuration",
+              "bugfix"
+            ],
+            "links": {
+              "projectDocsRefs": [
+                "module:backend",
+                "backend:testing"
+              ],
+              "developmentTasks": [
+                "task:0023"
+              ],
+              "aiRuleRefs": []
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Исправление проблемы с @SpringBootConfiguration в интеграционных тестах (success). № log-2025-11-15-001",
+                "log-attributes": {
+                  "id": "log-2025-11-15-001",
+                  "timestamp": "2025-11-15T08:30:00Z",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend",
+                      "backend:testing"
+                    ],
+                    "developmentTasks": [
+                      "task:0023"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Диагностика проблемы с интеграционными тестами",
+                    "details": "После обновления Spring Boot до версии 3.4.5 интеграционные тесты модуля femsq-web не запускались. Ошибка: Unable to find a @SpringBootConfiguration by searching packages upwards from the test. Проведена диагностика: проверена структура пакетов, зависимости Spring Boot Test, конфигурация Maven Failsafe Plugin, собран детальный анализ ошибки.",
+                    "outcome": "Выявлена корневая причина: Spring Boot Test Framework не может обработать @SpringBootTest при запуске через Failsafe Plugin в Spring Boot 3.4.5",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-25-1115-diagnostics.md"
+                    ]
+                  },
+                  {
+                    "action": "Создан IntegrationTestConfiguration для интеграционных тестов",
+                    "details": "Создан класс IntegrationTestConfiguration в src/test/java/com/femsq/web/config/ с аннотациями @SpringBootConfiguration, @EnableAutoConfiguration и @ComponentScan(basePackages = \"com.femsq\"). Класс дублирует настройки из FemsqWebApplication, но может быть использован в @SpringBootTest(classes=...).",
+                    "outcome": "Проблема с @SpringBootConfiguration решена, интеграционные тесты запускаются",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/test/java/com/femsq/web/config/IntegrationTestConfiguration.java"
+                    ]
+                  },
+                  {
+                    "action": "Обновлены интеграционные тесты для использования IntegrationTestConfiguration",
+                    "details": "Обновлены все три интеграционных теста (ApiOrganizationsSuccessIT, ApiMissingConfigurationIT, ConnectionControllerReconnectionIT) для использования IntegrationTestConfiguration вместо FemsqWebApplication. Также исправлено имя БД в тестах: FishEye → Fish_Eye и обновлен метод seedDatabase для замены имени БД в скрипте.",
+                    "outcome": "Все интеграционные тесты используют единообразную конфигурацию",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/test/java/com/femsq/web/api/rest/ApiOrganizationsSuccessIT.java",
+                      "code/femsq-backend/femsq-web/src/test/java/com/femsq/web/api/rest/ApiMissingConfigurationIT.java",
+                      "code/femsq-backend/femsq-web/src/test/java/com/femsq/web/api/rest/ConnectionControllerReconnectionIT.java"
+                    ]
+                  },
+                  {
+                    "action": "Обновлена документация",
+                    "details": "Обновлен spring-upgrade-completed.md с информацией о решении проблемы. Добавлена задача task:0023 в project-development.json. Добавлена запись в project-journal.json о решении проблемы.",
+                    "outcome": "Решение задокументировано в проектной документации",
+                    "references": [
+                      "docs/development/spring-upgrade-completed.md",
                       "docs/development/project-development.json",
                       "docs/journal/project-journal.json"
                     ]

@@ -42,6 +42,11 @@ public class JdbcOgAgDao implements OgAgDao {
     private String getTableName() {
         try {
             String schema = configurationService.loadConfig().schema();
+            // Если схема не указана (null), используем дефолтную схему "ags"
+            if (schema == null || schema.trim().isEmpty()) {
+                log.log(Level.WARNING, "Schema not configured, using default schema 'ags'");
+                return "ags." + TABLE_BASE_NAME;
+            }
             return schema + "." + TABLE_BASE_NAME;
         } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
             log.log(Level.WARNING, "Configuration not found, using default schema", exception);
@@ -62,6 +67,9 @@ public class JdbcOgAgDao implements OgAgDao {
                 }
                 return Optional.empty();
             }
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            // Пробрасываем MissingConfigurationException дальше для правильной обработки в ApiExceptionHandler
+            throw exception;
         } catch (SQLException exception) {
             log.log(Level.SEVERE, "Failed to execute findById for ogAg", exception);
             throw new DaoException("Не удалось получить агентскую организацию с идентификатором " + ogAgKey, exception);
@@ -82,6 +90,9 @@ public class JdbcOgAgDao implements OgAgDao {
                 }
                 return List.copyOf(agents);
             }
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            // Пробрасываем MissingConfigurationException дальше для правильной обработки в ApiExceptionHandler
+            throw exception;
         } catch (SQLException exception) {
             log.log(Level.SEVERE, "Failed to execute findByOrganization", exception);
             throw new DaoException("Не удалось получить агентские организации для организации " + organizationKey, exception);

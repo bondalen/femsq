@@ -41,6 +41,11 @@ public class JdbcOgDao implements OgDao {
     private String getTableName() {
         try {
             String schema = configurationService.loadConfig().schema();
+            // Если схема не указана (null), используем дефолтную схему "ags"
+            if (schema == null || schema.trim().isEmpty()) {
+                log.log(Level.WARNING, "Schema not configured, using default schema 'ags'");
+                return "ags." + TABLE_BASE_NAME;
+            }
             return schema + "." + TABLE_BASE_NAME;
         } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
             log.log(Level.WARNING, "Configuration not found, using default schema", exception);
@@ -62,6 +67,9 @@ public class JdbcOgDao implements OgDao {
                 }
                 return Optional.empty();
             }
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            // Пробрасываем MissingConfigurationException дальше для правильной обработки в ApiExceptionHandler
+            throw exception;
         } catch (SQLException exception) {
             log.log(Level.SEVERE, "Failed to execute findById", exception);
             throw new DaoException("Не удалось получить организацию c идентификатором " + ogKey, exception);
@@ -81,6 +89,9 @@ public class JdbcOgDao implements OgDao {
                 result.add(mapOg(resultSet));
             }
             return List.copyOf(result);
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            // Пробрасываем MissingConfigurationException дальше для правильной обработки в ApiExceptionHandler
+            throw exception;
         } catch (SQLException exception) {
             log.log(Level.SEVERE, "Failed to execute findAll", exception);
             throw new DaoException("Не удалось получить список организаций", exception);
@@ -109,6 +120,9 @@ public class JdbcOgDao implements OgDao {
                 result.add(mapOg(resultSet));
             }
             return List.copyOf(result);
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            // Пробрасываем MissingConfigurationException дальше для правильной обработки в ApiExceptionHandler
+            throw exception;
         } catch (SQLException exception) {
             log.log(Level.SEVERE, "Failed to execute findAll with pagination", exception);
             log.log(Level.SEVERE, "SQL: " + sql, exception);
@@ -127,6 +141,9 @@ public class JdbcOgDao implements OgDao {
                 return resultSet.getLong(1);
             }
             return 0L;
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            // Пробрасываем MissingConfigurationException дальше для правильной обработки в ApiExceptionHandler
+            throw exception;
         } catch (SQLException exception) {
             log.log(Level.SEVERE, "Failed to execute count", exception);
             throw new DaoException("Не удалось подсчитать количество организаций", exception);

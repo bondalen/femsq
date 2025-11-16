@@ -1,0 +1,81 @@
+{
+  "development": {
+    "environments": {
+      "description": "Машины разработки с порядком приоритета подключения. При начале работы AI проверяет машины в порядке check_order и использует первую подходящую.",
+      "check_order": [
+        "workstation-fedora",
+        "home-windows"
+      ],
+      "machines": {
+        "workstation-fedora": {
+          "name": "Основная рабочая машина",
+          "hostname_pattern": ".*fedora.*|.*workstation.*",
+          "os_pattern": ".*Fedora.*|.*Linux.*",
+          "priority": 1,
+          "database": {
+            "type": "docker",
+            "container_name": "vuege-mssql",
+            "host": "localhost",
+            "port": 1433,
+            "database": "Fish_Eye",
+            "username": "sa",
+            "password": "kolob_OK1",
+            "connection_string": "sqlserver://sa:kolob_OK1@localhost:1433/Fish_Eye?sslmode=disable&encrypt=false&trustServerCertificate=true",
+            "check_commands": {
+              "container_status": "docker ps --filter name=vuege-mssql --format '{{.Status}}'",
+              "port_check": "timeout 2 bash -c 'cat < /dev/null > /dev/tcp/localhost/1433' 2>&1"
+            }
+          },
+          "dbhub": {
+            "type": "local",
+            "path": ".cursor/dbhub",
+            "package": "@bytebase/dbhub",
+            "version": "latest",
+            "install_command": "npm install @bytebase/dbhub --prefix .cursor/dbhub",
+            "entry_point": ".cursor/dbhub/node_modules/@bytebase/dbhub/dist/index.js"
+          },
+          "notes": "Основная машина разработки, SQL Server в Docker контейнере vuege-mssql"
+        },
+        "home-windows": {
+          "name": "Домашняя машина",
+          "hostname_pattern": ".*home.*|.*windows.*",
+          "os_pattern": ".*Windows.*",
+          "priority": 2,
+          "database": {
+            "type": "local_service",
+            "service_name": "MSSQLSERVER",
+            "host": "localhost",
+            "port": 1433,
+            "database": "FishEye",
+            "username": "sa",
+            "password": "kolob_OK1",
+            "connection_string": "sqlserver://sa:kolob_OK1@localhost:1433/FishEye?sslmode=disable&encrypt=false&trustServerCertificate=true",
+            "check_commands": {
+              "service_status": "powershell.exe -Command \"Get-Service -Name MSSQLSERVER | Select-Object -ExpandProperty Status\"",
+              "port_check": "netstat -an | findstr :1433"
+            }
+          },
+          "dbhub": {
+            "type": "local",
+            "path": ".cursor/dbhub",
+            "package": "@bytebase/dbhub",
+            "version": "latest",
+            "install_command": "npm install @bytebase/dbhub --prefix .cursor/dbhub",
+            "entry_point": ".cursor/dbhub/node_modules/@bytebase/dbhub/dist/index.js"
+          },
+          "notes": "Домашняя машина, SQL Server как служба Windows"
+        }
+      },
+      "detection": {
+        "method": "auto",
+        "fallback": "ask_user",
+        "checks": [
+          "hostname",
+          "os",
+          "database_container",
+          "database_service"
+        ]
+      }
+    }
+  }
+}

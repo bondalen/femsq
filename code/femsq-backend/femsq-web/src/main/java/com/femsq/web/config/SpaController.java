@@ -49,7 +49,9 @@ public class SpaController {
   @RequestMapping(value = {
       "/organizations",
       "/connection",
-      "/{path:[^\\.]*}"  // Все пути без точки (исключает файлы с расширениями)
+      "/{path:(?!graphql|api)[^\\.]+}"  // Все пути без точки, исключая /graphql и /api
+                                      // Используем отрицательный lookahead (?!graphql|api)
+                                      // чтобы исключить /graphql и /api из обработки
   })
   public String spaRoutes() {
     // Перенаправляем на index.html для обработки Vue Router

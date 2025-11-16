@@ -30,12 +30,13 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import com.femsq.web.config.IntegrationTestConfiguration;
 
 /**
  * Интеграционные тесты для проверки переподключения к базе данных через ConnectionController.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes = IntegrationTestConfiguration.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class ConnectionControllerReconnectionIT {
 
     @Autowired
@@ -283,7 +284,7 @@ class ConnectionControllerReconnectionIT {
     private DatabaseConfigurationProperties configurationFromEnv() {
         String host = envOr("FEMSQ_DB_HOST", "localhost");
         int port = Integer.parseInt(envOr("FEMSQ_DB_PORT", "1433"));
-        String database = envOr("FEMSQ_DB_NAME", "FishEye");
+        String database = envOr("FEMSQ_DB_NAME", "Fish_Eye");
         String schema = envOr("FEMSQ_DB_SCHEMA", "ags_test");
         String authMode = envOr("FEMSQ_DB_AUTH_MODE", "credentials").toLowerCase(Locale.ROOT);
         String username = "credentials".equals(authMode) ? envOr("FEMSQ_DB_USER", "sa") : null;

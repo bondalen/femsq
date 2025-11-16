@@ -19,5 +19,6 @@
     <modules>
         <module>femsq-database</module>
         <module>femsq-web</module>
+        <module>femsq-graphql-tests</module>
     </modules>
 </project>

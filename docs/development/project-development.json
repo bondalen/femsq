@@ -3,13 +3,13 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2025-11-13",
+      "lastUpdated": "2025-11-15",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0023",
+      "nextTaskId": "0024",
       "items": {
         "0001": {
           "task": {
@@ -617,6 +617,36 @@
               },
               "created": "2025-11-14",
               "lastUpdated": "2025-11-14"
+            }
+          }
+        },
+        
+        "0023": {
+          "task": {
+            "displayName": "Исправление конфигурации Spring Boot для интеграционных тестов (completed, high). № 0023",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Проблема с @SpringBootConfiguration решена",
+                "Интеграционные тесты запускаются",
+                "Spring Boot контекст загружается корректно",
+                "Документация обновлена"
+              ],
+              "description": "Исправление проблемы с запуском интеграционных тестов модуля femsq-web после обновления Spring Boot до версии 3.4.5. Проблема: Unable to find a @SpringBootConfiguration. Решение: создан класс IntegrationTestConfiguration с @SpringBootConfiguration, @EnableAutoConfiguration и @ComponentScan.",
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend",
+                  "backend:testing"
+                ],
+                "journalRefs": [
+                  "log:log-2025-11-15-001"
+                ],
+                "aiRuleRefs": []
+              },
+              "created": "2025-11-15",
+              "lastUpdated": "2025-11-15"
             }
           }
         }

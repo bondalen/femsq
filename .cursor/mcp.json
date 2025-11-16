@@ -1,32 +1,16 @@
 {
   "mcpServers": {
-    "desktop-commander": {
-      "command": "npx",
-      "args": [
-        "@wonderwhy-er/desktop-commander@latest"
-      ],
-      "env": {
-        "NODE_ENV": "production"
-      },
-      "description": "Desktop Commander MCP - управление системой, файлами и процессами",
-      "capabilities": [
-        "file_operations",
-        "process_management", 
-        "terminal_commands",
-        "system_info"
-      ]
-    },
     "dbhub": {
       "command": "node",
       "args": [
-        "/home/alex/projects/java/spring/vue/fevue/dbhub/dist/index.js"
+        "${workspaceFolder}/.cursor/dbhub/node_modules/@bytebase/dbhub/dist/index.js"
       ],
       "env": {
         "NODE_ENV": "production",
-        "DSN": "sqlserver://sa:kolob_OK1@localhost:1433/FishEye?sslmode=disable",
+        "DSN": "sqlserver://sa:kolob_OK1@localhost:1433/Fish_Eye?sslmode=disable&encrypt=false&trustServerCertificate=true",
         "TRANSPORT": "stdio"
       },
-      "description": "DBHub MCP - универсальный сервер для работы с базами данных",
+      "description": "DBHub MCP - универсальный сервер для работы с базами данных (локальная установка в проекте)",
       "capabilities": [
         "database_connections",
         "sql_queries",
