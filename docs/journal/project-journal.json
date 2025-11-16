@@ -3,7 +3,7 @@
       "metadata": {
         "version": "1.0.0",
         "status": "active",
-        "lastUpdated": "2025-11-15"
+        "lastUpdated": "2025-11-16"
       },
       "sessions": [
         {
@@ -1490,7 +1490,7 @@
           "chat-attributes": {
             "id": "chat-2025-11-15-001",
             "created": "2025-11-15",
-            "lastUpdated": "2025-11-15",
+            "lastUpdated": "2025-11-16",
             "owner": "Александр",
             "status": "completed",
             "priority": "high",
@@ -1582,4 +1582,70 @@
         "development": "../development/project-development.json"
       }
     }
+  },
+  {
+    "chat": {
+      "displayName": "Smoke-тест единого JAR (completed, high). № chat-2025-11-16-001",
+      "chat-attributes": {
+        "id": "chat-2025-11-16-001",
+        "created": "2025-11-16",
+        "lastUpdated": "2025-11-16",
+        "owner": "Александр",
+        "status": "completed",
+        "priority": "high",
+        "tags": ["deployment", "smoke", "jar", "wsl"],
+        "links": {
+          "projectDocsRefs": ["deployment:fat-jar-corporate-network"],
+          "developmentTasks": ["task:0024"],
+          "aiRuleRefs": []
+        }
+      },
+      "entries": [
+        {
+          "log": {
+            "displayName": "Ручное тестирование JAR (success). № log-2025-11-16-001",
+            "log-attributes": {
+              "id": "log-2025-11-16-001",
+              "timestamp": "2025-11-16T00:00:00Z",
+              "level": "success",
+              "effort": "2h",
+              "status": "completed",
+              "links": {
+                "projectDocsRefs": [],
+                "developmentTasks": ["task:0024"],
+                "aiRuleRefs": []
+              }
+            },
+            "entries": [
+              {
+                "action": "Собран и запущен единый JAR",
+                "details": "Сборка Maven с frontend-модулем (Vite) прошла успешно. Запуск в WSL на 8080, SPA доступен.",
+                "outcome": "Приложение доступно по http://localhost:8080",
+                "references": [
+                  "code/femsq-backend/femsq-web/target/femsq-web-0.1.0-SNAPSHOT.jar"
+                ]
+              },
+              {
+                "action": "Настроено подключение к MSSQL",
+                "details": "Подключение через /setup: Fish_Eye/ags_test, sa. Контейнер vuege-mssql. После сохранения конфигурации REST и GraphQL стабильно отвечают.",
+                "outcome": "Статус connected, список организаций загружается",
+                "references": [
+                  "http://localhost:8080/setup",
+                  "http://localhost:8080/api/v1/organizations",
+                  "http://localhost:8080/graphql"
+                ]
+              },
+              {
+                "action": "Проверена устойчивость",
+                "details": "Останов/запуск MSSQL контейнера → REST 500 при останове; после старта и готовности 1433 — восстановление без ручного вмешательства.",
+                "outcome": "Система корректно восстанавливается",
+                "references": []
+              }
+            ]
+          }
+        }
+      ]
+    }
   }
+]
+}

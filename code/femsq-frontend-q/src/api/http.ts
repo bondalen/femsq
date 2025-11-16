@@ -13,10 +13,22 @@ const DEFAULT_TIMEOUT = 15_000;
  * <p>В production режиме (когда frontend встроен в JAR) все запросы идут
  * на относительные пути, что позволяет избежать проблем с CORS и упрощает развертывание.
  */
-const RAW_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) 
+const RAW_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)
   ?? (import.meta.env.PROD ? '/api/v1' : 'http://localhost:8080/api/v1');
 
-const API_BASE_URL = RAW_BASE_URL.endsWith('/') ? RAW_BASE_URL : `${RAW_BASE_URL}/`;
+function toAbsoluteBaseUrl(raw: string): string {
+  const ensureTrailingSlash = (u: string) => (u.endsWith('/') ? u : `${u}/`);
+  // already absolute
+  if (raw.startsWith('http://') || raw.startsWith('https://')) {
+    return ensureTrailingSlash(raw);
+  }
+  // handle relative like "/api/v1" or "api/v1"
+  const normalized = raw.startsWith('/') ? raw : `/${raw}`;
+  const absolute = new URL(normalized, window.location.origin).toString();
+  return ensureTrailingSlash(absolute);
+}
+
+const API_BASE_URL = toAbsoluteBaseUrl(RAW_BASE_URL);
 
 export interface RequestErrorOptions {
   readonly status: number;
@@ -47,9 +59,28 @@ interface RequestOptions extends RequestInit {
 }
 
 function buildUrl(path: string, query?: Record<string, unknown>): string {
-  const url = path.startsWith('http://') || path.startsWith('https://')
-    ? new URL(path)
-    : new URL(path.replace(/^\//, ''), API_BASE_URL);
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    const abs = new URL(path);
+    if (query) {
+      Object.entries(query)
+        .filter(([, value]) => value !== undefined && value !== null && value !== '')
+        .forEach(([key, value]) => abs.searchParams.set(key, String(value)));
+    }
+    return abs.toString();
+  }
+
+  // Normalize relative path and avoid duplicating base segment (e.g., /api/v1 + api/v1/...)
+  let relative = path.replace(/^\//, '');
+  try {
+    const basePath = new URL(API_BASE_URL).pathname.replace(/^\/+|\/+$/g, ''); // e.g., 'api/v1'
+    if (basePath && (relative === basePath || relative.startsWith(basePath + '/'))) {
+      relative = relative.slice(basePath.length).replace(/^\//, '');
+    }
+  } catch {
+    // ignore URL parsing errors; fall back to original relative
+  }
+
+  const url = new URL(relative, API_BASE_URL);
 
   if (query) {
     Object.entries(query)

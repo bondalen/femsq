@@ -510,10 +510,40 @@
             "environments": {
                 "description": "Машины разработки с порядком приоритета подключения. При начале работы AI проверяет машины в порядке check_order и использует первую подходящую.",
                 "check_order": [
+                    "workstation-wsl-ubuntu",
                     "workstation-fedora",
                     "home-windows"
                 ],
                 "machines": {
+                    "workstation-wsl-ubuntu": {
+                        "name": "WSL Ubuntu на Windows",
+                        "hostname_pattern": ".*User-PC.*|.*WSL.*|.*wsl.*",
+                        "os_pattern": ".*Ubuntu.*|.*Linux.*",
+                        "priority": 0,
+                        "database": {
+                            "type": "docker",
+                            "container_name": "vuege-mssql",
+                            "host": "localhost",
+                            "port": 1433,
+                            "database": "Fish_Eye",
+                            "username": "sa",
+                            "password": "kolob_OK1",
+                            "connection_string": "sqlserver://sa:kolob_OK1@localhost:1433/Fish_Eye?sslmode=disable&encrypt=false&trustServerCertificate=true",
+                            "check_commands": {
+                                "container_status": "docker ps --filter name=vuege-mssql --format '{{.Status}}'",
+                                "port_check": "timeout 2 bash -c 'cat < /dev/null > /dev/tcp/localhost/1433' 2>&1"
+                            }
+                        },
+                        "dbhub": {
+                            "type": "local",
+                            "path": ".cursor/dbhub",
+                            "package": "@bytebase/dbhub",
+                            "version": "latest",
+                            "install_command": "npm install @bytebase/dbhub --prefix .cursor/dbhub",
+                            "entry_point": ".cursor/dbhub/node_modules/@bytebase/dbhub/dist/index.js"
+                        },
+                        "notes": "WSL Ubuntu 24.04 LTS в Windows 10/11; доступ к приложению из браузера Windows по http://localhost:8080"
+                    },
                     "workstation-fedora": {
                         "name": "Основная рабочая машина",
                         "hostname_pattern": ".*fedora.*|.*workstation.*|.*User-PC.*",

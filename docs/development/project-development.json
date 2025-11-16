@@ -3,13 +3,13 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2025-11-15",
+      "lastUpdated": "2025-11-16",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0024",
+      "nextTaskId": "0025",
       "items": {
         "0001": {
           "task": {
@@ -191,6 +191,32 @@
         },
         
         "0008": {
+        
+        "0024": {
+          "task": {
+            "displayName": "Smoke‑тест единого JAR (completed, high). № 0024",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "JAR собран и запущен в WSL",
+                "Настройка подключения через /setup выполнена",
+                "REST и GraphQL отвечают корректно",
+                "Устойчивость подтверждена при рестарте MSSQL",
+                "Перезапуск приложения сохраняет настройки"
+              ],
+              "description": "Ручное тестирование единого fat JAR (backend+frontend) через браузер Windows",
+              "links": {
+                "projectDocsRefs": ["deployment:fat-jar-corporate-network"],
+                "journalRefs": ["log:log-2025-11-16-001"],
+                "aiRuleRefs": []
+              },
+              "created": "2025-11-16",
+              "lastUpdated": "2025-11-16"
+            }
+          }
+        },
           "task": {
             "displayName": "Frontend модуль (pending, medium). № 0008",
             "task-attributes": {
@@ -646,7 +672,7 @@
                 "aiRuleRefs": []
               },
               "created": "2025-11-15",
-              "lastUpdated": "2025-11-15"
+              "lastUpdated": "2025-11-16"
             }
           }
         }
