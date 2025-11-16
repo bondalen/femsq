@@ -508,18 +508,24 @@
                 ]
             },
             "environments": {
-                "description": "Машины разработки с порядком приоритета подключения. При начале работы AI проверяет машины в порядке check_order и использует первую подходящую.",
+                "description": "Машины разработки с приоритетом автодетекции. WSL Ubuntu на Windows (проект в WSL, Docker на Windows-хосте) и отдельная Fedora.",
                 "check_order": [
-                    "workstation-wsl-ubuntu",
-                    "workstation-fedora",
-                    "home-windows"
+                    "user-pc-ubuntu",
+                    "alex-fedora"
                 ],
                 "machines": {
-                    "workstation-wsl-ubuntu": {
-                        "name": "WSL Ubuntu на Windows",
-                        "hostname_pattern": ".*User-PC.*|.*WSL.*|.*wsl.*",
-                        "os_pattern": ".*Ubuntu.*|.*Linux.*",
+                    "user-pc-ubuntu": {
+                        "name": "User-PC / WSL Ubuntu",
+                        "hostname_pattern": "^(?i)User-PC$",
+                        "os_pattern": ".*Linux.*|.*Ubuntu.*|.*WSL.*",
                         "priority": 0,
+                        "host": {
+                            "hostname": "User-PC",
+                            "username": "alex",
+                            "os": "WSL2",
+                            "distribution": "Ubuntu 24.04",
+                            "description": "Windows с WSL2 Ubuntu; проект в WSL, Docker на Windows-хосте"
+                        },
                         "database": {
                             "type": "docker",
                             "container_name": "vuege-mssql",
@@ -532,7 +538,8 @@
                             "check_commands": {
                                 "container_status": "docker ps --filter name=vuege-mssql --format '{{.Status}}'",
                                 "port_check": "timeout 2 bash -c 'cat < /dev/null > /dev/tcp/localhost/1433' 2>&1"
-                            }
+                            },
+                            "note": "Docker контейнер запущен на Windows-хосте, доступен из WSL через localhost:1433"
                         },
                         "dbhub": {
                             "type": "local",
@@ -542,13 +549,20 @@
                             "install_command": "npm install @bytebase/dbhub --prefix .cursor/dbhub",
                             "entry_point": ".cursor/dbhub/node_modules/@bytebase/dbhub/dist/index.js"
                         },
-                        "notes": "WSL Ubuntu 24.04 LTS в Windows 10/11; доступ к приложению из браузера Windows по http://localhost:8080"
+                        "notes": "Проект расположен в WSL; Docker на Windows-хосте доступен через localhost. Доступ к приложению из браузера Windows по http://localhost:8080"
                     },
-                    "workstation-fedora": {
-                        "name": "Основная рабочая машина",
-                        "hostname_pattern": ".*fedora.*|.*workstation.*|.*User-PC.*",
-                        "os_pattern": ".*Fedora.*|.*Linux.*|.*Ubuntu.*",
+                    "alex-fedora": {
+                        "name": "Основная рабочая машина (Fedora)",
+                        "hostname_pattern": "^(?i)fedora$|.*alex-fedora.*",
+                        "os_pattern": ".*Linux.*|.*Fedora.*",
                         "priority": 1,
+                        "host": {
+                            "hostname": "fedora",
+                            "username": "alex",
+                            "os": "linux",
+                            "distribution": "Fedora 43",
+                            "description": "Основная рабочая машина"
+                        },
                         "database": {
                             "type": "docker",
                             "container_name": "vuege-mssql",
@@ -571,36 +585,7 @@
                             "install_command": "npm install @bytebase/dbhub --prefix .cursor/dbhub",
                             "entry_point": ".cursor/dbhub/node_modules/@bytebase/dbhub/dist/index.js"
                         },
-                        "notes": "Основная машина разработки, SQL Server в Docker контейнере vuege-mssql"
-                    },
-                    "home-windows": {
-                        "name": "Домашняя машина",
-                        "hostname_pattern": ".*home.*|.*windows.*",
-                        "os_pattern": ".*Windows.*",
-                        "priority": 2,
-                        "database": {
-                            "type": "local_service",
-                            "service_name": "MSSQLSERVER",
-                            "host": "localhost",
-                            "port": 1433,
-                            "database": "FishEye",
-                            "username": "sa",
-                            "password": "kolob_OK1",
-                            "connection_string": "sqlserver://sa:kolob_OK1@localhost:1433/FishEye?sslmode=disable&encrypt=false&trustServerCertificate=true",
-                            "check_commands": {
-                                "service_status": "powershell.exe -Command \"Get-Service -Name MSSQLSERVER | Select-Object -ExpandProperty Status\"",
-                                "port_check": "netstat -an | findstr :1433"
-                            }
-                        },
-                        "dbhub": {
-                            "type": "local",
-                            "path": ".cursor/dbhub",
-                            "package": "@bytebase/dbhub",
-                            "version": "latest",
-                            "install_command": "npm install @bytebase/dbhub --prefix .cursor/dbhub",
-                            "entry_point": ".cursor/dbhub/node_modules/@bytebase/dbhub/dist/index.js"
-                        },
-                        "notes": "Домашняя машина, SQL Server как служба Windows"
+                        "notes": "Fedora без WSL; собственная конфигурация Docker MSSQL"
                     }
                 },
                 "detection": {
@@ -609,8 +594,8 @@
                     "checks": [
                         "hostname",
                         "os",
-                        "database_container",
-                        "database_service"
+                        "wsl_presence",
+                        "database_container"
                     ]
                 }
             },
