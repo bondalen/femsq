@@ -3,21 +3,13 @@
     "dbhub": {
       "command": "node",
       "args": [
-        "${workspaceFolder}/.cursor/dbhub/node_modules/@bytebase/dbhub/dist/index.js"
+        "/home/alex/projects/java/spring/vue/fevue/dbhub/dist/index.js"
       ],
       "env": {
         "NODE_ENV": "production",
-        "DSN": "sqlserver://sa:kolob_OK1@localhost:1433/Fish_Eye?sslmode=disable&encrypt=false&trustServerCertificate=true",
+        "DSN": "sqlserver://sa:kolob_OK1@localhost:1433/FishEye?sslmode=disable&encrypt=false&trustServerCertificate=true",
         "TRANSPORT": "stdio"
-      },
-      "description": "DBHub MCP - универсальный сервер для работы с базами данных (локальная установка в проекте)",
-      "capabilities": [
-        "database_connections",
-        "sql_queries",
-        "schema_management",
-        "data_operations"
-      ]
+      }
     }
   }
 }
-

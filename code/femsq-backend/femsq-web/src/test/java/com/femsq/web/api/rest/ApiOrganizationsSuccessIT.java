@@ -115,8 +115,7 @@ class ApiOrganizationsSuccessIT {
                 });
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        PageResponse<OgDto> pageResponse = response.getBody();
-        assertThat(pageResponse).isNotNull();
+        PageResponse<OgDto> pageResponse = Objects.requireNonNull(response.getBody());
         assertThat(pageResponse.content())
                 .extracting(OgDto::ogName)
                 .containsExactly(

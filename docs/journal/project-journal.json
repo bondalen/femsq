@@ -3,7 +3,7 @@
       "metadata": {
         "version": "1.0.0",
         "status": "active",
-        "lastUpdated": "2025-11-16"
+        "lastUpdated": "2025-11-17"
       },
       "sessions": [
         {
@@ -1640,6 +1640,63 @@
                 "details": "Останов/запуск MSSQL контейнера → REST 500 при останове; после старта и готовности 1433 — восстановление без ручного вмешательства.",
                 "outcome": "Система корректно восстанавливается",
                 "references": []
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "chat": {
+      "displayName": "DBHub alex-fedora (completed, high). № chat-2025-11-17-001",
+      "chat-attributes": {
+        "id": "chat-2025-11-17-001",
+        "created": "2025-11-17",
+        "lastUpdated": "2025-11-17",
+        "owner": "Александр",
+        "status": "completed",
+        "priority": "high",
+        "tags": ["environment", "dbhub", "configuration"],
+        "links": {
+          "projectDocsRefs": ["environment:alex-fedora.dbhub"],
+          "developmentTasks": [],
+          "aiRuleRefs": []
+        }
+      },
+      "entries": [
+        {
+          "log": {
+            "displayName": "Обновление DBHub конфигурации (success). № log-2025-11-17-001",
+            "log-attributes": {
+              "id": "log-2025-11-17-001",
+              "timestamp": "2025-11-17T09:00:00Z",
+              "level": "success",
+              "effort": "1h",
+              "status": "completed",
+              "links": {
+                "projectDocsRefs": ["environment:alex-fedora.dbhub"],
+                "developmentTasks": [],
+                "aiRuleRefs": []
+              }
+            },
+            "entries": [
+              {
+                "action": "Обновлен .cursor/mcp.json проекта",
+                "details": "MCP сервер DBHub переведён на общую установку /home/alex/projects/java/spring/vue/fevue/dbhub/dist/index.js; DSN обновлён на базу FishEye.",
+                "outcome": "Проект использует единый экземпляр DBHub c корректным DSN",
+                "references": [
+                  ".cursor/mcp.json"
+                ]
+              },
+              {
+                "action": "Проверка подключения DBHub",
+                "details": "Удалён каталог .cursor/dbhub/node_modules; проверен sqlcmd (FishEye) и node /home/alex/projects/java/spring/vue/fevue/dbhub/dist/index.js --version с DSN sqlserver://sa:***@localhost:1433/FishEye. Оба способа подтвердили доступность сервера, ошибка ELOGIN исчезла после смены имени базы.",
+                "outcome": "DBHub готов к работе, используется общая установка",
+                "references": [
+                  "code/scripts/start-sql-server.sh",
+                  "docs/project/project-docs.json"
+                ]
               }
             ]
           }

@@ -162,7 +162,7 @@
                         </goals>
                         <phase>generate-resources</phase>
                         <configuration>
-                            <arguments>run build</arguments>
+                            <arguments>run build -- --outDir ../femsq-backend/femsq-web/target/frontend-dist</arguments>
                         </configuration>
                     </execution>
                 </executions>
@@ -182,7 +182,7 @@
                             <outputDirectory>${project.build.outputDirectory}/static</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>${project.basedir}/../../femsq-frontend-q/dist</directory>
+                                    <directory>${project.build.directory}/frontend-dist</directory>
                                     <filtering>false</filtering>
                                 </resource>
                             </resources>

@@ -1,6 +1,7 @@
 package com.femsq.web.config;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.lang.NonNull;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -33,7 +34,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
    * @param registry реестр обработчиков ресурсов
    */
   @Override
-  public void addResourceHandlers(ResourceHandlerRegistry registry) {
+  public void addResourceHandlers(@NonNull ResourceHandlerRegistry registry) {
     // Обслуживание статических ресурсов из classpath:/static/ по явному пути
     registry
         .addResourceHandler("/static/**")
@@ -61,7 +62,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
    * @param registry реестр контроллеров представлений
    */
   @Override
-  public void addViewControllers(ViewControllerRegistry registry) {
+  public void addViewControllers(@NonNull ViewControllerRegistry registry) {
     // Перенаправление корневого пути на index.html для SPA
     registry.addViewController("/").setViewName("forward:/index.html");
   }
