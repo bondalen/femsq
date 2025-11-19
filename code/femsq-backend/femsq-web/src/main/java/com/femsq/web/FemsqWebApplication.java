@@ -1,5 +1,6 @@
 package com.femsq.web;
 
+import com.femsq.database.auth.NativeLibraryLoader;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -15,6 +16,9 @@ public class FemsqWebApplication {
      * @param args аргументы командной строки
      */
     public static void main(String[] args) {
+        // Загружаем native библиотеку для Windows Authentication ДО инициализации Spring
+        NativeLibraryLoader.ensureSqlServerAuthLibrary();
+        
         SpringApplication.run(FemsqWebApplication.class, args);
     }
 }
