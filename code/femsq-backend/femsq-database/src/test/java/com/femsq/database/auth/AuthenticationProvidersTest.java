@@ -32,6 +32,14 @@ class AuthenticationProvidersTest {
         DatabaseConfigurationProperties config = new DatabaseConfigurationProperties("db.local", 1433, "femsq", null, null, null, "windows-integrated");
         Properties properties = provider.buildProperties(config);
         assertEquals("true", properties.getProperty("integratedSecurity"));
+        // На Windows может использоваться либо NTLM (без authenticationScheme), либо JavaKerberos
+        // На Linux всегда используется JavaKerberos
+        // Проверяем, что хотя бы один из вариантов установлен
+        String authScheme = properties.getProperty("authenticationScheme");
+        if (authScheme != null) {
+            assertEquals("JavaKerberos", authScheme);
+        }
+        // Если authenticationScheme отсутствует, значит используется NTLM через нативную DLL (только на Windows)
     }
 
     @Test

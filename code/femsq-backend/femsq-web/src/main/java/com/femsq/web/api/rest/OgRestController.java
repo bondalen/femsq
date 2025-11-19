@@ -60,14 +60,13 @@ public class OgRestController {
     public PageResponse<OgDto> getOrganizations(
             @RequestParam(required = false, defaultValue = "0") Integer page,
             @RequestParam(required = false, defaultValue = "10") Integer size,
-            @RequestParam(required = false) String sort) {
-        log.info(() -> String.format("Handling GET /api/v1/organizations?page=%s&size=%s&sort=%s", page, size, sort));
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) String ogName) {
+        log.info(() -> String.format("Handling GET /api/v1/organizations?page=%s&size=%s&sort=%s&ogName=%s", page, size, sort, ogName));
         
-        // Параметры по умолчанию
         int pageNum = Math.max(0, page != null ? page : 0);
         int pageSize = size != null && size > 0 ? size : 10;
         
-        // Парсинг сортировки
         String sortField = "ogKey";
         String sortDirection = "asc";
         if (sort != null && !sort.trim().isEmpty()) {
@@ -79,10 +78,14 @@ public class OgRestController {
                 sortDirection = sortParts[1].trim();
             }
         }
+
+        String nameFilter = ogName != null ? ogName.trim() : null;
+        if (nameFilter != null && nameFilter.isEmpty()) {
+            nameFilter = null;
+        }
         
-        // Получаем данные с пагинацией
-        List<OgDto> content = ogMapper.toDto(ogService.getAll(pageNum, pageSize, sortField, sortDirection));
-        long totalElements = ogService.count();
+        List<OgDto> content = ogMapper.toDto(ogService.getAll(pageNum, pageSize, sortField, sortDirection, nameFilter));
+        long totalElements = ogService.count(nameFilter);
         
         return PageResponse.of(content, pageNum, pageSize, (int) totalElements);
     }

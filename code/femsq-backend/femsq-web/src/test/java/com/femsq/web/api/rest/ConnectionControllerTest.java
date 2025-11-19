@@ -3,6 +3,8 @@ package com.femsq.web.api.rest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -18,6 +20,7 @@ import com.femsq.database.connection.ConnectionManager;
 import com.femsq.web.api.dto.ConnectionConfigResponse;
 import com.femsq.web.api.dto.ConnectionStatusResponse;
 import com.femsq.web.api.dto.ConnectionTestRequest;
+import com.femsq.web.logging.ConnectionAttemptLogger;
 import java.sql.SQLException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,6 +57,9 @@ class ConnectionControllerTest {
     @Mock
     private AuthenticationProvider authenticationProvider;
 
+    @Mock
+    private ConnectionAttemptLogger connectionAttemptLogger;
+
     private ConnectionController controller;
 
     private DatabaseConfigurationProperties testConfig;
@@ -65,7 +71,8 @@ class ConnectionControllerTest {
                 configurationService,
                 providerFactory,
                 configurationValidator,
-                connectionManager);
+                connectionManager,
+                connectionAttemptLogger);
 
         testConfig = new DatabaseConfigurationProperties(
                 "localhost",
@@ -163,6 +170,9 @@ class ConnectionControllerTest {
             assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
             assertThat(exception.getReason()).isEqualTo("Invalid configuration");
         }
+
+        verify(connectionAttemptLogger).logAttempt(eq(request), eq(false),
+                eq("Invalid configuration"), any(IllegalArgumentException.class));
     }
 
     @Test
@@ -193,6 +203,8 @@ class ConnectionControllerTest {
         assertThat(response.connected()).isTrue();
         assertThat(response.schema()).isEqualTo("ags_test");
         assertThat(response.message()).isEqualTo("Конфигурация применена и подключение установлено");
+        verify(connectionAttemptLogger).logAttempt(eq(request), eq(true),
+                eq("Конфигурация применена и подключение установлено"), isNull());
     }
 
     @Test
@@ -217,6 +229,9 @@ class ConnectionControllerTest {
             assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
             assertThat(exception.getReason()).isEqualTo("Invalid configuration");
         }
+
+        verify(connectionAttemptLogger).logAttempt(eq(request), eq(false),
+                eq("Invalid configuration"), any(IllegalArgumentException.class));
     }
 
     @Test
@@ -239,6 +254,9 @@ class ConnectionControllerTest {
         assertThat(response.connected()).isFalse();
         assertThat(response.error()).isNotNull();
         assertThat(response.error()).contains("аутентификации");
+        verify(connectionAttemptLogger).logAttempt(eq(request), eq(false),
+                eq("Ошибка аутентификации. Проверьте имя пользователя и пароль."),
+                any(ConnectionFactoryException.class));
     }
 
     @Test

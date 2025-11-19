@@ -12,6 +12,7 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -99,50 +100,65 @@ public class JdbcOgDao implements OgDao {
     }
 
     @Override
-    public List<Og> findAll(int page, int size, String sortField, String sortDirection) {
-        // Валидация и нормализация параметров
+    public List<Og> findAll(int page, int size, String sortField, String sortDirection, String nameFilter) {
         String safeSortField = validateSortField(sortField);
         String safeSortDirection = "desc".equalsIgnoreCase(sortDirection) ? "DESC" : "ASC";
         int offset = page * size;
+        StringBuilder sql = new StringBuilder("SELECT ogKey, ogNm, ogNmOf, ogNmFl, ogTxt, ogINN, ogKPP, ogOGRN, ogOKPO, ogOE, ogRgTaxType FROM ")
+                .append(getTableName());
 
-        // SQL Server требует OFFSET, даже если он равен 0
-        // Используем синтаксис совместимый с SQL Server 2012+
-        String sql = "SELECT ogKey, ogNm, ogNmOf, ogNmFl, ogTxt, ogINN, ogKPP, ogOGRN, ogOKPO, ogOE, ogRgTaxType FROM "
-                + getTableName() + " ORDER BY " + safeSortField + " " + safeSortDirection
-                + " OFFSET " + offset + " ROWS FETCH NEXT " + size + " ROWS ONLY";
-        log.fine(() -> String.format("Executing findAll with pagination: page=%d, size=%d, sort=%s %s, offset=%d", 
-                page, size, safeSortField, safeSortDirection, offset));
+        String normalizedFilter = normalizeNameFilter(nameFilter);
+        if (normalizedFilter != null) {
+            sql.append(" WHERE LOWER(ogNm) LIKE ?");
+        }
+        sql.append(" ORDER BY ").append(safeSortField).append(' ').append(safeSortDirection)
+                .append(" OFFSET ").append(offset).append(" ROWS FETCH NEXT ").append(size).append(" ROWS ONLY");
+
+        String finalSql = sql.toString();
+        log.fine(() -> String.format("Executing findAll with pagination: page=%d, size=%d, sort=%s %s, offset=%d, filter=%s",
+                page, size, safeSortField, safeSortDirection, offset, normalizedFilter));
         try (Connection connection = connectionFactory.createConnection();
-             PreparedStatement statement = connection.prepareStatement(sql);
-             ResultSet resultSet = statement.executeQuery()) {
-            List<Og> result = new ArrayList<>();
-            while (resultSet.next()) {
-                result.add(mapOg(resultSet));
+             PreparedStatement statement = connection.prepareStatement(finalSql)) {
+            if (normalizedFilter != null) {
+                statement.setNString(1, likePattern(normalizedFilter));
             }
-            return List.copyOf(result);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                List<Og> result = new ArrayList<>();
+                while (resultSet.next()) {
+                    result.add(mapOg(resultSet));
+                }
+                return List.copyOf(result);
+            }
         } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
-            // Пробрасываем MissingConfigurationException дальше для правильной обработки в ApiExceptionHandler
             throw exception;
         } catch (SQLException exception) {
             log.log(Level.SEVERE, "Failed to execute findAll with pagination", exception);
-            log.log(Level.SEVERE, "SQL: " + sql, exception);
+            log.log(Level.SEVERE, "SQL: " + finalSql, exception);
             throw new DaoException("Не удалось получить список организаций с пагинацией: " + exception.getMessage(), exception);
         }
     }
 
     @Override
-    public long count() {
-        String sql = "SELECT COUNT(*) FROM " + getTableName();
-        log.fine("Executing count for og");
+    public long count(String nameFilter) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM ").append(getTableName());
+        String normalizedFilter = normalizeNameFilter(nameFilter);
+        if (normalizedFilter != null) {
+            sql.append(" WHERE LOWER(ogNm) LIKE ?");
+        }
+        log.fine(() -> "Executing count for og with filter=" + normalizedFilter);
+        String finalSql = sql.toString();
         try (Connection connection = connectionFactory.createConnection();
-             PreparedStatement statement = connection.prepareStatement(sql);
-             ResultSet resultSet = statement.executeQuery()) {
-            if (resultSet.next()) {
-                return resultSet.getLong(1);
+             PreparedStatement statement = connection.prepareStatement(finalSql)) {
+            if (normalizedFilter != null) {
+                statement.setNString(1, likePattern(normalizedFilter));
             }
-            return 0L;
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getLong(1);
+                }
+                return 0L;
+            }
         } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
-            // Пробрасываем MissingConfigurationException дальше для правильной обработки в ApiExceptionHandler
             throw exception;
         } catch (SQLException exception) {
             log.log(Level.SEVERE, "Failed to execute count", exception);
@@ -176,6 +192,21 @@ public class JdbcOgDao implements OgDao {
                 log.warning(() -> "Invalid sort field: " + normalized + ", using default: ogKey");
                 return "ogKey";
         }
+    }
+
+    private String normalizeNameFilter(String nameFilter) {
+        if (nameFilter == null) {
+            return null;
+        }
+        String trimmed = nameFilter.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        return trimmed.toLowerCase(Locale.ROOT);
+    }
+
+    private String likePattern(String normalizedFilter) {
+        return "%" + normalizedFilter + "%";
     }
 
     @Override

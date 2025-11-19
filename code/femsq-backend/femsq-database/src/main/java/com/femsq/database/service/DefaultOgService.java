@@ -29,12 +29,22 @@ public class DefaultOgService implements OgService {
 
     @Override
     public List<Og> getAll(int page, int size, String sortField, String sortDirection) {
-        return ogDao.findAll(page, size, sortField, sortDirection);
+        return getAll(page, size, sortField, sortDirection, null);
+    }
+
+    @Override
+    public List<Og> getAll(int page, int size, String sortField, String sortDirection, String nameFilter) {
+        return ogDao.findAll(page, size, sortField, sortDirection, normalizeNameFilter(nameFilter));
     }
 
     @Override
     public long count() {
         return ogDao.count();
+    }
+
+    @Override
+    public long count(String nameFilter) {
+        return ogDao.count(normalizeNameFilter(nameFilter));
     }
 
     @Override
@@ -100,6 +110,14 @@ public class DefaultOgService implements OgService {
         if (isBlank(organization.registrationTaxType())) {
             throw new IllegalArgumentException("Код налогового учета обязателен");
         }
+    }
+
+    private String normalizeNameFilter(String nameFilter) {
+        if (nameFilter == null) {
+            return null;
+        }
+        String trimmed = nameFilter.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private boolean isBlank(String value) {

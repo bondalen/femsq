@@ -508,7 +508,7 @@
                 ]
             },
             "environments": {
-                "description": "Машины разработки с приоритетом автодетекции. WSL Ubuntu на Windows (проект в WSL, Docker на Windows-хосте) и отдельная Fedora.",
+                "description": "Машины разработки с приоритетом автодетекции. WSL Ubuntu на Windows (проект в WSL, Docker на Windows-хосте) и отдельная Fedora (MS SQL Server как локальная служба).",
                 "check_order": [
                     "user-pc-ubuntu",
                     "alex-fedora"
@@ -564,8 +564,7 @@
                             "description": "Основная рабочая машина"
                         },
                         "database": {
-                            "type": "docker",
-                            "container_name": "vuege-mssql",
+                            "type": "local_service",
                             "host": "localhost",
                             "port": 1433,
                             "database": "FishEye",
@@ -573,9 +572,9 @@
                             "password": "kolob_OK1",
                             "connection_string": "sqlserver://sa:kolob_OK1@localhost:1433/FishEye?sslmode=disable&encrypt=false&trustServerCertificate=true",
                             "check_commands": {
-                                "container_status": "docker ps --filter name=vuege-mssql --format '{{.Status}}'",
                                 "port_check": "timeout 2 bash -c 'cat < /dev/null > /dev/tcp/localhost/1433' 2>&1"
-                            }
+                            },
+                            "note": "MS SQL Server работает как локальная служба на localhost:1433"
                         },
                         "dbhub": {
                             "type": "shared",
@@ -588,7 +587,7 @@
                             "status": "linked",
                             "notes": "Используется общая установка DBHub из проекта fevue; проверено node .../fevue/dbhub/dist/index.js --version с DSN sqlserver://sa:***@localhost:1433/FishEye – соединение успешно после исправления имени базы (FishEye)."
                         },
-                        "notes": "Fedora без WSL; собственная конфигурация Docker MSSQL"
+                        "notes": "Fedora без WSL; MS SQL Server работает как локальная служба на localhost:1433"
                     }
                 },
                 "detection": {

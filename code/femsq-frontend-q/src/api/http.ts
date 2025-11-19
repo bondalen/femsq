@@ -18,14 +18,49 @@ const RAW_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)
 
 function toAbsoluteBaseUrl(raw: string): string {
   const ensureTrailingSlash = (u: string) => (u.endsWith('/') ? u : `${u}/`);
+  const toAbsolute = (base: string, path: string): string => {
+    const absolute = new URL(path, base).toString();
+    return ensureTrailingSlash(absolute);
+  };
+
   // already absolute
   if (raw.startsWith('http://') || raw.startsWith('https://')) {
     return ensureTrailingSlash(raw);
   }
+
   // handle relative like "/api/v1" or "api/v1"
   const normalized = raw.startsWith('/') ? raw : `/${raw}`;
-  const absolute = new URL(normalized, window.location.origin).toString();
-  return ensureTrailingSlash(absolute);
+
+  if (typeof window === 'undefined' || !window.location) {
+    const fallbackOrigin = 'http://localhost:8080';
+    console.warn('[API] window.location недоступен, используется fallback:', fallbackOrigin);
+    return toAbsolute(fallbackOrigin, normalized);
+  }
+
+  const origin = window.location.origin;
+  const isOriginValid = origin && origin !== 'null' && origin !== 'undefined';
+
+  if (isOriginValid) {
+    try {
+      return toAbsolute(origin, normalized);
+    } catch (error) {
+      console.error('[API] Ошибка создания URL из', normalized, 'и', origin, error);
+    }
+  } else {
+    console.warn('[API] window.location.origin некорректен:', origin);
+  }
+
+  // Fallback на текущий протокол/хост или localhost
+  const protocol = window.location.protocol || 'http:';
+  const host = window.location.host || 'localhost:8080';
+  const fallbackOrigin = `${protocol}//${host}`;
+
+  try {
+    return toAbsolute(fallbackOrigin, normalized);
+  } catch (error) {
+    console.error('[API] Ошибка создания fallback URL из', fallbackOrigin, 'и', normalized, error);
+    return toAbsolute('http://localhost:8080', normalized);
+  }
 }
 
 const API_BASE_URL = toAbsoluteBaseUrl(RAW_BASE_URL);
@@ -69,26 +104,38 @@ function buildUrl(path: string, query?: Record<string, unknown>): string {
     return abs.toString();
   }
 
+  const applyQuery = (url: URL): string => {
+    if (query) {
+      Object.entries(query)
+        .filter(([, value]) => value !== undefined && value !== null && value !== '')
+        .forEach(([key, value]) => url.searchParams.set(key, String(value)));
+    }
+    return url.toString();
+  };
+
   // Normalize relative path and avoid duplicating base segment (e.g., /api/v1 + api/v1/...)
   let relative = path.replace(/^\//, '');
   try {
-    const basePath = new URL(API_BASE_URL).pathname.replace(/^\/+|\/+$/g, ''); // e.g., 'api/v1'
-    if (basePath && (relative === basePath || relative.startsWith(basePath + '/'))) {
-      relative = relative.slice(basePath.length).replace(/^\//, '');
+    if (API_BASE_URL && API_BASE_URL !== 'undefined' && API_BASE_URL !== 'null') {
+      const basePath = new URL(API_BASE_URL).pathname.replace(/^\/+|\/+$/g, ''); // e.g., 'api/v1'
+      if (basePath && (relative === basePath || relative.startsWith(basePath + '/'))) {
+        relative = relative.slice(basePath.length).replace(/^\//, '');
+      }
     }
-  } catch {
-    // ignore URL parsing errors; fall back to original relative
+  } catch (error) {
+    console.warn('[API] Ошибка парсинга API_BASE_URL:', error);
   }
 
-  const url = new URL(relative, API_BASE_URL);
+  const fallbackBase = 'http://localhost:8080/api/v1/';
 
-  if (query) {
-    Object.entries(query)
-      .filter(([, value]) => value !== undefined && value !== null && value !== '')
-      .forEach(([key, value]) => url.searchParams.set(key, String(value)));
+  try {
+    const url = new URL(relative, API_BASE_URL);
+    return applyQuery(url);
+  } catch (error) {
+    console.error('[API] Ошибка создания URL в buildUrl:', error, 'fallback на', fallbackBase);
+    const url = new URL(relative, fallbackBase);
+    return applyQuery(url);
   }
-
-  return url.toString();
 }
 
 export async function apiRequest<T = unknown>(path: string, options: RequestOptions = {}): Promise<T> {

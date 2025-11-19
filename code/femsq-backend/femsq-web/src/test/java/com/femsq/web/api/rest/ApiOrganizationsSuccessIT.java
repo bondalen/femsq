@@ -126,6 +126,27 @@ class ApiOrganizationsSuccessIT {
 
     @Test
     @Order(2)
+    void shouldFilterOrganizationsByName() {
+        ResponseEntity<PageResponse<OgDto>> response = restTemplate.exchange(
+                "/api/v1/organizations?ogName=%D0%A0%D0%BE%D0%B3",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<>() {
+                });
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        PageResponse<OgDto> pageResponse = Objects.requireNonNull(response.getBody());
+        assertThat(pageResponse.totalElements()).isEqualTo(2);
+        assertThat(pageResponse.totalPages()).isEqualTo(1);
+        assertThat(pageResponse.content())
+                .extracting(OgDto::ogName)
+                .containsExactly(
+                        "Рога, ООО",
+                        "Рога и копыта, АО");
+    }
+
+    @Test
+    @Order(3)
     void shouldReturnAgentsFromAgsTestSchema() {
         ResponseEntity<List<OgAgDto>> response = restTemplate.exchange(
                 "/api/v1/agents",
@@ -146,7 +167,7 @@ class ApiOrganizationsSuccessIT {
 
     @Test
     @org.junit.jupiter.api.Disabled("GraphQL endpoint не регистрируется в тестовом контексте - требуется дополнительная настройка Spring GraphQL")
-    @Order(3)
+    @Order(4)
     void shouldReturnOrganizationsViaGraphQl() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

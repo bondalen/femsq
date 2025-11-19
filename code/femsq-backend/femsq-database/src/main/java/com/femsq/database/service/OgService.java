@@ -26,14 +26,38 @@ public interface OgService {
      * @param sortDirection направление сортировки ("asc" или "desc")
      * @return список организаций для запрошенной страницы
      */
-    List<Og> getAll(int page, int size, String sortField, String sortDirection);
+    default List<Og> getAll(int page, int size, String sortField, String sortDirection) {
+        return getAll(page, size, sortField, sortDirection, null);
+    }
+
+    /**
+     * Возвращает организации с пагинацией, сортировкой и фильтром по наименованию.
+     *
+     * @param page номер страницы (начиная с 0)
+     * @param size размер страницы
+     * @param sortField поле для сортировки
+     * @param sortDirection направление сортировки ("asc" или "desc")
+     * @param nameFilter фильтр по части наименования (case-insensitive)
+     * @return список организаций для запрошенной страницы
+     */
+    List<Og> getAll(int page, int size, String sortField, String sortDirection, String nameFilter);
 
     /**
      * Подсчитывает общее количество организаций.
      *
      * @return общее количество записей
      */
-    long count();
+    default long count() {
+        return count(null);
+    }
+
+    /**
+     * Подсчитывает количество организаций с учетом фильтра по наименованию.
+     *
+     * @param nameFilter фильтр по части наименования (case-insensitive)
+     * @return количество записей, удовлетворяющих фильтру
+     */
+    long count(String nameFilter);
 
     /**
      * Ищет организацию по идентификатору.

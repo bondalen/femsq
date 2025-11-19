@@ -121,8 +121,18 @@ class DefaultOgServiceTest {
         }
 
         @Override
+        public List<Og> findAll(int page, int size, String sortField, String sortDirection, String nameFilter) {
+            return findAll(page, size, sortField, sortDirection);
+        }
+
+        @Override
         public long count() {
             return all.size();
+        }
+
+        @Override
+        public long count(String nameFilter) {
+            return count();
         }
 
         @Override
