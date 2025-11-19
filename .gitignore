@@ -51,3 +51,10 @@ yarn-error.log*
 # Build artifacts
 build/
 out/
+
+# Native libraries (DLL files - too large for Git)
+*.dll
+**/native-libs/
+
+# Local MCP configuration
+.cursor/mcp.json

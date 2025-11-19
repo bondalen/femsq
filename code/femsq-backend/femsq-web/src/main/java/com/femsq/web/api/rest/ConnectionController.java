@@ -12,6 +12,7 @@ import com.femsq.database.connection.HikariJdbcConnector;
 import com.femsq.web.api.dto.ConnectionConfigResponse;
 import com.femsq.web.api.dto.ConnectionStatusResponse;
 import com.femsq.web.api.dto.ConnectionTestRequest;
+import com.femsq.web.logging.ConnectionAttemptLogger;
 import jakarta.validation.Valid;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -37,18 +38,21 @@ public class ConnectionController {
     private final AuthenticationProviderFactory providerFactory;
     private final ConfigurationValidator configurationValidator;
     private final ConnectionManager connectionManager;
+    private final ConnectionAttemptLogger connectionAttemptLogger;
 
     public ConnectionController(
             ConnectionFactory connectionFactory,
             DatabaseConfigurationService configurationService,
             AuthenticationProviderFactory providerFactory,
             ConfigurationValidator configurationValidator,
-            ConnectionManager connectionManager) {
+            ConnectionManager connectionManager,
+            ConnectionAttemptLogger connectionAttemptLogger) {
         this.connectionFactory = connectionFactory;
         this.configurationService = configurationService;
         this.providerFactory = providerFactory;
         this.configurationValidator = configurationValidator;
         this.connectionManager = connectionManager;
+        this.connectionAttemptLogger = connectionAttemptLogger;
     }
 
     /**
@@ -123,6 +127,7 @@ public class ConnectionController {
             if (connected) {
                 log.info(() -> String.format("Connection test successful: %s:%d/%s/%s",
                         testConfig.host(), testConfig.port(), testConfig.database(), testConfig.schema()));
+                connectionAttemptLogger.logAttempt(request, true, "Подключение успешно", null);
                 return new ConnectionStatusResponse(
                         true,
                         testConfig.schema(),
@@ -133,6 +138,8 @@ public class ConnectionController {
             } else {
                 log.warning(() -> String.format("Connection test failed: %s:%d/%s/%s",
                         testConfig.host(), testConfig.port(), testConfig.database(), testConfig.schema()));
+                connectionAttemptLogger.logAttempt(request, false,
+                        "Проверка подключения не прошла. Проверьте параметры подключения.", null);
                 return new ConnectionStatusResponse(
                         false,
                         testConfig.schema(),
@@ -143,10 +150,12 @@ public class ConnectionController {
             }
         } catch (IllegalArgumentException exception) {
             log.log(Level.WARNING, "Invalid configuration for connection test", exception);
+            connectionAttemptLogger.logAttempt(request, false, exception.getMessage(), exception);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage(), exception);
         } catch (ConnectionFactoryException exception) {
             log.log(Level.WARNING, "Connection test failed with exception", exception);
             String errorMessage = extractErrorMessage(exception);
+            connectionAttemptLogger.logAttempt(request, false, errorMessage, exception);
             return new ConnectionStatusResponse(
                     false,
                     request.schema(),
@@ -156,6 +165,7 @@ public class ConnectionController {
             );
         } catch (Exception exception) {
             log.log(Level.SEVERE, "Unexpected error during connection test", exception);
+            connectionAttemptLogger.logAttempt(request, false, exception.getMessage(), exception);
             return new ConnectionStatusResponse(
                     false,
                     request.schema(),
@@ -219,6 +229,8 @@ public class ConnectionController {
             
             log.info(() -> String.format("Configuration applied and reconnected: %s:%d/%s/%s",
                     newConfig.host(), newConfig.port(), newConfig.database(), newConfig.schema()));
+            connectionAttemptLogger.logAttempt(request, true,
+                    "Конфигурация применена и подключение установлено", null);
             
             return new ConnectionStatusResponse(
                     true,
@@ -229,10 +241,12 @@ public class ConnectionController {
             );
         } catch (IllegalArgumentException exception) {
             log.log(Level.WARNING, "Invalid configuration for apply", exception);
+            connectionAttemptLogger.logAttempt(request, false, exception.getMessage(), exception);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage(), exception);
         } catch (ConnectionFactoryException exception) {
             log.log(Level.WARNING, "Failed to apply configuration and reconnect", exception);
             String errorMessage = extractErrorMessage(exception);
+            connectionAttemptLogger.logAttempt(request, false, errorMessage, exception);
             return new ConnectionStatusResponse(
                     false,
                     request.schema(),
@@ -242,6 +256,7 @@ public class ConnectionController {
             );
         } catch (Exception exception) {
             log.log(Level.SEVERE, "Unexpected error during configuration apply", exception);
+            connectionAttemptLogger.logAttempt(request, false, exception.getMessage(), exception);
             return new ConnectionStatusResponse(
                     false,
                     request.schema(),
