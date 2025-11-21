@@ -6,14 +6,34 @@ import com.femsq.database.config.ConfigurationValidator;
 import com.femsq.database.config.DatabaseConfigurationService;
 import com.femsq.database.connection.ConnectionFactory;
 import com.femsq.database.connection.ConnectionManager;
+import com.femsq.database.dao.IpgChainDao;
+import com.femsq.database.dao.IpgChainRelationDao;
+import com.femsq.database.dao.InvestmentPlanGroupDao;
+import com.femsq.database.dao.InvestmentProgramDao;
+import com.femsq.database.dao.JdbcIpgChainDao;
+import com.femsq.database.dao.JdbcIpgChainRelationDao;
+import com.femsq.database.dao.JdbcInvestmentPlanGroupDao;
+import com.femsq.database.dao.JdbcInvestmentProgramDao;
 import com.femsq.database.dao.JdbcOgAgDao;
 import com.femsq.database.dao.JdbcOgDao;
+import com.femsq.database.dao.JdbcStNetworkDao;
 import com.femsq.database.dao.OgAgDao;
 import com.femsq.database.dao.OgDao;
+import com.femsq.database.dao.StNetworkDao;
+import com.femsq.database.service.DefaultIpgChainRelationService;
+import com.femsq.database.service.DefaultIpgChainService;
+import com.femsq.database.service.DefaultInvestmentPlanGroupService;
+import com.femsq.database.service.DefaultInvestmentProgramService;
 import com.femsq.database.service.DefaultOgAgService;
 import com.femsq.database.service.DefaultOgService;
+import com.femsq.database.service.DefaultStNetworkService;
+import com.femsq.database.service.IpgChainRelationService;
+import com.femsq.database.service.IpgChainService;
+import com.femsq.database.service.InvestmentPlanGroupService;
+import com.femsq.database.service.InvestmentProgramService;
 import com.femsq.database.service.OgAgService;
 import com.femsq.database.service.OgService;
+import com.femsq.database.service.StNetworkService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -149,5 +169,55 @@ public class DatabaseModuleConfiguration {
     @Bean
     public OgAgService ogAgService(OgAgDao ogAgDao, OgDao ogDao) {
         return new DefaultOgAgService(ogAgDao, ogDao);
+    }
+
+    @Bean
+    public IpgChainDao ipgChainDao(ConnectionFactory connectionFactory, DatabaseConfigurationService configurationService) {
+        return new JdbcIpgChainDao(connectionFactory, configurationService);
+    }
+
+    @Bean
+    public IpgChainRelationDao ipgChainRelationDao(ConnectionFactory connectionFactory, DatabaseConfigurationService configurationService) {
+        return new JdbcIpgChainRelationDao(connectionFactory, configurationService);
+    }
+
+    @Bean
+    public StNetworkDao stNetworkDao(ConnectionFactory connectionFactory, DatabaseConfigurationService configurationService) {
+        return new JdbcStNetworkDao(connectionFactory, configurationService);
+    }
+
+    @Bean
+    public InvestmentProgramDao investmentProgramDao(ConnectionFactory connectionFactory, DatabaseConfigurationService configurationService) {
+        return new JdbcInvestmentProgramDao(connectionFactory, configurationService);
+    }
+
+    @Bean
+    public InvestmentPlanGroupDao investmentPlanGroupDao(ConnectionFactory connectionFactory, DatabaseConfigurationService configurationService) {
+        return new JdbcInvestmentPlanGroupDao(connectionFactory, configurationService);
+    }
+
+    @Bean
+    public IpgChainService ipgChainService(IpgChainDao ipgChainDao) {
+        return new DefaultIpgChainService(ipgChainDao);
+    }
+
+    @Bean
+    public IpgChainRelationService ipgChainRelationService(IpgChainRelationDao ipgChainRelationDao) {
+        return new DefaultIpgChainRelationService(ipgChainRelationDao);
+    }
+
+    @Bean
+    public StNetworkService stNetworkService(StNetworkDao stNetworkDao) {
+        return new DefaultStNetworkService(stNetworkDao);
+    }
+
+    @Bean
+    public InvestmentProgramService investmentProgramService(InvestmentProgramDao investmentProgramDao) {
+        return new DefaultInvestmentProgramService(investmentProgramDao);
+    }
+
+    @Bean
+    public InvestmentPlanGroupService investmentPlanGroupService(InvestmentPlanGroupDao investmentPlanGroupDao) {
+        return new DefaultInvestmentPlanGroupService(investmentPlanGroupDao);
     }
 }

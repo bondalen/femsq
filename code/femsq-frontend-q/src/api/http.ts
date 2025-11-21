@@ -13,8 +13,13 @@ const DEFAULT_TIMEOUT = 15_000;
  * <p>В production режиме (когда frontend встроен в JAR) все запросы идут
  * на относительные пути, что позволяет избежать проблем с CORS и упрощает развертывание.
  */
+/**
+ * В development режиме используем относительные пути для работы с Vite proxy.
+ * В production режиме используем относительные пути, так как frontend встроен в JAR.
+ * Если задан VITE_API_BASE_URL - используется он (для кастомных конфигураций).
+ */
 const RAW_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)
-  ?? (import.meta.env.PROD ? '/api/v1' : 'http://localhost:8080/api/v1');
+  ?? '/api/v1';
 
 function toAbsoluteBaseUrl(raw: string): string {
   const ensureTrailingSlash = (u: string) => (u.endsWith('/') ? u : `${u}/`);

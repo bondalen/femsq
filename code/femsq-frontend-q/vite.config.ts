@@ -36,7 +36,18 @@ export default defineConfig({
   },
   server: {
     port: 5175,
-    open: false
+    open: false,
+    proxy: {
+      // Прокси для API запросов в development режиме
+      // Все запросы к /api/* перенаправляются на backend (http://localhost:8080)
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+        // Сохраняем оригинальный путь запроса
+        rewrite: (path) => path
+      }
+    }
   },
   preview: {
     port: 4175

@@ -2,7 +2,7 @@ import { computed, reactive, ref } from 'vue';
 import { defineStore } from 'pinia';
 
 export type ConnectionState = 'idle' | 'connecting' | 'connected' | 'connectionError' | 'disconnecting';
-export type ActiveView = 'home' | 'organizations';
+export type ActiveView = 'home' | 'organizations' | 'investment-chains';
 export type AuthMode = 'sql' | 'windows' | 'token';
 
 export interface ConnectionFormValues {
@@ -43,6 +43,7 @@ export const useConnectionStore = defineStore('connection', () => {
   const savedForm = reactive<ConnectionFormValues>({ ...DEFAULT_FORM_VALUES });
 
   const organizationsEnabled = computed(() => status.value === 'connected');
+  const investmentChainsEnabled = computed(() => status.value === 'connected');
 
   const statusTone = computed(() => {
     switch (status.value) {
@@ -117,6 +118,7 @@ export const useConnectionStore = defineStore('connection', () => {
     lastMessage,
     lastError,
     organizationsEnabled,
+    investmentChainsEnabled,
     statusTone,
     setStatus,
     navigate,

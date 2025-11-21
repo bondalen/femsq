@@ -28,6 +28,15 @@
         :disable="!organizationsEnabled"
         @click="handleNavigate('organizations')"
       />
+      <QBtn
+        flat
+        rounded
+        icon="account_tree"
+        label="Инвестиционные цепочки"
+        :color="activeView === 'investment-chains' ? 'primary' : 'dark'"
+        :disable="!investmentChainsEnabled"
+        @click="handleNavigate('investment-chains')"
+      />
     </div>
 
     <QBtn
@@ -53,6 +62,12 @@
           </QItemSection>
           <QItemSection>Организации</QItemSection>
         </QItem>
+        <QItem clickable :disable="!investmentChainsEnabled" @click="handleNavigate('investment-chains')">
+          <QItemSection avatar>
+            <QIcon name="account_tree" />
+          </QItemSection>
+          <QItemSection>Инвестиционные цепочки</QItemSection>
+        </QItem>
       </QList>
     </QMenu>
   </QToolbar>
@@ -68,6 +83,7 @@ interface Props {
   status: ConnectionState;
   activeView: ActiveView;
   organizationsEnabled: boolean;
+  investmentChainsEnabled: boolean;
 }
 
 const props = defineProps<Props>();

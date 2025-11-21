@@ -11,6 +11,12 @@ type Query {
   agents: [Agent!]!
   agent(id: Int!): Agent
   organizationAgents(organizationId: Int!): [Agent!]!
+  investmentChains(name: String, year: Int): [InvestmentChain!]!
+  investmentChain(id: Int!): InvestmentChain
+  investmentChainRelations(chainId: Int!): [InvestmentChainRelation!]!
+  stNetworks: [StNetwork!]!
+  investmentPrograms: [InvestmentProgramLookup!]!
+  investmentPlanGroups: [InvestmentPlanGroupLookup!]!
 }
 
 type Mutation {
@@ -79,4 +85,37 @@ input OgAgUpdateRequest {
   code: String!
   organizationKey: Int!
   legacyOid: UUID
+}
+
+type InvestmentChain {
+  chainKey: Int
+  name: String!
+  stNetKey: Int
+  stNetName: String
+  latestIpgKey: Int
+  year: Int
+}
+
+type InvestmentChainRelation {
+  relationKey: Int
+  chainKey: Int
+  investmentProgramKey: Int
+  investmentProgramName: String
+  planGroupKey: Int
+  planGroupName: String
+}
+
+type StNetwork {
+  stNetKey: Int!
+  name: String!
+}
+
+type InvestmentProgramLookup {
+  ipgKey: Int!
+  name: String!
+}
+
+type InvestmentPlanGroupLookup {
+  planGroupKey: Int!
+  name: String!
 }

@@ -3,13 +3,13 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2025-11-16",
+      "lastUpdated": "2025-11-21",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0025",
+      "nextTaskId": "0027",
       "items": {
         "0001": {
           "task": {
@@ -673,6 +673,47 @@
               },
               "created": "2025-11-15",
               "lastUpdated": "2025-11-16"
+            }
+          }
+        },
+        "0026": {
+          "task": {
+            "displayName": "UI для инвестиционных цепочек (completed, high). № 0026",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Backend: реализованы модели, DAO, сервисы для ipgCh и ipgChRl",
+                "Backend: реализованы lookup сервисы для stNet, ipg, ipgUtPlGr",
+                "Backend: реализованы REST/GraphQL API с поддержкой lookup данных",
+                "Backend: написаны unit и integration тесты",
+                "Frontend: созданы Pinia stores для investment-chains и lookup данных",
+                "Frontend: реализован компонент InvestmentChainsView с мастер-таблицей и деталями",
+                "Frontend: реализованы фильтры, сортировка, пагинация",
+                "Frontend: написаны unit и component тесты",
+                "Добавлен пункт меню в TopBar для перехода к Investment Chains",
+                "Документация обновлена"
+              ],
+              "description": "Реализация полного UI для работы с инвестиционными цепочками (ags.ipgCh) и их связями с программами (ags.ipgChRl) по аналогии с Organizations/OgAg. Включает backend (модели, DAO, сервисы, API) и frontend (Pinia stores, компоненты, тесты).",
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.database",
+                  "module:backend.web",
+                  "module:frontend",
+                  "component:backend.database.data-access",
+                  "component:backend.database.service",
+                  "component:backend.web.api.rest",
+                  "component:backend.web.api.graphql",
+                  "component:frontend.quasar"
+                ],
+                "journalRefs": [
+                  "log:log-2025-11-21-001"
+                ],
+                "aiRuleRefs": []
+              },
+              "created": "2025-11-20",
+              "lastUpdated": "2025-11-21"
             }
           }
         }

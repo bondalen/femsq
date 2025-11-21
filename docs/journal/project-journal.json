@@ -3,7 +3,7 @@
       "metadata": {
         "version": "1.0.0",
         "status": "active",
-        "lastUpdated": "2025-11-17"
+        "lastUpdated": "2025-11-21"
       },
       "sessions": [
         {
@@ -1696,6 +1696,136 @@
                 "references": [
                   "code/scripts/start-sql-server.sh",
                   "docs/project/project-docs.json"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "chat": {
+      "displayName": "UI для инвестиционных цепочек (completed, high). № chat-2025-11-21-001",
+      "chat-attributes": {
+        "id": "chat-2025-11-21-001",
+        "created": "2025-11-21",
+        "lastUpdated": "2025-11-21",
+        "owner": "Александр",
+        "status": "completed",
+        "priority": "high",
+        "tags": [
+          "backend",
+          "frontend",
+          "investment-chains",
+          "ui",
+          "testing",
+          "documentation"
+        ],
+        "links": {
+          "projectDocsRefs": [
+            "module:backend.database",
+            "module:backend.web",
+            "module:frontend",
+            "component:backend.database.data-access",
+            "component:backend.database.service",
+            "component:backend.web.api.rest",
+            "component:backend.web.api.graphql",
+            "component:frontend.quasar"
+          ],
+          "developmentTasks": [
+            "task:0026"
+          ],
+          "aiRuleRefs": []
+        }
+      },
+      "entries": [
+        {
+          "log": {
+            "displayName": "Реализация UI для инвестиционных цепочек (success). № log-2025-11-21-001",
+            "log-attributes": {
+              "id": "log-2025-11-21-001",
+              "timestamp": "2025-11-21T10:00:00Z",
+              "level": "success",
+              "effort": "8h",
+              "status": "completed",
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.database",
+                  "module:backend.web",
+                  "module:frontend",
+                  "component:backend.database.data-access",
+                  "component:backend.database.service",
+                  "component:backend.web.api.rest",
+                  "component:backend.web.api.graphql",
+                  "component:frontend.quasar"
+                ],
+                "developmentTasks": [
+                  "task:0026"
+                ],
+                "aiRuleRefs": []
+              }
+            },
+            "entries": [
+              {
+                "action": "Реализован backend для инвестиционных цепочек",
+                "details": "Созданы модели (IpgChain, IpgChainRelation, StNetwork, InvestmentProgram, InvestmentPlanGroup), DAO слой (JdbcIpgChainDao, JdbcIpgChainRelationDao, lookup DAO), сервисный слой (IpgChainService, IpgChainRelationService, lookup сервисы), REST/GraphQL API (IpgChainRestController, LookupRestController, IpgChainGraphqlController), DTO и мапперы.",
+                "outcome": "Backend полностью готов для работы с инвестиционными цепочками и lookup данными",
+                "references": [
+                  "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/model/",
+                  "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/",
+                  "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/service/",
+                  "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/"
+                ]
+              },
+              {
+                "action": "Реализован frontend для инвестиционных цепочек",
+                "details": "Созданы Pinia stores (useInvestmentChainsStore, useStNetworksStore, useInvestmentProgramsStore, usePlanGroupsStore), компонент InvestmentChainsView с мастер-таблицей и детальной таблицей связей, фильтры, сортировка, пагинация, интеграция с lookup stores, добавлен пункт меню в TopBar.",
+                "outcome": "Frontend полностью готов для отображения и работы с инвестиционными цепочками",
+                "references": [
+                  "code/femsq-frontend-q/src/stores/investment-chains.ts",
+                  "code/femsq-frontend-q/src/stores/lookups/",
+                  "code/femsq-frontend-q/src/views/investment-chains/InvestmentChainsView.vue",
+                  "code/femsq-frontend-q/src/components/layout/TopBar.vue"
+                ]
+              },
+              {
+                "action": "Написаны тесты для backend и frontend",
+                "details": "Backend: unit тесты для всех сервисов, integration тесты для всех DAO, integration тесты для GraphQL контроллера. Frontend: unit тесты для всех Pinia stores, component тесты для InvestmentChainsView. Все тесты проходят успешно.",
+                "outcome": "Полное покрытие тестами backend и frontend функционала инвестиционных цепочек",
+                "references": [
+                  "code/femsq-backend/femsq-database/src/test/java/com/femsq/database/service/",
+                  "code/femsq-backend/femsq-database/src/test/java/com/femsq/database/dao/",
+                  "code/femsq-backend/femsq-web/src/test/java/com/femsq/web/api/graphql/",
+                  "code/femsq-frontend-q/tests/unit/",
+                  "code/femsq-frontend-q/tests/component/"
+                ]
+              },
+              {
+                "action": "Обновлены тестовые данные в ags_test",
+                "details": "Расширен SQL скрипт ags_test_seed.sql для создания всех необходимых таблиц (stType, yyyy, stNet, ipg, ipgCh, ipgUtPlGr, ipgChRl) и заполнения их тестовыми данными. Добавлены внешние ключи и ограничения.",
+                "outcome": "Тестовая схема ags_test полностью готова для работы с инвестиционными цепочками",
+                "references": [
+                  "code/config/sql/ags_test_seed.sql"
+                ]
+              },
+              {
+                "action": "Настроен прокси для frontend в development режиме",
+                "details": "Добавлен прокси в vite.config.ts для перенаправления запросов /api/* на backend (http://localhost:8080). Обновлена логика base URL в http.ts для использования относительных путей в dev и prod режимах.",
+                "outcome": "Frontend корректно работает с backend в development режиме без проблем CORS",
+                "references": [
+                  "code/femsq-frontend-q/vite.config.ts",
+                  "code/femsq-frontend-q/src/api/http.ts"
+                ]
+              },
+              {
+                "action": "Обновлена документация проекта",
+                "details": "Добавлена задача 0026 в project-development.json, добавлена запись в project-journal.json, обновлен план в chat-plan-25-1120.md с отметкой всех выполненных этапов.",
+                "outcome": "Документация полностью синхронизирована с реализованным функционалом",
+                "references": [
+                  "docs/development/project-development.json",
+                  "docs/journal/project-journal.json",
+                  "docs/development/notes/chats/chat-plan/chat-plan-25-1120.md"
                 ]
               }
             ]

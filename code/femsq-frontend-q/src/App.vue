@@ -9,11 +9,13 @@
     :error="connection.lastError"
     :active-view="connection.activeView"
     :organizations-enabled="connection.organizationsEnabled"
+    :investment-chains-enabled="connection.investmentChainsEnabled"
     @open-connection="handleOpenConnection"
     @navigate="handleNavigate"
     @disconnect="handleDisconnect"
   >
     <OrganizationsView v-if="connection.activeView === 'organizations'" />
+    <InvestmentChainsView v-if="connection.activeView === 'investment-chains'" />
 
     <QPage v-else class="column q-gutter-lg">
       <div class="q-pa-xl bg-white rounded-borders shadow-2">
@@ -66,6 +68,7 @@ import { QPage, QList, QItem, QItemSection, QIcon, QBanner } from 'quasar';
 import AppLayout from '@/components/layout/AppLayout.vue';
 import ConnectionModal from '@/components/setup/ConnectionModal.vue';
 import OrganizationsView from '@/views/organizations/OrganizationsView.vue';
+import InvestmentChainsView from '@/views/investment-chains/InvestmentChainsView.vue';
 import type { ActiveView, ConnectionFormValues } from '@/stores/connection';
 import { useConnectionStore } from '@/stores/connection';
 import { useOrganizationsStore } from '@/stores/organizations';
