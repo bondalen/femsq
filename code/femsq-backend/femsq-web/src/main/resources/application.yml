@@ -16,3 +16,28 @@ spring:
 logging:
   level:
     com.femsq: INFO
+
+# Конфигурация модуля отчётов
+reports:
+  # Внешние отчёты (из файловой системы)
+  external:
+    enabled: true
+    path: ./reports
+    scan-interval: 60000  # 1 минута в миллисекундах
+  
+  # Встроенные отчёты (из classpath)
+  embedded:
+    enabled: true
+    path: classpath:reports/embedded
+  
+  # Компиляция отчётов
+  compilation:
+    cache-enabled: true
+    cache-directory: ./reports/cache
+    recompile-on-change: true
+  
+  # Генерация отчётов
+  generation:
+    timeout: 300000  # 5 минут в миллисекундах
+    max-concurrent: 5
+    temp-directory: ./temp/reports

@@ -1832,7 +1832,184 @@
           }
         }
       ]
+    },
+    {
+      "chat": {
+        "displayName": "Документирование модуля Reports (completed, critical). № chat-2025-11-21-002",
+        "chat-attributes": {
+          "id": "chat-2025-11-21-002",
+          "created": "2025-11-21",
+          "lastUpdated": "2025-11-21",
+          "owner": "Александр",
+          "status": "completed",
+          "priority": "critical",
+          "tags": ["reports", "documentation", "jasperreports", "adr", "planning"],
+          "links": {
+            "projectDocsRefs": [
+              "module:backend.reports",
+              "component:backend.reports.core",
+              "component:backend.reports.api",
+              "component:frontend.reports"
+            ],
+            "developmentTasks": [
+              "task:0027",
+              "task:0028",
+              "task:0029",
+              "task:0030",
+              "task:0031",
+              "task:0032"
+            ],
+            "aiRuleRefs": []
+          }
+        },
+        "entries": [
+          {
+            "log": {
+              "displayName": "Документирование модуля генерации отчётов (success). № log-2025-11-21-002",
+              "log-attributes": {
+                "id": "log-2025-11-21-002",
+                "timestamp": "2025-11-21T12:00:00Z",
+                "level": "success",
+                "effort": "4h",
+                "status": "completed",
+                "links": {
+                  "projectDocsRefs": [
+                    "module:backend.reports"
+                  ],
+                  "developmentTasks": [
+                    "task:0027"
+                  ],
+                  "aiRuleRefs": []
+                }
+              },
+              "entries": [
+                {
+                  "action": "Создан ADR 003 - выбор движка генерации отчётов",
+                  "details": "Документировано архитектурное решение использовать JasperReports 6.21.0 вместо альтернатив (Thymeleaf+OpenPDF, Apache FOP). Обоснован выбор: мощный функционал, визуальный дизайнер, динамические шаблоны, поддержка подотчётов. Размер зависимостей ~15 MB приемлем. Документирована архитектура с внешними шаблонами и hot-reload.",
+                  "outcome": "ADR 003 создан в docs/project/decisions/adr-003-reporting-engine.md",
+                  "references": [
+                    "docs/project/decisions/adr-003-reporting-engine.md"
+                  ]
+                },
+                {
+                  "action": "Обновлён project-docs.json - добавлен модуль Reports",
+                  "details": "В extensions/modules/modules.json добавлен модуль Reports (01.03) с компонентами Core (01.03.01), API (01.03.02), Model (01.03.03), Config (01.03.04). В project-docs.json добавлена секция reporting в architecture с описанием JasperReports. Добавлена секция deployment с описанием external_directories (./reports/).",
+                  "outcome": "Модуль Reports полностью задокументирован в проектной документации",
+                  "references": [
+                    "docs/project/extensions/modules/modules.json",
+                    "docs/project/project-docs.json"
+                  ]
+                },
+                {
+                  "action": "Созданы задачи разработки в project-development.json",
+                  "details": "Добавлены задачи 0027-0032: создание Maven модуля (0027), ReportDiscoveryService (0028), ReportGenerationService (0029), ReportController (0030), ReportsCatalog.vue (0031), ReportParametersDialog.vue (0032). Обновлён nextTaskId с '0027' на '0033'. Все задачи имеют completionCriteria вместо оценки времени.",
+                  "outcome": "6 ключевых задач созданы, готовы к реализации",
+                  "references": [
+                    "docs/development/project-development.json"
+                  ]
+                },
+                {
+                  "action": "Создана техническая документация для разработчиков",
+                  "details": "Создан reports-development-guide.md с инструкциями: установка Jaspersoft Studio, создание JRXML шаблонов, формат JSON метаданных, процесс развёртывания, лучшие практики, troubleshooting. Документ содержит примеры кода и SQL запросов.",
+                  "outcome": "Руководство для разработчиков отчётов создано",
+                  "references": [
+                    "docs/development/technical/reports-development-guide.md"
+                  ]
+                },
+                {
+                  "action": "Создан план работы чата",
+                  "details": "Создан chat-plan-25-1121.md со структурным планом (№ 05) из 10 этапов (05.0-05.15). Этап 05.0 'Документирование и планирование' выполнен полностью. План включает 10 контрольных точек и описание 7 рисков с митигацией.",
+                  "outcome": "План работы создан и первый этап выполнен",
+                  "references": [
+                    "docs/development/notes/chats/chat-plan/chat-plan-25-1121.md"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        {
+          "chat": {
+            "displayName": "Стратегия развёртывания отчётов: .jasper + .jrxml в JAR (completed, medium). № chat-2025-11-28-001",
+            "chat-attributes": {
+              "id": "chat-2025-11-28-001",
+              "created": "2025-11-28",
+              "lastUpdated": "2025-11-28",
+              "owner": "Александр",
+              "status": "completed",
+              "priority": "medium",
+              "tags": ["reports", "deployment", "jasperreports", "strategy"],
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.reports",
+                  "class:backend.reports.core.ReportGenerationService",
+                  "docs:deployment/reports-deployment-strategy.md"
+                ],
+                "developmentTasks": ["task:0033"],
+                "aiRuleRefs": []
+              }
+            },
+            "entries": [
+              {
+                "log": {
+                  "displayName": "Определение стратегии развёртывания отчётов (success). № log-2025-11-28-001",
+                  "log-attributes": {
+                    "id": "log-2025-11-28-001",
+                    "timestamp": "2025-11-28T11:00:00Z",
+                    "level": "success",
+                    "effort": "2h",
+                    "status": "completed",
+                    "links": {
+                      "projectDocsRefs": [
+                        "docs:deployment/reports-deployment-strategy.md",
+                        "module:backend.reports"
+                      ],
+                      "developmentTasks": ["task:0033"],
+                      "aiRuleRefs": []
+                    }
+                  },
+                  "entries": [
+                    {
+                      "action": "Определена стратегия развёртывания отчётов",
+                      "details": "Принято решение включать в JAR как предкомпилированные .jasper файлы (для работы приложения), так и исходные .jrxml файлы (для справки и доработки). Отчёты компилируются вручную в Jaspersoft Studio 7.0.3 из-за проблем с компиляцией в Spring Boot nested JAR.",
+                      "outcome": "Стратегия документирована, обновлены файлы проектной документации",
+                      "references": [
+                        "docs/deployment/reports-deployment-strategy.md",
+                        "docs/development/notes/runtime-compilation-analysis.md"
+                      ]
+                    },
+                    {
+                      "action": "Обновлена документация модулей",
+                      "details": "Обновлён файл modules.json: добавлена информация о стратегии развёртывания, обновлены технологии (JasperReports 7.0.3), добавлены классы ReportGenerationService, JasperReportsEngine, ReportDiscoveryService в компонент Core.",
+                      "outcome": "Документация модулей актуализирована",
+                      "references": [
+                        "docs/project/extensions/modules/modules.json"
+                      ]
+                    },
+                    {
+                      "action": "Обновлена проектная документация",
+                      "details": "Обновлён project-docs.json: добавлена секция deployment_strategy в раздел reporting с описанием метода компиляции, артефактов в JAR и внешних отчётов.",
+                      "outcome": "Проектная документация содержит полную информацию о стратегии",
+                      "references": [
+                        "docs/project/project-docs.json"
+                      ]
+                    },
+                    {
+                      "action": "Создана задача разработки",
+                      "details": "Добавлена задача 0033 'Стратегия развёртывания отчётов: .jasper + .jrxml в JAR' в project-development.json со статусом completed.",
+                      "outcome": "Задача задокументирована",
+                      "references": [
+                        "docs/development/project-development.json"
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
     }
-  }
-]
+  ]
+}
 }

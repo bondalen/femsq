@@ -136,7 +136,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: code/femsq-frontend/package-lock.json
+          cache-dependency-path: code/femsq-frontend-q/package-lock.json
       
       - name: Build backend
         working-directory: code/femsq-backend
@@ -158,13 +158,13 @@ jobs:
           curl -f http://localhost:8080/api/v1/connection/status || exit 1
       
       - name: Install Playwright
-        working-directory: code/femsq-frontend
+        working-directory: code/femsq-frontend-q
         run: |
           npm install
           npx playwright install --with-deps
       
       - name: Run E2E tests
-        working-directory: code/femsq-frontend
+        working-directory: code/femsq-frontend-q
         run: npm run test:e2e
       
       - name: Upload Playwright report
@@ -172,7 +172,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: code/femsq-frontend/playwright-report/
+          path: code/femsq-frontend-q/playwright-report/
 
   code-coverage:
     name: Code Coverage

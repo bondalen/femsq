@@ -95,7 +95,7 @@ export FEMSQ_DB_AUTH_MODE=credentials
 ### E2E-тесты (Playwright)
 - Требуют запущенный backend
 - Проверяют UI через браузер
-- Запускаются: `npm run test:e2e` в `code/femsq-frontend`
+- Запускаются: `npm run test:e2e` в `code/femsq-frontend-q`
 
 ## Отчеты о покрытии кода
 

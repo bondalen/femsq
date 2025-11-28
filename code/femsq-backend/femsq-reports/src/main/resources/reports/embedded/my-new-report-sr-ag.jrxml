@@ -1,0 +1,61 @@
+<!-- Created with Jaspersoft Studio version 7.0.3.final using JasperReports Library version 7.0.3-41034ca841d452f3305ba55b9042260aaa1ab5dd  -->
+<jasperReport name="my-new-report-sr-ag" language="java" columnCount="1" pageWidth="760" pageHeight="90" orientation="Landscape" columnWidth="750" leftMargin="5" rightMargin="5" topMargin="5" bottomMargin="5">
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="FishEyeDataAdapter"/>
+	<parameter name="SCHEMA_NAME" class="java.lang.String">
+		<defaultValueExpression><![CDATA[$P{SCHEMA_NAME}]]></defaultValueExpression>
+	</parameter>
+	<parameter name="contractorId" class="java.lang.String">
+		<defaultValueExpression><![CDATA[$P{contractorId}]]></defaultValueExpression>
+	</parameter>
+	<query language="SQL"><![CDATA[     SELECT 
+       oga.ogaKey AS objKey,
+       oga.ogaCode AS objName,
+       og.ogNm AS organizationName
+     FROM $P!{SCHEMA_NAME}.ogAg oga
+     INNER JOIN $P!{SCHEMA_NAME}.og og ON oga.ogaOg = og.ogKey
+     WHERE oga.ogaOg = CAST($P{contractorId} AS INT)]]></query>
+	<field name="objKey" class="java.lang.Integer">
+		<property name="com.jaspersoft.studio.field.name" value="objKey"/>
+		<property name="com.jaspersoft.studio.field.label" value="objKey"/>
+	</field>
+	<field name="objName" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="objName"/>
+		<property name="com.jaspersoft.studio.field.label" value="objName"/>
+	</field>
+	<field name="organizationName" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="organizationName"/>
+		<property name="com.jaspersoft.studio.field.label" value="organizationName"/>
+	</field>
+	<background splitType="Stretch"/>
+	<columnHeader height="24" splitType="Stretch">
+		<element kind="staticText" uuid="16c5ffa2-3787-44c2-b3cb-85990d695e13" x="0" y="0" width="80" height="18">
+			<text><![CDATA[objKey]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="da237c20-9aa0-4cb2-a431-7a415924288f"/>
+		</element>
+		<element kind="staticText" uuid="b98c80da-8452-493b-9173-9d74011b119b" x="80" y="0" width="100" height="18">
+			<text><![CDATA[objName]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="fad2ea26-8c30-4233-aac1-b7a2886fa667"/>
+		</element>
+		<element kind="staticText" uuid="1ce83df4-c6cf-41d3-afcb-0ba641e55739" x="182" y="0" width="558" height="18">
+			<text><![CDATA[organizationName]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="67718a5e-411a-474f-ab47-650431a14116"/>
+		</element>
+	</columnHeader>
+	<detail>
+		<band height="19" splitType="Stretch">
+			<element kind="textField" uuid="aef5f9e6-9174-41f9-8df3-938e569efe74" x="0" y="0" width="80" height="18">
+				<expression><![CDATA[$F{objKey}]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="da237c20-9aa0-4cb2-a431-7a415924288f"/>
+			</element>
+			<element kind="textField" uuid="a0b017c0-914a-4095-8f8b-f41e0878ce89" x="80" y="0" width="100" height="18" fontName="DejaVu Sans" pdfFontName="DejaVu Sans">
+				<expression><![CDATA[$F{objName} != null ? $F{objName} : ""]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="fad2ea26-8c30-4233-aac1-b7a2886fa667"/>
+			</element>
+			<element kind="textField" uuid="aab0c4fb-9d8d-4a27-a559-ec3937b9fd77" x="182" y="1" width="558" height="18" fontName="DejaVu Sans" pdfFontName="DejaVu Sans">
+				<expression><![CDATA[$F{organizationName} != null ? $F{organizationName} : ""]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="67718a5e-411a-474f-ab47-650431a14116"/>
+			</element>
+		</band>
+	</detail>
+</jasperReport>

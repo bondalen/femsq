@@ -1,7 +1,7 @@
 {
   "modules": {
     "version": "1.0.0",
-    "lastUpdated": "2025-11-13",
+    "lastUpdated": "2025-11-28",
     "description": "Структура модулей проекта FEMSQ",
     
     "items": [
@@ -1012,6 +1012,232 @@
                   }
                 ]
               }
+            },
+            {
+              "module": {
+                "displayName": "Reports Module. № 01.03",
+                "attributes": {
+                  "id": "reports",
+                  "number": "01.03",
+                  "name": "Reports Module",
+                  "description": "Модуль генерации PDF-отчётов на основе JasperReports",
+                  "purpose": "Генерация PDF/Excel/HTML отчётов из данных MS SQL Server",
+                  "status": "planned",
+                  "artifact": {
+                    "location": "code/femsq-backend/femsq-reports/",
+                    "file_path": "code/femsq-backend/femsq-reports/",
+                    "type": "maven-submodule",
+                    "artifact_type": "directory",
+                    "build_file": "pom.xml"
+                  },
+                  "dependencies": ["database", "web"],
+                  "technologies": [
+                    "JasperReports 7.0.3",
+                    "Spring Boot",
+                    "JRXML",
+                    "Jaspersoft Studio 7.0.3"
+                  ],
+                  "responsibilities": [
+                    "Обнаружение и сканирование шаблонов отчётов (.jasper и .jrxml)",
+                    "Загрузка предкомпилированных .jasper файлов из JAR",
+                    "Fallback на компиляцию .jrxml при отсутствии .jasper",
+                    "Генерация PDF отчётов через JRPdfExporter",
+                    "Генерация Excel отчётов через JRXlsxExporter",
+                    "Генерация HTML отчётов",
+                    "Управление метаданными отчётов (JSON)",
+                    "REST API для работы с отчётами",
+                    "Поддержка внешних отчётов (hot-reload без перезапуска)"
+                  ],
+                  "deployment": {
+                    "strategy": "precompiled-reports",
+                    "description": "Отчёты компилируются в Jaspersoft Studio 7.0.3 и включаются в JAR как .jasper файлы. Исходные .jrxml также включаются для справки и доработки.",
+                    "artifacts": {
+                      "in_jar": {
+                        "types": [".jasper", ".jrxml", ".json"],
+                        "location": "BOOT-INF/classes/reports/embedded/",
+                        "description": "Стандартные отчёты в поставке приложения"
+                      },
+                      "external": {
+                        "location": "./reports/external/",
+                        "description": "Пользовательские отчёты (приоритет над JAR)"
+                      }
+                    },
+                    "compilation": {
+                      "method": "manual",
+                      "tool": "Jaspersoft Studio 7.0.3",
+                      "reason": "Проблемы с компиляцией в Spring Boot nested JAR",
+                      "documentation": "docs/deployment/reports-deployment-strategy.md"
+                    }
+                  },
+                  "documentation": [
+                    "docs/project/decisions/adr-003-reporting-engine.md",
+                    "docs/development/technical/reports-development-guide.md",
+                    "docs/deployment/reports-deployment-strategy.md",
+                    "docs/development/jaspersoft-studio-guide.md"
+                  ]
+                },
+                
+                "components": [
+                  {
+                    "component": {
+                      "displayName": "Core Component. № 01.03.01",
+                      "attributes": {
+                        "id": "core",
+                        "number": "01.03.01",
+                        "name": "Reports Core",
+                        "description": "Ядро системы отчётов",
+                        "status": "planned",
+                        "artifact": {
+                          "location": "com.femsq.reports.core",
+                          "file_path": "src/main/java/com/femsq/reports/core/",
+                          "type": "java-package",
+                          "artifact_type": "directory"
+                        },
+                        "responsibilities": [
+                          "Сканирование директорий с отчётами",
+                          "Загрузка метаданных из JSON",
+                          "Загрузка предкомпилированных .jasper файлов",
+                          "Fallback на компиляцию .jrxml при отсутствии .jasper",
+                          "Кэширование скомпилированных отчётов",
+                          "Приоритет внешних отчётов над встроенными"
+                        ]
+                      },
+                      "classes": [
+                        {
+                          "class": {
+                            "displayName": "ReportGenerationService. № 01.03.01.01",
+                            "attributes": {
+                              "id": "ReportGenerationService",
+                              "number": "01.03.01.01",
+                              "name": "ReportGenerationService",
+                              "description": "Основной сервис генерации отчётов",
+                              "status": "completed",
+                              "artifact": {
+                                "location": "com.femsq.reports.core.ReportGenerationService",
+                                "file_path": "src/main/java/com/femsq/reports/core/ReportGenerationService.java",
+                                "type": "java-class",
+                                "artifact_type": "file"
+                              },
+                              "responsibilities": [
+                                "Загрузка отчётов с приоритетом: внешние → .jasper → .jrxml",
+                                "Генерация PDF, Excel, HTML отчётов",
+                                "Управление параметрами отчётов",
+                                "Обработка подотчётов"
+                              ],
+                              "dependsOn": ["JasperReportsEngine", "ReportDiscoveryService"]
+                            }
+                          }
+                        },
+                        {
+                          "class": {
+                            "displayName": "JasperReportsEngine. № 01.03.01.02",
+                            "attributes": {
+                              "id": "JasperReportsEngine",
+                              "number": "01.03.01.02",
+                              "name": "JasperReportsEngine",
+                              "description": "Движок компиляции и кэширования отчётов",
+                              "status": "completed",
+                              "artifact": {
+                                "location": "com.femsq.reports.core.JasperReportsEngine",
+                                "file_path": "src/main/java/com/femsq/reports/core/JasperReportsEngine.java",
+                                "type": "java-class",
+                                "artifact_type": "file"
+                              },
+                              "responsibilities": [
+                                "Компиляция JRXML в JasperReport",
+                                "Кэширование скомпилированных отчётов",
+                                "Управление директорией кэша"
+                              ],
+                              "dependsOn": []
+                            }
+                          }
+                        },
+                        {
+                          "class": {
+                            "displayName": "ReportDiscoveryService. № 01.03.01.03",
+                            "attributes": {
+                              "id": "ReportDiscoveryService",
+                              "number": "01.03.01.03",
+                              "name": "ReportDiscoveryService",
+                              "description": "Сервис обнаружения и загрузки метаданных отчётов",
+                              "status": "completed",
+                              "artifact": {
+                                "location": "com.femsq.reports.core.ReportDiscoveryService",
+                                "file_path": "src/main/java/com/femsq/reports/core/ReportDiscoveryService.java",
+                                "type": "java-class",
+                                "artifact_type": "file"
+                              },
+                              "responsibilities": [
+                                "Сканирование директорий с отчётами",
+                                "Загрузка метаданных из JSON",
+                                "Hot-reload при изменении файлов"
+                              ],
+                              "dependsOn": []
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "component": {
+                      "displayName": "API Component. № 01.03.02",
+                      "attributes": {
+                        "id": "api",
+                        "number": "01.03.02",
+                        "name": "Reports API",
+                        "description": "REST API для работы с отчётами",
+                        "status": "planned",
+                        "artifact": {
+                          "location": "com.femsq.reports.api",
+                          "file_path": "src/main/java/com/femsq/reports/api/",
+                          "type": "java-package",
+                          "artifact_type": "directory"
+                        }
+                      },
+                      "classes": []
+                    }
+                  },
+                  {
+                    "component": {
+                      "displayName": "Model Component. № 01.03.03",
+                      "attributes": {
+                        "id": "model",
+                        "number": "01.03.03",
+                        "name": "Reports Model",
+                        "description": "Модели данных для отчётов",
+                        "status": "planned",
+                        "artifact": {
+                          "location": "com.femsq.reports.model",
+                          "file_path": "src/main/java/com/femsq/reports/model/",
+                          "type": "java-package",
+                          "artifact_type": "directory"
+                        }
+                      },
+                      "classes": []
+                    }
+                  },
+                  {
+                    "component": {
+                      "displayName": "Config Component. № 01.03.04",
+                      "attributes": {
+                        "id": "config",
+                        "number": "01.03.04",
+                        "name": "Reports Configuration",
+                        "description": "Конфигурация модуля отчётов",
+                        "status": "planned",
+                        "artifact": {
+                          "location": "com.femsq.reports.config",
+                          "file_path": "src/main/java/com/femsq/reports/config/",
+                          "type": "java-package",
+                          "artifact_type": "directory"
+                        }
+                      },
+                      "classes": []
+                    }
+                  }
+                ]
+              }
             }
           ]
         }
@@ -1027,8 +1253,8 @@
             "purpose": "Пользовательский интерфейс для работы с контрагентами и объектами",
             "status": "planned",
             "artifact": {
-              "location": "code/femsq-frontend/",
-              "file_path": "code/femsq-frontend/",
+              "location": "code/femsq-frontend-q/",
+              "file_path": "code/femsq-frontend-q/",
               "type": "vue-module",
               "artifact_type": "directory",
               "build_file": "package.json"

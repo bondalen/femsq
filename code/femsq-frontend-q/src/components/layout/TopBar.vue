@@ -31,6 +31,15 @@
       <QBtn
         flat
         rounded
+        icon="analytics"
+        label="Отчёты"
+        :color="activeView === 'reports' ? 'primary' : 'dark'"
+        :disable="!reportsEnabled"
+        @click="handleNavigate('reports')"
+      />
+      <QBtn
+        flat
+        rounded
         icon="account_tree"
         label="Инвестиционные цепочки"
         :color="activeView === 'investment-chains' ? 'primary' : 'dark'"
@@ -62,6 +71,12 @@
           </QItemSection>
           <QItemSection>Организации</QItemSection>
         </QItem>
+        <QItem clickable :disable="!reportsEnabled" @click="handleNavigate('reports')">
+          <QItemSection avatar>
+            <QIcon name="analytics" />
+          </QItemSection>
+          <QItemSection>Отчёты</QItemSection>
+        </QItem>
         <QItem clickable :disable="!investmentChainsEnabled" @click="handleNavigate('investment-chains')">
           <QItemSection avatar>
             <QIcon name="account_tree" />
@@ -84,6 +99,7 @@ interface Props {
   activeView: ActiveView;
   organizationsEnabled: boolean;
   investmentChainsEnabled: boolean;
+  reportsEnabled: boolean;
 }
 
 const props = defineProps<Props>();

@@ -27,7 +27,7 @@
   - 01.02.02 lifecycle/ - Инициализация
   - 01.02.03 health/ - Health checks
 
-### Модуль 02: Frontend Module (femsq-frontend)
+### Модуль 02: Frontend Module (femsq-frontend-q)
   - 02.01 components/ - Vue компоненты
   - 02.02 services/ - API клиенты
 
@@ -56,7 +56,6 @@
 ```xml
 <modules>
     <module>femsq-backend</module>
-    <module>femsq-frontend</module>
 </modules>
 
 <!-- В femsq-backend/pom.xml -->
@@ -65,3 +64,6 @@
     <module>femsq-web</module>
 </modules>
 ```
+
+> Примечание: фронтенд (`code/femsq-frontend-q`) собирается отдельно через Vite/Quasar
+> и встраивается в Spring Boot артефакт через `frontend-maven-plugin` модуля `femsq-web`.

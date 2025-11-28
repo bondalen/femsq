@@ -1,0 +1,38 @@
+{
+  "id": "my-new-report",
+  "version": "1.0.0",
+  "name": "Организация с кодом (кодами) агента",
+  "description": "Карточка организации с вложенным списком кодов агента, если она агентом является. Демонстрирует использование подотчётов.",
+  "category": "contractors",
+  "author": "FEMSQ Team",
+  "created": "2025-11-27",
+  "lastModified": "2025-11-27",
+  "files": {
+    "template": "my-new-report.jrxml",
+    "thumbnail": null
+  },
+  "parameters": [
+    {
+      "name": "contractorId",
+      "type": "string",
+      "label": "ID организации",
+      "description": "Код организации (ogKey) для формирования отчёта",
+      "required": true
+    }
+  ],
+  "uiIntegration": {
+    "showInReportsList": true,
+    "contextMenus": [
+      {
+        "component": "OrganisationCard",
+        "label": "Организация с кодом агента",
+        "icon": "folder",
+        "parameterMapping": {
+          "contractorId": "${contractorId}"
+        }
+      }
+    ]
+  },
+  "tags": ["contractors", "objects", "subreport", "demo"],
+  "accessLevel": "user"
+}

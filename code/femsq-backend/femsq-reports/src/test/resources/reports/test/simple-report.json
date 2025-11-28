@@ -1,0 +1,45 @@
+{
+  "id": "simple-report",
+  "version": "1.0.0",
+  "name": "Simple Test Report",
+  "description": "Простой тестовый отчёт для интеграционных тестов",
+  "category": "test",
+  "author": "Test Author",
+  "created": "2025-01-01",
+  "lastModified": "2025-01-01",
+  "files": {
+    "template": "simple-report.jrxml",
+    "compiled": null,
+    "thumbnail": null
+  },
+  "parameters": [
+    {
+      "name": "title",
+      "type": "string",
+      "label": "Заголовок",
+      "description": "Заголовок отчёта",
+      "required": true,
+      "defaultValue": null,
+      "validation": null,
+      "options": null,
+      "source": null
+    },
+    {
+      "name": "message",
+      "type": "string",
+      "label": "Сообщение",
+      "description": "Текст сообщения в отчёте",
+      "required": false,
+      "defaultValue": "Тестовое сообщение",
+      "validation": null,
+      "options": null,
+      "source": null
+    }
+  ],
+  "uiIntegration": {
+    "showInReportsList": true,
+    "contextMenus": null
+  },
+  "tags": ["test", "simple"],
+  "accessLevel": "user"
+}

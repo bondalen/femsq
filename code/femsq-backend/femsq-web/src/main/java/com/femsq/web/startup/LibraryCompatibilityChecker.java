@@ -1,0 +1,199 @@
+package com.femsq.web.startup;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.util.*;
+
+/**
+ * Проверяет совместимость внешних библиотек при запуске thin JAR.
+ * Читает META-INF/lib-manifest.json и сравнивает с библиотеками в lib/.
+ */
+public class LibraryCompatibilityChecker {
+    
+    private static final Logger log = LoggerFactory.getLogger(LibraryCompatibilityChecker.class);
+    private static final String MANIFEST_PATH = "META-INF/lib-manifest.json";
+    
+    /**
+     * Проверяет совместимость библиотек.
+     * 
+     * @param libDir путь к директории lib/
+     * @return результат проверки
+     */
+    public static ValidationResult verify(Path libDir) {
+        ValidationResult result = new ValidationResult();
+        
+        try {
+            // Читаем lib-manifest.json из classpath
+            InputStream manifestStream = LibraryCompatibilityChecker.class
+                .getClassLoader()
+                .getResourceAsStream(MANIFEST_PATH);
+            
+            if (manifestStream == null) {
+                log.warn("lib-manifest.json not found in JAR. Skipping library validation.");
+                result.addWarning("lib-manifest.json not found - cannot validate libraries");
+                return result;
+            }
+            
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(manifestStream);
+            
+            JsonNode buildInfo = root.get("buildInfo");
+            if (buildInfo != null) {
+                String appVersion = buildInfo.get("appVersion").asText();
+                String buildNumber = buildInfo.get("buildNumber").asText();
+                log.info("Validating libraries for app version: {} (build: {})", appVersion, buildNumber);
+            }
+            
+            JsonNode libraries = root.get("libraries");
+            if (libraries == null || !libraries.isArray()) {
+                log.warn("No libraries found in lib-manifest.json");
+                return result;
+            }
+            
+            // Проверяем каждую библиотеку
+            for (JsonNode libNode : libraries) {
+                String filename = libNode.get("filename").asText();
+                boolean required = libNode.has("required") && libNode.get("required").asBoolean();
+                String expectedVersion = libNode.has("version") ? libNode.get("version").asText() : null;
+                String expectedSha256 = libNode.has("sha256") ? libNode.get("sha256").asText() : null;
+                
+                Path libFile = libDir.resolve(filename);
+                
+                if (!Files.exists(libFile)) {
+                    if (required) {
+                        result.addError("Required library missing: " + filename);
+                        log.error("Required library missing: {}", filename);
+                    } else {
+                        result.addWarning("Optional library missing: " + filename);
+                        log.warn("Optional library missing: {}", filename);
+                    }
+                    continue;
+                }
+                
+                // Проверяем версию для femsq-* модулей
+                if (filename.startsWith("femsq-") && expectedVersion != null) {
+                    String actualVersion = extractVersionFromFilename(filename);
+                    if (!expectedVersion.equals(actualVersion)) {
+                        result.addError(String.format(
+                            "Version mismatch for %s: expected %s, found %s",
+                            filename, expectedVersion, actualVersion
+                        ));
+                        log.error("Version mismatch for {}: expected {}, found {}",
+                            filename, expectedVersion, actualVersion);
+                    }
+                }
+                
+                // Проверяем SHA-256 (опционально, можно отключить)
+                if (expectedSha256 != null && System.getProperty("femsq.verify.lib.sha256", "false").equals("true")) {
+                    try {
+                        String actualSha256 = calculateSha256(libFile);
+                        if (!expectedSha256.equals(actualSha256)) {
+                            result.addWarning(String.format(
+                                "SHA-256 mismatch for %s (file may be corrupted or modified)",
+                                filename
+                            ));
+                            log.warn("SHA-256 mismatch for {}", filename);
+                        }
+                    } catch (Exception e) {
+                        log.warn("Failed to calculate SHA-256 for {}: {}", filename, e.getMessage());
+                    }
+                }
+            }
+            
+            // Проверяем наличие native-libs (если требуется Windows Auth)
+            if (System.getProperty("femsq.windows.auth", "false").equals("true")) {
+                Path nativeLibsDir = libDir.getParent().resolve("native-libs");
+                if (!Files.exists(nativeLibsDir)) {
+                    result.addWarning("native-libs directory not found (required for Windows Authentication)");
+                    log.warn("native-libs directory not found");
+                }
+            }
+            
+            if (result.hasErrors()) {
+                log.error("Library validation failed with {} errors", result.getErrors().size());
+            } else if (result.hasWarnings()) {
+                log.warn("Library validation completed with {} warnings", result.getWarnings().size());
+            } else {
+                log.info("Library validation passed successfully");
+            }
+            
+        } catch (Exception e) {
+            log.error("Failed to validate libraries", e);
+            result.addError("Library validation failed: " + e.getMessage());
+        }
+        
+        return result;
+    }
+    
+    private static String extractVersionFromFilename(String filename) {
+        // Извлекаем версию из имени файла: femsq-database-0.1.0.1-SNAPSHOT.jar -> 0.1.0.1-SNAPSHOT
+        String nameWithoutExt = filename.replace(".jar", "");
+        String[] parts = nameWithoutExt.split("-");
+        if (parts.length >= 2) {
+            // Берём последние части как версию
+            return String.join("-", Arrays.copyOfRange(parts, parts.length - 2, parts.length));
+        }
+        return "unknown";
+    }
+    
+    private static String calculateSha256(Path file) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        try (InputStream is = Files.newInputStream(file)) {
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = is.read(buffer)) != -1) {
+                digest.update(buffer, 0, bytesRead);
+            }
+        }
+        byte[] hash = digest.digest();
+        StringBuilder sb = new StringBuilder();
+        for (byte b : hash) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
+    }
+    
+    /**
+     * Результат проверки библиотек.
+     */
+    public static class ValidationResult {
+        private final List<String> errors = new ArrayList<>();
+        private final List<String> warnings = new ArrayList<>();
+        
+        public void addError(String error) {
+            errors.add(error);
+        }
+        
+        public void addWarning(String warning) {
+            warnings.add(warning);
+        }
+        
+        public boolean hasErrors() {
+            return !errors.isEmpty();
+        }
+        
+        public boolean hasWarnings() {
+            return !warnings.isEmpty();
+        }
+        
+        public List<String> getErrors() {
+            return Collections.unmodifiableList(errors);
+        }
+        
+        public List<String> getWarnings() {
+            return Collections.unmodifiableList(warnings);
+        }
+        
+        public boolean isValid() {
+            return !hasErrors();
+        }
+    }
+}
+

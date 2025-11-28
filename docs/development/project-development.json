@@ -3,13 +3,13 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2025-11-21",
+      "lastUpdated": "2025-11-28",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0027",
+      "nextTaskId": "0034",
       "items": {
         "0001": {
           "task": {
@@ -713,6 +713,185 @@
                 "aiRuleRefs": []
               },
               "created": "2025-11-20",
+              "lastUpdated": "2025-11-21"
+            }
+          }
+        },
+        "0027": {
+          "task": {
+            "displayName": "Создание Maven модуля Reports (pending, critical). № 0027",
+            "task-attributes": {
+              "status": "pending",
+              "priority": "critical",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Maven модуль femsq-reports создан в структуре проекта",
+                "pom.xml с зависимостями JasperReports 6.21.0 настроен",
+                "Базовая структура пакетов создана (core, api, model, config)",
+                "Модуль успешно собирается (mvn clean install)",
+                "Модуль добавлен в parent POM"
+              ],
+              "description": "Создание нового Maven модуля для функциональности отчётов с базовой структурой",
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.reports"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-11-21",
+              "lastUpdated": "2025-11-21"
+            }
+          }
+        },
+        "0028": {
+          "task": {
+            "displayName": "Реализация ReportDiscoveryService (pending, critical). № 0028",
+            "task-attributes": {
+              "status": "pending",
+              "priority": "critical",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Класс ReportDiscoveryService создан в пакете com.femsq.reports.core",
+                "Реализовано сканирование директорий ./reports/custom и ./reports/templates",
+                "Реализована загрузка метаданных из JSON файлов",
+                "Реализовано извлечение параметров из JRXML",
+                "Добавлен @Scheduled метод для автоматического обновления списка (каждую минуту)",
+                "Реализовано кэширование метаданных в ConcurrentHashMap",
+                "Unit-тесты покрывают основные сценарии (сканирование, загрузка, обновление)",
+                "JavaDoc документация добавлена"
+              ],
+              "description": "Разработка сервиса обнаружения и сканирования шаблонов отчётов с поддержкой hot-reload",
+              "links": {
+                "projectDocsRefs": [
+                  "class:backend.reports.core.ReportDiscoveryService"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-11-21",
+              "lastUpdated": "2025-11-21"
+            }
+          }
+        },
+        "0029": {
+          "task": {
+            "displayName": "Реализация ReportGenerationService (pending, critical). № 0029",
+            "task-attributes": {
+              "status": "pending",
+              "priority": "critical",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Класс ReportGenerationService создан",
+                "Реализована генерация PDF через JasperExportManager",
+                "Реализована генерация Excel через JRXlsExporter",
+                "Реализована генерация HTML через JRHtmlExporter",
+                "Добавлена валидация параметров перед генерацией",
+                "Настроены таймауты и ограничения (max-concurrent)",
+                "Unit-тесты с реальными JRXML шаблонами",
+                "JavaDoc документация добавлена"
+              ],
+              "description": "Разработка сервиса генерации отчётов в различных форматах",
+              "links": {
+                "projectDocsRefs": [
+                  "class:backend.reports.core.ReportGenerationService"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-11-21",
+              "lastUpdated": "2025-11-21"
+            }
+          }
+        },
+        "0030": {
+          "task": {
+            "displayName": "Реализация ReportController (pending, high). № 0030",
+            "task-attributes": {
+              "status": "pending",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "REST контроллер ReportController создан",
+                "Реализован GET /api/reports/available - список всех отчётов",
+                "Реализован GET /api/reports/{reportId}/metadata - метаданные отчёта",
+                "Реализован GET /api/reports/{reportId}/parameters - параметры с defaults",
+                "Реализован POST /api/reports/{reportId}/generate - генерация отчёта",
+                "Добавлена обработка ошибок и HTTP статусов",
+                "Integration-тесты для API (@SpringBootTest)",
+                "JavaDoc документация добавлена"
+              ],
+              "description": "Разработка REST API для работы с отчётами",
+              "links": {
+                "projectDocsRefs": [
+                  "class:backend.reports.api.ReportController"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-11-21",
+              "lastUpdated": "2025-11-21"
+            }
+          }
+        },
+        "0031": {
+          "task": {
+            "displayName": "Разработка ReportsCatalog.vue (pending, high). № 0031",
+            "task-attributes": {
+              "status": "pending",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Компонент ReportsCatalog.vue создан в src/modules/reports/views/",
+                "Реализовано отображение списка отчётов в виде карточек",
+                "Добавлены фильтры по категории и поиску",
+                "Реализована загрузка списка через API (/api/reports/available)",
+                "Добавлена кнопка обновления списка",
+                "При клике на карточку открывается диалог параметров",
+                "Отображаются теги и бейджи (встроенный/внешний)",
+                "Добавлена страница в роутер приложения",
+                "Компонент адаптивен (responsive design)",
+                "Component тесты (Vitest + @vue/test-utils)"
+              ],
+              "description": "Разработка страницы каталога отчётов с фильтрацией и карточками",
+              "links": {
+                "projectDocsRefs": [
+                  "component:frontend.reports.ReportsCatalog"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-11-21",
+              "lastUpdated": "2025-11-21"
+            }
+          }
+        },
+        "0032": {
+          "task": {
+            "displayName": "Разработка ReportParametersDialog.vue (pending, high). № 0032",
+            "task-attributes": {
+              "status": "pending",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Компонент ReportParametersDialog.vue создан",
+                "Динамическая генерация полей на основе ReportParameter[]",
+                "Поддержка типов: date, number, string, boolean, enum",
+                "Поддержка source.type='api' (загрузка options)",
+                "Реализован резолвинг defaultValue (${today}, ${firstDayOfQuarter})",
+                "Добавлена валидация (required, min/max)",
+                "Кнопки: Отмена, Предпросмотр, Сгенерировать",
+                "Component тесты (Vitest)"
+              ],
+              "description": "Разработка универсального диалога ввода параметров отчёта",
+              "links": {
+                "projectDocsRefs": [
+                  "component:frontend.reports.ReportParametersDialog"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-11-21",
               "lastUpdated": "2025-11-21"
             }
           }

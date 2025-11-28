@@ -34,6 +34,15 @@
       >
         Организации
       </button>
+      <button
+        class="top-bar__button"
+        type="button"
+        :disabled="!reportsEnabled"
+        :data-active="activeView === 'reports'"
+        @click="handleNavigate('reports')"
+      >
+        Отчёты
+      </button>
     </div>
   </nav>
 </template>
@@ -46,6 +55,7 @@ interface Props {
   status: ConnectionState;
   activeView: ActiveView;
   organizationsEnabled: boolean;
+  reportsEnabled: boolean;
 }
 
 const props = defineProps<Props>();

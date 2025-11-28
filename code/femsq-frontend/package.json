@@ -8,6 +8,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "type-check": "vue-tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },
@@ -19,8 +23,12 @@
     "@playwright/test": "^1.40.0",
     "@types/node": "^22.7.4",
     "@vitejs/plugin-vue": "^5.1.0",
+    "@vitest/ui": "^4.0.12",
+    "@vue/test-utils": "^2.4.6",
+    "happy-dom": "^20.0.10",
     "typescript": "5.4.5",
     "vite": "^5.2.8",
+    "vitest": "^4.0.12",
     "vue-tsc": "^2.0.29"
   }
 }

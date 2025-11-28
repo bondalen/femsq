@@ -10,12 +10,14 @@
     :active-view="connection.activeView"
     :organizations-enabled="connection.organizationsEnabled"
     :investment-chains-enabled="connection.investmentChainsEnabled"
+    :reports-enabled="connection.reportsEnabled"
     @open-connection="handleOpenConnection"
     @navigate="handleNavigate"
     @disconnect="handleDisconnect"
   >
     <OrganizationsView v-if="connection.activeView === 'organizations'" />
-    <InvestmentChainsView v-if="connection.activeView === 'investment-chains'" />
+    <InvestmentChainsView v-else-if="connection.activeView === 'investment-chains'" />
+    <ReportsCatalog v-else-if="connection.activeView === 'reports'" />
 
     <QPage v-else class="column q-gutter-lg">
       <div class="q-pa-xl bg-white rounded-borders shadow-2">
@@ -69,6 +71,7 @@ import AppLayout from '@/components/layout/AppLayout.vue';
 import ConnectionModal from '@/components/setup/ConnectionModal.vue';
 import OrganizationsView from '@/views/organizations/OrganizationsView.vue';
 import InvestmentChainsView from '@/views/investment-chains/InvestmentChainsView.vue';
+import ReportsCatalog from '@/modules/reports/views/ReportsCatalog.vue';
 import type { ActiveView, ConnectionFormValues } from '@/stores/connection';
 import { useConnectionStore } from '@/stores/connection';
 import { useOrganizationsStore } from '@/stores/organizations';

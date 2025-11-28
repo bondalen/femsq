@@ -2,7 +2,7 @@ import { computed, reactive, ref } from 'vue';
 import { defineStore } from 'pinia';
 
 export type ConnectionState = 'idle' | 'connecting' | 'connected' | 'connectionError' | 'disconnecting';
-export type ActiveView = 'home' | 'organizations' | 'investment-chains';
+export type ActiveView = 'home' | 'organizations' | 'investment-chains' | 'reports';
 export type AuthMode = 'sql' | 'windows' | 'token';
 
 export interface ConnectionFormValues {
@@ -44,6 +44,7 @@ export const useConnectionStore = defineStore('connection', () => {
 
   const organizationsEnabled = computed(() => status.value === 'connected');
   const investmentChainsEnabled = computed(() => status.value === 'connected');
+  const reportsEnabled = computed(() => true);
 
   const statusTone = computed(() => {
     switch (status.value) {
@@ -119,6 +120,7 @@ export const useConnectionStore = defineStore('connection', () => {
     lastError,
     organizationsEnabled,
     investmentChainsEnabled,
+    reportsEnabled,
     statusTone,
     setStatus,
     navigate,

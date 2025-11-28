@@ -199,9 +199,9 @@ Class
 
 #### Соответствие Java/Spring
 
-**Module → Maven/Gradle:**
+**Module → Maven/Gradle/Node:**
 - Корневые проекты: `code/`
-- Sub-modules: `code/femsq-backend/`, `code/femsq-frontend/`
+- Sub-modules: `code/femsq-backend/`, `code/femsq-frontend-q/`
 - Multi-module проекты: `code/femsq-backend/femsq-database/`, `code/femsq-backend/femsq-web/`
 
 **Component → Java Packages:**

@@ -6,7 +6,7 @@
             "description": "Cистема работы с контрагентами и объектами при капитальном строительстве на основе БД MS SQL Server FEMSQ (Fish Eye MS SQL Server)",
             "author": "Александр",
             "created": "2025-10-08",
-            "lastUpdated": "2025-11-17",
+            "lastUpdated": "2025-11-28",
             "status": "planning",
             "repository": "https://github.com/bondalen/femsq.git",
             "license": "MIT",
@@ -27,6 +27,19 @@
                 "language": "Java 21 LTS",
                 "database": "MS SQL Server (внешняя)",
                 "database_driver": "Microsoft SQL Server JDBC Driver 12.x",
+                "database_driver_version": "12.8.1.jre11",
+                "database_native_libraries": {
+                    "description": "Нативные библиотеки для Windows Authentication (mssql-jdbc_auth.dll)",
+                    "location": "code/femsq-backend/femsq-database/src/main/resources/com/microsoft/sqlserver/jdbc/auth/",
+                    "files": [
+                        "x64/mssql-jdbc_auth-12.8.1.x64.dll (305 KB)",
+                        "x86/mssql-jdbc_auth-12.8.1.x86.dll (248 KB)",
+                        "sqljdbc_auth.dll (для обратной совместимости)"
+                    ],
+                    "included_in_fat_jar": true,
+                    "extraction_path": "BOOT-INF/classes/native-libs/",
+                    "usage": "Автоматически извлекаются при сборке в fat JAR, загружаются при запуске на Windows для Windows Authentication"
+                },
                 "api": "GraphQL",
                 "security": "не разрабатывается - безопасная внутренняя сеть организации",
                 "authentication": "без аутентификации пользователей",
@@ -44,6 +57,42 @@
                 "state": "Pinia",
                 "serving": "Spring Boot Static Resources",
                 "deployment": "Встроен в Spring Boot JAR (единый артефакт)"
+            },
+            "reporting": {
+                "engine": "JasperReports 7.0.3",
+                "license": "LGPL v3",
+                "designer": "Jaspersoft Studio Community Edition (внешний инструмент)",
+                "template_format": "JRXML (XML-based)",
+                "output_formats": ["PDF", "Excel (XLS, XLSX)", "HTML", "CSV"],
+                "deployment": "Предкомпилированные .jasper + исходные .jrxml в JAR, внешние отчёты в ./reports/ (hot-reload)",
+                "deployment_strategy": {
+                    "method": "precompiled-reports",
+                    "description": "Отчёты компилируются в Jaspersoft Studio 7.0.3 и включаются в JAR как .jasper файлы. Исходные .jrxml также включаются для справки и доработки.",
+                    "artifacts_in_jar": {
+                        "types": [".jasper", ".jrxml", ".json"],
+                        "location": "BOOT-INF/classes/reports/embedded/",
+                        "standard_reports": ["my-new-report", "my-new-report-sr-ag"]
+                    },
+                    "external_reports": {
+                        "location": "./reports/external/",
+                        "priority": "выше встроенных отчётов"
+                    },
+                    "compilation": {
+                        "method": "manual",
+                        "tool": "Jaspersoft Studio 7.0.3",
+                        "reason": "Проблемы с компиляцией в Spring Boot nested JAR",
+                        "documentation": "docs/deployment/reports-deployment-strategy.md"
+                    }
+                },
+                "features": [
+                    "Динамические параметры отчётов",
+                    "Подотчёты (бесконечная вложенность)",
+                    "Графики и диаграммы",
+                    "Прямое подключение к MS SQL Server",
+                    "Загрузка предкомпилированных .jasper файлов",
+                    "Fallback на компиляцию .jrxml при отсутствии .jasper"
+                ],
+                "decision": "docs/project/decisions/adr-003-reporting-engine.md"
             },
             "infrastructure": {
                 "database": "MS SQL Server (внешняя)",
@@ -119,6 +168,121 @@
                         "docs/development/notes/testing-improvements-summary.md"
                     ]
                 }
+            }
+        },
+        "deployment": {
+            "artifact": {
+                "type": "Spring Boot Fat JAR",
+                "description": "Единый исполняемый JAR файл содержит backend, frontend и все зависимости",
+                "size": "~80-100 MB (включая JasperReports ~15 MB)"
+            },
+            "jar_lifecycle": {
+                "description": "Двухэтапная стратегия развёртывания: fat JAR для первичной установки, thin JAR для обновлений",
+                "stages": {
+                    "stage1_build": {
+                        "type": "fat-jar",
+                        "command": "mvn clean package -pl femsq-backend/femsq-web -am",
+                        "output": "femsq-web-{version}.jar (~51 MB)",
+                        "contains": [
+                            "Все классы приложения",
+                            "Все внешние библиотеки (BOOT-INF/lib/)",
+                            "Нативные библиотеки (native-libs/)",
+                            "Фронтенд (static/)",
+                            "Встроенные отчёты (reports/embedded/)",
+                            "Метаданные библиотек (META-INF/lib-manifest.json)"
+                        ]
+                    },
+                    "stage2a_initial_deployment": {
+                        "scenario": "Первичная установка на чистой машине",
+                        "steps": [
+                            "Скопировать fat JAR на целевую машину",
+                            "Запустить: java -jar femsq-web-{version}.jar (или start.bat на Windows)",
+                            "При первом запуске автоматически создаются: native-libs/, reports/, logs/, temp/",
+                            "Библиотеки остаются внутри JAR"
+                        ]
+                    },
+                    "stage2b_update_deployment": {
+                        "scenario": "Обновление на машине с уже установленными библиотеками",
+                        "prerequisites": [
+                            "На целевой машине уже есть папка lib/ с библиотеками",
+                            "На целевой машине уже есть папка native-libs/ (если используется Windows Auth)"
+                        ],
+                        "steps": [
+                            "На машине разработчика: ./scripts/build-thin-jar.sh",
+                            "Скопировать только thin JAR (~700 KB) на целевую машину",
+                            "Запустить: java -Dloader.path=lib,native-libs -jar femsq-web-{version}-thin.jar",
+                            "При запуске автоматически проверяются: наличие библиотек, версии, целостность"
+                        ],
+                        "validation": {
+                            "automatic": true,
+                            "checks": [
+                                "Наличие всех required библиотек в lib/",
+                                "Совпадение версий femsq-* модулей с версией thin JAR",
+                                "Совместимость версий внешних библиотек (>= требуемой)",
+                                "Наличие native-libs/ (если требуется Windows Auth)"
+                            ],
+                            "on_failure": "Логирование ошибок, остановка запуска при критических несоответствиях"
+                        }
+                    }
+                },
+                "library_metadata": {
+                    "file": "META-INF/lib-manifest.json",
+                    "format": "JSON",
+                    "contains": [
+                        "Информация о сборке (версия, timestamp, build number)",
+                        "Список всех библиотек с версиями из MANIFEST.MF",
+                        "SHA-256 хэши для проверки целостности",
+                        "Флаги required/optional для каждой библиотеки"
+                    ],
+                    "generation": "Автоматически при сборке fat JAR через maven-dependency-plugin"
+                }
+            },
+            "runtime_structure": {
+                "working_directory": "Директория запуска приложения",
+                "external_directories": [
+                    {
+                        "path": "./reports/",
+                        "purpose": "Внешние шаблоны отчётов и ресурсы",
+                        "structure": {
+                            "custom/": "Пользовательские отчёты (JRXML + JSON метаданные)",
+                            "templates/": "Библиотека шаблонов организации",
+                            "assets/": "Ресурсы (логотипы, шрифты, изображения)",
+                            "cache/": "Кэш скомпилированных отчётов (.jasper файлы)"
+                        },
+                        "permissions": "read/write",
+                        "backup_required": true,
+                        "hot_reload": true,
+                        "scan_interval": "60 seconds",
+                        "priority": "Внешние отчёты имеют приоритет над встроенными"
+                    },
+                    {
+                        "path": "~/.femsq/",
+                        "purpose": "Конфигурация пользователя",
+                        "structure": {
+                            "database.properties": "Параметры подключения к БД",
+                            "application.properties": "Пользовательские настройки приложения"
+                        },
+                        "permissions": "read/write",
+                        "backup_required": true
+                    }
+                ],
+                "embedded_resources": {
+                    "reports": "resources/reports/embedded/ - базовые встроенные отчёты (fallback)",
+                    "frontend": "resources/static/ - Vue.js приложение",
+                    "migrations": "resources/db/changelog/ - Liquibase миграции"
+                }
+            },
+            "configuration": {
+                "files": [
+                    "application.yml - основная конфигурация Spring Boot",
+                    "application-dev.yml - профиль разработки",
+                    "application-prod.yml - production профиль"
+                ],
+                "overrides": [
+                    "~/.femsq/application.properties - пользовательские переопределения",
+                    "Environment variables - переменные окружения (FEMSQ_*)",
+                    "Command line arguments - аргументы командной строки"
+                ]
             }
         },
         "features": {
@@ -456,8 +620,8 @@
                         "description": "Backend на Spring Boot и подмодули (database, web)"
                     },
                     {
-                        "path": "code/femsq-frontend",
-                        "description": "Frontend на Vue.js/Quasar"
+                        "path": "code/femsq-frontend-q",
+                        "description": "Frontend на Vue.js + Quasar"
                     },
                     {
                         "path": "code/scripts",

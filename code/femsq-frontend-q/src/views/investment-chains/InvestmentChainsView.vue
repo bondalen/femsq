@@ -180,9 +180,12 @@
 
               <QSeparator />
               <QCardSection>
-                <div class="row items-center q-mb-sm">
+                <div class="row items-center q-mb-sm q-col-gutter-sm">
                   <div class="text-subtitle2">Инвестиционные программы</div>
                   <QSpace />
+                  <ObjectsReportsMenu
+                    :items="selectedRelations.map((rel) => ({ objectId: rel.investmentProgramKey ?? rel.relationKey, label: rel.investmentProgramName ?? rel.planGroupName }))"
+                  />
                   <template v-if="store.relationsLoading">
                     <QSpinner size="18px" color="primary" />
                   </template>
@@ -203,6 +206,8 @@
                   :loading="investmentProgramsStore.loading || planGroupsStore.loading"
                   :pagination="{ rowsPerPage: 0 }"
                   hide-pagination
+                  selection="multiple"
+                  v-model:selected="selectedRelations"
                 >
                   <template #body-cell-investmentProgramName="props">
                     <QTd :props="props">
@@ -330,6 +335,7 @@ import type { InvestmentChain, InvestmentChainRelation } from '@/stores/investme
 import { useStNetworksStore } from '@/stores/lookups/st-networks';
 import { useInvestmentProgramsStore } from '@/stores/lookups/investment-programs';
 import { usePlanGroupsStore } from '@/stores/lookups/plan-groups';
+import ObjectsReportsMenu from '@/modules/reports/components/ObjectsReportsMenu.vue';
 
 const store = useInvestmentChainsStore();
 const stNetworksStore = useStNetworksStore();
@@ -338,6 +344,7 @@ const planGroupsStore = usePlanGroupsStore();
 
 const relationSearchTerm = ref('');
 const relationPlanGroupFilter = ref<number | null>(null);
+const selectedRelations = ref<InvestmentChainRelation[]>([]);
 
 const columns: QTableColumn<InvestmentChain>[] = [
   { name: 'name', field: 'name', label: 'Название', align: 'left', sortable: true },
@@ -426,6 +433,20 @@ watch(
     tablePagination.value.page = newVal.page;
     tablePagination.value.rowsPerPage = newVal.size;
     tablePagination.value.rowsNumber = newVal.total;
+  }
+);
+
+watch(
+  () => store.selectedChainKey,
+  () => {
+    selectedRelations.value = [];
+  }
+);
+
+watch(
+  () => store.relations,
+  () => {
+    selectedRelations.value = [];
   }
 );
 

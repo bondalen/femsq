@@ -94,9 +94,12 @@
         <div class="col-12 col-lg-5">
           <transition name="fade">
             <QCard v-if="store.selectedOrganization" class="organization-card" flat bordered>
-              <QCardSection>
-                <div class="text-h6 q-mb-xs">{{ store.selectedOrganization.ogName }}</div>
-                <div class="text-caption text-grey-7">Ключ: {{ store.selectedOrganization.ogKey }}</div>
+              <QCardSection class="row items-start q-gutter-sm">
+                <div class="col">
+                  <div class="text-h6 q-mb-xs">{{ store.selectedOrganization.ogName }}</div>
+                  <div class="text-caption text-grey-7">Ключ: {{ store.selectedOrganization.ogKey }}</div>
+                </div>
+                <ContractorReportsMenu :contractor="store.selectedOrganization" />
               </QCardSection>
               <QSeparator />
               <QCardSection>
@@ -196,6 +199,7 @@ import type { QTableColumn } from 'quasar';
 
 import { useOrganizationsStore } from '@/stores/organizations';
 import type { Organization } from '@/stores/organizations';
+import ContractorReportsMenu from '@/modules/reports/components/ContractorReportsMenu.vue';
 
 const store = useOrganizationsStore();
 

@@ -2,7 +2,7 @@ import { computed, reactive, ref } from 'vue';
 import { defineStore } from 'pinia';
 
 export type ConnectionState = 'idle' | 'connecting' | 'connected' | 'connectionError' | 'disconnecting';
-export type ActiveView = 'home' | 'organizations';
+export type ActiveView = 'home' | 'organizations' | 'reports';
 export type AuthMode = 'sql' | 'windows' | 'token';
 
 export interface ConnectionFormValues {
@@ -50,6 +50,13 @@ export const useConnectionStore = defineStore('connection', () => {
    * Возвращает флаг доступности раздела организаций.
    */
   const organizationsEnabled = computed(() => status.value === 'connected');
+
+  /**
+   * Возвращает флаг доступности раздела отчётов.
+   * Отчёты доступны всегда (каталог не требует подключения к БД).
+   * Генерация отчётов может требовать подключения, но это проверяется отдельно.
+   */
+  const reportsEnabled = computed(() => true);
 
   /**
    * Возвращает цвет индикатора строки состояния.
@@ -142,6 +149,7 @@ export const useConnectionStore = defineStore('connection', () => {
     lastMessage,
     lastError,
     organizationsEnabled,
+    reportsEnabled,
     statusTone,
     setStatus,
     navigate,

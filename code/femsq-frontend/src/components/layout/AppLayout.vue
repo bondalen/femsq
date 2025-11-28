@@ -5,6 +5,7 @@
         :status="status"
         :active-view="activeView"
         :organizations-enabled="organizationsEnabled"
+        :reports-enabled="reportsEnabled"
         @open-connection="emit('open-connection')"
         @navigate="emit('navigate', $event)"
       />
@@ -42,6 +43,7 @@ interface Props {
   error: string;
   activeView: ActiveView;
   organizationsEnabled: boolean;
+  reportsEnabled: boolean;
 }
 
 const props = defineProps<Props>();

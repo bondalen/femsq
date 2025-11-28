@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.EnumSet;
 import java.util.Locale;
@@ -39,6 +40,7 @@ public final class NativeLibraryLoader {
 
     /**
      * Загружает нативную библиотеку для Windows Authentication, если это необходимо.
+     * Всегда создаёт папку native-libs рядом с JAR для последующего использования.
      *
      * <p>Метод безопасен для многократного вызова - библиотека загружается только один раз.
      *
@@ -49,6 +51,15 @@ public final class NativeLibraryLoader {
         synchronized (loadLock) {
             if (libraryLoaded) {
                 return true;
+            }
+
+            // Всегда создаём папку native-libs рядом с JAR, даже на Linux
+            // Это нужно для того, чтобы папка была доступна для извлечения из fat JAR
+            try {
+                Path libraryDir = resolveLibraryDirectory();
+                log.log(Level.INFO, "Created native-libs directory: {0}", libraryDir);
+            } catch (Exception e) {
+                log.log(Level.WARNING, "Failed to create native-libs directory", e);
             }
 
             String osName = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
@@ -189,19 +200,61 @@ public final class NativeLibraryLoader {
 
     /**
      * Определяет каталог для размещения нативных библиотек.
-     * Приоритет: каталог рядом с JAR > временный каталог.
+     * Приоритет: каталог рядом с основным JAR > временный каталог.
+     * 
+     * <p>Для тонкого JAR определяет директорию основного JAR (не вложенного из lib/).
+     * Использует текущую рабочую директорию, так как JAR обычно запускается из своей директории.
      */
     private static Path resolveLibraryDirectory() throws IOException {
         try {
-            // Используем утилиту для определения каталога JAR
-            // Пробуем сначала класс из основного модуля (web), если он доступен
-            Path jarDir;
+            Path jarDir = null;
+            
+            // Способ 1: Пробуем определить через основной класс приложения
+            // Это должно указать на тонкий JAR, а не на вложенный JAR из lib/
             try {
                 Class<?> mainClass = Class.forName("com.femsq.web.FemsqWebApplication");
-                jarDir = JarPathResolver.resolveJarDirectory(mainClass);
+                Path candidateDir = JarPathResolver.resolveJarDirectory(mainClass);
+                
+                // Проверяем, что это не вложенный JAR из lib/
+                // Если путь содержит "lib", это может быть вложенный JAR
+                String candidatePath = candidateDir.toString().replace('\\', '/');
+                if (!candidatePath.contains("/lib/") && !candidatePath.endsWith("/lib")) {
+                    jarDir = candidateDir;
+                }
             } catch (ClassNotFoundException e) {
-                // Если основной класс недоступен, используем текущий класс
-                jarDir = JarPathResolver.resolveJarDirectory(NativeLibraryLoader.class);
+                // Основной класс недоступен, пробуем другой способ
+            }
+            
+            // Способ 2: Если не удалось определить через основной класс,
+            // пробуем найти тонкий JAR в java.class.path
+            if (jarDir == null) {
+                String classPath = System.getProperty("java.class.path", "");
+                String pathSeparator = System.getProperty("path.separator", ":");
+                String[] paths = classPath.split(pathSeparator);
+                
+                for (String path : paths) {
+                    if (path.endsWith("-thin.jar") || (path.contains("femsq-web") && path.endsWith(".jar"))) {
+                        Path candidateJar = Paths.get(path);
+                        if (Files.exists(candidateJar)) {
+                            Path candidateDir = candidateJar.getParent();
+                            if (candidateDir != null) {
+                                // Проверяем, что это не lib/
+                                String candidatePath = candidateDir.toString().replace('\\', '/');
+                                if (!candidatePath.endsWith("/lib")) {
+                                    jarDir = candidateDir;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Способ 3: Используем текущую рабочую директорию
+            // (предполагаем, что JAR запущен из своей директории)
+            if (jarDir == null) {
+                jarDir = Paths.get(System.getProperty("user.dir", "."));
+                log.log(Level.INFO, "Using current working directory: {0}", jarDir);
             }
             
             Path libDir = jarDir.resolve("native-libs");

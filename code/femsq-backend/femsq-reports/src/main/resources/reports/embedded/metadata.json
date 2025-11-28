@@ -1,0 +1,34 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-11-28",
+  "description": "Метаданные встроенных отчётов FEMSQ (базовая поставка)",
+  "reports": [
+    {
+      "id": "my-new-report",
+      "name": "Организация с кодом (кодами) агента",
+      "category": "contractors",
+      "description": "Карточка организации с вложенным списком кодов агента, если она агентом является. Демонстрирует использование подотчётов.",
+      "tags": ["contractors", "agents", "subreport", "demo"],
+      "hasSubreports": true,
+      "subreports": [
+        {
+          "id": "my-new-report-sr-ag",
+          "name": "Список кодов агента для организации",
+          "type": "subreport"
+        }
+      ]
+    }
+  ],
+  "categories": [
+    {
+      "id": "contractors",
+      "name": "Контрагенты",
+      "description": "Отчёты по контрагентам"
+    }
+  ],
+  "statistics": {
+    "totalReports": 1,
+    "totalSubreports": 1,
+    "totalCategories": 1
+  }
+}

@@ -8,6 +8,7 @@
     :error="connection.lastError"
     :active-view="connection.activeView"
     :organizations-enabled="connection.organizationsEnabled"
+    :reports-enabled="connection.reportsEnabled"
     @open-connection="handleOpenConnection"
     @navigate="handleNavigate"
     @disconnect="handleDisconnect"
@@ -26,7 +27,8 @@
       </ul>
     </section>
 
-    <OrganizationsView v-else />
+    <OrganizationsView v-else-if="connection.activeView === 'organizations'" />
+    <ReportsCatalog v-else-if="connection.activeView === 'reports'" />
   </AppLayout>
 
   <ConnectionModal
@@ -47,6 +49,7 @@ import { nextTick, onMounted, reactive } from 'vue';
 import AppLayout from '@/components/layout/AppLayout.vue';
 import ConnectionModal from '@/components/setup/connection-modal/ConnectionModal.vue';
 import OrganizationsView from '@/views/organizations/OrganizationsView.vue';
+import ReportsCatalog from '@/modules/reports/views/ReportsCatalog.vue';
 import type { ActiveView, ConnectionFormValues } from '@/stores/connection';
 import { useConnectionStore } from '@/stores/connection';
 import { useOrganizationsStore } from '@/stores/organizations';
@@ -156,6 +159,9 @@ async function handleOpenConnection(): Promise<void> {
  */
 function handleNavigate(view: ActiveView): void {
   if (view === 'organizations' && !connection.organizationsEnabled) {
+    return;
+  }
+  if (view === 'reports' && !connection.reportsEnabled) {
     return;
   }
   if (view === 'organizations' && !organizations.hasData && !organizations.loading) {

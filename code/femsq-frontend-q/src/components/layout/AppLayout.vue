@@ -6,6 +6,7 @@
         :active-view="activeView"
         :organizations-enabled="organizationsEnabled"
         :investment-chains-enabled="investmentChainsEnabled"
+        :reports-enabled="reportsEnabled"
         @open-connection="emit('open-connection')"
         @navigate="emit('navigate', $event)"
       />
@@ -46,6 +47,7 @@ interface Props {
   activeView: ActiveView;
   organizationsEnabled: boolean;
   investmentChainsEnabled: boolean;
+  reportsEnabled: boolean;
 }
 
 const props = defineProps<Props>();
