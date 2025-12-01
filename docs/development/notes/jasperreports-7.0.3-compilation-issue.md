@@ -130,3 +130,4 @@ System.setProperty("jasperreports.compiler", "net.sf.jasperreports.compilers.JRJ
 3. Включить `.jasper` файлы в JAR вместо `.jrxml`
 4. Обновить `ReportGenerationService` для использования предкомпилированных отчётов
 
+

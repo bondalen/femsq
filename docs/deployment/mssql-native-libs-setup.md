@@ -144,3 +144,4 @@ code/femsq-backend/femsq-web/src/main/resources/
 - [Windows Authentication Configuration](https://learn.microsoft.com/en-us/sql/connect/jdbc/connecting-with-ssl-encryption)
 - [Native Library Loading](https://learn.microsoft.com/en-us/sql/connect/jdbc/connecting-with-ssl-encryption)
 
+

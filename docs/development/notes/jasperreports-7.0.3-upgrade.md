@@ -109,3 +109,4 @@ Jaspersoft Studio 7.0.3 создаёт отчёты с атрибутами, н�
 - [Migration Guide 6.x → 7.x](https://community.jaspersoft.com/forums/topic/69820-what-changes-were-made-from-version-6206-to-version-703-of-jaspersoft-studio/)
 
 
+

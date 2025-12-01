@@ -107,3 +107,4 @@ echo ""
 echo -e "${YELLOW}Следующий шаг: пересоберите проект${NC}"
 echo "  mvn clean package -pl femsq-backend/femsq-web -am -DskipTests"
 
+

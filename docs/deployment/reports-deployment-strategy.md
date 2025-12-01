@@ -201,3 +201,4 @@ femsq:
 - [JAR Lifecycle](./jar-lifecycle.md) - жизненный цикл JAR файлов
 - [Runtime Compilation Analysis](../notes/runtime-compilation-analysis.md) - анализ проблемы компиляции
 
+
