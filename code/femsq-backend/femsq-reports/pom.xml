@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.femsq</groupId>
         <artifactId>femsq-backend</artifactId>
-        <version>0.1.0.1-SNAPSHOT</version>
+        <version>0.1.0.32-SNAPSHOT</version>
     </parent>
 
     <artifactId>femsq-reports</artifactId>
@@ -30,6 +30,13 @@
             <groupId>net.sf.jasperreports</groupId>
             <artifactId>jasperreports</artifactId>
             <version>${jasperreports.version}</version>
+            <exclusions>
+                <!-- Исключаем commons-logging, так как Spring Boot использует spring-jcl -->
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- JasperReports Fonts (для поддержки кириллицы) -->
@@ -44,6 +51,13 @@
             <groupId>net.sf.jasperreports</groupId>
             <artifactId>jasperreports-pdf</artifactId>
             <version>${jasperreports.version}</version>
+            <exclusions>
+                <!-- Исключаем commons-logging, так как Spring Boot использует spring-jcl -->
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- Excel Export -->
@@ -51,6 +65,13 @@
             <groupId>net.sf.jasperreports</groupId>
             <artifactId>jasperreports-functions</artifactId>
             <version>${jasperreports.version}</version>
+            <exclusions>
+                <!-- Исключаем commons-logging, так как Spring Boot использует spring-jcl -->
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         
         <!-- JDT Compiler для компиляции отчётов (решает проблему с classpath) -->
@@ -63,6 +84,13 @@
             <groupId>net.sf.jasperreports</groupId>
             <artifactId>jasperreports-jdt</artifactId>
             <version>${jasperreports.version}</version>
+            <exclusions>
+                <!-- Исключаем commons-logging, так как Spring Boot использует spring-jcl -->
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- Spring Boot Starter (для @Service, @Component, @ConfigurationProperties) -->
@@ -91,7 +119,7 @@
         <dependency>
             <groupId>com.femsq</groupId>
             <artifactId>femsq-database</artifactId>
-            <version>0.1.0.1-SNAPSHOT</version>
+            <version>0.1.0.32-SNAPSHOT</version>
         </dependency>
 
         <!-- JUnit для тестирования -->

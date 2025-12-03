@@ -1,14 +1,10 @@
 package com.femsq.database.auth;
 
-import com.femsq.database.util.JarPathResolver;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.PosixFilePermission;
-import java.util.EnumSet;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Properties;
@@ -28,7 +24,6 @@ import java.util.logging.Logger;
 public final class NativeLibraryLoader {
 
     private static final Logger log = Logger.getLogger(NativeLibraryLoader.class.getName());
-    private static final String AUTH_RESOURCE_ROOT = "/com/microsoft/sqlserver/jdbc/auth/";
     private static final String DRIVER_POM_PROPERTIES =
             "META-INF/maven/com.microsoft.sqlserver/mssql-jdbc/pom.properties";
 
@@ -53,14 +48,9 @@ public final class NativeLibraryLoader {
                 return true;
             }
 
-            // Всегда создаём папку native-libs рядом с JAR, даже на Linux
-            // Это нужно для того, чтобы папка была доступна для извлечения из fat JAR
-            try {
-                Path libraryDir = resolveLibraryDirectory();
-                log.log(Level.INFO, "Created native-libs directory: {0}", libraryDir);
-            } catch (Exception e) {
-                log.log(Level.WARNING, "Failed to create native-libs directory", e);
-            }
+            // НЕ создаём папку native-libs программно
+            // Пользователь будет копировать её вручную при необходимости
+            // Это позволяет избежать проблем с определением правильной директории
 
             String osName = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
             if (!osName.contains("windows")) {
@@ -86,39 +76,43 @@ public final class NativeLibraryLoader {
         String archFolder = detectWindowsArch();
         String driverVersion = detectDriverVersion();
         String libraryFileName = String.format("mssql-jdbc_auth-%s.%s.dll", driverVersion, archFolder);
-        String resourcePath = AUTH_RESOURCE_ROOT + archFolder + "/" + libraryFileName;
 
-        // Используем каталог рядом с JAR или временный каталог
-        Path libraryDir = resolveLibraryDirectory();
-        Path libraryPath = libraryDir.resolve(libraryFileName);
-
-        try (InputStream inputStream = NativeLibraryLoader.class.getResourceAsStream(resourcePath)) {
-            if (inputStream == null) {
-                throw new IOException("Native library " + resourcePath + " not found inside JAR. "
-                        + "Ensure mssql-jdbc_auth resources are packaged.");
-            }
-            try (FileOutputStream outputStream = new FileOutputStream(libraryPath.toFile())) {
-                byte[] buffer = new byte[8192];
-                int bytesRead;
-                while ((bytesRead = inputStream.read(buffer)) != -1) {
-                    outputStream.write(buffer, 0, bytesRead);
-                }
+        // Определяем директорию native-libs рядом с тонким JAR (не в lib/)
+        // Ищем тонкий JAR в текущей директории
+        Path libraryDir = resolveNativeLibsDirectory();
+        
+        // Проверяем, существует ли директория (должна быть создана вручную)
+        if (!Files.exists(libraryDir) || !Files.isDirectory(libraryDir)) {
+            throw new IOException("Native library directory not found: " + libraryDir + 
+                ". Please copy native-libs directory manually.");
+        }
+        
+        // Ищем библиотеку в native-libs (должна быть скопирована вручную)
+        // Пробуем разные варианты имён
+        Path libraryPath = null;
+        String[] possibleNames = {
+            libraryFileName,  // mssql-jdbc_auth-12.8.1.x64.dll
+            "mssql-jdbc_auth.dll",  // короткое имя
+            "sqljdbc_auth.dll"  // старое имя
+        };
+        
+        for (String name : possibleNames) {
+            Path candidate = libraryDir.resolve(name);
+            if (Files.exists(candidate)) {
+                libraryPath = candidate;
+                log.log(Level.INFO, "Found native library: {0}", candidate);
+                break;
             }
         }
-
-        try {
-            Files.setPosixFilePermissions(libraryPath, EnumSet.of(
-                    PosixFilePermission.OWNER_READ,
-                    PosixFilePermission.OWNER_WRITE,
-                    PosixFilePermission.OWNER_EXECUTE,
-                    PosixFilePermission.GROUP_READ,
-                    PosixFilePermission.GROUP_EXECUTE,
-                    PosixFilePermission.OTHERS_READ,
-                    PosixFilePermission.OTHERS_EXECUTE
-            ));
-        } catch (UnsupportedOperationException ignored) {
-            // На Windows это не поддерживается, игнорируем
+        
+        if (libraryPath == null || !Files.exists(libraryPath)) {
+            throw new IOException("Native library not found in " + libraryDir + 
+                ". Expected one of: " + String.join(", ", possibleNames) +
+                ". Please copy native-libs directory manually.");
         }
+
+        // Права доступа уже должны быть установлены при копировании папки вручную
+        // На Windows права доступа не требуются
 
         // КРИТИЧНО: Добавляем путь к библиотеке в java.library.path ДО загрузки
         // Это нужно для того, чтобы драйвер мог найти DLL через System.loadLibrary()
@@ -142,47 +136,8 @@ public final class NativeLibraryLoader {
             }
         }
 
-        // Создаём копии DLL с разными именами для максимальной совместимости
-        // Драйвер может искать библиотеку под разными именами в зависимости от версии и контекста
-        
-        // Базовое имя, которое драйвер использует для поиска: "mssql-jdbc_auth-VERSION.ARCH"
-        String baseLibraryName = String.format("mssql-jdbc_auth-%s.%s", driverVersion, archFolder);
-        
-        // Создаём все возможные варианты имён:
-        // 1. Полное имя с версией и архитектурой: mssql-jdbc_auth-12.8.1.x64.dll (уже создано выше)
-        // 2. Базовое имя драйвера с расширением: mssql-jdbc_auth-12.8.1.x64.dll (копия для надёжности)
-        // 3. Короткое имя: mssql-jdbc_auth.dll
-        // 4. Старое имя (обратная совместимость): sqljdbc_auth.dll
-        
-        Path driverNamePath = libraryDir.resolve(baseLibraryName + ".dll");
-        Path shortNamePath = libraryDir.resolve("mssql-jdbc_auth.dll");
-        Path legacyNamePath = libraryDir.resolve("sqljdbc_auth.dll");
-        
-        // Создаём копию с базовым именем драйвера (если это не тот же файл)
-        if (!driverNamePath.equals(libraryPath)) {
-            try {
-                Files.copy(libraryPath, driverNamePath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                log.log(Level.INFO, "Created driver name library copy: {0}", driverNamePath.getFileName());
-            } catch (IOException copyException) {
-                log.log(Level.WARNING, "Failed to create driver name copy (may affect compatibility)", copyException);
-            }
-        }
-        
-        // Создаём копию с коротким именем
-        try {
-            Files.copy(libraryPath, shortNamePath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-            log.log(Level.INFO, "Created short name library copy: {0}", shortNamePath.getFileName());
-        } catch (IOException copyException) {
-            log.log(Level.WARNING, "Failed to create short name copy (may affect compatibility)", copyException);
-        }
-        
-        // Создаём копию со старым именем
-        try {
-            Files.copy(libraryPath, legacyNamePath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-            log.log(Level.INFO, "Created legacy name library copy: {0}", legacyNamePath.getFileName());
-        } catch (IOException copyException) {
-            log.log(Level.WARNING, "Failed to create legacy name copy (may affect compatibility)", copyException);
-        }
+        // Библиотека уже должна быть в native-libs (скопирована вручную)
+        // Не создаём копии - используем то, что есть
         
         // Загружаем библиотеку явно через System.load() с полным путём
         // Это гарантирует, что библиотека будет загружена в JVM ДО того, как драйвер попытается её найти
@@ -192,89 +147,47 @@ public final class NativeLibraryLoader {
         
         // Логируем информацию для диагностики
         log.log(Level.INFO, "Library directory: {0}", libraryDir);
-        log.log(Level.INFO, "Created {0} library file variants for maximum compatibility", 
-                driverNamePath.equals(libraryPath) ? 3 : 4);
         log.log(Level.INFO, "Current java.library.path: {0}", System.getProperty("java.library.path"));
-        log.log(Level.INFO, "Driver will use native NTLM authentication through: {0}", baseLibraryName);
-    }
-
-    /**
-     * Определяет каталог для размещения нативных библиотек.
-     * Приоритет: каталог рядом с основным JAR > временный каталог.
-     * 
-     * <p>Для тонкого JAR определяет директорию основного JAR (не вложенного из lib/).
-     * Использует текущую рабочую директорию, так как JAR обычно запускается из своей директории.
-     */
-    private static Path resolveLibraryDirectory() throws IOException {
-        try {
-            Path jarDir = null;
-            
-            // Способ 1: Пробуем определить через основной класс приложения
-            // Это должно указать на тонкий JAR, а не на вложенный JAR из lib/
-            try {
-                Class<?> mainClass = Class.forName("com.femsq.web.FemsqWebApplication");
-                Path candidateDir = JarPathResolver.resolveJarDirectory(mainClass);
-                
-                // Проверяем, что это не вложенный JAR из lib/
-                // Если путь содержит "lib", это может быть вложенный JAR
-                String candidatePath = candidateDir.toString().replace('\\', '/');
-                if (!candidatePath.contains("/lib/") && !candidatePath.endsWith("/lib")) {
-                    jarDir = candidateDir;
-                }
-            } catch (ClassNotFoundException e) {
-                // Основной класс недоступен, пробуем другой способ
-            }
-            
-            // Способ 2: Если не удалось определить через основной класс,
-            // пробуем найти тонкий JAR в java.class.path
-            if (jarDir == null) {
-                String classPath = System.getProperty("java.class.path", "");
-                String pathSeparator = System.getProperty("path.separator", ":");
-                String[] paths = classPath.split(pathSeparator);
-                
-                for (String path : paths) {
-                    if (path.endsWith("-thin.jar") || (path.contains("femsq-web") && path.endsWith(".jar"))) {
-                        Path candidateJar = Paths.get(path);
-                        if (Files.exists(candidateJar)) {
-                            Path candidateDir = candidateJar.getParent();
-                            if (candidateDir != null) {
-                                // Проверяем, что это не lib/
-                                String candidatePath = candidateDir.toString().replace('\\', '/');
-                                if (!candidatePath.endsWith("/lib")) {
-                                    jarDir = candidateDir;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // Способ 3: Используем текущую рабочую директорию
-            // (предполагаем, что JAR запущен из своей директории)
-            if (jarDir == null) {
-                jarDir = Paths.get(System.getProperty("user.dir", "."));
-                log.log(Level.INFO, "Using current working directory: {0}", jarDir);
-            }
-            
-            Path libDir = jarDir.resolve("native-libs");
-            Files.createDirectories(libDir);
-            log.log(Level.INFO, "Using library directory next to JAR: {0}", libDir);
-            return libDir;
-            
-        } catch (Exception exception) {
-            log.log(Level.WARNING, "Could not determine JAR directory, using temp directory", exception);
-            // Fallback: используем временный каталог
-            Path tempDir = Files.createTempDirectory("femsq-native-libs");
-            tempDir.toFile().deleteOnExit();
-            log.log(Level.WARNING, "Using temporary library directory: {0}", tempDir);
-            return tempDir;
-        }
+        log.log(Level.INFO, "Driver will use native NTLM authentication");
     }
 
     private static String detectWindowsArch() {
         String arch = System.getProperty("os.arch", "").toLowerCase(Locale.ROOT);
         return arch.contains("64") ? "x64" : "x86";
+    }
+
+    /**
+     * Определяет директорию для native-libs рядом с тонким JAR.
+     * Ищет тонкий JAR (femsq-web-*-thin.jar) в текущей директории.
+     */
+    private static Path resolveNativeLibsDirectory() {
+        // Сначала пытаемся найти тонкий JAR в текущей директории
+        Path currentDir = Paths.get(System.getProperty("user.dir", "."));
+        
+        try {
+            // Ищем файлы, соответствующие паттерну тонкого JAR
+            java.io.File dir = currentDir.toFile();
+            if (dir.exists() && dir.isDirectory()) {
+                java.io.File[] files = dir.listFiles((d, name) -> 
+                    name.startsWith("femsq-web-") && name.contains("-thin.jar"));
+                
+                if (files != null && files.length > 0) {
+                    // Найден тонкий JAR - используем его директорию
+                    Path thinJarDir = files[0].getParentFile().toPath();
+                    Path nativeLibsDir = thinJarDir.resolve("native-libs");
+                    log.log(Level.INFO, "Found thin JAR: {0}, using native-libs directory: {1}", 
+                        new Object[]{files[0].getName(), nativeLibsDir});
+                    return nativeLibsDir;
+                }
+            }
+        } catch (Exception e) {
+            log.log(Level.WARNING, "Failed to find thin JAR in current directory, using fallback", e);
+        }
+        
+        // Fallback: используем текущую директорию
+        Path nativeLibsDir = currentDir.resolve("native-libs");
+        log.log(Level.INFO, "Using fallback native-libs directory: {0}", nativeLibsDir);
+        return nativeLibsDir;
     }
 
     private static String detectDriverVersion() throws IOException {

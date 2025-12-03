@@ -1,0 +1,89 @@
+<!-- Created with Jaspersoft Studio version 7.0.3.final using JasperReports Library version 7.0.3-41034ca841d452f3305ba55b9042260aaa1ab5dd  -->
+<jasperReport name="my-new-report" language="java" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="802" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="FishEyeDataAdapter"/>
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<parameter name="SCHEMA_NAME" class="java.lang.String">
+		<defaultValueExpression><![CDATA["ags"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="contractorId" class="java.lang.String">
+		<defaultValueExpression><![CDATA["71"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String">
+		<defaultValueExpression><![CDATA["./src/main/resources/reports/embedded/"]]></defaultValueExpression>
+	</parameter>
+	<query language="sql"><![CDATA[SELECT 
+  og.ogKey,
+  og.ogNm AS ogName,
+  og.ogNmFl AS fullName,
+  og.ogRgTaxType AS ogType
+FROM $P!{SCHEMA_NAME}.og og
+WHERE og.ogKey = CAST($P{contractorId} AS INT)]]></query>
+	<field name="ogKey" class="java.lang.Integer">
+		<property name="com.jaspersoft.studio.field.name" value="ogKey"/>
+		<property name="com.jaspersoft.studio.field.label" value="ogKey"/>
+	</field>
+	<field name="ogName" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="ogName"/>
+		<property name="com.jaspersoft.studio.field.label" value="ogName"/>
+	</field>
+	<field name="fullName" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="fullName"/>
+		<property name="com.jaspersoft.studio.field.label" value="fullName"/>
+	</field>
+	<field name="ogType" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="ogType"/>
+		<property name="com.jaspersoft.studio.field.label" value="ogType"/>
+	</field>
+	<background height="50"/>
+	<title height="32" splitType="Stretch">
+		<element kind="staticText" uuid="eb494bb7-30b7-4e6c-baf0-04435fb08464" x="0" y="0" width="280" height="30" fontName="DejaVu Sans" pdfFontName="DejaVu Sans">
+			<text><![CDATA[Мой новый отчёт]]></text>
+		</element>
+	</title>
+	<detail>
+		<band height="235" splitType="Stretch">
+			<element kind="textField" uuid="949a869e-baf2-4e4a-b2b3-d175bd037c08" x="80" y="8" width="100" height="30" blankWhenNull="true">
+				<expression><![CDATA[$F{ogKey}]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="e28ef595-fac7-4877-bff4-e67629255943"/>
+			</element>
+			<element kind="textField" uuid="f5dadd5d-283f-4652-92e7-58a1072c32ee" mode="Opaque" x="80" y="40" width="680" height="30" backcolor="#CCFFFF" blankWhenNull="true" fontName="DejaVu Sans" pdfFontName="DejaVu Sans">
+				<expression><![CDATA[$F{ogName} != null ? $F{ogName} : ""]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="46a42eee-049b-4914-8a72-b7ce9c8b71ff"/>
+			</element>
+			<element kind="staticText" uuid="ba44ce2a-47ce-4a91-93df-8b385d3a760b" mode="Opaque" x="0" y="40" width="80" height="30" backcolor="#CCFFFF">
+				<text><![CDATA[ogName]]></text>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="46a42eee-049b-4914-8a72-b7ce9c8b71ff"/>
+			</element>
+			<element kind="staticText" uuid="7bc85225-eedb-4a05-82b5-ed506eceed0d" mode="Transparent" x="0" y="10" width="80" height="30" backcolor="#FFFFFF">
+				<text><![CDATA[ogKey]]></text>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="e28ef595-fac7-4877-bff4-e67629255943"/>
+			</element>
+			<element kind="textField" uuid="b9649cb4-d6eb-4fe4-a185-2e4fb885bed6" x="80" y="70" width="680" height="30" blankWhenNull="true" fontName="DejaVu Sans" pdfFontName="DejaVu Sans">
+				<expression><![CDATA[$F{fullName} != null ? $F{fullName} : ""]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="abefdc2d-3a4c-4442-a300-e02538e01d9b"/>
+			</element>
+			<element kind="staticText" uuid="3a4fc2f3-5864-4230-b988-dd5a24b817e9" x="0" y="69" width="80" height="30">
+				<text><![CDATA[fullName]]></text>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="abefdc2d-3a4c-4442-a300-e02538e01d9b"/>
+			</element>
+			<element kind="textField" uuid="18c59782-8e0f-4103-9b46-72ed9078f6e5" x="80" y="99" width="100" height="30" blankWhenNull="true">
+				<expression><![CDATA[$F{ogType}]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="3d285966-a7a8-4bcf-9c0b-510fce8933fe"/>
+			</element>
+			<element kind="staticText" uuid="86e5f3c9-9326-4688-958c-5845c3545c59" x="0" y="99" width="80" height="30">
+				<text><![CDATA[ogType]]></text>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="3d285966-a7a8-4bcf-9c0b-510fce8933fe"/>
+			</element>
+			<element kind="subreport" uuid="eaaeacbb-f7c6-4f2e-8534-3d9d6dcf9829" x="0" y="140" width="760" height="90">
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<expression><![CDATA[     $P{SUBREPORT_DIR} + "my-new-report-sr-ag.jasper"]]></expression>
+				<parameter name="SCHEMA_NAME">
+					<expression><![CDATA[$P{SCHEMA_NAME}]]></expression>
+				</parameter>
+				<parameter name="contractorId">
+					<expression><![CDATA[$P{contractorId}]]></expression>
+				</parameter>
+			</element>
+		</band>
+	</detail>
+</jasperReport>

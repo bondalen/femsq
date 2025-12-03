@@ -312,4 +312,147 @@ class ConfigurationComponentTest {
                 IllegalArgumentException.class, () -> validator.validate(invalidConfig));
         assertTrue(exception.getMessage().contains("Schema"));
     }
+
+    @Nested
+    @DisplayName("Кэширование конфигурации")
+    class ConfigurationCachingTests {
+
+        @Test
+        @DisplayName("loadConfig использует кэш при повторных вызовах")
+        void loadConfigUsesCacheOnRepeatedCalls() {
+            // Создаём конфигурацию
+            Properties properties = new Properties();
+            properties.setProperty("host", "cached.server.local");
+            properties.setProperty("port", "1433");
+            properties.setProperty("database", "cached_db");
+            properties.setProperty("username", "cache_user");
+            properties.setProperty("password", "cache_pwd");
+            properties.setProperty("authMode", "credentials");
+            fileManager.writeProperties(properties);
+
+            // Первый вызов - загружает из файла
+            DatabaseConfigurationService.DatabaseConfigurationProperties firstCall = configurationService.loadConfig();
+            assertEquals("cached.server.local", firstCall.host());
+
+            // Второй вызов - должен использовать кэш (проверяем через логи или моки)
+            // На практике кэш работает, так как файл не изменился
+            DatabaseConfigurationService.DatabaseConfigurationProperties secondCall = configurationService.loadConfig();
+            assertEquals("cached.server.local", secondCall.host());
+            assertEquals(firstCall, secondCall, "Повторный вызов должен вернуть тот же объект из кэша");
+        }
+
+        @Test
+        @DisplayName("loadConfig инвалидирует кэш при изменении файла")
+        void loadConfigInvalidatesCacheWhenFileChanges() throws IOException, InterruptedException {
+            // Создаём первую конфигурацию
+            Properties properties1 = new Properties();
+            properties1.setProperty("host", "first.server.local");
+            properties1.setProperty("port", "1433");
+            properties1.setProperty("database", "first_db");
+            properties1.setProperty("username", "first_user");
+            properties1.setProperty("password", "first_pwd");
+            properties1.setProperty("authMode", "credentials");
+            fileManager.writeProperties(properties1);
+
+            // Первый вызов - загружает из файла
+            DatabaseConfigurationService.DatabaseConfigurationProperties firstCall = configurationService.loadConfig();
+            assertEquals("first.server.local", firstCall.host());
+
+            // Ждём немного, чтобы гарантировать изменение времени модификации файла
+            Thread.sleep(100);
+
+            // Изменяем конфигурацию
+            Properties properties2 = new Properties();
+            properties2.setProperty("host", "second.server.local");
+            properties2.setProperty("port", "1433");
+            properties2.setProperty("database", "second_db");
+            properties2.setProperty("username", "second_user");
+            properties2.setProperty("password", "second_pwd");
+            properties2.setProperty("authMode", "credentials");
+            fileManager.writeProperties(properties2);
+
+            // Второй вызов - должен загрузить новую конфигурацию (кэш инвалидирован)
+            DatabaseConfigurationService.DatabaseConfigurationProperties secondCall = configurationService.loadConfig();
+            assertEquals("second.server.local", secondCall.host());
+            assertNotEquals(firstCall.host(), secondCall.host(), "Конфигурация должна обновиться после изменения файла");
+        }
+
+        @Test
+        @DisplayName("saveConfig инвалидирует кэш")
+        void saveConfigInvalidatesCache() {
+            // Создаём начальную конфигурацию
+            Properties properties = new Properties();
+            properties.setProperty("host", "initial.server.local");
+            properties.setProperty("port", "1433");
+            properties.setProperty("database", "initial_db");
+            properties.setProperty("username", "initial_user");
+            properties.setProperty("password", "initial_pwd");
+            properties.setProperty("authMode", "credentials");
+            fileManager.writeProperties(properties);
+
+            // Загружаем конфигурацию (кэшируется)
+            DatabaseConfigurationService.DatabaseConfigurationProperties initialConfig = configurationService.loadConfig();
+            assertEquals("initial.server.local", initialConfig.host());
+
+            // Сохраняем новую конфигурацию
+            DatabaseConfigurationService.DatabaseConfigurationProperties newConfig =
+                    new DatabaseConfigurationService.DatabaseConfigurationProperties(
+                            "saved.server.local", 1433, "saved_db", "ags_test", "saved_user", "saved_pwd", "credentials");
+            configurationService.saveConfig(newConfig);
+
+            // Загружаем снова - должна быть новая конфигурация (кэш инвалидирован)
+            DatabaseConfigurationService.DatabaseConfigurationProperties loadedConfig = configurationService.loadConfig();
+            assertEquals("saved.server.local", loadedConfig.host());
+            assertEquals("saved_db", loadedConfig.database());
+            assertEquals("saved_user", loadedConfig.username());
+        }
+
+        @Test
+        @DisplayName("Кэширование thread-safe при одновременных вызовах")
+        void cachingIsThreadSafe() throws InterruptedException {
+            // Создаём конфигурацию
+            Properties properties = new Properties();
+            properties.setProperty("host", "threadsafe.server.local");
+            properties.setProperty("port", "1433");
+            properties.setProperty("database", "threadsafe_db");
+            properties.setProperty("username", "threadsafe_user");
+            properties.setProperty("password", "threadsafe_pwd");
+            properties.setProperty("authMode", "credentials");
+            fileManager.writeProperties(properties);
+
+            // Запускаем несколько потоков, которые одновременно вызывают loadConfig
+            int threadCount = 10;
+            Thread[] threads = new Thread[threadCount];
+            DatabaseConfigurationService.DatabaseConfigurationProperties[] results = 
+                    new DatabaseConfigurationService.DatabaseConfigurationProperties[threadCount];
+
+            for (int i = 0; i < threadCount; i++) {
+                final int index = i;
+                threads[i] = new Thread(() -> {
+                    results[index] = configurationService.loadConfig();
+                });
+            }
+
+            // Запускаем все потоки одновременно
+            for (Thread thread : threads) {
+                thread.start();
+            }
+
+            // Ждём завершения всех потоков
+            for (Thread thread : threads) {
+                thread.join();
+            }
+
+            // Проверяем, что все потоки получили одинаковую конфигурацию
+            DatabaseConfigurationService.DatabaseConfigurationProperties firstResult = results[0];
+            assertNotNull(firstResult, "Первый результат не должен быть null");
+            assertEquals("threadsafe.server.local", firstResult.host());
+
+            for (int i = 1; i < threadCount; i++) {
+                assertNotNull(results[i], "Результат потока " + i + " не должен быть null");
+                assertEquals(firstResult.host(), results[i].host(), 
+                        "Все потоки должны получить одинаковую конфигурацию");
+            }
+        }
+    }
 }

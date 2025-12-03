@@ -3,13 +3,13 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2025-11-28",
+      "lastUpdated": "2025-12-03",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0034",
+      "nextTaskId": "0036",
       "items": {
         "0001": {
           "task": {
@@ -893,6 +893,171 @@
               },
               "created": "2025-11-21",
               "lastUpdated": "2025-11-21"
+            }
+          }
+        },
+        
+        "0035": {
+          "task": {
+            "displayName": "Оптимизация производительности и устранение предупреждений (completed, high). № 0035",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Кэширование конфигурации БД реализовано и протестировано",
+                "Интервал сканирования отчётов увеличен до 5 минут",
+                "Предупреждение о commons-logging устранено",
+                "Количество предупреждений об optional libraries уменьшено",
+                "Все unit-тесты проходят успешно",
+                "Приложение запускается без ошибок и предупреждений"
+              ],
+              "description": "Оптимизация производительности приложения: кэширование конфигурации БД, увеличение интервала сканирования отчётов, устранение предупреждений о библиотеках",
+              "links": {
+                "projectDocsRefs": [
+                  "component:backend.database.config.DatabaseConfigurationService",
+                  "component:backend.reports.core.ReportDiscoveryService",
+                  "component:backend.web.startup.LibraryCompatibilityChecker"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-12-03",
+              "lastUpdated": "2025-12-03T13:04:01+03:00"
+            }
+          }
+        },
+        
+        "0035.1": {
+          "task": {
+            "displayName": "Кэширование конфигурации БД (completed, critical). № 0035.1",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "critical",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Добавлено кэширование в DatabaseConfigurationService",
+                "Реализована проверка lastModified для инвалидации кэша",
+                "Добавлена синхронизация для thread-safety",
+                "Обновлён saveConfig() для инвалидации кэша",
+                "Unit-тесты для кэширования написаны и проходят",
+                "Количество вызовов loadConfig() уменьшено в 2-4 раза"
+              ],
+              "description": "Реализация кэширования конфигурации БД для уменьшения количества обращений к файловой системе",
+              "links": {
+                "projectDocsRefs": [
+                  "component:backend.database.config.DatabaseConfigurationService"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-12-03",
+              "lastUpdated": "2025-12-03T13:04:01+03:00"
+            }
+          }
+        },
+        
+        "0035.2": {
+          "task": {
+            "displayName": "Увеличение интервала сканирования отчётов (completed, medium). № 0035.2",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "medium",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Интервал сканирования изменён с 60000ms на 300000ms (5 минут)",
+                "Обновлён комментарий в коде",
+                "Проверено, что hot-reload работает корректно",
+                "Логи подтверждают новый интервал"
+              ],
+              "description": "Увеличение интервала сканирования отчётов с 1 минуты до 5 минут для снижения нагрузки",
+              "links": {
+                "projectDocsRefs": [
+                  "component:backend.reports.core.ReportDiscoveryService"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-12-03",
+              "lastUpdated": "2025-12-03T13:04:01+03:00"
+            }
+          }
+        },
+        
+        "0035.3": {
+          "task": {
+            "displayName": "Удаление commons-logging (completed, medium). № 0035.3",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "medium",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Проверены все pom.xml на наличие commons-logging",
+                "Выполнен mvn dependency:tree для поиска транзитивных зависимостей",
+                "Удалена зависимость или добавлены exclusions",
+                "Пересобран проект без предупреждения",
+                "Обновлена документация win-update"
+              ],
+              "description": "Удаление commons-logging из зависимостей для устранения конфликта с spring-jcl",
+              "links": {
+                "projectDocsRefs": [],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-12-03",
+              "lastUpdated": "2025-12-03T13:04:01+03:00"
+            }
+          }
+        },
+        
+        "0035.4": {
+          "task": {
+            "displayName": "Фильтрация предупреждений об optional libraries (completed, low). № 0035.4",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "low",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Изменён уровень логирования missing optional libraries с WARN на DEBUG",
+                "Критические предупреждения (femsq-*) остаются на WARN",
+                "Обновлён LibraryVersionReporter для включения optional libraries в отчёт",
+                "Логи не содержат предупреждений об optional libraries на уровне WARN"
+              ],
+              "description": "Переведение предупреждений об optional libraries в уровень DEBUG для улучшения читаемости логов",
+              "links": {
+                "projectDocsRefs": [
+                  "component:backend.web.startup.LibraryCompatibilityChecker"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-12-03",
+              "lastUpdated": "2025-12-03"
+            }
+          }
+        },
+        
+        "0035.5": {
+          "task": {
+            "displayName": "Обновление версий библиотек (completed, low). № 0035.5",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "low",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Сравнены версии в lib-manifest.json с фактическими версиями",
+                "Определены несовпадения версий",
+                "Обновлены библиотеки или манифест",
+                "Пересобран проект и проверено соответствие версий"
+              ],
+              "description": "Исправление несовпадений версий библиотек между lib-manifest.json и фактическими библиотеками",
+              "links": {
+                "projectDocsRefs": [],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-12-03",
+              "lastUpdated": "2025-12-03T13:04:01+03:00"
             }
           }
         }

@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.femsq</groupId>
         <artifactId>femsq-backend</artifactId>
-        <version>0.1.0.1-SNAPSHOT</version>
+        <version>0.1.0.32-SNAPSHOT</version>
     </parent>
 
     <artifactId>femsq-web</artifactId>
@@ -59,11 +59,8 @@
             <artifactId>graphql-java-extended-scalars</artifactId>
             <version>22.0</version>
         </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.18.2</version>
-        </dependency>
+        <!-- Jackson версии управляются через Spring Boot BOM -->
+        <!-- Явная версия удалена для использования совместимых версий из Spring Boot -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -163,6 +160,7 @@
                         </goals>
                         <phase>generate-resources</phase>
                         <configuration>
+                            <nodeExecutable>${project.build.directory}/frontend/node/node</nodeExecutable>
                             <arguments>install --legacy-peer-deps --include=dev</arguments>
                         </configuration>
                     </execution>
@@ -173,6 +171,7 @@
                         </goals>
                         <phase>generate-resources</phase>
                         <configuration>
+                            <nodeExecutable>${project.build.directory}/frontend/node/node</nodeExecutable>
                             <arguments>run build -- --outDir ../femsq-backend/femsq-web/target/frontend-dist</arguments>
                         </configuration>
                     </execution>

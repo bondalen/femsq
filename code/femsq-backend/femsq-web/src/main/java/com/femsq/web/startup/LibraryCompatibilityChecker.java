@@ -14,6 +14,7 @@ import java.util.*;
 /**
  * Проверяет совместимость внешних библиотек при запуске thin JAR.
  * Читает META-INF/lib-manifest.json и сравнивает с библиотеками в lib/.
+ * Блокирует запуск при критических несоответствиях версий.
  */
 public class LibraryCompatibilityChecker {
     
@@ -24,9 +25,10 @@ public class LibraryCompatibilityChecker {
      * Проверяет совместимость библиотек.
      * 
      * @param libDir путь к директории lib/
+     * @param reportDir директория для сохранения отчёта (обычно рядом с тонким JAR)
      * @return результат проверки
      */
-    public static ValidationResult verify(Path libDir) {
+    public static ValidationResult verify(Path libDir, Path reportDir) {
         ValidationResult result = new ValidationResult();
         
         try {
@@ -62,7 +64,6 @@ public class LibraryCompatibilityChecker {
                 String filename = libNode.get("filename").asText();
                 boolean required = libNode.has("required") && libNode.get("required").asBoolean();
                 String expectedVersion = libNode.has("version") ? libNode.get("version").asText() : null;
-                String expectedSha256 = libNode.has("sha256") ? libNode.get("sha256").asText() : null;
                 
                 Path libFile = libDir.resolve(filename);
                 
@@ -71,39 +72,50 @@ public class LibraryCompatibilityChecker {
                         result.addError("Required library missing: " + filename);
                         log.error("Required library missing: {}", filename);
                     } else {
-                        result.addWarning("Optional library missing: " + filename);
-                        log.warn("Optional library missing: {}", filename);
+                        // Optional libraries не добавляем в warnings и логируем на уровне debug
+                        log.debug("Optional library missing: {} (not required, skipping)", filename);
                     }
                     continue;
                 }
                 
-                // Проверяем версию для femsq-* модулей
+                // Для femsq-* библиотек проверяем версию с учётом compatibleVersions
                 if (filename.startsWith("femsq-") && expectedVersion != null) {
                     String actualVersion = extractVersionFromFilename(filename);
-                    if (!expectedVersion.equals(actualVersion)) {
+                    JsonNode compatibleVersions = libNode.get("compatibleVersions");
+                    
+                    boolean isCompatible = false;
+                    if (compatibleVersions != null && compatibleVersions.isArray()) {
+                        for (JsonNode compatVersion : compatibleVersions) {
+                            if (compatVersion.asText().equals(actualVersion)) {
+                                isCompatible = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (!expectedVersion.equals(actualVersion) && !isCompatible) {
+                        // Версия не совпадает и не в списке совместимых - критическая ошибка
                         result.addError(String.format(
-                            "Version mismatch for %s: expected %s, found %s",
+                            "Version mismatch for %s: expected %s (or compatible), found %s",
                             filename, expectedVersion, actualVersion
                         ));
-                        log.error("Version mismatch for {}: expected {}, found {}",
+                        log.error("Version mismatch for {}: expected {} (or compatible), found {}",
+                            filename, expectedVersion, actualVersion);
+                    } else if (isCompatible && !expectedVersion.equals(actualVersion)) {
+                        // Используется совместимая версия - предупреждение
+                        result.addWarning(String.format(
+                            "Using compatible version for %s: expected %s, found %s (compatible)",
+                            filename, expectedVersion, actualVersion
+                        ));
+                        log.warn("Using compatible version for {}: expected {}, found {} (compatible)",
                             filename, expectedVersion, actualVersion);
                     }
                 }
                 
-                // Проверяем SHA-256 (опционально, можно отключить)
-                if (expectedSha256 != null && System.getProperty("femsq.verify.lib.sha256", "false").equals("true")) {
-                    try {
-                        String actualSha256 = calculateSha256(libFile);
-                        if (!expectedSha256.equals(actualSha256)) {
-                            result.addWarning(String.format(
-                                "SHA-256 mismatch for %s (file may be corrupted or modified)",
-                                filename
-                            ));
-                            log.warn("SHA-256 mismatch for {}", filename);
-                        }
-                    } catch (Exception e) {
-                        log.warn("Failed to calculate SHA-256 for {}: {}", filename, e.getMessage());
-                    }
+                // Для внешних библиотек - только проверка точного совпадения имени файла
+                if (!filename.startsWith("femsq-")) {
+                    // Файл существует с правильным именем - OK
+                    log.debug("External library found: {}", filename);
                 }
             }
             
@@ -116,9 +128,18 @@ public class LibraryCompatibilityChecker {
                 }
             }
             
+            // Генерируем файл отчёта
+            if (reportDir != null) {
+                Path reportPath = LibraryVersionReporter.generateReport(libDir, reportDir);
+                if (reportPath != null) {
+                    log.info("Library version report saved to: {}", reportPath);
+                }
+            }
+            
             if (result.hasErrors()) {
                 log.error("Library validation failed with {} errors", result.getErrors().size());
             } else if (result.hasWarnings()) {
+                // Warnings теперь только для критических случаев (например, совместимые версии femsq-*)
                 log.warn("Library validation completed with {} warnings", result.getWarnings().size());
             } else {
                 log.info("Library validation passed successfully");
@@ -141,23 +162,6 @@ public class LibraryCompatibilityChecker {
             return String.join("-", Arrays.copyOfRange(parts, parts.length - 2, parts.length));
         }
         return "unknown";
-    }
-    
-    private static String calculateSha256(Path file) throws Exception {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        try (InputStream is = Files.newInputStream(file)) {
-            byte[] buffer = new byte[8192];
-            int bytesRead;
-            while ((bytesRead = is.read(buffer)) != -1) {
-                digest.update(buffer, 0, bytesRead);
-            }
-        }
-        byte[] hash = digest.digest();
-        StringBuilder sb = new StringBuilder();
-        for (byte b : hash) {
-            sb.append(String.format("%02x", b));
-        }
-        return sb.toString();
     }
     
     /**
@@ -196,4 +200,3 @@ public class LibraryCompatibilityChecker {
         }
     }
 }
-

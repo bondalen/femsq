@@ -23,7 +23,7 @@ reports:
   external:
     enabled: true
     path: ./reports
-    scan-interval: 60000  # 1 минута в миллисекундах
+    scan-interval: 300000  # 5 минут в миллисекундах (увеличено для снижения нагрузки)
   
   # Встроенные отчёты (из classpath)
   embedded:

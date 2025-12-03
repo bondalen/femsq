@@ -1,5 +1,6 @@
 package com.femsq.database.config;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.logging.Level;
@@ -11,6 +12,10 @@ import java.util.logging.Logger;
  * Реализует сценарии чтения и записи файла {@code ~/.femsq/database.properties},
  * а также использует {@link ConfigurationValidator} для проверки корректности параметров.
  * </p>
+ * <p>
+ * Использует кэширование для уменьшения количества обращений к файловой системе.
+ * Кэш автоматически инвалидируется при изменении файла конфигурации (проверка по lastModified).
+ * </p>
  */
 public class DatabaseConfigurationService {
 
@@ -18,6 +23,10 @@ public class DatabaseConfigurationService {
 
     private final ConfigurationFileManager fileManager;
     private final ConfigurationValidator validator;
+
+    // Кэш конфигурации с проверкой изменений файла
+    private volatile DatabaseConfigurationProperties cachedConfig;
+    private volatile long configFileLastModified = 0;
 
     /**
      * Создает сервис конфигурации с требуемыми зависимостями.
@@ -32,22 +41,65 @@ public class DatabaseConfigurationService {
 
     /**
      * Загружает конфигурацию подключения из файла пользователя.
+     * <p>
+     * Использует кэширование для уменьшения количества обращений к файловой системе.
+     * Кэш автоматически инвалидируется при изменении файла конфигурации.
+     * </p>
      *
      * @return валидированные свойства подключения
      */
     public DatabaseConfigurationProperties loadConfig() {
         Path configPath = fileManager.resolveConfigPath();
-        log.log(Level.INFO, "Loading database configuration from {0}", configPath);
-        var rawProperties = fileManager.loadProperties();
-        if (rawProperties.isEmpty()) {
+        
+        // Проверяем, существует ли файл
+        if (!Files.exists(configPath)) {
             log.log(Level.WARNING, "Database configuration file {0} is missing or empty", configPath);
             throw new MissingConfigurationException(configPath);
         }
-        return validator.map(rawProperties);
+
+        // Проверяем кэш с синхронизацией для thread-safety
+        synchronized (this) {
+            try {
+                long currentLastModified = Files.getLastModifiedTime(configPath).toMillis();
+                
+                // Если файл не изменился и кэш существует - возвращаем кэш
+                if (cachedConfig != null && currentLastModified == configFileLastModified) {
+                    log.log(Level.FINE, "Using cached database configuration from {0}", configPath);
+                    return cachedConfig;
+                }
+                
+                // Файл изменился или кэш пуст - загружаем заново
+                log.log(Level.INFO, "Loading database configuration from {0}", configPath);
+                var rawProperties = fileManager.loadProperties();
+                if (rawProperties.isEmpty()) {
+                    log.log(Level.WARNING, "Database configuration file {0} is missing or empty", configPath);
+                    throw new MissingConfigurationException(configPath);
+                }
+                
+                DatabaseConfigurationProperties config = validator.map(rawProperties);
+                
+                // Обновляем кэш
+                cachedConfig = config;
+                configFileLastModified = currentLastModified;
+                
+                return config;
+            } catch (java.io.IOException ioException) {
+                log.log(Level.SEVERE, "Failed to check file modification time for {0}", configPath);
+                // При ошибке проверки времени модификации - загружаем без кэша
+                var rawProperties = fileManager.loadProperties();
+                if (rawProperties.isEmpty()) {
+                    throw new MissingConfigurationException(configPath);
+                }
+                return validator.map(rawProperties);
+            }
+        }
     }
 
     /**
      * Сохраняет конфигурацию подключения в файл пользователя.
+     * <p>
+     * После сохранения инвалидирует кэш, чтобы следующая загрузка использовала новые данные.
+     * </p>
      *
      * @param properties валидированные свойства подключения
      */
@@ -72,6 +124,13 @@ public class DatabaseConfigurationService {
             rawProperties.setProperty("authMode", properties.authMode().toLowerCase(Locale.ROOT));
         }
         fileManager.writeProperties(rawProperties);
+        
+        // Инвалидируем кэш после сохранения
+        synchronized (this) {
+            cachedConfig = null;
+            configFileLastModified = 0;
+            log.log(Level.FINE, "Cache invalidated after saving configuration");
+        }
     }
 
     /**

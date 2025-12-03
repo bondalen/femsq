@@ -6,7 +6,7 @@
             "description": "Cистема работы с контрагентами и объектами при капитальном строительстве на основе БД MS SQL Server FEMSQ (Fish Eye MS SQL Server)",
             "author": "Александр",
             "created": "2025-10-08",
-            "lastUpdated": "2025-11-28",
+            "lastUpdated": "2025-12-03",
             "status": "planning",
             "repository": "https://github.com/bondalen/femsq.git",
             "license": "MIT",
@@ -143,7 +143,7 @@
                     },
                     "e2e_tests": {
                         "tool": "Playwright",
-                        "location": "code/femsq-frontend/tests/e2e",
+                        "location": "code/femsq-frontend-q/tests/e2e",
                         "requirements": "Запущенный backend на localhost:8080"
                     },
                     "coverage": {
@@ -252,7 +252,7 @@
                         "permissions": "read/write",
                         "backup_required": true,
                         "hot_reload": true,
-                        "scan_interval": "60 seconds",
+                        "scan_interval": "300 seconds",
                         "priority": "Внешние отчёты имеют приоритет над встроенными"
                     },
                     {

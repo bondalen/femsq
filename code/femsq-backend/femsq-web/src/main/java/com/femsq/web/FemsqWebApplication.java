@@ -32,27 +32,32 @@ public class FemsqWebApplication {
         
         // Проверяем совместимость библиотек для thin JAR
         if (isThinJar()) {
-            String loaderPath = System.getProperty("loader.path");
-            if (loaderPath != null && loaderPath.contains("lib")) {
-                Path libDir = resolveLibDirectory();
-                if (libDir != null && libDir.toFile().exists()) {
-                    LibraryCompatibilityChecker.ValidationResult result = 
-                        LibraryCompatibilityChecker.verify(libDir);
-                    
-                    if (!result.isValid()) {
-                        log.error("Library validation failed. Errors:");
-                        result.getErrors().forEach(log::error);
-                        log.error("Application startup aborted due to library validation errors.");
-                        System.exit(1);
+            Path libDir = resolveLibDirectory();
+            Path reportDir = resolveReportDirectory();
+            
+            if (libDir != null && libDir.toFile().exists()) {
+                log.info("Thin JAR detected. Validating external libraries in: {}", libDir);
+                LibraryCompatibilityChecker.ValidationResult result = 
+                    LibraryCompatibilityChecker.verify(libDir, reportDir);
+                
+                // Блокируем запуск при любых ошибках (отсутствие библиотек или несовпадение версий)
+                if (!result.isValid()) {
+                    log.error("Critical library validation errors:");
+                    result.getErrors().forEach(log::error);
+                    log.error("Application startup aborted due to critical library validation errors.");
+                    if (reportDir != null) {
+                        log.error("See library version report for details in: {}", reportDir);
                     }
-                    
-                    if (result.hasWarnings()) {
-                        log.warn("Library validation warnings:");
-                        result.getWarnings().forEach(log::warn);
-                    }
-                } else {
-                    log.warn("lib/ directory not found. Skipping library validation.");
+                    System.exit(1);
                 }
+                
+                // Всегда показываем предупреждения
+                if (result.hasWarnings()) {
+                    log.warn("Library validation warnings:");
+                    result.getWarnings().forEach(log::warn);
+                }
+            } else {
+                log.warn("lib/ directory not found at: {}. Skipping library validation.", libDir);
             }
         }
         
@@ -76,30 +81,122 @@ public class FemsqWebApplication {
     private static Path resolveLibDirectory() {
         try {
             // Пытаемся определить путь к JAR
-            String jarPath = FemsqWebApplication.class.getProtectionDomain()
+            java.net.URL location = FemsqWebApplication.class.getProtectionDomain()
                 .getCodeSource()
-                .getLocation()
-                .getPath();
+                .getLocation();
             
-            if (jarPath != null) {
-                // Убираем префикс file: и декодируем URL
-                if (jarPath.startsWith("file:")) {
-                    jarPath = jarPath.substring(5);
-                }
-                if (jarPath.contains("!")) {
-                    jarPath = jarPath.substring(0, jarPath.indexOf("!"));
-                }
+            if (location != null) {
+                String jarPath = location.getPath();
                 
-                Path jarFile = Paths.get(jarPath);
-                Path libDir = jarFile.getParent().resolve("lib");
-                return libDir;
+                if (jarPath != null) {
+                    // Обрабатываем префикс nested: (используется Spring Boot Loader при java -cp)
+                    if (jarPath.startsWith("nested:")) {
+                        // Для nested: используем user.dir как базовую директорию
+                        String userDir = System.getProperty("user.dir");
+                        if (userDir != null) {
+                            Path libDir = Paths.get(userDir).resolve("lib");
+                            log.debug("Using user.dir for lib directory: {}", libDir);
+                            return libDir;
+                        }
+                    }
+                    
+                    // Убираем префикс file: и декодируем URL
+                    if (jarPath.startsWith("file:")) {
+                        jarPath = jarPath.substring(5);
+                    }
+                    if (jarPath.contains("!")) {
+                        jarPath = jarPath.substring(0, jarPath.indexOf("!"));
+                    }
+                    
+                    // Декодируем URL-encoded символы
+                    try {
+                        jarPath = java.net.URLDecoder.decode(jarPath, "UTF-8");
+                    } catch (java.io.UnsupportedEncodingException e) {
+                        // Игнорируем, используем как есть
+                    }
+                    
+                    Path jarFile = Paths.get(jarPath);
+                    if (jarFile.toFile().exists()) {
+                        Path libDir = jarFile.getParent().resolve("lib");
+                        return libDir;
+                    }
+                }
             }
         } catch (Exception e) {
             log.debug("Failed to resolve lib directory: {}", e.getMessage());
         }
         
-        // Fallback: используем текущую директорию
+        // Fallback: используем user.dir (рабочая директория)
+        String userDir = System.getProperty("user.dir");
+        if (userDir != null) {
+            Path libDir = Paths.get(userDir).resolve("lib");
+            log.debug("Using user.dir fallback for lib directory: {}", libDir);
+            return libDir;
+        }
+        
+        // Последний fallback: относительный путь
         return Paths.get("lib");
+    }
+    
+    /**
+     * Определяет путь к директории для сохранения отчётов (рядом с тонким JAR).
+     */
+    private static Path resolveReportDirectory() {
+        try {
+            // Пытаемся определить путь к JAR
+            java.net.URL location = FemsqWebApplication.class.getProtectionDomain()
+                .getCodeSource()
+                .getLocation();
+            
+            if (location != null) {
+                String jarPath = location.getPath();
+                
+                if (jarPath != null) {
+                    // Обрабатываем префикс nested: (используется Spring Boot Loader при java -cp)
+                    if (jarPath.startsWith("nested:")) {
+                        // Для nested: используем user.dir как базовую директорию
+                        String userDir = System.getProperty("user.dir");
+                        if (userDir != null) {
+                            log.debug("Using user.dir for report directory: {}", userDir);
+                            return Paths.get(userDir);
+                        }
+                    }
+                    
+                    // Убираем префикс file: и декодируем URL
+                    if (jarPath.startsWith("file:")) {
+                        jarPath = jarPath.substring(5);
+                    }
+                    if (jarPath.contains("!")) {
+                        jarPath = jarPath.substring(0, jarPath.indexOf("!"));
+                    }
+                    
+                    // Декодируем URL-encoded символы
+                    try {
+                        jarPath = java.net.URLDecoder.decode(jarPath, "UTF-8");
+                    } catch (java.io.UnsupportedEncodingException e) {
+                        // Игнорируем, используем как есть
+                    }
+                    
+                    Path jarFile = Paths.get(jarPath);
+                    if (jarFile.toFile().exists()) {
+                        // Отчёты сохраняем в той же директории, где находится тонкий JAR
+                        return jarFile.getParent();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Failed to resolve report directory: {}", e.getMessage());
+        }
+        
+        // Fallback: используем user.dir (рабочая директория)
+        String userDir = System.getProperty("user.dir");
+        if (userDir != null) {
+            log.debug("Using user.dir fallback for report directory: {}", userDir);
+            return Paths.get(userDir);
+        }
+        
+        // Последний fallback: текущая директория
+        return Paths.get(".");
     }
     
     /**
