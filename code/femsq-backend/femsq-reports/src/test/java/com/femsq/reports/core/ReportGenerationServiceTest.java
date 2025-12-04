@@ -1,10 +1,6 @@
 package com.femsq.reports.core;
 
 import com.femsq.reports.config.ReportsProperties;
-import com.femsq.reports.model.ReportGenerationRequest;
-import com.femsq.reports.model.ReportMetadata;
-import com.femsq.reports.model.ReportResult;
-import net.sf.jasperreports.engine.JRException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -13,11 +9,8 @@ import org.springframework.core.io.ResourceLoader;
 
 import javax.sql.DataSource;
 import java.nio.file.Paths;
-import java.util.Map;
-import java.util.concurrent.TimeoutException;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**

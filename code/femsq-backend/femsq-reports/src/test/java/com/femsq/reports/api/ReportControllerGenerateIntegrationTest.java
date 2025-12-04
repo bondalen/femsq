@@ -1,7 +1,6 @@
 package com.femsq.reports.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.femsq.reports.config.ReportsProperties;
 import com.femsq.reports.model.ReportGenerationRequest;
 import com.femsq.reports.model.ReportMetadata;
 import com.femsq.reports.model.ReportResult;
@@ -11,17 +10,19 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
+import org.springframework.lang.NonNull;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeoutException;
+import java.util.Objects;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -52,18 +53,29 @@ class ReportControllerGenerateIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private com.femsq.reports.core.ReportDiscoveryService discoveryService;
 
-    @MockBean
+    @MockitoBean
     private com.femsq.reports.core.ReportGenerationService generationService;
 
-    @MockBean
+    @MockitoBean
     private com.femsq.reports.core.ReportMetadataLoader metadataLoader;
+
+    @NonNull
+    private static final MediaType APPLICATION_JSON = Objects.requireNonNull(MediaType.APPLICATION_JSON);
+    @NonNull
+    private static final MediaType APPLICATION_PDF = Objects.requireNonNull(MediaType.APPLICATION_PDF);
 
     @BeforeEach
     void setUp() {
         // Базовая настройка моков
+    }
+
+    @NonNull
+    private String toJson(@NonNull Object value) throws com.fasterxml.jackson.core.JsonProcessingException {
+        String json = objectMapper.writeValueAsString(value);
+        return Objects.requireNonNull(json, "JSON serialization cannot return null");
     }
 
     @Test
@@ -105,10 +117,10 @@ class ReportControllerGenerateIntegrationTest {
         );
 
         mockMvc.perform(post("/api/reports/test-report/generate")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .contentType(APPLICATION_JSON)
+                        .content(toJson(request)))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_PDF))
+                .andExpect(content().contentType(APPLICATION_PDF))
                 .andExpect(header().exists("Content-Disposition"))
                 .andExpect(content().bytes(pdfContent));
     }
@@ -122,8 +134,8 @@ class ReportControllerGenerateIntegrationTest {
         );
 
         mockMvc.perform(post("/api/reports/test-report/generate")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .contentType(APPLICATION_JSON)
+                        .content(toJson(request)))
                 .andExpect(status().isBadRequest());
     }
 
@@ -136,8 +148,8 @@ class ReportControllerGenerateIntegrationTest {
         );
 
         mockMvc.perform(post("/api/reports/test-report/generate")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .contentType(APPLICATION_JSON)
+                        .content(toJson(request)))
                 .andExpect(status().isBadRequest());
     }
 
@@ -152,8 +164,8 @@ class ReportControllerGenerateIntegrationTest {
         );
 
         mockMvc.perform(post("/api/reports/non-existent/generate")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .contentType(APPLICATION_JSON)
+                        .content(toJson(request)))
                 .andExpect(status().isBadRequest());
     }
 
@@ -186,8 +198,8 @@ class ReportControllerGenerateIntegrationTest {
         );
 
         mockMvc.perform(post("/api/reports/test-report/generate")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .contentType(APPLICATION_JSON)
+                        .content(toJson(request)))
                 .andExpect(status().isInternalServerError());
     }
 
@@ -220,14 +232,14 @@ class ReportControllerGenerateIntegrationTest {
         );
         
         when(discoveryService.getMetadata("test-report")).thenReturn(metadata);
-        when(generationService.generatePreview(anyString(), any(Map.class)))
+        when(generationService.generatePreview(anyString(), anyMap()))
                 .thenReturn(result);
 
         mockMvc.perform(post("/api/reports/test-report/preview")
-                        .contentType(MediaType.APPLICATION_JSON)
+                        .contentType(APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_PDF))
+                .andExpect(content().contentType(APPLICATION_PDF))
                 .andExpect(header().exists("Content-Disposition"))
                 .andExpect(content().bytes(pdfContent));
     }
@@ -237,7 +249,7 @@ class ReportControllerGenerateIntegrationTest {
         when(discoveryService.getMetadata("non-existent")).thenReturn(null);
 
         mockMvc.perform(post("/api/reports/non-existent/preview")
-                        .contentType(MediaType.APPLICATION_JSON)
+                        .contentType(APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isBadRequest());
     }

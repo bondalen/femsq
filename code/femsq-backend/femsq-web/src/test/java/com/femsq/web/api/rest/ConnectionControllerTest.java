@@ -39,7 +39,7 @@ import org.springframework.web.server.ResponseStatusException;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class ConnectionControllerTest {
 
-    @Mock(lenient = true)
+    @Mock
     private ConnectionFactory connectionFactory;
 
     @Mock

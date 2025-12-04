@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -51,7 +52,8 @@ class ReportControllerTest {
         
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertTrue(response.getBody().isEmpty());
+        List<ReportInfo> body = Objects.requireNonNull(response.getBody());
+        assertTrue(body.isEmpty());
     }
 
     @Test
@@ -73,7 +75,8 @@ class ReportControllerTest {
         
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals("test-report", response.getBody().id());
+        ReportMetadata body = Objects.requireNonNull(response.getBody());
+        assertEquals("test-report", body.id());
     }
 
     @Test
@@ -93,7 +96,8 @@ class ReportControllerTest {
         
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals(2, response.getBody().size());
+        List<String> body = Objects.requireNonNull(response.getBody());
+        assertEquals(2, body.size());
     }
 
     @Test
@@ -104,7 +108,8 @@ class ReportControllerTest {
         
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals(2, response.getBody().size());
+        List<String> body = Objects.requireNonNull(response.getBody());
+        assertEquals(2, body.size());
     }
 
     private ReportMetadata createMetadata(String id) {

@@ -39,7 +39,7 @@ class ReportMetadataLoaderWithRealFilesTest {
     void loadFromJsonForJrxml_withRealJson_loadsMetadata() throws Exception {
         // Копируем тестовые файлы во временную директорию
         Path jrxmlPath = copyTestFile("simple-report.jrxml");
-        Path jsonPath = copyTestFile("simple-report.json");
+        copyTestFile("simple-report.json");
         
         // Загружаем метаданные из JSON
         ReportMetadata metadata = loader.loadFromJsonForJrxml(jrxmlPath);

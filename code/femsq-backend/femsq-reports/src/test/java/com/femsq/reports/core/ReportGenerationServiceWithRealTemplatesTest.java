@@ -3,7 +3,6 @@ package com.femsq.reports.core;
 import com.femsq.reports.config.ReportsProperties;
 import com.femsq.reports.model.ReportGenerationRequest;
 import com.femsq.reports.model.ReportResult;
-import net.sf.jasperreports.engine.JRException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -18,7 +17,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;

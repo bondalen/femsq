@@ -1,8 +1,5 @@
 package com.femsq.reports.api;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.femsq.reports.config.ReportsProperties;
-import com.femsq.reports.model.ReportGenerationRequest;
 import com.femsq.reports.model.ReportInfo;
 import com.femsq.reports.model.ReportMetadata;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,15 +8,15 @@ import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
+import org.springframework.lang.NonNull;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -56,20 +53,20 @@ class ReportControllerIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @MockBean
+    @MockitoBean
     private com.femsq.reports.core.ReportDiscoveryService discoveryService;
 
-    @MockBean
+    @MockitoBean
     private com.femsq.reports.core.ReportGenerationService generationService;
 
-    @MockBean
+    @MockitoBean
     private com.femsq.reports.core.ReportMetadataLoader metadataLoader;
 
     @TempDir
     Path tempDir;
+
+    @NonNull
+    private static final MediaType APPLICATION_JSON = Objects.requireNonNull(MediaType.APPLICATION_JSON);
 
     @BeforeEach
     void setUp() throws Exception {
@@ -97,7 +94,7 @@ class ReportControllerIntegrationTest {
 
         mockMvc.perform(get("/api/reports/available"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(APPLICATION_JSON))
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$[0].id").value("test-report"))
                 .andExpect(jsonPath("$[0].name").value("Test Report"));
@@ -120,7 +117,7 @@ class ReportControllerIntegrationTest {
         mockMvc.perform(get("/api/reports/available")
                         .param("category", "category1"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(APPLICATION_JSON))
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$[0].category").value("category1"));
     }
@@ -142,7 +139,7 @@ class ReportControllerIntegrationTest {
         mockMvc.perform(get("/api/reports/available")
                         .param("tag", "tag1"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(APPLICATION_JSON))
                 .andExpect(jsonPath("$").isArray());
     }
 
@@ -168,7 +165,7 @@ class ReportControllerIntegrationTest {
 
         mockMvc.perform(get("/api/reports/test-report/metadata"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(APPLICATION_JSON))
                 .andExpect(jsonPath("$.id").value("test-report"))
                 .andExpect(jsonPath("$.name").value("Test Report"))
                 .andExpect(jsonPath("$.version").value("1.0.0"));
@@ -205,7 +202,7 @@ class ReportControllerIntegrationTest {
 
         mockMvc.perform(get("/api/reports/test-report/parameters"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(APPLICATION_JSON))
                 .andExpect(jsonPath("$").isArray());
     }
 
@@ -223,7 +220,7 @@ class ReportControllerIntegrationTest {
 
         mockMvc.perform(get("/api/reports/categories"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(APPLICATION_JSON))
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$[0]").value("category1"))
                 .andExpect(jsonPath("$[1]").value("category2"));
@@ -235,7 +232,7 @@ class ReportControllerIntegrationTest {
 
         mockMvc.perform(get("/api/reports/tags"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(APPLICATION_JSON))
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$[0]").value("tag1"))
                 .andExpect(jsonPath("$[1]").value("tag2"));

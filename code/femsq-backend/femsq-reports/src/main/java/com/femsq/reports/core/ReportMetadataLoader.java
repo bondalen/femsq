@@ -11,8 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -149,9 +147,6 @@ public class ReportMetadataLoader {
             
             String reportId = getBaseName(jrxmlFile);
             String reportName = design.getName() != null ? design.getName() : reportId;
-            
-            // Извлекаем параметры из JRXML
-            List<ReportParameter> parameters = extractParametersFromDesign(design);
             
             return ReportMetadata.minimal(
                     reportId,
@@ -507,47 +502,6 @@ public class ReportMetadataLoader {
         }
 
         return new ReportMetadata.UiIntegration(showInReportsList, contextMenus);
-    }
-
-    private List<ReportParameter> extractParametersFromDesign(JasperDesign design) {
-        List<ReportParameter> parameters = new ArrayList<>();
-        
-        if (design.getParameters() != null) {
-            for (net.sf.jasperreports.engine.JRParameter param : design.getParameters()) {
-                // Пропускаем системные параметры
-                if (param.isSystemDefined()) {
-                    continue;
-                }
-                
-                String name = param.getName();
-                String type = getJavaTypeName(param.getValueClass());
-                
-                parameters.add(ReportParameter.simple(
-                        name,
-                        type,
-                        name,
-                        null,
-                        param.isForPrompting()
-                ));
-            }
-        }
-        
-        return parameters;
-    }
-
-    private String getJavaTypeName(Class<?> clazz) {
-        if (clazz == null) {
-            return "string";
-        }
-        
-        return switch (clazz.getSimpleName()) {
-            case "Date", "Timestamp" -> "date";
-            case "Long" -> "long";
-            case "Integer", "int" -> "integer";
-            case "Boolean", "boolean" -> "boolean";
-            case "String" -> "string";
-            default -> "string";
-        };
     }
 
     private String getBaseName(Path file) {

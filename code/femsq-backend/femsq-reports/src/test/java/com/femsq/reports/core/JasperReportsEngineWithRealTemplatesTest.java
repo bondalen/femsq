@@ -1,7 +1,6 @@
 package com.femsq.reports.core;
 
 import com.femsq.reports.config.ReportsProperties;
-import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JasperReport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

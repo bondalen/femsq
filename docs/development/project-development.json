@@ -3,13 +3,13 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2025-12-03",
+      "lastUpdated": "2025-12-03T17:30:20+03:00",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0036",
+      "nextTaskId": "0037",
       "items": {
         "0001": {
           "task": {
@@ -1058,6 +1058,221 @@
               },
               "created": "2025-12-03",
               "lastUpdated": "2025-12-03T13:04:01+03:00"
+            }
+          }
+        },
+        
+        "0036": {
+          "task": {
+            "displayName": "Исправление проблем сборки проекта (completed, critical). № 0036",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "critical",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Все критические ошибки сборки исправлены (проблемы 1-4)",
+                "Предупреждения lifecycle mapping для frontend-maven-plugin устранены",
+                "Проект собирается успешно через Maven CLI",
+                "Проект компилируется без ошибок в IDE",
+                "Все зависимости разрешены корректно",
+                "Панель Problems не показывает ошибок сборки (осталось 71 предупреждение)"
+              ],
+              "description": "Исправление 7 проблем сборки проекта: критические ошибки зависимостей, предупреждения lifecycle mapping и доступа к директориям. Все критические ошибки исправлены, проект собирается успешно.",
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.web",
+                  "module:backend.reports",
+                  "module:backend.graphql-tests"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-12-03",
+              "lastUpdated": "2025-12-03T17:30:20+03:00"
+            }
+          }
+        },
+        
+        "0036.1": {
+          "task": {
+            "displayName": "femsq-graphql-tests — зависимость от femsq-web (completed, critical). № 0036.1",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "critical",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Пересобран весь проект: mvn clean install -DskipTests",
+                "Проверено, что femsq-web создаёт test-jar",
+                "Обновлены проекты Maven в IDE",
+                "Проверено, что ошибка исчезла"
+              ],
+              "description": "Исправление ошибки сборки femsq-graphql-tests из-за отсутствия собранного femsq-web и его test-jar",
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.graphql-tests",
+                  "module:backend.web"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-12-03",
+              "lastUpdated": "2025-12-03T17:30:20+03:00"
+            }
+          }
+        },
+        
+        "0036.2": {
+          "task": {
+            "displayName": "femsq-reports — исправление .classpath (completed, critical). № 0036.2",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "critical",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Удалена строка с устаревшей версией из .classpath",
+                "Обновлён проект Maven в IDE",
+                "Проверено, что ошибки исчезли"
+              ],
+              "description": "Исправление ошибки сборки femsq-reports из-за устаревшей версии в .classpath (0.1.0.1-SNAPSHOT вместо 0.1.0.32-SNAPSHOT)",
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.reports"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-12-03",
+              "lastUpdated": "2025-12-03T17:30:20+03:00"
+            }
+          }
+        },
+        
+        "0036.3": {
+          "task": {
+            "displayName": "femsq-reports — ошибки build path (completed, critical). № 0036.3",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "critical",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Исправлена проблема 2 (устаревшая версия в .classpath)",
+                "Проверено, что ошибки build path исчезли"
+              ],
+              "description": "Исправление ошибок build path в femsq-reports (следствие проблемы 2)",
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.reports"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-12-03",
+              "lastUpdated": "2025-12-03T17:30:20+03:00"
+            }
+          }
+        },
+        
+        "0036.4": {
+          "task": {
+            "displayName": "femsq-web — зависимость от femsq-reports (completed, critical). № 0036.4",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "critical",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Исправлены проблемы 2 и 3 в femsq-reports",
+                "Проверено, что femsq-web собирается успешно"
+              ],
+              "description": "Исправление ошибки сборки femsq-web из-за ошибок в зависимом модуле femsq-reports (следствие проблем 2 и 3)",
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.web",
+                  "module:backend.reports"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-12-03",
+              "lastUpdated": "2025-12-03T17:30:20+03:00"
+            }
+          }
+        },
+        
+        "0036.5": {
+          "task": {
+            "displayName": "pom.xml (femsq-web) — предупреждение о доступе к директории (planned, low). № 0036.5",
+            "task-attributes": {
+              "status": "planned",
+              "priority": "low",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Проверена возможность использования allowOutsideBaseDir",
+                "Добавлен параметр в конфигурацию или подавлено предупреждение в IDE",
+                "Проверено, что предупреждение исчезло или подавлено"
+              ],
+              "description": "Исправление предупреждения maven-resources-plugin о доступе к директории вне проекта (копирование ресурсов из femsq-database)",
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.web"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-12-03",
+              "lastUpdated": "2025-12-03T16:42:31+03:00"
+            }
+          }
+        },
+        
+        "0036.6": {
+          "task": {
+            "displayName": "pom.xml (femsq-web) — frontend-maven-plugin lifecycle mapping (completed, medium). № 0036.6",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "medium",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Создан файл .settings/lifecycle-mapping-metadata.xml",
+                "Добавлена конфигурация lifecycle mapping для frontend-maven-plugin",
+                "Проверено, что ошибки исчезли"
+              ],
+              "description": "Настройка lifecycle mapping для frontend-maven-plugin в femsq-web (executions: install-node-and-npm, npm install, npm run build). Ошибки IDE исчезли.",
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.web"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-12-03",
+              "lastUpdated": "2025-12-03T17:30:20+03:00"
+            }
+          }
+        },
+        
+        "0036.7": {
+          "task": {
+            "displayName": "pom.xml (femsq-reports) — exec-maven-plugin lifecycle mapping (planned, medium). № 0036.7",
+            "task-attributes": {
+              "status": "planned",
+              "priority": "medium",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Проверено наличие файла .settings/org.eclipse.m2e.core.prefs",
+                "Добавлена конфигурация lifecycle mapping для exec-maven-plugin",
+                "Применена конфигурация для execution precompile-reports",
+                "Проверено, что предупреждение исчезло"
+              ],
+              "description": "Настройка lifecycle mapping для exec-maven-plugin в femsq-reports (execution: precompile-reports, phase: process-classes)",
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.reports"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-12-03",
+              "lastUpdated": "2025-12-03T16:42:31+03:00"
             }
           }
         }

@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>femsq-reports</name>
-	<comment>Модуль генерации PDF-отчётов на основе JasperReports для системы FEMSQ. NO_M2ECLIPSE_SUPPORT: Project files created with the maven-eclipse-plugin are not supported in M2Eclipse.</comment>
+	<name>femsq-database</name>
+	<comment>Базовый Maven-модуль для работы с конфигурацией и подключением к MS SQL Server. NO_M2ECLIPSE_SUPPORT: Project files created with the maven-eclipse-plugin are not supported in M2Eclipse.</comment>
 	<projects>
-		<project>femsq-database</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
@@ -23,7 +22,7 @@
 	</natures>
 	<filteredResources>
 		<filter>
-			<id>1764771311583</id>
+			<id>1764771311531</id>
 			<name></name>
 			<type>30</type>
 			<matcher>

@@ -8,7 +8,7 @@
     <parent>
         <groupId>com.femsq</groupId>
         <artifactId>femsq-backend</artifactId>
-        <version>0.1.0.32-SNAPSHOT</version>
+        <version>0.1.0.33-SNAPSHOT</version>
     </parent>
 
     <artifactId>femsq-graphql-tests</artifactId>
@@ -103,8 +103,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
                 <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
+                    <release>${java.version}</release>
                     <encoding>${project.build.sourceEncoding}</encoding>
                 </configuration>
             </plugin>

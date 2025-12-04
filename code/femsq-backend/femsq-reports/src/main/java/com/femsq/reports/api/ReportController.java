@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -182,8 +183,10 @@ public class ReportController {
             
             // Настраиваем HTTP заголовки
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.parseMediaType(result.getMimeType()));
-            headers.setContentDispositionFormData("attachment", result.fileName());
+            String mimeType = Objects.requireNonNull(result.getMimeType(), "MIME type cannot be null");
+            String fileName = Objects.requireNonNull(result.fileName(), "File name cannot be null");
+            headers.setContentType(MediaType.parseMediaType(mimeType));
+            headers.setContentDispositionFormData("attachment", fileName);
             headers.setContentLength(result.size());
             
             return ResponseEntity.ok()
@@ -229,8 +232,9 @@ public class ReportController {
             
             // Настраиваем HTTP заголовки
             HttpHeaders headers = new HttpHeaders();
+            String fileName = Objects.requireNonNull(result.fileName(), "File name cannot be null");
             headers.setContentType(MediaType.APPLICATION_PDF);
-            headers.setContentDispositionFormData("inline", result.fileName());
+            headers.setContentDispositionFormData("inline", fileName);
             headers.setContentLength(result.size());
             
             return ResponseEntity.ok()
