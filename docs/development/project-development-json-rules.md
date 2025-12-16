@@ -10,6 +10,7 @@
 
 - **[Общие правила документации](../project-documentation-rules.md)** - правила ведения всей проектной документации
 - **[Система структурной нумерации](../project-documentation-rules-structural-numbering.md)** - правила нумерации пунктов структуры
+- **Правила отчётов JasperReports:** `code/femsq-backend/femsq-reports/src/main/resources/reports/embedded/REPORTING_RULES.md` (обязательно соблюдать при переносе/разработке отчётов)
 
 ---
 

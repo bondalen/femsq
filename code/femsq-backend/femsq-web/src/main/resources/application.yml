@@ -16,6 +16,11 @@ spring:
 logging:
   level:
     com.femsq: INFO
+    com.femsq.reports.core.ReportGenerationService: DEBUG
+  file:
+    name: logs/spring-boot_${LOG_TIMESTAMP:now}.log
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
 
 # Конфигурация модуля отчётов
 reports:

@@ -194,7 +194,7 @@ public class ReportController {
                     .body(result.content());
                     
         } catch (IllegalArgumentException e) {
-            log.warn("Invalid request for report generation: {}", e.getMessage());
+            log.error("Invalid request for report generation: {}", e.getMessage(), e);
             return ResponseEntity.badRequest().build();
         } catch (TimeoutException e) {
             log.warn("Report generation timeout: {}", e.getMessage());

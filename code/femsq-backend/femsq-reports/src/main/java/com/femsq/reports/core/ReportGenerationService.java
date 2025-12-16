@@ -393,7 +393,12 @@ public class ReportGenerationService {
      * Валидирует параметры отчёта.
      */
     private void validateParameters(ReportMetadata metadata, Map<String, Object> providedParams) {
+        System.out.println("=== validateParameters CALLED ===");
+        System.out.println("Parameters count: " + (providedParams != null ? providedParams.size() : 0));
+        log.info("validateParameters called with {} parameters", providedParams != null ? providedParams.size() : 0);
         if (metadata.parameters() == null || metadata.parameters().isEmpty()) {
+            System.out.println("No parameters to validate");
+            log.info("No parameters to validate");
             return; // Нет параметров для валидации
         }
 
@@ -401,6 +406,9 @@ public class ReportGenerationService {
 
         for (ReportParameter param : metadata.parameters()) {
             Object value = providedParams.get(param.name());
+            System.out.println("Validating parameter: " + param.name() + " (type: " + param.type() + "), value: " + value + " (class: " + (value != null ? value.getClass().getSimpleName() : "null") + ")");
+            log.info("Validating parameter '{}' (type: {}), value: {} (class: {})", 
+                param.name(), param.type(), value, value != null ? value.getClass().getSimpleName() : "null");
 
             // Проверка обязательных параметров
             if (param.required() && (value == null || (value instanceof String && ((String) value).isBlank()))) {
@@ -412,19 +420,121 @@ public class ReportGenerationService {
                 continue; // Необязательный параметр без значения
             }
 
-            // Проверка типа
-            if (!isValidType(value, param.type())) {
-                errors.add("Invalid type for parameter '" + param.name() + "': expected " + param.type() + ", got " + value.getClass().getSimpleName());
+            // Конвертируем значение к правильному типу перед валидацией
+            Object convertedValue = convertParameterValue(value, param.type(), param.name());
+            // Всегда обновляем значение в карте (даже если конвертация не изменила тип)
+            providedParams.put(param.name(), convertedValue);
+            log.debug("Converted parameter '{}' from {} to {} (type: {})", 
+                param.name(), value.getClass().getSimpleName(), 
+                convertedValue.getClass().getSimpleName(), param.type());
+
+            // Проверка типа после конвертации
+            if (!isValidType(convertedValue, param.type())) {
+                errors.add("Invalid type for parameter '" + param.name() + "': expected " + param.type() + ", got " + convertedValue.getClass().getSimpleName());
             }
 
             // Проверка валидации (если есть)
             if (param.validation() != null) {
-                validateParameterValue(param, value, errors);
+                validateParameterValue(param, convertedValue, errors);
             }
         }
 
         if (!errors.isEmpty()) {
-            throw new IllegalArgumentException("Parameter validation failed: " + String.join(", ", errors));
+            String errorMessage = "Parameter validation failed: " + String.join(", ", errors);
+            log.error("Parameter validation failed for report: {}", errorMessage);
+            log.debug("Provided parameters: {}", providedParams);
+            throw new IllegalArgumentException(errorMessage);
+        }
+    }
+
+    /**
+     * Конвертирует значение параметра к правильному типу.
+     * Поддерживает конвертацию строк в числа и даты для гибкости API.
+     */
+    private Object convertParameterValue(Object value, String expectedType, String paramName) {
+        if (value == null) {
+            return null;
+        }
+
+        log.info("Converting parameter '{}' from type {} to type {}", paramName, value.getClass().getSimpleName(), expectedType);
+
+        try {
+            return switch (expectedType.toLowerCase()) {
+                case "integer", "int" -> {
+                    if (value instanceof Integer) {
+                        yield value;
+                    } else if (value instanceof Number number) {
+                        yield number.intValue();
+                    } else if (value instanceof String string) {
+                        try {
+                            Integer result = Integer.parseInt(string);
+                            log.info("Successfully converted '{}' from String '{}' to Integer {}", paramName, string, result);
+                            yield result;
+                        } catch (NumberFormatException e) {
+                            log.warn("Failed to parse integer parameter '{}' with value '{}': {}", paramName, string, e.getMessage());
+                            yield value; // Вернём строку, валидация покажет ошибку
+                        }
+                    } else {
+                        log.warn("Cannot convert parameter '{}' from {} to integer", paramName, value.getClass().getSimpleName());
+                        yield value; // Не удалось конвертировать, вернём как есть
+                    }
+                }
+                case "long" -> {
+                    if (value instanceof Long) {
+                        yield value;
+                    } else if (value instanceof Integer) {
+                        yield ((Integer) value).longValue();
+                    } else if (value instanceof Number number) {
+                        yield number.longValue();
+                    } else if (value instanceof String string) {
+                        yield Long.parseLong(string);
+                    } else {
+                        yield value;
+                    }
+                }
+                case "double", "float" -> {
+                    if (value instanceof Double || value instanceof Float) {
+                        yield value;
+                    } else if (value instanceof Number number) {
+                        yield number.doubleValue();
+                    } else if (value instanceof String string) {
+                        yield Double.parseDouble(string);
+                    } else {
+                        yield value;
+                    }
+                }
+                case "boolean" -> {
+                    if (value instanceof Boolean) {
+                        yield value;
+                    } else if (value instanceof String string) {
+                        yield Boolean.parseBoolean(string) || "1".equals(string) || "true".equalsIgnoreCase(string);
+                    } else {
+                        yield value;
+                    }
+                }
+                case "date" -> {
+                    if (value instanceof java.time.LocalDate || value instanceof java.util.Date) {
+                        yield value;
+                    } else if (value instanceof String string) {
+                        // Пробуем распарсить как ISO date (yyyy-MM-dd)
+                        try {
+                            java.time.LocalDate result = java.time.LocalDate.parse(string);
+                            log.info("Successfully converted '{}' from String '{}' to LocalDate {}", paramName, string, result);
+                            yield result;
+                        } catch (java.time.format.DateTimeParseException e) {
+                            log.warn("Failed to parse date parameter '{}' with value '{}': {}", paramName, string, e.getMessage());
+                            yield value; // Вернём строку, валидация покажет ошибку
+                        }
+                    } else {
+                        log.warn("Cannot convert parameter '{}' from {} to date", paramName, value.getClass().getSimpleName());
+                        yield value;
+                    }
+                }
+                default -> value; // Для string и неизвестных типов возвращаем как есть
+            };
+        } catch (NumberFormatException e) {
+            log.warn("Failed to convert parameter '{}' value '{}' to type {}: {}", paramName, value, expectedType, e.getMessage());
+            return value; // Вернём исходное значение, валидация покажет ошибку
         }
     }
 
@@ -472,8 +582,19 @@ public class ReportGenerationService {
             }
         }
 
-        // Проверка дат
-        if (value instanceof java.time.LocalDate dateValue) {
+        // Проверка дат (поддерживаем как LocalDate, так и строки)
+        java.time.LocalDate dateValue = null;
+        if (value instanceof java.time.LocalDate) {
+            dateValue = (java.time.LocalDate) value;
+        } else if (value instanceof String stringValue) {
+            try {
+                dateValue = java.time.LocalDate.parse(stringValue);
+            } catch (java.time.format.DateTimeParseException e) {
+                // Невалидная дата - ошибка будет показана при проверке типа
+            }
+        }
+        
+        if (dateValue != null) {
             if (validation.minDate() != null) {
                 java.time.LocalDate minDate = java.time.LocalDate.parse(validation.minDate());
                 if (dateValue.isBefore(minDate)) {
@@ -527,7 +648,18 @@ public class ReportGenerationService {
             log.warn("DatabaseConfigurationService is null, using default schema 'ags'");
         }
 
-        // 3. Добавляем SUBREPORT_DIR для отчётов с подотчётами
+        // 3. Конвертируем LocalDate в строки для параметров, которые в JRXML определены как String
+        // (например, MounthEndDate определён как java.lang.String в JRXML)
+        for (Map.Entry<String, Object> entry : params.entrySet()) {
+            Object value = entry.getValue();
+            if (value instanceof java.time.LocalDate localDate) {
+                // Конвертируем LocalDate в строку формата yyyy-MM-dd для передачи в JasperReports
+                entry.setValue(localDate.toString());
+                log.debug("Converted LocalDate parameter '{}' to string: {}", entry.getKey(), localDate.toString());
+            }
+        }
+
+        // 4. Добавляем SUBREPORT_DIR для отчётов с подотчётами
         if (!params.containsKey("SUBREPORT_DIR")) {
             String baseDir;
             if (embeddedTemplatesCacheDir != null) {

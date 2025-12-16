@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
@@ -28,7 +29,7 @@ public class ConnectionAttemptLogger {
 
     private static final Logger log = Logger.getLogger(ConnectionAttemptLogger.class.getName());
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
-    private static final String DEFAULT_FILE_NAME = "connection-attempts.log";
+    private static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("yy-MMdd-HHmm");
     private final Path logFilePath;
 
     public ConnectionAttemptLogger() {
@@ -144,7 +145,10 @@ public class ConnectionAttemptLogger {
             }
         }
 
-        Path logFile = directory.resolve(DEFAULT_FILE_NAME);
+        // Генерируем имя файла с временной меткой
+        String timestamp = LocalDateTime.now().format(TIMESTAMP_FORMATTER);
+        String logFileName = "connections_" + timestamp + ".log";
+        Path logFile = directory.resolve(logFileName);
         log.log(Level.INFO, "Connection attempt log file: {0}", logFile);
         return logFile;
     }

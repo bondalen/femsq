@@ -127,9 +127,10 @@ public class LibraryCompatibilityChecker {
                 }
             }
             
-            // Генерируем файл отчёта
+            // Генерируем файл отчёта в папку logs/
             if (reportDir != null) {
-                Path reportPath = LibraryVersionReporter.generateReport(libDir, reportDir);
+                Path logsDir = reportDir.resolve("logs");
+                Path reportPath = LibraryVersionReporter.generateReport(libDir, logsDir);
                 if (reportPath != null) {
                     log.info("Library version report saved to: {}", reportPath);
                 }

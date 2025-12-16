@@ -1,0 +1,1184 @@
+<!-- Created with Jaspersoft Studio version 7.0.3.final using JasperReports Library version 7.0.3-41034ca841d452f3305ba55b9042260aaa1ab5dd  -->
+<jasperReport name="mstrgAg_23_Branch_q2m_2408_25" language="java" pageWidth="1191" pageHeight="842" orientation="Landscape" columnWidth="1163" leftMargin="14" rightMargin="14" topMargin="14" bottomMargin="14" uuid="a1b2c3d4-e5f6-7890-abcd-ef1234567890">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="FishEyeDataAdapter"/>
+	<property name="com.jaspersoft.studio.unit" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<style name="Table_TH" mode="Opaque" backcolor="#F0F8FF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#7F7F7F"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="Table_CH" mode="Transparent" backcolor="#FFFFFF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#7F7F7F"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="Table_TD" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#7F7F7F"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="CellStyleEven" mode="Opaque" backcolor="#E0E0E0">
+		<box>
+			<pen lineWidth="0.5" lineColor="#7F7F7F"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="CellStyleOdd" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#7F7F7F"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<dataset name="PageHeaderDatasetMstrg" uuid="d3dec331-46b4-4beb-8aba-d86191c076f5">
+		<parameter name="P_REPORT_COUNT" class="java.lang.Integer"/>
+		<parameter name="P_lim" class="java.math.BigDecimal"/>
+		<parameter name="P_ag_lim" class="java.math.BigDecimal"/>
+		<parameter name="P_iv_lim" class="java.math.BigDecimal"/>
+		<parameter name="P_uk_lim" class="java.math.BigDecimal"/>
+		<parameter name="P_ag_Ful_OverFul" class="java.math.BigDecimal"/>
+		<parameter name="P_ag_LimPc" class="java.math.BigDecimal"/>
+		<parameter name="P_ag_PlOverLimit_" class="java.math.BigDecimal"/>
+		<parameter name="P_mn_lim" class="java.lang.String"/>
+		<parameter name="P_ag_PlAccum" class="java.math.BigDecimal"/>
+		<parameter name="P_ag_PlFulfillment" class="java.math.BigDecimal"/>
+		<parameter name="P_ag_PlPz" class="java.lang.Double"/>
+		<parameter name="P_ag_PlOverFulfillment" class="java.math.BigDecimal"/>
+		<parameter name="P_ag_PlFulfillmentAll" class="java.math.BigDecimal"/>
+		<parameter name="P_ag_PlPercent" class="java.lang.Double"/>
+		<parameter name="P_ag_Pl_M" class="java.math.BigDecimal"/>
+		<parameter name="P_ag_acceptedTtl_M" class="java.math.BigDecimal"/>
+		<parameter name="P_ag_PlPz_M" class="java.lang.Double"/>
+		<parameter name="P_ogNm" class="java.lang.String"/>
+		<parameter name="P_branchName" class="java.lang.String"/>
+		<parameter name="P_PrM_mn_lm" class="java.lang.String"/>
+		<parameter name="P_PrM_ag_PlAccum" class="java.math.BigDecimal"/>
+		<parameter name="P_PrM_ag_PlFulfillment" class="java.math.BigDecimal"/>
+		<parameter name="P_PrM_ag_PlPz" class="java.lang.Double"/>
+		<parameter name="P_PrM_ag_PlOverFulfillment" class="java.math.BigDecimal"/>
+		<parameter name="P_PrM_ag_PlFulfillmentAll" class="java.math.BigDecimal"/>
+		<parameter name="P_PrM_ag_PlPercent" class="java.lang.Double"/>
+		<parameter name="P_PrM_ag_Pl_M" class="java.math.BigDecimal"/>
+		<parameter name="P_PrM_ag_acceptedTtl_M" class="java.math.BigDecimal"/>
+		<parameter name="P_PrM_ag_PlPz_M" class="java.lang.Double"/>
+		<parameter name="P_PrM_mn_lm2" class="java.lang.String"/>
+		<parameter name="P_PrM_ag_PlAccum2" class="java.math.BigDecimal"/>
+		<parameter name="P_PrM_ag_PlFulfillment2" class="java.math.BigDecimal"/>
+		<parameter name="P_PrM_ag_PlPz2" class="java.lang.Double"/>
+		<parameter name="P_PrM_ag_PlOverFulfillment2" class="java.math.BigDecimal"/>
+		<parameter name="P_PrM_ag_PlFulfillment2All" class="java.math.BigDecimal"/>
+		<parameter name="P_PrM_ag_PlPercent2" class="java.lang.Double"/>
+		<parameter name="P_PrM_ag_Pl_M2" class="java.math.BigDecimal"/>
+		<parameter name="P_PrM_ag_acceptedTtl_M2" class="java.math.BigDecimal"/>
+		<parameter name="P_PrM_ag_PlPz_M2" class="java.lang.Double"/>
+		<parameter name="P_np_acceptedTtlAccum" class="java.math.BigDecimal"/>
+		<query language="sql"><![CDATA[]]></query>
+	</dataset>
+	<parameter name="SCHEMA_NAME" class="java.lang.String">
+		<defaultValueExpression><![CDATA["ags"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="ipgCh" class="java.lang.Integer">
+		<description><![CDATA[Код инвестиционной программы]]></description>
+		<defaultValueExpression><![CDATA[15]]></defaultValueExpression>
+	</parameter>
+	<parameter name="MounthEndDate" class="java.lang.String">
+		<description><![CDATA[Дата окончания периода (yyyy-MM-dd)]]></description>
+		<defaultValueExpression><![CDATA["2025-07-31"]]></defaultValueExpression>
+	</parameter>
+	<query language="sql"><![CDATA[SELECT 
+  ipgSh, limSort, ogNm, branchName, lim, ag_lim, iv_lim, uk_lim, cstAgPnCode,
+  ag_Ful_OverFul, ag_LimPc, ag_PlOverLimit_,
+  ag_PlAccum, ag_PlFulfillment, ag_PlPz, ag_PlOverFulfillment, ag_PlPercent, 
+  ag_PlFulfillmentAll, ag_acceptedNot,
+  ag_Pl_M, ag_acceptedTtl_M, ag_PlPz_M,
+  mn,
+  PrM_ag_PlAccum, PrM_ag_PlFulfillment, PrM_ag_PlPz, PrM_ag_PlOverFulfillment, 
+  PrM_ag_PlPercent, PrM_ag_PlFulfillmentAll,
+  PrM_ag_Pl_M, PrM_ag_acceptedTtl_M, PrM_ag_PlPz_M, PrM_mnPrevious,
+  PrM_ag_PlAccum2, PrM_ag_PlFulfillment2, PrM_ag_PlPz2, PrM_ag_PlOverFulfillment2, 
+  PrM_ag_PlPercent2, PrM_ag_PlFulfillment2All,
+  PrM_ag_Pl_M2, PrM_ag_acceptedTtl_M2, PrM_ag_PlPz_M2, PrM_mnPrevious2,
+  np_acceptedTtlAccum
+FROM $P!{SCHEMA_NAME}.spMstrg_2408_ResultSet5
+ORDER BY ipgSh, limSort DESC, lim DESC]]></query>
+	<field name="ipgSh" class="java.lang.String"/>
+	<field name="limSort" class="java.math.BigDecimal"/>
+	<field name="ogNm" class="java.lang.String"/>
+	<field name="branchName" class="java.lang.String"/>
+	<field name="lim" class="java.math.BigDecimal"/>
+	<field name="cstAgPnCode" class="java.lang.String"/>
+	<field name="mn" class="java.lang.String"/>
+	<field name="ag_lim" class="java.math.BigDecimal"/>
+	<field name="iv_lim" class="java.math.BigDecimal"/>
+	<field name="uk_lim" class="java.math.BigDecimal"/>
+	<field name="ag_Ful_OverFul" class="java.math.BigDecimal"/>
+	<field name="ag_LimPc" class="java.math.BigDecimal"/>
+	<field name="ag_PlOverLimit_" class="java.math.BigDecimal"/>
+	<field name="ag_PlAccum" class="java.math.BigDecimal"/>
+	<field name="ag_PlFulfillment" class="java.math.BigDecimal"/>
+	<field name="ag_PlPz" class="java.lang.Double"/>
+	<field name="ag_PlOverFulfillment" class="java.math.BigDecimal"/>
+	<field name="ag_PlPercent" class="java.lang.Double"/>
+	<field name="ag_PlFulfillmentAll" class="java.math.BigDecimal"/>
+	<field name="ag_acceptedNot" class="java.math.BigDecimal"/>
+	<field name="ag_Pl_M" class="java.math.BigDecimal"/>
+	<field name="ag_acceptedTtl_M" class="java.math.BigDecimal"/>
+	<field name="ag_PlPz_M" class="java.lang.Double"/>
+	<field name="PrM_ag_PlAccum" class="java.math.BigDecimal"/>
+	<field name="PrM_ag_PlFulfillment" class="java.math.BigDecimal"/>
+	<field name="PrM_ag_PlPz" class="java.lang.Double"/>
+	<field name="PrM_ag_PlOverFulfillment" class="java.math.BigDecimal"/>
+	<field name="PrM_ag_PlPercent" class="java.lang.Double"/>
+	<field name="PrM_ag_PlFulfillmentAll" class="java.math.BigDecimal"/>
+	<field name="PrM_ag_Pl_M" class="java.math.BigDecimal"/>
+	<field name="PrM_ag_acceptedTtl_M" class="java.math.BigDecimal"/>
+	<field name="PrM_ag_PlPz_M" class="java.lang.Double"/>
+	<field name="PrM_mnPrevious" class="java.lang.String"/>
+	<field name="PrM_ag_PlAccum2" class="java.math.BigDecimal"/>
+	<field name="PrM_ag_PlFulfillment2" class="java.math.BigDecimal"/>
+	<field name="PrM_ag_PlPz2" class="java.lang.Double"/>
+	<field name="PrM_ag_PlOverFulfillment2" class="java.math.BigDecimal"/>
+	<field name="PrM_ag_PlPercent2" class="java.lang.Double"/>
+	<field name="PrM_ag_PlFulfillment2All" class="java.math.BigDecimal"/>
+	<field name="PrM_ag_Pl_M2" class="java.math.BigDecimal"/>
+	<field name="PrM_ag_acceptedTtl_M2" class="java.math.BigDecimal"/>
+	<field name="PrM_ag_PlPz_M2" class="java.lang.Double"/>
+	<field name="PrM_mnPrevious2" class="java.lang.String"/>
+	<field name="np_acceptedTtlAccum" class="java.math.BigDecimal"/>
+	<group name="ipgShGroup">
+		<expression><![CDATA[$F{ipgSh}]]></expression>
+		<groupHeader>
+			<band/>
+		</groupHeader>
+	</group>
+	<group name="DetailRowGroup">
+		<expression><![CDATA[$V{REPORT_COUNT}]]></expression>
+		<groupHeader>
+			<band height="27" splitType="Stretch">
+				<element kind="rectangle" uuid="b2c3d4e5-f6a7-8901-bcde-222222222222" x="0" y="0" width="1160" height="27" backcolor="#E0E0E0">
+					<printWhenExpression><![CDATA[$V{REPORT_COUNT} % 2 == 0]]></printWhenExpression>
+					<pen lineWidth="0.0"/>
+				</element>
+				<element kind="rectangle" uuid="a1b2c3d4-e5f6-7890-abcd-111111111111" x="0" y="0" width="1160" height="27" backcolor="#FCD5B5">
+					<printWhenExpression><![CDATA[$F{ogNm} != null && ($F{ogNm}.equals("итого") || $F{ogNm}.equals("Заказчики"))]]></printWhenExpression>
+					<pen lineWidth="0.0"/>
+				</element>
+				<element kind="component" uuid="d5e6f7a8-b9c0-4123-a012-456789abcdef" x="0" y="0" width="1160" height="27">
+					<component kind="table">
+						<datasetRun uuid="e6f7a8b9-c0d1-4234-b123-567890abcdef" subDataset="PageHeaderDatasetMstrg">
+							<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.JREmptyDataSource(1)]]></dataSourceExpression>
+							<parameter name="P_REPORT_COUNT">
+								<expression><![CDATA[$V{REPORT_COUNT}]]></expression>
+							</parameter>
+							<parameter name="P_lim">
+								<expression><![CDATA[$F{lim}]]></expression>
+							</parameter>
+							<parameter name="P_ag_lim">
+								<expression><![CDATA[$F{ag_lim}]]></expression>
+							</parameter>
+							<parameter name="P_iv_lim">
+								<expression><![CDATA[$F{iv_lim}]]></expression>
+							</parameter>
+							<parameter name="P_uk_lim">
+								<expression><![CDATA[$F{uk_lim}]]></expression>
+							</parameter>
+							<parameter name="P_ag_Ful_OverFul">
+								<expression><![CDATA[$F{ag_Ful_OverFul}]]></expression>
+							</parameter>
+							<parameter name="P_ag_LimPc">
+								<expression><![CDATA[$F{ag_LimPc}]]></expression>
+							</parameter>
+							<parameter name="P_ag_PlOverLimit_">
+								<expression><![CDATA[$F{ag_PlOverLimit_}]]></expression>
+							</parameter>
+							<parameter name="P_mn_lim">
+								<expression><![CDATA[$F{ag_lim} != null ? $F{mn} : null]]></expression>
+							</parameter>
+							<parameter name="P_ag_PlAccum">
+								<expression><![CDATA[$F{ag_PlAccum}]]></expression>
+							</parameter>
+							<parameter name="P_ag_PlFulfillment">
+								<expression><![CDATA[$F{ag_PlFulfillment} != null && $F{ag_PlFulfillment}.compareTo(java.math.BigDecimal.ZERO) < 0 ? null : $F{ag_PlFulfillment}]]></expression>
+							</parameter>
+							<parameter name="P_ag_PlPz">
+								<expression><![CDATA[$F{ag_PlPz}]]></expression>
+							</parameter>
+							<parameter name="P_ag_PlOverFulfillment">
+								<expression><![CDATA[$F{ag_PlOverFulfillment}]]></expression>
+							</parameter>
+							<parameter name="P_ag_PlFulfillmentAll">
+								<expression><![CDATA[$F{ag_PlFulfillmentAll}]]></expression>
+							</parameter>
+							<parameter name="P_ag_PlPercent">
+								<expression><![CDATA[$F{ag_PlPercent}]]></expression>
+							</parameter>
+							<parameter name="P_ag_Pl_M">
+								<expression><![CDATA[$F{ag_Pl_M}]]></expression>
+							</parameter>
+							<parameter name="P_ag_acceptedTtl_M">
+								<expression><![CDATA[$F{ag_acceptedTtl_M}]]></expression>
+							</parameter>
+							<parameter name="P_ag_PlPz_M">
+								<expression><![CDATA[$F{ag_PlPz_M}]]></expression>
+							</parameter>
+							<parameter name="P_ogNm">
+								<expression><![CDATA[$F{ogNm}]]></expression>
+							</parameter>
+							<parameter name="P_branchName">
+								<expression><![CDATA[$F{branchName}]]></expression>
+							</parameter>
+							<parameter name="P_PrM_mn_lm">
+								<expression><![CDATA[$F{ag_lim} != null ? $F{PrM_mnPrevious} : null]]></expression>
+							</parameter>
+							<parameter name="P_PrM_ag_PlAccum">
+								<expression><![CDATA[$F{PrM_ag_PlAccum}]]></expression>
+							</parameter>
+							<parameter name="P_PrM_ag_PlFulfillment">
+								<expression><![CDATA[$F{PrM_ag_PlFulfillment} != null && $F{PrM_ag_PlFulfillment}.compareTo(java.math.BigDecimal.ZERO) < 0 ? null : $F{PrM_ag_PlFulfillment}]]></expression>
+							</parameter>
+							<parameter name="P_PrM_ag_PlPz">
+								<expression><![CDATA[$F{PrM_ag_PlPz}]]></expression>
+							</parameter>
+							<parameter name="P_PrM_ag_PlOverFulfillment">
+								<expression><![CDATA[$F{PrM_ag_PlOverFulfillment}]]></expression>
+							</parameter>
+							<parameter name="P_PrM_ag_PlFulfillmentAll">
+								<expression><![CDATA[$F{PrM_ag_PlFulfillmentAll}]]></expression>
+							</parameter>
+							<parameter name="P_PrM_ag_PlPercent">
+								<expression><![CDATA[$F{PrM_ag_PlPercent}]]></expression>
+							</parameter>
+							<parameter name="P_PrM_ag_Pl_M">
+								<expression><![CDATA[$F{PrM_ag_Pl_M}]]></expression>
+							</parameter>
+							<parameter name="P_PrM_ag_acceptedTtl_M">
+								<expression><![CDATA[$F{PrM_ag_acceptedTtl_M}]]></expression>
+							</parameter>
+							<parameter name="P_PrM_ag_PlPz_M">
+								<expression><![CDATA[$F{PrM_ag_PlPz_M}]]></expression>
+							</parameter>
+							<parameter name="P_PrM_mn_lm2">
+								<expression><![CDATA[$F{ag_lim} != null ? $F{PrM_mnPrevious2} : null]]></expression>
+							</parameter>
+							<parameter name="P_PrM_ag_PlAccum2">
+								<expression><![CDATA[$F{PrM_ag_PlAccum2}]]></expression>
+							</parameter>
+							<parameter name="P_PrM_ag_PlFulfillment2">
+								<expression><![CDATA[$F{PrM_ag_PlFulfillment2} != null && $F{PrM_ag_PlFulfillment2}.compareTo(java.math.BigDecimal.ZERO) < 0 ? null : $F{PrM_ag_PlFulfillment2}]]></expression>
+							</parameter>
+							<parameter name="P_PrM_ag_PlPz2">
+								<expression><![CDATA[$F{PrM_ag_PlPz2}]]></expression>
+							</parameter>
+							<parameter name="P_PrM_ag_PlOverFulfillment2">
+								<expression><![CDATA[$F{PrM_ag_PlOverFulfillment2}]]></expression>
+							</parameter>
+							<parameter name="P_PrM_ag_PlFulfillment2All">
+								<expression><![CDATA[$F{PrM_ag_PlFulfillment2All}]]></expression>
+							</parameter>
+							<parameter name="P_PrM_ag_PlPercent2">
+								<expression><![CDATA[$F{PrM_ag_PlPercent2}]]></expression>
+							</parameter>
+							<parameter name="P_PrM_ag_Pl_M2">
+								<expression><![CDATA[$F{PrM_ag_Pl_M2}]]></expression>
+							</parameter>
+							<parameter name="P_PrM_ag_acceptedTtl_M2">
+								<expression><![CDATA[$F{PrM_ag_acceptedTtl_M2}]]></expression>
+							</parameter>
+							<parameter name="P_PrM_ag_PlPz_M2">
+								<expression><![CDATA[$F{PrM_ag_PlPz_M2}]]></expression>
+							</parameter>
+							<parameter name="P_np_acceptedTtlAccum">
+								<expression><![CDATA[$F{np_acceptedTtlAccum}]]></expression>
+							</parameter>
+						</datasetRun>
+						<column kind="group" uuid="3ad61ae4-266d-4df3-8353-6234bd457661" width="99">
+							<columnHeader height="9" rowSpan="1" style="Table_CH">
+								<element kind="textField" uuid="73cae2db-41c8-43c8-a7c6-e4d95c79e16c" x="0" y="0" width="99" height="9" forecolor="#404040" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0" blankWhenNull="true" hTextAlign="Left" vTextAlign="Top">
+									<expression><![CDATA[$P{P_ogNm}]]></expression>
+								</element>
+								<box style="Table_CH">
+									<pen lineColor="#7F7F7F"/>
+									<bottomPen lineWidth="0.0"/>
+								</box>
+							</columnHeader>
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+							<column kind="single" uuid="f7a8b9c0-d1e2-4345-c234-678901bcdef0" width="99">
+								<columnHeader height="18" rowSpan="2" style="Table_CH">
+									<element kind="textField" uuid="0fb0354f-74d7-4e5d-a86d-452426a88a1c" x="0" y="0" width="99" height="18" forecolor="#E46C0A" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+										<expression><![CDATA[$P{P_branchName}]]></expression>
+										<box>
+											<pen lineWidth="0.0"/>
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+									</element>
+									<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									<box style="Table_CH">
+										<pen lineColor="#7F7F7F"/>
+										<topPen lineWidth="0.0"/>
+									</box>
+								</columnHeader>
+								<detailCell height="0" style="Table_TD"/>
+								<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column1"/>
+							</column>
+						</column>
+						<column kind="group" uuid="342f6c7d-1470-4b64-8698-9bbdaf61eea2" width="80">
+							<columnHeader height="9" rowSpan="1" style="Table_CH">
+								<element kind="textField" uuid="7c86a90d-ba52-4a1f-8d84-1e1090d10c8d" x="0" y="0" width="80" height="9" forecolor="#404040" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0.00" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+									<expression><![CDATA[$P{P_lim}]]></expression>
+								</element>
+								<box style="Table_CH">
+									<pen lineColor="#7F7F7F"/>
+								</box>
+							</columnHeader>
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+							<column kind="group" uuid="962311aa-ef1f-4864-b8dc-f5ba7c0fde16" width="80">
+								<columnHeader height="9" rowSpan="1" style="Table_CH">
+									<box style="Table_CH">
+										<pen lineColor="#7F7F7F"/>
+									</box>
+								</columnHeader>
+								<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+								<column kind="single" uuid="a8b9c0d1-e2f3-4456-d345-789012cdef01" width="80">
+									<columnHeader height="9" rowSpan="1" style="Table_CH">
+										<box style="Table_CH">
+											<pen lineColor="#7F7F7F"/>
+										</box>
+									</columnHeader>
+									<detailCell height="0" style="Table_TD"/>
+									<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column2"/>
+								</column>
+							</column>
+						</column>
+						<column kind="group" uuid="0f8c5ab7-f6ac-48b7-9066-b56e30c51c6b" width="85">
+							<columnHeader height="9" rowSpan="1" style="Table_CH">
+								<element kind="textField" uuid="6c8dc437-5593-4aec-8bed-e2ce27bb5c73" x="0" y="0" width="85" height="9" forecolor="#404040" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0.00" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+									<expression><![CDATA[$P{P_ag_lim}]]></expression>
+								</element>
+								<box style="Table_CH">
+									<pen lineColor="#7F7F7F"/>
+								</box>
+							</columnHeader>
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+							<column kind="group" uuid="f55aff6a-367b-4cd2-b821-368a7a2552dc" width="85">
+								<columnHeader height="9" rowSpan="1" style="Table_CH">
+									<element kind="textField" uuid="f8680874-3034-4b02-b538-582a220eba15" x="0" y="0" width="85" height="9" forecolor="#2F3699" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0.00" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+										<expression><![CDATA[$P{P_iv_lim}]]></expression>
+									</element>
+									<box style="Table_CH">
+										<pen lineColor="#7F7F7F"/>
+									</box>
+								</columnHeader>
+								<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+								<column kind="single" uuid="b9c0d1e2-f3a4-4567-e456-890123def012" width="85">
+									<columnHeader height="9" rowSpan="1" style="Table_CH">
+										<element kind="textField" uuid="8a82ad83-3ac8-4efc-9500-7e9470bc14c2" x="0" y="0" width="85" height="9" forecolor="#C0504D" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0.00" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+											<expression><![CDATA[$P{P_uk_lim}]]></expression>
+										</element>
+										<box style="Table_CH">
+											<pen lineColor="#7F7F7F"/>
+										</box>
+									</columnHeader>
+									<detailCell height="0" style="Table_TD"/>
+									<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column3"/>
+								</column>
+							</column>
+						</column>
+						<column kind="single" uuid="c0d1e2f3-a4b5-4678-f567-901234ef0123" width="77">
+							<columnHeader height="27" rowSpan="3" style="Table_CH">
+								<element kind="textField" uuid="1beb41db-4b61-4864-abb1-e7f9d21b8e36" x="0" y="0" width="77" height="27" forecolor="#404040" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0.00" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+									<expression><![CDATA[$P{P_ag_Ful_OverFul}]]></expression>
+								</element>
+								<box style="Table_CH">
+									<pen lineColor="#7F7F7F"/>
+								</box>
+							</columnHeader>
+							<detailCell height="0" style="Table_TD"/>
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column4"/>
+						</column>
+						<column kind="single" uuid="d1e2f3a4-b5c6-4789-a678-012345f01234" width="46">
+							<columnHeader height="27" rowSpan="3" style="Table_CH">
+								<element kind="textField" uuid="653a53a9-7f35-4e22-9db1-abe6ab35cfe8" x="0" y="0" width="46" height="27" forecolor="#404040" fontName="DejaVu Serif" fontSize="6.0" pattern="##0.00%" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+									<expression><![CDATA[$P{P_ag_LimPc}]]></expression>
+								</element>
+								<box style="Table_CH">
+									<pen lineColor="#7F7F7F"/>
+								</box>
+							</columnHeader>
+							<detailCell height="0" style="Table_TD"/>
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column5"/>
+						</column>
+						<column kind="group" uuid="ea9b96ab-476f-497c-b33e-661e7d12d6ac" width="74">
+							<columnHeader height="9" rowSpan="1" style="Table_CH">
+								<element kind="textField" uuid="6bf1be80-e029-47e7-9436-5dc29b60c0d6" x="0" y="0" width="74" height="9" forecolor="#404040" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0.00" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+									<expression><![CDATA[$P{P_ag_PlOverLimit_}]]></expression>
+								</element>
+								<box style="Table_CH">
+									<pen lineColor="#7F7F7F"/>
+								</box>
+							</columnHeader>
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+							<column kind="group" uuid="6624514a-12be-4978-a9f7-2c20b6115c7b" width="74">
+								<columnHeader height="9" rowSpan="1" style="Table_CH">
+									<box style="Table_CH">
+										<pen lineColor="#7F7F7F"/>
+									</box>
+								</columnHeader>
+								<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+								<column kind="single" uuid="e2f3a4b5-c6d7-4890-b789-123456012345" width="74">
+									<columnHeader height="9" rowSpan="1" style="Table_CH">
+										<element kind="textField" uuid="e0741e89-d680-4502-8f63-89773c66ff2e" x="0" y="0" width="74" height="9" forecolor="#FF0905" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0.00" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+											<expression><![CDATA[$P{P_np_acceptedTtlAccum}]]></expression>
+										</element>
+										<box style="Table_CH">
+											<pen lineColor="#7F7F7F"/>
+										</box>
+									</columnHeader>
+									<detailCell height="0" style="Table_TD"/>
+									<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column6"/>
+								</column>
+							</column>
+						</column>
+						<column kind="group" uuid="ee74d9d9-0673-468f-b439-24ba3378b283" width="52">
+							<columnHeader height="9" rowSpan="1" style="Table_CH">
+								<element kind="textField" uuid="f1d47636-8301-424b-9fab-4f25dfa29b55" x="0" y="0" width="52" height="9" forecolor="#404040" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+									<expression><![CDATA[$P{P_mn_lim}]]></expression>
+								</element>
+								<box style="Table_CH">
+									<pen lineColor="#7F7F7F"/>
+								</box>
+							</columnHeader>
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+							<column kind="group" uuid="8641ca82-35a9-4986-8813-f495ff38c508" width="52">
+								<columnHeader height="9" rowSpan="1" style="Table_CH">
+									<element kind="textField" uuid="f1d47636-8301-424b-9fab-4f25dfa29b57" x="0" y="0" width="52" height="9" forecolor="#E46C0A" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+										<expression><![CDATA[$P{P_PrM_mn_lm}]]></expression>
+									</element>
+									<box style="Table_CH">
+										<pen lineColor="#7F7F7F"/>
+									</box>
+								</columnHeader>
+								<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+								<column kind="single" uuid="f3a4b5c6-d7e8-4901-c890-234567123456" width="52">
+									<columnHeader height="9" rowSpan="1" style="Table_CH">
+										<element kind="textField" uuid="f1d47636-8301-424b-9fab-4f25dfa29b58" x="0" y="0" width="52" height="9" forecolor="#4F6228" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+											<expression><![CDATA[$P{P_PrM_mn_lm2}]]></expression>
+										</element>
+										<box style="Table_CH">
+											<pen lineColor="#7F7F7F"/>
+										</box>
+									</columnHeader>
+									<detailCell height="0" style="Table_TD"/>
+									<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column7"/>
+								</column>
+							</column>
+						</column>
+						<column kind="group" uuid="9eb20060-fd30-44e3-a8e9-5b5a7775730e" width="87">
+							<columnHeader height="9" rowSpan="1" style="Table_CH">
+								<element kind="textField" uuid="3f5c5f31-46ea-4934-912e-5242f0464fb3" x="0" y="0" width="87" height="9" forecolor="#404040" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0.00" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+									<expression><![CDATA[$P{P_ag_PlAccum}]]></expression>
+								</element>
+								<box style="Table_CH">
+									<pen lineColor="#7F7F7F"/>
+								</box>
+							</columnHeader>
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+							<column kind="group" uuid="a8acb98f-1441-460f-a62e-7bc5bdddb354" width="87">
+								<columnHeader height="9" rowSpan="1" style="Table_CH">
+									<element kind="textField" uuid="3f5c5f31-46ea-4934-912e-5242f0464fb5" x="0" y="0" width="87" height="9" forecolor="#E46C0A" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0.00" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+										<expression><![CDATA[$P{P_PrM_ag_PlAccum}]]></expression>
+									</element>
+									<box style="Table_CH">
+										<pen lineColor="#7F7F7F"/>
+									</box>
+								</columnHeader>
+								<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+								<column kind="single" uuid="a4b5c6d7-e8f9-4012-d901-345678234567" width="87">
+									<columnHeader height="9" rowSpan="1" style="Table_CH">
+										<element kind="textField" uuid="3f5c5f31-46ea-4934-912e-5242f0464fb6" x="0" y="0" width="87" height="9" forecolor="#4F6228" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0.00" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+											<expression><![CDATA[$P{P_PrM_ag_PlAccum2}]]></expression>
+										</element>
+										<box style="Table_CH">
+											<pen lineColor="#7F7F7F"/>
+										</box>
+									</columnHeader>
+									<detailCell height="0" style="Table_TD"/>
+									<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column8"/>
+								</column>
+							</column>
+						</column>
+						<column kind="group" uuid="194b49c0-e7b1-4525-adf8-b73c4771912b" width="80">
+							<columnHeader height="9" rowSpan="1" style="Table_CH">
+								<element kind="textField" uuid="2aec31e1-1b8a-4651-b8a3-cc5bc0f969f3" x="0" y="0" width="80" height="9" forecolor="#404040" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0.00" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+									<expression><![CDATA[$P{P_ag_PlFulfillment}]]></expression>
+								</element>
+								<box style="Table_CH">
+									<pen lineColor="#7F7F7F"/>
+								</box>
+							</columnHeader>
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+							<column kind="group" uuid="ed19bd9f-c1cc-4abc-8aa2-aa288696c0b5" width="80">
+								<columnHeader height="9" rowSpan="1" style="Table_CH">
+									<element kind="textField" uuid="2aec31e1-1b8a-4651-b8a3-cc5bc0f969f5" x="0" y="0" width="80" height="9" forecolor="#E46C0A" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0.00" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+										<expression><![CDATA[$P{P_PrM_ag_PlFulfillment}]]></expression>
+									</element>
+									<box style="Table_CH">
+										<pen lineColor="#7F7F7F"/>
+									</box>
+								</columnHeader>
+								<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+								<column kind="single" uuid="b5c6d7e8-f9a0-4123-e012-456789345678" width="80">
+									<columnHeader height="9" rowSpan="1" style="Table_CH">
+										<element kind="textField" uuid="2aec31e1-1b8a-4651-b8a3-cc5bc0f969f6" x="0" y="0" width="80" height="9" forecolor="#4F6228" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0.00" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+											<expression><![CDATA[$P{P_PrM_ag_PlFulfillment2}]]></expression>
+										</element>
+										<box style="Table_CH">
+											<pen lineColor="#7F7F7F"/>
+										</box>
+									</columnHeader>
+									<detailCell height="0" style="Table_TD"/>
+									<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column9"/>
+								</column>
+							</column>
+						</column>
+						<column kind="group" uuid="2ad6adb3-387b-4e9f-9aaa-27e2a4be4364" width="49">
+							<columnHeader height="9" rowSpan="1" style="Table_CH">
+								<element kind="textField" uuid="5339c4a4-3ca9-4d62-8146-dab109ac48e5" x="0" y="0" width="49" height="9" forecolor="#404040" fontName="DejaVu Serif" fontSize="6.0" pattern="##0.00%" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+									<expression><![CDATA[$P{P_ag_PlPz}]]></expression>
+								</element>
+								<box style="Table_CH">
+									<pen lineColor="#7F7F7F"/>
+								</box>
+							</columnHeader>
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+							<column kind="group" uuid="65ffa1e1-019f-4836-acff-6482ea348d5e" width="49">
+								<columnHeader height="9" rowSpan="1" style="Table_CH">
+									<element kind="textField" uuid="5339c4a4-3ca9-4d62-8146-dab109ac48e7" x="0" y="0" width="49" height="9" forecolor="#E46C0A" fontName="DejaVu Serif" fontSize="6.0" pattern="##0.00%" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+										<expression><![CDATA[$P{P_PrM_ag_PlPz}]]></expression>
+									</element>
+									<box style="Table_CH">
+										<pen lineColor="#7F7F7F"/>
+									</box>
+								</columnHeader>
+								<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+								<column kind="single" uuid="c6d7e8f9-a0b1-4234-f123-567890456789" width="49">
+									<columnHeader height="9" rowSpan="1" style="Table_CH">
+										<element kind="textField" uuid="5339c4a4-3ca9-4d62-8146-dab109ac48e8" x="0" y="0" width="49" height="9" forecolor="#4F6228" fontName="DejaVu Serif" fontSize="6.0" pattern="##0.00%" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+											<expression><![CDATA[$P{P_PrM_ag_PlPz2}]]></expression>
+										</element>
+										<box style="Table_CH">
+											<pen lineColor="#7F7F7F"/>
+										</box>
+									</columnHeader>
+									<detailCell height="0" style="Table_TD"/>
+									<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column10"/>
+								</column>
+							</column>
+						</column>
+						<column kind="group" uuid="e2824429-e1e7-4602-af53-434d5712e08e" width="71">
+							<columnHeader height="9" rowSpan="1" style="Table_CH">
+								<element kind="textField" uuid="6aaf49b0-2d6c-4ddd-bcda-b1712ad5aa9e" x="0" y="0" width="71" height="9" forecolor="#404040" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0.00" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+									<expression><![CDATA[$P{P_ag_PlOverFulfillment}]]></expression>
+								</element>
+								<box style="Table_CH">
+									<pen lineColor="#7F7F7F"/>
+								</box>
+							</columnHeader>
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+							<column kind="group" uuid="c404287b-e25f-48c0-9ef3-19817479ddae" width="71">
+								<columnHeader height="9" rowSpan="1" style="Table_CH">
+									<element kind="textField" uuid="6aaf49b0-2d6c-4ddd-bcda-b1712ad5aa9b" x="0" y="0" width="71" height="9" forecolor="#E46C0A" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0.00" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+										<expression><![CDATA[$P{P_PrM_ag_PlOverFulfillment}]]></expression>
+									</element>
+									<box style="Table_CH">
+										<pen lineColor="#7F7F7F"/>
+									</box>
+								</columnHeader>
+								<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+								<column kind="single" uuid="d7e8f9a0-b1c2-4345-a234-678901567890" width="71">
+									<columnHeader height="9" rowSpan="1" style="Table_CH">
+										<element kind="textField" uuid="6aaf49b0-2d6c-4ddd-bcda-b1712ad5aa9c" x="0" y="0" width="71" height="9" forecolor="#4F6228" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0.00" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+											<expression><![CDATA[$P{P_PrM_ag_PlOverFulfillment2}]]></expression>
+										</element>
+										<box style="Table_CH">
+											<pen lineColor="#7F7F7F"/>
+										</box>
+									</columnHeader>
+									<detailCell height="0" style="Table_TD"/>
+									<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column11"/>
+								</column>
+							</column>
+						</column>
+						<column kind="group" uuid="b97d6f34-41ac-447f-9752-8de1f447bbd1" width="80">
+							<columnHeader height="9" rowSpan="1" style="Table_CH">
+								<element kind="textField" uuid="04670c04-e5ed-45d4-b669-24359e8274c5" x="0" y="0" width="80" height="9" forecolor="#404040" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0.00" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+									<expression><![CDATA[$P{P_ag_PlFulfillmentAll}]]></expression>
+								</element>
+								<box style="Table_CH">
+									<pen lineColor="#7F7F7F"/>
+								</box>
+							</columnHeader>
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+							<column kind="group" uuid="129fb4b8-3032-471a-abe2-4d2e50ba1670" width="80">
+								<columnHeader height="9" rowSpan="1" style="Table_CH">
+									<element kind="textField" uuid="04670c04-e5ed-45d4-b669-24359e8274c8" x="0" y="0" width="80" height="9" forecolor="#E46C0A" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0.00" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+										<expression><![CDATA[$P{P_PrM_ag_PlFulfillmentAll}]]></expression>
+									</element>
+									<box style="Table_CH">
+										<pen lineColor="#7F7F7F"/>
+									</box>
+								</columnHeader>
+								<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+								<column kind="single" uuid="e8f9a0b1-c2d3-4456-b345-789012678901" width="80">
+									<columnHeader height="9" rowSpan="1" style="Table_CH">
+										<element kind="textField" uuid="04670c04-e5ed-45d4-b669-24359e8274c9" x="0" y="0" width="80" height="9" forecolor="#4F6228" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0.00" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+											<expression><![CDATA[$P{P_PrM_ag_PlFulfillment2All}]]></expression>
+										</element>
+										<box style="Table_CH">
+											<pen lineColor="#7F7F7F"/>
+										</box>
+									</columnHeader>
+									<detailCell height="0" style="Table_TD"/>
+									<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column12"/>
+								</column>
+							</column>
+						</column>
+						<column kind="group" uuid="4f6a25dc-f499-4c4a-bcf0-c6e11cdfdb39" width="69">
+							<columnHeader height="9" rowSpan="1" style="Table_CH">
+								<element kind="textField" uuid="862caa75-cbc8-4dd4-80f5-2fc3c1a760f3" x="0" y="0" width="69" height="9" forecolor="#404040" fontName="DejaVu Serif" fontSize="6.0" pattern="##0.00%" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+									<expression><![CDATA[$P{P_ag_PlPercent}]]></expression>
+								</element>
+								<box style="Table_CH">
+									<pen lineColor="#7F7F7F"/>
+								</box>
+							</columnHeader>
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+							<column kind="group" uuid="d903a5c1-6a92-4089-8a36-bddbcece1150" width="69">
+								<columnHeader height="9" rowSpan="1" style="Table_CH">
+									<element kind="textField" uuid="862caa75-cbc8-4dd4-80f5-2fc3c1a760f6" x="0" y="0" width="69" height="9" forecolor="#E46C0A" fontName="DejaVu Serif" fontSize="6.0" pattern="##0.00%" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+										<expression><![CDATA[$P{P_PrM_ag_PlPercent}]]></expression>
+									</element>
+									<box style="Table_CH">
+										<pen lineColor="#7F7F7F"/>
+									</box>
+								</columnHeader>
+								<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+								<column kind="single" uuid="f9a0b1c2-d3e4-4567-c456-890123789012" width="69">
+									<columnHeader height="9" rowSpan="1" style="Table_CH">
+										<element kind="textField" uuid="862caa75-cbc8-4dd4-80f5-2fc3c1a760f7" x="0" y="0" width="69" height="9" forecolor="#4F6228" fontName="DejaVu Serif" fontSize="6.0" pattern="##0.00%" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+											<expression><![CDATA[$P{P_PrM_ag_PlPercent2}]]></expression>
+										</element>
+										<box style="Table_CH">
+											<pen lineColor="#7F7F7F"/>
+										</box>
+									</columnHeader>
+									<detailCell height="0" style="Table_TD"/>
+									<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column13"/>
+								</column>
+							</column>
+						</column>
+						<column kind="group" uuid="0860e317-9d4a-441a-895e-c87d906a3c2a" width="77">
+							<columnHeader height="9" rowSpan="1" style="Table_CH">
+								<element kind="textField" uuid="43304956-4a7b-4a38-ae4c-f315fb0ebee0" x="0" y="0" width="77" height="9" forecolor="#404040" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0.00" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+									<expression><![CDATA[$P{P_ag_Pl_M}]]></expression>
+								</element>
+								<box style="Table_CH">
+									<pen lineColor="#7F7F7F"/>
+								</box>
+							</columnHeader>
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+							<column kind="group" uuid="4af4a61f-5283-491d-adde-67779d7ab7c9" width="77">
+								<columnHeader height="9" rowSpan="1" style="Table_CH">
+									<element kind="textField" uuid="43304956-4a7b-4a38-ae4c-f315fb0ebee3" x="0" y="0" width="77" height="9" forecolor="#E46C0A" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0.00" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+										<expression><![CDATA[$P{P_PrM_ag_Pl_M}]]></expression>
+									</element>
+									<box style="Table_CH">
+										<pen lineColor="#7F7F7F"/>
+									</box>
+								</columnHeader>
+								<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+								<column kind="single" uuid="a0b1c2d3-e4f5-4678-d567-901234890123" width="77">
+									<columnHeader height="9" rowSpan="1" style="Table_CH">
+										<element kind="textField" uuid="43304956-4a7b-4a38-ae4c-f315fb0ebee4" x="0" y="0" width="77" height="9" forecolor="#4F6228" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0.00" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+											<expression><![CDATA[$P{P_PrM_ag_Pl_M2}]]></expression>
+										</element>
+										<box style="Table_CH">
+											<pen lineColor="#7F7F7F"/>
+										</box>
+									</columnHeader>
+									<detailCell height="0" style="Table_TD"/>
+									<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column14"/>
+								</column>
+							</column>
+						</column>
+						<column kind="group" uuid="f97c4026-d0b6-4454-ac1b-96e088556370" width="85">
+							<columnHeader height="9" rowSpan="1" style="Table_CH">
+								<element kind="textField" uuid="38a91025-2ccf-41ea-bdae-9e6a4f5c722d" x="0" y="0" width="85" height="9" forecolor="#404040" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0.00" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+									<expression><![CDATA[$P{P_ag_acceptedTtl_M}]]></expression>
+								</element>
+								<box style="Table_CH">
+									<pen lineColor="#7F7F7F"/>
+								</box>
+							</columnHeader>
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+							<column kind="group" uuid="3445e542-2881-48b7-82c8-ada7dec09d29" width="85">
+								<columnHeader height="9" rowSpan="1" style="Table_CH">
+									<element kind="textField" uuid="38a91025-2ccf-41ea-bdae-9e6a4f5c722f" x="0" y="0" width="85" height="9" forecolor="#E46C0A" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0.00" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+										<expression><![CDATA[$P{P_PrM_ag_acceptedTtl_M}]]></expression>
+									</element>
+									<box style="Table_CH">
+										<pen lineColor="#7F7F7F"/>
+									</box>
+								</columnHeader>
+								<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+								<column kind="single" uuid="b1c2d3e4-f5a6-4789-e678-012345901234" width="85">
+									<columnHeader height="9" rowSpan="1" style="Table_CH">
+										<element kind="textField" uuid="38a91025-2ccf-41ea-bdae-9e6a4f5c7230" x="0" y="0" width="85" height="9" forecolor="#4F6228" fontName="DejaVu Serif" fontSize="6.0" pattern="#,##0.00" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+											<expression><![CDATA[$P{P_PrM_ag_acceptedTtl_M2}]]></expression>
+										</element>
+										<box style="Table_CH">
+											<pen lineColor="#7F7F7F"/>
+										</box>
+									</columnHeader>
+									<detailCell height="0" style="Table_TD"/>
+									<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column15"/>
+								</column>
+							</column>
+						</column>
+						<column kind="group" uuid="fd323a67-cd3e-4217-8093-7c04a06efdcd" width="49">
+							<columnHeader height="9" rowSpan="1" style="Table_CH">
+								<element kind="textField" uuid="effe920f-0a6c-418a-bdd6-e515cfe2d3c8" x="0" y="0" width="49" height="9" forecolor="#404040" fontName="DejaVu Serif" fontSize="6.0" pattern="##0.00%" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+									<expression><![CDATA[$P{P_ag_PlPz_M}]]></expression>
+								</element>
+								<box style="Table_CH">
+									<pen lineColor="#7F7F7F"/>
+								</box>
+							</columnHeader>
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+							<column kind="group" uuid="711789d6-0474-49a9-9cf3-713edc35c468" width="49">
+								<columnHeader height="9" rowSpan="1" style="Table_CH">
+									<element kind="textField" uuid="effe920f-0a6c-418a-bdd6-e515cfe2d3cb" x="0" y="0" width="49" height="9" forecolor="#E46C0A" fontName="DejaVu Serif" fontSize="6.0" pattern="##0.00%" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+										<expression><![CDATA[$P{P_PrM_ag_PlPz_M}]]></expression>
+									</element>
+									<box style="Table_CH">
+										<pen lineColor="#7F7F7F"/>
+									</box>
+								</columnHeader>
+								<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+								<column kind="single" uuid="c2d3e4f5-a6b7-4890-f789-123456012345" width="49">
+									<columnHeader height="9" rowSpan="1" style="Table_CH">
+										<element kind="textField" uuid="effe920f-0a6c-418a-bdd6-e515cfe2d3cc" x="0" y="0" width="49" height="9" forecolor="#4F6228" fontName="DejaVu Serif" fontSize="6.0" pattern="##0.00%" blankWhenNull="true" hTextAlign="Right" vTextAlign="Top">
+											<expression><![CDATA[$P{P_PrM_ag_PlPz_M2}]]></expression>
+										</element>
+										<box style="Table_CH">
+											<pen lineColor="#7F7F7F"/>
+										</box>
+									</columnHeader>
+									<detailCell height="0" style="Table_TD"/>
+									<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column16"/>
+								</column>
+							</column>
+						</column>
+					</component>
+					<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.VerticalRowLayout"/>
+					<property name="com.jaspersoft.studio.table.style.table_header" value="Table_TH"/>
+					<property name="com.jaspersoft.studio.table.style.column_header" value="Table_CH"/>
+					<property name="com.jaspersoft.studio.table.style.detail" value="Table_TD"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</element>
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			</band>
+		</groupHeader>
+	</group>
+	<title height="43" splitType="Stretch">
+		<element kind="staticText" uuid="a1b2c3d4-e5f6-7890-abcd-ef1234567891" x="0" y="0" width="1156" height="43" forecolor="#7F7F7F" fontName="DejaVu Serif" fontSize="10.0" pdfFontName="DejaVu Serif" bold="true" hTextAlign="Center" vTextAlign="Top">
+			<text><![CDATA[Освоение лимита капитальных вложений по агентским договорам в соответствии с Инвестиционной программой ПАО «Газпром» на 2025 год, 
+направленной Департаментом 03.09.2025
+(по состоянию на 17.09.2025)]]></text>
+		</element>
+	</title>
+	<pageHeader height="55" splitType="Stretch">
+		<element kind="component" uuid="364b07e6-e8ca-4d9b-81a4-9830506a9ea4" x="0" y="0" width="1160" height="55">
+			<component kind="table">
+				<datasetRun uuid="5524589d-1a2b-4bd7-ad91-43adf80a7983" subDataset="PageHeaderDatasetMstrg">
+					<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.JREmptyDataSource()]]></dataSourceExpression>
+				</datasetRun>
+				<column kind="single" uuid="0d3f619b-4326-4537-8641-5fe0087683a7" width="99">
+					<columnHeader height="55" rowSpan="5" style="Table_CH">
+						<element kind="staticText" uuid="2acdae7a-6189-461a-8b77-3fc353786a4e" x="0" y="0" width="99" height="55" forecolor="#7F7F7F" fontName="DejaVu Serif" fontSize="6.0" hTextAlign="Center" vTextAlign="Top">
+							<text><![CDATA[АГЕНТ]]></text>
+						</element>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+						<box style="Table_CH">
+							<pen lineColor="#7F7F7F"/>
+						</box>
+					</columnHeader>
+					<detailCell height="0" style="Table_TD">
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					</detailCell>
+					<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column1"/>
+				</column>
+				<column kind="single" uuid="f9b62e00-7037-47b8-9af1-8eca7e20bd93" width="80">
+					<columnHeader height="55" rowSpan="5" style="Table_CH">
+						<element kind="staticText" uuid="85dcac4d-1a4a-44cf-b054-2ea9fe3bb60b" x="0" y="0" width="80" height="55" forecolor="#7F7F7F" fontName="DejaVu Serif" fontSize="6.0" hTextAlign="Center" vTextAlign="Top">
+							<paragraph lineSpacing="Fixed" lineSpacingSize="5.0" spacingBefore="0" spacingAfter="0"/>
+							<text><![CDATA[ОБЩИЙ ЛИМИТ
+(без ПИР)]]></text>
+							<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						</element>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+						<box style="Table_CH">
+							<pen lineColor="#7F7F7F"/>
+						</box>
+					</columnHeader>
+					<detailCell height="0" style="Table_TD"/>
+					<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column2"/>
+				</column>
+				<column kind="group" uuid="ca088268-6c8e-42f4-b3f6-7a12c8267d60" width="85">
+					<columnHeader height="22" rowSpan="2" style="Table_CH">
+						<element kind="staticText" uuid="4bd18310-044d-4c52-8f09-ecd5b4612d06" x="0" y="0" width="85" height="22" forecolor="#7F7F7F" fontName="DejaVu Serif" fontSize="6.0" hTextAlign="Center" vTextAlign="Top">
+							<text><![CDATA[ЛИМИТ
+ПО СХЕМАМ]]></text>
+						</element>
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+						<box style="Table_CH">
+							<pen lineColor="#7F7F7F"/>
+						</box>
+					</columnHeader>
+					<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+					<column kind="group" uuid="99cf1264-6962-4796-86dd-76c9d789f0fc" width="85">
+						<columnHeader height="11" rowSpan="1" style="Table_CH">
+							<element kind="staticText" uuid="3eeec320-e068-44da-b46c-609028de198c" x="0" y="0" width="85" height="11" forecolor="#7F7F7F" fontName="DejaVu Serif" fontSize="6.0" hTextAlign="Center" vTextAlign="Top">
+								<paragraph lineSpacing="Fixed" lineSpacingSize="5.0" spacingBefore="0" spacingAfter="0"/>
+								<text><![CDATA[агентская]]></text>
+							</element>
+							<property name="com.jaspersoft.studio.unit.height" value="px"/>
+							<box style="Table_CH">
+								<pen lineColor="#7F7F7F"/>
+							</box>
+						</columnHeader>
+						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+						<column kind="group" uuid="f872de66-e4d7-4e4a-98e8-e6393269ab4c" width="85">
+							<columnHeader height="11" rowSpan="1" style="Table_CH">
+								<element kind="staticText" uuid="8146b303-8ae5-439f-a4d1-416d603b6969" x="0" y="0" width="85" height="11" forecolor="#2F3699" fontName="DejaVu Serif" fontSize="6.0" hTextAlign="Center" vTextAlign="Top">
+									<text><![CDATA[инвестиционная]]></text>
+								</element>
+								<property name="com.jaspersoft.studio.unit.height" value="px"/>
+								<box style="Table_CH">
+									<pen lineColor="#7F7F7F"/>
+								</box>
+							</columnHeader>
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+							<column kind="single" uuid="4c4d94aa-1bf5-4d5c-bf1a-2d855823f1d6" width="85">
+								<columnHeader height="11" rowSpan="1" style="Table_CH">
+									<element kind="staticText" uuid="3f941574-4494-45a0-a35b-86735808302c" x="0" y="0" width="85" height="11" forecolor="#C0504D" fontName="DejaVu Serif" fontSize="6.0" hTextAlign="Center" vTextAlign="Top">
+										<text><![CDATA[иная]]></text>
+									</element>
+									<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									<box style="Table_CH">
+										<pen lineColor="#7F7F7F"/>
+									</box>
+								</columnHeader>
+								<detailCell height="0" style="Table_TD"/>
+								<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column3"/>
+							</column>
+						</column>
+					</column>
+				</column>
+				<column kind="single" uuid="73fe76fd-cfaa-402c-b68b-8096dafc555f" width="77">
+					<columnHeader height="55" rowSpan="5" style="Table_CH">
+						<element kind="staticText" uuid="6a3dcd83-c153-42bd-8e7a-737e22d962bd" x="0" y="0" width="77" height="55" forecolor="#7F7F7F" fontName="DejaVu Serif" fontSize="6.0" hTextAlign="Center" vTextAlign="Top">
+							<paragraph lineSpacing="Fixed" lineSpacingSize="5.0" spacingBefore="0" spacingAfter="0"/>
+							<text><![CDATA[ОСВОЕНИЕ
+АГЕНТСКАЯ СХЕМА]]></text>
+						</element>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+						<box style="Table_CH">
+							<pen lineColor="#7F7F7F"/>
+						</box>
+					</columnHeader>
+					<detailCell height="0" style="Table_TD"/>
+					<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column4"/>
+				</column>
+				<column kind="single" uuid="1c79b651-f8c4-4634-8286-bc7702740c9f" width="46">
+					<columnHeader height="55" rowSpan="5" style="Table_CH">
+						<element kind="staticText" uuid="e9e774eb-9662-49c6-8113-2c84a23e6d7c" x="0" y="0" width="46" height="55" forecolor="#7F7F7F" fontName="DejaVu Serif" fontSize="6.0" hTextAlign="Center" vTextAlign="Top">
+							<paragraph lineSpacing="Fixed" lineSpacingSize="5.0" spacingBefore="0" spacingAfter="0"/>
+							<text><![CDATA[%
+ОСВОЕНИЯ
+АГЕНТСКАЯ СХЕМА]]></text>
+						</element>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+						<box style="Table_CH">
+							<pen lineColor="#7F7F7F"/>
+						</box>
+					</columnHeader>
+					<detailCell height="0" style="Table_TD"/>
+					<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column5"/>
+				</column>
+				<column kind="group" uuid="3bc4b6fd-f2ea-401b-b972-99f0ed16aed6" width="74">
+					<columnHeader height="33" rowSpan="3" style="Table_CH">
+						<element kind="staticText" uuid="1feafa47-a67e-498f-adf0-0a735e11b202" x="0" y="0" width="74" height="33" forecolor="#7F7F7F" fontName="DejaVu Serif" fontSize="6.0" hTextAlign="Center" vTextAlign="Top">
+							<paragraph lineSpacing="Fixed" lineSpacingSize="5.0" spacingBefore="0" spacingAfter="0"/>
+							<text><![CDATA[ОСВОЕНИЕ СВЕРХ ЛИМИТА АГЕНТСКАЯ СХЕМА]]></text>
+						</element>
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+						<property name="com.jaspersoft.studio.unit.width" value="px"/>
+						<box style="Table_CH">
+							<pen lineColor="#7F7F7F"/>
+						</box>
+					</columnHeader>
+					<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [1]"/>
+					<column kind="single" uuid="144fcb48-7390-415e-8dc4-c619e009a4c7" width="74">
+						<columnHeader height="22" rowSpan="2" style="Table_CH">
+							<element kind="staticText" uuid="14ffec39-3005-4c62-98e4-e88bfbcdceba" x="0" y="0" width="74" height="22" forecolor="#FF0000" fontName="DejaVu Serif" fontSize="6.0" hTextAlign="Center" vTextAlign="Top">
+								<paragraph lineSpacing="Fixed" lineSpacingSize="5.0" spacingBefore="0" spacingAfter="0"/>
+								<text><![CDATA[вне инвестиционной программы]]></text>
+							</element>
+							<property name="com.jaspersoft.studio.unit.height" value="px"/>
+							<box style="Table_CH">
+								<pen lineColor="#7F7F7F"/>
+							</box>
+						</columnHeader>
+						<detailCell height="0" style="Table_TD"/>
+						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column6"/>
+					</column>
+				</column>
+				<column kind="group" uuid="cec3ce27-21b5-41d2-b099-ef009606c1a9" width="699">
+					<columnHeader height="11" rowSpan="1" style="Table_CH">
+						<element kind="staticText" uuid="a0fb1eb7-fa43-4dab-9e68-57ff319212a0" mode="Opaque" x="0" y="0" width="699" height="11" forecolor="#7F7F7F" backcolor="#FCD5B5" fontName="DejaVu Serif" fontSize="6.0" hTextAlign="Center" vTextAlign="Top">
+							<paragraph lineSpacing="Fixed" lineSpacingSize="5.0" spacingBefore="0" spacingAfter="0"/>
+							<text><![CDATA[ИСПОЛНЕНИЕ ПЛАНОВ АГЕНТОВ ПО ОСВОЕНИЮ ЛИМИТОВ ЗА ПЕРИОД С НАЧАЛА ГОДА (текущий месяц и два предшествующих)]]></text>
+						</element>
+						<box style="Table_CH">
+							<pen lineColor="#7F7F7F"/>
+						</box>
+					</columnHeader>
+					<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [10]"/>
+					<column kind="single" uuid="0e4d03d8-9459-4f05-be10-fb04dc682878" width="52">
+						<columnHeader height="44" rowSpan="4" style="Table_CH">
+							<element kind="staticText" uuid="c49bc3f3-1ef5-4cf4-9511-55fb3964a83c" x="0" y="0" width="52" height="44" forecolor="#7F7F7F" fontName="DejaVu Serif" fontSize="6.0" hTextAlign="Center" vTextAlign="Top">
+								<paragraph lineSpacing="Fixed" lineSpacingSize="5.0" spacingBefore="0" spacingAfter="0"/>
+								<text><![CDATA[МЕСЯЦ]]></text>
+								<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+							</element>
+							<property name="com.jaspersoft.studio.unit.width" value="px"/>
+							<box style="Table_CH">
+								<pen lineColor="#7F7F7F"/>
+							</box>
+						</columnHeader>
+						<detailCell height="0" style="Table_TD"/>
+						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column7"/>
+					</column>
+					<column kind="group" uuid="2745cddf-d493-41a5-8fe7-ac72e6f7f7d3" width="436">
+						<columnHeader height="11" rowSpan="1" style="Table_CH">
+							<element kind="staticText" uuid="08f289e1-4cf5-45ac-b98a-844b19223a18" mode="Opaque" x="0" y="0" width="436" height="11" forecolor="#7F7F7F" backcolor="#FDEADA" fontName="DejaVu Serif" fontSize="6.0" hTextAlign="Center" vTextAlign="Top">
+								<paragraph lineSpacing="Fixed" lineSpacingSize="5.0" spacingBefore="0" spacingAfter="0"/>
+								<text><![CDATA[ С НАЧАЛА ГОДА НАРАСТАЮЩИМ ИТОГОМ]]></text>
+							</element>
+							<box style="Table_CH">
+								<pen lineColor="#7F7F7F"/>
+							</box>
+						</columnHeader>
+						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [6]"/>
+						<column kind="single" uuid="c7e8cf7d-8ba6-4039-9f0b-9504e5cc5979" width="87">
+							<columnHeader height="33" rowSpan="3" style="Table_CH">
+								<element kind="staticText" uuid="e856e4b2-e7e5-4986-a149-67bce558a482" x="0" y="0" width="87" height="33" forecolor="#7F7F7F" fontName="DejaVu Serif" fontSize="6.0" hTextAlign="Center" vTextAlign="Top">
+									<paragraph lineSpacing="Fixed" lineSpacingSize="5.0" spacingBefore="0" spacingAfter="0"/>
+									<text><![CDATA[ПЛАН, В РУБ]]></text>
+									<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+								</element>
+								<property name="com.jaspersoft.studio.unit.height" value="px"/>
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<box style="Table_CH">
+									<pen lineColor="#7F7F7F"/>
+								</box>
+							</columnHeader>
+							<detailCell height="0" style="Table_TD"/>
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column8"/>
+						</column>
+						<column kind="single" uuid="ca9ef575-7445-4789-9c6b-151b1e796f13" width="80">
+							<columnHeader height="33" rowSpan="3" style="Table_CH">
+								<element kind="staticText" uuid="e325f81a-9cbf-401c-a320-2024efd88fc6" x="0" y="0" width="80" height="33" forecolor="#7F7F7F" fontName="DejaVu Serif" fontSize="6.0" hTextAlign="Center" vTextAlign="Top">
+									<paragraph lineSpacing="Fixed" lineSpacingSize="5.0" spacingBefore="0" spacingAfter="0"/>
+									<text><![CDATA[ИСПОЛНЕНО, В РУБ]]></text>
+								</element>
+								<property name="com.jaspersoft.studio.unit.height" value="px"/>
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<box style="Table_CH">
+									<pen lineColor="#7F7F7F"/>
+								</box>
+							</columnHeader>
+							<detailCell height="0" style="Table_TD"/>
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column9"/>
+						</column>
+						<column kind="single" uuid="4afd1530-62af-47d6-9c8b-c07542e898bd" width="49">
+							<columnHeader height="33" rowSpan="3" style="Table_CH">
+								<element kind="staticText" uuid="5787bce4-e198-457b-94bb-d931eabc8a76" x="0" y="0" width="49" height="33" forecolor="#7F7F7F" fontName="DejaVu Serif" fontSize="6.0" hTextAlign="Center" vTextAlign="Top">
+									<paragraph lineSpacing="Fixed" lineSpacingSize="5.0" spacingBefore="0" spacingAfter="0"/>
+									<text><![CDATA[ИСПОЛНЕНО, В %]]></text>
+								</element>
+								<property name="com.jaspersoft.studio.unit.height" value="px"/>
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<box style="Table_CH">
+									<pen lineColor="#7F7F7F"/>
+								</box>
+							</columnHeader>
+							<detailCell height="0" style="Table_TD"/>
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column10"/>
+						</column>
+						<column kind="single" uuid="b99cd24a-1eb7-4637-a633-e33177d9a097" width="71">
+							<columnHeader height="33" rowSpan="3" style="Table_CH">
+								<element kind="staticText" uuid="1b0378d4-7128-4bfc-9960-001a8db1b2b9" x="0" y="0" width="71" height="33" forecolor="#7F7F7F" fontName="DejaVu Serif" fontSize="6.0" hTextAlign="Center" vTextAlign="Top">
+									<paragraph lineSpacing="Fixed" lineSpacingSize="5.0" spacingBefore="0" spacingAfter="0"/>
+									<text><![CDATA[ВЫПОЛНЕНО СВЕРХ ПЛАНА,  В РУБ]]></text>
+								</element>
+								<property name="com.jaspersoft.studio.unit.height" value="px"/>
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<box style="Table_CH">
+									<pen lineColor="#7F7F7F"/>
+								</box>
+							</columnHeader>
+							<detailCell height="0" style="Table_TD"/>
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column11"/>
+						</column>
+						<column kind="single" uuid="dde59303-85d1-4f6d-947c-4bc203b200e6" width="80">
+							<columnHeader height="33" rowSpan="3" style="Table_CH">
+								<element kind="staticText" uuid="474ac741-31e8-40c4-8db0-5ff45160015b" x="0" y="0" width="80" height="33" forecolor="#7F7F7F" fontName="DejaVu Serif" fontSize="6.0" hTextAlign="Center" vTextAlign="Top">
+									<paragraph lineSpacing="Fixed" lineSpacingSize="5.0" spacingBefore="0" spacingAfter="0"/>
+									<text><![CDATA[ВЫПОЛНЕНО С УЧЕТОМ СВЕРХ ПЛАНОВОГО,  В РУБ]]></text>
+								</element>
+								<property name="com.jaspersoft.studio.unit.height" value="px"/>
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<box style="Table_CH">
+									<pen lineColor="#7F7F7F"/>
+								</box>
+							</columnHeader>
+							<detailCell height="0" style="Table_TD"/>
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column12"/>
+						</column>
+						<column kind="single" uuid="cb35e917-5e69-4433-b1e0-073806773cee" width="69">
+							<columnHeader height="33" rowSpan="3" style="Table_CH">
+								<element kind="staticText" uuid="f345e5b9-c1d0-44ef-91b4-22ddffa0be78" x="0" y="0" width="69" height="33" forecolor="#7F7F7F" fontName="DejaVu Serif" fontSize="6.0" hTextAlign="Center" vTextAlign="Top">
+									<paragraph lineSpacing="Fixed" lineSpacingSize="5.0" spacingBefore="0" spacingAfter="0"/>
+									<text><![CDATA[ВЫПОЛНЕНО С УЧЕТОМ СВЕРХ ПЛАНОВОГО,  В %]]></text>
+								</element>
+								<property name="com.jaspersoft.studio.unit.height" value="px"/>
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<box style="Table_CH">
+									<pen lineColor="#7F7F7F"/>
+								</box>
+							</columnHeader>
+							<detailCell height="0" style="Table_TD"/>
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column13"/>
+						</column>
+					</column>
+					<column kind="group" uuid="a26d8025-81ce-43f7-b51f-e42b1f5152a6" width="211">
+						<columnHeader height="11" rowSpan="1" style="Table_CH">
+							<element kind="staticText" uuid="11f54a7d-c8a5-4b1c-9d3e-bead65f90e7d" mode="Opaque" x="0" y="0" width="211" height="11" forecolor="#7F7F7F" backcolor="#F3F0F6" fontName="DejaVu Serif" fontSize="6.0" hTextAlign="Center" vTextAlign="Top">
+								<paragraph lineSpacing="Fixed" lineSpacingSize="5.0" spacingBefore="0" spacingAfter="0"/>
+								<text><![CDATA[ В ТОМ ЧИСЛЕ ЗА МЕСЯЦ]]></text>
+							</element>
+							<box style="Table_CH">
+								<pen lineColor="#7F7F7F"/>
+							</box>
+						</columnHeader>
+						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [3]"/>
+						<column kind="single" uuid="7c822348-c38e-4511-9886-c61b2221f4fb" width="77">
+							<columnHeader height="33" rowSpan="3" style="Table_CH">
+								<element kind="staticText" uuid="02a0aea8-8d4b-4c92-b4e5-fdc6666e5489" x="0" y="0" width="77" height="33" forecolor="#7F7F7F" fontName="DejaVu Serif" fontSize="6.0" hTextAlign="Center" vTextAlign="Top">
+									<paragraph lineSpacing="Fixed" lineSpacingSize="5.0" spacingBefore="0" spacingAfter="0"/>
+									<text><![CDATA[ПЛАН, В РУБ]]></text>
+								</element>
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<box style="Table_CH">
+									<pen lineColor="#7F7F7F"/>
+								</box>
+							</columnHeader>
+							<detailCell height="0" style="Table_TD"/>
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column14"/>
+						</column>
+						<column kind="single" uuid="8feb147f-c490-4bfd-a7c6-0426cb1fd41d" width="85">
+							<columnHeader height="33" rowSpan="3" style="Table_CH">
+								<element kind="staticText" uuid="de9897bd-1678-4974-b276-4398889b934a" x="0" y="0" width="85" height="33" forecolor="#7F7F7F" fontName="DejaVu Serif" fontSize="6.0" hTextAlign="Center" vTextAlign="Top">
+									<paragraph lineSpacing="Fixed" lineSpacingSize="5.0" spacingBefore="0" spacingAfter="0"/>
+									<text><![CDATA[ИСПОЛНЕНО, В РУБ]]></text>
+								</element>
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<box style="Table_CH">
+									<pen lineColor="#7F7F7F"/>
+								</box>
+							</columnHeader>
+							<detailCell height="0" style="Table_TD"/>
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column15"/>
+						</column>
+						<column kind="single" uuid="9923faba-c20f-47c8-ba99-88f7523cddb7" width="49">
+							<columnHeader height="33" rowSpan="3" style="Table_CH">
+								<element kind="staticText" uuid="8f0a270c-0611-443d-94b1-5d925e751026" x="0" y="0" width="49" height="33" forecolor="#7F7F7F" fontName="DejaVu Serif" fontSize="6.0" hTextAlign="Center" vTextAlign="Top">
+									<paragraph lineSpacing="Fixed" lineSpacingSize="5.0" spacingBefore="0" spacingAfter="0"/>
+									<text><![CDATA[ИСПОЛНЕНО, В %]]></text>
+								</element>
+								<property name="com.jaspersoft.studio.unit.height" value="px"/>
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<box style="Table_CH">
+									<pen lineColor="#7F7F7F"/>
+								</box>
+							</columnHeader>
+							<detailCell height="0" style="Table_TD"/>
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column16"/>
+						</column>
+					</column>
+				</column>
+			</component>
+			<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.VerticalRowLayout"/>
+			<property name="com.jaspersoft.studio.table.style.table_header" value="Table_TH"/>
+			<property name="com.jaspersoft.studio.table.style.column_header" value="Table_CH"/>
+			<property name="com.jaspersoft.studio.table.style.detail" value="Table_TD"/>
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<property name="com.jaspersoft.studio.unit.y" value="px"/>
+		</element>
+		<property name="com.jaspersoft.studio.unit.height" value="px"/>
+	</pageHeader>
+	<detail>
+		<band splitType="Stretch"/>
+	</detail>
+	<pageFooter height="20" splitType="Stretch">
+		<element kind="textField" uuid="c6d7e8f9-a0b1-2345-0123-567890123456" x="0" y="0" width="300" height="20" fontName="DejaVu Serif" fontSize="6.0" pattern="dd.MM.yyyy HH:mm" hTextAlign="Left" vTextAlign="Bottom">
+			<expression><![CDATA["Страница " + $V{PAGE_NUMBER}]]></expression>
+		</element>
+		<element kind="textField" uuid="d7e8f9a0-b1c2-3456-1234-678901234567" x="863" y="0" width="300" height="20" fontName="DejaVu Serif" fontSize="6.0" hTextAlign="Right" vTextAlign="Bottom">
+			<expression><![CDATA[new java.util.Date()]]></expression>
+		</element>
+	</pageFooter>
+	<lastPageFooter/>
+	<summary/>
+	<noData/>
+</jasperReport>

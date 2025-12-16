@@ -13,6 +13,7 @@
 
 - **[Справочник по системе ссылок](project-documentation-rules-reference.md)** - таблица форматов ссылок, примеры, правила формирования ID
 - **[Система структурной нумерации](project-documentation-rules-structural-numbering.md)** - правила нумерации модулей, компонентов, классов
+- **Правила отчётов JasperReports:** `code/femsq-backend/femsq-reports/src/main/resources/reports/embedded/REPORTING_RULES.md` (обязательно соблюдать при переносе/разработке отчётов)
 
 ## Структура документации
 

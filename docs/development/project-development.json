@@ -9,7 +9,7 @@
     
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0037",
+      "nextTaskId": "0038",
       "items": {
         "0001": {
           "task": {
@@ -1273,6 +1273,198 @@
               },
               "created": "2025-12-03",
               "lastUpdated": "2025-12-03T16:42:31+03:00"
+            }
+          }
+        },
+        
+        "0037": {
+          "task": {
+            "displayName": "Заполнение шести таблиц данными из процедуры spMstrg_2408 (completed, high). № 0037",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Создана модифицированная процедура ags.spMstrg_2408_SaveToTables",
+                "Реализовано заполнение всех 6 таблиц результатами",
+                "Все таблицы заполнены данными и протестированы",
+                "Целостность данных подтверждена",
+                "Документация обновлена"
+              ],
+              "description": "Реализация заполнения шести таблиц (spMstrg_2408_ResultSet1-6) данными из процедуры spMstrg_2408. Процедура сохраняет результаты в таблицы вместо возврата рекордсетов, что позволяет обойти ограничение таймаута DBHub (15 секунд).",
+              "links": {
+                "projectDocsRefs": [
+                  "solution:spMstrg_2408_execution"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-12-04",
+              "lastUpdated": "2025-12-04T18:30:00+03:00"
+            }
+          }
+        },
+        
+        "0037.1": {
+          "task": {
+            "displayName": "Реализация заполнения ResultSet1 (completed, high). № 0037.1",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Создана таблица ags.spMstrg_2408_ResultSet1",
+                "Реализован INSERT INTO для ResultSet1",
+                "Таблица заполнена 12693 записями",
+                "Данные проверены и соответствуют ожидаемой структуре"
+              ],
+              "description": "Реализация заполнения ResultSet1 - полный набор данных из функции fnIpgChRsltCstUtlPercentBrn_2408 (179 столбцов, 12693 записей)",
+              "links": {
+                "projectDocsRefs": [
+                  "solution:spMstrg_2408_execution"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-12-04",
+              "lastUpdated": "2025-12-04T18:30:00+03:00"
+            }
+          }
+        },
+        
+        "0037.2": {
+          "task": {
+            "displayName": "Реализация заполнения ResultSet2 (completed, high). № 0037.2",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Создана таблица ags.spMstrg_2408_ResultSet2",
+                "Реализован INSERT INTO для ResultSet2 с переупорядоченными столбцами",
+                "Таблица заполнена 12693 записями",
+                "Данные проверены и соответствуют ожидаемой структуре"
+              ],
+              "description": "Реализация заполнения ResultSet2 - переупорядоченные столбцы (ag_, iv_, ia_ в начале, 179 столбцов, 12693 записей)",
+              "links": {
+                "projectDocsRefs": [
+                  "solution:spMstrg_2408_execution"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-12-04",
+              "lastUpdated": "2025-12-04T18:30:00+03:00"
+            }
+          }
+        },
+        
+        "0037.3": {
+          "task": {
+            "displayName": "Реализация заполнения ResultSet3 (completed, high). № 0037.3",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Создана таблица ags.spMstrg_2408_ResultSet3",
+                "Реализован INSERT INTO для ResultSet3 со столбцами без ag_, iv_, ia_",
+                "Таблица заполнена 12693 записями",
+                "Данные проверены и соответствуют ожидаемой структуре"
+              ],
+              "description": "Реализация заполнения ResultSet3 - столбцы без префиксов ag_, iv_, ia_ (np_, uk_, oh_ и общие, 220 столбцов, 12693 записей)",
+              "links": {
+                "projectDocsRefs": [
+                  "solution:spMstrg_2408_execution"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-12-04",
+              "lastUpdated": "2025-12-04T18:30:00+03:00"
+            }
+          }
+        },
+        
+        "0037.4": {
+          "task": {
+            "displayName": "Реализация заполнения ResultSet4 (completed, high). № 0037.4",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Создана таблица ags.spMstrg_2408_ResultSet4",
+                "Реализована табличная переменная @TableFnIpgChRsltCstUtlPercentBrnRep01_2408",
+                "Реализован INSERT INTO для ResultSet4 с JOIN для трёх месяцев",
+                "Таблица заполнена 744 записями",
+                "Данные проверены и соответствуют ожидаемой структуре"
+              ],
+              "description": "Реализация заполнения ResultSet4 - данные с JOIN для текущего, предыдущего и предпредыдущего месяцев (44 столбца, 744 записи)",
+              "links": {
+                "projectDocsRefs": [
+                  "solution:spMstrg_2408_execution"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-12-04",
+              "lastUpdated": "2025-12-04T18:30:00+03:00"
+            }
+          }
+        },
+        
+        "0037.5": {
+          "task": {
+            "displayName": "Реализация заполнения ResultSet5 (completed, high). № 0037.5",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Создана таблица ags.spMstrg_2408_ResultSet5",
+                "Реализован INSERT INTO для ResultSet5 с фильтрацией и UNION",
+                "Таблица заполнена 32 записями",
+                "Данные проверены и отсортированы правильно"
+              ],
+              "description": "Реализация заполнения ResultSet5 - данные с фильтрацией WHERE cstAgPnCode = 'всего' и UNION с разделительной строкой (44 столбца, 32 записи)",
+              "links": {
+                "projectDocsRefs": [
+                  "solution:spMstrg_2408_execution"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-12-04",
+              "lastUpdated": "2025-12-04T18:30:00+03:00"
+            }
+          }
+        },
+        
+        "0037.6": {
+          "task": {
+            "displayName": "Реализация заполнения ResultSet6 (completed, high). № 0037.6",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Создана таблица ags.spMstrg_2408_ResultSet6",
+                "Реализована табличная переменная @TableFnIpgChRsltCstUtlPercentBrnRepSrc01_2408",
+                "Реализован INSERT INTO для ResultSet6 с источниками освоения",
+                "Таблица заполнена 32 записями",
+                "Данные проверены и отсортированы правильно"
+              ],
+              "description": "Реализация заполнения ResultSet6 - данные с источниками освоения (ag_accepted, ag_agFeeAccepted, np_accepted и т.д.) с фильтрацией и UNION (51 столбец, 32 записи)",
+              "links": {
+                "projectDocsRefs": [
+                  "solution:spMstrg_2408_execution"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": []
+              },
+              "created": "2025-12-04",
+              "lastUpdated": "2025-12-04T18:30:00+03:00"
             }
           }
         }

@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2025-11-28",
+  "lastUpdated": "2025-12-05",
   "description": "Метаданные встроенных отчётов FEMSQ (базовая поставка)",
   "reports": [
     {
@@ -17,6 +17,15 @@
           "type": "subreport"
         }
       ]
+    },
+    {
+      "id": "mstrgAg_23_Branch_q2m_2408_25",
+      "name": "Исполнение плана капитального строительства",
+      "category": "mstrg",
+      "description": "Отчёт по исполнению плана капитального строительства по отдельным программам и подразделениям",
+      "tags": ["mstrg", "capital-construction", "execution", "programs", "investment"],
+      "hasSubreports": false,
+      "format": "A3 Landscape"
     }
   ],
   "categories": [
@@ -24,11 +33,16 @@
       "id": "contractors",
       "name": "Контрагенты",
       "description": "Отчёты по контрагентам"
+    },
+    {
+      "id": "mstrg",
+      "name": "Капитальное строительство",
+      "description": "Отчёты по капитальному строительству и инвестиционным программам"
     }
   ],
   "statistics": {
-    "totalReports": 1,
+    "totalReports": 2,
     "totalSubreports": 1,
-    "totalCategories": 1
+    "totalCategories": 2
   }
 }

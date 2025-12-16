@@ -1,0 +1,48 @@
+{
+  "id": "mstrgAg_23_Branch_q2m_2408_25",
+  "version": "1.0.0",
+  "name": "Исполнение плана капитального строительства",
+  "description": "Отчёт по исполнению плана капитального строительства по отдельным программам и подразделениям",
+  "category": "mstrg",
+  "author": "Александр",
+  "created": "2025-12-05",
+  "lastModified": "2025-12-15",
+  "files": {
+    "template": "mstrgAg_23_Branch_q2m_2408_25.jrxml",
+    "compiled": null,
+    "thumbnail": null
+  },
+  "parameters": [
+    {
+      "name": "SCHEMA_NAME",
+      "type": "string",
+      "label": "Схема БД",
+      "description": "Имя схемы базы данных (по умолчанию: ags)",
+      "required": false,
+      "defaultValue": "ags"
+    },
+    {
+      "name": "ipgCh",
+      "type": "integer",
+      "label": "Код инвестиционной программы",
+      "description": "Код инвестиционной программы для фильтрации данных",
+      "required": true,
+      "defaultValue": "15"
+    },
+    {
+      "name": "MounthEndDate",
+      "type": "date",
+      "label": "Дата окончания периода",
+      "description": "Дата окончания отчётного периода в формате yyyy-MM-dd",
+      "required": true,
+      "defaultValue": "2025-07-31"
+    }
+  ],
+  "uiIntegration": {
+    "showInReportsList": true,
+    "contextMenus": []
+  },
+  "tags": ["mstrg", "capital-construction", "execution", "programs", "investment"],
+  "accessLevel": "user"
+}
+

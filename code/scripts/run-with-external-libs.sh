@@ -38,6 +38,17 @@ echo "Thin JAR: $THIN_JAR"
 echo "Библиотеки: $LIB_DIR ($LIB_COUNT файлов)"
 echo ""
 
+# Создаём директорию для логов
+mkdir -p logs
+
+# Генерируем временную метку для логов
+TIMESTAMP=$(date +"%y-%m%d-%H%M")
+LOG_FILE="logs/app_${TIMESTAMP}.log"
+
 # Запуск
+# В Spring Boot 3.x -Dloader.path не работает, используем -cp с wildcard
 echo -e "${YELLOW}Запуск приложения...${NC}"
-java -Dloader.path="$LIB_DIR" -jar "$THIN_JAR"
+echo -e "${YELLOW}Логи сохраняются в: $LOG_FILE${NC}"
+echo -e "${YELLOW}Для просмотра логов в другом терминале: tail -f $LOG_FILE${NC}"
+echo ""
+java -cp "$THIN_JAR:$LIB_DIR/*" org.springframework.boot.loader.launch.JarLauncher 2>&1 | tee "$LOG_FILE"

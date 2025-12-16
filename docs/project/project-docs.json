@@ -1058,6 +1058,135 @@
                 "main": "docs",
                 "journal": "docs/journal/project-journal.json"
             }
+        },
+        "reports": {
+            "description": "Система отчётов JasperReports",
+            "categories": [
+                {
+                    "id": "sample",
+                    "name": "Примеры",
+                    "description": "Примеры отчётов для тестирования",
+                    "reportCount": 2,
+                    "created": "2025-11-24"
+                },
+                {
+                    "id": "mstrg",
+                    "name": "Капитальное строительство",
+                    "description": "Отчёты по мониторингу и контролю капитального строительства",
+                    "reportCount": 1,
+                    "created": "2025-12-05"
+                }
+            ],
+            "implemented": [
+                {
+                    "id": "report:my-new-report",
+                    "name": "Пример отчёта с подотчётом",
+                    "category": "sample",
+                    "description": "Пример отчёта для демонстрации возможностей JasperReports",
+                    "status": "completed",
+                    "priority": "low",
+                    "created": "2025-11-24",
+                    "lastModified": "2025-11-24",
+                    "version": "1.0.0"
+                },
+                {
+                    "id": "report:mstrgAg_23_Branch_q2m_2408_25",
+                    "name": "Исполнение плана капитального строительства",
+                    "category": "mstrg",
+                    "description": "Отчёт по исполнению плана капитального строительства по отдельным программам и подразделениям",
+                    "status": "completed",
+                    "priority": "high",
+                    "created": "2025-12-05",
+                    "lastModified": "2025-12-16",
+                    "version": "1.0.0",
+                    "files": {
+                        "jrxml": "code/femsq-backend/femsq-reports/src/main/resources/reports/embedded/mstrgAg_23_Branch_q2m_2408_25.jrxml",
+                        "metadata": "code/femsq-backend/femsq-reports/src/main/resources/reports/embedded/mstrgAg_23_Branch_q2m_2408_25.json",
+                        "documentation": "docs/development/technical/reports/mstrgAg_23_Branch_q2m_2408_25.md"
+                    },
+                    "dataSource": {
+                        "table": "ags.spMstrg_2408_ResultSet5",
+                        "procedure": "ags.spMstrg_2408",
+                        "recordCount": 32,
+                        "columnCount": 44
+                    },
+                    "parameters": [
+                        {
+                            "name": "ipgCh",
+                            "type": "integer",
+                            "required": true,
+                            "description": "Код инвестиционной программы"
+                        },
+                        {
+                            "name": "MounthEndDate",
+                            "type": "date",
+                            "required": true,
+                            "description": "Дата окончания периода"
+                        }
+                    ],
+                    "formats": ["pdf", "xlsx", "html"],
+                    "features": [
+                        "Условное форматирование (чередование серый/белый, оранжевый для итогов)",
+                        "Трёхуровневые заголовки столбцов",
+                        "Цветовое кодирование по типам (агентская/инвестиционная/укупорка)",
+                        "Группировка по схемам реализации",
+                        "A3 Landscape формат"
+                    ],
+                    "migration": {
+                        "source": "MS Access",
+                        "originalReport": "mstrgAg_23_Branch_q2m_2408_25",
+                        "migrationDate": "2025-12-05",
+                        "status": "completed",
+                        "notes": "Базовая версия (~40% детализации), полностью функциональна"
+                    },
+                    "relatedTasks": ["task:0038"],
+                    "relatedDocuments": [
+                        "docs/development/notes/analysis/access-report-mstrgAg-23-analysis.md",
+                        "docs/development/notes/chats/chat-plan/chat-plan-25-1205-jasper-report-mstrg.md"
+                    ]
+                }
+            ],
+            "statistics": {
+                "totalReports": 3,
+                "byCategory": {
+                    "sample": 2,
+                    "mstrg": 1
+                },
+                "byStatus": {
+                    "completed": 3,
+                    "inProgress": 0
+                },
+                "byFormat": {
+                    "pdf": 3,
+                    "xlsx": 2,
+                    "html": 2
+                }
+            }
+        },
+        "development": {
+            "milestones": [
+                {
+                    "id": "milestone:report-mstrg-01",
+                    "name": "Первый отчёт по капитальному строительству",
+                    "description": "Реализация отчёта mstrgAg_23_Branch_q2m_2408_25 (миграция из Access)",
+                    "status": "completed",
+                    "completedDate": "2025-12-16",
+                    "relatedTasks": ["task:0038"],
+                    "achievements": [
+                        "Миграция отчёта из MS Access в JasperReports",
+                        "Реализация условного форматирования через фоновые прямоугольники",
+                        "Интеграция с Backend API и Frontend",
+                        "Настройка логирования с временными метками",
+                        "Создание Desktop инструментов управления"
+                    ]
+                }
+            ]
         }
+    },
+    "metadata": {
+        "version": "1.1.0",
+        "lastUpdated": "2025-12-16",
+        "updatedBy": "Александр",
+        "updateReason": "Добавлен отчёт mstrgAg_23_Branch_q2m_2408_25, секции reports и development.milestones"
     }
 }
