@@ -1,7 +1,8 @@
 -- =============================================
 -- Модифицированная версия процедуры spMstrg_2408
--- Сохраняет все 6 рекордсетов в таблицы вместо их возврата
+-- Сохраняет все 7 рекордсетов в таблицы вместо их возврата
 -- Создано: 2025-12-04
+-- Обновлено: 2025-12-05 (добавлен ResultSet7, исправлена логика ResultSet6)
 -- =============================================
 
 USE FishEye;
@@ -41,6 +42,7 @@ BEGIN
     TRUNCATE TABLE ags.spMstrg_2408_ResultSet4;
     TRUNCATE TABLE ags.spMstrg_2408_ResultSet5;
     TRUNCATE TABLE ags.spMstrg_2408_ResultSet6;
+    TRUNCATE TABLE ags.spMstrg_2408_ResultSet7;
     
     PRINT @StepName + ' выполнена за ' + CAST(DATEDIFF(MILLISECOND, @StepTime, SYSDATETIME()) AS nvarchar(20)) + ' мс';
     PRINT '';
@@ -828,7 +830,7 @@ BEGIN
                         , ISNULL(p.ag_lim, 0) + ISNULL(p.iv_lim, 0) + ISNULL(p.uk_lim, 0) AS lim
                         , p.ag_lim 
                         , CASE WHEN p.ag_PlFulfillment + p.ag_PlOverFulfillment = 0 THEN NULL ELSE p.ag_PlFulfillment + p.ag_PlOverFulfillment END AS ag_Ful_OverFul
-                        , (p.ag_PlFulfillment + p.ag_PlOverFulfillment)/p.ag_lim AS ag_LimPc
+                        , CASE WHEN p.ag_lim IS NULL OR p.ag_lim = 0 THEN NULL ELSE (p.ag_PlFulfillment + p.ag_PlOverFulfillment)/p.ag_lim END AS ag_LimPc
                         , CASE WHEN p.ag_PlOverLimit = 0 THEN NULL ELSE p.ag_PlOverLimit END AS ag_PlOverLimit_, p.iv_lim, p.uk_lim
                         , CASE WHEN p.ag_PlAccum = 0 THEN NULL ELSE p.ag_PlAccum END AS ag_PlAccum
                         , CASE WHEN p.ag_PlFulfillment = 0 THEN NULL ELSE p.ag_PlFulfillment END AS ag_PlFulfillment
@@ -984,9 +986,9 @@ BEGIN
     PRINT 'Записей сохранено: ' + CAST(@@ROWCOUNT AS nvarchar(20));
     PRINT '';
     
-    -- РЕКОРДСЕТ 6: Данные из @TableFnIpgChRsltCstUtlPercentBrnRepSrc01_2408 (с источниками освоения)
+    -- РЕКОРДСЕТ 6: Данные из @TableFnIpgChRsltCstUtlPercentBrnRepSrc01_2408 (полный набор, без фильтрации)
     SET @StepTime = SYSDATETIME();
-    SET @StepName = 'Сохранение рекордсета 6 (данные с источниками освоения)';
+    SET @StepName = 'Сохранение рекордсета 6 (данные с источниками освоения, полный набор)';
     PRINT @StepName + '...';
     
     -- Объявляем табличную переменную для рекордсета 6
@@ -1054,7 +1056,7 @@ BEGIN
                         , ISNULL(p.cstAgPnCode, 'всего') AS cstAgPnCode, c.cstapCstName
                         , ISNULL(p.ag_lim, 0) + ISNULL(p.iv_lim, 0) + ISNULL(p.uk_lim, 0) AS lim, p.ag_lim
                         , CASE WHEN p.ag_PlFulfillment + p.ag_PlOverFulfillment = 0 THEN NULL ELSE p.ag_PlFulfillment + p.ag_PlOverFulfillment END AS ag_Ful_OverFul
-                        , (p.ag_PlFulfillment + p.ag_PlOverFulfillment)/p.ag_lim AS ag_LimPc
+                        , CASE WHEN p.ag_lim IS NULL OR p.ag_lim = 0 THEN NULL ELSE (p.ag_PlFulfillment + p.ag_PlOverFulfillment)/p.ag_lim END AS ag_LimPc
                         , CASE WHEN p.ag_PlOverLimit = 0 THEN NULL ELSE p.ag_PlOverLimit END AS ag_PlOverLimit_
                         , p.iv_lim, p.uk_lim, CASE WHEN p.ag_PlAccum = 0 THEN NULL ELSE p.ag_PlAccum END AS ag_PlAccum
                         , CASE WHEN p.ag_PlFulfillment = 0 THEN NULL ELSE p.ag_PlFulfillment END AS ag_PlFulfillment
@@ -1080,8 +1082,35 @@ BEGIN
         )  AS z
     ORDER BY z.ogNmSort, z.branchName, z.cstAgPnCodeSort;
     
-    -- Сохраняем данные из табличной переменной в ResultSet6 с JOIN и UNION
+    -- Сохраняем данные из табличной переменной в ResultSet6 (полный набор, без фильтрации)
     INSERT INTO ags.spMstrg_2408_ResultSet6
+        (ipgSh, limSort, ogNm, branchName, lim, ag_lim, ag_Ful_OverFul, ag_LimPc, ag_PlOverLimit_, iv_lim, uk_lim
+        , ag_PlAccum, ag_PlFulfillment, ag_PlPz, ag_PlOverFulfillment, ag_PlPercent, ag_PlFulfillmentAll
+        , ag_Pl_M, ag_acceptedTtl_M, ag_acceptedNot, ag_PlPz_M, mn, cstAgPnCode
+        , ag_accepted, ag_acceptedAccum, ag_agFeeAccepted, ag_agFeeAcceptedAccum, ag_acceptedRalp, ag_acceptedRalpAccum
+        , ag_storageSum, ag_storageSumAccum, ag_cctSum, ag_cctSumAccum, ag_MnrlSum, ag_MnrlSumAccum, np_lim
+        , np_iShKey, np_accepted, np_acceptedAccum, np_agFeeAccepted, np_agFeeAcceptedAccum, np_acceptedRalp, np_acceptedRalpAccum
+        , np_storageSum, np_storageSumAccum, np_cctSum, np_cctSumAccum, np_MnrlSum, np_MnrlSumAccum, np_acceptedTtl, np_acceptedTtlAccum)
+    SELECT 
+        ipgSh, NULL as limSort, ogNm, branchName, lim, ag_lim, ag_Ful_OverFul, ag_LimPc, ag_PlOverLimit_, iv_lim, uk_lim
+        , ag_PlAccum, ag_PlFulfillment, ag_PlPz, ag_PlOverFulfillment, ag_PlPercent, ag_PlFulfillmentAll
+        , ag_Pl_M, ag_acceptedTtl_M, ag_acceptedNot, ag_PlPz_M, mn, cstAgPnCode
+        , ag_accepted, ag_acceptedAccum, ag_agFeeAccepted, ag_agFeeAcceptedAccum, ag_acceptedRalp, ag_acceptedRalpAccum
+        , ag_storageSum, ag_storageSumAccum, ag_cctSum, ag_cctSumAccum, ag_MnrlSum, ag_MnrlSumAccum, np_lim
+        , np_iShKey, np_accepted, np_acceptedAccum, np_agFeeAccepted, np_agFeeAcceptedAccum, np_acceptedRalp, np_acceptedRalpAccum
+        , np_storageSum, np_storageSumAccum, np_cctSum, np_cctSumAccum, np_MnrlSum, np_MnrlSumAccum, np_acceptedTtl, np_acceptedTtlAccum
+    FROM @TableFnIpgChRsltCstUtlPercentBrnRepSrc01_2408;
+    
+    PRINT @StepName + ' выполнена за ' + CAST(DATEDIFF(MILLISECOND, @StepTime, SYSDATETIME()) AS nvarchar(20)) + ' мс';
+    PRINT 'Записей сохранено: ' + CAST(@@ROWCOUNT AS nvarchar(20));
+    PRINT '';
+    
+    -- РЕКОРДСЕТ 7: Данные из @TableFnIpgChRsltCstUtlPercentBrnRepSrc01_2408 с фильтрацией WHERE cstAgPnCode = 'всего' и UNION
+    SET @StepTime = SYSDATETIME();
+    SET @StepName = 'Сохранение рекордсета 7 (данные с фильтрацией "всего" и UNION)';
+    PRINT @StepName + '...';
+    
+    INSERT INTO ags.spMstrg_2408_ResultSet7
     SELECT  
         CASE WHEN o.ogNm = 'итого' THEN 'а' ELSE o.ipgSh END as ipgSh, lmm.lim as limSort, 
         CASE WHEN o.branchName IS NULL THEN o.ogNm ELSE NULL END as ogNm,
