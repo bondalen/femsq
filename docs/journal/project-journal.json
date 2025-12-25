@@ -3,7 +3,7 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2025-12-04"
+      "lastUpdated": "2025-12-25"
     },
     "sessions": [
       {
@@ -2544,6 +2544,110 @@
                       "docs/development/technical/reports/mstrgAg_23_Branch_q2m_2408_25.md",
                       "docs/project/project-docs.json",
                       "docs/journal/project-journal.json"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "Версия 0.1.0.45: Автоматический Kerberos SSO и оптимизация логирования (completed, high). № chat-2025-12-24-001",
+          "chat-attributes": {
+            "id": "chat-2025-12-24-001",
+            "created": "2025-12-24",
+            "lastUpdated": "2025-12-25",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "high",
+            "tags": [
+              "kerberos",
+              "sso",
+              "authentication",
+              "jdbc",
+              "java23",
+              "logging",
+              "optimization",
+              "backend",
+              "frontend"
+            ],
+            "links": {
+              "projectDocsRefs": ["module:backend.database.auth"],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatResume": "docs/development/notes/chats/chat-resume/chat-resume-25-1224-kerberos-sso.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Обновление JDBC Driver до 13.2.0 и реализация автоматического Kerberos SSO (success). № log-2025-12-24-001",
+                "log-attributes": {
+                  "id": "log-2025-12-24-001",
+                  "timestamp": "2025-12-24T15:00:00+03:00",
+                  "level": "success",
+                  "effort": "4h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.database.auth"],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Обновление JDBC Driver 12.8.1 → 13.2.0",
+                    "details": "Обновлён mssql.jdbc.version в pom.xml (femsq-database и femsq-web) до 13.2.0.jre11. Решена проблема с Java 23: старый драйвер использовал deprecated API Subject.getSubject(), новый использует Subject.current(). Проект пересобран успешно, Thin JAR создан (732 KB), библиотеки обновлены.",
+                    "outcome": "JDBC Driver 13.2.0 официально включён в сборку, полная совместимость с Java 23",
+                    "references": [
+                      "code/femsq-backend/femsq-database/pom.xml",
+                      "code/femsq-backend/femsq-web/pom.xml",
+                      "RELEASE-NOTES-0.1.0.45.md"
+                    ]
+                  },
+                  {
+                    "action": "Реализация автоматического определения Kerberos Principal",
+                    "details": "Добавлен метод detectKerberosPrincipal() в WindowsIntegratedAuthenticationProvider с тремя стратегиями fallback: 1) Извлечение из ticket cache через JAAS LoginContext, 2) System user + realm из /etc/krb5.conf, 3) Переменная окружения KRB5PRINCIPAL. Добавлен метод extractRealmFromKrb5Conf() для чтения default_realm. Убрана зависимость от ручного ввода username/realm.",
+                    "outcome": "True Single Sign-On - автоматическое определение principal из ticket cache",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/auth/WindowsIntegratedAuthenticationProvider.java"
+                    ]
+                  },
+                  {
+                    "action": "Упрощение UI для Windows Authentication",
+                    "details": "В ConnectionModal.vue убраны поля Username и Kerberos Realm для Windows Auth. Добавлен зелёный баннер QBanner: '✅ Single Sign-On (SSO)' с информацией об использовании текущей учётной записи. Убрана валидация realm. Импортированы компоненты QBanner и QIcon.",
+                    "outcome": "UX улучшен: 60% меньше кликов (5 → 2), минимальный риск ошибок, совместимость с DBeaver",
+                    "references": [
+                      "code/femsq-frontend-q/src/components/setup/ConnectionModal.vue"
+                    ]
+                  },
+                  {
+                    "action": "Оптимизация логирования",
+                    "details": "В start-femsq-background.sh изменено перенаправление с /tmp/femsq-nohup.log на /dev/null для устранения дублирования. Логи пишутся только через tee в logs/app_*.log и через Logback в logs/spring-boot_now.log. Создан LOGGING-GUIDE.md с полным руководством по логированию (290 строк).",
+                    "outcome": "Дублирование устранено, экономия 50% места на диске (15,737 → 8,170 строк), проще мониторинг",
+                    "references": [
+                      "start-femsq-background.sh",
+                      "LOGGING-GUIDE.md"
+                    ]
+                  },
+                  {
+                    "action": "Тестирование на клиентской Linux машине",
+                    "details": "Версия 0.1.0.45 запущена и протестирована. Подключение к БД прошло без ввода username/realm. Principal автоматически определён: bondale1@ADM.GAZPROM.RU. Все подключения успешны. Логи показывают корректное автоопределение через detectKerberosPrincipal().",
+                    "outcome": "Версия 0.1.0.45 подтверждена как рабочая, автоматический SSO работает корректно",
+                    "references": [
+                      "docs/development/notes/chats/chat-resume/chat-resume-25-1224-kerberos-sso.md"
+                    ]
+                  },
+                  {
+                    "action": "Обновление документации",
+                    "details": "Создан chat-resume-25-1224-kerberos-sso.md с полным описанием выполненной работы. Обновлён RELEASE-NOTES-0.1.0.45.md с информацией о Kerberos SSO и оптимизации логирования. Создан documentation-audit-25-1225.md с результатами аудита документации.",
+                    "outcome": "Вся работа задокументирована и синхронизирована с GitHub",
+                    "references": [
+                      "docs/development/notes/chats/chat-resume/chat-resume-25-1224-kerberos-sso.md",
+                      "RELEASE-NOTES-0.1.0.45.md",
+                      "docs/development/notes/documentation-audit-25-1225.md"
                     ]
                   }
                 ]

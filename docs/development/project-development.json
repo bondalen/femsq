@@ -3,13 +3,13 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2025-12-03T17:30:20+03:00",
+      "lastUpdated": "2025-12-25T15:30:00+03:00",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0038",
+      "nextTaskId": "0040",
       "items": {
         "0001": {
           "task": {
@@ -1465,6 +1465,33 @@
               },
               "created": "2025-12-04",
               "lastUpdated": "2025-12-04T18:30:00+03:00"
+            }
+          }
+        },
+        "0039": {
+          "task": {
+            "displayName": "Версия 0.1.0.45: Автоматический Kerberos SSO и оптимизация логирования (completed, high). № 0039",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "JDBC Driver обновлён до 13.2.0 (Java 23 совместимость)",
+                "Реализован автоматический Kerberos SSO (detectKerberosPrincipal)",
+                "Упрощён UI для Windows Authentication (убраны поля username/realm)",
+                "Оптимизировано логирование (убран дубликат femsq-nohup.log)",
+                "Версия протестирована на клиентской Linux машине",
+                "Документация обновлена (project-docs.json, journal, development)"
+              ],
+              "description": "Обновление до версии 0.1.0.45: поддержка Java 23 через JDBC Driver 13.2.0, реализация True Single Sign-On для Kerberos (автоматическое определение principal), упрощение UX, оптимизация структуры логов",
+              "links": {
+                "projectDocsRefs": ["module:backend.database.auth"],
+                "journalRefs": ["chat:chat-2025-12-24-001", "log:log-2025-12-24-001"],
+                "aiRuleRefs": [],
+                "chatResume": "docs/development/notes/chats/chat-resume/chat-resume-25-1224-kerberos-sso.md"
+              },
+              "created": "2025-12-24",
+              "lastUpdated": "2025-12-25"
             }
           }
         }

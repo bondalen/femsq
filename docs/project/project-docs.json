@@ -6,7 +6,7 @@
             "description": "Cистема работы с контрагентами и объектами при капитальном строительстве на основе БД MS SQL Server FEMSQ (Fish Eye MS SQL Server)",
             "author": "Александр",
             "created": "2025-10-08",
-            "lastUpdated": "2025-12-03",
+            "lastUpdated": "2025-12-25",
             "status": "planning",
             "repository": "https://github.com/bondalen/femsq.git",
             "license": "MIT",
@@ -24,12 +24,33 @@
             "notes": "Приложение работает с уже существующей БД FishEye; создание или миграция схем выполняется сторонними процедурами (DBA).",
             "backend": {
                 "framework": "Spring Boot 3.4.5",
-                "language": "Java 21 LTS",
+                "language": "Java 21 LTS (совместимо с Java 23)",
                 "database": "MS SQL Server (внешняя)",
-                "database_driver": "Microsoft SQL Server JDBC Driver 12.x",
-                "database_driver_version": "12.8.1.jre11",
+                "database_driver": "Microsoft SQL Server JDBC Driver 13.x",
+                "database_driver_version": "13.2.0.jre11",
+                "database_authentication": {
+                    "windows": {
+                        "method": "Windows SSPI (Kerberos/NTLM auto-select)",
+                        "description": "Автоматический выбор лучшего метода аутентификации на Windows",
+                        "requires_native_libs": true
+                    },
+                    "linux": {
+                        "method": "JavaKerberos with JAAS",
+                        "description": "True Single Sign-On - автоматическое определение principal из ticket cache через detectKerberosPrincipal()",
+                        "requires_native_libs": false,
+                        "implementation": "WindowsIntegratedAuthenticationProvider.detectKerberosPrincipal()",
+                        "features": [
+                            "Автоматическое определение Kerberos principal из ticket cache",
+                            "3 стратегии fallback (JAAS LoginContext → krb5.conf → env var)",
+                            "Упрощённый UI (без ручного ввода username/realm)",
+                            "Полная совместимость с Java 23 через JDBC Driver 13.2.0"
+                        ]
+                    },
+                    "version": "0.1.0.45",
+                    "documentation": "RELEASE-NOTES-0.1.0.45.md, docs/development/notes/chats/chat-resume/chat-resume-25-1224-kerberos-sso.md"
+                },
                 "database_native_libraries": {
-                    "description": "Нативные библиотеки для Windows Authentication (mssql-jdbc_auth.dll)",
+                    "description": "Нативные библиотеки для Windows Authentication (mssql-jdbc_auth.dll) - требуются только на Windows",
                     "location": "code/femsq-backend/femsq-database/src/main/resources/com/microsoft/sqlserver/jdbc/auth/",
                     "files": [
                         "x64/mssql-jdbc_auth-12.8.1.x64.dll (305 KB)",
@@ -38,7 +59,7 @@
                     ],
                     "included_in_fat_jar": true,
                     "extraction_path": "BOOT-INF/classes/native-libs/",
-                    "usage": "Автоматически извлекаются при сборке в fat JAR, загружаются при запуске на Windows для Windows Authentication"
+                    "usage": "Автоматически извлекаются при сборке в fat JAR, загружаются при запуске на Windows для Windows Authentication. На Linux используются JavaKerberos с JAAS (без native библиотек)."
                 },
                 "api": "GraphQL",
                 "security": "не разрабатывается - безопасная внутренняя сеть организации",
@@ -844,7 +865,17 @@
         
         "monitoring": {
             "health_checks": true,
-            "logging": "file-rotation",
+            "logging": {
+                "type": "file-rotation",
+                "structure": {
+                    "application": "logs/app_ГГММДД-ЧЧММ.log",
+                    "formatted": "logs/spring-boot_now.log",
+                    "connections": "logs/connections_ГГММДД-ЧЧММ.log"
+                },
+                "documentation": "LOGGING-GUIDE.md",
+                "note": "Дублирование устранено в v0.1.0.45 (удалён femsq-nohup.log)",
+                "optimization": "v0.1.0.45"
+            },
             "backup": "daily-database",
             "extensions": [
                 "docs/project/extensions/monitoring/logging-config.json",
@@ -1184,9 +1215,9 @@
         }
     },
     "metadata": {
-        "version": "1.1.0",
-        "lastUpdated": "2025-12-16",
+        "version": "1.2.0",
+        "lastUpdated": "2025-12-25",
         "updatedBy": "Александр",
-        "updateReason": "Добавлен отчёт mstrgAg_23_Branch_q2m_2408_25, секции reports и development.milestones"
+        "updateReason": "Обновление до версии 0.1.0.45: JDBC Driver 13.2.0, автоматический Kerberos SSO, оптимизация логирования"
     }
 }
