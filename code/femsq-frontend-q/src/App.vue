@@ -149,6 +149,7 @@ async function loadConnectionConfig(): Promise<void> {
         username: config.username || '',
         password: '', // Пароль никогда не возвращается из API
         token: '', // Токен никогда не возвращается из API
+        realm: config.realm || '',  // Kerberos realm
         timeoutSeconds: '30',
         useSsl: false,
         applicationName: 'FEMSQ UI'
@@ -161,7 +162,8 @@ async function loadConnectionConfig(): Promise<void> {
     modalForm.value = {
       ...connection.getSavedForm(),
       password: '',
-      token: ''
+      token: '',
+      realm: ''
     };
   }
 }
@@ -219,7 +221,8 @@ function formValuesToApiRequest(values: ConnectionFormValues) {
     schema: values.schema || undefined,
     username: values.username || undefined,
     password: values.password || undefined,
-    authMode
+    authMode,
+    realm: values.realm || undefined
   };
 }
 

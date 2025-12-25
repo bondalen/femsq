@@ -147,6 +147,7 @@ public class DatabaseConfigurationService {
      * @param username имя пользователя (опционально)
      * @param password пароль (опционально)
      * @param authMode режим аутентификации (credentials, windows-integrated, kerberos)
+     * @param realm    Kerberos realm для Windows Authentication на Linux (опционально, например ADM.GAZPROM.RU)
      */
     public record DatabaseConfigurationProperties(
             String host,
@@ -155,7 +156,8 @@ public class DatabaseConfigurationService {
             String schema,
             String username,
             String password,
-            String authMode) {
+            String authMode,
+            String realm) {
     }
 
     /**

@@ -296,7 +296,8 @@ public class ConnectionController {
                 request.schema(),
                 request.username(),
                 request.password(),
-                request.authMode()
+                request.authMode(),
+                request.realm()
         );
     }
 

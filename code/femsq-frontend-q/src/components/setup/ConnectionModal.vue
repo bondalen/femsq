@@ -42,6 +42,23 @@
             </div>
           </div>
 
+          <div v-else-if="form.authMode === 'windows'" class="q-mt-md">
+            <QBanner class="bg-positive text-white rounded-borders">
+              <template v-slot:avatar>
+                <QIcon name="check_circle" color="white" size="md" />
+              </template>
+              <div class="text-subtitle2">✅ Single Sign-On (SSO)</div>
+              <div class="text-body2">
+                Будет использована ваша текущая учётная запись системы через Kerberos
+              </div>
+            </QBanner>
+            
+            <div class="text-caption text-grey-7 q-mt-sm q-ml-sm">
+              <QIcon name="info" size="xs" class="q-mr-xs" />
+              Убедитесь, что вы залогинены в домене и имеете действующий Kerberos ticket
+            </div>
+          </div>
+
           <div v-else-if="form.authMode === 'token'" class="q-mt-md">
             <QInput v-model.trim="form.token" type="textarea" autogrow label="Token *" :error-message="errors.token" :error="!!errors.token" />
           </div>
@@ -98,7 +115,9 @@ import {
   QExpansionItem,
   QToggle,
   QCardActions,
-  QBtn
+  QBtn,
+  QBanner,
+  QIcon
 } from 'quasar';
 
 import type { ConnectionFormValues } from '@/stores/connection';
@@ -221,6 +240,7 @@ function validate(): boolean {
   if (form.authMode === 'token' && !form.token) {
     nextErrors.token = 'Введите токен доступа';
   }
+  // Windows Auth: валидация не требуется (SSO автоматически)
   if (form.timeoutSeconds && Number.parseInt(form.timeoutSeconds, 10) <= 0) {
     nextErrors.timeoutSeconds = 'Таймаут должен быть больше нуля';
   }

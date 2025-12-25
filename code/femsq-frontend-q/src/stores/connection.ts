@@ -14,6 +14,7 @@ export interface ConnectionFormValues {
   username: string;
   password: string;
   token: string;
+  realm: string;  // Kerberos realm для Windows Authentication на Linux
   timeoutSeconds: string;
   useSsl: boolean;
   applicationName: string;
@@ -28,6 +29,7 @@ const DEFAULT_FORM_VALUES: ConnectionFormValues = {
   username: 'sa',
   password: '',
   token: '',
+  realm: '',
   timeoutSeconds: '30',
   useSsl: false,
   applicationName: 'FEMSQ UI'

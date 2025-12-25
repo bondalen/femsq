@@ -13,6 +13,7 @@ export interface ConnectionTestRequest {
   username?: string;
   password?: string;
   authMode: 'credentials' | 'windows-integrated' | 'kerberos';
+  realm?: string;  // Kerberos realm для Windows Authentication на Linux (например, ADM.GAZPROM.RU)
 }
 
 export interface ConnectionStatusResponse {
@@ -30,6 +31,7 @@ export interface ConnectionConfigResponse {
   schema?: string;
   username?: string;
   authMode?: string;
+  realm?: string;  // Kerberos realm
 }
 
 export type ApiError = RequestError;

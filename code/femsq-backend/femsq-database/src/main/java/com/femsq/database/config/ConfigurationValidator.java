@@ -17,6 +17,7 @@ public class ConfigurationValidator {
     private static final Logger log = Logger.getLogger(ConfigurationValidator.class.getName());
     private static final Pattern HOST_PATTERN = Pattern.compile("^[a-zA-Z0-9-_.]+$");
     private static final Pattern SCHEMA_PATTERN = Pattern.compile("^[a-zA-Z0-9_]+$");
+    private static final Pattern REALM_PATTERN = Pattern.compile("^[A-Z0-9._-]+$");
     private static final String DEFAULT_SCHEMA = "ags_test";
     private static final Set<String> SUPPORTED_AUTH_MODES = Set.of("credentials", "windows-integrated", "kerberos");
 
@@ -37,6 +38,7 @@ public class ConfigurationValidator {
         validateOptional("username", properties.username());
         validateOptional("password", properties.password());
         validateAuthMode(properties);
+        validateRealm(properties.realm());
     }
 
     /**
@@ -56,8 +58,9 @@ public class ConfigurationValidator {
         String username = properties.getProperty("username");
         String password = properties.getProperty("password");
         String authMode = normalizeAuthMode(properties.getProperty("authMode"), username);
+        String realm = properties.getProperty("realm");
 
-        var config = new DatabaseConfigurationService.DatabaseConfigurationProperties(host, port, database, schema, username, password, authMode);
+        var config = new DatabaseConfigurationService.DatabaseConfigurationProperties(host, port, database, schema, username, password, authMode, realm);
         validate(config);
         return config;
     }
@@ -149,5 +152,16 @@ public class ConfigurationValidator {
             return (username != null && !username.isBlank()) ? "credentials" : "windows-integrated";
         }
         return rawAuthMode.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private void validateRealm(String realm) {
+        if (realm != null && !realm.isBlank()) {
+            if (!REALM_PATTERN.matcher(realm).matches()) {
+                throw new IllegalArgumentException("Realm должен содержать только заглавные буквы, цифры, точки, дефисы и подчеркивания: " + realm);
+            }
+            if (realm.length() > 255) {
+                throw new IllegalArgumentException("Realm превышает максимально допустимую длину 255 символов: " + realm);
+            }
+        }
     }
 }

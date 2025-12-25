@@ -16,6 +16,7 @@ import jakarta.validation.constraints.Size;
  * @param username имя пользователя (опционально, требуется для credentials)
  * @param password пароль (опционально, требуется для credentials)
  * @param authMode режим аутентификации (credentials, windows-integrated, kerberos)
+ * @param realm    Kerberos realm для Windows Authentication на Linux (опционально, например ADM.GAZPROM.RU)
  */
 public record ConnectionTestRequest(
         @NotBlank(message = "host обязателен")
@@ -42,7 +43,11 @@ public record ConnectionTestRequest(
 
         @NotBlank(message = "authMode обязателен")
         @Pattern(regexp = "(?i)credentials|windows-integrated|kerberos", message = "Поддерживаются значения: credentials, windows-integrated, kerberos")
-        String authMode
+        String authMode,
+
+        @Size(max = 255, message = "realm не должен превышать 255 символов")
+        @Pattern(regexp = "^[A-Z0-9._-]*$", message = "realm должен содержать только заглавные буквы, цифры, точки, дефисы и подчеркивания")
+        String realm
 ) {
 }
 
