@@ -702,14 +702,20 @@ public class ReportGenerationService {
         String templateFile = metadata.files().template();
         log.info("[{}] getTemplatePath: looking for template: {}", BUILD_MARKER, templateFile);
         
-        // Проверяем внешние отчёты
+        // Проверяем внешние отчёты в поддиректориях custom/ и templates/
         Path externalPath = properties.getExternal().getPathAsPath();
-        Path templatePath = externalPath.resolve(templateFile);
+        List<Path> directoriesToCheck = List.of(
+                externalPath.resolve("custom"),
+                externalPath.resolve("templates")
+        );
         
-        log.debug("[{}] Checking external path: {}", BUILD_MARKER, templatePath);
-        if (Files.exists(templatePath)) {
-            log.info("[{}] Found template in external directory: {}", BUILD_MARKER, templatePath);
-            return templatePath;
+        for (Path directory : directoriesToCheck) {
+            Path templatePath = directory.resolve(templateFile);
+            log.debug("[{}] Checking external path: {}", BUILD_MARKER, templatePath);
+            if (Files.exists(templatePath)) {
+                log.info("[{}] Found template in external directory: {}", BUILD_MARKER, templatePath);
+                return templatePath;
+            }
         }
 
         // Если не найден во внешних, ищем встроенные (classpath или файловая система)

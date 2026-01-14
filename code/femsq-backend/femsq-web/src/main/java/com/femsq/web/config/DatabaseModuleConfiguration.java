@@ -16,9 +16,14 @@ import com.femsq.database.dao.JdbcInvestmentPlanGroupDao;
 import com.femsq.database.dao.JdbcInvestmentProgramDao;
 import com.femsq.database.dao.JdbcOgAgDao;
 import com.femsq.database.dao.JdbcOgDao;
-import com.femsq.database.dao.JdbcStNetworkDao;
+import com.femsq.database.dao.JdbcRaADao;
+import com.femsq.database.dao.JdbcRaAtDao;
+import com.femsq.database.dao.JdbcRaDirDao;
 import com.femsq.database.dao.OgAgDao;
 import com.femsq.database.dao.OgDao;
+import com.femsq.database.dao.RaADao;
+import com.femsq.database.dao.RaAtDao;
+import com.femsq.database.dao.RaDirDao;
 import com.femsq.database.dao.StNetworkDao;
 import com.femsq.database.service.DefaultIpgChainRelationService;
 import com.femsq.database.service.DefaultIpgChainService;
@@ -26,6 +31,9 @@ import com.femsq.database.service.DefaultInvestmentPlanGroupService;
 import com.femsq.database.service.DefaultInvestmentProgramService;
 import com.femsq.database.service.DefaultOgAgService;
 import com.femsq.database.service.DefaultOgService;
+import com.femsq.database.service.DefaultRaAService;
+import com.femsq.database.service.DefaultRaAtService;
+import com.femsq.database.service.DefaultRaDirService;
 import com.femsq.database.service.DefaultStNetworkService;
 import com.femsq.database.service.IpgChainRelationService;
 import com.femsq.database.service.IpgChainService;
@@ -33,6 +41,9 @@ import com.femsq.database.service.InvestmentPlanGroupService;
 import com.femsq.database.service.InvestmentProgramService;
 import com.femsq.database.service.OgAgService;
 import com.femsq.database.service.OgService;
+import com.femsq.database.service.RaAService;
+import com.femsq.database.service.RaAtService;
+import com.femsq.database.service.RaDirService;
 import com.femsq.database.service.StNetworkService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -219,5 +230,35 @@ public class DatabaseModuleConfiguration {
     @Bean
     public InvestmentPlanGroupService investmentPlanGroupService(InvestmentPlanGroupDao investmentPlanGroupDao) {
         return new DefaultInvestmentPlanGroupService(investmentPlanGroupDao);
+    }
+
+    @Bean
+    public RaAtDao raAtDao(ConnectionFactory connectionFactory) {
+        return new JdbcRaAtDao(connectionFactory);
+    }
+
+    @Bean
+    public RaDirDao raDirDao(ConnectionFactory connectionFactory) {
+        return new JdbcRaDirDao(connectionFactory);
+    }
+
+    @Bean
+    public RaADao raADao(ConnectionFactory connectionFactory) {
+        return new JdbcRaADao(connectionFactory);
+    }
+
+    @Bean
+    public RaAtService raAtService(RaAtDao raAtDao) {
+        return new DefaultRaAtService(raAtDao);
+    }
+
+    @Bean
+    public RaDirService raDirService(RaDirDao raDirDao) {
+        return new DefaultRaDirService(raDirDao);
+    }
+
+    @Bean
+    public RaAService raAService(RaADao raADao) {
+        return new DefaultRaAService(raADao);
     }
 }

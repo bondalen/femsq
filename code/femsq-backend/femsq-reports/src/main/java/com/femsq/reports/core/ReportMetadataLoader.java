@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.femsq.reports.model.ReportMetadata;
 import com.femsq.reports.model.ReportParameter;
 import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.JRParameter;
 import net.sf.jasperreports.engine.design.JasperDesign;
 import net.sf.jasperreports.engine.xml.JRXmlLoader;
 import org.slf4j.Logger;
@@ -148,17 +149,142 @@ public class ReportMetadataLoader {
             String reportId = getBaseName(jrxmlFile);
             String reportName = design.getName() != null ? design.getName() : reportId;
             
-            return ReportMetadata.minimal(
+            // Извлекаем параметры из JRXML
+            List<ReportParameter> parameters = extractParametersFromDesign(design);
+            
+            return new ReportMetadata(
                     reportId,
+                    "1.0.0",
                     reportName,
                     "Автоматически определено из JRXML",
-                    jrxmlFile.getFileName().toString()
+                    null, // category
+                    null, // author
+                    null, // created
+                    null, // lastModified
+                    new ReportMetadata.Files(jrxmlFile.getFileName().toString(), null, null),
+                    parameters,
+                    new ReportMetadata.UiIntegration(true, List.of()),
+                    List.of(), // tags
+                    "user" // accessLevel
             );
             
         } catch (IOException | JRException e) {
             log.error("Failed to extract metadata from JRXML: {}", jrxmlFile, e);
             return null;
         }
+    }
+    
+    /**
+     * Извлекает параметры из JasperDesign.
+     * 
+     * @param design JasperDesign из JRXML файла
+     * @return список параметров отчёта
+     */
+    private List<ReportParameter> extractParametersFromDesign(JasperDesign design) {
+        List<ReportParameter> parameters = new ArrayList<>();
+        
+        JRParameter[] jrParameters = design.getParameters();
+        if (jrParameters == null || jrParameters.length == 0) {
+            return parameters;
+        }
+        
+        // Фильтруем только пользовательские параметры (исключаем системные)
+        // Системные параметры обычно начинаются с подчёркивания или имеют специальные имена
+        for (JRParameter jrParam : jrParameters) {
+            String paramName = jrParam.getName();
+            
+            // Пропускаем системные параметры JasperReports
+            if (paramName.startsWith("_") || 
+                paramName.equals("REPORT_PARAMETERS_MAP") ||
+                paramName.equals("REPORT_CONNECTION") ||
+                paramName.equals("REPORT_DATA_SOURCE") ||
+                paramName.equals("REPORT_SCRIPTLET") ||
+                paramName.equals("REPORT_LOCALE") ||
+                paramName.equals("REPORT_RESOURCE_BUNDLE") ||
+                paramName.equals("REPORT_TIME_ZONE") ||
+                paramName.equals("REPORT_FORMAT_FACTORY") ||
+                paramName.equals("REPORT_CLASS_LOADER") ||
+                paramName.equals("REPORT_URL_HANDLER_FACTORY") ||
+                paramName.equals("REPORT_FILE_RESOLVER") ||
+                paramName.equals("REPORT_VIRTUALIZER") ||
+                paramName.equals("REPORT_MAX_COUNT") ||
+                paramName.equals("REPORT_TEMPLATES") ||
+                paramName.equals("SORT_FIELDS") ||
+                paramName.equals("FILTER") ||
+                paramName.equals("REPORT_CONTEXT")) {
+                continue;
+            }
+            
+            // Определяем тип параметра на основе класса
+            String paramType = mapJasperTypeToParameterType(jrParam.getValueClass());
+            
+            // Проверяем, является ли параметр обязательным
+            // В JasperReports параметр обязателен, если defaultValueExpression == null и нет значения по умолчанию
+            boolean required = jrParam.getDefaultValueExpression() == null;
+            
+            // Извлекаем значение по умолчанию из выражения
+            String defaultValue = null;
+            if (jrParam.getDefaultValueExpression() != null) {
+                String expr = jrParam.getDefaultValueExpression().getText();
+                // Упрощённая обработка: если это строка в кавычках, извлекаем её
+                if (expr != null && expr.startsWith("\"") && expr.endsWith("\"")) {
+                    defaultValue = expr.substring(1, expr.length() - 1);
+                } else if (expr != null && !expr.trim().isEmpty()) {
+                    defaultValue = expr;
+                }
+            }
+            
+            parameters.add(new ReportParameter(
+                    paramName,
+                    paramType,
+                    paramName, // label по умолчанию = имя параметра
+                    null, // description
+                    required,
+                    defaultValue,
+                    null, // validation
+                    null, // options
+                    null  // source
+            ));
+        }
+        
+        log.debug("Extracted {} parameters from JRXML", parameters.size());
+        return parameters;
+    }
+    
+    /**
+     * Преобразует класс параметра JasperReports в тип параметра системы.
+     * 
+     * @param paramClass класс параметра из JRXML
+     * @return тип параметра (string, integer, date, boolean, double)
+     */
+    private String mapJasperTypeToParameterType(Class<?> paramClass) {
+        if (paramClass == null) {
+            return "string";
+        }
+        
+        String className = paramClass.getName();
+        
+        if (className.equals("java.lang.String")) {
+            return "string";
+        } else if (className.equals("java.lang.Integer") || className.equals("int")) {
+            return "integer";
+        } else if (className.equals("java.lang.Long") || className.equals("long")) {
+            return "long";
+        } else if (className.equals("java.lang.Double") || className.equals("double") ||
+                   className.equals("java.lang.Float") || className.equals("float")) {
+            return "double";
+        } else if (className.equals("java.lang.Boolean") || className.equals("boolean")) {
+            return "boolean";
+        } else if (className.equals("java.util.Date") || 
+                   className.equals("java.sql.Date") ||
+                   className.equals("java.time.LocalDate")) {
+            return "date";
+        } else if (className.equals("java.math.BigDecimal")) {
+            return "double";
+        }
+        
+        // По умолчанию - строка
+        return "string";
     }
 
     /**

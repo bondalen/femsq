@@ -399,13 +399,21 @@ public class ReportDiscoveryService {
      * @return "embedded" или "external"
      */
     private String determineSource(ReportMetadata metadata) {
-        // Простая эвристика: если файл находится в external директории - external
-        // Иначе - embedded
+        // Проверяем внешние отчёты в поддиректориях custom/ и templates/
         Path externalPath = properties.getExternal().getPathAsPath();
-        Path templatePath = externalPath.resolve(metadata.files().template());
+        String templateFile = metadata.files().template();
         
-        if (Files.exists(templatePath)) {
-            return "external";
+        // Проверяем в custom/ и templates/ поддиректориях
+        List<Path> directoriesToCheck = List.of(
+                externalPath.resolve("custom"),
+                externalPath.resolve("templates")
+        );
+        
+        for (Path directory : directoriesToCheck) {
+            Path templatePath = directory.resolve(templateFile);
+            if (Files.exists(templatePath)) {
+                return "external";
+            }
         }
         
         return "embedded";
