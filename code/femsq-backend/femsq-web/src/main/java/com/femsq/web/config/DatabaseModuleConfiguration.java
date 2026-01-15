@@ -19,6 +19,7 @@ import com.femsq.database.dao.JdbcOgDao;
 import com.femsq.database.dao.JdbcRaADao;
 import com.femsq.database.dao.JdbcRaAtDao;
 import com.femsq.database.dao.JdbcRaDirDao;
+import com.femsq.database.dao.JdbcStNetworkDao;
 import com.femsq.database.dao.OgAgDao;
 import com.femsq.database.dao.OgDao;
 import com.femsq.database.dao.RaADao;

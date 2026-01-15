@@ -46,6 +46,14 @@
         :disable="!investmentChainsEnabled"
         @click="handleNavigate('investment-chains')"
       />
+      <QBtn
+        flat
+        rounded
+        icon="verified_user"
+        label="Ревизии"
+        :color="activeView === 'audits' ? 'primary' : 'dark'"
+        @click="handleNavigate('audits')"
+      />
     </div>
 
     <QBtn
@@ -82,6 +90,12 @@
             <QIcon name="account_tree" />
           </QItemSection>
           <QItemSection>Инвестиционные цепочки</QItemSection>
+        </QItem>
+        <QItem clickable @click="handleNavigate('audits')">
+          <QItemSection avatar>
+            <QIcon name="verified_user" />
+          </QItemSection>
+          <QItemSection>Ревизии</QItemSection>
         </QItem>
       </QList>
     </QMenu>

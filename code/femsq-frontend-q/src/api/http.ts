@@ -17,9 +17,13 @@ const DEFAULT_TIMEOUT = 15_000;
  * В development режиме используем относительные пути для работы с Vite proxy.
  * В production режиме используем относительные пути, так как frontend встроен в JAR.
  * Если задан VITE_API_BASE_URL - используется он (для кастомных конфигураций).
+ * 
+ * Базовый URL установлен в '/api', так как контроллеры используют пути вида:
+ * - /api/v1/... (старые контроллеры)
+ * - /api/ra/... (новые контроллеры ревизий)
  */
 const RAW_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)
-  ?? '/api/v1';
+  ?? '/api';
 
 function toAbsoluteBaseUrl(raw: string): string {
   const ensureTrailingSlash = (u: string) => (u.endsWith('/') ? u : `${u}/`);
@@ -118,23 +122,32 @@ function buildUrl(path: string, query?: Record<string, unknown>): string {
     return url.toString();
   };
 
-  // Normalize relative path and avoid duplicating base segment (e.g., /api/v1 + api/v1/...)
-  let relative = path.replace(/^\//, '');
-  try {
-    if (API_BASE_URL && API_BASE_URL !== 'undefined' && API_BASE_URL !== 'null') {
-      const basePath = new URL(API_BASE_URL).pathname.replace(/^\/+|\/+$/g, ''); // e.g., 'api/v1'
-      if (basePath && (relative === basePath || relative.startsWith(basePath + '/'))) {
-        relative = relative.slice(basePath.length).replace(/^\//, '');
-      }
+  // Normalize relative path and avoid duplicating base segment
+  // Обрабатываем пути вида /api/ra/... или /api/v1/...
+  let relative = path.replace(/^\//, ''); // Убираем ведущий слеш
+  
+  // Определяем базовый URL для создания полного URL
+  let baseUrl: string;
+  
+  // Если путь уже начинается с 'api/', используем корневой URL сервера
+  // Это позволяет работать с обоими паттернами: /api/v1/... и /api/ra/...
+  if (relative.startsWith('api/')) {
+    // Путь уже содержит полный путь от корня, используем origin сервера
+    if (typeof window !== 'undefined' && window.location) {
+      baseUrl = window.location.origin + '/';
+    } else {
+      baseUrl = 'http://localhost:8080/';
     }
-  } catch (error) {
-    console.warn('[API] Ошибка парсинга API_BASE_URL:', error);
+  } else {
+    // Путь не содержит 'api/', используем API_BASE_URL напрямую
+    // API_BASE_URL уже содержит полный URL типа http://localhost:8080/api/
+    baseUrl = API_BASE_URL;
   }
 
-  const fallbackBase = 'http://localhost:8080/api/v1/';
+  const fallbackBase = 'http://localhost:8080/';
 
   try {
-    const url = new URL(relative, API_BASE_URL);
+    const url = new URL(relative, baseUrl);
     return applyQuery(url);
   } catch (error) {
     console.error('[API] Ошибка создания URL в buildUrl:', error, 'fallback на', fallbackBase);
@@ -212,4 +225,20 @@ export function apiPost<T = unknown>(path: string, data?: unknown, options?: Omi
     },
     body: data ? JSON.stringify(data) : undefined
   });
+}
+
+export function apiPut<T = unknown>(path: string, data?: unknown, options?: Omit<RequestOptions, 'method' | 'body'>): Promise<T> {
+  return apiRequest<T>(path, {
+    ...options,
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options?.headers ?? {})
+    },
+    body: data ? JSON.stringify(data) : undefined
+  });
+}
+
+export function apiDelete<T = unknown>(path: string, options?: Omit<RequestOptions, 'method'>): Promise<T> {
+  return apiRequest<T>(path, { ...options, method: 'DELETE' });
 }
