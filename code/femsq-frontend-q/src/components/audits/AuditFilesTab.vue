@@ -9,7 +9,11 @@
     />
 
     <!-- Список файлов -->
-    <FilesList :dir-id="currentDirectory?.key ?? null" />
+    <!-- ВРЕМЕННО СКРЫТО ДЛЯ ДИАГНОСТИКИ: проблема с позиционированием -->
+    <FilesList 
+      v-if="showFilesList" 
+      :dir-id="currentDirectory?.key ?? null" 
+    />
 
     <!-- Сообщение об ошибке -->
     <q-banner v-if="error" class="bg-negative text-white q-mt-md">
@@ -40,8 +44,9 @@ const directoriesStore = useDirectoriesStore();
 // State
 const loadingDirectory = ref(false);
 const error = ref<string | null>(null);
-// ВРЕМЕННО: флаг для скрытия DirectoryInfo при диагностике проблемы с позиционированием
+// ВРЕМЕННО: флаги для скрытия компонентов при диагностике проблемы с позиционированием
 const showDirectoryInfo = ref(false);
+const showFilesList = ref(false);
 
 // Computed
 const currentDirectory = computed(() => directoriesStore.currentDirectory);
