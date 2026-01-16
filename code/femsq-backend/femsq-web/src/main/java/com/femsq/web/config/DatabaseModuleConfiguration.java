@@ -19,12 +19,20 @@ import com.femsq.database.dao.JdbcOgDao;
 import com.femsq.database.dao.JdbcRaADao;
 import com.femsq.database.dao.JdbcRaAtDao;
 import com.femsq.database.dao.JdbcRaDirDao;
+import com.femsq.database.dao.JdbcRaFDao;
+import com.femsq.database.dao.JdbcRaFtSDao;
+import com.femsq.database.dao.JdbcRaFtSnDao;
+import com.femsq.database.dao.JdbcRaFtStDao;
 import com.femsq.database.dao.JdbcStNetworkDao;
 import com.femsq.database.dao.OgAgDao;
 import com.femsq.database.dao.OgDao;
 import com.femsq.database.dao.RaADao;
 import com.femsq.database.dao.RaAtDao;
 import com.femsq.database.dao.RaDirDao;
+import com.femsq.database.dao.RaFDao;
+import com.femsq.database.dao.RaFtSDao;
+import com.femsq.database.dao.RaFtSnDao;
+import com.femsq.database.dao.RaFtStDao;
 import com.femsq.database.dao.StNetworkDao;
 import com.femsq.database.service.DefaultIpgChainRelationService;
 import com.femsq.database.service.DefaultIpgChainService;
@@ -35,6 +43,10 @@ import com.femsq.database.service.DefaultOgService;
 import com.femsq.database.service.DefaultRaAService;
 import com.femsq.database.service.DefaultRaAtService;
 import com.femsq.database.service.DefaultRaDirService;
+import com.femsq.database.service.DefaultRaFService;
+import com.femsq.database.service.DefaultRaFtSService;
+import com.femsq.database.service.DefaultRaFtSnService;
+import com.femsq.database.service.DefaultRaFtStService;
 import com.femsq.database.service.DefaultStNetworkService;
 import com.femsq.database.service.IpgChainRelationService;
 import com.femsq.database.service.IpgChainService;
@@ -45,6 +57,10 @@ import com.femsq.database.service.OgService;
 import com.femsq.database.service.RaAService;
 import com.femsq.database.service.RaAtService;
 import com.femsq.database.service.RaDirService;
+import com.femsq.database.service.RaFService;
+import com.femsq.database.service.RaFtSService;
+import com.femsq.database.service.RaFtSnService;
+import com.femsq.database.service.RaFtStService;
 import com.femsq.database.service.StNetworkService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -261,5 +277,55 @@ public class DatabaseModuleConfiguration {
     @Bean
     public RaAService raAService(RaADao raADao) {
         return new DefaultRaAService(raADao);
+    }
+
+    @Bean
+    public RaFDao raFDao(ConnectionFactory connectionFactory) {
+        return new JdbcRaFDao(connectionFactory);
+    }
+
+    @Bean
+    public RaFtStDao raFtStDao(ConnectionFactory connectionFactory) {
+        return new JdbcRaFtStDao(connectionFactory);
+    }
+
+    @Bean
+    public RaFtSDao raFtSDao(ConnectionFactory connectionFactory) {
+        return new JdbcRaFtSDao(connectionFactory);
+    }
+
+    @Bean
+    public RaFtSnDao raFtSnDao(ConnectionFactory connectionFactory) {
+        return new JdbcRaFtSnDao(connectionFactory);
+    }
+
+    @Bean
+    public RaFtDao raFtDao(ConnectionFactory connectionFactory) {
+        return new JdbcRaFtDao(connectionFactory);
+    }
+
+    @Bean
+    public RaFService raFService(RaFDao raFDao) {
+        return new DefaultRaFService(raFDao);
+    }
+
+    @Bean
+    public RaFtStService raFtStService(RaFtStDao raFtStDao) {
+        return new DefaultRaFtStService(raFtStDao);
+    }
+
+    @Bean
+    public RaFtSService raFtSService(RaFtSDao raFtSDao, RaFtStDao raFtStDao) {
+        return new DefaultRaFtSService(raFtSDao, raFtStDao);
+    }
+
+    @Bean
+    public RaFtSnService raFtSnService(RaFtSnDao raFtSnDao, RaFtSDao raFtSDao) {
+        return new DefaultRaFtSnService(raFtSnDao, raFtSDao);
+    }
+
+    @Bean
+    public RaFtService raFtService(RaFtDao raFtDao) {
+        return new DefaultRaFtService(raFtDao);
     }
 }

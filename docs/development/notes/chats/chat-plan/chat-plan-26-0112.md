@@ -186,24 +186,371 @@
 
 ### Этап 2: Работа с файлами для ревизии
 
-**База данных:**
-- [ ] Создать таблицу `ags.ra_f` (файлы для проверки)
-  - Поля: af_key, af_name, af_dir, af_type, af_is_done, af_is_source
-- [ ] Создать справочные таблицы типов файлов:
-  - `ags.ra_ft_s` - источники
-  - `ags.ra_ft_sn` - имена источников
-  - `ags.ra_ft_st` - типы источников
-- [ ] Перенести данные из MS Access в новые таблицы
+#### 2.1 База данных: Создание таблиц и перенос данных
 
-**Backend:**
-- [ ] Entity классы для файловых таблиц
-- [ ] REST API для управления файлами
-- [ ] Сервисная логика для работы с файловой системой
+**2.1.1 Анализ структуры таблиц в MS Access** ✅ (2026-01-15)
+- ✅ Изучить структуру таблицы `ra_f` в MS Access ✅
+  - Проанализирован VBA код из `Form_ra_a.cls`
+  - Определены поля: `af_key`, `af_name`, `af_dir`, `af_type`, `af_execute`, `af_source`
+  - Выявлены дополнительные поля: `af_is_done`, `af_is_source` (упомянуты в плане)
+- ✅ Изучить структуру справочных таблиц `ra_ft_s`, `ra_ft_sn`, `ra_ft_st` ✅
+  - `ra_ft_st`: `st_key`, `st_name` (типы источников)
+  - `ra_ft_s`: `ft_s_key`, `ft_s_type`, `ft_s_num`, `ft_s_sheet_type` (источники/листы)
+  - `ra_ft_sn`: `ftsn_key`, `ftsn_ft_s`, `ftsn_name` (имена источников)
+- ✅ Определить связи между таблицами (FK constraints) ✅
+  - `ra_f.af_dir` → `ra_dir.key`
+  - `ra_ft_s.ft_s_sheet_type` → `ra_ft_st.st_key`
+  - `ra_ft_sn.ftsn_ft_s` → `ra_ft_s.ft_s_key`
+  - `ra_f.af_type` → связь по значению с `ra_ft_s.ft_s_type`
+- ✅ Определить связи с таблицей `ra_a` (связь файлов с ревизиями) ✅
+  - Текущая реализация: фильтрация по `af_dir = adt_dir`
+  - Рекомендация: добавить явную FK `af_adt_key → ra_a.adt_key`
+- ✅ Документировать поля и их типы данных ✅
+  - Создан документ: `docs/development/notes/analysis/ra-f-tables-structure-analysis.md`
+  - Определены типы данных для SQL Server
+  - Документированы типы файлов (значения `af_type`: 1-6)
+  - Описаны особенности обработки для каждого типа
 
-**Frontend:**
-- [ ] Компонент списка файлов для ревизии
-- [ ] Форма добавления/редактирования файлов
-- [ ] Интеграция с формой ревизии
+**2.1.2 Создание таблицы `ags.ra_f` (файлы для проверки)** ✅ (2026-01-15)
+- ✅ Создать SQL скрипт `04_create_ra_f_tables.sql` ✅
+  - Создан скрипт: `code/config/sql/04_create_ra_f_tables.sql`
+- ✅ Определить структуру таблицы ✅
+  - `af_key` - первичный ключ (BIGINT IDENTITY(1,1)) ✅
+  - `af_name` - имя файла (NVARCHAR(255) NOT NULL) ✅
+  - `af_dir` - FK к `ags.ra_dir.key` (INT NOT NULL) ✅
+  - `af_type` - тип файла (INT NOT NULL, значения 1-6) ✅
+  - `af_execute` - флаг выполнения проверки (BIT NOT NULL DEFAULT 1) ✅
+  - `af_source` - источник данных (INT NULL) ✅
+  - `af_adt_key` - FK к `ags.ra_a.adt_key` (BIGINT NULL, связь с ревизией) ✅
+  - `af_is_done` - флаг завершения проверки (BIT NOT NULL DEFAULT 0) ✅
+  - `af_is_source` - флаг источника данных (BIT NOT NULL DEFAULT 0) ✅
+  - `af_created`, `af_updated` - даты создания/обновления (DATETIME2 DEFAULT GETDATE()) ✅
+- ✅ Создать индексы ✅
+  - PRIMARY KEY на `af_key` ✅
+  - NONCLUSTERED на `af_dir` (IX_ra_f_dir) ✅
+  - NONCLUSTERED на `af_type` (IX_ra_f_type) ✅
+  - NONCLUSTERED на `af_adt_key` с фильтром WHERE (IX_ra_f_adt_key) ✅
+  - NONCLUSTERED на `af_execute` с фильтром WHERE (IX_ra_f_execute) ✅
+  - NONCLUSTERED на `af_name` (IX_ra_f_name) ✅
+  - Составной индекс на `af_dir, af_type, af_execute` (IX_ra_f_dir_type_execute) ✅
+- ✅ Добавить FK constraints ✅
+  - FK к `ags.ra_dir` (FK_ra_f_dir: `af_dir` → `ra_dir.key`) ✅
+  - FK к `ags.ra_a` (FK_ra_f_adt: `af_adt_key` → `ra_a.adt_key`) ✅
+- ✅ Добавить комментарии к таблице (Extended Properties) ✅
+  - Комментарий к таблице ✅
+  - Комментарии ко всем полям с описанием назначения ✅
+
+**2.1.3 Создание справочных таблиц типов файлов** ✅ (2026-01-15)
+- ✅ Создать таблицу `ags.ra_ft_st` (типы источников) ✅
+  - Поля: `st_key` (PK, INT IDENTITY), `st_name` (NVARCHAR(255) NOT NULL), `st_created`, `st_updated` ✅
+  - UNIQUE индекс на `st_name` ✅
+- ✅ Создать таблицу `ags.ra_ft_s` (источники/листы) ✅
+  - Поля: `ft_s_key` (PK, INT IDENTITY), `ft_s_type` (INT NOT NULL), `ft_s_num` (INT NOT NULL), `ft_s_sheet_type` (INT NOT NULL, FK к `ra_ft_st.st_key`), `ft_s_created`, `ft_s_updated` ✅
+  - Индексы: `IX_ra_ft_s_type`, `IX_ra_ft_s_sheet_type`, `IX_ra_ft_s_type_num` (составной) ✅
+  - FK constraint: `FK_ra_ft_s_sheet_type` → `ags.ra_ft_st.st_key` ✅
+- ✅ Создать таблицу `ags.ra_ft_sn` (имена источников) ✅
+  - Поля: `ftsn_key` (PK, INT IDENTITY), `ftsn_ft_s` (INT NOT NULL, FK к `ra_ft_s.ft_s_key`), `ftsn_name` (NVARCHAR(255) NOT NULL), `ftsn_created`, `ftsn_updated` ✅
+  - Индексы: `IX_ra_ft_sn_ft_s`, `IX_ra_ft_sn_name` ✅
+  - FK constraint: `FK_ra_ft_sn_ft_s` → `ags.ra_ft_s.ft_s_key` ✅
+- ✅ Создать индексы для справочных таблиц ✅
+  - Все необходимые индексы созданы (см. выше) ✅
+- ✅ Добавить FK constraints ✅
+  - `ra_ft_s.ft_s_sheet_type` → `ra_ft_st.st_key` ✅
+  - `ra_ft_sn.ftsn_ft_s` → `ra_ft_s.ft_s_key` ✅
+  - Примечание: связь `ra_f.af_type` с `ra_ft_s.ft_s_type` реализована по значению (не FK), так как `af_type` может иметь значения, не представленные в справочнике ✅
+- ✅ Добавить комментарии к таблицам (Extended Properties) ✅
+  - Комментарии ко всем трем таблицам и их полям ✅
+
+**2.1.4 Перенос данных из MS Access** ✅ (2026-01-15)
+- ✅ Экспортировать данные из `ra_f` в CSV или JSON ✅
+  - Bash скрипт автоматически экспортирует данные из MS Access в CSV ✅
+  - Используется утилита `mdb-export` из пакета `mdbtools` ✅
+- ✅ Экспортировать данные из справочных таблиц ✅
+  - Экспорт `ra_ft_st`, `ra_ft_s`, `ra_ft_sn` в отдельные CSV файлы ✅
+  - Все таблицы экспортируются автоматически при запуске скрипта ✅
+- ✅ Создать Python скрипт импорта: `05_import_ra_f_data.py` ✅
+  - Скрипт импортирует данные в правильном порядке (с учетом FK constraints) ✅
+  - Обрабатывает BIT поля (af_execute, af_is_done, af_is_source) ✅
+  - Обрабатывает NULL значения и значения по умолчанию ✅
+  - Поддерживает различные форматы дат из MS Access ✅
+  - Сохраняет оригинальные ключи через IDENTITY_INSERT ✅
+- ✅ Создать bash скрипт: `import_ra_f.sh` ✅
+  - Автоматический экспорт данных из MS Access ✅
+  - Проверка наличия зависимостей (pyodbc, mdbtools) ✅
+  - Интерактивное подтверждение перезаписи существующих CSV файлов ✅
+  - Подсчет записей для импорта ✅
+  - Запуск Python скрипта импорта ✅
+- ✅ Выполнить импорт данных в SQL Server ✅ (2026-01-15)
+  - ✅ Экспорт данных из MS Access в CSV файлы выполнен ✅
+  - ✅ Созданы таблицы в базе данных FishEye ✅
+  - ✅ Импортированы данные:
+    - `ra_ft_st`: 6 записей ✅
+    - `ra_ft_s`: 41 запись ✅
+    - `ra_ft_sn`: 126 записей ✅
+    - `ra_f`: 138 записей ✅
+  - ✅ Всего импортировано: 311 записей ✅
+- ✅ Проверить целостность данных и связи ✅ (2026-01-15)
+  - ✅ Проверка FK constraints выполнена ✅
+  - ✅ Все связи корректны (ra_f → ra_dir, ra_ft_s → ra_ft_st, ra_ft_sn → ra_ft_s) ✅
+  - ✅ Данные соответствуют экспортированным из MS Access ✅
+
+**2.1.5 Исправление структуры БД после анализа UI** ✅ (2026-01-15)
+- ✅ Выполнен анализ форм MS Access и сравнение с БД ✅
+- ✅ Исправлена таблица `ags.ra_f`:
+  - ✅ Удалены лишние поля: `af_is_done`, `af_is_source`, `af_adt_key` ✅
+  - ✅ Добавлены поля: `af_num` (INT), `ra_org_sender` (INT) ✅
+  - ✅ Изменен тип: `af_source` (INT → BIT) ✅
+  - ✅ Обновлено 138 записей с инициализацией `af_num` ✅
+  - ✅ Созданы индексы: `IX_ra_f_num`, `IX_ra_f_org_sender` ✅
+- ✅ Исправлена таблица `ags.ra_ft_s`:
+  - ✅ Добавлено поле: `ft_s_period` (NVARCHAR(50)) ✅
+  - ✅ Создан индекс: `IX_ra_ft_s_period` ✅
+
+**2.1.6 Перенос справочника типов файлов (ra_ft)** ✅ (2026-01-15)
+- ✅ Создать таблицу `ags.ra_ft` (справочник типов файлов) ✅
+  - Поля: `ft_key` (INT PK IDENTITY), `ft_name` (NVARCHAR(255) NOT NULL) ✅
+  - Индекс: `IX_ra_ft_name` ✅
+  - Комментарий: "Справочник типов файлов для проверки (lookup для ra_f.af_type)" ✅
+- ✅ Импортировать данные из MS Access (6 записей): ✅
+  1. "отчёты агента" (107 файлов)
+  2. "хранение оборудования и стройконтроль" (11 файлов)
+  3. "аренда земли" (6 файлов)
+  4. "агентское вознаграждение" (4 файла)
+  5. "отчёты всех агентов" (5 файлов)
+  6. "23-0627_агентское вознаграждение" (5 файлов)
+- ✅ Добавить FK constraint: `ra_f.af_type` → `ra_ft.ft_key` ✅
+- ✅ Добавить FK constraint: `ra_f.ra_org_sender` → `og.ogKey` ✅
+- ✅ Проверить целостность данных ✅
+  - Все значения `af_type` корректны (0 некорректных) ✅
+  - Все значения `ra_org_sender` корректны (0 некорректных) ✅
+
+#### 2.2 Backend: Entity классы и DAO
+
+**2.2.1 Создание Entity классов**
+- ✅ Создать `com.femsq.database.model.RaF` (AuditFile entity) ✅
+  - Record класс с валидацией полей ✅
+  - Маппинг на таблицу `ags.ra_f` ✅
+  - Поля: `afKey`, `afName`, `afDir`, `afType`, `afExecute`, `afSource`, `afAdtKey`, `afIsDone`, `afIsSource`, `afCreated`, `afUpdated` ✅
+- ✅ Создать `com.femsq.database.model.RaFtSt` (FileSourceType entity) ✅
+  - Поля: `stKey`, `stName`, `stCreated`, `stUpdated` ✅
+- ✅ Создать `com.femsq.database.model.RaFtS` (FileSource entity) ✅
+  - Поля: `ftSKey`, `ftSType`, `ftSNum`, `ftSSheetType`, `ftSCreated`, `ftSUpdated` ✅
+- ✅ Создать `com.femsq.database.model.RaFtSn` (FileSourceName entity) ✅
+  - Поля: `ftsnKey`, `ftsnFtS`, `ftsnName`, `ftsnCreated`, `ftsnUpdated` ✅
+- ✅ Настроить связи между сущностями ✅
+  - Связи реализованы через FK в базе данных, Entity классы содержат соответствующие поля ✅
+
+**2.2.2 Создание DAO интерфейсов**
+- ✅ Создать `RaFDao` - интерфейс для работы с файлами ревизий ✅
+  - Методы: `findAll()`, `findById()`, `findByAuditId()`, `findByDirId()`, `findByFileType()`, `create()`, `update()`, `delete()`, `count()` ✅
+- ✅ Создать `RaFtSDao` - интерфейс для работы с источниками ✅
+  - Методы: `findAll()`, `findById()`, `findByFileType()`, `findBySheetType()`, `create()`, `update()`, `delete()`, `count()` ✅
+- ✅ Создать `RaFtSnDao` - интерфейс для работы с именами источников ✅
+  - Методы: `findAll()`, `findById()`, `findByFtS()`, `create()`, `update()`, `delete()`, `count()` ✅
+- ✅ Создать `RaFtStDao` - интерфейс для работы с типами источников ✅
+  - Методы: `findAll()`, `findById()`, `create()`, `update()`, `delete()`, `count()` ✅
+
+**2.2.3 JDBC реализации DAO** ✅
+- ✅ Создать `JdbcRaFDao` - реализация для файлов ревизий (с полным CRUD) ✅
+  - Реализованы все методы интерфейса ✅
+  - Обработка NULL значений для `afSource` и `afAdtKey` ✅
+  - Логирование операций ✅
+- ✅ Создать `JdbcRaFtSDao` - реализация для источников ✅
+  - Реализованы все методы интерфейса ✅
+  - Сортировка по `ft_s_num` для `findByFileType()` и `findBySheetType()` ✅
+- ✅ Создать `JdbcRaFtSnDao` - реализация для имен источников ✅
+  - Реализованы все методы интерфейса ✅
+  - Метод `findByFtS()` для получения всех имен для источника ✅
+- ✅ Создать `JdbcRaFtStDao` - реализация для типов источников ✅
+  - Реализованы все методы интерфейса ✅
+- ✅ Добавить обработку ошибок и логирование ✅
+  - Все DAO используют `DaoException` для обработки ошибок ✅
+  - Логирование через `java.util.logging.Logger` ✅
+  - Подробные сообщения об ошибках на русском языке ✅
+- ✅ Зарегистрировать DAO в `DatabaseModuleConfiguration` ✅
+  - Добавлены бины для всех четырех DAO ✅
+
+#### 2.3 Backend: Сервисный слой и REST API
+
+**2.3.1 Сервисный слой** ✅
+- ✅ Создать интерфейсы: `RaFService`, `RaFtSService`, `RaFtSnService`, `RaFtStService` ✅
+- ✅ Создать реализации: `DefaultRaFService`, `DefaultRaFtSService`, `DefaultRaFtSnService`, `DefaultRaFtStService` ✅
+- ✅ Добавить валидацию бизнес-правил: ✅
+  - ✅ Проверка существования ревизии при создании файла ✅
+  - ✅ Проверка уникальности имени файла в рамках ревизии ✅
+  - ⚠️ Валидация путей к файлам (отложено до этапа 2.3.6) ⚠️
+
+**2.3.2 DTO классы** ✅
+- ✅ Создать DTO: `RaFDto`, `RaFtSDto`, `RaFtSnDto`, `RaFtStDto` ✅
+- ✅ Создать Request DTO: `RaFCreateRequest`, `RaFUpdateRequest` ✅
+- ✅ Добавить валидацию полей через аннотации ✅
+  - Использованы `@NotBlank`, `@NotNull`, `@Size` для валидации ✅
+
+**2.3.3 Mapper классы** ✅
+- ✅ Создать `RaFMapper` для преобразования RaF ↔ RaFDto и Request DTO ✅
+- ✅ Создать `RaFtSMapper` для преобразования RaFtS ↔ RaFtSDto ✅
+- ✅ Создать `RaFtSnMapper` для преобразования RaFtSn ↔ RaFtSnDto ✅
+- ✅ Создать `RaFtStMapper` для преобразования RaFtSt ↔ RaFtStDto ✅
+
+**2.3.4 REST контроллеры** ✅
+- ✅ Создать `RaFRestController` с endpoints: ✅
+  - ✅ `GET /api/ra/files` - список всех файлов ✅
+  - ✅ `GET /api/ra/audits/{auditId}/files` - список файлов для ревизии ✅
+  - ✅ `GET /api/ra/files/{id}` - детали файла ✅
+  - ✅ `POST /api/ra/audits/{auditId}/files` - создание файла для ревизии ✅
+  - ✅ `PUT /api/ra/files/{id}` - обновление файла ✅
+  - ✅ `DELETE /api/ra/files/{id}` - удаление файла ✅
+- ✅ Создать `RaFtSRestController`: ✅
+  - ✅ `GET /api/ra/file-sources` - список источников ✅
+- ✅ Создать `RaFtSnRestController`: ✅
+  - ✅ `GET /api/ra/file-source-names` - список имен источников ✅
+- ✅ Создать `RaFtStRestController`: ✅
+  - ✅ `GET /api/ra/file-source-types` - список типов источников ✅
+
+**2.3.5 Регистрация в конфигурации**
+- ✅ Зарегистрировать DAO бины в `DatabaseModuleConfiguration` ✅
+  - Добавлены: `raFDao`, `raFtStDao`, `raFtSDao`, `raFtSnDao` ✅
+- ✅ Зарегистрировать сервисы в `DatabaseModuleConfiguration` ✅
+  - Добавлены бины: `raFService`, `raFtStService`, `raFtSService`, `raFtSnService` ✅
+- ✅ Зарегистрировать новые бины: ✅ (2026-01-15)
+  - `raFtDao`, `raFtService` ✅
+
+**2.3.6 Сервисная логика для работы с файловой системой**
+- [ ] Создать `FileSystemService` для проверки существования файлов
+- [ ] Реализовать валидацию путей к файлам
+- [ ] Добавить логирование операций с файлами
+- [ ] Обработка ошибок доступа к файлам
+
+#### 2.4 Frontend: Vue.js компоненты
+
+**2.4.1 API клиенты и типы** ✅ (2026-01-15)
+- ✅ Создать API клиент `files-api.ts` для работы с `/api/ra/files` ✅
+  - `GET /api/ra/files` - получить все файлы ✅
+  - `GET /api/ra/files/{id}` - получить файл по ID ✅
+  - `GET /api/ra/directories/{dirId}/files` - получить файлы директории ✅
+  - `POST /api/ra/files` - создать файл ✅
+  - `PUT /api/ra/files/{id}` - обновить файл ✅
+  - `DELETE /api/ra/files/{id}` - удалить файл ✅
+- ✅ Создать API клиент `file-types-api.ts` для `/api/ra/file-types` (lookup) ✅
+  - `GET /api/ra/file-types` - получить все типы ✅
+  - `GET /api/ra/file-types/{id}` - получить тип по ID ✅
+- ✅ Создать API клиент `organizations-api.ts` для `/api/og` (lookup для ra_org_sender) ✅
+  - `GET /api/og` - получить все организации ✅
+  - `GET /api/og/{id}` - получить организацию по ID ✅
+  - `getOrganizationsLookup()` - упрощенная версия для select ✅
+- ✅ Создать API клиент `directories-api.ts` для `/api/ra/directories` ✅
+  - `GET /api/ra/directories` - получить все директории ✅
+  - `GET /api/ra/directories/{id}` - получить директорию по ID ✅
+  - `GET /api/ra/audits/{auditId}/directory` - получить директорию ревизии (1:1) ✅
+- ✅ Определить TypeScript типы: ✅
+  - `RaFDto` (обновленный: с `af_num`, `ra_org_sender`, без `af_is_done`, `af_is_source`, `af_adt_key`) ✅
+  - `RaFCreateRequest`, `RaFUpdateRequest` ✅
+  - `RaFtDto` (справочник типов файлов) ✅
+  - `DirectoryDto` (для отображения директории) ✅
+  - `OrganizationDto`, `OrganizationLookupDto` (для lookup отправителя) ✅
+
+**2.4.2 Pinia stores** ✅ (2026-01-15)
+- ✅ Создать store `useFilesStore` для управления файлами ✅
+  - Actions: `loadByDirId`, `loadAll`, `loadById`, `create`, `update`, `deleteFile`, `clearFiles` ✅
+  - State: `files`, `currentDirId`, `loading`, `error` ✅
+  - Getters: `filesByDirId`, `fileById`, `filesByType`, `sortedFiles` ✅
+- ✅ Создать store `useLookupsStore` для справочников ✅
+  - Actions: `loadFileTypes`, `loadOrganizations`, `loadAllLookups`, `clearAll` ✅
+  - State: `fileTypes`, `organizations`, загрузки и флаги ✅
+  - Getters: `fileTypeNameById`, `organizationNameById`, `*Options` для select ✅
+- ✅ Создать store `useDirectoriesStore` для работы с директориями ✅
+  - Actions: `loadAll`, `loadById`, `loadByAuditId`, `setCurrentDirectory`, `clearDirectories` ✅
+  - State: `directories`, `currentDirectory`, `loading`, `error` ✅
+  - Getters: `directoryById`, `directoriesOptions` ✅
+
+**2.4.3 Компоненты для вкладки "файлы для проверки"** ✅ (2026-01-15)
+
+**Главный компонент (Master-Detail):**
+- ✅ Создать `AuditFilesTab.vue` - главный компонент вкладки ✅
+  - Верхняя секция: информация о директории (readonly) ✅
+  - Нижняя секция: таблица файлов с CRUD операциями ✅
+  - Загрузка директории по `auditId` (1:1 связь) ✅
+  - Передача `dirId` в дочерние компоненты ✅
+  - Обработка ошибок загрузки ✅
+
+**Компонент информации о директории:**
+- ✅ Создать `DirectoryInfo.vue` (readonly) ✅
+  - Отображение полей: `dir_name`, `dir` (путь) ✅
+  - Компактный вид (v-card) ✅
+  - Без возможности редактирования ✅
+  - Отображение дат создания/обновления ✅
+  - Индикатор загрузки ✅
+
+**Компонент списка файлов:**
+- ✅ Создать `FilesList.vue` - таблица файлов ✅
+  - Колонки (v-data-table): ✅
+    - `№` (`af_num`) - номер по порядку ✅
+    - `Имя файла` (`af_name`) с иконкой ✅
+    - `Тип` (`af_type`) - lookup в `ra_ft.ft_name` (chip) ✅
+    - `Отправитель` (`ra_org_sender`) - lookup в `og.ogNm` ✅
+    - `Рассмотрение` (`af_execute`) - иконка ✅
+    - `Из Excel` (`af_source`) - иконка ✅
+    - Действия (редактировать, удалить) ✅
+  - Сортировка по `af_num` (по умолчанию) ✅
+  - Фильтрация: поиск по имени + фильтр по типу ✅
+  - Кнопка "Добавить файл" ✅
+  - Диалог подтверждения удаления ✅
+  - Snackbar для уведомлений ✅
+
+**Форма редактирования файла:**
+- ✅ Создать `FileEditDialog.vue` - модальное окно ✅
+  - Поля формы (с валидацией): ✅
+    - `af_name` - текстовое поле (обязательное, max 500) ✅
+    - `af_type` - select с lookup в `ra_ft` (обязательное) ✅
+    - `ra_org_sender` - select с lookup в `og` (необязательное) ✅
+    - `af_execute` - чекбокс (по умолчанию true) ✅
+    - `af_source` - чекбокс (необязательное) ✅
+    - `af_num` - число (для сортировки, необязательное) ✅
+  - Валидация полей (v-form + rules) ✅
+  - Обработка ошибок от API ✅
+  - Режимы: создание/редактирование ✅
+  - Persistent dialog (не закрывается при клике вне) ✅
+  - Автозагрузка справочников ✅
+
+**Демо-представление:**
+- ✅ Создать `AuditsView.vue` - страница с вкладками ✅
+  - Вкладка "Файлы для проверки" (активна) ✅
+  - Остальные вкладки (заглушки) ✅
+
+**2.4.4 Интеграция с формой ревизии**
+- [ ] Интегрировать `AuditFilesList.vue` во вкладку "файлы для проверки" в `AuditsView.vue`
+- [ ] Добавить кнопку "Добавить файл" в список файлов
+- [ ] Реализовать модальное окно для добавления/редактирования файла
+- [ ] Связать файлы с выбранной ревизией (`af_adt_key`)
+- [ ] Обновлять список файлов при изменении выбранной ревизии
+- [ ] Добавить возможность удаления файлов
+
+#### 2.5 Интеграция и тестирование
+
+**2.5.1 Unit тесты**
+- [ ] Unit тесты для `useFilesStore` (CRUD операции)
+- [ ] Unit тесты для stores справочников (file-sources, file-source-names, file-source-types)
+- [ ] Проверка всех тестов (должны проходить успешно)
+
+**2.5.2 Интеграционное тестирование**
+- [ ] Проверка работы CRUD операций с файлами через API
+- [ ] Проверка загрузки файлов для конкретной ревизии
+- [ ] Проверка работы выпадающих списков (типы файлов, источники)
+- [ ] Проверка валидации полей формы
+
+**2.5.3 UI/UX тестирование**
+- [ ] Проверка отображения списка файлов во вкладке "файлы для проверки"
+- [ ] Проверка работы формы добавления/редактирования файлов
+- [ ] Проверка интеграции с формой ревизии
+- [ ] Проверка обновления списка при смене ревизии
+- [ ] Проверка обработки ошибок и уведомлений
+
+**2.5.4 Тестирование в браузере**
+- [ ] Сборка и развертывание приложения
+- [ ] Проверка работы страницы ревизий с файлами
+- [ ] Проверка создания, редактирования, удаления файлов
+- [ ] Проверка работы с реальной БД
+- [ ] Подтверждение корректной работы в production режиме
 
 ### Этап 3: Запуск ревизии и импорт Excel
 

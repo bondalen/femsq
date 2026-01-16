@@ -3,6 +3,7 @@ package com.femsq.database.service;
 import com.femsq.database.dao.RaDirDao;
 import com.femsq.database.model.RaDir;
 import java.util.List;
+import java.util.Optional;
 import java.util.Objects;
 
 /**
@@ -19,5 +20,10 @@ public class DefaultRaDirService implements RaDirService {
     @Override
     public List<RaDir> getAll() {
         return raDirDao.findAll();
+    }
+    
+    @Override
+    public Optional<RaDir> getById(int key) {
+        return raDirDao.findById(key);
     }
 }
