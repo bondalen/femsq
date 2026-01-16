@@ -5,7 +5,6 @@ import com.femsq.web.api.dto.RaDirDto;
 import com.femsq.web.api.mapper.RaDirMapper;
 import java.util.List;
 import java.util.logging.Logger;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
