@@ -461,9 +461,12 @@ onMounted(async () => {
 
 .audits-list-card,
 .audit-form-card {
-  overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+.full-height {
+  height: 100%;
 }
 
 .audits-list-card .q-card__section:nth-child(3) {
@@ -472,11 +475,16 @@ onMounted(async () => {
 }
 
 .audit-list-item {
+  cursor: pointer;
   transition: background-color 0.2s;
 }
 
 .audit-list-item:hover {
-  background-color: rgba(0, 0, 0, 0.04);
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.audit-list-item.q-item--active {
+  background-color: rgba(25, 118, 210, 0.1);
 }
 
 .audit-form-card {
