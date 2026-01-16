@@ -33,7 +33,8 @@
             <q-tab-panels v-model="currentTab" animated>
               <!-- Вкладка: Файлы для проверки -->
               <q-tab-panel name="files">
-                <AuditFilesTab :audit-id="1" />
+                <!-- TODO: В будущем загружать текущую ревизию из роутера или store -->
+                <AuditFilesTab :audit-id="2" />
               </q-tab-panel>
 
               <!-- Вкладка: Результаты -->

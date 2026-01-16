@@ -6,7 +6,7 @@
 
     <groupId>com.femsq</groupId>
     <artifactId>femsq</artifactId>
-    <version>0.1.0.58-SNAPSHOT</version>
+    <version>0.1.0.60-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>FEMSQ Root</name>
