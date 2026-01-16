@@ -2,7 +2,7 @@
   <QPage class="audits-view q-pa-md">
     <div class="row q-col-gutter-md" style="height: calc(100vh - 150px);">
       <!-- Левая панель: список ревизий -->
-      <div class="col-12 audits-list-panel">
+      <div class="col-12 col-md-2 audits-list-panel">
         <QCard flat bordered class="audits-list-card full-height">
           <QCardSection class="row items-center justify-between">
             <div class="text-h6">Ревизии</div>
@@ -56,7 +56,7 @@
       </div>
 
       <!-- Основная область: форма ревизии -->
-      <div class="col-12 audit-form-panel">
+      <div class="col-12 col-md-10 audit-form-panel">
         <QCard flat bordered class="audit-form-card full-height">
           <QCardSection v-if="selectedAudit || isNewAudit" class="compact-form-section">
             <div class="text-h6 compact-title">{{ isNewAudit ? 'Новая ревизия' : 'Редактирование ревизии' }}</div>
@@ -454,26 +454,10 @@ onMounted(async () => {
   margin: 0 auto;
 }
 
-/* Левая панель: ширина в 2.5 раза меньше чем было (col-md-4 = 33.33% -> 13.33%) */
-.audits-list-panel {
-  flex: 0 0 13.33%;
-  max-width: 13.33%;
-}
-
-/* Основная область занимает оставшееся место */
-.audit-form-panel {
-  flex: 0 0 86.67%;
-  max-width: 86.67%;
-}
-
-/* Мобильные устройства - обе панели на всю ширину */
-@media (max-width: 768px) {
-  .audits-list-panel,
-  .audit-form-panel {
-    flex: 0 0 100%;
-    max-width: 100%;
-  }
-}
+/* Quasar Grid классы управляют шириной:
+   - Мобильные (col-12): обе панели на всю ширину (100%)
+   - Десктопы (col-md-2 / col-md-10): панели 16.67% и 83.33%
+*/
 
 .audits-list-card,
 .audit-form-card {
