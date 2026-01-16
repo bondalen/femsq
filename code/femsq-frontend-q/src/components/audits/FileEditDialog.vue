@@ -1,236 +1,211 @@
 <template>
-  <v-dialog
-    :model-value="modelValue"
-    @update:model-value="$emit('update:modelValue', $event)"
-    max-width="600"
-    persistent
-  >
-    <v-card>
-      <v-card-title class="d-flex align-center bg-primary">
-        <v-icon icon="mdi-file-document-edit-outline" class="mr-2" />
-        {{ isEdit ? 'Редактирование файла' : 'Добавление файла' }}
-      </v-card-title>
-      
-      <v-card-text class="pt-4">
-        <v-form ref="formRef" v-model="valid" @submit.prevent="handleSubmit">
-          <v-text-field
+  <q-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)" persistent>
+    <q-card style="min-width: 500px; max-width: 600px">
+      <q-card-section class="row items-center bg-primary text-white">
+        <q-icon name="edit_document" size="sm" class="q-mr-sm" />
+        <div class="text-h6">{{ isEdit ? 'Редактирование файла' : 'Добавление файла' }}</div>
+        <q-space />
+        <q-btn icon="close" flat round dense @click="handleCancel" />
+      </q-card-section>
+
+      <q-card-section class="q-pt-md">
+        <q-form ref="formRef" @submit.prevent="handleSubmit" greedy>
+          <!-- Имя файла -->
+          <q-input
             v-model="form.afName"
             label="Имя файла *"
-            :rules="[rules.required, rules.maxLength(500)]"
-            variant="outlined"
-            density="comfortable"
-            counter="500"
-            hint="Полное имя файла с расширением"
-            persistent-hint
+            outlined
+            dense
+            :rules="[
+              (val) => (val && val.length > 0) || 'Поле обязательно для заполнения',
+              (val) => (val && val.length <= 500) || 'Максимальная длина 500 символов'
+            ]"
+            class="q-mb-md"
           />
-          
-          <v-select
+
+          <!-- Тип файла -->
+          <q-select
             v-model="form.afType"
-            :items="fileTypesOptions"
+            :options="fileTypesOptions"
             label="Тип файла *"
-            :rules="[rules.required]"
-            variant="outlined"
-            density="comfortable"
-            item-title="label"
-            item-value="value"
-            :loading="loadingLookups"
+            outlined
+            dense
+            emit-value
+            map-options
+            :rules="[(val) => val !== null && val !== undefined || 'Поле обязательно для заполнения']"
+            class="q-mb-md"
           />
-          
-          <v-select
+
+          <!-- Отправитель -->
+          <q-select
             v-model="form.raOrgSender"
-            :items="organizationsOptions"
+            :options="organizationsOptions"
             label="Отправитель"
-            variant="outlined"
-            density="comfortable"
-            item-title="label"
-            item-value="value"
-            :loading="loadingLookups"
+            outlined
+            dense
+            emit-value
+            map-options
             clearable
-            hint="Организация-отправитель (необязательно)"
-            persistent-hint
+            class="q-mb-md"
           />
-          
-          <v-row>
-            <v-col cols="12" md="6">
-              <v-text-field
+
+          <div class="row q-col-gutter-md q-mb-md">
+            <!-- Номер по порядку -->
+            <div class="col-12 col-sm-6">
+              <q-input
                 v-model.number="form.afNum"
                 label="Номер по порядку"
                 type="number"
-                variant="outlined"
-                density="comfortable"
-                hint="Для сортировки файлов"
-                persistent-hint
+                outlined
+                dense
               />
-            </v-col>
-            
-            <v-col cols="12" md="6">
-              <v-checkbox
+            </div>
+
+            <!-- Чекбоксы -->
+            <div class="col-12 col-sm-6">
+              <q-checkbox
                 v-model="form.afExecute"
                 label="Подлежит рассмотрению"
-                density="comfortable"
-                hide-details
+                dense
               />
-              
-              <v-checkbox
+              <q-checkbox
                 v-model="form.afSource"
                 label="Брать данные из Excel"
-                density="comfortable"
-                hide-details
+                dense
               />
-            </v-col>
-          </v-row>
-        </v-form>
-      </v-card-text>
-      
-      <v-divider />
-      
-      <v-card-actions>
-        <v-spacer />
-        <v-btn
-          variant="text"
+            </div>
+          </div>
+        </q-form>
+      </q-card-section>
+
+      <q-card-actions align="right" class="q-pa-md">
+        <q-btn
+          label="Отмена"
+          color="grey-7"
+          flat
           @click="handleCancel"
-          :disabled="saving"
-        >
-          Отмена
-        </v-btn>
-        <v-btn
+        />
+        <q-btn
+          :label="isEdit ? 'Сохранить' : 'Создать'"
           color="primary"
-          variant="flat"
+          unelevated
           @click="handleSubmit"
-          :loading="saving"
-          :disabled="!valid"
-        >
-          {{ isEdit ? 'Сохранить' : 'Создать' }}
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+          :loading="loading"
+        />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
-import type { RaFDto, RaFCreateRequest, RaFUpdateRequest } from '@/types/files'
-import { useLookupsStore } from '@/stores/lookups'
+import { ref, watch, computed } from 'vue';
+import type { RaFDto, RaFCreateRequest, RaFUpdateRequest } from '@/types/files';
+import { useLookupsStore } from '@/stores/lookups';
 
 interface Props {
-  modelValue: boolean
-  file?: RaFDto | null
-  dirId: number
+  modelValue: boolean;
+  file?: RaFDto | null;
+  dirId: number;
 }
 
 interface Emits {
-  (e: 'update:modelValue', value: boolean): void
-  (e: 'save', data: RaFCreateRequest | RaFUpdateRequest): void
-  (e: 'cancel'): void
+  (e: 'update:modelValue', value: boolean): void;
+  (e: 'save', data: RaFCreateRequest | RaFUpdateRequest): void;
+  (e: 'cancel'): void;
 }
 
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
+const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
 
-const lookupsStore = useLookupsStore()
+const lookupsStore = useLookupsStore();
+
+// Refs
+const formRef = ref<any>(null);
+const loading = ref(false);
 
 // Form state
-const formRef = ref<any>(null)
-const valid = ref(false)
-const saving = ref(false)
-
 const form = ref<{
-  afName: string
-  afType: number | null
-  afExecute: boolean
-  afSource: boolean | null
-  raOrgSender: number | null
-  afNum: number | null
+  afName: string;
+  afType: number | null;
+  raOrgSender: number | null;
+  afNum: number | null;
+  afExecute: boolean;
+  afSource: boolean;
 }>({
   afName: '',
   afType: null,
-  afExecute: true,
-  afSource: false,
   raOrgSender: null,
-  afNum: null
-})
+  afNum: null,
+  afExecute: false,
+  afSource: false
+});
 
 // Computed
-const isEdit = computed(() => !!props.file)
+const isEdit = computed(() => !!props.file);
 
-const fileTypesOptions = computed(() => lookupsStore.fileTypesOptions)
-const organizationsOptions = computed(() => lookupsStore.organizationsOptions)
-
-const loadingLookups = computed(() => 
-  lookupsStore.loadingFileTypes || lookupsStore.loadingOrganizations
-)
-
-// Validation rules
-const rules = {
-  required: (v: any) => !!v || 'Обязательное поле',
-  maxLength: (max: number) => (v: string) => 
-    !v || v.length <= max || `Максимум ${max} символов`
-}
+const fileTypesOptions = computed(() => lookupsStore.fileTypesOptions);
+const organizationsOptions = computed(() => lookupsStore.organizationsOptions);
 
 // Watchers
-watch(() => props.modelValue, (isOpen) => {
-  if (isOpen) {
-    loadLookups()
-    resetForm()
-    if (props.file) {
-      loadFileData(props.file)
+watch(
+  () => props.modelValue,
+  (isOpen) => {
+    if (isOpen) {
+      loadLookups();
+      if (props.file) {
+        // Режим редактирования
+        form.value = {
+          afName: props.file.afName,
+          afType: props.file.afType,
+          raOrgSender: props.file.raOrgSender ?? null,
+          afNum: props.file.afNum ?? null,
+          afExecute: props.file.afExecute,
+          afSource: props.file.afSource ?? false
+        };
+      } else {
+        // Режим создания
+        resetForm();
+      }
     }
   }
-})
+);
 
 // Methods
 async function loadLookups() {
-  await lookupsStore.loadAllLookups()
+  await lookupsStore.loadAllLookups();
 }
 
 function resetForm() {
   form.value = {
     afName: '',
     afType: null,
-    afExecute: true,
-    afSource: false,
     raOrgSender: null,
-    afNum: null
-  }
-  formRef.value?.resetValidation()
-}
-
-function loadFileData(file: RaFDto) {
-  form.value = {
-    afName: file.afName,
-    afType: file.afType,
-    afExecute: file.afExecute,
-    afSource: file.afSource,
-    raOrgSender: file.raOrgSender,
-    afNum: file.afNum
-  }
+    afNum: null,
+    afExecute: false,
+    afSource: false
+  };
+  formRef.value?.resetValidation();
 }
 
 async function handleSubmit() {
-  const { valid: isValid } = await formRef.value.validate()
-  if (!isValid) return
-  
-  saving.value = true
-  
-  try {
-    const data: RaFCreateRequest | RaFUpdateRequest = {
-      afName: form.value.afName,
-      afDir: props.dirId,
-      afType: form.value.afType!,
-      afExecute: form.value.afExecute,
-      afSource: form.value.afSource,
-      raOrgSender: form.value.raOrgSender,
-      afNum: form.value.afNum
-    }
-    
-    emit('save', data)
-  } finally {
-    saving.value = false
-  }
+  const isValid = await formRef.value?.validate();
+  if (!isValid) return;
+
+  const data = {
+    afName: form.value.afName,
+    afDir: props.dirId,
+    afType: form.value.afType!,
+    afExecute: form.value.afExecute,
+    afSource: form.value.afSource,
+    raOrgSender: form.value.raOrgSender ?? undefined,
+    afNum: form.value.afNum ?? undefined
+  };
+
+  emit('save', data);
 }
 
 function handleCancel() {
-  emit('cancel')
-  emit('update:modelValue', false)
+  emit('cancel');
+  emit('update:modelValue', false);
 }
 </script>

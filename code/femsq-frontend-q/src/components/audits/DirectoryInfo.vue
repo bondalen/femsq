@@ -1,60 +1,67 @@
 <template>
-  <v-card variant="outlined" class="mb-4">
-    <v-card-title class="bg-grey-lighten-4">
-      <v-icon icon="mdi-folder-outline" class="mr-2" />
-      Директория
-    </v-card-title>
-    
-    <v-card-text v-if="directory">
-      <v-row>
-        <v-col cols="12" md="6">
-          <div class="text-caption text-grey">Название директории</div>
-          <div class="text-body-1 font-weight-medium">{{ directory.dirName }}</div>
-        </v-col>
-        
-        <v-col cols="12" md="6">
-          <div class="text-caption text-grey">Путь</div>
-          <div class="text-body-1 font-mono">{{ directory.dir }}</div>
-        </v-col>
-      </v-row>
-      
-      <v-row v-if="directory.created || directory.updated" class="mt-2">
-        <v-col cols="12" md="6">
-          <div class="text-caption text-grey">Создано</div>
-          <div class="text-body-2">{{ formatDate(directory.created) }}</div>
-        </v-col>
-        
-        <v-col cols="12" md="6">
-          <div class="text-caption text-grey">Обновлено</div>
-          <div class="text-body-2">{{ formatDate(directory.updated) }}</div>
-        </v-col>
-      </v-row>
-    </v-card-text>
-    
-    <v-card-text v-else-if="loading">
-      <v-progress-linear indeterminate color="primary" />
-    </v-card-text>
-    
-    <v-card-text v-else>
-      <v-alert type="info" variant="tonal">
+  <q-card flat bordered class="q-mb-md">
+    <q-card-section class="bg-grey-3">
+      <div class="text-h6">
+        <q-icon name="folder_open" class="q-mr-sm" />
+        Директория
+      </div>
+    </q-card-section>
+
+    <q-card-section v-if="directory">
+      <div class="row q-col-gutter-md">
+        <div class="col-12 col-md-6">
+          <div class="text-caption text-grey-7">Ключ</div>
+          <div class="text-body1">{{ directory.key }}</div>
+        </div>
+
+        <div class="col-12 col-md-6">
+          <div class="text-caption text-grey-7">Путь</div>
+          <div class="text-body1">{{ directory.path || '—' }}</div>
+        </div>
+
+        <div class="col-12 col-md-6">
+          <div class="text-caption text-grey-7">Дата создания</div>
+          <div class="text-body1">{{ formatDate(directory.created) }}</div>
+        </div>
+
+        <div class="col-12 col-md-6">
+          <div class="text-caption text-grey-7">Дата обновления</div>
+          <div class="text-body1">{{ formatDate(directory.updated) }}</div>
+        </div>
+      </div>
+    </q-card-section>
+
+    <q-card-section v-else-if="loading">
+      <q-linear-progress indeterminate color="primary" />
+      <div class="text-center q-mt-sm text-grey-7">Загрузка директории...</div>
+    </q-card-section>
+
+    <q-card-section v-else>
+      <q-banner class="bg-blue-1 text-blue-9">
+        <template v-slot:avatar>
+          <q-icon name="info" color="blue" />
+        </template>
         Директория не загружена
-      </v-alert>
-    </v-card-text>
-  </v-card>
+      </q-banner>
+    </q-card-section>
+  </q-card>
 </template>
 
 <script setup lang="ts">
-import type { DirectoryDto } from '@/types/files'
+import type { DirectoryDto } from '@/types/files';
 
 interface Props {
-  directory: DirectoryDto | null
-  loading?: boolean
+  directory: DirectoryDto | null;
+  loading?: boolean;
 }
 
-defineProps<Props>()
+defineProps<Props>();
 
+/**
+ * Форматирует дату в читаемый формат
+ */
 function formatDate(date: string | null): string {
-  if (!date) return 'Не указано'
+  if (!date) return '—';
   try {
     return new Date(date).toLocaleString('ru-RU', {
       year: 'numeric',
@@ -62,15 +69,18 @@ function formatDate(date: string | null): string {
       day: '2-digit',
       hour: '2-digit',
       minute: '2-digit'
-    })
+    });
   } catch {
-    return date
+    return date;
   }
 }
 </script>
 
 <style scoped>
-.font-mono {
-  font-family: 'Courier New', monospace;
+.text-caption {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 </style>

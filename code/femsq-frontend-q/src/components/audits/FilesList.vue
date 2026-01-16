@@ -1,130 +1,169 @@
 <template>
-  <v-card>
-    <v-card-title class="d-flex align-center">
-      <v-icon icon="mdi-file-multiple-outline" class="mr-2" />
-      Файлы для проверки
-      <v-chip class="ml-2" size="small" color="primary">
+  <q-card flat bordered>
+    <q-card-section class="row items-center">
+      <div class="text-h6">Файлы для проверки</div>
+      <q-chip class="q-ml-sm" color="primary" text-color="white">
         {{ files.length }}
-      </v-chip>
-      <v-spacer />
-      <v-btn
+      </q-chip>
+      <q-space />
+      <q-btn
         color="primary"
-        prepend-icon="mdi-plus"
+        icon="add"
+        label="Добавить файл"
+        unelevated
         @click="handleAdd"
-        :disabled="!dirId"
-      >
-        Добавить файл
-      </v-btn>
-    </v-card-title>
-    
-    <v-card-text>
+        :disable="!dirId"
+      />
+    </q-card-section>
+
+    <q-card-section>
       <!-- Фильтры -->
-      <v-row class="mb-4">
-        <v-col cols="12" md="6">
-          <v-text-field
-            v-model="search"
-            prepend-inner-icon="mdi-magnify"
-            label="Поиск по имени файла"
-            variant="outlined"
-            density="compact"
+      <div class="row q-col-gutter-md q-mb-md">
+        <div class="col-12 col-md-6">
+          <q-input
+            v-model="searchQuery"
+            outlined
+            dense
+            placeholder="Поиск по имени файла..."
             clearable
-            hide-details
-          />
-        </v-col>
-        
-        <v-col cols="12" md="6">
-          <v-select
+          >
+            <template v-slot:prepend>
+              <q-icon name="search" />
+            </template>
+          </q-input>
+        </div>
+        <div class="col-12 col-md-6">
+          <q-select
             v-model="filterType"
-            :items="fileTypeFilterOptions"
-            label="Фильтр по типу"
-            variant="outlined"
-            density="compact"
+            :options="filterTypeOptions"
+            outlined
+            dense
+            emit-value
+            map-options
             clearable
-            hide-details
+            placeholder="Фильтр по типу"
           />
-        </v-col>
-      </v-row>
-      
-      <!-- Таблица файлов -->
-      <v-data-table
-        :headers="headers"
-        :items="filteredFiles"
+        </div>
+      </div>
+
+      <!-- Таблица -->
+      <q-table
+        :rows="filteredFiles"
+        :columns="columns"
+        row-key="afKey"
         :loading="loading"
-        :sort-by="[{ key: 'afNum', order: 'asc' }]"
-        class="elevation-1"
-        density="comfortable"
-        :items-per-page="25"
-        :items-per-page-options="[10, 25, 50, 100]"
+        flat
+        bordered
+        :rows-per-page-options="[10, 25, 50]"
+        :pagination="{ rowsPerPage: 10, sortBy: 'afNum', descending: false }"
       >
-        <template #item.afNum="{ item }">
-          <span class="text-grey">{{ item.afNum ?? '—' }}</span>
+        <!-- Колонка: Номер -->
+        <template v-slot:body-cell-afNum="props">
+          <q-td :props="props">
+            <q-chip size="sm" color="grey-3">
+              {{ props.row.afNum ?? '—' }}
+            </q-chip>
+          </q-td>
         </template>
-        
-        <template #item.afName="{ item }">
-          <div class="d-flex align-center">
-            <v-icon icon="mdi-file-document-outline" size="small" class="mr-2" />
-            <span class="font-weight-medium">{{ item.afName }}</span>
+
+        <!-- Колонка: Имя файла -->
+        <template v-slot:body-cell-afName="props">
+          <q-td :props="props">
+            <div class="row items-center no-wrap">
+              <q-icon name="description" size="sm" class="q-mr-sm" color="grey-7" />
+              <span>{{ props.row.afName }}</span>
+            </div>
+          </q-td>
+        </template>
+
+        <!-- Колонка: Тип -->
+        <template v-slot:body-cell-afType="props">
+          <q-td :props="props">
+            <q-chip size="sm" color="blue-2" text-color="blue-9">
+              {{ getFileTypeName(props.row.afType) }}
+            </q-chip>
+          </q-td>
+        </template>
+
+        <!-- Колонка: Отправитель -->
+        <template v-slot:body-cell-raOrgSender="props">
+          <q-td :props="props">
+            <span class="text-body2">
+              {{ getOrganizationName(props.row.raOrgSender) }}
+            </span>
+          </q-td>
+        </template>
+
+        <!-- Колонка: Рассмотрение -->
+        <template v-slot:body-cell-afExecute="props">
+          <q-td :props="props" class="text-center">
+            <q-icon
+              :name="props.row.afExecute ? 'check_circle' : 'radio_button_unchecked'"
+              :color="props.row.afExecute ? 'positive' : 'grey-5'"
+              size="sm"
+            />
+          </q-td>
+        </template>
+
+        <!-- Колонка: Из Excel -->
+        <template v-slot:body-cell-afSource="props">
+          <q-td :props="props" class="text-center">
+            <q-icon
+              v-if="props.row.afSource"
+              name="table_chart"
+              color="green-7"
+              size="sm"
+            />
+            <span v-else class="text-grey-5">—</span>
+          </q-td>
+        </template>
+
+        <!-- Колонка: Действия -->
+        <template v-slot:body-cell-actions="props">
+          <q-td :props="props">
+            <q-btn
+              icon="edit"
+              size="sm"
+              flat
+              round
+              color="primary"
+              @click="handleEdit(props.row)"
+            >
+              <q-tooltip>Редактировать</q-tooltip>
+            </q-btn>
+            <q-btn
+              icon="delete"
+              size="sm"
+              flat
+              round
+              color="negative"
+              @click="handleDelete(props.row)"
+            >
+              <q-tooltip>Удалить</q-tooltip>
+            </q-btn>
+          </q-td>
+        </template>
+
+        <!-- Нет данных -->
+        <template v-slot:no-data>
+          <div class="full-width column flex-center q-pa-lg">
+            <q-icon name="folder_open" size="3em" color="grey-5" />
+            <div class="text-h6 q-mt-md text-grey-7">Файлы не найдены</div>
+            <div class="text-body2 text-grey-6">
+              {{ dirId ? 'Добавьте первый файл для этой директории' : 'Выберите директорию' }}
+            </div>
           </div>
         </template>
-        
-        <template #item.afType="{ item }">
-          <v-chip size="small" color="primary" variant="tonal">
-            {{ getFileTypeName(item.afType) }}
-          </v-chip>
+
+        <!-- Загрузка -->
+        <template v-slot:loading>
+          <q-inner-loading showing>
+            <q-spinner-dots size="50px" color="primary" />
+          </q-inner-loading>
         </template>
-        
-        <template #item.raOrgSender="{ item }">
-          <span class="text-body-2">
-            {{ getOrganizationName(item.raOrgSender) }}
-          </span>
-        </template>
-        
-        <template #item.afExecute="{ item }">
-          <v-icon
-            :icon="item.afExecute ? 'mdi-check-circle' : 'mdi-circle-outline'"
-            :color="item.afExecute ? 'success' : 'grey'"
-            size="small"
-          />
-        </template>
-        
-        <template #item.afSource="{ item }">
-          <v-icon
-            v-if="item.afSource"
-            icon="mdi-table-large"
-            color="info"
-            size="small"
-          />
-          <span v-else class="text-grey">—</span>
-        </template>
-        
-        <template #item.actions="{ item }">
-          <v-btn
-            icon="mdi-pencil"
-            variant="text"
-            size="small"
-            @click="handleEdit(item)"
-          />
-          <v-btn
-            icon="mdi-delete"
-            variant="text"
-            size="small"
-            color="error"
-            @click="handleDelete(item)"
-          />
-        </template>
-        
-        <template #no-data>
-          <v-alert type="info" variant="tonal" class="ma-4">
-            {{ dirId ? 'Файлы не найдены' : 'Выберите директорию для отображения файлов' }}
-          </v-alert>
-        </template>
-        
-        <template #loading>
-          <v-skeleton-loader type="table-row@10" />
-        </template>
-      </v-data-table>
-    </v-card-text>
-    
+      </q-table>
+    </q-card-section>
+
     <!-- Диалог редактирования -->
     <FileEditDialog
       v-model="dialogOpen"
@@ -133,192 +172,245 @@
       @save="handleSave"
       @cancel="handleCancelDialog"
     />
-    
+
     <!-- Диалог подтверждения удаления -->
-    <v-dialog v-model="deleteDialogOpen" max-width="400">
-      <v-card>
-        <v-card-title class="text-h6">Подтверждение удаления</v-card-title>
-        <v-card-text>
-          Вы уверены, что хотите удалить файл<br>
-          <strong>{{ fileToDelete?.afName }}</strong>?
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn variant="text" @click="deleteDialogOpen = false">Отмена</v-btn>
-          <v-btn color="error" variant="flat" @click="confirmDelete" :loading="deleting">
-            Удалить
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-    
-    <!-- Snackbar для уведомлений -->
-    <v-snackbar v-model="snackbar" :color="snackbarColor" :timeout="3000">
-      {{ snackbarText }}
-      <template #actions>
-        <v-btn icon="mdi-close" size="small" @click="snackbar = false" />
-      </template>
-    </v-snackbar>
-  </v-card>
+    <q-dialog v-model="deleteDialogOpen" persistent>
+      <q-card>
+        <q-card-section class="row items-center">
+          <q-icon name="warning" color="warning" size="md" class="q-mr-md" />
+          <span class="text-h6">Подтверждение удаления</span>
+        </q-card-section>
+
+        <q-card-section>
+          Вы действительно хотите удалить файл
+          <strong>"{{ fileToDelete?.afName }}"</strong>?
+          <br />
+          Это действие нельзя отменить.
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn label="Отмена" color="grey-7" flat @click="deleteDialogOpen = false" />
+          <q-btn
+            label="Удалить"
+            color="negative"
+            unelevated
+            @click="confirmDelete"
+            :loading="deleteLoading"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+  </q-card>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import type { RaFDto, RaFCreateRequest, RaFUpdateRequest } from '@/types/files'
-import { useFilesStore } from '@/stores/files'
-import { useLookupsStore } from '@/stores/lookups'
-import FileEditDialog from './FileEditDialog.vue'
+import { ref, computed, watch } from 'vue';
+import { useQuasar } from 'quasar';
+import type { RaFDto, RaFCreateRequest, RaFUpdateRequest } from '@/types/files';
+import { useFilesStore } from '@/stores/files';
+import { useLookupsStore } from '@/stores/lookups';
+import FileEditDialog from './FileEditDialog.vue';
 
 interface Props {
-  dirId: number | null
+  dirId: number | null;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
-const filesStore = useFilesStore()
-const lookupsStore = useLookupsStore()
+const $q = useQuasar();
+const filesStore = useFilesStore();
+const lookupsStore = useLookupsStore();
 
 // State
-const search = ref('')
-const filterType = ref<number | null>(null)
-const dialogOpen = ref(false)
-const selectedFile = ref<RaFDto | null>(null)
-const deleteDialogOpen = ref(false)
-const fileToDelete = ref<RaFDto | null>(null)
-const deleting = ref(false)
-
-// Snackbar
-const snackbar = ref(false)
-const snackbarText = ref('')
-const snackbarColor = ref<'success' | 'error'>('success')
+const dialogOpen = ref(false);
+const selectedFile = ref<RaFDto | null>(null);
+const deleteDialogOpen = ref(false);
+const fileToDelete = ref<RaFDto | null>(null);
+const deleteLoading = ref(false);
+const searchQuery = ref('');
+const filterType = ref<number | null>(null);
 
 // Computed
-const files = computed(() => filesStore.sortedFiles)
-const loading = computed(() => filesStore.loading)
+const files = computed(() => 
+  props.dirId ? filesStore.filesByDirId(props.dirId) : []
+);
 
-const fileTypeFilterOptions = computed(() => [
-  { title: 'Все типы', value: null },
-  ...lookupsStore.fileTypesOptions.map(opt => ({
-    title: opt.label,
-    value: opt.value
-  }))
-])
+const loading = computed(() => filesStore.loading);
+
+const columns = [
+  {
+    name: 'afNum',
+    label: '№',
+    field: 'afNum',
+    align: 'center' as const,
+    sortable: true,
+    style: 'width: 80px'
+  },
+  {
+    name: 'afName',
+    label: 'Имя файла',
+    field: 'afName',
+    align: 'left' as const,
+    sortable: true
+  },
+  {
+    name: 'afType',
+    label: 'Тип',
+    field: 'afType',
+    align: 'left' as const,
+    sortable: true,
+    style: 'width: 180px'
+  },
+  {
+    name: 'raOrgSender',
+    label: 'Отправитель',
+    field: 'raOrgSender',
+    align: 'left' as const,
+    sortable: true,
+    style: 'width: 200px'
+  },
+  {
+    name: 'afExecute',
+    label: 'Рассмотрение',
+    field: 'afExecute',
+    align: 'center' as const,
+    sortable: true,
+    style: 'width: 120px'
+  },
+  {
+    name: 'afSource',
+    label: 'Из Excel',
+    field: 'afSource',
+    align: 'center' as const,
+    sortable: true,
+    style: 'width: 100px'
+  },
+  {
+    name: 'actions',
+    label: 'Действия',
+    field: 'actions',
+    align: 'center' as const,
+    style: 'width: 120px'
+  }
+];
+
+const filterTypeOptions = computed(() => lookupsStore.fileTypesOptions);
 
 const filteredFiles = computed(() => {
-  let result = files.value
-  
+  let result = files.value;
+
   // Фильтр по поиску
-  if (search.value) {
-    const searchLower = search.value.toLowerCase()
-    result = result.filter(file => 
-      file.afName.toLowerCase().includes(searchLower)
-    )
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase();
+    result = result.filter((file) =>
+      file.afName.toLowerCase().includes(query)
+    );
   }
-  
+
   // Фильтр по типу
   if (filterType.value !== null) {
-    result = result.filter(file => file.afType === filterType.value)
+    result = result.filter((file) => file.afType === filterType.value);
   }
-  
-  return result
-})
 
-// Table headers
-const headers = [
-  { title: '№', key: 'afNum', width: '80px', sortable: true },
-  { title: 'Имя файла', key: 'afName', sortable: true },
-  { title: 'Тип', key: 'afType', width: '200px', sortable: true },
-  { title: 'Отправитель', key: 'raOrgSender', width: '200px', sortable: false },
-  { title: 'Рассмотрение', key: 'afExecute', width: '120px', align: 'center', sortable: true },
-  { title: 'Из Excel', key: 'afSource', width: '100px', align: 'center', sortable: true },
-  { title: 'Действия', key: 'actions', width: '120px', align: 'center', sortable: false }
-]
+  return result;
+});
 
 // Watchers
-watch(() => props.dirId, async (newDirId) => {
-  if (newDirId) {
-    await loadFiles(newDirId)
-    await lookupsStore.loadAllLookups()
-  }
-}, { immediate: true })
+watch(
+  () => props.dirId,
+  async (newDirId) => {
+    if (newDirId) {
+      await filesStore.loadByDirId(newDirId);
+      await lookupsStore.loadAllLookups();
+    }
+  },
+  { immediate: true }
+);
 
 // Methods
-async function loadFiles(dirId: number) {
-  try {
-    await filesStore.loadByDirId(dirId)
-  } catch (error) {
-    showSnackbar('Ошибка загрузки файлов', 'error')
-  }
-}
-
 function getFileTypeName(typeId: number): string {
-  return lookupsStore.fileTypeNameById(typeId)
+  return lookupsStore.fileTypeNameById(typeId);
 }
 
 function getOrganizationName(orgId: number | null): string {
-  return lookupsStore.organizationNameById(orgId)
+  if (!orgId) return '—';
+  return lookupsStore.organizationNameById(orgId);
 }
 
 function handleAdd() {
-  selectedFile.value = null
-  dialogOpen.value = true
+  selectedFile.value = null;
+  dialogOpen.value = true;
 }
 
 function handleEdit(file: RaFDto) {
-  selectedFile.value = file
-  dialogOpen.value = true
+  selectedFile.value = file;
+  dialogOpen.value = true;
+}
+
+function handleDelete(file: RaFDto) {
+  fileToDelete.value = file;
+  deleteDialogOpen.value = true;
 }
 
 async function handleSave(data: RaFCreateRequest | RaFUpdateRequest) {
   try {
     if (selectedFile.value) {
-      await filesStore.update(selectedFile.value.afKey, data as RaFUpdateRequest)
-      showSnackbar('Файл успешно обновлен', 'success')
+      // Редактирование
+      await filesStore.update(selectedFile.value.afKey, data as RaFUpdateRequest);
+      $q.notify({
+        type: 'positive',
+        message: 'Файл успешно обновлен',
+        position: 'top-right'
+      });
     } else {
-      await filesStore.create(data as RaFCreateRequest)
-      showSnackbar('Файл успешно создан', 'success')
+      // Создание
+      await filesStore.create(data as RaFCreateRequest);
+      $q.notify({
+        type: 'positive',
+        message: 'Файл успешно создан',
+        position: 'top-right'
+      });
     }
-    dialogOpen.value = false
+    dialogOpen.value = false;
+    if (props.dirId) {
+      await filesStore.loadByDirId(props.dirId);
+    }
   } catch (error) {
-    showSnackbar('Ошибка сохранения файла', 'error')
+    $q.notify({
+      type: 'negative',
+      message: `Ошибка: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`,
+      position: 'top-right'
+    });
   }
 }
 
 function handleCancelDialog() {
-  dialogOpen.value = false
-  selectedFile.value = null
-}
-
-function handleDelete(file: RaFDto) {
-  fileToDelete.value = file
-  deleteDialogOpen.value = true
+  dialogOpen.value = false;
 }
 
 async function confirmDelete() {
-  if (!fileToDelete.value) return
-  
-  deleting.value = true
+  if (!fileToDelete.value) return;
+
+  deleteLoading.value = true;
   try {
-    await filesStore.deleteFile(fileToDelete.value.afKey)
-    showSnackbar('Файл успешно удален', 'success')
-    deleteDialogOpen.value = false
-    fileToDelete.value = null
+    await filesStore.deleteFile(fileToDelete.value.afKey);
+    $q.notify({
+      type: 'positive',
+      message: 'Файл успешно удален',
+      position: 'top-right'
+    });
+    deleteDialogOpen.value = false;
+    if (props.dirId) {
+      await filesStore.loadByDirId(props.dirId);
+    }
   } catch (error) {
-    showSnackbar('Ошибка удаления файла', 'error')
+    $q.notify({
+      type: 'negative',
+      message: `Ошибка удаления: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`,
+      position: 'top-right'
+    });
   } finally {
-    deleting.value = false
+    deleteLoading.value = false;
   }
 }
-
-function showSnackbar(text: string, color: 'success' | 'error') {
-  snackbarText.value = text
-  snackbarColor.value = color
-  snackbar.value = true
-}
 </script>
-
-<style scoped>
-.v-data-table :deep(.v-data-table__td) {
-  white-space: nowrap;
-}
-</style>

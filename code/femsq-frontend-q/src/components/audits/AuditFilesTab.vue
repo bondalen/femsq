@@ -1,76 +1,72 @@
 <template>
   <div class="audit-files-tab">
     <!-- Информация о директории -->
-    <DirectoryInfo
-      :directory="currentDirectory"
-      :loading="loadingDirectory"
-    />
-    
+    <DirectoryInfo :directory="currentDirectory" :loading="loadingDirectory" />
+
     <!-- Список файлов -->
-    <FilesList
-      :dir-id="currentDirectory?.key ?? null"
-    />
-    
-    <!-- Ошибка загрузки -->
-    <v-alert
-      v-if="error"
-      type="error"
-      variant="tonal"
-      class="mt-4"
-      closable
-      @click:close="error = null"
-    >
+    <FilesList :dir-id="currentDirectory?.key ?? null" />
+
+    <!-- Сообщение об ошибке -->
+    <q-banner v-if="error" class="bg-negative text-white q-mt-md">
+      <template v-slot:avatar>
+        <q-icon name="error" color="white" />
+      </template>
       {{ error }}
-    </v-alert>
+    </q-banner>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { useDirectoriesStore } from '@/stores/directories'
-import DirectoryInfo from './DirectoryInfo.vue'
-import FilesList from './FilesList.vue'
+import { ref, onMounted, computed } from 'vue';
+import { useQuasar } from 'quasar';
+import { useDirectoriesStore } from '@/stores/directories';
+import DirectoryInfo from './DirectoryInfo.vue';
+import FilesList from './FilesList.vue';
 
 interface Props {
-  auditId: number
+  auditId: number;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
-const directoriesStore = useDirectoriesStore()
+const $q = useQuasar();
+const directoriesStore = useDirectoriesStore();
 
 // State
-const loadingDirectory = ref(false)
-const error = ref<string | null>(null)
+const loadingDirectory = ref(false);
+const error = ref<string | null>(null);
 
 // Computed
-const currentDirectory = computed(() => directoriesStore.currentDirectory)
+const currentDirectory = computed(() => directoriesStore.currentDirectory);
 
 // Lifecycle
 onMounted(async () => {
-  await loadDirectory()
-})
+  await loadDirectory();
+});
 
 // Methods
 async function loadDirectory() {
-  loadingDirectory.value = true
-  error.value = null
-  
+  loadingDirectory.value = true;
+  error.value = null;
+
   try {
-    await directoriesStore.loadByAuditId(props.auditId)
+    await directoriesStore.loadByAuditId(props.auditId);
   } catch (err) {
-    error.value = err instanceof Error 
-      ? err.message 
-      : 'Ошибка загрузки директории ревизии'
-    console.error('Failed to load directory:', err)
+    error.value = `Ошибка загрузки директории: ${err instanceof Error ? err.message : 'Неизвестная ошибка'}`;
+    $q.notify({
+      type: 'negative',
+      message: error.value,
+      position: 'top-right'
+    });
   } finally {
-    loadingDirectory.value = false
+    loadingDirectory.value = false;
   }
 }
 </script>
 
 <style scoped>
 .audit-files-tab {
-  padding: 16px 0;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 </style>

@@ -1,69 +1,129 @@
 <template>
-  <v-container fluid class="pa-4">
-    <v-row>
-      <v-col cols="12">
-        <h1 class="text-h4 mb-4">Ревизии отчётов агента</h1>
-      </v-col>
-    </v-row>
-    
-    <v-row>
-      <v-col cols="12">
-        <v-card>
-          <v-tabs v-model="currentTab" bg-color="primary">
-            <v-tab value="files">
-              <v-icon icon="mdi-file-multiple" class="mr-2" />
-              Файлы для проверки
-            </v-tab>
-            <v-tab value="results" disabled>
-              <v-icon icon="mdi-chart-box-outline" class="mr-2" />
-              Результаты
-            </v-tab>
-            <v-tab value="land-review" disabled>
-              <v-icon icon="mdi-map-marker" class="mr-2" />
-              Земля, рассмотрения
-            </v-tab>
-            <v-tab value="land-reports" disabled>
-              <v-icon icon="mdi-file-chart" class="mr-2" />
-              Земля, отчёты
-            </v-tab>
-            <v-tab value="land-rent" disabled>
-              <v-icon icon="mdi-currency-rub" class="mr-2" />
-              Земля, итог
-            </v-tab>
-          </v-tabs>
-          
-          <v-card-text>
-            <v-window v-model="currentTab">
-              <v-window-item value="files">
+  <q-page padding>
+    <div class="q-pa-md">
+      <!-- Заголовок -->
+      <div class="row q-mb-md">
+        <div class="col">
+          <h1 class="text-h4 q-mb-sm">Ревизии отчётов агента</h1>
+          <p class="text-grey-7">Управление файлами для проверки и результатами ревизий</p>
+        </div>
+      </div>
+
+      <!-- Карточка с вкладками -->
+      <div class="row">
+        <div class="col">
+          <q-card flat bordered>
+            <q-tabs
+              v-model="currentTab"
+              class="bg-primary text-white"
+              active-color="white"
+              indicator-color="white"
+              align="left"
+            >
+              <q-tab name="files" icon="folder_open" label="Файлы для проверки" />
+              <q-tab name="results" icon="assignment_turned_in" label="Результаты" disable />
+              <q-tab name="land" icon="landscape" label="Земля" disable />
+              <q-tab name="buildings" icon="business" label="Здания" disable />
+              <q-tab name="facilities" icon="factory" label="Сооружения" disable />
+              <q-tab name="movable" icon="category" label="Движимое имущество" disable />
+            </q-tabs>
+
+            <q-separator />
+
+            <q-tab-panels v-model="currentTab" animated>
+              <!-- Вкладка: Файлы для проверки -->
+              <q-tab-panel name="files">
                 <AuditFilesTab :audit-id="1" />
-              </v-window-item>
-              
-              <v-window-item value="results">
-                <v-alert type="info">Вкладка "Результаты" в разработке</v-alert>
-              </v-window-item>
-              
-              <v-window-item value="land-review">
-                <v-alert type="info">Вкладка "Земля, рассмотрения" в разработке</v-alert>
-              </v-window-item>
-              
-              <v-window-item value="land-reports">
-                <v-alert type="info">Вкладка "Земля, отчёты" в разработке</v-alert>
-              </v-window-item>
-              
-              <v-window-item value="land-rent">
-                <v-alert type="info">Вкладка "Земля, итог" в разработке</v-alert>
-              </v-window-item>
-            </v-window>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-  </v-container>
+              </q-tab-panel>
+
+              <!-- Вкладка: Результаты -->
+              <q-tab-panel name="results">
+                <q-banner class="bg-blue-1 text-blue-9">
+                  <template v-slot:avatar>
+                    <q-icon name="info" color="blue" />
+                  </template>
+                  <div class="text-h6 q-mb-sm">Результаты ревизии</div>
+                  <div>
+                    Эта вкладка будет содержать результаты проверки файлов и сводную информацию
+                    по ревизии.
+                  </div>
+                </q-banner>
+              </q-tab-panel>
+
+              <!-- Вкладка: Земля -->
+              <q-tab-panel name="land">
+                <q-banner class="bg-blue-1 text-blue-9">
+                  <template v-slot:avatar>
+                    <q-icon name="info" color="blue" />
+                  </template>
+                  <div class="text-h6 q-mb-sm">Земельные участки</div>
+                  <div>
+                    Эта вкладка будет содержать информацию о земельных участках, выявленных в
+                    процессе ревизии.
+                  </div>
+                </q-banner>
+              </q-tab-panel>
+
+              <!-- Вкладка: Здания -->
+              <q-tab-panel name="buildings">
+                <q-banner class="bg-blue-1 text-blue-9">
+                  <template v-slot:avatar>
+                    <q-icon name="info" color="blue" />
+                  </template>
+                  <div class="text-h6 q-mb-sm">Здания</div>
+                  <div>
+                    Эта вкладка будет содержать информацию о зданиях, выявленных в процессе
+                    ревизии.
+                  </div>
+                </q-banner>
+              </q-tab-panel>
+
+              <!-- Вкладка: Сооружения -->
+              <q-tab-panel name="facilities">
+                <q-banner class="bg-blue-1 text-blue-9">
+                  <template v-slot:avatar>
+                    <q-icon name="info" color="blue" />
+                  </template>
+                  <div class="text-h6 q-mb-sm">Сооружения</div>
+                  <div>
+                    Эта вкладка будет содержать информацию о сооружениях, выявленных в процессе
+                    ревизии.
+                  </div>
+                </q-banner>
+              </q-tab-panel>
+
+              <!-- Вкладка: Движимое имущество -->
+              <q-tab-panel name="movable">
+                <q-banner class="bg-blue-1 text-blue-9">
+                  <template v-slot:avatar>
+                    <q-icon name="info" color="blue" />
+                  </template>
+                  <div class="text-h6 q-mb-sm">Движимое имущество</div>
+                  <div>
+                    Эта вкладка будет содержать информацию о движимом имуществе, выявленном в
+                    процессе ревизии.
+                  </div>
+                </q-banner>
+              </q-tab-panel>
+            </q-tab-panels>
+          </q-card>
+        </div>
+      </div>
+    </div>
+  </q-page>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import AuditFilesTab from '@/components/audits/AuditFilesTab.vue'
+import { ref } from 'vue';
+import AuditFilesTab from '@/components/audits/AuditFilesTab.vue';
 
-const currentTab = ref('files')
+const currentTab = ref('files');
 </script>
+
+<style scoped>
+.text-h4 {
+  font-size: 2rem;
+  font-weight: 400;
+  line-height: 1.2;
+}
+</style>
