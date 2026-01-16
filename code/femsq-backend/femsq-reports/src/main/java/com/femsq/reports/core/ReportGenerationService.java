@@ -402,6 +402,11 @@ public class ReportGenerationService {
             return; // Нет параметров для валидации
         }
 
+        // Проверка на null для providedParams перед использованием
+        if (providedParams == null) {
+            throw new IllegalArgumentException("Параметры не могут быть null для отчета с обязательными параметрами");
+        }
+
         List<String> errors = new ArrayList<>();
 
         for (ReportParameter param : metadata.parameters()) {
