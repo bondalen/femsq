@@ -2,7 +2,7 @@
   <QPage class="audits-view q-pa-md">
     <div class="row q-col-gutter-md" style="height: calc(100vh - 150px);">
       <!-- Левая панель: список ревизий -->
-      <div class="col-12 col-md-3 audits-list-panel">
+      <div class="col-12 col-sm-2 audits-list-panel">
         <QCard flat bordered class="audits-list-card full-height">
           <QCardSection class="row items-center justify-between">
             <div class="text-h6">Ревизии</div>
@@ -454,9 +454,9 @@ onMounted(async () => {
   margin: 0 auto;
 }
 
-/* Quasar Grid классы управляют шириной:
-   - Мобильные (col-12): обе панели на всю ширину (100%)
-   - Десктопы (col-md-2 / col-md-10): панели 16.67% и 83.33%
+/* Quasar Grid (col-sm-2 / col-sm-10):
+   - Мобильные (< 600px, col-12): обе панели на всю ширину (100%)
+   - Планшеты и десктопы (>= 600px, col-sm-2 / col-sm-10): панели 16.67% / 83.33%
 */
 
 .audits-list-card,
