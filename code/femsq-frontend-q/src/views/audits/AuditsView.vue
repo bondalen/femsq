@@ -2,7 +2,7 @@
   <QPage class="audits-view q-pa-md">
     <div class="row q-col-gutter-md" style="height: calc(100vh - 150px);">
       <!-- Левая панель: список ревизий -->
-      <div class="col-12 col-sm-2 audits-list-panel">
+      <div class="col-12 audits-list-panel">
         <QCard flat bordered class="audits-list-card full-height">
           <QCardSection class="row items-center justify-between">
             <div class="text-h6">Ревизии</div>
@@ -56,7 +56,7 @@
       </div>
 
       <!-- Основная область: форма ревизии -->
-      <div class="col-12 col-md-9 audit-form-panel">
+      <div class="col-12 audit-form-panel">
         <QCard flat bordered class="audit-form-card full-height">
           <QCardSection v-if="selectedAudit || isNewAudit" class="compact-form-section">
             <div class="text-h6 compact-title">{{ isNewAudit ? 'Новая ревизия' : 'Редактирование ревизии' }}</div>
@@ -450,14 +450,8 @@ onMounted(async () => {
 
 <style scoped>
 .audits-view {
-  max-width: 1800px;
-  margin: 0 auto;
+  height: 100%;
 }
-
-/* Quasar Grid (col-sm-2 / col-sm-10):
-   - Мобильные (< 600px, col-12): обе панели на всю ширину (100%)
-   - Планшеты и десктопы (>= 600px, col-sm-2 / col-sm-10): панели 16.67% / 83.33%
-*/
 
 .audits-list-card,
 .audit-form-card {
@@ -467,11 +461,6 @@ onMounted(async () => {
 
 .full-height {
   height: 100%;
-}
-
-.audits-list-card .q-card__section:nth-child(3) {
-  flex: 1;
-  overflow-y: auto;
 }
 
 .audit-list-item {
@@ -487,44 +476,58 @@ onMounted(async () => {
   background-color: rgba(25, 118, 210, 0.1);
 }
 
-.audit-form-card {
-  overflow-y: auto;
+/* Левая панель: ширина в 2.5 раза меньше чем было (col-md-4 = 33.33% -> 13.33%) */
+.audits-list-panel {
+  flex: 0 0 100%;
+  max-width: 100%;
 }
 
+@media (min-width: 768px) {
+  .audits-list-panel {
+    flex: 0 0 13.33%;
+    max-width: 13.33%;
+  }
+  
+  .audit-form-panel {
+    flex: 0 0 86.67%;
+    max-width: 86.67%;
+  }
+}
+
+/* Компактная форма: уменьшаем вертикальные отступы в 4 раза */
 .compact-form-section {
-  padding: 12px !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
 }
 
 .compact-title {
-  margin-bottom: 8px;
-  font-size: 1.1rem;
+  margin-bottom: 4px !important; /* было q-mb-md (16px) -> 4px */
 }
 
 .compact-banner {
-  margin-bottom: 8px;
-  padding: 8px 12px;
+  margin-bottom: 4px !important; /* было q-mb-md (16px) -> 4px */
 }
 
+/* q-gutter-md использует gap или margin, переопределяем на 4px (было 16px) */
 .compact-form {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  gap: 4px !important; /* было 16px в q-gutter-md */
+}
+
+.compact-form > * {
+  margin-bottom: 4px !important;
+}
+
+.compact-form > *:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Уменьшаем отступы внутри row для даты/времени */
+.compact-form .row {
+  margin-bottom: 4px !important;
 }
 
 .compact-buttons {
-  margin-top: 4px;
+  margin-top: 4px !important; /* было q-mt-md (16px) -> 4px */
 }
 
-.text-h6 {
-  font-size: 1.25rem;
-  font-weight: 500;
-  line-height: 1.6;
-}
-
-.text-body2 {
-  font-size: 0.875rem;
-  font-weight: 400;
-  line-height: 1.43;
-  letter-spacing: 0.01071em;
-}
 </style>
