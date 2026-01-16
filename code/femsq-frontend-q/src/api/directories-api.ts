@@ -8,8 +8,15 @@ import { apiGet } from './http'
 /**
  * Получить все директории
  */
-export async function getAllDirectories(): Promise<DirectoryDto[]> {
+export async function getDirectories(): Promise<DirectoryDto[]> {
   return apiGet<DirectoryDto[]>('/api/ra/directories')
+}
+
+/**
+ * Получить все директории (алиас для совместимости)
+ */
+export async function getAllDirectories(): Promise<DirectoryDto[]> {
+  return getDirectories()
 }
 
 /**
