@@ -42,8 +42,15 @@
               },
               "dependencies" : [ ],
               "buildHistory" : {
-                "lastUpdated" : "2026-01-16T14:34:05+03:00",
+                "lastUpdated" : "2026-01-16T15:46:06+03:00",
                 "builds" : [ {
+                  "version" : "0.1.0.63-SNAPSHOT",
+                  "sha256" : "9004cff4480cd8b106fb15b5f7c685fb3d3527cc36b6519c2cf7d4734fb0d4b7",
+                  "buildTimestamp" : "2026-01-16T15:46:06+03:00",
+                  "buildNumber" : "202601161546060",
+                  "changed" : true,
+                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.63-SNAPSHOT.jar"
+                }, {
                   "version" : "0.1.0.62-SNAPSHOT",
                   "sha256" : "00d129eaee1a2289a22946b97a784bc962ccecb0bac794527ddf85ae1298e141",
                   "buildTimestamp" : "2026-01-16T14:34:05+03:00",
@@ -176,13 +183,6 @@
                   "buildNumber" : "202512231513090",
                   "changed" : true,
                   "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.42-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.40-SNAPSHOT",
-                  "sha256" : "025eb00fb2f7b6f5c2d5b7c9c7a07bf959e28a0cb1b8cae676c4d87b2fa92b94",
-                  "buildTimestamp" : "2025-12-22T15:43:47+03:00",
-                  "buildNumber" : "202512221543470",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.40-SNAPSHOT.jar"
                 } ]
               }
             },
@@ -1011,8 +1011,15 @@
               "technologies" : [ "JasperReports 7.0.3", "Spring Boot", "JRXML", "Jaspersoft Studio 7.0.3" ],
               "responsibilities" : [ "Обнаружение и сканирование шаблонов отчётов (.jasper и .jrxml)", "Загрузка предкомпилированных .jasper файлов из JAR", "Fallback на компиляцию .jrxml при отсутствии .jasper", "Генерация PDF отчётов через JRPdfExporter", "Генерация Excel отчётов через JRXlsxExporter", "Генерация HTML отчётов", "Управление метаданными отчётов (JSON)", "REST API для работы с отчётами", "Поддержка внешних отчётов (hot-reload без перезапуска)" ],
               "buildHistory" : {
-                "lastUpdated" : "2026-01-16T14:34:05+03:00",
+                "lastUpdated" : "2026-01-16T15:46:06+03:00",
                 "builds" : [ {
+                  "version" : "0.1.0.63-SNAPSHOT",
+                  "sha256" : "d6c615bb284671fb8227e00afe1bd9332dad70ec1e1e8da6bfee0eaf24667c22",
+                  "buildTimestamp" : "2026-01-16T15:46:06+03:00",
+                  "buildNumber" : "202601161546060",
+                  "changed" : true,
+                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.63-SNAPSHOT.jar"
+                }, {
                   "version" : "0.1.0.62-SNAPSHOT",
                   "sha256" : "064c7ed8886959afdee830447a04923574bc2f61b9e85e012202ed164a4ed878",
                   "buildTimestamp" : "2026-01-16T14:34:05+03:00",
@@ -1145,13 +1152,6 @@
                   "buildNumber" : "202512231513090",
                   "changed" : true,
                   "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.42-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.40-SNAPSHOT",
-                  "sha256" : "79f33a4ae21287965a978c0b0ec4d4e25df33586c8920d1e728a119dc75cba17",
-                  "buildTimestamp" : "2025-12-22T15:43:47+03:00",
-                  "buildNumber" : "202512221543470",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.40-SNAPSHOT.jar"
                 } ]
               },
               "deployment" : {

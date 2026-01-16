@@ -54,6 +54,14 @@
         :color="activeView === 'audits' ? 'primary' : 'dark'"
         @click="handleNavigate('audits')"
       />
+      <QBtn
+        flat
+        rounded
+        icon="grid_on"
+        label="Test Grid"
+        :color="activeView === 'test-grid' ? 'primary' : 'dark'"
+        @click="handleNavigate('test-grid')"
+      />
     </div>
 
     <QBtn
@@ -96,6 +104,12 @@
             <QIcon name="verified_user" />
           </QItemSection>
           <QItemSection>Ревизии</QItemSection>
+        </QItem>
+        <QItem clickable @click="handleNavigate('test-grid')">
+          <QItemSection avatar>
+            <QIcon name="grid_on" />
+          </QItemSection>
+          <QItemSection>Test Grid</QItemSection>
         </QItem>
       </QList>
     </QMenu>
