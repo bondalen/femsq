@@ -2,7 +2,7 @@
   <QPage class="audits-view q-pa-md">
     <div class="row q-col-gutter-md" style="height: calc(100vh - 150px);">
       <!-- Левая панель: список ревизий -->
-      <div class="col-12 col-md-2 audits-list-panel">
+      <div class="col-12 col-md-3 audits-list-panel">
         <QCard flat bordered class="audits-list-card full-height">
           <QCardSection class="row items-center justify-between">
             <div class="text-h6">Ревизии</div>
@@ -56,7 +56,7 @@
       </div>
 
       <!-- Основная область: форма ревизии -->
-      <div class="col-12 col-md-10 audit-form-panel">
+      <div class="col-12 col-md-9 audit-form-panel">
         <QCard flat bordered class="audit-form-card full-height">
           <QCardSection v-if="selectedAudit || isNewAudit" class="compact-form-section">
             <div class="text-h6 compact-title">{{ isNewAudit ? 'Новая ревизия' : 'Редактирование ревизии' }}</div>
