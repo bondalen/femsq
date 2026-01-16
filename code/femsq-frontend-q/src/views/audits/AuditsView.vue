@@ -213,7 +213,7 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { useAuditsStore } from '@/stores/audits';
 import { useAuditTypesStore } from '@/stores/lookups/audit-types';
-import { useDirectoriesStore } from '@/stores/lookups/directories';
+import { useDirectoriesStore } from '@/stores/directories';
 import type { RaAudit, RaAuditCreateRequest, RaAuditUpdateRequest } from '@/types/audits';
 import AuditFilesTab from '@/components/audits/AuditFilesTab.vue';
 
@@ -438,7 +438,7 @@ onMounted(async () => {
   await Promise.all([
     auditsStore.fetchAudits(),
     auditTypesStore.fetchAuditTypes(),
-    directoriesStore.fetchDirectories(),
+    directoriesStore.loadAll(),
   ]);
 
   // Auto-select first audit if available
