@@ -1,6 +1,5 @@
 package com.femsq.database.dao;
 
-import com.femsq.database.config.DatabaseConfigurationService;
 import com.femsq.database.connection.ConnectionFactory;
 import com.femsq.database.exception.DaoException;
 import com.femsq.database.model.RaAt;
