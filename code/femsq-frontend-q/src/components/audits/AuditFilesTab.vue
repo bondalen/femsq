@@ -1,7 +1,12 @@
 <template>
   <div class="audit-files-tab">
     <!-- Информация о директории -->
-    <DirectoryInfo :directory="currentDirectory" :loading="loadingDirectory" />
+    <!-- ВРЕМЕННО СКРЫТО ДЛЯ ДИАГНОСТИКИ: проблема с позиционированием -->
+    <DirectoryInfo 
+      v-if="showDirectoryInfo" 
+      :directory="currentDirectory" 
+      :loading="loadingDirectory" 
+    />
 
     <!-- Список файлов -->
     <FilesList :dir-id="currentDirectory?.key ?? null" />
@@ -35,6 +40,8 @@ const directoriesStore = useDirectoriesStore();
 // State
 const loadingDirectory = ref(false);
 const error = ref<string | null>(null);
+// ВРЕМЕННО: флаг для скрытия DirectoryInfo при диагностике проблемы с позиционированием
+const showDirectoryInfo = ref(false);
 
 // Computed
 const currentDirectory = computed(() => directoriesStore.currentDirectory);
