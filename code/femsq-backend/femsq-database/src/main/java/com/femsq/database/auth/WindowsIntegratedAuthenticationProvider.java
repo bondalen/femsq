@@ -1,8 +1,6 @@
 package com.femsq.database.auth;
 
 import com.femsq.database.config.DatabaseConfigurationService.DatabaseConfigurationProperties;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
