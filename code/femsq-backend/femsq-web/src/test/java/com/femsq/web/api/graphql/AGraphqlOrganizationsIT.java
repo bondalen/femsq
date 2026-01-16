@@ -217,7 +217,7 @@ class AGraphqlOrganizationsIT {
         String username = envOr("FEMSQ_DB_USER", "sa");
         String authMode = envOr("FEMSQ_DB_AUTH_MODE", "credentials").toLowerCase(Locale.ROOT);
         String password = "credentials".equals(authMode) ? System.getenv("FEMSQ_DB_PASSWORD") : null;
-        return new DatabaseConfigurationProperties(host, port, database, schema, username, password, authMode);
+        return new DatabaseConfigurationProperties(host, port, database, schema, username, password, authMode, null);
     }
 
     private void writeConfiguration(DatabaseConfigurationProperties configuration) {

@@ -34,7 +34,8 @@ class ConnectionFactoryIntegrationTest {
                 schema,
                 username,
                 "credentials".equals(authMode) ? password : null,
-                authMode
+                authMode,
+                null
         );
 
         AuthenticationProviderFactory providerFactory = AuthenticationProviderFactory.withDefaults();

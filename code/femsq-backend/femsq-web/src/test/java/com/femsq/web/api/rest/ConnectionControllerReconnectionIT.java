@@ -111,7 +111,8 @@ class ConnectionControllerReconnectionIT {
                 baseConfiguration.schema(),
                 baseConfiguration.username(),
                 baseConfiguration.password(),
-                baseConfiguration.authMode());
+                baseConfiguration.authMode(),
+                baseConfiguration.realm());
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -134,14 +135,13 @@ class ConnectionControllerReconnectionIT {
 
     @Test
     void testConnection_WithInvalidHost_ReturnsError() {
-        ConnectionTestRequest request = new ConnectionTestRequest(
-                "invalid-host",
+        ConnectionTestRequest request = new ConnectionTestRequest("invalid-host",
                 1433,
                 "FishEye",
                 "ags_test",
                 "sa",
                 "wrong-password",
-                "credentials");
+                "credentials", null);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -170,7 +170,8 @@ class ConnectionControllerReconnectionIT {
                 baseConfiguration.schema(),
                 baseConfiguration.username(),
                 baseConfiguration.password(),
-                baseConfiguration.authMode());
+                baseConfiguration.authMode(),
+                baseConfiguration.realm());
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -201,7 +202,8 @@ class ConnectionControllerReconnectionIT {
                 baseConfiguration.schema(), // Используем ту же схему
                 baseConfiguration.username(),
                 baseConfiguration.password(),
-                baseConfiguration.authMode());
+                baseConfiguration.authMode(),
+                baseConfiguration.realm());
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -244,7 +246,8 @@ class ConnectionControllerReconnectionIT {
                 baseConfiguration.schema(),
                 baseConfiguration.username(),
                 baseConfiguration.password(),
-                baseConfiguration.authMode());
+                baseConfiguration.authMode(),
+                baseConfiguration.realm());
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -289,7 +292,7 @@ class ConnectionControllerReconnectionIT {
         String authMode = envOr("FEMSQ_DB_AUTH_MODE", "credentials").toLowerCase(Locale.ROOT);
         String username = "credentials".equals(authMode) ? envOr("FEMSQ_DB_USER", "sa") : null;
         String password = "credentials".equals(authMode) ? System.getenv("FEMSQ_DB_PASSWORD") : null;
-        return new DatabaseConfigurationProperties(host, port, database, schema, username, password, authMode);
+        return new DatabaseConfigurationProperties(host, port, database, schema, username, password, authMode, null);
     }
 
     private void writeConfiguration(DatabaseConfigurationProperties configuration) {

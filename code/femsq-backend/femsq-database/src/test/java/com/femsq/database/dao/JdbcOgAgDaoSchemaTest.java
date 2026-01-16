@@ -79,7 +79,8 @@ class JdbcOgAgDaoSchemaTest {
                     testSchema,
                     baseConfiguration.username(),
                     baseConfiguration.password(),
-                    baseConfiguration.authMode()
+                    baseConfiguration.authMode(),
+                    baseConfiguration.realm()
             );
             
             DatabaseConfigurationService configService = new StubConfigurationService(testConfig);

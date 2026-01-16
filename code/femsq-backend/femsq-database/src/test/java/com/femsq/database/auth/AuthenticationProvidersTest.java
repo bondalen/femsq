@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 class AuthenticationProvidersTest {
 
     private static final DatabaseConfigurationProperties BASE_CONFIG =
-            new DatabaseConfigurationProperties("db.local", 1433, "femsq", null, "alex", "secret", "credentials");
+            new DatabaseConfigurationProperties("db.local", 1433, "femsq", null, "alex", "secret", "credentials", null);
 
     @Test
     void credentialsProviderAddsUserAndPassword() {
@@ -22,14 +22,14 @@ class AuthenticationProvidersTest {
     @Test
     void credentialsProviderRejectsMissingUsername() {
         AuthenticationProvider provider = new CredentialsAuthenticationProvider();
-        DatabaseConfigurationProperties invalid = new DatabaseConfigurationProperties("db.local", 1433, "femsq", null, null, "secret", "credentials");
+        DatabaseConfigurationProperties invalid = new DatabaseConfigurationProperties("db.local", 1433, "femsq", null, null, "secret", "credentials", null);
         assertThrows(IllegalArgumentException.class, () -> provider.buildProperties(invalid));
     }
 
     @Test
     void windowsIntegratedProviderSetsFlag() {
         AuthenticationProvider provider = new WindowsIntegratedAuthenticationProvider();
-        DatabaseConfigurationProperties config = new DatabaseConfigurationProperties("db.local", 1433, "femsq", null, null, null, "windows-integrated");
+        DatabaseConfigurationProperties config = new DatabaseConfigurationProperties("db.local", 1433, "femsq", null, null, null, "windows-integrated", null);
         Properties properties = provider.buildProperties(config);
         assertEquals("true", properties.getProperty("integratedSecurity"));
     }
@@ -37,7 +37,7 @@ class AuthenticationProvidersTest {
     @Test
     void kerberosProviderSetsScheme() {
         AuthenticationProvider provider = new KerberosAuthenticationProvider();
-        DatabaseConfigurationProperties config = new DatabaseConfigurationProperties("db.local", 1433, "femsq", null, null, null, "kerberos");
+        DatabaseConfigurationProperties config = new DatabaseConfigurationProperties("db.local", 1433, "femsq", null, null, null, "kerberos", null);
         Properties properties = provider.buildProperties(config);
         assertEquals("true", properties.getProperty("integratedSecurity"));
         assertEquals("JavaKerberos", properties.getProperty("authenticationScheme"));
@@ -46,7 +46,7 @@ class AuthenticationProvidersTest {
     @Test
     void factorySelectsProviderByAuthMode() {
         AuthenticationProviderFactory factory = AuthenticationProviderFactory.withDefaults();
-        DatabaseConfigurationProperties kerberosConfig = new DatabaseConfigurationProperties("db.local", 1433, "femsq", null, null, null, "kerberos");
+        DatabaseConfigurationProperties kerberosConfig = new DatabaseConfigurationProperties("db.local", 1433, "femsq", null, null, null, "kerberos", null);
         AuthenticationProvider provider = factory.create(kerberosConfig);
         assertEquals("kerberos", provider.getName());
     }
@@ -54,7 +54,7 @@ class AuthenticationProvidersTest {
     @Test
     void factoryThrowsOnUnknownMode() {
         AuthenticationProviderFactory factory = AuthenticationProviderFactory.withDefaults();
-        DatabaseConfigurationProperties config = new DatabaseConfigurationProperties("db.local", 1433, "femsq", null, null, null, "unsupported");
+        DatabaseConfigurationProperties config = new DatabaseConfigurationProperties("db.local", 1433, "femsq", null, null, null, "unsupported", null);
         assertThrows(IllegalArgumentException.class, () -> factory.create(config));
     }
 }

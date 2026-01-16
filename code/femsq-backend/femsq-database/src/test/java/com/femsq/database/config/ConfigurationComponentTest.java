@@ -99,7 +99,7 @@ class ConfigurationComponentTest {
         void validatorRejectsInvalidHost() {
             DatabaseConfigurationService.DatabaseConfigurationProperties invalidConfig =
                     new DatabaseConfigurationService.DatabaseConfigurationProperties(
-                            "bad host name", 1433, "femsq", null, "alex", "secret", "credentials");
+                            "bad host name", 1433, "femsq", null, "alex", "secret", "credentials", null);
 
             IllegalArgumentException exception = assertThrows(
                     IllegalArgumentException.class, () -> validator.validate(invalidConfig));
@@ -110,7 +110,7 @@ class ConfigurationComponentTest {
         void validatorRejectsInvalidPort() {
             DatabaseConfigurationService.DatabaseConfigurationProperties invalidConfig =
                     new DatabaseConfigurationService.DatabaseConfigurationProperties(
-                            "db.local", 70000, "femsq", null, "alex", "secret", "credentials");
+                            "db.local", 70000, "femsq", null, "alex", "secret", "credentials", null);
 
             IllegalArgumentException exception = assertThrows(
                     IllegalArgumentException.class, () -> validator.validate(invalidConfig));
@@ -121,7 +121,7 @@ class ConfigurationComponentTest {
         void validatorRejectsMissingDatabase() {
             DatabaseConfigurationService.DatabaseConfigurationProperties invalidConfig =
                     new DatabaseConfigurationService.DatabaseConfigurationProperties(
-                            "db.local", 1433, null, null, "alex", "secret", "credentials");
+                            "db.local", 1433, null, null, "alex", "secret", "credentials", null);
 
             IllegalArgumentException exception = assertThrows(
                     IllegalArgumentException.class, () -> validator.validate(invalidConfig));
@@ -132,7 +132,7 @@ class ConfigurationComponentTest {
         void validatorRejectsEmptyHost() {
             DatabaseConfigurationService.DatabaseConfigurationProperties invalidConfig =
                     new DatabaseConfigurationService.DatabaseConfigurationProperties(
-                            "", 1433, "femsq", null, "alex", "secret", "credentials");
+                            "", 1433, "femsq", null, "alex", "secret", "credentials", null);
 
             IllegalArgumentException exception = assertThrows(
                     IllegalArgumentException.class, () -> validator.validate(invalidConfig));
@@ -144,7 +144,7 @@ class ConfigurationComponentTest {
             String longUsername = "x".repeat(256);
             DatabaseConfigurationService.DatabaseConfigurationProperties invalidConfig =
                     new DatabaseConfigurationService.DatabaseConfigurationProperties(
-                            "db.local", 1433, "femsq", null, longUsername, "secret", "credentials");
+                            "db.local", 1433, "femsq", null, longUsername, "secret", "credentials", null);
 
             IllegalArgumentException exception = assertThrows(
                     IllegalArgumentException.class, () -> validator.validate(invalidConfig));
@@ -155,7 +155,7 @@ class ConfigurationComponentTest {
         void validatorRejectsNullPort() {
             DatabaseConfigurationService.DatabaseConfigurationProperties invalidConfig =
                     new DatabaseConfigurationService.DatabaseConfigurationProperties(
-                            "db.local", null, "femsq", null, "alex", "secret", "credentials");
+                            "db.local", null, "femsq", null, "alex", "secret", "credentials", null);
 
             IllegalArgumentException exception = assertThrows(
                     IllegalArgumentException.class, () -> validator.validate(invalidConfig));
@@ -166,7 +166,7 @@ class ConfigurationComponentTest {
         void validatorRejectsUnknownAuthMode() {
             DatabaseConfigurationService.DatabaseConfigurationProperties invalidConfig =
                     new DatabaseConfigurationService.DatabaseConfigurationProperties(
-                            "db.local", 1433, "femsq", null, "alex", "secret", "unknown-mode");
+                            "db.local", 1433, "femsq", null, "alex", "secret", "unknown-mode", null);
 
             IllegalArgumentException exception = assertThrows(
                     IllegalArgumentException.class, () -> validator.validate(invalidConfig));
@@ -177,7 +177,7 @@ class ConfigurationComponentTest {
         void validatorRequiresCredentialsUsername() {
             DatabaseConfigurationService.DatabaseConfigurationProperties invalidConfig =
                     new DatabaseConfigurationService.DatabaseConfigurationProperties(
-                            "db.local", 1433, "femsq", null, null, "secret", "credentials");
+                            "db.local", 1433, "femsq", null, null, "secret", "credentials", null);
 
             IllegalArgumentException exception = assertThrows(
                     IllegalArgumentException.class, () -> validator.validate(invalidConfig));
@@ -188,7 +188,7 @@ class ConfigurationComponentTest {
         void validatorRequiresCredentialsPassword() {
             DatabaseConfigurationService.DatabaseConfigurationProperties invalidConfig =
                     new DatabaseConfigurationService.DatabaseConfigurationProperties(
-                            "db.local", 1433, "femsq", null, "alex", null, "credentials");
+                            "db.local", 1433, "femsq", null, "alex", null, "credentials", null);
 
             IllegalArgumentException exception = assertThrows(
                     IllegalArgumentException.class, () -> validator.validate(invalidConfig));
@@ -258,7 +258,7 @@ class ConfigurationComponentTest {
     void serviceSaveAndLoadRoundTrip() {
         DatabaseConfigurationService.DatabaseConfigurationProperties configuration =
                 new DatabaseConfigurationService.DatabaseConfigurationProperties(
-                        "db.roundtrip.local", 1433, "femsq", "ags_test", "alex", "secret", "credentials");
+                        "db.roundtrip.local", 1433, "femsq", "ags_test", "alex", "secret", "credentials", null);
 
         configurationService.saveConfig(configuration);
 
@@ -306,7 +306,7 @@ class ConfigurationComponentTest {
     void validatorRejectsInvalidSchema() {
         DatabaseConfigurationService.DatabaseConfigurationProperties invalidConfig =
                 new DatabaseConfigurationService.DatabaseConfigurationProperties(
-                        "db.local", 1433, "femsq", "invalid-schema-name", "alex", "secret", "credentials");
+                        "db.local", 1433, "femsq", "invalid-schema-name", "alex", "secret", "credentials", null);
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class, () -> validator.validate(invalidConfig));
@@ -397,7 +397,7 @@ class ConfigurationComponentTest {
             // Сохраняем новую конфигурацию
             DatabaseConfigurationService.DatabaseConfigurationProperties newConfig =
                     new DatabaseConfigurationService.DatabaseConfigurationProperties(
-                            "saved.server.local", 1433, "saved_db", "ags_test", "saved_user", "saved_pwd", "credentials");
+                            "saved.server.local", 1433, "saved_db", "ags_test", "saved_user", "saved_pwd", "credentials", null);
             configurationService.saveConfig(newConfig);
 
             // Загружаем снова - должна быть новая конфигурация (кэш инвалидирован)

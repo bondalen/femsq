@@ -81,7 +81,8 @@ class ConnectionControllerTest {
                 "ags_test",
                 "sa",
                 "password",
-                "credentials");
+                "credentials",
+                null);
     }
 
     @Test
@@ -150,14 +151,13 @@ class ConnectionControllerTest {
 
     @Test
     void testConnection_WithInvalidRequest_ThrowsBadRequest() {
-        ConnectionTestRequest request = new ConnectionTestRequest(
-                "localhost",
+        ConnectionTestRequest request = new ConnectionTestRequest("localhost",
                 1433,
                 "FishEye",
                 "ags_test",
                 "sa",
                 "password",
-                "credentials");
+                "credentials", null);
 
         doThrow(new IllegalArgumentException("Invalid configuration"))
                 .when(configurationValidator)
@@ -188,14 +188,13 @@ class ConnectionControllerTest {
 
     @Test
     void applyConfiguration_WithValidRequest_AppliesAndReconnects() {
-        ConnectionTestRequest request = new ConnectionTestRequest(
-                "localhost",
+        ConnectionTestRequest request = new ConnectionTestRequest("localhost",
                 1433,
                 "FishEye",
                 "ags_test",
                 "sa",
                 "password",
-                "credentials");
+                "credentials", null);
 
         ConnectionStatusResponse response = controller.applyConfiguration(request);
 
@@ -209,14 +208,13 @@ class ConnectionControllerTest {
 
     @Test
     void applyConfiguration_WithInvalidRequest_ThrowsBadRequest() {
-        ConnectionTestRequest request = new ConnectionTestRequest(
-                "localhost",
+        ConnectionTestRequest request = new ConnectionTestRequest("localhost",
                 1433,
                 "FishEye",
                 "ags_test",
                 "sa",
                 "password",
-                "credentials");
+                "credentials", null);
 
         doThrow(new IllegalArgumentException("Invalid configuration"))
                 .when(connectionManager)
@@ -236,14 +234,13 @@ class ConnectionControllerTest {
 
     @Test
     void applyConfiguration_WhenReconnectionFails_ReturnsError() {
-        ConnectionTestRequest request = new ConnectionTestRequest(
-                "localhost",
+        ConnectionTestRequest request = new ConnectionTestRequest("localhost",
                 1433,
                 "FishEye",
                 "ags_test",
                 "sa",
                 "password",
-                "credentials");
+                "credentials", null);
 
         doThrow(new ConnectionFactoryException("Connection failed", new SQLException("Login failed")))
                 .when(connectionManager)

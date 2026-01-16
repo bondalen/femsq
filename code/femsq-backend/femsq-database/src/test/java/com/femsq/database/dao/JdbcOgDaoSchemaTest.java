@@ -83,7 +83,8 @@ class JdbcOgDaoSchemaTest {
                     testSchema,
                     baseConfiguration.username(),
                     baseConfiguration.password(),
-                    baseConfiguration.authMode()
+                    baseConfiguration.authMode(),
+                    baseConfiguration.realm()
             );
             
             DatabaseConfigurationService configService = new StubConfigurationService(testConfig);
@@ -135,7 +136,8 @@ class JdbcOgDaoSchemaTest {
                 null, // Схема не указана
                 baseConfiguration.username(),
                 baseConfiguration.password(),
-                baseConfiguration.authMode()
+                baseConfiguration.authMode(),
+                baseConfiguration.realm()
         );
         
         DatabaseConfigurationService configService = new StubConfigurationService(configWithoutSchema);
