@@ -1,23 +1,20 @@
 /**
  * API клиент для работы со справочником типов файлов (ra_ft)
- * Используется для lookup в UI (выпадающие списки)
  */
 
 import type { RaFtDto } from '@/types/files'
-import { http } from './http'
+import { apiGet } from './http'
 
 /**
- * Получить все типы файлов для использования в lookup
+ * Получить все типы файлов
  */
 export async function getAllFileTypes(): Promise<RaFtDto[]> {
-  const response = await http.get<RaFtDto[]>('/api/ra/file-types')
-  return response.data
+  return apiGet<RaFtDto[]>('/api/ra/file-types')
 }
 
 /**
  * Получить тип файла по ID
  */
 export async function getFileTypeById(id: number): Promise<RaFtDto> {
-  const response = await http.get<RaFtDto>(`/api/ra/file-types/${id}`)
-  return response.data
+  return apiGet<RaFtDto>(`/api/ra/file-types/${id}`)
 }

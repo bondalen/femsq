@@ -1,31 +1,27 @@
 /**
- * API клиент для работы с директориями (ra_dir)
+ * API клиент для работы с директориями ревизий
  */
 
 import type { DirectoryDto } from '@/types/files'
-import { http } from './http'
+import { apiGet } from './http'
 
 /**
  * Получить все директории
  */
 export async function getAllDirectories(): Promise<DirectoryDto[]> {
-  const response = await http.get<DirectoryDto[]>('/api/ra/directories')
-  return response.data
+  return apiGet<DirectoryDto[]>('/api/ra/directories')
 }
 
 /**
  * Получить директорию по ID
  */
 export async function getDirectoryById(id: number): Promise<DirectoryDto> {
-  const response = await http.get<DirectoryDto>(`/api/ra/directories/${id}`)
-  return response.data
+  return apiGet<DirectoryDto>(`/api/ra/directories/${id}`)
 }
 
 /**
- * Получить директорию по ID ревизии (связь 1:1)
- * В форме ревизии всегда одна директория
+ * Получить директорию для ревизии (связь 1:1)
  */
 export async function getDirectoryByAuditId(auditId: number): Promise<DirectoryDto> {
-  const response = await http.get<DirectoryDto>(`/api/ra/audits/${auditId}/directory`)
-  return response.data
+  return apiGet<DirectoryDto>(`/api/ra/audits/${auditId}/directory`)
 }
