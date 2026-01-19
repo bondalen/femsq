@@ -2,7 +2,7 @@ import { computed, reactive, ref } from 'vue';
 import { defineStore } from 'pinia';
 
 export type ConnectionState = 'idle' | 'connecting' | 'connected' | 'connectionError' | 'disconnecting';
-export type ActiveView = 'home' | 'organizations' | 'investment-chains' | 'reports' | 'audits' | 'test-grid';
+export type ActiveView = 'home' | 'organizations' | 'investment-chains' | 'reports' | 'audits' | 'audits-v53' | 'test-grid';
 export type AuthMode = 'sql' | 'windows' | 'token';
 
 export interface ConnectionFormValues {

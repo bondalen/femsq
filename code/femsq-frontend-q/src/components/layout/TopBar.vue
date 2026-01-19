@@ -57,6 +57,14 @@
       <QBtn
         flat
         rounded
+        icon="verified_user"
+        label="Ревизии (v53)"
+        :color="activeView === 'audits-v53' ? 'primary' : 'dark'"
+        @click="handleNavigate('audits-v53')"
+      />
+      <QBtn
+        flat
+        rounded
         icon="grid_on"
         label="Test Grid"
         :color="activeView === 'test-grid' ? 'primary' : 'dark'"
@@ -104,6 +112,12 @@
             <QIcon name="verified_user" />
           </QItemSection>
           <QItemSection>Ревизии</QItemSection>
+        </QItem>
+        <QItem clickable @click="handleNavigate('audits-v53')">
+          <QItemSection avatar>
+            <QIcon name="verified_user" />
+          </QItemSection>
+          <QItemSection>Ревизии (v53)</QItemSection>
         </QItem>
         <QItem clickable @click="handleNavigate('test-grid')">
           <QItemSection avatar>

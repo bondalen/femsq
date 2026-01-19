@@ -8,7 +8,7 @@
     <parent>
         <groupId>com.femsq</groupId>
         <artifactId>femsq-backend</artifactId>
-        <version>0.1.0.68-SNAPSHOT</version>
+        <version>0.1.0.55-SNAPSHOT</version>
     </parent>
 
     <artifactId>femsq-graphql-tests</artifactId>
