@@ -40,6 +40,7 @@
           <q-select
             v-model="form.raOrgSender"
             :options="organizationsOptions"
+            :loading="lookupsStore.loadingOrganizations"
             label="Отправитель"
             outlined
             dense
@@ -47,7 +48,15 @@
             map-options
             clearable
             class="q-mb-md"
-          />
+          >
+            <template v-if="organizationsOptions.length === 0 && !lookupsStore.loadingOrganizations" v-slot:no-option>
+              <q-item>
+                <q-item-section class="text-grey">
+                  Организации не найдены
+                </q-item-section>
+              </q-item>
+            </template>
+          </q-select>
 
           <div class="row q-col-gutter-md q-mb-md">
             <!-- Номер по порядку -->
@@ -172,7 +181,8 @@ watch(
 
 // Methods
 async function loadLookups() {
-  await lookupsStore.loadAllLookups();
+  // Используем force = true для гарантии загрузки свежих данных при открытии диалога
+  await lookupsStore.loadAllLookups(true);
 }
 
 function resetForm() {

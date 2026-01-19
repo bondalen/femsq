@@ -123,31 +123,41 @@ export interface DirectoryDto {
 
 /**
  * DTO организации (ags.og) - для lookup отправителя
+ * Соответствует структуре OgDto из backend (ogName вместо ogNm)
  */
 export interface OrganizationDto {
   /** Идентификатор организации (PK) */
   ogKey: number;
   
-  /** Название организации (именительный падеж) */
-  ogNm: string;
+  /** Название организации (именительный падеж) - backend возвращает ogName */
+  ogName: string;
   
-  /** Название организации (родительный падеж) */
-  ogNmOf: string;
+  /** Официальное название организации */
+  ogOfficialName: string | null;
   
   /** Полное название организации */
-  ogNmFl: string | null;
+  ogFullName: string | null;
+  
+  /** Описание организации */
+  ogDescription: string | null;
   
   /** ИНН */
-  ogINN: number | null;
+  inn: number | null;
   
   /** КПП */
-  ogKPP: number | null;
+  kpp: number | null;
   
   /** ОГРН */
-  ogOGRN: number | null;
+  ogrn: number | null;
   
   /** ОКПО */
-  ogOKPO: number | null;
+  okpo: number | null;
+  
+  /** Код отрасли экономики */
+  oe: number | null;
+  
+  /** Режим налогового учета */
+  registrationTaxType: string | null;
 }
 
 /**

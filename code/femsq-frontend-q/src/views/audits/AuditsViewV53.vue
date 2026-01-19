@@ -188,8 +188,15 @@
               </QTabPanel>
               <QTabPanel name="files">
                 <div class="q-pa-md">
-                  <div class="text-body2 text-grey-7">
-                    Список файлов для проверки будет реализован в отдельном подэтапе.
+                  <!-- Информация о директории (включая файлы внутри) -->
+                  <DirectoryInfo 
+                    v-if="selectedAudit"
+                    :directory="currentDirectory" 
+                    :loading="loadingDirectory" 
+                  />
+                  
+                  <div v-else class="text-body2 text-grey-7 text-center q-pa-md">
+                    Выберите ревизию для просмотра директории
                   </div>
                 </div>
               </QTabPanel>
@@ -255,7 +262,9 @@ import { useQuasar, Notify } from 'quasar';
 import { useAuditsStore } from '@/stores/audits';
 import { useAuditTypesStore } from '@/stores/lookups/audit-types';
 import { useDirectoriesStore } from '@/stores/lookups/directories';
-import type { RaADto, RaACreateRequest, RaAUpdateRequest } from '@/types/audits';
+import type { RaADto, RaACreateRequest, RaAUpdateRequest, RaDirDto } from '@/types/audits';
+import * as directoriesApi from '@/api/directories-api';
+import DirectoryInfo from '@/components/audits/DirectoryInfo.vue';
 
 const $q = useQuasar();
 const auditsStore = useAuditsStore();
@@ -268,6 +277,10 @@ const saving = ref(false);
 const errorMessage = ref<string | null>(null);
 const activeTab = ref<'progress' | 'files'>('progress');
 const executeDialogOpen = ref(false);
+
+// Состояние для директории
+const currentDirectory = ref<RaDirDto | null>(null);
+const loadingDirectory = ref(false);
 
 // Форма ревизии
 const form = ref<{
@@ -339,6 +352,7 @@ onMounted(async () => {
 // Watch для автоматической загрузки формы при изменении выбранной ревизии
 watch(selectedAuditId, async (newId) => {
   if (!newId || isNewAudit.value) {
+    currentDirectory.value = null;
     return;
   }
 
@@ -349,11 +363,15 @@ watch(selectedAuditId, async (newId) => {
     const audit = await auditsStore.fetchAuditById(newId);
     if (audit) {
       loadAuditToForm(audit);
+      // Загружаем директорию для ревизии
+      await loadDirectory(newId);
     } else {
       errorMessage.value = 'Ревизия не найдена';
+      currentDirectory.value = null;
     }
   } catch (err) {
     errorMessage.value = err instanceof Error ? err.message : 'Не удалось загрузить ревизию';
+    currentDirectory.value = null;
   }
 });
 
@@ -428,6 +446,21 @@ function handleCreateNew(): void {
 async function handleRefresh(): Promise<void> {
   await auditsStore.fetchAudits();
   // Watch автоматически загрузит форму при изменении selectedAuditId
+}
+
+// Загрузка директории для ревизии
+async function loadDirectory(auditId: number): Promise<void> {
+  loadingDirectory.value = true;
+  try {
+    const directory = await directoriesApi.getDirectoryByAuditId(auditId);
+    currentDirectory.value = directory;
+  } catch (err) {
+    // Если директория не найдена, это не критическая ошибка
+    currentDirectory.value = null;
+    console.warn('Директория для ревизии не найдена:', err);
+  } finally {
+    loadingDirectory.value = false;
+  }
 }
 
 // ============================================================================

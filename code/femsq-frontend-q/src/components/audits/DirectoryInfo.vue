@@ -44,18 +44,27 @@
         Директория не загружена
       </q-banner>
     </q-card-section>
+
+    <!-- Список файлов внутри директории -->
+    <q-card-section v-if="directory && showFiles" class="q-pt-md">
+      <FilesList :dir-id="directory.key" />
+    </q-card-section>
   </q-card>
 </template>
 
 <script setup lang="ts">
 import type { RaDirDto } from '@/types/audits';
+import FilesList from './FilesList.vue';
 
 interface Props {
   directory: RaDirDto | null;
   loading?: boolean;
+  showFiles?: boolean;
 }
 
-defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  showFiles: true
+});
 
 /**
  * Форматирует дату в читаемый формат

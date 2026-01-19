@@ -99,35 +99,64 @@ const modalForm = ref<ConnectionFormValues>(connection.getSavedForm());
 
 /**
  * Загружает текущий статус подключения и обновляет store.
+ * Использует retry механизм для обработки случаев, когда backend еще не готов.
  */
 async function loadConnectionStatus(): Promise<void> {
-  try {
-    const statusResponse = await getConnectionStatus();
-    if (statusResponse.connected) {
-      const previousSchema = connection.schema;
-      connection.setStatus('connected', {
-        schema: statusResponse.schema,
-        database: statusResponse.database,
-        message: statusResponse.message
-      });
-      // Если схема изменилась и мы на экране организаций, перезагружаем данные
-      if (statusResponse.schema && statusResponse.schema !== previousSchema && connection.activeView === 'organizations') {
-        console.info('[App] Schema changed on load, reloading organizations:', previousSchema, '→', statusResponse.schema);
-        void organizationsStore.fetchOrganizations();
-      } else if (connection.activeView === 'organizations' && !organizationsStore.hasOrganizations) {
-        // Если мы на экране организаций, но данных нет, загружаем их
-        void organizationsStore.fetchOrganizations();
+  const maxRetries = 3;
+  const baseRetryDelay = 1000; // 1 секунда
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      if (attempt > 0) {
+        const delay = baseRetryDelay * attempt; // Экспоненциальная задержка: 1s, 2s, 3s
+        console.info(`[App] Retrying connection status load (attempt ${attempt + 1}/${maxRetries}) after ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      } else {
+        console.info('[App] Loading connection status...');
       }
-    } else {
-      connection.setStatus('idle', {
-        message: statusResponse.message,
-        error: statusResponse.error
-      });
+      
+      const startTime = performance.now();
+      const statusResponse = await getConnectionStatus();
+      const duration = Math.round(performance.now() - startTime);
+      console.info(`[App] Connection status loaded in ${duration}ms:`, statusResponse);
+      
+      if (statusResponse.connected) {
+        const previousSchema = connection.schema;
+        connection.setStatus('connected', {
+          schema: statusResponse.schema,
+          database: statusResponse.database,
+          message: statusResponse.message
+        });
+        // Если схема изменилась и мы на экране организаций, перезагружаем данные
+        if (statusResponse.schema && statusResponse.schema !== previousSchema && connection.activeView === 'organizations') {
+          console.info('[App] Schema changed on load, reloading organizations:', previousSchema, '→', statusResponse.schema);
+          void organizationsStore.fetchOrganizations();
+        } else if (connection.activeView === 'organizations' && !organizationsStore.hasOrganizations) {
+          // Если мы на экране организаций, но данных нет, загружаем их
+          void organizationsStore.fetchOrganizations();
+        }
+      } else {
+        connection.setStatus('idle', {
+          message: statusResponse.message,
+          error: statusResponse.error
+        });
+      }
+      
+      // Успешно загружено, выходим из цикла
+      return;
+    } catch (error) {
+      const apiError = error as ApiError;
+      const isLastAttempt = attempt === maxRetries - 1;
+      
+      if (isLastAttempt) {
+        // Последняя попытка не удалась
+        console.error(`[App] Failed to load connection status after ${maxRetries} attempts:`, apiError);
+        connection.setStatus('idle', { message: 'Ожидает подключения' });
+      } else {
+        // Не последняя попытка - логируем предупреждение
+        console.warn(`[App] Connection status load attempt ${attempt + 1} failed:`, apiError.message || apiError);
+      }
     }
-  } catch (error) {
-    const apiError = error as ApiError;
-    console.error('[App] Failed to load connection status:', apiError);
-    connection.setStatus('idle', { message: 'Ожидает подключения' });
   }
 }
 

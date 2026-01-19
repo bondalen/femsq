@@ -38,9 +38,12 @@ export type ApiError = RequestError;
 
 /**
  * Получает текущий статус подключения к базе данных.
+ * Использует увеличенный таймаут (30 секунд) для первого запроса при загрузке приложения.
  */
 export async function getConnectionStatus(): Promise<ConnectionStatusResponse> {
-  return apiGet<ConnectionStatusResponse>('/api/v1/connection/status');
+  return apiGet<ConnectionStatusResponse>('/api/v1/connection/status', {
+    timeoutMs: 30_000 // 30 секунд для первого запроса при загрузке приложения
+  });
 }
 
 /**

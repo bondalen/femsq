@@ -26,8 +26,9 @@ export async function getOrganizationById(id: number): Promise<OrganizationDto> 
 export async function getOrganizationsLookup(): Promise<OrganizationLookupDto[]> {
   const orgs = await apiGet<OrganizationDto[]>('/api/og')
   // Преобразуем в упрощенный формат для lookup
+  // Backend возвращает ogName, преобразуем в ogNm для совместимости
   return orgs.map((org) => ({
     ogKey: org.ogKey,
-    ogNm: org.ogNm
+    ogNm: org.ogName
   }))
 }

@@ -83,10 +83,16 @@ export const useLookupsStore = defineStore('lookups', () => {
     try {
       const data = await organizationsApi.getOrganizationsLookup()
       organizations.value = data
+      // Устанавливаем флаг только если данные успешно загружены
+      // Если массив пустой, это может быть нормально (нет организаций в БД)
+      // Но флаг устанавливаем, чтобы не загружать повторно без force
       organizationsLoaded.value = true
       return data
     } catch (err) {
       console.error('Failed to load organizations:', err)
+      // При ошибке НЕ устанавливаем флаг, чтобы можно было повторить загрузку
+      organizations.value = []
+      organizationsLoaded.value = false
       throw err
     } finally {
       loadingOrganizations.value = false
