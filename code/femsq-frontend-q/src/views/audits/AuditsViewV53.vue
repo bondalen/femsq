@@ -226,7 +226,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import {
   QBanner,
   QBtn,
@@ -263,7 +263,6 @@ const auditTypesStore = useAuditTypesStore();
 const directoriesStore = useDirectoriesStore();
 
 const selectedAuditId = ref<number | null>(null);
-const selectedAudit = ref<RaADto | null>(null);
 const isNewAudit = ref(false);
 const saving = ref(false);
 const errorMessage = ref<string | null>(null);
@@ -294,25 +293,32 @@ const errors = ref<{
   adtDate?: string;
 }>({});
 
-// Отсортированные ревизии
+// Отсортированные ревизии (по дате, новые сверху)
 const sortedAudits = computed(() => {
   return [...auditsStore.audits].sort((a, b) => {
-    return a.adtName.localeCompare(b.adtName, 'ru');
+    if (!a.adtDate) return 1;
+    if (!b.adtDate) return -1;
+    return new Date(b.adtDate).getTime() - new Date(a.adtDate).getTime();
   });
+});
+
+// Computed selectedAudit для реактивности
+const selectedAudit = computed(() => {
+  if (!selectedAuditId.value) return null;
+  return auditsStore.audits.find((a) => a.adtKey === selectedAuditId.value) || null;
 });
 
 // Опции для выпадающих списков
 const auditTypesOptions = computed(() => auditTypesStore.auditTypes);
 const directoriesOptions = computed(() => directoriesStore.directories);
 
-// Валидация формы
+// Валидация формы (время опционально)
 const isFormValid = computed(() => {
   return !!(
     form.value.adtName.trim() &&
     form.value.adtType !== null &&
     form.value.adtDir !== null &&
-    form.value.adtDateDate &&
-    form.value.adtDateTime
+    form.value.adtDateDate
   );
 });
 
@@ -323,31 +329,66 @@ onMounted(async () => {
     auditTypesStore.fetchAuditTypes(),
     directoriesStore.fetchDirectories()
   ]);
+
+  // Auto-select first audit if available
+  if (auditsStore.audits.length > 0 && !selectedAuditId.value) {
+    selectedAuditId.value = sortedAudits.value[0]?.adtKey || null;
+  }
 });
 
+// Watch для автоматической загрузки формы при изменении выбранной ревизии
+watch(selectedAuditId, async (newId) => {
+  if (!newId || isNewAudit.value) {
+    return;
+  }
+
+  errorMessage.value = null;
+
+  try {
+    // Загружаем полные данные ревизии через API
+    const audit = await auditsStore.fetchAuditById(newId);
+    if (audit) {
+      loadAuditToForm(audit);
+    } else {
+      errorMessage.value = 'Ревизия не найдена';
+    }
+  } catch (err) {
+    errorMessage.value = err instanceof Error ? err.message : 'Не удалось загрузить ревизию';
+  }
+});
+
+// ============================================================================
+// Обработка выбора и навигации
+// ============================================================================
+
 // Обработка выбора ревизии
-async function handleSelectAudit(id: number): Promise<void> {
-  if (selectedAuditId.value === id && selectedAudit.value) {
+function handleSelectAudit(id: number): void {
+  if (selectedAuditId.value === id) {
     return;
   }
 
   isNewAudit.value = false;
   selectedAuditId.value = id;
   errorMessage.value = null;
+  activeTab.value = 'progress';
+}
 
-  try {
-    const audit = await auditsStore.fetchAuditById(id);
-    if (audit) {
-      selectedAudit.value = audit;
-      loadAuditToForm(audit);
-    } else {
-      errorMessage.value = 'Ревизия не найдена';
-      selectedAudit.value = null;
-    }
-  } catch (err) {
-    errorMessage.value = err instanceof Error ? err.message : 'Не удалось загрузить ревизию';
-    selectedAudit.value = null;
-  }
+// ============================================================================
+// Работа с формой
+// ============================================================================
+
+// Очистка формы
+function resetForm(): void {
+  form.value = {
+    adtName: '',
+    adtType: null,
+    adtDir: null,
+    adtDateDate: '',
+    adtDateTime: '',
+    adtAddRA: false
+  };
+  errors.value = {};
+  errorMessage.value = null;
 }
 
 // Загрузка данных ревизии в форму
@@ -360,6 +401,7 @@ function loadAuditToForm(audit: RaADto): void {
   if (audit.adtDate) {
     const date = new Date(audit.adtDate);
     form.value.adtDateDate = date.toISOString().slice(0, 10);
+    // Формат времени для input type="time": HH:mm (без секунд)
     form.value.adtDateTime = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
   } else {
     form.value.adtDateDate = '';
@@ -371,54 +413,45 @@ function loadAuditToForm(audit: RaADto): void {
 function handleCreateNew(): void {
   isNewAudit.value = true;
   selectedAuditId.value = null;
-  selectedAudit.value = null;
-  errorMessage.value = null;
   activeTab.value = 'progress';
 
   // Очистка формы
-  form.value = {
-    adtName: '',
-    adtType: null,
-    adtDir: null,
-    adtDateDate: '',
-    adtDateTime: '',
-    adtAddRA: false
-  };
+  resetForm();
 
   // Установка текущей даты и времени по умолчанию
   const now = new Date();
   form.value.adtDateDate = now.toISOString().slice(0, 10);
   form.value.adtDateTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-
-  errors.value = {};
 }
 
 // Обновление списка ревизий
 async function handleRefresh(): Promise<void> {
   await auditsStore.fetchAudits();
-  if (selectedAuditId.value) {
-    await handleSelectAudit(selectedAuditId.value);
-  }
+  // Watch автоматически загрузит форму при изменении selectedAuditId
 }
+
+// ============================================================================
+// Валидация и сохранение
+// ============================================================================
 
 // Валидация формы перед сохранением
 function validateForm(): boolean {
   errors.value = {};
 
   if (!form.value.adtName.trim()) {
-    errors.value.adtName = 'Имя ревизии обязательно для заполнения';
+    errors.value.adtName = 'Введите название ревизии';
   }
 
   if (form.value.adtType === null) {
-    errors.value.adtType = 'Тип ревизии обязателен для заполнения';
+    errors.value.adtType = 'Выберите тип ревизии из списка';
   }
 
   if (form.value.adtDir === null) {
-    errors.value.adtDir = 'Директория обязательна для заполнения';
+    errors.value.adtDir = 'Выберите директорию из списка';
   }
 
-  if (!form.value.adtDateDate || !form.value.adtDateTime) {
-    errors.value.adtDate = 'Дата и время обязательны для заполнения';
+  if (!form.value.adtDateDate) {
+    errors.value.adtDate = 'Укажите дату выполнения ревизии';
   }
 
   return Object.keys(errors.value).length === 0;
@@ -434,8 +467,15 @@ async function handleSave(): Promise<void> {
   errorMessage.value = null;
 
   try {
-    // Формирование даты и времени
-    const adtDate = new Date(`${form.value.adtDateDate}T${form.value.adtDateTime}`).toISOString();
+    // Формирование даты и времени в локальном формате (без конвертации в UTC)
+    // Формат: "YYYY-MM-DDTHH:mm:ss" (без 'Z') для работы с LocalDateTime на backend
+    // Время опционально: если не указано, используется 00:00:00
+    const timeStr = form.value.adtDateTime || '00:00:00';
+    const dateTimeStr = `${form.value.adtDateDate}T${timeStr}`;
+    // Добавляем секунды, если их нет
+    const adtDate = dateTimeStr.includes(':') && dateTimeStr.split(':').length === 2 
+      ? `${dateTimeStr}:00` 
+      : dateTimeStr;
 
     if (isNewAudit.value) {
       // Создание новой ревизии
@@ -449,7 +489,8 @@ async function handleSave(): Promise<void> {
 
       const created = await auditsStore.createAudit(createRequest);
       if (created) {
-        selectedAudit.value = created;
+        // Обновляем список ревизий и устанавливаем выбранную
+        await auditsStore.fetchAudits();
         selectedAuditId.value = created.adtKey;
         isNewAudit.value = false;
         Notify.create({
@@ -470,7 +511,8 @@ async function handleSave(): Promise<void> {
 
       const updated = await auditsStore.updateAudit(selectedAudit.value.adtKey, updateRequest);
       if (updated) {
-        selectedAudit.value = updated;
+        // Обновляем список ревизий, watch автоматически загрузит форму
+        await auditsStore.fetchAudits();
         Notify.create({
           type: 'positive',
           message: 'Ревизия успешно обновлена',
@@ -490,24 +532,36 @@ async function handleSave(): Promise<void> {
   }
 }
 
+// ============================================================================
+// Дополнительные действия
+// ============================================================================
+
 // Выполнение ревизии (заглушка)
 function handleExecuteAudit(): void {
   executeDialogOpen.value = true;
 }
+
+// ============================================================================
+// Утилиты
+// ============================================================================
 
 // Форматирование даты
 function formatDate(dateString: string | null | undefined): string {
   if (!dateString) {
     return '';
   }
-  const date = new Date(dateString);
-  return date.toLocaleDateString('ru-RU', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch {
+    return '';
+  }
 }
 </script>
 
