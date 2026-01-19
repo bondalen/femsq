@@ -16,17 +16,17 @@
 
         <div class="col-12 col-md-6">
           <div class="text-caption text-grey-7">Путь</div>
-          <div class="text-body1">{{ directory.path || '—' }}</div>
+          <div class="text-body1">{{ directory.dir || '—' }}</div>
         </div>
 
         <div class="col-12 col-md-6">
           <div class="text-caption text-grey-7">Дата создания</div>
-          <div class="text-body1">{{ formatDate(directory.created) }}</div>
+          <div class="text-body1">{{ formatDate(directory.dirCreated) }}</div>
         </div>
 
         <div class="col-12 col-md-6">
           <div class="text-caption text-grey-7">Дата обновления</div>
-          <div class="text-body1">{{ formatDate(directory.updated) }}</div>
+          <div class="text-body1">{{ formatDate(directory.dirUpdated) }}</div>
         </div>
       </div>
     </q-card-section>
@@ -48,10 +48,10 @@
 </template>
 
 <script setup lang="ts">
-import type { DirectoryDto } from '@/types/files';
+import type { RaDirDto } from '@/types/audits';
 
 interface Props {
-  directory: DirectoryDto | null;
+  directory: RaDirDto | null;
   loading?: boolean;
 }
 

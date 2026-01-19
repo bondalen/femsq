@@ -1,17 +1,13 @@
 <template>
   <div class="audit-files-tab">
     <!-- Информация о директории -->
-    <!-- ВРЕМЕННО СКРЫТО ДЛЯ ДИАГНОСТИКИ: проблема с позиционированием -->
     <DirectoryInfo 
-      v-if="showDirectoryInfo" 
       :directory="currentDirectory" 
       :loading="loadingDirectory" 
     />
 
     <!-- Список файлов -->
-    <!-- ВРЕМЕННО СКРЫТО ДЛЯ ДИАГНОСТИКИ: проблема с позиционированием -->
     <FilesList 
-      v-if="showFilesList" 
       :dir-id="currentDirectory?.key ?? null" 
     />
 
@@ -26,9 +22,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
-import { useDirectoriesStore } from '@/stores/directories';
+import * as directoriesApi from '@/api/directories-api';
+import type { RaDirDto } from '@/types/audits';
 import DirectoryInfo from './DirectoryInfo.vue';
 import FilesList from './FilesList.vue';
 
@@ -39,17 +36,11 @@ interface Props {
 const props = defineProps<Props>();
 
 const $q = useQuasar();
-const directoriesStore = useDirectoriesStore();
 
 // State
+const currentDirectory = ref<RaDirDto | null>(null);
 const loadingDirectory = ref(false);
 const error = ref<string | null>(null);
-// ВРЕМЕННО: флаги для скрытия компонентов при диагностике проблемы с позиционированием
-const showDirectoryInfo = ref(false);
-const showFilesList = ref(false);
-
-// Computed
-const currentDirectory = computed(() => directoriesStore.currentDirectory);
 
 // Lifecycle
 onMounted(async () => {
@@ -62,7 +53,8 @@ async function loadDirectory() {
   error.value = null;
 
   try {
-    await directoriesStore.loadByAuditId(props.auditId);
+    const directory = await directoriesApi.getDirectoryByAuditId(props.auditId);
+    currentDirectory.value = directory;
   } catch (err) {
     error.value = `Ошибка загрузки директории: ${err instanceof Error ? err.message : 'Неизвестная ошибка'}`;
     $q.notify({
@@ -70,6 +62,7 @@ async function loadDirectory() {
       message: error.value,
       position: 'top-right'
     });
+    currentDirectory.value = null;
   } finally {
     loadingDirectory.value = false;
   }
