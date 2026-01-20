@@ -19,7 +19,6 @@
     <InvestmentChainsView v-else-if="connection.activeView === 'investment-chains'" />
     <ReportsCatalog v-else-if="connection.activeView === 'reports'" />
     <AuditsView v-else-if="connection.activeView === 'audits'" />
-    <AuditsViewV53 v-else-if="connection.activeView === 'audits-v53'" />
     <TestGridView v-else-if="connection.activeView === 'test-grid'" />
 
     <QPage v-else class="column q-gutter-lg">
@@ -76,7 +75,6 @@ import OrganizationsView from '@/views/organizations/OrganizationsView.vue';
 import InvestmentChainsView from '@/views/investment-chains/InvestmentChainsView.vue';
 import ReportsCatalog from '@/modules/reports/views/ReportsCatalog.vue';
 import AuditsView from '@/views/audits/AuditsView.vue';
-import AuditsViewV53 from '@/views/audits/AuditsViewV53.vue';
 import TestGridView from '@/views/TestGridView.vue';
 import type { ActiveView, ConnectionFormValues } from '@/stores/connection';
 import { useConnectionStore } from '@/stores/connection';

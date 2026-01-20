@@ -187,10 +187,17 @@
                 </div>
               </QTabPanel>
               <QTabPanel name="files">
-                <!-- ✅ ИНТЕГРАЦИЯ: Новый компонент файлов для проверки -->
-                <AuditFilesTab v-if="selectedAudit" :audit-id="selectedAudit.adtKey" />
-                <div v-else class="q-pa-md text-center text-grey-7">
-                  Выберите ревизию для просмотра файлов
+                <div class="q-pa-md">
+                  <!-- Информация о директории (включая файлы внутри) -->
+                  <DirectoryInfo 
+                    v-if="selectedAudit"
+                    :directory="currentDirectory" 
+                    :loading="loadingDirectory" 
+                  />
+                  
+                  <div v-else class="text-body2 text-grey-7 text-center q-pa-md">
+                    Выберите ревизию для просмотра директории
+                  </div>
                 </div>
               </QTabPanel>
             </QTabPanels>
@@ -198,56 +205,108 @@
 
           <!-- Сообщение, когда ревизия не выбрана -->
           <QCardSection v-if="!selectedAudit && !isNewAudit" class="text-center text-grey-7 q-pa-xl">
-            <div class="text-h6 q-mb-md">Выберите ревизию или создайте новую</div>
-            <div class="text-body2">
-              Используйте список слева для выбора существующей ревизии или нажмите "Создать новую".
-            </div>
+            <QIcon name="info" size="48px" class="q-mb-md" />
+            <div class="text-body1">Выберите ревизию из списка или создайте новую</div>
           </QCardSection>
         </QCard>
       </div>
     </div>
+
+    <!-- Диалог подтверждения выполнения ревизии -->
+    <QDialog v-model="executeDialogOpen">
+      <QCard>
+        <QCardSection>
+          <div class="text-h6">Выполнить ревизию</div>
+        </QCardSection>
+        <QCardSection>
+          <div class="text-body1">
+            Функция выполнения ревизии будет реализована позже. 
+            Она будет включать загрузку данных из Excel и выполнение проверок.
+          </div>
+        </QCardSection>
+        <QCardActions align="right">
+          <QBtn flat label="Закрыть" color="primary" @click="executeDialogOpen = false" />
+        </QCardActions>
+      </QCard>
+    </QDialog>
   </QPage>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
+import {
+  QBanner,
+  QBtn,
+  QCard,
+  QCardActions,
+  QCardSection,
+  QCheckbox,
+  QDialog,
+  QForm,
+  QIcon,
+  QInput,
+  QItem,
+  QItemLabel,
+  QItemSection,
+  QList,
+  QPage,
+  QSelect,
+  QSeparator,
+  QTab,
+  QTabPanel,
+  QTabPanels,
+  QTabs
+} from 'quasar';
+import { useQuasar, Notify } from 'quasar';
+
 import { useAuditsStore } from '@/stores/audits';
 import { useAuditTypesStore } from '@/stores/lookups/audit-types';
-import { useDirectoriesStore } from '@/stores/directories';
-import type { RaAudit, RaAuditCreateRequest, RaAuditUpdateRequest } from '@/types/audits';
-import AuditFilesTab from '@/components/audits/AuditFilesTab.vue';
+import { useDirectoriesStore } from '@/stores/lookups/directories';
+import type { RaADto, RaACreateRequest, RaAUpdateRequest, RaDirDto } from '@/types/audits';
+import * as directoriesApi from '@/api/directories-api';
+import DirectoryInfo from '@/components/audits/DirectoryInfo.vue';
 
-// Stores
+const $q = useQuasar();
 const auditsStore = useAuditsStore();
 const auditTypesStore = useAuditTypesStore();
 const directoriesStore = useDirectoriesStore();
 
-// State
 const selectedAuditId = ref<number | null>(null);
 const isNewAudit = ref(false);
-const activeTab = ref('progress');
 const saving = ref(false);
-const errorMessage = ref('');
+const errorMessage = ref<string | null>(null);
+const activeTab = ref<'progress' | 'files'>('progress');
+const executeDialogOpen = ref(false);
 
-// Form data
-const form = ref({
+// Состояние для директории
+const currentDirectory = ref<RaDirDto | null>(null);
+const loadingDirectory = ref(false);
+
+// Форма ревизии
+const form = ref<{
+  adtName: string;
+  adtType: number | null;
+  adtDir: number | null;
+  adtDateDate: string;
+  adtDateTime: string;
+  adtAddRA: boolean;
+}>({
   adtName: '',
-  adtType: null as number | null,
-  adtDir: null as number | null,
+  adtType: null,
+  adtDir: null,
   adtDateDate: '',
   adtDateTime: '',
-  adtAddRA: false,
+  adtAddRA: false
 });
 
-// Form errors
-const errors = ref({
-  adtName: '',
-  adtType: '',
-  adtDir: '',
-  adtDate: '',
-});
+const errors = ref<{
+  adtName?: string;
+  adtType?: string;
+  adtDir?: string;
+  adtDate?: string;
+}>({});
 
-// Computed
+// Отсортированные ревизии (по дате, новые сверху)
 const sortedAudits = computed(() => {
   return [...auditsStore.audits].sort((a, b) => {
     if (!a.adtDate) return 1;
@@ -256,189 +315,32 @@ const sortedAudits = computed(() => {
   });
 });
 
+// Computed selectedAudit для реактивности
 const selectedAudit = computed(() => {
   if (!selectedAuditId.value) return null;
   return auditsStore.audits.find((a) => a.adtKey === selectedAuditId.value) || null;
 });
 
+// Опции для выпадающих списков
 const auditTypesOptions = computed(() => auditTypesStore.auditTypes);
 const directoriesOptions = computed(() => directoriesStore.directories);
 
+// Валидация формы (время опционально)
 const isFormValid = computed(() => {
-  return (
-    form.value.adtName.trim() !== '' &&
+  return !!(
+    form.value.adtName.trim() &&
     form.value.adtType !== null &&
     form.value.adtDir !== null &&
-    form.value.adtDateDate !== ''
+    form.value.adtDateDate
   );
 });
 
-// Methods
-function formatDate(dateString: string | null): string {
-  if (!dateString) return '';
-  try {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ru-RU', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    });
-  } catch {
-    return '';
-  }
-}
-
-function resetForm() {
-  form.value = {
-    adtName: '',
-    adtType: null,
-    adtDir: null,
-    adtDateDate: '',
-    adtDateTime: '',
-    adtAddRA: false,
-  };
-  errors.value = {
-    adtName: '',
-    adtType: '',
-    adtDir: '',
-    adtDate: '',
-  };
-  errorMessage.value = '';
-}
-
-function loadFormFromAudit(audit: RaAudit) {
-  form.value.adtName = audit.adtName || '';
-  form.value.adtType = audit.adtType;
-  form.value.adtDir = audit.adtDir;
-  form.value.adtAddRA = audit.adtAddRA || false;
-
-  if (audit.adtDate) {
-    const date = new Date(audit.adtDate);
-    form.value.adtDateDate = date.toISOString().split('T')[0];
-    form.value.adtDateTime = date.toTimeString().split(' ')[0].substring(0, 5);
-  } else {
-    form.value.adtDateDate = '';
-    form.value.adtDateTime = '';
-  }
-}
-
-function validateForm(): boolean {
-  errors.value = {
-    adtName: '',
-    adtType: '',
-    adtDir: '',
-    adtDate: '',
-  };
-
-  let valid = true;
-
-  if (!form.value.adtName.trim()) {
-    errors.value.adtName = 'Введите имя ревизии';
-    valid = false;
-  }
-
-  if (form.value.adtType === null) {
-    errors.value.adtType = 'Выберите тип ревизии';
-    valid = false;
-  }
-
-  if (form.value.adtDir === null) {
-    errors.value.adtDir = 'Выберите директорию';
-    valid = false;
-  }
-
-  if (!form.value.adtDateDate) {
-    errors.value.adtDate = 'Введите дату';
-    valid = false;
-  }
-
-  return valid;
-}
-
-async function handleSave() {
-  if (!validateForm()) {
-    return;
-  }
-
-  saving.value = true;
-  errorMessage.value = '';
-
-  try {
-    // Combine date and time
-    let adtDate = form.value.adtDateDate;
-    if (form.value.adtDateTime) {
-      adtDate += 'T' + form.value.adtDateTime;
-    } else {
-      adtDate += 'T00:00:00';
-    }
-
-    if (isNewAudit.value) {
-      // Create new audit
-      const createRequest: RaAuditCreateRequest = {
-        adtName: form.value.adtName,
-        adtType: form.value.adtType!,
-        adtDir: form.value.adtDir!,
-        adtDate,
-        adtAddRA: form.value.adtAddRA,
-      };
-
-      const newAudit = await auditsStore.createAudit(createRequest);
-      selectedAuditId.value = newAudit.adtKey;
-      isNewAudit.value = false;
-    } else if (selectedAudit.value) {
-      // Update existing audit
-      const updateRequest: RaAuditUpdateRequest = {
-        adtName: form.value.adtName,
-        adtType: form.value.adtType!,
-        adtDir: form.value.adtDir!,
-        adtDate,
-        adtAddRA: form.value.adtAddRA,
-      };
-
-      await auditsStore.updateAudit(selectedAudit.value.adtKey, updateRequest);
-    }
-  } catch (error: any) {
-    errorMessage.value = error.message || 'Ошибка при сохранении ревизии';
-  } finally {
-    saving.value = false;
-  }
-}
-
-function handleSelectAudit(auditId: number) {
-  selectedAuditId.value = auditId;
-  isNewAudit.value = false;
-  activeTab.value = 'progress';
-}
-
-function handleCreateNew() {
-  isNewAudit.value = true;
-  selectedAuditId.value = null;
-  resetForm();
-  activeTab.value = 'progress';
-}
-
-async function handleRefresh() {
-  await auditsStore.fetchAudits();
-}
-
-function handleExecuteAudit() {
-  // TODO: Implement audit execution
-  alert('Функция "Выполнить ревизию" будет реализована в следующих этапах');
-}
-
-// Watchers
-watch(selectedAudit, (newAudit) => {
-  if (newAudit && !isNewAudit.value) {
-    loadFormFromAudit(newAudit);
-  }
-});
-
-// Lifecycle
+// Загрузка данных при монтировании
 onMounted(async () => {
   await Promise.all([
     auditsStore.fetchAudits(),
     auditTypesStore.fetchAuditTypes(),
-    directoriesStore.loadAll(),
+    directoriesStore.fetchDirectories()
   ]);
 
   // Auto-select first audit if available
@@ -446,6 +348,254 @@ onMounted(async () => {
     selectedAuditId.value = sortedAudits.value[0]?.adtKey || null;
   }
 });
+
+// Watch для автоматической загрузки формы при изменении выбранной ревизии
+watch(selectedAuditId, async (newId) => {
+  if (!newId || isNewAudit.value) {
+    currentDirectory.value = null;
+    return;
+  }
+
+  errorMessage.value = null;
+
+  try {
+    // Загружаем полные данные ревизии через API
+    const audit = await auditsStore.fetchAuditById(newId);
+    if (audit) {
+      loadAuditToForm(audit);
+      // Загружаем директорию для ревизии
+      await loadDirectory(newId);
+    } else {
+      errorMessage.value = 'Ревизия не найдена';
+      currentDirectory.value = null;
+    }
+  } catch (err) {
+    errorMessage.value = err instanceof Error ? err.message : 'Не удалось загрузить ревизию';
+    currentDirectory.value = null;
+  }
+});
+
+// ============================================================================
+// Обработка выбора и навигации
+// ============================================================================
+
+// Обработка выбора ревизии
+function handleSelectAudit(id: number): void {
+  if (selectedAuditId.value === id) {
+    return;
+  }
+
+  isNewAudit.value = false;
+  selectedAuditId.value = id;
+  errorMessage.value = null;
+  activeTab.value = 'progress';
+}
+
+// ============================================================================
+// Работа с формой
+// ============================================================================
+
+// Очистка формы
+function resetForm(): void {
+  form.value = {
+    adtName: '',
+    adtType: null,
+    adtDir: null,
+    adtDateDate: '',
+    adtDateTime: '',
+    adtAddRA: false
+  };
+  errors.value = {};
+  errorMessage.value = null;
+}
+
+// Загрузка данных ревизии в форму
+function loadAuditToForm(audit: RaADto): void {
+  form.value.adtName = audit.adtName || '';
+  form.value.adtType = audit.adtType || null;
+  form.value.adtDir = audit.adtDir || null;
+  form.value.adtAddRA = audit.adtAddRA || false;
+
+  if (audit.adtDate) {
+    const date = new Date(audit.adtDate);
+    form.value.adtDateDate = date.toISOString().slice(0, 10);
+    // Формат времени для input type="time": HH:mm (без секунд)
+    form.value.adtDateTime = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  } else {
+    form.value.adtDateDate = '';
+    form.value.adtDateTime = '';
+  }
+}
+
+// Создание новой ревизии
+function handleCreateNew(): void {
+  isNewAudit.value = true;
+  selectedAuditId.value = null;
+  activeTab.value = 'progress';
+
+  // Очистка формы
+  resetForm();
+
+  // Установка текущей даты и времени по умолчанию
+  const now = new Date();
+  form.value.adtDateDate = now.toISOString().slice(0, 10);
+  form.value.adtDateTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+}
+
+// Обновление списка ревизий
+async function handleRefresh(): Promise<void> {
+  await auditsStore.fetchAudits();
+  // Watch автоматически загрузит форму при изменении selectedAuditId
+}
+
+// Загрузка директории для ревизии
+async function loadDirectory(auditId: number): Promise<void> {
+  loadingDirectory.value = true;
+  try {
+    const directory = await directoriesApi.getDirectoryByAuditId(auditId);
+    currentDirectory.value = directory;
+  } catch (err) {
+    // Если директория не найдена, это не критическая ошибка
+    currentDirectory.value = null;
+    console.warn('Директория для ревизии не найдена:', err);
+  } finally {
+    loadingDirectory.value = false;
+  }
+}
+
+// ============================================================================
+// Валидация и сохранение
+// ============================================================================
+
+// Валидация формы перед сохранением
+function validateForm(): boolean {
+  errors.value = {};
+
+  if (!form.value.adtName.trim()) {
+    errors.value.adtName = 'Введите название ревизии';
+  }
+
+  if (form.value.adtType === null) {
+    errors.value.adtType = 'Выберите тип ревизии из списка';
+  }
+
+  if (form.value.adtDir === null) {
+    errors.value.adtDir = 'Выберите директорию из списка';
+  }
+
+  if (!form.value.adtDateDate) {
+    errors.value.adtDate = 'Укажите дату выполнения ревизии';
+  }
+
+  return Object.keys(errors.value).length === 0;
+}
+
+// Сохранение ревизии
+async function handleSave(): Promise<void> {
+  if (!validateForm()) {
+    return;
+  }
+
+  saving.value = true;
+  errorMessage.value = null;
+
+  try {
+    // Формирование даты и времени в локальном формате (без конвертации в UTC)
+    // Формат: "YYYY-MM-DDTHH:mm:ss" (без 'Z') для работы с LocalDateTime на backend
+    // Время опционально: если не указано, используется 00:00:00
+    const timeStr = form.value.adtDateTime || '00:00:00';
+    const dateTimeStr = `${form.value.adtDateDate}T${timeStr}`;
+    // Добавляем секунды, если их нет
+    const adtDate = dateTimeStr.includes(':') && dateTimeStr.split(':').length === 2 
+      ? `${dateTimeStr}:00` 
+      : dateTimeStr;
+
+    if (isNewAudit.value) {
+      // Создание новой ревизии
+      const createRequest: RaACreateRequest = {
+        adtName: form.value.adtName.trim(),
+        adtType: form.value.adtType!,
+        adtDir: form.value.adtDir!,
+        adtDate: adtDate,
+        adtAddRA: form.value.adtAddRA
+      };
+
+      const created = await auditsStore.createAudit(createRequest);
+      if (created) {
+        // Обновляем список ревизий и устанавливаем выбранную
+        await auditsStore.fetchAudits();
+        selectedAuditId.value = created.adtKey;
+        isNewAudit.value = false;
+        Notify.create({
+          type: 'positive',
+          message: 'Ревизия успешно создана',
+          position: 'top'
+        });
+      }
+    } else if (selectedAudit.value) {
+      // Обновление существующей ревизии
+      const updateRequest: RaAUpdateRequest = {
+        adtName: form.value.adtName.trim(),
+        adtType: form.value.adtType!,
+        adtDir: form.value.adtDir!,
+        adtDate: adtDate,
+        adtAddRA: form.value.adtAddRA
+      };
+
+      const updated = await auditsStore.updateAudit(selectedAudit.value.adtKey, updateRequest);
+      if (updated) {
+        // Обновляем список ревизий, watch автоматически загрузит форму
+        await auditsStore.fetchAudits();
+        Notify.create({
+          type: 'positive',
+          message: 'Ревизия успешно обновлена',
+          position: 'top'
+        });
+      }
+    }
+  } catch (err) {
+    errorMessage.value = err instanceof Error ? err.message : 'Не удалось сохранить ревизию';
+    Notify.create({
+      type: 'negative',
+      message: errorMessage.value,
+      position: 'top'
+    });
+  } finally {
+    saving.value = false;
+  }
+}
+
+// ============================================================================
+// Дополнительные действия
+// ============================================================================
+
+// Выполнение ревизии (заглушка)
+function handleExecuteAudit(): void {
+  executeDialogOpen.value = true;
+}
+
+// ============================================================================
+// Утилиты
+// ============================================================================
+
+// Форматирование даты
+function formatDate(dateString: string | null | undefined): string {
+  if (!dateString) {
+    return '';
+  }
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch {
+    return '';
+  }
+}
 </script>
 
 <style scoped>
@@ -529,5 +679,4 @@ onMounted(async () => {
 .compact-buttons {
   margin-top: 4px !important; /* было q-mt-md (16px) -> 4px */
 }
-
 </style>
