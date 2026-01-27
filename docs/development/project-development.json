@@ -3,13 +3,13 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2025-12-25T15:30:00+03:00",
+      "lastUpdated": "2026-01-27T14:03:50+03:00",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0040",
+      "nextTaskId": "0041",
       "items": {
         "0001": {
           "task": {
@@ -1492,6 +1492,34 @@
               },
               "created": "2025-12-24",
               "lastUpdated": "2025-12-25"
+            }
+          }
+        },
+        "0040": {
+          "task": {
+            "displayName": "Финализация страницы ревизий (AuditsView) и интеграция директории/файлов (completed, high). № 0040",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Единая страница ревизий работает (AuditsView.vue)",
+                "Интегрированы компоненты директории и файлов для проверки",
+                "CRUD файлов работает, организации в select загружаются",
+                "Удалена проблемная версия страницы ревизий (.68) и временная навигация audits-v53",
+                "Проведено финальное тестирование в браузере",
+                "Документация обновлена и синхронизирована"
+              ],
+              "description": "Восстановление работоспособной страницы ревизий на базе версии .53, перенос улучшений, интеграция DirectoryInfo + FilesList, исправления (таймаут статуса подключения, ogName→ogNm), удаление версии .68 и финализация.",
+              "links": {
+                "projectDocsRefs": ["module:frontend"],
+                "journalRefs": ["chat:chat-2026-01-19-001", "log:log-2026-01-20-001"],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0119-restore-audits.md",
+                "chatResume": "docs/development/notes/chats/chat-resume/chat-resume-26-0119-restore-audits.md"
+              },
+              "created": "2026-01-19",
+              "lastUpdated": "2026-01-27T14:03:50+03:00"
             }
           }
         }

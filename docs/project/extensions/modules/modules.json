@@ -1,7 +1,7 @@
 {
   "modules" : {
     "version" : "1.0.0",
-    "lastUpdated" : "2025-11-28",
+    "lastUpdated" : "2026-01-27",
     "description" : "Структура модулей проекта FEMSQ",
     "items" : [ {
       "module" : {
@@ -1710,6 +1710,43 @@
                   "artifact" : {
                     "location" : "src/views/organizations/OrganizationsView.vue",
                     "file_path" : "src/views/organizations/OrganizationsView.vue",
+                    "type" : "vue-view",
+                    "artifact_type" : "file"
+                  }
+                }
+              }
+            } ]
+          }
+        }, {
+          "component" : {
+            "displayName" : "Audits Screen. № 02.07",
+            "attributes" : {
+              "id" : "auditsScreen",
+              "number" : "02.07",
+              "name" : "Audits Screen",
+              "description" : "Экран работы с ревизиями (аудит Excel-файлов) с привязкой директории и файлов для проверки",
+              "status" : "completed",
+              "artifact" : {
+                "location" : "src/views/audits/AuditsView.vue",
+                "file_path" : "code/femsq-frontend-q/src/views/audits/AuditsView.vue",
+                "type" : "vue-view",
+                "artifact_type" : "file"
+              },
+              "responsibilities" : [ "Просмотр и выбор ревизий (левая панель)", "Редактирование данных ревизии (правая панель)", "Вкладка 'Файлы для проверки': директория + список файлов", "CRUD операции с файлами для проверки" ],
+              "documentation" : [ "docs/development/notes/chats/chat-plan/chat-plan-26-0119-restore-audits.md", "docs/development/notes/chats/chat-resume/chat-resume-26-0119-restore-audits.md" ]
+            },
+            "classes" : [ {
+              "class" : {
+                "displayName" : "AuditsView.vue. № 02.07.01",
+                "attributes" : {
+                  "id" : "AuditsView",
+                  "number" : "02.07.01",
+                  "name" : "AuditsView",
+                  "description" : "Страница ревизий (основная, финализированная версия)",
+                  "status" : "completed",
+                  "artifact" : {
+                    "location" : "src/views/audits/AuditsView.vue",
+                    "file_path" : "code/femsq-frontend-q/src/views/audits/AuditsView.vue",
                     "type" : "vue-view",
                     "artifact_type" : "file"
                   }

@@ -6,8 +6,8 @@
             "description": "Cистема работы с контрагентами и объектами при капитальном строительстве на основе БД MS SQL Server FEMSQ (Fish Eye MS SQL Server)",
             "author": "Александр",
             "created": "2025-10-08",
-            "lastUpdated": "2025-12-25",
-            "status": "planning",
+            "lastUpdated": "2026-01-27",
+            "status": "in_progress",
             "repository": "https://github.com/bondalen/femsq.git",
             "license": "MIT",
             "keywords": [
@@ -311,6 +311,7 @@
                 "Управление отношениями с контрагентами",
                 "CRM функциональность",
                 "Документооборот",
+                "Ревизии (аудит/проверка файлов Excel)",
                 "Управленческий финансовый учет"
             ],
             "advanced": [
@@ -322,7 +323,7 @@
         "modules": {
             "description": "Структура модулей проекта FEMSQ",
             "version": "1.0.0",
-            "lastUpdated": "2025-11-17",
+            "lastUpdated": "2026-01-27",
             "structure": {
                 "type": "recursive",
                 "entities": ["Module", "Component", "Class"],
@@ -1216,8 +1217,8 @@
     },
     "metadata": {
         "version": "1.2.0",
-        "lastUpdated": "2025-12-25",
+        "lastUpdated": "2026-01-27",
         "updatedBy": "Александр",
-        "updateReason": "Обновление до версии 0.1.0.45: JDBC Driver 13.2.0, автоматический Kerberos SSO, оптимизация логирования"
+        "updateReason": "Актуализация документации после восстановления и финализации страницы ревизий (AuditsView), интеграции директории/файлов и удаления проблемной версии .68; версия приложения 0.1.0.83-SNAPSHOT."
     }
 }

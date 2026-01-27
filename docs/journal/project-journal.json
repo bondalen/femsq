@@ -3,7 +3,7 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2025-12-25"
+      "lastUpdated": "2026-01-27"
     },
     "sessions": [
       {
@@ -2648,6 +2648,103 @@
                       "docs/development/notes/chats/chat-resume/chat-resume-25-1224-kerberos-sso.md",
                       "RELEASE-NOTES-0.1.0.45.md",
                       "docs/development/notes/documentation-audit-25-1225.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "Восстановление страницы ревизий и интеграция файлов (completed, high). № chat-2026-01-19-001",
+          "chat-attributes": {
+            "id": "chat-2026-01-19-001",
+            "created": "2026-01-19",
+            "lastUpdated": "2026-01-27",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "high",
+            "tags": [
+              "audits",
+              "frontend",
+              "migration",
+              "ui",
+              "bugfix",
+              "cleanup"
+            ],
+            "links": {
+              "projectDocsRefs": [
+                "module:frontend"
+              ],
+              "developmentTasks": [
+                "task:0040"
+              ],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0119-restore-audits.md",
+              "chatResume": "docs/development/notes/chats/chat-resume/chat-resume-26-0119-restore-audits.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Финализация страницы ревизий (success). № log-2026-01-20-001",
+                "log-attributes": {
+                  "id": "log-2026-01-20-001",
+                  "timestamp": "2026-01-20T15:50:00+03:00",
+                  "level": "success",
+                  "effort": "2d",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "task:0040"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Восстановлена работоспособная страница ревизий на базе версии .53",
+                    "details": "Создана и протестирована версия AuditsView на основе рабочего коммита 2a137c8. Перенесены улучшения UX и структуры из проблемной версии .68 без дублирования кода.",
+                    "outcome": "Страница ревизий отображается корректно, без проблем позиционирования",
+                    "references": [
+                      "code/femsq-frontend-q/src/views/audits/AuditsView.vue",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0119-restore-audits.md"
+                    ]
+                  },
+                  {
+                    "action": "Интегрированы компоненты директории и файлов для проверки",
+                    "details": "Реализована цепочка данных ревизия → директория → файлы. FilesList вложен внутрь DirectoryInfo для наглядного отображения связи один-ко-многим. CRUD файлов подтвержден тестированием.",
+                    "outcome": "Вкладка \"Файлы для проверки\" работает, файлы создаются/редактируются/удаляются",
+                    "references": [
+                      "code/femsq-frontend-q/src/components/audits/DirectoryInfo.vue",
+                      "code/femsq-frontend-q/src/components/audits/FilesList.vue",
+                      "code/femsq-frontend-q/src/components/audits/FileEditDialog.vue"
+                    ]
+                  },
+                  {
+                    "action": "Исправлены интеграционные проблемы (типизация организаций и таймаут статуса подключения)",
+                    "details": "Исправлено несоответствие API: backend возвращает ogName, а UI ожидал ogNm (скорректированы типы и маппинг). Для статуса подключения добавлен retry + увеличен таймаут и логирование, чтобы устранить sporadic timeout при старте.",
+                    "outcome": "Организации в селекте отображаются; ошибка таймаута при загрузке статуса подключения устранена",
+                    "references": [
+                      "code/femsq-frontend-q/src/api/organizations-api.ts",
+                      "code/femsq-frontend-q/src/types/files.ts",
+                      "code/femsq-frontend-q/src/App.vue",
+                      "code/femsq-frontend-q/src/api/connection-api.ts"
+                    ]
+                  },
+                  {
+                    "action": "Удалена проблемная версия страницы ревизий (.68) и выполнена финализация",
+                    "details": "Удалена временная навигация audits-v53, удалены связанные условия/импорты, AuditsView сделан единственной актуальной страницей. Создан бэкап старой версии для истории (AuditsView.v68.backup).",
+                    "outcome": "В проекте осталась единая работоспособная версия страницы ревизий",
+                    "references": [
+                      "code/femsq-frontend-q/src/components/layout/TopBar.vue",
+                      "code/femsq-frontend-q/src/stores/connection.ts",
+                      "code/femsq-frontend-q/src/App.vue"
                     ]
                   }
                 ]
