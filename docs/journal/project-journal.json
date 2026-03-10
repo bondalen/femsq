@@ -2505,7 +2505,89 @@
                         "solution": "Изменён на более заметный серый #E0E0E0"
                       }
                     ]
+      },
+      {
+        "chat": {
+          "displayName": "Тестовая сборка и развёртывание FEMSQ в WSL (completed, medium). № chat-2026-03-05-001",
+          "chat-attributes": {
+            "id": "chat-2026-03-05-001",
+            "created": "2026-03-05",
+            "lastUpdated": "2026-03-10T11:50:00+03:00",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "medium",
+            "tags": [
+              "deployment",
+              "wsl2",
+              "docker",
+              "mssql",
+              "fat-jar",
+              "thin-jar"
+            ],
+            "links": {
+              "projectDocsRefs": [
+                "chat-plan:26-0305"
+              ],
+              "developmentTasks": [],
+              "aiRuleRefs": []
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Сборка 0.1.0.85 и развёртывание fat/thin JAR в WSL (success). № log-2026-03-10-001",
+                "log-attributes": {
+                  "id": "log-2026-03-10-001",
+                  "timestamp": "2026-03-10T11:50:00+03:00",
+                  "level": "success",
+                  "effort": "4h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "chat-plan:26-0305"
+                    ],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Сборка и развёртывание fat JAR в каталоге 26-0305",
+                    "details": "Выполнена Maven-сборка приложения FEMSQ (версия 0.1.0.83 → 0.1.0.84 → 0.1.0.85) с предкомпиляцией отчётов JasperReports (PrecompileReports) и генерацией lib-manifest.json (LibManifestGenerator). Fat JAR `femsq-web-0.1.0.83-SNAPSHOT.jar` был развёрнут в каталоге 26-0305 и успешно запущен в WSL, обеспечив доступ к приложению по http://localhost:8080 из браузера Windows 11.",
+                    "outcome": "Подтверждена работоспособность сценария первичной установки через fat JAR в окружении nb-win + WSL2 + Docker MS SQL.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0305.md",
+                      "code/femsq-backend/femsq-reports/src/main/java/com/femsq/reports/build/PrecompileReports.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/build/LibManifestGenerator.java"
+                    ]
                   },
+                  {
+                    "action": "Настройка LibManifestGenerator и запуск thin JAR с внешними библиотеками",
+                    "details": "Реализован LibManifestGenerator для генерации META-INF/lib-manifest.json на основе содержимого BOOT-INF/lib/ и добавления его в fat JAR через `jar uf`. Исправлена логика извлечения версии для femsq-* библиотек (используются последние два фрагмента имени файла, например 0.1.0.85-SNAPSHOT), чтобы LibraryCompatibilityChecker корректно сравнивал версии. На основании fat JAR собран thin JAR `femsq-web-0.1.0.85-SNAPSHOT-thin.jar`, библиотеки извлечены в каталог `lib/` (скрипт `extract-libs-from-fatjar.sh`) и развёрнуты в каталоге 26-0309.",
+                    "outcome": "Сценарий обновления через thin JAR с внешним каталогом lib/ успешно отработал: LibraryCompatibilityChecker прошёл без ошибок, приложение запустилось из каталога 26-0309 с использованием `java -cp \"femsq-web-0.1.0.85-SNAPSHOT-thin.jar:lib/*\" org.springframework.boot.loader.launch.JarLauncher`.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0305.md",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/build/LibManifestGenerator.java",
+                      "code/scripts/build-thin-jar.sh",
+                      "code/scripts/extract-libs-from-fatjar.sh",
+                      "code/scripts/run-with-external-libs.sh"
+                    ]
+                  },
+                  {
+                    "action": "Подключение к тестовой БД FishEye и проверка UI из Windows 11",
+                    "details": "В Docker-контейнере `femsq-mssql` развернута тестовая база FishEye (schema ags, compatibility level 110). Через UI приложения настроено подключение к БД (localhost:1433, FishEye, ags, sa), конфигурация сохранена в `~/.femsq/database.properties`. Из браузера Windows 11 проверены базовые разделы UI: главная страница, \"Организации\" и \"Ревизии\" (включая вкладку \"Файлы для проверки\"), а также разделы цепочек и отчётов для подтверждения корректной работы с тестовыми данными.",
+                    "outcome": "Подтверждено, что текущая версия FEMSQ (0.1.0.85-SNAPSHOT) корректно работает в окружении nb-win + WSL2 с Docker MS SQL и доступна из Windows через http://localhost:8080.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0305.md",
+                      "docs/development/notes/chats/chat-resume/chat-resume-26-0305.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
                   {
                     "action": "Этап 08.8: Backend интеграция",
                     "details": "Создан JSON metadata файл. Отчёт размещён в embedded папке. Настроен ReportDiscoveryService. Реализована валидация и конвертация параметров (String → Integer/LocalDate). Настроено логирование с временными метками (app_*, versions_*, connections_*). Созданы Desktop инструменты управления (ярлыки, скрипты).",
