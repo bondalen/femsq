@@ -58,3 +58,6 @@ out/
 
 # Local MCP configuration
 .cursor/mcp.json
+
+# Eclipse/IDE project metadata inside resources (не коммитим)
+code/femsq-backend/femsq-reports/src/main/resources/reports/embedded/.project
