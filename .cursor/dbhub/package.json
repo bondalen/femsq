@@ -11,5 +11,8 @@
   "description": "",
   "dependencies": {
     "@bytebase/dbhub": "^0.11.6"
+  },
+  "overrides": {
+    "mariadb": "3.4.0"
   }
 }

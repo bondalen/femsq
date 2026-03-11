@@ -720,10 +720,10 @@
                             "container_name": "vuege-mssql",
                             "host": "localhost",
                             "port": 1433,
-                            "database": "Fish_Eye",
+                            "database": "FishEye",
                             "username": "sa",
                             "password": "kolob_OK1",
-                            "connection_string": "sqlserver://sa:kolob_OK1@localhost:1433/Fish_Eye?sslmode=disable&encrypt=false&trustServerCertificate=true",
+                            "connection_string": "sqlserver://sa:kolob_OK1@localhost:1433/FishEye?sslmode=disable&encrypt=false&trustServerCertificate=true",
                             "check_commands": {
                                 "container_status": "docker ps --filter name=vuege-mssql --format '{{.Status}}'",
                                 "port_check": "timeout 2 bash -c 'cat < /dev/null > /dev/tcp/localhost/1433' 2>&1"
