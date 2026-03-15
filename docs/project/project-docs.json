@@ -6,7 +6,7 @@
             "description": "Cистема работы с контрагентами и объектами при капитальном строительстве на основе БД MS SQL Server FEMSQ (Fish Eye MS SQL Server)",
             "author": "Александр",
             "created": "2025-10-08",
-            "lastUpdated": "2026-01-27",
+            "lastUpdated": "2026-03-13",
             "status": "in_progress",
             "repository": "https://github.com/bondalen/femsq.git",
             "license": "MIT",
@@ -697,12 +697,58 @@
                 ]
             },
             "environments": {
-                "description": "Машины разработки с приоритетом автодетекции. WSL Ubuntu на Windows (проект в WSL, Docker на Windows-хосте) и отдельная Fedora (MS SQL Server как локальная служба).",
+                "description": "Машины разработки с приоритетом автодетекции. nb-win: Windows 11 + WSL2 Ubuntu, Docker (femsq-mssql), Hyper-V ВМ w10-26-0310 для Access/Excel. user-pc-ubuntu: аналог (User-PC). alex-fedora: Fedora с локальным MS SQL Server.",
                 "check_order": [
+                    "nb-win",
                     "user-pc-ubuntu",
                     "alex-fedora"
                 ],
                 "machines": {
+                    "nb-win": {
+                        "name": "nb-win (Windows 11 + WSL2 + Hyper-V)",
+                        "hostname_pattern": "^(?i)nb-win$",
+                        "os_pattern": ".*Linux.*|.*Ubuntu.*|.*WSL.*",
+                        "priority": 0,
+                        "host": {
+                            "hostname": "nb-win",
+                            "username": "alex",
+                            "os": "WSL2",
+                            "distribution": "Ubuntu 24.04",
+                            "description": "Windows 11 (хост nb-win); проект в WSL2, Docker Desktop на хосте; Hyper-V ВМ w10-26-0310 для MS Office 2013 (Access/Excel) и работы с действующей Access-системой"
+                        },
+                        "database": {
+                            "type": "docker",
+                            "container_name": "femsq-mssql",
+                            "host": "localhost",
+                            "port": 1433,
+                            "database": "FishEye",
+                            "username": "sa",
+                            "password": "kolob_OK1",
+                            "connection_string": "sqlserver://sa:kolob_OK1@localhost:1433/FishEye?sslmode=disable&encrypt=false&trustServerCertificate=true",
+                            "check_commands": {
+                                "container_status": "docker ps --filter name=femsq-mssql --format '{{.Status}}'",
+                                "port_check": "timeout 2 bash -c 'cat < /dev/null > /dev/tcp/localhost/1433' 2>&1"
+                            },
+                            "note": "Docker контейнер на Windows-хосте, доступен из WSL через localhost:1433; из гостевой ВМ Hyper-V (w10-26-0310) — по имени хоста nb-win,1433"
+                        },
+                        "dbhub": {
+                            "type": "local",
+                            "path": ".cursor/dbhub",
+                            "package": "@bytebase/dbhub",
+                            "version": "latest",
+                            "install_command": "npm install @bytebase/dbhub --prefix .cursor/dbhub",
+                            "entry_point": ".cursor/dbhub/node_modules/@bytebase/dbhub/dist/index.js"
+                        },
+                        "access_excel_vm": {
+                            "description": "ВМ Hyper-V для действующей Access/Excel системы (подготовка к импорту из Excel)",
+                            "vm_name": "w10-26-0310",
+                            "disk_path": "D:\\Program_Files\\vm\\hyper-v\\w10-26-0310\\disk0.vhdx",
+                            "office": "Microsoft Office профессиональный плюс 2013 (Access, Excel)",
+                            "odbc_dsn": "FishEye (ODBC Driver 17 for SQL Server), подключение к хосту nb-win,1433",
+                            "notes": "Вход в ВМ по RDP (mstsc); связи Access с сохранением пароля; формы и таблицы отображают данные FishEye из Docker"
+                        },
+                        "notes": "VMware удалена из-за конфликта с Cursor AI; используется Вариант A (Hyper-V). План: docs/development/notes/chats/chat-plan/chat-plan-26-0310.md"
+                    },
                     "user-pc-ubuntu": {
                         "name": "User-PC / WSL Ubuntu",
                         "hostname_pattern": "^(?i)User-PC$",
@@ -1220,7 +1266,7 @@
     },
     "metadata": {
         "version": "1.2.0",
-        "lastUpdated": "2026-01-27",
+        "lastUpdated": "2026-03-13",
         "updatedBy": "Александр",
         "updateReason": "Актуализация документации после восстановления и финализации страницы ревизий (AuditsView), интеграции директории/файлов и удаления проблемной версии .68; версия приложения 0.1.0.83-SNAPSHOT."
     }

@@ -3,7 +3,7 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-01-27"
+      "lastUpdated": "2026-03-13"
     },
     "sessions": [
       {
@@ -2827,6 +2827,96 @@
                       "code/femsq-frontend-q/src/components/layout/TopBar.vue",
                       "code/femsq-frontend-q/src/stores/connection.ts",
                       "code/femsq-frontend-q/src/App.vue"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "Подготовка к импорту из Excel: Hyper-V ВМ, Access/Excel, связь с FishEye (completed, high). № chat-2026-03-10-001",
+          "chat-attributes": {
+            "id": "chat-2026-03-10-001",
+            "created": "2026-03-10",
+            "lastUpdated": "2026-03-13",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "high",
+            "tags": [
+              "access",
+              "excel",
+              "hyper-v",
+              "vm",
+              "odbc",
+              "fish-eye",
+              "import"
+            ],
+            "links": {
+              "projectDocsRefs": [
+                "development:environments.nb-win"
+              ],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0310.md",
+              "chatResume": "docs/development/notes/chats/chat-resume/chat-resume-26-0310.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Этап 0 плана chat-plan-26-0310: среда Office 2013 + Access/Excel + FishEye (success). № log-2026-03-13-001",
+                "log-attributes": {
+                  "id": "log-2026-03-13-001",
+                  "timestamp": "2026-03-13T12:00:00+03:00",
+                  "level": "success",
+                  "effort": "3d",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "development:environments",
+                      "chat-plan:26-0310"
+                    ],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Миграция с VMware на Hyper-V (Вариант A)",
+                    "details": "VMware Workstation удалена из-за конфликта с Cursor AI (сетевые адаптеры VMnet блокировали подключение к model provider). Включены компоненты Windows: WSL, VirtualMachinePlatform, Microsoft-Hyper-V-All, HypervisorPlatform. Диск ВМ D:\\Program_Files\\vm\\vmware\\w10-26-0310 (multi-extent VMDK) сконвертирован в VHDX через qemu-img в WSL, создана ВМ Hyper-V w10-26-0310 (Gen2), Default Switch. Вход в ВМ по PIN; работа через RDP (mstsc), буфер обмена хост↔гость работает.",
+                    "outcome": "ВМ Windows 10 в Hyper-V запускается и доступна с хоста nb-win без конфликта с Cursor и Docker.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0310.md",
+                      "net_problem"
+                    ]
+                  },
+                  {
+                    "action": "Office 2013 и действующие файлы Access/Excel в ВМ",
+                    "details": "В гостевой ВМ установлен и активирован Microsoft Office профессиональный плюс 2013 (Access, Excel). Файлы Access/Excel извлечены из ZIP (7-Zip) и размещены в ВМ. Проверена комплексная работа Access и Excel без подключения к SQL и с подключением.",
+                    "outcome": "Файлы открываются без ошибок в Office 2013, связанные таблицы и формы отображают данные.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0310.md"
+                    ]
+                  },
+                  {
+                    "action": "Подключение Access к FishEye в Docker (ODBC Driver 17)",
+                    "details": "Создан пользовательский ODBC-источник FishEye (на хосте nb-win,1433) в гостевой ВМ. Используется ODBC Driver 17 for SQL Server; при связывании таблиц через UI доступен флажок «Сохранить пароль». Связи пересозданы с сохранением пароля — таблицы и формы открываются без запроса пароля и отображают данные из контейнера femsq-mssql (база FishEye, схема ags и др.).",
+                    "outcome": "Действующие файлы Access/Excel на nb-win (в ВМ w10-26-0310) успешно работают с MS SQL Server в Docker (FishEye).",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0310.md",
+                      "docs/project/project-docs.json"
+                    ]
+                  },
+                  {
+                    "action": "Обновление документации проекта",
+                    "details": "В project-docs.json добавлена машина nb-win в development.environments.machines (hostname nb-win, Docker femsq-mssql, Hyper-V ВМ w10-26-0310, access_excel_vm, DBHub local). check_order дополнен nb-win. Обновлены lastUpdated (2026-03-13). В project-journal.json добавлена сессия chat-2026-03-10-001 и лог log-2026-03-13-001.",
+                    "outcome": "Документация соответствует фактически выполненным работам.",
+                    "references": [
+                      "docs/project/project-docs.json",
+                      "docs/journal/project-journal.json"
                     ]
                   }
                 ]
