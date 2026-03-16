@@ -163,7 +163,8 @@
                   color="primary"
                   icon="play_arrow"
                   label="Выполнить ревизию"
-                  :disable="isNewAudit || saving"
+                  :loading="executing"
+                  :disable="isNewAudit || saving || executing"
                   @click="handleExecuteAudit"
                 />
               </div>
@@ -181,8 +182,13 @@
             <QTabPanels v-model="activeTab" animated>
               <QTabPanel name="progress">
                 <div class="q-pa-md">
-                  <div class="text-body2 text-grey-7">
-                    Лог выполнения ревизии будет отображаться здесь после реализации функции "Выполнить ревизию".
+                  <div
+                    v-if="selectedAudit && selectedAudit.adtResults"
+                    class="text-body2 text-grey-7"
+                    v-html="selectedAudit.adtResults"
+                  />
+                  <div v-else class="text-body2 text-grey-7">
+                    Лог выполнения ревизии будет отображаться здесь после запуска функции "Выполнить ревизию".
                   </div>
                 </div>
               </QTabPanel>
@@ -277,6 +283,7 @@ const saving = ref(false);
 const errorMessage = ref<string | null>(null);
 const activeTab = ref<'progress' | 'files'>('progress');
 const executeDialogOpen = ref(false);
+const executing = ref(false);
 
 // Состояние для директории
 const currentDirectory = ref<RaDirDto | null>(null);
@@ -569,9 +576,31 @@ async function handleSave(): Promise<void> {
 // Дополнительные действия
 // ============================================================================
 
-// Выполнение ревизии (заглушка)
-function handleExecuteAudit(): void {
-  executeDialogOpen.value = true;
+// Выполнение ревизии
+async function handleExecuteAudit(): Promise<void> {
+  if (!selectedAudit.value) {
+    Notify.create({
+      type: 'warning',
+      message: 'Сначала выберите ревизию',
+      position: 'top'
+    });
+    return;
+  }
+
+  try {
+    executing.value = true;
+    await auditsStore.executeAudit(selectedAudit.value.adtKey);
+    activeTab.value = 'progress';
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Не удалось выполнить ревизию';
+    Notify.create({
+      type: 'negative',
+      message,
+      position: 'top'
+    });
+  } finally {
+    executing.value = false;
+  }
 }
 
 // ============================================================================

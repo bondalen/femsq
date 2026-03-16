@@ -6,6 +6,7 @@ import com.femsq.web.api.dto.RaACreateRequest;
 import com.femsq.web.api.dto.RaADto;
 import com.femsq.web.api.dto.RaAUpdateRequest;
 import com.femsq.web.api.mapper.RaAMapper;
+import com.femsq.web.audit.AuditExecutionService;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.logging.Logger;
@@ -32,10 +33,13 @@ public class RaARestController {
 
     private final RaAService raAService;
     private final RaAMapper raAMapper;
+    private final AuditExecutionService auditExecutionService;
 
-    public RaARestController(RaAService raAService, RaAMapper raAMapper) {
+    public RaARestController(RaAService raAService, RaAMapper raAMapper,
+            AuditExecutionService auditExecutionService) {
         this.raAService = raAService;
         this.raAMapper = raAMapper;
+        this.auditExecutionService = auditExecutionService;
     }
 
     /**
@@ -105,5 +109,23 @@ public class RaARestController {
         } catch (DaoException exception) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage(), exception);
         }
+    }
+
+    /**
+     * Асинхронно запускает выполнение ревизии.
+     * Пока реализована только заглушка оркестрации: вызов сервиса и ответ о старте.
+     */
+    @PostMapping("/{id}/execute")
+    public ResponseEntity<Void> executeAudit(@PathVariable("id") long id) {
+        log.info(() -> "Handling POST /api/ra/audits/" + id + "/execute");
+
+        // Проверяем, что ревизия существует. Детальные проверки статуса будут добавлены позже.
+        raAService.getById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ревизия не найдена"));
+
+        // Вызов оркестратора. На данном этапе метод выполняется синхронно и только логирует факт вызова.
+        auditExecutionService.executeAudit(id);
+
+        return ResponseEntity.accepted().build();
     }
 }

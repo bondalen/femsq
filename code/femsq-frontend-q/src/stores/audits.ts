@@ -88,6 +88,20 @@ export const useAuditsStore = defineStore('audits', () => {
     }
   }
 
+  async function executeAudit(id: number): Promise<void> {
+    error.value = null;
+    try {
+      await auditsApi.executeAudit(id);
+      // После запуска ревизии перечитываем список, чтобы подтянуть обновлённый adt_results
+      await fetchAudits();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Не удалось выполнить ревизию';
+      error.value = message;
+      console.error('[audits-store] Error executing audit:', err);
+      throw err;
+    }
+  }
+
   function clearError(): void {
     error.value = null;
   }
@@ -103,6 +117,7 @@ export const useAuditsStore = defineStore('audits', () => {
     createAudit,
     updateAudit,
     deleteAudit,
+    executeAudit,
     clearError
   };
 });

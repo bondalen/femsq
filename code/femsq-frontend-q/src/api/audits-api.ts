@@ -43,3 +43,10 @@ export async function updateAudit(id: number, request: RaAUpdateRequest): Promis
 export async function deleteAudit(id: number): Promise<void> {
   return apiDelete<void>(`${AUDITS_API_BASE}/${id}`);
 }
+
+/**
+ * Запускает выполнение ревизии (асинхронно, без ожидания результата).
+ */
+export async function executeAudit(id: number): Promise<void> {
+  return apiPost<void>(`${AUDITS_API_BASE}/${id}/execute`, {});
+}
