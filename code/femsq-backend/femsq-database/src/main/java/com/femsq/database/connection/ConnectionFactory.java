@@ -103,17 +103,19 @@ public class ConnectionFactory implements AutoCloseable {
         String jdbcUrl = buildJdbcUrl(configuration);
         log.log(Level.INFO, "Opening JDBC connection to {0} using provider {1}", new Object[]{jdbcUrl, provider.getName()});
         
-        // DEBUG: Log all JDBC properties
-        log.log(Level.INFO, "=== JDBC Connection Properties ===");
-        for (String key : properties.stringPropertyNames()) {
-            String value = properties.getProperty(key);
-            // Mask password
-            if (key.toLowerCase().contains("password")) {
-                value = "***";
+        // DEBUG: Log all JDBC properties (verbose)
+        if (log.isLoggable(Level.FINE)) {
+            log.log(Level.FINE, "=== JDBC Connection Properties ===");
+            for (String key : properties.stringPropertyNames()) {
+                String value = properties.getProperty(key);
+                // Mask password
+                if (key.toLowerCase().contains("password")) {
+                    value = "***";
+                }
+                log.log(Level.FINE, "  {0} = {1}", new Object[]{key, value});
             }
-            log.log(Level.INFO, "  {0} = {1}", new Object[]{key, value});
+            log.log(Level.FINE, "==================================");
         }
-        log.log(Level.INFO, "==================================");
         
         try {
             return connector.connect(jdbcUrl, properties);

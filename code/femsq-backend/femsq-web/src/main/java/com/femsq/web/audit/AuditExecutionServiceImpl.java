@@ -4,11 +4,13 @@ import com.femsq.database.model.RaA;
 import com.femsq.database.model.RaF;
 import com.femsq.database.service.RaAService;
 import com.femsq.database.service.RaFService;
+import com.femsq.web.audit.runtime.AuditExecutionRegistry;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.logging.Logger;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 /**
@@ -28,15 +30,19 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
     private final RaAService raAService;
     private final RaFService raFService;
     private final List<AuditFileProcessor> fileProcessors;
+    private final AuditExecutionRegistry auditExecutionRegistry;
 
     public AuditExecutionServiceImpl(RaAService raAService,
                                      RaFService raFService,
-                                     List<AuditFileProcessor> fileProcessors) {
+                                     List<AuditFileProcessor> fileProcessors,
+                                     AuditExecutionRegistry auditExecutionRegistry) {
         this.raAService = raAService;
         this.raFService = raFService;
         this.fileProcessors = fileProcessors;
+        this.auditExecutionRegistry = auditExecutionRegistry;
     }
 
+    @Async
     @Override
     public void executeAudit(long auditId) {
         // Шаг 1: загрузка ревизии или ошибка  (реакция на ошибку — в REST-контроллере)
@@ -62,69 +68,86 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
         );
         context.appendEntry(headerEntry);
 
-        // Шаг 3: цикл по файлам ревизии и делегирование обработчикам (пока без Excel-логики)
-        Integer dirId = audit.adtDir();
-        if (dirId == null) {
-            log.warning("[AuditExecution] Audit has no directory, skipping file processing. auditId=" + auditId);
-            saveProgress(audit, context);
-            return;
-        }
-
-        List<RaF> files = raFService.getByDirId(dirId);
-        log.info(() -> "[AuditExecution] Files to process for auditId=" + auditId + " (dir=" + dirId + "): " + files.size());
-
-        for (RaF raF : files) {
-            // Учитываем только файлы, помеченные к выполнению
-            if (!Boolean.TRUE.equals(raF.afExecute())) {
-                continue;
+        try {
+            // Шаг 3: цикл по файлам ревизии и делегирование обработчикам (пока без Excel-логики)
+            Integer dirId = audit.adtDir();
+            if (dirId == null) {
+                log.warning("[AuditExecution] Audit has no directory, skipping file processing. auditId=" + auditId);
+                saveProgress(audit, context);
+                auditExecutionRegistry.markCompleted(auditId);
+                return;
             }
 
-            AuditFile auditFile = new AuditFile(
-                    raF.afKey() != null ? raF.afKey() : -1L,
-                    raF.afName(), // пока используем только имя файла; путь будет уточнён позже
-                    raF.afType(),
-                    raF.afSource() != null && raF.afSource() ? 1 : 0
-            );
+            List<RaF> files = raFService.getByDirId(dirId);
+            log.info(() -> "[AuditExecution] Files to process for auditId=" + auditId + " (dir=" + dirId + "): " + files.size());
 
-            AuditFileProcessor processor = fileProcessors.stream()
-                    .filter(p -> p.supports(raF.afType()))
-                    .findFirst()
-                    .orElse(null);
+            for (RaF raF : files) {
+                // Учитываем только файлы, помеченные к выполнению
+                if (!Boolean.TRUE.equals(raF.afExecute())) {
+                    continue;
+                }
 
-            if (processor == null) {
-                AuditLogEntry entry = new AuditLogEntry(
+                AuditFile auditFile = new AuditFile(
+                        raF.afKey() != null ? raF.afKey() : -1L,
+                        raF.afName(), // пока используем только имя файла; путь будет уточнён позже
+                        raF.afType(),
+                        raF.afSource() != null && raF.afSource() ? 1 : 0
+                );
+
+                AuditFileProcessor processor = fileProcessors.stream()
+                        .filter(p -> p.supports(raF.afType()))
+                        .findFirst()
+                        .orElse(null);
+
+                if (processor == null) {
+                    AuditLogEntry entry = new AuditLogEntry(
+                            Instant.now(),
+                            AuditLogLevel.WARNING,
+                            AuditLogScope.FILE,
+                            "FILE_PROCESSOR_NOT_FOUND",
+                            "<P>Нет обработчика для файла типа " + raF.afType() + ": " + raF.afName() + "</P>",
+                            null
+                    );
+                    context.appendEntry(entry);
+                    continue;
+                }
+
+                processor.process(context, auditFile);
+
+                // Завершение обработки файла
+                AuditLogEntry fileEnd = new AuditLogEntry(
                         Instant.now(),
-                        AuditLogLevel.WARNING,
+                        AuditLogLevel.INFO,
                         AuditLogScope.FILE,
-                        "FILE_PROCESSOR_NOT_FOUND",
-                        "<P>Нет обработчика для файла типа " + raF.afType() + ": " + raF.afName() + "</P>",
+                        "FILE_PROCESS_FINISH",
+                        "<P>Обработка файла завершена: " + raF.afName() + "</P>",
                         null
                 );
-                context.appendEntry(entry);
-                continue;
+                context.appendEntry(fileEnd);
+
+                // Инкрементальное обновление лога и временной метки после каждого файла
+                saveProgress(audit, context);
             }
 
-            processor.process(context, auditFile);
+            // Шаг 4: финальное сохранение обновлённого adt_results (контрольная фиксация)
+            saveProgress(audit, context);
 
-            // Завершение обработки файла
-            AuditLogEntry fileEnd = new AuditLogEntry(
+            auditExecutionRegistry.markCompleted(auditId);
+            log.info(() -> "[AuditExecution] Audit execution log saved for auditId=" + auditId);
+        } catch (Exception ex) {
+            auditExecutionRegistry.markFailed(auditId, ex.getMessage());
+            log.severe("[AuditExecution] Error during audit execution for auditId=" + auditId + ": " + ex.getMessage());
+            AuditLogEntry errorEntry = new AuditLogEntry(
                     Instant.now(),
-                    AuditLogLevel.INFO,
-                    AuditLogScope.FILE,
-                    "FILE_PROCESS_FINISH",
-                    "<P>Обработка файла завершена: " + raF.afName() + "</P>",
+                    AuditLogLevel.ERROR,
+                    AuditLogScope.AUDIT,
+                    "AUDIT_ERROR",
+                    "<P><b>Ошибка выполнения ревизии.</b> Подробности см. в журнале сервера.</P>",
                     null
             );
-            context.appendEntry(fileEnd);
-
-            // Инкрементальное обновление лога и временной метки после каждого файла
+            context.appendEntry(errorEntry);
             saveProgress(audit, context);
         }
-
-        // Шаг 4: финальное сохранение обновлённого adt_results (контрольная фиксация)
-        saveProgress(audit, context);
-
-        log.info(() -> "[AuditExecution] Audit execution log saved for auditId=" + auditId);
     }
 
     /**

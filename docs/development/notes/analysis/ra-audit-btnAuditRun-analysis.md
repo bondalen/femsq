@@ -158,6 +158,8 @@ End Sub
       - последовательно вызывает обработчики по каждому файлу;
       - по ходу работы обновляет `adt_results` и статус ревизии (например, поля `status`, `lastUpdated`).
 
+> **Примечание о текущей реализации (по состоянию на 2026-03-17):** метод `executeAudit` пока выполняется **синхронно** на HTTP-потоке запроса — аннотации `@Async` и `@EnableAsync` ещё не добавлены. Это подтверждается логом: весь `AuditExecution` проходит на потоке `nio-8080-exec-N`, а POST возвращается только по завершении выполнения. Для заглушек (время ~900 мс) это незаметно, но станет критической проблемой при реальной обработке Excel-файлов. Добавление `@Async` запланировано в п. 7.2 `chat-plan-26-0311.md`.
+
 ### 4.2. Обновление "Хода загрузки" на backend
 
 - Внутри фоновой задачи оркестратор должен **регулярно обновлять лог**:
@@ -426,3 +428,74 @@ withWorkbook(file.getPath(), workbook -> {
    - Ошибки уровня файла/листа (нет листа, нет настроек периода/месяца) — в первую очередь фиксировать в логе (`scope = FILE`/`SHEET`), а в UI дополнительно может быть счётчик/иконка состояния файла.
 
 Таким образом, UI остаётся лёгким (основная детализация уходит в лог `adt_results`), а пользователь всё равно своевременно узнаёт о критичных проблемах через `Notify` и/или баннеры.
+
+---
+
+## 8. In-memory реестр статуса: `AuditExecutionRegistry`
+
+### 8.1. Обоснование выбора
+
+Статус выполнения ревизии (`RUNNING`, `COMPLETED`, `FAILED`) является техническим артефактом приложения, а не данными предметной области. Хранение его в `ags.ra_a` нарушило бы принцип чистоты доменных таблиц: если с той же БД будет работать другое приложение (например, Access), такое поле будет для него избыточным и непонятным.
+
+Выбранное решение — **Spring-бин `AuditExecutionRegistry`** с `ConcurrentHashMap` в памяти JVM. Схема БД не меняется.
+
+### 8.2. Структура
+
+```java
+@Component
+public class AuditExecutionRegistry {
+    private final ConcurrentHashMap<Long, AuditExecutionState> states = new ConcurrentHashMap<>();
+
+    public void markRunning(long auditId)               { /* put RUNNING + startedAt */ }
+    public void markCompleted(long auditId)              { /* update COMPLETED + finishedAt */ }
+    public void markFailed(long auditId, String error)   { /* update FAILED + errorMessage */ }
+    public Optional<AuditExecutionState> getState(long auditId) { return Optional.ofNullable(states.get(auditId)); }
+    public boolean isRunning(long auditId)               { return getState(auditId).map(s -> s.status() == AuditStatus.RUNNING).orElse(false); }
+}
+
+public record AuditExecutionState(
+    long auditId,
+    AuditStatus status,   // RUNNING | COMPLETED | FAILED
+    Instant startedAt,
+    Instant finishedAt,
+    String errorMessage
+) {}
+```
+
+### 8.3. Жизненный цикл статуса
+
+| Момент | Действие | Статус |
+|---|---|---|
+| До первого запуска | Запись в реестре отсутствует | `IDLE` (по умолчанию) |
+| Начало `executeAudit` | `registry.markRunning(id)` | `RUNNING` |
+| Успешное завершение (finally try) | `registry.markCompleted(id)` | `COMPLETED` |
+| Ошибка (catch) | `registry.markFailed(id, msg)` | `FAILED` |
+
+### 8.4. Интеграция с DTO и фронтендом
+
+- `RaAMapper` при сборке `RaADto` запрашивает реестр и добавляет вычисляемое поле `adtStatus` (тип `String`). В БД поле не хранится.
+- `RaARestController.executeAudit`: если `registry.isRunning(id)` — возвращает `409 Conflict`.
+- Фронтенд получает `adtStatus` в составе обычного `GET /api/ra/audits/{id}` — дополнительный эндпоинт не нужен.
+- Polling останавливается, когда `adtStatus === 'COMPLETED' || adtStatus === 'FAILED'`.
+- При загрузке страницы: если `adtStatus === 'RUNNING'` — polling запускается автоматически.
+
+### 8.5. Ограничения и эволюция
+
+- **Ограничение:** при перезапуске сервера реестр очищается. Ревизия в статусе `RUNNING` после рестарта будет выглядеть как `IDLE`, а `adt_results` сохранит незавершённый лог. Приемлемо для текущего этапа.
+- **Эволюция:** если в будущем понадобится история запусков или устойчивость к рестартам, реестр можно заменить отдельной таблицей-журналом (не `ags.ra_a`) без изменения контракта `RaADto`.
+
+---
+
+## 9. Граница анализа: что остаётся для следующего чата
+
+Данный документ охватывает:
+- высокоуровневую структуру `btnAuditRun_Click` (разделы 1–3);
+- архитектурные решения для оркестратора, статуса и polling (разделы 4–8).
+
+**Детальный анализ VBA-логики обработчиков файлов** выносится в документ следующего чата (`chat-plan-26-XXXX-excel-processing.md`). Для него потребуется:
+
+- Полный разбор `RAAudit_ralp`: работа с листом «РАСЧЁТ», таблицы `ra_ft_sn`, `ogAgFeePnTest`, логика поиска строк/столбцов.
+- Разбор `RAAudit_RA_RepPeriod`: сопоставление периодов (`ags_ra_period`), обработка листов по месяцам.
+- Разбор `TotalValuesFind` и логики записи итогов в `ra_aTtl`.
+- Карта соответствия: VBA-процедура → Java-класс (`AuditFileProcessor`) → метод Apache POI.
+- Детальный план наполнения `RalpAuditFileProcessor` и `AllAgentsAuditFileProcessor` реальной логикой.

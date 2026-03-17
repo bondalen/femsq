@@ -164,7 +164,7 @@
                   icon="play_arrow"
                   label="Выполнить ревизию"
                   :loading="executing"
-                  :disable="isNewAudit || saving || executing"
+                  :disable="isNewAudit || saving || executing || selectedAudit?.adtStatus === 'RUNNING'"
                   @click="handleExecuteAudit"
                 />
               </div>
@@ -181,7 +181,7 @@
             <QSeparator />
             <QTabPanels v-model="activeTab" animated>
               <QTabPanel name="progress">
-                <div class="q-pa-md">
+                <div class="q-pa-md audit-log-container">
                   <div
                     v-if="selectedAudit && selectedAudit.adtResults"
                     class="text-body2 text-grey-7"
@@ -191,6 +191,13 @@
                     Лог выполнения ревизии будет отображаться здесь после запуска функции "Выполнить ревизию".
                   </div>
                 </div>
+                <QBanner
+                  v-if="auditsStore.pollingConnectionLost"
+                  class="q-mt-sm bg-warning text-black"
+                  rounded
+                >
+                  Соединение с сервером потеряно во время опроса статуса ревизии. Проверьте подключение к базе данных и при необходимости запустите ревизию повторно.
+                </QBanner>
               </QTabPanel>
               <QTabPanel name="files">
                 <div class="q-pa-md">
@@ -285,6 +292,7 @@ const activeTab = ref<'progress' | 'files'>('progress');
 const executeDialogOpen = ref(false);
 const executing = ref(false);
 
+
 // Состояние для директории
 const currentDirectory = ref<RaDirDto | null>(null);
 const loadingDirectory = ref(false);
@@ -344,16 +352,24 @@ const isFormValid = computed(() => {
 
 // Загрузка данных при монтировании
 onMounted(async () => {
+  console.log('[AuditsView] onMounted: start');
   await Promise.all([
     auditsStore.fetchAudits(),
     auditTypesStore.fetchAuditTypes(),
     directoriesStore.fetchDirectories()
   ]);
 
+  // При монтировании страницы останавливаем возможный старый polling,
+  // чтобы не тянуть статус для другой ревизии.
+  auditsStore.stopPolling();
+  auditsStore.resetPollingState();
+
   // Auto-select first audit if available
   if (auditsStore.audits.length > 0 && !selectedAuditId.value) {
     selectedAuditId.value = sortedAudits.value[0]?.adtKey || null;
+    console.log('[AuditsView] onMounted: auto-selected audit', { selectedAuditId: selectedAuditId.value });
   }
+  console.log('[AuditsView] onMounted: end');
 });
 
 // Watch для автоматической загрузки формы при изменении выбранной ревизии
@@ -372,6 +388,11 @@ watch(selectedAuditId, async (newId) => {
       loadAuditToForm(audit);
       // Загружаем директорию для ревизии
       await loadDirectory(newId);
+
+      // Если ревизия выполняется — включаем polling для обновления лога/статуса
+      if (audit.adtStatus === 'RUNNING') {
+        auditsStore.startPolling(audit.adtKey);
+      }
     } else {
       errorMessage.value = 'Ревизия не найдена';
       currentDirectory.value = null;
@@ -389,13 +410,19 @@ watch(selectedAuditId, async (newId) => {
 // Обработка выбора ревизии
 function handleSelectAudit(id: number): void {
   if (selectedAuditId.value === id) {
+    console.log('[AuditsView] handleSelectAudit: same id, skipping', { id });
     return;
   }
 
+  console.log('[AuditsView] handleSelectAudit: select', { id });
   isNewAudit.value = false;
   selectedAuditId.value = id;
   errorMessage.value = null;
   activeTab.value = 'progress';
+
+  // При смене выбранной ревизии останавливаем polling для предыдущей
+  auditsStore.stopPolling();
+  auditsStore.resetPollingState();
 }
 
 // ============================================================================
@@ -587,12 +614,29 @@ async function handleExecuteAudit(): Promise<void> {
     return;
   }
 
+  console.log('[AuditsView] handleExecuteAudit: start', {
+    selectedAuditId: selectedAuditId.value,
+    adtKey: selectedAudit.value.adtKey
+  });
+
+  // При новом запуске очищаем локальное отображение лога,
+  // чтобы старые строки не "зависали" до первого ответа polling
+  if (selectedAudit.value) {
+    selectedAudit.value.adtResults = '';
+  }
+
   try {
     executing.value = true;
     await auditsStore.executeAudit(selectedAudit.value.adtKey);
+    console.log('[AuditsView] handleExecuteAudit: executeAudit finished');
     activeTab.value = 'progress';
+
+    // Запускаем polling для выбранной ревизии, чтобы лог и статус обновлялись автоматически
+    auditsStore.startPolling(selectedAudit.value.adtKey);
+    console.log('[AuditsView] handleExecuteAudit: startPolling called');
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Не удалось выполнить ревизию';
+    console.error('[AuditsView] handleExecuteAudit: error', err);
     Notify.create({
       type: 'negative',
       message,
@@ -600,6 +644,7 @@ async function handleExecuteAudit(): Promise<void> {
     });
   } finally {
     executing.value = false;
+    console.log('[AuditsView] handleExecuteAudit: end, executing=false');
   }
 }
 
@@ -685,6 +730,12 @@ function formatDate(dateString: string | null | undefined): string {
 
 .compact-banner {
   margin-bottom: 4px !important; /* было q-mb-md (16px) -> 4px */
+}
+
+.audit-log-container {
+  max-height: 280px;
+  overflow-y: auto;
+  border-radius: 4px;
 }
 
 /* q-gutter-md использует gap или margin, переопределяем на 4px (было 16px) */

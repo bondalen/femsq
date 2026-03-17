@@ -17,6 +17,8 @@ export interface RaDirDto {
   dirUpdated?: string | null;
 }
 
+export type AuditRunStatus = 'IDLE' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+
 export interface RaADto {
   adtKey: number;
   adtName: string;
@@ -27,6 +29,7 @@ export interface RaADto {
   adtAddRA: boolean;
   adtCreated?: string | null;
   adtUpdated?: string | null;
+  adtStatus?: AuditRunStatus | null;
 }
 
 export interface RaACreateRequest {

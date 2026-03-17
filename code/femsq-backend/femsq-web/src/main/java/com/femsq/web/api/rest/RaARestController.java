@@ -7,6 +7,7 @@ import com.femsq.web.api.dto.RaADto;
 import com.femsq.web.api.dto.RaAUpdateRequest;
 import com.femsq.web.api.mapper.RaAMapper;
 import com.femsq.web.audit.AuditExecutionService;
+import com.femsq.web.audit.runtime.AuditExecutionRegistry;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.logging.Logger;
@@ -34,12 +35,16 @@ public class RaARestController {
     private final RaAService raAService;
     private final RaAMapper raAMapper;
     private final AuditExecutionService auditExecutionService;
+    private final AuditExecutionRegistry auditExecutionRegistry;
 
-    public RaARestController(RaAService raAService, RaAMapper raAMapper,
-            AuditExecutionService auditExecutionService) {
+    public RaARestController(RaAService raAService,
+            RaAMapper raAMapper,
+            AuditExecutionService auditExecutionService,
+            AuditExecutionRegistry auditExecutionRegistry) {
         this.raAService = raAService;
         this.raAMapper = raAMapper;
         this.auditExecutionService = auditExecutionService;
+        this.auditExecutionRegistry = auditExecutionRegistry;
     }
 
     /**
@@ -119,11 +124,16 @@ public class RaARestController {
     public ResponseEntity<Void> executeAudit(@PathVariable("id") long id) {
         log.info(() -> "Handling POST /api/ra/audits/" + id + "/execute");
 
-        // Проверяем, что ревизия существует. Детальные проверки статуса будут добавлены позже.
+        // Проверяем, что ревизия существует.
         raAService.getById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ревизия не найдена"));
 
-        // Вызов оркестратора. На данном этапе метод выполняется синхронно и только логирует факт вызова.
+        // Защита от повторного запуска: статус хранится в памяти приложения.
+        if (!auditExecutionRegistry.tryMarkRunning(id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ревизия уже выполняется");
+        }
+
+        // Вызов оркестратора (выполнение асинхронное за счёт @Async в сервисе).
         auditExecutionService.executeAudit(id);
 
         return ResponseEntity.accepted().build();

@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
  * @param adtAddRA   флаг автодобавления отсутствующих отчётов
  * @param adtCreated дата создания записи
  * @param adtUpdated дата последнего обновления записи
+ * @param adtStatus  технический статус выполнения (in-memory): IDLE/RUNNING/COMPLETED/FAILED
  */
 public record RaADto(
         Long adtKey,
@@ -24,6 +25,7 @@ public record RaADto(
         Integer adtType,
         Boolean adtAddRA,
         LocalDateTime adtCreated,
-        LocalDateTime adtUpdated
+        LocalDateTime adtUpdated,
+        String adtStatus
 ) {
 }

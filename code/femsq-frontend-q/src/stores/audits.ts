@@ -4,11 +4,18 @@ import { defineStore } from 'pinia';
 import * as auditsApi from '@/api/audits-api';
 import type { RaADto, RaACreateRequest, RaAUpdateRequest } from '@/types/audits';
 
+let pollingTimer: number | null = null;
+
 export const useAuditsStore = defineStore('audits', () => {
   const audits = ref<RaADto[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
   const lastUpdatedAt = ref<string>('');
+
+  // Текущая ревизия, для которой активен polling (или null, если polling выключен)
+  const pollingAuditId = ref<number | null>(null);
+  const pollingErrorCount = ref(0);
+  const pollingConnectionLost = ref(false);
 
   const hasAudits = computed(() => audits.value.length > 0);
 
@@ -40,6 +47,34 @@ export const useAuditsStore = defineStore('audits', () => {
       error.value = message;
       console.error('[audits-store] Error fetching audit:', err);
       return null;
+    }
+  }
+
+  async function pollAuditStatus(id: number): Promise<void> {
+    error.value = null;
+    console.log('[audits-store] pollAuditStatus: tick', { id });
+    try {
+      const fresh = await auditsApi.getAuditById(id);
+      const index = audits.value.findIndex(a => a.adtKey === id);
+      if (index !== -1) {
+        audits.value[index] = fresh;
+      } else {
+        audits.value.push(fresh);
+      }
+      lastUpdatedAt.value = new Date().toISOString();
+      pollingErrorCount.value = 0;
+      pollingConnectionLost.value = false;
+
+      // Останавливаем polling, когда ревизия завершена (или упала)
+      if (fresh.adtStatus === 'COMPLETED' || fresh.adtStatus === 'FAILED') {
+        stopPolling();
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Не удалось обновить статус ревизии';
+      error.value = message;
+      pollingErrorCount.value += 1;
+      console.error('[audits-store] Error polling audit status:', err, { id, pollingErrorCount: pollingErrorCount.value });
+      throw err;
     }
   }
 
@@ -102,6 +137,51 @@ export const useAuditsStore = defineStore('audits', () => {
     }
   }
 
+  function startPolling(auditId: number, intervalMs = 3000): void {
+    // Останавливаем предыдущий таймер, если он был
+    stopPolling();
+
+    console.log('[audits-store] startPolling: start', { auditId, intervalMs });
+    pollingAuditId.value = auditId;
+    pollingErrorCount.value = 0;
+    pollingConnectionLost.value = false;
+
+    pollingTimer = window.setInterval(async () => {
+      try {
+        if (pollingAuditId.value != null) {
+          await pollAuditStatus(pollingAuditId.value);
+        }
+      } catch (err) {
+        console.error('[audits-store] Error during polling pollAuditStatus:', err, {
+          pollingAuditId: pollingAuditId.value,
+          pollingErrorCount: pollingErrorCount.value
+        });
+        if (pollingErrorCount.value >= 3) {
+          pollingConnectionLost.value = true;
+          stopPolling();
+        }
+      }
+    }, intervalMs);
+  }
+
+  function stopPolling(): void {
+    if (pollingTimer !== null) {
+      clearInterval(pollingTimer);
+      pollingTimer = null;
+    }
+    console.log('[audits-store] stopPolling: stop', {
+      previousAuditId: pollingAuditId.value,
+      pollingErrorCount: pollingErrorCount.value,
+      pollingConnectionLost: pollingConnectionLost.value
+    });
+    pollingAuditId.value = null;
+  }
+
+  function resetPollingState(): void {
+    pollingErrorCount.value = 0;
+    pollingConnectionLost.value = false;
+  }
+
   function clearError(): void {
     error.value = null;
   }
@@ -111,6 +191,9 @@ export const useAuditsStore = defineStore('audits', () => {
     loading,
     error,
     lastUpdatedAt,
+    pollingAuditId,
+    pollingErrorCount,
+    pollingConnectionLost,
     hasAudits,
     fetchAudits,
     fetchAuditById,
@@ -118,6 +201,9 @@ export const useAuditsStore = defineStore('audits', () => {
     updateAudit,
     deleteAudit,
     executeAudit,
+    startPolling,
+    stopPolling,
+    resetPollingState,
     clearError
   };
 });

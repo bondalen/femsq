@@ -4,6 +4,7 @@ import com.femsq.database.model.RaA;
 import com.femsq.web.api.dto.RaACreateRequest;
 import com.femsq.web.api.dto.RaADto;
 import com.femsq.web.api.dto.RaAUpdateRequest;
+import com.femsq.web.audit.runtime.AuditExecutionRegistry;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -15,6 +16,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class RaAMapper {
 
+    private final AuditExecutionRegistry auditExecutionRegistry;
+
+    public RaAMapper(AuditExecutionRegistry auditExecutionRegistry) {
+        this.auditExecutionRegistry = Objects.requireNonNull(auditExecutionRegistry, "auditExecutionRegistry");
+    }
+
     /**
      * Преобразует доменную модель в DTO.
      *
@@ -23,6 +30,7 @@ public class RaAMapper {
      */
     public RaADto toDto(RaA raA) {
         Objects.requireNonNull(raA, "raA");
+        String status = auditExecutionRegistry.getStatusOrIdle(raA.adtKey() != null ? raA.adtKey() : -1L).name();
         return new RaADto(
                 raA.adtKey(),
                 raA.adtName(),
@@ -32,7 +40,8 @@ public class RaAMapper {
                 raA.adtType(),
                 raA.adtAddRA(),
                 raA.adtCreated(),
-                raA.adtUpdated()
+                raA.adtUpdated(),
+                status
         );
     }
 
