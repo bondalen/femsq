@@ -1,0 +1,74 @@
+scalar DateTime
+
+type Audit {
+  adtKey: Int
+  adtName: String!
+  adtDate: DateTime
+  adtResults: String
+  adtDir: Int
+  adtType: Int
+  adtAddRA: Boolean
+  adtCreated: DateTime
+  adtUpdated: DateTime
+  adtStatus: AuditRunStatus!
+  directory: AuditDirectory
+  auditType: AuditType
+}
+
+enum AuditRunStatus {
+  IDLE
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+type AuditDirectory {
+  key: Int
+  dirName: String!
+  dir: String!
+  dirCreated: DateTime
+  dirUpdated: DateTime
+}
+
+type AuditType {
+  atKey: Int
+  atName: String
+}
+
+type AuditExecutionResult {
+  started: Boolean!
+  alreadyRunning: Boolean!
+  message: String
+}
+
+input AuditCreateInput {
+  adtName: String!
+  adtDate: DateTime
+  adtResults: String
+  adtDir: Int!
+  adtType: Int!
+  adtAddRA: Boolean!
+}
+
+input AuditUpdateInput {
+  adtName: String!
+  adtDate: DateTime
+  adtResults: String
+  adtDir: Int!
+  adtType: Int!
+  adtAddRA: Boolean!
+}
+
+extend type Query {
+  audits: [Audit!]!
+  audit(id: Int!): Audit
+  auditTypes: [AuditType!]!
+  directories: [AuditDirectory!]!
+}
+
+extend type Mutation {
+  createAudit(input: AuditCreateInput!): Audit!
+  updateAudit(id: Int!, input: AuditUpdateInput!): Audit!
+  deleteAudit(id: Int!): Boolean!
+  executeAudit(id: Int!): AuditExecutionResult!
+}

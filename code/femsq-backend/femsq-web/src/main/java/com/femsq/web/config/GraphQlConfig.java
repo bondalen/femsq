@@ -20,4 +20,15 @@ public class GraphQlConfig {
     public RuntimeWiringConfigurer uuidScalarConfigurer() {
         return builder -> builder.scalar(ExtendedScalars.UUID);
     }
+
+    /**
+     * Регистрирует поддержку DateTime-скаляра для схемы GraphQL.
+     * Сериализует {@link java.time.LocalDateTime} в ISO-8601 и десериализует обратно.
+     *
+     * @return конфигуратор RuntimeWiring
+     */
+    @Bean
+    public RuntimeWiringConfigurer dateTimeScalarConfigurer() {
+        return builder -> builder.scalar(ExtendedScalars.DateTime);
+    }
 }

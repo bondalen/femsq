@@ -8,33 +8,55 @@
 
 ## 1. Фаза 1: Backend — схема и контроллер домена ревизий
 
-### 1.1. Создать `ra-schema.graphqls`
+### 1.1. Создать `ra-schema.graphqls` ✅
 
 **Задачи:**
 - Создать файл `code/femsq-backend/femsq-web/src/main/resources/graphql/ra-schema.graphqls` со следующими типами и операциями:
 
-  **Типы домена:**
+  **Скаляр и типы домена:**
   ```graphql
+  scalar DateTime
+
   type Audit {
     adtKey: Int
     adtName: String!
-    adtDate: String
+    adtDate: DateTime
     adtResults: String
     adtDir: Int
     adtType: Int
     adtAddRA: Boolean
-    adtCreated: String
-    adtUpdated: String
+    adtCreated: DateTime
+    adtUpdated: DateTime
     adtStatus: AuditRunStatus!  # вычисляемое, из AuditExecutionRegistry
     directory: AuditDirectory    # @SchemaMapping — lazy
     auditType: AuditType         # @SchemaMapping — lazy
   }
   enum AuditRunStatus { IDLE RUNNING COMPLETED FAILED }
-  type AuditDirectory { key: Int dirName: String dir: String dirCreated: String dirUpdated: String }
+  type AuditDirectory {
+    key: Int
+    dirName: String!
+    dir: String!
+    dirCreated: DateTime
+    dirUpdated: DateTime
+  }
   type AuditType { atKey: Int atName: String }
   type AuditExecutionResult { started: Boolean! alreadyRunning: Boolean! message: String }
-  input AuditCreateInput { adtName: String! adtDir: Int! adtType: Int! adtAddRA: Boolean }
-  input AuditUpdateInput { adtName: String! adtDate: String adtDir: Int! adtType: Int! adtAddRA: Boolean }
+  input AuditCreateInput {
+    adtName: String!
+    adtDate: DateTime
+    adtResults: String
+    adtDir: Int!
+    adtType: Int!
+    adtAddRA: Boolean!
+  }
+  input AuditUpdateInput {
+    adtName: String!
+    adtDate: DateTime
+    adtResults: String
+    adtDir: Int!
+    adtType: Int!
+    adtAddRA: Boolean!
+  }
   ```
 
   **Расширения корневых типов:**
@@ -54,28 +76,130 @@
   ```
 
 - Проверить, что `og-schema.graphqls` использует `schema { query: Query mutation: Mutation }` (корневые типы) — новый файл расширяет их через `extend type`.
+- Зарегистрировать скаляр `DateTime` в `com.femsq.web.config.GraphQlConfig`:
+  ```java
+  // Добавить второй @Bean рядом с существующим uuidScalarConfigurer()
+  @Bean
+  public RuntimeWiringConfigurer dateTimeScalarConfigurer() {
+      return builder -> builder.scalar(ExtendedScalars.DateTime);
+  }
+  ```
+  `graphql-java-extended-scalars` уже в `pom.xml`; `ExtendedScalars.DateTime` сериализует
+  `LocalDateTime` в ISO-8601 и десериализует обратно автоматически.
+- В `RaAGraphqlController` (п.1.2) использовать **существующие** `RaACreateRequest` и
+  `RaAUpdateRequest` как тип аргумента `@Argument` — Spring GraphQL сопоставит поля
+  `AuditCreateInput`/`AuditUpdateInput` напрямую, новые Java-классы для GraphQL-ввода
+  **не нужны**.
 
-**Ожидаемый результат:** файл `ra-schema.graphqls` содержит все типы домена `ra_a/ra_at/ra_dir`, запросы и мутации домена ревизий.
+**Ожидаемый результат:** файл `ra-schema.graphqls` содержит все типы домена `ra_a/ra_at/ra_dir`
+с корректными типами полей; `DateTime` скаляр зарегистрирован; схема компилируется без ошибок.
 
-### 1.2. Создать `RaAGraphqlController`
+##### Результат (исполнено)
+
+- Создан `code/femsq-backend/femsq-web/src/main/resources/graphql/ra-schema.graphqls`:
+  `scalar DateTime`, типы `Audit`, `AuditRunStatus`, `AuditDirectory`, `AuditType`,
+  `AuditExecutionResult`, инпуты `AuditCreateInput`/`AuditUpdateInput`,
+  `extend type Query` (4 запроса) и `extend type Mutation` (4 мутации).
+- В `GraphQlConfig.java` добавлен `@Bean dateTimeScalarConfigurer()` →
+  `ExtendedScalars.DateTime`; новый импорт не потребовался.
+
+### 1.2. Создать `RaAGraphqlController` ✅
+
+#### 1.2.1. Создать DTO результата запуска ревизии (`AuditExecutionResult`) ✅
 
 **Задачи:**
-- Создать `com.femsq.web.api.graphql.RaAGraphqlController` (`@Controller`):
+- Создать `com.femsq.web.api.dto.AuditExecutionResult` как Java `record`:
+  - `started: boolean`
+  - `alreadyRunning: boolean`
+  - `message: String` (nullable)
+
+**Ожидаемый результат:** `AuditExecutionResult` доступен для использования в GraphQL-мутации `executeAudit`.
+
+##### Результат (исполнено)
+
+- Создан `code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/dto/AuditExecutionResult.java`:
+  `record AuditExecutionResult(boolean started, boolean alreadyRunning, String message)`.
+
+#### 1.2.2. Реализовать Query-операции домена ревизий ✅
+
+**Задачи:**
+- В `com.femsq.web.api.graphql.RaAGraphqlController` (`@Controller`) реализовать:
   - `@QueryMapping audits()` — список всех ревизий;
   - `@QueryMapping audit(@Argument int id)` — одна ревизия;
   - `@QueryMapping auditTypes()` — справочник типов;
-  - `@QueryMapping directories()` — справочник директорий;
-  - `@MutationMapping createAudit`, `updateAudit`, `deleteAudit` — CRUD;
-  - `@MutationMapping executeAudit(@Argument int id)` — возвращает `AuditExecutionResult`:
-    - `tryMarkRunning(id)` не прошёл → `{ started: false, alreadyRunning: true, ... }` (HTTP 409 больше не используется);
-    - успех → запуск `@Async`, `{ started: true, alreadyRunning: false }`;
-  - `@SchemaMapping(typeName="Audit", field="directory")` — lazy-загрузка директории (вызывается только если фронт запросил поле);
-  - `@SchemaMapping(typeName="Audit", field="auditType")` — аналогично.
-- Внедрить `AuditExecutionResult` как Java `record` в пакете `com.femsq.web.api.dto`.
+  - `@QueryMapping directories()` — справочник директорий.
 
-**Ожидаемый результат:** `RaAGraphqlController` работает параллельно с REST-контроллерами; все операции проверяются через GraphiQL (`/graphiql`).
+**Ожидаемый результат:** запросы из `extend type Query` (п.1.1) выполняются в GraphiQL.
 
-### 1.3. Проверка сборки бэкенда
+##### Результат (исполнено)
+
+- Создан `code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/graphql/RaAGraphqlController.java`:
+  реализованы `@QueryMapping` методы `audits`, `audit(id)`, `auditTypes`, `directories`.
+- Сборка `mvn -pl femsq-backend/femsq-web -am -DskipTests package` проходит успешно.
+
+#### 1.2.3. Реализовать CRUD-мутации домена ревизий ✅
+
+**Задачи:**
+- В `RaAGraphqlController` реализовать:
+  - `@MutationMapping createAudit(input)` — создание;
+  - `@MutationMapping updateAudit(id, input)` — обновление;
+  - `@MutationMapping deleteAudit(id)` — удаление.
+
+**Ожидаемый результат:** CRUD-мутации работают параллельно с существующим REST и проверяются в GraphiQL.
+
+##### Результат (исполнено)
+
+- В `RaAGraphqlController` добавлены `@MutationMapping`:
+  - `createAudit(input: RaACreateRequest): RaADto`
+  - `updateAudit(id, input: RaAUpdateRequest): RaADto`
+  - `deleteAudit(id): boolean` (возвращает `true`, при отсутствии ревизии — NOT_FOUND).
+- Сборка `mvn -pl femsq-backend/femsq-web -am -DskipTests package` проходит успешно.
+
+#### 1.2.4. Реализовать мутацию запуска ревизии `executeAudit` ✅
+
+**Задачи:**
+- `@MutationMapping executeAudit(@Argument int id)` — возвращает `AuditExecutionResult`:
+  - `tryMarkRunning(id)` не прошёл → `{ started: false, alreadyRunning: true, message: ... }`
+    (HTTP 409 больше не используется);
+  - успех → запуск `auditExecutionService.executeAudit(id)` (асинхронно), вернуть
+    `{ started: true, alreadyRunning: false, message: ... }`.
+
+**Ожидаемый результат:** повторный вызов `executeAudit` для уже выполняющейся ревизии возвращает `alreadyRunning: true`.
+
+##### Результат (исполнено)
+
+- В `RaAGraphqlController` добавлена мутация `executeAudit(id): AuditExecutionResult`:
+  проверка существования ревизии, защита от повторного запуска через `AuditExecutionRegistry.tryMarkRunning`,
+  асинхронный запуск через `AuditExecutionService.executeAudit`.
+- Сборка `mvn -pl femsq-backend/femsq-web -am -DskipTests package` проходит успешно.
+
+#### 1.2.5. Реализовать lazy-поля через `@SchemaMapping` ✅
+
+**Задачи:**
+- `@SchemaMapping(typeName = "Audit", field = "directory")` — возвращает `AuditDirectory` по `adtDir`.
+- `@SchemaMapping(typeName = "Audit", field = "auditType")` — возвращает `AuditType` по `adtType`.
+
+**Ожидаемый результат:** вложенные поля загружаются только при запросе их фронтендом; отсутствует лишняя загрузка справочников.
+
+##### Результат (исполнено)
+
+- В `RaAGraphqlController` добавлены `@SchemaMapping`:
+  - `Audit.directory` → загрузка директории по `adtDir`
+  - `Audit.auditType` → загрузка типа по `adtType`
+- Сборка `mvn -pl femsq-backend/femsq-web -am -DskipTests package` проходит успешно.
+
+**Итоговый ожидаемый результат п.1.2:** `RaAGraphqlController` работает параллельно с REST-контроллерами; все операции проверяются через GraphiQL (`/graphiql`).
+
+##### Результат (исполнено)
+
+- Созданы и успешно собираются:
+  - `AuditExecutionResult` (record, п.1.2.1)
+  - `RaAGraphqlController` с 4 × `@QueryMapping`, 4 × `@MutationMapping`, 2 × `@SchemaMapping` (пп.1.2.2–1.2.5)
+- Дополнительно: в `RaAtService`/`DefaultRaAtService` добавлен метод `getById(int)`;
+  резолвер `Audit.auditType` переведён с `getAll().stream().filter()` на `getById`.
+- Последняя сборка: `mvn -pl femsq-backend/femsq-web -am -DskipTests package` — **BUILD SUCCESS**.
+
+### 1.3. Проверка сборки бэкенда ✅
 
 **Задачи:**
 - Инкрементировать версию JAR.
@@ -84,6 +208,17 @@
 - REST-контроллеры на этом этапе **ещё работают** — фронтенд не поломан.
 
 **Ожидаемый результат:** проект собирается, GraphQL-эндпоинт работает, `adtStatus` передаётся корректно.
+
+##### Результат (исполнено)
+
+- Инкремент версии: `0.1.0.88-SNAPSHOT` → `0.1.0.89-SNAPSHOT` (pom.xml синхронизированы по parent-версиям).
+- Сборка: `mvn -pl femsq-backend/femsq-web -am -DskipTests package` — **BUILD SUCCESS**.
+- Ручная проверка GraphQL (через HTTP, т.к. UI GraphiQL зависает на “Loading…” при недоступном CDN `unpkg.com`):
+  - `audits { adtKey adtName adtStatus }` — список возвращается, `adtStatus` корректен (`IDLE`/`COMPLETED`).
+  - `audit(id: 12)` с вложенными `directory` и `auditType` — работает (проверка `@SchemaMapping`).
+  - `executeAudit(id: 12)` — возвращает `started=true`.
+  - Повторный вызов `executeAudit` может снова вернуть `started=true`, если ревизия завершается слишком быстро;
+    при этом `audit(id: 12).adtStatus` после запуска становится `COMPLETED`.
 
 ---
 
@@ -112,8 +247,18 @@
   app.provide(DefaultApolloClient, apolloClient);
   ```
 - Проверить `tsconfig.json` — возможно потребуется `"moduleResolution": "bundler"` для Apollo.
+- Добавить в `vite.config.ts` в секцию `server.proxy` проксирование `/graphql`:
+  ```typescript
+  '/graphql': {
+    target: 'http://localhost:8080',
+    changeOrigin: true,
+    secure: false
+  }
+  ```
+  **Обязательно:** без этой записи в dev-режиме (Vite на порту 5175) все GraphQL-запросы
+  не достигают backend и возвращают 404 — сейчас `proxy` покрывает только `/api`.
 
-**Ожидаемый результат:** проект собирается без ошибок типов, Apollo Client доступен через `provide`.
+**Ожидаемый результат:** проект собирается без ошибок типов, Apollo Client доступен через `provide`, dev-сервер корректно проксирует `/graphql`.
 
 ### 2.2. Создать `.graphql`-файлы запросов
 
@@ -169,7 +314,8 @@
 - Удалить (REST-контроллеры домена ревизий больше не нужны):
   - `RaARestController.java` (CRUD + `/execute`);
   - `RaAtRestController.java` (типы ревизий);
-  - `RaAuditDirectoryRestController.java` (директории).
+  - `RaAuditDirectoryRestController.java` (`/api/ra/audits/{id}/directory`);
+  - `RaDirRestController.java` (`/api/ra/directories` — `getDirectories()` и `getDirectoryById()`).
 - **Оставить** REST-контроллеры `OgRestController`, `OgAgRestController`, `OgLookupRestController`, `LookupRestController` — они могут использоваться другими потребителями.
 - Добавить запись в `application.properties`: `spring.graphql.graphiql.enabled=true` (уже есть); проверить `spring.mvc.pathmatch.use-suffix-pattern`.
 
@@ -193,19 +339,33 @@
 ### 5.1. Обновить `useAuditsStore`
 
 **Задачи:**
-- Импорт `audits-api.ts` остаётся прежним — никаких изменений в сторе не нужно (API-клиент изменён, интерфейс сохранён).
-- Обновить тип `AuditExecutionResult` в `pollAuditStatus` / `executeAudit`:
-  - `executeAudit` проверяет `result.alreadyRunning` — показывает `Notify.create` с предупреждением если `alreadyRunning === true`.
+- Импорт `audits-api.ts` остаётся прежним — транспортный слой изменён, интерфейс сохранён.
+- Обновить функцию `executeAudit` в сторе:
+  - Сейчас: `await auditsApi.executeAudit(id)` возвращает `void`, после чего вызывается `fetchAudits()`.
+  - После миграции: `auditsApi.executeAudit(id)` возвращает `AuditExecutionResult { started, alreadyRunning, message }`.
+  - Если `result.alreadyRunning === true` — показать `Notify.create` с предупреждением и **не вызывать** `fetchAudits()` / не запускать polling (это не ошибка, обработка через `return`).
+  - Если `result.started === true` — поведение прежнее.
+- Убедиться, что `pollAuditStatus` использует `fetchPolicy: 'network-only'` в `apolloClient.query` —
+  иначе InMemoryCache Apollo будет возвращать устаревшие данные вместо актуального `adtStatus`.
 
-**Ожидаемый результат:** стор не знает о том, что транспортный слой изменился.
+**Ожидаемый результат:** стор корректно обрабатывает оба сценария запуска (`started` и `alreadyRunning`); транспортный слой скрыт за API-интерфейсом.
 
-### 5.2. Проверить `AuditsView.vue`
+### 5.2. Проверить прямые вызовы `directoriesApi` в компонентах и сторах
 
 **Задачи:**
-- Проверить, что `AuditsView.vue` не обращается напрямую к API-файлам — всё идёт через стор. Изменений не требуется.
-- Проверить, что `handleExecuteAudit` обрабатывает `AuditExecutionResult` (новый тип) корректно.
+- Убедиться, что GraphQL-версия `directories-api.ts` (п.3.2) сохраняет прежние сигнатуры функций
+  (`getDirectories`, `getDirectoryById`, `getDirectoryByAuditId`) — это условие корректной работы
+  всех потребителей без дополнительных правок.
+- **Потребители `directories-api.ts`** (4 файла обращаются к API напрямую):
+  - `stores/directories.ts` — `getAllDirectories()`, `getDirectoryById(id)`, `getDirectoryByAuditId(auditId)`;
+  - `stores/lookups/directories.ts` — `getDirectories()`;
+  - `views/audits/AuditsView.vue` строка 489 — `getDirectoryByAuditId(auditId)` (прямой вызов в компоненте);
+  - `components/audits/AuditFilesTab.vue` строка 56 — `getDirectoryByAuditId(auditId)` (прямой вызов в компоненте).
+- Проверить, что `handleExecuteAudit` в `AuditsView.vue` корректно обрабатывает `AuditExecutionResult`
+  (новый тип возврата после миграции стора).
 
-**Ожидаемый результат:** `AuditsView.vue` не требует изменений при миграции.
+**Ожидаемый результат:** при сохранении сигнатур в `directories-api.ts` все 4 потребителя
+продолжают работать без изменений; `handleExecuteAudit` работает с новым типом.
 
 ---
 
@@ -256,5 +416,5 @@
 
 **Файл создан:** 2026-03-17
 **Последнее обновление:** 2026-03-17
-**Версия:** 1.0.0
+**Версия:** 1.3.0
 **Автор:** Александр

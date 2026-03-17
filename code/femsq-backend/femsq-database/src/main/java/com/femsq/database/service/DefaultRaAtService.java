@@ -4,6 +4,7 @@ import com.femsq.database.dao.RaAtDao;
 import com.femsq.database.model.RaAt;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Реализация {@link RaAtService}.
@@ -19,5 +20,10 @@ public class DefaultRaAtService implements RaAtService {
     @Override
     public List<RaAt> getAll() {
         return raAtDao.findAll();
+    }
+
+    @Override
+    public Optional<RaAt> getById(int atKey) {
+        return raAtDao.findById(atKey);
     }
 }
