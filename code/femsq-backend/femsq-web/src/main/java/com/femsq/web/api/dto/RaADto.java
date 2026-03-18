@@ -1,6 +1,6 @@
 package com.femsq.web.api.dto;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /**
  * DTO представление ревизии {@code ags.ra_a} для REST API.
@@ -19,13 +19,13 @@ import java.time.LocalDateTime;
 public record RaADto(
         Long adtKey,
         String adtName,
-        LocalDateTime adtDate,
+        OffsetDateTime adtDate,
         String adtResults,
         Integer adtDir,
         Integer adtType,
         Boolean adtAddRA,
-        LocalDateTime adtCreated,
-        LocalDateTime adtUpdated,
+        OffsetDateTime adtCreated,
+        OffsetDateTime adtUpdated,
         String adtStatus
 ) {
 }

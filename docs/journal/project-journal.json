@@ -3,7 +3,7 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-03-13"
+      "lastUpdated": "2026-03-18"
     },
     "sessions": [
       {
@@ -2917,6 +2917,91 @@
                     "references": [
                       "docs/project/project-docs.json",
                       "docs/journal/project-journal.json"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "Миграция домена ревизий на GraphQL + Apollo, устранение доменного REST (completed, critical). № chat-2026-03-17-001",
+          "chat-attributes": {
+            "id": "chat-2026-03-17-001",
+            "created": "2026-03-17",
+            "lastUpdated": "2026-03-18",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "critical",
+            "tags": [
+              "audits",
+              "graphql",
+              "apollo",
+              "migration",
+              "rest-cleanup",
+              "frontend",
+              "backend"
+            ],
+            "links": {
+              "projectDocsRefs": [
+                "module:backend.web",
+                "module:frontend",
+                "component:backend.web.api.graphql"
+              ],
+              "developmentTasks": [
+                "task:0041"
+              ],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0317-graphql-migration.md",
+              "chatResume": "docs/development/notes/chats/chat-resume/chat-resume-26-0317-graphql-migration.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Фаза 1-8 плана chat-plan-26-0317: GraphQL migration и устранение REST (success). № log-2026-03-18-001",
+                "log-attributes": {
+                  "id": "log-2026-03-18-001",
+                  "timestamp": "2026-03-18T00:00:00+03:00",
+                  "level": "success",
+                  "effort": "2d",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "task:0041"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Backend: домен ревизий переведён на GraphQL",
+                    "details": "Добавлены/актуализированы GraphQL schema + контроллеры домена ревизий, реализован запуск ревизии через Mutation, обеспечены связи audit → directory → files и lookups. Устранены проблемы сериализации DateTime (OffsetDateTime вместо LocalDateTime) и сопутствующие маппинги.",
+                    "outcome": "GraphQL endpoint корректно обслуживает операции домена ревизий, curl-проверки подтверждены",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0317-graphql-migration.md"
+                    ]
+                  },
+                  {
+                    "action": "Frontend: Apollo Client установлен и интегрирован; доменный REST устранён",
+                    "details": "Подключён Apollo Client и настроен InMemoryCache (typePolicies/keyFields). Переписаны доменные API-клиенты и Pinia-сторы на GraphQL. Зафиксированы осознанные REST-исключения (status/connection, binary reports) и запрет прямого доменного REST в сторах.",
+                    "outcome": "Страница ревизий работает через GraphQL без доменных REST-вызовов из src/api и сторов",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0317-graphql-migration.md"
+                    ]
+                  },
+                  {
+                    "action": "Сборка/деплой и ручная проверка",
+                    "details": "Выполнены npm type-check/build, Maven package (единый fat JAR). Вручную проверено: загрузка списка ревизий, выбор ревизии/директории, запуск ревизии, устранение Apollo cache warning (keyFields + adtKey в запросе).",
+                    "outcome": "Ручная проверка подтверждает корректную работу домена ревизий после миграции",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0317-graphql-migration.md"
                     ]
                   }
                 ]

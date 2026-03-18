@@ -4,6 +4,8 @@ import com.femsq.database.model.RaF;
 import com.femsq.web.api.dto.RaFCreateRequest;
 import com.femsq.web.api.dto.RaFDto;
 import com.femsq.web.api.dto.RaFUpdateRequest;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -30,8 +32,8 @@ public class RaFMapper {
                 raF.afType(),
                 raF.afExecute(),
                 raF.afSource(),
-                raF.afCreated(),
-                raF.afUpdated(),
+                toOffsetDateTime(raF.afCreated()),
+                toOffsetDateTime(raF.afUpdated()),
                 raF.raOrgSender(),
                 raF.afNum()
         );
@@ -91,5 +93,12 @@ public class RaFMapper {
                 request.raOrgSender(),
                 request.afNum()
         );
+    }
+
+    private OffsetDateTime toOffsetDateTime(java.time.LocalDateTime dateTime) {
+        if (dateTime == null) {
+            return null;
+        }
+        return dateTime.atZone(ZoneId.systemDefault()).toOffsetDateTime();
     }
 }

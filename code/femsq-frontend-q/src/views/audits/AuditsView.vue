@@ -274,7 +274,7 @@ import { useQuasar, Notify } from 'quasar';
 
 import { useAuditsStore } from '@/stores/audits';
 import { useAuditTypesStore } from '@/stores/lookups/audit-types';
-import { useDirectoriesStore } from '@/stores/lookups/directories';
+import { useDirectoriesStore as useDirectoriesLookupStore } from '@/stores/lookups/directories';
 import type { RaADto, RaACreateRequest, RaAUpdateRequest, RaDirDto } from '@/types/audits';
 import * as directoriesApi from '@/api/directories-api';
 import DirectoryInfo from '@/components/audits/DirectoryInfo.vue';
@@ -282,7 +282,7 @@ import DirectoryInfo from '@/components/audits/DirectoryInfo.vue';
 const $q = useQuasar();
 const auditsStore = useAuditsStore();
 const auditTypesStore = useAuditTypesStore();
-const directoriesStore = useDirectoriesStore();
+const directoriesStore = useDirectoriesLookupStore();
 
 const selectedAuditId = ref<number | null>(null);
 const isNewAudit = ref(false);

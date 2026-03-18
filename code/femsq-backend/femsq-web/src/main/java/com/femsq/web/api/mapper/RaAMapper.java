@@ -5,6 +5,8 @@ import com.femsq.web.api.dto.RaACreateRequest;
 import com.femsq.web.api.dto.RaADto;
 import com.femsq.web.api.dto.RaAUpdateRequest;
 import com.femsq.web.audit.runtime.AuditExecutionRegistry;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -34,13 +36,13 @@ public class RaAMapper {
         return new RaADto(
                 raA.adtKey(),
                 raA.adtName(),
-                raA.adtDate(),
+                toOffsetDateTime(raA.adtDate()),
                 raA.adtResults(),
                 raA.adtDir(),
                 raA.adtType(),
                 raA.adtAddRA(),
-                raA.adtCreated(),
-                raA.adtUpdated(),
+                toOffsetDateTime(raA.adtCreated()),
+                toOffsetDateTime(raA.adtUpdated()),
                 status
         );
     }
@@ -97,5 +99,12 @@ public class RaAMapper {
                 null,
                 null
         );
+    }
+
+    private OffsetDateTime toOffsetDateTime(java.time.LocalDateTime dateTime) {
+        if (dateTime == null) {
+            return null;
+        }
+        return dateTime.atZone(ZoneId.systemDefault()).toOffsetDateTime();
     }
 }

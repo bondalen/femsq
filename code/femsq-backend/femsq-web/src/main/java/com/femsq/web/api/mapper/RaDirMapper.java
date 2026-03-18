@@ -2,6 +2,8 @@ package com.femsq.web.api.mapper;
 
 import com.femsq.database.model.RaDir;
 import com.femsq.web.api.dto.RaDirDto;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -25,8 +27,8 @@ public class RaDirMapper {
                 raDir.key(),
                 raDir.dirName(),
                 raDir.dir(),
-                raDir.dirCreated(),
-                raDir.dirUpdated()
+                toOffsetDateTime(raDir.dirCreated()),
+                toOffsetDateTime(raDir.dirUpdated())
         );
     }
 
@@ -39,5 +41,12 @@ public class RaDirMapper {
     public List<RaDirDto> toDto(List<RaDir> raDirs) {
         Objects.requireNonNull(raDirs, "raDirs");
         return raDirs.stream().map(this::toDto).collect(Collectors.toList());
+    }
+
+    private OffsetDateTime toOffsetDateTime(java.time.LocalDateTime dateTime) {
+        if (dateTime == null) {
+            return null;
+        }
+        return dateTime.atZone(ZoneId.systemDefault()).toOffsetDateTime();
     }
 }

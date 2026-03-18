@@ -3,13 +3,13 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2026-01-27T14:03:50+03:00",
+      "lastUpdated": "2026-03-18T00:00:00+03:00",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0041",
+      "nextTaskId": "0042",
       "items": {
         "0001": {
           "task": {
@@ -1520,6 +1520,35 @@
               },
               "created": "2026-01-19",
               "lastUpdated": "2026-01-27T14:03:50+03:00"
+            }
+          }
+        },
+        "0041": {
+          "task": {
+            "displayName": "Миграция домена ревизий (RA) на GraphQL + Apollo, удаление доменного REST (completed, critical). № 0041",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "critical",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Backend: добавлена/актуализирована GraphQL-схема домена ревизий (audits/directories/files/types)",
+                "Backend: добавлен GraphQL-контроллер домена ревизий (Query/Mutation/SchemaMapping)",
+                "Frontend: установлен и настроен Apollo Client, подключён в приложении",
+                "Frontend: API-клиенты ревизий и связанных сущностей переведены с REST на GraphQL (Apollo query/mutate)",
+                "Frontend: устранён доменный REST в Pinia-сторах (запрещены прямые apiGet/apiPost для доменных ресурсов)",
+                "Frontend: в InMemoryCache настроены keyFields/typePolicies для стабильного кэширования",
+                "Проект собран (Maven package), выполнена ручная проверка страницы ревизий и запуска ревизии"
+              ],
+              "description": "Полный перевод домена ревизий (RA) на GraphQL transport: схемы и резолверы на backend (Spring GraphQL), Apollo Client на frontend, переписывание доменных API-клиентов и Pinia-сторов, удаление/запрет доменного REST (за исключением осознанных технических/бинарных REST-эндпойнтов), а также устранение интеграционных ошибок (DateTime scalar, конфликт store id, Apollo cache keyFields).",
+              "links": {
+                "projectDocsRefs": ["module:backend.web", "module:frontend", "component:backend.web.api.graphql"],
+                "journalRefs": ["chat:chat-2026-03-17-001", "log:log-2026-03-18-001"],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0317-graphql-migration.md",
+                "chatResume": "docs/development/notes/chats/chat-resume/chat-resume-26-0317-graphql-migration.md"
+              },
+              "created": "2026-03-17",
+              "lastUpdated": "2026-03-18"
             }
           }
         }

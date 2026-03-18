@@ -1,6 +1,6 @@
 package com.femsq.web.api.dto;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /**
  * DTO представление директории ревизий {@code ags.ra_dir} для REST API.
@@ -15,7 +15,7 @@ public record RaDirDto(
         Integer key,
         String dirName,
         String dir,
-        LocalDateTime dirCreated,
-        LocalDateTime dirUpdated
+        OffsetDateTime dirCreated,
+        OffsetDateTime dirUpdated
 ) {
 }

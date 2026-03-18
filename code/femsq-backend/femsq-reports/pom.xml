@@ -1,13 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>com.femsq</groupId>
         <artifactId>femsq-backend</artifactId>
-        <version>0.1.0.89-SNAPSHOT</version>
+        <version>0.1.0.90-SNAPSHOT</version>
     </parent>
 
     <artifactId>femsq-reports</artifactId>
@@ -25,13 +23,13 @@
     </properties>
 
     <dependencies>
-        <!-- JasperReports Core -->
+        
         <dependency>
             <groupId>net.sf.jasperreports</groupId>
             <artifactId>jasperreports</artifactId>
             <version>${jasperreports.version}</version>
             <exclusions>
-                <!-- Исключаем commons-logging, так как Spring Boot использует spring-jcl -->
+                
                 <exclusion>
                     <groupId>commons-logging</groupId>
                     <artifactId>commons-logging</artifactId>
@@ -39,20 +37,20 @@
             </exclusions>
         </dependency>
 
-        <!-- JasperReports Fonts (для поддержки кириллицы) -->
+        
         <dependency>
             <groupId>net.sf.jasperreports</groupId>
             <artifactId>jasperreports-fonts</artifactId>
             <version>${jasperreports.version}</version>
         </dependency>
 
-        <!-- JasperReports PDF Export (отдельный модуль в 7.0.3) -->
+        
         <dependency>
             <groupId>net.sf.jasperreports</groupId>
             <artifactId>jasperreports-pdf</artifactId>
             <version>${jasperreports.version}</version>
             <exclusions>
-                <!-- Исключаем commons-logging, так как Spring Boot использует spring-jcl -->
+                
                 <exclusion>
                     <groupId>commons-logging</groupId>
                     <artifactId>commons-logging</artifactId>
@@ -60,13 +58,13 @@
             </exclusions>
         </dependency>
 
-        <!-- Excel Export -->
+        
         <dependency>
             <groupId>net.sf.jasperreports</groupId>
             <artifactId>jasperreports-functions</artifactId>
             <version>${jasperreports.version}</version>
             <exclusions>
-                <!-- Исключаем commons-logging, так как Spring Boot использует spring-jcl -->
+                
                 <exclusion>
                     <groupId>commons-logging</groupId>
                     <artifactId>commons-logging</artifactId>
@@ -74,7 +72,7 @@
             </exclusions>
         </dependency>
         
-        <!-- JDT Compiler для компиляции отчётов (решает проблему с classpath) -->
+        
         <dependency>
             <groupId>org.eclipse.jdt.core.compiler</groupId>
             <artifactId>ecj</artifactId>
@@ -85,7 +83,7 @@
             <artifactId>jasperreports-jdt</artifactId>
             <version>${jasperreports.version}</version>
             <exclusions>
-                <!-- Исключаем commons-logging, так как Spring Boot использует spring-jcl -->
+                
                 <exclusion>
                     <groupId>commons-logging</groupId>
                     <artifactId>commons-logging</artifactId>
@@ -93,21 +91,21 @@
             </exclusions>
         </dependency>
 
-        <!-- Spring Boot Starter (для @Service, @Component, @ConfigurationProperties) -->
+        
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
             <version>${spring-boot.version}</version>
         </dependency>
 
-        <!-- Spring Boot Web (для REST контроллеров) -->
+        
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
             <version>${spring-boot.version}</version>
         </dependency>
 
-        <!-- Spring Boot Configuration Processor (для автодополнения в IDE) -->
+        
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
@@ -115,14 +113,14 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- Database Module (для работы с БД) -->
+        
         <dependency>
             <groupId>com.femsq</groupId>
             <artifactId>femsq-database</artifactId>
             <version>${project.version}</version>
         </dependency>
 
-        <!-- JUnit для тестирования -->
+        
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
@@ -136,7 +134,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Spring Boot Test (для integration тестов) -->
+        
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -174,7 +172,7 @@
                 </configuration>
             </plugin>
             
-            <!-- Предкомпиляция отчётов на этапе сборки -->
+            
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>

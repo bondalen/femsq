@@ -4,7 +4,7 @@ import { defineStore } from 'pinia';
 import * as directoriesApi from '@/api/directories-api';
 import type { RaDirDto } from '@/types/audits';
 
-export const useDirectoriesStore = defineStore('directories', () => {
+export const useDirectoriesStore = defineStore('directoriesLookup', () => {
   const directories = ref<RaDirDto[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);

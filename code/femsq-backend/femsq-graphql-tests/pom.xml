@@ -1,14 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0          http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>com.femsq</groupId>
         <artifactId>femsq-backend</artifactId>
-        <version>0.1.0.89-SNAPSHOT</version>
+        <version>0.1.0.90-SNAPSHOT</version>
     </parent>
 
     <artifactId>femsq-graphql-tests</artifactId>
@@ -22,7 +19,7 @@
     </properties>
 
     <dependencies>
-        <!-- Зависимость от модуля femsq-database -->
+        
         <dependency>
             <groupId>com.femsq</groupId>
             <artifactId>femsq-database</artifactId>
@@ -30,14 +27,14 @@
             <scope>test</scope>
         </dependency>
         
-        <!-- Зависимость от основного модуля femsq-web -->
+        
         <dependency>
             <groupId>com.femsq</groupId>
             <artifactId>femsq-web</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
-        <!-- Зависимость от тестовых классов femsq-web -->
+        
         <dependency>
             <groupId>com.femsq</groupId>
             <artifactId>femsq-web</artifactId>
@@ -46,7 +43,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Spring Boot Web (необходимо для запуска приложения в тестах) -->
+        
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -54,7 +51,7 @@
             <scope>test</scope>
         </dependency>
         
-        <!-- Spring Boot GraphQL (необходимо для GraphQL endpoint) -->
+        
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-graphql</artifactId>
@@ -62,7 +59,7 @@
             <scope>test</scope>
         </dependency>
         
-        <!-- Spring Boot Test -->
+        
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -70,7 +67,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Spring GraphQL Test -->
+        
         <dependency>
             <groupId>org.springframework.graphql</groupId>
             <artifactId>spring-graphql-test</artifactId>
@@ -78,7 +75,7 @@
             <scope>test</scope>
         </dependency>
         
-        <!-- GraphQL Java Extended Scalars -->
+        
         <dependency>
             <groupId>com.graphql-java</groupId>
             <artifactId>graphql-java-extended-scalars</artifactId>
@@ -86,7 +83,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- MS SQL Server JDBC Driver (для интеграционных тестов) -->
+        
         <dependency>
             <groupId>com.microsoft.sqlserver</groupId>
             <artifactId>mssql-jdbc</artifactId>
@@ -97,7 +94,7 @@
 
     <build>
         <plugins>
-            <!-- Maven Compiler Plugin -->
+            
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -108,7 +105,7 @@
                 </configuration>
             </plugin>
 
-            <!-- Maven Surefire Plugin (для unit-тестов, но их здесь нет) -->
+            
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -118,7 +115,7 @@
                 </configuration>
             </plugin>
 
-            <!-- Maven Failsafe Plugin (для интеграционных тестов) -->
+            
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
@@ -143,7 +140,7 @@
     </build>
 
     <profiles>
-        <!-- Профиль для интеграционных тестов -->
+        
         <profile>
             <id>integration</id>
             <build>

@@ -1,13 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>com.femsq</groupId>
         <artifactId>femsq-backend</artifactId>
-        <version>0.1.0.89-SNAPSHOT</version>
+        <version>0.1.0.90-SNAPSHOT</version>
     </parent>
 
     <artifactId>femsq-web</artifactId>
@@ -39,7 +37,7 @@
             <artifactId>spring-boot-starter-validation</artifactId>
             <version>${spring.boot.version}</version>
         </dependency>
-        <!-- Явная зависимость на spring-core для IDE индексации -->
+        
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-core</artifactId>
@@ -65,8 +63,8 @@
             <artifactId>graphql-java-extended-scalars</artifactId>
             <version>22.0</version>
         </dependency>
-        <!-- Jackson версии управляются через Spring Boot BOM -->
-        <!-- Явная версия удалена для использования совместимых версий из Spring Boot -->
+        
+        
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -113,7 +111,7 @@
                     </execution>
                 </executions>
             </plugin>
-            <!-- Maven JAR Plugin для создания test-jar с тестовыми классами -->
+            
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>

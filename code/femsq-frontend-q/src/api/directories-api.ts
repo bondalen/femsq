@@ -46,6 +46,7 @@ const GET_DIRECTORY_BY_ID = gql`
 const GET_DIRECTORY_BY_AUDIT_ID = gql`
   query GetDirectoryByAuditId($id: Int!) {
     audit(id: $id) {
+      adtKey
       directory {
         key
         dirName

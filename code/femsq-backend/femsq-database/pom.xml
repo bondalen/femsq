@@ -1,13 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>com.femsq</groupId>
         <artifactId>femsq-backend</artifactId>
-        <version>0.1.0.89-SNAPSHOT</version>
+        <version>0.1.0.90-SNAPSHOT</version>
     </parent>
 
     <artifactId>femsq-database</artifactId>
@@ -34,19 +32,7 @@
             <artifactId>mssql-jdbc</artifactId>
             <version>${mssql.jdbc.version}</version>
         </dependency>
-        <!-- 
-        Примечание: Нативная библиотека mssql-jdbc_auth для Windows Authentication (NTLM)
-        не доступна через Maven Central. DLL должна быть включена в JAR вручную как ресурс
-        в директории /com/microsoft/sqlserver/jdbc/auth/ или /native/.
         
-        Если DLL отсутствует, приложение автоматически использует JavaKerberos,
-        который работает на всех платформах (Windows и Linux).
-        
-        Для включения DLL в JAR:
-        1. Скачайте sqljdbc_auth.dll из официального пакета Microsoft SQL Server JDBC Driver
-        2. Поместите файл в src/main/resources/com/microsoft/sqlserver/jdbc/auth/sqljdbc_auth.dll
-        3. Или используйте плагин для копирования DLL из внешнего источника
-        -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>

@@ -461,16 +461,25 @@
 
 ---
 
-## 6. Фаза 6: Сборка, деплой, верификация
+## 6. Фаза 6: Сборка, деплой, верификация ✅
 
-### 6.1. Инкрементировать версию, собрать JAR
+### 6.1. Инкрементировать версию, собрать JAR ✅
 
 **Задачи:**
 - Увеличить четвёртую цифру версии во всех `pom.xml`.
 - `mvn -pl femsq-backend/femsq-web -am -DskipTests package`.
 - Убедиться, что в новом бандле нет `fetch`-вызовов в к API REST домена ревизий.
 
-### 6.2. Деплой в тестовую папку
+##### Результат (исполнено) ✅
+
+- Версия поднята: `0.1.0.89-SNAPSHOT` → `0.1.0.90-SNAPSHOT`:
+  - `code/pom.xml`
+  - `code/femsq-backend/pom.xml`
+  - parent-версии синхронизированы в модулях `femsq-database`, `femsq-web`, `femsq-reports`, `femsq-graphql-tests`.
+- Сборка выполнена: `mvn -pl femsq-backend/femsq-web -am -DskipTests package` — **BUILD SUCCESS**.
+- Собран артефакт: `code/femsq-backend/femsq-web/target/femsq-web-0.1.0.90-SNAPSHOT.jar`.
+
+### 6.2. Деплой в тестовую папку ✅
 
 **Задачи:**
 - Очистить тестовую папку, скопировать JAR, запустить сервер.
@@ -499,7 +508,19 @@
 - Опционально (если GraphiQL открывается): `http://localhost:8080/graphiql` и выполнить те же операции.
 - Открыть Chrome DevTools → Network → убедиться, что запросы идут на `/graphql`, а не на `/api/ra/...`.
 
-### 6.3. Обновить документацию
+##### Результат (исполнено) ✅
+
+- Тестовая папка: `/home/alex/projects-test/femsq-test/26-0318` (Windows: `\\wsl.localhost\\Ubuntu\\home\\alex\\projects-test\\femsq-test\\26-0318`).
+- Скопирован артефакт: `femsq-web-0.1.0.90-SNAPSHOT.jar`.
+- Приложение запущено на `http://localhost:8080`.
+- Верификация GraphQL через `curl`:
+  - `audits{...}` — OK;
+  - `audit(id:12){... directory ... auditType ...}` — OK;
+  - `executeAudit(id:12)` — OK;
+  - `audit(id:12).adtStatus` после запуска — `COMPLETED`.
+- Примечание: повторный `executeAudit` может вернуть `started=true`, если ревизия завершается слишком быстро (это ожидаемо).
+
+### 6.3. Обновить документацию ✅
 
 **Задачи:**
 - Обновить `docs/project/project-docs.json`, `docs/development/project-development.json`, `docs/journal/project-journal.json` — отметить:
@@ -509,6 +530,14 @@
 - Подготовить `chat-resume-26-0317-graphql-migration.md`.
 
 **Ожидаемый результат:** вся документация соответствует архитектуре с единым GraphQL API.
+
+##### Результат (исполнено) ✅
+
+- Обновлены документы:
+  - `docs/project/project-docs.json` (lastUpdated 2026-03-18, актуализация причины изменения под миграцию RA на GraphQL/Apollo).
+  - `docs/development/project-development.json` (добавлена задача `0041` по миграции домена ревизий на GraphQL + Apollo и устранению доменного REST; обновлён `nextTaskId`).
+  - `docs/journal/project-journal.json` (добавлена сессия `chat-2026-03-17-001` и лог `log-2026-03-18-001`).
+- Подготовлен `docs/development/notes/chats/chat-resume/chat-resume-26-0317-graphql-migration.md`.
 
 ---
 
@@ -707,6 +736,6 @@
 ---
 
 **Файл создан:** 2026-03-17
-**Последнее обновление:** 2026-03-17
-**Версия:** 2.7.0
+**Последнее обновление:** 2026-03-18
+**Версия:** 2.7.1
 **Автор:** Александр
