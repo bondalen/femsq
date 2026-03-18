@@ -41,6 +41,24 @@ type AuditExecutionResult {
   message: String
 }
 
+type AuditFile {
+  afKey: Int
+  afName: String!
+  afDir: Int!
+  afType: Int!
+  afExecute: Boolean!
+  afSource: Boolean
+  afCreated: DateTime
+  afUpdated: DateTime
+  raOrgSender: Int
+  afNum: Int
+}
+
+type FileType {
+  ftKey: Int
+  ftName: String!
+}
+
 input AuditCreateInput {
   adtName: String!
   adtDate: DateTime
@@ -59,11 +77,35 @@ input AuditUpdateInput {
   adtAddRA: Boolean!
 }
 
+input FileCreateInput {
+  afName: String!
+  afDir: Int!
+  afType: Int!
+  afExecute: Boolean!
+  afSource: Boolean
+  raOrgSender: Int
+  afNum: Int
+}
+
+input FileUpdateInput {
+  afName: String!
+  afDir: Int!
+  afType: Int!
+  afExecute: Boolean!
+  afSource: Boolean
+  raOrgSender: Int
+  afNum: Int
+}
+
 extend type Query {
   audits: [Audit!]!
   audit(id: Int!): Audit
   auditTypes: [AuditType!]!
   directories: [AuditDirectory!]!
+  files: [AuditFile!]!
+  file(id: Int!): AuditFile
+  filesByDirectory(dirId: Int!): [AuditFile!]!
+  fileTypes: [FileType!]!
 }
 
 extend type Mutation {
@@ -71,4 +113,7 @@ extend type Mutation {
   updateAudit(id: Int!, input: AuditUpdateInput!): Audit!
   deleteAudit(id: Int!): Boolean!
   executeAudit(id: Int!): AuditExecutionResult!
+  createFile(input: FileCreateInput!): AuditFile!
+  updateFile(id: Int!, input: FileUpdateInput!): AuditFile!
+  deleteFile(id: Int!): Boolean!
 }

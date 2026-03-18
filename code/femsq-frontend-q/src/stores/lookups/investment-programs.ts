@@ -1,12 +1,9 @@
 import { computed, ref } from 'vue';
 import { defineStore } from 'pinia';
 
-import { apiGet, RequestError } from '@/api/http';
-
-export interface InvestmentProgramLookupDto {
-  ipgKey: number;
-  name: string;
-}
+import { RequestError } from '@/api/http';
+import type { InvestmentProgramLookupDto } from '@/api/lookups-api';
+import { getInvestmentProgramsLookup } from '@/api/lookups-api';
 
 export const useInvestmentProgramsStore = defineStore('investmentPrograms', () => {
   const investmentPrograms = ref<InvestmentProgramLookupDto[]>([]);
@@ -37,8 +34,8 @@ export const useInvestmentProgramsStore = defineStore('investmentPrograms', () =
     error.value = null;
 
     try {
-      console.info('[investment-programs-store] Fetching investmentPrograms');
-      const response = await apiGet<InvestmentProgramLookupDto[]>('/api/v1/lookups/investment-programs');
+      console.info('[investment-programs-store] Fetching investmentPrograms (GraphQL)');
+      const response = await getInvestmentProgramsLookup();
       console.info('[investment-programs-store] Received response:', response);
 
       investmentPrograms.value = response;

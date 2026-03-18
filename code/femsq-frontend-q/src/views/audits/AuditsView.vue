@@ -627,13 +627,11 @@ async function handleExecuteAudit(): Promise<void> {
 
   try {
     executing.value = true;
-    await auditsStore.executeAudit(selectedAudit.value.adtKey);
+    const result = await auditsStore.executeAudit(selectedAudit.value.adtKey);
     console.log('[AuditsView] handleExecuteAudit: executeAudit finished');
     activeTab.value = 'progress';
-
-    // Запускаем polling для выбранной ревизии, чтобы лог и статус обновлялись автоматически
-    auditsStore.startPolling(selectedAudit.value.adtKey);
-    console.log('[AuditsView] handleExecuteAudit: startPolling called');
+    // Polling запускается внутри useAuditsStore.executeAudit() только если started=true.
+    console.log('[AuditsView] handleExecuteAudit: executeAudit result', result);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Не удалось выполнить ревизию';
     console.error('[AuditsView] handleExecuteAudit: error', err);

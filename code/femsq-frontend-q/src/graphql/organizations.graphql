@@ -1,0 +1,23 @@
+query GetOrganizations {
+  organizations {
+    ogKey
+    ogName
+    ogOfficialName
+    ogFullName
+    ogDescription
+    inn
+    kpp
+    ogrn
+    okpo
+    oe
+    registrationTaxType
+  }
+}
+
+query GetOrganizationsLookup {
+  organizations {
+    ogKey
+    ogName
+  }
+}
+

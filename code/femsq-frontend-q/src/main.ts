@@ -1,8 +1,10 @@
 import { createApp } from 'vue';
 import { Quasar, Notify } from 'quasar';
 import { createPinia } from 'pinia';
+import { DefaultApolloClient } from '@vue/apollo-composable';
 
 import App from './App.vue';
+import { apolloClient } from './plugins/apollo';
 import 'quasar/dist/quasar.css';
 import '@quasar/extras/material-icons/material-icons.css';
 
@@ -16,6 +18,7 @@ function bootstrap(): void {
   console.info('[femsq-ui-q] #app element found:', appElement);
   const app = createApp(App);
   app.use(createPinia());
+  app.provide(DefaultApolloClient, apolloClient);
   app.use(Quasar, {
     plugins: {
       Notify

@@ -6,7 +6,7 @@
 
 ---
 
-## 1. Фаза 1: Backend — схема и контроллер домена ревизий
+## 1. Фаза 1: Backend — схема и контроллер домена ревизий ✅
 
 ### 1.1. Создать `ra-schema.graphqls` ✅
 
@@ -222,9 +222,9 @@
 
 ---
 
-## 2. Фаза 2: Frontend — установка Apollo Client
+## 2. Фаза 2: Frontend — установка Apollo Client ✅
 
-### 2.1. Установка зависимостей
+### 2.1. Установка зависимостей ✅
 
 **Задачи:**
 - Выполнить:
@@ -260,7 +260,16 @@
 
 **Ожидаемый результат:** проект собирается без ошибок типов, Apollo Client доступен через `provide`, dev-сервер корректно проксирует `/graphql`.
 
-### 2.2. Создать `.graphql`-файлы запросов
+##### Результат (исполнено)
+
+- Установлены зависимости: `@apollo/client`, `@vue/apollo-composable`, `graphql`.
+- Создан `code/femsq-frontend-q/src/plugins/apollo.ts` (ApolloClient с `uri: '/graphql'`).
+- В `code/femsq-frontend-q/src/main.ts` подключён `DefaultApolloClient` через `app.provide`.
+- В `code/femsq-frontend-q/vite.config.ts` добавлен proxy `/graphql` → `http://localhost:8080`.
+- В `code/femsq-frontend-q/tsconfig.json` добавлены `baseUrl`/`paths` для алиаса `@/*`.
+- `npm run build` проходит успешно.
+
+### 2.2. Создать `.graphql`-файлы запросов ✅
 
 **Задачи:**
 - Создать директорию `src/graphql/` с файлами:
@@ -273,11 +282,38 @@
 - Добавить в `vite.config.ts` поддержку `*.graphql`-файлов (через `vite-plugin-graphql-loader` или inline-импорт через `gql` тег).
 
 **Ожидаемый результат:** все GraphQL-запросы оформлены как именованные операции, сборка проходит.
+
+##### Результат (исполнено)
+
+- Создана директория `code/femsq-frontend-q/src/graphql/`:
+  - `audits.graphql` (`GetAudits`, `GetAudit`, `GetAuditWithDetails`, `CreateAudit`, `UpdateAudit`, `DeleteAudit`, `ExecuteAudit`)
+  - `audit-types.graphql` (`GetAuditTypes`)
+  - `directories.graphql` (`GetDirectories`)
+  - `organizations.graphql` (`GetOrganizations`, `GetOrganizationsLookup`)
+- В `code/femsq-frontend-q/vite.config.ts` добавлена поддержка импорта `*.graphql` через `vite-plugin-graphql-loader`.
+- `npm run build` проходит успешно.
+
+### 2.3. Привести `npm run type-check` к зелёному статусу (перед Фазой 3) ✅
+
+**Задачи:**
+- Запустить `npm run type-check` в `code/femsq-frontend-q`.
+- Исправить ошибки типизации (включая алиасы, несовпадения DTO/типов, `unknown`/`any` и пр.) так,
+  чтобы команда завершалась успешно.
+- Убедиться, что после правок:
+  - `npm run build` проходит успешно;
+  - `npm run dev` поднимается без ошибок в консоли браузера (минимальная sanity-проверка).
+
+**Ожидаемый результат:** типизация фронтенда не мешает дальнейшей миграции API-клиентов на Apollo в Фазе 3.
+
+##### Результат (исполнено)
+
+- `npm run type-check` — **успешно** (vue-tsc без ошибок).
+- `npm run build` — **успешно**.
 ---
 
-## 3. Фаза 3: Frontend — замена API-клиентов домена ревизий
+## 3. Фаза 3: Frontend — замена API-клиентов домена ревизий ✅
 
-### 3.1. Переписать `audits-api.ts`
+### 3.1. Переписать `audits-api.ts` ✅
 
 **Задачи:**
 - Заменить `src/api/audits-api.ts` полностью: вместо `apiGet`/`apiPost`/`apiPut`/`apiDelete` использовать `apolloClient.query` и `apolloClient.mutate`.
@@ -286,7 +322,13 @@
 
 **Ожидаемый результат:** `audits-api.ts` работает через GraphQL; опасных изменений стора не требуется.
 
-### 3.2. Переписать `audit-types-api.ts` и `directories-api.ts`
+##### Результат (исполнено)
+
+- `code/femsq-frontend-q/src/api/audits-api.ts` переписан на `apolloClient.query/mutate` (`/graphql`) вместо REST `/api/ra/audits`.
+- `executeAudit(id)` теперь возвращает `AuditExecutionResult { started, alreadyRunning, message }`.
+- `npm run type-check` и `npm run build` проходят успешно.
+
+### 3.2. Переписать `audit-types-api.ts` и `directories-api.ts` ✅
 
 **Задачи:**
 - `audit-types-api.ts`: `getAuditTypes()` → `apolloClient.query({ query: GET_AUDIT_TYPES })`.
@@ -296,7 +338,13 @@
 
 **Ожидаемый результат:** справочники при загрузке спрашиваются через GraphQL.
 
-### 3.3. Переписать `organizations-api.ts`
+##### Результат (исполнено)
+
+- `code/femsq-frontend-q/src/api/audit-types-api.ts`: `getAuditTypes()` переписан на `apolloClient.query` (`/graphql`).
+- `code/femsq-frontend-q/src/api/directories-api.ts`: `getDirectories`, `getAllDirectories`, `getDirectoryById`, `getDirectoryByAuditId` переписаны на GraphQL (`/graphql`) с сохранением сигнатур для существующих потребителей.
+- `npm run type-check` и `npm run build` проходят успешно.
+
+### 3.3. Переписать `organizations-api.ts` ✅
 
 **Задачи:**
 - Заменить REST-вызовы `getOrganizations()` и `getOrganizationsLookup()` на GraphQL-запросы `GET_ORGANIZATIONS` / `GET_ORGANIZATIONS_LOOKUP` через `apolloClient.query`.
@@ -304,11 +352,19 @@
 
 **Ожидаемый результат:** все API-клиенты домена `ra_a` и `og` используют GraphQL.
 
+##### Результат (исполнено)
+
+- `code/femsq-frontend-q/src/api/organizations-api.ts` переписан на `apolloClient.query` (`/graphql`):
+  - `getAllOrganizations()` → `organizations`
+  - `getOrganizationById(id)` → `organization(id)`
+  - `getOrganizationsLookup()` → `organizations` (только `ogKey`/`ogName`) + маппинг в `OrganizationLookupDto`
+- `npm run type-check` и `npm run build` проходят успешно.
+
 ---
 
-## 4. Фаза 4: Удаление устаревших REST-артефактов
+## 4. Фаза 4: Удаление устаревших REST-артефактов ✅
 
-### 4.1. Удалить REST-контроллеры домена ревизий
+### 4.1. Удалить REST-контроллеры домена ревизий ✅
 
 **Задачи:**
 - Удалить (REST-контроллеры домена ревизий больше не нужны):
@@ -321,7 +377,16 @@
 
 **Ожидаемый результат:** REST-артефакты домена ревизий удалены; проект собирается без ошибок.
 
-### 4.2. Удалить устаревшие REST API-файлы фронтенда
+##### Результат (исполнено)
+
+- Удалены REST-контроллеры домена ревизий:
+  - `RaARestController.java`
+  - `RaAtRestController.java`
+  - `RaAuditDirectoryRestController.java`
+  - `RaDirRestController.java`
+- Сборка `mvn -pl femsq-backend/femsq-web -am -DskipTests package` — **BUILD SUCCESS**.
+
+### 4.2. Удалить устаревшие REST API-файлы фронтенда ✅
 
 **Задачи:**
 - Удалить (REST API-клиенты домена ревизий больше не нужны):
@@ -332,11 +397,19 @@
 - **Оставить** `src/api/http.ts` — может использоваться для иных целей (status check и т.d.).
 
 **Ожидаемый результат:** директория `src/api/` содержит только GraphQL-клиенты для доменных API.
+
+##### Результат (исполнено)
+
+- Отдельных REST-версий файлов `src/api/audits-api.ts`, `src/api/audit-types-api.ts`, `src/api/directories-api.ts`, `src/api/organizations-api.ts` в репозитории не осталось:
+  они были переписаны “на месте” на GraphQL/Apollo в пп.3.1–3.3.
+- Проверено, что `audits-api.ts`, `audit-types-api.ts`, `directories-api.ts`, `organizations-api.ts` не используют `apiGet/apiPost/apiPut/apiDelete`.
+- Примечание: в `src/api/` остаются REST-клиенты для файлов/типов файлов (`files-api.ts`, `file-types-api.ts`) и `http.ts` —
+  они не относятся к домену ревизий `ra_a/ra_at/ra_dir` и будут мигрироваться отдельным этапом (вне 4.2).
 ---
 
-## 5. Фаза 5: Обновление стора и компонента `AuditsView.vue`
+## 5. Фаза 5: Обновление стора и компонента `AuditsView.vue` ✅
 
-### 5.1. Обновить `useAuditsStore`
+### 5.1. Обновить `useAuditsStore` ✅
 
 **Задачи:**
 - Импорт `audits-api.ts` остаётся прежним — транспортный слой изменён, интерфейс сохранён.
@@ -350,7 +423,16 @@
 
 **Ожидаемый результат:** стор корректно обрабатывает оба сценария запуска (`started` и `alreadyRunning`); транспортный слой скрыт за API-интерфейсом.
 
-### 5.2. Проверить прямые вызовы `directoriesApi` в компонентах и сторах
+##### Результат (исполнено) ✅
+
+- В `src/stores/audits.ts` обновлён `executeAudit(id)`:
+  - возвращает `AuditExecutionResult`;
+  - при `alreadyRunning=true` показывает `Notify.create({ type: 'warning', ... })` и **не** вызывает `fetchAudits()` и **не** запускает polling;
+  - при `started=true` показывает позитивное уведомление (если есть `message`), вызывает `fetchAudits()` и запускает `startPolling(id)`.
+- Подтверждено, что polling статуса использует `auditsApi.getAuditById(id)`, где `apolloClient.query` выполняется с `fetchPolicy: 'network-only'`.
+- В `AuditsView.vue` убран безусловный вызов `startPolling()` — polling теперь запускается централизованно в сторе только при `started=true`.
+
+### 5.2. Проверить прямые вызовы `directoriesApi` в компонентах и сторах ✅
 
 **Задачи:**
 - Убедиться, что GraphQL-версия `directories-api.ts` (п.3.2) сохраняет прежние сигнатуры функций
@@ -366,6 +448,16 @@
 
 **Ожидаемый результат:** при сохранении сигнатур в `directories-api.ts` все 4 потребителя
 продолжают работать без изменений; `handleExecuteAudit` работает с новым типом.
+
+##### Результат (исполнено) ✅
+
+- `src/api/directories-api.ts` сохраняет сигнатуры: `getDirectories()`, `getAllDirectories()`, `getDirectoryById(id)`, `getDirectoryByAuditId(auditId)` и использует GraphQL (`fetchPolicy: 'network-only'`).
+- Проверены 4 потребителя прямых вызовов `directoriesApi` — они используют те же функции без изменений:
+  - `src/stores/directories.ts`
+  - `src/stores/lookups/directories.ts`
+  - `src/views/audits/AuditsView.vue`
+  - `src/components/audits/AuditFilesTab.vue`
+- `npm run type-check` проходит успешно после верификации.
 
 ---
 
@@ -401,6 +493,187 @@
 
 ---
 
+## 8. Фаза 8: Полное устранение REST из `src/api/` (опционально) ✅
+
+> Цель фазы: в `code/femsq-frontend-q/src/api/` не остаётся доменных REST-клиентов; весь домен
+> работает через GraphQL/Apollo. Допускается оставить REST только для технических эндпоинтов
+> (status/health) и внешних интеграций, если GraphQL технически невозможен.
+
+### 8.1. Backend: добавить GraphQL для `ra_f` и `ra_ft` (файлы ревизий) ✅
+
+**Задачи:**
+- Добавить в GraphQL-схему типы и операции для:
+  - файлов ревизий (`ra_f`) — список, получение по id, получение по директории, CRUD;
+  - типов файлов (`ra_ft`) — справочник.
+- Реализовать GraphQL-контроллеры (`@Controller` + `@QueryMapping/@MutationMapping`) по паттерну `RaAGraphqlController`.
+
+**Ожидаемый результат:** для всех операций, которые сейчас выполняются через `/api/ra/files` и `/api/ra/file-types`,
+существуют эквиваленты в `/graphql`.
+
+##### Результат (исполнено)
+
+- В `code/femsq-backend/femsq-web/src/main/resources/graphql/ra-schema.graphqls` добавлены:
+  - типы `AuditFile`, `FileType`;
+  - инпуты `FileCreateInput`, `FileUpdateInput`;
+  - query: `files`, `file(id)`, `filesByDirectory(dirId)`, `fileTypes`;
+  - mutation: `createFile`, `updateFile`, `deleteFile`.
+- Создан `code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/graphql/RaFGraphqlController.java`:
+  query+mutation для `ra_f` и query для `ra_ft` (используются существующие `RaFService`/`RaFtService` и мапперы).
+- Сборка `mvn -pl femsq-backend/femsq-web -am -DskipTests package` — **BUILD SUCCESS**.
+
+### 8.2. Frontend: переписать `files-api.ts` и `file-types-api.ts` на Apollo ✅
+
+**Задачи:**
+- `src/api/files-api.ts` — заменить REST-вызовы на `apolloClient.query/mutate`, сохранив текущие сигнатуры
+  для потребителей.
+- `src/api/file-types-api.ts` — аналогично (lookup типов файлов).
+- Удалить/очистить REST-зависимости в этих файлах (`apiGet/apiPost/apiPut/apiDelete`), если они больше не нужны.
+
+**Ожидаемый результат:** в Chrome DevTools → Network запросы файлового домена идут на `/graphql`, а не на `/api/ra/files...`.
+
+##### Результат (исполнено)
+
+- `code/femsq-frontend-q/src/api/file-types-api.ts`: `getAllFileTypes`, `getFileTypeById` переписаны на GraphQL (`fileTypes`).
+- `code/femsq-frontend-q/src/api/files-api.ts`: все операции (`getAllFiles`, `getFileById`, `getFilesByDirId`, `createFile`, `updateFile`, `deleteFile`) переписаны на GraphQL (`files`, `file`, `filesByDirectory`, `createFile`, `updateFile`, `deleteFile`).
+- В `src/api/` больше нет вызовов `apiGet/apiPost/apiPut/apiDelete` (REST используется только в `http.ts` и технических клиентах).
+- `npm run type-check` и `npm run build` проходят успешно.
+
+### 8.3. Connection/status: зафиксировать осознанный REST (технические эндпоинты) ✅
+
+**Решение (Вариант A — осознанный REST):**
+
+После анализа состояния `src/api/` принято решение **оставить** следующие файлы на REST:
+
+| Файл | Обоснование |
+|------|-------------|
+| `connection-api.ts` | Технический health-check: проверка подключения к БД при bootstrap приложения. REST-семантика лучше подходит для health-check. Специальный таймаут `30_000ms`. Правила проекта явно допускают REST для `status`/`health`. |
+| `reports-api.ts` | Бинарные ответы (`Blob`, PDF). GraphQL физически не может вернуть бинарные данные — протокол JSON. `generateReport` и `generatePreview` **обязаны** оставаться на REST/fetch. |
+| `http.ts` | Утилитная библиотека для двух вышеназванных технических клиентов. Остаётся как инфраструктурная зависимость. |
+
+**Правило проекта (зафиксировано в `.cursorrules`):**
+- `src/api/connection-api.ts` + `src/api/reports-api.ts` + `src/api/http.ts` = **осознанный технический REST**.
+  Не является нарушением архитектуры.
+- Все доменные API-клиенты в `src/api/` используют только Apollo Client.
+- Сторы **не должны** вызывать `apiGet`/`apiPost` напрямую для доменных операций — только через файлы `src/api/`.
+
+**Задачи:**
+- [x] Зафиксировать решение в чат-плане.
+- [x] Обновить секцию «Правила архитектуры API» в `.cursorrules`.
+- [x] Добавить JSDoc-заголовки с пояснением в `connection-api.ts` и `reports-api.ts`.
+
+**Ожидаемый результат:** в `src/api/` нет "случайного" REST — три оставшихся файла явно задокументированы как осознанный технический REST.
+
+### 8.4. Устранение доменного REST в сторах ✅
+
+**Проблема:**
+Пять сторов вызывают `apiGet` из `@/api/http` **напрямую**, минуя слой `src/api/`:
+
+| Стор | Эндпоинты (REST) |
+|------|-----------------|
+| `stores/organizations.ts` | `GET /api/v1/organizations`, `GET /api/v1/organizations/:id/agents` |
+| `stores/investment-chains.ts` | `GET /api/v1/ipg-chains`, `GET /api/v1/ipg-chains/:id/relations` |
+| `stores/lookups/investment-programs.ts` | `GET /api/v1/lookups/investment-programs` |
+| `stores/lookups/plan-groups.ts` | `GET /api/v1/lookups/plan-groups` |
+| `stores/lookups/st-networks.ts` | `GET /api/v1/lookups/st-networks` |
+
+Это нарушение архитектуры: доменный REST прямо в сторах, минуя `src/api/`.
+
+**Задачи:**
+
+#### 8.4.1. Organizations: мигрировать стор на `organizations-api.ts` ✅
+**Задачи (перед началом):**
+- `organizations-api.ts` уже переписан на Apollo (п. 3.3), но `stores/organizations.ts` всё ещё вызывает `apiGet` напрямую для `/api/v1/organizations`.
+- Проверить: `/api/v1/organizations` с пагинацией — есть ли GraphQL-эквивалент в `og-schema.graphqls`?
+  Если нет — реализовать клиентскую пагинацию поверх GraphQL-запроса `organizations`.
+- Переписать стор на использование `organizations-api.ts`.
+
+##### Результат (исполнено) ✅
+
+- В `src/api/organizations-api.ts` добавлены:
+  - типы `OrganizationsQuery`, `OrganizationsPage`;
+  - функция `getOrganizationsPage(query)` — выполняет GraphQL-запрос `organizations`, затем применяет фильтр по `ogName`, сортировку по `ogName` и клиентскую пагинацию (page/size);
+  - тип `AgentDto` и функция `getAgentsByOrganization(organizationKey)` — используют GraphQL-запрос `organizationAgents(organizationId)` вместо REST `/api/v1/organizations/{id}/agents`.
+- В `src/stores/organizations.ts`:
+  - удалён прямой импорт `apiGet` из `@/api/http`;
+  - стор импортирует `getOrganizationsPage` и `getAgentsByOrganization` из `@/api/organizations-api`;
+  - `fetchOrganizations` переписан на использование `getOrganizationsPage` (GraphQL), pagination/filters/sort поддерживаются на клиенте;
+  - `fetchAgentsFor` использует `getAgentsByOrganization` (GraphQL) вместо REST.
+
+#### 8.4.2. Investment chains: добавить GraphQL и мигрировать стор ✅
+
+**Задачи (перед началом):**
+- Backend: использовать уже существующие query `investmentChains(name, year)` и `investmentChainRelations(chainId)` в `og-schema.graphqls` вместо REST `/api/v1/ipg-chains`.
+- Frontend: заменить `apiGet('/api/v1/ipg-chains')` и `apiGet('/api/v1/ipg-chains/{id}/relations')` в `stores/investment-chains.ts` на Apollo-запросы через `src/api/investment-chains-api.ts`.
+
+##### Результат (исполнено) ✅
+
+- Создан `src/api/investment-chains-api.ts`:
+  - GraphQL-операции:
+    - `GetInvestmentChains(name, year)` → `investmentChains(name, year)`;
+    - `GetInvestmentChainRelations(chainId)` → `investmentChainRelations(chainId)`.
+  - Типы `InvestmentChainsQuery`, `InvestmentChainsPage`, `IpgChainDto`, `IpgChainRelationDto`.
+  - Функции:
+    - `getInvestmentChainsPage(query)` — выполняет GraphQL-запрос `investmentChains`, затем применяет клиентскую сортировку (`name`/`chainKey`) и пагинацию (page/size);
+    - `getInvestmentChainRelations(chainId)` — возвращает массив связей для выбранной цепочки.
+- Обновлён `src/stores/investment-chains.ts`:
+  - удалён прямой импорт `apiGet` из `@/api/http`;
+  - `fetchChains` использует `getInvestmentChainsPage` (GraphQL) с сохранением UX (фильтры `name`/`year`, пагинация, сортировка);
+  - `fetchRelationsFor` использует `getInvestmentChainRelations` (GraphQL) вместо REST `/api/v1/ipg-chains/{id}/relations`;
+  - структура стора и публичный API для `InvestmentChainsView.vue` не изменились.
+
+#### 8.4.3. Lookups: добавить GraphQL и мигрировать сторы ✅
+
+**Задачи (перед началом):**
+- Backend: использовать существующие query `investmentPrograms`, `investmentPlanGroups`, `stNetworks` из `og-schema.graphqls`.
+- Frontend: заменить прямые `apiGet` в сторах `lookups/` (`investment-programs`, `plan-groups`, `st-networks`) на Apollo-запросы через `src/api/`.
+
+##### Результат (исполнено) ✅
+
+- Создан `src/api/lookups-api.ts`:
+  - GraphQL-операции:
+    - `GetInvestmentPrograms` → `investmentPrograms`;
+    - `GetInvestmentPlanGroups` → `investmentPlanGroups`;
+    - `GetStNetworks` → `stNetworks`.
+  - Типы `InvestmentProgramLookupDto`, `InvestmentPlanGroupLookupDto`, `StNetworkDto`.
+  - Функции:
+    - `getInvestmentProgramsLookup()`;
+    - `getPlanGroupsLookup()`;
+    - `getStNetworksLookup()`.
+- Обновлён `src/stores/lookups/investment-programs.ts`:
+  - удалён `apiGet` из `@/api/http`;
+  - стор использует `getInvestmentProgramsLookup()` (GraphQL), остальная логика (map, `getInvestmentProgramName`) не менялась.
+- Обновлён `src/stores/lookups/plan-groups.ts`:
+  - удалён `apiGet` из `@/api/http`;
+  - стор использует `getPlanGroupsLookup()` (GraphQL), логика `utPlGrMap` и `getPlanGroupName` сохранена.
+- Обновлён `src/stores/lookups/st-networks.ts`:
+  - удалён `apiGet` из `@/api/http`;
+  - стор использует `getStNetworksLookup()` (GraphQL), логика `stNetworkMap` и `getStNetworkName` сохранена.
+
+**Ожидаемый результат:** ни один стор не вызывает `apiGet`/`apiPost` напрямую для доменных ресурсов.
+Все доменные запросы идут через файлы `src/api/`, которые используют Apollo Client.
+
+### 8.5. Финальная проверка: `src/api/` без доменного REST
+
+**Задачи:**
+- Проверить, что в `src/api/` нет вызовов `apiGet/apiPost/apiPut/apiDelete` для доменных операций.
+- Проверить, что ни один стор не импортирует `apiGet` из `@/api/http` для доменных ресурсов.
+- `npm run type-check`, `npm run build` — успешно.
+- Ручная проверка в браузере: ключевые сценарии работают, Network показывает запросы на `/graphql`.
+
+**Ожидаемый результат:** `src/api/` не содержит доменных REST-клиентов; сторы не содержат прямых `apiGet` для домена.
+
+##### Результат (исполнено) ✅
+
+- В `src/api/`:
+  - доменные клиенты (`audits-api.ts`, `audit-types-api.ts`, `directories-api.ts`, `organizations-api.ts`, `files-api.ts`, `file-types-api.ts`, `investment-chains-api.ts`, `lookups-api.ts`) используют только Apollo Client/GraphQL;
+  - REST остался только в осознанных технических клиентах (`http.ts`, `connection-api.ts`, `reports-api.ts`) согласно `.cursorrules`.
+- В `src/stores/`:
+  - ни один стор не вызывает `apiGet/apiPost/apiPut/apiDelete` напрямую; все доменные вызовы идут через `src/api/*.ts`;
+  - сторы `organizations`, `investment-chains`, lookup-сторы используют новые GraphQL-клиенты.
+- Команды `npm run type-check` и `npm run build` для `femsq-frontend-q` выполняются успешно.
+
+---
+
 ## 7. Граница чата
 
 **Чат считается завершённым, если:**
@@ -416,5 +689,5 @@
 
 **Файл создан:** 2026-03-17
 **Последнее обновление:** 2026-03-17
-**Версия:** 1.3.0
+**Версия:** 2.7.0
 **Автор:** Александр

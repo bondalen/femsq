@@ -69,7 +69,7 @@ const props = withDefaults(defineProps<Props>(), {
 /**
  * Форматирует дату в читаемый формат
  */
-function formatDate(date: string | null): string {
+function formatDate(date: string | null | undefined): string {
   if (!date) return '—';
   try {
     return new Date(date).toLocaleString('ru-RU', {

@@ -1,21 +1,12 @@
 import { computed, reactive, ref } from 'vue';
 import { defineStore } from 'pinia';
 
-import { apiGet, RequestError } from '@/api/http';
-
-export interface OrganizationDto {
-  ogKey: number;
-  ogName: string;
-  ogOfficialName?: string | null;
-  ogFullName?: string | null;
-  ogDescription?: string | null;
-  inn?: number | null;
-  kpp?: number | null;
-  ogrn?: number | null;
-  okpo?: number | null;
-  oe?: number | null;
-  registrationTaxType?: string | null;
-}
+import { RequestError } from '@/api/http';
+import type { OrganizationDto as ApiOrganizationDto } from '@/types/files';
+import {
+  getAgentsByOrganization,
+  getOrganizationsPage
+} from '@/api/organizations-api';
 
 export interface AgentDto {
   ogAgKey: number;
@@ -46,19 +37,6 @@ export interface Agent {
   legacyOid?: string | null;
 }
 
-interface PageResponse<T> {
-  content: T[];
-  totalElements?: number;
-  totalPages?: number;
-  page?: number;
-  number?: number;
-  size?: number;
-}
-
-type OrganizationsResponse = OrganizationDto[] | PageResponse<OrganizationDto>;
-
-type AgentsResponse = AgentDto[] | PageResponse<AgentDto>;
-
 const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 10;
 const DEFAULT_SORT = 'ogName,asc';
@@ -70,7 +48,7 @@ function formatNullableNumber(value?: number | null): string | null {
   return Number.isInteger(value) ? String(value) : value.toString();
 }
 
-function mapOrganization(dto: OrganizationDto): Organization {
+function mapOrganization(dto: ApiOrganizationDto): Organization {
   return {
     ogKey: dto.ogKey,
     ogName: dto.ogName,
@@ -94,19 +72,6 @@ function mapAgent(dto: AgentDto): Agent {
     organizationKey: dto.organizationKey,
     legacyOid: dto.legacyOid ?? null
   };
-}
-
-function normalizeResponse<T>(response: T[] | PageResponse<T>): PageResponse<T> {
-  if (Array.isArray(response)) {
-    return {
-      content: response,
-      totalElements: response.length,
-      totalPages: 1,
-      page: 0,
-      size: response.length
-    };
-  }
-  return response;
 }
 
 export const useOrganizationsStore = defineStore('organizations', () => {
@@ -151,38 +116,35 @@ export const useOrganizationsStore = defineStore('organizations', () => {
     const previousSelection = options.keepSelection ? selectedOrganizationKey.value : null;
 
     try {
-      const query: Record<string, unknown> = {
-        page: Math.max(pagination.page - 1, 0),
+      const ogNameFilter = filters.ogName.trim();
+      const zeroBasedPage = Math.max(pagination.page - 1, 0);
+
+      const query = {
+        page: zeroBasedPage,
         size: pagination.size,
-        sort: pagination.sort
+        sort: pagination.sort,
+        ogName: ogNameFilter.length > 0 ? ogNameFilter : undefined
       };
-      if (filters.ogName.trim().length > 0) {
-        query.ogName = filters.ogName.trim();
-      }
 
-      // Преобразуем поле сортировки из frontend формата (ogName) в backend формат (ogNm)
-      if (query.sort && typeof query.sort === 'string') {
-        query.sort = query.sort.replace(/^ogName/, 'ogNm');
-      }
+      console.info('[organizations-store] Fetching organizations (GraphQL) with query:', query);
+      const page = await getOrganizationsPage(query);
+      console.info('[organizations-store] Page meta:', {
+        totalElements: page.totalElements,
+        totalPages: page.totalPages,
+        page: page.page,
+        size: page.size
+      });
 
-      console.info('[organizations-store] Fetching organizations with query:', query);
-      const response = await apiGet<OrganizationsResponse>('/api/v1/organizations', { query });
-      console.info('[organizations-store] Received response type:', Array.isArray(response) ? 'array' : 'object', 'length/keys:', Array.isArray(response) ? response.length : Object.keys(response));
-      const normalized = normalizeResponse(response);
-      console.info('[organizations-store] Normalized response:', { contentLength: normalized.content?.length, totalElements: normalized.totalElements, totalPages: normalized.totalPages, page: normalized.page, size: normalized.size });
-
-      const content = normalized.content ?? [];
+      const content = page.content ?? [];
       organizations.value = content.map(mapOrganization);
 
-      pagination.totalElements = normalized.totalElements ?? organizations.value.length;
-      pagination.totalPages = normalized.totalPages ?? (organizations.value.length > 0 ? 1 : 0);
-      if (typeof normalized.page === 'number' || typeof normalized.number === 'number') {
-        const pageIndex = (normalized.page ?? normalized.number ?? 0) + 1;
-        pagination.page = Math.max(pageIndex, 1);
-      } else if (pagination.page > pagination.totalPages && pagination.totalPages > 0) {
-        pagination.page = pagination.totalPages;
+      pagination.totalElements = page.totalElements;
+      pagination.totalPages = page.totalPages;
+      if (page.totalPages > 0) {
+        pagination.page = Math.max(Math.min(page.page + 1, page.totalPages), 1);
+      } else {
+        pagination.page = DEFAULT_PAGE;
       }
-      // Не перезаписываем pagination.size из ответа - размер страницы управляется пользователем
 
       lastUpdatedAt.value = new Date().toISOString();
 
@@ -231,9 +193,8 @@ export const useOrganizationsStore = defineStore('organizations', () => {
     agentsError.value = null;
 
     try {
-      const response = await apiGet<AgentsResponse>(`/api/v1/organizations/${ogKey}/agents`);
-      const normalized = normalizeResponse(response);
-      const mappedAgents = normalized.content.map(mapAgent);
+      const response = await getAgentsByOrganization(ogKey);
+      const mappedAgents = response.map(mapAgent);
 
       if (selectedOrganizationKey.value !== ogKey) {
         return;

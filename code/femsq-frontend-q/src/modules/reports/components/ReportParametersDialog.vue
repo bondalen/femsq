@@ -42,7 +42,7 @@
 
               <QInput
                 v-if="param.type === 'string' && !param.options"
-                v-model="formValues[param.name]"
+                v-model="(formValues[param.name] as any)"
                 :label="param.description || 'Текст'"
                 dense
                 outlined
@@ -50,7 +50,7 @@
 
               <QInput
                 v-else-if="param.type === 'integer' || param.type === 'long'"
-                v-model.number="formValues[param.name]"
+                v-model.number="(formValues[param.name] as any)"
                 type="number"
                 dense
                 outlined
@@ -61,7 +61,7 @@
 
               <QInput
                 v-else-if="param.type === 'double'"
-                v-model.number="formValues[param.name]"
+                v-model.number="(formValues[param.name] as any)"
                 type="number"
                 step="0.01"
                 dense
@@ -73,7 +73,7 @@
 
               <QInput
                 v-else-if="param.type === 'date'"
-                v-model="formValues[param.name]"
+                v-model="(formValues[param.name] as any)"
                 type="date"
                 dense
                 outlined
@@ -178,7 +178,9 @@ const error = ref('');
 const parameters = ref<ReportParameter[]>([]);
 const reportName = ref('Параметры отчёта');
 const reportDescription = ref('');
-const formValues = reactive<Record<string, unknown>>({});
+type FormValue = string | number | boolean | FileList | null | undefined;
+
+const formValues = reactive<Record<string, FormValue>>({});
 const selectedFormat = ref<'pdf' | 'excel' | 'html'>('pdf');
 const generating = ref(false);
 const parameterOptions = reactive<Record<string, ParameterOption[]>>({});
@@ -293,7 +295,7 @@ function resolveDefaultValue(defaultValue: string): string {
   });
 }
 
-function convertValue(value: string, type: string): unknown {
+function convertValue(value: string, type: string): FormValue {
   if (!value && value !== '0') {
     return getDefaultValueForType(type);
   }
@@ -310,7 +312,7 @@ function convertValue(value: string, type: string): unknown {
   }
 }
 
-function getDefaultValueForType(type: string): unknown {
+function getDefaultValueForType(type: string): FormValue {
   switch (type) {
     case 'integer':
     case 'long':
@@ -376,7 +378,7 @@ function collectParameters(): Record<string, unknown> {
   return params;
 }
 
-function convertValueForApi(value: unknown, type: string): unknown {
+function convertValueForApi(value: FormValue, type: string): unknown {
   if (value === null || value === undefined || value === '') {
     return value;
   }
@@ -388,7 +390,7 @@ function convertValueForApi(value: unknown, type: string): unknown {
     case 'double':
       return typeof value === 'number' ? value : Number.parseFloat(String(value));
     case 'boolean':
-      return typeof value === 'boolean' ? value : (value === 'true' || value === '1' || value === true);
+      return typeof value === 'boolean' ? value : value === 'true' || value === '1';
     case 'date':
       return String(value);
     default:

@@ -3,10 +3,12 @@ import { fileURLToPath, URL } from 'node:url';
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { quasar, transformAssetUrls } from '@quasar/vite-plugin';
+import graphqlLoader from 'vite-plugin-graphql-loader';
 
 // eslint-disable-next-line import/no-default-export
 export default defineConfig({
   plugins: [
+    graphqlLoader(),
     vue({
       template: { transformAssetUrls }
     }),
@@ -46,6 +48,11 @@ export default defineConfig({
         secure: false,
         // Сохраняем оригинальный путь запроса
         rewrite: (path) => path
+      },
+      '/graphql': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false
       }
     }
   },

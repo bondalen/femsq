@@ -95,15 +95,15 @@ const activeReport = ref<
   | null
 >(null);
 
-const contractorContext = computed(() => {
+const contractorContext = computed<Record<string, string>>(() => {
   if (!props.contractor) {
-    return {};
+    return {} as Record<string, string>;
   }
   return {
     contractorId: String(props.contractor.ogKey),
-    contractorName: props.contractor.ogName,
-    contractorInn: props.contractor.inn ?? '',
-    contractorDescription: props.contractor.ogDescription ?? ''
+    contractorName: String(props.contractor.ogName),
+    contractorInn: props.contractor.inn !== null && props.contractor.inn !== undefined ? String(props.contractor.inn) : '',
+    contractorDescription: props.contractor.ogDescription !== null && props.contractor.ogDescription !== undefined ? String(props.contractor.ogDescription) : ''
   };
 });
 

@@ -1,0 +1,98 @@
+query GetAudits {
+  audits {
+    adtKey
+    adtName
+    adtDate
+    adtResults
+    adtDir
+    adtType
+    adtAddRA
+    adtCreated
+    adtUpdated
+    adtStatus
+  }
+}
+
+query GetAudit($id: Int!) {
+  audit(id: $id) {
+    adtKey
+    adtName
+    adtDate
+    adtResults
+    adtDir
+    adtType
+    adtAddRA
+    adtCreated
+    adtUpdated
+    adtStatus
+  }
+}
+
+query GetAuditWithDetails($id: Int!) {
+  audit(id: $id) {
+    adtKey
+    adtName
+    adtDate
+    adtResults
+    adtDir
+    adtType
+    adtAddRA
+    adtCreated
+    adtUpdated
+    adtStatus
+    directory {
+      key
+      dirName
+      dir
+      dirCreated
+      dirUpdated
+    }
+    auditType {
+      atKey
+      atName
+    }
+  }
+}
+
+mutation CreateAudit($input: AuditCreateInput!) {
+  createAudit(input: $input) {
+    adtKey
+    adtName
+    adtDate
+    adtResults
+    adtDir
+    adtType
+    adtAddRA
+    adtCreated
+    adtUpdated
+    adtStatus
+  }
+}
+
+mutation UpdateAudit($id: Int!, $input: AuditUpdateInput!) {
+  updateAudit(id: $id, input: $input) {
+    adtKey
+    adtName
+    adtDate
+    adtResults
+    adtDir
+    adtType
+    adtAddRA
+    adtCreated
+    adtUpdated
+    adtStatus
+  }
+}
+
+mutation DeleteAudit($id: Int!) {
+  deleteAudit(id: $id)
+}
+
+mutation ExecuteAudit($id: Int!) {
+  executeAudit(id: $id) {
+    started
+    alreadyRunning
+    message
+  }
+}
+

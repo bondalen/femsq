@@ -1,12 +1,9 @@
 import { computed, ref } from 'vue';
 import { defineStore } from 'pinia';
 
-import { apiGet, RequestError } from '@/api/http';
-
-export interface StNetworkDto {
-  stNetKey: number;
-  name: string;
-}
+import { RequestError } from '@/api/http';
+import type { StNetworkDto } from '@/api/lookups-api';
+import { getStNetworksLookup } from '@/api/lookups-api';
 
 export const useStNetworksStore = defineStore('stNetworks', () => {
   const stNetworks = ref<StNetworkDto[]>([]);
@@ -37,8 +34,8 @@ export const useStNetworksStore = defineStore('stNetworks', () => {
     error.value = null;
 
     try {
-      console.info('[st-networks-store] Fetching stNetworks');
-      const response = await apiGet<StNetworkDto[]>('/api/v1/lookups/st-networks');
+      console.info('[st-networks-store] Fetching stNetworks (GraphQL)');
+      const response = await getStNetworksLookup();
       console.info('[st-networks-store] Received response:', response);
 
       stNetworks.value = response;

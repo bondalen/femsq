@@ -38,6 +38,7 @@ const DEFAULT_FORM_VALUES: ConnectionFormValues = {
 export const useConnectionStore = defineStore('connection', () => {
   const status = ref<ConnectionState>('idle');
   const activeView = ref<ActiveView>('home');
+  const database = ref<string>('');
   const schema = ref<string>('');
   const user = ref<string>('');
   const lastMessage = ref<string>('Ожидает подключения');
@@ -62,11 +63,17 @@ export const useConnectionStore = defineStore('connection', () => {
     }
   });
 
-  function setStatus(next: ConnectionState, payload?: { schema?: string; user?: string; message?: string; error?: string }): void {
+  function setStatus(
+    next: ConnectionState,
+    payload?: { schema?: string; database?: string; user?: string; message?: string; error?: string }
+  ): void {
     console.info('[connection-store] status change', status.value, '→', next, payload);
     status.value = next;
     if (payload?.schema !== undefined) {
       schema.value = payload.schema;
+    }
+    if (payload?.database !== undefined) {
+      database.value = payload.database;
     }
     if (payload?.user !== undefined) {
       user.value = payload.user;
@@ -93,6 +100,7 @@ export const useConnectionStore = defineStore('connection', () => {
   function resetConnection(): void {
     console.info('[connection-store] reset');
     status.value = 'idle';
+    database.value = '';
     schema.value = '';
     user.value = '';
     lastMessage.value = 'Ожидает подключения';
@@ -116,6 +124,7 @@ export const useConnectionStore = defineStore('connection', () => {
   return {
     status,
     activeView,
+    database,
     schema,
     user,
     lastMessage,

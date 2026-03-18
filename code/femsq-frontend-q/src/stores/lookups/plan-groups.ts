@@ -1,12 +1,9 @@
 import { computed, ref } from 'vue';
 import { defineStore } from 'pinia';
 
-import { apiGet, RequestError } from '@/api/http';
-
-export interface InvestmentPlanGroupLookupDto {
-  planGroupKey: number;
-  name: string;
-}
+import { RequestError } from '@/api/http';
+import type { InvestmentPlanGroupLookupDto } from '@/api/lookups-api';
+import { getPlanGroupsLookup } from '@/api/lookups-api';
 
 export const usePlanGroupsStore = defineStore('planGroups', () => {
   const planGroups = ref<InvestmentPlanGroupLookupDto[]>([]);
@@ -37,8 +34,8 @@ export const usePlanGroupsStore = defineStore('planGroups', () => {
     error.value = null;
 
     try {
-      console.info('[plan-groups-store] Fetching planGroups');
-      const response = await apiGet<InvestmentPlanGroupLookupDto[]>('/api/v1/lookups/plan-groups');
+      console.info('[plan-groups-store] Fetching planGroups (GraphQL)');
+      const response = await getPlanGroupsLookup();
       console.info('[plan-groups-store] Received response:', response);
 
       planGroups.value = response;

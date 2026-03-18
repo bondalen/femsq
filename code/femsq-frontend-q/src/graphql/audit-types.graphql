@@ -1,0 +1,7 @@
+query GetAuditTypes {
+  auditTypes {
+    atKey
+    atName
+  }
+}
+

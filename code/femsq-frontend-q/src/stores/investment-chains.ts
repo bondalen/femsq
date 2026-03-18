@@ -1,25 +1,16 @@
 import { computed, reactive, ref } from 'vue';
 import { defineStore } from 'pinia';
 
-import { apiGet, RequestError } from '@/api/http';
-
-export interface IpgChainDto {
-  chainKey: number;
-  name: string;
-  stNetKey?: number | null;
-  stNetName?: string | null;
-  latestIpgKey?: number | null;
-  year?: number | null;
-}
-
-export interface IpgChainRelationDto {
-  relationKey: number;
-  chainKey: number;
-  investmentProgramKey: number;
-  investmentProgramName?: string | null;
-  planGroupKey?: number | null;
-  planGroupName?: string | null;
-}
+import { RequestError } from '@/api/http';
+import type {
+  IpgChainDto,
+  IpgChainRelationDto,
+  InvestmentChainsQuery
+} from '@/api/investment-chains-api';
+import {
+  getInvestmentChainRelations,
+  getInvestmentChainsPage
+} from '@/api/investment-chains-api';
 
 export interface InvestmentChain {
   chainKey: number;
@@ -39,18 +30,6 @@ export interface InvestmentChainRelation {
   planGroupKey?: number | null;
   planGroupName?: string | null;
 }
-
-interface PageResponse<T> {
-  content: T[];
-  totalElements?: number;
-  totalPages?: number;
-  page?: number;
-  number?: number;
-  size?: number;
-}
-
-type InvestmentChainsResponse = IpgChainDto[] | PageResponse<IpgChainDto>;
-type InvestmentChainRelationsResponse = IpgChainRelationDto[] | PageResponse<IpgChainRelationDto>;
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 10;
@@ -77,19 +56,6 @@ function mapInvestmentChainRelation(dto: IpgChainRelationDto): InvestmentChainRe
     planGroupKey: dto.planGroupKey ?? null,
     planGroupName: dto.planGroupName ?? null
   };
-}
-
-function normalizeResponse<T>(response: T[] | PageResponse<T>): PageResponse<T> {
-  if (Array.isArray(response)) {
-    return {
-      content: response,
-      totalElements: response.length,
-      totalPages: 1,
-      page: 0,
-      size: response.length
-    };
-  }
-  return response;
 }
 
 export const useInvestmentChainsStore = defineStore('investmentChains', () => {
@@ -135,39 +101,33 @@ export const useInvestmentChainsStore = defineStore('investmentChains', () => {
     const previousSelection = options.keepSelection ? selectedChainKey.value : null;
 
     try {
-      const query: Record<string, unknown> = {
-        page: Math.max(pagination.page - 1, 0),
+      const zeroBasedPage = Math.max(pagination.page - 1, 0);
+      const query: InvestmentChainsQuery = {
+        page: zeroBasedPage,
         size: pagination.size,
-        sort: pagination.sort
+        sort: pagination.sort,
+        name: filters.name.trim() || undefined,
+        year: filters.year
       };
-      if (filters.name.trim().length > 0) {
-        query.name = filters.name.trim();
-      }
-      if (filters.year !== null) {
-        query.year = filters.year;
-      }
 
-      // Преобразуем поле сортировки из frontend формата (name) в backend формат (ipgcName)
-      if (query.sort && typeof query.sort === 'string') {
-        query.sort = query.sort.replace(/^name/, 'ipgcName').replace(/^chainKey/, 'ipgcKey');
-      }
+      console.info('[investment-chains-store] Fetching chains (GraphQL) with query:', query);
+      const page = await getInvestmentChainsPage(query);
+      console.info('[investment-chains-store] Page meta:', {
+        totalElements: page.totalElements,
+        totalPages: page.totalPages,
+        page: page.page,
+        size: page.size
+      });
 
-      console.info('[investment-chains-store] Fetching chains with query:', query);
-      const response = await apiGet<InvestmentChainsResponse>('/api/v1/ipg-chains', { query });
-      console.info('[investment-chains-store] Received response type:', Array.isArray(response) ? 'array' : 'object', 'length/keys:', Array.isArray(response) ? response.length : Object.keys(response));
-      const normalized = normalizeResponse(response);
-      console.info('[investment-chains-store] Normalized response:', { contentLength: normalized.content?.length, totalElements: normalized.totalElements, totalPages: normalized.totalPages, page: normalized.page, size: normalized.size });
-
-      const content = normalized.content ?? [];
+      const content = page.content ?? [];
       chains.value = content.map(mapInvestmentChain);
 
-      pagination.totalElements = normalized.totalElements ?? chains.value.length;
-      pagination.totalPages = normalized.totalPages ?? (chains.value.length > 0 ? 1 : 0);
-      if (typeof normalized.page === 'number' || typeof normalized.number === 'number') {
-        const pageIndex = (normalized.page ?? normalized.number ?? 0) + 1;
-        pagination.page = Math.max(pageIndex, 1);
-      } else if (pagination.page > pagination.totalPages && pagination.totalPages > 0) {
-        pagination.page = pagination.totalPages;
+      pagination.totalElements = page.totalElements;
+      pagination.totalPages = page.totalPages;
+      if (page.totalPages > 0) {
+        pagination.page = Math.max(Math.min(page.page + 1, page.totalPages), 1);
+      } else {
+        pagination.page = DEFAULT_PAGE;
       }
 
       lastUpdatedAt.value = new Date().toISOString();
@@ -217,9 +177,8 @@ export const useInvestmentChainsStore = defineStore('investmentChains', () => {
     relationsError.value = null;
 
     try {
-      const response = await apiGet<InvestmentChainRelationsResponse>(`/api/v1/ipg-chains/${chainKey}/relations`);
-      const normalized = normalizeResponse(response);
-      const mappedRelations = normalized.content.map(mapInvestmentChainRelation);
+      const response = await getInvestmentChainRelations(chainKey);
+      const mappedRelations = response.map(mapInvestmentChainRelation);
 
       if (selectedChainKey.value !== chainKey) {
         return;

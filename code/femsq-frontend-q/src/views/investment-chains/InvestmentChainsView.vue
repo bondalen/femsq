@@ -360,7 +360,7 @@ const columns: QTableColumn<InvestmentChain>[] = [
     field: 'year',
     align: 'center',
     sortable: true,
-    format: (val: number | null) => val ?? '—'
+    format: (val: number | null) => (val === null ? '—' : String(val))
   },
   { name: 'relationsCount', field: 'relationsCount', label: 'Программ', align: 'center', sortable: true }
 ];

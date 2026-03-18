@@ -1,8 +1,10 @@
 import { computed, ref } from 'vue';
 import { defineStore } from 'pinia';
 
+import { Notify } from 'quasar';
 import * as auditsApi from '@/api/audits-api';
 import type { RaADto, RaACreateRequest, RaAUpdateRequest } from '@/types/audits';
+import type { AuditExecutionResult } from '@/api/audits-api';
 
 let pollingTimer: number | null = null;
 
@@ -123,12 +125,34 @@ export const useAuditsStore = defineStore('audits', () => {
     }
   }
 
-  async function executeAudit(id: number): Promise<void> {
+  async function executeAudit(id: number): Promise<AuditExecutionResult> {
     error.value = null;
     try {
-      await auditsApi.executeAudit(id);
-      // После запуска ревизии перечитываем список, чтобы подтянуть обновлённый adt_results
-      await fetchAudits();
+      const result: AuditExecutionResult = await auditsApi.executeAudit(id);
+      if (result.alreadyRunning) {
+        Notify.create({
+          type: 'warning',
+          message: result.message ?? 'Ревизия уже выполняется',
+          position: 'top'
+        });
+        return result;
+      }
+
+      if (result.started) {
+        if (result.message) {
+          Notify.create({
+            type: 'positive',
+            message: result.message,
+            position: 'top'
+          });
+        }
+
+        // Обновляем список и запускаем polling, чтобы UI увидел RUNNING/COMPLETED и лог.
+        await fetchAudits();
+        startPolling(id);
+      }
+
+      return result;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Не удалось выполнить ревизию';
       error.value = message;

@@ -1,0 +1,10 @@
+query GetDirectories {
+  directories {
+    key
+    dirName
+    dir
+    dirCreated
+    dirUpdated
+  }
+}
+
