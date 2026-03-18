@@ -474,10 +474,29 @@
 
 **Задачи:**
 - Очистить тестовую папку, скопировать JAR, запустить сервер.
-- Открыть `http://localhost:8080/graphiql`:
-  - Выполнить запрос `{ audits { adtKey adtName adtStatus } }`;
-  - Выполнить `mutation { executeAudit(id: 12) { started alreadyRunning } }`;
-  - Убедиться, что повторный вызов возвращает `alreadyRunning: true`.
+- Проверить GraphQL через `curl` (предпочтительно, т.к. встроенный GraphiQL может зависать на “Loading…” при недоступном CDN):
+  - Список ревизий:
+    ```bash
+    curl -sS -H 'Content-Type: application/json' \
+      --data '{"query":"query{audits{adtKey adtName adtStatus}}"}' \
+      http://localhost:8080/graphql
+    ```
+  - Одна ревизия с lazy-полями:
+    ```bash
+    curl -sS -H 'Content-Type: application/json' \
+      --data '{"query":"query{audit(id:12){adtKey adtName adtStatus directory{key dirName dir} auditType{atKey atName}}}"}' \
+      http://localhost:8080/graphql
+    ```
+  - Запуск ревизии:
+    ```bash
+    curl -sS -H 'Content-Type: application/json' \
+      --data '{"query":"mutation{executeAudit(id:12){started alreadyRunning message}}"}' \
+      http://localhost:8080/graphql
+    ```
+  - Повторный запуск:
+    - Ожидаемо: `alreadyRunning: true`, если ревизия ещё выполняется;
+    - Допустимо: `started: true`, если ревизия завершается слишком быстро (тогда проверить `adtStatus` через `audit(id:12)`).
+- Опционально (если GraphiQL открывается): `http://localhost:8080/graphiql` и выполнить те же операции.
 - Открыть Chrome DevTools → Network → убедиться, что запросы идут на `/graphql`, а не на `/api/ra/...`.
 
 ### 6.3. Обновить документацию
