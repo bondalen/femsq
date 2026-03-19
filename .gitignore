@@ -61,3 +61,10 @@ out/
 
 # Eclipse/IDE project metadata inside resources (не коммитим)
 code/femsq-backend/femsq-reports/src/main/resources/reports/embedded/.project
+
+# Local Python tooling (эксперименты, не коммитим)
+.venv_excel/
+
+# Excel working files (не коммитим бинарные xlsx/xls)
+*.xlsx
+*.xls
