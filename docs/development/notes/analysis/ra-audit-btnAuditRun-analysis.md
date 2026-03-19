@@ -486,6 +486,205 @@ public record AuditExecutionState(
 
 ---
 
+---
+
+## 10. Таблица `ra_ImpNew` и запросы сверки (`ra_ImpNewQuRa`, `ra_ImpNewQuRc`)
+
+### 10.1. Роль `ra_ImpNew` в процессе ревизии
+
+`ra_ImpNew` — это **промежуточная таблица-буфер** (в Access — локальная, не связанная с SQL Server), которая используется исключительно в контексте `af_type = 5` (AllAgents, лист "Отчеты"). Её жизненный цикл:
+
+1. **Перед чтением Excel**: таблица очищается (`DELETE * FROM ra_ImpNew`).
+2. **Во время чтения Excel**: каждая строка-отчёт заносится в таблицу (`INSERT INTO ra_ImpNew`).
+3. **После чтения Excel**: таблица используется как основа для двух запросов сверки с SQL Server.
+
+Если `af_source = false` (поле `ra_f.af_source`) — Excel не читается и `ra_ImpNew` не обновляется. Сверка с БД выполняется всегда (по данным, которые были в таблице ранее, или по пустой таблице).
+
+### 10.2. Полная структура `ra_ImpNew` (26 полей)
+
+Все поля полностью восстановлены из процедуры `RaReadOfExcel` в `ra_aAllAgents.cls`:
+
+| Поле | Тип | Excel-колонка (заголовок) | Примечание |
+|------|-----|--------------------------|-----------|
+| `rainRow` | Integer | — | Номер строки в Excel (идентификатор для сверки) |
+| `rainRaNum` | String | "№ ОА" | **Якорная колонка** — по ней ищутся все остальные |
+| `rainRaDate` | Date / Null | "Дата ОА" | |
+| `rainSign` | String | "Признак" | "ОА" или "ОА прочие" |
+| `rainCstAgPnStr` | String | "Код стройки" | Строковый код; разрешается в `cstapKey` в запросе |
+| `rainCstName` | String | "Наименование стройки" | Информационное поле |
+| `rainSender` | String | "Агент" | Строковое имя; разрешается в `ogKey` в запросе |
+| `rainTtl` | Decimal / Null | "Всего с НДС" | `NumericOrNull` — строки → NULL |
+| `rainWork` | Decimal / Null | "СМР" | |
+| `rainEquip` | Decimal / Null | "Оборудование" | |
+| `rainOthers` | Decimal / Null | "Прочие" | |
+| `rainArrivedNum` | String | "Поступило (№ письма)" | Заголовок: `"Поступило " & vbLf & "(№ письма)"` |
+| `rainArrivedDate` | Date / Null | "Поступило (Дата письма)" | |
+| `rainArrivedDateFact` | Date / Null | "Поступило (Фактическая дата)" | |
+| `rainReturnedNum` | String | "Возвращен на доработку (№ письма) " | Trailing space в заголовке! |
+| `rainReturnedDate` | Date / Null | "Возвращен на доработку (дата письма)" | |
+| `rainReturnedReason` | String | "Причина возврата" | |
+| `rainSendNum` | String | "Направлен в Бухгалтерию (№ СЗ)" | |
+| `rainSendDate` | Date / Null | "Направлен в Бухгалтерию (дата СЗ)" | |
+| `rainUnit` | String | "Отдел Управления" | |
+| `rainRaSheetsNumber` | Integer / Null | "Кол-во листов ОА" | |
+| `rainTitleDocSheetsNumber` | Integer / Null | "Кол-во листов ПУД" | |
+| `rainPlanNumber` | Integer / Null | "План кол-во" | |
+| `rainPlanDate` | Date / Null | "План дата" | |
+| `rainRaSignOfTest` | String | "Признак проверки ОА" | |
+| `rainRaSendedSum` | Decimal / Null | "Сумма переданных ОА" | |
+| `rainRaReturnedSum` | Decimal / Null | "Cумма возвращенных ОА" | Опечатка в заголовке Excel: "Cумма" (латинская C) |
+
+**Важное замечание:** из 26 полей только `rainRow`, `rainRaNum`, `rainCstAgPnStr`, `rainSender`, `rainSign` являются обязательными для сверки. Остальные — данные для создания/обновления записей в `ags_ra` и `ags_ra_change`.
+
+### 10.3. Поля, возвращаемые `ra_ImpNewQuRa` (сверка с `ags_ra`)
+
+Все поля инферированы из процедур `AuditRaCreateNew` и `AuditRaEdit` в `ra_aAllAgents.cls`:
+
+**Из `ra_ImpNew` (передаются напрямую):**
+- `rainRow` — номер строки Excel
+- `rainRaNum` — номер отчёта
+
+**Разрешённые ключи (lookup-результаты):**
+- `periodKey` — FK на `ags_ra_period` (разрешён из `rainRaDate` + год ревизии)
+- `cstapKey` — FK на `cstAgPn` (разрешён из `rainCstAgPnStr`)
+- `ogKey` — FK на `og` (разрешён из `rainSender`)
+- `rainSign` — передаётся как есть ("ОА" / "ОА прочие")
+
+**Результат сверки с `ags_ra`:**
+- `ra_key` — FK на `ags_ra` (NULL = запись не найдена в БД)
+- `ras_key` — FK на `ags_ra_sm` (суммы отчёта; NULL = нет суммы)
+- `rs` — Boolean: `TRUE` = все поля совпадают
+
+**Поколонные флаги совпадения (Boolean):**
+- `rsArrv`, `rsArrvDate`, `rsArrvDateFact` — письмо и даты поступления
+- `rsRetn`, `rsRetnDate`, `rsRetnRsn` — письмо возврата, дата, причина
+- `rsSent`, `rsSentDate` — письмо направления и дата
+- `rsSender` — отправитель (организация)
+- `rsDate` — дата отчёта
+- `rsSum` — суммы (агрегатный флаг)
+- `rsTtl`, `rsWork`, `rsEquip`, `rsOthers` — поколонные флаги сумм
+
+**Значения из источника (для вывода расхождений и создания/обновления):**
+- `exArrv`, `exArrvDate`, `exArrvDateFact`
+- `exRetn`, `exRetnDate`, `exRetnRsn`
+- `exSent`, `exSentDate`
+- `exSender` — числовой ключ организации (уже разрешён запросом)
+- `exDate` — дата отчёта из Excel
+- `exTtl`, `exWork`, `exEquip`, `exOthers` — суммы из Excel
+
+### 10.4. Поля, возвращаемые `ra_ImpNewQuRc` (сверка с `ags_ra_change`)
+
+Инферированы из процедур `AuditRcCreateNew` и `AuditRcEdit`:
+
+Включает все поля `ra_ImpNewQuRa` плюс:
+- `rac_key` — FK на `ags_ra_change` (NULL = изменение не найдено)
+- `raсs_key` — FK на `ags_ra_change_sm` (суммы изменения)
+- `ra_key` — FK на родительский `ags_ra` (отчёт, к которому изменение)
+- `rcPeriod` — FK на `ags_ra_period` (период изменения)
+- `num` — номер изменения
+
+**Важно:** SQL `ra_ImpNewQuRc` должен JOIN-ить `ra_ImpNew` с данными изменений (`ags_ra_change`) по совместному ключу `(ra_key, num, rcPeriod)` или аналогичному.
+
+### 10.5. Шесть операций сверки в `Audit()`
+
+Метод `Audit()` выполняет **шесть последовательных операций** в двух блоках:
+
+**Блок A — основные отчёты (`ags_ra`):**
+
+| # | Набор данных | Условие | Действие |
+|---|-------------|---------|---------|
+| A1 | `ra_ImpNewQuRa` | все записи | Лог: "Всего найдено отчётов: N" |
+| A2 | `ra_ImpNewQuRa WHERE ra_key IS NULL` | Excel-записи, не найденные в БД | Лог + `AuditRaCreateNew` (если `addRa=true`) |
+| A3 | `ra_ImpNewQuRa WHERE ra_key IS NOT NULL AND rs = false` | найдены, но есть расхождения | Лог + `AuditRaEdit` (если `addRa=true`) |
+| A4 | `ags_ra_period JOIN ags_ra LEFT JOIN ra_ImpNewQuRa WHERE rainRow IS NULL AND Year(period)=yyyy` | в БД есть, в Excel нет | Лог + `raRaExr.raDelete` (если `addRa=true`) |
+
+**Блок B — изменения отчётов (`ags_ra_change`):**
+
+| # | Набор данных | Условие | Действие |
+|---|-------------|---------|---------|
+| B1 | `ra_ImpNewQuRc` | все записи | Лог: "Всего найдено изменений: N" |
+| B2 | `ra_ImpNewQuRc WHERE rac_key IS NULL` | Excel-изменения, не найденные в БД | Лог + `AuditRcCreateNew` (если `addRa=true`) |
+| B3 | `ra_ImpNewQuRc WHERE rac_key IS NOT NULL AND rs = false` | найдены, но есть расхождения | Лог + `AuditRcEdit` (если `addRa=true`) |
+| B4 | `ags_ra_change INNER JOIN ra_ImpNewQuRc WHERE rainRow IS NULL AND Year(period)=yyyy` | в БД есть, в Excel нет | Лог + `rcRcExr.rcDelete` (если `addRa=true`) |
+
+### 10.6. Маппинг `af_type` → обработчик → лист Excel → путь файла
+
+Полностью восстановлен из `btnAuditRun_Click` (`Form_ra_a.cls`):
+
+| `af_type` | Тип файла (описание) | Лист(ы) | Обработчик VBA | Путь |
+|-----------|---------------------|---------|---------------|------|
+| 1 | РАСЧЁТ (расчётный лист) | через `ra_ft_sn` | `RAAudit_RA_RepPeriod` | `strDir + "\" + af_name` |
+| 2 | Хранение и стройконтроль | "ХрСтрКнтрл" | `RAAudit_cn_PrDoc` | `af_name` (уже полный) |
+| 3 | Аренда земли | "Аренда_Земли" + "учет_аренды" | `RAAudit_ralp` + `RAAudit_ralpSum` | `af_name` (уже полный) |
+| 4 | Агентское вознаграждение | через `ra_ft_s`/`ra_ft_st`/`ra_ft_sn` | `RAAudit_RA_RepPeriod` + `ra_aAgFee23_06` | `strDir + "\" + af_name` |
+| 5 | Отчёты всех агентов | "Отчеты" | `ra_aAllAgents.Audit` | `af_name` (уже полный) |
+| 6 | Агентское вознаграждение 23-0628 | через `ra_ft_s`/`ra_ft_st`/`ra_ft_sn` | `ra_aAgFee23_06` | `af_name` (уже полный) |
+
+**Правило определения полного пути:**
+- Типы 2, 3, 5, 6 → `af_name` содержит **абсолютный путь** (имя файла уже включает директорию).
+- Типы 1, 4 → `strDir + "\" + af_name` — к имени добавляется директория ревизии.
+
+### 10.7. Открытые вопросы (требуют получения из Access VM)
+
+| Вопрос | Способ получения |
+|--------|-----------------|
+| SQL-определение `ra_ImpNewQuRa` | `Debug.Print CurrentDb.QueryDefs("ra_ImpNewQuRa").SQL` в Access |
+| SQL-определение `ra_ImpNewQuRc` | `Debug.Print CurrentDb.QueryDefs("ra_ImpNewQuRc").SQL` в Access |
+| Значения `af_type` для всех реальных файлов | `SELECT DISTINCT af_type, COUNT(*) FROM ags.ra_f GROUP BY af_type` через DBHub |
+| Как именно `rainCstAgPnStr` резолвится в `cstapKey` | Вытекает из SQL `ra_ImpNewQuRa` |
+| Как именно `rainSender` резолвится в `ogKey` | Вытекает из SQL `ra_ImpNewQuRa` |
+
+### 10.8. Архитектурное решение: `ra_ImpNew` и изоляция сеансов
+
+**Принято:** `ra_ImpNew` создаётся как таблица в SQL Server.
+
+**Обоснование:** к концу года файл Excel содержит 10–20 тысяч записей с высоким риском ошибок разного рода. Факт переноса данных из Excel в реляционную таблицу — ценный результат сам по себе. После переноса данные в `ra_ImpNew` могут быть проверены, исправлены и сохранены через SQL-клиент (DBHub/SSMS) независимо от дальнейшей обработки.
+
+**Проблема изоляции при конкурентных запусках:**
+
+Использование `adt_key` (FK на ревизию) как изолятора недостаточно: два пользователя могут одновременно запустить одну и ту же ревизию — они получат одинаковый `adt_key`, данные смешаются. Также `DATETIME` как суррогатный ключ сеанса — ненадёжен (теоретические коллизии, неудобен для JOIN).
+
+**Решение: таблица `ra_execution` как изолятор сеанса**
+
+```sql
+CREATE TABLE ags.ra_execution (
+    exec_key         BIGINT IDENTITY(1,1) PRIMARY KEY,
+    adt_key          INT NOT NULL,                      -- FK → ra_a.adt_key
+    exec_started_at  DATETIME2 NOT NULL,
+    exec_finished_at DATETIME2 NULL,
+    exec_status      VARCHAR(20) NOT NULL DEFAULT 'RUNNING',  -- RUNNING / COMPLETED / FAILED
+    exec_error       NVARCHAR(MAX) NULL
+);
+```
+
+- `ra_ImpNew` добавляет колонку `rain_exec_key BIGINT NOT NULL` (FK → `ra_execution.exec_key`)
+- Каждый запуск ревизии создаёт новую строку в `ra_execution`, получая уникальный `exec_key`
+- Два одновременных запуска одной ревизии → два разных `exec_key` → полная изоляция данных
+- `DELETE FROM ra_ImpNew WHERE rain_exec_key = :execKey` — очистка строго своего сеанса
+
+**Дополнительный бонус: замена `AuditExecutionRegistry`**
+
+`ra_execution` является **постоянным хранилищем статуса выполнения** и заменяет (или дополняет) in-memory `AuditExecutionRegistry`. Это устраняет ограничение §8.5: статус `RUNNING/COMPLETED/FAILED` теперь переживает рестарт сервера. При перезапуске зависшие сеансы (`exec_status = 'RUNNING'`, `exec_finished_at IS NULL`) могут быть помечены как `FAILED` автоматически при старте.
+
+`AuditExecutionRegistry` может быть:
+- Удалён: статус читается напрямую из `ra_execution` через DAO
+- Или сохранён как кеш, синхронизируемый с `ra_execution` при старте приложения
+
+### 10.9. Асинхронное выполнение ревизии (`@Async`)
+
+**Принято:** `executeAudit` выполняется асинхронно.
+
+**Обоснование:** обработка 10–20 тыс. строк Excel с INSERT в `ra_ImpNew` и последующими JOIN-сверками с `ags_ra`/`ags_ra_change` займёт от десятков секунд до нескольких минут. Синхронное выполнение на HTTP-потоке приведёт к таймауту клиента и деградации приложения.
+
+**Реализация:**
+- `@EnableAsync` на конфигурационном классе (или на `FemsqWebApplication`)
+- `@Async` на методе `AuditExecutionServiceImpl.executeAudit`
+- GraphQL mutation `executeAudit` возвращает `{started: true, alreadyRunning: false}` немедленно
+- Фронтенд запускает polling (`getAuditById` каждые 3 сек.) для отображения прогресса
+- `AuditExecutionRegistry` (или `ra_execution`) обеспечивает защиту от двойного запуска (`isRunning` → `409` / `alreadyRunning: true`)
+
+---
+
 ## 9. Граница анализа: что остаётся для следующего чата
 
 Данный документ охватывает:
