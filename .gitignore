@@ -68,3 +68,7 @@ code/femsq-backend/femsq-reports/src/main/resources/reports/embedded/.project
 # Excel working files (не коммитим бинарные xlsx/xls)
 *.xlsx
 *.xls
+*.xlsm
+
+# Локальная папка с Excel-источниками для ревизий
+excel/
