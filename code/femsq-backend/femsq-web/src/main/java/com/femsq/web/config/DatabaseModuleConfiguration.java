@@ -19,22 +19,28 @@ import com.femsq.database.dao.JdbcOgDao;
 import com.femsq.database.dao.JdbcRaADao;
 import com.femsq.database.dao.JdbcRaAtDao;
 import com.femsq.database.dao.JdbcRaDirDao;
+import com.femsq.database.dao.JdbcRaExecutionDao;
 import com.femsq.database.dao.JdbcRaFDao;
 import com.femsq.database.dao.JdbcRaFtDao;
 import com.femsq.database.dao.JdbcRaFtSDao;
 import com.femsq.database.dao.JdbcRaFtSnDao;
 import com.femsq.database.dao.JdbcRaFtStDao;
+import com.femsq.database.dao.JdbcRaColMapDao;
+import com.femsq.database.dao.JdbcRaSheetConfDao;
 import com.femsq.database.dao.JdbcStNetworkDao;
 import com.femsq.database.dao.OgAgDao;
 import com.femsq.database.dao.OgDao;
 import com.femsq.database.dao.RaADao;
 import com.femsq.database.dao.RaAtDao;
 import com.femsq.database.dao.RaDirDao;
+import com.femsq.database.dao.RaExecutionDao;
 import com.femsq.database.dao.RaFDao;
 import com.femsq.database.dao.RaFtDao;
 import com.femsq.database.dao.RaFtSDao;
 import com.femsq.database.dao.RaFtSnDao;
 import com.femsq.database.dao.RaFtStDao;
+import com.femsq.database.dao.RaColMapDao;
+import com.femsq.database.dao.RaSheetConfDao;
 import com.femsq.database.dao.StNetworkDao;
 import com.femsq.database.service.DefaultIpgChainRelationService;
 import com.femsq.database.service.DefaultIpgChainService;
@@ -45,11 +51,14 @@ import com.femsq.database.service.DefaultOgService;
 import com.femsq.database.service.DefaultRaAService;
 import com.femsq.database.service.DefaultRaAtService;
 import com.femsq.database.service.DefaultRaDirService;
+import com.femsq.database.service.DefaultRaExecutionService;
 import com.femsq.database.service.DefaultRaFService;
 import com.femsq.database.service.DefaultRaFtService;
 import com.femsq.database.service.DefaultRaFtSService;
 import com.femsq.database.service.DefaultRaFtSnService;
 import com.femsq.database.service.DefaultRaFtStService;
+import com.femsq.database.service.DefaultRaColMapService;
+import com.femsq.database.service.DefaultRaSheetConfService;
 import com.femsq.database.service.DefaultStNetworkService;
 import com.femsq.database.service.IpgChainRelationService;
 import com.femsq.database.service.IpgChainService;
@@ -60,11 +69,14 @@ import com.femsq.database.service.OgService;
 import com.femsq.database.service.RaAService;
 import com.femsq.database.service.RaAtService;
 import com.femsq.database.service.RaDirService;
+import com.femsq.database.service.RaExecutionService;
 import com.femsq.database.service.RaFService;
 import com.femsq.database.service.RaFtService;
 import com.femsq.database.service.RaFtSService;
 import com.femsq.database.service.RaFtSnService;
 import com.femsq.database.service.RaFtStService;
+import com.femsq.database.service.RaColMapService;
+import com.femsq.database.service.RaSheetConfService;
 import com.femsq.database.service.StNetworkService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -289,6 +301,21 @@ public class DatabaseModuleConfiguration {
     }
 
     @Bean
+    public RaExecutionDao raExecutionDao(ConnectionFactory connectionFactory) {
+        return new JdbcRaExecutionDao(connectionFactory);
+    }
+
+    @Bean
+    public RaSheetConfDao raSheetConfDao(ConnectionFactory connectionFactory) {
+        return new JdbcRaSheetConfDao(connectionFactory);
+    }
+
+    @Bean
+    public RaColMapDao raColMapDao(ConnectionFactory connectionFactory) {
+        return new JdbcRaColMapDao(connectionFactory);
+    }
+
+    @Bean
     public RaFtStDao raFtStDao(ConnectionFactory connectionFactory) {
         return new JdbcRaFtStDao(connectionFactory);
     }
@@ -311,6 +338,21 @@ public class DatabaseModuleConfiguration {
     @Bean
     public RaFService raFService(RaFDao raFDao) {
         return new DefaultRaFService(raFDao);
+    }
+
+    @Bean
+    public RaExecutionService raExecutionService(RaExecutionDao raExecutionDao) {
+        return new DefaultRaExecutionService(raExecutionDao);
+    }
+
+    @Bean
+    public RaSheetConfService raSheetConfService(RaSheetConfDao raSheetConfDao) {
+        return new DefaultRaSheetConfService(raSheetConfDao);
+    }
+
+    @Bean
+    public RaColMapService raColMapService(RaColMapDao raColMapDao) {
+        return new DefaultRaColMapService(raColMapDao);
     }
 
     @Bean

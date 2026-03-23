@@ -3,7 +3,7 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-03-18"
+      "lastUpdated": "2026-03-19"
     },
     "sessions": [
       {
@@ -3002,6 +3002,1111 @@
                     "outcome": "Ручная проверка подтверждает корректную работу домена ревизий после миграции",
                     "references": [
                       "docs/development/notes/chats/chat-plan/chat-plan-26-0317-graphql-migration.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "Access: запрос cn_PrDocImp_CnInvExCsosExPdExPnExRs (документация). № chat-2026-03-19-002",
+          "chat-attributes": {
+            "id": "chat-2026-03-19-002",
+            "created": "2026-03-19",
+            "lastUpdated": "2026-03-19",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "low",
+            "tags": [
+              "documentation",
+              "access",
+              "vba-analysis",
+              "excel-processing"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Оформлен SQL Access cn_PrDocImp_CnInvExCsosExPdExPnExRs (success). № log-2026-03-19-001",
+                "log-attributes": {
+                  "id": "log-2026-03-19-001",
+                  "timestamp": "2026-03-19T00:00:00+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Конвертация дампа запроса Access в репозиторий",
+                    "details": "Создан cn_PrDocImp_CnInvExCsosExPdExPnExRs.access.sql (цепочка CnInv*: e из cn_PrDocImp_CnInvExCsosExPdExPnEx, JOIN cn_PrDocImp i и ags_cn_PrDocP b; поля rs* и агрегат rslt). Удалён исходный .txt. Обновлены cn_PrDocImp.table.md, access-queries/README.md, chat-plan-26-0319 S.2.2.",
+                    "outcome": "Запрос задокументирован; имя подтверждено по Form_ra_a.cls (OpenRecordset).",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/access-queries/cn_PrDocImp_CnInvExCsosExPdExPnExRs.access.sql",
+                      "docs/project/proposals/vba-analysis/access-queries/cn_PrDocImp.table.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "Access: запрос cn_PrDocImp_CnInvExCsosExPdExPnNtIn (документация). № chat-2026-03-19-003",
+          "chat-attributes": {
+            "id": "chat-2026-03-19-003",
+            "created": "2026-03-19",
+            "lastUpdated": "2026-03-19",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "low",
+            "tags": [
+              "documentation",
+              "access",
+              "vba-analysis",
+              "excel-processing"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Оформлен SQL Access cn_PrDocImp_CnInvExCsosExPdExPnNtIn (success). № log-2026-03-19-002",
+                "log-attributes": {
+                  "id": "log-2026-03-19-002",
+                  "timestamp": "2026-03-19T12:00:00+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Конвертация дампа PnNt → PnNtIn в репозиторий",
+                    "details": "Создан cn_PrDocImp_CnInvExCsosExPdExPnNtIn.access.sql (аналог PnEx с WHERE pdpKey Is Null; внешний CDate(CnInvDate)). Исходный файл cn_PrDocImp_CnInvExCsosExPdExPnNt.txt удалён. Обновлены cn_PrDocImp.table.md, access-queries/README.md, chat-plan-26-0319 S.2.2.",
+                    "outcome": "Имя QueryDef согласовано с Form_ra_a.cls (OpenRecordset cn_PrDocImp_CnInvExCsosExPdExPnNtIn).",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/access-queries/cn_PrDocImp_CnInvExCsosExPdExPnNtIn.access.sql",
+                      "docs/project/proposals/vba-analysis/VBA-Code-Export/Form-Modules/Form_ra_a.cls"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "Access: разделение PnNt и PnNtIn + дамп PnNtIn (документация). № chat-2026-03-19-004",
+          "chat-attributes": {
+            "id": "chat-2026-03-19-004",
+            "created": "2026-03-19",
+            "lastUpdated": "2026-03-19",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "low",
+            "tags": [
+              "documentation",
+              "access",
+              "vba-analysis",
+              "excel-processing"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "PnNt.access.sql + корректный PnNtIn по Access (success). № log-2026-03-19-003",
+                "log-attributes": {
+                  "id": "log-2026-03-19-003",
+                  "timestamp": "2026-03-19T14:00:00+03:00",
+                  "level": "success",
+                  "effort": "20m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Исправление путаницы PnNt / PnNtIn в access-queries",
+                    "details": "Добавлен cn_PrDocImp_CnInvExCsosExPdExPnNt.access.sql (агрегат без pdpKey). Файл PnNtIn перезаписан по дампу cn_PrDocImp_CnInvExCsosExPdExPnNtIn.txt (q из PnNt, JOIN cn_PrDocImp и ags_cn_PrDocP, флаги *Equal). Удалён .txt. Обновлены cn_PrDocImp.table.md, README, chat-plan 0.7.4.",
+                    "outcome": "Два QueryDef соответствуют двум файлам .access.sql; VBA OpenRecordset(PnNtIn) согласован с SQL.",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/access-queries/cn_PrDocImp_CnInvExCsosExPdExPnNt.access.sql",
+                      "docs/project/proposals/vba-analysis/access-queries/cn_PrDocImp_CnInvExCsosExPdExPnNtIn.access.sql"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "Access: запрос cn_PrDocImp_CnInvExCsosExPdExPnNtOneAccDoc (документация). № chat-2026-03-19-005",
+          "chat-attributes": {
+            "id": "chat-2026-03-19-005",
+            "created": "2026-03-19",
+            "lastUpdated": "2026-03-19",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "low",
+            "tags": [
+              "documentation",
+              "access",
+              "vba-analysis",
+              "excel-processing"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Оформлен SQL PnNtOneAccDoc (success). № log-2026-03-19-004",
+                "log-attributes": {
+                  "id": "log-2026-03-19-004",
+                  "timestamp": "2026-03-19T16:00:00+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Конвертация дампа PnNtOneAccDoc в репозиторий",
+                    "details": "Создан cn_PrDocImp_CnInvExCsosExPdExPnNtOneAccDoc.access.sql (JOIN ags_cn_PrDocP без accountingDocNull в ON; WHERE расхождение accountingDocNull). Удалён .txt. Обновлены cn_PrDocImp.table.md, README, chat-plan 0.7.5.",
+                    "outcome": "Запрос задокументирован; ссылок в VBA по имени OneAccDoc в репозитории не найдено.",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/access-queries/cn_PrDocImp_CnInvExCsosExPdExPnNtOneAccDoc.access.sql"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "Access: запрос cn_PrDocImp_CnInvExCsosExPdNt (документация). № chat-2026-03-19-006",
+          "chat-attributes": {
+            "id": "chat-2026-03-19-006",
+            "created": "2026-03-19",
+            "lastUpdated": "2026-03-19",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "low",
+            "tags": [
+              "documentation",
+              "access",
+              "vba-analysis",
+              "excel-processing"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Оформлен SQL cn_PrDocImp_CnInvExCsosExPdNt (success). № log-2026-03-19-005",
+                "log-attributes": {
+                  "id": "log-2026-03-19-005",
+                  "timestamp": "2026-03-19T17:00:00+03:00",
+                  "level": "success",
+                  "effort": "20m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Конвертация дампа PdNt в репозиторий",
+                    "details": "Создан cn_PrDocImp_CnInvExCsosExPdNt.access.sql (многоуровневая агрегация, HAVING d.cnpdKey Is Null, NumDateCount). Удалён .txt. Обновлены cn_PrDocImp.table.md, README, chat-plan 0.7.6.",
+                    "outcome": "Согласовано с Form_ra_a.cls (OpenRecordset cn_PrDocImp_CnInvExCsosExPdNt, поле NumDateCount).",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/access-queries/cn_PrDocImp_CnInvExCsosExPdNt.access.sql",
+                      "docs/project/proposals/vba-analysis/VBA-Code-Export/Form-Modules/Form_ra_a.cls"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "Access: запрос cn_PrDocImp_CnInvExCsosNt (документация). № chat-2026-03-19-007",
+          "chat-attributes": {
+            "id": "chat-2026-03-19-007",
+            "created": "2026-03-19",
+            "lastUpdated": "2026-03-19",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "low",
+            "tags": [
+              "documentation",
+              "access",
+              "vba-analysis",
+              "excel-processing"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Оформлен SQL cn_PrDocImp_CnInvExCsosNt (success). № log-2026-03-19-006",
+                "log-attributes": {
+                  "id": "log-2026-03-19-006",
+                  "timestamp": "2026-03-19T18:00:00+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Конвертация дампа CnInvExCsosNt в репозиторий",
+                    "details": "Создан cn_PrDocImp_CnInvExCsosNt.access.sql (z + ags_accnt, LEFT JOIN y как в CsosEx, HAVING y.ciasKey Is Null). Удалён .txt. Обновлены cn_PrDocImp.table.md, README, chat-plan 0.7.7.",
+                    "outcome": "Согласовано с Form_ra_a.cls (OpenRecordset cn_PrDocImp_CnInvExCsosNt).",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/access-queries/cn_PrDocImp_CnInvExCsosNt.access.sql",
+                      "docs/project/proposals/vba-analysis/VBA-Code-Export/Form-Modules/Form_ra_a.cls"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "Access: запрос cn_PrDocImp_CnInvNt (документация). № chat-2026-03-19-008",
+          "chat-attributes": {
+            "id": "chat-2026-03-19-008",
+            "created": "2026-03-19",
+            "lastUpdated": "2026-03-19",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "low",
+            "tags": [
+              "documentation",
+              "access",
+              "vba-analysis",
+              "excel-processing"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Оформлен SQL cn_PrDocImp_CnInvNt (success). № log-2026-03-19-007",
+                "log-attributes": {
+                  "id": "log-2026-03-19-007",
+                  "timestamp": "2026-03-19T19:00:00+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Конвертация дампа CnInvNt в репозиторий",
+                    "details": "Создан cn_PrDocImp_CnInvNt.access.sql (cn_PrDocImp по cn_key, LEFT JOIN ags_cnInv/inv/invNum, внешний JOIN ags_invNum по inNum, HAVING x.ciKey Is Null, inKeyCount). Удалён .txt. Обновлены cn_PrDocImp.table.md, README, chat-plan 0.7.8.",
+                    "outcome": "Согласовано с Form_ra_a.cls (OpenRecordset cn_PrDocImp_CnInvNt).",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/access-queries/cn_PrDocImp_CnInvNt.access.sql",
+                      "docs/project/proposals/vba-analysis/VBA-Code-Export/Form-Modules/Form_ra_a.cls"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "Access: динамический QueryDef ags_PdSdRRcList (документация). № chat-2026-03-19-009",
+          "chat-attributes": {
+            "id": "chat-2026-03-19-009",
+            "created": "2026-03-19",
+            "lastUpdated": "2026-03-19",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "low",
+            "tags": [
+              "documentation",
+              "access",
+              "vba-analysis",
+              "excel-processing",
+              "pass-through"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Оформлен ags_PdSdRRcList.access.sql (success). № log-2026-03-19-008",
+                "log-attributes": {
+                  "id": "log-2026-03-19-008",
+                  "timestamp": "2026-03-19T20:00:00+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Документирование динамического QueryDef ags_PdSdRRcList",
+                    "details": "Создан ags_PdSdRRcList.access.sql: комментарии о подстановке .SQL в Module1.bas и Form_ra_a.cls, пример из дампа (cstAgPn), разделение ODBC-строки и SQL. Удалён .txt. Обновлены cn_PrDocImp.table.md (ссылка), README, chat-plan 0.7.9.",
+                    "outcome": "Пункт S.2.2 по ags_PdSdRRcList закрыт в плане.",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/access-queries/ags_PdSdRRcList.access.sql",
+                      "docs/project/proposals/vba-analysis/VBA-Code-Export/Standard-Modules/Module1.bas"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "Access: таблица ralpRaAuTest (документация). № chat-2026-03-19-010",
+          "chat-attributes": {
+            "id": "chat-2026-03-19-010",
+            "created": "2026-03-19",
+            "lastUpdated": "2026-03-19",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "low",
+            "tags": [
+              "documentation",
+              "access",
+              "vba-analysis",
+              "excel-processing",
+              "af_type_3"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Описана таблица ralpRaAuTest (success). № log-2026-03-19-009",
+                "log-attributes": {
+                  "id": "log-2026-03-19-009",
+                  "timestamp": "2026-03-19T21:00:00+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Документирование Access-таблицы ralpRaAuTest",
+                    "details": "Создан файл access-queries/ralpRaAuTest.table.md по DAO-дампу: TableDef, 8 полей, индекс PrimaryKey, примечания по ошибке 3008 и связь со staging ags.ra_stg_ralp. Обновлены access-queries/README.md и chat-plan (S.1.3, версия 0.8.1).",
+                    "outcome": "Для af_type=3 закрыт первый табличный объект ralpRaAuTest.",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/access-queries/ralpRaAuTest.table.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "Access: таблица ralpRaSumTest (документация). № chat-2026-03-19-011",
+          "chat-attributes": {
+            "id": "chat-2026-03-19-011",
+            "created": "2026-03-19",
+            "lastUpdated": "2026-03-19",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "low",
+            "tags": [
+              "documentation",
+              "access",
+              "vba-analysis",
+              "excel-processing",
+              "af_type_3"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Описана таблица ralpRaSumTest (success). № log-2026-03-19-010",
+                "log-attributes": {
+                  "id": "log-2026-03-19-010",
+                  "timestamp": "2026-03-19T21:30:00+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Документирование Access-таблицы ralpRaSumTest",
+                    "details": "Создан файл access-queries/ralpRaSumTest.table.md по DAO-дампу: TableDef, 10 полей, примечания по ошибке 3008 и связь со staging ags.ra_stg_ralp_sm. Обновлены access-queries/README.md и chat-plan (S.1.3, версия 0.8.2).",
+                    "outcome": "Для af_type=3 закрыт второй табличный объект ralpRaSumTest.",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/access-queries/ralpRaSumTest.table.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "Access: QueryDef ralpRaAuTestQuRa (документация). № chat-2026-03-19-012",
+          "chat-attributes": {
+            "id": "chat-2026-03-19-012",
+            "created": "2026-03-19",
+            "lastUpdated": "2026-03-19",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "low",
+            "tags": [
+              "documentation",
+              "access",
+              "vba-analysis",
+              "excel-processing",
+              "af_type_3"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Оформлен QueryDef ralpRaAuTestQuRa (success). № log-2026-03-19-011",
+                "log-attributes": {
+                  "id": "log-2026-03-19-011",
+                  "timestamp": "2026-03-19T22:00:00+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Конвертация дампа QueryDef ralpRaAuTestQuRa в репозиторий",
+                    "details": "Создан ralpRaAuTestQuRa.access.sql, удален исходный .txt, обновлены access-queries/README.md, ralpRaAuTest.table.md и chat-plan (S.2.3, версия 0.8.3).",
+                    "outcome": "Для RAAudit_ralp закрыт первый QueryDef из минимального списка.",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/access-queries/ralpRaAuTestQuRa.access.sql",
+                      "docs/project/proposals/vba-analysis/access-queries/ralpRaAuTest.table.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "Access: QueryDef ralpRaAuTestQuAu (документация). № chat-2026-03-19-013",
+          "chat-attributes": {
+            "id": "chat-2026-03-19-013",
+            "created": "2026-03-19",
+            "lastUpdated": "2026-03-19",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "low",
+            "tags": [
+              "documentation",
+              "access",
+              "vba-analysis",
+              "excel-processing",
+              "af_type_3"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Оформлен QueryDef ralpRaAuTestQuAu (success). № log-2026-03-19-012",
+                "log-attributes": {
+                  "id": "log-2026-03-19-012",
+                  "timestamp": "2026-03-19T22:30:00+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Конвертация дампа QueryDef ralpRaAuTestQuAu в репозиторий",
+                    "details": "Создан ralpRaAuTestQuAu.access.sql, удален исходный .txt, обновлены access-queries/README.md, ralpRaAuTest.table.md и chat-plan (версия 0.8.4).",
+                    "outcome": "Для af_type=3 закрыт минимальный набор QueryDef в S.2.3.",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/access-queries/ralpRaAuTestQuAu.access.sql",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "af_type 6: закрытие S.2.4 без named QueryDef (success). № chat-2026-03-19-017",
+          "chat-attributes": {
+            "id": "chat-2026-03-19-017",
+            "created": "2026-03-19",
+            "lastUpdated": "2026-03-19",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "medium",
+            "tags": [
+              "documentation",
+              "access",
+              "vba-analysis",
+              "excel-processing",
+              "af_type_6"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Plan: подтверждено отсутствие named QueryDef для af_type=6. № log-2026-03-19-016",
+                "log-attributes": {
+                  "id": "log-2026-03-19-016",
+                  "timestamp": "2026-03-19T23:55:00+03:00",
+                  "level": "success",
+                  "effort": "10m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Обновление chat-plan по S.2.4 (af_type=6)",
+                    "details": "В `ra_aAgFee23_06.cls` подтверждено использование `CreateQueryDef(\"\", ...)` ad-hoc (именованных QueryDef для контура нет). Уточнен список SQL Server объектов `ags.*`, упоминаемых в коде. Версия плана увеличена до 0.8.8.",
+                    "outcome": "S.2.4 (af_type=6) переведен в ✅; named Access QueryDef и оформление `*.access.sql` как QueryDef — не требуется.",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/VBA-Code-Export/Class-Modules/ra_aAgFee23_06.cls",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "План: подтверждение полного закрытия S.1.3 и S.2.3. № chat-2026-03-19-014",
+          "chat-attributes": {
+            "id": "chat-2026-03-19-014",
+            "created": "2026-03-19",
+            "lastUpdated": "2026-03-19",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "low",
+            "tags": [
+              "documentation",
+              "planning",
+              "vba-analysis",
+              "excel-processing",
+              "af_type_3"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "В плане зафиксировано полное выполнение S.1.3/S.2.3 (success). № log-2026-03-19-013",
+                "log-attributes": {
+                  "id": "log-2026-03-19-013",
+                  "timestamp": "2026-03-19T23:00:00+03:00",
+                  "level": "success",
+                  "effort": "5m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Уточнение статусов подпунктов S.1.3 и S.2.3",
+                    "details": "После сверки файлов access-queries/ralp*.table.md и ralpRaAuTestQu*.access.sql в chat-plan добавлены явные строки: оба подпункта выполнены целиком; версия плана увеличена до 0.8.5.",
+                    "outcome": "Статусы в плане соответствуют фактическому состоянию артефактов af_type=3.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "af_type 6: linked-table документирование и план работ. № chat-2026-03-19-015",
+          "chat-attributes": {
+            "id": "chat-2026-03-19-015",
+            "created": "2026-03-19",
+            "lastUpdated": "2026-03-19",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "medium",
+            "tags": [
+              "documentation",
+              "access",
+              "vba-analysis",
+              "excel-processing",
+              "af_type_6"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Добавлен ags_ogAgFeePnTest.table.md и уточнен S.2.4 (success). № log-2026-03-19-014",
+                "log-attributes": {
+                  "id": "log-2026-03-19-014",
+                  "timestamp": "2026-03-19T23:30:00+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Старт документирования af_type=6 с учетом linked-table природы",
+                    "details": "Создан access-queries/ags_ogAgFeePnTest.table.md (ODBC linked table, предварительный список полей по скриншоту и Connect string). В chat-plan обновлены S.1.4/S.2.4: разделение на Access QueryDef и SQL Server objects, добавлен предварительный перечень объектов ags.* из ra_aAgFee23_06.cls. README синхронизирован.",
+                    "outcome": "Подготовлен корректный каркас для финального закрытия af_type=6 без смешения linked tables и Access QueryDef.",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/access-queries/ags_ogAgFeePnTest.table.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "af_type 6: полный DAO-дамп ags_ogAgFeePnTest (S.1.4). № chat-2026-03-19-016",
+          "chat-attributes": {
+            "id": "chat-2026-03-19-016",
+            "created": "2026-03-19",
+            "lastUpdated": "2026-03-19",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "medium",
+            "tags": [
+              "documentation",
+              "access",
+              "vba-analysis",
+              "excel-processing",
+              "af_type_6"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Обновлен ags_ogAgFeePnTest.table.md до полного дампа (success). № log-2026-03-19-015",
+                "log-attributes": {
+                  "id": "log-2026-03-19-015",
+                  "timestamp": "2026-03-19T23:45:00+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Уточнение документации linked-таблицы ags_ogAgFeePnTest",
+                    "details": "Заменено предварительное описание на полный DAO-дамп linked-table ags_ogAgFeePnTest (Connect/Properties/поля/PK; примечание про Err=3151). В chat-plan S.1.4 (af_type=6) переведен в ✅. Версия плана увеличена до 0.8.7.",
+                    "outcome": "S.1.4 для af_type=6 закрыт по linked-таблице импорта.",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/access-queries/ags_ogAgFeePnTest.table.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "af_type 6: локальная таблица ogAgFeePnTest (документация). № chat-2026-03-19-019",
+          "chat-attributes": {
+            "id": "chat-2026-03-19-019",
+            "created": "2026-03-19",
+            "lastUpdated": "2026-03-19",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "medium",
+            "tags": [
+              "documentation",
+              "access",
+              "vba-analysis",
+              "excel-processing",
+              "af_type_6"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Описана локальная таблица ogAgFeePnTest (success). № log-2026-03-19-019",
+                "log-attributes": {
+                  "id": "log-2026-03-19-019",
+                  "timestamp": "2026-03-20T00:20:00+03:00",
+                  "level": "success",
+                  "effort": "10m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Раздельная фиксация linked/local таблиц af_type=6",
+                    "details": "Создан `ogAgFeePnTest.table.md` по полному DAO-дампу локальной таблицы; `ags_ogAgFeePnTest.table.md` уточнен как linked-объект с ссылкой на локальный файл. Синхронизированы README и chat-plan (версия 0.9.0).",
+                    "outcome": "Документация af_type=6 теперь покрывает оба фактических объекта: linked `ags_ogAgFeePnTest` и local `ogAgFeePnTest`.",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/access-queries/ogAgFeePnTest.table.md",
+                      "docs/project/proposals/vba-analysis/access-queries/ags_ogAgFeePnTest.table.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "Plan: отметка S.3 чеклиста как выполненного (success). № chat-2026-03-19-018",
+          "chat-attributes": {
+            "id": "chat-2026-03-19-018",
+            "created": "2026-03-19",
+            "lastUpdated": "2026-03-19",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "low",
+            "tags": [
+              "documentation",
+              "planning",
+              "af_type_6"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Закрытие чеклиста S.3 в chat-plan (success). № log-2026-03-19-018",
+                "log-attributes": {
+                  "id": "log-2026-03-19-018",
+                  "timestamp": "2026-03-20T00:10:00+03:00",
+                  "level": "success",
+                  "effort": "5m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Отметка S.3 чекбоксов как выполненных",
+                    "details": "После обновлений `access-queries/README.md` и завершения контуров `af_type ∈ {2,3,5,6}` чеклист `S.3` переведен в [x]. Версия плана увеличена до 0.8.9.",
+                    "outcome": "Фиксация финального чеклиста документации для требуемых типов.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "Plan: вынесена специфика reconcile по af_type в отдельные чаты (документация). № chat-2026-03-23-001",
+          "chat-attributes": {
+            "id": "chat-2026-03-23-001",
+            "created": "2026-03-23",
+            "lastUpdated": "2026-03-23",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "low",
+            "tags": [
+              "documentation",
+              "planning",
+              "excel-processing",
+              "reconcile"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Переструктурирован chat-plan (Phase 5): специфика af_type вынесена в отдельные чаты (success). № log-2026-03-23-001",
+                "log-attributes": {
+                  "id": "log-2026-03-23-001",
+                  "timestamp": "2026-03-23T00:15:00+03:00",
+                  "level": "success",
+                  "effort": "5m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Корректировка плана: общий reconcile-каркас остался в этом чате",
+                    "details": "В `chat-plan-26-0319-excel-processing-parallel.md` Фаза 5 оставлена как общий reconcile-каркас (✅ 5.0), а доменные пункты по `af_type=2/3/5/6` помечены как вынесенные в отдельные чаты.",
+                    "outcome": "План отражает разделение общего функционала и последующей разработки специфики reconcile по типам.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "Plan: создан следующий чат reconcile-specific по af_type (2/3/5/6) (planning). № chat-2026-03-23-002",
+          "chat-attributes": {
+            "id": "chat-2026-03-23-002",
+            "created": "2026-03-23",
+            "lastUpdated": "2026-03-23",
+            "owner": "Александр",
+            "status": "in_progress",
+            "priority": "medium",
+            "tags": [
+              "planning",
+              "excel-processing",
+              "reconcile",
+              "af_type_2_3_5_6"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0323-reconcile-specific.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Создан план следующего чата reconcile-specific (success). № log-2026-03-23-002",
+                "log-attributes": {
+                  "id": "log-2026-03-23-002",
+                  "timestamp": "2026-03-23T00:25:00+03:00",
+                  "level": "success",
+                  "effort": "5m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Скелет нового chat-plan для доменной специфики reconcile",
+                    "details": "Создан `chat-plan-26-0323-reconcile-specific.md` с задачами Фазы 1–6: Type 5/2/3/6, cross-type идемпотентность + SQL artifacts, финальная верификация и ручной прогон.",
+                    "outcome": "Есть отдельный план для доменной специфики reconcile, чтобы текущий чат оставался компактным и завершённым по общему функционалу.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0323-reconcile-specific.md"
                     ]
                   }
                 ]

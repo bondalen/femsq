@@ -16,8 +16,10 @@ public class AuditExecutionContext {
     private final long auditId;
     private Long directoryId;
     private String directoryPath;
+    private Long executionKey;
     private Integer year;
     private Boolean addRa;
+    private Integer auditType;
 
     /**
      * Записи лога в естественном хронологическом порядке (старые → новые).
@@ -54,6 +56,14 @@ public class AuditExecutionContext {
         this.directoryPath = directoryPath;
     }
 
+    public Long getExecutionKey() {
+        return executionKey;
+    }
+
+    public void setExecutionKey(Long executionKey) {
+        this.executionKey = executionKey;
+    }
+
     public Integer getYear() {
         return year;
     }
@@ -68,6 +78,14 @@ public class AuditExecutionContext {
 
     public void setAddRa(Boolean addRa) {
         this.addRa = addRa;
+    }
+
+    public Integer getAuditType() {
+        return auditType;
+    }
+
+    public void setAuditType(Integer auditType) {
+        this.auditType = auditType;
     }
 
     public Instant getStartedAt() {

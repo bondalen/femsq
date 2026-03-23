@@ -532,7 +532,7 @@ public record AuditExecutionState(
 | `rainPlanDate` | Date / Null | "План дата" | |
 | `rainRaSignOfTest` | String | "Признак проверки ОА" | |
 | `rainRaSendedSum` | Decimal / Null | "Сумма переданных ОА" | |
-| `rainRaReturnedSum` | Decimal / Null | "Cумма возвращенных ОА" | Опечатка в заголовке Excel: "Cумма" (латинская C) |
+| `rainRaReturnedSum` | Decimal / Null | "Сумма возвращенных ОА" | Канон: кириллическая **С**; в старых шапках Excel могла встречаться латинская `C` — в метаданных таблицы и в документации зафиксировано правильное написание |
 
 **Важное замечание:** из 26 полей только `rainRow`, `rainRaNum`, `rainCstAgPnStr`, `rainSender`, `rainSign` являются обязательными для сверки. Остальные — данные для создания/обновления записей в `ags_ra` и `ags_ra_change`.
 

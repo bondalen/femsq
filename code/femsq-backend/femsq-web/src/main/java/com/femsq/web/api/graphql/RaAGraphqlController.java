@@ -143,11 +143,11 @@ public class RaAGraphqlController {
         log.info(() -> "GraphQL mutation executeAudit id=" + id);
 
         // Проверяем, что ревизия существует.
-        raAService.getById(id)
+        var audit = raAService.getById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ревизия не найдена"));
 
         // Защита от повторного запуска: статус хранится в памяти приложения.
-        if (!auditExecutionRegistry.tryMarkRunning(id)) {
+        if (!auditExecutionRegistry.tryMarkRunning(id, Boolean.TRUE.equals(audit.adtAddRA()))) {
             return new AuditExecutionResult(false, true, "Ревизия уже выполняется");
         }
 

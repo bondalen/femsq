@@ -2,7 +2,7 @@
 
 **Версия:** 2.0.0  
 **Дата создания:** 2025-10-08  
-**Последнее обновление:** 2025-10-09  
+**Последнее обновление:** 2026-03-19  
 **Автор:** Александр  
 
 ## Обзор
@@ -14,6 +14,7 @@
 - **[Справочник по системе ссылок](project-documentation-rules-reference.md)** - таблица форматов ссылок, примеры, правила формирования ID
 - **[Система структурной нумерации](project-documentation-rules-structural-numbering.md)** - правила нумерации модулей, компонентов, классов
 - **Правила отчётов JasperReports:** `code/femsq-backend/femsq-reports/src/main/resources/reports/embedded/REPORTING_RULES.md` (обязательно соблюдать при переносе/разработке отчётов)
+- **MS Access — снятие сведений о таблицах, запросах и объектах:** [project/proposals/vba-analysis/MS-ACCESS-OBJECTS-CAPTURE.md](project/proposals/vba-analysis/MS-ACCESS-OBJECTS-CAPTURE.md) (порядок работы; каталог `access-queries/`: [access-queries/README.md](project/proposals/vba-analysis/access-queries/README.md))
 
 ## Структура документации
 

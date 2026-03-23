@@ -3,12 +3,15 @@ package com.femsq.web.audit;
 import com.femsq.database.model.RaA;
 import com.femsq.database.model.RaF;
 import com.femsq.database.service.RaAService;
+import com.femsq.database.service.RaDirService;
+import com.femsq.database.service.RaExecutionService;
 import com.femsq.database.service.RaFService;
 import com.femsq.web.audit.runtime.AuditExecutionRegistry;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Logger;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -28,15 +31,21 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
     private static final Logger log = Logger.getLogger(AuditExecutionServiceImpl.class.getName());
 
     private final RaAService raAService;
+    private final RaDirService raDirService;
+    private final RaExecutionService raExecutionService;
     private final RaFService raFService;
     private final List<AuditFileProcessor> fileProcessors;
     private final AuditExecutionRegistry auditExecutionRegistry;
 
     public AuditExecutionServiceImpl(RaAService raAService,
+                                     RaDirService raDirService,
+                                     RaExecutionService raExecutionService,
                                      RaFService raFService,
                                      List<AuditFileProcessor> fileProcessors,
                                      AuditExecutionRegistry auditExecutionRegistry) {
         this.raAService = raAService;
+        this.raDirService = raDirService;
+        this.raExecutionService = raExecutionService;
         this.raFService = raFService;
         this.fileProcessors = fileProcessors;
         this.auditExecutionRegistry = auditExecutionRegistry;
@@ -53,9 +62,20 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
 
         // Шаг 2: инициализация контекста и шапки лога
         AuditExecutionContext context = new AuditExecutionContext(auditId);
-        context.setDirectoryId(audit.adtDir() != null ? audit.adtDir().longValue() : null);
+        raExecutionService.getLatestByAuditId((int) auditId)
+                .ifPresent(exec -> context.setExecutionKey(exec.execKey() != null ? exec.execKey().longValue() : null));
+        Integer dirId = audit.adtDir();
+        context.setDirectoryId(dirId != null ? dirId.longValue() : null);
+        if (dirId != null) {
+            raDirService.getById(dirId).ifPresentOrElse(
+                    dir -> context.setDirectoryPath(dir.dir()),
+                    () -> log.warning("[AuditExecution] Directory not found for adtDir=" + audit.adtDir() + ", auditId=" + auditId)
+            );
+        }
         context.setStartedAt(Instant.now());
         context.setLastUpdatedAt(context.getStartedAt());
+        context.setAuditType(audit.adtType());
+        context.setAddRa(audit.adtAddRA());
 
         String headerHtml = "<P>Запуск ревизии <b>" + escape(audit.adtName()) + "</b> (ID=" + auditId + ")</P>";
         AuditLogEntry headerEntry = new AuditLogEntry(
@@ -70,7 +90,7 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
 
         try {
             // Шаг 3: цикл по файлам ревизии и делегирование обработчикам (пока без Excel-логики)
-            Integer dirId = audit.adtDir();
+            dirId = audit.adtDir();
             if (dirId == null) {
                 log.warning("[AuditExecution] Audit has no directory, skipping file processing. auditId=" + auditId);
                 saveProgress(audit, context);
@@ -79,7 +99,7 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
             }
 
             List<RaF> files = raFService.getByDirId(dirId);
-            log.info(() -> "[AuditExecution] Files to process for auditId=" + auditId + " (dir=" + dirId + "): " + files.size());
+            log.info("[AuditExecution] Files to process for auditId=" + auditId + " (dir=" + dirId + "): " + files.size());
 
             for (RaF raF : files) {
                 // Учитываем только файлы, помеченные к выполнению
@@ -87,10 +107,42 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
                     continue;
                 }
 
+                Integer fileType = raF.afType();
+                if (Objects.equals(fileType, 1) || Objects.equals(fileType, 4)) {
+                    String message = "<P>WARN: af_type=" + fileType
+                            + " устарел — файл " + escape(raF.afName()) + " пропущен</P>";
+                    log.warning("[AuditExecution] Skipped obsolete file type af_type=" + fileType + ", file=" + raF.afName());
+                    context.appendEntry(new AuditLogEntry(
+                            Instant.now(),
+                            AuditLogLevel.WARNING,
+                            AuditLogScope.FILE,
+                            "FILE_TYPE_OBSOLETE_SKIPPED",
+                            message,
+                            null
+                    ));
+                    continue;
+                }
+
+                String resolvedPath = resolveFilePath(context, raF);
+                if (resolvedPath == null || resolvedPath.isBlank()) {
+                    String message = "<P>WARN: Путь к файлу не определён — файл пропущен: "
+                            + escape(raF.afName()) + "</P>";
+                    log.warning("[AuditExecution] File path is empty, skipping file=" + raF.afName());
+                    context.appendEntry(new AuditLogEntry(
+                            Instant.now(),
+                            AuditLogLevel.WARNING,
+                            AuditLogScope.FILE,
+                            "FILE_PATH_EMPTY",
+                            message,
+                            null
+                    ));
+                    continue;
+                }
+
                 AuditFile auditFile = new AuditFile(
                         raF.afKey() != null ? raF.afKey() : -1L,
-                        raF.afName(), // пока используем только имя файла; путь будет уточнён позже
-                        raF.afType(),
+                        resolvedPath,
+                        fileType,
                         raF.afSource() != null && raF.afSource() ? 1 : 0
                 );
 
@@ -172,6 +224,38 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
 
     private static String escape(String value) {
         return value == null ? "" : value.replace("<", "&lt;").replace(">", "&gt;");
+    }
+
+    private String resolveFilePath(AuditExecutionContext context, RaF file) {
+        String fileName = file.afName();
+        if (fileName == null || fileName.isBlank()) {
+            return fileName;
+        }
+
+        String normalized = fileName.trim();
+        if (isAbsoluteOrUncPath(normalized)) {
+            return normalized;
+        }
+
+        String directoryPath = context.getDirectoryPath();
+        if (directoryPath == null || directoryPath.isBlank()) {
+            return normalized;
+        }
+
+        String dir = directoryPath.trim();
+        String separator = dir.contains("\\") ? "\\" : "/";
+        String cleanedDir = dir.endsWith("\\") || dir.endsWith("/") ? dir.substring(0, dir.length() - 1) : dir;
+        String cleanedFile = normalized.startsWith("\\") || normalized.startsWith("/") ? normalized.substring(1) : normalized;
+        return cleanedDir + separator + cleanedFile;
+    }
+
+    private boolean isAbsoluteOrUncPath(String path) {
+        return path.startsWith("\\\\")
+                || path.startsWith("/")
+                || (path.length() >= 3
+                && Character.isLetter(path.charAt(0))
+                && path.charAt(1) == ':'
+                && (path.charAt(2) == '\\' || path.charAt(2) == '/'));
     }
 
     private static LocalDateTime toLocalDateTime(Instant instant) {

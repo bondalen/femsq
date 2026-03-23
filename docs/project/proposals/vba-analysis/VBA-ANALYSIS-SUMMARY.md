@@ -259,6 +259,10 @@ CREATE TABLE [24-1021_debt_Test] (
 3. Тестировать на реальных Excel файлах
 4. Корректировать по результатам тестирования
 
+## Документирование объектов Access (таблицы, запросы)
+
+Порядок снятия структуры таблиц, текста запросов и артефактов для репозитория описан в **[MS-ACCESS-OBJECTS-CAPTURE.md](./MS-ACCESS-OBJECTS-CAPTURE.md)** и **[access-queries/README.md](./access-queries/README.md)**. Пример: **`ra_ImpNew`** — один файл `access-queries/ra_ImpNew.table.md`, запросы `ra_ImpNewQuRa.access.sql` / `ra_ImpNewQuRc.access.sql`, модуль `DumpTableDef_RaImpNew.bas`.
+
 ## Извлечённые файлы
 
 **Директория:** `docs/project/proposals/vba-analysis/VBA-Code-Export/`
