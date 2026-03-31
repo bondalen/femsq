@@ -3,7 +3,6 @@ package com.femsq.web.audit;
 import com.femsq.web.audit.staging.AuditStagingService;
 import com.femsq.web.audit.stage2.CnPrDocStage2Service;
 import com.femsq.web.audit.reconcile.AuditReconcileCoordinator;
-import java.time.Instant;
 import java.util.Objects;
 import java.util.logging.Logger;
 import org.springframework.stereotype.Service;
@@ -42,38 +41,35 @@ public class CnPrDocAuditFileProcessor implements AuditFileProcessor {
         int insertedFinal = inserted;
         log.info(() -> "[AuditExecution] CnPrDoc processor Stage1, file=" + file.getPath()
                 + ", type=" + file.getType() + ", inserted=" + insertedFinal);
-        context.appendEntry(new AuditLogEntry(
-                Instant.now(),
+        context.append(
                 AuditLogLevel.INFO,
                 AuditLogScope.FILE,
                 "FILE_CN_PRDOC_STAGE1",
                 "<P>Stage 1 (CnPrDoc) завершён: " + file.getPath() + ", вставлено строк: " + inserted + "</P>",
                 null
-        ));
+        );
 
         Long executionKey = context.getExecutionKey();
         if (executionKey == null) {
-            context.appendEntry(new AuditLogEntry(
-                    Instant.now(),
+            context.append(
                     AuditLogLevel.WARNING,
                     AuditLogScope.FILE,
                     "FILE_CN_PRDOC_STAGE2_SKIPPED",
                     "<P>Stage 2 (CnPrDoc) пропущен: executionKey отсутствует</P>",
                     null
-            ));
+            );
             return;
         }
 
         CnPrDocStage2Service.ResolutionResult resolutionResult = cnPrDocStage2Service.resolveForExecution(executionKey);
-        context.appendEntry(new AuditLogEntry(
-                Instant.now(),
+        context.append(
                 AuditLogLevel.INFO,
                 AuditLogScope.FILE,
                 "FILE_CN_PRDOC_STAGE2A",
                 "<P>Stage 2a (CnPrDoc) выполнен: cnpdTpOrdKey=" + resolutionResult.resolvedTpOrd()
                         + ", pdpCstAgPnKey=" + resolutionResult.resolvedCstAgPn() + "</P>",
                 null
-        ));
+        );
 
         reconcileCoordinator.run(context, file);
     }

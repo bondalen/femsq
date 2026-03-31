@@ -7,8 +7,14 @@
  * Диалект: Microsoft Access SQL (Jet/ACE). Не исполнять как есть на SQL Server.
  *
  * Связь с Java: эталон для reconcile type=5 (изменения → ags_ra_change / суммы).
+ * Read-model 1.3.1: AllAgentsReconcileService (RcStagingLineParser + rc* counters в adt_results).
+ * Поведение apply по VBA: partial apply (строка-за-строкой) — некондиционные строки
+ * логируются и пропускаются, но не блокируют применение кондиционных строк.
+ * Политика сумм изменений (подтверждена данными БД): 1:N история в ags.ra_change_summ допустима;
+ * новая запись суммы добавляется только при отличии от предыдущей версии, при равенстве пропускается.
+ * Актуальная версия суммы определяется через ags.ra_chSmLt (MAX(raсs_date) по raсs_raс).
  *
- * lastUpdated: 2026-03-19
+ * lastUpdated: 2026-03-24
  */
 
 SELECT

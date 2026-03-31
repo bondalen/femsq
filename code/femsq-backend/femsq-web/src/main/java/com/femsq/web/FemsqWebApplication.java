@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -15,6 +16,7 @@ import java.nio.file.Paths;
  * Точка входа Spring Boot-приложения FEMSQ Web API.
  */
 @EnableAsync
+@EnableScheduling
 @SpringBootApplication(scanBasePackages = {"com.femsq"})
 public class FemsqWebApplication {
     

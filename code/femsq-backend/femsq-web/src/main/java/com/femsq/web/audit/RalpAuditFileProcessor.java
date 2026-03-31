@@ -3,7 +3,6 @@ package com.femsq.web.audit;
 import com.femsq.web.audit.staging.AuditStagingService;
 import com.femsq.web.audit.stage2.RalpStage2Service;
 import com.femsq.web.audit.reconcile.AuditReconcileCoordinator;
-import java.time.Instant;
 import java.util.Objects;
 import java.util.logging.Logger;
 import org.springframework.stereotype.Service;
@@ -47,32 +46,28 @@ public class RalpAuditFileProcessor implements AuditFileProcessor {
         int insertedFinal = inserted;
         log.info(() -> "[AuditExecution] Ralp processor Stage1, file=" + file.getPath()
                 + ", type=" + file.getType() + ", inserted=" + insertedFinal);
-        AuditLogEntry entry = new AuditLogEntry(
-                Instant.now(),
+        context.append(
                 AuditLogLevel.INFO,
                 AuditLogScope.FILE,
                 "FILE_RALP_STAGE1",
                 "<P>Stage 1 (RALP) завершён: " + file.getPath() + ", вставлено строк: " + inserted + "</P>",
                 null
         );
-        context.appendEntry(entry);
 
         Long executionKey = context.getExecutionKey();
         if (executionKey == null) {
-            context.appendEntry(new AuditLogEntry(
-                    Instant.now(),
+            context.append(
                     AuditLogLevel.WARNING,
                     AuditLogScope.FILE,
                     "FILE_RALP_STAGE2_SKIPPED",
                     "<P>Stage 2 (RALP) пропущен: executionKey отсутствует</P>",
                     null
-            ));
+            );
             return;
         }
 
         RalpStage2Service.ResolutionResult resolutionResult = ralpStage2Service.resolveForExecution(executionKey);
-        context.appendEntry(new AuditLogEntry(
-                Instant.now(),
+        context.append(
                 AuditLogLevel.INFO,
                 AuditLogScope.FILE,
                 "FILE_RALP_STAGE2A2B",
@@ -81,7 +76,7 @@ public class RalpAuditFileProcessor implements AuditFileProcessor {
                         + ", ralprsSender=" + resolutionResult.resolvedSmSender()
                         + ", ralprtStatus=" + resolutionResult.computedStatus() + "</P>",
                 null
-        ));
+        );
 
         reconcileCoordinator.run(context, file);
     }

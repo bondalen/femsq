@@ -1,7 +1,7 @@
 <template>
-  <q-card flat bordered>
-    <q-card-section class="row items-center">
-      <div class="text-h6">Файлы для проверки</div>
+  <q-card flat bordered class="files-list-card">
+    <q-card-section :class="compact ? 'files-header-compact row items-center' : 'row items-center'">
+      <div :class="compact ? 'text-subtitle2' : 'text-h6'">Файлы для проверки</div>
       <q-chip class="q-ml-sm" color="primary" text-color="white">
         {{ files.length }}
       </q-chip>
@@ -16,9 +16,9 @@
       />
     </q-card-section>
 
-    <q-card-section>
+    <q-card-section :class="compact ? 'files-body-compact' : ''">
       <!-- Фильтры -->
-      <div class="row q-col-gutter-md q-mb-md">
+      <div :class="compact ? 'row q-col-gutter-sm q-mb-xs' : 'row q-col-gutter-md q-mb-md'">
         <div class="col-12 col-md-6">
           <q-input
             v-model="searchQuery"
@@ -48,14 +48,16 @@
 
       <!-- Таблица -->
       <q-table
+        class="files-table"
         :rows="filteredFiles"
         :columns="columns"
         row-key="afKey"
         :loading="loading"
+        :dense="compact"
         flat
         bordered
         :rows-per-page-options="[10, 25, 50]"
-        :pagination="{ rowsPerPage: 10, sortBy: 'afNum', descending: false }"
+        :pagination="{ rowsPerPage: compact ? 25 : 10, sortBy: 'afNum', descending: false }"
       >
         <!-- Колонка: Номер -->
         <template v-slot:body-cell-afNum="props">
@@ -213,9 +215,12 @@ import FileEditDialog from './FileEditDialog.vue';
 
 interface Props {
   dirId: number | null;
+  compact?: boolean;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  compact: false
+});
 
 const $q = useQuasar();
 const filesStore = useFilesStore();
@@ -414,3 +419,33 @@ async function confirmDelete() {
   }
 }
 </script>
+
+<style scoped>
+.files-list-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.files-header-compact {
+  padding: 4px 8px !important;
+}
+
+.files-body-compact {
+  padding: 4px !important;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.files-table {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+:deep(.files-table .q-table__middle) {
+  max-height: 100%;
+}
+</style>

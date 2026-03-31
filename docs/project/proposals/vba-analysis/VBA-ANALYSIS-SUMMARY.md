@@ -263,6 +263,16 @@ CREATE TABLE [24-1021_debt_Test] (
 
 Порядок снятия структуры таблиц, текста запросов и артефактов для репозитория описан в **[MS-ACCESS-OBJECTS-CAPTURE.md](./MS-ACCESS-OBJECTS-CAPTURE.md)** и **[access-queries/README.md](./access-queries/README.md)**. Пример: **`ra_ImpNew`** — один файл `access-queries/ra_ImpNew.table.md`, запросы `ra_ImpNewQuRa.access.sql` / `ra_ImpNewQuRc.access.sql`, модуль `DumpTableDef_RaImpNew.bas`.
 
+## Уточнение по Type 5 (partial apply)
+
+По подтверждённой логике VBA (`ra_aAllAgents.Audit`, `AuditRaCreateNew`, `AuditRaEdit`, `AuditRcCreateNew`, `AuditRcEdit`) для `af_type=5` применяется **частичная загрузка**:
+
+- кондиционные строки применяются в доменные таблицы;
+- некондиционные строки пропускаются и отображаются в "ходе ревизии" с причинами;
+- наличие некондиционных строк не должно глобально блокировать применение кондиционных.
+
+Детальная матрица `ELIGIBLE/REJECTED/FILTERED`, инварианты реализации и протокол контролируемой проверки на реальной БД (с rollback до baseline) зафиксированы в документе: **[type5-row-eligibility.md](./type5-row-eligibility.md)**.
+
 ## Извлечённые файлы
 
 **Директория:** `docs/project/proposals/vba-analysis/VBA-Code-Export/`

@@ -2,7 +2,7 @@
 
 **Назначение:** в этой папке — по одному файлу на **каждую задокументированную** локальную таблицу и **каждый сохранённый запрос** MS Access, плюс общие модули VBA для снятия метаданных.
 
-**lastUpdated:** 2026-03-19
+**lastUpdated:** 2026-03-23
 
 ---
 
@@ -27,4 +27,6 @@
 
 | Таблицы (`*.table.md`) | Запросы (`*.access.sql`) |
 |-------------------------|---------------------------|
-| `ra_ImpNew.table.md`, `cn_PrDocImp.table.md`, `ralpRaAuTest.table.md`, `ralpRaSumTest.table.md`, `ags_ogAgFeePnTest.table.md`, `ogAgFeePnTest.table.md` | `ra_ImpNewQuRa.access.sql`, `ra_ImpNewQuRc.access.sql`, `ags_PdSdRRcList.access.sql`, `cn_PrDocImp_Compare.access.sql`, `cn_PrDocImp_Cn.access.sql`, `cn_PrDocImp_CnInv.access.sql`, `cn_PrDocImp_CnInvNt.access.sql`, `cn_PrDocImp_CnInvEx.access.sql`, `cn_PrDocImp_CnInvExCsosEx.access.sql`, `cn_PrDocImp_CnInvExCsosNt.access.sql`, `cn_PrDocImp_CnInvExCsosExPdEx.access.sql`, `cn_PrDocImp_CnInvExCsosExPdNt.access.sql`, `cn_PrDocImp_CnInvExCsosExPdExPnEx.access.sql`, `cn_PrDocImp_CnInvExCsosExPdExPnNt.access.sql`, `cn_PrDocImp_CnInvExCsosExPdExPnNtOneAccDoc.access.sql`, `cn_PrDocImp_CnInvExCsosExPdExPnNtIn.access.sql`, `cn_PrDocImp_CnInvExCsosExPdExPnExRs.access.sql`, `ralpRaAuTestQuRa.access.sql`, `ralpRaAuTestQuAu.access.sql` |
+| `ra_ImpNew.table.md`, `cn_PrDocImp.table.md`, `ralpRaAuTest.table.md`, `ralpRaSumTest.table.md`, `ags_ogAgFeePnTest.table.md`, `ogAgFeePnTest.table.md` | `ra_ImpNewQu.access.sql`, `ra_ImpNewQuRa.access.sql`, `ra_ImpNewQuRc.access.sql`, `ags_PdSdRRcList.access.sql`, `cn_PrDocImp_Compare.access.sql`, `cn_PrDocImp_Cn.access.sql`, `cn_PrDocImp_CnInv.access.sql`, `cn_PrDocImp_CnInvNt.access.sql`, `cn_PrDocImp_CnInvEx.access.sql`, `cn_PrDocImp_CnInvExCsosEx.access.sql`, `cn_PrDocImp_CnInvExCsosNt.access.sql`, `cn_PrDocImp_CnInvExCsosExPdEx.access.sql`, `cn_PrDocImp_CnInvExCsosExPdNt.access.sql`, `cn_PrDocImp_CnInvExCsosExPdExPnEx.access.sql`, `cn_PrDocImp_CnInvExCsosExPdExPnNt.access.sql`, `cn_PrDocImp_CnInvExCsosExPdExPnNtOneAccDoc.access.sql`, `cn_PrDocImp_CnInvExCsosExPdExPnNtIn.access.sql`, `cn_PrDocImp_CnInvExCsosExPdExPnExRs.access.sql`, `ralpRaAuTestQuRa.access.sql`, `ralpRaAuTestQuAu.access.sql` |
+
+Примечание по Type 5 (`ra_ImpNewQuRa` / `ra_ImpNewQuRc`): политика сумм зафиксирована как версия-эволюция `1:N` — новая запись в `ags.ra_summ` / `ags.ra_change_summ` добавляется только при отличии от latest, при равенстве пропускается.

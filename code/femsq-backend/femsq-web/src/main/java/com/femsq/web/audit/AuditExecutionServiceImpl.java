@@ -7,9 +7,12 @@ import com.femsq.database.service.RaDirService;
 import com.femsq.database.service.RaExecutionService;
 import com.femsq.database.service.RaFService;
 import com.femsq.web.audit.runtime.AuditExecutionRegistry;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
@@ -29,6 +32,7 @@ import org.springframework.stereotype.Service;
 public class AuditExecutionServiceImpl implements AuditExecutionService {
 
     private static final Logger log = Logger.getLogger(AuditExecutionServiceImpl.class.getName());
+    private static final long LOG_FLUSH_INTERVAL_MS = 1000L;
 
     private final RaAService raAService;
     private final RaDirService raDirService;
@@ -76,23 +80,28 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
         context.setLastUpdatedAt(context.getStartedAt());
         context.setAuditType(audit.adtType());
         context.setAddRa(audit.adtAddRA());
+        ThrottledProgressFlusher progressFlusher = new ThrottledProgressFlusher(
+                LOG_FLUSH_INTERVAL_MS,
+                () -> saveProgress(audit, context)
+        );
+        context.setOnEntryAppended(ctx -> progressFlusher.tryFlush());
 
-        String headerHtml = "<P>Запуск ревизии <b>" + escape(audit.adtName()) + "</b> (ID=" + auditId + ")</P>";
-        AuditLogEntry headerEntry = new AuditLogEntry(
-                context.getStartedAt(),
+        String auditSpanId = context.beginSpan(
                 AuditLogLevel.INFO,
                 AuditLogScope.AUDIT,
                 "AUDIT_START",
-                headerHtml,
+                "<P>Запуск ревизии <b>" + escape(audit.adtName()) + "</b> (ID=" + auditId + ")</P>",
                 null
         );
-        context.appendEntry(headerEntry);
 
         try {
             // Шаг 3: цикл по файлам ревизии и делегирование обработчикам (пока без Excel-логики)
             dirId = audit.adtDir();
             if (dirId == null) {
                 log.warning("[AuditExecution] Audit has no directory, skipping file processing. auditId=" + auditId);
+                context.append(AuditLogLevel.WARNING, AuditLogScope.AUDIT, "DIR_ID_EMPTY",
+                        "<P>Директория ревизии не задана — обработка файлов пропущена</P>", null);
+                appendAuditEnd(context, auditSpanId);
                 saveProgress(audit, context);
                 auditExecutionRegistry.markCompleted(auditId);
                 return;
@@ -101,42 +110,61 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
             List<RaF> files = raFService.getByDirId(dirId);
             log.info("[AuditExecution] Files to process for auditId=" + auditId + " (dir=" + dirId + "): " + files.size());
 
+            boolean dirMissing = verifyDirectoryExistsInFileSystem(context);
+            if (dirMissing) {
+                appendAuditEnd(context, auditSpanId);
+                saveProgress(audit, context);
+                auditExecutionRegistry.markCompleted(auditId);
+                return;
+            }
+
             for (RaF raF : files) {
                 // Учитываем только файлы, помеченные к выполнению
                 if (!Boolean.TRUE.equals(raF.afExecute())) {
+                    context.append(AuditLogLevel.INFO, AuditLogScope.FILE, "FILE_SKIPPED_BY_USER",
+                            "<P>Файл пропущен (по настройке): " + escape(raF.afName()) + "</P>", null);
                     continue;
                 }
 
                 Integer fileType = raF.afType();
                 if (Objects.equals(fileType, 1) || Objects.equals(fileType, 4)) {
-                    String message = "<P>WARN: af_type=" + fileType
+                    String message = "<P>af_type=" + fileType
                             + " устарел — файл " + escape(raF.afName()) + " пропущен</P>";
                     log.warning("[AuditExecution] Skipped obsolete file type af_type=" + fileType + ", file=" + raF.afName());
-                    context.appendEntry(new AuditLogEntry(
-                            Instant.now(),
-                            AuditLogLevel.WARNING,
-                            AuditLogScope.FILE,
-                            "FILE_TYPE_OBSOLETE_SKIPPED",
-                            message,
-                            null
-                    ));
+                    context.append(AuditLogLevel.WARNING, AuditLogScope.FILE, "FILE_TYPE_OBSOLETE_SKIPPED", message, null);
                     continue;
                 }
 
                 String resolvedPath = resolveFilePath(context, raF);
                 if (resolvedPath == null || resolvedPath.isBlank()) {
-                    String message = "<P>WARN: Путь к файлу не определён — файл пропущен: "
+                    String message = "<P>Путь к файлу не определён — файл пропущен: "
                             + escape(raF.afName()) + "</P>";
                     log.warning("[AuditExecution] File path is empty, skipping file=" + raF.afName());
-                    context.appendEntry(new AuditLogEntry(
-                            Instant.now(),
-                            AuditLogLevel.WARNING,
-                            AuditLogScope.FILE,
-                            "FILE_PATH_EMPTY",
-                            message,
-                            null
-                    ));
+                    context.append(AuditLogLevel.WARNING, AuditLogScope.FILE, "FILE_PATH_EMPTY", message, null);
                     continue;
+                }
+
+                Instant fileStartedAt = Instant.now();
+                String fileSpanId = context.beginSpan(
+                        AuditLogLevel.INFO,
+                        AuditLogScope.FILE,
+                        "FILE_START",
+                        "<P>Файл: " + escape(raF.afName()) + " (type=" + fileType + ") — начало обработки</P>",
+                        null
+                );
+
+                Path filePath = Path.of(resolvedPath);
+                if (!Files.exists(filePath)) {
+                    context.append(AuditLogLevel.WARNING, AuditLogScope.FILE, "FILE_FS_MISSING",
+                            "<P>Файл не найден в файловой системе: " + escape(resolvedPath) + "</P>", null);
+                    context.endSpan(fileSpanId, AuditLogLevel.INFO, AuditLogScope.FILE, "FILE_END",
+                            "<P>Файл: " + escape(raF.afName()) + " — завершено (не найден), duration="
+                                    + formatDuration(fileStartedAt, Instant.now()) + "</P>", null);
+                    saveProgress(audit, context);
+                    continue;
+                } else {
+                    context.append(AuditLogLevel.INFO, AuditLogScope.FILE, "FILE_FS_FOUND",
+                            "<P>Файл найден: " + escape(resolvedPath) + "</P>", null);
                 }
 
                 AuditFile auditFile = new AuditFile(
@@ -152,36 +180,32 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
                         .orElse(null);
 
                 if (processor == null) {
-                    AuditLogEntry entry = new AuditLogEntry(
-                            Instant.now(),
+                    context.append(
                             AuditLogLevel.WARNING,
                             AuditLogScope.FILE,
                             "FILE_PROCESSOR_NOT_FOUND",
                             "<P>Нет обработчика для файла типа " + raF.afType() + ": " + raF.afName() + "</P>",
                             null
                     );
-                    context.appendEntry(entry);
+                    context.endSpan(fileSpanId, AuditLogLevel.INFO, AuditLogScope.FILE, "FILE_END",
+                            "<P>Файл: " + escape(raF.afName()) + " — завершено (нет обработчика), duration="
+                                    + formatDuration(fileStartedAt, Instant.now()) + "</P>", null);
                     continue;
                 }
 
-                processor.process(context, auditFile);
+                context.inSpan(fileSpanId, () -> processor.process(context, auditFile));
 
                 // Завершение обработки файла
-                AuditLogEntry fileEnd = new AuditLogEntry(
-                        Instant.now(),
-                        AuditLogLevel.INFO,
-                        AuditLogScope.FILE,
-                        "FILE_PROCESS_FINISH",
-                        "<P>Обработка файла завершена: " + raF.afName() + "</P>",
-                        null
-                );
-                context.appendEntry(fileEnd);
+                context.endSpan(fileSpanId, AuditLogLevel.INFO, AuditLogScope.FILE, "FILE_END",
+                        "<P>Файл: " + escape(raF.afName()) + " — завершено за " + formatDuration(fileStartedAt, Instant.now()) + "</P>",
+                        null);
 
                 // Инкрементальное обновление лога и временной метки после каждого файла
                 saveProgress(audit, context);
             }
 
             // Шаг 4: финальное сохранение обновлённого adt_results (контрольная фиксация)
+            appendAuditEnd(context, auditSpanId);
             saveProgress(audit, context);
 
             auditExecutionRegistry.markCompleted(auditId);
@@ -189,17 +213,84 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
         } catch (Exception ex) {
             auditExecutionRegistry.markFailed(auditId, ex.getMessage());
             log.severe("[AuditExecution] Error during audit execution for auditId=" + auditId + ": " + ex.getMessage());
-            AuditLogEntry errorEntry = new AuditLogEntry(
-                    Instant.now(),
+            context.append(
                     AuditLogLevel.ERROR,
                     AuditLogScope.AUDIT,
                     "AUDIT_ERROR",
                     "<P><b>Ошибка выполнения ревизии.</b> Подробности см. в журнале сервера.</P>",
                     null
             );
-            context.appendEntry(errorEntry);
+            appendAuditEnd(context, auditSpanId);
             saveProgress(audit, context);
         }
+    }
+
+    private static final class ThrottledProgressFlusher {
+        private final long intervalMs;
+        private final Runnable flushAction;
+        private long lastFlushAtMs;
+
+        private ThrottledProgressFlusher(long intervalMs, Runnable flushAction) {
+            this.intervalMs = intervalMs;
+            this.flushAction = flushAction;
+            this.lastFlushAtMs = 0L;
+        }
+
+        private synchronized void tryFlush() {
+            long now = System.currentTimeMillis();
+            if (now - lastFlushAtMs < intervalMs) {
+                return;
+            }
+            flushAction.run();
+            lastFlushAtMs = now;
+        }
+    }
+
+    private boolean verifyDirectoryExistsInFileSystem(AuditExecutionContext context) {
+        String dir = context.getDirectoryPath();
+        if (dir == null || dir.isBlank()) {
+            return false;
+        }
+        String normalizedDir = normalizeCrossPlatformPath(dir.trim());
+        Path path = Path.of(normalizedDir);
+        if (Files.isDirectory(path)) {
+            context.append(
+                    AuditLogLevel.INFO,
+                    AuditLogScope.AUDIT,
+                    "DIR_FS_EXISTS",
+                    "<P>Директория в файловой системе обнаружена: " + escape(normalizedDir) + "</P>",
+                    null
+            );
+            return false;
+        }
+        context.append(
+                AuditLogLevel.WARNING,
+                AuditLogScope.AUDIT,
+                "DIR_FS_MISSING",
+                "<P>Директория в файловой системе не обнаружена: " + escape(normalizedDir) + "</P>",
+                null
+        );
+        return true;
+    }
+
+    private void appendAuditEnd(AuditExecutionContext context, String auditSpanId) {
+        Instant start = context.getStartedAt();
+        Instant end = Instant.now();
+        context.endSpan(auditSpanId, AuditLogLevel.INFO, AuditLogScope.AUDIT, "AUDIT_END",
+                "<P>Ревизия завершена. Duration: " + formatDuration(start, end) + "</P>", null);
+    }
+
+    private String formatDuration(Instant start, Instant end) {
+        if (start == null || end == null) {
+            return "-";
+        }
+        long seconds = ChronoUnit.SECONDS.between(start, end);
+        if (seconds < 0) {
+            seconds = 0;
+        }
+        long minutes = seconds / 60;
+        long remSeconds = seconds % 60;
+        return minutes + "m " + remSeconds + "s";
     }
 
     /**
@@ -242,11 +333,27 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
             return normalized;
         }
 
-        String dir = directoryPath.trim();
+        String dir = normalizeCrossPlatformPath(directoryPath.trim());
         String separator = dir.contains("\\") ? "\\" : "/";
         String cleanedDir = dir.endsWith("\\") || dir.endsWith("/") ? dir.substring(0, dir.length() - 1) : dir;
         String cleanedFile = normalized.startsWith("\\") || normalized.startsWith("/") ? normalized.substring(1) : normalized;
         return cleanedDir + separator + cleanedFile;
+    }
+
+    private String normalizeCrossPlatformPath(String path) {
+        if (path == null || path.isBlank()) {
+            return path;
+        }
+        String trimmed = path.trim();
+        // Some directory values may come in escaped UNC-like format with doubled backslashes.
+        String canonical = trimmed.replace("\\\\", "\\");
+        String lowerCanonical = canonical.toLowerCase();
+        String wslPrefix = "\\wsl.localhost\\ubuntu\\";
+        if (lowerCanonical.startsWith(wslPrefix)) {
+            String suffix = canonical.substring(wslPrefix.length()).replace("\\", "/");
+            return "/" + suffix;
+        }
+        return trimmed;
     }
 
     private boolean isAbsoluteOrUncPath(String path) {

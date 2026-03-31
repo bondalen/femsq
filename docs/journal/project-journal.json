@@ -3,7 +3,7 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-03-19"
+      "lastUpdated": "2026-03-26"
     },
     "sessions": [
       {
@@ -4066,7 +4066,7 @@
           "chat-attributes": {
             "id": "chat-2026-03-23-002",
             "created": "2026-03-23",
-            "lastUpdated": "2026-03-23",
+            "lastUpdated": "2026-03-26",
             "owner": "Александр",
             "status": "in_progress",
             "priority": "medium",
@@ -4106,6 +4106,502 @@
                     "outcome": "Есть отдельный план для доменной специфики reconcile, чтобы текущий чат оставался компактным и завершённым по общему функционалу.",
                     "references": [
                       "docs/development/notes/chats/chat-plan/chat-plan-26-0319-excel-processing-parallel.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0323-reconcile-specific.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Type 5: DBHub-check SQL под partial apply (success). № log-2026-03-24-001",
+                "log-attributes": {
+                  "id": "log-2026-03-24-001",
+                  "timestamp": "2026-03-24T00:00:00+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Обновлён type5-match-categories-check.sql",
+                    "details": "Добавлены `applyEligibility`, проверка знака `ОА`/`ОА прочие` до `NEW`, материализация `#classified` для нескольких result set, `partialApplyCoexistsRejected` вместо `shouldBlockApply`. В плане `chat-plan-26-0323-reconcile-specific.md` закрыт пункт 1.1.6, версия плана 0.9.8.",
+                    "outcome": "Ручная проверка категорий в DBHub согласована с partial apply reconcile.",
+                    "references": [
+                      "docs/sql-scripts/type5-match-categories-check.sql",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0323-reconcile-specific.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Type 5: счётчики eligibility в adt_results (success). № log-2026-03-24-002",
+                "log-attributes": {
+                  "id": "log-2026-03-24-002",
+                  "timestamp": "2026-03-24T00:00:00+03:00",
+                  "level": "success",
+                  "effort": "20m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Пункты плана 1.1.8–1.1.9: rowsEligible/rowsRejected и разделение FILTERED vs data-quality",
+                    "details": "В `AllAgentsReconcileService`: раздельный учёт `rejectedInvalidCanonical` и `rejectedDisallowedSign`; в строке диагностики (adt_results) добавлены `rowsEligible`, `rowsRejected`, `rejectedByReason(filteredToRc|invalidCanonical|disallowedSign|ambiguous)`. План обновлён до 0.9.9.",
+                    "outcome": "Сводка reconcile type=5 в журнале аудита явно отделяет ветку RC от отказов RA по качеству данных.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/AllAgentsReconcileService.java",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0323-reconcile-specific.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Type 5: закрыты инкременты 1.7.1–1.7.2 (success). № log-2026-03-24-003",
+                "log-attributes": {
+                  "id": "log-2026-03-24-003",
+                  "timestamp": "2026-03-24T00:00:00+03:00",
+                  "level": "success",
+                  "effort": "10m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "План: пункты 1.7.1 (match RA) и 1.7.2 (upsert RA) отмечены выполненными по факту",
+                    "details": "Добавлен `docs/sql-scripts/type5-post-apply-ra-sanity.sql` для DBHub (staging count, прирост `ags.ra`/`ra_summ` относительно baseline `ra_key`). В заголовке `type5-match-categories-check.sql` — перекрёстная ссылка. Версия плана 0.9.10.",
+                    "outcome": "Формальный вертикальный срез A+B для type=5 зафиксирован в плане и SQL-артефактах.",
+                    "references": [
+                      "docs/sql-scripts/type5-post-apply-ra-sanity.sql",
+                      "docs/sql-scripts/type5-match-categories-check.sql",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0323-reconcile-specific.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Type 5: read-model RC 1.3.1 (success). № log-2026-03-24-004",
+                "log-attributes": {
+                  "id": "log-2026-03-24-004",
+                  "timestamp": "2026-03-24T00:00:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Реализован read-model сопоставления изменений (план 1.3.1)",
+                    "details": "Добавлены `RcStagingLineParser`, загрузка `ags.ra_change`/`ra_chSmLt` с колонками `raс_*`/`raсs_*`, индекс `ags.ra` по периоду и номеру отчёта, счётчики `rc*` в строке reconcile для `adt_results`. План обновлён до 0.9.11.",
+                    "outcome": "Без записи в БД доступна диагностика ветки «ОА изм» по аналогии с `ra_ImpNewQuRc`.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/AllAgentsReconcileService.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/RcStagingLineParser.java",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0323-reconcile-specific.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Type 5: идемпотентность apply через marker-таблицу (success). № log-2026-03-25-001",
+                "log-attributes": {
+                  "id": "log-2026-03-25-001",
+                  "timestamp": "2026-03-25T00:00:00+03:00",
+                  "level": "success",
+                  "effort": "40m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Реализована 1.5.1: marker-based идемпотентность для Type 5",
+                    "details": "В `AllAgentsReconcileService.reconcileInTransaction` добавлены marker-checks по `exec_key + step_code` (`TYPE5_APPLY_RA`, `TYPE5_APPLY_RC`, `TYPE5_DELETE_RA`, `TYPE5_DELETE_RC`). Для защищённых шагов при повторном запуске сайд-эффекты пропускаются, а при первом успешном выполнении создаётся запись в `ags.ra_reconcile_marker` (table-ensure + select/merge). Для RC дельт счётчики `rcApplyDelta*` обнуляются, если шаг уже выполнен по marker.",
+                    "outcome": "Повторный reconcile на том же `exec_key` не повторяет apply-сайд-эффекты и сохраняет идемпотентность.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/AllAgentsReconcileService.java",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0323-reconcile-specific.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Type 5: SQL-guard от дублей на RA insert (success). № log-2026-03-25-002",
+                "log-attributes": {
+                  "id": "log-2026-03-25-002",
+                  "timestamp": "2026-03-25T00:00:00+03:00",
+                  "level": "success",
+                  "effort": "30m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Реализована 1.5.2: SQL защита дублей при insert-ветке RA",
+                    "details": "В `AllAgentsReconcileService.insertNewRaRows` заменён простой `INSERT` на `INSERT ... OUTPUT ... SELECT ... WHERE NOT EXISTS` по ключам read-model `(ra_period, ra_num)`. При наличии уже существующей записи резолвится `ra_key`, чтобы корректно продолжить эволюцию `ags.ra_summ` без создания дублей.",
+                    "outcome": "Повторные/частичные запуски не создают новые строки `ags.ra` по тем же ключам, при этом `ags.ra_summ` остаётся в согласованном состоянии.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/AllAgentsReconcileService.java",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0323-reconcile-specific.md"
+                    ]
+                  }
+                ]
+              }
+            }
+            ,
+            {
+              "log": {
+                "displayName": "Type 5: идемпотентность повторного reconcile на одном exec_key (success). № log-2026-03-25-003",
+                "log-attributes": {
+                  "id": "log-2026-03-25-003",
+                  "timestamp": "2026-03-25T00:00:00+03:00",
+                  "level": "success",
+                  "effort": "30m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Выполнен пункт 1.5.3: повторный reconcile на одном exec_key без дублей",
+                    "details": "Добавлен интеграционный тест `Type5ExecKeyIdempotencyIntegrationIT`: после `executeAudit(14)` берёт последний `exec_key` и дважды вызывает `AllAgentsReconcileService.reconcile(new ReconcileContext(exec_key, 14, true, 5))`, сравнивая snapshot max-ключей по `ags.ra/ra_summ/ra_change/ra_change_summ` и marker-строк для `exec_key` до и после повторных вызовов.",
+                    "outcome": "Повторный запуск reconcile на том же `exec_key` детерминирован и не создаёт новых записей в доменных таблицах.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/test/java/com/femsq/web/audit/reconcile/Type5ExecKeyIdempotencyIntegrationIT.java",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0323-reconcile-specific.md"
+                    ]
+                  }
+                ]
+              }
+            }
+            ,
+            {
+              "log": {
+                "displayName": "Type 5: повторный запуск ревизии с новым exec_key (success). № log-2026-03-25-004",
+                "log-attributes": {
+                  "id": "log-2026-03-25-004",
+                  "timestamp": "2026-03-25T00:00:00+03:00",
+                  "level": "success",
+                  "effort": "45m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Выполнен пункт 1.5.4: повторный запуск той же ревизии с новым exec_key",
+                    "details": "Добавлен интеграционный тест `Type5NewExecKeyIdempotencyIntegrationIT`: несколько раз запускает `executeAudit(14)` (получая разные `exec_key`) и для каждого `exec_key` вызывает `AllAgentsReconcileService.reconcile(new ReconcileContext(exec_key, 14, true, 5))`. Проверяется сходимость: после повторного запуска доменные max-ключи `ags.ra/ra_summ/ra_change/ra_change_summ` перестают расти; marker-таблица фиксирует шаги по каждому `exec_key`.",
+                    "outcome": "Повторные запуска ревизии (новые `exec_key`) приводят к детерминированному состоянию без дублей и лишних версий.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/test/java/com/femsq/web/audit/reconcile/Type5NewExecKeyIdempotencyIntegrationIT.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/AllAgentsReconcileService.java",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0323-reconcile-specific.md"
+                    ]
+                  }
+                ]
+              }
+            }
+            ,
+            {
+              "log": {
+                "displayName": "Type 5: частичный сбой, rollback и безопасный повтор (success). № log-2026-03-25-005",
+                "log-attributes": {
+                  "id": "log-2026-03-25-005",
+                  "timestamp": "2026-03-25T00:00:00+03:00",
+                  "level": "success",
+                  "effort": "45m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Выполнен пункт 1.5.5: проверка rollback и повторного безопасного запуска",
+                    "details": "В `AllAgentsReconcileService` добавлен тестовый хук `femsq.reconcile.type5.simulateFailureStep` (по умолчанию выключен), позволяющий смоделировать SQL-сбой после шага apply. Добавлен интеграционный тест `Type5PartialFailureRecoveryIntegrationIT`: получает `exec_key` через `executeAudit(14)` в dry-run (`adt_AddRA=0`), затем вызывает reconcile apply с симуляцией сбоя после `TYPE5_APPLY_RA` и проверяет отсутствие изменений домена/marker (rollback). После этого выполняет повторный reconcile без флага и подтверждает успешное применение и идемпотентность повторного вызова на том же `exec_key`.",
+                    "outcome": "Частичный сбой не оставляет следов (rollback), повторный запуск безопасен и не порождает дублей.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/AllAgentsReconcileService.java",
+                      "code/femsq-backend/femsq-web/src/test/java/com/femsq/web/audit/reconcile/Type5PartialFailureRecoveryIntegrationIT.java",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0323-reconcile-specific.md"
+                    ]
+                  }
+                ]
+              }
+            }
+            ,
+            {
+              "log": {
+                "displayName": "Type 5: DBHub SQL чек-лист верификации (success). № log-2026-03-25-006",
+                "log-attributes": {
+                  "id": "log-2026-03-25-006",
+                  "timestamp": "2026-03-25T00:00:00+03:00",
+                  "level": "success",
+                  "effort": "25m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Выполнен пункт 1.6.1: SQL чек-лист верификации Type 5 для DBHub",
+                    "details": "Добавлен `docs/sql-scripts/type5-verification-checklist.sql`: секции execution metadata, adt_results, staging volume, marker-таблица, проверки дублей (RA/RC) и быстрые sanity-проверки по RC-ветке.",
+                    "outcome": "Есть единый DBHub-скрипт для быстрой ручной верификации прогона Type 5 по `exec_key`.",
+                    "references": [
+                      "docs/sql-scripts/type5-verification-checklist.sql",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0323-reconcile-specific.md"
+                    ]
+                  }
+                ]
+              }
+            }
+            ,
+            {
+              "log": {
+                "displayName": "Type 5: цепочка staging→domain→journal в DBHub (success). № log-2026-03-25-007",
+                "log-attributes": {
+                  "id": "log-2026-03-25-007",
+                  "timestamp": "2026-03-25T00:00:00+03:00",
+                  "level": "success",
+                  "effort": "25m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Выполнен пункт 1.6.2: DBHub-скрипт сверки цепочки Type 5",
+                    "details": "Добавлен `docs/sql-scripts/type5-chain-stg-domain-journal.sql`: по `@exec_key` выводит `ags.ra_execution` (статус/ошибка/время), `ags.ra_a.adt_results` (HTML journal), объём `ags.ra_stg_ra`, RA-цепочку join staging→lookup→ags.ra (с подсчётами missing/single/ambiguous), sanity-проверки по `ags.ra_change` и marker-таблице.",
+                    "outcome": "Ручная проверка цепочки staging→domain→journal формализована одним DBHub-скриптом.",
+                    "references": [
+                      "docs/sql-scripts/type5-chain-stg-domain-journal.sql",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0323-reconcile-specific.md"
+                    ]
+                  }
+                ]
+              }
+            }
+            ,
+            {
+              "log": {
+                "displayName": "Type 5: сверка счётчиков reconcile с БД (success). № log-2026-03-25-008",
+                "log-attributes": {
+                  "id": "log-2026-03-25-008",
+                  "timestamp": "2026-03-25T00:00:00+03:00",
+                  "level": "success",
+                  "effort": "25m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Выполнен пункт 1.6.3: сверка reconcile-счётчиков с фактическими count в БД",
+                    "details": "Добавлен `docs/sql-scripts/type5-counters-vs-db-check.sql`: извлекает значения ключевых счётчиков из `ags.ra_a.adt_results` и сравнивает их с фактическим приростом строк доменных таблиц по диапазонам ключей (требуются baseline max ключей до прогона).",
+                    "outcome": "Есть DBHub-скрипт expected-vs-actual для проверки корректности счётчиков apply на реальной БД.",
+                    "references": [
+                      "docs/sql-scripts/type5-counters-vs-db-check.sql",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0323-reconcile-specific.md"
+                    ]
+                  }
+                ]
+              }
+            }
+            ,
+            {
+              "log": {
+                "displayName": "Type 5: шаблон отчёта ручной проверки (success). № log-2026-03-25-009",
+                "log-attributes": {
+                  "id": "log-2026-03-25-009",
+                  "timestamp": "2026-03-25T00:00:00+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Выполнен пункт 1.6.4: зафиксирован шаблон отчёта ручной проверки Type 5",
+                    "details": "Добавлен `docs/development/notes/templates/type5-manual-verification-report-template.md`: структура отчёта с полями auditId/exec_key/addRa, journal (`ra_execution` + `adt_results`), staging summary, baseline max-keys, expected counters, actual deltas, expected-vs-actual, итог/рекомендации.",
+                    "outcome": "Есть единый шаблон для документирования результатов ручной DBHub-верификации Type 5.",
+                    "references": [
+                      "docs/development/notes/templates/type5-manual-verification-report-template.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0323-reconcile-specific.md"
+                    ]
+                  }
+                ]
+              }
+            }
+            ,
+            {
+              "log": {
+                "displayName": "Type 5: DBHub match+apply RC (success). № log-2026-03-25-010",
+                "log-attributes": {
+                  "id": "log-2026-03-25-010",
+                  "timestamp": "2026-03-25T00:00:00+03:00",
+                  "level": "success",
+                  "effort": "40m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Выполнен пункт 1.7.3: SQL-верификация match+upsert RC (ra_change)",
+                    "details": "Добавлен `docs/sql-scripts/type5-rc-match-apply-check.sql`: best-effort SQL парсинг строк `rainRaNum` для staging `ОА изм`, привязка к base `ags.ra` по (reportPeriod, reportNum), сопоставление с `ags.ra_change` по (rcPeriod, ra_key, changeNum) и категории NEW/CHANGED/UNCHANGED/AMBIGUOUS/PARSE_INVALID/MISSING_BASE_RA. Также секция apply-deltas по baseline (rac_key/raсs_key).",
+                    "outcome": "Есть DBHub-артефакт для ручной проверки ветки RC (match + apply sanity) в вертикальном срезе Type 5.",
+                    "references": [
+                      "docs/sql-scripts/type5-rc-match-apply-check.sql",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0323-reconcile-specific.md"
+                    ]
+                  }
+                ]
+              }
+            }
+            ,
+            {
+              "log": {
+                "displayName": "Type 5: идемпотентность вертикального среза (exec_key) (success). № log-2026-03-25-011",
+                "log-attributes": {
+                  "id": "log-2026-03-25-011",
+                  "timestamp": "2026-03-25T00:00:00+03:00",
+                  "level": "success",
+                  "effort": "10m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Выполнен пункт 1.7.4: идемпотентность на одном exec_key",
+                    "details": "Вертикальный срез Type 5 дополнен явной фиксацией идемпотентности на одном `exec_key`: marker-таблица `ags.ra_reconcile_marker` блокирует повторные сайд-эффекты, а `Type5ExecKeyIdempotencyIntegrationIT` проверяет неизменность доменных max-ключей и marker-строк при повторных вызовах reconcile на одном `exec_key`.",
+                    "outcome": "Повторный reconcile на том же `exec_key` не изменяет доменные таблицы и считается идемпотентным.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/test/java/com/femsq/web/audit/reconcile/Type5ExecKeyIdempotencyIntegrationIT.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/AllAgentsReconcileService.java",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0323-reconcile-specific.md"
+                    ]
+                  }
+                ]
+              }
+            }
+            ,
+            {
+              "log": {
+                "displayName": "Type 5: delete-ветки и финальная DBHub-сверка (success). № log-2026-03-25-012",
+                "log-attributes": {
+                  "id": "log-2026-03-25-012",
+                  "timestamp": "2026-03-25T00:00:00+03:00",
+                  "level": "success",
+                  "effort": "35m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Выполнен пункт 1.7.5: delete-ветки и финальная сверка счётчиков/journal",
+                    "details": "Добавлен `docs/sql-scripts/type5-delete-final-check.sql`: вычисляет план delete для RA/RC (best-effort SQL-аналог), выводит journal (`ra_execution` + `adt_results`) и показывает факт применения delete по marker шагам `TYPE5_DELETE_RA/TYPE5_DELETE_RC` для `exec_key` (если marker-таблица существует). Скрипт ничего не удаляет.",
+                    "outcome": "Вертикальный срез Type 5 дополнен финальным DBHub-артефактом для delete-веток и сверки journal/счётчиков.",
+                    "references": [
+                      "docs/sql-scripts/type5-delete-final-check.sql",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0323-reconcile-specific.md"
+                    ]
+                  }
+                ]
+              }
+            }
+            ,
+            {
+              "log": {
+                "displayName": "Audit log: заложена структура документов (success). № log-2026-03-26-001",
+                "log-attributes": {
+                  "id": "log-2026-03-26-001",
+                  "timestamp": "2026-03-26T00:00:00+03:00",
+                  "level": "success",
+                  "effort": "30m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Создан набор документов для работ по «ходу ревизии» (VBA parity)",
+                    "details": "Добавлены документы: `audit-execution-log-vba-parity.md` (контракт/цели), `audit-log-event-catalog.md` (каталог событий), `audit-log-vba-to-java-mapping.md` (матрица соответствий), `audit-log-implementation-plan.md` (итерационный план), `audit-log-manual-review-template.md` (шаблон проверки). В чат-план Type 5 добавлен раздел 1.8 со ссылками на эти документы.",
+                    "outcome": "Есть структура проектной документации для анализа и последующего внедрения привычного журнала «ход ревизии».",
+                    "references": [
+                      "docs/development/notes/audit-log/audit-execution-log-vba-parity.md",
+                      "docs/development/notes/audit-log/audit-log-event-catalog.md",
+                      "docs/development/notes/audit-log/audit-log-vba-to-java-mapping.md",
+                      "docs/development/notes/audit-log/audit-log-implementation-plan.md",
+                      "docs/development/notes/templates/audit-log-manual-review-template.md",
                       "docs/development/notes/chats/chat-plan/chat-plan-26-0323-reconcile-specific.md"
                     ]
                   }

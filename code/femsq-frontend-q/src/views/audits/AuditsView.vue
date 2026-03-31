@@ -1,6 +1,10 @@
 <template>
-  <QPage class="audits-view q-pa-md">
-    <div class="row q-col-gutter-md" style="height: calc(100vh - 150px);">
+  <QPage class="q-pa-none">
+    <!-- absolute-full: дочерний слой заполняет QPage точно по viewport-области
+         (между header и footer), не реагируя на рост контента внутри.
+         Это официальный Quasar-паттерн для страниц с внутренними скроллами. -->
+    <div class="absolute-full q-pa-md audits-page-inner">
+      <div class="row q-col-gutter-md audits-layout">
       <!-- Левая панель: список ревизий -->
       <div class="col-12 audits-list-panel">
         <QCard flat bordered class="audits-list-card full-height">
@@ -65,90 +69,82 @@
               {{ errorMessage }}
             </QBanner>
 
-            <QForm @submit.prevent="handleSave" class="compact-form">
-              <!-- Имя ревизии -->
-              <QInput
-                v-model="form.adtName"
-                label="Имя ревизии *"
-                :error="!!errors.adtName"
-                :error-message="errors.adtName"
-                :disable="saving"
-                outlined
-                dense
-              />
-
-              <!-- Тип ревизии -->
-              <QSelect
-                v-model="form.adtType"
-                :options="auditTypesOptions"
-                option-value="atKey"
-                option-label="atName"
-                emit-value
-                map-options
-                label="Ревизия, тип *"
-                :loading="auditTypesStore.loading"
-                :error="!!errors.adtType"
-                :error-message="errors.adtType"
-                :disable="saving"
-                outlined
-                dense
-                clearable
-              />
-
-              <!-- Директория -->
-              <QSelect
-                v-model="form.adtDir"
-                :options="directoriesOptions"
-                option-value="key"
-                option-label="dirName"
-                emit-value
-                map-options
-                label="Директория *"
-                :loading="directoriesStore.loading"
-                :error="!!errors.adtDir"
-                :error-message="errors.adtDir"
-                :disable="saving"
-                outlined
-                dense
-                clearable
-              />
-
-              <!-- Дата и время -->
-              <div class="row q-col-gutter-sm">
-                <div class="col-12 col-md-6">
-                  <QInput
-                    v-model="form.adtDateDate"
-                    label="Дата *"
-                    type="date"
-                    :error="!!errors.adtDate"
-                    :error-message="errors.adtDate"
-                    :disable="saving"
-                    outlined
-                    dense
-                  />
-                </div>
-                <div class="col-12 col-md-6">
-                  <QInput
-                    v-model="form.adtDateTime"
-                    label="Время *"
-                    type="time"
-                    :error="!!errors.adtDate"
-                    :disable="saving"
-                    outlined
-                    dense
-                  />
-                </div>
+            <QForm @submit.prevent="handleSave" class="compact-form-grid">
+              <div class="compact-row compact-row-fields">
+                <QInput
+                  v-model="form.adtName"
+                  label="Имя ревизии *"
+                  :error="!!errors.adtName"
+                  :error-message="errors.adtName"
+                  :disable="saving"
+                  outlined
+                  dense
+                  class="field field-name"
+                />
+                <QSelect
+                  v-model="form.adtType"
+                  :options="auditTypesOptions"
+                  option-value="atKey"
+                  option-label="atName"
+                  emit-value
+                  map-options
+                  label="Тип *"
+                  :loading="auditTypesStore.loading"
+                  :error="!!errors.adtType"
+                  :error-message="errors.adtType"
+                  :disable="saving"
+                  outlined
+                  dense
+                  clearable
+                  class="field"
+                />
+                <QSelect
+                  v-model="form.adtDir"
+                  :options="directoriesOptions"
+                  option-value="key"
+                  option-label="dirName"
+                  emit-value
+                  map-options
+                  label="Директория *"
+                  :loading="directoriesStore.loading"
+                  :error="!!errors.adtDir"
+                  :error-message="errors.adtDir"
+                  :disable="saving"
+                  outlined
+                  dense
+                  clearable
+                  class="field"
+                />
+                <QInput
+                  v-model="form.adtDateDate"
+                  label="Дата *"
+                  type="date"
+                  :error="!!errors.adtDate"
+                  :error-message="errors.adtDate"
+                  :disable="saving"
+                  outlined
+                  dense
+                  class="field field-date"
+                />
+                <QInput
+                  v-model="form.adtDateTime"
+                  label="Время"
+                  type="time"
+                  :error="!!errors.adtDate"
+                  :disable="saving"
+                  outlined
+                  dense
+                  class="field field-time"
+                />
               </div>
-
-              <!-- Чекбокс "обновляем базу данных?" -->
-              <QCheckbox
-                v-model="form.adtAddRA"
-                label="Обновляем базу данных?"
-                :disable="saving"
-              />
-
-              <!-- Кнопки действий -->
-              <div class="row q-gutter-sm compact-buttons">
+              <div class="compact-row compact-row-actions">
+                <QCheckbox
+                  v-model="form.adtAddRA"
+                  label="Обновляем базу данных?"
+                  :disable="saving"
+                  dense
+                  class="compact-checkbox"
+                />
                 <QBtn
                   type="submit"
                   unelevated
@@ -173,23 +169,37 @@
 
           <!-- Вкладки -->
           <QSeparator v-if="selectedAudit || isNewAudit" />
-          <QCardSection v-if="selectedAudit || isNewAudit" class="q-pa-none">
+          <QCardSection v-if="selectedAudit || isNewAudit" class="q-pa-none audit-tabs-section">
             <QTabs v-model="activeTab" dense class="text-grey" active-color="primary" indicator-color="primary">
               <QTab name="progress" label="Ход ревизии" />
               <QTab name="files" label="Файлы для проверки" />
             </QTabs>
             <QSeparator />
-            <QTabPanels v-model="activeTab" animated>
-              <QTabPanel name="progress">
-                <div class="q-pa-md audit-log-container">
+            <QTabPanels v-model="activeTab" animated class="audit-tab-panels">
+              <QTabPanel name="progress" class="progress-tab-panel">
+                <div
+                  ref="auditLogContainerRef"
+                  class="q-pa-sm audit-log-container"
+                  @scroll="handleAuditLogScroll"
+                >
                   <div
-                    v-if="selectedAudit && selectedAudit.adtResults"
+                    v-if="displayedAuditResults"
                     class="text-body2 text-grey-7"
-                    v-html="selectedAudit.adtResults"
+                    v-html="displayedAuditResults"
                   />
                   <div v-else class="text-body2 text-grey-7">
                     Лог выполнения ревизии будет отображаться здесь после запуска функции "Выполнить ревизию".
                   </div>
+                </div>
+                <div v-if="showJumpToLatest" class="jump-to-latest-wrap">
+                  <QBtn
+                    dense
+                    size="sm"
+                    color="primary"
+                    icon="south"
+                    label="К последним строкам"
+                    @click="jumpToLatest"
+                  />
                 </div>
                 <QBanner
                   v-if="auditsStore.pollingConnectionLost"
@@ -199,16 +209,18 @@
                   Соединение с сервером потеряно во время опроса статуса ревизии. Проверьте подключение к базе данных и при необходимости запустите ревизию повторно.
                 </QBanner>
               </QTabPanel>
-              <QTabPanel name="files">
-                <div class="q-pa-md">
+              <QTabPanel name="files" class="files-tab-panel">
+                <div class="files-tab-container">
                   <!-- Информация о директории (включая файлы внутри) -->
                   <DirectoryInfo 
                     v-if="selectedAudit"
                     :directory="currentDirectory" 
-                    :loading="loadingDirectory" 
+                    :loading="loadingDirectory"
+                    compact
+                    class="directory-info-compact"
                   />
                   
-                  <div v-else class="text-body2 text-grey-7 text-center q-pa-md">
+                  <div v-else class="text-body2 text-grey-7 text-center q-pa-sm">
                     Выберите ревизию для просмотра директории
                   </div>
                 </div>
@@ -222,6 +234,7 @@
             <div class="text-body1">Выберите ревизию из списка или создайте новую</div>
           </QCardSection>
         </QCard>
+      </div>
       </div>
     </div>
 
@@ -246,7 +259,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import {
   QBanner,
   QBtn,
@@ -336,6 +349,19 @@ const selectedAudit = computed(() => {
   return auditsStore.audits.find((a) => a.adtKey === selectedAuditId.value) || null;
 });
 
+// Локальный override для вкладки "Ход ревизии" (нужен, чтобы очищать UI-лог
+// перед новым запуском без мутации readonly-объекта из store/apollo-кэша).
+const auditResultsOverride = ref<string | null>(null);
+const displayedAuditResults = computed(() => {
+  if (auditResultsOverride.value !== null) {
+    return auditResultsOverride.value;
+  }
+  return selectedAudit.value?.adtResults ?? '';
+});
+const auditLogContainerRef = ref<HTMLElement | null>(null);
+const autoFollowLog = ref(true);
+const showJumpToLatest = ref(false);
+
 // Опции для выпадающих списков
 const auditTypesOptions = computed(() => auditTypesStore.auditTypes);
 const directoriesOptions = computed(() => directoriesStore.directories);
@@ -374,6 +400,7 @@ onMounted(async () => {
 
 // Watch для автоматической загрузки формы при изменении выбранной ревизии
 watch(selectedAuditId, async (newId) => {
+  auditResultsOverride.value = null;
   if (!newId || isNewAudit.value) {
     currentDirectory.value = null;
     return;
@@ -403,6 +430,19 @@ watch(selectedAuditId, async (newId) => {
   }
 });
 
+watch(
+  () => selectedAudit.value?.adtResults,
+  (newLog) => {
+    if (auditResultsOverride.value !== null && newLog && newLog.trim().length > 0) {
+      auditResultsOverride.value = null;
+    }
+    scheduleAutoScroll();
+  }
+);
+watch(displayedAuditResults, () => {
+  scheduleAutoScroll();
+});
+
 // ============================================================================
 // Обработка выбора и навигации
 // ============================================================================
@@ -419,6 +459,8 @@ function handleSelectAudit(id: number): void {
   selectedAuditId.value = id;
   errorMessage.value = null;
   activeTab.value = 'progress';
+  autoFollowLog.value = true;
+  showJumpToLatest.value = false;
 
   // При смене выбранной ревизии останавливаем polling для предыдущей
   auditsStore.stopPolling();
@@ -621,9 +663,9 @@ async function handleExecuteAudit(): Promise<void> {
 
   // При новом запуске очищаем локальное отображение лога,
   // чтобы старые строки не "зависали" до первого ответа polling
-  if (selectedAudit.value) {
-    selectedAudit.value.adtResults = '';
-  }
+  auditResultsOverride.value = '';
+  autoFollowLog.value = true;
+  showJumpToLatest.value = false;
 
   try {
     executing.value = true;
@@ -635,6 +677,7 @@ async function handleExecuteAudit(): Promise<void> {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Не удалось выполнить ревизию';
     console.error('[AuditsView] handleExecuteAudit: error', err);
+    auditResultsOverride.value = null;
     Notify.create({
       type: 'negative',
       message,
@@ -668,21 +711,75 @@ function formatDate(dateString: string | null | undefined): string {
     return '';
   }
 }
+
+function scheduleAutoScroll(): void {
+  if (activeTab.value !== 'progress') {
+    return;
+  }
+  if (!autoFollowLog.value) {
+    return;
+  }
+  nextTick(() => {
+    jumpToLatest();
+  });
+}
+
+function jumpToLatest(): void {
+  const el = auditLogContainerRef.value;
+  if (!el) {
+    return;
+  }
+  el.scrollTop = el.scrollHeight;
+  autoFollowLog.value = true;
+  showJumpToLatest.value = false;
+}
+
+function handleAuditLogScroll(): void {
+  const el = auditLogContainerRef.value;
+  if (!el) {
+    return;
+  }
+  const thresholdPx = 32;
+  const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= thresholdPx;
+  autoFollowLog.value = atBottom;
+  const running = selectedAudit.value?.adtStatus === 'RUNNING' || executing.value;
+  showJumpToLatest.value = running && !atBottom;
+}
 </script>
 
 <style scoped>
-.audits-view {
-  height: 100%;
+/* QPage имеет position:relative — absolute-full внутри заполняет его точно. */
+.audits-page-inner {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box; /* padding не увеличивает высоту за пределы absolute-full */
+}
+
+.audits-layout {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .audits-list-card,
 .audit-form-card {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Явно ограничиваем высоту карточки, чтобы она не выходила за viewport.
+   Overhead: header (50–105px) + footer (28–52px) + q-pa-md (32px) + q-col-gutter-md (16px) ≈ max 205px.
+   Запас 5px → 210px. Это гарантирует, что max-height всегда < доступной высоты страницы. */
+.audit-form-card {
+  max-height: calc(100vh - 210px);
 }
 
 .full-height {
-  height: 100%;
+  height: 100%; /* используется только в панелях вне flex-цепочки */
 }
 
 .audit-list-item {
@@ -700,6 +797,9 @@ function formatDate(dateString: string | null | undefined): string {
 
 /* Левая панель: ширина в 2.5 раза меньше чем было (col-md-4 = 33.33% -> 13.33%) */
 .audits-list-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   flex: 0 0 100%;
   max-width: 100%;
 }
@@ -711,6 +811,9 @@ function formatDate(dateString: string | null | undefined): string {
   }
   
   .audit-form-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
     flex: 0 0 86.67%;
     max-width: 86.67%;
   }
@@ -718,43 +821,142 @@ function formatDate(dateString: string | null | undefined): string {
 
 /* Компактная форма: уменьшаем вертикальные отступы в 4 раза */
 .compact-form-section {
-  padding-top: 8px !important;
-  padding-bottom: 8px !important;
+  padding: 2px 6px !important;
+  flex: 0 0 auto;
 }
 
 .compact-title {
-  margin-bottom: 4px !important; /* было q-mb-md (16px) -> 4px */
+  margin-bottom: 1px !important;
+  font-size: 0.95rem;
+  line-height: 1rem;
 }
 
 .compact-banner {
-  margin-bottom: 4px !important; /* было q-mb-md (16px) -> 4px */
+  margin-bottom: 2px !important;
 }
 
 .audit-log-container {
-  max-height: 280px;
+  /* max-height на карточке (.audit-form-card) — первичный ограничитель.
+     max-height на логе — вторичный: предотвращает рост лога внутри карточки
+     при broken flex-chain (когда flex: 1 1 auto даёт неограниченную высоту).
+     350px = card overhead (210) + form+tabs (~140): log ≤ видимой области. */
+  flex: 1 1 auto;
+  min-height: 80px;
+  max-height: calc(100vh - 350px);
   overflow-y: auto;
   border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-/* q-gutter-md использует gap или margin, переопределяем на 4px (было 16px) */
-.compact-form {
-  gap: 4px !important; /* было 16px в q-gutter-md */
+/* Внешний скролл у карточки допускаем только при аномально малой высоте окна */
+@media (max-height: 420px) {
+  .audit-form-card {
+    overflow: auto;
+  }
 }
 
-.compact-form > * {
-  margin-bottom: 4px !important;
+.audit-tabs-section {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-.compact-form > *:last-child {
-  margin-bottom: 0 !important;
+.audit-tab-panels {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-/* Уменьшаем отступы внутри row для даты/времени */
-.compact-form .row {
-  margin-bottom: 4px !important;
+.audit-tab-panels :deep(.q-tab-panel) {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0; /* убираем Quasar default 16px — внутренний паддинг даёт q-pa-sm на log-container */
 }
 
-.compact-buttons {
-  margin-top: 4px !important; /* было q-mt-md (16px) -> 4px */
+/* .q-panel НЕ вставляется Quasar в QTabPanels (только в QCarousel).
+   Это правило бесполезно — удалено. */
+
+.progress-tab-panel,
+.files-tab-panel {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.compact-form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.compact-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-wrap: nowrap;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.compact-row-fields .field {
+  min-width: 120px;
+  flex: 1 1 0;
+}
+
+.compact-row-fields .field-name {
+  flex: 1.4 1 0;
+}
+
+.compact-row-fields .field-date {
+  flex: 0 0 150px;
+}
+
+.compact-row-fields .field-time {
+  flex: 0 0 110px;
+}
+
+.compact-row-actions {
+  justify-content: flex-start;
+}
+
+.compact-checkbox {
+  margin-right: 4px;
+  white-space: nowrap;
+}
+
+.jump-to-latest-wrap {
+  margin-top: 2px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+:deep(.compact-form-grid .q-field--outlined .q-field__control) {
+  min-height: 30px;
+}
+
+:deep(.compact-form-grid .q-field__native),
+:deep(.compact-form-grid .q-field__input) {
+  line-height: 1.1;
+}
+
+.files-tab-container {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px;
+  overflow: hidden;
+}
+
+.directory-info-compact {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 </style>

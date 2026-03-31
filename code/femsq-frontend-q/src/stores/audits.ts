@@ -59,9 +59,9 @@ export const useAuditsStore = defineStore('audits', () => {
       const fresh = await auditsApi.getAuditById(id);
       const index = audits.value.findIndex(a => a.adtKey === id);
       if (index !== -1) {
-        audits.value[index] = fresh;
+        audits.value = audits.value.map(a => (a.adtKey === id ? fresh : a));
       } else {
-        audits.value.push(fresh);
+        audits.value = [...audits.value, fresh];
       }
       lastUpdatedAt.value = new Date().toISOString();
       pollingErrorCount.value = 0;
@@ -84,7 +84,7 @@ export const useAuditsStore = defineStore('audits', () => {
     error.value = null;
     try {
       const created = await auditsApi.createAudit(request);
-      audits.value.push(created);
+      audits.value = [...audits.value, created];
       return created;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Не удалось создать ревизию';
@@ -100,7 +100,7 @@ export const useAuditsStore = defineStore('audits', () => {
       const updated = await auditsApi.updateAudit(id, request);
       const index = audits.value.findIndex(a => a.adtKey === id);
       if (index !== -1) {
-        audits.value[index] = updated;
+        audits.value = audits.value.map(a => (a.adtKey === id ? updated : a));
       }
       return updated;
     } catch (err) {

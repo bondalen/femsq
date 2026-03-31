@@ -5,6 +5,9 @@ import com.femsq.database.model.RaColMap;
 import com.femsq.database.model.RaSheetConf;
 import com.femsq.web.audit.AuditExecutionContext;
 import com.femsq.web.audit.AuditFile;
+import com.femsq.web.audit.AuditLogEntry;
+import com.femsq.web.audit.AuditLogLevel;
+import com.femsq.web.audit.AuditLogScope;
 import com.femsq.web.audit.excel.AuditExcelCellReader;
 import com.femsq.web.audit.excel.AuditExcelColumnLocator;
 import com.femsq.web.audit.excel.AuditExcelException;
@@ -16,7 +19,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -76,7 +81,22 @@ public class DefaultAuditStagingService implements AuditStagingService {
             return 0;
         }
 
-        return excelReader.withWorkbook(file.getPath(), workbook -> loadWorkbook(context, workbook, sheetConfigs));
+        Instant openedAt = Instant.now();
+        String workbookSpanId = context.beginSpan(
+                AuditLogLevel.INFO,
+                AuditLogScope.FILE,
+                "WORKBOOK_OPEN",
+                "<P>Книга открывается: " + escape(file.getPath()) + "</P>",
+                null
+        );
+        try {
+            return context.inSpan(workbookSpanId, () -> excelReader.withWorkbook(file.getPath(), workbook -> loadWorkbook(context, workbook, sheetConfigs)));
+        } finally {
+            Instant closedAt = Instant.now();
+            context.endSpan(workbookSpanId, AuditLogLevel.INFO, AuditLogScope.FILE, "WORKBOOK_CLOSE",
+                    "<P>Книга закрыта: " + escape(file.getPath()) + ". Duration: " + formatDuration(openedAt, closedAt) + "</P>",
+                    null);
+        }
     }
 
     private int loadWorkbook(AuditExecutionContext context, Workbook workbook, List<RaSheetConf> sheetConfigs) {
@@ -93,17 +113,29 @@ public class DefaultAuditStagingService implements AuditStagingService {
                 throw exception;
             }
         } catch (SQLException exception) {
-            throw new AuditExcelException("Failed to load staging data", exception);
+            throw new AuditExcelException("Failed to load staging data: " + exception.getMessage(), exception);
         }
         return totalInserted;
     }
 
     private int loadSheet(AuditExecutionContext context, Connection connection, Workbook workbook, RaSheetConf config)
             throws SQLException {
+        Instant stagingStartedAt = Instant.now();
+        String stagingSpanId = context.beginSpan(
+                AuditLogLevel.INFO,
+                AuditLogScope.FILE,
+                "STAGING_START",
+                "<P>Staging start: table=" + escape(config.rscStgTbl()) + ", sheet=" + escape(config.rscSheet()) + "</P>",
+                null
+        );
         Sheet sheet = resolveSheet(workbook, config.rscSheet());
         if (sheet == null) {
+            context.append(AuditLogLevel.WARNING, AuditLogScope.FILE, "SHEET_MISSING",
+                    "<P>Лист не найден: " + escape(config.rscSheet()) + "</P>", null);
             throw new AuditExcelException("Sheet not found: " + config.rscSheet());
         }
+        context.append(AuditLogLevel.INFO, AuditLogScope.FILE, "SHEET_FOUND",
+                "<P>Лист найден: " + escape(sheet.getSheetName()) + "</P>", null);
 
         OptionalInt anchorRowOpt = columnLocator.findAnchorRow(sheet, config.rscAnchor(), config.rscAnchorMatch());
         if (anchorRowOpt.isEmpty()) {
@@ -118,8 +150,14 @@ public class DefaultAuditStagingService implements AuditStagingService {
 
         List<RaColMap> mappings = mappingRepository.getColumnMappings(config.rscKey());
         Map<String, Integer> excelColumns = columnLocator.locateColumns(headerRow, mappings);
+        Set<String> requiredColumns = mappings.stream()
+                .filter(mapping -> Boolean.TRUE.equals(mapping.rcmRequired()))
+                .map(RaColMap::rcmTblCol)
+                .filter(excelColumns::containsKey)
+                .collect(java.util.stream.Collectors.toSet());
 
         Map<String, Integer> dbColumnTypes = readColumnTypes(connection, config.rscStgTbl());
+        Map<String, Integer> dbColumnSizes = readColumnSizes(connection, config.rscStgTbl());
         String execColumn = findExecColumn(dbColumnTypes.keySet());
 
         List<String> insertColumns = resolveInsertColumns(mappings, excelColumns, dbColumnTypes.keySet(), execColumn, context.getExecutionKey());
@@ -130,15 +168,40 @@ public class DefaultAuditStagingService implements AuditStagingService {
         String insertSql = buildInsertSql(config.rscStgTbl(), insertColumns);
         int inserted = 0;
         int batchCount = 0;
+        SheetLoadStats stats = new SheetLoadStats(sheet.getSheetName(), config.rscStgTbl(), headerRowIndex + 1, sheet.getLastRowNum());
         try (PreparedStatement statement = connection.prepareStatement(insertSql)) {
             for (int rowIndex = headerRowIndex + 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
+                stats.sourceRows++;
                 Row row = sheet.getRow(rowIndex);
                 if (row == null) {
+                    stats.skippedNullRow++;
                     continue;
                 }
-                if (!bindRow(statement, row, insertColumns, excelColumns, dbColumnTypes, execColumn, context.getExecutionKey())) {
+                RowBindOutcome outcome = bindRow(
+                        statement,
+                        row,
+                        insertColumns,
+                        excelColumns,
+                        dbColumnTypes,
+                        dbColumnSizes,
+                        execColumn,
+                        context.getExecutionKey(),
+                        requiredColumns
+                );
+                if (!outcome.insertable()) {
+                    if (outcome.missingRequiredData()) {
+                        stats.skippedMissingRequired++;
+                    } else {
+                        stats.skippedNoBusinessData++;
+                    }
                     continue;
                 }
+                if (outcome.truncatedFields() > 0) {
+                    stats.rowsWithTruncation++;
+                    stats.totalTruncatedFields += outcome.truncatedFields();
+                }
+                stats.acceptedRows++;
+                stats.acceptedSignCounts.compute(outcome.rainSign(), (k, v) -> v == null ? 1 : v + 1);
                 statement.addBatch();
                 batchCount++;
                 if (batchCount >= BATCH_SIZE) {
@@ -150,7 +213,71 @@ public class DefaultAuditStagingService implements AuditStagingService {
                 inserted += executeBatch(statement);
             }
         }
+        stats.insertedRows = inserted;
+        logSheetStats(context, stats);
+        Instant stagingEndedAt = Instant.now();
+        context.endSpan(stagingSpanId, AuditLogLevel.INFO, AuditLogScope.FILE, "STAGING_END",
+                "<P>Staging end: table=" + escape(config.rscStgTbl()) + ", sheet=" + escape(sheet.getSheetName())
+                        + ", inserted=" + inserted + ", duration=" + formatDuration(stagingStartedAt, stagingEndedAt) + "</P>",
+                null);
         return inserted;
+    }
+
+    private void logSheetStats(AuditExecutionContext context, SheetLoadStats stats) {
+        String signStats = formatSignStats(stats.acceptedSignCounts);
+        String message = "[AuditStaging] sheet=" + stats.sheetName
+                + ", table=" + stats.stagingTable
+                + ", rowRange=" + stats.firstDataRow + "-" + stats.lastDataRow
+                + ", sourceRows=" + stats.sourceRows
+                + ", inserted=" + stats.insertedRows
+                + ", skippedNullRow=" + stats.skippedNullRow
+                + ", skippedNoBusinessData=" + stats.skippedNoBusinessData
+                + ", skippedMissingRequired=" + stats.skippedMissingRequired
+                + ", rowsWithTruncation=" + stats.rowsWithTruncation
+                + ", truncatedFields=" + stats.totalTruncatedFields
+                + ", signStats=" + signStats;
+        log.info(message);
+        context.append(
+                AuditLogLevel.INFO,
+                AuditLogScope.FILE,
+                "STAGING_LOAD_STATS",
+                "<P>" + message + "</P>",
+                Map.of("sheet", stats.sheetName, "table", stats.stagingTable)
+        );
+    }
+
+    private String escape(String value) {
+        return value == null ? "" : value.replace("<", "&lt;").replace(">", "&gt;");
+    }
+
+    private String formatDuration(Instant start, Instant end) {
+        if (start == null || end == null) {
+            return "-";
+        }
+        long seconds = ChronoUnit.SECONDS.between(start, end);
+        if (seconds < 0) {
+            seconds = 0;
+        }
+        long minutes = seconds / 60;
+        long remSeconds = seconds % 60;
+        return minutes + "m " + remSeconds + "s";
+    }
+
+    private String formatSignStats(Map<String, Integer> signCounts) {
+        if (signCounts.isEmpty()) {
+            return "{}";
+        }
+        StringBuilder builder = new StringBuilder("{");
+        boolean first = true;
+        for (Map.Entry<String, Integer> entry : signCounts.entrySet()) {
+            if (!first) {
+                builder.append(", ");
+            }
+            first = false;
+            builder.append(entry.getKey()).append("=").append(entry.getValue());
+        }
+        builder.append("}");
+        return builder.toString();
     }
 
     private Sheet resolveSheet(Workbook workbook, String sheetName) {
@@ -165,17 +292,28 @@ public class DefaultAuditStagingService implements AuditStagingService {
         if (parts.length != 2) {
             throw new AuditExcelException("Unsupported table format: " + tableName);
         }
-        String sql = "SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?";
         Map<String, Integer> result = new HashMap<>();
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, parts[0]);
-            statement.setString(2, parts[1]);
-            try (ResultSet rs = statement.executeQuery()) {
-                while (rs.next()) {
-                    String name = rs.getString("COLUMN_NAME");
-                    int jdbcType = rs.getInt("DATA_TYPE");
-                    result.put(name, jdbcType);
-                }
+        try (ResultSet rs = connection.getMetaData().getColumns(null, parts[0], parts[1], null)) {
+            while (rs.next()) {
+                String name = rs.getString("COLUMN_NAME");
+                int jdbcType = rs.getInt("DATA_TYPE");
+                result.put(name, jdbcType);
+            }
+        }
+        return result;
+    }
+
+    private Map<String, Integer> readColumnSizes(Connection connection, String tableName) throws SQLException {
+        String[] parts = tableName.split("\\.");
+        if (parts.length != 2) {
+            throw new AuditExcelException("Unsupported table format: " + tableName);
+        }
+        Map<String, Integer> result = new HashMap<>();
+        try (ResultSet rs = connection.getMetaData().getColumns(null, parts[0], parts[1], null)) {
+            while (rs.next()) {
+                String name = rs.getString("COLUMN_NAME");
+                int size = rs.getInt("COLUMN_SIZE");
+                result.put(name, size);
             }
         }
         return result;
@@ -220,16 +358,21 @@ public class DefaultAuditStagingService implements AuditStagingService {
         return "INSERT INTO " + tableName + " (" + cols + ") VALUES (" + placeholders + ")";
     }
 
-    private boolean bindRow(
+    private RowBindOutcome bindRow(
             PreparedStatement statement,
             Row row,
             List<String> insertColumns,
             Map<String, Integer> excelColumns,
             Map<String, Integer> dbColumnTypes,
+            Map<String, Integer> dbColumnSizes,
             String execColumn,
-            Long executionKey
+            Long executionKey,
+            Set<String> requiredColumns
     ) throws SQLException {
         boolean hasBusinessData = false;
+        boolean missingRequiredData = false;
+        int truncatedFields = 0;
+        String rainSign = "(null)";
         for (int i = 0; i < insertColumns.size(); i++) {
             String column = insertColumns.get(i);
             int jdbcType = dbColumnTypes.getOrDefault(column, Types.NVARCHAR);
@@ -244,12 +387,35 @@ public class DefaultAuditStagingService implements AuditStagingService {
             }
             Integer excelColIndex = excelColumns.get(column);
             Object value = excelColIndex != null ? readTyped(row.getCell(excelColIndex), jdbcType) : null;
+            if (value instanceof String stringValue) {
+                Integer maxLength = dbColumnSizes.get(column);
+                if (maxLength != null && maxLength > 0 && stringValue.length() > maxLength) {
+                    value = stringValue.substring(0, maxLength);
+                    truncatedFields++;
+                }
+            }
+            if ("rainSign".equalsIgnoreCase(column) && value instanceof String stringValue && !stringValue.isBlank()) {
+                rainSign = stringValue;
+            }
+            if (requiredColumns.contains(column) && isEmptyValue(value)) {
+                missingRequiredData = true;
+            }
             if (value != null) {
                 hasBusinessData = true;
             }
             bindValue(statement, parameterIndex, jdbcType, value);
         }
-        return hasBusinessData;
+        return new RowBindOutcome(hasBusinessData && !missingRequiredData, missingRequiredData, truncatedFields, rainSign);
+    }
+
+    private boolean isEmptyValue(Object value) {
+        if (value == null) {
+            return true;
+        }
+        if (value instanceof String stringValue) {
+            return stringValue.trim().isEmpty();
+        }
+        return false;
     }
 
     private Object readTyped(org.apache.poi.ss.usermodel.Cell cell, int jdbcType) {
@@ -290,5 +456,31 @@ public class DefaultAuditStagingService implements AuditStagingService {
             }
         }
         return affected;
+    }
+
+    private record RowBindOutcome(boolean insertable, boolean missingRequiredData, int truncatedFields, String rainSign) {
+    }
+
+    private static final class SheetLoadStats {
+        private final String sheetName;
+        private final String stagingTable;
+        private final int firstDataRow;
+        private final int lastDataRow;
+        private long sourceRows;
+        private long acceptedRows;
+        private long insertedRows;
+        private long skippedNullRow;
+        private long skippedNoBusinessData;
+        private long skippedMissingRequired;
+        private long rowsWithTruncation;
+        private long totalTruncatedFields;
+        private final Map<String, Integer> acceptedSignCounts = new java.util.TreeMap<>();
+
+        private SheetLoadStats(String sheetName, String stagingTable, int firstDataRow, int lastDataRow) {
+            this.sheetName = sheetName;
+            this.stagingTable = stagingTable;
+            this.firstDataRow = firstDataRow;
+            this.lastDataRow = lastDataRow;
+        }
     }
 }
