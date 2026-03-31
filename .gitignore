@@ -72,3 +72,7 @@ code/femsq-backend/femsq-reports/src/main/resources/reports/embedded/.project
 
 # Локальная папка с Excel-источниками для ревизий
 excel/
+
+# Local temporary directories
+temp/
+code/femsq-backend/temp/
