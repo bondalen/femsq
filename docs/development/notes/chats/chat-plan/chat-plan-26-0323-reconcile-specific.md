@@ -1,7 +1,7 @@
 # План следующего шага: reconcile-specific по `af_type` (2/3/5/6)
 
 **Дата создания:** 2026-03-23  
-**Последнее обновление:** 2026-03-25  
+**Последнее обновление:** 2026-03-31  
 **Проект:** FEMSQ  
 **Версия плана:** 0.9.14  
 
@@ -239,10 +239,94 @@
 - [ ] 1.8.8.3. Отдельно проверить ветки ошибок: отсутствует файл/лист/якорь/ошибка парсинга ячейки — что пользователь видит понятное WARN/ERROR и точку остановки
 
 ### 1.8.9. Следующий инкремент: реализация TARGET‑сообщений в Java (по mapping)
-- [ ] 1.8.9.1. Реализовать в коде `J-A [MSG][TARGET]` для оркестровки (`msg.start/msg.end`, `dir lookup`, `dir fs`, `file fs`, `files.empty`) и перевести соответствующие `status` в mapping из `missing` в `present/semantic`
-- [ ] 1.8.9.2. Для узлов `V-A` с map на `J-B.1.1/1.2` (`WORKBOOK_OPEN/CLOSE`) зафиксировать окончательное решение: оставить `semantic` (без app-level Excel событий) либо добавить явные app-level сообщения и обновить mapping/каталог
-- [ ] 1.8.9.3. Синхронизировать ключи/поля событий в коде и mapping (`eventKey`, `messageType`, `colorHint`, `emphasis`) и проверить, что HTML остаётся только render-слоем
-- [ ] 1.8.9.4. Выполнить контрольный прогон и обновить `V-A -> J-*` статусы (`missing/partial/semantic/present`) по факту реализации
+- ✅ 1.8.9.1. Реализовать в коде `J-A [MSG][TARGET]` для оркестровки (`msg.start/msg.end`, `dir lookup`, `dir fs`, `file fs`, `files.empty`) и перевести соответствующие `status` в mapping из `missing` в `present/semantic`
+  - ✅ Реализованы события `DIR_LOOKUP_FOUND`, `DIR_LOOKUP_NOT_FOUND`, `FILES_EMPTY` в `AuditExecutionServiceImpl`; расширены `AUDIT_START`/`AUDIT_END` (включая поля времени и статус завершения).
+  - ✅ В `audit-log-vba-to-java-mapping.md` статусы по `V-A`/`J-A` для оркестровочных сообщений переведены в `present` (workbook lifecycle по-прежнему `semantic` через `J-B.1.1/1.2`).
+- ✅ 1.8.9.2. Для узлов `V-A` с map на `J-B.1.1/1.2` (`WORKBOOK_OPEN/CLOSE`) зафиксировать окончательное решение: оставить `semantic` (без app-level Excel событий) либо добавить явные app-level сообщения и обновить mapping/каталог
+  - ✅ Принято решение: **оставить `semantic`**, app-level события `EXCEL_APP_OPEN/CLOSE` не добавлять.
+  - ✅ Обоснование: фактическая точка открытия/закрытия книги находится в едином Excel-layer (`DefaultAuditStagingService`), событие `WORKBOOK_OPEN/CLOSE` достаточно для диагностики и не дублирует оркестратор.
+  - ✅ Зафиксировано в mapping: для `V-A.1.2.b.b.check.b1`, `V-A.1.2.b.b.check.b2.0.a.0.a1`, `V-A.1.msg.excel.close` статус остаётся `semantic` c map на `J-B.1.1/1.2`.
+- ✅ 1.8.9.3. Синхронизировать ключи/поля событий в коде и mapping (`eventKey`, `messageType`, `colorHint`, `emphasis`) и проверить, что HTML остаётся только render-слоем
+  - ✅ В `AuditExecutionServiceImpl` для оркестровочных событий добавлено единое обогащение meta-полей: `messageType`, `colorHint`, `emphasis` (helper `withPresentationMeta(...)`).
+  - ✅ Ключи `eventKey` синхронизированы с mapping (`AUDIT_START/END`, `DIR_LOOKUP_*`, `DIR_FS_*`, `FILE_*`, `FILES_EMPTY`, `AUDIT_ERROR`).
+  - ✅ Подтверждено правило: HTML используется как render-слой, source-of-truth для визуальной семантики — структурированные meta-поля события.
+- ✅ 1.8.9.4. Выполнить контрольный прогон и обновить `V-A -> J-*` статусы (`missing/partial/semantic/present`) по факту реализации
+  - ✅ Контрольный прогон выполнен (`auditId=13`) через GraphQL `executeAudit` + polling `audit(id)`: статус `COMPLETED`.
+  - ✅ В `adt_results` подтверждены ключевые оркестровочные сообщения (`Начало ревизии`, `Время начала`, `Имя директории`, `Файл пропущен (по настройке)`, `ревизия завершена`).
+  - ✅ Актуальные статусы `V-A -> J-*` в `audit-log-vba-to-java-mapping.md` зафиксированы: оркестровка `present`, workbook lifecycle `semantic` (по принятому решению 1.8.9.2).
+
+### 1.8.10. Закрытие «дыры» между оркестровкой и type=5 (принцип «от общего к частному»)
+- ✅ 1.8.10.1. Шаг 1: сформировать полный inventory сообщений VBA для `ra_aAllAgents.cls` (`Audit`, `AuditRa*`, `AuditRc*`, `RaReadOfExcel`)
+  - ✅ Выделены `V-C.* [MSG]` с условиями появления и группировкой по подветкам: `V-C.R`, `V-C.RA`, `V-C.RA.C/E`, `V-C.RC`, `V-C.RC.C/E`.
+  - ✅ В mapping добавлены message-категории по фактической логике `ra_aAllAgents.cls`: row-level `paragraph`, summary-count блоки, new/changed/excess, mismatch(old/expected), apply-result.
+  - ✅ Для inventory зафиксирована визуальная семантика VBA (Crimson/Peru/SeaGreen/OrangeRed/Blue) как база для последующего `J-C.5 [TARGET]` контракта.
+- ✅ 1.8.10.2. Шаг 2: добавить целевое дерево `J-C.5.* [MSG][TARGET]` с разбиением по существующим Java-файлам
+  - ✅ Добавлен блок `J-C.5.A` (`AllAgentsAuditFileProcessor`): `FILE_ALL_AGENTS_STAGE1`, `FILE_ALL_AGENTS_STAGE2_NOOP`, переход к reconcile.
+  - ✅ Добавлен блок `J-C.5.B` (`DefaultAuditStagingService`): `WORKBOOK_*`, `SHEET_*`, целевые `ANCHOR_*`, `STAGING_*`.
+  - ✅ Добавлен блок `J-C.5.C` (`AllAgentsReconcileService`): целевые события `RECONCILE_TYPE5_*` (start/match/apply/diagnostics/done-skipped-failed).
+  - ✅ Для всех `J-C.5.* [TARGET]` зафиксированы `eventKey`, `scope`, минимальный `meta`-контракт и правила `map/status/gap`.
+- [ ] 1.8.10.3. Шаг 3: реализовать `J-C.5 [TARGET]` по слоям (сначала агрегаты, потом row-level)
+  - ✅ Layer 1: process-level parity (этапы type=5 в читаемом виде, без перегруза лога).
+    - ✅ `AllAgentsAuditFileProcessor`: добавлены meta-контракты для `FILE_ALL_AGENTS_STAGE1` и `FILE_ALL_AGENTS_STAGE2_NOOP` (`messageType/colorHint/emphasis` + `auditId/filePath/fileType/...`).
+    - ✅ `DefaultAuditStagingService`: добавлены `ANCHOR_FOUND/ANCHOR_MISSING`, meta-контракты для `WORKBOOK_*`, `SHEET_*`, `STAGING_*`.
+    - ✅ `AuditReconcileCoordinator`: введены type5-коды `RECONCILE_TYPE5_START|DONE|SKIPPED|FAILED` и структурированные meta-поля.
+  - ✅ Layer 2: row-level parity для `V-C.2.1.a.1.1.a.*` (эквивалент `paragraph`) с ограничением шума (`top-N + counters`).
+    - ✅ `DefaultAuditStagingService`: добавлены ограниченные row-level события `ROW_PARAGRAPH_PREVIEW` / `ROW_PARAGRAPH_PREVIEW_SKIPPED` для type=5.
+    - ✅ Введено ограничение шума: `ROW_PREVIEW_LIMIT=12`, плюс итоговый `ROW_PARAGRAPH_PREVIEW_SUMMARY` (sampled/suppressed/total).
+    - ✅ Сохранён принцип render-layer: визуальная семантика хранится в `meta` (`messageType/colorHint/emphasis`), HTML только отображение.
+  - ✅ Проверено: HTML остаётся render-слоем, визуальная семантика вынесена в `meta` для новых событий type5.
+- ✅ 1.8.10.4. Шаг 4: выполнить контрольный прогон type=5 и обновить статусы `V-C -> J-C.5`
+  - ✅ 1.8.10.4.1. Контрольный прогон выполнен (`auditId=13`) через GraphQL `executeAudit` + polling `audit(id)` до `COMPLETED`.
+  - ✅ 1.8.10.4.2. В фактическом `adt_results` подтверждён type5 pipeline (`Этап 1 (Все агенты)` + `Сверка`) и отсутствие регрессии оркестровки.
+  - ✅ 1.8.10.4.3. Статусы в mapping обновлены по факту: process-level `J-C.5.A/B/C` — `present/partial`; row-level preview — `partial` (зависит от наличия/качества строк и лимита `top-N`).
+  - ⚠️ 1.8.10.4.4. В контрольном наборе не зафиксированы явные `ROW_PARAGRAPH_PREVIEW*` записи; для полного визуального подтверждения row-level нужен отдельный прогон на файле/периоде с репрезентативными строками type 5.
+    - 1.8.10.4.4.1. **Методика проверки `adt_results`:** технические коды событий (`ROW_PARAGRAPH_PREVIEW*`, многие `ANCHOR_*` и др.) в сохранённом HTML через `AuditExecutionContext.localizeCode` чаще отображаются как «СОБЫТИЕ», а не как исходный `eventKey`; поиск сырой подстроки `ROW_PARAGRAPH_PREVIEW` в HTML не доказывает отсутствие события. Для верификации row-level ориентироваться на **текст тела сообщения**: `paragraph: row=` / `paragraph-skip: row=`, фразы «добавлено в staging», «пропущено (нет достаточных данных)», блок `Row-level preview`, строка `[AuditStaging] sheet=` из `STAGING_LOAD_STATS` и аналоги.
+      - ✅ **Применение методики (2026-04-01):** по GraphQL `audit(id:13|14) { adtResults }` проверены подстроки из списка выше. В HTML **обеих** ревизий **нет** `paragraph: row=`, `paragraph-skip: row=`, «добавлено в staging», «пропущено (нет достаточных данных)», `Row-level preview`; подстрока `ROW_PARAGRAPH_PREVIEW` тоже отсутствует. При этом присутствует агрегат staging-статистики с префиксом **`[AuditStaging]`** (в выводе после локализации — `лист=…`, `таблица=staging РА`, счётчики строк). **Вывод:** в сохранённом `adt_results` нет ни технических кодов row-level, ни их текстовых тел — отсутствие превью **не** объясняется только подменой кода на «СОБЫТИЕ»; дальнейший разбор — по 1.8.10.4.4.3–1.8.10.4.4.4 (п. 4.4.2 проверен: `af_source` не причина).
+    - 1.8.10.4.4.2. **Условие вызова staging для type=5:** в `AllAgentsAuditFileProcessor` `loadToStaging` выполняется только при `Integer.valueOf(1).equals(file.getSource())` (в БД — признак источника `af_source`). Проверить для контрольного файла type=5 значение `afSource`; при `false`/`NULL` staging и row-level превью не выполняются, хотя файл в каталоге один.
+      - ✅ **Проверка (2026-04-01):** GraphQL `file(id:308|312)` и `filesByDirectory(14|15)`: для единственных файлов type=5 в контрольных каталогах **`afSource: true`** (ревизия 13 → `afKey=308`, ревизия 14 → `afKey=312`), `afExecute: true`. В `AuditExecutionServiceImpl` это даёт `AuditFile.source=1`, условие `AllAgentsAuditFileProcessor` на вызов **`loadToStaging` выполняется**. **Вывод:** отсутствие row-level превью в `adt_results` **не** объясняется выключенным `af_source`; гипотеза 1.8.10.4.4.2 для контрольного набора **снята** → далее 1.8.10.4.4.3–1.8.10.4.4.4.
+    - 1.8.10.4.4.3. **Если staging вызывался, а превью строк нет:** возможен ранний выход до цикла по строкам — например, пустой список `insertColumns` после `resolveInsertColumns` (нет ни одной колонки для вставки), либо в обрабатываемом диапазоне нет ни одной строки, дающей `rowParagraphTotal > 0` (тогда нет и `ROW_PARAGRAPH_PREVIEW_SUMMARY`). Сверить маппинг колонок, якорь и заголовок, `ra_sheet_conf` / лист, схему staging-таблицы, наличие `executionKey` для exec-колонки.
+      - ✅ **Проверка (2026-04-01):** по **старым** снимкам `adt_results` (до повторного прогона) уже видно, что цикл загрузки **отрабатывал**: блок `[AuditStaging] …` с ненулевым `добавлено=` / `строкВИсточнике=` (ревизии 13 и 14). Значит ветка **`insertColumns.isEmpty()` с немедленным `return 0`** для этих прогонов **не срабатывала** (при пустых колонках не было бы массовой вставки и агрегатной статистики в том же духе). Якорь и лист подтверждены косвенно: есть «Лист найден», «Начало загрузки в staging», «Завершение загрузки в staging»; в блоке сверки присутствует `ключВыполнения`. **Контроль на актуальном backend:** после `executeAudit(13)` и `executeAudit(14)` в новом `adt_results` появились ожидаемые маркеры **тела** row-level (`paragraph: row=`, `Row-level preview` / summary). Итог: перечисленные в п. 4.4.3 «технические» причины (пустой `insertColumns`, отсутствие строк для `rowParagraphTotal`) **не объясняют** отсутствие превью в **старых** HTML — оно согласуется с **1.8.10.4.4.4** (запись лога версией без row-level или до включения фичи). **Замечание:** поля `rowParagraphSampled` / `rowParagraphTotal` передаются в **`meta` у `STAGING_LOAD_STATS`**, в текст HTML не попадают — искать их подстрокой в `adt_results` нельзя. **Связанный root-cause для отбора строк:** см. новый блок **1.8.10.5** (перевод фильтра type=5 на поле `Признак`).
+    - 1.8.10.4.4.4. **Актуальность прогона:** для подтверждения поведения текущего кода выполнить повторный прогон ревизии на **собранной сейчас** версии backend; записи `adt_results` старых прогонов могли быть сформированы до появления row-level или иной веткой логики.
+    - 1.8.10.4.4.5. **Опциональные доработки прозрачности:** (а) в render-слой добавить скрытый или data-атрибут с техническим `code` / режим «отладка»; (б) расширить `localizeCode` для ключевых кодов аудита; (в) при `insertColumns.isEmpty()` — явное предупреждение в лог и корректное завершение staging-span; (г) в UI/доке зафиксировать лимит превью (`ROW_PREVIEW_LIMIT`, сейчас 12) и смысл summary.
+  - ✅ 1.8.10.4.5. Последовательность инкремента соблюдена: `1.8.10.1 -> 1.8.10.2 -> 1.8.10.3 -> 1.8.10.4`.
+
+- [ ] 1.8.10.5. Перевод отбора строк type=5 с маски номера на фильтр по полю `Признак`
+  - ✅ 1.8.10.5.1. Зафиксировать текущее поведение (as-is): Java не использует VBA-подобный `Find("*???????-*")` как фильтр строк при загрузке `ra_stg_ra`; строки обходятся линейно от заголовка до конца листа и проверяются через `requiredColumns/hasBusinessData`.
+  - ✅ 1.8.10.5.2. Подтвердить конфигурационный контекст: поле `rsc_row_pattern` (для type=5 задано `%_______-%`) присутствует в `ags.ra_sheet_conf`, но в текущей runtime-логике staging не участвует в отборе.
+  - ✅ 1.8.10.5.3. Утвердить целевое правило отбора (to-be): включать в staging только строки с `rainSign in {"ОА", "ОА изм", "ОА прочие"}`, исключать `ОА Аренда` и прочие значения.
+    - ✅ 1.8.10.5.3.1. Зафиксировано: `ОА изм` обязательно сохраняется для RC-ветки reconcile (иначе будет потеря строки изменений и деградация счётчиков `rcRowsConsidered/category*`).
+    - ✅ 1.8.10.5.3.2. Зафиксирована нормализация сравнения признака: `trim` (удаление ведущих/замыкающих пробелов), case-insensitive сравнение через единый регистр (`Locale.ROOT`), null/пустое значение -> категория `UNKNOWN_SIGN` (строка не загружается в staging, учитывается в `filteredBySign`).
+    - ✅ 1.8.10.5.3.3. Зафиксирован формат отражения в логе: итог фильтрации включается в `STAGING_LOAD_STATS` (`acceptedBySign`, `filteredBySign`, top-N `filteredSigns`), отдельный технический event не вводится на первом шаге.
+  - ✅ 1.8.10.5.4. Реализация фильтра в `DefaultAuditStagingService` (без изменения reconcile-контрактов)
+    - ✅ 1.8.10.5.4.1. Фильтрация применена до `statement.addBatch()` только для `af_type=5` (через gate по `rainSign` до bind/insert ветки).
+    - ✅ 1.8.10.5.4.2. Добавлены счётчики `filteredBySign` / `acceptedBySign`; включены в `STAGING_LOAD_STATS` (сообщение + `meta`).
+    - ✅ 1.8.10.5.4.3. Добавлен top-N по исключённым значениям `rainSign` (`filteredSignsTop`) для диагностики качества источника.
+    - ✅ 1.8.10.5.4.4. Введена нормализация `rainSign` в коде (`trim` + `toLowerCase(Locale.ROOT)`), пустые/null учитываются как `UNKNOWN_SIGN` и попадают в `filteredBySign`.
+    - ✅ 1.8.10.5.4.5. Проверка сборки: `mvn -DskipTests test-compile` для `femsq-web` — успешно.
+  - ✅ 1.8.10.5.5. Выбрать способ конфигурирования whitelist
+    - ⚪ 1.8.10.5.5.1. Вариант A (быстрый): hardcoded whitelist для type=5. *(не выбран; оставлен как fallback в коде при пустой конфигурации)*.
+    - ✅ 1.8.10.5.5.2. Вариант B (предпочтительный): whitelist из конфигурации (`ra_sheet_conf`) без перекомпиляции — реализован.
+      - ✅ Добавлено поле `rsc_sign_whitelist` в `ags.ra_sheet_conf` (Liquibase changeset).
+      - ✅ Для `rsc_key=1` (type=5) задано значение `ОА;ОА изм;ОА прочие`.
+      - ✅ `JdbcRaSheetConfDao`/`RaSheetConf`/`DefaultAuditStagingService` обновлены: whitelist читается из БД и применяется в runtime.
+    - ✅ 1.8.10.5.5.3. Выбранный вариант и причина зафиксированы: B выбран для управляемости правила без новых сборок; hardcoded-список сохранён как безопасный fallback.
+  - [ ] 1.8.10.5.6. Верификация и критерии приёмки
+    - [~] 1.8.10.5.6.1. Контрольный прогон ревизий 13/14 после внедрения фильтра.
+      - ✅ Ревизия `14`: повторный прогон выполнен, `adtStatus=COMPLETED`, `execKey=104`.
+      - ⚠️ Ревизия `13`: в текущем окружении зафиксировано зависание в `RUNNING` (не завершилась в ожидаемое окно наблюдения), требуется отдельная диагностика.
+    - ✅ 1.8.10.5.6.2. SQL-проверка staging: `rainSign='ОА Аренда'` не попадает в `ags.ra_stg_ra` для нового `exec_key`.
+      - ✅ DBHub (exec_key=`104`): в `ags.ra_stg_ra` присутствуют только `ОА` (`1338`), `ОА изм` (`71`), `ОА прочие` (`311`); `ОА Аренда` = `0`.
+    - ✅ 1.8.10.5.6.3. Проверка `adt_results`: есть явное отражение фильтрации по признаку (счётчики/summary), row-level preview остаётся консистентным.
+      - ✅ В `adt_results` ревизии `14` присутствуют `acceptedBySign=...`, `filteredBySign=...`, `filteredSignsTop=...`, а также `paragraph: row=` и `Row-level preview`.
+    - [~] 1.8.10.5.6.4. Проверка reconcile: RA (`ОА`, `ОА прочие`) и RC (`ОА изм`) ветки сохраняют ожидаемые counters и идемпотентность.
+      - ✅ По ревизии `14` ветки RA/RC активны, reconcile-сообщения (`Начало сверки`, `Type5 match/apply показатели`, diagnostics) присутствуют.
+      - ⚠️ Финальная оценка идемпотентности требует повторяемого завершённого прогона для `13` после устранения зависания `RUNNING`.
+
+  - [ ] 1.8.10.5.7. Диагностика и устранение дефекта `audit RUNNING` без завершения
+    - [ ] 1.8.10.5.7.1. Воспроизвести зависание для `auditId=13` с server-log трассировкой и фиксированным `exec_key`.
+    - [ ] 1.8.10.5.7.2. Определить место зависания (staging/reconcile/async completion) и причину отсутствия перехода в `FAILED/COMPLETED`.
+    - [ ] 1.8.10.5.7.3. Внести защиту: гарантированный перевод статуса ревизии в `FAILED` при необработанной ошибке async-ветки.
+    - [ ] 1.8.10.5.7.4. Повторить `1.8.10.5.6.1/1.8.10.5.6.4` и закрыть блок верификации полностью.
 
 ---
 

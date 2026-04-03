@@ -10,6 +10,7 @@ package com.femsq.database.model;
  * @param rscAnchor      якорный заголовок
  * @param rscAnchorMatch режим матчинга якоря (W/P)
  * @param rscRowPattern  шаблон строки данных (может быть null)
+ * @param rscSignWhitelist whitelist значений признака для загрузки (может быть null)
  */
 public record RaSheetConf(
         Integer rscKey,
@@ -18,6 +19,7 @@ public record RaSheetConf(
         String rscStgTbl,
         String rscAnchor,
         String rscAnchorMatch,
-        String rscRowPattern
+        String rscRowPattern,
+        String rscSignWhitelist
 ) {
 }

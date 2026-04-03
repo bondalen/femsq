@@ -8,6 +8,7 @@ import com.femsq.web.audit.AuditLogScope;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,23 +58,59 @@ public class AuditReconcileCoordinator {
         }
 
         Instant reconcileStartedAt = Instant.now();
+        String startCode = codeForType(file, "RECONCILE_START", "RECONCILE_TYPE5_START");
         String reconcileSpanId = context.beginSpan(
                 AuditLogLevel.INFO,
                 AuditLogScope.FILE,
-                "RECONCILE_START",
+                startCode,
                 "<P>Reconcile start: type=" + file.getType() + ", execKey=" + executionKey + "</P>",
-                null
+                withPresentationMeta(
+                        Map.of(
+                                "auditId", String.valueOf(context.getAuditId()),
+                                "executionKey", String.valueOf(executionKey),
+                                "fileType", String.valueOf(file.getType()),
+                                "addRa", String.valueOf(Boolean.TRUE.equals(context.getAddRa()))
+                        ),
+                        "START",
+                        "BLUE",
+                        "BOLD"
+                )
         );
 
         boolean addRa = Boolean.TRUE.equals(context.getAddRa());
-        ReconcileResult result = context.inSpan(reconcileSpanId, () -> service.reconcile(new ReconcileContext(
-                executionKey,
-                context.getAuditId(),
-                addRa,
-                file.getType()
-        )));
-        appendResult(context, file, result, reconcileSpanId, reconcileStartedAt);
-        return result;
+        try {
+            ReconcileResult result = context.inSpan(reconcileSpanId, () -> service.reconcile(new ReconcileContext(
+                    executionKey,
+                    context.getAuditId(),
+                    addRa,
+                    file.getType()
+            )));
+            appendResult(context, file, result, reconcileSpanId, reconcileStartedAt);
+            appendType5ExtraDiagnostics(context, file, result);
+            return result;
+        } catch (RuntimeException exception) {
+            String failedCode = codeForType(file, "RECONCILE_FAILED", "RECONCILE_TYPE5_FAILED");
+            context.endSpan(
+                    reconcileSpanId,
+                    AuditLogLevel.ERROR,
+                    AuditLogScope.FILE,
+                    failedCode,
+                    "<P><b>Reconcile</b>: type=" + file.getType() + ", status=FAILED, message="
+                            + escape(exception.getMessage()) + "</P>",
+                    withPresentationMeta(
+                            Map.of(
+                                    "auditId", String.valueOf(context.getAuditId()),
+                                    "executionKey", String.valueOf(executionKey),
+                                    "fileType", String.valueOf(file.getType()),
+                                    "status", "FAILED"
+                            ),
+                            "ERROR",
+                            "RED",
+                            "BOLD"
+                    )
+            );
+            throw exception;
+        }
     }
 
     private void appendResult(AuditExecutionContext context,
@@ -81,7 +118,9 @@ public class AuditReconcileCoordinator {
                               ReconcileResult result,
                               String reconcileSpanId,
                               Instant reconcileStartedAt) {
-        String code = result.applied() ? "RECONCILE_DONE" : "RECONCILE_SKIPPED";
+        String code = result.applied()
+                ? codeForType(file, "RECONCILE_DONE", "RECONCILE_TYPE5_DONE")
+                : codeForType(file, "RECONCILE_SKIPPED", "RECONCILE_TYPE5_SKIPPED");
         AuditLogLevel level = result.applied() ? AuditLogLevel.INFO : AuditLogLevel.WARNING;
         String duration = formatDuration(reconcileStartedAt, Instant.now());
         String countersSummary = summarizeCounters(result.message());
@@ -95,12 +134,26 @@ public class AuditReconcileCoordinator {
                 : "<P>counters: " + escape(countersSummary) + "</P>";
         context.endSpan(reconcileSpanId, level, AuditLogScope.FILE, code,
                 summaryLine + countersLine,
-                null);
+                withPresentationMeta(
+                        Map.of(
+                                "auditId", String.valueOf(context.getAuditId()),
+                                "executionKey", String.valueOf(context.getExecutionKey()),
+                                "fileType", String.valueOf(file.getType()),
+                                "status", result.applied() ? "DONE" : "SKIPPED",
+                                "affectedRows", String.valueOf(result.affectedRows()),
+                                "durationHuman", duration
+                        ),
+                        result.applied() ? "END" : "WARN",
+                        result.applied() ? "BLUE" : "ORANGE",
+                        "BOLD"
+                ));
     }
 
     private void appendResult(AuditExecutionContext context, AuditFile file, ReconcileResult result) {
         // legacy path for early-exit cases (no reconcile span)
-        String code = result.applied() ? "RECONCILE_DONE" : "RECONCILE_SKIPPED";
+        String code = result.applied()
+                ? codeForType(file, "RECONCILE_DONE", "RECONCILE_TYPE5_DONE")
+                : codeForType(file, "RECONCILE_SKIPPED", "RECONCILE_TYPE5_SKIPPED");
         AuditLogLevel level = result.applied() ? AuditLogLevel.INFO : AuditLogLevel.WARNING;
         String countersSummary = summarizeCounters(result.message());
         String summaryLine = "<P><b>Reconcile</b>: type=" + file.getType()
@@ -112,7 +165,94 @@ public class AuditReconcileCoordinator {
                 : "<P>counters: " + escape(countersSummary) + "</P>";
         context.append(level, AuditLogScope.FILE, code,
                 summaryLine + countersLine,
-                null);
+                withPresentationMeta(
+                        Map.of(
+                                "auditId", String.valueOf(context.getAuditId()),
+                                "executionKey", String.valueOf(context.getExecutionKey()),
+                                "fileType", String.valueOf(file.getType()),
+                                "status", result.applied() ? "DONE" : "SKIPPED",
+                                "affectedRows", String.valueOf(result.affectedRows())
+                        ),
+                        result.applied() ? "END" : "WARN",
+                        result.applied() ? "BLUE" : "ORANGE",
+                        "BOLD"
+                ));
+    }
+
+    private void appendType5ExtraDiagnostics(AuditExecutionContext context, AuditFile file, ReconcileResult result) {
+        if (file.getType() == null || file.getType() != 5) {
+            return;
+        }
+        String message = result.message() == null ? "" : result.message();
+        String countersSummary = summarizeCounters(message);
+        if (!countersSummary.isBlank()) {
+            context.append(
+                    AuditLogLevel.INFO,
+                    AuditLogScope.FILE,
+                    "RECONCILE_TYPE5_MATCH_STATS",
+                    "<P>Type5 match/apply counters: " + escape(countersSummary) + "</P>",
+                    withPresentationMeta(
+                            Map.of(
+                                    "auditId", String.valueOf(context.getAuditId()),
+                                    "executionKey", String.valueOf(context.getExecutionKey()),
+                                    "fileType", "5",
+                                    "counters", countersSummary
+                            ),
+                            "INFO",
+                            "SILVER",
+                            "NORMAL"
+                    )
+            );
+        }
+        String missingDetails = extractMissingDetails(message);
+        if (!missingDetails.isBlank()) {
+            context.append(
+                    AuditLogLevel.WARNING,
+                    AuditLogScope.FILE,
+                    "RECONCILE_TYPE5_DIAGNOSTICS",
+                    "<P>Type5 diagnostics (top): " + escape(missingDetails) + "</P>",
+                    withPresentationMeta(
+                            Map.of(
+                                    "auditId", String.valueOf(context.getAuditId()),
+                                    "executionKey", String.valueOf(context.getExecutionKey()),
+                                    "fileType", "5",
+                                    "missingTop", missingDetails
+                            ),
+                            "WARN",
+                            "ORANGE",
+                            "NORMAL"
+                    )
+            );
+        }
+    }
+
+    private String extractMissingDetails(String message) {
+        if (message == null || message.isBlank()) {
+            return "";
+        }
+        int idx = message.indexOf("Нет отправителя:");
+        if (idx < 0) {
+            return "";
+        }
+        return message.substring(idx).trim();
+    }
+
+    private String codeForType(AuditFile file, String commonCode, String type5Code) {
+        return file.getType() != null && file.getType() == 5 ? type5Code : commonCode;
+    }
+
+    private Map<String, String> withPresentationMeta(Map<String, String> meta,
+                                                      String messageType,
+                                                      String colorHint,
+                                                      String emphasis) {
+        Map<String, String> enriched = new HashMap<>();
+        if (meta != null) {
+            enriched.putAll(meta);
+        }
+        enriched.put("messageType", messageType);
+        enriched.put("colorHint", colorHint);
+        enriched.put("emphasis", emphasis);
+        return enriched;
     }
 
     private String summarizeCounters(String message) {

@@ -2,6 +2,8 @@ package com.femsq.web.audit;
 
 import com.femsq.web.audit.staging.AuditStagingService;
 import com.femsq.web.audit.reconcile.AuditReconcileCoordinator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Logger;
 import org.springframework.stereotype.Service;
@@ -44,7 +46,17 @@ public class AllAgentsAuditFileProcessor implements AuditFileProcessor {
                 AuditLogScope.FILE,
                 "FILE_ALL_AGENTS_STAGE1",
                 "<P>Stage 1 (AllAgents) завершён: " + file.getPath() + ", вставлено строк: " + inserted + "</P>",
-                null
+                withPresentationMeta(
+                        Map.of(
+                                "auditId", String.valueOf(context.getAuditId()),
+                                "filePath", String.valueOf(file.getPath()),
+                                "fileType", String.valueOf(file.getType()),
+                                "insertedRows", String.valueOf(inserted)
+                        ),
+                        "INFO",
+                        "BLUE",
+                        "NORMAL"
+                )
         );
 
         // Stage 2 для type=5 по архитектуре: no-op, данные уже готовы к reconcile.
@@ -53,9 +65,33 @@ public class AllAgentsAuditFileProcessor implements AuditFileProcessor {
                 AuditLogScope.FILE,
                 "FILE_ALL_AGENTS_STAGE2_NOOP",
                 "<P>Stage 2 (AllAgents): no-op, дополнительные FK/derived вычисления не требуются</P>",
-                null
+                withPresentationMeta(
+                        Map.of(
+                                "auditId", String.valueOf(context.getAuditId()),
+                                "filePath", String.valueOf(file.getPath()),
+                                "fileType", String.valueOf(file.getType()),
+                                "reason", "NO_OP"
+                        ),
+                        "INFO",
+                        "SILVER",
+                        "NORMAL"
+                )
         );
 
         reconcileCoordinator.run(context, file);
+    }
+
+    private Map<String, String> withPresentationMeta(Map<String, String> meta,
+                                                      String messageType,
+                                                      String colorHint,
+                                                      String emphasis) {
+        Map<String, String> enriched = new HashMap<>();
+        if (meta != null) {
+            enriched.putAll(meta);
+        }
+        enriched.put("messageType", messageType);
+        enriched.put("colorHint", colorHint);
+        enriched.put("emphasis", emphasis);
+        return enriched;
     }
 }

@@ -9,12 +9,17 @@ import com.femsq.database.service.RaFService;
 import com.femsq.web.audit.runtime.AuditExecutionRegistry;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -33,6 +38,7 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
 
     private static final Logger log = Logger.getLogger(AuditExecutionServiceImpl.class.getName());
     private static final long LOG_FLUSH_INTERVAL_MS = 1000L;
+    private static final DateTimeFormatter HUMAN_TS_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss z");
 
     private final RaAService raAService;
     private final RaDirService raDirService;
@@ -58,50 +64,99 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
     @Async
     @Override
     public void executeAudit(long auditId) {
-        // Шаг 1: загрузка ревизии или ошибка  (реакция на ошибку — в REST-контроллере)
-        RaA audit = raAService.getById(auditId)
-                .orElseThrow(() -> new IllegalArgumentException("Ревизия с id=" + auditId + " не найдена"));
+        // Шаг 1: загрузка ревизии (вне основного try — при сбое ревизия уже RUNNING в реестре)
+        final RaA audit;
+        try {
+            audit = raAService.getById(auditId)
+                    .orElseThrow(() -> new IllegalArgumentException("Ревизия с id=" + auditId + " не найдена"));
+        } catch (Throwable ex) {
+            auditExecutionRegistry.markFailed(auditId, throwableMessage(ex));
+            log.log(Level.SEVERE, "[AuditExecution] Failed to load audit auditId=" + auditId, ex);
+            return;
+        }
 
         log.info(() -> "[AuditExecution] Starting audit execution for auditId=" + auditId);
 
-        // Шаг 2: инициализация контекста и шапки лога
-        AuditExecutionContext context = new AuditExecutionContext(auditId);
-        raExecutionService.getLatestByAuditId((int) auditId)
-                .ifPresent(exec -> context.setExecutionKey(exec.execKey() != null ? exec.execKey().longValue() : null));
-        Integer dirId = audit.adtDir();
-        context.setDirectoryId(dirId != null ? dirId.longValue() : null);
-        if (dirId != null) {
-            raDirService.getById(dirId).ifPresentOrElse(
-                    dir -> context.setDirectoryPath(dir.dir()),
-                    () -> log.warning("[AuditExecution] Directory not found for adtDir=" + audit.adtDir() + ", auditId=" + auditId)
-            );
-        }
-        context.setStartedAt(Instant.now());
-        context.setLastUpdatedAt(context.getStartedAt());
-        context.setAuditType(audit.adtType());
-        context.setAddRa(audit.adtAddRA());
-        ThrottledProgressFlusher progressFlusher = new ThrottledProgressFlusher(
-                LOG_FLUSH_INTERVAL_MS,
-                () -> saveProgress(audit, context)
-        );
-        context.setOnEntryAppended(ctx -> progressFlusher.tryFlush());
-
-        String auditSpanId = context.beginSpan(
-                AuditLogLevel.INFO,
-                AuditLogScope.AUDIT,
-                "AUDIT_START",
-                "<P>Запуск ревизии <b>" + escape(audit.adtName()) + "</b> (ID=" + auditId + ")</P>",
-                null
-        );
-
+        // Шаг 2–4: контекст, файлы, финал (все ошибки и Error → markFailed, иначе RUNNING «зависает»)
+        AuditExecutionContext errContext = null;
+        String auditSpanId = null;
         try {
+            final AuditExecutionContext context = new AuditExecutionContext(auditId);
+            errContext = context;
+            raExecutionService.getLatestByAuditId((int) auditId)
+                    .ifPresent(exec -> context.setExecutionKey(exec.execKey() != null ? exec.execKey().longValue() : null));
+            Integer dirId = audit.adtDir();
+            context.setDirectoryId(dirId != null ? dirId.longValue() : null);
+            final boolean[] dirLookupFound = {false};
+            final boolean[] dirLookupMissing = {false};
+            if (dirId != null) {
+                raDirService.getById(dirId).ifPresentOrElse(
+                        dir -> {
+                            context.setDirectoryPath(dir.dir());
+                            dirLookupFound[0] = true;
+                        },
+                        () -> {
+                            dirLookupMissing[0] = true;
+                            log.warning("[AuditExecution] Directory not found for adtDir=" + audit.adtDir() + ", auditId=" + auditId);
+                        }
+                );
+            }
+            context.setStartedAt(Instant.now());
+            context.setLastUpdatedAt(context.getStartedAt());
+            context.setAuditType(audit.adtType());
+            context.setAddRa(audit.adtAddRA());
+            ThrottledProgressFlusher progressFlusher = new ThrottledProgressFlusher(
+                    LOG_FLUSH_INTERVAL_MS,
+                    () -> saveProgress(audit, context)
+            );
+            context.setOnEntryAppended(ctx -> progressFlusher.tryFlush());
+
+            String resolvedDir = context.getDirectoryPath() == null || context.getDirectoryPath().isBlank()
+                    ? "(не задана)"
+                    : normalizeCrossPlatformPath(context.getDirectoryPath().trim());
+            auditSpanId = context.beginSpan(
+                    AuditLogLevel.INFO,
+                    AuditLogScope.AUDIT,
+                    "AUDIT_START",
+                    "<P>Начало ревизии <b>" + escape(audit.adtName()) + "</b> (ID=" + auditId + ")</P>"
+                            + "<P>Проводим по директории - " + escape(resolvedDir) + "</P>"
+                            + "<P><b>" + formatInstantHuman(context.getStartedAt()) + "</b> - Время начала проведения ревизии.</P>",
+                    withPresentationMeta(Map.of(
+                            "auditId", String.valueOf(auditId),
+                            "auditName", audit.adtName() == null ? "" : audit.adtName(),
+                            "auditDir", resolvedDir,
+                            "startedAt", String.valueOf(context.getStartedAt())
+                    ), "START", "RED", "BOLD")
+            );
+            if (dirLookupMissing[0]) {
+                context.append(
+                        AuditLogLevel.WARNING,
+                        AuditLogScope.AUDIT,
+                        "DIR_LOOKUP_NOT_FOUND",
+                        "<P>Не обнаружена <font color=\"red\">директория</font> для ревизии (dirId=" + dirId + ")</P>",
+                        withPresentationMeta(Map.of("auditId", String.valueOf(auditId), "dirId", String.valueOf(dirId)),
+                                "ERROR", "RED", "BOLD")
+                );
+            } else if (dirLookupFound[0]) {
+                context.append(
+                        AuditLogLevel.INFO,
+                        AuditLogScope.AUDIT,
+                        "DIR_LOOKUP_FOUND",
+                        "<P>Имя директории <b><font color=\"green\">" + escape(resolvedDir)
+                                + "</font></b> для ревизии обнаружено</P>",
+                        withPresentationMeta(Map.of("auditId", String.valueOf(auditId), "dirName", resolvedDir),
+                                "INFO", "GREEN", "BOLD")
+                );
+            }
+
             // Шаг 3: цикл по файлам ревизии и делегирование обработчикам (пока без Excel-логики)
             dirId = audit.adtDir();
             if (dirId == null) {
                 log.warning("[AuditExecution] Audit has no directory, skipping file processing. auditId=" + auditId);
                 context.append(AuditLogLevel.WARNING, AuditLogScope.AUDIT, "DIR_ID_EMPTY",
-                        "<P>Директория ревизии не задана — обработка файлов пропущена</P>", null);
-                appendAuditEnd(context, auditSpanId);
+                        "<P>Директория ревизии не задана — обработка файлов пропущена</P>",
+                        withPresentationMeta(Map.of("auditId", String.valueOf(auditId)), "WARNING", "RED", "NORMAL"));
+                appendAuditEnd(context, auditSpanId, "COMPLETED");
                 saveProgress(audit, context);
                 auditExecutionRegistry.markCompleted(auditId);
                 return;
@@ -109,10 +164,19 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
 
             List<RaF> files = raFService.getByDirId(dirId);
             log.info("[AuditExecution] Files to process for auditId=" + auditId + " (dir=" + dirId + "): " + files.size());
+            if (files.isEmpty()) {
+                context.append(
+                        AuditLogLevel.WARNING,
+                        AuditLogScope.AUDIT,
+                        "FILES_EMPTY",
+                        "<P>Не обнаружены файлы для рассмотрения</P>",
+                        withPresentationMeta(Map.of("auditId", String.valueOf(auditId)), "WARNING", "RED", "NORMAL")
+                );
+            }
 
             boolean dirMissing = verifyDirectoryExistsInFileSystem(context);
             if (dirMissing) {
-                appendAuditEnd(context, auditSpanId);
+                appendAuditEnd(context, auditSpanId, "COMPLETED");
                 saveProgress(audit, context);
                 auditExecutionRegistry.markCompleted(auditId);
                 return;
@@ -121,8 +185,37 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
             for (RaF raF : files) {
                 // Учитываем только файлы, помеченные к выполнению
                 if (!Boolean.TRUE.equals(raF.afExecute())) {
+                    Instant skippedStartedAt = Instant.now();
+                    String skippedFileSpan = context.beginSpan(
+                            AuditLogLevel.INFO,
+                            AuditLogScope.FILE,
+                            "FILE_START",
+                            "<P>Файл: " + escape(raF.afName()) + " — начало обработки</P>",
+                            withPresentationMeta(Map.of(
+                                    "auditId", String.valueOf(auditId),
+                                    "filePath", String.valueOf(raF.afName()),
+                                    "fileType", String.valueOf(raF.afType())
+                            ), "START", "GREEN", "BOLD")
+                    );
                     context.append(AuditLogLevel.INFO, AuditLogScope.FILE, "FILE_SKIPPED_BY_USER",
-                            "<P>Файл пропущен (по настройке): " + escape(raF.afName()) + "</P>", null);
+                            "<P>Файл пропущен (по настройке): " + escape(raF.afName()) + "</P>",
+                            withPresentationMeta(Map.of(
+                                    "auditId", String.valueOf(auditId),
+                                    "filePath", String.valueOf(raF.afName())
+                            ), "INFO", "GREEN", "NORMAL"));
+                    context.endSpan(
+                            skippedFileSpan,
+                            AuditLogLevel.INFO,
+                            AuditLogScope.FILE,
+                            "FILE_END",
+                            "<P>Файл: " + escape(raF.afName()) + " — завершено (пропущен), duration="
+                                    + formatDuration(skippedStartedAt, Instant.now()) + "</P>",
+                            withPresentationMeta(Map.of(
+                                    "auditId", String.valueOf(auditId),
+                                    "filePath", String.valueOf(raF.afName()),
+                                    "durationHuman", formatDuration(skippedStartedAt, Instant.now())
+                            ), "END", "GREEN", "NORMAL")
+                    );
                     continue;
                 }
 
@@ -150,21 +243,34 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
                         AuditLogScope.FILE,
                         "FILE_START",
                         "<P>Файл: " + escape(raF.afName()) + " (type=" + fileType + ") — начало обработки</P>",
-                        null
+                        withPresentationMeta(Map.of(
+                                "auditId", String.valueOf(auditId),
+                                "filePath", resolvedPath,
+                                "fileType", String.valueOf(fileType)
+                        ), "START", "GREEN", "BOLD")
                 );
 
                 Path filePath = Path.of(resolvedPath);
                 if (!Files.exists(filePath)) {
                     context.append(AuditLogLevel.WARNING, AuditLogScope.FILE, "FILE_FS_MISSING",
-                            "<P>Файл не найден в файловой системе: " + escape(resolvedPath) + "</P>", null);
+                            "<P>Файл не найден в файловой системе: " + escape(resolvedPath) + "</P>",
+                            withPresentationMeta(Map.of("auditId", String.valueOf(auditId), "filePath", resolvedPath),
+                                    "ERROR", "RED", "BOLD"));
                     context.endSpan(fileSpanId, AuditLogLevel.INFO, AuditLogScope.FILE, "FILE_END",
                             "<P>Файл: " + escape(raF.afName()) + " — завершено (не найден), duration="
-                                    + formatDuration(fileStartedAt, Instant.now()) + "</P>", null);
+                                    + formatDuration(fileStartedAt, Instant.now()) + "</P>",
+                            withPresentationMeta(Map.of(
+                                    "auditId", String.valueOf(auditId),
+                                    "filePath", resolvedPath,
+                                    "durationHuman", formatDuration(fileStartedAt, Instant.now())
+                            ), "END", "GREEN", "NORMAL"));
                     saveProgress(audit, context);
                     continue;
                 } else {
                     context.append(AuditLogLevel.INFO, AuditLogScope.FILE, "FILE_FS_FOUND",
-                            "<P>Файл найден: " + escape(resolvedPath) + "</P>", null);
+                            "<P>Файл найден: " + escape(resolvedPath) + "</P>",
+                            withPresentationMeta(Map.of("auditId", String.valueOf(auditId), "filePath", resolvedPath),
+                                    "INFO", "GREEN", "NORMAL"));
                 }
 
                 AuditFile auditFile = new AuditFile(
@@ -185,11 +291,20 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
                             AuditLogScope.FILE,
                             "FILE_PROCESSOR_NOT_FOUND",
                             "<P>Нет обработчика для файла типа " + raF.afType() + ": " + raF.afName() + "</P>",
-                            null
+                            withPresentationMeta(Map.of(
+                                    "auditId", String.valueOf(auditId),
+                                    "filePath", resolvedPath,
+                                    "fileType", String.valueOf(raF.afType())
+                            ), "WARNING", "RED", "NORMAL")
                     );
                     context.endSpan(fileSpanId, AuditLogLevel.INFO, AuditLogScope.FILE, "FILE_END",
                             "<P>Файл: " + escape(raF.afName()) + " — завершено (нет обработчика), duration="
-                                    + formatDuration(fileStartedAt, Instant.now()) + "</P>", null);
+                                    + formatDuration(fileStartedAt, Instant.now()) + "</P>",
+                            withPresentationMeta(Map.of(
+                                    "auditId", String.valueOf(auditId),
+                                    "filePath", resolvedPath,
+                                    "durationHuman", formatDuration(fileStartedAt, Instant.now())
+                            ), "END", "GREEN", "NORMAL"));
                     continue;
                 }
 
@@ -198,31 +313,53 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
                 // Завершение обработки файла
                 context.endSpan(fileSpanId, AuditLogLevel.INFO, AuditLogScope.FILE, "FILE_END",
                         "<P>Файл: " + escape(raF.afName()) + " — завершено за " + formatDuration(fileStartedAt, Instant.now()) + "</P>",
-                        null);
+                        withPresentationMeta(Map.of(
+                                "auditId", String.valueOf(auditId),
+                                "filePath", resolvedPath,
+                                "durationHuman", formatDuration(fileStartedAt, Instant.now())
+                        ), "END", "GREEN", "NORMAL"));
 
                 // Инкрементальное обновление лога и временной метки после каждого файла
                 saveProgress(audit, context);
             }
 
             // Шаг 4: финальное сохранение обновлённого adt_results (контрольная фиксация)
-            appendAuditEnd(context, auditSpanId);
+            appendAuditEnd(context, auditSpanId, "COMPLETED");
             saveProgress(audit, context);
 
             auditExecutionRegistry.markCompleted(auditId);
             log.info(() -> "[AuditExecution] Audit execution log saved for auditId=" + auditId);
-        } catch (Exception ex) {
-            auditExecutionRegistry.markFailed(auditId, ex.getMessage());
-            log.severe("[AuditExecution] Error during audit execution for auditId=" + auditId + ": " + ex.getMessage());
-            context.append(
-                    AuditLogLevel.ERROR,
-                    AuditLogScope.AUDIT,
-                    "AUDIT_ERROR",
-                    "<P><b>Ошибка выполнения ревизии.</b> Подробности см. в журнале сервера.</P>",
-                    null
-            );
-            appendAuditEnd(context, auditSpanId);
-            saveProgress(audit, context);
+        } catch (Throwable ex) {
+            auditExecutionRegistry.markFailed(auditId, throwableMessage(ex));
+            log.log(Level.SEVERE, "[AuditExecution] Error during audit execution for auditId=" + auditId, ex);
+            if (errContext != null) {
+                try {
+                    errContext.append(
+                            AuditLogLevel.ERROR,
+                            AuditLogScope.AUDIT,
+                            "AUDIT_ERROR",
+                            "<P><b>Ошибка выполнения ревизии.</b> Подробности см. в журнале сервера.</P>",
+                            withPresentationMeta(Map.of("auditId", String.valueOf(auditId)), "ERROR", "RED", "BOLD")
+                    );
+                    if (auditSpanId != null) {
+                        appendAuditEnd(errContext, auditSpanId, "FAILED");
+                    }
+                    saveProgress(audit, errContext);
+                } catch (Exception persistEx) {
+                    log.log(Level.WARNING,
+                            "[AuditExecution] Failed to persist audit error log for auditId=" + auditId,
+                            persistEx);
+                }
+            }
         }
+    }
+
+    /**
+     * Краткое сообщение для {@link AuditExecutionRegistry#markFailed(long, String)} (БД / UI).
+     */
+    private static String throwableMessage(Throwable ex) {
+        String m = ex.getMessage();
+        return (m != null && !m.isBlank()) ? m : ex.getClass().getName();
     }
 
     private static final class ThrottledProgressFlusher {
@@ -259,7 +396,7 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
                     AuditLogScope.AUDIT,
                     "DIR_FS_EXISTS",
                     "<P>Директория в файловой системе обнаружена: " + escape(normalizedDir) + "</P>",
-                    null
+                    withPresentationMeta(Map.of("dirPath", normalizedDir), "SUCCESS", "GREEN", "NORMAL")
             );
             return false;
         }
@@ -268,29 +405,60 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
                 AuditLogScope.AUDIT,
                 "DIR_FS_MISSING",
                 "<P>Директория в файловой системе не обнаружена: " + escape(normalizedDir) + "</P>",
-                null
+                withPresentationMeta(Map.of("dirPath", normalizedDir), "ERROR", "RED", "BOLD")
         );
         return true;
     }
 
-    private void appendAuditEnd(AuditExecutionContext context, String auditSpanId) {
+    private void appendAuditEnd(AuditExecutionContext context, String auditSpanId, String status) {
         Instant start = context.getStartedAt();
         Instant end = Instant.now();
+        String endColor = "FAILED".equalsIgnoreCase(status) ? "#f85149" : "#58a6ff";
         context.endSpan(auditSpanId, AuditLogLevel.INFO, AuditLogScope.AUDIT, "AUDIT_END",
-                "<P>Ревизия завершена. Duration: " + formatDuration(start, end) + "</P>", null);
+                "<P>В " + formatInstantHuman(end) + " - <b><font color=\"" + endColor + "\">ревизия завершена</font></b>. C "
+                        + formatInstantHuman(start)
+                        + " в течении " + formatDuration(start, end) + ".</P>",
+                withPresentationMeta(Map.of(
+                        "finishedAt", formatInstantHuman(end),
+                        "startedAt", formatInstantHuman(start),
+                        "durationHuman", formatDuration(start, end),
+                        "status", status
+                ), "END", "FAILED".equalsIgnoreCase(status) ? "RED" : "BLUE", "BOLD"));
     }
 
     private String formatDuration(Instant start, Instant end) {
         if (start == null || end == null) {
             return "-";
         }
-        long seconds = ChronoUnit.SECONDS.between(start, end);
+        long seconds = Duration.between(start, end).toSeconds();
         if (seconds < 0) {
             seconds = 0;
         }
         long minutes = seconds / 60;
         long remSeconds = seconds % 60;
         return minutes + "m " + remSeconds + "s";
+    }
+
+    private String formatInstantHuman(Instant instant) {
+        if (instant == null) {
+            return "-";
+        }
+        ZonedDateTime zonedDateTime = instant.atZone(ZoneId.systemDefault());
+        return HUMAN_TS_FORMAT.format(zonedDateTime);
+    }
+
+    private Map<String, String> withPresentationMeta(Map<String, String> meta,
+                                                      String messageType,
+                                                      String colorHint,
+                                                      String emphasis) {
+        Map<String, String> enriched = new HashMap<>();
+        if (meta != null) {
+            enriched.putAll(meta);
+        }
+        enriched.put("messageType", messageType);
+        enriched.put("colorHint", colorHint);
+        enriched.put("emphasis", emphasis);
+        return enriched;
     }
 
     /**

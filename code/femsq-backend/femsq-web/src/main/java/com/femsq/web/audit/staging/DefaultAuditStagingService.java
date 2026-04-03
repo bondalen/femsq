@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.OptionalInt;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.logging.Logger;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -46,6 +47,9 @@ public class DefaultAuditStagingService implements AuditStagingService {
 
     private static final Logger log = Logger.getLogger(DefaultAuditStagingService.class.getName());
     private static final int BATCH_SIZE = 200;
+    private static final int ROW_PREVIEW_LIMIT = 12;
+    private static final int FILTERED_SIGN_TOP_LIMIT = 5;
+    private static final Set<String> TYPE5_ALLOWED_SIGNS = Set.of("оа", "оа изм", "оа прочие");
 
     private final AuditColumnMappingRepository mappingRepository;
     private final AuditExcelReader excelReader;
@@ -80,6 +84,7 @@ public class DefaultAuditStagingService implements AuditStagingService {
             log.info(() -> "[AuditStaging] No sheet config for file type=" + file.getType());
             return 0;
         }
+        final boolean emitRowParagraphPreview = fileTypeSupportsRowParagraph(file);
 
         Instant openedAt = Instant.now();
         String workbookSpanId = context.beginSpan(
@@ -87,25 +92,52 @@ public class DefaultAuditStagingService implements AuditStagingService {
                 AuditLogScope.FILE,
                 "WORKBOOK_OPEN",
                 "<P>Книга открывается: " + escape(file.getPath()) + "</P>",
-                null
+                withPresentationMeta(
+                        Map.of(
+                                "auditId", String.valueOf(context.getAuditId()),
+                                "filePath", String.valueOf(file.getPath()),
+                                "openedAt", String.valueOf(openedAt)
+                        ),
+                        "START",
+                        "BLUE",
+                        "BOLD"
+                )
         );
         try {
-            return context.inSpan(workbookSpanId, () -> excelReader.withWorkbook(file.getPath(), workbook -> loadWorkbook(context, workbook, sheetConfigs)));
+            return context.inSpan(
+                    workbookSpanId,
+                    () -> excelReader.withWorkbook(file.getPath(), workbook -> loadWorkbook(context, workbook, sheetConfigs,
+                            emitRowParagraphPreview))
+            );
         } finally {
             Instant closedAt = Instant.now();
             context.endSpan(workbookSpanId, AuditLogLevel.INFO, AuditLogScope.FILE, "WORKBOOK_CLOSE",
                     "<P>Книга закрыта: " + escape(file.getPath()) + ". Duration: " + formatDuration(openedAt, closedAt) + "</P>",
-                    null);
+                    withPresentationMeta(
+                            Map.of(
+                                    "auditId", String.valueOf(context.getAuditId()),
+                                    "filePath", String.valueOf(file.getPath()),
+                                    "closedAt", String.valueOf(closedAt),
+                                    "durationHuman", formatDuration(openedAt, closedAt)
+                            ),
+                            "END",
+                            "BLUE",
+                            "BOLD"
+                    ));
         }
     }
 
-    private int loadWorkbook(AuditExecutionContext context, Workbook workbook, List<RaSheetConf> sheetConfigs) {
+    private int loadWorkbook(AuditExecutionContext context,
+                             Workbook workbook,
+                             List<RaSheetConf> sheetConfigs,
+                             boolean emitRowParagraphPreview) {
         int totalInserted = 0;
         try (Connection connection = connectionFactory.createConnection()) {
             connection.setAutoCommit(false);
             try {
                 for (RaSheetConf config : sheetConfigs) {
-                    totalInserted += loadSheet(context, connection, workbook, config);
+                    Set<String> allowedSigns = resolveAllowedSigns(config, emitRowParagraphPreview);
+                    totalInserted += loadSheet(context, connection, workbook, config, emitRowParagraphPreview, allowedSigns);
                 }
                 connection.commit();
             } catch (Exception exception) {
@@ -118,7 +150,12 @@ public class DefaultAuditStagingService implements AuditStagingService {
         return totalInserted;
     }
 
-    private int loadSheet(AuditExecutionContext context, Connection connection, Workbook workbook, RaSheetConf config)
+    private int loadSheet(AuditExecutionContext context,
+                          Connection connection,
+                          Workbook workbook,
+                          RaSheetConf config,
+                          boolean emitRowParagraphPreview,
+                          Set<String> allowedSigns)
             throws SQLException {
         Instant stagingStartedAt = Instant.now();
         String stagingSpanId = context.beginSpan(
@@ -126,21 +163,85 @@ public class DefaultAuditStagingService implements AuditStagingService {
                 AuditLogScope.FILE,
                 "STAGING_START",
                 "<P>Staging start: table=" + escape(config.rscStgTbl()) + ", sheet=" + escape(config.rscSheet()) + "</P>",
-                null
+                withPresentationMeta(
+                        Map.of(
+                                "auditId", String.valueOf(context.getAuditId()),
+                                "tableName", String.valueOf(config.rscStgTbl()),
+                                "sheetName", String.valueOf(config.rscSheet())
+                        ),
+                        "START",
+                        "BLUE",
+                        "BOLD"
+                )
         );
         Sheet sheet = resolveSheet(workbook, config.rscSheet());
         if (sheet == null) {
             context.append(AuditLogLevel.WARNING, AuditLogScope.FILE, "SHEET_MISSING",
-                    "<P>Лист не найден: " + escape(config.rscSheet()) + "</P>", null);
+                    "<P>Лист не найден: " + escape(config.rscSheet()) + "</P>",
+                    withPresentationMeta(
+                            Map.of(
+                                    "auditId", String.valueOf(context.getAuditId()),
+                                    "sheetName", String.valueOf(config.rscSheet()),
+                                    "tableName", String.valueOf(config.rscStgTbl())
+                            ),
+                            "WARN",
+                            "RED",
+                            "BOLD"
+                    ));
             throw new AuditExcelException("Sheet not found: " + config.rscSheet());
         }
         context.append(AuditLogLevel.INFO, AuditLogScope.FILE, "SHEET_FOUND",
-                "<P>Лист найден: " + escape(sheet.getSheetName()) + "</P>", null);
+                "<P>Лист найден: " + escape(sheet.getSheetName()) + "</P>",
+                withPresentationMeta(
+                        Map.of(
+                                "auditId", String.valueOf(context.getAuditId()),
+                                "sheetName", String.valueOf(sheet.getSheetName()),
+                                "tableName", String.valueOf(config.rscStgTbl())
+                        ),
+                        "INFO",
+                        "GREEN",
+                        "BOLD"
+                ));
 
         OptionalInt anchorRowOpt = columnLocator.findAnchorRow(sheet, config.rscAnchor(), config.rscAnchorMatch());
         if (anchorRowOpt.isEmpty()) {
+            context.append(
+                    AuditLogLevel.WARNING,
+                    AuditLogScope.FILE,
+                    "ANCHOR_MISSING",
+                    "<P>Якорь не найден: " + escape(config.rscAnchor()) + ", лист=" + escape(sheet.getSheetName()) + "</P>",
+                    withPresentationMeta(
+                            Map.of(
+                                    "auditId", String.valueOf(context.getAuditId()),
+                                    "sheetName", String.valueOf(sheet.getSheetName()),
+                                    "anchorText", String.valueOf(config.rscAnchor()),
+                                    "tableName", String.valueOf(config.rscStgTbl())
+                            ),
+                            "WARN",
+                            "RED",
+                            "BOLD"
+                    )
+            );
             throw new AuditExcelException("Anchor not found: " + config.rscAnchor() + ", sheet=" + sheet.getSheetName());
         }
+        context.append(
+                AuditLogLevel.INFO,
+                AuditLogScope.FILE,
+                "ANCHOR_FOUND",
+                "<P>Якорь найден: " + escape(config.rscAnchor()) + ", row=" + anchorRowOpt.getAsInt() + "</P>",
+                withPresentationMeta(
+                        Map.of(
+                                "auditId", String.valueOf(context.getAuditId()),
+                                "sheetName", String.valueOf(sheet.getSheetName()),
+                                "anchorText", String.valueOf(config.rscAnchor()),
+                                "anchorRow", String.valueOf(anchorRowOpt.getAsInt()),
+                                "tableName", String.valueOf(config.rscStgTbl())
+                        ),
+                        "INFO",
+                        "GREEN",
+                        "NORMAL"
+                )
+        );
 
         int headerRowIndex = anchorRowOpt.getAsInt();
         Row headerRow = sheet.getRow(headerRowIndex);
@@ -177,6 +278,16 @@ public class DefaultAuditStagingService implements AuditStagingService {
                     stats.skippedNullRow++;
                     continue;
                 }
+                if (allowedSigns != null) {
+                    String signRaw = readStringByColumnName(row, excelColumns, "rainSign");
+                    String normalizedSign = normalizeSign(signRaw);
+                    if (!allowedSigns.contains(normalizedSign)) {
+                        stats.filteredBySign++;
+                        stats.filteredSignCounts.compute(safeSignLabel(signRaw), (k, v) -> v == null ? 1 : v + 1);
+                        continue;
+                    }
+                    stats.acceptedBySign++;
+                }
                 RowBindOutcome outcome = bindRow(
                         statement,
                         row,
@@ -194,6 +305,32 @@ public class DefaultAuditStagingService implements AuditStagingService {
                     } else {
                         stats.skippedNoBusinessData++;
                     }
+                    if (emitRowParagraphPreview) {
+                        stats.rowParagraphTotal++;
+                        String paragraph = buildRowParagraph(row, excelColumns, rowIndex + 1, false);
+                        if (stats.rowParagraphSampled < ROW_PREVIEW_LIMIT) {
+                            stats.rowParagraphSampled++;
+                            context.append(
+                                    AuditLogLevel.WARNING,
+                                    AuditLogScope.FILE,
+                                    "ROW_PARAGRAPH_PREVIEW_SKIPPED",
+                                    "<P>" + paragraph + " — пропущено (нет достаточных данных)</P>",
+                                    withPresentationMeta(
+                                            Map.of(
+                                                    "auditId", String.valueOf(context.getAuditId()),
+                                                    "sheetName", String.valueOf(sheet.getSheetName()),
+                                                    "rowIndex", String.valueOf(rowIndex + 1),
+                                                    "status", "SKIPPED"
+                                            ),
+                                            "WARN",
+                                            "ORANGE",
+                                            "NORMAL"
+                                    )
+                            );
+                        } else {
+                            stats.rowParagraphSuppressed++;
+                        }
+                    }
                     continue;
                 }
                 if (outcome.truncatedFields() > 0) {
@@ -202,6 +339,32 @@ public class DefaultAuditStagingService implements AuditStagingService {
                 }
                 stats.acceptedRows++;
                 stats.acceptedSignCounts.compute(outcome.rainSign(), (k, v) -> v == null ? 1 : v + 1);
+                if (emitRowParagraphPreview) {
+                    stats.rowParagraphTotal++;
+                    String paragraph = buildRowParagraph(row, excelColumns, rowIndex + 1, true);
+                    if (stats.rowParagraphSampled < ROW_PREVIEW_LIMIT) {
+                        stats.rowParagraphSampled++;
+                        context.append(
+                                AuditLogLevel.INFO,
+                                AuditLogScope.FILE,
+                                "ROW_PARAGRAPH_PREVIEW",
+                                "<P>" + paragraph + " — добавлено в staging</P>",
+                                withPresentationMeta(
+                                        Map.of(
+                                                "auditId", String.valueOf(context.getAuditId()),
+                                                "sheetName", String.valueOf(sheet.getSheetName()),
+                                                "rowIndex", String.valueOf(rowIndex + 1),
+                                                "status", "ACCEPTED"
+                                        ),
+                                        "INFO",
+                                        "SILVER",
+                                        "NORMAL"
+                                )
+                        );
+                    } else {
+                        stats.rowParagraphSuppressed++;
+                    }
+                }
                 statement.addBatch();
                 batchCount++;
                 if (batchCount >= BATCH_SIZE) {
@@ -219,16 +382,31 @@ public class DefaultAuditStagingService implements AuditStagingService {
         context.endSpan(stagingSpanId, AuditLogLevel.INFO, AuditLogScope.FILE, "STAGING_END",
                 "<P>Staging end: table=" + escape(config.rscStgTbl()) + ", sheet=" + escape(sheet.getSheetName())
                         + ", inserted=" + inserted + ", duration=" + formatDuration(stagingStartedAt, stagingEndedAt) + "</P>",
-                null);
+                withPresentationMeta(
+                        Map.of(
+                                "auditId", String.valueOf(context.getAuditId()),
+                                "tableName", String.valueOf(config.rscStgTbl()),
+                                "sheetName", String.valueOf(sheet.getSheetName()),
+                                "inserted", String.valueOf(inserted),
+                                "durationHuman", formatDuration(stagingStartedAt, stagingEndedAt)
+                        ),
+                        "END",
+                        "BLUE",
+                        "BOLD"
+                ));
         return inserted;
     }
 
     private void logSheetStats(AuditExecutionContext context, SheetLoadStats stats) {
         String signStats = formatSignStats(stats.acceptedSignCounts);
+        String filteredSignsTop = formatTopN(stats.filteredSignCounts, FILTERED_SIGN_TOP_LIMIT);
         String message = "[AuditStaging] sheet=" + stats.sheetName
                 + ", table=" + stats.stagingTable
                 + ", rowRange=" + stats.firstDataRow + "-" + stats.lastDataRow
                 + ", sourceRows=" + stats.sourceRows
+                + ", acceptedBySign=" + stats.acceptedBySign
+                + ", filteredBySign=" + stats.filteredBySign
+                + ", filteredSignsTop=" + filteredSignsTop
                 + ", inserted=" + stats.insertedRows
                 + ", skippedNullRow=" + stats.skippedNullRow
                 + ", skippedNoBusinessData=" + stats.skippedNoBusinessData
@@ -242,8 +420,107 @@ public class DefaultAuditStagingService implements AuditStagingService {
                 AuditLogScope.FILE,
                 "STAGING_LOAD_STATS",
                 "<P>" + message + "</P>",
-                Map.of("sheet", stats.sheetName, "table", stats.stagingTable)
+                withPresentationMeta(
+                        stagingStatsMeta(context, stats, filteredSignsTop),
+                        "INFO",
+                        "SILVER",
+                        "NORMAL"
+                )
         );
+        if (stats.rowParagraphTotal > 0) {
+            context.append(
+                    AuditLogLevel.INFO,
+                    AuditLogScope.FILE,
+                    "ROW_PARAGRAPH_PREVIEW_SUMMARY",
+                    "<P>Row-level preview: показано " + stats.rowParagraphSampled
+                            + ", скрыто " + stats.rowParagraphSuppressed
+                            + " (лимит " + ROW_PREVIEW_LIMIT + ")</P>",
+                    withPresentationMeta(
+                            Map.of(
+                                    "auditId", String.valueOf(context.getAuditId()),
+                                    "sheetName", stats.sheetName,
+                                    "sampled", String.valueOf(stats.rowParagraphSampled),
+                                    "suppressed", String.valueOf(stats.rowParagraphSuppressed),
+                                    "total", String.valueOf(stats.rowParagraphTotal),
+                                    "limit", String.valueOf(ROW_PREVIEW_LIMIT)
+                            ),
+                            "INFO",
+                            "BLUE",
+                            "NORMAL"
+                    )
+            );
+        }
+    }
+
+    private boolean fileTypeSupportsRowParagraph(AuditFile file) {
+        return file != null && Integer.valueOf(5).equals(file.getType());
+    }
+
+    private String buildRowParagraph(Row row, Map<String, Integer> excelColumns, int rowIndexOneBased, boolean accepted) {
+        String sign = readStringByColumnName(row, excelColumns, "rainSign");
+        String raNum = readStringByColumnName(row, excelColumns, "rainRaNum");
+        String cst = readStringByColumnName(row, excelColumns, "rainCstAgPnStr");
+        if (sign == null || sign.isBlank()) {
+            sign = "(тип не указан)";
+        }
+        if (raNum == null || raNum.isBlank()) {
+            raNum = "(номер не указан)";
+        }
+        if (cst == null || cst.isBlank()) {
+            cst = "(стройка не указана)";
+        }
+        String marker = accepted ? "paragraph" : "paragraph-skip";
+        return marker + ": row=" + rowIndexOneBased + ", тип=" + escape(sign) + ", №=" + escape(raNum) + ", стройка=" + escape(cst);
+    }
+
+    private String readStringByColumnName(Row row, Map<String, Integer> excelColumns, String columnName) {
+        Integer idx = excelColumns.get(columnName);
+        if (idx == null) {
+            return null;
+        }
+        return cellReader.readString(row.getCell(idx));
+    }
+
+    private String normalizeSign(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private String safeSignLabel(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return "UNKNOWN_SIGN";
+        }
+        return value.trim();
+    }
+
+    private Set<String> resolveAllowedSigns(RaSheetConf config, boolean isType5) {
+        if (!isType5) {
+            return null;
+        }
+        if (config == null || config.rscSignWhitelist() == null || config.rscSignWhitelist().isBlank()) {
+            return TYPE5_ALLOWED_SIGNS;
+        }
+        Set<String> configured = java.util.Arrays.stream(config.rscSignWhitelist().split("[,;\\n]+"))
+                .map(this::normalizeSign)
+                .filter(value -> !value.isBlank())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        return configured.isEmpty() ? TYPE5_ALLOWED_SIGNS : configured;
+    }
+
+    private Map<String, String> withPresentationMeta(Map<String, String> meta,
+                                                      String messageType,
+                                                      String colorHint,
+                                                      String emphasis) {
+        Map<String, String> enriched = new HashMap<>();
+        if (meta != null) {
+            enriched.putAll(meta);
+        }
+        enriched.put("messageType", messageType);
+        enriched.put("colorHint", colorHint);
+        enriched.put("emphasis", emphasis);
+        return enriched;
     }
 
     private String escape(String value) {
@@ -278,6 +555,48 @@ public class DefaultAuditStagingService implements AuditStagingService {
         }
         builder.append("}");
         return builder.toString();
+    }
+
+    private String formatTopN(Map<String, Integer> source, int limit) {
+        if (source == null || source.isEmpty() || limit <= 0) {
+            return "[]";
+        }
+        List<Map.Entry<String, Integer>> entries = source.entrySet().stream()
+                .sorted((a, b) -> {
+                    int byCount = Integer.compare(b.getValue(), a.getValue());
+                    if (byCount != 0) {
+                        return byCount;
+                    }
+                    return String.valueOf(a.getKey()).compareTo(String.valueOf(b.getKey()));
+                })
+                .limit(limit)
+                .toList();
+        StringBuilder builder = new StringBuilder("[");
+        for (int i = 0; i < entries.size(); i++) {
+            if (i > 0) {
+                builder.append("; ");
+            }
+            Map.Entry<String, Integer> entry = entries.get(i);
+            builder.append(entry.getKey()).append(" x").append(entry.getValue());
+        }
+        builder.append("]");
+        return builder.toString();
+    }
+
+    private Map<String, String> stagingStatsMeta(AuditExecutionContext context, SheetLoadStats stats, String filteredSignsTop) {
+        Map<String, String> meta = new HashMap<>();
+        meta.put("auditId", String.valueOf(context.getAuditId()));
+        meta.put("sheet", stats.sheetName);
+        meta.put("table", stats.stagingTable);
+        meta.put("sourceRows", String.valueOf(stats.sourceRows));
+        meta.put("acceptedBySign", String.valueOf(stats.acceptedBySign));
+        meta.put("filteredBySign", String.valueOf(stats.filteredBySign));
+        meta.put("filteredSignsTop", filteredSignsTop);
+        meta.put("insertedRows", String.valueOf(stats.insertedRows));
+        meta.put("rowParagraphSampled", String.valueOf(stats.rowParagraphSampled));
+        meta.put("rowParagraphSuppressed", String.valueOf(stats.rowParagraphSuppressed));
+        meta.put("rowParagraphTotal", String.valueOf(stats.rowParagraphTotal));
+        return meta;
     }
 
     private Sheet resolveSheet(Workbook workbook, String sheetName) {
@@ -467,6 +786,8 @@ public class DefaultAuditStagingService implements AuditStagingService {
         private final int firstDataRow;
         private final int lastDataRow;
         private long sourceRows;
+        private long acceptedBySign;
+        private long filteredBySign;
         private long acceptedRows;
         private long insertedRows;
         private long skippedNullRow;
@@ -475,6 +796,10 @@ public class DefaultAuditStagingService implements AuditStagingService {
         private long rowsWithTruncation;
         private long totalTruncatedFields;
         private final Map<String, Integer> acceptedSignCounts = new java.util.TreeMap<>();
+        private final Map<String, Integer> filteredSignCounts = new java.util.TreeMap<>();
+        private long rowParagraphSampled;
+        private long rowParagraphSuppressed;
+        private long rowParagraphTotal;
 
         private SheetLoadStats(String sheetName, String stagingTable, int firstDataRow, int lastDataRow) {
             this.sheetName = sheetName;

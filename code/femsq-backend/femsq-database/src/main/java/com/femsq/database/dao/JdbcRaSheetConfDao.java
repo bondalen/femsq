@@ -29,7 +29,7 @@ public class JdbcRaSheetConfDao implements RaSheetConfDao {
 
     @Override
     public List<RaSheetConf> findByFileType(int fileType) {
-        String sql = "SELECT rsc_key, rsc_ft_key, rsc_sheet, rsc_stg_tbl, rsc_anchor, rsc_anchor_match, rsc_row_pattern "
+        String sql = "SELECT rsc_key, rsc_ft_key, rsc_sheet, rsc_stg_tbl, rsc_anchor, rsc_anchor_match, rsc_row_pattern, rsc_sign_whitelist "
                 + "FROM " + TABLE_NAME + " WHERE rsc_ft_key = ? ORDER BY rsc_key";
         try (Connection connection = connectionFactory.createConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -44,7 +44,8 @@ public class JdbcRaSheetConfDao implements RaSheetConfDao {
                             resultSet.getNString("rsc_stg_tbl"),
                             resultSet.getNString("rsc_anchor"),
                             resultSet.getString("rsc_anchor_match"),
-                            resultSet.getNString("rsc_row_pattern")
+                            resultSet.getNString("rsc_row_pattern"),
+                            resultSet.getNString("rsc_sign_whitelist")
                     ));
                 }
                 return List.copyOf(result);
