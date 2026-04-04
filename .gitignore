@@ -76,3 +76,8 @@ excel/
 # Local temporary directories
 temp/
 code/femsq-backend/temp/
+code/temp/
+code/femsq-backend/femsq-web/temp/
+
+# JasperReports: скомпилированные шаблоны (в репозитории — только *.jrxml; .jasper собирает Maven)
+**/temp/**/*.jasper

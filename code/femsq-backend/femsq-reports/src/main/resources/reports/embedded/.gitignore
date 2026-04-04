@@ -1,1 +1,2 @@
-/my-new-report-sr-ag.jasper
+# Скомпилированные отчёты; источник правды — одноимённые *.jrxml (см. PrecompileReports в femsq-reports).
+*.jasper
