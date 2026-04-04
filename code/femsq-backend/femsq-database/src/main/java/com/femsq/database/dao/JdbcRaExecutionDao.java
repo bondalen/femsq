@@ -9,6 +9,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -76,6 +78,30 @@ public class JdbcRaExecutionDao implements RaExecutionDao {
         } catch (SQLException exception) {
             log.log(Level.SEVERE, "Failed to read execution state", exception);
             throw new DaoException("Не удалось получить статус выполнения ревизии " + auditId, exception);
+        }
+    }
+
+    @Override
+    public List<RaExecution> findRunningOlderThanMinutes(int olderThanMinutes) {
+        if (olderThanMinutes <= 0) {
+            return List.of();
+        }
+        String sql = "SELECT exec_key, exec_adt_key, exec_status, exec_add_ra, exec_started, exec_finished, exec_error "
+                + "FROM " + TABLE_NAME + " WHERE exec_status = N'RUNNING' AND exec_started IS NOT NULL "
+                + "AND exec_started < DATEADD(minute, -?, SYSUTCDATETIME()) ORDER BY exec_started ASC";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, olderThanMinutes);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                List<RaExecution> out = new ArrayList<>();
+                while (resultSet.next()) {
+                    out.add(map(resultSet));
+                }
+                return List.copyOf(out);
+            }
+        } catch (SQLException exception) {
+            log.log(Level.SEVERE, "Failed to list stale running executions", exception);
+            throw new DaoException("Не удалось получить список зависших выполнений ревизий", exception);
         }
     }
 

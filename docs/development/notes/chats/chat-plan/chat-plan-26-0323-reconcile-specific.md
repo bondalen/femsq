@@ -327,6 +327,7 @@
     - [x] 1.8.10.5.7.2. Определить место зависания (staging/reconcile/async completion) и причину отсутствия перехода в `FAILED/COMPLETED`. *(невызванный `markFailed` при `NoSuchMethodError` / иных `Throwable` вне `Exception`)*
     - [x] 1.8.10.5.7.3. Внести защиту: гарантированный перевод статуса ревизии в `FAILED` при необработанной ошибке async-ветки. *(реализовано в `AuditExecutionServiceImpl`: `catch (Throwable)`, отдельный guard при загрузке ревизии, коммит в `0.1.0.106-SNAPSHOT`)*
     - [x] 1.8.10.5.7.4. Повторить `1.8.10.5.6.1/1.8.10.5.6.4` и закрыть блок верификации полностью. *(выполнено: см. `1.8.10.5.6.1` и `1.8.10.5.6.4` выше; SQL по `exec_key` 105/106/107 и `adt_results` для `adt_key=13`)*
+    - ✅ **Эксплуатация и наблюдаемость (2026-04-03):** runbook `docs/development/notes/audit-log/ra-execution-operations.md` (SQL для «зависших» RUNNING, ручной UPDATE, настройки watchdog); в приложении — `AuditExecutionStalenessWatchdog` + `RaExecutionDao.findRunningOlderThanMinutes`; регрессионный тест `AuditExecutionServiceImplThrowableTest` (ошибка типа `Error` → `markFailed`).
 
 ---
 

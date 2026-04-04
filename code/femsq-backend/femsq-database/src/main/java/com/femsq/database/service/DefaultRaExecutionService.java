@@ -2,6 +2,7 @@ package com.femsq.database.service;
 
 import com.femsq.database.dao.RaExecutionDao;
 import com.femsq.database.model.RaExecution;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -34,5 +35,10 @@ public class DefaultRaExecutionService implements RaExecutionService {
     @Override
     public Optional<RaExecution> getLatestByAuditId(int auditId) {
         return raExecutionDao.findLatestByAuditId(auditId);
+    }
+
+    @Override
+    public List<RaExecution> listRunningOlderThanMinutes(int olderThanMinutes) {
+        return raExecutionDao.findRunningOlderThanMinutes(olderThanMinutes);
     }
 }

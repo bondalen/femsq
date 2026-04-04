@@ -1,6 +1,7 @@
 package com.femsq.database.service;
 
 import com.femsq.database.model.RaExecution;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -27,4 +28,9 @@ public interface RaExecutionService {
      * Возвращает последний статус выполнения по ревизии.
      */
     Optional<RaExecution> getLatestByAuditId(int auditId);
+
+    /**
+     * Список выполнений в {@code RUNNING} старше заданного числа минут (для мониторинга).
+     */
+    List<RaExecution> listRunningOlderThanMinutes(int olderThanMinutes);
 }

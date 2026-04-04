@@ -1,6 +1,7 @@
 package com.femsq.database.dao;
 
 import com.femsq.database.model.RaExecution;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -27,4 +28,11 @@ public interface RaExecutionDao {
      * Возвращает последнюю запись выполнения по ревизии.
      */
     Optional<RaExecution> findLatestByAuditId(int auditId);
+
+    /**
+     * Записи в статусе {@code RUNNING}, у которых время старта раньше чем {@code SYSUTCDATETIME() - olderThanMinutes}.
+     *
+     * @param olderThanMinutes положительное число минут «простоя»
+     */
+    List<RaExecution> findRunningOlderThanMinutes(int olderThanMinutes);
 }

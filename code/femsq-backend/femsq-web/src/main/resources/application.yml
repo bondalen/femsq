@@ -13,6 +13,13 @@ spring:
     graphiql:
       enabled: true
 
+# Мониторинг долгих RUNNING в ags.ra_execution (только лог; см. docs/.../ra-execution-operations.md)
+audit:
+  execution:
+    stale-watchdog-enabled: true
+    stale-warning-after-minutes: 45
+    stale-check-cron: "0 */10 * * * *"
+
 logging:
   level:
     com.femsq: INFO
