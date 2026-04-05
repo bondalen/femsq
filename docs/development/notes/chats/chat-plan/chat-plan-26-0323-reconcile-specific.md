@@ -1,9 +1,9 @@
 # План следующего шага: reconcile-specific по `af_type` (2/3/5/6)
 
 **Дата создания:** 2026-03-23  
-**Последнее обновление:** 2026-03-31  
+**Последнее обновление:** 2026-04-05  
 **Проект:** FEMSQ  
-**Версия плана:** 0.9.14  
+**Версия плана:** 0.9.15  
 
 ---
 
@@ -328,6 +328,95 @@
     - ✅ 1.8.10.5.7.3. Внести защиту: гарантированный перевод статуса ревизии в `FAILED` при необработанной ошибке async-ветки. *(в коде: `AuditExecutionServiceImpl` — `catch (Throwable)` и guard при загрузке ревизии; регрессия `AuditExecutionServiceImplThrowableTest`; в проде — актуальная сборка `femsq-web`, начиная с ветки с фиксом)*
     - ✅ 1.8.10.5.7.4. Повторить `1.8.10.5.6.1/1.8.10.5.6.4` и закрыть блок верификации полностью. *(выполнено: см. `1.8.10.5.6.1` и `1.8.10.5.6.4` выше; SQL по `exec_key` 105/106/107 и `adt_results` для `adt_key=13`)*
     - ✅ **Эксплуатация и наблюдаемость:** runbook `docs/development/notes/audit-log/ra-execution-operations.md` (SQL, ручной UPDATE, метрики Actuator); `AuditExecutionStalenessWatchdog` + Micrometer + `RaExecutionDao.findRunningOlderThanMinutes`; см. также коммиты после `0.1.0.106-SNAPSHOT` (watchdog, метрики, SPA/`actuator`).
+
+### 1.8.11. Аналогия лога type=5: полный срез кнопка → «ревизия завершена» (VBA parity, вариант A)
+
+**Решения (2026-04-05):**
+- **Р1 (row-level reconcile):** вариант **A — полная аналогия с VBA** (per-row сообщения для RA/RC new/changed/excess/validation без ограничения top-N). После достижения устойчивой работоспособности можно пересмотреть ограничение объёма лога.
+- **Р2 (RA/RC summary):** вариант **A** — отдельные явные сообщения «Всего строк отчётов: N» (`V-C.3.1`) и «Всего строк изменений: N» (`V-C.4.1`) как самостоятельные MSG в начале соответствующих reconcile-блоков.
+
+#### 1.8.11.1. Синхронизация mapping (только документация, без кода)
+- [ ] 1.8.11.1.1. Обновить статус `V-C.2.1.a.1.filter` в mapping: `partial` → `present`; закрыть `P3.1` в backlog
+- [ ] 1.8.11.1.2. Добавить аннотацию `map/status` для узла `V-A.1.2.b.b.check.b2.0.a.1.5.1.b` → `SHEET_MISSING` в дереве V-A и в таблице связей
+- [ ] 1.8.11.1.3. Проверить фактическое наличие `RECONCILE_TYPE5_START/DONE/SKIPPED/FAILED` в `AuditReconcileCoordinator`; актуализировать статусы `J-C.5.C.1` и `J-C.5.C.5` в mapping (план `1.8.10.3` ✅, но в mapping — `missing`)
+- [ ] 1.8.11.1.4. Зафиксировать в mapping решения Р1/Р2 (full parity A): обновить `gap`-описания `V-C.3.*/V-C.4.*` на целевые
+
+#### 1.8.11.2. Staging: детализация диапазона и якоря
+- [ ] 1.8.11.2.1. `SHEET_FOUND`: добавить в meta координаты диапазона (`column`, `firstRow`, `lastRow`, `address`) — аналог VBA `ra_RA.Column/Row/Rows.count/Address`
+  → `V-C.2.1.a`: `partial` → `present`; Event Catalog: расширить поля `SHEET_FOUND`
+- [ ] 1.8.11.2.2. `ANCHOR_FOUND/ANCHOR_MISSING`: реализовать как явные события в `DefaultAuditStagingService`
+  (сейчас при отсутствии якоря бросается исключение без события в лог)
+  → `J-C.5.B.3`: `missing` → `present`
+
+#### 1.8.11.3. Отдельные summary-сообщения RA/RC перед reconcile-блоком (V-C.3.1 / V-C.4.1)
+- [ ] 1.8.11.3.1. В `AllAgentsReconcileService` добавить явный MSG «Всего строк отчётов: N» перед блоком RA
+  (аналог VBA `"<P>Всего строк отчётов: <b>" & rsRaAll.RecordCount & "</b></P>"`)
+  → `V-C.3.1`: `partial` → `present`
+- [ ] 1.8.11.3.2. В `AllAgentsReconcileService` добавить явный MSG «Всего строк изменений: N» перед блоком RC
+  (аналог VBA `"<P>Всего строк изменений: <b>" & rsRaAll.RecordCount & "</b></P>"`)
+  → `V-C.4.1`: `partial` → `present`
+
+#### 1.8.11.4. Reconcile framework events (start / mode / stats / done)
+- [ ] 1.8.11.4.1. Подтвердить/реализовать `RECONCILE_TYPE5_START` как явное событие в `adt_results`
+  (meta: `executionKey`, `addRa`, `fileType=5`)
+  → `J-C.5.C.1`: `missing` → `present`
+- [ ] 1.8.11.4.2. Подтвердить/реализовать trio-model `RECONCILE_TYPE5_DONE/SKIPPED/FAILED`
+  → `J-C.5.C.5`: `missing` → `present`
+- [ ] 1.8.11.4.3. `RECONCILE_TYPE5_MATCH_STATS`: вынести из diagnostics-строки в структурированный MSG
+  (meta: `raNew/raChanged/raUnchanged/raInvalid/raAmbiguous`, `rcNew/rcChanged/rcUnchanged/rcInvalid/rcAmbiguous`)
+  → `J-C.5.C.2`: `partial` → `present`
+- [ ] 1.8.11.4.4. `RECONCILE_TYPE5_APPLY_STATS`: структурированный MSG
+  (meta: `raInserted/raUpdated/raUnchanged/raDeleted`, `rcInserted/rcUpdated/rcUnchanged/rcDeleted`, `sumInserted`)
+  → `J-C.5.C.3`: `partial` → `present` (агрегатный слой)
+- [ ] 1.8.11.4.5. Добавить явный MSG режима reconcile: «Режим: диагностика (addRa=false)» / «Режим: применение (addRa=true)»
+  (`eventKey: RECONCILE_TYPE5_MODE`)
+  → `V-C.3.5/V-C.4.5`: `partial` → `present`
+
+#### 1.8.11.5. Row-level события RA (V-C.3.2.a.* / V-C.3.3.a.* / V-C.3.4) — полная аналогия с VBA
+- [ ] 1.8.11.5.1. **NEW RA per row** `V-C.3.2.a.1`: MSG «создан, ключ=N, ОА=..., стройка=..., период=...»
+  (`eventKey: RA_NEW_CREATED`)
+- [ ] 1.8.11.5.2. **NEW RA sums per row** `V-C.3.2.a.2`: MSG «суммы: total=... work=... equip=... others=...» либо «суммы отсутствуют»
+  (`eventKey: RA_NEW_SUMS`)
+- [ ] 1.8.11.5.3. **NEW RA validation fail per row** `V-C.3.2.a.3`: читаемая причина на строку («нет ОА», «нет периода», «нет стройки», «неподдерживаемый Признак», «ошибка создания суммы»)
+  (`eventKey: RA_VALIDATION_FAIL`)
+- [ ] 1.8.11.5.4. **CHANGED RA field mismatch per row** `V-C.3.3.a.1`: MSG «поле X: старое=A (Crimson), ожидается=B (Peru)»
+  (`eventKey: RA_FIELD_MISMATCH`)
+- [ ] 1.8.11.5.5. **CHANGED RA after apply per row** `V-C.3.3.a.2`: MSG «обновлено: X=B (SeaGreen)»
+  (`eventKey: RA_FIELD_UPDATED`)
+- [ ] 1.8.11.5.6. **CHANGED RA sum mismatch per row** `V-C.3.3.a.3`: покомпонентный diff `ttl/work/equip/others` + пересоздание/добавление суммы
+  (`eventKey: RA_SUM_MISMATCH`)
+- [ ] 1.8.11.5.7. **Excess RA list** `V-C.3.4`: построчный список кандидатов на удаление (`ra_key`, `ra_name`)
+  (`eventKey: RA_EXCESS_ITEM`)
+
+#### 1.8.11.6. Row-level события RC (V-C.4.2.a.* / V-C.4.3.a.* / V-C.4.4) — полная аналогия с VBA
+- [ ] 1.8.11.6.1. **NEW RC per row** `V-C.4.2.a.1`: MSG «создано изменение, ключ=N, ОА=..., период=..., №=...»
+  (`eventKey: RC_NEW_CREATED`)
+- [ ] 1.8.11.6.2. **NEW RC sums per row** `V-C.4.2.a.2`: MSG «суммы: total=... work=... equip=... others=...» либо «суммы отсутствуют»
+  (`eventKey: RC_NEW_SUMS`)
+- [ ] 1.8.11.6.3. **NEW RC validation fail per row** `V-C.4.2.a.3`: читаемая причина на строку («нет ra_key», «нет периода», «нет №», «нет отправителя», «ошибка создания RC/суммы»)
+  (`eventKey: RC_VALIDATION_FAIL`)
+- [ ] 1.8.11.6.4. **CHANGED RC field mismatch per row** `V-C.4.3.a.1`: MSG «поле X: старое=A, ожидается=B»
+  (`eventKey: RC_FIELD_MISMATCH`)
+- [ ] 1.8.11.6.5. **CHANGED RC after apply per row** `V-C.4.3.a.2`: MSG «обновлено: X=B»
+  (`eventKey: RC_FIELD_UPDATED`)
+- [ ] 1.8.11.6.6. **CHANGED RC sum mismatch per row** `V-C.4.3.a.3`: покомпонентный diff + пересоздание суммы RC
+  (`eventKey: RC_SUM_MISMATCH`)
+- [ ] 1.8.11.6.7. **Excess RC list** `V-C.4.4`: построчный список кандидатов на удаление (`rac_key`, `rc_name`)
+  (`eventKey: RC_EXCESS_ITEM`)
+
+#### 1.8.11.7. Staging: per-row insert ID MSG (V-C.2.1.a.1.1.a.2.a.1)
+- [ ] 1.8.11.7.1. В `DefaultAuditStagingService` для каждой вставленной строки (`af_source=true`) добавить MSG «добавлен в импорт. ID = N»
+  (аналог VBA `"добавлен в импорт. ID - " & raRow`; `eventKey: STAGING_ROW_INSERTED`)
+  → `V-C.2.1.a.1.1.a.2.a.1`: `missing` → `present`
+  > Примечание: при больших файлах (2000+ строк) лог будет значительным — это принятое следствие решения Р1 (varian A). Реализовать в рамках того же type=5 scope.
+
+#### 1.8.11.8. Acceptance: контрольный прогон и финальная синхронизация mapping
+- [ ] 1.8.11.8.1. Контрольный прогон type=5 (один файл, `af_source=true`, `addRa=false`) → `COMPLETED`
+- [ ] 1.8.11.8.2. Верификация `adt_results` (dry-run): видны все фазы от `AUDIT_START` до `AUDIT_END`
+  — `RECONCILE_TYPE5_START`, режим `диагностика`, summary RA/RC, row-level events (new/changed/excess), match stats, apply stats, `RECONCILE_TYPE5_DONE`
+- [ ] 1.8.11.8.3. Прогон с `addRa=true` (apply, snapshot/rollback): RA created/updated, RC created/updated явно в логе
+- [ ] 1.8.11.8.4. Обновить все `map/status/gap` в `audit-log-vba-to-java-mapping.md` по факту реализации
+- [ ] 1.8.11.8.5. Закрыть `P2` и `P3` в backlog mapping если достигнуто full parity по type=5
 
 ---
 
