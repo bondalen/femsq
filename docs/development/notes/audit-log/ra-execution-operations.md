@@ -53,5 +53,48 @@ WHERE exec_key = ? /* и при необходимости */ AND exec_adt_key =
 
 Не только `Exception`, но и `Error` (например `NoSuchMethodError` при несовпадении версий модулей) должны приводить к вызову `markFailed` — см. `AuditExecutionServiceImpl` (`catch (Throwable)`).
 
+---
+
+## Чеклист «сразу по эксплуатации» (после релиза / раз в квартал)
+
+### 1. Выкладка приложения (все среды, где крутится femsq-web)
+
+Цель: на каждом хосте JAR не старее логики с `catch (Throwable)` и `AuditExecutionStalenessWatchdog` (ветка `main` после соответствующих коммитов).
+
+1. Собрать толстый JAR (из корня backend-модуля):  
+   `mvn -pl femsq-web -am package -DskipTests`  
+   Артефакт: `code/femsq-backend/femsq-web/target/femsq-web-0.1.0.*-SNAPSHOT.jar` (четвёртая цифра версии см. в `code/pom.xml`).
+2. Остановить сервис приложения → заменить JAR → запустить (команды зависят от ОС: `systemd`, Docker, ручной `java -jar`, и т.д.).
+3. Убедиться, что поднялся тот же порт/контекст, что и раньше; при необходимости проверить GraphQL `executeAudit` на тестовой ревизии.
+
+*Автоматически из IDE/агента на ваши прод-серверы зайти нельзя — пункты 1–2 выполняет оператор на каждой среде.*
+
+### 2. БД: колонка и seed `rsc_sign_whitelist` (type=5)
+
+Changeset: `code/femsq-backend/femsq-web/src/main/resources/db/changelog/changes/2026-04-02-ra-sheet-conf-sign-whitelist.sql`.
+
+Проверки на **целевой** БД:
+
+```sql
+SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_SCHEMA = N'ags' AND TABLE_NAME = N'ra_sheet_conf'
+  AND COLUMN_NAME = N'rsc_sign_whitelist';
+
+SELECT rsc_key, rsc_sign_whitelist
+FROM ags.ra_sheet_conf
+WHERE rsc_key = 1;
+```
+
+Ожидание: колонка `nvarchar(500)`; для `rsc_key = 1` — `ОА;ОА изм;ОА прочие` (или осознанно иное значение).
+
+Если таблицы Liquibase (`DATABASECHANGELOG`) в базе нет — сравнение с файлом changeset всё равно обязательно: схема могла накатываться вручную или другим способом.
+
+**Журнал проверки (DBHub, подключение по умолчанию, 2026-04-04):** колонка присутствует; для `rsc_key = 1` whitelist задан; активных `RUNNING` в `ra_execution` нет.
+
+### 3. Долгие `RUNNING` (квартальный / после инцидента)
+
+Выполнить запрос из раздела «Разовая проверка БД» выше. Пустой результат — норма. При строках — разбор по runbook (ручной `FAILED` при мёртвом процессе + повторный запуск после деплоя).
+
 **Файл создан:** 2026-04-03  
-**lastUpdated:** 2026-04-03
+**lastUpdated:** 2026-04-04
