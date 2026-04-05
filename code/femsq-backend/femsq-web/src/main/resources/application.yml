@@ -13,7 +13,13 @@ spring:
     graphiql:
       enabled: true
 
-# Мониторинг долгих RUNNING в ags.ra_execution (только лог; см. docs/.../ra-execution-operations.md)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics
+
+# Мониторинг долгих RUNNING в ags.ra_execution (лог + Micrometer; см. docs/.../ra-execution-operations.md)
 audit:
   execution:
     stale-watchdog-enabled: true

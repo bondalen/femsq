@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
  * <ul>
  *   <li>API-запросами (/api/**)</li>
  *   <li>GraphQL-запросами (/graphql)</li>
+ *   <li>Actuator (/actuator/**)</li>
  *   <li>Статическими файлами (файлы с расширениями)</li>
  * </ul>
  * 
@@ -49,9 +50,7 @@ public class SpaController {
   @RequestMapping(value = {
       "/organizations",
       "/connection",
-      "/{path:(?!graphql|api)[^\\.]+}"  // Все пути без точки, исключая /graphql и /api
-                                      // Используем отрицательный lookahead (?!graphql|api)
-                                      // чтобы исключить /graphql и /api из обработки
+      "/{path:(?!graphql|api|actuator)[^\\.]+}"  // без точки; не перехватывать /graphql, /api, /actuator
   })
   public String spaRoutes() {
     // Перенаправляем на index.html для обработки Vue Router

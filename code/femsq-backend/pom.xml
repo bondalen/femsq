@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.femsq</groupId>
         <artifactId>femsq</artifactId>
-        <version>0.1.0.107-SNAPSHOT</version>
+        <version>0.1.0.108-SNAPSHOT</version>
     </parent>
 
     <artifactId>femsq-backend</artifactId>

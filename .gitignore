@@ -81,3 +81,5 @@ code/femsq-backend/femsq-web/temp/
 
 # JasperReports: скомпилированные шаблоны (в репозитории — только *.jrxml; .jasper собирает Maven)
 **/temp/**/*.jasper
+# Исходники отчётов только в femsq-reports/src/main/resources/reports/embedded/ (не дублировать в temp/)
+**/temp/**/*.jrxml

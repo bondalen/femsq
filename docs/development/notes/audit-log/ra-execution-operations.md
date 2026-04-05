@@ -41,6 +41,16 @@ WHERE exec_key = ? /* и при необходимости */ AND exec_adt_key =
 
 Компонент `AuditExecutionStalenessWatchdog` раз в N минут ищет `RUNNING` старше порога и пишет в лог префикс `[AuditExecutionStale]`.
 
+**Micrometer** (при подключённом `spring-boot-starter-actuator`):
+
+| Метрика | Тип | Смысл |
+|---------|-----|--------|
+| `audit.execution.stale.running` | gauge | Текущее число «зависших» строк после последней проверки |
+| `audit.execution.stale.rows.detected` | counter | Суммарно зафиксированных строк за все тики (инкремент на размер списка при ненулевом) |
+| `audit.execution.stale.check.failure` | counter | Сбои запроса к БД в watchdog |
+
+Просмотр: `GET /actuator/metrics` (включены `health` и `metrics`; см. `management.endpoints.web.exposure` в `application.yml`).
+
 Параметры (`application.yml` / override):
 
 | Свойство | Смысл |
@@ -96,5 +106,9 @@ WHERE rsc_key = 1;
 
 Выполнить запрос из раздела «Разовая проверка БД» выше. Пустой результат — норма. При строках — разбор по runbook (ручной `FAILED` при мёртвом процессе + повторный запуск после деплоя).
 
+## Исходники JasperReports
+
+Канонические **`.jrxml`** встроенных отчётов — только в `femsq-reports/src/main/resources/reports/embedded/`. Копии под `**/temp/**/*.jrxml` в репозиторий не коммитить (см. корневой `.gitignore`).
+
 **Файл создан:** 2026-04-03  
-**lastUpdated:** 2026-04-04
+**lastUpdated:** 2026-04-05
