@@ -3,7 +3,7 @@ title: "Audit log: VBA → Java mapping (ход ревизии)"
 created: "2026-03-26"
 lastUpdated: "2026-04-06"
 status: "draft"
-version: "0.3.2"
+version: "0.3.3"
 ---
 
 ## Назначение
@@ -630,8 +630,8 @@ version: "0.3.2"
       - **map/status/gap:** `map -> V-C.2.1.a / V-C.2.1.b`, `status -> partial`, `gap -> в VBA есть более детальная диагностика колонок/смещений/адресов`
     - `J-C.5.B.3 [MSG][TARGET]` `ANCHOR_FOUND/ANCHOR_MISSING`
       - **eventKey:** `ANCHOR_FOUND`, `ANCHOR_MISSING`; **scope:** `FILE`
-      - **Минимальные meta-поля:** `auditId`, `filePath`, `sheetName`, `anchorText`, `anchorRow`, `messageType`, `colorHint`, `emphasis`
-      - **map/status/gap:** `map -> V-C.2.1`, `status -> missing`, `gap -> в коде сейчас нет явного события anchor; ошибка пробрасывается исключением`
+      - **Минимальные meta-поля:** `auditId`, `sheetName`, `anchorText`, `anchorRow`, `anchorRowOneBased`, `anchorColumn`, `anchorCellContent`, `messageType`, `colorHint`, `emphasis`
+      - **map/status/gap:** `map -> V-C.2.1`, `status -> present`, `gap -> формат `ANCHOR_FOUND` выровнен к SCR-003-B (текст «Найдена ячейка ...», `BLUE`); для `ANCHOR_MISSING` сохранён WARN/RED + исключение`
     - `J-C.5.B.4 [MSG]` `STAGING_START/STAGING_LOAD_STATS/STAGING_END` + `ROW_PARAGRAPH_PREVIEW*` (фактические события)
       - **eventKey:** `STAGING_START`, `STAGING_LOAD_STATS`, `STAGING_END`; **scope:** `FILE`
       - **map/status/gap:** `map -> V-C.2.1 / V-C.3.1 / V-C.4.1`, `status -> partial`, `gap -> в Java есть row-level staging preview (без top-N, 1.8.11.9.7) и staging-статистика; нет полного VBA-эквивалента: (а) механизм отбора строк отличается от VBA `Find/FindNext` (семантика совпадает через whitelist), (б) отдельный summary RA/RC как в VBA, (в) row-level reconcile RA/RC per-row.`
@@ -688,6 +688,7 @@ version: "0.3.2"
 | `V-C.3/V-C.4` (рамка reconcile) | `J-C.5.C.1` `RECONCILE_TYPE5_START` | present | Старт reconcile type=5: `AuditReconcileCoordinator.run` → `beginSpan` с `RECONCILE_TYPE5_START` (см. 1.8.11.1.3). |
 | `V-C.3/V-C.4` (завершение reconcile) | `J-C.5.C.5` `DONE/SKIPPED/FAILED` | present | Завершение: `appendResult` → `RECONCILE_TYPE5_DONE`/`SKIPPED`; catch → `RECONCILE_TYPE5_FAILED` (см. 1.8.11.1.3). |
 | `V-C.2.1.a` | `J-C.5.B.2 SHEET_FOUND` | partial | Лист найден: событие есть, но без координат диапазона (column/firstRow/lastRow/address). Целевое расширение: 1.8.11.2.1. |
+| `V-C.2.1` (anchor) | `J-C.5.B.3 ANCHOR_FOUND/ANCHOR_MISSING` | present | Реализовано событие якоря; `ANCHOR_FOUND` в формате SCR-003-B («Найдена ячейка ...», `BLUE`) с meta `anchorColumn/anchorCellContent/anchorRowOneBased`. |
 | `V-C.2.1.a.1.filter` | `J-C.5.B.4` | present | Фильтр строк по полю `Признак` из whitelist (`ОА`/`ОА изм`/`ОА прочие`) реализован в 1.8.10.5 ✅. Механизм отличается от VBA (`Find/FindNext`), семантический результат идентичен. |
 | `V-C.2.1.a.1.1.a.2.a.1` | — | missing | Per-row staging insert ID. Целевой `eventKey: STAGING_ROW_INSERTED` (1.8.11.7.1). |
 | `V-C.2.1.a.1` | `J-C.5.B/J-C.5.C` | partial | Перебор строк в VBA логируется детально; в Java покрыт через staging/reconcile + row-level preview и агрегированные counters. |
@@ -967,7 +968,7 @@ version: "0.3.2"
 | `STAGING_START` | `FILE` | `START` | `filePath`, `tableName`, `sheetName` | Старт загрузки staging. |
 | `STAGING_LOAD_STATS` | `FILE` | `INFO` | `filePath`, `tableName`, `inserted`, `skipped*` | Итоговая статистика загрузки. |
 | `STAGING_END` | `FILE` | `END` | `filePath`, `tableName`, `durationSec` | Завершение загрузки staging. |
-| `ANCHOR_FOUND` | `FILE` | `INFO` | `filePath`, `sheetName`, `anchorText`, `anchorRow` | Якорь заголовка найден. |
+| `ANCHOR_FOUND` | `FILE` | `INFO` | `sheetName`, `anchorText`, `anchorRow`, `anchorRowOneBased`, `anchorColumn`, `anchorCellContent` | Якорь заголовка найден (формат SCR-003-B). |
 | `ANCHOR_MISSING` | `FILE` | `WARN` | `filePath`, `sheetName`, `anchorText` | Якорь заголовка не найден. |
 | `RECONCILE_START` | `FILE` | `START` | `execKey`, `fileType` | Старт reconcile. |
 | `RECONCILE_DONE` | `FILE` | `END` | `execKey`, `fileType`, `counters` | Завершение reconcile с counters. |

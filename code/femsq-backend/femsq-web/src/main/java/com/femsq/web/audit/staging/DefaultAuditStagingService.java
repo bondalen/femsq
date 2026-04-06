@@ -232,21 +232,33 @@ public class DefaultAuditStagingService implements AuditStagingService {
             );
             throw new AuditExcelException("Anchor not found: " + config.rscAnchor() + ", sheet=" + sheet.getSheetName());
         }
+        String anchorColumnLabel = config.rscAnchor() == null || config.rscAnchor().isBlank()
+                ? "(якорь)"
+                : config.rscAnchor().trim();
+        int anchorColumnOneBased = findAnchorColumnOneBased(sheet.getRow(anchorRowOpt.getAsInt()), config.rscAnchor());
+        int anchorRowOneBased = anchorRowOpt.getAsInt() + 1;
+        String anchorCellContent = readAnchorCellContent(sheet.getRow(anchorRowOpt.getAsInt()), anchorColumnOneBased);
         context.append(
                 AuditLogLevel.INFO,
                 AuditLogScope.FILE,
                 "ANCHOR_FOUND",
-                "<P>Якорь найден: " + escape(config.rscAnchor()) + ", row=" + anchorRowOpt.getAsInt() + "</P>",
+                "<P>Найдена ячейка " + escape(anchorColumnLabel)
+                        + " колонка - " + anchorColumnOneBased
+                        + ", строка - " + anchorRowOneBased
+                        + ". Содержание: " + escape(anchorCellContent) + ".</P>",
                 withPresentationMeta(
                         Map.of(
                                 "auditId", String.valueOf(context.getAuditId()),
                                 "sheetName", String.valueOf(sheet.getSheetName()),
                                 "anchorText", String.valueOf(config.rscAnchor()),
                                 "anchorRow", String.valueOf(anchorRowOpt.getAsInt()),
+                                "anchorRowOneBased", String.valueOf(anchorRowOneBased),
+                                "anchorColumn", String.valueOf(anchorColumnOneBased),
+                                "anchorCellContent", String.valueOf(anchorCellContent),
                                 "tableName", String.valueOf(config.rscStgTbl())
                         ),
                         "INFO",
-                        "GREEN",
+                        "BLUE",
                         "NORMAL"
                 )
         );
@@ -555,6 +567,35 @@ public class DefaultAuditStagingService implements AuditStagingService {
             return null;
         }
         return cellReader.readString(row.getCell(idx));
+    }
+
+    private int findAnchorColumnOneBased(Row anchorRow, String anchorText) {
+        if (anchorRow == null || anchorText == null || anchorText.isBlank()) {
+            return 0;
+        }
+        String expected = anchorText.trim();
+        short last = anchorRow.getLastCellNum();
+        if (last <= 0) {
+            return 0;
+        }
+        for (int i = 0; i < last; i++) {
+            String actual = cellReader.readString(anchorRow.getCell(i));
+            if (actual == null) {
+                continue;
+            }
+            if (expected.equalsIgnoreCase(actual.trim())) {
+                return i + 1;
+            }
+        }
+        return 0;
+    }
+
+    private String readAnchorCellContent(Row anchorRow, int anchorColumnOneBased) {
+        if (anchorRow == null || anchorColumnOneBased <= 0) {
+            return "";
+        }
+        String value = cellReader.readString(anchorRow.getCell(anchorColumnOneBased - 1));
+        return value == null ? "" : value;
     }
 
     private String normalizeSign(String value) {
