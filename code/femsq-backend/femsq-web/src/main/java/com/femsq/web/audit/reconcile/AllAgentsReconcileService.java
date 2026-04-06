@@ -55,6 +55,12 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             System.getProperty("femsq.reconcile.type5.enableDeletes", "false"));
     /** Цвет акцента для summary RA/RC (SCR-002-A/B/C, Crimson). */
     private static final String HTML_CRIMSON_SUMMARY = "#DC143C";
+    /** SCR-002-B: несовпадение поля — «старое» в БД. */
+    private static final String HTML_CRIMSON_FIELD = "#DC143C";
+    /** SCR-002-B: ожидаемое значение из источника. */
+    private static final String HTML_PERU_EXPECTED = "#CD853F";
+    /** SCR-002-B: значение после обновления. */
+    private static final String HTML_SEA_GREEN = "#2E8B57";
 
     public AllAgentsReconcileService(ConnectionFactory connectionFactory) {
         super(connectionFactory);
@@ -72,7 +78,7 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         LookupResolutionResult lookupResult = resolveLookupKeys(stagingRowsData, lookupCaches);
         LookupResolutionStats lookupStats = lookupResult.stats();
         CanonicalKeyStats canonicalKeyStats = buildCanonicalKeyStats(stagingRowsData, lookupResult.byRowKey());
-        RaReadModelResult readModelResult = buildRaReadModel(connection, stagingRowsData, lookupResult.byRowKey());
+        RaReadModelResult readModelResult = buildRaReadModel(connection, stagingRowsData, lookupResult.byRowKey(), context);
         RaReadModelStats readModelStats = readModelResult.stats();
         // RC read-model строим позже:
         // - в dry-run можно строить сразу
@@ -107,6 +113,7 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         int rcNewPlanned = 0;
         int rcChangedPlanned = 0;
         RaDeletePlan raDeletePlan = planRaDeletes(connection, stagingRowsData, lookupResult.byRowKey());
+        appendRaExcessItemsAudit(context, raDeletePlan);
         // rcDeletePlan зависит от domainRcByKey, который для apply нужно грузить после RA apply.
         RcDeletePlan rcDeletePlan = new RcDeletePlan(List.of(), 0);
         int raDeleted = 0;
@@ -153,11 +160,13 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             }
 
             if (!raStepAlreadyDone) {
-                InsertNewRaResult insertResult = insertNewRaRows(connection, readModelResult.newRows());
+                InsertNewRaResult insertResult = insertNewRaRows(connection, context, readModelResult.newRows());
                 inserted = insertResult.insertedCount();
-                updated = updateChangedRaRows(connection, readModelResult.changedRows());
+                updated = updateChangedRaRows(connection, context, readModelResult.changedRows());
                 SumEvolutionStats sumStats = evolveRaSums(
                         connection,
+                        context,
+                        readModelResult.newRows(),
                         insertResult.insertedRows(),
                         readModelResult.changedRows()
                 );
@@ -490,7 +499,8 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
     private RaReadModelResult buildRaReadModel(
             Connection connection,
             List<StagingRaRow> rows,
-            Map<Long, ResolvedLookupKeys> byRowKey
+            Map<Long, ResolvedLookupKeys> byRowKey,
+            ReconcileContext context
     ) throws SQLException {
         Map<CanonicalMatchKey, List<DomainRaRow>> domainByKey = loadDomainRaRows(connection);
         List<NewRaRow> newRows = new ArrayList<>();
@@ -524,12 +534,14 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                 invalid++;
                 categoryInvalid++;
                 rejectedInvalidCanonical++;
+                appendRaValidationFail(context, row, "INVALID_CANONICAL_KEY", describeMissingCanonicalParts(row, byRowKey.get(row.key())));
                 continue;
             }
             if (!isAllowedRaSign(sign)) {
                 invalid++;
                 categoryInvalid++;
                 rejectedDisallowedSign++;
+                appendRaValidationFail(context, row, "DISALLOWED_SIGN", "Знак «" + escapeHtml(trimToNull(sign)) + "» не допускается для ветки RA (ожидаются ОА / ОА прочие).");
                 continue;
             }
             List<DomainRaRow> candidates = domainByKey.get(canonical);
@@ -542,6 +554,8 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             if (candidates.size() > 1) {
                 matchedAmbiguous++;
                 categoryAmbiguous++;
+                appendRaValidationFail(context, row, "AMBIGUOUS_MATCH",
+                        "Найдено " + candidates.size() + " записей ags.ra по ключу (отправитель, стройка, период, номер).");
                 continue;
             }
             matchedSingle++;
@@ -552,7 +566,7 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             } else {
                 changed++;
                 categoryChanged++;
-                changedRows.add(new ChangedRaRow(domain.raKey(), row));
+                changedRows.add(new ChangedRaRow(domain.raKey(), domain, row));
             }
         }
         int rowsEligible = categoryNew + categoryChanged;
@@ -587,7 +601,8 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         );
     }
 
-    private InsertNewRaResult insertNewRaRows(Connection connection, List<NewRaRow> newRows) throws SQLException {
+    private InsertNewRaResult insertNewRaRows(Connection connection, ReconcileContext context, List<NewRaRow> newRows)
+            throws SQLException {
         if (newRows.isEmpty()) {
             return new InsertNewRaResult(0, List.of());
         }
@@ -656,14 +671,18 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                 try (ResultSet resultSet = statement.executeQuery()) {
                     if (resultSet.next()) {
                         inserted++;
-                        insertedRows.add(new InsertedRaRow(resultSet.getLong(1), source));
+                        long raKey = resultSet.getLong(1);
+                        insertedRows.add(new InsertedRaRow(raKey, source));
+                        appendRaNewCreatedAudit(context, source, keys, raKey, true);
                     } else {
                         // Уже существует (SQL-idempotency). Разрешим ra_key, чтобы всё равно корректно эволюционировать суммы.
                         selectExistingRaKey.setInt(1, raPeriod);
                         selectExistingRaKey.setString(2, raNum);
                         try (ResultSet rs = selectExistingRaKey.executeQuery()) {
                             if (rs.next()) {
-                                insertedRows.add(new InsertedRaRow(rs.getLong(1), source));
+                                long raKey = rs.getLong(1);
+                                insertedRows.add(new InsertedRaRow(raKey, source));
+                                appendRaNewCreatedAudit(context, source, keys, raKey, false);
                             }
                         }
                     }
@@ -673,7 +692,8 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         return new InsertNewRaResult(inserted, insertedRows);
     }
 
-    private int updateChangedRaRows(Connection connection, List<ChangedRaRow> changedRows) throws SQLException {
+    private int updateChangedRaRows(Connection connection, ReconcileContext context, List<ChangedRaRow> changedRows)
+            throws SQLException {
         if (changedRows.isEmpty()) {
             return 0;
         }
@@ -696,6 +716,7 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             for (ChangedRaRow row : changedRows) {
                 StagingRaRow source = row.stagingRow();
+                DomainRaRow domainBefore = row.domainBefore();
                 statement.setString(1, mapToDomainRaType(source.sign()));
                 statement.setObject(2, source.raDate());
                 statement.setString(3, trimToNull(source.arrivedNum()));
@@ -707,7 +728,11 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                 statement.setString(9, trimToNull(source.sendNum()));
                 statement.setObject(10, source.sendDate());
                 statement.setLong(11, row.raKey());
-                updated += statement.executeUpdate();
+                int n = statement.executeUpdate();
+                updated += n;
+                if (n > 0) {
+                    appendRaFieldMismatchAndUpdatedAudit(context, domainBefore, source, row.raKey());
+                }
             }
         }
         return updated;
@@ -715,6 +740,8 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
 
     private SumEvolutionStats evolveRaSums(
             Connection connection,
+            ReconcileContext context,
+            List<NewRaRow> newRaRows,
             List<InsertedRaRow> insertedRows,
             List<ChangedRaRow> changedRows
     ) throws SQLException {
@@ -733,18 +760,24 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         try (PreparedStatement selectLatest = connection.prepareStatement(selectLatestSql);
              PreparedStatement insertStatement = connection.prepareStatement(insertSql)) {
             Timestamp now = new Timestamp(System.currentTimeMillis());
-            for (InsertedRaRow row : insertedRows) {
-                boolean insertedNow = upsertRaSummForRow(selectLatest, insertStatement, now, row.raKey(), row.stagingRow());
-                if (insertedNow) {
+            for (int i = 0; i < insertedRows.size(); i++) {
+                InsertedRaRow row = insertedRows.get(i);
+                NewRaRow newRa = newRaRows.get(i);
+                RaSummUpsertOutcome outcome = upsertRaSummForRowWithOutcome(
+                        selectLatest, insertStatement, now, row.raKey(), row.stagingRow());
+                if (outcome.versionInserted()) {
                     inserted++;
+                    appendRaNewSumsAudit(context, newRa.stagingRow(), row.raKey(), outcome);
                 } else {
                     unchangedSkipped++;
                 }
             }
             for (ChangedRaRow row : changedRows) {
-                boolean insertedNow = upsertRaSummForRow(selectLatest, insertStatement, now, row.raKey(), row.stagingRow());
-                if (insertedNow) {
+                RaSummUpsertOutcome outcome = upsertRaSummForRowWithOutcome(
+                        selectLatest, insertStatement, now, row.raKey(), row.stagingRow());
+                if (outcome.versionInserted()) {
                     inserted++;
+                    appendRaSumMismatchAudit(context, row.stagingRow(), row.raKey(), outcome);
                 } else {
                     unchangedSkipped++;
                 }
@@ -776,7 +809,7 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         );
     }
 
-    private boolean upsertRaSummForRow(
+    private RaSummUpsertOutcome upsertRaSummForRowWithOutcome(
             PreparedStatement selectLatest,
             PreparedStatement insertStatement,
             Timestamp now,
@@ -803,7 +836,7 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                 && sameAmount(dbWork, source.work())
                 && sameAmount(dbEquip, source.equip())
                 && sameAmount(dbOthers, source.others())) {
-            return false;
+            return new RaSummUpsertOutcome(false, true, dbTotal, dbWork, dbEquip, dbOthers);
         }
         insertStatement.setLong(1, raKey);
         setNullableMoney(insertStatement, 2, source.ttl());
@@ -812,7 +845,7 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         setNullableMoney(insertStatement, 5, source.others());
         insertStatement.setTimestamp(6, now);
         insertStatement.executeUpdate();
-        return true;
+        return new RaSummUpsertOutcome(true, hasLatest, dbTotal, dbWork, dbEquip, dbOthers);
     }
 
     private boolean hasSameLatestSum(Connection connection, long raKey, StagingRaRow source) throws SQLException {
@@ -1031,7 +1064,7 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         return "ОА".equals(sign) || "ОА прочие".equals(sign);
     }
 
-    private String mapToDomainRaType(String sign) {
+    private static String mapToDomainRaType(String sign) {
         if ("ОА прочие".equals(sign)) {
             return "ОА, прочие";
         }
@@ -1517,7 +1550,7 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         // Domain set, grouped by canonical key.
         Map<CanonicalMatchKey, List<DomainRaRow>> domainByKey = loadDomainRaRows(connection);
 
-        List<Long> raKeysToDelete = new ArrayList<>();
+        List<RaExcessPlanned> excessItems = new ArrayList<>();
         int skippedAmbiguous = 0;
         for (Map.Entry<CanonicalMatchKey, List<DomainRaRow>> entry : domainByKey.entrySet()) {
             CanonicalMatchKey key = entry.getKey();
@@ -1532,10 +1565,14 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                 skippedAmbiguous++;
                 continue;
             }
-            raKeysToDelete.add(candidates.get(0).raKey());
+            Integer period = key.raPeriod();
+            if (period == null) {
+                continue;
+            }
+            excessItems.add(new RaExcessPlanned(candidates.get(0).raKey(), period, key.raNum()));
         }
 
-        return new RaDeletePlan(raKeysToDelete, skippedAmbiguous);
+        return new RaDeletePlan(excessItems, skippedAmbiguous);
     }
 
     /**
@@ -1719,9 +1756,22 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         }
     }
 
-    private record RaDeletePlan(List<Long> raKeysToDelete, int skippedAmbiguous) {
+    /**
+     * Кандидаты на удаление RA: ключ + идентификаторы для row-level аудита {@code RA_EXCESS_ITEM}.
+     */
+    private record RaExcessPlanned(long raKey, int raPeriod, String raNum) {
+    }
+
+    private record RaDeletePlan(List<RaExcessPlanned> excessItems, int skippedAmbiguous) {
+        List<Long> raKeysToDelete() {
+            if (excessItems == null || excessItems.isEmpty()) {
+                return List.of();
+            }
+            return excessItems.stream().map(RaExcessPlanned::raKey).toList();
+        }
+
         int planned() {
-            return raKeysToDelete == null ? 0 : raKeysToDelete.size();
+            return excessItems == null ? 0 : excessItems.size();
         }
     }
 
@@ -1853,6 +1903,346 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                         "BOLD"
                 )
         );
+    }
+
+    /**
+     * Row-level события аудита для ветки RA (1.8.11.5.1–5.7): NEW / validation / CHANGED поля и суммы / excess.
+     * Все вызовы no-op при {@code context.auditExecutionContext() == null}.
+     */
+    /* ---- Row-level RA audit (1.8.11.5.1–5.7) ---- */
+
+    private static String escapeHtml(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
+
+    private static String describeMissingCanonicalParts(StagingRaRow row, ResolvedLookupKeys keys) {
+        List<String> parts = new ArrayList<>();
+        if (trimToNullStatic(row.raNum()) == null) {
+            parts.add("нет ra_num");
+        }
+        if (keys == null) {
+            parts.add("lookup не разрешён");
+        } else {
+            if (keys.ogKey() == null) {
+                parts.add("нет отправителя (og)");
+            }
+            if (keys.cstapKey() == null) {
+                parts.add("нет стройки (cac)");
+            }
+            if (keys.periodKey() == null) {
+                parts.add("нет периода отчёта");
+            }
+        }
+        return parts.isEmpty() ? "неизвестная причина" : String.join("; ", parts);
+    }
+
+    private static String trimToNullStatic(String value) {
+        if (value == null) {
+            return null;
+        }
+        String t = value.trim();
+        return t.isEmpty() ? null : t;
+    }
+
+    private static String formatAuditDate(LocalDate d) {
+        return d == null ? "—" : d.toString();
+    }
+
+    private static String formatAuditMoney(BigDecimal v) {
+        if (v == null) {
+            return "—";
+        }
+        return v.stripTrailingZeros().toPlainString();
+    }
+
+    private static String formatAuditString(String s) {
+        return s == null ? "—" : escapeHtml(s);
+    }
+
+    private void appendRaValidationFail(ReconcileContext context, StagingRaRow row, String reasonCode, String detailText) {
+        AuditExecutionContext audit = context.auditExecutionContext();
+        if (audit == null) {
+            return;
+        }
+        String safeDetail = escapeHtml(detailText);
+        String html = "<P>RA: отказ валидации (staging key=<b>" + row.key() + "</b>, ra_num=<b>"
+                + formatAuditString(trimToNull(row.raNum())) + "</b>): <b>" + escapeHtml(reasonCode) + "</b>. "
+                + safeDetail + "</P>";
+        Map<String, String> meta = new HashMap<>();
+        meta.put("auditId", String.valueOf(context.auditId()));
+        meta.put("execKey", String.valueOf(context.executionKey()));
+        meta.put("fileType", String.valueOf(context.fileType()));
+        meta.put("rowIndex", String.valueOf(row.key()));
+        meta.put("raNum", trimToNull(row.raNum()) == null ? "" : trimToNull(row.raNum()));
+        meta.put("reason", reasonCode);
+        meta.put("detail", detailText);
+        audit.append(
+                AuditLogLevel.WARNING,
+                AuditLogScope.FILE,
+                "RA_VALIDATION_FAIL",
+                html,
+                withPresentationMeta(meta, "WARNING", "CRIMSON", "NORMAL")
+        );
+    }
+
+    private void appendRaNewCreatedAudit(
+            ReconcileContext context,
+            StagingRaRow source,
+            ResolvedLookupKeys keys,
+            long raKey,
+            boolean insertedNewRow
+    ) {
+        AuditExecutionContext audit = context.auditExecutionContext();
+        if (audit == null) {
+            return;
+        }
+        String mode = insertedNewRow ? "Создана новая запись ags.ra" : "Запись ags.ra уже существовала (идемпотентность)";
+        String html = "<P>" + mode + ": <b>ra_key=" + raKey + "</b>, staging key=" + source.key()
+                + ", ra_num=<b>" + formatAuditString(trimToNull(source.raNum())) + "</b>, период="
+                + (keys.periodKey() != null ? keys.periodKey() : "—")
+                + ", cac=" + (keys.cstapKey() != null ? keys.cstapKey() : "—")
+                + ", og=" + (keys.ogKey() != null ? keys.ogKey() : "—") + ".</P>";
+        Map<String, String> meta = new HashMap<>();
+        meta.put("auditId", String.valueOf(context.auditId()));
+        meta.put("execKey", String.valueOf(context.executionKey()));
+        meta.put("fileType", String.valueOf(context.fileType()));
+        meta.put("rowIndex", String.valueOf(source.key()));
+        meta.put("raKey", String.valueOf(raKey));
+        meta.put("raNum", trimToNull(source.raNum()) == null ? "" : trimToNull(source.raNum()));
+        meta.put("period", keys.periodKey() != null ? String.valueOf(keys.periodKey()) : "");
+        meta.put("cstap", keys.cstapKey() != null ? String.valueOf(keys.cstapKey()) : "");
+        meta.put("insertedNewRow", String.valueOf(insertedNewRow));
+        audit.append(
+                AuditLogLevel.INFO,
+                AuditLogScope.FILE,
+                "RA_NEW_CREATED",
+                html,
+                withPresentationMeta(meta, "INFO", "BLUE", "NORMAL")
+        );
+    }
+
+    private void appendRaNewSumsAudit(
+            ReconcileContext context,
+            StagingRaRow source,
+            long raKey,
+            RaSummUpsertOutcome outcome
+    ) {
+        AuditExecutionContext audit = context.auditExecutionContext();
+        if (audit == null) {
+            return;
+        }
+        String sumsLine = "итого=" + formatAuditMoney(source.ttl()) + ", работы=" + formatAuditMoney(source.work())
+                + ", оборуд.=" + formatAuditMoney(source.equip()) + ", прочие=" + formatAuditMoney(source.others());
+        String html;
+        if (outcome.versionInserted()) {
+            html = "<P>RA суммы: добавлена новая версия в ags.ra_summ для <b>ra_key=" + raKey + "</b> (staging key="
+                    + source.key() + "): " + sumsLine + ".</P>";
+        } else {
+            html = "<P>RA суммы: совпадают с последней версией ags.ra_summ для <b>ra_key=" + raKey
+                    + "</b> (staging key=" + source.key() + "), вставка пропущена: " + sumsLine + ".</P>";
+        }
+        Map<String, String> meta = new HashMap<>();
+        meta.put("auditId", String.valueOf(context.auditId()));
+        meta.put("execKey", String.valueOf(context.executionKey()));
+        meta.put("fileType", String.valueOf(context.fileType()));
+        meta.put("rowIndex", String.valueOf(source.key()));
+        meta.put("raKey", String.valueOf(raKey));
+        meta.put("ttl", formatAuditMoney(source.ttl()));
+        meta.put("work", formatAuditMoney(source.work()));
+        meta.put("equip", formatAuditMoney(source.equip()));
+        meta.put("others", formatAuditMoney(source.others()));
+        meta.put("versionInserted", String.valueOf(outcome.versionInserted()));
+        audit.append(
+                AuditLogLevel.INFO,
+                AuditLogScope.FILE,
+                "RA_NEW_SUMS",
+                html,
+                withPresentationMeta(meta, "INFO", "BLUE", "NORMAL")
+        );
+    }
+
+    private void appendRaFieldMismatchAndUpdatedAudit(ReconcileContext context, DomainRaRow d, StagingRaRow s, long raKey) {
+        AuditExecutionContext audit = context.auditExecutionContext();
+        if (audit == null) {
+            return;
+        }
+        String html = buildRaFieldMismatchUpdatedParagraphHtml(raKey, d, s);
+        if (html.isEmpty()) {
+            return;
+        }
+        Map<String, String> base = new HashMap<>();
+        base.put("auditId", String.valueOf(context.auditId()));
+        base.put("execKey", String.valueOf(context.executionKey()));
+        base.put("fileType", String.valueOf(context.fileType()));
+        base.put("rowIndex", String.valueOf(s.key()));
+        base.put("raKey", String.valueOf(raKey));
+        base.put("fieldsTouched", listRaFieldNamesChanged(d, s));
+        base.put("pairedEventKey", "RA_FIELD_UPDATED");
+        audit.append(
+                AuditLogLevel.WARNING,
+                AuditLogScope.FILE,
+                "RA_FIELD_MISMATCH",
+                html,
+                withPresentationMeta(new HashMap<>(base), "WARNING", "CRIMSON", "NORMAL")
+        );
+        Map<String, String> updatedMeta = new HashMap<>(base);
+        updatedMeta.put("pairedEventKey", "RA_FIELD_MISMATCH");
+        updatedMeta.put("detailInEvent", "RA_FIELD_MISMATCH");
+        /* Одна визуальная <P> в RA_FIELD_MISMATCH; отдельная запись для учёта eventKey 5.5 (мета + пустой HTML). */
+        audit.append(
+                AuditLogLevel.INFO,
+                AuditLogScope.FILE,
+                "RA_FIELD_UPDATED",
+                "",
+                withPresentationMeta(updatedMeta, "INFO", "SEA_GREEN", "NORMAL")
+        );
+    }
+
+    private static String listRaFieldNamesChanged(DomainRaRow d, StagingRaRow s) {
+        List<String> names = new ArrayList<>();
+        if (!Objects.equals(d.raType(), mapToDomainRaType(trimToNullStatic(s.sign())))) {
+            names.add("ra_type");
+        }
+        if (!Objects.equals(d.raDate(), s.raDate())) {
+            names.add("ra_date");
+        }
+        if (!Objects.equals(d.arrived(), trimToNullStatic(s.arrivedNum()))) {
+            names.add("ra_arrived");
+        }
+        if (!Objects.equals(d.arrivedDate(), s.arrivedDate())) {
+            names.add("ra_arrived_date");
+        }
+        if (!Objects.equals(d.arrivedDateFact(), s.arrivedDateFact())) {
+            names.add("ra_arrived_dateFact");
+        }
+        if (!Objects.equals(d.returned(), trimToNullStatic(s.returnedNum()))) {
+            names.add("ra_returned");
+        }
+        if (!Objects.equals(d.returnedDate(), s.returnedDate())) {
+            names.add("ra_returned_date");
+        }
+        if (!Objects.equals(d.returnedReason(), trimToNullStatic(s.returnedReason()))) {
+            names.add("ra_returnedReason");
+        }
+        if (!Objects.equals(d.sent(), trimToNullStatic(s.sendNum()))) {
+            names.add("ra_sent");
+        }
+        if (!Objects.equals(d.sentDate(), s.sendDate())) {
+            names.add("ra_sent_date");
+        }
+        return String.join(",", names);
+    }
+
+    private static String buildRaFieldMismatchUpdatedParagraphHtml(long raKey, DomainRaRow d, StagingRaRow s) {
+        List<String> segments = new ArrayList<>();
+        addRaFieldTripleIfDiff(
+                segments, "ra_type", d.raType(), mapToDomainRaType(trimToNullStatic(s.sign())));
+        addRaFieldTripleIfDiff(segments, "ra_date", formatAuditDate(d.raDate()), formatAuditDate(s.raDate()));
+        addRaFieldTripleIfDiff(segments, "ra_arrived", d.arrived(), trimToNullStatic(s.arrivedNum()));
+        addRaFieldTripleIfDiff(segments, "ra_arrived_date", formatAuditDate(d.arrivedDate()), formatAuditDate(s.arrivedDate()));
+        addRaFieldTripleIfDiff(
+                segments, "ra_arrived_dateFact", formatAuditDate(d.arrivedDateFact()), formatAuditDate(s.arrivedDateFact()));
+        addRaFieldTripleIfDiff(segments, "ra_returned", d.returned(), trimToNullStatic(s.returnedNum()));
+        addRaFieldTripleIfDiff(segments, "ra_returned_date", formatAuditDate(d.returnedDate()), formatAuditDate(s.returnedDate()));
+        addRaFieldTripleIfDiff(segments, "ra_returnedReason", d.returnedReason(), trimToNullStatic(s.returnedReason()));
+        addRaFieldTripleIfDiff(segments, "ra_sent", d.sent(), trimToNullStatic(s.sendNum()));
+        addRaFieldTripleIfDiff(segments, "ra_sent_date", formatAuditDate(d.sentDate()), formatAuditDate(s.sendDate()));
+        if (segments.isEmpty()) {
+            return "";
+        }
+        return "<P><b>ra_key=" + raKey + "</b> (staging key=" + s.key() + "): "
+                + String.join(" ", segments) + "</P>";
+    }
+
+    private static void addRaFieldTripleIfDiff(List<String> segments, String label, String oldRaw, String newRaw) {
+        String oldNorm = oldRaw == null || "—".equals(oldRaw) ? null : oldRaw;
+        String newNorm = newRaw == null || "—".equals(newRaw) ? null : newRaw;
+        if (Objects.equals(oldNorm, newNorm)) {
+            return;
+        }
+        String oldDisp = oldRaw == null ? "—" : escapeHtml(oldRaw);
+        String newDisp = newRaw == null ? "—" : escapeHtml(newRaw);
+        segments.add(
+                "<b>" + escapeHtml(label) + "</b>: БД <font color=\"" + HTML_CRIMSON_FIELD + "\">" + oldDisp
+                        + "</font> ожид. <font color=\"" + HTML_PERU_EXPECTED + "\">" + newDisp
+                        + "</font> → <font color=\"" + HTML_SEA_GREEN + "\">" + newDisp + "</font>");
+    }
+
+    private void appendRaSumMismatchAudit(
+            ReconcileContext context,
+            StagingRaRow source,
+            long raKey,
+            RaSummUpsertOutcome outcome
+    ) {
+        AuditExecutionContext audit = context.auditExecutionContext();
+        if (audit == null) {
+            return;
+        }
+        String html = "<P><b>ra_key=" + raKey + "</b> (staging key=" + source.key()
+                + "): расхождение сумм — добавлена новая версия в ags.ra_summ. "
+                + buildSumComponentDiffHtml("итого", outcome.oldTotal(), source.ttl())
+                + " " + buildSumComponentDiffHtml("работы", outcome.oldWork(), source.work())
+                + " " + buildSumComponentDiffHtml("оборуд.", outcome.oldEquip(), source.equip())
+                + " " + buildSumComponentDiffHtml("прочие", outcome.oldOthers(), source.others())
+                + "</P>";
+        Map<String, String> meta = new HashMap<>();
+        meta.put("auditId", String.valueOf(context.auditId()));
+        meta.put("execKey", String.valueOf(context.executionKey()));
+        meta.put("fileType", String.valueOf(context.fileType()));
+        meta.put("rowIndex", String.valueOf(source.key()));
+        meta.put("raKey", String.valueOf(raKey));
+        meta.put("ttlOld", formatAuditMoney(outcome.oldTotal()));
+        meta.put("ttlNew", formatAuditMoney(source.ttl()));
+        meta.put("workOld", formatAuditMoney(outcome.oldWork()));
+        meta.put("workNew", formatAuditMoney(source.work()));
+        meta.put("equipOld", formatAuditMoney(outcome.oldEquip()));
+        meta.put("equipNew", formatAuditMoney(source.equip()));
+        meta.put("othersOld", formatAuditMoney(outcome.oldOthers()));
+        meta.put("othersNew", formatAuditMoney(source.others()));
+        audit.append(
+                AuditLogLevel.WARNING,
+                AuditLogScope.FILE,
+                "RA_SUM_MISMATCH",
+                html,
+                withPresentationMeta(meta, "WARNING", "CRIMSON", "NORMAL")
+        );
+    }
+
+    private static String buildSumComponentDiffHtml(String label, BigDecimal oldV, BigDecimal newV) {
+        return "<b>" + escapeHtml(label) + "</b>: БД <font color=\"" + HTML_CRIMSON_FIELD + "\">"
+                + formatAuditMoney(oldV) + "</font> → источник <font color=\"" + HTML_PERU_EXPECTED + "\">"
+                + formatAuditMoney(newV) + "</font> <font color=\"" + HTML_SEA_GREEN + "\">(применено)</font>";
+    }
+
+    private void appendRaExcessItemsAudit(ReconcileContext context, RaDeletePlan plan) {
+        AuditExecutionContext audit = context.auditExecutionContext();
+        if (audit == null || plan.excessItems() == null || plan.excessItems().isEmpty()) {
+            return;
+        }
+        for (RaExcessPlanned item : plan.excessItems()) {
+            String raName = "RA № " + formatAuditString(item.raNum()) + ", период " + item.raPeriod();
+            String html = "<P>Лишняя запись в домене (кандидат на удаление): <b>" + raName + "</b>, <b>ra_key="
+                    + item.raKey() + "</b>.</P>";
+            Map<String, String> meta = new HashMap<>();
+            meta.put("auditId", String.valueOf(context.auditId()));
+            meta.put("execKey", String.valueOf(context.executionKey()));
+            meta.put("fileType", String.valueOf(context.fileType()));
+            meta.put("rowIndex", "");
+            meta.put("raKey", String.valueOf(item.raKey()));
+            meta.put("raNum", item.raNum() == null ? "" : item.raNum());
+            meta.put("raPeriod", String.valueOf(item.raPeriod()));
+            meta.put("raName", "RA № " + (item.raNum() == null ? "" : item.raNum()) + ", период " + item.raPeriod());
+            audit.append(
+                    AuditLogLevel.WARNING,
+                    AuditLogScope.FILE,
+                    "RA_EXCESS_ITEM",
+                    html,
+                    withPresentationMeta(meta, "WARNING", "CRIMSON", "NORMAL")
+            );
+        }
     }
 
     private static Map<String, String> withPresentationMeta(
@@ -2311,6 +2701,7 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
 
     private record ChangedRaRow(
             long raKey,
+            DomainRaRow domainBefore,
             StagingRaRow stagingRow
     ) {
     }
@@ -2330,6 +2721,19 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
     private record SumEvolutionStats(
             int inserted,
             int unchangedSkipped
+    ) {
+    }
+
+    /**
+     * Результат попытки вставить новую версию строки в {@code ags.ra_summ} (для аудита 5.2 и 5.6).
+     */
+    private record RaSummUpsertOutcome(
+            boolean versionInserted,
+            boolean hadLatestVersion,
+            BigDecimal oldTotal,
+            BigDecimal oldWork,
+            BigDecimal oldEquip,
+            BigDecimal oldOthers
     ) {
     }
 

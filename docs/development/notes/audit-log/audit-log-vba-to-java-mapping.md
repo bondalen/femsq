@@ -3,7 +3,7 @@ title: "Audit log: VBA → Java mapping (ход ревизии)"
 created: "2026-03-26"
 lastUpdated: "2026-04-06"
 status: "draft"
-version: "0.3.7"
+version: "0.3.8"
 ---
 
 ## Назначение
@@ -376,8 +376,8 @@ version: "0.3.7"
       ```
   - `V-C.3.2 [MSG]` Новые RA (`ra_key is null`) — count + построчная детализация через `AuditRaCreateNew`.
     - `map -> J-C.5.C.2/J-C.5.C.3 [MSG][TARGET]`
-    - `status -> partial`
-    - `gap -> Java отражает категории счётчиками в `RECONCILE_TYPE5_MATCH_STATS`, но без VBA-детализации текста по строкам. Целевые события: `RA_NEW_CREATED`, `RA_NEW_SUMS`, `RA_VALIDATION_FAIL` (1.8.11.5.1–5.3)`
+    - `status -> partial` (агрегат по-прежнему в `RECONCILE_TYPE5_MATCH_STATS`; построчно — см. `V-C.3.2.a.*`)
+    - `gap -> —` для row-level: `RA_NEW_CREATED`, `RA_NEW_SUMS`, `RA_VALIDATION_FAIL` в `AllAgentsReconcileService` (1.8.11.5.1–5.3) ✅
     - `screenshot -> SCR-002-A` («Найдено отчётов отсутствующих в БД: 8» `[CRIMSON BOLD]`)
     - **Поля:** `rsRaNew.RecordCount`, `rainRow`, `rainRaNum`, `periodKey`, `cstapKey`, `ogKey`, `rainSign`, `exTtl/exWork/exEquip/exOthers`
     - **Шаблон (VBA):**
@@ -387,8 +387,8 @@ version: "0.3.7"
     - `V-C.3.2.a [ACTION]` `AuditRaCreateNew` (создание RA).
       - `V-C.3.2.a.1 [MSG]` Создан новый RA + ключ.
         - `map -> J-C.5.C.3 [MSG][TARGET]`
-        - `status -> missing`
-        - `gap -> в Java нет row-level сообщения о создании RA; целевой `eventKey: RA_NEW_CREATED` (1.8.11.5.1)`
+        - `status -> present`
+        - `gap -> —` (`AllAgentsReconcileService.appendRaNewCreatedAudit`, 1.8.11.5.1) ✅
         - `screenshot -> SCR-002-A` («{idx}. {stgRow}. {raName}. Создан отчёт, ключ: {raKey}. Сумма: ...» — «Создан отчёт, ключ:» `[SEA_GREEN]`, ключ `[ORANGE]`)
         - **Поля:** `rainRow`, `rainRaNum`, `ra_key`
         - **Шаблон (VBA):**
@@ -397,8 +397,8 @@ version: "0.3.7"
           ```
       - `V-C.3.2.a.2 [MSG]` Добавлены суммы (`ttl/work/equip/others`) либо "суммы отсутствуют".
         - `map -> J-C.5.C.3 [MSG][TARGET]`
-        - `status -> missing`
-        - `gap -> в Java суммы видны агрегатно в apply stats, но нет строкового сообщения по конкретной записи; целевой `eventKey: RA_NEW_SUMS` (1.8.11.5.2)`
+        - `status -> present`
+        - `gap -> —` (`appendRaNewSumsAudit`, 1.8.11.5.2) ✅
         - `screenshot -> SCR-002-A` (хвост строки: «Сумма: всего: {ttl} Р, СМР: {work} Р, ...» или «Сумма не требуется.»)
         - **Поля:** `exTtl`, `exWork`, `exEquip`, `exOthers`, `rasmRaSm.*`
         - **Шаблон (VBA):**
@@ -407,14 +407,14 @@ version: "0.3.7"
           ```
       - `V-C.3.2.a.3 [MSG]` Отказы валидации: отсутствуют `ra_num/period/cstap/sender`, неподдерживаемый `sign`, ошибка создания суммы (`colorHint=ORANGE_RED`, `messageType=WARN/ERROR`).
         - `map -> J-C.5.C.4 [MSG][TARGET]`
-        - `status -> partial`
-        - `gap -> Java даёт diagnostics, но не человекочитаемую причину отказа по каждой строке; целевой `eventKey: RA_VALIDATION_FAIL` (1.8.11.5.3)`
+        - `status -> present`
+        - `gap -> —` (`appendRaValidationFail` в `buildRaReadModel`, 1.8.11.5.3) ✅
         - `visual -> inferred` (нет на скриншоте — строка 1 в SCR-002-A «Но это изменение!» является косвенным намёком на validation-warn; точный формат — по реализации)
         - **Поля:** `rainRaNum`, `periodKey`, `cstapKey`, `ogKey`, `rainSign`
   - `V-C.3.3 [MSG]` Изменённые RA (`ra_key is not null and rs=false`) — count + построчная детализация через `AuditRaEdit`.
     - `map -> J-C.5.C.2/J-C.5.C.3 [MSG][TARGET]`
-    - `status -> partial`
-    - `gap -> в Java есть counters CHANGED/UPDATED в `RECONCILE_TYPE5_MATCH_STATS`, но нет полного old/expected/updated текста по каждому полю. Целевые события: `RA_FIELD_MISMATCH`, `RA_FIELD_UPDATED`, `RA_SUM_MISMATCH` (1.8.11.5.4–5.6)`
+    - `status -> partial` (агрегат в `RECONCILE_TYPE5_MATCH_STATS`; построчно — `V-C.3.3.a.*`)
+    - `gap -> —` для row-level полей/сумм: `RA_FIELD_MISMATCH`/`RA_FIELD_UPDATED`/`RA_SUM_MISMATCH` (1.8.11.5.4–5.6) ✅
     - `screenshot -> SCR-002-B` («Найдено отчётов имеющих несоответствия в данных: 36» `[CRIMSON BOLD]`)
     - **Поля:** `rsRaErr.RecordCount`, `rainRow`, `ra_key`, `rs*` флаги, `ex*` поля, `domain old values`
     - **Шаблон (VBA):**
@@ -424,26 +424,26 @@ version: "0.3.7"
     - `V-C.3.3.a [ACTION]` `AuditRaEdit` (корректировка существующего RA).
       - `V-C.3.3.a.1 [MSG]` Поле не совпадает: old (Crimson) vs expected (Peru).
         - `map -> J-C.5.C.2 [MSG][TARGET]`
-        - `status -> missing`
-        - `gap -> Java не выводит row-level diff по полям; целевой `eventKey: RA_FIELD_MISMATCH` (1.8.11.5.4)`
+        - `status -> present`
+        - `gap -> —` (`updateChangedRaRows` → `appendRaFieldMismatchAndUpdatedAudit`, 1.8.11.5.4) ✅
         - `screenshot -> SCR-002-B` («{fieldName}, БД: {oldVal}» `[CRIMSON]`; «источник: {newVal}» `[PERU]`)
         - **Поля:** `rsArrv/rsDate/...`, `raRa.<field old>`, `rsRaErr!ex<field>`
       - `V-C.3.3.a.2 [MSG]` После apply: updated value (SeaGreen).
         - `map -> J-C.5.C.3 [MSG][TARGET]`
-        - `status -> missing`
-        - `gap -> Java не публикует row-level "updated" значения в лог; целевой `eventKey: RA_FIELD_UPDATED` (1.8.11.5.5)`
+        - `status -> present`
+        - `gap -> —` (вторая запись `RA_FIELD_UPDATED` с пустым HTML, детали в `RA_FIELD_MISMATCH`, 1.8.11.5.5) ✅
         - `screenshot -> SCR-002-B` («Обновлено, БД: {updatedVal}» `[SEA_GREEN]` — inline после mismatch в той же `<P>`)
         - **Поля:** `addRa`, `raRa.<field new>`
       - `V-C.3.3.a.3 [MSG]` Суммовой блок: mismatch по компонентам + пересоздание/добавление суммы.
         - `map -> J-C.5.C.3 [MSG][TARGET]`
-        - `status -> partial`
-        - `gap -> есть итоговые sum counters в apply stats, но нет детализации по компонентам суммы; целевой `eventKey: RA_SUM_MISMATCH` (1.8.11.5.6)`
+        - `status -> present`
+        - `gap -> —` (`evolveRaSums` CHANGED → `appendRaSumMismatchAudit`, 1.8.11.5.6) ✅
         - `visual -> derived-from SCR-002-B` (формат аналогичен полевому diff: «{component}, БД: {old}; источник: {new}. Обновлено: {upd}» inline; точный текст — по реализации)
         - **Поля:** `rsTtl/rsWork/rsEquip/rsOthers`, `rasmRaSm`, `exTtl/exWork/exEquip/exOthers`
   - `V-C.3.4 [MSG]` Лишние RA в домене (нет в текущем source) — count + построчный список кандидатов на удаление.
     - `map -> J-C.5.C.4 [MSG][TARGET]`
-    - `status -> partial`
-    - `gap -> Java delete-план отражается в diagnostics агрегатно, но без построчного списка имён как в VBA; целевой `eventKey: RA_EXCESS_ITEM` (1.8.11.5.7)`
+    - `status -> present`
+    - `gap -> —` (`appendRaExcessItemsAudit` после `planRaDeletes`, 1.8.11.5.7) ✅
     - `visual -> derived-from SCR-002-A` (шаблон счётчика: «... в БД, но отсутствуют в источнике: **N**» `[CRIMSON BOLD]`; список: «{idx}. {raName}» `[CRIMSON]`)
     - **Поля:** `rsRaExr.RecordCount`, `ra_key`, `ra_name`, `addRa`
     - **Шаблон (VBA):**
@@ -697,13 +697,13 @@ version: "0.3.7"
 | `V-C.2.1.a.1` | `J-C.5.B/J-C.5.C` | partial | Перебор строк в VBA логируется детально; в Java покрыт через staging/reconcile + row-level preview и агрегированные counters. |
 | `V-C.2.1.a.1.1.a.*` | `ROW_PARAGRAPH_PREVIEW*` | partial | Staging: полный вывод строк без top-N, SCR-003-D HTML + `rain_key` (1.8.11.9.7). Полный VBA-parity по файлу — ещё reconcile RA/RC per-row (1.8.11.5–1.8.11.6). |
 | `V-C.3.1` | `RA_ROWS_SUMMARY` | present | `AllAgentsReconcileService`: `matchRowsConsidered` в `raRowsCount` (1.8.11.3.1) ✅. |
-| `V-C.3.2.a.1` | — | missing | RA created per row. Целевой `eventKey: RA_NEW_CREATED` (1.8.11.5.1). |
-| `V-C.3.2.a.2` | — | missing | RA sums per row. Целевой `eventKey: RA_NEW_SUMS` (1.8.11.5.2). |
-| `V-C.3.2.a.3` | `RECONCILE_TYPE5_DIAGNOSTICS` | partial | RA validation fail: в diagnostics частично, без per-row текста. Целевой `eventKey: RA_VALIDATION_FAIL` (1.8.11.5.3). |
-| `V-C.3.3.a.1` | — | missing | RA field mismatch old/expected. Целевой `eventKey: RA_FIELD_MISMATCH` (1.8.11.5.4). |
-| `V-C.3.3.a.2` | — | missing | RA updated value. Целевой `eventKey: RA_FIELD_UPDATED` (1.8.11.5.5). |
-| `V-C.3.3.a.3` | `RECONCILE_TYPE5_APPLY_STATS` | partial | RA sum mismatch: агрегат есть, per-row нет. Целевой `eventKey: RA_SUM_MISMATCH` (1.8.11.5.6). |
-| `V-C.3.4` | `RECONCILE_TYPE5_DIAGNOSTICS` | partial | Excess RA: aggregate, без списка имён. Целевой `eventKey: RA_EXCESS_ITEM` (1.8.11.5.7). |
+| `V-C.3.2.a.1` | `RA_NEW_CREATED` | present | Per-row при apply: `AllAgentsReconcileService.insertNewRaRows` → `appendRaNewCreatedAudit` (1.8.11.5.1) ✅. |
+| `V-C.3.2.a.2` | `RA_NEW_SUMS` | present | Per-row при apply: `evolveRaSums` → `appendRaNewSumsAudit` (1.8.11.5.2) ✅. |
+| `V-C.3.2.a.3` | `RA_VALIDATION_FAIL` | present | Per-row: `buildRaReadModel` → `appendRaValidationFail` (invalid key / sign / ambiguous) (1.8.11.5.3) ✅. |
+| `V-C.3.3.a.1` | `RA_FIELD_MISMATCH` | present | После `UPDATE` полей RA: одна `<P>` с inline Crimson/Peru/SeaGreen (1.8.11.5.4) ✅. |
+| `V-C.3.3.a.2` | `RA_FIELD_UPDATED` | present | Вторая запись с тем же смыслом: пустой HTML, meta `detailInEvent=RA_FIELD_MISMATCH` (1.8.11.5.5) ✅. |
+| `V-C.3.3.a.3` | `RA_SUM_MISMATCH` | present | При вставке новой версии `ra_summ` для CHANGED: покомпонентный diff (1.8.11.5.6) ✅. |
+| `V-C.3.4` | `RA_EXCESS_ITEM` | present | После `planRaDeletes`: построчно по кандидатам (1.8.11.5.7) ✅. |
 | `V-C.3.5/V-C.4.5` | `RECONCILE_TYPE5_MODE` | present | Явный MSG режима + `addRa` в `RECONCILE_TYPE5_START` (1.8.11.4.5) ✅. |
 | `V-C.4.1` | `RC_ROWS_SUMMARY` | present | `rcRowsConsidered` перед блоком RC (1.8.11.3.2) ✅. |
 | `V-C.4.2.a.1` | — | missing | RC created per row. Целевой `eventKey: RC_NEW_CREATED` (1.8.11.6.1). |
@@ -877,6 +877,8 @@ version: "0.3.7"
 ```
 
 > **Ключевое наблюдение:** несколько изменённых полей одной записи выводятся **в одной строке `<P>`**. `RA_FIELD_MISMATCH` + `RA_FIELD_UPDATED` — inline-пары без `<P>` между полями; новая `<P>` только при переходе к следующей RA-записи.
+>
+> **Java (1.8.11.5.4–5.5):** одна визуальная `<P>` в событии `RA_FIELD_MISMATCH`; запись `RA_FIELD_UPDATED` дублирует meta и несёт пустой HTML (`detailInEvent=RA_FIELD_MISMATCH`), чтобы сохранить оба `eventKey` без второго параграфа с тем же текстом.
 
 **Производные узлы `V-C.4.3.*` CHANGED RC:** формат идентичен, «отчёт»→«изменение».
 
@@ -989,13 +991,13 @@ version: "0.3.7"
 | `STAGING_ROW_INSERTED` | `FILE` | `INFO` | `sheetName`, `tableName`, `rowIndex`, `insertedId` | Строка добавлена в staging с `rain_key` (type=5, по-строчный `executeUpdate`). |
 | `RECONCILE_TYPE5_MODE` | `FILE` | `INFO` | `execKey`, `addRa`, `mode` | Режим reconcile: `DIAGNOSTIC`/`APPLY` (`AllAgentsReconcileService`, 1.8.11.4.5). |
 | `RA_ROWS_SUMMARY` | `FILE` | `INFO` | `execKey`, `raRowsCount` | «Всего строк отчётов: N» перед блоком RA (`AllAgentsReconcileService`, 1.8.11.3.1). |
-| `RA_NEW_CREATED` | `FILE` | `INFO` | `rowIndex`, `raNum`, `raKey`, `period`, `cstap` | Создан новый RA + ключ (per-row). Целевой (1.8.11.5.1). |
-| `RA_NEW_SUMS` | `FILE` | `INFO` | `rowIndex`, `raKey`, `ttl`, `work`, `equip`, `others`, `hasSums` | Добавлены суммы RA или «суммы отсутствуют» (per-row). Целевой (1.8.11.5.2). |
-| `RA_VALIDATION_FAIL` | `FILE` | `WARN` | `rowIndex`, `raNum`, `reason` | Отказ валидации RA: читаемая причина (per-row). Целевой (1.8.11.5.3). |
-| `RA_FIELD_MISMATCH` | `FILE` | `WARN` | `rowIndex`, `raKey`, `field`, `oldValue`, `expectedValue` | Несовпадение поля RA: old (Crimson) vs expected (Peru). Целевой (1.8.11.5.4). |
-| `RA_FIELD_UPDATED` | `FILE` | `INFO` | `rowIndex`, `raKey`, `field`, `newValue` | Обновлено поле RA (SeaGreen). Целевой (1.8.11.5.5). |
-| `RA_SUM_MISMATCH` | `FILE` | `WARN` | `rowIndex`, `raKey`, `ttlOld`, `ttlNew`, `workOld`, `workNew`, `equipOld`, `equipNew`, `othersOld`, `othersNew` | Суммовой блок RA: покомпонентный diff + пересоздание. Целевой (1.8.11.5.6). |
-| `RA_EXCESS_ITEM` | `FILE` | `WARN` | `rowIndex`, `raKey`, `raName` | Лишняя RA в домене (кандидат на удаление). Целевой (1.8.11.5.7). |
+| `RA_NEW_CREATED` | `FILE` | `INFO` | `rowIndex`, `raNum`, `raKey`, `period`, `cstap`, `insertedNewRow` | Создан новый RA + ключ (per-row, apply). `AllAgentsReconcileService` (1.8.11.5.1). |
+| `RA_NEW_SUMS` | `FILE` | `INFO` | `rowIndex`, `raKey`, `ttl`, `work`, `equip`, `others`, `versionInserted` | Суммы NEW RA: новая версия `ra_summ` или совпадение с последней (1.8.11.5.2). |
+| `RA_VALIDATION_FAIL` | `FILE` | `WARN` | `rowIndex`, `raNum`, `reason`, `detail` | Отказ валидации RA по строке staging (1.8.11.5.3). |
+| `RA_FIELD_MISMATCH` | `FILE` | `WARN` | `rowIndex`, `raKey`, `fieldsTouched`, `pairedEventKey` | Поля RA: БД / ожидание / применено в одной `<P>` (1.8.11.5.4). |
+| `RA_FIELD_UPDATED` | `FILE` | `INFO` | `rowIndex`, `raKey`, `fieldsTouched`, `detailInEvent`, `pairedEventKey` | Спутник 5.5: пустой `messageHtml`, дублирующая meta; текст в `RA_FIELD_MISMATCH` (1.8.11.5.5). |
+| `RA_SUM_MISMATCH` | `FILE` | `WARN` | `rowIndex`, `raKey`, `ttlOld`, `ttlNew`, … | CHANGED RA: diff по компонентам + новая версия `ra_summ` (1.8.11.5.6). |
+| `RA_EXCESS_ITEM` | `FILE` | `WARN` | `raKey`, `raNum`, `raPeriod`, `raName` | Кандидат на удаление RA (`rowIndex` пустой — нет строки staging) (1.8.11.5.7). |
 | `RC_ROWS_SUMMARY` | `FILE` | `INFO` | `execKey`, `rcRowsCount` | «Всего строк изменений: N» перед блоком RC (`AllAgentsReconcileService`, 1.8.11.3.2). |
 | `RC_NEW_CREATED` | `FILE` | `INFO` | `rowIndex`, `raKey`, `rcKey`, `period`, `num` | Создано новое RC + ключ (per-row). Целевой (1.8.11.6.1). |
 | `RC_NEW_SUMS` | `FILE` | `INFO` | `rowIndex`, `rcKey`, `ttl`, `work`, `equip`, `others`, `hasSums` | Добавлены суммы RC или «суммы отсутствуют» (per-row). Целевой (1.8.11.6.2). |
@@ -1020,4 +1022,4 @@ version: "0.3.7"
 - `P2`: расширить mapping на type-specific оркестровочные сообщения (`af_type=2/3/5/6`) в том же формате `map/status/gap`. Для type=5 частично закрыто в `1.8.10`; полное закрытие — после выполнения `1.8.11`.
 - `P3 (partially done)`: staging row-level (`V-C.2.1.a.1.1.a.*`) — полный вывод без top-N, SCR-003-D (1.8.11.9.7). Полный per-row по reconcile RA/RC — целевое решение A, см. `1.8.11.5–1.8.11.7`.
 - `P3.1 (done)`: реализован целевой критерий отбора строк type=5 по полю `Признак` (`ОА`/`ОА изм`/`ОА прочие`) из `ags.ra_sheet_conf`; `V-C.2.1.a.1.filter` переведён в `present`. Выполнено в `1.8.10.5` ✅.
-- `P4`: реализовать row-level события reconcile type=5 (RA/RC new/changed/excess/validation) по решению A (full parity). Карта задач: `1.8.11.3–1.8.11.7`. Новые `eventKey`: `RA_ROWS_SUMMARY`, `RA_NEW_CREATED`, `RA_NEW_SUMS`, `RA_VALIDATION_FAIL`, `RA_FIELD_MISMATCH`, `RA_FIELD_UPDATED`, `RA_SUM_MISMATCH`, `RA_EXCESS_ITEM`, и симметричные `RC_*`. Плюс framework events: `RECONCILE_TYPE5_MODE`, `STAGING_ROW_INSERTED`.
+- `P4 (partial)`: row-level RA — `1.8.11.5` ✅ (`AllAgentsReconcileService`). Остаётся симметрия RC (`1.8.11.6`) и прочие пункты `1.8.11.3–1.8.11.4`, `1.8.11.7`.

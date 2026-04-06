@@ -3,7 +3,7 @@
 **Дата создания:** 2026-03-23  
 **Последнее обновление:** 2026-04-06  
 **Проект:** FEMSQ  
-**Версия плана:** 0.9.24  
+**Версия плана:** 0.9.25  
 
 ---
 
@@ -393,23 +393,29 @@
   - **Факт кода:** `RECONCILE_TYPE5_MODE` с meta `mode=APPLY|DIAGNOSTIC`, `addRa`; эмиссия вместе с `RA_ROWS_SUMMARY` в начале `reconcileInTransaction`.
 
 #### 1.8.11.5. Row-level события RA (V-C.3.2.a.* / V-C.3.3.a.* / V-C.3.4) — полная аналогия с VBA
-- [ ] 1.8.11.5.1. **NEW RA per row** `V-C.3.2.a.1`: MSG «создан, ключ=N, ОА=..., стройка=..., период=...»
+- ✅ 1.8.11.5.1. **NEW RA per row** `V-C.3.2.a.1`: MSG «создан, ключ=N, ОА=..., стройка=..., период=...»
   (`eventKey: RA_NEW_CREATED`)
-- [ ] 1.8.11.5.2. **NEW RA sums per row** `V-C.3.2.a.2`: MSG «суммы: total=... work=... equip=... others=...» либо «суммы отсутствуют»
+  - **Факт кода:** `insertNewRaRows` → `appendRaNewCreatedAudit` (только apply, не dry-run); учёт идемпотентного INSERT (`insertedNewRow` в meta).
+- ✅ 1.8.11.5.2. **NEW RA sums per row** `V-C.3.2.a.2`: MSG «суммы: total=... work=... equip=... others=...» либо «суммы отсутствуют»
   (`eventKey: RA_NEW_SUMS`)
-- [ ] 1.8.11.5.3. **NEW RA validation fail per row** `V-C.3.2.a.3`: читаемая причина на строку («нет ОА», «нет периода», «нет стройки», «неподдерживаемый Признак», «ошибка создания суммы»)
+  - **Факт кода:** `evolveRaSums` для каждой пары `NewRaRow`/`InsertedRaRow` → `appendRaNewSumsAudit` (`versionInserted` в meta).
+- ✅ 1.8.11.5.3. **NEW RA validation fail per row** `V-C.3.2.a.3`: читаемая причина на строку («нет ОА», «нет периода», «нет стройки», «неподдерживаемый Признак», «ошибка создания суммы»)
   (`eventKey: RA_VALIDATION_FAIL`)
-- [ ] 1.8.11.5.4. **CHANGED RA field mismatch per row** `V-C.3.3.a.1`: MSG «поле X: старое=A (Crimson), ожидается=B (Peru)»
+  - **Факт кода:** `buildRaReadModel`: нет канонического ключа, недопустимый признак, неоднозначный матч → `appendRaValidationFail` (dry и apply).
+- ✅ 1.8.11.5.4. **CHANGED RA field mismatch per row** `V-C.3.3.a.1`: MSG «поле X: старое=A (Crimson), ожидается=B (Peru)»
   (`eventKey: RA_FIELD_MISMATCH`)
-- [ ] 1.8.11.5.5. **CHANGED RA after apply per row** `V-C.3.3.a.2`: MSG «обновлено: X=B (SeaGreen)»
+- ✅ 1.8.11.5.5. **CHANGED RA after apply per row** `V-C.3.3.a.2`: MSG «обновлено: X=B (SeaGreen)»
   (`eventKey: RA_FIELD_UPDATED`)
   > ⚠️ **Архитектурное ограничение (SCR-002-B):** `RA_FIELD_MISMATCH` + `RA_FIELD_UPDATED` — inline-пары
   > без `<P>` между полями одной записи; все изменённые поля одной RA-строки помещаются в **одну `<P>`**.
   > Новая `<P>` открывается только при переходе к следующей RA-записи.
-- [ ] 1.8.11.5.6. **CHANGED RA sum mismatch per row** `V-C.3.3.a.3`: покомпонентный diff `ttl/work/equip/others` + пересоздание/добавление суммы
+  - **Факт кода:** после `UPDATE` в `updateChangedRaRows`: одна `<P>` с тройками Crimson/Peru/SeaGreen на поле; второе событие `RA_FIELD_UPDATED` — для учёта `eventKey` 5.5 с **пустым** `messageHtml`, текст в паре `RA_FIELD_MISMATCH`, meta `detailInEvent` / `pairedEventKey`.
+- ✅ 1.8.11.5.6. **CHANGED RA sum mismatch per row** `V-C.3.3.a.3`: покомпонентный diff `ttl/work/equip/others` + пересоздание/добавление суммы
   (`eventKey: RA_SUM_MISMATCH`)
-- [ ] 1.8.11.5.7. **Excess RA list** `V-C.3.4`: построчный список кандидатов на удаление (`ra_key`, `ra_name`)
+  - **Факт кода:** `evolveRaSums` для `ChangedRaRow` при фактической вставке новой версии `ra_summ` → `appendRaSumMismatchAudit`.
+- ✅ 1.8.11.5.7. **Excess RA list** `V-C.3.4`: построчный список кандидатов на удаление (`ra_key`, `ra_name`)
   (`eventKey: RA_EXCESS_ITEM`)
+  - **Факт кода:** после `planRaDeletes` → `appendRaExcessItemsAudit` (dry и apply); план несёт `RaExcessPlanned(raKey, period, raNum)`.
 
 #### 1.8.11.6. Row-level события RC (V-C.4.2.a.* / V-C.4.3.a.* / V-C.4.4) — полная аналогия с VBA
 - [ ] 1.8.11.6.1. **NEW RC per row** `V-C.4.2.a.1`: MSG «создано изменение, ключ=N, ОА=..., период=..., №=...»
