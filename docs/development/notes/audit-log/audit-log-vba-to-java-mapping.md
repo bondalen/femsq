@@ -1,9 +1,9 @@
 ---
 title: "Audit log: VBA → Java mapping (ход ревизии)"
 created: "2026-03-26"
-lastUpdated: "2026-04-05"
+lastUpdated: "2026-04-06"
 status: "draft"
-version: "0.2.0"
+version: "0.3.0"
 ---
 
 ## Назначение
@@ -78,6 +78,7 @@ version: "0.2.0"
     - `map -> J-A.1.msg.start [MSG]`
     - `status -> present`
     - `gap -> цветовая семантика пока в HTML-тексте; структурированные `colorHint/messageType/emphasis` как source-of-truth — следующий шаг`
+    - `screenshot -> SCR-003-A` (верхние строки блока старта)
     - **Поля:** `Me!adt_name`, `Me!adt_dir`, `Me!adt_date`
     - **Шаблон:**
       ```vb
@@ -92,6 +93,7 @@ version: "0.2.0"
         - `map -> J-A.1.2.msg.dir.lookup.missing [MSG]`
         - `status -> present`
         - `gap -> требуется выравнивание структурированных полей визуальной семантики (`colorHint/messageType/emphasis`)`
+        - `visual -> derived-from SCR-003-A` (зеркало DIR_FS_EXISTS: «Не обнаружена **директория** для ревизии» `[RED]`)
         - **Поля:** `Me!adt_results`
         - **Шаблон:**
           ```vb
@@ -102,6 +104,7 @@ version: "0.2.0"
         - `map -> J-A.1.2.msg.dir.lookup.found [MSG]`
         - `status -> present`
         - `gap -> требуется выравнивание структурированных полей визуальной семантики (`colorHint/messageType/emphasis`)`
+        - `screenshot -> SCR-003-A` («Имя директории *...* для ревизии обнаружено» `[GREEN BOLD]`)
         - **Поля:** `strDir`, `Me!adt_results`
         - **Шаблон:**
           ```vb
@@ -113,6 +116,7 @@ version: "0.2.0"
           - `map -> J-A.1.2.b.msg.dir.fs.missing [MSG]`
           - `status -> present`
           - `gap -> формулировка Java-сообщения менее акцентная, чем в VBA (semantic parity)`
+          - `visual -> derived-from SCR-003-A` (зеркало DIR_FS_EXISTS: «Директория с именем "..." в ФС **не** обнаружена» `[RED BOLD]`)
           - **Поля:** `strDir`, `Me!adt_results`
           - **Шаблон:**
             ```vb
@@ -127,6 +131,7 @@ version: "0.2.0"
           - `map -> J-A.1.2.b.msg.dir.fs.found [MSG]`
           - `status -> present`
           - `gap -> формулировка Java-сообщения менее акцентная, чем в VBA (semantic parity)`
+          - `screenshot -> SCR-003-A` («Директория с именем "..." в ФС обнаружена» `[GREEN BOLD]`)
           - **Поля:** `strDir`, `Me!adt_results`
           - **Шаблон:**
             ```vb
@@ -137,6 +142,7 @@ version: "0.2.0"
           - `map -> J-B.1.1`
           - `status -> semantic`
           - `gap -> принято как целевое решение: используем `WORKBOOK_OPEN` из `J-B` без отдельного app-level события`
+          - `screenshot -> SCR-003-A` («*Приложение Excel открыто*» `[BLUE BOLD]`)
           - **Поля:** `DateTime.Now`, `Me!adt_results`
           - **Шаблон:**
             ```vb
@@ -151,6 +157,7 @@ version: "0.2.0"
                   - `map -> J-A.1.3.2.msg.file.fs.found [MSG]`
                   - `status -> present`
                   - `gap -> формулировка Java-сообщения менее акцентная, чем в VBA (semantic parity)`
+                  - `screenshot -> SCR-003-A` («... Файл с именем "..." в файловой системе обнаружен»)
                   - **Поля:** `DateTime.Now`, `strFile`, `Me!adt_results`
                   - **Шаблон:**
                     ```vb
@@ -161,6 +168,7 @@ version: "0.2.0"
                   - `map -> J-B.1.1`
                   - `status -> semantic`
                   - `gap -> принято как целевое решение: открытие файла покрывается `WORKBOOK_OPEN` без отдельного app-level/file-open события`
+                  - `screenshot -> SCR-003-A` («... Файл с именем "..." в приложении открыт» `[GREEN BOLD]`)
                   - **Поля:** `DateTime.Now`, `strFile`, `Me!adt_results`
                   - **Шаблон:**
                     ```vb
@@ -172,6 +180,7 @@ version: "0.2.0"
                   - `map -> J-A.1.3.2.msg.file.fs.missing [MSG]`
                   - `status -> present`
                   - `gap -> формулировка Java-сообщения менее акцентная, чем в VBA (semantic parity)`
+                  - `visual -> derived-from SCR-003-A` (зеркало FILE_FS_FOUND: «Файл с именем "..." в ФС **не** обнаружен» `[RED BOLD]`)
                   - **Поля:** `strFile`, `Me!adt_results`
                   - **Шаблон:**
                     ```vb
@@ -222,6 +231,7 @@ version: "0.2.0"
                       - `map -> J-C.5.B.2 SHEET_MISSING [MSG]`
                       - `status -> present`
                       - `gap -> Java-сообщение `SHEET_MISSING` эмитируется из `DefaultAuditStagingService`; VBA-текст про «в книге» и `DateTime.Now` — semantic расхождение, смысл идентичен`
+                      - `visual -> derived-from SCR-003-C` (формат «лист *...* **не** обнаружен» `[RED BOLD]` — зеркало SCR-003-C с заменой «найден»→«не найден»)
                       - **Поля:** `DateTime.Now`, `Me!adt_results`
                       - **Шаблон:**
                         ```vb
@@ -245,6 +255,7 @@ version: "0.2.0"
               - `map -> J-A.1.3.msg.files.empty [MSG]`
               - `status -> present`
               - `gap -> Java-сообщение реализовано как оркестровочный WARN без HTML-акцента VBA`
+              - `visual -> inferred` (нет на скриншоте; по VBA-сниппету: «Не обнаружены файлы для рассмотрения» `[plain]`)
               - **Поля:** `Me!adt_results`
               - **Шаблон:**
                 ```vb
@@ -255,6 +266,7 @@ version: "0.2.0"
     - `map -> J-B.1.2`
     - `status -> semantic`
     - `gap -> принято как целевое решение: закрытие покрывается `WORKBOOK_CLOSE` без отдельного app-level события`
+    - `screenshot -> SCR-002-D` («*Приложение Excel закрыто*» `[BLUE BOLD]`)
     - **Поля:** `DateTime.Now`, `Me!adt_results`
     - **Шаблон:**
       ```vb
@@ -268,6 +280,7 @@ version: "0.2.0"
     - `map -> J-A.1.msg.end [MSG]`
     - `status -> present`
     - `gap -> цветовая семантика пока в HTML-тексте; структурированные `colorHint/messageType/emphasis` как source-of-truth — следующий шаг`
+    - `screenshot -> SCR-002-D` («В {finishTime} - *ревизия завершена*. С {startTime} в течении ... сек.» `[BLUE BOLD]`)
     - **Поля:** `dFinish`, `dStart`, `dDateDiff`, `Me!adt_results`
     - **Шаблон:**
       ```vb
@@ -287,11 +300,13 @@ version: "0.2.0"
 
 - `V-C.1 [ACTION]` Вход в `ra_aAllAgents.Audit` (вызов из `btnAuditRun_Click` при `af_type=5`).
 - `V-C.2 [ACTION]` Поиск и валидация структуры листа `Отчёты обычные` (`CellFind` по обязательным колонкам/смещениям).
+  - `visual -> SCR-003-B` (серия BLUE «Найдена ячейка {col} колонка - {N}, строка - 1» — по одной строке на каждый столбец из конфигурации)
   - `V-C.2.1 [CHECK]` Ключевые колонки и диапазон найдены?
     - `V-C.2.1.a [MSG]` Диапазон данных найден: колонка, первая/последняя строка, адрес (`colorHint=BLUE`, `messageType=INFO`).
       - `map -> J-C.5.B.2 [MSG][TARGET]`
       - `status -> partial`
       - `gap -> в Java пока нет полного вывода адреса диапазона и всех координат (как в VBA)`
+      - `screenshot -> SCR-003-C` («Найден диапазон *Отчёты обычные*, колонка - 4, первая строка - 2, нижняя строка - 19144. Адрес: $D$2:$D$19144.»)
       - **Поля:** `ra_RA.Column`, `ra_RA.Row`, `ra_RA.Rows.Count`, `ra_RA.Address`, `adt_results`
       - **Шаблон (VBA):**
         ```vb
@@ -312,7 +327,8 @@ version: "0.2.0"
         - `V-C.2.1.a.1.1.a.1 [MSG]` Старт `paragraph`: тип/номер ОА, стройка и контекст строки.
           - `map -> J-C.5.B.4 / ROW_PARAGRAPH_PREVIEW`
           - `status -> partial`
-          - `gap -> в Java сообщение есть, но выводится ограниченной выборкой (`ROW_PREVIEW_LIMIT`) и без полного VBA-форматирования/контекста каждой строки.`
+          - `gap -> в Java сообщение есть, но выводится ограниченной выборкой (`ROW_PREVIEW_LIMIT`) и без полного VBA-форматирования/контекста каждой строки. Целевое решение: full parity per-row (1.8.11.5).`
+          - `screenshot -> SCR-003-D` («Найден тип *ОА*; имя: ...; Стр. - ....» `[TEAL BOLD]`)
           - **Поля:** `ra_type`, `ra`, `Constraction`, `ra_Row`
           - **Шаблон (VBA):**
             ```vb
@@ -325,6 +341,7 @@ version: "0.2.0"
             - `map -> J-C.5.C.3 [MSG][TARGET]`
             - `status -> missing`
             - `gap -> в Java фиксируются агрегированные счётчики apply, но нет row-level подтверждения по каждой строке`
+            - `screenshot -> SCR-003-D` («Отчёт внесён в промеж. тбл. ID - {id}» `[DARK_GREEN]`, ID `[ORANGE BOLD]`)
             - **Поля:** `ra_`, `ra_date`, `rainRow (ID)`, `paragraph`
             - **Шаблон (VBA):**
               ```vb
@@ -338,6 +355,7 @@ version: "0.2.0"
       - `map -> J-C.5.B.2 [MSG][TARGET]`
       - `status -> partial`
       - `gap -> в Java отсутствует детализация причины (не найдено / найдено в неверной колонке)`
+      - `visual -> derived-from SCR-003-C` (зеркало SCR-003-C: «... **данные не найдены** ...» `[RED BOLD]` — цвет blue→red, «найден»→«не найдены»)
       - **Поля:** `cellRaNumColumn`, `c.Column`, `adt_results`
       - **Шаблон (VBA):**
         ```vb
@@ -350,6 +368,7 @@ version: "0.2.0"
     - `map -> J-C.5.C [MSG][TARGET]`
     - `status -> missing`
     - `gap -> в Java нет отдельного MSG «Всего строк отчётов: N» перед блоком RA; целевой `eventKey: RA_ROWS_SUMMARY` (1.8.11.3.1)`
+    - `screenshot -> SCR-002-A` («Всего найдено отчётов: 1952» `[CRIMSON BOLD]`)
     - **Поля:** `rsRaAll.RecordCount`
     - **Шаблон (VBA):**
       ```vb
@@ -359,6 +378,7 @@ version: "0.2.0"
     - `map -> J-C.5.C.2/J-C.5.C.3 [MSG][TARGET]`
     - `status -> partial`
     - `gap -> Java отражает категории счётчиками в `RECONCILE_TYPE5_MATCH_STATS`, но без VBA-детализации текста по строкам. Целевые события: `RA_NEW_CREATED`, `RA_NEW_SUMS`, `RA_VALIDATION_FAIL` (1.8.11.5.1–5.3)`
+    - `screenshot -> SCR-002-A` («Найдено отчётов отсутствующих в БД: 8» `[CRIMSON BOLD]`)
     - **Поля:** `rsRaNew.RecordCount`, `rainRow`, `rainRaNum`, `periodKey`, `cstapKey`, `ogKey`, `rainSign`, `exTtl/exWork/exEquip/exOthers`
     - **Шаблон (VBA):**
       ```vb
@@ -369,6 +389,7 @@ version: "0.2.0"
         - `map -> J-C.5.C.3 [MSG][TARGET]`
         - `status -> missing`
         - `gap -> в Java нет row-level сообщения о создании RA; целевой `eventKey: RA_NEW_CREATED` (1.8.11.5.1)`
+        - `screenshot -> SCR-002-A` («{idx}. {stgRow}. {raName}. Создан отчёт, ключ: {raKey}. Сумма: ...» — «Создан отчёт, ключ:» `[SEA_GREEN]`, ключ `[ORANGE]`)
         - **Поля:** `rainRow`, `rainRaNum`, `ra_key`
         - **Шаблон (VBA):**
           ```vb
@@ -378,6 +399,7 @@ version: "0.2.0"
         - `map -> J-C.5.C.3 [MSG][TARGET]`
         - `status -> missing`
         - `gap -> в Java суммы видны агрегатно в apply stats, но нет строкового сообщения по конкретной записи; целевой `eventKey: RA_NEW_SUMS` (1.8.11.5.2)`
+        - `screenshot -> SCR-002-A` (хвост строки: «Сумма: всего: {ttl} Р, СМР: {work} Р, ...» или «Сумма не требуется.»)
         - **Поля:** `exTtl`, `exWork`, `exEquip`, `exOthers`, `rasmRaSm.*`
         - **Шаблон (VBA):**
           ```vb
@@ -387,11 +409,13 @@ version: "0.2.0"
         - `map -> J-C.5.C.4 [MSG][TARGET]`
         - `status -> partial`
         - `gap -> Java даёт diagnostics, но не человекочитаемую причину отказа по каждой строке; целевой `eventKey: RA_VALIDATION_FAIL` (1.8.11.5.3)`
+        - `visual -> inferred` (нет на скриншоте — строка 1 в SCR-002-A «Но это изменение!» является косвенным намёком на validation-warn; точный формат — по реализации)
         - **Поля:** `rainRaNum`, `periodKey`, `cstapKey`, `ogKey`, `rainSign`
   - `V-C.3.3 [MSG]` Изменённые RA (`ra_key is not null and rs=false`) — count + построчная детализация через `AuditRaEdit`.
     - `map -> J-C.5.C.2/J-C.5.C.3 [MSG][TARGET]`
     - `status -> partial`
     - `gap -> в Java есть counters CHANGED/UPDATED в `RECONCILE_TYPE5_MATCH_STATS`, но нет полного old/expected/updated текста по каждому полю. Целевые события: `RA_FIELD_MISMATCH`, `RA_FIELD_UPDATED`, `RA_SUM_MISMATCH` (1.8.11.5.4–5.6)`
+    - `screenshot -> SCR-002-B` («Найдено отчётов имеющих несоответствия в данных: 36» `[CRIMSON BOLD]`)
     - **Поля:** `rsRaErr.RecordCount`, `rainRow`, `ra_key`, `rs*` флаги, `ex*` поля, `domain old values`
     - **Шаблон (VBA):**
       ```vb
@@ -402,21 +426,25 @@ version: "0.2.0"
         - `map -> J-C.5.C.2 [MSG][TARGET]`
         - `status -> missing`
         - `gap -> Java не выводит row-level diff по полям; целевой `eventKey: RA_FIELD_MISMATCH` (1.8.11.5.4)`
+        - `screenshot -> SCR-002-B` («{fieldName}, БД: {oldVal}» `[CRIMSON]`; «источник: {newVal}» `[PERU]`)
         - **Поля:** `rsArrv/rsDate/...`, `raRa.<field old>`, `rsRaErr!ex<field>`
       - `V-C.3.3.a.2 [MSG]` После apply: updated value (SeaGreen).
         - `map -> J-C.5.C.3 [MSG][TARGET]`
         - `status -> missing`
         - `gap -> Java не публикует row-level "updated" значения в лог; целевой `eventKey: RA_FIELD_UPDATED` (1.8.11.5.5)`
+        - `screenshot -> SCR-002-B` («Обновлено, БД: {updatedVal}» `[SEA_GREEN]` — inline после mismatch в той же `<P>`)
         - **Поля:** `addRa`, `raRa.<field new>`
       - `V-C.3.3.a.3 [MSG]` Суммовой блок: mismatch по компонентам + пересоздание/добавление суммы.
         - `map -> J-C.5.C.3 [MSG][TARGET]`
         - `status -> partial`
         - `gap -> есть итоговые sum counters в apply stats, но нет детализации по компонентам суммы; целевой `eventKey: RA_SUM_MISMATCH` (1.8.11.5.6)`
+        - `visual -> derived-from SCR-002-B` (формат аналогичен полевому diff: «{component}, БД: {old}; источник: {new}. Обновлено: {upd}» inline; точный текст — по реализации)
         - **Поля:** `rsTtl/rsWork/rsEquip/rsOthers`, `rasmRaSm`, `exTtl/exWork/exEquip/exOthers`
   - `V-C.3.4 [MSG]` Лишние RA в домене (нет в текущем source) — count + построчный список кандидатов на удаление.
     - `map -> J-C.5.C.4 [MSG][TARGET]`
     - `status -> partial`
     - `gap -> Java delete-план отражается в diagnostics агрегатно, но без построчного списка имён как в VBA; целевой `eventKey: RA_EXCESS_ITEM` (1.8.11.5.7)`
+    - `visual -> derived-from SCR-002-A` (шаблон счётчика: «... в БД, но отсутствуют в источнике: **N**» `[CRIMSON BOLD]`; список: «{idx}. {raName}» `[CRIMSON]`)
     - **Поля:** `rsRaExr.RecordCount`, `ra_key`, `ra_name`, `addRa`
     - **Шаблон (VBA):**
       ```vb
@@ -427,6 +455,7 @@ version: "0.2.0"
     - `map -> J-C.5.C [MSG][TARGET]`
     - `status -> partial`
     - `gap -> в Java режим отражается неявно (поле `addRa` в meta `RECONCILE_TYPE5_START`), без явного MSG в лог; целевой `eventKey: RECONCILE_TYPE5_MODE` (1.8.11.4.5)`
+    - `visual -> inferred` (нет отдельной строки на скриншоте; информация передаётся только через meta-поля событий reconcile)
     - `V-C.3.5.a [ACTION]` apply enabled: create/update/delete + обновление сумм
     - `V-C.3.5.b [ACTION]` dry-run: только диагностика/подсчёты, без изменений в домене
 
@@ -435,6 +464,7 @@ version: "0.2.0"
     - `map -> J-C.5.C [MSG][TARGET]`
     - `status -> missing`
     - `gap -> в Java нет отдельного MSG «Всего строк изменений: N» перед блоком RC; целевой `eventKey: RC_ROWS_SUMMARY` (1.8.11.3.2)`
+    - `screenshot -> SCR-002-C` («Всего новых изменений: 77» `[CRIMSON BOLD]`)
     - **Поля:** `rsRaAll.RecordCount`
     - **Шаблон (VBA):**
       ```vb
@@ -444,6 +474,7 @@ version: "0.2.0"
     - `map -> J-C.5.C.2/J-C.5.C.3 [MSG][TARGET]`
     - `status -> partial`
     - `gap -> Java NEW по RC есть как категория в `RECONCILE_TYPE5_MATCH_STATS`, но без VBA row-level текста. Целевые события: `RC_NEW_CREATED`, `RC_NEW_SUMS`, `RC_VALIDATION_FAIL` (1.8.11.6.1–6.3)`
+    - `screenshot -> SCR-002-C` («Найдено изменений отсутствующих в БД: 3» `[CRIMSON BOLD]`)
     - **Поля:** `rsRaNew.RecordCount`, `rainRow`, `rainRaNum`, `ra_key`, `rcPeriod`, `num`, `exSender`, `ex* sums`
     - **Шаблон (VBA):**
       ```vb
@@ -454,21 +485,25 @@ version: "0.2.0"
         - `map -> J-C.5.C.3 [MSG][TARGET]`
         - `status -> missing`
         - `gap -> в Java нет row-level сообщения о создании RC; целевой `eventKey: RC_NEW_CREATED` (1.8.11.6.1)`
+        - `screenshot -> SCR-002-C` («Создано изменение отчёта, ключ: {rcKey}» — формат аналогичен SCR-002-A, «ключ:» `[SEA_GREEN]`, значение `[ORANGE]`)
         - **Поля:** `rainRow`, `rainRaNum`, `rac_key`
       - `V-C.4.2.a.2 [MSG]` Добавлены суммы RC либо "суммы отсутствуют".
         - `map -> J-C.5.C.3 [MSG][TARGET]`
         - `status -> missing`
         - `gap -> нет row-level сообщения по суммам RC; целевой `eventKey: RC_NEW_SUMS` (1.8.11.6.2)`
+        - `screenshot -> SCR-002-C` (хвост строки: «Сумма: {ttl} Р, ...» или «Сумма не требуется.»)
         - **Поля:** `exTtl`, `exWork`, `exEquip`, `exOthers`, `rcsmRcSm.*`
       - `V-C.4.2.a.3 [MSG]` Отказы валидации: отсутствуют `ra_key/period/num/sender`, ошибка создания RC/сумм.
         - `map -> J-C.5.C.4 [MSG][TARGET]`
         - `status -> partial`
         - `gap -> Java фиксирует часть причин в diagnostics, но не как отдельные человекочитаемые строки; целевой `eventKey: RC_VALIDATION_FAIL` (1.8.11.6.3)`
+        - `visual -> inferred` (нет на скриншоте; формат — по аналогии с RA_VALIDATION_FAIL)
         - **Поля:** `ra_key`, `rcPeriod`, `num`, `exSender`
   - `V-C.4.3 [MSG]` Изменённые RC (`rac_key is not null and rs=false`) — count + построчная детализация через `AuditRcEdit`.
     - `map -> J-C.5.C.2/J-C.5.C.3 [MSG][TARGET]`
     - `status -> partial`
     - `gap -> Java CHANGED по RC отражается в counters `RECONCILE_TYPE5_MATCH_STATS`, но без покомпонентного diff-текста. Целевые события: `RC_FIELD_MISMATCH`, `RC_FIELD_UPDATED`, `RC_SUM_MISMATCH` (1.8.11.6.4–6.6)`
+    - `screenshot -> SCR-002-C` («Не найдены изменения имеющие несоответствия в данных.» `[plain]` — в данном прогоне CHANGED=0)
     - **Поля:** `rsRaErr.RecordCount`, `rainRow`, `rac_key`, `rs*` флаги, `ex*` поля, `domain old values`
     - **Шаблон (VBA):**
       ```vb
@@ -479,21 +514,25 @@ version: "0.2.0"
         - `map -> J-C.5.C.2 [MSG][TARGET]`
         - `status -> missing`
         - `gap -> нет row-level diff-сообщений old vs expected; целевой `eventKey: RC_FIELD_MISMATCH` (1.8.11.6.4)`
+        - `visual -> derived-from SCR-002-B` (формат идентичен RA: «{field}, БД: {old}» `[CRIMSON]`; «источник: {new}» `[PERU]`)
         - **Поля:** `rsArrv/rsDate/...`, `rcRc.<field old>`, `rsRaErr!ex<field>`
       - `V-C.4.3.a.2 [MSG]` После apply: updated value (SeaGreen).
         - `map -> J-C.5.C.3 [MSG][TARGET]`
         - `status -> missing`
         - `gap -> нет row-level "updated" сообщений по RC; целевой `eventKey: RC_FIELD_UPDATED` (1.8.11.6.5)`
+        - `visual -> derived-from SCR-002-B` (формат идентичен RA: «Обновлено, БД: {upd}» `[SEA_GREEN]` inline)
         - **Поля:** `addRa`, `rcRc.<field new>`
       - `V-C.4.3.a.3 [MSG]` Суммовой блок: mismatch по компонентам + пересоздание/добавление суммы.
         - `map -> J-C.5.C.3 [MSG][TARGET]`
         - `status -> partial`
         - `gap -> в Java только агрегаты по суммам без детального текста по компонентам; целевой `eventKey: RC_SUM_MISMATCH` (1.8.11.6.6)`
+        - `visual -> derived-from SCR-002-B` (формат аналогичен RA_SUM_MISMATCH; точный текст — по реализации)
         - **Поля:** `rsTtl/rsWork/rsEquip/rsOthers`, `rcsmRcSm`, `exTtl/exWork/exEquip/exOthers`
   - `V-C.4.4 [MSG]` Лишние RC в домене (нет в текущем source) — count + построчный список кандидатов на удаление.
     - `map -> J-C.5.C.4 [MSG][TARGET]`
     - `status -> partial`
     - `gap -> в Java RC delete отражается как агрегат planned/applied, но без построчного перечня имён как в VBA; целевой `eventKey: RC_EXCESS_ITEM` (1.8.11.6.7)`
+    - `visual -> derived-from SCR-002-A` (шаблон счётчика и списка аналогичен RA_EXCESS_ITEM; «изменение»→«изменение отчёта»)
     - **Поля:** `rsRaExr.RecordCount`, `rac_key`, `rc_name`, `addRa`
     - **Шаблон (VBA):**
       ```vb
@@ -504,6 +543,7 @@ version: "0.2.0"
     - `map -> J-C.5.C [MSG][TARGET]`
     - `status -> partial`
     - `gap -> аналогично `V-C.3.5`: режим отражается неявно; см. `RECONCILE_TYPE5_MODE` (1.8.11.4.5)`
+    - `visual -> inferred` (аналогично V-C.3.5; нет отдельной строки на скриншоте)
     - `V-C.4.5.a [ACTION]` apply enabled: create/update/delete + обновление сумм
     - `V-C.4.5.b [ACTION]` dry-run: только диагностика/подсчёты, без изменений в домене
 
@@ -668,6 +708,238 @@ version: "0.2.0"
 | `V-C.4.3.a.3` | `RECONCILE_TYPE5_APPLY_STATS` | partial | RC sum mismatch. Целевой `eventKey: RC_SUM_MISMATCH` (1.8.11.6.6). |
 | `V-C.4.4` | `RECONCILE_TYPE5_DIAGNOSTICS` | partial | Excess RC: aggregate, без списка имён. Целевой `eventKey: RC_EXCESS_ITEM` (1.8.11.6.7). |
 | `V-B.*` | `J-C.x` | parked/missing | Legacy-ветка `paragraph` не раскрывается в текущем scope. |
+
+## Visual Reference (скриншоты реального прогона type=5)
+
+> **Источники:** `docs/development/notes/audit-log/images/26-0406-002.PNG`,
+> `docs/development/notes/audit-log/images/26-0406-003.PNG`.
+> **Прогон:** 06.04.2026, type=5, один файл (`2026 Свод инф-ции по OA.xlsm`), `addRa=true`.
+>
+> **Правило приоритета:** реальный текст из `SCR-*` имеет приоритет над абстрактным
+> VBA-сниппетом в дереве. При расхождении — сниппет уточняется по `SCR`.
+>
+> **Порядок в VBA-логе:** VBA prepends (новейшее вверху); Java appends (старейшее вверху).
+> Содержимое идентично, порядок отображения обратный.
+
+---
+
+### SCR-003-A: Оркестровка — старт (26-0406-003.PNG, нижняя часть)
+
+> Узлы: `V-A.1.msg.start`, `V-A.1.2.b.b.msg`, `V-A.1.2.b.b.check.b`,
+> `V-A.1.2.b.b.check.b1`, `V-A.1.2.b.b.check.b2.0.a.0.a`, `V-A.1.2.b.b.check.b2.0.a.0.a1`
+
+```text
+Начало проведения ревизии *2026-й год*.                                                   [RED BOLD]
+Проводим по директории - X:\grp\F644\All\УКПиУБПроСО                                     [plain]
+06.04.2026 9:18:16 - Время начала проведения ревизии.                                     [plain]
+
+Имя директории *X:\grp\F644\All\УКПиУБПроСО* для ревизии обнаружено                      [GREEN BOLD]
+Директория с именем *X:\grp\F644\All\УКПиУБПроСО* в файловой системе обнаружена          [GREEN BOLD]
+*Приложение Excel открыто*                                                                [BLUE BOLD]
+06.04.2026 9:18:07 - Файл с именем "...2026 Свод инф-ции по OA.xlsm" в файловой системе обнаружен
+06.04.2026 9:18:07 - Файл с именем "...2026 Свод инф-ции по OA.xlsm" в приложении открыт [GREEN BOLD]
+```
+
+**Производные узлы (не на скриншоте, формат выведен по аналогии):**
+- `V-A.1.2.b.a` `DIR_LOOKUP_NOT_FOUND`: «Не обнаружена **директория** для ревизии» `[RED]` — зеркало `DIR_LOOKUP_FOUND`
+- `V-A.1.2.b.b.check.a` `DIR_FS_MISSING`: «Директория с именем "..." в ФС **не** обнаружена» `[RED BOLD]` — зеркало `DIR_FS_EXISTS`
+- `V-A.1.2.b.b.check.b2.0.a.0.b` `FILE_FS_MISSING`: «Файл с именем "..." в ФС **не** обнаружен» `[RED BOLD]` — зеркало `FILE_FS_FOUND`
+- `V-A.1.2.b.b.check.b2.0.b` `FILES_EMPTY`: «Не обнаружены файлы для рассмотрения» `[plain]` — по VBA-сниппету, без скриншота
+
+---
+
+### SCR-003-B: Якоря колонок (26-0406-003.PNG, средняя часть)
+
+> Узлы: `V-C.2` (`CellFind` серия → `ANCHOR_FOUND`)
+
+```text
+Найдена ячейка № ОА колонка - 4, строка - 1. Содержание: № ОА.                           [BLUE]
+Найдена ячейка Дата ОА колонка - 5, строка - 1. Содержание: Дата ОА.                     [BLUE]
+Найдена ячейка Поступило (№ письма) колонка - 11, строка - 1. Содержание: ...            [BLUE]
+Найдена ячейка Поступило (Фактическая дата) колонка - 13, строка - 1. Содержание: ...   [BLUE]
+Найдена ячейка Направлен в Бухгалтерию (Дата С3) колонка - 14, строка - 1. Содержание: ... [BLUE]
+Найдена ячейка Направлен в Бухгалтерию (№ С3) колонка - 15, строка - 1. Содержание: ... [BLUE]
+... (одно сообщение на каждый столбец из конфигурации)
+```
+
+**Шаблон строки:**
+```
+Найдена ячейка {columnName} колонка - {colNum}, строка - 1. Содержание: {cellContent}.  [BLUE]
+```
+
+---
+
+### SCR-003-C: Диапазон найден (26-0406-003.PNG, средняя часть)
+
+> Узел: `V-C.2.1.a`
+
+```text
+Найден диапазон *Отчёты обычные*, колонка - 4, первая строка - 2, нижняя строка - 19144.
+Адрес: $D$2:$D$19144.                                                                     [BLUE, *name* BOLD]
+```
+
+**Шаблон:**
+```
+Найден диапазон *{sheetName}*, колонка - {colNum}, первая строка - {firstRow}, нижняя строка - {lastRow}. Адрес: {address}.
+```
+
+**Производный узел:** `V-C.2.1.b` (range not found):
+«... **данные не найдены** ...» `[RED BOLD]` — цвет `blue→red`, «найден»→«не найдены», по аналогии.
+
+---
+
+### SCR-003-D: Per-row staging (26-0406-003.PNG, верхняя часть)
+
+> Узлы: `V-C.2.1.a.1.1.a.1`, `V-C.2.1.a.1.1.a.2.a.1`
+
+```text
+Найден тип *ОА*; имя: С326-2002437-1; Стр. - 051-2002437. ОА С326-2002437-1/1 от 15.01.2026;
+Отчёт внесён в промеж. тбл. ID - 39 (номер строки листа Excel).
+
+Найден тип *ОА прочие*; имя: НПП26-2001040-1; Стр. - 051-2001040. ОА НПП26-2001040-1 от 01.10.2026;
+Отчёт внесён в промеж. тбл. ID - 26 (номер строки листа Excel).
+
+Найден тип *ОА изм*; имя: Изм 1 в ИР25-2004430-16 от 31.07.2025; Стр. - 051-2004430.
+ОА Изм 1 в ИР25-2004430-16 от 31.07.2025 от 15.01.2026;
+Отчёт внесён в промеж. тбл. ID - 15 (номер строки листа Excel).
+```
+
+**Цветовая разметка:**
+- `*{sign}*` → `TEAL BOLD`
+- `Отчёт внесён в промеж. тбл. ID -` → `DARK_GREEN`
+- `{insertedId}` → `ORANGE BOLD`
+
+**Шаблон:**
+```
+Найден тип *{sign}*; имя: {raName}; Стр. - {stgRowNum}. {raNum} от {raDate}; Отчёт внесён в промеж. тбл. ID - {insertedId} (номер строки листа Excel).
+```
+
+**Вариант `af_source=false`** (dry-run): строка заканчивается после даты, без «Отчёт внесён...».
+
+---
+
+### SCR-002-A: RA суммарные счётчики + NEW RA строки (26-0406-002.PNG, нижняя часть)
+
+> Узлы: `V-C.3.1`, `V-C.3.2`, `V-C.3.2.a.1`, `V-C.3.2.a.2`
+
+```text
+Всего найдено отчётов: 1952                                                               [CRIMSON BOLD]
+Найдено отчётов отсутствующих в БД: 8                                                     [CRIMSON BOLD]
+1. 2541. Изменение № 1 к ОА № НСК25-3000860-3 от 28.02.2026. Но это изменение!
+2. 2552. ИР26-2006735-9. Создан отчёт, ключ: 60733. Сумма: всего: 132 621 134,15 Р, СМР: 0,00 Р, ...
+3. 2549. ИР26-2004430-9. Создан отчёт, ключ: 60732. Сумма: всего: 427 040 266,84 Р, ...
+...
+```
+
+**Цветовая разметка строки NEW RA:**
+- `Создан отчёт, ключ:` → `SEA_GREEN`
+- `{raKey}` → `ORANGE`
+
+**Шаблоны:**
+```
+Всего найдено отчётов: {total}                                           [CRIMSON BOLD]
+Найдено отчётов отсутствующих в БД: {countNew}                          [CRIMSON BOLD]
+{idx}. {stgRow}. {raName}. Создан отчёт, ключ: {raKey}. Сумма: всего: {ttl} Р, СМР: {work} Р, Оборудование: {equip} Р, Прочие: {others} Р.
+(или: ... Сумма не требуется.)
+```
+
+**Производный узел `V-C.3.4`** (excess RA): «... в БД, но отсутствуют в источнике: **N**» `[CRIMSON BOLD]` + по строке «`{idx}. {raName}`» `[CRIMSON]`.
+
+---
+
+### SCR-002-B: CHANGED RA строки / inline diff (26-0406-002.PNG, средняя часть)
+
+> Узлы: `V-C.3.3`, `V-C.3.3.a.1`, `V-C.3.3.a.2`
+
+```text
+Найдено отчётов имеющих несоответствия в данных: 36                                       [CRIMSON BOLD]
+36. 2538. ГПИ26-2006743-3. Письмо направления, БД: ; источник: 472. Обновлено, БД: 472.
+    Дата направления, БД: ; источник: 03.04.2026. Обновлено, БД: 03.04.2026
+35. 2537. ГПИ26-2005599-1. Письмо направления, БД: ; источник: 472. Обновлено, БД: 472.
+    Дата направления, БД: ; источник: 03.04.2026. Обновлено, БД: 03.04.2026
+... (аналогично для остальных строк)
+```
+
+**Цветовая разметка одной строки CHANGED RA:**
+- `{fieldName}, БД: {oldVal}` → `CRIMSON`
+- `источник: {newVal}` → `PERU`
+- `Обновлено, БД: {updatedVal}` → `SEA_GREEN`
+
+**Шаблон:**
+```
+{idx}. {stgRow}. {raName}. {fieldName}, БД: {oldVal}; источник: {newVal}. Обновлено, БД: {updatedVal}. [повтор для каждого поля в той же <P>]
+```
+
+> **Ключевое наблюдение:** несколько изменённых полей одной записи выводятся **в одной строке `<P>`**. `RA_FIELD_MISMATCH` + `RA_FIELD_UPDATED` — inline-пары без `<P>` между полями; новая `<P>` только при переходе к следующей RA-записи.
+
+**Производные узлы `V-C.4.3.*` CHANGED RC:** формат идентичен, «отчёт»→«изменение».
+
+---
+
+### SCR-002-C: RC суммарные счётчики + NEW RC строки (26-0406-002.PNG, верхняя часть)
+
+> Узлы: `V-C.4.1`, `V-C.4.2`, `V-C.4.2.a.1`, `V-C.4.2.a.2`, `V-C.4.3`
+
+```text
+Всего новых изменений: 77                                                                  [CRIMSON BOLD]
+Найдено изменений отсутствующих в БД: 3                                                    [CRIMSON BOLD]
+1. 838. Изм 1 к ОА № НП25-2001040-18 от 30.11.2025. Создано изменение отчёта, ключ: 3863.
+   Сумма: -963 271,25 Р, СМР: , Оборудование: -963 271,25 Р
+2. 2556. Изменение № 1 от 31.03.2026 в ИР26-2000714-3 от 31.01.2026. Создано изменение отчёта, ключ: 3864. Сумма не требуется.
+3. 2557. Изменение № 1 от 31.03.2026 в ИР26-2000714-7 от 28.02.2026. Создано изменение отчёта, ключ: 3865. Сумма не требуется.
+Не найдены изменения имеющие несоответствия в данных.                                     [plain]
+```
+
+**Шаблоны:**
+```
+Всего новых изменений: {total}                                           [CRIMSON BOLD]
+Найдено изменений отсутствующих в БД: {countNew}                        [CRIMSON BOLD]
+{idx}. {stgRow}. {rcDescription}. Создано изменение отчёта, ключ: {rcKey}. Сумма не требуется.
+(или: ... Сумма: {ttl} Р, СМР: {work} Р, Оборудование: {equip} Р, Прочие: {others} Р.)
+Не найдены изменения имеющие несоответствия в данных.                   [при countChanged=0]
+```
+
+---
+
+### SCR-002-D: Завершение (26-0406-002.PNG, верхняя часть)
+
+> Узлы: `V-A.1.msg.end`, `V-A.1.msg.excel.close`, `FILE_CLOSE` per-file, `FILE_SKIPPED_BY_USER`
+
+```text
+В 06.04.2026 9:24:01 - *ревизия завершена*. С 06.04.2026 9:18:16 в течении 5 мин. 45 сек., (всего 345 сек.).  [BLUE BOLD]
+06.04.2026 9:24:01 - *Приложение Excel закрыто*                                           [BLUE BOLD]
+Файл с именем "...2026_Аренда_рабочий_1.xlsx" рассмотрению, в соответствии с Вашим выбором, не подлежит.  [GRAY]
+Файл с именем "...2026 Свод инф-ции по Актам.xlsm" рассмотрению, в соответствии с Вашим выбором, не подлежит.  [GRAY]
+06.04.2026 9:24:00 - Файл с именем "...2026 Свод инф-ции по OA.xlsm" в приложении закрыт
+```
+
+**Шаблоны:**
+```
+В {finishTime} - *ревизия завершена*. С {startTime} в течении {durationMin} мин. {durationSec} сек., (всего {durationTotalSec} сек.).
+{closedAt} - *Приложение Excel закрыто*                                                   [BLUE BOLD]
+Файл с именем "{filePath}" рассмотрению, в соответствии с Вашим выбором, не подлежит.   [GRAY]
+{closedAt} - Файл с именем "{filePath}" в приложении закрыт
+```
+
+---
+
+### Сводная таблица цветовых токенов (из скриншотов)
+
+| Роль | VBA color | Java `colorHint` | Light HEX | Dark HEX |
+|---|---|---|---|---|
+| Системные события start/end, «ревизия завершена» | `blue` bold | `BLUE_BOLD` | `#0055AA` | `#5AB4FF` |
+| Диапазон, якоря, инфо | `blue` | `BLUE` | `#0066CC` | `#60A5FA` |
+| Найдено (dir/file OK), dir/file found | `green` | `GREEN` | `#1A7A1A` | `#4ADE80` |
+| «Отчёт внесён в промеж. тбл.» | `DarkGreen` | `DARK_GREEN` | `#006400` | `#16A34A` |
+| Тип строки (*ОА*, *ОА изм*…) | teal/cyan | `TEAL` | `#007070` | `#5EEAD4` |
+| ID вставки, ключ записи, ключ RA/RC | `orange` | `ORANGE` | `#D06000` | `#FFB74D` |
+| Счётчики summary, старое значение БД | `Crimson` | `CRIMSON` | `#B81C2E` | `#FC8181` |
+| Ожидаемое/источник в diff | `Peru` | `PERU` | `#A0724B` | `#D4A55A` |
+| Применено/обновлено, «Создан отчёт» | `SeaGreen` | `SEA_GREEN` | `#1F7A50` | `#34D399` |
+| Критические ошибки, отсутствует | `MediumVioletRed` | `VIOLET_RED` | `#AA1060` | `#E879F9` |
+| Пропущенные файлы | `gray` | `GRAY` | `#666666` | `#9CA3AF` |
+
+---
 
 ## Event Catalog (compact, source-of-truth)
 
