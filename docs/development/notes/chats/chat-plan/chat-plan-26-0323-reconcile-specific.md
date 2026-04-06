@@ -3,7 +3,7 @@
 **Дата создания:** 2026-03-23  
 **Последнее обновление:** 2026-04-06  
 **Проект:** FEMSQ  
-**Версия плана:** 0.9.18  
+**Версия плана:** 0.9.19  
 
 ---
 
@@ -436,30 +436,34 @@
   добавить/выровнять `colorHint=RED`, `emphasis=BOLD` для имени ревизии
   (SCR-003-A: «Начало проведения ревизии ***2026-й год***.» — имя ревизии красным жирным)
 - [факт] `AuditExecutionServiceImpl`: `eventKey=AUDIT_START`, `withPresentationMeta(..., "START", "RED", "BOLD")`
-- [ ] 1.8.11.9.2. **`AUDIT_END`** `V-A.1.msg.end`:
+- ✅ 1.8.11.9.2. **`AUDIT_END`** `V-A.1.msg.end`:
   выровнять текст: «В {finishTime} - ***ревизия завершена***. С {startTime} в течении {min} мин. {sec} сек., (всего {total} сек.).»;
   `colorHint=BLUE_BOLD`
   (SCR-002-D)
+- [факт] `AuditExecutionServiceImpl.appendAuditEnd`: кириллическое «С», длительность «N мин. M сек.», хвост «(всего K сек.)»; meta `durationTotalSec`; для успеха цвет заголовка `#0055AA`, `BLUE`/`BOLD`.
 - ✅ 1.8.11.9.3. **`DIR_LOOKUP_FOUND`** `V-A.1.2.b.b.msg`:
   добавить `colorHint=GREEN`, `emphasis=BOLD` для имени директории
   (SCR-003-A: «Имя директории ***...*** для ревизии обнаружено»)
 - [факт] `AuditExecutionServiceImpl`: `eventKey=DIR_LOOKUP_FOUND`, `withPresentationMeta(..., "INFO", "GREEN", "BOLD")`
-- [ ] 1.8.11.9.4. **`DIR_FS_EXISTS` / `DIR_FS_MISSING`** `V-A.1.2.b.b.check.b/a`:
+- ✅ 1.8.11.9.4. **`DIR_FS_EXISTS` / `DIR_FS_MISSING`** `V-A.1.2.b.b.check.b/a`:
   добавить `colorHint=GREEN`/`RED`, `emphasis=BOLD` для имени директории
   (SCR-003-A: «Директория с именем ***...*** в файловой системе обнаружена/не обнаружена»)
+- [факт] `AuditExecutionServiceImpl.verifyDirectoryExistsInFileSystem`: HTML как в VBA (имя директории зелёное/красное жирное); meta `DIR_FS_EXISTS` → `GREEN`/`BOLD`, `DIR_FS_MISSING` без изменений (`RED`/`BOLD`).
 - ✅ 1.8.11.9.5. **`WORKBOOK_OPEN` / `WORKBOOK_CLOSE`** `J-B.1.1 / J-B.1.2`:
   добавить `colorHint=BLUE_BOLD`; текст «***Приложение Excel открыто/закрыто***» жирным синим
   (SCR-003-A, SCR-002-D)
 - [факт] `DefaultAuditStagingService`: `WORKBOOK_OPEN` → `withPresentationMeta(..., "START", "BLUE", "BOLD")`, `WORKBOOK_CLOSE` → `withPresentationMeta(..., "END", "BLUE", "BOLD")`
-- [ ] 1.8.11.9.6. **`FILE_FS_FOUND`** `V-A.1.2.b.b.check.b2.0.a.0.a`:
+- ✅ 1.8.11.9.6. **`FILE_FS_FOUND` / `FILE_FS_MISSING`** `V-A.1.2.b.b.check.b2.0.a.0.a/b`:
   уточнить шаблон текста по SCR-003-A:
-  «{datetime} - Файл с именем "..." в файловой системе обнаружен» (без `BOLD`, plain)
-  Аналогично FILE_FS_MISSING: те же структура/формат, цвет `RED`
-- [ ] 1.8.11.9.7. **`ROW_PARAGRAPH_PREVIEW`** (staging per-row, `V-C.2.1.a.1.1.a.1`):
+  «{datetime} - Файл с именем "..." в файловой системе обнаружен» (имя файла в `<b>`, meta `GREEN`/`NORMAL` для FOUND)
+  Аналогично MISSING: префикс с датой/временем, имя в `<b><font color=red>`, meta `RED`/`BOLD`
+- [факт] `AuditExecutionServiceImpl`: `formatInstantHuman(Instant.now())` + путь в HTML как выше.
+- ✅ 1.8.11.9.7. **`ROW_PARAGRAPH_PREVIEW`** (staging per-row, `V-C.2.1.a.1.1.a.1`):
   выровнять цветовую схему по SCR-003-D:
   — тип `*{sign}*` → `colorHint=TEAL_BOLD`
   — «Отчёт внесён в промеж. тбл. ID - » → `colorHint=DARK_GREEN`
   — `{insertedId}` → `colorHint=ORANGE`, `emphasis=BOLD`
+- [факт] `DefaultAuditStagingService`: для type=5 убран лимит `ROW_PREVIEW_LIMIT`; строка лога в HTML с цветами `#007070` / `#006400` / `#D06000`; после каждого успешного `INSERT` — `RETURN_GENERATED_KEYS` → `rain_key` в тексте; meta `ROW_PARAGRAPH_PREVIEW` → `TEAL`/`NORMAL` (детализация в HTML). **Производительность:** при больших файлах — по одному `executeUpdate` на принятую строку (осознанный trade-off для полноты лога, решение Р1).
 
 #### 1.8.11.8. Acceptance: контрольный прогон и финальная синхронизация mapping
 - [ ] 1.8.11.8.1. Контрольный прогон type=5 (один файл, `af_source=true`, `addRa=false`) → `COMPLETED`

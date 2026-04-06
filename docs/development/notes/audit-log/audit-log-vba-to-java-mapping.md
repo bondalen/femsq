@@ -3,7 +3,7 @@ title: "Audit log: VBA → Java mapping (ход ревизии)"
 created: "2026-03-26"
 lastUpdated: "2026-04-06"
 status: "draft"
-version: "0.3.1"
+version: "0.3.2"
 ---
 
 ## Назначение
@@ -322,12 +322,12 @@ version: "0.3.1"
       - `V-C.2.1.a.1.1 [MSG]` Для каждой строки формируется row-level `paragraph` (добавляется в начало лога).
         - `map -> J-C.5.B/J-C.5.C`
         - `status -> partial`
-        - `gap -> в Java реализован row-level preview (`ROW_PARAGRAPH_PREVIEW*`), но в режиме `top-N + counters`; это не полный эквивалент VBA-лога по каждой строке.`
+        - `gap -> staging row-level (`ROW_PARAGRAPH_PREVIEW*`) без лимита top-N, HTML по SCR-003-D (1.8.11.9.7). Полный эквивалент VBA-лога по файлу ещё требует row-level reconcile RA/RC (1.8.11.5–1.8.11.6).`
       - `V-C.2.1.a.1.1.a [ACTION]` `RaReadOfExcel` (row-level слой, источник строк `ra_ImpNew`).
         - `V-C.2.1.a.1.1.a.1 [MSG]` Старт `paragraph`: тип/номер ОА, стройка и контекст строки.
           - `map -> J-C.5.B.4 / ROW_PARAGRAPH_PREVIEW`
           - `status -> partial`
-          - `gap -> в Java сообщение есть, но выводится ограниченной выборкой (`ROW_PREVIEW_LIMIT`) и без полного VBA-форматирования/контекста каждой строки. Целевое решение: full parity per-row (1.8.11.5).`
+          - `gap -> формат и цвета выровнены по SCR-003-D; `rain_key` после INSERT. Остаётся полный parity по reconcile RA/RC per-row (1.8.11.5–1.8.11.6), не staging.`
           - `screenshot -> SCR-003-D` («Найден тип *ОА*; имя: ...; Стр. - ....» `[TEAL BOLD]`)
           - **Поля:** `ra_type`, `ra`, `Constraction`, `ra_Row`
           - **Шаблон (VBA):**
@@ -634,7 +634,7 @@ version: "0.3.1"
       - **map/status/gap:** `map -> V-C.2.1`, `status -> missing`, `gap -> в коде сейчас нет явного события anchor; ошибка пробрасывается исключением`
     - `J-C.5.B.4 [MSG]` `STAGING_START/STAGING_LOAD_STATS/STAGING_END` + `ROW_PARAGRAPH_PREVIEW*` (фактические события)
       - **eventKey:** `STAGING_START`, `STAGING_LOAD_STATS`, `STAGING_END`; **scope:** `FILE`
-      - **map/status/gap:** `map -> V-C.2.1 / V-C.3.1 / V-C.4.1`, `status -> partial`, `gap -> в Java есть row-level preview и staging-статистика, но нет полного VBA-эквивалента: (а) отбор строк по `Find("*???????-*")`/`FindNext`, (б) отдельный summary по RA/RC как в VBA, (в) полный per-row лог без top-N ограничения.`
+      - **map/status/gap:** `map -> V-C.2.1 / V-C.3.1 / V-C.4.1`, `status -> partial`, `gap -> в Java есть row-level staging preview (без top-N, 1.8.11.9.7) и staging-статистика; нет полного VBA-эквивалента: (а) механизм отбора строк отличается от VBA `Find/FindNext` (семантика совпадает через whitelist), (б) отдельный summary RA/RC как в VBA, (в) row-level reconcile RA/RC per-row.`
 
   - `J-C.5.C [ACTION]` `AllAgentsReconcileService` (match/apply/delete/diagnostics)
     - `J-C.5.C.1 [MSG][TARGET]` `RECONCILE_TYPE5_START`
@@ -659,7 +659,7 @@ version: "0.3.1"
       - **map/status/gap:** `map -> V-C.3/V-C.4`, `status -> present`, `gap -> trio реализована в `AuditReconcileCoordinator`: `appendResult` вызывает `endSpan` с `RECONCILE_TYPE5_DONE` или `RECONCILE_TYPE5_SKIPPED` (`status` в meta: `DONE`/`SKIPPED`, `affectedRows`, `durationHuman`); при `RuntimeException` из `service.reconcile` — `endSpan` с `RECONCILE_TYPE5_FAILED` (`status=FAILED`). HTML — технический (`Reconcile: type=..., applied=...`); VBA-формулировки нет.`
 
   - `J-C.5.3 [TERMINAL]` `### TERMINAL: TYPE5_ROW_LEVEL_PARAGRAPH_EQUIVALENT_PARTIAL`
-    - Комментарий: `ROW_PARAGRAPH_PREVIEW`, `ROW_PARAGRAPH_PREVIEW_SKIPPED`, `ROW_PARAGRAPH_PREVIEW_SUMMARY` реализованы, но как `top-N + counters`; полного эквивалента VBA per-row (без ограничения, с полным форматом всех строк) пока нет.
+    - Комментарий: `ROW_PARAGRAPH_PREVIEW*` для type=5: лимит `top-N` снят (1.8.11.9.7); HTML и цвета выровнены по SCR-003-D; `rain_key` подставляется после `INSERT` (`RETURN_GENERATED_KEYS`). Оставшийся gap к VBA: формулировки `WORKBOOK_*` («Книга…» vs «Приложение Excel…») и мелкие отличия в шаблоне `AUDIT_START`.
 - `J-C.6 [ACTION]` Type 6: `AgFee2306AuditFileProcessor`
 - `J-C.x [TERMINAL]` `### TERMINAL: PARAGRAPH_EQUIVALENT_NOT_IMPLEMENTED`
 
@@ -691,7 +691,7 @@ version: "0.3.1"
 | `V-C.2.1.a.1.filter` | `J-C.5.B.4` | present | Фильтр строк по полю `Признак` из whitelist (`ОА`/`ОА изм`/`ОА прочие`) реализован в 1.8.10.5 ✅. Механизм отличается от VBA (`Find/FindNext`), семантический результат идентичен. |
 | `V-C.2.1.a.1.1.a.2.a.1` | — | missing | Per-row staging insert ID. Целевой `eventKey: STAGING_ROW_INSERTED` (1.8.11.7.1). |
 | `V-C.2.1.a.1` | `J-C.5.B/J-C.5.C` | partial | Перебор строк в VBA логируется детально; в Java покрыт через staging/reconcile + row-level preview и агрегированные counters. |
-| `V-C.2.1.a.1.1.a.*` | `ROW_PARAGRAPH_PREVIEW*` | partial | Row-level preview реализован (включая summary), но в режиме `top-N + counters`; это не полный VBA-эквивалент per-row лога без ограничений. Целевая политика: полный per-row (решение А, 1.8.11.5–1.8.11.6). |
+| `V-C.2.1.a.1.1.a.*` | `ROW_PARAGRAPH_PREVIEW*` | partial | Staging: полный вывод строк без top-N, SCR-003-D HTML + `rain_key` (1.8.11.9.7). Полный VBA-parity по файлу — ещё reconcile RA/RC per-row (1.8.11.5–1.8.11.6). |
 | `V-C.3.1` | — | missing | «Всего строк отчётов: N». Целевой `eventKey: RA_ROWS_SUMMARY` (1.8.11.3.1). |
 | `V-C.3.2.a.1` | — | missing | RA created per row. Целевой `eventKey: RA_NEW_CREATED` (1.8.11.5.1). |
 | `V-C.3.2.a.2` | — | missing | RA sums per row. Целевой `eventKey: RA_NEW_SUMS` (1.8.11.5.2). |
@@ -980,7 +980,7 @@ version: "0.3.1"
 | `RECONCILE_TYPE5_DIAGNOSTICS` | `FILE` | `WARN` | `execKey`, `fileType=5`, `missingTop` | Top-представление диагностик (`Нет отправителя/стройки/периода`). |
 | `ROW_PARAGRAPH_PREVIEW` | `FILE` | `INFO` | `sheetName`, `rowIndex`, `status=ACCEPTED` | Row-level preview для type 5 (staging). |
 | `ROW_PARAGRAPH_PREVIEW_SKIPPED` | `FILE` | `WARN` | `sheetName`, `rowIndex`, `status=SKIPPED` | Row-level preview для пропущенной строки (нет данных). |
-| `ROW_PARAGRAPH_PREVIEW_SUMMARY` | `FILE` | `INFO` | `sampled`, `suppressed`, `total`, `limit` | Итог row-level staging preview. |
+| `ROW_PARAGRAPH_PREVIEW_SUMMARY` | `FILE` | `INFO` | `sampled`, `suppressed`, `total`, `previewMode=FULL` | Итог row-level staging preview (без лимита). |
 | `STAGING_ROW_INSERTED` | `FILE` | `INFO` | `sheetName`, `rowIndex`, `insertedId` | Строка добавлена в staging с ID (per-row, `af_source=true`). Целевой (1.8.11.7.1). |
 | `RECONCILE_TYPE5_MODE` | `FILE` | `INFO` | `execKey`, `addRa`, `mode` | Режим reconcile: `DIAGNOSTIC`/`APPLY`. Целевой (1.8.11.4.5). |
 | `RA_ROWS_SUMMARY` | `FILE` | `INFO` | `execKey`, `raRowsCount` | «Всего строк отчётов: N» перед блоком RA. Целевой (1.8.11.3.1). |
@@ -1013,6 +1013,6 @@ version: "0.3.1"
 - `P1 (done)`: синхронизированы `eventKey/messageType/colorHint/emphasis` для оркестровочных `J-A` (через `AuditExecutionServiceImpl.withPresentationMeta(...)`), HTML оставлен render-слоем.
 - `P1 (done)`: решение по `semantic`-узлам (`V-A ... Excel open/close`) зафиксировано: app-level event не добавляется, используются `WORKBOOK_*` (`J-B.1.1/1.2`).
 - `P2`: расширить mapping на type-specific оркестровочные сообщения (`af_type=2/3/5/6`) в том же формате `map/status/gap`. Для type=5 частично закрыто в `1.8.10`; полное закрытие — после выполнения `1.8.11`.
-- `P3 (partially done)`: row-level эквиваленты `paragraph` (staging, `V-C.2.1.a.1.1.a.*`) — row-level preview реализован. Полный per-row (без top-N) — целевое решение A, см. `1.8.11.5–1.8.11.7`.
+- `P3 (partially done)`: staging row-level (`V-C.2.1.a.1.1.a.*`) — полный вывод без top-N, SCR-003-D (1.8.11.9.7). Полный per-row по reconcile RA/RC — целевое решение A, см. `1.8.11.5–1.8.11.7`.
 - `P3.1 (done)`: реализован целевой критерий отбора строк type=5 по полю `Признак` (`ОА`/`ОА изм`/`ОА прочие`) из `ags.ra_sheet_conf`; `V-C.2.1.a.1.filter` переведён в `present`. Выполнено в `1.8.10.5` ✅.
 - `P4`: реализовать row-level события reconcile type=5 (RA/RC new/changed/excess/validation) по решению A (full parity). Карта задач: `1.8.11.3–1.8.11.7`. Новые `eventKey`: `RA_ROWS_SUMMARY`, `RA_NEW_CREATED`, `RA_NEW_SUMS`, `RA_VALIDATION_FAIL`, `RA_FIELD_MISMATCH`, `RA_FIELD_UPDATED`, `RA_SUM_MISMATCH`, `RA_EXCESS_ITEM`, и симметричные `RC_*`. Плюс framework events: `RECONCILE_TYPE5_MODE`, `STAGING_ROW_INSERTED`.

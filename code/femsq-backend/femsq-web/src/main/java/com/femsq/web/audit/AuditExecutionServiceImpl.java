@@ -253,7 +253,8 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
                 Path filePath = Path.of(resolvedPath);
                 if (!Files.exists(filePath)) {
                     context.append(AuditLogLevel.WARNING, AuditLogScope.FILE, "FILE_FS_MISSING",
-                            "<P>Файл не найден в файловой системе: " + escape(resolvedPath) + "</P>",
+                            "<P>" + formatInstantHuman(Instant.now()) + " - Файл с именем <b><font color=\"red\">"
+                                    + escape(resolvedPath) + "</font></b> в файловой системе не обнаружен</P>",
                             withPresentationMeta(Map.of("auditId", String.valueOf(auditId), "filePath", resolvedPath),
                                     "ERROR", "RED", "BOLD"));
                     context.endSpan(fileSpanId, AuditLogLevel.INFO, AuditLogScope.FILE, "FILE_END",
@@ -268,7 +269,8 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
                     continue;
                 } else {
                     context.append(AuditLogLevel.INFO, AuditLogScope.FILE, "FILE_FS_FOUND",
-                            "<P>Файл найден: " + escape(resolvedPath) + "</P>",
+                            "<P>" + formatInstantHuman(Instant.now()) + " - Файл с именем <b>"
+                                    + escape(resolvedPath) + "</b> в файловой системе обнаружен</P>",
                             withPresentationMeta(Map.of("auditId", String.valueOf(auditId), "filePath", resolvedPath),
                                     "INFO", "GREEN", "NORMAL"));
                 }
@@ -395,8 +397,9 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
                     AuditLogLevel.INFO,
                     AuditLogScope.AUDIT,
                     "DIR_FS_EXISTS",
-                    "<P>Директория в файловой системе обнаружена: " + escape(normalizedDir) + "</P>",
-                    withPresentationMeta(Map.of("dirPath", normalizedDir), "SUCCESS", "GREEN", "NORMAL")
+                    "<P>Директория с именем <b><font color=\"green\">" + escape(normalizedDir)
+                            + "</font></b> в файловой системе обнаружена</P>",
+                    withPresentationMeta(Map.of("dirPath", normalizedDir), "SUCCESS", "GREEN", "BOLD")
             );
             return false;
         }
@@ -404,7 +407,8 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
                 AuditLogLevel.WARNING,
                 AuditLogScope.AUDIT,
                 "DIR_FS_MISSING",
-                "<P>Директория в файловой системе не обнаружена: " + escape(normalizedDir) + "</P>",
+                "<P>Директория с именем <b><font color=\"red\">" + escape(normalizedDir)
+                        + "</font></b> в файловой системе не обнаружена</P>",
                 withPresentationMeta(Map.of("dirPath", normalizedDir), "ERROR", "RED", "BOLD")
         );
         return true;
@@ -413,17 +417,39 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
     private void appendAuditEnd(AuditExecutionContext context, String auditSpanId, String status) {
         Instant start = context.getStartedAt();
         Instant end = Instant.now();
-        String endColor = "FAILED".equalsIgnoreCase(status) ? "#f85149" : "#58a6ff";
+        boolean failed = "FAILED".equalsIgnoreCase(status);
+        String endColor = failed ? "#f85149" : "#0055AA";
+        long totalSeconds = start != null && end != null
+                ? Math.max(0L, Duration.between(start, end).getSeconds())
+                : 0L;
+        String durationRu = formatAuditDurationRussian(start, end);
         context.endSpan(auditSpanId, AuditLogLevel.INFO, AuditLogScope.AUDIT, "AUDIT_END",
-                "<P>В " + formatInstantHuman(end) + " - <b><font color=\"" + endColor + "\">ревизия завершена</font></b>. C "
+                "<P>В " + formatInstantHuman(end) + " - <b><font color=\"" + endColor + "\">ревизия завершена</font></b>. С "
                         + formatInstantHuman(start)
-                        + " в течении " + formatDuration(start, end) + ".</P>",
+                        + " в течении " + durationRu + ", (всего " + totalSeconds + " сек.).</P>",
                 withPresentationMeta(Map.of(
                         "finishedAt", formatInstantHuman(end),
                         "startedAt", formatInstantHuman(start),
-                        "durationHuman", formatDuration(start, end),
+                        "durationHuman", durationRu,
+                        "durationTotalSec", String.valueOf(totalSeconds),
                         "status", status
-                ), "END", "FAILED".equalsIgnoreCase(status) ? "RED" : "BLUE", "BOLD"));
+                ), "END", failed ? "RED" : "BLUE", "BOLD"));
+    }
+
+    /**
+     * Длительность ревизии для текста {@code AUDIT_END} в стиле VBA (SCR-002-D): «N мин. M сек.».
+     */
+    private static String formatAuditDurationRussian(Instant start, Instant end) {
+        if (start == null || end == null) {
+            return "-";
+        }
+        long seconds = Duration.between(start, end).getSeconds();
+        if (seconds < 0) {
+            seconds = 0;
+        }
+        long minutes = seconds / 60;
+        long remSeconds = seconds % 60;
+        return minutes + " мин. " + remSeconds + " сек.";
     }
 
     private String formatDuration(Instant start, Instant end) {

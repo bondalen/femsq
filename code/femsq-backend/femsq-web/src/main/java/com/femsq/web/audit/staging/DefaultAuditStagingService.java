@@ -18,9 +18,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Types;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -47,7 +49,13 @@ public class DefaultAuditStagingService implements AuditStagingService {
 
     private static final Logger log = Logger.getLogger(DefaultAuditStagingService.class.getName());
     private static final int BATCH_SIZE = 200;
-    private static final int ROW_PREVIEW_LIMIT = 12;
+    private static final DateTimeFormatter RAIN_DATE_HUMAN =
+            DateTimeFormatter.ofPattern("dd.MM.yyyy", Locale.forLanguageTag("ru-RU"));
+    /** Цвета SCR-003-D / mapping (светлая тема). */
+    private static final String HTML_TEAL_SIGN = "#007070";
+    private static final String HTML_DARK_GREEN_TAIL = "#006400";
+    private static final String HTML_ORANGE_ID = "#D06000";
+    private static final String HTML_GRAY_NOTE = "#606060";
     private static final int FILTERED_SIGN_TOP_LIMIT = 5;
     private static final Set<String> TYPE5_ALLOWED_SIGNS = Set.of("оа", "оа изм", "оа прочие");
 
@@ -270,7 +278,10 @@ public class DefaultAuditStagingService implements AuditStagingService {
         int inserted = 0;
         int batchCount = 0;
         SheetLoadStats stats = new SheetLoadStats(sheet.getSheetName(), config.rscStgTbl(), headerRowIndex + 1, sheet.getLastRowNum());
-        try (PreparedStatement statement = connection.prepareStatement(insertSql)) {
+        boolean logEachStagingRow = emitRowParagraphPreview;
+        try (PreparedStatement statement = logEachStagingRow
+                ? connection.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)
+                : connection.prepareStatement(insertSql)) {
             for (int rowIndex = headerRowIndex + 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
                 stats.sourceRows++;
                 Row row = sheet.getRow(rowIndex);
@@ -307,29 +318,25 @@ public class DefaultAuditStagingService implements AuditStagingService {
                     }
                     if (emitRowParagraphPreview) {
                         stats.rowParagraphTotal++;
-                        String paragraph = buildRowParagraph(row, excelColumns, rowIndex + 1, false);
-                        if (stats.rowParagraphSampled < ROW_PREVIEW_LIMIT) {
-                            stats.rowParagraphSampled++;
-                            context.append(
-                                    AuditLogLevel.WARNING,
-                                    AuditLogScope.FILE,
-                                    "ROW_PARAGRAPH_PREVIEW_SKIPPED",
-                                    "<P>" + paragraph + " — пропущено (нет достаточных данных)</P>",
-                                    withPresentationMeta(
-                                            Map.of(
-                                                    "auditId", String.valueOf(context.getAuditId()),
-                                                    "sheetName", String.valueOf(sheet.getSheetName()),
-                                                    "rowIndex", String.valueOf(rowIndex + 1),
-                                                    "status", "SKIPPED"
-                                            ),
-                                            "WARN",
-                                            "ORANGE",
-                                            "NORMAL"
-                                    )
-                            );
-                        } else {
-                            stats.rowParagraphSuppressed++;
-                        }
+                        stats.rowParagraphSampled++;
+                        String html = buildRowParagraphVbaHtml(row, excelColumns, rowIndex + 1, false, -1L);
+                        context.append(
+                                AuditLogLevel.WARNING,
+                                AuditLogScope.FILE,
+                                "ROW_PARAGRAPH_PREVIEW_SKIPPED",
+                                "<P>" + html + "</P>",
+                                withPresentationMeta(
+                                        Map.of(
+                                                "auditId", String.valueOf(context.getAuditId()),
+                                                "sheetName", String.valueOf(sheet.getSheetName()),
+                                                "rowIndex", String.valueOf(rowIndex + 1),
+                                                "status", "SKIPPED"
+                                        ),
+                                        "WARN",
+                                        "ORANGE",
+                                        "NORMAL"
+                                )
+                        );
                     }
                     continue;
                 }
@@ -339,40 +346,41 @@ public class DefaultAuditStagingService implements AuditStagingService {
                 }
                 stats.acceptedRows++;
                 stats.acceptedSignCounts.compute(outcome.rainSign(), (k, v) -> v == null ? 1 : v + 1);
-                if (emitRowParagraphPreview) {
+                if (logEachStagingRow) {
                     stats.rowParagraphTotal++;
-                    String paragraph = buildRowParagraph(row, excelColumns, rowIndex + 1, true);
-                    if (stats.rowParagraphSampled < ROW_PREVIEW_LIMIT) {
-                        stats.rowParagraphSampled++;
-                        context.append(
-                                AuditLogLevel.INFO,
-                                AuditLogScope.FILE,
-                                "ROW_PARAGRAPH_PREVIEW",
-                                "<P>" + paragraph + " — добавлено в staging</P>",
-                                withPresentationMeta(
-                                        Map.of(
-                                                "auditId", String.valueOf(context.getAuditId()),
-                                                "sheetName", String.valueOf(sheet.getSheetName()),
-                                                "rowIndex", String.valueOf(rowIndex + 1),
-                                                "status", "ACCEPTED"
-                                        ),
-                                        "INFO",
-                                        "SILVER",
-                                        "NORMAL"
-                                )
-                        );
-                    } else {
-                        stats.rowParagraphSuppressed++;
+                    statement.executeUpdate();
+                    inserted++;
+                    long rainKey = readGeneratedRainKey(statement);
+                    stats.rowParagraphSampled++;
+                    String html = buildRowParagraphVbaHtml(row, excelColumns, rowIndex + 1, true, rainKey);
+                    context.append(
+                            AuditLogLevel.INFO,
+                            AuditLogScope.FILE,
+                            "ROW_PARAGRAPH_PREVIEW",
+                            "<P>" + html + "</P>",
+                            withPresentationMeta(
+                                    Map.of(
+                                            "auditId", String.valueOf(context.getAuditId()),
+                                            "sheetName", String.valueOf(sheet.getSheetName()),
+                                            "rowIndex", String.valueOf(rowIndex + 1),
+                                            "rainKey", String.valueOf(rainKey),
+                                            "status", "ACCEPTED"
+                                    ),
+                                    "INFO",
+                                    "TEAL",
+                                    "NORMAL"
+                            )
+                    );
+                } else {
+                    statement.addBatch();
+                    batchCount++;
+                    if (batchCount >= BATCH_SIZE) {
+                        inserted += executeBatch(statement);
+                        batchCount = 0;
                     }
                 }
-                statement.addBatch();
-                batchCount++;
-                if (batchCount >= BATCH_SIZE) {
-                    inserted += executeBatch(statement);
-                    batchCount = 0;
-                }
             }
-            if (batchCount > 0) {
+            if (!logEachStagingRow && batchCount > 0) {
                 inserted += executeBatch(statement);
             }
         }
@@ -432,9 +440,8 @@ public class DefaultAuditStagingService implements AuditStagingService {
                     AuditLogLevel.INFO,
                     AuditLogScope.FILE,
                     "ROW_PARAGRAPH_PREVIEW_SUMMARY",
-                    "<P>Row-level preview: показано " + stats.rowParagraphSampled
-                            + ", скрыто " + stats.rowParagraphSuppressed
-                            + " (лимит " + ROW_PREVIEW_LIMIT + ")</P>",
+                    "<P>Row-level staging: залогировано сообщений " + stats.rowParagraphSampled
+                            + " по " + stats.rowParagraphTotal + " строкам (без лимита, полный вывод).</P>",
                     withPresentationMeta(
                             Map.of(
                                     "auditId", String.valueOf(context.getAuditId()),
@@ -442,7 +449,7 @@ public class DefaultAuditStagingService implements AuditStagingService {
                                     "sampled", String.valueOf(stats.rowParagraphSampled),
                                     "suppressed", String.valueOf(stats.rowParagraphSuppressed),
                                     "total", String.valueOf(stats.rowParagraphTotal),
-                                    "limit", String.valueOf(ROW_PREVIEW_LIMIT)
+                                    "previewMode", "FULL"
                             ),
                             "INFO",
                             "BLUE",
@@ -456,21 +463,90 @@ public class DefaultAuditStagingService implements AuditStagingService {
         return file != null && Integer.valueOf(5).equals(file.getType());
     }
 
-    private String buildRowParagraph(Row row, Map<String, Integer> excelColumns, int rowIndexOneBased, boolean accepted) {
+    /**
+     * Текст строки лога staging в стиле VBA (SCR-003-D): тип (teal), хвост «Отчёт внесён…» (dark green), ID (orange).
+     *
+     * @param excelRowOneBased номер строки на листе Excel (1-based)
+     * @param accepted         {@code false} — пропуск до insert; {@code true} — после успешного {@code INSERT}
+     * @param rainKey          сгенерированный {@code rain_key} или {@code <= 0}, если не получен
+     */
+    private String buildRowParagraphVbaHtml(
+            Row row,
+            Map<String, Integer> excelColumns,
+            int excelRowOneBased,
+            boolean accepted,
+            long rainKey
+    ) {
         String sign = readStringByColumnName(row, excelColumns, "rainSign");
         String raNum = readStringByColumnName(row, excelColumns, "rainRaNum");
         String cst = readStringByColumnName(row, excelColumns, "rainCstAgPnStr");
         if (sign == null || sign.isBlank()) {
             sign = "(тип не указан)";
+        } else {
+            sign = sign.trim();
         }
         if (raNum == null || raNum.isBlank()) {
             raNum = "(номер не указан)";
+        } else {
+            raNum = raNum.trim();
         }
         if (cst == null || cst.isBlank()) {
             cst = "(стройка не указана)";
+        } else {
+            cst = cst.trim();
         }
-        String marker = accepted ? "paragraph" : "paragraph-skip";
-        return marker + ": row=" + rowIndexOneBased + ", тип=" + escape(sign) + ", №=" + escape(raNum) + ", стройка=" + escape(cst);
+        String raDateLabel = formatRainRaDateForLog(row, excelColumns);
+        StringBuilder sb = new StringBuilder();
+        sb.append("Найден тип <b><font color=\"").append(HTML_TEAL_SIGN).append("\">*")
+                .append(escape(sign)).append("*</font></b>");
+        sb.append("; имя: ").append(escape(raNum));
+        sb.append("; Стр. - ").append(escape(cst)).append(". ");
+        sb.append("ОА ").append(escape(raNum)).append(" от ").append(raDateLabel).append(";");
+        if (!accepted) {
+            sb.append(" <font color=\"").append(HTML_GRAY_NOTE).append("\">— пропущено (нет достаточных данных)</font>");
+        } else if (rainKey > 0) {
+            sb.append(" <font color=\"").append(HTML_DARK_GREEN_TAIL).append("\">Отчёт внесён в промеж. тбл. ID - </font>");
+            sb.append("<b><font color=\"").append(HTML_ORANGE_ID).append("\">").append(rainKey).append("</font></b>");
+            sb.append(" <font color=\"").append(HTML_GRAY_NOTE).append("\">(строка листа Excel ")
+                    .append(excelRowOneBased).append(").</font>");
+        } else {
+            sb.append(" <font color=\"").append(HTML_GRAY_NOTE).append("\">Отчёт внесён в промеж. тбл. (ключ строки не получен от СУБД). Строка листа ")
+                    .append(excelRowOneBased).append(".</font>");
+        }
+        return sb.toString();
+    }
+
+    private String formatRainRaDateForLog(Row row, Map<String, Integer> excelColumns) {
+        Integer idx = excelColumns.get("rainRaDate");
+        if (idx == null) {
+            return escape("(дата не указана)");
+        }
+        var cell = row.getCell(idx);
+        if (cell == null) {
+            return escape("(дата не указана)");
+        }
+        try {
+            LocalDate d = cellReader.readDate(cell);
+            if (d == null) {
+                return escape("(дата не указана)");
+            }
+            return escape(RAIN_DATE_HUMAN.format(d));
+        } catch (RuntimeException ex) {
+            String raw = readStringByColumnName(row, excelColumns, "rainRaDate");
+            if (raw != null && !raw.isBlank()) {
+                return escape(raw.trim());
+            }
+            return escape("(дата не указана)");
+        }
+    }
+
+    private static long readGeneratedRainKey(PreparedStatement statement) throws SQLException {
+        try (ResultSet keys = statement.getGeneratedKeys()) {
+            if (keys.next()) {
+                return keys.getLong(1);
+            }
+        }
+        return -1L;
     }
 
     private String readStringByColumnName(Row row, Map<String, Integer> excelColumns, String columnName) {
