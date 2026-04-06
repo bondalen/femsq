@@ -1,9 +1,9 @@
 # План следующего шага: reconcile-specific по `af_type` (2/3/5/6)
 
 **Дата создания:** 2026-03-23  
-**Последнее обновление:** 2026-04-05  
+**Последнее обновление:** 2026-04-06  
 **Проект:** FEMSQ  
-**Версия плана:** 0.9.15  
+**Версия плана:** 0.9.16  
 
 ---
 
@@ -336,16 +336,25 @@
 - **Р2 (RA/RC summary):** вариант **A** — отдельные явные сообщения «Всего строк отчётов: N» (`V-C.3.1`) и «Всего строк изменений: N» (`V-C.4.1`) как самостоятельные MSG в начале соответствующих reconcile-блоков.
 
 #### 1.8.11.1. Синхронизация mapping (только документация, без кода)
-- [ ] 1.8.11.1.1. Обновить статус `V-C.2.1.a.1.filter` в mapping: `partial` → `present`; закрыть `P3.1` в backlog
-- [ ] 1.8.11.1.2. Добавить аннотацию `map/status` для узла `V-A.1.2.b.b.check.b2.0.a.1.5.1.b` → `SHEET_MISSING` в дереве V-A и в таблице связей
+- ✅ 1.8.11.1.1. Обновить статус `V-C.2.1.a.1.filter` в mapping: `partial` → `present`; закрыть `P3.1` в backlog
+- ✅ 1.8.11.1.2. Добавить аннотацию `map/status` для узла `V-A.1.2.b.b.check.b2.0.a.1.5.1.b` → `SHEET_MISSING` в дереве V-A и в таблице связей
 - [ ] 1.8.11.1.3. Проверить фактическое наличие `RECONCILE_TYPE5_START/DONE/SKIPPED/FAILED` в `AuditReconcileCoordinator`; актуализировать статусы `J-C.5.C.1` и `J-C.5.C.5` в mapping (план `1.8.10.3` ✅, но в mapping — `missing`)
-- [ ] 1.8.11.1.4. Зафиксировать в mapping решения Р1/Р2 (full parity A): обновить `gap`-описания `V-C.3.*/V-C.4.*` на целевые
+- ✅ 1.8.11.1.4. Зафиксировать в mapping решения Р1/Р2 (full parity A): обновить `gap`-описания `V-C.3.*/V-C.4.*` на целевые
+- ✅ 1.8.11.1.5. Интегрировать данные реального прогона type=5 (06.04.2026) в `audit-log-vba-to-java-mapping.md`:
+  добавлен раздел **Visual Reference** (SCR-003-A/B/C/D, SCR-002-A/B/C/D) с реальными текстами и цветами;
+  35 аннотаций `screenshot`/`visual` в узлах V-A и V-C;
+  сводная таблица цветовых токенов (11 ролей, light/dark HEX);
+  изображения `26-0406-002.PNG`, `26-0406-003.PNG` добавлены в репозиторий.
+  Версия mapping → **0.3.0**.
 
 #### 1.8.11.2. Staging: детализация диапазона и якоря
 - [ ] 1.8.11.2.1. `SHEET_FOUND`: добавить в meta координаты диапазона (`column`, `firstRow`, `lastRow`, `address`) — аналог VBA `ra_RA.Column/Row/Rows.count/Address`
   → `V-C.2.1.a`: `partial` → `present`; Event Catalog: расширить поля `SHEET_FOUND`
 - [ ] 1.8.11.2.2. `ANCHOR_FOUND/ANCHOR_MISSING`: реализовать как явные события в `DefaultAuditStagingService`
   (сейчас при отсутствии якоря бросается исключение без события в лог)
+  Шаблон строки `ANCHOR_FOUND` из SCR-003-B:
+  «Найдена ячейка {columnName} колонка - {N}, строка - 1. Содержание: {cellContent}.» `[BLUE]`
+  (одно сообщение на каждый столбец из конфигурации в порядке обхода)
   → `J-C.5.B.3`: `missing` → `present`
 
 #### 1.8.11.3. Отдельные summary-сообщения RA/RC перед reconcile-блоком (V-C.3.1 / V-C.4.1)
@@ -383,6 +392,9 @@
   (`eventKey: RA_FIELD_MISMATCH`)
 - [ ] 1.8.11.5.5. **CHANGED RA after apply per row** `V-C.3.3.a.2`: MSG «обновлено: X=B (SeaGreen)»
   (`eventKey: RA_FIELD_UPDATED`)
+  > ⚠️ **Архитектурное ограничение (SCR-002-B):** `RA_FIELD_MISMATCH` + `RA_FIELD_UPDATED` — inline-пары
+  > без `<P>` между полями одной записи; все изменённые поля одной RA-строки помещаются в **одну `<P>`**.
+  > Новая `<P>` открывается только при переходе к следующей RA-записи.
 - [ ] 1.8.11.5.6. **CHANGED RA sum mismatch per row** `V-C.3.3.a.3`: покомпонентный diff `ttl/work/equip/others` + пересоздание/добавление суммы
   (`eventKey: RA_SUM_MISMATCH`)
 - [ ] 1.8.11.5.7. **Excess RA list** `V-C.3.4`: построчный список кандидатов на удаление (`ra_key`, `ra_name`)
@@ -399,6 +411,8 @@
   (`eventKey: RC_FIELD_MISMATCH`)
 - [ ] 1.8.11.6.5. **CHANGED RC after apply per row** `V-C.4.3.a.2`: MSG «обновлено: X=B»
   (`eventKey: RC_FIELD_UPDATED`)
+  > ⚠️ **Архитектурное ограничение (SCR-002-B, аналогия с RA):** `RC_FIELD_MISMATCH` + `RC_FIELD_UPDATED` —
+  > inline-пары в одной `<P>` для всех полей одной RC-записи; новая `<P>` — только на следующую запись.
 - [ ] 1.8.11.6.6. **CHANGED RC sum mismatch per row** `V-C.4.3.a.3`: покомпонентный diff + пересоздание суммы RC
   (`eventKey: RC_SUM_MISMATCH`)
 - [ ] 1.8.11.6.7. **Excess RC list** `V-C.4.4`: построчный список кандидатов на удаление (`rac_key`, `rc_name`)
@@ -409,6 +423,38 @@
   (аналог VBA `"добавлен в импорт. ID - " & raRow`; `eventKey: STAGING_ROW_INSERTED`)
   → `V-C.2.1.a.1.1.a.2.a.1`: `missing` → `present`
   > Примечание: при больших файлах (2000+ строк) лог будет значительным — это принятое следствие решения Р1 (varian A). Реализовать в рамках того же type=5 scope.
+
+#### 1.8.11.9. Коррекция уже реализованных записей лога (present-узлы с gap по скриншотам)
+
+> Работа по Java-коду: привести цвет (`colorHint`), акцент (`emphasis`) и текстовый шаблон
+> already-`present`-узлов в соответствие с реальным VBA-логом из SCR-*.
+> Источник-приоритет: реальный текст/цвет из скриншотов (§ Visual Reference, v0.3.0).
+
+- [ ] 1.8.11.9.1. **`AUDIT_START`** `V-A.1.msg.start`:
+  добавить/выровнять `colorHint=RED`, `emphasis=BOLD` для имени ревизии
+  (SCR-003-A: «Начало проведения ревизии ***2026-й год***.» — имя ревизии красным жирным)
+- [ ] 1.8.11.9.2. **`AUDIT_END`** `V-A.1.msg.end`:
+  выровнять текст: «В {finishTime} - ***ревизия завершена***. С {startTime} в течении {min} мин. {sec} сек., (всего {total} сек.).»;
+  `colorHint=BLUE_BOLD`
+  (SCR-002-D)
+- [ ] 1.8.11.9.3. **`DIR_LOOKUP_FOUND`** `V-A.1.2.b.b.msg`:
+  добавить `colorHint=GREEN`, `emphasis=BOLD` для имени директории
+  (SCR-003-A: «Имя директории ***...*** для ревизии обнаружено»)
+- [ ] 1.8.11.9.4. **`DIR_FS_EXISTS` / `DIR_FS_MISSING`** `V-A.1.2.b.b.check.b/a`:
+  добавить `colorHint=GREEN`/`RED`, `emphasis=BOLD` для имени директории
+  (SCR-003-A: «Директория с именем ***...*** в файловой системе обнаружена/не обнаружена»)
+- [ ] 1.8.11.9.5. **`WORKBOOK_OPEN` / `WORKBOOK_CLOSE`** `J-B.1.1 / J-B.1.2`:
+  добавить `colorHint=BLUE_BOLD`; текст «***Приложение Excel открыто/закрыто***» жирным синим
+  (SCR-003-A, SCR-002-D)
+- [ ] 1.8.11.9.6. **`FILE_FS_FOUND`** `V-A.1.2.b.b.check.b2.0.a.0.a`:
+  уточнить шаблон текста по SCR-003-A:
+  «{datetime} - Файл с именем "..." в файловой системе обнаружен» (без `BOLD`, plain)
+  Аналогично FILE_FS_MISSING: те же структура/формат, цвет `RED`
+- [ ] 1.8.11.9.7. **`ROW_PARAGRAPH_PREVIEW`** (staging per-row, `V-C.2.1.a.1.1.a.1`):
+  выровнять цветовую схему по SCR-003-D:
+  — тип `*{sign}*` → `colorHint=TEAL_BOLD`
+  — «Отчёт внесён в промеж. тбл. ID - » → `colorHint=DARK_GREEN`
+  — `{insertedId}` → `colorHint=ORANGE`, `emphasis=BOLD`
 
 #### 1.8.11.8. Acceptance: контрольный прогон и финальная синхронизация mapping
 - [ ] 1.8.11.8.1. Контрольный прогон type=5 (один файл, `af_source=true`, `addRa=false`) → `COMPLETED`
