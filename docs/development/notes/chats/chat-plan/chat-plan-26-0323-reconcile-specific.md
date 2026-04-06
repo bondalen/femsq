@@ -3,7 +3,7 @@
 **Дата создания:** 2026-03-23  
 **Последнее обновление:** 2026-04-06  
 **Проект:** FEMSQ  
-**Версия плана:** 0.9.17  
+**Версия плана:** 0.9.18  
 
 ---
 
@@ -432,22 +432,25 @@
 > already-`present`-узлов в соответствие с реальным VBA-логом из SCR-*.
 > Источник-приоритет: реальный текст/цвет из скриншотов (§ Visual Reference, v0.3.0).
 
-- [ ] 1.8.11.9.1. **`AUDIT_START`** `V-A.1.msg.start`:
+- ✅ 1.8.11.9.1. **`AUDIT_START`** `V-A.1.msg.start`:
   добавить/выровнять `colorHint=RED`, `emphasis=BOLD` для имени ревизии
   (SCR-003-A: «Начало проведения ревизии ***2026-й год***.» — имя ревизии красным жирным)
+- [факт] `AuditExecutionServiceImpl`: `eventKey=AUDIT_START`, `withPresentationMeta(..., "START", "RED", "BOLD")`
 - [ ] 1.8.11.9.2. **`AUDIT_END`** `V-A.1.msg.end`:
   выровнять текст: «В {finishTime} - ***ревизия завершена***. С {startTime} в течении {min} мин. {sec} сек., (всего {total} сек.).»;
   `colorHint=BLUE_BOLD`
   (SCR-002-D)
-- [ ] 1.8.11.9.3. **`DIR_LOOKUP_FOUND`** `V-A.1.2.b.b.msg`:
+- ✅ 1.8.11.9.3. **`DIR_LOOKUP_FOUND`** `V-A.1.2.b.b.msg`:
   добавить `colorHint=GREEN`, `emphasis=BOLD` для имени директории
   (SCR-003-A: «Имя директории ***...*** для ревизии обнаружено»)
+- [факт] `AuditExecutionServiceImpl`: `eventKey=DIR_LOOKUP_FOUND`, `withPresentationMeta(..., "INFO", "GREEN", "BOLD")`
 - [ ] 1.8.11.9.4. **`DIR_FS_EXISTS` / `DIR_FS_MISSING`** `V-A.1.2.b.b.check.b/a`:
   добавить `colorHint=GREEN`/`RED`, `emphasis=BOLD` для имени директории
   (SCR-003-A: «Директория с именем ***...*** в файловой системе обнаружена/не обнаружена»)
-- [ ] 1.8.11.9.5. **`WORKBOOK_OPEN` / `WORKBOOK_CLOSE`** `J-B.1.1 / J-B.1.2`:
+- ✅ 1.8.11.9.5. **`WORKBOOK_OPEN` / `WORKBOOK_CLOSE`** `J-B.1.1 / J-B.1.2`:
   добавить `colorHint=BLUE_BOLD`; текст «***Приложение Excel открыто/закрыто***» жирным синим
   (SCR-003-A, SCR-002-D)
+- [факт] `DefaultAuditStagingService`: `WORKBOOK_OPEN` → `withPresentationMeta(..., "START", "BLUE", "BOLD")`, `WORKBOOK_CLOSE` → `withPresentationMeta(..., "END", "BLUE", "BOLD")`
 - [ ] 1.8.11.9.6. **`FILE_FS_FOUND`** `V-A.1.2.b.b.check.b2.0.a.0.a`:
   уточнить шаблон текста по SCR-003-A:
   «{datetime} - Файл с именем "..." в файловой системе обнаружен» (без `BOLD`, plain)
