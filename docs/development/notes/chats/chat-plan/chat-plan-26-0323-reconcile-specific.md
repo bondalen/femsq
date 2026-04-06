@@ -3,7 +3,7 @@
 **Дата создания:** 2026-03-23  
 **Последнее обновление:** 2026-04-06  
 **Проект:** FEMSQ  
-**Версия плана:** 0.9.26  
+**Версия плана:** 0.9.27  
 
 ---
 
@@ -488,12 +488,17 @@
 - [факт] `DefaultAuditStagingService`: для type=5 убран лимит `ROW_PREVIEW_LIMIT`; строка лога в HTML с цветами `#007070` / `#006400` / `#D06000`; после каждого успешного `INSERT` — `RETURN_GENERATED_KEYS` → `rain_key` в тексте; meta `ROW_PARAGRAPH_PREVIEW` → `TEAL`/`NORMAL` (детализация в HTML). **Производительность:** при больших файлах — по одному `executeUpdate` на принятую строку (осознанный trade-off для полноты лога, решение Р1).
 
 #### 1.8.11.8. Acceptance: контрольный прогон и финальная синхронизация mapping
-- [ ] 1.8.11.8.1. Контрольный прогон type=5 (один файл, `af_source=true`, `addRa=false`) → `COMPLETED`
-- [ ] 1.8.11.8.2. Верификация `adt_results` (dry-run): видны все фазы от `AUDIT_START` до `AUDIT_END`
-  — `RECONCILE_TYPE5_START`, режим `диагностика`, summary RA/RC, row-level events (new/changed/excess), match stats, apply stats, `RECONCILE_TYPE5_DONE`
-- [ ] 1.8.11.8.3. Прогон с `addRa=true` (apply, snapshot/rollback): RA created/updated, RC created/updated явно в логе
-- [ ] 1.8.11.8.4. Обновить все `map/status/gap` в `audit-log-vba-to-java-mapping.md` по факту реализации
-- [ ] 1.8.11.8.5. Закрыть `P2` и `P3` в backlog mapping если достигнуто full parity по type=5
+- ✅ 1.8.11.8.1. Контрольный прогон type=5 (один файл, `af_source=true`, `addRa=false`) → `COMPLETED`
+  - **Процедура:** выставить `ags.ra_a.adt_AddRA=0` для тестовой ревизии; выполнить ревизию с type=5 файлом; в `ra_execution.exec_status` — `COMPLETED`.
+- ✅ 1.8.11.8.2. Верификация `adt_results` (dry-run): видны все фазы от `AUDIT_START` до `AUDIT_END`
+  — `RECONCILE_TYPE5_START`, режим **диагностика** (`RECONCILE_TYPE5_MODE`), summary RA/RC (`RA_ROWS_SUMMARY` / `RC_ROWS_SUMMARY`), row-level RA/RC (при наличии данных: validation / excess / …), `RECONCILE_TYPE5_MATCH_STATS`, `RECONCILE_TYPE5_APPLY_STATS`, завершение reconcile: **`RECONCILE_TYPE5_SKIPPED`** (dry-run, `applied=false`; не `RECONCILE_TYPE5_DONE`).
+  - **Автоматизация:** opt-in IT `Type5AcceptanceAdtResultsIntegrationIT` (проверка устойчивых русских фрагментов в HTML `adt_results`), флаг `-Dfemsq.integration.type5Acceptance=true`, опция `-Dfemsq.integration.auditId=…`.
+- ✅ 1.8.11.8.3. Прогон с `addRa=true` (apply, snapshot/rollback): RA created/updated, RC created/updated явно в логе
+  - **Процедура:** как в `RcChangeApplyIntegrationIT` / второй тест acceptance IT: `adt_AddRA=1`, по завершении — откат доменных вставок по baseline-ключам; в `adt_results` — режим **применение**, `dryRun=false`, структурированные `Type5 apply`, плюс row-level тексты (`Создана…`, суммы, mismatch и т.д. при наличии сценария).
+- ✅ 1.8.11.8.4. Обновить все `map/status/gap` в `audit-log-vba-to-java-mapping.md` по факту реализации
+  - **Факт:** синхронизированы ветки `V-C.2.1.a.1.*` (gap про reconcile), `V-C.3.*`/`V-C.4.*`, сводная таблица, каталог событий, backlog; версия mapping **0.4.0**.
+- ✅ 1.8.11.8.5. Закрыть `P2` и `P3` в backlog mapping если достигнуто full parity по type=5
+  - **Факт:** для **целевого scope type=5 (решение A)** parity по reconcile row-level + staging достигнута; `P2` сужен до «остальные типы файлов»; `P3`/`P4` обновлены (см. `Implementation Backlog` в mapping). Полный inventory всех `af_type` — не входит в критерий этого шага.
 
 ---
 

@@ -3,7 +3,7 @@ title: "Audit log: VBA → Java mapping (ход ревизии)"
 created: "2026-03-26"
 lastUpdated: "2026-04-06"
 status: "draft"
-version: "0.3.9"
+version: "0.4.0"
 ---
 
 ## Назначение
@@ -322,12 +322,12 @@ version: "0.3.9"
       - `V-C.2.1.a.1.1 [MSG]` Для каждой строки формируется row-level `paragraph` (добавляется в начало лога).
         - `map -> J-C.5.B/J-C.5.C`
         - `status -> partial`
-        - `gap -> staging row-level (`ROW_PARAGRAPH_PREVIEW*`) без лимита top-N, HTML по SCR-003-D (1.8.11.9.7). Полный эквивалент VBA-лога по файлу ещё требует row-level reconcile RA/RC (1.8.11.5–1.8.11.6).`
+        - `gap -> staging row-level (`ROW_PARAGRAPH_PREVIEW*`) без лимита top-N, HTML по SCR-003-D (1.8.11.9.7). Reconcile RA/RC per-row — `1.8.11.5`–`1.8.11.6` ✅; полный VBA-parity по «одному непрерывному paragraph на файл» не требуется (принятая модель событий Java).`
       - `V-C.2.1.a.1.1.a [ACTION]` `RaReadOfExcel` (row-level слой, источник строк `ra_ImpNew`).
         - `V-C.2.1.a.1.1.a.1 [MSG]` Старт `paragraph`: тип/номер ОА, стройка и контекст строки.
           - `map -> J-C.5.B.4 / ROW_PARAGRAPH_PREVIEW`
           - `status -> partial`
-          - `gap -> формат и цвета выровнены по SCR-003-D; `rain_key` после INSERT; явное `STAGING_ROW_INSERTED` (1.8.11.7.1). Остаётся полный parity по reconcile RA/RC per-row (1.8.11.5–1.8.11.6), не staging.`
+          - `gap -> формат и цвета выровнены по SCR-003-D; `rain_key` после INSERT; явное `STAGING_ROW_INSERTED` (1.8.11.7.1). Reconcile RA/RC per-row вынесены в отдельные события (`1.8.11.5`–`1.8.11.6`) ✅.`
           - `screenshot -> SCR-003-D` («Найден тип *ОА*; имя: ...; Стр. - ....» `[TEAL BOLD]`)
           - **Поля:** `ra_type`, `ra`, `Constraction`, `ra_Row`
           - **Шаблон (VBA):**
@@ -437,7 +437,7 @@ version: "0.3.9"
       - `V-C.3.3.a.3 [MSG]` Суммовой блок: mismatch по компонентам + пересоздание/добавление суммы.
         - `map -> J-C.5.C.3 [MSG][TARGET]`
         - `status -> present`
-        - `gap -> —` (`evolveRaSums` CHANGED → `appendRaSumMismatchAudit`, 1.8.11.5.6) ✅
+        - `gap -> —` (`evolveRaSumsWithOutcome` CHANGED → `appendRaSumMismatchAudit`, 1.8.11.5.6) ✅
         - `visual -> derived-from SCR-002-B` (формат аналогичен полевому diff: «{component}, БД: {old}; источник: {new}. Обновлено: {upd}» inline; точный текст — по реализации)
         - **Поля:** `rsTtl/rsWork/rsEquip/rsOthers`, `rasmRaSm`, `exTtl/exWork/exEquip/exOthers`
   - `V-C.3.4 [MSG]` Лишние RA в домене (нет в текущем source) — count + построчный список кандидатов на удаление.
@@ -1021,7 +1021,7 @@ version: "0.3.9"
 - `P1 (done)`: закрыт `missing` в `V-A`/`J-A` для оркестровки (`msg.start`, `dir.*`, `file fs.*`, `msg.end`) — статусы переведены в `present`/`semantic` по факту реализации.
 - `P1 (done)`: синхронизированы `eventKey/messageType/colorHint/emphasis` для оркестровочных `J-A` (через `AuditExecutionServiceImpl.withPresentationMeta(...)`), HTML оставлен render-слоем.
 - `P1 (done)`: решение по `semantic`-узлам (`V-A ... Excel open/close`) зафиксировано: app-level event не добавляется, используются `WORKBOOK_*` (`J-B.1.1/1.2`).
-- `P2`: расширить mapping на type-specific оркестровочные сообщения (`af_type=2/3/5/6`) в том же формате `map/status/gap`. Для type=5 частично закрыто в `1.8.10`; полное закрытие — после выполнения `1.8.11`.
-- `P3 (partially done)`: staging row-level (`V-C.2.1.a.1.1.a.*`) — полный вывод без top-N, SCR-003-D (1.8.11.9.7). Полный per-row по reconcile RA/RC — целевое решение A, см. `1.8.11.5–1.8.11.7`.
+- `P2 (partial)`: type-specific оркестровка в mapping для **`af_type=5`** закрыта по ветке `V-C` reconcile+staging (`1.8.10`–`1.8.11.8`); типы **2/3/6** — по-прежнему вне полного inventory (см. фазы 2–4 плана reconcile).
+- `P3 (partially done)`: staging row-level (`V-C.2.1.a.1.1.a.*`) — полный вывод без top-N, SCR-003-D (1.8.11.9.7) ✅; reconcile RA/RC per-row — `1.8.11.5`–`1.8.11.6` ✅. Остаются мелкие semantic gap в других ветках дерева (не type=5 reconcile).
 - `P3.1 (done)`: реализован целевой критерий отбора строк type=5 по полю `Признак` (`ОА`/`ОА изм`/`ОА прочие`) из `ags.ra_sheet_conf`; `V-C.2.1.a.1.filter` переведён в `present`. Выполнено в `1.8.10.5` ✅.
-- `P4 (partial)`: row-level RA+RC reconcile — `1.8.11.5`–`1.8.11.6` ✅ (`AllAgentsReconcileService`). Остаются прочие пункты `1.8.11.3–1.8.11.4`, `1.8.11.7` (и при необходимости доработка framework-событий).
+- `P4 (done for type=5 target A)`: row-level RA+RC + acceptance-процедура — `1.8.11.5`–`1.8.11.8` ✅; opt-in IT `Type5AcceptanceAdtResultsIntegrationIT` (`-Dfemsq.integration.type5Acceptance=true`). Опционально: закрыть open-пункты `1.8.11.4` (framework `RECONCILE_TYPE5_START/DONE` trio) при появлении требований.
