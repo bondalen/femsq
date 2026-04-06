@@ -3,7 +3,7 @@
 **Дата создания:** 2026-03-23  
 **Последнее обновление:** 2026-04-06  
 **Проект:** FEMSQ  
-**Версия плана:** 0.9.20  
+**Версия плана:** 0.9.21  
 
 ---
 
@@ -350,8 +350,9 @@
   Версия mapping → **0.3.0**.
 
 #### 1.8.11.2. Staging: детализация диапазона и якоря
-- [ ] 1.8.11.2.1. `SHEET_FOUND`: добавить в meta координаты диапазона (`column`, `firstRow`, `lastRow`, `address`) — аналог VBA `ra_RA.Column/Row/Rows.count/Address`
+- ✅ 1.8.11.2.1. `SHEET_FOUND`: добавить в meta координаты диапазона (`column`, `firstRow`, `lastRow`, `address`) — аналог VBA `ra_RA.Column/Row/Rows.count/Address`
   → `V-C.2.1.a`: `partial` → `present`; Event Catalog: расширить поля `SHEET_FOUND`
+  - **Факт кода:** `DefaultAuditStagingService` эмитит `SHEET_FOUND` после `locateColumns`, HTML по SCR-003-C; столбец диапазона — приоритет `rainRaNum` / `rainSign` / `rainCstAgPnStr`, иначе первый required по `rcmTblColOrd`.
 - ✅ 1.8.11.2.2. `ANCHOR_FOUND/ANCHOR_MISSING`: реализовать как явные события в `DefaultAuditStagingService`
   (сейчас при отсутствии якоря бросается исключение без события в лог)
   Шаблон строки `ANCHOR_FOUND` из SCR-003-B:

@@ -3,7 +3,7 @@ title: "Audit log: VBA → Java mapping (ход ревизии)"
 created: "2026-03-26"
 lastUpdated: "2026-04-06"
 status: "draft"
-version: "0.3.3"
+version: "0.3.4"
 ---
 
 ## Назначение
@@ -304,8 +304,8 @@ version: "0.3.3"
   - `V-C.2.1 [CHECK]` Ключевые колонки и диапазон найдены?
     - `V-C.2.1.a [MSG]` Диапазон данных найден: колонка, первая/последняя строка, адрес (`colorHint=BLUE`, `messageType=INFO`).
       - `map -> J-C.5.B.2 [MSG][TARGET]`
-      - `status -> partial`
-      - `gap -> в Java пока нет полного вывода адреса диапазона и всех координат (как в VBA)`
+      - `status -> present`
+      - `gap -> —`
       - `screenshot -> SCR-003-C` («Найден диапазон *Отчёты обычные*, колонка - 4, первая строка - 2, нижняя строка - 19144. Адрес: $D$2:$D$19144.»)
       - **Поля:** `ra_RA.Column`, `ra_RA.Row`, `ra_RA.Rows.Count`, `ra_RA.Address`, `adt_results`
       - **Шаблон (VBA):**
@@ -687,7 +687,7 @@ version: "0.3.3"
 | `V-C.1/V-C.2` | `J-C.5.A/J-C.5.B` | present | Process-level этапы type5 реализованы (`FILE_ALL_AGENTS_STAGE*`, `WORKBOOK_*`, `SHEET_*`, `ANCHOR_*`, `STAGING_*`). |
 | `V-C.3/V-C.4` (рамка reconcile) | `J-C.5.C.1` `RECONCILE_TYPE5_START` | present | Старт reconcile type=5: `AuditReconcileCoordinator.run` → `beginSpan` с `RECONCILE_TYPE5_START` (см. 1.8.11.1.3). |
 | `V-C.3/V-C.4` (завершение reconcile) | `J-C.5.C.5` `DONE/SKIPPED/FAILED` | present | Завершение: `appendResult` → `RECONCILE_TYPE5_DONE`/`SKIPPED`; catch → `RECONCILE_TYPE5_FAILED` (см. 1.8.11.1.3). |
-| `V-C.2.1.a` | `J-C.5.B.2 SHEET_FOUND` | partial | Лист найден: событие есть, но без координат диапазона (column/firstRow/lastRow/address). Целевое расширение: 1.8.11.2.1. |
+| `V-C.2.1.a` | `J-C.5.B.2 SHEET_FOUND` | present | Координаты диапазона в meta (`column`, `firstRow`, `lastRow`, `address`), HTML по SCR-003-C; выполнено в `1.8.11.2.1` ✅. |
 | `V-C.2.1` (anchor) | `J-C.5.B.3 ANCHOR_FOUND/ANCHOR_MISSING` | present | Реализовано событие якоря; `ANCHOR_FOUND` в формате SCR-003-B («Найдена ячейка ...», `BLUE`) с meta `anchorColumn/anchorCellContent/anchorRowOneBased`. |
 | `V-C.2.1.a.1.filter` | `J-C.5.B.4` | present | Фильтр строк по полю `Признак` из whitelist (`ОА`/`ОА изм`/`ОА прочие`) реализован в 1.8.10.5 ✅. Механизм отличается от VBA (`Find/FindNext`), семантический результат идентичен. |
 | `V-C.2.1.a.1.1.a.2.a.1` | — | missing | Per-row staging insert ID. Целевой `eventKey: STAGING_ROW_INSERTED` (1.8.11.7.1). |
@@ -963,7 +963,7 @@ version: "0.3.3"
 | `FILES_EMPTY` | `AUDIT` | `WARN` | `auditId` | Для ревизии не обнаружены файлы для рассмотрения. |
 | `WORKBOOK_OPEN` | `FILE` | `INFO` | `filePath`, `openedAt` | Фактическое событие `DefaultAuditStagingService`. |
 | `WORKBOOK_CLOSE` | `FILE` | `INFO` | `filePath`, `closedAt`, `durationSec` | Фактическое событие `DefaultAuditStagingService`. |
-| `SHEET_FOUND` | `FILE` | `INFO` | `filePath`, `sheetName` | Лист найден. |
+| `SHEET_FOUND` | `FILE` | `INFO` | `sheetName`, `tableName`, `column`, `firstRow`, `lastRow`, `address` | Диапазон данных на листе (SCR-003-C), после маппинга заголовков. |
 | `SHEET_MISSING` | `FILE` | `WARN` | `filePath`, `sheetName` | Лист не найден. |
 | `STAGING_START` | `FILE` | `START` | `filePath`, `tableName`, `sheetName` | Старт загрузки staging. |
 | `STAGING_LOAD_STATS` | `FILE` | `INFO` | `filePath`, `tableName`, `inserted`, `skipped*` | Итоговая статистика загрузки. |

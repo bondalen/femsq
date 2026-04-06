@@ -39,6 +39,7 @@ import java.util.logging.Logger;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.util.CellReference;
 import org.springframework.stereotype.Service;
 
 /**
@@ -58,6 +59,14 @@ public class DefaultAuditStagingService implements AuditStagingService {
     private static final String HTML_GRAY_NOTE = "#606060";
     private static final int FILTERED_SIGN_TOP_LIMIT = 5;
     private static final Set<String> TYPE5_ALLOWED_SIGNS = Set.of("оа", "оа изм", "оа прочие");
+    /**
+     * Логические колонки staging для описания вертикального диапазона на листе (аналог VBA {@code ra_RA} по ключевому столбцу).
+     */
+    private static final List<String> RANGE_ANCHOR_STAGING_COLUMNS = List.of(
+            "rainRaNum",
+            "rainSign",
+            "rainCstAgPnStr"
+    );
 
     private final AuditColumnMappingRepository mappingRepository;
     private final AuditExcelReader excelReader;
@@ -198,18 +207,6 @@ public class DefaultAuditStagingService implements AuditStagingService {
                     ));
             throw new AuditExcelException("Sheet not found: " + config.rscSheet());
         }
-        context.append(AuditLogLevel.INFO, AuditLogScope.FILE, "SHEET_FOUND",
-                "<P>Лист найден: " + escape(sheet.getSheetName()) + "</P>",
-                withPresentationMeta(
-                        Map.of(
-                                "auditId", String.valueOf(context.getAuditId()),
-                                "sheetName", String.valueOf(sheet.getSheetName()),
-                                "tableName", String.valueOf(config.rscStgTbl())
-                        ),
-                        "INFO",
-                        "GREEN",
-                        "BOLD"
-                ));
 
         OptionalInt anchorRowOpt = columnLocator.findAnchorRow(sheet, config.rscAnchor(), config.rscAnchorMatch());
         if (anchorRowOpt.isEmpty()) {
@@ -271,6 +268,9 @@ public class DefaultAuditStagingService implements AuditStagingService {
 
         List<RaColMap> mappings = mappingRepository.getColumnMappings(config.rscKey());
         Map<String, Integer> excelColumns = columnLocator.locateColumns(headerRow, mappings);
+        int rangeColumnIndex0 = resolveRangeColumnIndex0(excelColumns, mappings);
+        SheetDataRangeSpec dataRange = buildSheetDataRangeSpec(sheet, headerRowIndex, rangeColumnIndex0);
+        appendSheetFound(context, config, sheet, dataRange);
         Set<String> requiredColumns = mappings.stream()
                 .filter(mapping -> Boolean.TRUE.equals(mapping.rcmRequired()))
                 .map(RaColMap::rcmTblCol)
@@ -567,6 +567,96 @@ public class DefaultAuditStagingService implements AuditStagingService {
             return null;
         }
         return cellReader.readString(row.getCell(idx));
+    }
+
+    /**
+     * Пишет событие {@code SHEET_FOUND} с координатами вертикального диапазона в ключевом столбце (SCR-003-C / VBA {@code ra_RA}).
+     */
+    private void appendSheetFound(
+            AuditExecutionContext context,
+            RaSheetConf config,
+            Sheet sheet,
+            SheetDataRangeSpec range
+    ) {
+        String sheetLabel = escape(sheet.getSheetName());
+        String html = "<P>Найден диапазон <b><font color=\"blue\">" + sheetLabel + "</font></b>, колонка - "
+                + range.columnOneBased()
+                + ", первая строка - " + range.firstRowOneBased()
+                + ", нижняя строка - " + range.lastRowOneBased()
+                + ". Адрес: <font color=\"blue\">" + escape(range.address()) + "</font>.</P>";
+        context.append(
+                AuditLogLevel.INFO,
+                AuditLogScope.FILE,
+                "SHEET_FOUND",
+                html,
+                withPresentationMeta(
+                        Map.of(
+                                "auditId", String.valueOf(context.getAuditId()),
+                                "sheetName", String.valueOf(sheet.getSheetName()),
+                                "tableName", String.valueOf(config.rscStgTbl()),
+                                "column", String.valueOf(range.columnOneBased()),
+                                "firstRow", String.valueOf(range.firstRowOneBased()),
+                                "lastRow", String.valueOf(range.lastRowOneBased()),
+                                "address", String.valueOf(range.address())
+                        ),
+                        "INFO",
+                        "BLUE",
+                        "BOLD"
+                )
+        );
+    }
+
+    /**
+     * Индекс колонки Excel (0-based) для описания диапазона данных (приоритет — ключевые бизнес-колонки staging).
+     */
+    private int resolveRangeColumnIndex0(Map<String, Integer> excelColumns, List<RaColMap> mappings) {
+        for (String logical : RANGE_ANCHOR_STAGING_COLUMNS) {
+            Integer idx = excelColumns.get(logical);
+            if (idx != null && idx >= 0) {
+                return idx;
+            }
+        }
+        return mappings.stream()
+                .filter(mapping -> Boolean.TRUE.equals(mapping.rcmRequired()))
+                .sorted(Comparator.comparing(RaColMap::rcmTblColOrd))
+                .map(m -> excelColumns.get(m.rcmTblCol()))
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElseGet(() -> excelColumns.values().stream().min(Integer::compareTo).orElse(0));
+    }
+
+    /**
+     * Вертикальный диапазон в одной колонке: от первой строки под заголовком до последней непустой ячейки (нумерация строк Excel, 1-based).
+     */
+    private SheetDataRangeSpec buildSheetDataRangeSpec(Sheet sheet, int headerRowIndex, int rangeColumnIndex0) {
+        int firstDataRowIndex = headerRowIndex + 1;
+        int firstRowOneBased = firstDataRowIndex + 1;
+        String colLetters = CellReference.convertNumToColString(rangeColumnIndex0);
+        int lastPoi = sheet.getLastRowNum();
+        if (lastPoi < firstDataRowIndex) {
+            String address = "$" + colLetters + "$" + firstRowOneBased + ":$" + colLetters + "$" + firstRowOneBased;
+            return new SheetDataRangeSpec(rangeColumnIndex0 + 1, firstRowOneBased, firstRowOneBased, address);
+        }
+        int lastNonEmpty = -1;
+        for (int r = lastPoi; r >= firstDataRowIndex; r--) {
+            Row row = sheet.getRow(r);
+            if (row == null) {
+                continue;
+            }
+            if (cellReader.readString(row.getCell(rangeColumnIndex0)) != null) {
+                lastNonEmpty = r;
+                break;
+            }
+        }
+        int lastRowOneBased = lastNonEmpty >= 0 ? lastNonEmpty + 1 : firstRowOneBased;
+        String address = "$" + colLetters + "$" + firstRowOneBased + ":$" + colLetters + "$" + lastRowOneBased;
+        return new SheetDataRangeSpec(rangeColumnIndex0 + 1, firstRowOneBased, lastRowOneBased, address);
+    }
+
+    /**
+     * Координаты вертикального диапазона данных в столбце (метаданные для {@code SHEET_FOUND}).
+     */
+    private record SheetDataRangeSpec(int columnOneBased, int firstRowOneBased, int lastRowOneBased, String address) {
     }
 
     private int findAnchorColumnOneBased(Row anchorRow, String anchorText) {
