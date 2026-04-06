@@ -83,7 +83,8 @@ public class AuditReconcileCoordinator {
                     executionKey,
                     context.getAuditId(),
                     addRa,
-                    file.getType()
+                    file.getType(),
+                    context
             )));
             appendResult(context, file, result, reconcileSpanId, reconcileStartedAt);
             appendType5ExtraDiagnostics(context, file, result);

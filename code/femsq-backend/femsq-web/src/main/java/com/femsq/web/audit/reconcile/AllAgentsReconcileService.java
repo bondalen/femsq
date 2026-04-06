@@ -1,6 +1,9 @@
 package com.femsq.web.audit.reconcile;
 
 import com.femsq.database.connection.ConnectionFactory;
+import com.femsq.web.audit.AuditExecutionContext;
+import com.femsq.web.audit.AuditLogLevel;
+import com.femsq.web.audit.AuditLogScope;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -50,6 +53,8 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
     private static final String RACS_DATE = "[ra\u0441s_date]";
     private static final boolean ENABLE_DELETES = Boolean.parseBoolean(
             System.getProperty("femsq.reconcile.type5.enableDeletes", "false"));
+    /** Цвет акцента для summary RA/RC (SCR-002-A/B/C, Crimson). */
+    private static final String HTML_CRIMSON_SUMMARY = "#DC143C";
 
     public AllAgentsReconcileService(ConnectionFactory connectionFactory) {
         super(connectionFactory);
@@ -93,6 +98,7 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         // VBA semantics for type=5: row-level reject, not global apply blocker.
         boolean applyBlocked = false;
         boolean dryRun = !applyRequested;
+        appendType5ModeAndRaRowsAuditLog(context, readModelStats.considered(), applyRequested);
         int rcChangesInserted = 0;
         int rcSumsInserted = 0;
         int rcChangesUpdated = 0;
@@ -120,6 +126,7 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                     domainRcByKey
             );
             rcReadStats = rcReadModelResult.stats();
+            appendRcRowsSummaryAuditLog(context, rcReadStats.rcRowsConsidered());
             rcNewPlanned = rcReadModelResult.newRows().size();
             rcChangedPlanned = rcReadModelResult.changedRows().size();
             rcDeletePlan = planRcDeletes(
@@ -171,6 +178,7 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                     domainRcByKey
             );
             rcReadStats = rcReadModelResult.stats();
+            appendRcRowsSummaryAuditLog(context, rcReadStats.rcRowsConsidered());
             rcNewPlanned = rcReadModelResult.newRows().size();
             rcChangedPlanned = rcReadModelResult.changedRows().size();
             rcDeletePlan = planRcDeletes(
@@ -1753,6 +1761,100 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             return false;
         }
         return sameAmount(domain.others(), source.others());
+    }
+
+    /**
+     * Явные MSG для журнала аудита: режим reconcile и сводка по строкам RA перед обработкой RA (1.8.11.3.1, 4.5).
+     */
+    private void appendType5ModeAndRaRowsAuditLog(ReconcileContext context, int raRowsConsidered, boolean addRa) {
+        AuditExecutionContext audit = context.auditExecutionContext();
+        if (audit == null) {
+            return;
+        }
+        String modeToken = addRa ? "APPLY" : "DIAGNOSTIC";
+        String modeHtml = addRa
+                ? "<P>Режим: <b>применение</b> (addRa=true)</P>"
+                : "<P>Режим: <b>диагностика</b> (addRa=false)</P>";
+        audit.append(
+                AuditLogLevel.INFO,
+                AuditLogScope.FILE,
+                "RECONCILE_TYPE5_MODE",
+                modeHtml,
+                withPresentationMeta(
+                        Map.of(
+                                "auditId", String.valueOf(context.auditId()),
+                                "execKey", String.valueOf(context.executionKey()),
+                                "fileType", String.valueOf(context.fileType()),
+                                "addRa", String.valueOf(addRa),
+                                "mode", modeToken
+                        ),
+                        "INFO",
+                        "BLUE",
+                        "NORMAL"
+                )
+        );
+        audit.append(
+                AuditLogLevel.INFO,
+                AuditLogScope.FILE,
+                "RA_ROWS_SUMMARY",
+                "<P>Всего строк отчётов: <b><font color=\"" + HTML_CRIMSON_SUMMARY + "\">"
+                        + raRowsConsidered + "</font></b></P>",
+                withPresentationMeta(
+                        Map.of(
+                                "auditId", String.valueOf(context.auditId()),
+                                "execKey", String.valueOf(context.executionKey()),
+                                "fileType", String.valueOf(context.fileType()),
+                                "raRowsCount", String.valueOf(raRowsConsidered)
+                        ),
+                        "INFO",
+                        "CRIMSON",
+                        "BOLD"
+                )
+        );
+    }
+
+    /**
+     * Сводка по строкам изменений перед блоком RC (1.8.11.3.2).
+     */
+    private void appendRcRowsSummaryAuditLog(ReconcileContext context, int rcRowsConsidered) {
+        AuditExecutionContext audit = context.auditExecutionContext();
+        if (audit == null) {
+            return;
+        }
+        audit.append(
+                AuditLogLevel.INFO,
+                AuditLogScope.FILE,
+                "RC_ROWS_SUMMARY",
+                "<P>Всего строк изменений: <b><font color=\"" + HTML_CRIMSON_SUMMARY + "\">"
+                        + rcRowsConsidered + "</font></b></P>",
+                withPresentationMeta(
+                        Map.of(
+                                "auditId", String.valueOf(context.auditId()),
+                                "execKey", String.valueOf(context.executionKey()),
+                                "fileType", String.valueOf(context.fileType()),
+                                "rcRowsCount", String.valueOf(rcRowsConsidered)
+                        ),
+                        "INFO",
+                        "CRIMSON",
+                        "BOLD"
+                )
+        );
+    }
+
+    private static Map<String, String> withPresentationMeta(
+            Map<String, String> meta,
+            String messageType,
+            String colorHint,
+            String emphasis
+    ) {
+        Map<String, String> enriched = new HashMap<>();
+        if (meta != null) {
+            enriched.putAll(meta);
+        }
+        enriched.put("messageType", messageType);
+        enriched.put("colorHint", colorHint);
+        enriched.put("emphasis", emphasis);
+        return enriched;
     }
 
     private String formatCounters(

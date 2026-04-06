@@ -3,7 +3,7 @@
 **Дата создания:** 2026-03-23  
 **Последнее обновление:** 2026-04-06  
 **Проект:** FEMSQ  
-**Версия плана:** 0.9.21  
+**Версия плана:** 0.9.22  
 
 ---
 
@@ -364,12 +364,14 @@
     `colorHint` изменён `GREEN` → `BLUE`, meta дополнены `anchorColumn`, `anchorCellContent`, `anchorRowOneBased`.
 
 #### 1.8.11.3. Отдельные summary-сообщения RA/RC перед reconcile-блоком (V-C.3.1 / V-C.4.1)
-- [ ] 1.8.11.3.1. В `AllAgentsReconcileService` добавить явный MSG «Всего строк отчётов: N» перед блоком RA
+- ✅ 1.8.11.3.1. В `AllAgentsReconcileService` добавить явный MSG «Всего строк отчётов: N» перед блоком RA
   (аналог VBA `"<P>Всего строк отчётов: <b>" & rsRaAll.RecordCount & "</b></P>"`)
   → `V-C.3.1`: `partial` → `present`
-- [ ] 1.8.11.3.2. В `AllAgentsReconcileService` добавить явный MSG «Всего строк изменений: N» перед блоком RC
+  - **Факт кода:** `eventKey: RA_ROWS_SUMMARY`, `raRowsCount` = `matchRowsConsidered`; `ReconcileContext` передаёт `AuditExecutionContext` из `AuditReconcileCoordinator`.
+- ✅ 1.8.11.3.2. В `AllAgentsReconcileService` добавить явный MSG «Всего строк изменений: N» перед блоком RC
   (аналог VBA `"<P>Всего строк изменений: <b>" & rsRaAll.RecordCount & "</b></P>"`)
   → `V-C.4.1`: `partial` → `present`
+  - **Факт кода:** `eventKey: RC_ROWS_SUMMARY`, `rcRowsCount` = `rcRowsConsidered` после `buildRcChangeReadModel` (dry-run и apply).
 
 #### 1.8.11.4. Reconcile framework events (start / mode / stats / done)
 - [ ] 1.8.11.4.1. Подтвердить/реализовать `RECONCILE_TYPE5_START` как явное событие в `adt_results`
@@ -383,9 +385,10 @@
 - [ ] 1.8.11.4.4. `RECONCILE_TYPE5_APPLY_STATS`: структурированный MSG
   (meta: `raInserted/raUpdated/raUnchanged/raDeleted`, `rcInserted/rcUpdated/rcUnchanged/rcDeleted`, `sumInserted`)
   → `J-C.5.C.3`: `partial` → `present` (агрегатный слой)
-- [ ] 1.8.11.4.5. Добавить явный MSG режима reconcile: «Режим: диагностика (addRa=false)» / «Режим: применение (addRa=true)»
+- ✅ 1.8.11.4.5. Добавить явный MSG режима reconcile: «Режим: диагностика (addRa=false)» / «Режим: применение (addRa=true)»
   (`eventKey: RECONCILE_TYPE5_MODE`)
   → `V-C.3.5/V-C.4.5`: `partial` → `present`
+  - **Факт кода:** `RECONCILE_TYPE5_MODE` с meta `mode=APPLY|DIAGNOSTIC`, `addRa`; эмиссия вместе с `RA_ROWS_SUMMARY` в начале `reconcileInTransaction`.
 
 #### 1.8.11.5. Row-level события RA (V-C.3.2.a.* / V-C.3.3.a.* / V-C.3.4) — полная аналогия с VBA
 - [ ] 1.8.11.5.1. **NEW RA per row** `V-C.3.2.a.1`: MSG «создан, ключ=N, ОА=..., стройка=..., период=...»

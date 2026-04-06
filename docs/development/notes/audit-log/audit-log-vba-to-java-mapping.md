@@ -3,7 +3,7 @@ title: "Audit log: VBA → Java mapping (ход ревизии)"
 created: "2026-03-26"
 lastUpdated: "2026-04-06"
 status: "draft"
-version: "0.3.4"
+version: "0.3.5"
 ---
 
 ## Назначение
@@ -366,8 +366,8 @@ version: "0.3.4"
 - `V-C.3 [ACTION]` Блок RA из `Audit`: агрегаты и детализация `ra_ImpNewQuRa`.
   - `V-C.3.1 [MSG]` Всего строк RA в staging (summary count).
     - `map -> J-C.5.C [MSG][TARGET]`
-    - `status -> missing`
-    - `gap -> в Java нет отдельного MSG «Всего строк отчётов: N» перед блоком RA; целевой `eventKey: RA_ROWS_SUMMARY` (1.8.11.3.1)`
+    - `status -> present`
+    - `gap -> —`
     - `screenshot -> SCR-002-A` («Всего найдено отчётов: 1952» `[CRIMSON BOLD]`)
     - **Поля:** `rsRaAll.RecordCount`
     - **Шаблон (VBA):**
@@ -453,8 +453,8 @@ version: "0.3.4"
       ```
   - `V-C.3.5 [CHECK]` `addRa=true`? При true применяются create/update/delete; при false — диагностический режим без apply.
     - `map -> J-C.5.C [MSG][TARGET]`
-    - `status -> partial`
-    - `gap -> в Java режим отражается неявно (поле `addRa` в meta `RECONCILE_TYPE5_START`), без явного MSG в лог; целевой `eventKey: RECONCILE_TYPE5_MODE` (1.8.11.4.5)`
+    - `status -> present`
+    - `gap -> —` (`RECONCILE_TYPE5_MODE` в `AllAgentsReconcileService`, 1.8.11.4.5 ✅; плюс `addRa` в meta `RECONCILE_TYPE5_START`)
     - `visual -> inferred` (нет отдельной строки на скриншоте; информация передаётся только через meta-поля событий reconcile)
     - `V-C.3.5.a [ACTION]` apply enabled: create/update/delete + обновление сумм
     - `V-C.3.5.b [ACTION]` dry-run: только диагностика/подсчёты, без изменений в домене
@@ -462,8 +462,8 @@ version: "0.3.4"
 - `V-C.4 [ACTION]` Блок RC из `Audit`: агрегаты и детализация `ra_ImpNewQuRc`.
   - `V-C.4.1 [MSG]` Всего строк RC в staging (summary count).
     - `map -> J-C.5.C [MSG][TARGET]`
-    - `status -> missing`
-    - `gap -> в Java нет отдельного MSG «Всего строк изменений: N» перед блоком RC; целевой `eventKey: RC_ROWS_SUMMARY` (1.8.11.3.2)`
+    - `status -> present`
+    - `gap -> —`
     - `screenshot -> SCR-002-C` («Всего новых изменений: 77» `[CRIMSON BOLD]`)
     - **Поля:** `rsRaAll.RecordCount`
     - **Шаблон (VBA):**
@@ -541,8 +541,8 @@ version: "0.3.4"
       ```
   - `V-C.4.5 [CHECK]` `addRa=true`? При true применяются create/update/delete; при false — диагностический режим без apply.
     - `map -> J-C.5.C [MSG][TARGET]`
-    - `status -> partial`
-    - `gap -> аналогично `V-C.3.5`: режим отражается неявно; см. `RECONCILE_TYPE5_MODE` (1.8.11.4.5)`
+    - `status -> present`
+    - `gap -> —` (см. `V-C.3.5` / `RECONCILE_TYPE5_MODE`)
     - `visual -> inferred` (аналогично V-C.3.5; нет отдельной строки на скриншоте)
     - `V-C.4.5.a [ACTION]` apply enabled: create/update/delete + обновление сумм
     - `V-C.4.5.b [ACTION]` dry-run: только диагностика/подсчёты, без изменений в домене
@@ -634,9 +634,12 @@ version: "0.3.4"
       - **map/status/gap:** `map -> V-C.2.1`, `status -> present`, `gap -> формат `ANCHOR_FOUND` выровнен к SCR-003-B (текст «Найдена ячейка ...», `BLUE`); для `ANCHOR_MISSING` сохранён WARN/RED + исключение`
     - `J-C.5.B.4 [MSG]` `STAGING_START/STAGING_LOAD_STATS/STAGING_END` + `ROW_PARAGRAPH_PREVIEW*` (фактические события)
       - **eventKey:** `STAGING_START`, `STAGING_LOAD_STATS`, `STAGING_END`; **scope:** `FILE`
-      - **map/status/gap:** `map -> V-C.2.1 / V-C.3.1 / V-C.4.1`, `status -> partial`, `gap -> в Java есть row-level staging preview (без top-N, 1.8.11.9.7) и staging-статистика; нет полного VBA-эквивалента: (а) механизм отбора строк отличается от VBA `Find/FindNext` (семантика совпадает через whitelist), (б) отдельный summary RA/RC как в VBA, (в) row-level reconcile RA/RC per-row.`
+      - **map/status/gap:** `map -> V-C.2.1 / V-C.3.1 / V-C.4.1`, `status -> partial`, `gap -> в Java есть row-level staging preview (без top-N, 1.8.11.9.7) и staging-статистика; нет полного VBA-эквивалента: (а) механизм отбора строк отличается от VBA `Find/FindNext` (семантика совпадает через whitelist), (б) summary RA/RC вынесен в reconcile (`RA_ROWS_SUMMARY`/`RC_ROWS_SUMMARY`, 1.8.11.3.1–3.2), (в) row-level reconcile RA/RC per-row.`
 
   - `J-C.5.C [ACTION]` `AllAgentsReconcileService` (match/apply/delete/diagnostics)
+    - `J-C.5.C.0 [MSG]` `RECONCILE_TYPE5_MODE`, `RA_ROWS_SUMMARY`, `RC_ROWS_SUMMARY` (фактические события)
+      - **eventKey:** `RECONCILE_TYPE5_MODE`, `RA_ROWS_SUMMARY`, `RC_ROWS_SUMMARY`; **scope:** `FILE`
+      - **map/status/gap:** `map -> V-C.3.1 / V-C.4.1 / V-C.3.5 / V-C.4.5`, `status -> present`, `gap -> —` (`AllAgentsReconcileService.reconcileInTransaction`, 1.8.11.3.1–3.2, 4.5; требуется не-null `AuditExecutionContext` в `ReconcileContext`).
     - `J-C.5.C.1 [MSG][TARGET]` `RECONCILE_TYPE5_START`
       - **eventKey:** `RECONCILE_TYPE5_START`; **scope:** `FILE`
       - **Минимальные meta-поля:** `auditId`, `executionKey`, `fileType=5`, `addRa`, `messageType`, `colorHint`, `emphasis`
@@ -693,7 +696,7 @@ version: "0.3.4"
 | `V-C.2.1.a.1.1.a.2.a.1` | — | missing | Per-row staging insert ID. Целевой `eventKey: STAGING_ROW_INSERTED` (1.8.11.7.1). |
 | `V-C.2.1.a.1` | `J-C.5.B/J-C.5.C` | partial | Перебор строк в VBA логируется детально; в Java покрыт через staging/reconcile + row-level preview и агрегированные counters. |
 | `V-C.2.1.a.1.1.a.*` | `ROW_PARAGRAPH_PREVIEW*` | partial | Staging: полный вывод строк без top-N, SCR-003-D HTML + `rain_key` (1.8.11.9.7). Полный VBA-parity по файлу — ещё reconcile RA/RC per-row (1.8.11.5–1.8.11.6). |
-| `V-C.3.1` | — | missing | «Всего строк отчётов: N». Целевой `eventKey: RA_ROWS_SUMMARY` (1.8.11.3.1). |
+| `V-C.3.1` | `RA_ROWS_SUMMARY` | present | `AllAgentsReconcileService`: `matchRowsConsidered` в `raRowsCount` (1.8.11.3.1) ✅. |
 | `V-C.3.2.a.1` | — | missing | RA created per row. Целевой `eventKey: RA_NEW_CREATED` (1.8.11.5.1). |
 | `V-C.3.2.a.2` | — | missing | RA sums per row. Целевой `eventKey: RA_NEW_SUMS` (1.8.11.5.2). |
 | `V-C.3.2.a.3` | `RECONCILE_TYPE5_DIAGNOSTICS` | partial | RA validation fail: в diagnostics частично, без per-row текста. Целевой `eventKey: RA_VALIDATION_FAIL` (1.8.11.5.3). |
@@ -701,8 +704,8 @@ version: "0.3.4"
 | `V-C.3.3.a.2` | — | missing | RA updated value. Целевой `eventKey: RA_FIELD_UPDATED` (1.8.11.5.5). |
 | `V-C.3.3.a.3` | `RECONCILE_TYPE5_APPLY_STATS` | partial | RA sum mismatch: агрегат есть, per-row нет. Целевой `eventKey: RA_SUM_MISMATCH` (1.8.11.5.6). |
 | `V-C.3.4` | `RECONCILE_TYPE5_DIAGNOSTICS` | partial | Excess RA: aggregate, без списка имён. Целевой `eventKey: RA_EXCESS_ITEM` (1.8.11.5.7). |
-| `V-C.3.5/V-C.4.5` | — | partial | dry-run vs apply: неявно в meta. Целевой `eventKey: RECONCILE_TYPE5_MODE` (1.8.11.4.5). |
-| `V-C.4.1` | — | missing | «Всего строк изменений: N». Целевой `eventKey: RC_ROWS_SUMMARY` (1.8.11.3.2). |
+| `V-C.3.5/V-C.4.5` | `RECONCILE_TYPE5_MODE` | present | Явный MSG режима + `addRa` в `RECONCILE_TYPE5_START` (1.8.11.4.5) ✅. |
+| `V-C.4.1` | `RC_ROWS_SUMMARY` | present | `rcRowsConsidered` перед блоком RC (1.8.11.3.2) ✅. |
 | `V-C.4.2.a.1` | — | missing | RC created per row. Целевой `eventKey: RC_NEW_CREATED` (1.8.11.6.1). |
 | `V-C.4.2.a.2` | — | missing | RC sums per row. Целевой `eventKey: RC_NEW_SUMS` (1.8.11.6.2). |
 | `V-C.4.2.a.3` | `RECONCILE_TYPE5_DIAGNOSTICS` | partial | RC validation fail. Целевой `eventKey: RC_VALIDATION_FAIL` (1.8.11.6.3). |
@@ -983,8 +986,8 @@ version: "0.3.4"
 | `ROW_PARAGRAPH_PREVIEW_SKIPPED` | `FILE` | `WARN` | `sheetName`, `rowIndex`, `status=SKIPPED` | Row-level preview для пропущенной строки (нет данных). |
 | `ROW_PARAGRAPH_PREVIEW_SUMMARY` | `FILE` | `INFO` | `sampled`, `suppressed`, `total`, `previewMode=FULL` | Итог row-level staging preview (без лимита). |
 | `STAGING_ROW_INSERTED` | `FILE` | `INFO` | `sheetName`, `rowIndex`, `insertedId` | Строка добавлена в staging с ID (per-row, `af_source=true`). Целевой (1.8.11.7.1). |
-| `RECONCILE_TYPE5_MODE` | `FILE` | `INFO` | `execKey`, `addRa`, `mode` | Режим reconcile: `DIAGNOSTIC`/`APPLY`. Целевой (1.8.11.4.5). |
-| `RA_ROWS_SUMMARY` | `FILE` | `INFO` | `execKey`, `raRowsCount` | «Всего строк отчётов: N» перед блоком RA. Целевой (1.8.11.3.1). |
+| `RECONCILE_TYPE5_MODE` | `FILE` | `INFO` | `execKey`, `addRa`, `mode` | Режим reconcile: `DIAGNOSTIC`/`APPLY` (`AllAgentsReconcileService`, 1.8.11.4.5). |
+| `RA_ROWS_SUMMARY` | `FILE` | `INFO` | `execKey`, `raRowsCount` | «Всего строк отчётов: N» перед блоком RA (`AllAgentsReconcileService`, 1.8.11.3.1). |
 | `RA_NEW_CREATED` | `FILE` | `INFO` | `rowIndex`, `raNum`, `raKey`, `period`, `cstap` | Создан новый RA + ключ (per-row). Целевой (1.8.11.5.1). |
 | `RA_NEW_SUMS` | `FILE` | `INFO` | `rowIndex`, `raKey`, `ttl`, `work`, `equip`, `others`, `hasSums` | Добавлены суммы RA или «суммы отсутствуют» (per-row). Целевой (1.8.11.5.2). |
 | `RA_VALIDATION_FAIL` | `FILE` | `WARN` | `rowIndex`, `raNum`, `reason` | Отказ валидации RA: читаемая причина (per-row). Целевой (1.8.11.5.3). |
@@ -992,7 +995,7 @@ version: "0.3.4"
 | `RA_FIELD_UPDATED` | `FILE` | `INFO` | `rowIndex`, `raKey`, `field`, `newValue` | Обновлено поле RA (SeaGreen). Целевой (1.8.11.5.5). |
 | `RA_SUM_MISMATCH` | `FILE` | `WARN` | `rowIndex`, `raKey`, `ttlOld`, `ttlNew`, `workOld`, `workNew`, `equipOld`, `equipNew`, `othersOld`, `othersNew` | Суммовой блок RA: покомпонентный diff + пересоздание. Целевой (1.8.11.5.6). |
 | `RA_EXCESS_ITEM` | `FILE` | `WARN` | `rowIndex`, `raKey`, `raName` | Лишняя RA в домене (кандидат на удаление). Целевой (1.8.11.5.7). |
-| `RC_ROWS_SUMMARY` | `FILE` | `INFO` | `execKey`, `rcRowsCount` | «Всего строк изменений: N» перед блоком RC. Целевой (1.8.11.3.2). |
+| `RC_ROWS_SUMMARY` | `FILE` | `INFO` | `execKey`, `rcRowsCount` | «Всего строк изменений: N» перед блоком RC (`AllAgentsReconcileService`, 1.8.11.3.2). |
 | `RC_NEW_CREATED` | `FILE` | `INFO` | `rowIndex`, `raKey`, `rcKey`, `period`, `num` | Создано новое RC + ключ (per-row). Целевой (1.8.11.6.1). |
 | `RC_NEW_SUMS` | `FILE` | `INFO` | `rowIndex`, `rcKey`, `ttl`, `work`, `equip`, `others`, `hasSums` | Добавлены суммы RC или «суммы отсутствуют» (per-row). Целевой (1.8.11.6.2). |
 | `RC_VALIDATION_FAIL` | `FILE` | `WARN` | `rowIndex`, `raKey`, `reason` | Отказ валидации RC: читаемая причина (per-row). Целевой (1.8.11.6.3). |
