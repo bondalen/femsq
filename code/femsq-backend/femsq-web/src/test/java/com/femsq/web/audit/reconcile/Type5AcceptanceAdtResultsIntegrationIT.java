@@ -64,8 +64,10 @@ class Type5AcceptanceAdtResultsIntegrationIT {
                 exec(connection, "UPDATE ags.ra_a SET adt_AddRA = 0 WHERE adt_key = ?", adtKey);
                 connection.commit();
 
+                int baselineExecKey = readInt(connection,
+                        "SELECT ISNULL(MAX(exec_key), 0) FROM ags.ra_execution WHERE exec_adt_key = ?", adtKey);
                 executeAuditViaGraphql(adtKey);
-                waitForCompleted(connection, adtKey, Duration.ofSeconds(180));
+                waitForNewCompleted(connection, adtKey, baselineExecKey, Duration.ofSeconds(180));
 
                 String results = readString(connection,
                         "SELECT CAST(adt_results AS NVARCHAR(MAX)) FROM ags.ra_a WHERE adt_key = ?",
@@ -80,7 +82,7 @@ class Type5AcceptanceAdtResultsIntegrationIT {
                         "Всего строк изменений",
                         "Type5 match — RA:",
                         "Type5 apply — RA:",
-                        "dryRun=true");
+                        "сухойПрогон=true");
             } finally {
                 exec(connection, "UPDATE ags.ra_a SET adt_AddRA = ? WHERE adt_key = ?", prevAddRa, adtKey);
                 connection.commit();
@@ -107,8 +109,10 @@ class Type5AcceptanceAdtResultsIntegrationIT {
                 exec(connection, "UPDATE ags.ra_a SET adt_AddRA = 1 WHERE adt_key = ?", adtKey);
                 connection.commit();
 
+                int baselineExecKey = readInt(connection,
+                        "SELECT ISNULL(MAX(exec_key), 0) FROM ags.ra_execution WHERE exec_adt_key = ?", adtKey);
                 executeAuditViaGraphql(adtKey);
-                waitForCompleted(connection, adtKey, Duration.ofSeconds(180));
+                waitForNewCompleted(connection, adtKey, baselineExecKey, Duration.ofSeconds(180));
 
                 String results = readString(connection,
                         "SELECT CAST(adt_results AS NVARCHAR(MAX)) FROM ags.ra_a WHERE adt_key = ?",
@@ -119,7 +123,7 @@ class Type5AcceptanceAdtResultsIntegrationIT {
                         "addRa=true",
                         "Type5 match — RA:",
                         "Type5 apply — RA:",
-                        "dryRun=false");
+                        "сухойПрогон=false");
                 boolean rowLevelSignal = results.contains("Создана новая запись ags.ra")
                         || results.contains("Создана новая запись ags.ra_change")
                         || results.contains("RA суммы:")
@@ -171,25 +175,34 @@ class Type5AcceptanceAdtResultsIntegrationIT {
         }
     }
 
-    private static void waitForCompleted(Connection connection, int auditId, Duration timeout) throws Exception {
+    /**
+     * Waits for a NEW execution (exec_key &gt; baselineExecKey) to reach COMPLETED status.
+     * This avoids reading a stale COMPLETED record from a previous run.
+     */
+    private static void waitForNewCompleted(Connection connection, int auditId, int baselineExecKey,
+            Duration timeout) throws Exception {
         long deadline = System.currentTimeMillis() + timeout.toMillis();
         while (System.currentTimeMillis() < deadline) {
-            int latest = readInt(connection,
-                    "SELECT TOP 1 exec_key FROM ags.ra_execution WHERE exec_adt_key = ? ORDER BY exec_key DESC",
-                    auditId);
+            Thread.sleep(1500);
+            Integer newExecKey = readIntOrNull(connection,
+                    "SELECT TOP 1 exec_key FROM ags.ra_execution "
+                            + "WHERE exec_adt_key = ? AND exec_key > ? ORDER BY exec_key DESC",
+                    auditId, baselineExecKey);
+            if (newExecKey == null) {
+                continue;
+            }
             String status = readString(connection,
                     "SELECT TOP 1 exec_status FROM ags.ra_execution WHERE exec_key = ?",
-                    latest);
+                    newExecKey);
             if ("COMPLETED".equalsIgnoreCase(status) || "FAILED".equalsIgnoreCase(status)) {
                 org.junit.jupiter.api.Assertions.assertEquals(
                         "COMPLETED",
                         status,
-                        "execution failed for exec_key=" + latest);
+                        "execution failed for exec_key=" + newExecKey);
                 return;
             }
-            Thread.sleep(1500);
         }
-        throw new IllegalStateException("Timeout waiting for audit " + auditId + " completion");
+        throw new IllegalStateException("Timeout waiting for new audit execution after exec_key=" + baselineExecKey);
     }
 
     private static void exec(Connection connection, String sql, Object... params) throws Exception {
@@ -198,6 +211,17 @@ class Type5AcceptanceAdtResultsIntegrationIT {
                 ps.setObject(i + 1, params[i]);
             }
             ps.executeUpdate();
+        }
+    }
+
+    private static Integer readIntOrNull(Connection connection, String sql, Object... params) throws Exception {
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            for (int i = 0; i < params.length; i++) {
+                ps.setObject(i + 1, params[i]);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : null;
+            }
         }
     }
 
