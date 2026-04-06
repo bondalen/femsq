@@ -3,7 +3,7 @@ title: "Audit log: VBA → Java mapping (ход ревизии)"
 created: "2026-03-26"
 lastUpdated: "2026-04-06"
 status: "draft"
-version: "0.3.0"
+version: "0.3.1"
 ---
 
 ## Назначение
@@ -640,7 +640,7 @@ version: "0.3.0"
     - `J-C.5.C.1 [MSG][TARGET]` `RECONCILE_TYPE5_START`
       - **eventKey:** `RECONCILE_TYPE5_START`; **scope:** `FILE`
       - **Минимальные meta-поля:** `auditId`, `executionKey`, `fileType=5`, `addRa`, `messageType`, `colorHint`, `emphasis`
-      - **map/status/gap:** `map -> V-C.3/V-C.4`, `status -> missing`, `gap -> в коде нет отдельного start-msg reconcile ветки type5`
+      - **map/status/gap:** `map -> V-C.3/V-C.4`, `status -> present`, `gap -> реализовано в `AuditReconcileCoordinator.run()`: `beginSpan` с `codeForType(file, \"RECONCILE_START\", \"RECONCILE_TYPE5_START\")` при `fileType=5`; meta: `auditId`, `executionKey`, `fileType`, `addRa`; `messageType=START`, `colorHint=BLUE`, `emphasis=BOLD`. HTML — технический (`Reconcile start: type=...`); VBA-формулировки нет (см. 1.8.11.4.1 при необходимости выравнивания текста).`
     - `J-C.5.C.2 [MSG][TARGET]` `RECONCILE_TYPE5_MATCH_STATS`
       - **eventKey:** `RECONCILE_TYPE5_MATCH_STATS`; **scope:** `FILE`
       - **Минимальные meta-поля:** `executionKey`, `rowsEligible`, `rowsRejected`, `categoryNew`, `categoryChanged`, `categoryUnchanged`, `categoryAmbiguous`, `categoryInvalid`, `messageType`, `colorHint`, `emphasis`
@@ -656,7 +656,7 @@ version: "0.3.0"
     - `J-C.5.C.5 [MSG][TARGET]` `RECONCILE_TYPE5_DONE/RECONCILE_TYPE5_SKIPPED/RECONCILE_TYPE5_FAILED`
       - **eventKey:** `RECONCILE_TYPE5_DONE`, `RECONCILE_TYPE5_SKIPPED`, `RECONCILE_TYPE5_FAILED`; **scope:** `FILE`
       - **Минимальные meta-поля:** `executionKey`, `status`, `reason`, `durationSec`, `messageType`, `colorHint`, `emphasis`
-      - **map/status/gap:** `map -> V-C.3/V-C.4`, `status -> missing`, `gap -> требуется явная trio-модель завершения reconcile type5 в adt_results`
+      - **map/status/gap:** `map -> V-C.3/V-C.4`, `status -> present`, `gap -> trio реализована в `AuditReconcileCoordinator`: `appendResult` вызывает `endSpan` с `RECONCILE_TYPE5_DONE` или `RECONCILE_TYPE5_SKIPPED` (`status` в meta: `DONE`/`SKIPPED`, `affectedRows`, `durationHuman`); при `RuntimeException` из `service.reconcile` — `endSpan` с `RECONCILE_TYPE5_FAILED` (`status=FAILED`). HTML — технический (`Reconcile: type=..., applied=...`); VBA-формулировки нет.`
 
   - `J-C.5.3 [TERMINAL]` `### TERMINAL: TYPE5_ROW_LEVEL_PARAGRAPH_EQUIVALENT_PARTIAL`
     - Комментарий: `ROW_PARAGRAPH_PREVIEW`, `ROW_PARAGRAPH_PREVIEW_SKIPPED`, `ROW_PARAGRAPH_PREVIEW_SUMMARY` реализованы, но как `top-N + counters`; полного эквивалента VBA per-row (без ограничения, с полным форматом всех строк) пока нет.
@@ -685,6 +685,8 @@ version: "0.3.0"
 | `V-A.1.2.b.b.b.2.2/3/5/6` | `J-C.2/3/5/6` | partial | Рабочие типы поддерживаются, но разная детализация лога. |
 | `V-A.1.2.b.b.check.b2.0.a.1.5.1.b` | `J-C.5.B.2 SHEET_MISSING` | present | Лист «Отчёты обычные» не найден: Java эмитирует `SHEET_MISSING` из `DefaultAuditStagingService`. Семантически эквивалентно VBA-сообщению; timestamp/«в книге» — semantic расхождение. |
 | `V-C.1/V-C.2` | `J-C.5.A/J-C.5.B` | present | Process-level этапы type5 реализованы (`FILE_ALL_AGENTS_STAGE*`, `WORKBOOK_*`, `SHEET_*`, `ANCHOR_*`, `STAGING_*`). |
+| `V-C.3/V-C.4` (рамка reconcile) | `J-C.5.C.1` `RECONCILE_TYPE5_START` | present | Старт reconcile type=5: `AuditReconcileCoordinator.run` → `beginSpan` с `RECONCILE_TYPE5_START` (см. 1.8.11.1.3). |
+| `V-C.3/V-C.4` (завершение reconcile) | `J-C.5.C.5` `DONE/SKIPPED/FAILED` | present | Завершение: `appendResult` → `RECONCILE_TYPE5_DONE`/`SKIPPED`; catch → `RECONCILE_TYPE5_FAILED` (см. 1.8.11.1.3). |
 | `V-C.2.1.a` | `J-C.5.B.2 SHEET_FOUND` | partial | Лист найден: событие есть, но без координат диапазона (column/firstRow/lastRow/address). Целевое расширение: 1.8.11.2.1. |
 | `V-C.2.1.a.1.filter` | `J-C.5.B.4` | present | Фильтр строк по полю `Признак` из whitelist (`ОА`/`ОА изм`/`ОА прочие`) реализован в 1.8.10.5 ✅. Механизм отличается от VBA (`Find/FindNext`), семантический результат идентичен. |
 | `V-C.2.1.a.1.1.a.2.a.1` | — | missing | Per-row staging insert ID. Целевой `eventKey: STAGING_ROW_INSERTED` (1.8.11.7.1). |

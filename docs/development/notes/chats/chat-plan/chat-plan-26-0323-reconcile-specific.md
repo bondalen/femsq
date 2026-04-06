@@ -3,7 +3,7 @@
 **Дата создания:** 2026-03-23  
 **Последнее обновление:** 2026-04-06  
 **Проект:** FEMSQ  
-**Версия плана:** 0.9.16  
+**Версия плана:** 0.9.17  
 
 ---
 
@@ -338,7 +338,9 @@
 #### 1.8.11.1. Синхронизация mapping (только документация, без кода)
 - ✅ 1.8.11.1.1. Обновить статус `V-C.2.1.a.1.filter` в mapping: `partial` → `present`; закрыть `P3.1` в backlog
 - ✅ 1.8.11.1.2. Добавить аннотацию `map/status` для узла `V-A.1.2.b.b.check.b2.0.a.1.5.1.b` → `SHEET_MISSING` в дереве V-A и в таблице связей
-- [ ] 1.8.11.1.3. Проверить фактическое наличие `RECONCILE_TYPE5_START/DONE/SKIPPED/FAILED` в `AuditReconcileCoordinator`; актуализировать статусы `J-C.5.C.1` и `J-C.5.C.5` в mapping (план `1.8.10.3` ✅, но в mapping — `missing`)
+- ✅ 1.8.11.1.3. Проверить фактическое наличие `RECONCILE_TYPE5_START/DONE/SKIPPED/FAILED` в `AuditReconcileCoordinator`; актуализировать статусы `J-C.5.C.1` и `J-C.5.C.5` в mapping (план `1.8.10.3` ✅, но в mapping — `missing`)
+  - **Факт кода:** `AuditReconcileCoordinator.run()` — `beginSpan` с `codeForType(..., \"RECONCILE_TYPE5_START\")`; `appendResult` → `endSpan` с `RECONCILE_TYPE5_DONE` или `RECONCILE_TYPE5_SKIPPED`; в `catch` → `RECONCILE_TYPE5_FAILED`.
+  - **Mapping:** `J-C.5.C.1` / `J-C.5.C.5` → `status: present`, уточнены `gap` (класс `AuditReconcileCoordinator`, технический HTML vs VBA); добавлены строки в «Таблица связей узлов»; версия mapping **0.3.1**.
 - ✅ 1.8.11.1.4. Зафиксировать в mapping решения Р1/Р2 (full parity A): обновить `gap`-описания `V-C.3.*/V-C.4.*` на целевые
 - ✅ 1.8.11.1.5. Интегрировать данные реального прогона type=5 (06.04.2026) в `audit-log-vba-to-java-mapping.md`:
   добавлен раздел **Visual Reference** (SCR-003-A/B/C/D, SCR-002-A/B/C/D) с реальными текстами и цветами;
