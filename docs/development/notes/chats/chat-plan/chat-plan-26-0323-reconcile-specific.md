@@ -3,7 +3,7 @@
 **Дата создания:** 2026-03-23  
 **Последнее обновление:** 2026-04-06  
 **Проект:** FEMSQ  
-**Версия плана:** 0.9.27  
+**Версия плана:** 0.9.28  
 
 ---
 
@@ -374,11 +374,13 @@
   - **Факт кода:** `eventKey: RC_ROWS_SUMMARY`, `rcRowsCount` = `rcRowsConsidered` после `buildRcChangeReadModel` (dry-run и apply).
 
 #### 1.8.11.4. Reconcile framework events (start / mode / stats / done)
-- [ ] 1.8.11.4.1. Подтвердить/реализовать `RECONCILE_TYPE5_START` как явное событие в `adt_results`
+- ✅ 1.8.11.4.1. Подтвердить/реализовать `RECONCILE_TYPE5_START` как явное событие в `adt_results`
   (meta: `executionKey`, `addRa`, `fileType=5`)
   → `J-C.5.C.1`: `missing` → `present`
-- [ ] 1.8.11.4.2. Подтвердить/реализовать trio-model `RECONCILE_TYPE5_DONE/SKIPPED/FAILED`
+  - **Факт кода (подтверждение — 2026-04-06):** `AuditReconcileCoordinator.run()` строка 61: `String startCode = codeForType(file, "RECONCILE_START", "RECONCILE_TYPE5_START")` → `context.beginSpan(... startCode ...)` с meta `executionKey`, `addRa`, `fileType`; ранее зафиксировано в 1.8.11.1.3.
+- ✅ 1.8.11.4.2. Подтвердить/реализовать trio-model `RECONCILE_TYPE5_DONE/SKIPPED/FAILED`
   → `J-C.5.C.5`: `missing` → `present`
+  - **Факт кода (подтверждение — 2026-04-06):** строки 123–124: `RECONCILE_TYPE5_DONE` (applied) / `RECONCILE_TYPE5_SKIPPED` (dry-run); строка 93: `RECONCILE_TYPE5_FAILED` в `catch(RuntimeException)`; ранее зафиксировано в 1.8.11.1.3.
 - ✅ 1.8.11.4.3. `RECONCILE_TYPE5_MATCH_STATS`: вынести из diagnostics-строки в структурированный MSG
   (meta: `raNew/raChanged/raUnchanged/raInvalid/raAmbiguous`, `rcNew/rcChanged/rcUnchanged/rcInvalid/rcAmbiguous`)
   → `J-C.5.C.2`: `partial` → `present`
