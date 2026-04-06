@@ -130,7 +130,8 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                     lookupResult.byRowKey(),
                     lookupCaches,
                     raByPeriodAndNum,
-                    domainRcByKey
+                    domainRcByKey,
+                    context
             );
             rcReadStats = rcReadModelResult.stats();
             appendRcRowsSummaryAuditLog(context, rcReadStats.rcRowsConsidered());
@@ -143,6 +144,7 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                     raByPeriodAndNum,
                     domainRcByKey
             );
+            appendRcExcessItemsAudit(context, rcDeletePlan);
             DryRunStats dryRunStats = estimateDryRunStats(connection, readModelResult);
             inserted = dryRunStats.inserted();
             updated = dryRunStats.updated();
@@ -184,7 +186,8 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                     lookupResult.byRowKey(),
                     lookupCaches,
                     raByPeriodAndNum,
-                    domainRcByKey
+                    domainRcByKey,
+                    context
             );
             rcReadStats = rcReadModelResult.stats();
             appendRcRowsSummaryAuditLog(context, rcReadStats.rcRowsConsidered());
@@ -197,15 +200,16 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                     raByPeriodAndNum,
                     domainRcByKey
             );
+            appendRcExcessItemsAudit(context, rcDeletePlan);
 
             if (!rcStepAlreadyDone) {
                 // 1.3.2: создание записей ветки RC только для NEW-строк (когда rac_key отсутствует).
-                RcChangeApplyStats rcApplyStats = insertNewRcChanges(connection, rcReadModelResult.newRows());
+                RcChangeApplyStats rcApplyStats = insertNewRcChanges(connection, context, rcReadModelResult.newRows());
                 rcChangesInserted = rcApplyStats.rcChangesInserted();
                 rcSumsInserted = rcApplyStats.rcSumsInserted();
 
                 // 1.3.3: обновление существующих записей ветки RC для CHANGED-строк.
-                RcChangeUpdateStats rcUpdateStats = updateChangedRcChanges(connection, rcReadModelResult.changedRows());
+                RcChangeUpdateStats rcUpdateStats = updateChangedRcChanges(connection, context, rcReadModelResult.changedRows());
                 rcChangesUpdated = rcUpdateStats.rcChangesUpdated();
                 rcSumsInsertedChanged = rcUpdateStats.rcSumsInserted();
                 rcSumsUnchangedSkipped = rcUpdateStats.rcSumsUnchangedSkipped();
@@ -1161,7 +1165,8 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             Map<Long, ResolvedLookupKeys> byRowKey,
             LookupCaches lookupCaches,
             Map<PeriodRaNumKey, List<Long>> raByPeriodAndNum,
-            Map<RcChangeMatchKey, List<DomainRcChangeRow>> domainRcByKey
+            Map<RcChangeMatchKey, List<DomainRcChangeRow>> domainRcByKey,
+            ReconcileContext context
     ) {
         int considered = 0;
         int parseInvalid = 0;
@@ -1185,38 +1190,58 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             Optional<RcStagingLineParser.ParsedRcLine> parsedOpt = RcStagingLineParser.parse(row.raNum());
             if (parsedOpt.isEmpty()) {
                 parseInvalid++;
+                appendRcValidationFail(
+                        context, row, "RC_PARSE_INVALID", "Не удалось разобрать строку изменения в rain_ra_num.");
                 continue;
             }
             RcStagingLineParser.ParsedRcLine parsed = parsedOpt.get();
             Integer rcPeriod = resolvePeriodKey(row.raDate(), periodByDate);
             if (rcPeriod == null) {
                 missingRcPeriod++;
+                appendRcValidationFail(
+                        context, row, "RC_MISSING_RC_PERIOD", "Не найден ключ периода по дате строки изменения.");
                 continue;
             }
             Integer reportPeriodKey = resolvePeriodKey(parsed.reportDate(), periodByDate);
             if (reportPeriodKey == null) {
                 missingReportPeriod++;
+                appendRcValidationFail(
+                        context, row, "RC_MISSING_REPORT_PERIOD", "Не найден ключ периода по дате отчёта из строки изменения.");
                 continue;
             }
             String reportNum = trimToNull(parsed.reportNumber());
             if (reportNum == null) {
                 missingBaseRa++;
+                appendRcValidationFail(
+                        context, row, "RC_MISSING_REPORT_NUM", "В строке изменения отсутствует номер базового отчёта.");
                 continue;
             }
             PeriodRaNumKey raLookup = new PeriodRaNumKey(reportPeriodKey, reportNum);
             List<Long> raKeys = raByPeriodAndNum.getOrDefault(raLookup, List.of());
             if (raKeys.isEmpty()) {
                 missingBaseRa++;
+                appendRcValidationFail(
+                        context,
+                        row,
+                        "RC_MISSING_BASE_RA",
+                        "В домене нет RA для пары (период отчёта, ra_num) из строки изменения.");
                 continue;
             }
             if (raKeys.size() > 1) {
                 ambiguousBaseRa++;
+                appendRcValidationFail(
+                        context,
+                        row,
+                        "RC_AMBIGUOUS_BASE_RA",
+                        "Найдено " + raKeys.size() + " записей ags.ra по ключу период+номер отчёта.");
                 continue;
             }
             long raKey = raKeys.get(0);
             ResolvedLookupKeys keys = byRowKey.get(row.key());
             if (keys == null || keys.ogKey() == null) {
                 missingLookupForCompare++;
+                appendRcValidationFail(
+                        context, row, "RC_MISSING_LOOKUP", "Не разрешён отправитель (ra_org_sender / og) для строки изменения.");
                 continue;
             }
             String changeNumKey = normalizeRcChangeNumKey(String.valueOf(parsed.changeNumber()));
@@ -1225,6 +1250,7 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             if (racList.isEmpty()) {
                 categoryNew++;
                 newRows.add(new RcNewApplyRow(
+                        row.key(),
                         raKey,
                         rcPeriod,
                         changeNumKey,
@@ -1247,6 +1273,11 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             }
             if (racList.size() > 1) {
                 ambiguousRac++;
+                appendRcValidationFail(
+                        context,
+                        row,
+                        "RC_AMBIGUOUS_RAC",
+                        "Найдено " + racList.size() + " записей ags.ra_change по ключу (период изменения, ra_key, № изм.).");
                 continue;
             }
             DomainRcChangeRow domain = racList.get(0);
@@ -1255,7 +1286,9 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             } else {
                 categoryChanged++;
                 changedRows.add(new RcChangedApplyRow(
+                        row.key(),
                         domain.racKey(),
+                        domain,
                         raKey,
                         rcPeriod,
                         changeNumKey,
@@ -1299,7 +1332,8 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
      * {@code ags.ra_change_summ}.
      * </p>
      */
-    private RcChangeApplyStats insertNewRcChanges(Connection connection, List<RcNewApplyRow> newRows)
+    private RcChangeApplyStats insertNewRcChanges(
+            Connection connection, ReconcileContext context, List<RcNewApplyRow> newRows)
             throws SQLException {
         if (newRows == null || newRows.isEmpty()) {
             return new RcChangeApplyStats(0, 0);
@@ -1374,9 +1408,11 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
 
                 try (ResultSet rs = insertRc.executeQuery()) {
                     Long racKey;
+                    boolean insertedNewRc;
                     if (rs.next()) {
                         racKey = rs.getLong(1);
                         rcChangesInserted++;
+                        insertedNewRc = true;
                     } else {
                         // Already exists (idempotency). Resolve rac_key and still apply sum evolution (1.3.4).
                         selectRacKey.setInt(1, row.raPeriod());
@@ -1385,17 +1421,21 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                         try (ResultSet rsk = selectRacKey.executeQuery()) {
                             racKey = rsk.next() ? rsk.getLong(1) : null;
                         }
+                        insertedNewRc = false;
                     }
                     if (racKey == null) {
                         continue;
                     }
 
-                    boolean inserted = evolveRcSums(connection, racKey, row.total(), row.work(), row.equip(), row.others(), now);
-                    if (inserted) {
+                    appendRcNewCreatedAudit(context, row, racKey, insertedNewRc);
+                    RaSummUpsertOutcome sumOutcome = evolveRcSumsWithOutcome(
+                            connection, racKey, row.total(), row.work(), row.equip(), row.others(), now);
+                    if (sumOutcome.versionInserted()) {
                         rcSumsInserted++;
                     } else {
                         rcSumsSkipped++;
                     }
+                    appendRcNewSumsAudit(context, row.stagingRowKey(), racKey, row, sumOutcome);
                 }
             }
         }
@@ -1406,7 +1446,8 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
     /**
      * 1.3.3 Обновление существующих строк `ags.ra_change` + эволюция сумм в `ags.ra_change_summ` только при отличии от latest.
      */
-    private RcChangeUpdateStats updateChangedRcChanges(Connection connection, List<RcChangedApplyRow> changedRows)
+    private RcChangeUpdateStats updateChangedRcChanges(
+            Connection connection, ReconcileContext context, List<RcChangedApplyRow> changedRows)
             throws SQLException {
         if (changedRows == null || changedRows.isEmpty()) {
             return new RcChangeUpdateStats(0, 0, 0);
@@ -1448,11 +1489,17 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                 updateStmt.setString(idx++, row.sent());
                 updateStmt.setObject(idx++, row.sentDate());
                 updateStmt.setLong(idx++, row.racKey());
-                updated += updateStmt.executeUpdate();
+                int n = updateStmt.executeUpdate();
+                updated += n;
+                if (n > 0) {
+                    appendRcFieldMismatchAndUpdatedAudit(context, row.domainBefore(), row);
+                }
 
-                boolean inserted = evolveRcSums(connection, row.racKey(), row.total(), row.work(), row.equip(), row.others(), now);
-                if (inserted) {
+                RaSummUpsertOutcome sumOutcome = evolveRcSumsWithOutcome(
+                        connection, row.racKey(), row.total(), row.work(), row.equip(), row.others(), now);
+                if (sumOutcome.versionInserted()) {
                     sumsInserted++;
+                    appendRcSumMismatchAudit(context, row, sumOutcome);
                 } else {
                     sumsUnchangedSkipped++;
                 }
@@ -1466,7 +1513,7 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
      * 1.3.4 Эволюция сумм RC: вставить новую версию в {@code ags.ra_change_summ} только если отличается от latest.
      * Latest читается через {@code ags.ra_chSmLt} (это VIEW).
      */
-    private boolean evolveRcSums(
+    private RaSummUpsertOutcome evolveRcSumsWithOutcome(
             Connection connection,
             long racKey,
             BigDecimal total,
@@ -1508,7 +1555,7 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                 && sameAmount(dbWork, work)
                 && sameAmount(dbEquip, equip)
                 && sameAmount(dbOthers, others)) {
-            return false;
+            return new RaSummUpsertOutcome(false, true, dbTotal, dbWork, dbEquip, dbOthers);
         }
         try (PreparedStatement insertSum = connection.prepareStatement(insertSumSql)) {
             insertSum.setLong(1, racKey);
@@ -1518,7 +1565,7 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             setNullableMoney(insertSum, 5, others);
             insertSum.setTimestamp(6, now);
             insertSum.executeUpdate();
-            return true;
+            return new RaSummUpsertOutcome(true, hasLatest, dbTotal, dbWork, dbEquip, dbOthers);
         }
     }
 
@@ -1620,7 +1667,7 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             rcPeriodsInSource.add(rcPeriod);
         }
 
-        List<Long> racKeysToDelete = new ArrayList<>();
+        List<RcExcessPlanned> excessItems = new ArrayList<>();
         int skippedAmbiguous = 0;
         for (Map.Entry<RcChangeMatchKey, List<DomainRcChangeRow>> entry : domainRcByKey.entrySet()) {
             RcChangeMatchKey key = entry.getKey();
@@ -1635,10 +1682,11 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                 skippedAmbiguous++;
                 continue;
             }
-            racKeysToDelete.add(candidates.get(0).racKey());
+            DomainRcChangeRow ex = candidates.get(0);
+            excessItems.add(new RcExcessPlanned(ex.racKey(), key.rcPeriod(), key.raKey(), key.changeNum()));
         }
 
-        return new RcDeletePlan(racKeysToDelete, skippedAmbiguous);
+        return new RcDeletePlan(excessItems, skippedAmbiguous);
     }
 
     private int applyRcDeletes(Connection connection, List<Long> racKeys) throws SQLException {
@@ -1775,9 +1823,20 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         }
     }
 
-    private record RcDeletePlan(List<Long> racKeysToDelete, int skippedAmbiguous) {
+    /** Кандидаты на удаление RC для row-level аудита {@code RC_EXCESS_ITEM}. */
+    private record RcExcessPlanned(long racKey, int rcPeriod, long raFk, String changeNum) {
+    }
+
+    private record RcDeletePlan(List<RcExcessPlanned> excessItems, int skippedAmbiguous) {
+        List<Long> racKeysToDelete() {
+            if (excessItems == null || excessItems.isEmpty()) {
+                return List.of();
+            }
+            return excessItems.stream().map(RcExcessPlanned::racKey).toList();
+        }
+
         int planned() {
-            return racKeysToDelete == null ? 0 : racKeysToDelete.size();
+            return excessItems == null ? 0 : excessItems.size();
         }
     }
 
@@ -2245,6 +2304,270 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         }
     }
 
+    /**
+     * Row-level события аудита для ветки RC (1.8.11.6.1–6.7). При {@code audit == null} — без записей.
+     */
+    private void appendRcValidationFail(ReconcileContext context, StagingRaRow row, String reasonCode, String detailText) {
+        AuditExecutionContext audit = context.auditExecutionContext();
+        if (audit == null) {
+            return;
+        }
+        String safeDetail = escapeHtml(detailText);
+        String html = "<P>RC (ОА изм): отказ валидации (staging key=<b>" + row.key() + "</b>, rain_ra_num=<b>"
+                + formatAuditString(trimToNull(row.raNum())) + "</b>): <b>" + escapeHtml(reasonCode) + "</b>. "
+                + safeDetail + "</P>";
+        Map<String, String> meta = new HashMap<>();
+        meta.put("auditId", String.valueOf(context.auditId()));
+        meta.put("execKey", String.valueOf(context.executionKey()));
+        meta.put("fileType", String.valueOf(context.fileType()));
+        meta.put("rowIndex", String.valueOf(row.key()));
+        meta.put("raNum", trimToNull(row.raNum()) == null ? "" : trimToNull(row.raNum()));
+        meta.put("reason", reasonCode);
+        meta.put("detail", detailText);
+        audit.append(
+                AuditLogLevel.WARNING,
+                AuditLogScope.FILE,
+                "RC_VALIDATION_FAIL",
+                html,
+                withPresentationMeta(meta, "WARNING", "CRIMSON", "NORMAL")
+        );
+    }
+
+    private void appendRcNewCreatedAudit(ReconcileContext context, RcNewApplyRow row, long racKey, boolean insertedNewRc) {
+        AuditExecutionContext audit = context.auditExecutionContext();
+        if (audit == null) {
+            return;
+        }
+        String mode = insertedNewRc ? "Создана новая запись ags.ra_change" : "Запись ags.ra_change уже существовала (идемпотентность)";
+        String html = "<P>" + mode + ": <b>rac_key=" + racKey + "</b>, staging key=" + row.stagingRowKey()
+                + ", ra_key=" + row.raFk() + ", период изменения=" + row.raPeriod() + ", № изм.=<b>"
+                + formatAuditString(trimToNull(row.changeNum())) + "</b>.</P>";
+        Map<String, String> meta = new HashMap<>();
+        meta.put("auditId", String.valueOf(context.auditId()));
+        meta.put("execKey", String.valueOf(context.executionKey()));
+        meta.put("fileType", String.valueOf(context.fileType()));
+        meta.put("rowIndex", String.valueOf(row.stagingRowKey()));
+        meta.put("racKey", String.valueOf(racKey));
+        meta.put("raKey", String.valueOf(row.raFk()));
+        meta.put("period", String.valueOf(row.raPeriod()));
+        meta.put("num", row.changeNum() == null ? "" : row.changeNum());
+        meta.put("insertedNewRc", String.valueOf(insertedNewRc));
+        audit.append(
+                AuditLogLevel.INFO,
+                AuditLogScope.FILE,
+                "RC_NEW_CREATED",
+                html,
+                withPresentationMeta(meta, "INFO", "BLUE", "NORMAL")
+        );
+    }
+
+    private void appendRcNewSumsAudit(
+            ReconcileContext context,
+            long stagingRowKey,
+            long racKey,
+            RcNewApplyRow row,
+            RaSummUpsertOutcome outcome
+    ) {
+        AuditExecutionContext audit = context.auditExecutionContext();
+        if (audit == null) {
+            return;
+        }
+        String sumsLine = "итого=" + formatAuditMoney(row.total()) + ", работы=" + formatAuditMoney(row.work())
+                + ", оборуд.=" + formatAuditMoney(row.equip()) + ", прочие=" + formatAuditMoney(row.others());
+        String html;
+        if (outcome.versionInserted()) {
+            html = "<P>RC суммы: добавлена новая версия в ags.ra_change_summ для <b>rac_key=" + racKey
+                    + "</b> (staging key=" + stagingRowKey + "): " + sumsLine + ".</P>";
+        } else {
+            html = "<P>RC суммы: совпадают с последней версией для <b>rac_key=" + racKey + "</b> (staging key="
+                    + stagingRowKey + "), вставка пропущена: " + sumsLine + ".</P>";
+        }
+        Map<String, String> meta = new HashMap<>();
+        meta.put("auditId", String.valueOf(context.auditId()));
+        meta.put("execKey", String.valueOf(context.executionKey()));
+        meta.put("fileType", String.valueOf(context.fileType()));
+        meta.put("rowIndex", String.valueOf(stagingRowKey));
+        meta.put("racKey", String.valueOf(racKey));
+        meta.put("raKey", String.valueOf(row.raFk()));
+        meta.put("ttl", formatAuditMoney(row.total()));
+        meta.put("work", formatAuditMoney(row.work()));
+        meta.put("equip", formatAuditMoney(row.equip()));
+        meta.put("others", formatAuditMoney(row.others()));
+        meta.put("versionInserted", String.valueOf(outcome.versionInserted()));
+        audit.append(
+                AuditLogLevel.INFO,
+                AuditLogScope.FILE,
+                "RC_NEW_SUMS",
+                html,
+                withPresentationMeta(meta, "INFO", "BLUE", "NORMAL")
+        );
+    }
+
+    private void appendRcFieldMismatchAndUpdatedAudit(ReconcileContext context, DomainRcChangeRow d, RcChangedApplyRow row) {
+        AuditExecutionContext audit = context.auditExecutionContext();
+        if (audit == null) {
+            return;
+        }
+        String html = buildRcFieldMismatchUpdatedParagraphHtml(row.racKey(), row.stagingRowKey(), d, row);
+        if (html.isEmpty()) {
+            return;
+        }
+        Map<String, String> base = new HashMap<>();
+        base.put("auditId", String.valueOf(context.auditId()));
+        base.put("execKey", String.valueOf(context.executionKey()));
+        base.put("fileType", String.valueOf(context.fileType()));
+        base.put("rowIndex", String.valueOf(row.stagingRowKey()));
+        base.put("racKey", String.valueOf(row.racKey()));
+        base.put("raKey", String.valueOf(row.raFk()));
+        base.put("fieldsTouched", listRcFieldNamesChanged(d, row));
+        base.put("pairedEventKey", "RC_FIELD_UPDATED");
+        audit.append(
+                AuditLogLevel.WARNING,
+                AuditLogScope.FILE,
+                "RC_FIELD_MISMATCH",
+                html,
+                withPresentationMeta(new HashMap<>(base), "WARNING", "CRIMSON", "NORMAL")
+        );
+        Map<String, String> updatedMeta = new HashMap<>(base);
+        updatedMeta.put("pairedEventKey", "RC_FIELD_MISMATCH");
+        updatedMeta.put("detailInEvent", "RC_FIELD_MISMATCH");
+        audit.append(
+                AuditLogLevel.INFO,
+                AuditLogScope.FILE,
+                "RC_FIELD_UPDATED",
+                "",
+                withPresentationMeta(updatedMeta, "INFO", "SEA_GREEN", "NORMAL")
+        );
+    }
+
+    private static String listRcFieldNamesChanged(DomainRcChangeRow d, RcChangedApplyRow s) {
+        List<String> names = new ArrayList<>();
+        if (!Objects.equals(d.rcDate(), s.rcDate())) {
+            names.add("rac_rc_date");
+        }
+        if (d.raOrgSender() != s.raOrgSender()) {
+            names.add("ra_org_sender");
+        }
+        if (!Objects.equals(d.arrived(), s.arrived())) {
+            names.add("ra_arrived");
+        }
+        if (!Objects.equals(d.arrivedDate(), s.arrivedDate())) {
+            names.add("ra_arrived_date");
+        }
+        if (!Objects.equals(d.arrivedDateFact(), s.arrivedDateFact())) {
+            names.add("ra_arrived_dateFact");
+        }
+        if (!Objects.equals(d.returned(), s.returned())) {
+            names.add("ra_returned");
+        }
+        if (!Objects.equals(d.returnedDate(), s.returnedDate())) {
+            names.add("ra_returned_date");
+        }
+        if (!Objects.equals(d.returnedReason(), s.returnedReason())) {
+            names.add("ra_returnedReason");
+        }
+        if (!Objects.equals(d.sent(), s.sent())) {
+            names.add("ra_sent");
+        }
+        if (!Objects.equals(d.sentDate(), s.sentDate())) {
+            names.add("ra_sent_date");
+        }
+        return String.join(",", names);
+    }
+
+    private static String buildRcFieldMismatchUpdatedParagraphHtml(
+            long racKey,
+            long stagingKey,
+            DomainRcChangeRow d,
+            RcChangedApplyRow s
+    ) {
+        List<String> segments = new ArrayList<>();
+        addRaFieldTripleIfDiff(segments, "rac_rc_date", formatAuditDate(d.rcDate()), formatAuditDate(s.rcDate()));
+        addRaFieldTripleIfDiff(
+                segments, "ra_org_sender", String.valueOf(d.raOrgSender()), String.valueOf(s.raOrgSender()));
+        addRaFieldTripleIfDiff(segments, "ra_arrived", d.arrived(), s.arrived());
+        addRaFieldTripleIfDiff(segments, "ra_arrived_date", formatAuditDate(d.arrivedDate()), formatAuditDate(s.arrivedDate()));
+        addRaFieldTripleIfDiff(
+                segments, "ra_arrived_dateFact", formatAuditDate(d.arrivedDateFact()), formatAuditDate(s.arrivedDateFact()));
+        addRaFieldTripleIfDiff(segments, "ra_returned", d.returned(), s.returned());
+        addRaFieldTripleIfDiff(segments, "ra_returned_date", formatAuditDate(d.returnedDate()), formatAuditDate(s.returnedDate()));
+        addRaFieldTripleIfDiff(segments, "ra_returnedReason", d.returnedReason(), s.returnedReason());
+        addRaFieldTripleIfDiff(segments, "ra_sent", d.sent(), s.sent());
+        addRaFieldTripleIfDiff(segments, "ra_sent_date", formatAuditDate(d.sentDate()), formatAuditDate(s.sentDate()));
+        if (segments.isEmpty()) {
+            return "";
+        }
+        return "<P><b>rac_key=" + racKey + "</b> (staging key=" + stagingKey + ", ra_key=" + s.raFk() + "): "
+                + String.join(" ", segments) + "</P>";
+    }
+
+    private void appendRcSumMismatchAudit(ReconcileContext context, RcChangedApplyRow row, RaSummUpsertOutcome outcome) {
+        AuditExecutionContext audit = context.auditExecutionContext();
+        if (audit == null) {
+            return;
+        }
+        String html = "<P><b>rac_key=" + row.racKey() + "</b> (staging key=" + row.stagingRowKey() + ", ra_key="
+                + row.raFk() + "): расхождение сумм RC — добавлена новая версия в ags.ra_change_summ. "
+                + buildSumComponentDiffHtml("итого", outcome.oldTotal(), row.total())
+                + " " + buildSumComponentDiffHtml("работы", outcome.oldWork(), row.work())
+                + " " + buildSumComponentDiffHtml("оборуд.", outcome.oldEquip(), row.equip())
+                + " " + buildSumComponentDiffHtml("прочие", outcome.oldOthers(), row.others())
+                + "</P>";
+        Map<String, String> meta = new HashMap<>();
+        meta.put("auditId", String.valueOf(context.auditId()));
+        meta.put("execKey", String.valueOf(context.executionKey()));
+        meta.put("fileType", String.valueOf(context.fileType()));
+        meta.put("rowIndex", String.valueOf(row.stagingRowKey()));
+        meta.put("racKey", String.valueOf(row.racKey()));
+        meta.put("raKey", String.valueOf(row.raFk()));
+        meta.put("ttlOld", formatAuditMoney(outcome.oldTotal()));
+        meta.put("ttlNew", formatAuditMoney(row.total()));
+        meta.put("workOld", formatAuditMoney(outcome.oldWork()));
+        meta.put("workNew", formatAuditMoney(row.work()));
+        meta.put("equipOld", formatAuditMoney(outcome.oldEquip()));
+        meta.put("equipNew", formatAuditMoney(row.equip()));
+        meta.put("othersOld", formatAuditMoney(outcome.oldOthers()));
+        meta.put("othersNew", formatAuditMoney(row.others()));
+        audit.append(
+                AuditLogLevel.WARNING,
+                AuditLogScope.FILE,
+                "RC_SUM_MISMATCH",
+                html,
+                withPresentationMeta(meta, "WARNING", "CRIMSON", "NORMAL")
+        );
+    }
+
+    private void appendRcExcessItemsAudit(ReconcileContext context, RcDeletePlan plan) {
+        AuditExecutionContext audit = context.auditExecutionContext();
+        if (audit == null || plan.excessItems() == null || plan.excessItems().isEmpty()) {
+            return;
+        }
+        for (RcExcessPlanned item : plan.excessItems()) {
+            String rcName = "Изм. № " + formatAuditString(item.changeNum()) + ", ra_key=" + item.raFk()
+                    + ", период " + item.rcPeriod();
+            String html = "<P>Лишнее изменение в домене (кандидат на удаление): <b>" + rcName + "</b>, <b>rac_key="
+                    + item.racKey() + "</b>.</P>";
+            Map<String, String> meta = new HashMap<>();
+            meta.put("auditId", String.valueOf(context.auditId()));
+            meta.put("execKey", String.valueOf(context.executionKey()));
+            meta.put("fileType", String.valueOf(context.fileType()));
+            meta.put("rowIndex", "");
+            meta.put("racKey", String.valueOf(item.racKey()));
+            meta.put("raKey", String.valueOf(item.raFk()));
+            meta.put("rcPeriod", String.valueOf(item.rcPeriod()));
+            meta.put("changeNum", item.changeNum() == null ? "" : item.changeNum());
+            meta.put("rcName", "Изм. № " + (item.changeNum() == null ? "" : item.changeNum()) + ", ra_key="
+                    + item.raFk() + ", период " + item.rcPeriod());
+            audit.append(
+                    AuditLogLevel.WARNING,
+                    AuditLogScope.FILE,
+                    "RC_EXCESS_ITEM",
+                    html,
+                    withPresentationMeta(meta, "WARNING", "CRIMSON", "NORMAL")
+            );
+        }
+    }
+
     private static Map<String, String> withPresentationMeta(
             Map<String, String> meta,
             String messageType,
@@ -2600,6 +2923,7 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
 
     /** Модель строки RC, которая относится к категории NEW и будет создана в {@code ags.ra_change}. */
     private record RcNewApplyRow(
+            long stagingRowKey,
             long raFk,
             int raPeriod,
             String changeNum,
@@ -2622,7 +2946,9 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
 
     /** Модель строки RC, которая относится к категории CHANGED и будет обновлена в {@code ags.ra_change}. */
     private record RcChangedApplyRow(
+            long stagingRowKey,
             long racKey,
+            DomainRcChangeRow domainBefore,
             long raFk,
             int raPeriod,
             String changeNum,

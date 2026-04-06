@@ -3,7 +3,7 @@
 **Дата создания:** 2026-03-23  
 **Последнее обновление:** 2026-04-06  
 **Проект:** FEMSQ  
-**Версия плана:** 0.9.25  
+**Версия плана:** 0.9.26  
 
 ---
 
@@ -412,28 +412,34 @@
   - **Факт кода:** после `UPDATE` в `updateChangedRaRows`: одна `<P>` с тройками Crimson/Peru/SeaGreen на поле; второе событие `RA_FIELD_UPDATED` — для учёта `eventKey` 5.5 с **пустым** `messageHtml`, текст в паре `RA_FIELD_MISMATCH`, meta `detailInEvent` / `pairedEventKey`.
 - ✅ 1.8.11.5.6. **CHANGED RA sum mismatch per row** `V-C.3.3.a.3`: покомпонентный diff `ttl/work/equip/others` + пересоздание/добавление суммы
   (`eventKey: RA_SUM_MISMATCH`)
-  - **Факт кода:** `evolveRaSums` для `ChangedRaRow` при фактической вставке новой версии `ra_summ` → `appendRaSumMismatchAudit`.
+  - **Факт кода:** `evolveRaSumsWithOutcome` для `ChangedRaRow` при фактической вставке новой версии `ra_summ` → `appendRaSumMismatchAudit`.
 - ✅ 1.8.11.5.7. **Excess RA list** `V-C.3.4`: построчный список кандидатов на удаление (`ra_key`, `ra_name`)
   (`eventKey: RA_EXCESS_ITEM`)
   - **Факт кода:** после `planRaDeletes` → `appendRaExcessItemsAudit` (dry и apply); план несёт `RaExcessPlanned(raKey, period, raNum)`.
 
 #### 1.8.11.6. Row-level события RC (V-C.4.2.a.* / V-C.4.3.a.* / V-C.4.4) — полная аналогия с VBA
-- [ ] 1.8.11.6.1. **NEW RC per row** `V-C.4.2.a.1`: MSG «создано изменение, ключ=N, ОА=..., период=..., №=...»
+- ✅ 1.8.11.6.1. **NEW RC per row** `V-C.4.2.a.1`: MSG «создано изменение, ключ=N, ОА=..., период=..., №=...»
   (`eventKey: RC_NEW_CREATED`)
-- [ ] 1.8.11.6.2. **NEW RC sums per row** `V-C.4.2.a.2`: MSG «суммы: total=... work=... equip=... others=...» либо «суммы отсутствуют»
+  - **Факт кода:** `insertNewRcChanges` → `appendRcNewCreatedAudit` (apply, не dry); meta `insertedNewRc`.
+- ✅ 1.8.11.6.2. **NEW RC sums per row** `V-C.4.2.a.2`: MSG «суммы: total=... work=... equip=... others=...» либо «суммы отсутствуют»
   (`eventKey: RC_NEW_SUMS`)
-- [ ] 1.8.11.6.3. **NEW RC validation fail per row** `V-C.4.2.a.3`: читаемая причина на строку («нет ra_key», «нет периода», «нет №», «нет отправителя», «ошибка создания RC/суммы»)
+  - **Факт кода:** после `evolveRcSumsWithOutcome` для NEW → `appendRcNewSumsAudit` (`versionInserted` в meta).
+- ✅ 1.8.11.6.3. **NEW RC validation fail per row** `V-C.4.2.a.3`: читаемая причина на строку («нет ra_key», «нет периода», «нет №», «нет отправителя», «ошибка создания RC/суммы»)
   (`eventKey: RC_VALIDATION_FAIL`)
-- [ ] 1.8.11.6.4. **CHANGED RC field mismatch per row** `V-C.4.3.a.1`: MSG «поле X: старое=A, ожидается=B»
+  - **Факт кода:** `buildRcChangeReadModel` → `appendRcValidationFail` (parse, периоды, base RA, lookup, ambiguous rac).
+- ✅ 1.8.11.6.4. **CHANGED RC field mismatch per row** `V-C.4.3.a.1`: MSG «поле X: старое=A, ожидается=B»
   (`eventKey: RC_FIELD_MISMATCH`)
-- [ ] 1.8.11.6.5. **CHANGED RC after apply per row** `V-C.4.3.a.2`: MSG «обновлено: X=B»
+- ✅ 1.8.11.6.5. **CHANGED RC after apply per row** `V-C.4.3.a.2`: MSG «обновлено: X=B»
   (`eventKey: RC_FIELD_UPDATED`)
   > ⚠️ **Архитектурное ограничение (SCR-002-B, аналогия с RA):** `RC_FIELD_MISMATCH` + `RC_FIELD_UPDATED` —
   > inline-пары в одной `<P>` для всех полей одной RC-записи; новая `<P>` — только на следующую запись.
-- [ ] 1.8.11.6.6. **CHANGED RC sum mismatch per row** `V-C.4.3.a.3`: покомпонентный diff + пересоздание суммы RC
+  - **Факт кода:** после `UPDATE` в `updateChangedRcChanges`: одна `<P>` в `RC_FIELD_MISMATCH`; `RC_FIELD_UPDATED` с пустым HTML и meta `detailInEvent` / `pairedEventKey` (как RA 5.5).
+- ✅ 1.8.11.6.6. **CHANGED RC sum mismatch per row** `V-C.4.3.a.3`: покомпонентный diff + пересоздание суммы RC
   (`eventKey: RC_SUM_MISMATCH`)
-- [ ] 1.8.11.6.7. **Excess RC list** `V-C.4.4`: построчный список кандидатов на удаление (`rac_key`, `rc_name`)
+  - **Факт кода:** при фактической вставке новой версии в `ra_change_summ` для CHANGED → `appendRcSumMismatchAudit`.
+- ✅ 1.8.11.6.7. **Excess RC list** `V-C.4.4`: построчный список кандидатов на удаление (`rac_key`, `rc_name`)
   (`eventKey: RC_EXCESS_ITEM`)
+  - **Факт кода:** после `planRcDeletes` → `appendRcExcessItemsAudit` (dry и apply); план несёт `RcExcessPlanned(racKey, rcPeriod, raFk, changeNum)`.
 
 #### 1.8.11.7. Staging: per-row insert ID MSG (V-C.2.1.a.1.1.a.2.a.1)
 - ✅ 1.8.11.7.1. В `DefaultAuditStagingService` для каждой вставленной строки (`af_source=true`) добавить MSG «добавлен в импорт. ID = N»
