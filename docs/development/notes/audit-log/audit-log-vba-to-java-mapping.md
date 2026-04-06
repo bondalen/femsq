@@ -3,7 +3,7 @@ title: "Audit log: VBA → Java mapping (ход ревизии)"
 created: "2026-03-26"
 lastUpdated: "2026-04-06"
 status: "draft"
-version: "0.3.6"
+version: "0.3.7"
 ---
 
 ## Назначение
@@ -327,7 +327,7 @@ version: "0.3.6"
         - `V-C.2.1.a.1.1.a.1 [MSG]` Старт `paragraph`: тип/номер ОА, стройка и контекст строки.
           - `map -> J-C.5.B.4 / ROW_PARAGRAPH_PREVIEW`
           - `status -> partial`
-          - `gap -> формат и цвета выровнены по SCR-003-D; `rain_key` после INSERT. Остаётся полный parity по reconcile RA/RC per-row (1.8.11.5–1.8.11.6), не staging.`
+          - `gap -> формат и цвета выровнены по SCR-003-D; `rain_key` после INSERT; явное `STAGING_ROW_INSERTED` (1.8.11.7.1). Остаётся полный parity по reconcile RA/RC per-row (1.8.11.5–1.8.11.6), не staging.`
           - `screenshot -> SCR-003-D` («Найден тип *ОА*; имя: ...; Стр. - ....» `[TEAL BOLD]`)
           - **Поля:** `ra_type`, `ra`, `Constraction`, `ra_Row`
           - **Шаблон (VBA):**
@@ -338,9 +338,9 @@ version: "0.3.6"
         - `V-C.2.1.a.1.1.a.2 [CHECK]` `af_source=true`?
           - `V-C.2.1.a.1.1.a.2.a [ACTION]` Запись строки в `ra_ImpNew`.
           - `V-C.2.1.a.1.1.a.2.a.1 [MSG]` Успешная вставка в импорт с ID (`colorHint=GREEN`, `messageType=SUCCESS`).
-            - `map -> J-C.5.C.3 [MSG][TARGET]`
-            - `status -> missing`
-            - `gap -> в Java фиксируются агрегированные счётчики apply, но нет row-level подтверждения по каждой строке`
+            - `map -> J-C.5.B.4 [MSG][TARGET]`
+            - `status -> present`
+            - `gap -> —`
             - `screenshot -> SCR-003-D` («Отчёт внесён в промеж. тбл. ID - {id}» `[DARK_GREEN]`, ID `[ORANGE BOLD]`)
             - **Поля:** `ra_`, `ra_date`, `rainRow (ID)`, `paragraph`
             - **Шаблон (VBA):**
@@ -632,8 +632,8 @@ version: "0.3.6"
       - **eventKey:** `ANCHOR_FOUND`, `ANCHOR_MISSING`; **scope:** `FILE`
       - **Минимальные meta-поля:** `auditId`, `sheetName`, `anchorText`, `anchorRow`, `anchorRowOneBased`, `anchorColumn`, `anchorCellContent`, `messageType`, `colorHint`, `emphasis`
       - **map/status/gap:** `map -> V-C.2.1`, `status -> present`, `gap -> формат `ANCHOR_FOUND` выровнен к SCR-003-B (текст «Найдена ячейка ...», `BLUE`); для `ANCHOR_MISSING` сохранён WARN/RED + исключение`
-    - `J-C.5.B.4 [MSG]` `STAGING_START/STAGING_LOAD_STATS/STAGING_END` + `ROW_PARAGRAPH_PREVIEW*` (фактические события)
-      - **eventKey:** `STAGING_START`, `STAGING_LOAD_STATS`, `STAGING_END`; **scope:** `FILE`
+    - `J-C.5.B.4 [MSG]` `STAGING_START/STAGING_LOAD_STATS/STAGING_END` + `STAGING_ROW_INSERTED` + `ROW_PARAGRAPH_PREVIEW*` (фактические события)
+      - **eventKey:** `STAGING_START`, `STAGING_LOAD_STATS`, `STAGING_END`, `STAGING_ROW_INSERTED`, `ROW_PARAGRAPH_PREVIEW`, `ROW_PARAGRAPH_PREVIEW_SKIPPED`, `ROW_PARAGRAPH_PREVIEW_SUMMARY`; **scope:** `FILE`
       - **map/status/gap:** `map -> V-C.2.1 / V-C.3.1 / V-C.4.1`, `status -> partial`, `gap -> в Java есть row-level staging preview (без top-N, 1.8.11.9.7) и staging-статистика; нет полного VBA-эквивалента: (а) механизм отбора строк отличается от VBA `Find/FindNext` (семантика совпадает через whitelist), (б) summary RA/RC вынесен в reconcile (`RA_ROWS_SUMMARY`/`RC_ROWS_SUMMARY`, 1.8.11.3.1–3.2), (в) row-level reconcile RA/RC per-row.`
 
   - `J-C.5.C [ACTION]` `AllAgentsReconcileService` (match/apply/delete/diagnostics)
@@ -693,7 +693,7 @@ version: "0.3.6"
 | `V-C.2.1.a` | `J-C.5.B.2 SHEET_FOUND` | present | Координаты диапазона в meta (`column`, `firstRow`, `lastRow`, `address`), HTML по SCR-003-C; выполнено в `1.8.11.2.1` ✅. |
 | `V-C.2.1` (anchor) | `J-C.5.B.3 ANCHOR_FOUND/ANCHOR_MISSING` | present | Реализовано событие якоря; `ANCHOR_FOUND` в формате SCR-003-B («Найдена ячейка ...», `BLUE`) с meta `anchorColumn/anchorCellContent/anchorRowOneBased`. |
 | `V-C.2.1.a.1.filter` | `J-C.5.B.4` | present | Фильтр строк по полю `Признак` из whitelist (`ОА`/`ОА изм`/`ОА прочие`) реализован в 1.8.10.5 ✅. Механизм отличается от VBA (`Find/FindNext`), семантический результат идентичен. |
-| `V-C.2.1.a.1.1.a.2.a.1` | — | missing | Per-row staging insert ID. Целевой `eventKey: STAGING_ROW_INSERTED` (1.8.11.7.1). |
+| `V-C.2.1.a.1.1.a.2.a.1` | `STAGING_ROW_INSERTED` | present | После `INSERT` + `RETURN_GENERATED_KEYS`: meta `insertedId`, `rowIndex`, `tableName` (`DefaultAuditStagingService`, 1.8.11.7.1) ✅. |
 | `V-C.2.1.a.1` | `J-C.5.B/J-C.5.C` | partial | Перебор строк в VBA логируется детально; в Java покрыт через staging/reconcile + row-level preview и агрегированные counters. |
 | `V-C.2.1.a.1.1.a.*` | `ROW_PARAGRAPH_PREVIEW*` | partial | Staging: полный вывод строк без top-N, SCR-003-D HTML + `rain_key` (1.8.11.9.7). Полный VBA-parity по файлу — ещё reconcile RA/RC per-row (1.8.11.5–1.8.11.6). |
 | `V-C.3.1` | `RA_ROWS_SUMMARY` | present | `AllAgentsReconcileService`: `matchRowsConsidered` в `raRowsCount` (1.8.11.3.1) ✅. |
@@ -986,7 +986,7 @@ version: "0.3.6"
 | `ROW_PARAGRAPH_PREVIEW` | `FILE` | `INFO` | `sheetName`, `rowIndex`, `status=ACCEPTED` | Row-level preview для type 5 (staging). |
 | `ROW_PARAGRAPH_PREVIEW_SKIPPED` | `FILE` | `WARN` | `sheetName`, `rowIndex`, `status=SKIPPED` | Row-level preview для пропущенной строки (нет данных). |
 | `ROW_PARAGRAPH_PREVIEW_SUMMARY` | `FILE` | `INFO` | `sampled`, `suppressed`, `total`, `previewMode=FULL` | Итог row-level staging preview (без лимита). |
-| `STAGING_ROW_INSERTED` | `FILE` | `INFO` | `sheetName`, `rowIndex`, `insertedId` | Строка добавлена в staging с ID (per-row, `af_source=true`). Целевой (1.8.11.7.1). |
+| `STAGING_ROW_INSERTED` | `FILE` | `INFO` | `sheetName`, `tableName`, `rowIndex`, `insertedId` | Строка добавлена в staging с `rain_key` (type=5, по-строчный `executeUpdate`). |
 | `RECONCILE_TYPE5_MODE` | `FILE` | `INFO` | `execKey`, `addRa`, `mode` | Режим reconcile: `DIAGNOSTIC`/`APPLY` (`AllAgentsReconcileService`, 1.8.11.4.5). |
 | `RA_ROWS_SUMMARY` | `FILE` | `INFO` | `execKey`, `raRowsCount` | «Всего строк отчётов: N» перед блоком RA (`AllAgentsReconcileService`, 1.8.11.3.1). |
 | `RA_NEW_CREATED` | `FILE` | `INFO` | `rowIndex`, `raNum`, `raKey`, `period`, `cstap` | Создан новый RA + ключ (per-row). Целевой (1.8.11.5.1). |

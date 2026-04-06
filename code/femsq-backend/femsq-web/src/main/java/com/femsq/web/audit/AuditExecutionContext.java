@@ -446,6 +446,7 @@ public class AuditExecutionContext {
         return switch (code) {
             case "WORKBOOK_OPEN" -> "КНИГА";
             case "SHEET_FOUND" -> "ЛИСТ";
+            case "STAGING_ROW_INSERTED" -> "STAGING";
             case "STAGING_STATS" -> "СТАТИСТИКА";
             case "FILE_FS_FOUND" -> "ФАЙЛ";
             case "DIR_FS_EXISTS" -> "ПАПКА";

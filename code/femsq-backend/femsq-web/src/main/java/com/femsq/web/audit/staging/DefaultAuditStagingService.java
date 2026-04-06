@@ -363,6 +363,7 @@ public class DefaultAuditStagingService implements AuditStagingService {
                     statement.executeUpdate();
                     inserted++;
                     long rainKey = readGeneratedRainKey(statement);
+                    appendStagingRowInserted(context, sheet, config, rowIndex + 1, rainKey);
                     stats.rowParagraphSampled++;
                     String html = buildRowParagraphVbaHtml(row, excelColumns, rowIndex + 1, true, rainKey);
                     context.append(
@@ -482,6 +483,47 @@ public class DefaultAuditStagingService implements AuditStagingService {
      * @param accepted         {@code false} — пропуск до insert; {@code true} — после успешного {@code INSERT}
      * @param rainKey          сгенерированный {@code rain_key} или {@code <= 0}, если не получен
      */
+    /**
+     * Событие {@code STAGING_ROW_INSERTED} (V-C.2.1.a.1.1.a.2.a.1 / 1.8.11.7.1): только после успешного {@code INSERT} и чтения {@code rain_key}.
+     * При пакетной загрузке ({@code logEachStagingRow=false}) не вызывается — нет по-строчного {@code RETURN_GENERATED_KEYS}.
+     */
+    private void appendStagingRowInserted(
+            AuditExecutionContext context,
+            Sheet sheet,
+            RaSheetConf config,
+            int excelRowOneBased,
+            long rainKey
+    ) {
+        Map<String, String> meta = new HashMap<>();
+        meta.put("auditId", String.valueOf(context.getAuditId()));
+        meta.put("sheetName", String.valueOf(sheet.getSheetName()));
+        meta.put("tableName", String.valueOf(config.rscStgTbl()));
+        meta.put("rowIndex", String.valueOf(excelRowOneBased));
+        meta.put("insertedId", String.valueOf(rainKey > 0 ? rainKey : 0));
+        if (rainKey > 0) {
+            String html = "<P><font color=\"" + HTML_DARK_GREEN_TAIL + "\">Добавлен в импорт. ID — </font>"
+                    + "<b><font color=\"" + HTML_ORANGE_ID + "\">" + rainKey + "</font></b>"
+                    + " <font color=\"" + HTML_GRAY_NOTE + "\">(строка листа Excel " + excelRowOneBased + ").</font></P>";
+            context.append(
+                    AuditLogLevel.INFO,
+                    AuditLogScope.FILE,
+                    "STAGING_ROW_INSERTED",
+                    html,
+                    withPresentationMeta(meta, "INFO", "GREEN", "NORMAL")
+            );
+        } else {
+            String html = "<P><font color=\"#d29922\">INSERT в staging выполнен, идентификатор <code>rain_key</code> не получен от СУБД.</font> Строка листа "
+                    + excelRowOneBased + ".</P>";
+            context.append(
+                    AuditLogLevel.WARNING,
+                    AuditLogScope.FILE,
+                    "STAGING_ROW_INSERTED",
+                    html,
+                    withPresentationMeta(meta, "WARN", "ORANGE", "NORMAL")
+            );
+        }
+    }
+
     private String buildRowParagraphVbaHtml(
             Row row,
             Map<String, Integer> excelColumns,
