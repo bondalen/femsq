@@ -3,7 +3,7 @@
 **Дата создания:** 2026-03-23  
 **Последнее обновление:** 2026-04-06  
 **Проект:** FEMSQ  
-**Версия плана:** 0.9.22  
+**Версия плана:** 0.9.23  
 
 ---
 
@@ -379,12 +379,14 @@
   → `J-C.5.C.1`: `missing` → `present`
 - [ ] 1.8.11.4.2. Подтвердить/реализовать trio-model `RECONCILE_TYPE5_DONE/SKIPPED/FAILED`
   → `J-C.5.C.5`: `missing` → `present`
-- [ ] 1.8.11.4.3. `RECONCILE_TYPE5_MATCH_STATS`: вынести из diagnostics-строки в структурированный MSG
+- ✅ 1.8.11.4.3. `RECONCILE_TYPE5_MATCH_STATS`: вынести из diagnostics-строки в структурированный MSG
   (meta: `raNew/raChanged/raUnchanged/raInvalid/raAmbiguous`, `rcNew/rcChanged/rcUnchanged/rcInvalid/rcAmbiguous`)
   → `J-C.5.C.2`: `partial` → `present`
-- [ ] 1.8.11.4.4. `RECONCILE_TYPE5_APPLY_STATS`: структурированный MSG
+  - **Факт кода:** `Type5ReconcileAuditCounters.MatchStats` в `ReconcileResult`, сбор в `AllAgentsReconcileService`, отдельное событие в `AuditReconcileCoordinator.appendType5MatchStats`; fallback на строку `counters`, если `type5AuditCounters==null`.
+- ✅ 1.8.11.4.4. `RECONCILE_TYPE5_APPLY_STATS`: структурированный MSG
   (meta: `raInserted/raUpdated/raUnchanged/raDeleted`, `rcInserted/rcUpdated/rcUnchanged/rcDeleted`, `sumInserted`)
   → `J-C.5.C.3`: `partial` → `present` (агрегатный слой)
+  - **Факт кода:** `Type5ReconcileAuditCounters.ApplyStats`; `sumInserted` = RA `ra_summ` вставки + RC `ra_change_summ` вставки (`rcSumsInserted` + `rcSumsInsertedChanged`).
 - ✅ 1.8.11.4.5. Добавить явный MSG режима reconcile: «Режим: диагностика (addRa=false)» / «Режим: применение (addRa=true)»
   (`eventKey: RECONCILE_TYPE5_MODE`)
   → `V-C.3.5/V-C.4.5`: `partial` → `present`

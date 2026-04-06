@@ -185,25 +185,31 @@ public class AuditReconcileCoordinator {
             return;
         }
         String message = result.message() == null ? "" : result.message();
-        String countersSummary = summarizeCounters(message);
-        if (!countersSummary.isBlank()) {
-            context.append(
-                    AuditLogLevel.INFO,
-                    AuditLogScope.FILE,
-                    "RECONCILE_TYPE5_MATCH_STATS",
-                    "<P>Type5 match/apply counters: " + escape(countersSummary) + "</P>",
-                    withPresentationMeta(
-                            Map.of(
-                                    "auditId", String.valueOf(context.getAuditId()),
-                                    "executionKey", String.valueOf(context.getExecutionKey()),
-                                    "fileType", "5",
-                                    "counters", countersSummary
-                            ),
-                            "INFO",
-                            "SILVER",
-                            "NORMAL"
-                    )
-            );
+        Type5ReconcileAuditCounters structured = result.type5AuditCounters();
+        if (structured != null) {
+            appendType5MatchStats(context, structured.match());
+            appendType5ApplyStats(context, structured.apply());
+        } else {
+            String countersSummary = summarizeCounters(message);
+            if (!countersSummary.isBlank()) {
+                context.append(
+                        AuditLogLevel.INFO,
+                        AuditLogScope.FILE,
+                        "RECONCILE_TYPE5_MATCH_STATS",
+                        "<P>Type5 match/apply counters: " + escape(countersSummary) + "</P>",
+                        withPresentationMeta(
+                                Map.of(
+                                        "auditId", String.valueOf(context.getAuditId()),
+                                        "executionKey", String.valueOf(context.getExecutionKey()),
+                                        "fileType", "5",
+                                        "counters", countersSummary
+                                ),
+                                "INFO",
+                                "SILVER",
+                                "NORMAL"
+                        )
+                );
+            }
         }
         String missingDetails = extractMissingDetails(message);
         if (!missingDetails.isBlank()) {
@@ -225,6 +231,63 @@ public class AuditReconcileCoordinator {
                     )
             );
         }
+    }
+
+    private void appendType5MatchStats(AuditExecutionContext context, Type5ReconcileAuditCounters.MatchStats match) {
+        String html = "<P>Type5 match — RA: NEW=" + match.raNew() + ", CHANGED=" + match.raChanged()
+                + ", UNCHANGED=" + match.raUnchanged() + ", INVALID=" + match.raInvalid()
+                + ", AMBIGUOUS=" + match.raAmbiguous() + "; RC: NEW=" + match.rcNew()
+                + ", CHANGED=" + match.rcChanged() + ", UNCHANGED=" + match.rcUnchanged()
+                + ", INVALID=" + match.rcInvalid() + ", AMBIGUOUS=" + match.rcAmbiguous() + ".</P>";
+        Map<String, String> meta = new LinkedHashMap<>();
+        meta.put("auditId", String.valueOf(context.getAuditId()));
+        meta.put("executionKey", String.valueOf(context.getExecutionKey()));
+        meta.put("fileType", "5");
+        meta.put("raNew", String.valueOf(match.raNew()));
+        meta.put("raChanged", String.valueOf(match.raChanged()));
+        meta.put("raUnchanged", String.valueOf(match.raUnchanged()));
+        meta.put("raInvalid", String.valueOf(match.raInvalid()));
+        meta.put("raAmbiguous", String.valueOf(match.raAmbiguous()));
+        meta.put("rcNew", String.valueOf(match.rcNew()));
+        meta.put("rcChanged", String.valueOf(match.rcChanged()));
+        meta.put("rcUnchanged", String.valueOf(match.rcUnchanged()));
+        meta.put("rcInvalid", String.valueOf(match.rcInvalid()));
+        meta.put("rcAmbiguous", String.valueOf(match.rcAmbiguous()));
+        context.append(
+                AuditLogLevel.INFO,
+                AuditLogScope.FILE,
+                "RECONCILE_TYPE5_MATCH_STATS",
+                html,
+                withPresentationMeta(meta, "INFO", "SILVER", "NORMAL")
+        );
+    }
+
+    private void appendType5ApplyStats(AuditExecutionContext context, Type5ReconcileAuditCounters.ApplyStats apply) {
+        String html = "<P>Type5 apply — RA: inserted=" + apply.raInserted() + ", updated=" + apply.raUpdated()
+                + ", unchanged=" + apply.raUnchanged() + ", deleted=" + apply.raDeleted()
+                + "; RC: inserted=" + apply.rcInserted() + ", updated=" + apply.rcUpdated()
+                + ", unchanged=" + apply.rcUnchanged() + ", deleted=" + apply.rcDeleted()
+                + "; sums inserted (RA+RC)=" + apply.sumInserted() + ".</P>";
+        Map<String, String> meta = new LinkedHashMap<>();
+        meta.put("auditId", String.valueOf(context.getAuditId()));
+        meta.put("executionKey", String.valueOf(context.getExecutionKey()));
+        meta.put("fileType", "5");
+        meta.put("raInserted", String.valueOf(apply.raInserted()));
+        meta.put("raUpdated", String.valueOf(apply.raUpdated()));
+        meta.put("raUnchanged", String.valueOf(apply.raUnchanged()));
+        meta.put("raDeleted", String.valueOf(apply.raDeleted()));
+        meta.put("rcInserted", String.valueOf(apply.rcInserted()));
+        meta.put("rcUpdated", String.valueOf(apply.rcUpdated()));
+        meta.put("rcUnchanged", String.valueOf(apply.rcUnchanged()));
+        meta.put("rcDeleted", String.valueOf(apply.rcDeleted()));
+        meta.put("sumInserted", String.valueOf(apply.sumInserted()));
+        context.append(
+                AuditLogLevel.INFO,
+                AuditLogScope.FILE,
+                "RECONCILE_TYPE5_APPLY_STATS",
+                html,
+                withPresentationMeta(meta, "INFO", "TEAL", "NORMAL")
+        );
     }
 
     private String extractMissingDetails(String message) {

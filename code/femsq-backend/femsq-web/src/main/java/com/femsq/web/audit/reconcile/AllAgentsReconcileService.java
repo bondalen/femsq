@@ -257,10 +257,24 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         String blockingReason = "";
         String diagnostics = counters + blockingReason + ", " + missingDetails;
         log.info("[Reconcile][type=5] execKey=" + context.executionKey() + ", " + counters);
+        Type5ReconcileAuditCounters type5AuditCounters = buildType5ReconcileAuditCounters(
+                readModelStats,
+                rcReadStats,
+                inserted,
+                updated,
+                unchanged,
+                raDeleted,
+                rcChangesInserted,
+                rcChangesUpdated,
+                rcDeleted,
+                sumInserted,
+                rcSumsInserted,
+                rcSumsInsertedChanged
+        );
         if (applyRequested && !applyBlocked) {
-            return ReconcileResult.applied(inserted + updated, "type=5 apply-partial; " + diagnostics);
+            return ReconcileResult.applied(inserted + updated, "type=5 apply-partial; " + diagnostics, type5AuditCounters);
         }
-        return ReconcileResult.skipped("type=5 apply-skipped; " + diagnostics);
+        return ReconcileResult.skipped("type=5 apply-skipped; " + diagnostics, type5AuditCounters);
     }
 
     private List<StagingRaRow> loadStagingRows(Connection connection, long executionKey) throws SQLException {
@@ -1855,6 +1869,56 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         enriched.put("colorHint", colorHint);
         enriched.put("emphasis", emphasis);
         return enriched;
+    }
+
+    /**
+     * Собирает структурированные счётчики для {@link ReconcileResult#type5AuditCounters()} (meta в журнале аудита).
+     */
+    private static Type5ReconcileAuditCounters buildType5ReconcileAuditCounters(
+            RaReadModelStats readModelStats,
+            RcChangeReadModelStats rcReadStats,
+            int raInserted,
+            int raUpdated,
+            int raUnchanged,
+            int raDeleted,
+            int rcInserted,
+            int rcUpdated,
+            int rcDeleted,
+            int raSumInserted,
+            int rcSumsInserted,
+            int rcSumsInsertedChanged
+    ) {
+        int rcInvalid = rcReadStats.rcParseInvalid()
+                + rcReadStats.rcMissingRcPeriod()
+                + rcReadStats.rcMissingReportPeriod()
+                + rcReadStats.rcMissingLookupForCompare()
+                + rcReadStats.rcMissingBaseRa();
+        int rcAmbiguous = rcReadStats.rcAmbiguousBaseRa() + rcReadStats.rcAmbiguousRac();
+        Type5ReconcileAuditCounters.MatchStats match = new Type5ReconcileAuditCounters.MatchStats(
+                readModelStats.categoryNew(),
+                readModelStats.categoryChanged(),
+                readModelStats.categoryUnchanged(),
+                readModelStats.categoryInvalid(),
+                readModelStats.categoryAmbiguous(),
+                rcReadStats.rcCategoryNew(),
+                rcReadStats.rcCategoryChanged(),
+                rcReadStats.rcCategoryUnchanged(),
+                rcInvalid,
+                rcAmbiguous
+        );
+        int sumTotal = raSumInserted + rcSumsInserted + rcSumsInsertedChanged;
+        Type5ReconcileAuditCounters.ApplyStats apply = new Type5ReconcileAuditCounters.ApplyStats(
+                raInserted,
+                raUpdated,
+                raUnchanged,
+                raDeleted,
+                rcInserted,
+                rcUpdated,
+                rcReadStats.rcCategoryUnchanged(),
+                rcDeleted,
+                sumTotal
+        );
+        return new Type5ReconcileAuditCounters(match, apply);
     }
 
     private String formatCounters(

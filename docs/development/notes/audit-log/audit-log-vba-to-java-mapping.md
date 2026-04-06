@@ -3,7 +3,7 @@ title: "Audit log: VBA → Java mapping (ход ревизии)"
 created: "2026-03-26"
 lastUpdated: "2026-04-06"
 status: "draft"
-version: "0.3.5"
+version: "0.3.6"
 ---
 
 ## Назначение
@@ -646,12 +646,12 @@ version: "0.3.5"
       - **map/status/gap:** `map -> V-C.3/V-C.4`, `status -> present`, `gap -> реализовано в `AuditReconcileCoordinator.run()`: `beginSpan` с `codeForType(file, \"RECONCILE_START\", \"RECONCILE_TYPE5_START\")` при `fileType=5`; meta: `auditId`, `executionKey`, `fileType`, `addRa`; `messageType=START`, `colorHint=BLUE`, `emphasis=BOLD`. HTML — технический (`Reconcile start: type=...`); VBA-формулировки нет (см. 1.8.11.4.1 при необходимости выравнивания текста).`
     - `J-C.5.C.2 [MSG][TARGET]` `RECONCILE_TYPE5_MATCH_STATS`
       - **eventKey:** `RECONCILE_TYPE5_MATCH_STATS`; **scope:** `FILE`
-      - **Минимальные meta-поля:** `executionKey`, `rowsEligible`, `rowsRejected`, `categoryNew`, `categoryChanged`, `categoryUnchanged`, `categoryAmbiguous`, `categoryInvalid`, `messageType`, `colorHint`, `emphasis`
-      - **map/status/gap:** `map -> V-C.3.2/V-C.3.3/V-C.4.2/V-C.4.3`, `status -> partial`, `gap -> сейчас статистика в основном в технической строке diagnostics`
+      - **Минимальные meta-поля:** `auditId`, `executionKey`, `fileType=5`, `raNew`, `raChanged`, `raUnchanged`, `raInvalid`, `raAmbiguous`, `rcNew`, `rcChanged`, `rcUnchanged`, `rcInvalid`, `rcAmbiguous`, `messageType`, `colorHint`, `emphasis`
+      - **map/status/gap:** `map -> V-C.3.2/V-C.3.3/V-C.4.2/V-C.4.3`, `status -> present`, `gap -> —` (`Type5ReconcileAuditCounters.MatchStats` из `AllAgentsReconcileService`, эмиссия в `AuditReconcileCoordinator.appendType5MatchStats`, 1.8.11.4.3; `rcInvalid`/`rcAmbiguous` — агрегаты счётчиков read-model RC)
     - `J-C.5.C.3 [MSG][TARGET]` `RECONCILE_TYPE5_APPLY_STATS`
       - **eventKey:** `RECONCILE_TYPE5_APPLY_STATS`; **scope:** `FILE`
-      - **Минимальные meta-поля:** `inserted`, `updated`, `unchanged`, `raDeleted`, `rcDeleted`, `sumInserted`, `sumUnchangedSkipped`, `messageType`, `colorHint`, `emphasis`
-      - **map/status/gap:** `map -> V-C.3.5/V-C.4.5`, `status -> partial`, `gap -> в VBA apply сопровождается row-level строками old/expected/updated`
+      - **Минимальные meta-поля:** `auditId`, `executionKey`, `fileType=5`, `raInserted`, `raUpdated`, `raUnchanged`, `raDeleted`, `rcInserted`, `rcUpdated`, `rcUnchanged`, `rcDeleted`, `sumInserted` (RA+RC суммовые вставки), `messageType`, `colorHint`, `emphasis`
+      - **map/status/gap:** `map -> V-C.3.5/V-C.4.5`, `status -> present`, `gap -> row-level old/expected/updated в VBA по-прежнему не покрыты; агрегат apply — в meta `Type5ReconcileAuditCounters.ApplyStats` (1.8.11.4.4).
     - `J-C.5.C.4 [MSG][TARGET]` `RECONCILE_TYPE5_DIAGNOSTICS`
       - **eventKey:** `RECONCILE_TYPE5_DIAGNOSTICS`; **scope:** `FILE`
       - **Минимальные meta-поля:** `missingSenderTopN`, `missingCstTopN`, `missingPeriodTopN`, `ambiguous*`, `messageType`, `colorHint`, `emphasis`
@@ -980,7 +980,8 @@ version: "0.3.5"
 | `RECONCILE_TYPE5_DONE` | `FILE` | `END` | `execKey`, `fileType=5`, `affectedRows` | Успешное завершение reconcile type 5. |
 | `RECONCILE_TYPE5_SKIPPED` | `FILE` | `END` | `execKey`, `fileType=5`, `reason` | Пропуск reconcile type 5. |
 | `RECONCILE_TYPE5_FAILED` | `FILE` | `ERROR` | `execKey`, `fileType=5`, `message` | Ошибка reconcile type 5. |
-| `RECONCILE_TYPE5_MATCH_STATS` | `FILE` | `INFO` | `execKey`, `fileType=5`, `counters` | Агрегированные match/apply counters по type 5. |
+| `RECONCILE_TYPE5_MATCH_STATS` | `FILE` | `INFO` | `executionKey`, `fileType=5`, `raNew`, `raChanged`, `raUnchanged`, `raInvalid`, `raAmbiguous`, `rcNew`, `rcChanged`, `rcUnchanged`, `rcInvalid`, `rcAmbiguous` | Категории read-model RA/RC (`AuditReconcileCoordinator`, 1.8.11.4.3). |
+| `RECONCILE_TYPE5_APPLY_STATS` | `FILE` | `INFO` | `executionKey`, `fileType=5`, `raInserted`, `raUpdated`, `raUnchanged`, `raDeleted`, `rcInserted`, `rcUpdated`, `rcUnchanged`, `rcDeleted`, `sumInserted` | Агрегат apply/dry-run (`AuditReconcileCoordinator`, 1.8.11.4.4). |
 | `RECONCILE_TYPE5_DIAGNOSTICS` | `FILE` | `WARN` | `execKey`, `fileType=5`, `missingTop` | Top-представление диагностик (`Нет отправителя/стройки/периода`). |
 | `ROW_PARAGRAPH_PREVIEW` | `FILE` | `INFO` | `sheetName`, `rowIndex`, `status=ACCEPTED` | Row-level preview для type 5 (staging). |
 | `ROW_PARAGRAPH_PREVIEW_SKIPPED` | `FILE` | `WARN` | `sheetName`, `rowIndex`, `status=SKIPPED` | Row-level preview для пропущенной строки (нет данных). |
