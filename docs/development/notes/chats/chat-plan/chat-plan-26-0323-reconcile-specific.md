@@ -3,7 +3,7 @@
 **Дата создания:** 2026-03-23  
 **Последнее обновление:** 2026-04-06  
 **Проект:** FEMSQ  
-**Версия плана:** 0.9.29  
+**Версия плана:** 0.9.30  
 
 ---
 
@@ -506,6 +506,14 @@
   - **Результат:** `BUILD SUCCESS`, `Tests run: 2, Failures: 0, Errors: 0, Skipped: 0`.
   - **Проверка артефактов БД после apply-run (`addRa=true`):** доменные хвосты очищены `finally`-блоком теста (`ags.ra*` / `ags.ra_change*`), `adt_AddRA` восстановлен; ожидаемо остаются технические следы `ags.ra_execution` и `ags.ra_reconcile_marker`.
   - **Важно для повторяемости:** в HTML `adt_results` после локализации `AuditExecutionContext.localizeMessageHtml` используется `сухойПрогон=true/false` (а не `dryRun=true/false`), поэтому acceptance-проверки должны искать локализованную форму.
+- ✅ 1.8.11.8.7. Политика очистки `ags.ra_reconcile_marker` для тестового стенда (Вариант B: TTL + retention)
+  - **Решение:** для TEST-стенда принят регламент управляемой очистки marker-таблицы:
+    - удалять только маркеры старше TTL (по `created_at`),
+    - дополнительно сохранять минимум N последних `exec_key` на каждую ревизию (`exec_adt_key`),
+    - никогда не удалять маркеры `RUNNING`.
+  - **SQL-плейбук:** `docs/sql-scripts/type5-reconcile-marker-cleanup-policy.sql`
+    (режимы dry-run/DELETE, safety guards, параметры `@ttlDays`, `@keepLatestPerAudit`, `@applyDelete`).
+  - **Операционный регламент (TEST):** запуск 1 раз в неделю, рекомендуемо `@ttlDays=14..30`, `@keepLatestPerAudit>=20`.
 
 ---
 
