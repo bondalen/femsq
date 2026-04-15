@@ -3,7 +3,7 @@
 **Дата создания:** 2026-03-23  
 **Последнее обновление:** 2026-04-06  
 **Проект:** FEMSQ  
-**Версия плана:** 0.9.34  
+**Версия плана:** 0.9.35  
 
 ---
 
@@ -546,6 +546,14 @@
   - **Нюанс локализации зафиксирован:** для `adt_results` проверяется `сухойПрогон=true/false` (не `dryRun=true/false`).
   - **Post-run SQL smoke-check:** добавлен `docs/sql-scripts/type5-acceptance-postrun-smoke-check.sql`
     (baseline snapshot, сравнение delta по доменным max-ключам, статус rollback, контроль ожидаемых технических артефактов `ra_execution`/`ra_reconcile_marker`).
+- ✅ 1.8.11.8.9. Smoke-check SQL чеклист сделан обязательным после каждого apply IT
+  - **Операционное правило:** для каждого acceptance/apply-прогона (`addRa=true`) post-run smoke-check выполняется обязательно.
+  - **Критерий PASS:** `rollback_status=OK_ROLLBACK`; критерии FAIL: `CHECK_REQUIRED` или `BASELINE_NOT_SET`.
+  - **SQL приведён к рабочему ритуалу “до/после”:** `docs/sql-scripts/type5-acceptance-postrun-smoke-check.sql`
+    (явный baseline-capture + post-run блок с ручной подстановкой baseline значений).
+  - **Фиксация результата:** введён шаблон отчёта
+    `docs/development/notes/templates/type5-acceptance-smoke-check-report-template.md`.
+  - **Runbook обновлён:** `code/scripts/README-TESTING.md` — обязательность шага и критерии PASS/FAIL.
 
 ---
 

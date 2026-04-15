@@ -52,6 +52,11 @@ mvn -pl femsq-backend/femsq-web test \
 - Для ручных прогонов использовать SQL:
   - `docs/sql-scripts/type5-acceptance-postrun-smoke-check.sql`
 - Цель: подтвердить отсутствие доменных хвостов после rollback и зафиксировать ожидаемые технические артефакты (`ra_execution`, `ra_reconcile_marker`).
+- **Обязательность для apply IT:** после каждого прогона с `addRa=true` smoke-check обязателен.
+- **Критерий PASS:** `rollback_status = OK_ROLLBACK`.
+- **Критерии FAIL:** `rollback_status = CHECK_REQUIRED` или `BASELINE_NOT_SET`.
+- Для фиксации результата использовать шаблон:
+  - `docs/development/notes/templates/type5-acceptance-smoke-check-report-template.md`
 
 ## Maven команды
 
