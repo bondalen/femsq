@@ -3,7 +3,7 @@
 **Дата создания:** 2026-03-23  
 **Последнее обновление:** 2026-04-06  
 **Проект:** FEMSQ  
-**Версия плана:** 0.9.33  
+**Версия плана:** 0.9.34  
 
 ---
 
@@ -538,6 +538,14 @@
   - **SQL-плейбук:** `docs/sql-scripts/type5-reconcile-marker-cleanup-policy.sql`
     (режимы dry-run/DELETE, safety guards, параметры `@ttlDays`, `@keepLatestPerAudit`, `@applyDelete`).
   - **Операционный регламент (TEST):** запуск 1 раз в неделю, рекомендуемо `@ttlDays=14..30`, `@keepLatestPerAudit>=20`.
+- ✅ 1.8.11.8.8. Стабилизирован acceptance IT для CI/ручных прогонов (runbook + post-run smoke-check)
+  - **Runbook:** добавлен раздел в `code/scripts/README-TESTING.md`:
+    - предусловия (backend/GraphQL/БД),
+    - каноническая команда запуска `Type5AcceptanceAdtResultsIntegrationIT`,
+    - ожидаемый итог `BUILD SUCCESS` + `Tests run: 2`.
+  - **Нюанс локализации зафиксирован:** для `adt_results` проверяется `сухойПрогон=true/false` (не `dryRun=true/false`).
+  - **Post-run SQL smoke-check:** добавлен `docs/sql-scripts/type5-acceptance-postrun-smoke-check.sql`
+    (baseline snapshot, сравнение delta по доменным max-ключам, статус rollback, контроль ожидаемых технических артефактов `ra_execution`/`ra_reconcile_marker`).
 
 ---
 

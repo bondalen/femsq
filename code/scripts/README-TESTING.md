@@ -24,6 +24,35 @@ source ~/.bashrc
 ./code/scripts/test-e2e.sh
 ```
 
+## Type5 Acceptance IT (ручной/CI runbook)
+
+### Предусловия
+- Backend запущен и отвечает на `http://127.0.0.1:8080/graphql`
+- БД доступна (MS SQL Server)
+- Тестовая ревизия с type=5 файлом существует (обычно `auditId=13` или `14`)
+
+### Команда запуска (opt-in)
+```bash
+cd code
+mvn -pl femsq-backend/femsq-web test \
+  -Dtest=Type5AcceptanceAdtResultsIntegrationIT \
+  -Dfemsq.integration.type5Acceptance=true \
+  -DfailIfNoTests=false
+```
+
+### Ожидаемый результат
+- `BUILD SUCCESS`
+- `Tests run: 2, Failures: 0, Errors: 0, Skipped: 0`
+
+### Важный нюанс проверки `adt_results`
+- В HTML после локализации используется `сухойПрогон=true/false` (не `dryRun=true/false`).
+- При поиске маркеров в acceptance-проверках ориентироваться на локализованные ключи.
+
+### Post-run smoke-check
+- Для ручных прогонов использовать SQL:
+  - `docs/sql-scripts/type5-acceptance-postrun-smoke-check.sql`
+- Цель: подтвердить отсутствие доменных хвостов после rollback и зафиксировать ожидаемые технические артефакты (`ra_execution`, `ra_reconcile_marker`).
+
 ## Maven команды
 
 ### Unit-тесты
