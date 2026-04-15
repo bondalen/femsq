@@ -3,7 +3,7 @@ title: "Audit log: VBA → Java mapping (ход ревизии)"
 created: "2026-03-26"
 lastUpdated: "2026-04-06"
 status: "draft"
-version: "0.4.0"
+version: "0.4.1"
 ---
 
 ## Назначение
@@ -1024,4 +1024,7 @@ version: "0.4.0"
 - `P2 (partial)`: type-specific оркестровка в mapping для **`af_type=5`** закрыта по ветке `V-C` reconcile+staging (`1.8.10`–`1.8.11.8`); типы **2/3/6** — по-прежнему вне полного inventory (см. фазы 2–4 плана reconcile).
 - `P3 (partially done)`: staging row-level (`V-C.2.1.a.1.1.a.*`) — полный вывод без top-N, SCR-003-D (1.8.11.9.7) ✅; reconcile RA/RC per-row — `1.8.11.5`–`1.8.11.6` ✅. Остаются мелкие semantic gap в других ветках дерева (не type=5 reconcile).
 - `P3.1 (done)`: реализован целевой критерий отбора строк type=5 по полю `Признак` (`ОА`/`ОА изм`/`ОА прочие`) из `ags.ra_sheet_conf`; `V-C.2.1.a.1.filter` переведён в `present`. Выполнено в `1.8.10.5` ✅.
-- `P4 (done for type=5 target A)`: row-level RA+RC + acceptance-процедура — `1.8.11.5`–`1.8.11.8` ✅; opt-in IT `Type5AcceptanceAdtResultsIntegrationIT` (`-Dfemsq.integration.type5Acceptance=true`). Опционально: закрыть open-пункты `1.8.11.4` (framework `RECONCILE_TYPE5_START/DONE` trio) при появлении требований.
+- `P4 (done for type=5 target A)`: row-level RA+RC + acceptance-процедура — `1.8.11.5`–`1.8.11.8` ✅; opt-in IT `Type5AcceptanceAdtResultsIntegrationIT` (`-Dfemsq.integration.type5Acceptance=true`).
+  - Факт реального прогона (2026-04-06): `BUILD SUCCESS`, `Tests run: 2, Failures: 0, Errors: 0`.
+  - Для проверки HTML в `adt_results`: искать локализованный ключ `сухойПрогон=true/false` (после `localizeMessageHtml`), а не `dryRun=true/false`.
+  - Опционально: закрыть open-пункты `1.8.11.4` (framework `RECONCILE_TYPE5_START/DONE` trio) при появлении требований.

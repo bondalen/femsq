@@ -3,7 +3,7 @@
 **Дата создания:** 2026-03-23  
 **Последнее обновление:** 2026-04-06  
 **Проект:** FEMSQ  
-**Версия плана:** 0.9.28  
+**Версия плана:** 0.9.29  
 
 ---
 
@@ -501,6 +501,11 @@
   - **Факт:** синхронизированы ветки `V-C.2.1.a.1.*` (gap про reconcile), `V-C.3.*`/`V-C.4.*`, сводная таблица, каталог событий, backlog; версия mapping **0.4.0**.
 - ✅ 1.8.11.8.5. Закрыть `P2` и `P3` в backlog mapping если достигнуто full parity по type=5
   - **Факт:** для **целевого scope type=5 (решение A)** parity по reconcile row-level + staging достигнута; `P2` сужен до «остальные типы файлов»; `P3`/`P4` обновлены (см. `Implementation Backlog` в mapping). Полный inventory всех `af_type` — не входит в критерий этого шага.
+- ✅ 1.8.11.8.6. Реальный acceptance IT-прогон на доступной БД + живом backend (финальная фиксация)
+  - **Факт прогона (2026-04-06):** `mvn -pl femsq-backend/femsq-web test -Dtest=Type5AcceptanceAdtResultsIntegrationIT -Dfemsq.integration.type5Acceptance=true -DfailIfNoTests=false`
+  - **Результат:** `BUILD SUCCESS`, `Tests run: 2, Failures: 0, Errors: 0, Skipped: 0`.
+  - **Проверка артефактов БД после apply-run (`addRa=true`):** доменные хвосты очищены `finally`-блоком теста (`ags.ra*` / `ags.ra_change*`), `adt_AddRA` восстановлен; ожидаемо остаются технические следы `ags.ra_execution` и `ags.ra_reconcile_marker`.
+  - **Важно для повторяемости:** в HTML `adt_results` после локализации `AuditExecutionContext.localizeMessageHtml` используется `сухойПрогон=true/false` (а не `dryRun=true/false`), поэтому acceptance-проверки должны искать локализованную форму.
 
 ---
 
