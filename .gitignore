@@ -21,6 +21,17 @@ mvnw.cmd
 *.swo
 *~
 
+# Eclipse / STS / Buildship (IDE metadata)
+**/.project
+**/.classpath
+**/.settings/
+**/.factorypath
+**/.externalToolBuilders/
+**/.apt_generated/
+**/.sts4-cache/
+**/.springBeans
+**/.metadata/
+
 # Node / Vue.js
 node_modules/
 dist/
