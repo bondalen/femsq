@@ -1,9 +1,9 @@
 # План следующего шага: reconcile-specific по `af_type` (2/3/5/6)
 
 **Дата создания:** 2026-03-23  
-**Последнее обновление:** 2026-04-06  
+**Последнее обновление:** 2026-04-15  
 **Проект:** FEMSQ  
-**Версия плана:** 0.9.36  
+**Версия плана:** 0.9.41  
 
 ---
 
@@ -701,9 +701,17 @@
 - ✅ P.1.3. Зафиксирован out-of-scope для текущего продуктивного окна: новые доменные сценарии Type 2/3/6, расширения за пределы baseline + Type 5 Excel.
 
 ### P.2. Release package и режим запуска
-- [ ] P.2.1. Зафиксировать целевую версию артефакта (JAR/thin JAR + lib) и источник сборки.
-- [ ] P.2.2. Подготовить release bundle для машины разработки (для браузерной проверки) и для продуктивной машины.
-- [ ] P.2.3. Зафиксировать стартовый режим ревизий для внедрения: сначала dry-run (`adt_AddRA=0`) как default.
+- ✅ P.2.1. Зафиксирована целевая версия артефакта и источник сборки:
+  - версия: `0.1.0.109-SNAPSHOT`,
+  - базовый коммит: `014aa68`,
+  - fat JAR: `code/femsq-backend/femsq-web/target/femsq-web-0.1.0.109-SNAPSHOT.jar`,
+  - SHA-256: `3edf061cf0d03f841ac734a12ba98b6e3ec5c7c2c7a96c45d27d2789772e82db`.
+- ✅ P.2.2. Подготовлен release bundle для dev/browser-check и продуктивного переноса:
+  - документ: `docs/deployment/type5-preprod-prod-release-bundle.md`,
+  - включает состав артефактов, сопроводительные инструкции и обязательные SQL/checklist файлы.
+- ✅ P.2.3. Зафиксирован стартовый режим ревизий для внедрения:
+  - default для пилота: dry-run (`adt_AddRA=0`),
+  - apply (`adt_AddRA=1`) только после успешного pre-prod browser smoke и обязательного post-apply smoke-check.
 
 ### P.3. Pre-prod браузерная проверка на машине разработки
 - [ ] P.3.1. Выполнить smoke-check базовых разделов UI (как в предыдущем развёртывании): главная, организации, ревизии, файлы, отчёты.
@@ -719,6 +727,14 @@
 - [ ] P.5.1. После каждого apply IT / pilot-apply выполнить `docs/sql-scripts/type5-acceptance-postrun-smoke-check.sql`.
 - [ ] P.5.2. Зафиксировать отчёт по шаблону `docs/development/notes/templates/type5-acceptance-smoke-check-report-template.md`.
 - ✅ P.5.3. Критерий PASS/FAIL формализован: PASS только при `rollback_status=OK_ROLLBACK`; при `CHECK_REQUIRED/BASELINE_NOT_SET` — блокировка продвижения.
+  - Текущий цикл (2026-04-15): baseline снят и зафиксирован:
+    - `ra_max=51537`, `ras_max=37711`, `rac_max=3429`, `racs_max=2409`,
+    - baseline `ra_execution` для `adt_key IN (13,14)` зафиксирован (последний `exec_key` на момент фиксации: `1122`),
+    - черновик отчёта: `docs/development/notes/reports/type5-acceptance-smoke-check-report-2026-04-15.md`.
+  - Факт apply-прогона пользователя: `exec_key=1124`, `exec_adt_key=14`, `exec_status=COMPLETED`, `exec_add_ra=1`.
+  - Результат post-run smoke-check после apply: `rollback_status=CHECK_REQUIRED` (дельты: `ra=+54890`, `ras=+56363`, `rac=+1608`, `racs=+1608`).
+  - Выполнено восстановление baseline вручную (по max-key rollback): удалены хвосты `ra/ra_summ/ra_change/ra_change_summ`, max-ключи возвращены к baseline (`51537/37711/3429/2409`), `adt_AddRA(14)` возвращён в `0`.
+  - Текущее состояние блока P.5: apply-цикл завершён с FAIL, состояние БД восстановлено; перед следующим apply обязателен новый baseline capture и smoke-check.
 
 ### P.6. Go/No-Go перед переносом на продуктив
 - [ ] P.6.1. GO: scope freeze подписан, release bundle проверен, pre-prod браузерный smoke пройден, DB rollback readiness подтверждён, post-apply smoke-check PASS.

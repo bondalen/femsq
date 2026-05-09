@@ -566,6 +566,25 @@ function validateForm(): boolean {
   return Object.keys(errors.value).length === 0;
 }
 
+/**
+ * Формирует RFC3339 c локальным смещением (без сдвига "настенного" времени).
+ * Пример: 2026-04-06T15:46:00+03:00
+ */
+function toRfc3339WithLocalOffset(datePart: string, timePart: string): string {
+  const safeTime = timePart && timePart.trim() ? timePart.trim() : '00:00';
+  const hhmmss = safeTime.split(':').length === 2 ? `${safeTime}:00` : safeTime;
+  const baseLocal = `${datePart}T${hhmmss}`;
+
+  const dt = new Date(baseLocal);
+  const tzMinutes = -dt.getTimezoneOffset();
+  const sign = tzMinutes >= 0 ? '+' : '-';
+  const abs = Math.abs(tzMinutes);
+  const hours = String(Math.floor(abs / 60)).padStart(2, '0');
+  const minutes = String(abs % 60).padStart(2, '0');
+
+  return `${baseLocal}${sign}${hours}:${minutes}`;
+}
+
 // Сохранение ревизии
 async function handleSave(): Promise<void> {
   if (!validateForm()) {
@@ -576,15 +595,8 @@ async function handleSave(): Promise<void> {
   errorMessage.value = null;
 
   try {
-    // Формирование даты и времени в локальном формате (без конвертации в UTC)
-    // Формат: "YYYY-MM-DDTHH:mm:ss" (без 'Z') для работы с LocalDateTime на backend
-    // Время опционально: если не указано, используется 00:00:00
-    const timeStr = form.value.adtDateTime || '00:00:00';
-    const dateTimeStr = `${form.value.adtDateDate}T${timeStr}`;
-    // Добавляем секунды, если их нет
-    const adtDate = dateTimeStr.includes(':') && dateTimeStr.split(':').length === 2 
-      ? `${dateTimeStr}:00` 
-      : dateTimeStr;
+    // Backend GraphQL DateTime ожидает RFC3339 (обязательное timezone-смещение).
+    const adtDate = toRfc3339WithLocalOffset(form.value.adtDateDate, form.value.adtDateTime);
 
     if (isNewAudit.value) {
       // Создание новой ревизии

@@ -1,0 +1,1 @@
+В функции fnIpgChRsltCstUtlPercentBrn_2408_ipgSt сделано исправление в строке 2293 - isnull(ia_inProcessTtlAccum, 0) --isnull(ia_acceptedTtlAccum, 0) 15.04.2025
