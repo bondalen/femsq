@@ -1,1273 +1,921 @@
 {
-    "project": {
-        "metadata": {
-            "name": "FEMSQ",
-            "version": "1.0.0",
-            "description": "Cистема работы с контрагентами и объектами при капитальном строительстве на основе БД MS SQL Server FEMSQ (Fish Eye MS SQL Server)",
-            "author": "Александр",
-            "created": "2025-10-08",
-            "lastUpdated": "2026-03-18",
-            "status": "in_progress",
-            "repository": "https://github.com/bondalen/femsq.git",
-            "license": "MIT",
-            "keywords": [
-                "crm",
-                "contractors",
-                "management"
-            ],
-            "documentationRules": "docs/project-documentation-rules.md"
-        },
-        "architecture": {
-            "type": "full-stack",
-            "pattern": "modular-monolith",
-            "pattern_decision": "docs/decisions/007-modular-monolith-pattern.md",
-            "notes": "Приложение работает с уже существующей БД FishEye; создание или миграция схем выполняется сторонними процедурами (DBA).",
-            "backend": {
-                "framework": "Spring Boot 3.4.5",
-                "language": "Java 21 LTS (совместимо с Java 23)",
-                "database": "MS SQL Server (внешняя)",
-                "database_driver": "Microsoft SQL Server JDBC Driver 13.x",
-                "database_driver_version": "13.2.0.jre11",
-                "database_authentication": {
-                    "windows": {
-                        "method": "Windows SSPI (Kerberos/NTLM auto-select)",
-                        "description": "Автоматический выбор лучшего метода аутентификации на Windows",
-                        "requires_native_libs": true
-                    },
-                    "linux": {
-                        "method": "JavaKerberos with JAAS",
-                        "description": "True Single Sign-On - автоматическое определение principal из ticket cache через detectKerberosPrincipal()",
-                        "requires_native_libs": false,
-                        "implementation": "WindowsIntegratedAuthenticationProvider.detectKerberosPrincipal()",
-                        "features": [
-                            "Автоматическое определение Kerberos principal из ticket cache",
-                            "3 стратегии fallback (JAAS LoginContext → krb5.conf → env var)",
-                            "Упрощённый UI (без ручного ввода username/realm)",
-                            "Полная совместимость с Java 23 через JDBC Driver 13.2.0"
-                        ]
-                    },
-                    "version": "0.1.0.45",
-                    "documentation": "RELEASE-NOTES-0.1.0.45.md, docs/development/notes/chats/chat-resume/chat-resume-25-1224-kerberos-sso.md"
-                },
-                "database_native_libraries": {
-                    "description": "Нативные библиотеки для Windows Authentication (mssql-jdbc_auth.dll) - требуются только на Windows",
-                    "location": "code/femsq-backend/femsq-database/src/main/resources/com/microsoft/sqlserver/jdbc/auth/",
-                    "files": [
-                        "x64/mssql-jdbc_auth-12.8.1.x64.dll (305 KB)",
-                        "x86/mssql-jdbc_auth-12.8.1.x86.dll (248 KB)",
-                        "sqljdbc_auth.dll (для обратной совместимости)"
-                    ],
-                    "included_in_fat_jar": true,
-                    "extraction_path": "BOOT-INF/classes/native-libs/",
-                    "usage": "Автоматически извлекаются при сборке в fat JAR, загружаются при запуске на Windows для Windows Authentication. На Linux используются JavaKerberos с JAAS (без native библиотек)."
-                },
-                "api": "GraphQL",
-                "security": "не разрабатывается - безопасная внутренняя сеть организации",
-                "authentication": "без аутентификации пользователей",
-                "migrations": "Liquibase (встроенные в JAR)",
-                "monitoring": "Spring Boot Actuator"
-            },
-            "frontend": {
-                "framework": "Vue.js 3.4.21",
-                "language": "TypeScript 5.4.0",
-                "ui": "Quasar Framework 2.16.1",
-                "graphql": "Apollo Client",
-                "build": "Vite",
-                "maps": "Leaflet",
-                "routing": "Vue Router",
-                "state": "Pinia",
-                "serving": "Spring Boot Static Resources",
-                "deployment": "Встроен в Spring Boot JAR (единый артефакт)"
-            },
-            "reporting": {
-                "engine": "JasperReports 7.0.3",
-                "license": "LGPL v3",
-                "designer": "Jaspersoft Studio Community Edition (внешний инструмент)",
-                "template_format": "JRXML (XML-based)",
-                "output_formats": ["PDF", "Excel (XLS, XLSX)", "HTML", "CSV"],
-                "deployment": "Предкомпилированные .jasper + исходные .jrxml в JAR, внешние отчёты в ./reports/ (hot-reload)",
-                "deployment_strategy": {
-                    "method": "precompiled-reports",
-                    "description": "Отчёты компилируются в Jaspersoft Studio 7.0.3 и включаются в JAR как .jasper файлы. Исходные .jrxml также включаются для справки и доработки.",
-                    "artifacts_in_jar": {
-                        "types": [".jasper", ".jrxml", ".json"],
-                        "location": "BOOT-INF/classes/reports/embedded/",
-                        "standard_reports": ["my-new-report", "my-new-report-sr-ag"]
-                    },
-                    "external_reports": {
-                        "location": "./reports/external/",
-                        "priority": "выше встроенных отчётов"
-                    },
-                    "compilation": {
-                        "method": "manual",
-                        "tool": "Jaspersoft Studio 7.0.3",
-                        "reason": "Проблемы с компиляцией в Spring Boot nested JAR",
-                        "documentation": "docs/deployment/reports-deployment-strategy.md"
-                    }
-                },
-                "features": [
-                    "Динамические параметры отчётов",
-                    "Подотчёты (бесконечная вложенность)",
-                    "Графики и диаграммы",
-                    "Прямое подключение к MS SQL Server",
-                    "Загрузка предкомпилированных .jasper файлов",
-                    "Fallback на компиляцию .jrxml при отсутствии .jasper"
-                ],
-                "decision": "docs/project/decisions/adr-003-reporting-engine.md"
-            },
-            "infrastructure": {
-                "database": "MS SQL Server (внешняя)",
-                "monitoring": "Spring Boot Actuator",
-                "ai": "MCP Servers",
-                "deployment": "Spring Boot Fat JAR (Full-Stack: backend + frontend в едином JAR)",
-                "ci_cd": {
-                    "platform": "GitHub Actions",
-                    "workflow": ".github/workflows/ci.yml",
-                    "description": "Автоматический запуск тестов при PR и merge в main",
-                    "jobs": [
-                        {
-                            "name": "unit-tests",
-                            "trigger": "При каждом PR и push",
-                            "description": "Запуск unit-тестов"
-                        },
-                        {
-                            "name": "integration-tests",
-                            "trigger": "При merge в main или по требованию [test-integration]",
-                            "description": "Запуск integration-тестов с MS SQL Server в Docker"
-                        },
-                        {
-                            "name": "e2e-tests",
-                            "trigger": "При merge в main или по требованию [test-e2e]",
-                            "description": "Запуск E2E-тестов Playwright"
-                        },
-                        {
-                            "name": "code-coverage",
-                            "trigger": "При merge в main",
-                            "description": "Генерация отчетов о покрытии кода (JaCoCo)"
-                        }
-                    ]
-                },
-                "testing": {
-                    "framework": "JUnit 5",
-                    "unit_tests": {
-                        "tool": "Maven Surefire Plugin",
-                        "profile": "unit (по умолчанию)",
-                        "pattern": "**/*Test.java",
-                        "location": "src/test/java"
-                    },
-                    "integration_tests": {
-                        "tool": "Maven Failsafe Plugin",
-                        "profile": "integration",
-                        "pattern": "**/*IT.java, **/*IntegrationTest.java",
-                        "location": "src/test/java",
-                        "requirements": "Переменные FEMSQ_DB_*"
-                    },
-                    "e2e_tests": {
-                        "tool": "Playwright",
-                        "location": "code/femsq-frontend-q/tests/e2e",
-                        "requirements": "Запущенный backend на localhost:8080"
-                    },
-                    "coverage": {
-                        "tool": "JaCoCo",
-                        "profile": "ci",
-                        "reports": "target/site/jacoco/index.html",
-                        "minimum_coverage": "50%"
-                    },
-                    "scripts": {
-                        "location": "code/scripts/",
-                        "files": [
-                            "test-unit.sh",
-                            "test-integration.sh",
-                            "test-all.sh",
-                            "test-e2e.sh"
-                        ],
-                        "documentation": "code/scripts/README-TESTING.md"
-                    },
-                    "documentation": [
-                        "docs/development/notes/testing-strategy.md",
-                        "docs/development/notes/testing-recommendations.md",
-                        "docs/development/notes/testing-improvements-summary.md"
-                    ]
-                }
-            }
-        },
-        "deployment": {
-            "artifact": {
-            "type": "Spring Boot Fat JAR",
-            "description": "Единый исполняемый JAR файл содержит backend, frontend и все зависимости",
-            "size": "~50-55 MB (включая JasperReports ~15 MB)"
-            },
-            "jar_lifecycle": {
-                "description": "Двухэтапная стратегия развёртывания: fat JAR для первичной установки, thin JAR для обновлений",
-                "stages": {
-                    "stage1_build": {
-                    "type": "fat-jar",
-                    "command": "mvn clean package -DskipTests -pl femsq-backend/femsq-web -am",
-                    "output": "femsq-web-{version}.jar (~51 MB)",
-                        "contains": [
-                            "Все классы приложения",
-                            "Все внешние библиотеки (BOOT-INF/lib/)",
-                            "Нативные библиотеки (native-libs/)",
-                            "Фронтенд (static/)",
-                            "Встроенные отчёты (reports/embedded/)",
-                            "Метаданные библиотек (META-INF/lib-manifest.json)"
-                        ]
-                    },
-                    "stage2a_initial_deployment": {
-                        "scenario": "Первичная установка на чистой машине",
-                        "steps": [
-                            "Скопировать fat JAR на целевую машину",
-                            "Запустить: java -jar femsq-web-{version}.jar (или start.bat на Windows)",
-                            "При первом запуске автоматически создаются: native-libs/, reports/, logs/, temp/",
-                            "Библиотеки остаются внутри JAR"
-                        ]
-                    },
-                    "stage2b_update_deployment": {
-                        "scenario": "Обновление на машине с уже установленными библиотеками",
-                        "prerequisites": [
-                            "На целевой машине уже есть папка lib/ с библиотеками",
-                            "На целевой машине уже есть папка native-libs/ (если используется Windows Auth)"
-                        ],
-                        "steps": [
-                        "На машине разработчика: ./scripts/build-thin-jar.sh",
-                        "Скопировать только thin JAR (~700-800 KB) на целевую машину",
-                        "Запустить обновлённую версию с внешними библиотеками, используя Spring Boot 3.x JarLauncher, например:",
-                        "  - Linux: java -cp \"femsq-web-{version}-thin.jar:lib/*\" org.springframework.boot.loader.launch.JarLauncher",
-                        "  - Windows: см. docs/deployment/windows-deployment-guide.md (пример команды с -cp и JarLauncher или start.bat)",
-                        "Или использовать скрипт code/scripts/run-with-external-libs.sh",
-                        "При запуске автоматически проверяются: наличие библиотек, версии, целостность"
-                        ],
-                        "validation": {
-                            "automatic": true,
-                            "checks": [
-                                "Наличие всех required библиотек в lib/",
-                                "Совпадение версий femsq-* модулей с версией thin JAR",
-                                "Совместимость версий внешних библиотек (>= требуемой)",
-                                "Наличие native-libs/ (если требуется Windows Auth)"
-                            ],
-                            "on_failure": "Логирование ошибок, остановка запуска при критических несоответствиях"
-                        }
-                    }
-                },
-                    "library_metadata": {
-                    "file": "META-INF/lib-manifest.json",
-                    "format": "JSON",
-                    "contains": [
-                        "Информация о сборке (версия приложения, timestamp сборки, build number)",
-                        "Список всех библиотек из BOOT-INF/lib/ с версиями",
-                        "SHA-256 хэши для проверки целостности",
-                        "Флаги required/optional для каждой библиотеки"
-                    ],
-                    "generation": "Автоматически при сборке fat JAR классом com.femsq.web.build.LibManifestGenerator (exec-maven-plugin, фаза package) на основе содержимого BOOT-INF/lib/"
-                }
-            },
-            "runtime_structure": {
-                "working_directory": "Директория запуска приложения",
-                "external_directories": [
-                    {
-                        "path": "./reports/",
-                        "purpose": "Внешние шаблоны отчётов и ресурсы",
-                        "structure": {
-                            "custom/": "Пользовательские отчёты (JRXML + JSON метаданные)",
-                            "templates/": "Библиотека шаблонов организации",
-                            "assets/": "Ресурсы (логотипы, шрифты, изображения)",
-                            "cache/": "Кэш скомпилированных отчётов (.jasper файлы)"
-                        },
-                        "permissions": "read/write",
-                        "backup_required": true,
-                        "hot_reload": true,
-                        "scan_interval": "300 seconds",
-                        "priority": "Внешние отчёты имеют приоритет над встроенными"
-                    },
-                    {
-                        "path": "~/.femsq/",
-                        "purpose": "Конфигурация пользователя",
-                        "structure": {
-                            "database.properties": "Параметры подключения к БД",
-                            "application.properties": "Пользовательские настройки приложения"
-                        },
-                        "permissions": "read/write",
-                        "backup_required": true
-                    }
-                ],
-                "embedded_resources": {
-                    "reports": "resources/reports/embedded/ - базовые встроенные отчёты (fallback)",
-                    "frontend": "resources/static/ - Vue.js приложение",
-                    "migrations": "resources/db/changelog/ - Liquibase миграции"
-                }
-            },
-            "configuration": {
-                "files": [
-                    "application.yml - основная конфигурация Spring Boot",
-                    "application-dev.yml - профиль разработки",
-                    "application-prod.yml - production профиль"
-                ],
-                "overrides": [
-                    "~/.femsq/application.properties - пользовательские переопределения",
-                    "Environment variables - переменные окружения (FEMSQ_*)",
-                    "Command line arguments - аргументы командной строки"
-                ]
-            }
-        },
-        "features": {
-            "core": [
-                "Управление отношениями с контрагентами",
-                "CRM функциональность",
-                "Документооборот",
-                "Ревизии (аудит/проверка файлов Excel)",
-                "Управленческий финансовый учет"
-            ],
-            "advanced": [
-                "Автоматическая генерация документов (PDF, Excel, CSV)",
-                "Система отчетности",
-                "Кэширование и оптимизация"
-            ]
-        },
-        "modules": {
-            "description": "Структура модулей проекта FEMSQ",
-            "version": "1.0.0",
-            "lastUpdated": "2026-01-27",
-            "structure": {
-                "type": "recursive",
-                "entities": ["Module", "Component", "Class"],
-                "organization": "single_file",
-                "grouping": "artifact object for physical attributes"
-            },
-            "extensions": [
-                "docs/project/extensions/modules/modules.json"
-            ],
-            "diagrams": [
-                "docs/project/diagrams/database-module-classes.puml",
-                "docs/project/diagrams/components.puml",
-                "docs/project/diagrams/package-structure.puml"
-            ]
-        },
-        "database": {
-            "schema": "ags",
-            "test_schema": "ags_test",
-            "schemaManagement": "external",
-            "version": "1.0.0",
-            "engine": "MS SQL Server 2012+",
-            "target_version": "11.0.7507.2 (2012 SP4)",
-            "connection": {
-                "type": "external",
-                "driver": "com.microsoft.sqlserver.jdbc.SQLServerDriver",
-                "url_template": "jdbc:sqlserver://{host}:{port};databaseName=FishEye;encrypt=false;trustServerCertificate=true"
-            },
-            "tables": [
-                {
-                    "name": "contractors",
-                    "description": "Таблица контрагентов",
-                    "columns": [
-                        {
-                            "name": "id",
-                            "type": "UUID",
-                            "constraints": "PRIMARY KEY DEFAULT gen_random_uuid()"
-                        },
-                        {
-                            "name": "name",
-                            "type": "VARCHAR(255)",
-                            "constraints": "NOT NULL"
-                        },
-                        {
-                            "name": "legal_name",
-                            "type": "VARCHAR(255)",
-                            "constraints": "NULL"
-                        },
-                        {
-                            "name": "inn",
-                            "type": "VARCHAR(12)",
-                            "constraints": "UNIQUE NULL"
-                        },
-                        {
-                            "name": "kpp",
-                            "type": "VARCHAR(9)",
-                            "constraints": "NULL"
-                        },
-                        {
-                            "name": "email",
-                            "type": "VARCHAR(255)",
-                            "constraints": "NULL"
-                        },
-                        {
-                            "name": "phone",
-                            "type": "VARCHAR(50)",
-                            "constraints": "NULL"
-                        },
-                        {
-                            "name": "address",
-                            "type": "TEXT",
-                            "constraints": "NULL"
-                        },
-                        {
-                            "name": "coordinates",
-                            "type": "GEOMETRY(POINT, 4326)",
-                            "constraints": "NULL"
-                        },
-                        {
-                            "name": "status",
-                            "type": "VARCHAR(50)",
-                            "constraints": "NOT NULL DEFAULT 'active'"
-                        },
-                        {
-                            "name": "created_at",
-                            "type": "TIMESTAMP",
-                            "constraints": "NOT NULL DEFAULT NOW()"
-                        },
-                        {
-                            "name": "updated_at",
-                            "type": "TIMESTAMP",
-                            "constraints": "NOT NULL DEFAULT NOW()"
-                        }
-                    ],
-                    "indexes": [
-                        {
-                            "name": "idx_contractors_inn",
-                            "columns": [
-                                "inn"
-                            ],
-                            "type": "UNIQUE"
-                        },
-                        {
-                            "name": "idx_contractors_coordinates",
-                            "columns": [
-                                "coordinates"
-                            ],
-                            "type": "GIST"
-                        },
-                        {
-                            "name": "idx_contractors_status",
-                            "columns": [
-                                "status"
-                            ],
-                            "type": "BTREE"
-                        },
-                        {
-                            "name": "idx_contractors_name",
-                            "columns": [
-                                "name"
-                            ],
-                            "type": "BTREE"
-                        }
-                    ]
-                },
-                {
-                    "name": "users",
-                    "description": "Таблица пользователей системы",
-                    "columns": [
-                        {
-                            "name": "id",
-                            "type": "UUID",
-                            "constraints": "PRIMARY KEY DEFAULT gen_random_uuid()"
-                        },
-                        {
-                            "name": "username",
-                            "type": "VARCHAR(100)",
-                            "constraints": "UNIQUE NOT NULL"
-                        },
-                        {
-                            "name": "email",
-                            "type": "VARCHAR(255)",
-                            "constraints": "UNIQUE NOT NULL"
-                        },
-                        {
-                            "name": "password_hash",
-                            "type": "VARCHAR(255)",
-                            "constraints": "NOT NULL"
-                        },
-                        {
-                            "name": "first_name",
-                            "type": "VARCHAR(100)",
-                            "constraints": "NULL"
-                        },
-                        {
-                            "name": "last_name",
-                            "type": "VARCHAR(100)",
-                            "constraints": "NULL"
-                        },
-                        {
-                            "name": "role",
-                            "type": "VARCHAR(50)",
-                            "constraints": "NOT NULL DEFAULT 'USER'"
-                        },
-                        {
-                            "name": "is_active",
-                            "type": "BOOLEAN",
-                            "constraints": "NOT NULL DEFAULT true"
-                        },
-                        {
-                            "name": "created_at",
-                            "type": "TIMESTAMP",
-                            "constraints": "NOT NULL DEFAULT NOW()"
-                        },
-                        {
-                            "name": "updated_at",
-                            "type": "TIMESTAMP",
-                            "constraints": "NOT NULL DEFAULT NOW()"
-                        }
-                    ],
-                    "indexes": [
-                        {
-                            "name": "idx_users_username",
-                            "columns": [
-                                "username"
-                            ],
-                            "type": "UNIQUE"
-                        },
-                        {
-                            "name": "idx_users_email",
-                            "columns": [
-                                "email"
-                            ],
-                            "type": "UNIQUE"
-                        },
-                        {
-                            "name": "idx_users_role",
-                            "columns": [
-                                "role"
-                            ],
-                            "type": "BTREE"
-                        }
-                    ]
-                }
-            ],
-            "notes": "Схема ags поддерживается существующей БД; тестовая схема ags_test содержит копии таблиц для интеграционных тестов (og, ogAg).",
-            "migrations": [
-                {
-                    "version": "001",
-                    "description": "Initial schema creation",
-                    "file": "001-initial-schema.xml",
-                    "status": "planned",
-                    "changes": [
-                        "Create contractors table",
-                        "Create users table",
-                        "Create basic indexes"
-                    ]
-                },
-                {
-                    "version": "002",
-                    "description": "Add additional tables for CRM functionality",
-                    "file": "002-crm-tables.xml",
-                    "status": "planned",
-                    "changes": [
-                        "Create documents table",
-                        "Create contracts table",
-                        "Add relationships between contractors and documents"
-                    ]
-                }
-            ],
-            "extensions": [
-                "docs/project/extensions/database/connection-config.json",
-                "docs/project/extensions/database/authentication-methods.json",
-                "docs/project/extensions/database/migration-config.json",
-                "docs/project/extensions/database/compatibility.json"
-            ]
-        },
-        "development": {
-            "setup": {
-                "prerequisites": [
-                    "Java 21 LTS",
-                    "MS SQL Server (корпоративный или локальный)",
-                    "Maven 3.9+",
-                    "Git"
-                ],
-                "scripts": {
-                    "dev": {
-                        "command": "mvn spring-boot:run",
-                        "description": "Запуск в режиме разработки",
-                        "location": "code/femsq-backend",
-                        "usage": "Локальная разработка с встроенной формой настройки"
-                    },
-                    "build": {
-                        "command": "mvn clean package",
-                        "description": "Сборка единого Full-Stack JAR-файла (backend + frontend)",
-                        "location": "code",
-                        "usage": "Создание production-ready JAR файла с встроенным frontend. Frontend собирается автоматически через frontend-maven-plugin."
-                    },
-                    "run": {
-                        "command": "java -jar target/femsq-{version}.jar",
-                        "description": "Запуск готового JAR-файла",
-                        "location": "code/femsq-backend",
-                        "usage": "Production запуск с внешней БД"
-                    },
-                    "test": {
-                        "command": "mvn test",
-                        "description": "Запуск unit-тестов (быстро, не требует БД)",
-                        "location": "code/femsq-backend",
-                        "usage": "Быстрое тестирование кода"
-                    },
-                    "testUnit": {
-                        "command": "./code/scripts/test-unit.sh",
-                        "description": "Запуск unit-тестов через скрипт",
-                        "location": "project root",
-                        "usage": "Удобный запуск unit-тестов"
-                    },
-                    "testIntegration": {
-                        "command": "./code/scripts/test-integration.sh",
-                        "description": "Запуск integration-тестов (требует переменные FEMSQ_DB_*)",
-                        "location": "project root",
-                        "usage": "Тестирование с реальной БД"
-                    },
-                    "testAll": {
-                        "command": "./code/scripts/test-all.sh",
-                        "description": "Запуск всех тестов (unit + integration)",
-                        "location": "project root",
-                        "usage": "Полная проверка перед коммитом"
-                    },
-                    "testE2E": {
-                        "command": "./code/scripts/test-e2e.sh",
-                        "description": "Запуск E2E-тестов Playwright (требует запущенный backend)",
-                        "location": "project root",
-                        "usage": "Тестирование UI через браузер"
-                    },
-                    "testWithCoverage": {
-                        "command": "mvn test -Pci",
-                        "description": "Запуск unit-тестов с генерацией отчета о покрытии кода",
-                        "location": "code/femsq-backend",
-                        "usage": "Анализ покрытия кода тестами"
-                    },
-                    "setJavaHome": {
-                        "command": "source code/scripts/setup-java-home.sh",
-                        "description": "Определяет JAVA_HOME на основе установленного JDK",
-                        "location": "project root",
-                        "usage": "Подготовка окружения перед запуском Maven"
-                    },
-                    "seedTestData": {
-                        "command": "/opt/mssql-tools/bin/sqlcmd -S localhost,1433 -U sa -P $FEMSQ_DB_PASSWORD -i code/config/sql/ags_test_seed.sql",
-                        "description": "Создаёт тестовые таблицы ags_test.og/ogAg и наполняет их данными",
-                        "location": "project root",
-                        "usage": "Подготовка тестовой базы перед интеграционными тестами"
-                    }
-                },
-                "repositoryStructure": [
-                    {
-                        "path": "code/femsq-backend",
-                        "description": "Backend на Spring Boot и подмодули (database, web)"
-                    },
-                    {
-                        "path": "code/femsq-frontend-q",
-                        "description": "Frontend на Vue.js + Quasar"
-                    },
-                    {
-                        "path": "code/scripts",
-                        "description": "Папка для вспомогательных скриптов разработки и автоматизации"
-                    },
-                    {
-                        "path": "code/config",
-                        "description": "Конфигурационные шаблоны и параметры окружения"
-                    }
-                ],
-                "environmentVariables": [
-                    {
-                        "name": "FEMSQ_DB_PASSWORD",
-                        "scope": "local",
-                        "description": "Пароль пользователя MS SQL Server для интеграционных тестов и ConnectionFactory",
-                        "storage": "экспорт в shell / менеджер секретов, не хранить в репозитории"
-                    },
-                    {
-                        "name": "FEMSQ_DB_HOST",
-                        "scope": "optional",
-                        "description": "Хост MS SQL Server (по умолчанию localhost)",
-                        "storage": "настройка через shell"
-                    },
-                    {
-                        "name": "FEMSQ_DB_PORT",
-                        "scope": "optional",
-                        "description": "Порт MS SQL Server (по умолчанию 1433)",
-                        "storage": "настройка через shell"
-                    },
-                    {
-                        "name": "FEMSQ_DB_NAME",
-                        "scope": "optional",
-                        "description": "Имя базы данных (по умолчанию FishEye)",
-                        "storage": "настройка через shell"
-                    },
-                    {
-                        "name": "FEMSQ_DB_USER",
-                        "scope": "optional",
-                        "description": "Пользователь базы данных для режима credentials (по умолчанию sa)",
-                        "storage": "настройка через shell"
-                    },
-                    {
-                        "name": "FEMSQ_DB_AUTH_MODE",
-                        "scope": "optional",
-                        "description": "Режим аутентификации (credentials/windows-integrated/kerberos)",
-                        "storage": "настройка через shell"
-                    }
-                ]
-            },
-            "environments": {
-                "description": "Машины разработки с приоритетом автодетекции. nb-win: Windows 11 + WSL2 Ubuntu, Docker (femsq-mssql), Hyper-V ВМ w10-26-0310 для Access/Excel. user-pc-ubuntu: аналог (User-PC). alex-fedora: Fedora с локальным MS SQL Server.",
-                "check_order": [
-                    "nb-win",
-                    "user-pc-ubuntu",
-                    "alex-fedora"
-                ],
-                "machines": {
-                    "nb-win": {
-                        "name": "nb-win (Windows 11 + WSL2 + Hyper-V)",
-                        "hostname_pattern": "^(?i)nb-win$",
-                        "os_pattern": ".*Linux.*|.*Ubuntu.*|.*WSL.*",
-                        "priority": 0,
-                        "host": {
-                            "hostname": "nb-win",
-                            "username": "alex",
-                            "os": "WSL2",
-                            "distribution": "Ubuntu 24.04",
-                            "description": "Windows 11 (хост nb-win); проект в WSL2, Docker Desktop на хосте; Hyper-V ВМ w10-26-0310 для MS Office 2013 (Access/Excel) и работы с действующей Access-системой"
-                        },
-                        "database": {
-                            "type": "docker",
-                            "container_name": "femsq-mssql",
-                            "host": "localhost",
-                            "port": 1433,
-                            "database": "FishEye",
-                            "username": "sa",
-                            "password": "kolob_OK1",
-                            "connection_string": "sqlserver://sa:kolob_OK1@localhost:1433/FishEye?sslmode=disable&encrypt=false&trustServerCertificate=true",
-                            "check_commands": {
-                                "container_status": "docker ps --filter name=femsq-mssql --format '{{.Status}}'",
-                                "port_check": "timeout 2 bash -c 'cat < /dev/null > /dev/tcp/localhost/1433' 2>&1"
-                            },
-                            "note": "Docker контейнер на Windows-хосте, доступен из WSL через localhost:1433; из гостевой ВМ Hyper-V (w10-26-0310) — по имени хоста nb-win,1433"
-                        },
-                        "dbhub": {
-                            "type": "local",
-                            "path": ".cursor/dbhub",
-                            "package": "@bytebase/dbhub",
-                            "version": "latest",
-                            "install_command": "npm install @bytebase/dbhub --prefix .cursor/dbhub",
-                            "entry_point": ".cursor/dbhub/node_modules/@bytebase/dbhub/dist/index.js"
-                        },
-                        "access_excel_vm": {
-                            "description": "ВМ Hyper-V для действующей Access/Excel системы (подготовка к импорту из Excel)",
-                            "vm_name": "w10-26-0310",
-                            "disk_path": "D:\\Program_Files\\vm\\hyper-v\\w10-26-0310\\disk0.vhdx",
-                            "office": "Microsoft Office профессиональный плюс 2013 (Access, Excel)",
-                            "odbc_dsn": "FishEye (ODBC Driver 17 for SQL Server), подключение к хосту nb-win,1433",
-                            "notes": "Вход в ВМ по RDP (mstsc); связи Access с сохранением пароля; формы и таблицы отображают данные FishEye из Docker"
-                        },
-                        "notes": "VMware удалена из-за конфликта с Cursor AI; используется Вариант A (Hyper-V). План: docs/development/notes/chats/chat-plan/chat-plan-26-0310.md"
-                    },
-                    "user-pc-ubuntu": {
-                        "name": "User-PC / WSL Ubuntu",
-                        "hostname_pattern": "^(?i)User-PC$",
-                        "os_pattern": ".*Linux.*|.*Ubuntu.*|.*WSL.*",
-                        "priority": 0,
-                        "host": {
-                            "hostname": "User-PC",
-                            "username": "alex",
-                            "os": "WSL2",
-                            "distribution": "Ubuntu 24.04",
-                            "description": "Windows с WSL2 Ubuntu; проект в WSL, Docker на Windows-хосте"
-                        },
-                        "database": {
-                            "type": "docker",
-                            "container_name": "vuege-mssql",
-                            "host": "localhost",
-                            "port": 1433,
-                            "database": "FishEye",
-                            "username": "sa",
-                            "password": "kolob_OK1",
-                            "connection_string": "sqlserver://sa:kolob_OK1@localhost:1433/FishEye?sslmode=disable&encrypt=false&trustServerCertificate=true",
-                            "check_commands": {
-                                "container_status": "docker ps --filter name=vuege-mssql --format '{{.Status}}'",
-                                "port_check": "timeout 2 bash -c 'cat < /dev/null > /dev/tcp/localhost/1433' 2>&1"
-                            },
-                            "note": "Docker контейнер запущен на Windows-хосте, доступен из WSL через localhost:1433"
-                        },
-                        "dbhub": {
-                            "type": "local",
-                            "path": ".cursor/dbhub",
-                            "package": "@bytebase/dbhub",
-                            "version": "latest",
-                            "install_command": "npm install @bytebase/dbhub --prefix .cursor/dbhub",
-                            "entry_point": ".cursor/dbhub/node_modules/@bytebase/dbhub/dist/index.js"
-                        },
-                        "notes": "Проект расположен в WSL; Docker на Windows-хосте доступен через localhost. Доступ к приложению из браузера Windows по http://localhost:8080"
-                    },
-                    "alex-fedora": {
-                        "name": "Основная рабочая машина (Fedora)",
-                        "hostname_pattern": "^(?i)fedora$|.*alex-fedora.*",
-                        "os_pattern": ".*Linux.*|.*Fedora.*",
-                        "priority": 1,
-                        "host": {
-                            "hostname": "fedora",
-                            "username": "alex",
-                            "os": "linux",
-                            "distribution": "Fedora 43",
-                            "description": "Основная рабочая машина"
-                        },
-                        "database": {
-                            "type": "local_service",
-                            "host": "localhost",
-                            "port": 1433,
-                            "database": "FishEye",
-                            "username": "sa",
-                            "password": "kolob_OK1",
-                            "connection_string": "sqlserver://sa:kolob_OK1@localhost:1433/FishEye?sslmode=disable&encrypt=false&trustServerCertificate=true",
-                            "check_commands": {
-                                "port_check": "timeout 2 bash -c 'cat < /dev/null > /dev/tcp/localhost/1433' 2>&1"
-                            },
-                            "note": "MS SQL Server работает как локальная служба на localhost:1433"
-                        },
-                        "dbhub": {
-                            "type": "shared",
-                            "path": "/home/alex/projects/java/spring/vue/fevue/dbhub",
-                            "package": "@bytebase/dbhub",
-                            "version": "latest",
-                            "install_command": "n/a (используется существующая установка в fevue)",
-                            "entry_point": "/home/alex/projects/java/spring/vue/fevue/dbhub/dist/index.js",
-                            "lastChecked": "2025-11-17",
-                            "status": "linked",
-                            "notes": "Используется общая установка DBHub из проекта fevue; проверено node .../fevue/dbhub/dist/index.js --version с DSN sqlserver://sa:***@localhost:1433/FishEye – соединение успешно после исправления имени базы (FishEye)."
-                        },
-                        "notes": "Fedora без WSL; MS SQL Server работает как локальная служба на localhost:1433"
-                    }
-                },
-                "detection": {
-                    "method": "auto",
-                    "fallback": "ask_user",
-                    "checks": [
-                        "hostname",
-                        "os",
-                        "wsl_presence",
-                        "database_container"
-                    ]
-                }
-            },
-            "standards": {
-                "codeStyle": "Google Java Style + ESLint/Prettier",
-                "gitFlow": "GitHub Flow",
-                "testing": "JUnit 5 + Vue Test Utils",
-                "documentation": "JSON + Markdown + ADR",
-                "api": "GraphQL-first"
-            }
-        },
-        "deployment": {
-            "strategy": "Единый JAR-файл с веб-интерфейсом настройки БД",
-            "architecture": {
-                "type": "monolithic",
-                "deployment_type": "fat-jar-corporate-network"
-            },
-            "environments": {
-                "frontend": "http://localhost:8080 (встроенный в JAR, подтверждено 2025-11-14)",
-                "backend": "http://localhost:8080",
-                "api": "http://localhost:8080/api/v1",
-                "graphql": "http://localhost:8080/graphql",
-                "note": "Frontend и backend работают на одном порту (8080), единый JAR-файл"
-            },
-            "configuration": {
-                "jar_name": "femsq-{version}.jar",
-                "startup_command": "java -jar femsq-{version}.jar"
-            },
-            "extensions": [
-                "docs/project/extensions/deployment/deployment-config.json",
-                "docs/project/extensions/deployment/environments.json",
-                "docs/project/extensions/deployment/security-config.json"
-            ]
-        },
-        
-        "ui": {
-            "setup_interface": {
-                "url": "/setup",
-                "title": "Настройка подключения к базе данных FEMSQ",
-                "description": "Веб-интерфейс для настройки подключения к MS SQL Server"
-            },
-            "main_application": {
-                "url": "/",
-                "title": "FEMSQ - Система работы с контрагентами"
-            },
-            "extensions": [
-                "docs/project/extensions/ui/setup-forms.json",
-                "docs/project/extensions/ui/status-pages.json",
-                "docs/project/extensions/ui/user-experience.json"
-            ]
-        },
-        
-        "network": {
-            "type": "controlled_corporate_network",
-            "authentication_methods": [
-                "integrated_security",
-                "trusted_connection",
-                "username_password"
-            ],
-            "extensions": [
-                "docs/project/extensions/network/corporate-network.json",
-                "docs/project/extensions/network/connection-detection.json"
-            ]
-        },
-        
-        "security": {
-            "scope": "internal_secure_network",
-            "description": "Проект предназначен для работы в безопасной внутренней сети организации",
-            "user_authentication": "не требуется",
-            "data_encryption": "не требуется",
-            "password_encryption": "не требуется (хранение в plain text допустимо)",
-            "network_security": "обеспечивается инфраструктурой организации",
-            "assumptions": [
-                "Приложение работает в защищенной корпоративной сети",
-                "Доступ к серверу БД ограничен на уровне сети",
-                "Пользователи имеют доверенный доступ",
-                "Файлы конфигурации защищены правами ОС (chmod 600)"
-            ]
-        },
-        
-        "monitoring": {
-            "health_checks": true,
-            "logging": {
-                "type": "file-rotation",
-                "structure": {
-                    "application": "logs/app_ГГММДД-ЧЧММ.log",
-                    "formatted": "logs/spring-boot_now.log",
-                    "connections": "logs/connections_ГГММДД-ЧЧММ.log"
-                },
-                "documentation": "LOGGING-GUIDE.md",
-                "note": "Дублирование устранено в v0.1.0.45 (удалён femsq-nohup.log)",
-                "optimization": "v0.1.0.45"
-            },
-            "backup": "daily-database",
-            "extensions": [
-                "docs/project/extensions/monitoring/logging-config.json",
-                "docs/project/extensions/monitoring/health-checks.json"
-            ]
-        },
-        "timeline": {
-            "phases": [
-                {
-                    "name": "Phase 1: Foundation",
-                    "duration": "2 weeks",
-                    "startDate": "2025-01-27",
-                    "tasks": [
-                        "Настройка инфраструктуры",
-                        "Базовая архитектура Backend",
-                        "Базовая архитектура Frontend",
-                        "Настройка БД и миграций",
-                        "Создание JSON-документации"
-                    ],
-                    "status": "in_progress",
-                    "progress": 20
-                },
-                {
-                    "name": "Phase 2: Core Features",
-                    "duration": "4 weeks",
-                    "startDate": "2025-02-10",
-                    "tasks": [
-                        "Модуль управления отношениями с контрагентами",
-                        "Система аутентификации",
-                        "Базовый UI/UX",
-                        "API интеграция Frontend-Backend"
-                    ],
-                    "status": "planned",
-                    "progress": 0
-                },
-                {
-                    "name": "Phase 3: Advanced Features",
-                    "duration": "3 weeks",
-                    "startDate": "2025-03-10",
-                    "tasks": [
-                        "ГИС-аналитика",
-                        "Документооборот",
-                        "Система уведомлений",
-                        "Интеграции с внешними API"
-                    ],
-                    "status": "planned",
-                    "progress": 0
-                }
-            ]
-        },
-        "quality": {
-            "lastUpdated": "2025-11-17",
-            "checkpoints": [
-                {
-                    "id": "K1",
-                    "name": "Контрольная точка K1 - Backend API",
-                    "date": "2025-11-11",
-                    "status": "completed",
-                    "description": "Backend REST/GraphQL API подтверждён интеграционным тестом ApiOrganizationsSuccessIT и ручной проверкой через временный database.properties.",
-                    "verification": {
-                        "automatedTests": [
-                            "ApiOrganizationsSuccessIT (Spring Boot, JUnit 5)"
-                        ],
-                        "manualSteps": [
-                            "GET /api/v1/organizations",
-                            "GET /api/v1/agents",
-                            "POST /graphql { organizations { ogKey ogName } }"
-                        ]
-                    },
-                    "links": {
-                        "projectDocsRefs": [
-                            "module:backend.web",
-                            "component:backend.web.api.rest",
-                            "component:backend.web.api.graphql"
-                        ],
-                        "developmentTasks": [
-                            "task:0017"
-                        ],
-                        "journalRefs": [
-                            "log:log-2025-11-11-001"
-                        ]
-                    }
-                }
-            ],
-            "tests": [
-                {
-                    "name": "ApiOrganizationsSuccessIT",
-                    "type": "integration",
-                    "scope": [
-                        "REST /api/v1/organizations",
-                        "REST /api/v1/agents",
-                        "GraphQL organizations query"
-                    ],
-                    "environment": "Схема ags_test, временный каталог user.home с database.properties",
-                    "automation": "JUnit 5 @SpringBootTest + TestRestTemplate",
-                    "manualMode": {
-                        "enabled": true,
-                        "timeoutMinutes": 3,
-                        "stopFile": "/tmp/femsq-api-stop"
-                    },
-                    "links": {
-                        "source": "code/femsq-backend/femsq-web/src/test/java/com/femsq/web/api/rest/ApiOrganizationsSuccessIT.java",
-                        "journalRefs": [
-                            "log:log-2025-11-11-001"
-                        ],
-                        "developmentTasks": [
-                            "task:0017"
-                        ]
-                    }
-                }
-            ]
-        },
-        "risks": [
-            {
-                "id": "R001",
-                "description": "Сложность интеграции с внешними API",
-                "probability": "medium",
-                "impact": "high",
-                "mitigation": "Поэтапная интеграция с тестированием",
-                "status": "monitoring"
-            },
-            {
-                "id": "R002",
-                "description": "Производительность при работе с большими объемами данных",
-                "probability": "low",
-                "impact": "medium",
-                "mitigation": "Оптимизация запросов и кэширование",
-                "status": "monitoring"
-            }
-        ],
-        "problems": [
-            {
-                "id": "P-2025-11-16-001",
-                "title": "Spring GraphQL: нестабильность интеграционных тестов (404 при запуске всего модуля)",
-                "status": "known_issue",
-                "discovered": "2025-11-15",
-                "lastUpdated": "2025-11-17",
-                "modules": [
-                    "femsq-backend/femsq-web"
-                ],
-                "scope": [
-                    "Интеграционные тесты GraphQL",
-                    "Spring Boot 3.4.5",
-                    "Spring GraphQL 1.3.5"
-                ],
-                "description": "GraphQL endpoint стабильно работает в production и при изолированном запуске тестового класса, но при запуске всех интеграционных тестов модуля возвращает 404 (endpoint не регистрируется). Проблема воспроизводится независимо от задержек/ретраев и аннотаций изоляции контекста.",
-                "reproduction": [
-                    "mvn -Pintegration -pl femsq-backend/femsq-web verify",
-                    "Падает тест GraphQL: 404 после нескольких ретраев"
-                ],
-                "attemptedSolutions": [
-                    "@DirtiesContext (BEFORE_CLASS/AFTER_CLASS/AFTER_EACH_TEST_METHOD) — не помогло",
-                    "Задержка 2с + 10 ретраев по 1с — не помогло",
-                    "Изменение порядка выполнения (имя класса, @Order) — Maven Failsafe игнорирует порядок",
-                    "Вынос теста в отдельный класс и модуль — в модуле возникли конфликты зависимостей Spring (BeanFactoryInitializer)"
-                ],
-                "currentWorkaround": "Тесты GraphQL отключены (@Disabled) в модуле femsq-web. Функциональность GraphQL подтверждена вручную и изолированными запусками.",
-                "impact": {
-                    "severity": "medium",
-                    "areas": ["интеграционные тесты GraphQL"],
-                    "notes": "Не влияет на production, но снижает автоматизированное покрытие GraphQL."
-                },
-                "recommendations": [
-                    "Добавить slice-тесты @GraphQlTest для контроллера OgGraphqlController",
-                    "Рассмотреть отдельный тестовый модуль только для GraphQL с корректной компоновкой зависимостей",
-                    "Отслеживать обновления Spring Boot/GraphQL и перепроверять проблему при следующем обновлении",
-                    "Альтернатива: E2E-проверка GraphQL через Playwright на живом приложении"
-                ],
-                "links": {
-                    "plan": "docs/development/notes/chats/chat-plan/chat-plan-25-1115.md",
-                    "tests": [
-                        "code/femsq-backend/femsq-web/src/test/java/com/femsq/web/api/rest/ApiOrganizationsSuccessIT.java",
-                        "code/femsq-backend/femsq-web/src/test/java/com/femsq/web/api/graphql/AGraphqlOrganizationsIT.java"
-                    ],
-                    "commits": [],
-                    "issues": []
-                }
-            }
-        ],
-        "resources": {
-            "team": [
-                {
-                    "role": "Full-stack Developer",
-                    "name": "Александр",
-                    "responsibilities": [
-                        "Backend",
-                        "Frontend",
-                        "DevOps",
-                        "Database",
-                        "Architecture"
-                    ],
-                    "skills": [
-                        "Java",
-                        "Vue.js",
-                        "MS SQL Server",
-                        "GraphQL"
-                    ]
-                }
-            ],
-            "budget": {
-                "development": "0 (open-source)",
-                "hosting": "estimated $50/month",
-                "tools": "0 (free tools)",
-                "total": "estimated $50/month"
-            },
-            "tools": [
-                "Cursor",
-                "GitHub"
-            ],
-            "documentation": {
-                "main": "docs",
-                "journal": "docs/journal/project-journal.json"
-            }
-        },
-        "reports": {
-            "description": "Система отчётов JasperReports",
-            "categories": [
-                {
-                    "id": "sample",
-                    "name": "Примеры",
-                    "description": "Примеры отчётов для тестирования",
-                    "reportCount": 2,
-                    "created": "2025-11-24"
-                },
-                {
-                    "id": "mstrg",
-                    "name": "Капитальное строительство",
-                    "description": "Отчёты по мониторингу и контролю капитального строительства",
-                    "reportCount": 1,
-                    "created": "2025-12-05"
-                }
-            ],
-            "implemented": [
-                {
-                    "id": "report:my-new-report",
-                    "name": "Пример отчёта с подотчётом",
-                    "category": "sample",
-                    "description": "Пример отчёта для демонстрации возможностей JasperReports",
-                    "status": "completed",
-                    "priority": "low",
-                    "created": "2025-11-24",
-                    "lastModified": "2025-11-24",
-                    "version": "1.0.0"
-                },
-                {
-                    "id": "report:mstrgAg_23_Branch_q2m_2408_25",
-                    "name": "Исполнение плана капитального строительства",
-                    "category": "mstrg",
-                    "description": "Отчёт по исполнению плана капитального строительства по отдельным программам и подразделениям",
-                    "status": "completed",
-                    "priority": "high",
-                    "created": "2025-12-05",
-                    "lastModified": "2025-12-16",
-                    "version": "1.0.0",
-                    "files": {
-                        "jrxml": "code/femsq-backend/femsq-reports/src/main/resources/reports/embedded/mstrgAg_23_Branch_q2m_2408_25.jrxml",
-                        "metadata": "code/femsq-backend/femsq-reports/src/main/resources/reports/embedded/mstrgAg_23_Branch_q2m_2408_25.json",
-                        "documentation": "docs/development/technical/reports/mstrgAg_23_Branch_q2m_2408_25.md"
-                    },
-                    "dataSource": {
-                        "table": "ags.spMstrg_2408_ResultSet5",
-                        "procedure": "ags.spMstrg_2408",
-                        "recordCount": 32,
-                        "columnCount": 44
-                    },
-                    "parameters": [
-                        {
-                            "name": "ipgCh",
-                            "type": "integer",
-                            "required": true,
-                            "description": "Код инвестиционной программы"
-                        },
-                        {
-                            "name": "MounthEndDate",
-                            "type": "date",
-                            "required": true,
-                            "description": "Дата окончания периода"
-                        }
-                    ],
-                    "formats": ["pdf", "xlsx", "html"],
-                    "features": [
-                        "Условное форматирование (чередование серый/белый, оранжевый для итогов)",
-                        "Трёхуровневые заголовки столбцов",
-                        "Цветовое кодирование по типам (агентская/инвестиционная/укупорка)",
-                        "Группировка по схемам реализации",
-                        "A3 Landscape формат"
-                    ],
-                    "migration": {
-                        "source": "MS Access",
-                        "originalReport": "mstrgAg_23_Branch_q2m_2408_25",
-                        "migrationDate": "2025-12-05",
-                        "status": "completed",
-                        "notes": "Базовая версия (~40% детализации), полностью функциональна"
-                    },
-                    "relatedTasks": ["task:0038"],
-                    "relatedDocuments": [
-                        "docs/development/notes/analysis/access-report-mstrgAg-23-analysis.md",
-                        "docs/development/notes/chats/chat-plan/chat-plan-25-1205-jasper-report-mstrg.md"
-                    ]
-                }
-            ],
-            "statistics": {
-                "totalReports": 3,
-                "byCategory": {
-                    "sample": 2,
-                    "mstrg": 1
-                },
-                "byStatus": {
-                    "completed": 3,
-                    "inProgress": 0
-                },
-                "byFormat": {
-                    "pdf": 3,
-                    "xlsx": 2,
-                    "html": 2
-                }
-            }
-        },
-        "development": {
-            "milestones": [
-                {
-                    "id": "milestone:report-mstrg-01",
-                    "name": "Первый отчёт по капитальному строительству",
-                    "description": "Реализация отчёта mstrgAg_23_Branch_q2m_2408_25 (миграция из Access)",
-                    "status": "completed",
-                    "completedDate": "2025-12-16",
-                    "relatedTasks": ["task:0038"],
-                    "achievements": [
-                        "Миграция отчёта из MS Access в JasperReports",
-                        "Реализация условного форматирования через фоновые прямоугольники",
-                        "Интеграция с Backend API и Frontend",
-                        "Настройка логирования с временными метками",
-                        "Создание Desktop инструментов управления"
-                    ]
-                }
-            ]
-        }
-    },
+  "project": {
     "metadata": {
-        "version": "1.3.0",
-        "lastUpdated": "2026-03-18",
-        "updatedBy": "Александр",
-        "updateReason": "Актуализация после миграции домена ревизий (RA) на GraphQL (Spring GraphQL) и перехода фронтенда на Apollo Client, устранения доменного REST в src/api и сторах (кроме осознанных технических/бинарных REST-исключений), а также финальной сборки/деплоя и ручной проверки; версия приложения 0.1.0.90-SNAPSHOT."
+      "name": "FEMSQ",
+      "version": "1.0.0",
+      "description": "Cистема работы с контрагентами и объектами при капитальном строительстве на основе БД MS SQL Server FEMSQ (Fish Eye MS SQL Server)",
+      "author": "Александр",
+      "created": "2025-10-08",
+      "lastUpdated": "2026-03-18",
+      "status": "in_progress",
+      "repository": "https://github.com/bondalen/femsq.git",
+      "license": "MIT",
+      "keywords": [
+        "crm",
+        "contractors",
+        "management"
+      ],
+      "documentationRules": "docs/project-documentation-rules.md"
+    },
+    "architecture": {
+      "type": "full-stack",
+      "pattern": "modular-monolith",
+      "pattern_decision": "docs/decisions/007-modular-monolith-pattern.md",
+      "notes": "Приложение работает с уже существующей БД FishEye; создание или миграция схем выполняется сторонними процедурами (DBA).",
+      "backend": {
+        "framework": "Spring Boot 3.4.5",
+        "language": "Java 21 LTS (совместимо с Java 23)",
+        "database": "MS SQL Server (внешняя)",
+        "database_driver": "Microsoft SQL Server JDBC Driver 13.x",
+        "database_driver_version": "13.2.0.jre11",
+        "database_authentication": {
+          "windows": {
+            "method": "Windows SSPI (Kerberos/NTLM auto-select)",
+            "description": "Автоматический выбор лучшего метода аутентификации на Windows",
+            "requires_native_libs": true
+          },
+          "linux": {
+            "method": "JavaKerberos with JAAS",
+            "description": "True Single Sign-On - автоматическое определение principal из ticket cache через detectKerberosPrincipal()",
+            "requires_native_libs": false,
+            "implementation": "WindowsIntegratedAuthenticationProvider.detectKerberosPrincipal()",
+            "features": [
+              "Автоматическое определение Kerberos principal из ticket cache",
+              "3 стратегии fallback (JAAS LoginContext → krb5.conf → env var)",
+              "Упрощённый UI (без ручного ввода username/realm)",
+              "Полная совместимость с Java 23 через JDBC Driver 13.2.0"
+            ]
+          },
+          "version": "0.1.0.45",
+          "documentation": "RELEASE-NOTES-0.1.0.45.md, docs/development/notes/chats/chat-resume/chat-resume-25-1224-kerberos-sso.md"
+        },
+        "database_native_libraries": {
+          "description": "Нативные библиотеки для Windows Authentication (mssql-jdbc_auth.dll) - требуются только на Windows",
+          "location": "code/femsq-backend/femsq-database/src/main/resources/com/microsoft/sqlserver/jdbc/auth/",
+          "files": [
+            "x64/mssql-jdbc_auth-12.8.1.x64.dll (305 KB)",
+            "x86/mssql-jdbc_auth-12.8.1.x86.dll (248 KB)",
+            "sqljdbc_auth.dll (для обратной совместимости)"
+          ],
+          "included_in_fat_jar": true,
+          "extraction_path": "BOOT-INF/classes/native-libs/",
+          "usage": "Автоматически извлекаются при сборке в fat JAR, загружаются при запуске на Windows для Windows Authentication. На Linux используются JavaKerberos с JAAS (без native библиотек)."
+        },
+        "api": "GraphQL",
+        "security": "не разрабатывается - безопасная внутренняя сеть организации",
+        "authentication": "без аутентификации пользователей",
+        "migrations": "Liquibase (встроенные в JAR)",
+        "monitoring": "Spring Boot Actuator"
+      },
+      "frontend": {
+        "framework": "Vue.js 3.4.21",
+        "language": "TypeScript 5.4.0",
+        "ui": "Quasar Framework 2.16.1",
+        "graphql": "Apollo Client",
+        "build": "Vite",
+        "maps": "Leaflet",
+        "routing": "Vue Router",
+        "state": "Pinia",
+        "serving": "Spring Boot Static Resources",
+        "deployment": "Встроен в Spring Boot JAR (единый артефакт)"
+      },
+      "reporting": {
+        "engine": "JasperReports 7.0.3",
+        "license": "LGPL v3",
+        "designer": "Jaspersoft Studio Community Edition (внешний инструмент)",
+        "template_format": "JRXML (XML-based)",
+        "output_formats": [
+          "PDF",
+          "Excel (XLS, XLSX)",
+          "HTML",
+          "CSV"
+        ],
+        "deployment": "Предкомпилированные .jasper + исходные .jrxml в JAR, внешние отчёты в ./reports/ (hot-reload)",
+        "deployment_strategy": {
+          "method": "precompiled-reports",
+          "description": "Отчёты компилируются в Jaspersoft Studio 7.0.3 и включаются в JAR как .jasper файлы. Исходные .jrxml также включаются для справки и доработки.",
+          "artifacts_in_jar": {
+            "types": [
+              ".jasper",
+              ".jrxml",
+              ".json"
+            ],
+            "location": "BOOT-INF/classes/reports/embedded/",
+            "standard_reports": [
+              "my-new-report",
+              "my-new-report-sr-ag"
+            ]
+          },
+          "external_reports": {
+            "location": "./reports/external/",
+            "priority": "выше встроенных отчётов"
+          },
+          "compilation": {
+            "method": "manual",
+            "tool": "Jaspersoft Studio 7.0.3",
+            "reason": "Проблемы с компиляцией в Spring Boot nested JAR",
+            "documentation": "docs/deployment/reports-deployment-strategy.md"
+          }
+        },
+        "features": [
+          "Динамические параметры отчётов",
+          "Подотчёты (бесконечная вложенность)",
+          "Графики и диаграммы",
+          "Прямое подключение к MS SQL Server",
+          "Загрузка предкомпилированных .jasper файлов",
+          "Fallback на компиляцию .jrxml при отсутствии .jasper"
+        ],
+        "decision": "docs/project/decisions/adr-003-reporting-engine.md"
+      },
+      "infrastructure": {
+        "database": "MS SQL Server (внешняя)",
+        "monitoring": "Spring Boot Actuator",
+        "ai": "MCP Servers",
+        "deployment": "Spring Boot Fat JAR (Full-Stack: backend + frontend в едином JAR)",
+        "ci_cd": {
+          "platform": "GitHub Actions",
+          "workflow": ".github/workflows/ci.yml",
+          "description": "Автоматический запуск тестов при PR и merge в main",
+          "jobs": [
+            {
+              "name": "unit-tests",
+              "trigger": "При каждом PR и push",
+              "description": "Запуск unit-тестов"
+            },
+            {
+              "name": "integration-tests",
+              "trigger": "При merge в main или по требованию [test-integration]",
+              "description": "Запуск integration-тестов с MS SQL Server в Docker"
+            },
+            {
+              "name": "e2e-tests",
+              "trigger": "При merge в main или по требованию [test-e2e]",
+              "description": "Запуск E2E-тестов Playwright"
+            },
+            {
+              "name": "code-coverage",
+              "trigger": "При merge в main",
+              "description": "Генерация отчетов о покрытии кода (JaCoCo)"
+            }
+          ]
+        },
+        "testing": {
+          "framework": "JUnit 5",
+          "unit_tests": {
+            "tool": "Maven Surefire Plugin",
+            "profile": "unit (по умолчанию)",
+            "pattern": "**/*Test.java",
+            "location": "src/test/java"
+          },
+          "integration_tests": {
+            "tool": "Maven Failsafe Plugin",
+            "profile": "integration",
+            "pattern": "**/*IT.java, **/*IntegrationTest.java",
+            "location": "src/test/java",
+            "requirements": "Переменные FEMSQ_DB_*"
+          },
+          "e2e_tests": {
+            "tool": "Playwright",
+            "location": "code/femsq-frontend-q/tests/e2e",
+            "requirements": "Запущенный backend на localhost:8080"
+          },
+          "coverage": {
+            "tool": "JaCoCo",
+            "profile": "ci",
+            "reports": "target/site/jacoco/index.html",
+            "minimum_coverage": "50%"
+          },
+          "scripts": {
+            "location": "code/scripts/",
+            "files": [
+              "test-unit.sh",
+              "test-integration.sh",
+              "test-all.sh",
+              "test-e2e.sh"
+            ],
+            "documentation": "code/scripts/README-TESTING.md"
+          },
+          "documentation": [
+            "docs/development/notes/testing-strategy.md",
+            "docs/development/notes/testing-recommendations.md",
+            "docs/development/notes/testing-improvements-summary.md"
+          ]
+        }
+      }
+    },
+    "deployment": {
+      "strategy": "Единый JAR-файл с веб-интерфейсом настройки БД",
+      "architecture": {
+        "type": "monolithic",
+        "deployment_type": "fat-jar-corporate-network"
+      },
+      "environments": {
+        "frontend": "http://localhost:8080 (встроенный в JAR, подтверждено 2025-11-14)",
+        "backend": "http://localhost:8080",
+        "api": "http://localhost:8080/api/v1",
+        "graphql": "http://localhost:8080/graphql",
+        "note": "Frontend и backend работают на одном порту (8080), единый JAR-файл"
+      },
+      "configuration": {
+        "jar_name": "femsq-{version}.jar",
+        "startup_command": "java -jar femsq-{version}.jar"
+      },
+      "extensions": [
+        "docs/project/extensions/deployment/deployment-config.json",
+        "docs/project/extensions/deployment/environments.json",
+        "docs/project/extensions/deployment/security-config.json"
+      ]
+    },
+    "features": {
+      "core": [
+        "Управление отношениями с контрагентами",
+        "CRM функциональность",
+        "Документооборот",
+        "Ревизии (аудит/проверка файлов Excel)",
+        "Управленческий финансовый учет"
+      ],
+      "advanced": [
+        "Автоматическая генерация документов (PDF, Excel, CSV)",
+        "Система отчетности",
+        "Кэширование и оптимизация"
+      ]
+    },
+    "modules": {
+      "description": "Структура модулей проекта FEMSQ",
+      "version": "1.0.0",
+      "lastUpdated": "2026-01-27",
+      "structure": {
+        "type": "recursive",
+        "entities": [
+          "Module",
+          "Component",
+          "Class"
+        ],
+        "organization": "single_file",
+        "grouping": "artifact object for physical attributes"
+      },
+      "extensions": [
+        "docs/project/extensions/modules/modules.json"
+      ],
+      "diagrams": [
+        "docs/project/diagrams/database-module-classes.puml",
+        "docs/project/diagrams/components.puml",
+        "docs/project/diagrams/package-structure.puml"
+      ]
+    },
+    "database": {
+      "schema": "ags",
+      "test_schema": "ags_test",
+      "schemaManagement": "external",
+      "version": "1.0.0",
+      "engine": "MS SQL Server 2012+",
+      "target_version": "11.0.7507.2 (2012 SP4)",
+      "connection": {
+        "type": "external",
+        "driver": "com.microsoft.sqlserver.jdbc.SQLServerDriver",
+        "url_template": "jdbc:sqlserver://{host}:{port};databaseName=FishEye;encrypt=false;trustServerCertificate=true"
+      },
+      "tables": [
+        {
+          "name": "contractors",
+          "description": "Таблица контрагентов",
+          "columns": [
+            {
+              "name": "id",
+              "type": "UUID",
+              "constraints": "PRIMARY KEY DEFAULT gen_random_uuid()"
+            },
+            {
+              "name": "name",
+              "type": "VARCHAR(255)",
+              "constraints": "NOT NULL"
+            },
+            {
+              "name": "legal_name",
+              "type": "VARCHAR(255)",
+              "constraints": "NULL"
+            },
+            {
+              "name": "inn",
+              "type": "VARCHAR(12)",
+              "constraints": "UNIQUE NULL"
+            },
+            {
+              "name": "kpp",
+              "type": "VARCHAR(9)",
+              "constraints": "NULL"
+            },
+            {
+              "name": "email",
+              "type": "VARCHAR(255)",
+              "constraints": "NULL"
+            },
+            {
+              "name": "phone",
+              "type": "VARCHAR(50)",
+              "constraints": "NULL"
+            },
+            {
+              "name": "address",
+              "type": "TEXT",
+              "constraints": "NULL"
+            },
+            {
+              "name": "coordinates",
+              "type": "GEOMETRY(POINT, 4326)",
+              "constraints": "NULL"
+            },
+            {
+              "name": "status",
+              "type": "VARCHAR(50)",
+              "constraints": "NOT NULL DEFAULT 'active'"
+            },
+            {
+              "name": "created_at",
+              "type": "TIMESTAMP",
+              "constraints": "NOT NULL DEFAULT NOW()"
+            },
+            {
+              "name": "updated_at",
+              "type": "TIMESTAMP",
+              "constraints": "NOT NULL DEFAULT NOW()"
+            }
+          ],
+          "indexes": [
+            {
+              "name": "idx_contractors_inn",
+              "columns": [
+                "inn"
+              ],
+              "type": "UNIQUE"
+            },
+            {
+              "name": "idx_contractors_coordinates",
+              "columns": [
+                "coordinates"
+              ],
+              "type": "GIST"
+            },
+            {
+              "name": "idx_contractors_status",
+              "columns": [
+                "status"
+              ],
+              "type": "BTREE"
+            },
+            {
+              "name": "idx_contractors_name",
+              "columns": [
+                "name"
+              ],
+              "type": "BTREE"
+            }
+          ]
+        },
+        {
+          "name": "users",
+          "description": "Таблица пользователей системы",
+          "columns": [
+            {
+              "name": "id",
+              "type": "UUID",
+              "constraints": "PRIMARY KEY DEFAULT gen_random_uuid()"
+            },
+            {
+              "name": "username",
+              "type": "VARCHAR(100)",
+              "constraints": "UNIQUE NOT NULL"
+            },
+            {
+              "name": "email",
+              "type": "VARCHAR(255)",
+              "constraints": "UNIQUE NOT NULL"
+            },
+            {
+              "name": "password_hash",
+              "type": "VARCHAR(255)",
+              "constraints": "NOT NULL"
+            },
+            {
+              "name": "first_name",
+              "type": "VARCHAR(100)",
+              "constraints": "NULL"
+            },
+            {
+              "name": "last_name",
+              "type": "VARCHAR(100)",
+              "constraints": "NULL"
+            },
+            {
+              "name": "role",
+              "type": "VARCHAR(50)",
+              "constraints": "NOT NULL DEFAULT 'USER'"
+            },
+            {
+              "name": "is_active",
+              "type": "BOOLEAN",
+              "constraints": "NOT NULL DEFAULT true"
+            },
+            {
+              "name": "created_at",
+              "type": "TIMESTAMP",
+              "constraints": "NOT NULL DEFAULT NOW()"
+            },
+            {
+              "name": "updated_at",
+              "type": "TIMESTAMP",
+              "constraints": "NOT NULL DEFAULT NOW()"
+            }
+          ],
+          "indexes": [
+            {
+              "name": "idx_users_username",
+              "columns": [
+                "username"
+              ],
+              "type": "UNIQUE"
+            },
+            {
+              "name": "idx_users_email",
+              "columns": [
+                "email"
+              ],
+              "type": "UNIQUE"
+            },
+            {
+              "name": "idx_users_role",
+              "columns": [
+                "role"
+              ],
+              "type": "BTREE"
+            }
+          ]
+        }
+      ],
+      "notes": "Схема ags поддерживается существующей БД; тестовая схема ags_test содержит копии таблиц для интеграционных тестов (og, ogAg).",
+      "migrations": [
+        {
+          "version": "001",
+          "description": "Initial schema creation",
+          "file": "001-initial-schema.xml",
+          "status": "planned",
+          "changes": [
+            "Create contractors table",
+            "Create users table",
+            "Create basic indexes"
+          ]
+        },
+        {
+          "version": "002",
+          "description": "Add additional tables for CRM functionality",
+          "file": "002-crm-tables.xml",
+          "status": "planned",
+          "changes": [
+            "Create documents table",
+            "Create contracts table",
+            "Add relationships between contractors and documents"
+          ]
+        }
+      ],
+      "extensions": [
+        "docs/project/extensions/database/connection-config.json",
+        "docs/project/extensions/database/authentication-methods.json",
+        "docs/project/extensions/database/migration-config.json",
+        "docs/project/extensions/database/compatibility.json"
+      ]
+    },
+    "development": {
+      "milestones": [
+        {
+          "id": "milestone:report-mstrg-01",
+          "name": "Первый отчёт по капитальному строительству",
+          "description": "Реализация отчёта mstrgAg_23_Branch_q2m_2408_25 (миграция из Access)",
+          "status": "completed",
+          "completedDate": "2025-12-16",
+          "relatedTasks": [
+            "task:0038"
+          ],
+          "achievements": [
+            "Миграция отчёта из MS Access в JasperReports",
+            "Реализация условного форматирования через фоновые прямоугольники",
+            "Интеграция с Backend API и Frontend",
+            "Настройка логирования с временными метками",
+            "Создание Desktop инструментов управления"
+          ]
+        }
+      ]
+    },
+    "ui": {
+      "setup_interface": {
+        "url": "/setup",
+        "title": "Настройка подключения к базе данных FEMSQ",
+        "description": "Веб-интерфейс для настройки подключения к MS SQL Server"
+      },
+      "main_application": {
+        "url": "/",
+        "title": "FEMSQ - Система работы с контрагентами"
+      },
+      "extensions": [
+        "docs/project/extensions/ui/setup-forms.json",
+        "docs/project/extensions/ui/status-pages.json",
+        "docs/project/extensions/ui/user-experience.json"
+      ]
+    },
+    "network": {
+      "type": "controlled_corporate_network",
+      "authentication_methods": [
+        "integrated_security",
+        "trusted_connection",
+        "username_password"
+      ],
+      "extensions": [
+        "docs/project/extensions/network/corporate-network.json",
+        "docs/project/extensions/network/connection-detection.json"
+      ]
+    },
+    "security": {
+      "scope": "internal_secure_network",
+      "description": "Проект предназначен для работы в безопасной внутренней сети организации",
+      "user_authentication": "не требуется",
+      "data_encryption": "не требуется",
+      "password_encryption": "не требуется (хранение в plain text допустимо)",
+      "network_security": "обеспечивается инфраструктурой организации",
+      "assumptions": [
+        "Приложение работает в защищенной корпоративной сети",
+        "Доступ к серверу БД ограничен на уровне сети",
+        "Пользователи имеют доверенный доступ",
+        "Файлы конфигурации защищены правами ОС (chmod 600)"
+      ]
+    },
+    "monitoring": {
+      "health_checks": true,
+      "logging": {
+        "type": "file-rotation",
+        "structure": {
+          "application": "logs/app_ГГММДД-ЧЧММ.log",
+          "formatted": "logs/spring-boot_now.log",
+          "connections": "logs/connections_ГГММДД-ЧЧММ.log"
+        },
+        "documentation": "LOGGING-GUIDE.md",
+        "note": "Дублирование устранено в v0.1.0.45 (удалён femsq-nohup.log)",
+        "optimization": "v0.1.0.45"
+      },
+      "backup": "daily-database",
+      "extensions": [
+        "docs/project/extensions/monitoring/logging-config.json",
+        "docs/project/extensions/monitoring/health-checks.json"
+      ]
+    },
+    "timeline": {
+      "phases": [
+        {
+          "name": "Phase 1: Foundation",
+          "duration": "2 weeks",
+          "startDate": "2025-01-27",
+          "tasks": [
+            "Настройка инфраструктуры",
+            "Базовая архитектура Backend",
+            "Базовая архитектура Frontend",
+            "Настройка БД и миграций",
+            "Создание JSON-документации"
+          ],
+          "status": "in_progress",
+          "progress": 20
+        },
+        {
+          "name": "Phase 2: Core Features",
+          "duration": "4 weeks",
+          "startDate": "2025-02-10",
+          "tasks": [
+            "Модуль управления отношениями с контрагентами",
+            "Система аутентификации",
+            "Базовый UI/UX",
+            "API интеграция Frontend-Backend"
+          ],
+          "status": "planned",
+          "progress": 0
+        },
+        {
+          "name": "Phase 3: Advanced Features",
+          "duration": "3 weeks",
+          "startDate": "2025-03-10",
+          "tasks": [
+            "ГИС-аналитика",
+            "Документооборот",
+            "Система уведомлений",
+            "Интеграции с внешними API"
+          ],
+          "status": "planned",
+          "progress": 0
+        }
+      ]
+    },
+    "quality": {
+      "lastUpdated": "2025-11-17",
+      "checkpoints": [
+        {
+          "id": "K1",
+          "name": "Контрольная точка K1 - Backend API",
+          "date": "2025-11-11",
+          "status": "completed",
+          "description": "Backend REST/GraphQL API подтверждён интеграционным тестом ApiOrganizationsSuccessIT и ручной проверкой через временный database.properties.",
+          "verification": {
+            "automatedTests": [
+              "ApiOrganizationsSuccessIT (Spring Boot, JUnit 5)"
+            ],
+            "manualSteps": [
+              "GET /api/v1/organizations",
+              "GET /api/v1/agents",
+              "POST /graphql { organizations { ogKey ogName } }"
+            ]
+          },
+          "links": {
+            "projectDocsRefs": [
+              "module:backend.web",
+              "component:backend.web.api.rest",
+              "component:backend.web.api.graphql"
+            ],
+            "developmentTasks": [
+              "task:0017"
+            ],
+            "journalRefs": [
+              "log:log-2025-11-11-001"
+            ]
+          }
+        }
+      ],
+      "tests": [
+        {
+          "name": "ApiOrganizationsSuccessIT",
+          "type": "integration",
+          "scope": [
+            "REST /api/v1/organizations",
+            "REST /api/v1/agents",
+            "GraphQL organizations query"
+          ],
+          "environment": "Схема ags_test, временный каталог user.home с database.properties",
+          "automation": "JUnit 5 @SpringBootTest + TestRestTemplate",
+          "manualMode": {
+            "enabled": true,
+            "timeoutMinutes": 3,
+            "stopFile": "/tmp/femsq-api-stop"
+          },
+          "links": {
+            "source": "code/femsq-backend/femsq-web/src/test/java/com/femsq/web/api/rest/ApiOrganizationsSuccessIT.java",
+            "journalRefs": [
+              "log:log-2025-11-11-001"
+            ],
+            "developmentTasks": [
+              "task:0017"
+            ]
+          }
+        }
+      ]
+    },
+    "risks": [
+      {
+        "id": "R001",
+        "description": "Сложность интеграции с внешними API",
+        "probability": "medium",
+        "impact": "high",
+        "mitigation": "Поэтапная интеграция с тестированием",
+        "status": "monitoring"
+      },
+      {
+        "id": "R002",
+        "description": "Производительность при работе с большими объемами данных",
+        "probability": "low",
+        "impact": "medium",
+        "mitigation": "Оптимизация запросов и кэширование",
+        "status": "monitoring"
+      }
+    ],
+    "problems": [
+      {
+        "id": "P-2025-11-16-001",
+        "title": "Spring GraphQL: нестабильность интеграционных тестов (404 при запуске всего модуля)",
+        "status": "known_issue",
+        "discovered": "2025-11-15",
+        "lastUpdated": "2025-11-17",
+        "modules": [
+          "femsq-backend/femsq-web"
+        ],
+        "scope": [
+          "Интеграционные тесты GraphQL",
+          "Spring Boot 3.4.5",
+          "Spring GraphQL 1.3.5"
+        ],
+        "description": "GraphQL endpoint стабильно работает в production и при изолированном запуске тестового класса, но при запуске всех интеграционных тестов модуля возвращает 404 (endpoint не регистрируется). Проблема воспроизводится независимо от задержек/ретраев и аннотаций изоляции контекста.",
+        "reproduction": [
+          "mvn -Pintegration -pl femsq-backend/femsq-web verify",
+          "Падает тест GraphQL: 404 после нескольких ретраев"
+        ],
+        "attemptedSolutions": [
+          "@DirtiesContext (BEFORE_CLASS/AFTER_CLASS/AFTER_EACH_TEST_METHOD) — не помогло",
+          "Задержка 2с + 10 ретраев по 1с — не помогло",
+          "Изменение порядка выполнения (имя класса, @Order) — Maven Failsafe игнорирует порядок",
+          "Вынос теста в отдельный класс и модуль — в модуле возникли конфликты зависимостей Spring (BeanFactoryInitializer)"
+        ],
+        "currentWorkaround": "Тесты GraphQL отключены (@Disabled) в модуле femsq-web. Функциональность GraphQL подтверждена вручную и изолированными запусками.",
+        "impact": {
+          "severity": "medium",
+          "areas": [
+            "интеграционные тесты GraphQL"
+          ],
+          "notes": "Не влияет на production, но снижает автоматизированное покрытие GraphQL."
+        },
+        "recommendations": [
+          "Добавить slice-тесты @GraphQlTest для контроллера OgGraphqlController",
+          "Рассмотреть отдельный тестовый модуль только для GraphQL с корректной компоновкой зависимостей",
+          "Отслеживать обновления Spring Boot/GraphQL и перепроверять проблему при следующем обновлении",
+          "Альтернатива: E2E-проверка GraphQL через Playwright на живом приложении"
+        ],
+        "links": {
+          "plan": "docs/development/notes/chats/chat-plan/chat-plan-25-1115.md",
+          "tests": [
+            "code/femsq-backend/femsq-web/src/test/java/com/femsq/web/api/rest/ApiOrganizationsSuccessIT.java",
+            "code/femsq-backend/femsq-web/src/test/java/com/femsq/web/api/graphql/AGraphqlOrganizationsIT.java"
+          ],
+          "commits": [],
+          "issues": []
+        }
+      }
+    ],
+    "resources": {
+      "team": [
+        {
+          "role": "Full-stack Developer",
+          "name": "Александр",
+          "responsibilities": [
+            "Backend",
+            "Frontend",
+            "DevOps",
+            "Database",
+            "Architecture"
+          ],
+          "skills": [
+            "Java",
+            "Vue.js",
+            "MS SQL Server",
+            "GraphQL"
+          ]
+        }
+      ],
+      "budget": {
+        "development": "0 (open-source)",
+        "hosting": "estimated $50/month",
+        "tools": "0 (free tools)",
+        "total": "estimated $50/month"
+      },
+      "tools": [
+        "Cursor",
+        "GitHub"
+      ],
+      "documentation": {
+        "main": "docs",
+        "journal": "docs/journal/project-journal.json"
+      }
+    },
+    "reports": {
+      "description": "Система отчётов JasperReports",
+      "categories": [
+        {
+          "id": "sample",
+          "name": "Примеры",
+          "description": "Примеры отчётов для тестирования",
+          "reportCount": 2,
+          "created": "2025-11-24"
+        },
+        {
+          "id": "mstrg",
+          "name": "Капитальное строительство",
+          "description": "Отчёты по мониторингу и контролю капитального строительства",
+          "reportCount": 1,
+          "created": "2025-12-05"
+        }
+      ],
+      "implemented": [
+        {
+          "id": "report:my-new-report",
+          "name": "Пример отчёта с подотчётом",
+          "category": "sample",
+          "description": "Пример отчёта для демонстрации возможностей JasperReports",
+          "status": "completed",
+          "priority": "low",
+          "created": "2025-11-24",
+          "lastModified": "2025-11-24",
+          "version": "1.0.0"
+        },
+        {
+          "id": "report:mstrgAg_23_Branch_q2m_2408_25",
+          "name": "Исполнение плана капитального строительства",
+          "category": "mstrg",
+          "description": "Отчёт по исполнению плана капитального строительства по отдельным программам и подразделениям",
+          "status": "completed",
+          "priority": "high",
+          "created": "2025-12-05",
+          "lastModified": "2026-05-16",
+          "version": "1.1.0",
+          "files": {
+            "jrxml": "code/femsq-backend/femsq-reports/src/main/resources/reports/embedded/mstrgAg_23_Branch_q2m_2408_25.jrxml",
+            "metadata": "code/femsq-backend/femsq-reports/src/main/resources/reports/embedded/mstrgAg_23_Branch_q2m_2408_25.json",
+            "documentation": "docs/development/technical/reports/mstrgAg_23_Branch_q2m_2408_25.md"
+          },
+          "dataSource": {
+            "tables": [
+              "ags.spMstrg_2408_ResultSet1",
+              "ags.spMstrg_2408_ResultSet2",
+              "ags.spMstrg_2408_ResultSet3",
+              "ags.spMstrg_2408_ResultSet4",
+              "ags.spMstrg_2408_ResultSet5",
+              "ags.spMstrg_2408_ResultSet6",
+              "ags.spMstrg_2408_ResultSet7"
+            ],
+            "procedure": "ags.spMstrg_2605",
+            "procedureLegacy": "ags.spMstrg_2408_SaveToTables",
+            "populationScript": "code/scripts/execute_spMstrg_2605.sh",
+            "recordCount": {
+              "RS1": 12693,
+              "RS4": 744,
+              "RS5": 32,
+              "RS6": 721,
+              "RS7": 32
+            },
+            "notes": "Таблицы заполняются внешним shell-скриптом перед генерацией отчёта. С 2026-05 используется spMstrg_2605 с поддержкой фильтра @ipgSt."
+          },
+          "parameters": [
+            {
+              "name": "ipgCh",
+              "type": "integer",
+              "required": true,
+              "description": "Код инвестиционной программы"
+            },
+            {
+              "name": "MounthEndDate",
+              "type": "date",
+              "required": true,
+              "description": "Дата окончания периода"
+            },
+            {
+              "name": "ipgSt",
+              "type": "string",
+              "required": false,
+              "description": "Фильтр по стройке (NULL = все стройки). Поддерживается с версии spMstrg_2605."
+            }
+          ],
+          "formats": [
+            "pdf",
+            "xlsx",
+            "html"
+          ],
+          "features": [
+            "Условное форматирование (чередование серый/белый, оранжевый для итогов)",
+            "Трёхуровневые заголовки столбцов",
+            "Цветовое кодирование по типам (агентская/инвестиционная/укупорка)",
+            "Группировка по схемам реализации",
+            "A3 Landscape формат"
+          ],
+          "migration": {
+            "source": "MS Access",
+            "originalReport": "mstrgAg_23_Branch_q2m_2408_25",
+            "migrationDate": "2025-12-05",
+            "status": "completed",
+            "notes": "Базовая версия (~40% детализации), полностью функциональна"
+          },
+          "relatedTasks": [
+            "task:0038"
+          ],
+          "relatedDocuments": [
+            "docs/development/notes/analysis/access-report-mstrgAg-23-analysis.md",
+            "docs/development/notes/chats/chat-plan/chat-plan-25-1205-jasper-report-mstrg.md",
+            "docs/development/notes/chats/chat-plan/chat-plan-26-0508-spMstrg-2605.md",
+            "docs/deployment/db-upgrade-spMstrg-2605.md",
+            "docs/solutions/spMstrg_2408_execution.md"
+          ]
+        }
+      ],
+      "statistics": {
+        "totalReports": 3,
+        "byCategory": {
+          "sample": 2,
+          "mstrg": 1
+        },
+        "byStatus": {
+          "completed": 3,
+          "inProgress": 0
+        },
+        "byFormat": {
+          "pdf": 3,
+          "xlsx": 2,
+          "html": 2
+        }
+      }
     }
+  },
+  "metadata": {
+    "version": "1.3.0",
+    "lastUpdated": "2026-03-18",
+    "updatedBy": "Александр",
+    "updateReason": "Актуализация после миграции домена ревизий (RA) на GraphQL (Spring GraphQL) и перехода фронтенда на Apollo Client, устранения доменного REST в src/api и сторах (кроме осознанных технических/бинарных REST-исключений), а также финальной сборки/деплоя и ручной проверки; версия приложения 0.1.0.90-SNAPSHOT."
+  }
 }

@@ -368,12 +368,16 @@ spMstrg_2605 (@ipgCh, @MounthEndDate, @ipgSt = NULL, @saveToTables bit = 0)
 
 ---
 
-### Этап 8 — Документирование
+### Этап 8 — Документирование ✅
 
-- [ ] **8.1**  Обновить `docs/solutions/spMstrg_2408_execution.md` — добавить раздел о `spMstrg_2605`
-- [ ] **8.2** Обновить `docs/project/project-docs.json` — секция `reports.implemented`, источник данных
-- [ ] **8.3** Создать резюме чата `docs/development/notes/chats/chat-resume/chat-resume-26-0508-spMstrg-2605.md`
-- [ ] **8.4** Сделать запись в `docs/journal/project-journal.json`
+- [x] **8.1** Обновить `docs/solutions/spMstrg_2408_execution.md` — добавить раздел о `spMstrg_2605`  
+  **Исполнено:** добавлен раздел «Обновление 2026-05» (~100 строк): новые объекты, сигнатура, режимы, таблица RS-значений, время выполнения, откат, таблица артефактов ✅
+- [x] **8.2** Обновить `docs/project/project-docs.json` — секция `reports.implemented`, источник данных  
+  **Исполнено:** запись `report:mstrgAg_23_Branch_q2m_2408_25` обновлена: `dataSource.procedure → spMstrg_2605`, добавлен `@ipgSt` в `parameters`, версия `1.1.0`, новые `relatedDocuments` ✅
+- [x] **8.3** Создать резюме чата `docs/development/notes/chats/chat-resume/chat-resume-26-0508-spMstrg-2605.md`  
+  **Исполнено:** резюме создано (~80 строк): итог, ключевые изменения, проблемы и решения, таблица результатов тестирования ✅
+- [x] **8.4** Сделать запись в `docs/journal/project-journal.json`  
+  **Исполнено:** добавлена сессия `chat-2026-05-08-001` с 5 log-записями (этапы 1–7); `metadata.lastUpdated → 2026-05-16` ✅
 
 ---
 

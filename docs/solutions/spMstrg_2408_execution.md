@@ -125,4 +125,105 @@ UNION ALL SELECT 'ResultSet6', COUNT(*) FROM ags.spMstrg_2408_ResultSet6;
 
 ---
 
-**Дата последнего обновления:** 2025-12-04
+## Обновление 2026-05 — Новая процедура `spMstrg_2605`
+
+### Что изменилось
+
+В мае 2026 года создана процедура `ags.spMstrg_2605`, которая объединяет функциональность `spMstrg_2408` и `spMstrg_2408_SaveToTables`, добавляет фильтрацию по стройке (`@ipgSt`) и управляет режимом работы через параметр `@saveToTables`.
+
+### Новые объекты БД
+
+| Объект | Тип | Назначение |
+|--------|-----|-----------|
+| `ags.fnIpgChRsltCstUtl2_2605` | Inline TVF | Базовая функция расчёта с фильтром `@ipgSt` |
+| `ags.fnIpgChRsltCstUtlPercentBrn_2605` | Multi-statement TVF | Сводный расчёт по бренду с фильтром `@ipgSt` |
+| `ags.spMstrg_2605` | Хранимая процедура | Объединяет режимы Access (SELECT) и FEMSQ (INSERT) |
+
+### Сигнатура `spMstrg_2605`
+
+```sql
+EXEC ags.spMstrg_2605
+    @ipgCh        int,              -- код цепи ИПГ (обязательный)
+    @MounthEndDate date,            -- последний день периода (обязательный)
+    @ipgSt        nvarchar(255),    -- фильтр по стройке (NULL = все стройки)
+    @saveToTables  bit;             -- 0 = SELECT-режим (Access), 1 = INSERT-режим (FEMSQ)
+```
+
+### Режимы работы
+
+**Режим `@saveToTables = 0` (Access/ADODB):**
+- Возвращает 7 рекордсетов через `SELECT` — обратно совместим с `spMstrg_2408`
+- Используется при вызове из VBA (`Form_ipgChMin`, обработчик `btnMasteringPercent_2408_Click`)
+- При `@ipgSt = NULL` данные идентичны `spMstrg_2408`
+
+**Режим `@saveToTables = 1` (FEMSQ/JasperReports):**
+- Выполняет `TRUNCATE` → `INSERT INTO` для таблиц `ags.spMstrg_2408_ResultSet1..7`
+- Данные те же таблицы, что использует `spMstrg_2408_SaveToTables`
+- JRXML-шаблон и Java-код `ReportGenerationService` **не требуют изменений**
+
+### Запуск через `execute_spMstrg_2605.sh`
+
+Новый скрипт заменяет `execute_spMstrg_2408.sh`:
+
+```bash
+cd /home/alex/projects/femsq/code/scripts
+./execute_spMstrg_2605.sh
+# Параметры задаются переменными внутри скрипта:
+# IPGCH=15, MONTH_END_DATE="2025-07-31", IPGST="" (пустая = NULL = все стройки)
+```
+
+Скрипт выполняется через `docker exec femsq-mssql` (sqlcmd доступен только внутри контейнера).
+
+### Ожидаемые результаты (тест: ipgCh=15, MounthEndDate='2024-08-31')
+
+| ResultSet | Без фильтра (`@ipgSt=NULL`) | С фильтром (`@ipgSt='12ОПР'`) |
+|-----------|----------------------------|-------------------------------|
+| RS1 | 12 693 | 604 |
+| RS2 | 12 693 | 604 |
+| RS3 | 12 693 | 604 |
+| RS4 | 0 | 0 |
+| RS5 | 1 | 1 |
+| RS6 | 0 | 0 |
+| RS7 | 1 | 1 |
+
+> RS4–RS7 показывают 0/1 для даты '2024-08-31'; при рабочей дате месяца RS4=744, RS5=32, RS6=721, RS7=32.
+
+### Время выполнения
+
+| Режим | Время (approx.) |
+|-------|----------------|
+| `@saveToTables=0, @ipgSt=NULL` | ~26 сек |
+| `@saveToTables=1, @ipgSt=NULL` | ~17 сек |
+| `@saveToTables=0, @ipgSt='12ОПР'` | ~6 сек |
+| `@saveToTables=1, @ipgSt='12ОПР'` | ~8 сек |
+
+### Откат к `_2408`
+
+Если возникает необходимость вернуться к старым объектам:
+
+```bash
+# Выполнить 05_ROLLBACK.sql:
+docker exec femsq-mssql /opt/mssql-tools18/bin/sqlcmd \
+  -S localhost -U sa -P '...' -d FishEye -C \
+  -i docs/development/notes/sql/26-0508/05_ROLLBACK.sql
+# Переключить скрипт обратно:
+./execute_spMstrg_2408.sh  # старый скрипт сохранён
+```
+
+### Артефакты
+
+| Файл | Назначение |
+|------|-----------|
+| `docs/development/notes/sql/26-0508/00_VERIFY_before.sql` | Проверка состояния до применения |
+| `docs/development/notes/sql/26-0508/01_CREATE_FUNCTION_fnIpgChRsltCstUtl2_2605.sql` | Создание inline TVF |
+| `docs/development/notes/sql/26-0508/02_CREATE_FUNCTION_fnIpgChRsltCstUtlPercentBrn_2605.sql` | Создание multi-stmt TVF |
+| `docs/development/notes/sql/26-0508/03_CREATE_PROCEDURE_spMstrg_2605.sql` | Создание процедуры |
+| `docs/development/notes/sql/26-0508/04_VERIFY_after.sql` | Проверка после применения |
+| `docs/development/notes/sql/26-0508/05_ROLLBACK.sql` | Откат |
+| `docs/development/notes/sql/26-0508/06_DROP_obsolete_2408.sql` | Удаление устаревших `_2408` (отложено) |
+| `code/scripts/execute_spMstrg_2605.sh` | Shell-скрипт для FEMSQ |
+| `docs/deployment/db-upgrade-spMstrg-2605.md` | Порядок работ для продуктива |
+
+---
+
+**Дата последнего обновления:** 2026-05-16
