@@ -32,6 +32,20 @@ echo "Установка @bytebase/dbhub..."
 cd "$DBHUB_DIR"
 npm install @bytebase/dbhub --save --silent
 
+# ssh-config@5 — только ESM; dbhub грузит пакет через CJS → SyntaxError. Фикс: pin 4.1.6
+if ! grep -q '"ssh-config": "4.1.6"' "$DBHUB_DIR/package.json" 2>/dev/null; then
+    node -e "
+      const fs = require('fs');
+      const p = '$DBHUB_DIR/package.json';
+      const j = JSON.parse(fs.readFileSync(p, 'utf8'));
+      j.overrides = j.overrides || {};
+      j.overrides['ssh-config'] = '4.1.6';
+      j.overrides.mariadb = j.overrides.mariadb || '3.4.0';
+      fs.writeFileSync(p, JSON.stringify(j, null, 2) + '\n');
+    "
+    npm install --silent
+fi
+
 # Проверка установки
 if [ -f "$DBHUB_DIR/node_modules/@bytebase/dbhub/dist/index.js" ]; then
     echo "✓ DBHub успешно установлен"

@@ -1,6 +1,7 @@
 # План работы чата: Рефакторинг отчётной ветки spMstrg → версия _2605
 
 **Дата:** 2026-05-08  
+**Обновлён:** 2026-05-16  
 **Автор:** Александр  
 **Связанные задачи:** (будут созданы в ходе работы)  
 **Связанное резюме:** (будет создано по завершению)
@@ -10,6 +11,10 @@
 ## Контекст
 
 В результате параллельного развития двух проектов — **MS Access + MS SQL Server** (действующая система) и **FEMSQ** (новый проект) — сложились дублирующиеся группы артефактов SQL Server, которые выполняют аналогичные задачи формирования наборов данных для отчётов.
+
+### Цель чата
+
+Разработать и верифицировать SQL-объекты серии `_2605` на тестовой БД **FishEye**, и **сформировать пакет для продуктивного сервера** — набор нумерованных `.sql`-скриптов и документ `docs/deployment/db-upgrade-spMstrg-2605.md` с пошаговым порядком проведения работ, пригодный для самостоятельного применения на продуктиве.
 
 ### Существующие артефакты (папка `docs/development/notes/sql/26-0416`)
 
@@ -46,11 +51,14 @@
 - **Именование новых объектов:** суффикс `_2605` (май 2026 — дата архитектурной ревизии), аналогично сложившейся конвенции `_2408`
 - **Стратегия перехода:** параллельная разработка; старые `_2408`-объекты сохраняются до финального тестирования новых `_2605`-объектов, после чего удаляются
 - **Объекты `_ipgSt`** не получают аналогов в `_2605`-серии — параметр `@ipgSt` встраивается в основные объекты
+- **Справочник `importIpgSt_26-0320`** уже присутствует на продуктивном сервере — скрипт его создания/заполнения в пакет для продуктива не включается
+- **Удаление устаревших `_2408`/`_ipgSt` объектов** выполняется отдельно, после подтверждения работоспособности `_2605` — оформляется отдельным документом, не входит в основной пакет
+- **Изменения в MS Access** (форма, VBA) выполняются вручную; инструкция включается в документ порядка работ
 
 ### Целевая архитектура
 
 ```
-importIpgSt_26-0320  (справочник групп, не меняется)
+importIpgSt_26-0320  (справочник групп, уже существует на продуктиве)
          ↓ JOIN (внутри функции, условно при @ipgSt IS NOT NULL)
 fnIpgChRsltCstUtl2_2605 (@ipgChKey, @ipgSt nvarchar(255) = NULL)
          ↓
@@ -66,7 +74,7 @@ spMstrg_2605 (@ipgCh, @MounthEndDate, @ipgSt = NULL, @saveToTables bit = 0)
     btnMasteringPercent_2408_Click → spMstrg_2605 с динамическим @ipgSt
 ```
 
-### Объекты к удалению после перехода
+### Объекты к удалению (отдельным этапом, после приёмки _2605)
 
 - `fnIpgChRsltCstUtl2_2408_ipgSt`
 - `fnIpgChRsltCstUtlPercentBrn_2408_ipgSt`
@@ -77,22 +85,49 @@ spMstrg_2605 (@ipgCh, @MounthEndDate, @ipgSt = NULL, @saveToTables bit = 0)
 
 ---
 
+## Состав пакета для продуктивного сервера
+
+Файлы располагаются в `docs/development/notes/sql/26-0508/`.  
+Нумерация префиксов отражает порядок применения.
+
+| Файл | Содержимое | Создаётся на этапе |
+|------|-----------|-------------------|
+| `00_VERIFY_before.sql` | SELECT-проверки до применения: объекты, строки ResultSet-таблиц, справочник | Этап 0 |
+| `01_CREATE_FUNCTION_fnIpgChRsltCstUtl2_2605.sql` | `CREATE OR ALTER FUNCTION` (идемпотентный) | Этап 1 |
+| `02_CREATE_FUNCTION_fnIpgChRsltCstUtlPercentBrn_2605.sql` | `CREATE OR ALTER FUNCTION` (идемпотентный) | Этап 2 |
+| `03_CREATE_PROCEDURE_spMstrg_2605.sql` | `CREATE OR ALTER PROCEDURE` (идемпотентный) | Этап 3 |
+| `04_VERIFY_after.sql` | SELECT-проверки после применения: тест COUNT по режимам `@ipgSt`; ожидаемые значения в комментариях | Этапы 1–3 (наращивается) |
+| `05_ROLLBACK.sql` | DROP _2605 объектов — возврат к состоянию до применения | Параллельно этапам 1–3 |
+| `06_DROP_obsolete_2408.sql` | DROP устаревших _2408/_ipgSt объектов — **отдельный документ, применяется позже** | Этап 6 |
+
+**Требования к оформлению каждого скрипта:**
+- Заголовок-комментарий: версия, дата, автор, назначение
+- Идемпотентность: `CREATE OR ALTER` для функций/процедур
+- PRINT-маркеры этапов для вывода в sqlcmd
+- Транзакционная обёртка там, где возможно и целесообразно
+
+**Итоговый документ порядка работ:** `docs/deployment/db-upgrade-spMstrg-2605.md`
+
+---
+
 ## Структурный план
 
 ### Этап 0 — Подготовка и верификация
 
 - [ ] **0.1 Проверка текущего состояния БД**
-  - [ ] 0.1.1 Убедиться, что все 8 целевых объектов `_2408` существуют в БД (`FishEye`, схема `ags`)
-  - [ ] 0.1.2 Убедиться, что таблица `importIpgSt_26-0320` заполнена (780 строк, 6 групп)
+  - [ ] 0.1.1 Убедиться, что базовые `_2408`-объекты существуют в БД (`FishEye`, схема `ags`):  
+    `fnIpgChRsltCstUtl2_2408`, `fnIpgChRsltCstUtlPercentBrn_2408`, `spMstrg_2408`, `spMstrg_2408_SaveToTables`
+  - [ ] 0.1.2 Убедиться, что таблица `importIpgSt_26-0320` заполнена (780 строк, 6 групп)  
+    *(Примечание: на FishEye отсутствует — применить скрипт из `26-0416/CREATE_TABLE_ags_importIpgSt_26-0320.sql`)*
   - [ ] 0.1.3 Убедиться, что таблицы `spMstrg_2408_ResultSet1..7` существуют и доступны
-  - [ ] 0.1.4 Зафиксировать эталонные результаты для последующего сравнения:
-    - Количество строк в каждой ResultSet-таблице при текущих параметрах (`@ipgCh=15`, `@MounthEndDate` — актуальная дата)
+  - [ ] 0.1.4 Зафиксировать эталонные результаты — записать в `00_VERIFY_before.sql`:
+    - Количество строк в каждой ResultSet-таблице (RS1–3: 12693, RS4: 744, RS5: 32, RS6: 721, RS7: 32)
     - Контрольные суммы по ключевым полям (`ag_accepted`, `ag_lim`) в RS1 и RS2
 
 - [ ] **0.2 Изучение исходного кода `fnIpgChRsltCstUtl2_2408`**
   - [ ] 0.2.1 Получить `OBJECT_DEFINITION` функции из БД
-  - [ ] 0.2.2 Определить тип функции (inline TVF vs multi-statement TVF)
-  - [ ] 0.2.3 Выявить точку, где добавляется фильтрация по `cstAgPnCode` (для `_ipgSt`-варианта)
+  - [ ] 0.2.2 Подтвердить тип функции — **inline TVF** (уже установлено)
+  - [ ] 0.2.3 Выявить точку добавления фильтра по `cstAgPnCode` (для проектирования `_2605`)
 
 ---
 
@@ -101,41 +136,45 @@ spMstrg_2605 (@ipgCh, @MounthEndDate, @ipgSt = NULL, @saveToTables bit = 0)
 - [ ] **1.1 Проектирование**
   - [ ] 1.1.1 Определить способ условной фильтрации по `@ipgSt`:
     - При `@ipgSt IS NULL` — возвращать все стройки (поведение как у `_2408`)
-    - При `@ipgSt IS NOT NULL` — LEFT JOIN/EXISTS к `ags.[importIpgSt_26-0320]` по `cstAgPnCode = cst` и `cst_type = @ipgSt`
-  - [ ] 1.1.2 Учесть тип функции: если inline TVF — условный фильтр через `WHERE (@ipgSt IS NULL OR EXISTS(...))`, если multi-statement — возможно `IF/ELSE` ветвление
-  - [ ] 1.1.3 Оценить влияние условного JOIN на производительность оптимизатора
+    - При `@ipgSt IS NOT NULL` — фильтр через `WHERE (@ipgSt IS NULL OR EXISTS(SELECT 1 FROM ags.[importIpgSt_26-0320] s WHERE s.cst = t.cstAgPnCode AND s.cst_type = @ipgSt))`
+  - [ ] 1.1.2 Оценить влияние условного предиката на план выполнения (inline TVF — оптимизатор справляется)
 
-- [ ] **1.2 Создание функции в БД**
-  - [ ] 1.2.1 Написать скрипт `CREATE FUNCTION ags.fnIpgChRsltCstUtl2_2605`
-  - [ ] 1.2.2 Сохранить скрипт в `docs/development/notes/sql/26-0508/CREATE_FUNCTION_ags_fnIpgChRsltCstUtl2_2605.sql`
-  - [ ] 1.2.3 Выполнить скрипт в БД
+- [ ] **1.2 Создание функции в БД и оформление артефакта**
+  - [ ] 1.2.1 Написать скрипт `CREATE OR ALTER FUNCTION ags.fnIpgChRsltCstUtl2_2605`
+  - [ ] 1.2.2 Сохранить в `docs/development/notes/sql/26-0508/01_CREATE_FUNCTION_fnIpgChRsltCstUtl2_2605.sql`  
+    *(оформить с заголовком, PRINT-маркерами)*
+  - [ ] 1.2.3 Выполнить скрипт в FishEye
+  - [ ] 1.2.4 Добавить DROP в `05_ROLLBACK.sql`: `DROP FUNCTION IF EXISTS ags.fnIpgChRsltCstUtl2_2605`
 
-- [ ] **1.3 Тестирование**
-  - [ ] 1.3.1 Проверить режим «все стройки» (`@ipgSt = NULL`): количество строк должно совпадать с `fnIpgChRsltCstUtl2_2408`
-  - [ ] 1.3.2 Проверить режим фильтрации (`@ipgSt = '12ОПР'`): количество строк должно совпадать с `fnIpgChRsltCstUtl2_2408_ipgSt` при том же параметре
+- [ ] **1.3 Тестирование + наполнение `04_VERIFY_after.sql`**
+  - [ ] 1.3.1 Режим «все стройки» (`@ipgSt = NULL`): COUNT строк = COUNT из `fnIpgChRsltCstUtl2_2408`
+  - [ ] 1.3.2 Режим фильтрации (`@ipgSt = '12ОПР'`): сравнить с `fnIpgChRsltCstUtl2_2408_ipgSt`
   - [ ] 1.3.3 Проверить остальные группы: `99ОСТ`, `23КПР`, `20ПКП`, `11ПРЗ`, `30ППР`
+  - [ ] 1.3.4 Успешные проверочные запросы перенести в `04_VERIFY_after.sql` (секция «fn_2605»)
 
 ---
 
 ### Этап 2 — Создание `fnIpgChRsltCstUtlPercentBrn_2605`
 
 - [ ] **2.1 Проектирование**
-  - [ ] 2.1.1 Взять за основу `fnIpgChRsltCstUtlPercentBrn_2408`
+  - [ ] 2.1.1 Взять за основу `fnIpgChRsltCstUtlPercentBrn_2408` из `26-0416/`
   - [ ] 2.1.2 Добавить параметр `@ipgSt nvarchar(255) = NULL`
   - [ ] 2.1.3 Изменить строку источника данных (единственное содержательное изменение):
-    - Было: `from ags.fnIpgChRsltCstUtl2_2408(@ipgChKey) t`
-    - Стало: `from ags.fnIpgChRsltCstUtl2_2605(@ipgChKey, @ipgSt) t`
-  - [ ] 2.1.4 Убедиться, что `cst_type` из `_2605`-функции не конфликтует с именами столбцов результирующей выборки
+    - Было: `FROM ags.fnIpgChRsltCstUtl2_2408(@ipgChKey) t`
+    - Стало: `FROM ags.fnIpgChRsltCstUtl2_2605(@ipgChKey, @ipgSt) t`
+  - [ ] 2.1.4 Убедиться, что `cst_type` из `_2605`-функции не конфликтует с именами столбцов результата
 
-- [ ] **2.2 Создание функции в БД**
-  - [ ] 2.2.1 Написать скрипт `CREATE FUNCTION ags.fnIpgChRsltCstUtlPercentBrn_2605`
-  - [ ] 2.2.2 Сохранить скрипт в `docs/development/notes/sql/26-0508/CREATE_FUNCTION_ags_fnIpgChRsltCstUtlPercentBrn_2605.sql`
-  - [ ] 2.2.3 Выполнить скрипт в БД
+- [ ] **2.2 Создание функции в БД и оформление артефакта**
+  - [ ] 2.2.1 Написать скрипт `CREATE OR ALTER FUNCTION ags.fnIpgChRsltCstUtlPercentBrn_2605`
+  - [ ] 2.2.2 Сохранить в `docs/development/notes/sql/26-0508/02_CREATE_FUNCTION_fnIpgChRsltCstUtlPercentBrn_2605.sql`
+  - [ ] 2.2.3 Выполнить скрипт в FishEye
+  - [ ] 2.2.4 Добавить DROP в `05_ROLLBACK.sql`
 
-- [ ] **2.3 Тестирование**
-  - [ ] 2.3.1 Режим «все стройки» (`@ipgSt = NULL`): сравнить количество строк и контрольные суммы с `fnIpgChRsltCstUtlPercentBrn_2408`
-  - [ ] 2.3.2 Режим фильтрации (`@ipgSt = '12ОПР'`): сравнить с результатами `fnIpgChRsltCstUtlPercentBrn_2408_ipgSt`
+- [ ] **2.3 Тестирование + наполнение `04_VERIFY_after.sql`**
+  - [ ] 2.3.1 Режим «все стройки» (`@ipgSt = NULL`): сравнить COUNT и контрольные суммы с `fnIpgChRsltCstUtlPercentBrn_2408`
+  - [ ] 2.3.2 Режим фильтрации (`@ipgSt = '12ОПР'`): сравнить с результатами `_ipgSt`-варианта
   - [ ] 2.3.3 Зафиксировать время выполнения для обоих режимов
+  - [ ] 2.3.4 Успешные проверочные запросы перенести в `04_VERIFY_after.sql` (секция «fnPBrn_2605»)
 
 ---
 
@@ -144,66 +183,62 @@ spMstrg_2605 (@ipgCh, @MounthEndDate, @ipgSt = NULL, @saveToTables bit = 0)
 - [ ] **3.1 Проектирование**
   - [ ] 3.1.1 Определить сигнатуру:
     ```sql
-    CREATE PROCEDURE ags.spMstrg_2605
+    CREATE OR ALTER PROCEDURE ags.spMstrg_2605
         @ipgCh         int,
         @MounthEndDate date,
         @ipgSt         nvarchar(255) = NULL,  -- NULL = все стройки
         @saveToTables  bit           = 0      -- 0 = SELECT (Access), 1 = INSERT (FEMSQ)
     ```
-  - [ ] 3.1.2 Определить структуру тела процедуры:
-    - Заполнить `@TableFnIpgChRsltCstUtlPercentBrn_2605` из `fnIpgChRsltCstUtlPercentBrn_2605(@ipgCh, @ipgSt)`
-    - Для каждого из 7 рекордсетов: `IF @saveToTables = 1 → INSERT INTO ResultSet_N; ELSE → SELECT`
-    - При `@saveToTables = 1`: предварительно выполнить `TRUNCATE TABLE` для всех 7 таблиц
-  - [ ] 3.1.3 Убедиться, что логирование времени шагов сохранено (PRINT-операторы)
+  - [ ] 3.1.2 Определить структуру тела:
+    - Заполнить табличную переменную из `fnIpgChRsltCstUtlPercentBrn_2605(@ipgCh, @ipgSt)`
+    - Для каждого из 7 рекордсетов: `IF @saveToTables = 1 → TRUNCATE + INSERT INTO ResultSet_N; ELSE → SELECT`
+  - [ ] 3.1.3 Сохранить PRINT-операторы логирования времени шагов
 
-- [ ] **3.2 Создание процедуры в БД**
-  - [ ] 3.2.1 Написать скрипт `CREATE PROCEDURE ags.spMstrg_2605`
-  - [ ] 3.2.2 Сохранить скрипт в `docs/development/notes/sql/26-0508/CREATE_PROCEDURE_ags_spMstrg_2605.sql`
-  - [ ] 3.2.3 Выполнить скрипт в БД
+- [ ] **3.2 Создание процедуры в БД и оформление артефакта**
+  - [ ] 3.2.1 Написать скрипт `CREATE OR ALTER PROCEDURE ags.spMstrg_2605`
+  - [ ] 3.2.2 Сохранить в `docs/development/notes/sql/26-0508/03_CREATE_PROCEDURE_spMstrg_2605.sql`
+  - [ ] 3.2.3 Выполнить скрипт в FishEye
+  - [ ] 3.2.4 Добавить DROP в `05_ROLLBACK.sql`
 
 - [ ] **3.3 Тестирование режима Access (`@saveToTables = 0`)**
-  - [ ] 3.3.1 Вызвать через DBHub или sqlcmd с `@ipgSt = NULL`: убедиться, что возвращает 7 рекордсетов
+  - [ ] 3.3.1 Вызвать через DBHub с `@ipgSt = NULL`: убедиться в 7 рекордсетах
   - [ ] 3.3.2 Вызвать с `@ipgSt = '12ОПР'`: проверить фильтрацию
-  - [ ] 3.3.3 Сравнить количество строк и суммы с `spMstrg_2408` (режим без фильтра)
+  - [ ] 3.3.3 Сравнить COUNT и суммы с `spMstrg_2408`
 
 - [ ] **3.4 Тестирование режима FEMSQ (`@saveToTables = 1`)**
   - [ ] 3.4.1 Вызвать через sqlcmd с `@ipgSt = NULL`, зафиксировать время выполнения
-  - [ ] 3.4.2 Проверить заполнение таблиц `spMstrg_2408_ResultSet1..7`: количество строк, контрольные суммы
-  - [ ] 3.4.3 Сравнить результаты с эталоном из п. 0.1.4
-  - [ ] 3.4.4 Вызвать с `@ipgSt = '12ОПР'`: убедиться, что в таблицах только отфильтрованные данные
+  - [ ] 3.4.2 Проверить таблицы `spMstrg_2408_ResultSet1..7`: COUNT и контрольные суммы
+  - [ ] 3.4.3 Сравнить с эталоном из п. 0.1.4
+  - [ ] 3.4.4 Вызвать с `@ipgSt = '12ОПР'`: убедиться в фильтрации в таблицах
+
+- [ ] **3.5 Наполнение `04_VERIFY_after.sql`**
+  - [ ] 3.5.1 Добавить секцию «sp_2605»: EXEC с `@saveToTables=1`, затем COUNT по всем 7 ResultSet-таблицам с ожидаемыми значениями в комментариях
 
 ---
 
 ### Этап 4 — Обновление VBA (`Form_ipgChMin.cls`)
 
-- [ ] **4.1 Добавление элемента управления на форму Access**
-  - [ ] 4.1.1 Добавить `cbxIpgSt` (ComboBox) на форму `Form_ipgChMin`
-  - [ ] 4.1.2 Настроить источник строк:
-    ```sql
-    SELECT '' AS cst_type, '(все стройки)' AS cst_type_nm
-    UNION SELECT DISTINCT cst_type, cst_type FROM ags.[importIpgSt_26-0320]
-    ORDER BY 1
-    ```
-  - [ ] 4.1.3 Настроить свойства: `BoundColumn = 1`, `ColumnWidths`, подпись на форме
+> Изменения выполняются **вручную** в MS Access. Инструкция включается в `docs/deployment/db-upgrade-spMstrg-2605.md`.
 
-- [ ] **4.2 Корректировка `btnMasteringPercent_2408_Click()`**
-  - [ ] 4.2.1 Изменить `.CommandText` на `"ags.spMstrg_2605"` (единственное имя)
-  - [ ] 4.2.2 Добавить параметр `@ipgSt`:
-    ```vba
-    .Parameters.Append .CreateParameter("@ipgSt", adVarWChar, adParamInput, 255, _
-        IIf(Nz(Me!cbxIpgSt, "") = "", Null, Me!cbxIpgSt))
-    ```
-  - [ ] 4.2.3 Добавить параметр `@saveToTables = 0` (явно, для документальности):
-    ```vba
-    .Parameters.Append .CreateParameter("@saveToTables", adSmallInt, adParamInput, , 0)
-    ```
-  - [ ] 4.2.4 Убедиться, что порядок `.Parameters.Append` соответствует сигнатуре процедуры
-  - [ ] 4.2.5 Обновить константу `cstrTitle` — отразить новое имя процедуры и наличие фильтра группы
+- [ ] **4.1 Подготовка инструкции для ручного выполнения**
+  - [ ] 4.1.1 Описать добавление `cbxIpgSt` (ComboBox) на форму `Form_ipgChMin`:
+    - Источник строк:
+      ```sql
+      SELECT '' AS cst_type, '(все стройки)' AS nm
+      UNION SELECT DISTINCT cst_type, cst_type FROM ags.[importIpgSt_26-0320]
+      ORDER BY 1
+      ```
+    - Свойства: `BoundColumn = 1`, `ColumnCount = 2`, `ColumnWidths = "0cm;4cm"`, `DefaultValue = ""`
+  - [ ] 4.1.2 Описать изменения в `btnMasteringPercent_2408_Click()`:
+    - `.CommandText = "ags.spMstrg_2605"`
+    - Добавить `.Parameters.Append` для `@ipgSt` и `@saveToTables = 0`
+    - Порядок параметров: `@ipgCh`, `@MounthEndDate`, `@ipgSt`, `@saveToTables`
+  - [ ] 4.1.3 Включить инструкцию в раздел «Изменения MS Access» документа `db-upgrade-spMstrg-2605.md`
 
-- [ ] **4.3 Тестирование в MS Access**
-  - [ ] 4.3.1 Проверить работу кнопки с `cbxIpgSt = "(все стройки)"` — результат должен совпадать со старым `spMstrg_2408`
-  - [ ] 4.3.2 Проверить работу с `cbxIpgSt = '12ОПР'` — результат должен совпадать со старым `spMstrg_2408_ipgSt`
-  - [ ] 4.3.3 Проверить все 6 групп
+- [ ] **4.2 Тестирование в MS Access** *(после ручного применения)*
+  - [ ] 4.2.1 Кнопка с `cbxIpgSt = "(все стройки)"` → результат как у старого `spMstrg_2408`
+  - [ ] 4.2.2 Кнопка с `cbxIpgSt = '12ОПР'` → результат как у `spMstrg_2408_ipgSt`
+  - [ ] 4.2.3 Проверить все 6 групп
 
 ---
 
@@ -221,40 +256,73 @@ spMstrg_2605 (@ipgCh, @MounthEndDate, @ipgSt = NULL, @saveToTables bit = 0)
 
 ---
 
-### Этап 6 — Финализация и очистка
+### Этап 6 — Удаление устаревших объектов *(отдельное окно обслуживания)*
 
-- [ ] **6.1 Финальная верификация**
-  - [ ] 6.1.1 Запустить все тесты: Access (все группы + без фильтра), FEMSQ (режим таблиц)
-  - [ ] 6.1.2 Сравнить результаты `_2605` с эталоном `_2408` — расхождений не должно быть
+- [ ] **6.1 Финальная верификация перед удалением**
+  - [ ] 6.1.1 Все тесты этапов 3–5 пройдены без замечаний
+  - [ ] 6.1.2 На продуктиве `_2605`-объекты применены и подтверждены
 
-- [ ] **6.2 Удаление устаревших объектов из БД**
-  - [ ] 6.2.1 `DROP FUNCTION ags.fnIpgChRsltCstUtl2_2408_ipgSt`
-  - [ ] 6.2.2 `DROP FUNCTION ags.fnIpgChRsltCstUtlPercentBrn_2408_ipgSt`
-  - [ ] 6.2.3 `DROP PROCEDURE ags.spMstrg_2408_ipgSt`
-  - [ ] 6.2.4 `DROP PROCEDURE ags.spMstrg_2408_SaveToTables_ipgSt`
-  - [ ] 6.2.5 `DROP PROCEDURE ags.spMstrg_2408` (после подтверждения замены)
-  - [ ] 6.2.6 `DROP PROCEDURE ags.spMstrg_2408_SaveToTables` (после подтверждения замены)
-  - [ ] 6.2.7 Сохранить DROP-скрипты в `docs/development/notes/sql/26-0508/DROP_obsolete_2408_objects.sql`
+- [ ] **6.2 Подготовка скрипта удаления**
+  - [ ] 6.2.1 Оформить `06_DROP_obsolete_2408.sql` с заголовком и PRINT-маркерами:
+    - `DROP FUNCTION IF EXISTS ags.fnIpgChRsltCstUtl2_2408_ipgSt`
+    - `DROP FUNCTION IF EXISTS ags.fnIpgChRsltCstUtlPercentBrn_2408_ipgSt`
+    - `DROP PROCEDURE IF EXISTS ags.spMstrg_2408_ipgSt`
+    - `DROP PROCEDURE IF EXISTS ags.spMstrg_2408_SaveToTables_ipgSt`
+    - `DROP PROCEDURE IF EXISTS ags.spMstrg_2408` *(только после полной замены)*
+    - `DROP PROCEDURE IF EXISTS ags.spMstrg_2408_SaveToTables` *(только после полной замены)*
+  - [ ] 6.2.2 Выполнить на FishEye; убедиться, что `_2605` продолжает работать
 
-- [ ] **6.3 Документирование**
-  - [ ] 6.3.1 Обновить `docs/solutions/spMstrg_2408_execution.md` — добавить раздел о `spMstrg_2605`
-  - [ ] 6.3.2 Обновить `docs/project/project-docs.json` — секция `reports.implemented`, источник данных
-  - [ ] 6.3.3 Создать резюме чата `docs/development/notes/chats/chat-resume/chat-resume-26-0508-spMstrg-2605.md`
-  - [ ] 6.3.4 Сделать запись в `docs/journal/project-journal.json`
+---
+
+### Этап 7 — Сборка и приёмка пакета для продуктивного сервера
+
+- [ ] **7.1 Финальная подготовка артефактов**
+  - [ ] 7.1.1 Проверить идемпотентность 01–03: выполнить повторно — ошибок нет
+  - [ ] 7.1.2 Проверить откат: выполнить `05_ROLLBACK.sql` → затем 01–03 → `04_VERIFY_after.sql`
+  - [ ] 7.1.3 Убедиться, что в `04_VERIFY_after.sql` все ожидаемые значения прописаны в комментариях
+
+- [ ] **7.2 Оформление документа порядка работ**
+  - [ ] 7.2.1 Создать `docs/deployment/db-upgrade-spMstrg-2605.md` по структуре:
+    1. Назначение и область применения
+    2. Предварительные условия (доступ, резервная копия, версия SQL Server)
+    3. Состав пакета (таблица: файл / назначение / порядок)
+    4. Порядок выполнения (пошагово: бэкап → `00_VERIFY_before` → 01 → 02 → 03 → `04_VERIFY_after`)
+    5. Откат (`05_ROLLBACK.sql`)
+    6. Изменения MS Access (ручная инструкция из п. 4.1)
+    7. Изменения FEMSQ (краткое описание + ссылка на коммит)
+    8. Таблица приёмочной проверки (шаг / ожидаемый результат / фактический / подпись)
+  - [ ] 7.2.2 Заполнить таблицу приёмки ожидаемыми значениями из `04_VERIFY_after.sql`
+
+- [ ] **7.3 Финальная приёмка пакета на FishEye**
+  - [ ] 7.3.1 Выполнить `00_VERIFY_before.sql` — состояние «до»
+  - [ ] 7.3.2 Применить 01 → 02 → 03 в порядке номеров
+  - [ ] 7.3.3 Выполнить `04_VERIFY_after.sql` — сравнить с ожиданиями
+  - [ ] 7.3.4 Выполнить `05_ROLLBACK.sql` → убедиться, что `_2605` удалены, `_2408` работают
+  - [ ] 7.3.5 Повторно применить 01–03 (проверка чистоты отката и повторного применения)
+
+---
+
+### Этап 8 — Документирование
+
+- [ ] **8.1**  Обновить `docs/solutions/spMstrg_2408_execution.md` — добавить раздел о `spMstrg_2605`
+- [ ] **8.2** Обновить `docs/project/project-docs.json` — секция `reports.implemented`, источник данных
+- [ ] **8.3** Создать резюме чата `docs/development/notes/chats/chat-resume/chat-resume-26-0508-spMstrg-2605.md`
+- [ ] **8.4** Сделать запись в `docs/journal/project-journal.json`
 
 ---
 
 ## Контрольные точки
 
 | Точка | Условие готовности |
-|---|---|
-| К-0 | Эталонные данные зафиксированы; все `_2408`-объекты подтверждены в БД |
-| К-1 | `fnIpgChRsltCstUtl2_2605` создана и протестирована в обоих режимах |
-| К-2 | `fnIpgChRsltCstUtlPercentBrn_2605` создана; результаты совпадают с `_2408` эталоном |
-| К-3 | `spMstrg_2605` создана; оба режима (`@saveToTables = 0/1`) протестированы |
-| К-4 | VBA обновлён; форма Access работает с новой процедурой во всех вариантах |
+|-------|--------------------|
+| К-0 | Эталонные данные зафиксированы; базовые `_2408`-объекты и `importIpgSt_26-0320` подтверждены; `00_VERIFY_before.sql` сформирован |
+| К-1 | `fnIpgChRsltCstUtl2_2605` создана, тест пройден; `01_*.sql` и фрагмент `04_VERIFY_after.sql` готовы |
+| К-2 | `fnIpgChRsltCstUtlPercentBrn_2605` создана; COUNT и суммы совпадают с эталоном; `02_*.sql` готов |
+| К-3 | `spMstrg_2605` создана; оба режима (`@saveToTables = 0/1`) протестированы; `03_*.sql`, `04_VERIFY_after.sql`, `05_ROLLBACK.sql` готовы |
+| К-4 | VBA обновлён вручную; форма Access работает во всех вариантах |
 | К-5 | FEMSQ переключён на `spMstrg_2605`; отчёт JasperReports выдаёт корректные данные |
-| К-6 | Старые `_2408`/`_ipgSt` объекты удалены; документация обновлена |
+| К-6 | `06_DROP_obsolete_2408.sql` готов и проверен на FishEye |
+| К-7 | Пакет 00–05 прошёл полный прогон (применение + откат + повтор) на FishEye; `db-upgrade-spMstrg-2605.md` заполнен |
 
 ---
 
@@ -270,10 +338,11 @@ spMstrg_2605 (@ipgCh, @MounthEndDate, @ipgSt = NULL, @saveToTables bit = 0)
 ### Ключевые параметры для тестирования
 - `@ipgCh = 15` (цепь инвестпрограмм)
 - `@MounthEndDate` — последний день актуального месяца
-- `@ipgSt = NULL` — все стройки (эталон: ~12693 строки в RS1–3, ~744 в RS4, ~32 в RS5–7)
+- `@ipgSt = NULL` — все стройки (эталон: RS1–3: 12693, RS4: 744, RS5: 32, RS6: 721, RS7: 32)
 - `@ipgSt = '12ОПР'` — группа для сравнения с `_ipgSt`-вариантами
 
-### Расположение скриптов
-- Новые SQL-скрипты: `docs/development/notes/sql/26-0508/`
-- Существующие `_2408` скрипты (эталон): `docs/development/notes/sql/26-0416/`
-- VBA-исходник: `docs/project/proposals/vba-analysis/VBA-Code-Export/Form-Modules/Form_ipgChMin.cls`
+### Расположение артефактов
+- **Пакет для продуктива:** `docs/development/notes/sql/26-0508/` (файлы 00–06)
+- **Документ порядка работ:** `docs/deployment/db-upgrade-spMstrg-2605.md`
+- **Эталонные `_2408` скрипты:** `docs/development/notes/sql/26-0416/`
+- **VBA-исходник:** `docs/project/proposals/vba-analysis/VBA-Code-Export/Form-Modules/Form_ipgChMin.cls`

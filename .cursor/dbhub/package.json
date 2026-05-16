@@ -1,18 +1,14 @@
 {
-  "name": "dbhub",
+  "name": "femsq-dbhub",
   "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
+  "private": true,
+  "description": "Local MCP DBHub install for FEMSQ (not a workspace npm project)",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "@bytebase/dbhub": "^0.11.6"
   },
   "overrides": {
-    "mariadb": "3.4.0"
+    "mariadb": "3.4.0",
+    "ssh-config": "4.1.6"
   }
 }

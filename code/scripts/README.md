@@ -2,6 +2,26 @@
 
 Скрипты для работы с базой данных FishEye
 
+## Резервное копирование FishEye
+
+**Скрипт:** `backup-fisheye.sh` — `BACKUP DATABASE` в контейнере `femsq-mssql`, копия `.bak` на диск **D:** (вне `docker_data.vhdx`).
+
+**Каталог (WSL):** `/mnt/d/Backups/femsq/database/` → `daily` | `manual` | `before-docker` | `archive`
+
+```bash
+./backup-fisheye.sh              # daily, ротация 7 копий
+./backup-fisheye.sh manual         # перед SQL-изменениями
+./backup-fisheye.sh before-docker  # перед обновлением Docker Desktop
+./backup-fisheye.sh archive        # долгосрочные снимки
+BACKUP_LABEL=метка ./backup-fisheye.sh manual
+```
+
+Пароль: `~/.femsq/database.properties` или `FEMSQ_DB_PASSWORD` / `SA_PASSWORD`.
+
+**Первый архивный бэкап (2026-05-15):** `D:\Backups\femsq\database\archive\FishEye_20260515_first.bak` (~126 МБ).
+
+---
+
 ## Скрипты выполнения процедур
 
 ### spMstrg_2408_SaveToTables
@@ -38,4 +58,4 @@
 
 ---
 
-**Дата последнего обновления:** 2025-12-04
+**Дата последнего обновления:** 2026-05-15
