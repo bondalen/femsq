@@ -311,21 +311,30 @@ spMstrg_2605 (@ipgCh, @MounthEndDate, @ipgSt = NULL, @saveToTables bit = 0)
 
 ---
 
-### Этап 6 — Удаление устаревших объектов *(отдельное окно обслуживания)*
+### Этап 6 — Удаление устаревших объектов ✅ *(секция A выполнена)*
 
-- [ ] **6.1 Финальная верификация перед удалением**
-  - [ ] 6.1.1 Все тесты этапов 3–5 пройдены без замечаний
-  - [ ] 6.1.2 На продуктиве `_2605`-объекты применены и подтверждены
+- [x] **6.1 Финальная верификация перед удалением** ✅
+  - [x] 6.1.1 Все тесты этапов 3–5 пройдены без замечаний ✅
+  - [x] 6.1.2 На dev FishEye `_2605`-объекты подтверждены ✅  
+    *(На продуктиве — применяется администратором отдельно)*
 
-- [ ] **6.2 Подготовка скрипта удаления**
-  - [ ] 6.2.1 Оформить `06_DROP_obsolete_2408.sql` с заголовком и PRINT-маркерами:
-    - `DROP FUNCTION IF EXISTS ags.fnIpgChRsltCstUtl2_2408_ipgSt`
-    - `DROP FUNCTION IF EXISTS ags.fnIpgChRsltCstUtlPercentBrn_2408_ipgSt`
-    - `DROP PROCEDURE IF EXISTS ags.spMstrg_2408_ipgSt`
+- [x] **6.2 Подготовка скрипта удаления** ✅
+  - [x] 6.2.1 Оформить `06_DROP_obsolete_2408.sql` — создан с двумя секциями:  
+    **Секция A** (выполняется сейчас, промежуточные `_ipgSt`-варианты):
     - `DROP PROCEDURE IF EXISTS ags.spMstrg_2408_SaveToTables_ipgSt`
-    - `DROP PROCEDURE IF EXISTS ags.spMstrg_2408` *(только после полной замены)*
-    - `DROP PROCEDURE IF EXISTS ags.spMstrg_2408_SaveToTables` *(только после полной замены)*
-  - [ ] 6.2.2 Выполнить на FishEye; убедиться, что `_2605` продолжает работать
+    - `DROP PROCEDURE IF EXISTS ags.spMstrg_2408_ipgSt`
+    - `DROP FUNCTION IF EXISTS ags.fnIpgChRsltCstUtlPercentBrn_2408_ipgSt`
+    - `DROP FUNCTION IF EXISTS ags.fnIpgChRsltCstUtl2_2408_ipgSt`
+    
+    **Секция B** (закомментирована — только после полного перехода на `_2605` на продуктиве):
+    - `DROP PROCEDURE IF EXISTS ags.spMstrg_2408_SaveToTables`
+    - `DROP PROCEDURE IF EXISTS ags.spMstrg_2408`
+    - `DROP FUNCTION IF EXISTS ags.fnIpgChRsltCstUtlPercentBrn_2408`
+    - `DROP FUNCTION IF EXISTS ags.fnIpgChRsltCstUtl2_2408`
+    
+    **Исполнено:** На dev FishEye `_ipgSt`-объектов не существовало → IF EXISTS = no-op.
+  - [x] 6.2.2 Выполнить на FishEye; убедиться, что `_2605` продолжает работать  
+    **Исполнено:** 3 объекта `_2605` подтверждены после выполнения скрипта ✅
 
 ---
 
