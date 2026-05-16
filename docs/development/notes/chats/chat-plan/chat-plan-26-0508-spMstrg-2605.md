@@ -256,26 +256,29 @@ spMstrg_2605 (@ipgCh, @MounthEndDate, @ipgSt = NULL, @saveToTables bit = 0)
 
 ---
 
-### Этап 4 — Обновление VBA (`Form_ipgChMin.cls`)
+### Этап 4 — Обновление VBA (`Form_ipgChMin.cls`) ✅ *(инструкция подготовлена)*
 
-> Изменения выполняются **вручную** в MS Access. Инструкция включается в `docs/deployment/db-upgrade-spMstrg-2605.md`.
+> Изменения выполняются **вручную** в MS Access. Инструкция включена в `docs/deployment/db-upgrade-spMstrg-2605.md`.
 
-- [ ] **4.1 Подготовка инструкции для ручного выполнения**
-  - [ ] 4.1.1 Описать добавление `cbxIpgSt` (ComboBox) на форму `Form_ipgChMin`:
+- [x] **4.1 Подготовка инструкции для ручного выполнения** ✅
+  - [x] 4.1.1 Описать добавление `cbxIpgSt` (ComboBox) на форму `Form_ipgChMin`:
     - Источник строк:
       ```sql
       SELECT '' AS cst_type, '(все стройки)' AS nm
       UNION SELECT DISTINCT cst_type, cst_type FROM ags.[importIpgSt_26-0320]
       ORDER BY 1
       ```
-    - Свойства: `BoundColumn = 1`, `ColumnCount = 2`, `ColumnWidths = "0cm;4cm"`, `DefaultValue = ""`
-  - [ ] 4.1.2 Описать изменения в `btnMasteringPercent_2408_Click()`:
+    - Свойства: `BoundColumn = 1`, `ColumnCount = 2`, `ColumnWidths = "0cm;4cm"`, `DefaultValue = ""`  
+    **Исполнено:** раздел 6.1 документа `db-upgrade-spMstrg-2605.md`.
+  - [x] 4.1.2 Описать изменения в `btnMasteringPercent_2408_Click()`:
     - `.CommandText = "ags.spMstrg_2605"`
     - Добавить `.Parameters.Append` для `@ipgSt` и `@saveToTables = 0`
-    - Порядок параметров: `@ipgCh`, `@MounthEndDate`, `@ipgSt`, `@saveToTables`
-  - [ ] 4.1.3 Включить инструкцию в раздел «Изменения MS Access» документа `db-upgrade-spMstrg-2605.md`
+    - Порядок параметров: `@ipgCh`, `@MounthEndDate`, `@ipgSt`, `@saveToTables`  
+    **Исполнено:** раздел 6.2 документа — полный diff БЫЛО/СТАЛО с VBA-кодом. `@ipgSt` передаётся как `Null` при пустом `cbxIpgSt`, `@saveToTables = adBoolean False`.
+  - [x] 4.1.3 Включить инструкцию в раздел «Изменения MS Access» документа `db-upgrade-spMstrg-2605.md`  
+    **Исполнено:** документ `docs/deployment/db-upgrade-spMstrg-2605.md` создан (разделы 1–8).
 
-- [ ] **4.2 Тестирование в MS Access** *(после ручного применения)*
+- [ ] **4.2 Тестирование в MS Access** *(после ручного применения — выполняется вручную)*
   - [ ] 4.2.1 Кнопка с `cbxIpgSt = "(все стройки)"` → результат как у старого `spMstrg_2408`
   - [ ] 4.2.2 Кнопка с `cbxIpgSt = '12ОПР'` → результат как у `spMstrg_2408_ipgSt`
   - [ ] 4.2.3 Проверить все 6 групп
