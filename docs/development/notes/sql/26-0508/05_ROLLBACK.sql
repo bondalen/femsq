@@ -18,7 +18,7 @@ GO
 PRINT 'DROP: ags.spMstrg_2605'
 GO
 
--- 2. Вторая функция (зависит от первой)
+-- 2. Вторая функция (зависит от первой, используется в процедуре)
 DROP FUNCTION IF EXISTS [ags].[fnIpgChRsltCstUtlPercentBrn_2605];
 GO
 PRINT 'DROP: ags.fnIpgChRsltCstUtlPercentBrn_2605'
