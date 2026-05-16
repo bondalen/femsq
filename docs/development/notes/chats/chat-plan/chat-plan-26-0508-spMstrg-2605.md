@@ -285,16 +285,28 @@ spMstrg_2605 (@ipgCh, @MounthEndDate, @ipgSt = NULL, @saveToTables bit = 0)
 
 ---
 
-### Этап 5 — Обновление FEMSQ (Java / JasperReports)
+### Этап 5 — Обновление FEMSQ (Java / JasperReports) ✅
 
-- [ ] **5.1 Найти место вызова `spMstrg_2408_SaveToTables` в коде Java**
-  - [ ] 5.1.1 Поиск по кодовой базе `code/femsq-backend`
+- [x] **5.1 Найти место вызова `spMstrg_2408_SaveToTables` в коде Java** ✅
+  - [x] 5.1.1 Поиск по кодовой базе `code/femsq-backend`  
+    **Исполнено:** Вызов `spMstrg_2408_SaveToTables` **не находится в Java-коде**.  
+    Архитектура: `ReportGenerationService.java` читает данные напрямую из таблиц  
+    `ags.spMstrg_2408_ResultSet1..7` через JasperReports + JRXML-шаблон.  
+    Таблицы заполняются **внешним shell-скриптом** `code/scripts/execute_spMstrg_2408.sh`.  
+    JRXML (`mstrgAg_23_Branch_q2m_2408_25.jrxml`) и Java-код не требуют изменений.
 
-- [ ] **5.2 Изменить вызов на `spMstrg_2605` с `@saveToTables = 1`**
-  - [ ] 5.2.1 Добавить передачу параметра `@ipgSt` (NULL для текущего отчёта)
-  - [ ] 5.2.2 Проверить, что таймаут соединения достаточен (процедура выполняется ~126 сек)
+- [x] **5.2 Изменить вызов на `spMstrg_2605` с `@saveToTables = 1`** ✅
+  - [x] 5.2.1 Создать `code/scripts/execute_spMstrg_2605.sh` — замена `execute_spMstrg_2408.sh`:  
+    - Вызывает `EXEC ags.spMstrg_2605 @ipgCh=..., @MounthEndDate=..., @ipgSt=NULL, @saveToTables=1`  
+    - Использует `docker exec femsq-mssql sqlcmd` (sqlcmd только в контейнере)  
+    - Переменная `IPGST=""` — NULL = все стройки  
+    - После выполнения: COUNT по всем 7 ResultSet-таблицам  
+    - Обновлён `code/scripts/README.md`  
+    **Протестировано:** RS1=RS2=RS3=12693, RS4=744, RS5=32, RS6=721, RS7=32 — совпадает с эталоном ✅
+  - [x] 5.2.2 Проверить таймаут  
+    **Исполнено:** Время выполнения ~24 сек (dev-Docker), TIMEOUT=600 сек — достаточно ✅
 
-- [ ] **5.3 Проверить работу JasperReports**
+- [ ] **5.3 Проверить работу JasperReports** *(выполняется вручную после деплоя)*
   - [ ] 5.3.1 Запустить отчёт `mstrgAg_23_Branch_q2m_2408_25`, убедиться в корректности данных
 
 ---
