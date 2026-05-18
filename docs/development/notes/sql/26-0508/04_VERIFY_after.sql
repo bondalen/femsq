@@ -10,6 +10,8 @@ GO
 --   Объекты:       fnIpgChRsltCstUtl2_2605, fnIpgChRsltCstUtlPercentBrn_2605, spMstrg_2605 — созданы
 --   Столбцы fn2:   cols_2408=90, cols_2605=90 — совпадают
 --   Столбцы fnPBrn: cols_2408=398, cols_2605=398 — совпадают
+--   COUNT fn2 (ipgCh=15): fn_2408=14210, fn_2605(NULL)=14210, fn_2605('12ОПР')=661
+--   COUNT fnPBrn (ipgCh=15): fn_2408=12693, fn_2605(NULL)=12693, fn_2605('12ОПР')=604
 --
 --   spMstrg_2605(ipgSt=NULL, save=0):  7 рекордсетов (SELECT-режим), выполнено ~26 сек
 --   spMstrg_2605(ipgSt=NULL, save=1):  RS1=12693 RS2=12693 RS3=12693 RS4=0 RS5=1 RS6=0 RS7=1
@@ -52,6 +54,75 @@ SELECT
         N'SELECT * FROM ags.fnIpgChRsltCstUtlPercentBrn_2408(15)', NULL, 0)) AS cols_2408,
     (SELECT COUNT(*) FROM sys.dm_exec_describe_first_result_set(
         N'SELECT * FROM ags.fnIpgChRsltCstUtlPercentBrn_2605(15, NULL)', NULL, 0)) AS cols_2605;
+GO
+
+-- =============================================================================
+-- 2c. fnIpgChRsltCstUtl2_2605 — COUNT строк (ipgCh=15)
+--     Ожидаемо (FishEye dev): fn_2408=14210, fn_2605(NULL)=14210, fn_2605('12ОПР')=661
+--     На продуктиве абсолютные значения могут отличаться; важно: cnt_2408 = cnt_2605_null
+-- =============================================================================
+DECLARE @ipgCh int = 15;
+
+SELECT
+    test_name,
+    cnt,
+    expected_dev,
+    CASE
+        WHEN test_name = 'fn2_2408'           AND cnt = expected_dev THEN 'OK'
+        WHEN test_name = 'fn2_2605_NULL'      AND cnt = expected_dev THEN 'OK'
+        WHEN test_name = 'fn2_2605_12OPR'     AND cnt = expected_dev THEN 'OK'
+        WHEN test_name IN ('fn2_2408', 'fn2_2605_NULL')
+            AND cnt = (SELECT COUNT(*) FROM ags.fnIpgChRsltCstUtl2_2408(@ipgCh)) THEN 'OK (match pair)'
+        WHEN test_name = 'fn2_2605_12OPR' AND cnt < (SELECT COUNT(*) FROM ags.fnIpgChRsltCstUtl2_2408(@ipgCh)) THEN 'OK (filtered subset)'
+        ELSE 'CHECK'
+    END AS status
+FROM (
+    SELECT 'fn2_2408' AS test_name,
+           (SELECT COUNT(*) FROM ags.fnIpgChRsltCstUtl2_2408(@ipgCh)) AS cnt,
+           14210 AS expected_dev
+    UNION ALL
+    SELECT 'fn2_2605_NULL',
+           (SELECT COUNT(*) FROM ags.fnIpgChRsltCstUtl2_2605(@ipgCh, NULL)),
+           14210
+    UNION ALL
+    SELECT 'fn2_2605_12OPR',
+           (SELECT COUNT(*) FROM ags.fnIpgChRsltCstUtl2_2605(@ipgCh, N'12ОПР')),
+           661
+) t;
+GO
+
+-- =============================================================================
+-- 2d. fnIpgChRsltCstUtlPercentBrn_2605 — COUNT строк (ipgCh=15)
+--     Ожидаемо (FishEye dev): fn_2408=12693, fn_2605(NULL)=12693, fn_2605('12ОПР')=604
+-- =============================================================================
+DECLARE @ipgCh int = 15;
+
+SELECT
+    test_name,
+    cnt,
+    expected_dev,
+    CASE
+        WHEN test_name = 'fnPBrn_2408'        AND cnt = expected_dev THEN 'OK'
+        WHEN test_name = 'fnPBrn_2605_NULL'   AND cnt = expected_dev THEN 'OK'
+        WHEN test_name = 'fnPBrn_2605_12OPR'  AND cnt = expected_dev THEN 'OK'
+        WHEN test_name IN ('fnPBrn_2408', 'fnPBrn_2605_NULL')
+            AND cnt = (SELECT COUNT(*) FROM ags.fnIpgChRsltCstUtlPercentBrn_2408(@ipgCh)) THEN 'OK (match pair)'
+        WHEN test_name = 'fnPBrn_2605_12OPR' AND cnt < (SELECT COUNT(*) FROM ags.fnIpgChRsltCstUtlPercentBrn_2408(@ipgCh)) THEN 'OK (filtered subset)'
+        ELSE 'CHECK'
+    END AS status
+FROM (
+    SELECT 'fnPBrn_2408' AS test_name,
+           (SELECT COUNT(*) FROM ags.fnIpgChRsltCstUtlPercentBrn_2408(@ipgCh)) AS cnt,
+           12693 AS expected_dev
+    UNION ALL
+    SELECT 'fnPBrn_2605_NULL',
+           (SELECT COUNT(*) FROM ags.fnIpgChRsltCstUtlPercentBrn_2605(@ipgCh, NULL)),
+           12693
+    UNION ALL
+    SELECT 'fnPBrn_2605_12OPR',
+           (SELECT COUNT(*) FROM ags.fnIpgChRsltCstUtlPercentBrn_2605(@ipgCh, N'12ОПР')),
+           604
+) t;
 GO
 
 -- =============================================================================

@@ -4,7 +4,8 @@
 **Обновлён:** 2026-05-16  
 **Автор:** Александр  
 **Связанные задачи:** (будут созданы в ходе работы)  
-**Связанное резюме:** (будет создано по завершению)
+**Связанное резюме:** `docs/development/notes/chats/chat-resume/chat-resume-26-0508-spMstrg-2605.md`  
+**Чеклист дня деплоя:** `docs/deployment/db-upgrade-spMstrg-2605-deploy-day-checklist.md`
 
 ---
 
@@ -152,8 +153,8 @@ spMstrg_2605 (@ipgCh, @MounthEndDate, @ipgSt = NULL, @saveToTables bit = 0)
     **Исполнено:** файл создан, 18 345 символов. Заголовок с описанием, SET-операторы, PRINT-маркер.
   - [x] 1.2.3 Выполнить скрипт в FishEye  
     **Исполнено:** `OK: ags.fnIpgChRsltCstUtl2_2605 создана/обновлена` — без ошибок.
-  - [ ] 1.2.4 Добавить DROP в `05_ROLLBACK.sql`: `DROP FUNCTION IF EXISTS ags.fnIpgChRsltCstUtl2_2605`  
-    *(будет исполнено в конце этапа)*
+  - [x] 1.2.4 Добавить DROP в `05_ROLLBACK.sql`: `DROP FUNCTION IF EXISTS ags.fnIpgChRsltCstUtl2_2605`  
+    **Исполнено:** строка присутствует в `05_ROLLBACK.sql` (DROP всех трёх объектов `_2605`) ✅
 
 - [x] **1.3 Тестирование + наполнение `04_VERIFY_after.sql`** ✅
   - [x] 1.3.1 Режим «все стройки» (`@ipgSt = NULL`): COUNT строк = COUNT из `fnIpgChRsltCstUtl2_2408`  
@@ -162,8 +163,8 @@ spMstrg_2605 (@ipgCh, @MounthEndDate, @ipgSt = NULL, @saveToTables bit = 0)
     **Исполнено:** `fn2605(15, '12ОПР')` = 661 строк. `_ipgSt`-вариант на FishEye не установлен (только на продуктиве — по плану). Результат 661 является подмножеством 14210; в `importIpgSt_26-0320` группа `12ОПР` = 61 строек. ✅
   - [x] 1.3.3 Проверить количество столбцов  
     **Исполнено:** `fn2408` = 90 столбцов, `fn2605` = 90 столбцов, разница = 0 ✅
-  - [ ] 1.3.4 Успешные проверочные запросы перенести в `04_VERIFY_after.sql` (секция «fn_2605»)  
-    *(будет выполнено на Этапе 7)*
+  - [x] 1.3.4 Успешные проверочные запросы перенести в `04_VERIFY_after.sql` (секция «fn_2605»)  
+    **Исполнено:** секции 2a (столбцы), 2c (COUNT fn2: 14210/14210/661) в `04_VERIFY_after.sql` ✅
 
 ---
 
@@ -198,8 +199,8 @@ spMstrg_2605 (@ipgCh, @MounthEndDate, @ipgSt = NULL, @saveToTables bit = 0)
     **Исполнено:** `fnPBrn_2605(15, '12ОПР')` = 604 строки. Является подмножеством 12693. ✅
   - [x] 2.3.3 Проверка состава столбцов  
     **Исполнено:** `fnPBrn_2408` = 398 столбцов, `fnPBrn_2605` = 398 столбцов, разница = 0 ✅
-  - [ ] 2.3.4 Успешные проверочные запросы перенести в `04_VERIFY_after.sql` (секция «fnPBrn_2605»)  
-    *(будет выполнено на Этапе 7)*
+  - [x] 2.3.4 Успешные проверочные запросы перенести в `04_VERIFY_after.sql` (секция «fnPBrn_2605»)  
+    **Исполнено:** секции 2b (столбцы), 2d (COUNT fnPBrn: 12693/12693/604) в `04_VERIFY_after.sql` ✅
 
 ---
 
@@ -414,5 +415,6 @@ spMstrg_2605 (@ipgCh, @MounthEndDate, @ipgSt = NULL, @saveToTables bit = 0)
 ### Расположение артефактов
 - **Пакет для продуктива:** `docs/development/notes/sql/26-0508/` (файлы 00–06)
 - **Документ порядка работ:** `docs/deployment/db-upgrade-spMstrg-2605.md`
+- **Чеклист дня деплоя:** `docs/deployment/db-upgrade-spMstrg-2605-deploy-day-checklist.md`
 - **Эталонные `_2408` скрипты:** `docs/development/notes/sql/26-0416/`
 - **VBA-исходник:** `docs/project/proposals/vba-analysis/VBA-Code-Export/Form-Modules/Form_ipgChMin.cls`
