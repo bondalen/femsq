@@ -6,7 +6,8 @@
 **Ответственный (FEMSQ):** _______________
 
 > Полный порядок работ: [`db-upgrade-spMstrg-2605.md`](db-upgrade-spMstrg-2605.md)  
-> SQL-пакет: `docs/development/notes/sql/26-0508/`
+> SQL-пакет: `docs/development/notes/sql/26-0508/`  
+> **SQL Server 2012:** `docs/development/notes/sql/26-0508/MSSQL2012/`
 
 ---
 

@@ -7,6 +7,9 @@
 
 **Краткий чеклист на день деплоя:** [`db-upgrade-spMstrg-2605-deploy-day-checklist.md`](db-upgrade-spMstrg-2605-deploy-day-checklist.md)
 
+**Реестр продуктивного сервера:** `docs/project/project-docs.json` → `development.environments.machines.prod-fisheye`  
+**Общие правила SQL для FishEye:** [`sql-server-deployment-rules.md`](sql-server-deployment-rules.md)
+
 ---
 
 ## 1. Назначение и область применения
@@ -29,7 +32,7 @@
 
 | # | Условие | Проверка |
 |---|---------|---------|
-| 2.1 | SQL Server 2016+ (требуется `CREATE OR ALTER`) | `SELECT @@VERSION` |
+| 2.1 | SQL Server **2016 SP1+** (`CREATE OR ALTER`) **или 2012 SP4+** (пакет `MSSQL2012/`) | `SELECT @@VERSION` |
 | 2.2 | Объект `ags.[importIpgSt_26-0320]` существует в БД | `SELECT OBJECT_ID('ags.[importIpgSt_26-0320]')` |
 | 2.3 | Процедура `ags.spMstrg_2408_SaveToTables` существует | `SELECT OBJECT_ID('ags.spMstrg_2408_SaveToTables')` |
 | 2.4 | Таблицы `ags.spMstrg_2408_ResultSet1..7` существуют | `SELECT COUNT(*) FROM sys.tables WHERE name LIKE 'spMstrg_2408_ResultSet%'` |
@@ -42,6 +45,10 @@
 ## 3. Состав пакета
 
 Пакет находится в `docs/development/notes/sql/26-0508/`.
+
+**SQL Server 2012 (продуктив 11.0.x):** используйте зеркальный набор в  
+`docs/development/notes/sql/26-0508/MSSQL2012/` (те же имена файлов 00–06, без `CREATE OR ALTER` / `DROP IF EXISTS`).  
+См. `MSSQL2012/README.md`.
 
 | Файл | Назначение | Порядок |
 |------|-----------|---------|

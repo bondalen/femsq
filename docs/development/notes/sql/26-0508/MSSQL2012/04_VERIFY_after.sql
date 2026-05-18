@@ -1,0 +1,187 @@
+USE [FishEye]
+GO
+
+-- =============================================================================
+-- Файл:    04_VERIFY_after.sql
+-- Пакет:   docs/development/notes/sql/26-0508/MSSQL2012/
+-- Совместим с SQL Server 2012 SP1+
+-- Назначение: Проверочные запросы после применения всех объектов _2605.
+--
+-- Подтверждённые результаты (2026-05-16, ipgCh=15, MounthEndDate='2024-08-31'):
+--   Объекты:       fnIpgChRsltCstUtl2_2605, fnIpgChRsltCstUtlPercentBrn_2605, spMstrg_2605 — созданы
+--   Столбцы fn2:   cols_2408=90, cols_2605=90 — совпадают
+--   Столбцы fnPBrn: cols_2408=398, cols_2605=398 — совпадают
+--   COUNT fn2 (ipgCh=15): fn_2408=14210, fn_2605(NULL)=14210, fn_2605('12ОПР')=661
+--   COUNT fnPBrn (ipgCh=15): fn_2408=12693, fn_2605(NULL)=12693, fn_2605('12ОПР')=604
+--
+--   spMstrg_2605(ipgSt=NULL, save=0):  7 рекордсетов (SELECT-режим), выполнено ~26 сек
+--   spMstrg_2605(ipgSt=NULL, save=1):  RS1=12693 RS2=12693 RS3=12693 RS4=0 RS5=1 RS6=0 RS7=1
+--   spMstrg_2605(ipgSt='12ОПР', save=1): RS1=604 RS2=604 RS3=604 RS4=0 RS5=1 RS6=0 RS7=1
+--   spMstrg_2605(ipgSt='12ОПР', save=0): 7 рекордсетов (SELECT-режим с фильтром), выполнено ~6 сек
+-- =============================================================================
+
+-- =============================================================================
+-- 1. Проверка существования объектов
+-- =============================================================================
+SELECT
+    name,
+    type_desc,
+    CONVERT(varchar(10), create_date, 23) AS created,
+    CONVERT(varchar(10), modify_date, 23) AS modified
+FROM sys.objects
+WHERE schema_id = SCHEMA_ID('ags')
+  AND name IN (
+    'fnIpgChRsltCstUtl2_2605',
+    'fnIpgChRsltCstUtlPercentBrn_2605',
+    'spMstrg_2605'
+  )
+ORDER BY name;
+GO
+
+-- =============================================================================
+-- 2. Проверка функций (количество столбцов)
+-- =============================================================================
+-- 2a. fnIpgChRsltCstUtl2_2605 — совпадение числа столбцов с _2408
+SELECT
+    (SELECT COUNT(*) FROM sys.dm_exec_describe_first_result_set(
+        N'SELECT * FROM ags.fnIpgChRsltCstUtl2_2408(15)', NULL, 0)) AS cols_2408,
+    (SELECT COUNT(*) FROM sys.dm_exec_describe_first_result_set(
+        N'SELECT * FROM ags.fnIpgChRsltCstUtl2_2605(15, NULL)', NULL, 0)) AS cols_2605;
+GO
+
+-- 2b. fnIpgChRsltCstUtlPercentBrn_2605 — совпадение числа столбцов с _2408
+SELECT
+    (SELECT COUNT(*) FROM sys.dm_exec_describe_first_result_set(
+        N'SELECT * FROM ags.fnIpgChRsltCstUtlPercentBrn_2408(15)', NULL, 0)) AS cols_2408,
+    (SELECT COUNT(*) FROM sys.dm_exec_describe_first_result_set(
+        N'SELECT * FROM ags.fnIpgChRsltCstUtlPercentBrn_2605(15, NULL)', NULL, 0)) AS cols_2605;
+GO
+
+-- =============================================================================
+-- 2c. fnIpgChRsltCstUtl2_2605 — COUNT строк (ipgCh=15)
+--     Ожидаемо (FishEye dev): fn_2408=14210, fn_2605(NULL)=14210, fn_2605('12ОПР')=661
+--     На продуктиве абсолютные значения могут отличаться; важно: cnt_2408 = cnt_2605_null
+-- =============================================================================
+DECLARE @ipgCh int = 15;
+
+SELECT
+    test_name,
+    cnt,
+    expected_dev,
+    CASE
+        WHEN test_name = 'fn2_2408'           AND cnt = expected_dev THEN 'OK'
+        WHEN test_name = 'fn2_2605_NULL'      AND cnt = expected_dev THEN 'OK'
+        WHEN test_name = 'fn2_2605_12OPR'     AND cnt = expected_dev THEN 'OK'
+        WHEN test_name IN ('fn2_2408', 'fn2_2605_NULL')
+            AND cnt = (SELECT COUNT(*) FROM ags.fnIpgChRsltCstUtl2_2408(@ipgCh)) THEN 'OK (match pair)'
+        WHEN test_name = 'fn2_2605_12OPR' AND cnt < (SELECT COUNT(*) FROM ags.fnIpgChRsltCstUtl2_2408(@ipgCh)) THEN 'OK (filtered subset)'
+        ELSE 'CHECK'
+    END AS status
+FROM (
+    SELECT 'fn2_2408' AS test_name,
+           (SELECT COUNT(*) FROM ags.fnIpgChRsltCstUtl2_2408(@ipgCh)) AS cnt,
+           14210 AS expected_dev
+    UNION ALL
+    SELECT 'fn2_2605_NULL',
+           (SELECT COUNT(*) FROM ags.fnIpgChRsltCstUtl2_2605(@ipgCh, NULL)),
+           14210
+    UNION ALL
+    SELECT 'fn2_2605_12OPR',
+           (SELECT COUNT(*) FROM ags.fnIpgChRsltCstUtl2_2605(@ipgCh, N'12ОПР')),
+           661
+) t;
+GO
+
+-- =============================================================================
+-- 2d. fnIpgChRsltCstUtlPercentBrn_2605 — COUNT строк (ipgCh=15)
+--     Ожидаемо (FishEye dev): fn_2408=12693, fn_2605(NULL)=12693, fn_2605('12ОПР')=604
+-- =============================================================================
+DECLARE @ipgCh int = 15;
+
+SELECT
+    test_name,
+    cnt,
+    expected_dev,
+    CASE
+        WHEN test_name = 'fnPBrn_2408'        AND cnt = expected_dev THEN 'OK'
+        WHEN test_name = 'fnPBrn_2605_NULL'   AND cnt = expected_dev THEN 'OK'
+        WHEN test_name = 'fnPBrn_2605_12OPR'  AND cnt = expected_dev THEN 'OK'
+        WHEN test_name IN ('fnPBrn_2408', 'fnPBrn_2605_NULL')
+            AND cnt = (SELECT COUNT(*) FROM ags.fnIpgChRsltCstUtlPercentBrn_2408(@ipgCh)) THEN 'OK (match pair)'
+        WHEN test_name = 'fnPBrn_2605_12OPR' AND cnt < (SELECT COUNT(*) FROM ags.fnIpgChRsltCstUtlPercentBrn_2408(@ipgCh)) THEN 'OK (filtered subset)'
+        ELSE 'CHECK'
+    END AS status
+FROM (
+    SELECT 'fnPBrn_2408' AS test_name,
+           (SELECT COUNT(*) FROM ags.fnIpgChRsltCstUtlPercentBrn_2408(@ipgCh)) AS cnt,
+           12693 AS expected_dev
+    UNION ALL
+    SELECT 'fnPBrn_2605_NULL',
+           (SELECT COUNT(*) FROM ags.fnIpgChRsltCstUtlPercentBrn_2605(@ipgCh, NULL)),
+           12693
+    UNION ALL
+    SELECT 'fnPBrn_2605_12OPR',
+           (SELECT COUNT(*) FROM ags.fnIpgChRsltCstUtlPercentBrn_2605(@ipgCh, N'12ОПР')),
+           604
+) t;
+GO
+
+-- =============================================================================
+-- 3. Тест spMstrg_2605: режим saveToTables=0 (Access), ipgSt=NULL
+--    Ожидаемый результат: 7 рекордсетов (SELECT), ~26 сек, RS1 = 12693 строк (ipgCh=15)
+-- =============================================================================
+EXEC ags.spMstrg_2605
+    @ipgCh        = 15,
+    @MounthEndDate = '2024-08-31',
+    @ipgSt         = NULL,
+    @saveToTables  = 0;
+GO
+
+-- =============================================================================
+-- 4. Тест spMstrg_2605: режим saveToTables=1 (FEMSQ), ipgSt=NULL
+--    Ожидаемый результат: ResultSet-таблицы заполнены, ~17 сек
+--    RS1=12693  RS2=12693  RS3=12693  RS4=0  RS5=1  RS6=0  RS7=1
+-- =============================================================================
+SET NOCOUNT ON;
+EXEC ags.spMstrg_2605
+    @ipgCh        = 15,
+    @MounthEndDate = '2024-08-31',
+    @ipgSt         = NULL,
+    @saveToTables  = 1;
+
+SELECT 'RS1' AS rs, COUNT(*) AS cnt FROM ags.spMstrg_2408_ResultSet1
+UNION ALL SELECT 'RS2', COUNT(*) FROM ags.spMstrg_2408_ResultSet2
+UNION ALL SELECT 'RS3', COUNT(*) FROM ags.spMstrg_2408_ResultSet3
+UNION ALL SELECT 'RS4', COUNT(*) FROM ags.spMstrg_2408_ResultSet4
+UNION ALL SELECT 'RS5', COUNT(*) FROM ags.spMstrg_2408_ResultSet5
+UNION ALL SELECT 'RS6', COUNT(*) FROM ags.spMstrg_2408_ResultSet6
+UNION ALL SELECT 'RS7', COUNT(*) FROM ags.spMstrg_2408_ResultSet7;
+GO
+
+-- =============================================================================
+-- 5. Тест spMstrg_2605: режим saveToTables=1 (FEMSQ), ipgSt='12ОПР'
+--    Ожидаемый результат: RS1=604  RS2=604  RS3=604  RS4=0  RS5=1  RS6=0  RS7=1
+-- =============================================================================
+SET NOCOUNT ON;
+EXEC ags.spMstrg_2605
+    @ipgCh        = 15,
+    @MounthEndDate = '2024-08-31',
+    @ipgSt         = N'12ОПР',
+    @saveToTables  = 1;
+
+SELECT 'RS1_12OPR' AS rs, COUNT(*) AS cnt FROM ags.spMstrg_2408_ResultSet1
+UNION ALL SELECT 'RS2_12OPR', COUNT(*) FROM ags.spMstrg_2408_ResultSet2
+UNION ALL SELECT 'RS3_12OPR', COUNT(*) FROM ags.spMstrg_2408_ResultSet3;
+GO
+
+-- =============================================================================
+-- 6. Тест spMstrg_2605: режим saveToTables=0 (Access), ipgSt='12ОПР'
+--    Ожидаемый результат: 7 рекордсетов (SELECT с фильтром), ~6 сек
+-- =============================================================================
+SET NOCOUNT OFF;
+EXEC ags.spMstrg_2605
+    @ipgCh        = 15,
+    @MounthEndDate = '2024-08-31',
+    @ipgSt         = N'12ОПР',
+    @saveToTables  = 0;
+GO

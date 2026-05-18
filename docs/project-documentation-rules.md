@@ -287,6 +287,13 @@
 - ✅ **Соответствие коду** - похоже на пути пакетов Java
 - ✅ **Гибкость** - можно ссылаться на любой уровень иерархии
 
+## SQL Server и продуктивное окружение
+
+- **Продуктивная БД:** `FishEye`, схема `ags`, MS SQL Server **2012 SP4** (`11.0.7507.2`). Зафиксировано в `project-docs.json` → `database` и `development.environments.machines.prod-fisheye`.
+- **Разработка:** Docker `femsq-mssql` (SQL Server 2022) — не является целевой платформой для DDL на prod.
+- **SQL-пакеты:** для продуктива обязательна подпапка `MSSQL2012/` в каталоге задачи; см. `docs/deployment/sql-server-deployment-rules.md` и `docs/project/extensions/database/compatibility.json`.
+- **Реестр окружений:** `project-docs.json` → `development.environments`; расширение `docs/project/extensions/deployment/environments.json`.
+
 ## Правила обновления
 
 ### Обязательные требования

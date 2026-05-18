@@ -3,7 +3,7 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-05-16"
+      "lastUpdated": "2026-05-18"
     },
     "sessions": [
       {
@@ -4776,6 +4776,69 @@
                     "references": [
                       "docs/development/notes/sql/26-0508/06_DROP_obsolete_2408.sql",
                       "docs/development/notes/sql/26-0508/00_VERIFY_before.sql"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "Документация: продуктив SQL Server 2012, реестр окружений, MSSQL2012 (success). № chat-2026-05-18-001",
+          "chat-attributes": {
+            "id": "chat-2026-05-18-001",
+            "created": "2026-05-18",
+            "lastUpdated": "2026-05-18",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "high",
+            "tags": [
+              "documentation",
+              "sql-server",
+              "production",
+              "environments",
+              "compatibility"
+            ],
+            "links": {
+              "projectDocsRefs": [
+                "docs/project/project-docs.json#development.environments"
+              ],
+              "developmentTasks": [],
+              "aiRuleRefs": [
+                ".cursorrules"
+              ],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0508-spMstrg-2605.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Актуализация реестра prod/dev и правил SQL (success). № log-2026-05-18-001",
+                "log-attributes": {
+                  "id": "log-2026-05-18-001",
+                  "timestamp": "2026-05-18T12:00:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Синхронизация документации продуктивного SQL Server 2012 SP4",
+                    "details": "Подтверждён продуктив 11.0.7507.2. Добавлены development.environments.machines (nb-win, prod-fisheye), environments.json, sql-server-deployment-rules.md, обновлены compatibility.json (.cursorrules), project-documentation-rules. Конвенция MSSQL2012/ для DDL-пакетов.",
+                    "outcome": "Единый источник правды для выбора SQL-скриптов на prod vs dev; закрыт разрыв между .cursorrules и project-docs.json.",
+                    "references": [
+                      "docs/project/project-docs.json",
+                      "docs/project/extensions/deployment/environments.json",
+                      "docs/deployment/sql-server-deployment-rules.md",
+                      "docs/project/extensions/database/compatibility.json",
+                      "docs/development/notes/sql/26-0508/MSSQL2012/"
                     ]
                   }
                 ]

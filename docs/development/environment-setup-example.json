@@ -1,7 +1,8 @@
 {
+  "$comment": "УСТАРЕВШИЙ ОБРАЗЕЦ. Актуальная конфигурация: docs/project/project-docs.json → development.environments и docs/project/extensions/deployment/environments.json",
   "development": {
     "environments": {
-      "description": "Машины разработки с порядком приоритета подключения. При начале работы AI проверяет машины в порядке check_order и использует первую подходящую.",
+      "description": "[ОБРАЗЕЦ] Машины разработки. Не использовать напрямую — см. project-docs.json.",
       "check_order": [
         "workstation-fedora",
         "home-windows"

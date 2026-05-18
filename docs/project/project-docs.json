@@ -6,7 +6,7 @@
       "description": "Cистема работы с контрагентами и объектами при капитальном строительстве на основе БД MS SQL Server FEMSQ (Fish Eye MS SQL Server)",
       "author": "Александр",
       "created": "2025-10-08",
-      "lastUpdated": "2026-03-18",
+      "lastUpdated": "2026-05-18",
       "status": "in_progress",
       "repository": "https://github.com/bondalen/femsq.git",
       "license": "MIT",
@@ -221,9 +221,7 @@
         "startup_command": "java -jar femsq-{version}.jar"
       },
       "extensions": [
-        "docs/project/extensions/deployment/deployment-config.json",
-        "docs/project/extensions/deployment/environments.json",
-        "docs/project/extensions/deployment/security-config.json"
+        "docs/project/extensions/deployment/environments.json"
       ]
     },
     "features": {
@@ -270,6 +268,19 @@
       "version": "1.0.0",
       "engine": "MS SQL Server 2012+",
       "target_version": "11.0.7507.2 (2012 SP4)",
+      "compatibility_reference": "docs/project/extensions/database/compatibility.json",
+      "sql_deployment_rules": "docs/deployment/sql-server-deployment-rules.md",
+      "sql_package_convention": {
+        "description": "DDL/DML для FishEye: целевая платформа — production (2012 SP4). Два набора скриптов в одной папке задачи.",
+        "production_subfolder": "MSSQL2012",
+        "production_subfolder_when": "SQL Server major_version = 11 (2012 SP4)",
+        "dev_syntax_subfolder": "корень папки задачи (CREATE OR ALTER, DROP IF EXISTS) — только для dev на 2016+",
+        "example": "docs/development/notes/sql/26-0508/MSSQL2012/"
+      },
+      "production_upgrade_docs": [
+        "docs/deployment/db-upgrade-spMstrg-2605.md",
+        "docs/deployment/db-upgrade-spMstrg-2605-deploy-day-checklist.md"
+      ],
       "connection": {
         "type": "external",
         "driver": "com.microsoft.sqlserver.jdbc.SQLServerDriver",
@@ -478,13 +489,87 @@
         }
       ],
       "extensions": [
-        "docs/project/extensions/database/connection-config.json",
-        "docs/project/extensions/database/authentication-methods.json",
-        "docs/project/extensions/database/migration-config.json",
         "docs/project/extensions/database/compatibility.json"
       ]
     },
     "development": {
+      "environments": {
+        "description": "Машины и серверы БД. Используется при проверке окружения (.cursorrules) и при выборе набора SQL-скриптов для деплоя.",
+        "check_order": [
+          "nb-win",
+          "prod-fisheye"
+        ],
+        "machines": {
+          "nb-win": {
+            "name": "Рабочая станция разработки (WSL2)",
+            "role": "development",
+            "hostname_pattern": "^nb-win$",
+            "os_pattern": ".*Linux.*|.*WSL.*",
+            "priority": 1,
+            "database": {
+              "type": "docker",
+              "container_name": "femsq-mssql",
+              "host": "localhost",
+              "port": 1433,
+              "database": "FishEye",
+              "schema": "ags",
+              "compatibility_level_recommended": 110,
+              "sql_server_product": "Microsoft SQL Server 2022 (dev only)",
+              "notes": "Для проверки совместимости с продуктивом использовать скрипты из подпапки MSSQL2012/ и/или COMPATIBILITY_LEVEL=110"
+            },
+            "dbhub": {
+              "type": "local",
+              "path": ".cursor/dbhub",
+              "entry_point": ".cursor/dbhub/node_modules/@bytebase/dbhub/dist/index.js"
+            },
+            "hyperv_vm": {
+              "name": "w10-26-0310",
+              "purpose": "MS Access / Excel с ODBC к Docker SQL"
+            }
+          },
+          "prod-fisheye": {
+            "name": "Продуктивный SQL Server (FishEye)",
+            "role": "production",
+            "hostname_pattern": ".*",
+            "os_pattern": ".*Windows.*",
+            "priority": 2,
+            "database": {
+              "type": "remote_server",
+              "host": "(корпоративная сеть, уточнять у DBA)",
+              "port": 1433,
+              "database": "FishEye",
+              "schema": "ags",
+              "sql_server_version": "11.0.7507.2",
+              "sql_server_name": "Microsoft SQL Server 2012 (SP4-GDR)",
+              "sql_server_major_version": 11,
+              "compatibility_level": 110,
+              "edition": "Standard Edition (64-bit)",
+              "verified_date": "2026-05-18",
+              "verified_by": "00_VERIFY_before.sql (@@VERSION на продуктиве)",
+              "sql_scripts_path": "docs/development/notes/sql/{task}/MSSQL2012/",
+              "clients": [
+                "MS Access (Form_ipgChMin)",
+                "FEMSQ / JasperReports (execute_spMstrg_2605.sh)",
+                "legacy: ags.spMstrg_2408 / _SaveToTables"
+              ]
+            },
+            "notes": "Единственный целевой сервер для DDL-пакетов _2605 и аналогичных. Не использовать CREATE OR ALTER и DROP IF EXISTS — только папка MSSQL2012/."
+          }
+        },
+        "detection": {
+          "method": "auto",
+          "fallback": "ask_user",
+          "checks": [
+            "hostname",
+            "os",
+            "database_container",
+            "database_service"
+          ]
+        },
+        "extensions": [
+          "docs/project/extensions/deployment/environments.json"
+        ]
+      },
       "milestones": [
         {
           "id": "milestone:report-mstrg-01",

@@ -1,7 +1,7 @@
 # План работы чата: Рефакторинг отчётной ветки spMstrg → версия _2605
 
 **Дата:** 2026-05-08  
-**Обновлён:** 2026-05-16  
+**Обновлён:** 2026-05-18  
 **Автор:** Александр  
 **Связанные задачи:** (будут созданы в ходе работы)  
 **Связанное резюме:** `docs/development/notes/chats/chat-resume/chat-resume-26-0508-spMstrg-2605.md`  
@@ -413,7 +413,8 @@ spMstrg_2605 (@ipgCh, @MounthEndDate, @ipgSt = NULL, @saveToTables bit = 0)
 - `@ipgSt = '12ОПР'` — группа для сравнения с `_ipgSt`-вариантами
 
 ### Расположение артефактов
-- **Пакет для продуктива:** `docs/development/notes/sql/26-0508/` (файлы 00–06)
+- **Пакет для продуктива (SQL Server 2016+):** `docs/development/notes/sql/26-0508/` (файлы 00–06)
+- **Пакет для продуктива (SQL Server 2012 SP4+):** `docs/development/notes/sql/26-0508/MSSQL2012/` (файлы 00–06)
 - **Документ порядка работ:** `docs/deployment/db-upgrade-spMstrg-2605.md`
 - **Чеклист дня деплоя:** `docs/deployment/db-upgrade-spMstrg-2605-deploy-day-checklist.md`
 - **Эталонные `_2408` скрипты:** `docs/development/notes/sql/26-0416/`

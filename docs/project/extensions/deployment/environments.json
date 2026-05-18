@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "Реестр окружений FEMSQ: разработка и продуктивный SQL Server. Дублирует и дополняет project.development.environments в project-docs.json.",
+  "lastUpdated": "2026-05-18",
+
+  "summary": {
+    "production_database": "FishEye на MS SQL Server 2012 SP4 (11.0.7507.2)",
+    "development_database": "FishEye в Docker (femsq-mssql), SQL Server 2022 — только для разработки",
+    "sql_target_platform": "Всегда production (2012 SP4) для DDL, применяемого на продуктиве"
+  },
+
+  "environments": {
+    "development": [
+      {
+        "id": "nb-win",
+        "name": "Рабочая станция WSL2",
+        "role": "development",
+        "sql_server": {
+          "deployment": "docker",
+          "container": "femsq-mssql",
+          "product_version": "2022",
+          "database": "FishEye",
+          "schema": "ags",
+          "compatibility_level_recommended": 110,
+          "note": "Синтаксис 2016+ допустим только в dev; перед prod — папка MSSQL2012/"
+        },
+        "application": {
+          "url": "http://localhost:8080"
+        }
+      }
+    ],
+    "production": {
+      "id": "prod-fisheye",
+      "name": "Продуктивный SQL Server",
+      "role": "production",
+      "sql_server": {
+        "version": "11.0.7507.2",
+        "name": "Microsoft SQL Server 2012 (SP4-GDR)",
+        "major_version": 11,
+        "compatibility_level": 110,
+        "edition": "Standard Edition (64-bit)",
+        "host_os": "Windows Server 2012 R2 (Hyper-V)",
+        "database": "FishEye",
+        "schema": "ags",
+        "verified_date": "2026-05-18",
+        "verified_method": "docs/development/notes/sql/26-0508/MSSQL2012/00_VERIFY_before.sql"
+      },
+      "clients": [
+        "MS Access",
+        "FEMSQ / JasperReports",
+        "shell: execute_spMstrg_2605.sh"
+      ],
+      "credentials": "Не хранить в репозитории; у DBA / ~/.femsq/database.properties"
+    }
+  },
+
+  "sql_script_conventions": {
+    "reference": "docs/deployment/sql-server-deployment-rules.md",
+    "compatibility": "docs/project/extensions/database/compatibility.json",
+    "package_layout": {
+      "root": "docs/development/notes/sql/{task-id}/",
+      "files": ["00_VERIFY_before.sql", "01_*.sql", "02_*.sql", "03_*.sql", "04_VERIFY_after.sql", "05_ROLLBACK.sql", "06_*.sql"],
+      "production_subfolder": "MSSQL2012",
+      "rule": "На продуктив (major_version=11) применять только скрипты из MSSQL2012/"
+    },
+    "forbidden_on_production": [
+      "CREATE OR ALTER",
+      "DROP PROCEDURE IF EXISTS",
+      "DROP FUNCTION IF EXISTS",
+      "DROP TABLE IF EXISTS"
+    ],
+    "required_on_production": [
+      "IF OBJECT_ID(...) IS NOT NULL перед DROP",
+      "CREATE (после DROP) или ALTER для идемпотентности"
+    ]
+  },
+
+  "related_documents": [
+    "docs/project/project-docs.json",
+    "docs/deployment/db-upgrade-spMstrg-2605.md",
+    "docs/development/notes/sql/26-0508/MSSQL2012/README.md"
+  ]
+}

@@ -39,9 +39,15 @@
       },
       {
         "feature": "DROP IF EXISTS",
-        "description": "Упрощенный синтаксис удаления объектов",
+        "description": "Упрощенный синтаксис удаления объектов (DROP PROCEDURE/FUNCTION/TABLE IF EXISTS)",
         "available_since": "MS SQL Server 2016",
-        "workaround": "Проверять существование через sys.objects перед удалением"
+        "workaround": "IF OBJECT_ID(N'ags.object_name', N'P'|'IF'|'U') IS NOT NULL DROP ..."
+      },
+      {
+        "feature": "CREATE OR ALTER",
+        "description": "Идемпотентное создание процедур и функций одной командой",
+        "available_since": "MS SQL Server 2016 SP1",
+        "workaround": "IF OBJECT_ID(...) IS NOT NULL DROP ...; GO; CREATE ... (см. папка MSSQL2012/ в SQL-пакетах)"
       },
       {
         "feature": "CONCAT_WS функция",
@@ -109,12 +115,22 @@
       }
     },
     
+    "sql_package_convention": {
+      "description": "Структура папки docs/development/notes/sql/{task}/",
+      "production_subfolder": "MSSQL2012",
+      "production_rule": "На продуктив (11.x) применять только скрипты из MSSQL2012/",
+      "dev_root_rule": "Корень папки задачи — синтаксис 2016+ (CREATE OR ALTER) только для Docker dev",
+      "documentation": "docs/deployment/sql-server-deployment-rules.md",
+      "example": "docs/development/notes/sql/26-0508/MSSQL2012/"
+    },
+
     "development_guidelines": [
-      "Всегда разрабатывать с учетом ограничений MS SQL Server 2012",
-      "Тестировать код на версии 2012 перед релизом в production",
-      "Избегать использования функций, появившихся после 2012",
-      "Документировать все workarounds для совместимости",
-      "Использовать SET COMPATIBILITY_LEVEL = 110 на dev окружении для тестов"
+      "Всегда разрабатывать с учетом ограничений MS SQL Server 2012 (продуктив)",
+      "Для каждого DDL-пакета создавать подпапку MSSQL2012/ перед merge в main",
+      "Тестировать папку MSSQL2012/ на dev (желательно COMPATIBILITY_LEVEL=110)",
+      "Избегать CREATE OR ALTER и DROP IF EXISTS в скриптах для продуктива",
+      "Документировать workarounds в compatibility.json и sql-server-deployment-rules.md",
+      "Использовать SET COMPATIBILITY_LEVEL = 110 на FishEye в Docker для сближения с prod"
     ],
     
     "testing_strategy": {

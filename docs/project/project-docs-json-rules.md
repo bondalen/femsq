@@ -370,6 +370,13 @@ docs/project/extensions/
 3. **Обновить зависимости** в других файлах
 4. **Синхронизировать с PlantUML** диаграммами
 
+### Окружения и SQL Server
+
+- **`development.environments.machines`** — реестр машин dev/prod для `.cursorrules` (проверка окружения в начале чата).
+- **`database.target_version`** — всегда **2012 SP4** для продуктива; dev (Docker 2022) не меняет целевую платформу DDL.
+- **SQL-пакеты:** подпапка `MSSQL2012/` в `docs/development/notes/sql/{task}/` — обязательна для скриптов на продуктив.
+- См. также: `docs/deployment/sql-server-deployment-rules.md`, `docs/project/extensions/deployment/environments.json`.
+
 ### Примеры использования расширений
 
 #### Создание расширения базы данных
@@ -377,7 +384,7 @@ docs/project/extensions/
 // docs/project/extensions/database/connection-config.json
 {
   "database_connection": {
-    "engine": "MS SQL Server 2019+",
+    "engine": "MS SQL Server 2012+",
     "driver": "com.microsoft.sqlserver.jdbc.SQLServerDriver",
     "connection_pool": {
       "min_size": 5,
