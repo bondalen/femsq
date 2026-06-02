@@ -51,6 +51,8 @@ dist/
 # OS
 .DS_Store
 Thumbs.db
+*:Zone.Identifier
+**/*:Zone.Identifier
 
 # Logs
 logs/
@@ -80,6 +82,14 @@ code/femsq-backend/femsq-reports/src/main/resources/reports/embedded/.project
 *.xlsx
 *.xls
 *.xlsm
+
+# Скриншоты ошибок SQL/ODBC — только локально на nb-win (каталог: docs/sql_err/images/README.md)
+docs/sql_err/images/**/*.png
+docs/sql_err/images/**/*.PNG
+docs/sql_err/images/**/*.jpg
+docs/sql_err/images/**/*.jpeg
+docs/sql_err/images/**/*.gif
+docs/sql_err/images/**/*.bmp
 
 # Локальная папка с Excel-источниками для ревизий
 excel/
