@@ -226,4 +226,47 @@ docker exec femsq-mssql /opt/mssql-tools18/bin/sqlcmd \
 
 ---
 
-**Дата последнего обновления:** 2026-05-16
+---
+
+## Стек `spMstrg_2606` (2026-06)
+
+Параллельный стек с DAG-фильтрацией (`@ipgStKey`, `@stCostKey`) и ускоренным освоением через `factDocCost`.  
+**Не заменяет** `_2605` на продуктиве до явного переключения клиентов.
+
+### Запуск (FEMSQ / sqlcmd)
+
+```bash
+# После применения SQL-пакета 26-0604 на сервере:
+docker exec femsq-mssql /opt/mssql-tools18/bin/sqlcmd \
+  -S localhost -U sa -P '...' -d FishEye -C -Q \
+  "EXEC ags.spMstrg_2606 @ipgCh=5, @MounthEndDate='2022-09-30',
+       @ipgStKey=NULL, @stCostKey=NULL, @saveToTables=1"
+```
+
+### Таблицы результатов
+
+| Таблица | Назначение |
+|---------|------------|
+| `ags.spMstrg_2606_ResultSet1..7` | Отдельно от `*_2408_ResultSet*` (решение 8) |
+| Эталон RS1 (цепь 5, dev) | **14447** строк |
+
+### Производительность (dev, цепь 5)
+
+| Операция | Время |
+|----------|-------|
+| `spMstrg_2606` saveToTables=1 | ~5 мин |
+| `spMstrg_2606` saveToTables=0 | ~4 мин |
+
+### Артефакты
+
+| Файл | Назначение |
+|------|-----------|
+| `docs/development/notes/sql/26-0604/06_CREATE_PROCEDURE_spMstrg_2606.sql` | Процедура |
+| `docs/development/notes/sql/26-0604/05b_CREATE_TABLE_spMstrg_2606_ResultSets.sql` | DDL ResultSet |
+| `docs/development/notes/sql/26-0604/07_VERIFY_spMstrg_2606_chain5.sql` | Приёмка |
+| `docs/deployment/db-upgrade-spMstrg-2606.md` | Деплой на продуктив |
+| `docs/development/notes/sql/26-0604/MSSQL2012/` | Пакет SQL Server 2012 |
+
+---
+
+**Дата последнего обновления:** 2026-06-12

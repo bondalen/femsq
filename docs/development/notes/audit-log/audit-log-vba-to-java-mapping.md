@@ -1016,6 +1016,47 @@ version: "0.4.1"
 - HTML — только слой рендера в `adt_results`, не source-of-truth.
 - Для оркестровочных событий `J-A` meta-поля `messageType/colorHint/emphasis` заполняются в коде (`AuditExecutionServiceImpl.withPresentationMeta(...)`).
 
+## Семантика сумм RA / RC и stCost (`factDocCost`)
+
+**Дата:** 2026-06-13 | **Связь:** `spMstrg_2606`, `01c`/`01d1`, Type 5 reconcile
+
+### Маппинг Excel → `ra_summ` (уже корректен в Java)
+
+| Колонка Excel (`ra_col_map`) | Поле staging | Поле domain | stCost (целевой) |
+|------------------------------|--------------|-------------|------------------|
+| `rainTtl` — «Всего с НДС» | `ttl` | `ras_total` | **212** |
+| `rainWork` — **«СМР»** | `work` | `ras_work` | **195** (не 182) |
+| `rainEquip` — «Оборудование» | `equip` | `ras_equip` | **172** |
+| `rainOthers` — «Прочие» | `others` | `ras_others` | **187** |
+
+`AllAgentsReconcileService.evolveRaSums()` пишет только `ra_summ` / `ra_change_summ`; **`ra_summCt` не заполняет**.
+
+### Цепочка после apply (Type 5, `addRa=true`)
+
+```text
+INSERT ra_summ → trgRaSumm_syncFactDoc → factDocCost
+```
+
+До исправления `01c` (2026-06-13) триггер ошибочно писал `ras_work` в `factDocCost@182`. После исправления — **@195**.
+
+### Обязательные проверки после apply
+
+1. SQL: `docs/sql-scripts/type5-post-apply-ra-sanity.sql` **§D** — новые RA не создают `factDocCost@182` из `ras_work`.
+2. Ручной отчёт: `docs/development/notes/templates/type5-manual-verification-report-template.md` — секция «factDocCost / stCost».
+3. Полный план SQL-миграции: `docs/development/notes/sql/26-0604/docs/11-ra-work-stCost195-fix-plan.md`.
+
+### Рекомендации для Java (этап 2, backlog)
+
+| ID | Задача |
+|----|--------|
+| `P5-stCost-1` | Интеграционный тест: reconcile apply → `factDocCost` содержит 195, не 182, для `ras_work>0` |
+| `P5-stCost-2` | Опционально: синхронизация `ra_summCt` (212/195/172/187) при `evolveRaSums` |
+| `P5-stCost-3` | В meta событий `RA_NEW_SUMS` / `RA_SUM_MISMATCH`: комментарий `workStCost=195` |
+
+### Текст в аудит-логе (без изменения формата)
+
+Строки вида «СМР: {work} Р» остаются; интерпретация для разработчиков: **work = stCost 195**, не 182.
+
 ## Implementation Backlog (compact)
 
 - `P1 (done)`: закрыт `missing` в `V-A`/`J-A` для оркестровки (`msg.start`, `dir.*`, `file fs.*`, `msg.end`) — статусы переведены в `present`/`semantic` по факту реализации.

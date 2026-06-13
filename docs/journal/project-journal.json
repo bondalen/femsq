@@ -3,7 +3,7 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-05-18"
+      "lastUpdated": "2026-06-04"
     },
     "sessions": [
       {
@@ -4786,6 +4786,80 @@
       },
       {
         "chat": {
+          "displayName": "Анализ spMstrg_2606: архитектурные проблемы фильтрации и схемы данных (analysis). № chat-2026-06-04-001",
+          "chat-attributes": {
+            "id": "chat-2026-06-04-001",
+            "created": "2026-06-04",
+            "lastUpdated": "2026-06-04",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "high",
+            "tags": [
+              "analysis",
+              "architecture",
+              "sql-server",
+              "spMstrg",
+              "dag",
+              "ipgChRlV"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0508-spMstrg-2605.md",
+              "nextChatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Углублённая верификация RS4–RS7 и архитектурный анализ (success). № log-2026-06-04-001",
+                "log-attributes": {
+                  "id": "log-2026-06-04-001",
+                  "timestamp": "2026-06-04T14:48:00+03:00",
+                  "level": "success",
+                  "effort": "3h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Построчная верификация RS4–RS7: spMstrg_2605 vs spMstrg_2408",
+                    "details": "Python/pymssql EXCEPT-сравнение и multiset-сравнение по именам столбцов. Даты 2025-07-31 и 2024-08-31. RS5/RS7 (32 строки): полное совпадение включая порядок. RS4 (744): совпадение по данным, порядок может различаться. RS6 (721): данные совпадают по 50 общим полям; расхождение cstapCstName (в _2408 SELECT) vs limSort (в _2605/ResultSet6) — не регрессия _2605, а прежнее отличие SELECT vs INSERT в ветке _2408.",
+                    "outcome": "Построчное соответствие spMstrg_2605 и spMstrg_2408 подтверждено для всех компактных рекордсетов. Добавлен этап 3.6 в chat-plan-26-0508.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0508-spMstrg-2605.md#3.6"
+                    ]
+                  },
+                  {
+                    "action": "Выявление проблемы A: некорректная фильтрация через importIpgSt_26-0320",
+                    "details": "importIpgSt фильтрует по cstAgPnCode без учёта актуальной ipg на дату. Для цепи 15 (ipg=25→26): 43 стройки меняют узел stIpg между корректировками. Существующая инфраструктура DAG (stIpg, ipgStPn, fnStDownAll, fnIpgStNumCstapGr) позволяет решить это через привязку к ipgStPn актуальной ipg. fnMasteringCstAgPnShIpgSt (34KB) уже реализует похожую логику.",
+                    "outcome": "Зафиксирован архитектурный дефект spMstrg_2605. Решение — spMstrg_2606 с параметром @ipgStKey int и DAG-фильтрацией через ipgStPn.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0508-spMstrg-2605.md#Проблема-A"
+                    ]
+                  },
+                  {
+                    "action": "Выявление проблемы Б: ipgStr/ipgEnd как атрибут ipg вместо ipgChRl",
+                    "details": "ipg=25 входит в цепи 14 и 15 с разными требованиями к периоду актуальности. Исправление ipg.ipgEnd ломает другую цепь. Фильтр в fn*_2605 работает по MONTH(), не по дню — переход mid-month даёт задвоение. Решение: новая таблица ags.ipgChRlV с ipgcrvStr (только начало; конец вычисляется через LEAD). UNIQUE (chain, str) гарантирует отсутствие перекрытий.",
+                    "outcome": "Принято решение создать ags.ipgChRlV. Первым этапом — только цепь 15. ipg.ipgStr/ipgEnd не исправляются. spMstrg_2605 остаётся с известным ограничением по цепи 15 (задвоение месяцев 7-12).",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0508-spMstrg-2605.md#Проблема-Б",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
           "displayName": "Документация: продуктив SQL Server 2012, реестр окружений, MSSQL2012 (success). № chat-2026-05-18-001",
           "chat-attributes": {
             "id": "chat-2026-05-18-001",
@@ -4839,6 +4913,179 @@
                       "docs/deployment/sql-server-deployment-rules.md",
                       "docs/project/extensions/database/compatibility.json",
                       "docs/development/notes/sql/26-0508/MSSQL2012/"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "spMstrg_2606: fn2_2606 v7 PASS + анализ производительности. № chat-2026-06-11-001",
+          "chat-attributes": {
+            "id": "chat-2026-06-11-001",
+            "created": "2026-06-11",
+            "lastUpdated": "2026-06-12",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "critical",
+            "tags": ["sql", "performance", "spMstrg_2606", "fn2_2606", "factDocCost", "optimization", "PercentBrn", "deployment"],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606-v2.md",
+              "transcript": "agent-transcripts/3a4f7a43-ed80-4b57-bc1d-f03b1f935fc6"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "fn2_2606 v7 PASS + анализ производительности (success). № log-2026-06-11-001",
+                "log-attributes": {
+                  "id": "log-2026-06-11-001",
+                  "timestamp": "2026-06-11T17:59:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "fn2_2606 v7: raFactRalp + raFactStorage в extraBase/masExtraBase",
+                    "details": "Добавлены CTE raFactRalp (читает ags.ralp) и raFactStorage (читает ags.cn_PrDocP) и подключены через LEFT JOIN в masExtraBase и extraBase. Исправлено: presentedRalp для cstAgPnKey=2101, ipgKey=6/8, mNum=6,7 ранее был NULL вместо ненулевых значений.",
+                    "outcome": "07h v7 stIpg=46 — PASS: proxy05=fn2_2606=5479, miss=0, extra=0, vdiff=0. Корректность fn2_2606 подтверждена для stIpg=46 и stIpg=61.",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/04_CREATE_FUNCTION_fnIpgChRsltCstUtl2_2606.sql",
+                      "docs/development/notes/sql/26-0604/07h_compare_fn2_by_stIpg.sql"
+                    ]
+                  },
+                  {
+                    "action": "Комплексный анализ производительности стека _2606",
+                    "details": "Проведён тщательный анализ всей цепочки вызовов: fn2_2606 → fnMasteringStIpgStCost_2606 → fnMasteringCstAgPnSh_2606 → fnMasteringCstAgPn_2606 → 22 legacy scalar UDF × 17 дат × 680 контрактов × 3 схемы = 762 960 вызовов. Каждый UDF сканирует ags.ra (49K) + fnStCostRa (DAG по ra_summ 36K). RRcTimeList — VIEW без индексов (52K строк). Обнаружено: factDocCost (112K строк) уже заполнен, fnStCostRa_2606 создана и протестирована, но fnMasteringCstAgPnSh_2606 ещё использует LEGACY scalar UDF. Главный вывод: 03b1 (fnMasteringFact*_2606) = самый мощный рычаг ×70–140, MSTVF-конверсия fn2_2606 = вторичный рычаг ×4–5. Совместный эффект П1+П2+П3+П4: ~100–200× ускорение (stIpg=46: 42 мин → 10–30 сек; полная цепь 5: ~3 ч → 40–90 сек).",
+                    "outcome": "Создан 07-performance-analysis.md. Переписан chat-plan-26-0604-spMstrg-2606.md с оптимальной последовательностью шагов. Обновлены todo-задачи.",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/docs/07-performance-analysis.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "К-6/К-8 PASS, К-7-прагматик, fn2 v9.0 (success). № log-2026-06-11-002",
+                "log-attributes": {
+                  "id": "log-2026-06-11-002",
+                  "timestamp": "2026-06-11T22:00:00+03:00",
+                  "level": "success",
+                  "effort": "3h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "PercentBrn v8.6–v8.9: корректность полной цепи",
+                    "details": "v8.6 MONTH-окно ИПГ; v8.7 ipgMasteringCombos/accum; v8.8 NOT all-NULL; v8.9 storage/cct из cn_PrDocP при shShow. 07f PASS F.1–F.3 dedup=0.",
+                    "outcome": "К-8 достигнута (~5 мин). Документ 10-percentDev-218-diff-root-cause.md.",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/04_CREATE_FUNCTION_fnIpgChRsltCstUtl2_2606.sql",
+                      "docs/development/notes/sql/26-0604/docs/10-percentDev-218-diff-root-cause.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606-v2.md"
+                    ]
+                  },
+                  {
+                    "action": "Этап 10.5: профиль К-7 и fn2 v9.0",
+                    "details": "07h6: StIpgStCost NULL 197,9 с (73% fn2). G3 stIpg=27/71/31: vdiff=0. v9.0: @raFactPrDoc 1× cn_PrDocP. Ранний MONTH-фильтр в CTE откатан (сломал 07f). К-6: 45 с. К-7: 279,8 с. Принято К-7-прагматик <5 мин.",
+                    "outcome": "Готовность к Этапу 11 (spMstrg_2606). П6/materialized mastering — backlog для строгой К-7.",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/07h6_fn2_profile_stIpgNULL.sql",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606-v2.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Этап 11: spMstrg_2606 + MSSQL2012/04 v9.0 (success). № log-2026-06-11-003",
+                "log-attributes": {
+                  "id": "log-2026-06-11-003",
+                  "timestamp": "2026-06-12T06:00:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Этап 11: spMstrg_2606 и ResultSet-таблицы",
+                    "details": "05b: spMstrg_2606_ResultSet1..7 (схема из _2408). 06: процедура от spMstrg_2605 с @ipgStKey/@stCostKey, PercentBrn_2606, запись только в *_2606_ResultSet*. Приёмка: saveToTables=1 RS1=14447 RS4=904 (~275 с); saveToTables=0 OK (~262 с).",
+                    "outcome": "К-9 достигнута. Скрипт 07_VERIFY_spMstrg_2606_chain5.sql.",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/05b_CREATE_TABLE_spMstrg_2606_ResultSets.sql",
+                      "docs/development/notes/sql/26-0604/06_CREATE_PROCEDURE_spMstrg_2606.sql",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606-v2.md"
+                    ]
+                  },
+                  {
+                    "action": "MSSQL2012: полная синхронизация fn2_2606 v9.0 + spMstrg",
+                    "details": "MSSQL2012/04 — зеркало dev MSTVF v9.0 (DROP TF + CREATE). 05b, 06 — зеркала этапа 11. Исправлен DROP TYPE TF в 08_ROLLBACK.",
+                    "outcome": "Пакет MSSQL2012 готов к деплою (04–06).",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/MSSQL2012/04_CREATE_FUNCTION_fnIpgChRsltCstUtl2_2606.sql",
+                      "docs/development/notes/sql/26-0604/MSSQL2012/06_CREATE_PROCEDURE_spMstrg_2606.sql"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Этап 12: деплой-документация и MSSQL2012 полный пакет (success). № log-2026-06-12-001",
+                "log-attributes": {
+                  "id": "log-2026-06-12-001",
+                  "timestamp": "2026-06-12T09:00:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Документация деплоя spMstrg_2606",
+                    "details": "db-upgrade-spMstrg-2606.md, deploy-day-checklist.md, 07_VERIFY_after.sql. Приёмка dev: fn2=11587, PercentBrn=14447, RS1=14447.",
+                    "outcome": "К-10 достигнута. Пакет готов к передаче DBA.",
+                    "references": [
+                      "docs/deployment/db-upgrade-spMstrg-2606.md",
+                      "docs/development/notes/sql/26-0604/07_VERIFY_after.sql"
+                    ]
+                  },
+                  {
+                    "action": "MSSQL2012 полное зеркало",
+                    "details": "00/07/08, 03b1 (50 fn DROP+CREATE), README с порядком 00–08.",
+                    "outcome": "Продуктивный пакет SQL Server 2012 SP4 комплектен.",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/MSSQL2012/README.md",
+                      "docs/development/notes/sql/26-0604/MSSQL2012/03b1_CREATE_FUNCTION_fnMasteringFact_2606.sql"
                     ]
                   }
                 ]

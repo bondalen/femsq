@@ -21,6 +21,7 @@ version: "1.0.0"
 - **Счётчики vs БД (baseline required)**: `docs/sql-scripts/type5-counters-vs-db-check.sql`
 - **Match categories (RA)**: `docs/sql-scripts/type5-match-categories-check.sql`
 - **Post-apply sanity (RA)**: `docs/sql-scripts/type5-post-apply-ra-sanity.sql`
+- **stCost / factDocCost gate**: тот же скрипт, §D (после `01c`/`01d1`, см. `11-ra-work-stCost195-fix-plan.md`)
 
 ## Journal выполнения (DB)
 
@@ -106,6 +107,18 @@ version: "1.0.0"
 - **RA**: `<OK|Mismatch + details>`
 - **RC**: `<OK|Mismatch + details>`
 - **Markers**: `<OK|Mismatch + details>`
+
+## factDocCost / stCost (после apply, `addRa=true`)
+
+> Семантика: `ras_work` = Excel «СМР» = **stCost 195** (не 182). План: `docs/development/notes/sql/26-0604/docs/11-ra-work-stCost195-fix-plan.md`
+
+Выполнить `type5-post-apply-ra-sanity.sql` §D с тем же `@exec_key` / `@baseline_max_ra_key`.
+
+| Проверка | Ожидание | Факт |
+|----------|----------|------|
+| Новые `ra_summ` с `ras_work<>0` → `factDocCost@195` | Да | `<OK|FAIL>` |
+| Новые `ra_summ` с `ras_work<>0` → `factDocCost@182` | **Нет** | `<OK|FAIL>` |
+| `bad_182_from_work` (§D1) | 0 | `<number>` |
 
 ## Итог
 
