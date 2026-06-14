@@ -114,7 +114,7 @@
 | `07f_COMPARE_PercentBrn_full_chain5.sql` | Полный PercentBrn vs RS1 | ❌ 9668≠14447 |
 | `05b_CREATE_TABLE_spMstrg_2606_ResultSets.sql` | DDL `spMstrg_2606_ResultSet1..7` | ⬜ |
 | `06_CREATE_PROCEDURE_spMstrg_2606.sql` | Процедура → только `*_2606_ResultSet*` | ⬜ |
-| `07_VERIFY_after.sql` | Проверки после применения | ⬜ |
+| `07_VERIFY_after.sql` | Проверки после применения | ✅ 2026-06-13 |
 | `08_ROLLBACK.sql` | Откат всех объектов | ⬜ |
 | `MSSQL2012/` | Зеркало для продуктива (SQL Server 2012 SP4) | ⏳ до 04 включительно |
 
@@ -273,6 +273,8 @@ EXEC ags.spMstrg_2606
 | Анализ регрессии `_2606(182)` vs legacy | ✅ 8 674 RA на dev (до фикса) |
 | План миграции `01c`/`01d1`/`07j` | ✅ `docs/11-ra-work-stCost195-fix-plan.md` |
 | SQL-правки и миграция на dev | ✅ `01c` + `01d1` (2026-06-13) |
+| `07h` pres/lim после 01d1 | ✅ stIpg=61 vdiff=0; stIpg=46 NULL↔0 only |
+| `07_VERIFY_after` после 01d1 | ✅ fn2=11587, PBrn=14447 |
 | К-11: `07j` PASS, `regression_182=0` | ✅ stIpg=46; `07b` G-stCost195 PASS |
 
 ---

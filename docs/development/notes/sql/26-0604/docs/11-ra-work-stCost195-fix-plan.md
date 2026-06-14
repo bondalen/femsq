@@ -227,8 +227,8 @@ COUNT WHERE fnStCostRa_2606(ra,182,3)>0 AND fnStCostRa(ra,182,3)=0 → 0
 | **К-11b** | `regression_182` = 0 (вся БД или цепь 5) | `07j` |
 | **К-11c** | FACT: `pres@212 = pres@172+pres@187+pres@195` на stIpg=46 | `07j` |
 | **К-11d** | LIM: `lim@212 = lim@172+lim@187+lim@195` | `07i` |
-| **К-11e** | `07b` тест F с 195 — PASS | `07b` |
-| **К-11f** | `07h` stIpg=61/46 — без новых расхождений pres/lim vs baseline | `07h` |
+| **К-11e** | `07b` тест F с 195 — PASS | `07b` ✅ |
+| **К-11f** | `07h` stIpg=61/46 — без новых расхождений pres/lim vs baseline | `07h` ✅ 2026-06-13 |
 
 ---
 

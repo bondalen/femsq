@@ -56,6 +56,8 @@
 Шаг C.  07j  stIpg=46   — FACT additive
 Шаг D.  07i  stIpg=46   — LIM additive (контроль)
 Шаг E.  07b  fnStCost* parity с @StCostKey=195 для work
+Шаг F.  07h  stIpg=61, 46 — pres/lim (M.5; NULL↔0 на 46 — известно)
+Шаг G.  07_VERIFY_after — объекты, fn2, PercentBrn, RS*
 ```
 
 **Инварианты:**
