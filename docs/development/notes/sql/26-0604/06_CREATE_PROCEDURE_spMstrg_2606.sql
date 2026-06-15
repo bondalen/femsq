@@ -9,6 +9,7 @@
   Процедура отчёта освоения _2606. Шаблон — spMstrg_2605 (SaveToTables + SELECT).
   @ipgStKey / @stCostKey int — DAG-фильтры (NULL = без фильтра).
   @saveToTables bit — 0=SELECT×7 (Access), 1=TRUNCATE+INSERT в *_2606_ResultSet*.
+  Путь Access: fnIpgChRsltCstUtlPercentBrn_2606 (К-7 на dev). Ступень 3 (SP): 06b + MSSQL2012/.
 ЗАВИСИМОСТИ:
   fnIpgChRsltCstUtlPercentBrn_2606, spMstrg_2606_ResultSet1..7 (05b)
 ROLLBACK: 08_ROLLBACK.sql

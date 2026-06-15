@@ -5116,11 +5116,17 @@
                       "docs/development/notes/sql/26-0604/03c_CREATE_FUNCTION_fnMasteringCstAgPnSh_2606.sql",
                       "docs/development/notes/sql/26-0604/MSSQL2012/03b1b_CREATE_FUNCTION_fnMasteringCostBase_2606.sql"
                     ]
+                  },
+                  {
+                    "action": "Этап 14.3: fn2→SP (Ступень 3)",
+                    "details": "04b spIpgChRsltCstUtl2_2606 (#temp + INDEX #schemeRows). 05b spPercentBrn, 06b SP-path. Dev: spFn2 ~144 с vs fn2 111 с (SQL 2022). Access/dev: fn-path в 06. MSSQL2012/04b,05b,06b — для prod.",
+                    "outcome": "Артефакты prod готовы; замер на SQL 2012 prod обязателен перед 06b.",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/04b_CREATE_PROCEDURE_spIpgChRsltCstUtl2_2606.sql",
+                      "docs/development/notes/sql/26-0604/05b_CREATE_PROCEDURE_spIpgChRsltCstUtlPercentBrn_2606.sql",
+                      "docs/development/notes/sql/26-0604/MSSQL2012/04b_CREATE_PROCEDURE_spIpgChRsltCstUtl2_2606.sql"
+                    ]
                   }
-                ]
-              }
-            }
-          ]
         }
       }
     ],

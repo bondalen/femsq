@@ -16,6 +16,7 @@ DECLARE @yKey      int;
 DECLARE @yyyy      int;
 DECLARE @t0        datetime2;
 DECLARE @ms        int;
+DECLARE @msFn2     int;
 DECLARE @n         int;
 DECLARE @msg       nvarchar(500);
 
@@ -185,8 +186,23 @@ RAISERROR(N'--- D. fn2_2606 stIpg=NULL full (К-7) ---', 0, 1) WITH NOWAIT;
 SET @t0 = SYSDATETIME();
 SELECT @n = COUNT(*) FROM ags.fnIpgChRsltCstUtl2_2606(@ipgChKey, @ipgStKey, NULL) f WHERE f.ipgKey IS NOT NULL;
 SET @ms = DATEDIFF(ms, @t0, SYSDATETIME());
+SET @msFn2 = @ms;
 SET @msg = N'  fn2 rows=' + CAST(@n AS nvarchar) + N' ms=' + CAST(@ms AS nvarchar)
          + CASE WHEN @ms < 120000 THEN N'  К-7 PASS' ELSE N'  К-7 FAIL (цель <120000 ms)' END;
+RAISERROR(@msg, 0, 1) WITH NOWAIT;
+
+-- -------------------------------------------------------------------------
+-- D2. spIpgChRsltCstUtl2_2606 (Ступень 3) — замер SP на dev; целевой выигрыш на SQL 2012 prod
+-- -------------------------------------------------------------------------
+RAISERROR(N'--- D2. spFn2 stIpg=NULL (14.3) ---', 0, 1) WITH NOWAIT;
+SET @t0 = SYSDATETIME();
+IF OBJECT_ID(N'tempdb..#fn2k7') IS NOT NULL DROP TABLE #fn2k7;
+SELECT TOP 0 * INTO #fn2k7 FROM ags.fnIpgChRsltCstUtl2_2606(@ipgChKey, @ipgStKey, NULL);
+INSERT INTO #fn2k7 EXEC ags.spIpgChRsltCstUtl2_2606 @ipgChKey, @ipgStKey, NULL;
+SELECT @n = COUNT(*) FROM #fn2k7 f WHERE f.ipgKey IS NOT NULL;
+SET @ms = DATEDIFF(ms, @t0, SYSDATETIME());
+SET @msg = N'  spFn2 rows=' + CAST(@n AS nvarchar) + N' ms=' + CAST(@ms AS nvarchar)
+         + N'  (fn2 ref=' + CAST(@msFn2 AS nvarchar) + N' ms; на SQL2012 prod ожидается выигрыш от #schemeRows INDEX)';
 RAISERROR(@msg, 0, 1) WITH NOWAIT;
 
 RAISERROR(N'=== 07h6 DONE ===', 0, 1) WITH NOWAIT;

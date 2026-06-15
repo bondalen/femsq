@@ -437,7 +437,9 @@ CTE `allMonthsForIpg` = `ipgSchemeCombo × mmmm(12)` (**23 688** строк) LEF
 
 **Ожидаемый эффект:** fn2 overhead **~82 с → ~5–15 с**.
 
-**Приёмка:** `07h6` К-7; `07f` PercentBrn PASS; `07_VERIFY_after`; `07h` stIpg=46/61.
+**Приёмка:** `07h6` D2 (spFn2); `07f` PercentBrn PASS; `07_VERIFY_after`; `07h` stIpg=46/61.
+
+**Замер dev (2026-06-15):** fn2 NULL **111 с**; spFn2 **~144 с** (SQL 2022, INSERT-EXEC overhead). На **SQL 2012 prod** ожидается выигрыш от `INDEX #schemeRows` (нет статистики у table variables). Access остаётся на `fn2` + `fnPercentBrn` до подтверждения на prod; переключение — `MSSQL2012/06b`.
 
 ---
 
