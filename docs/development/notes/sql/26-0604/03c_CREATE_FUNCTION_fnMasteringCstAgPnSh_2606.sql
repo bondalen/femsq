@@ -7,12 +7,14 @@ GO
 -- Назначение: Освоение по стройке с учётом схем реализации (_2606).
 --   fnMasteringCstAgPn_2606: fnIpgChDatsV + fnStCostRsCstAgPn_2606 + ipgChRlV.
 --   fnMasteringCstAgPnSh_2606: агрегация схем (прототип fnMasteringCstAgPnSh).
+-- ИЗМЕНЕНИЯ (Этап 14.2, 2026-06-15):
+--   - @ralpCostBase + @prDocMnrlCostBase вместо 17× OUTER APPLY bundle (P6-lite).
 -- ИЗМЕНЕНИЯ (Этап 8.3, 2026-06-11):
 --   - Все LEGACY-вызовы fnMasteringPresRa/AccpRa/... → fnMasteringPresRa_2606/...
 --   - Добавлены 27 новых колонок Ret/InProc/NotArr/PresAll/PrevYears (Вариант 6А).
 -- Предусловия: 02 (fnIpgChDatsV), 03a, 03b, 03b1 (fnMasteringFact*_2606).
 -- Автор:   Александр
--- Дата:    2026-06-11 (обновлён)
+-- Дата:    2026-06-15 (обновлён)
 -- =============================================================================
 
 PRINT '=== 03c: CREATE FUNCTION ags.fnMasteringCstAgPn_2606 ===';
@@ -120,6 +122,29 @@ BEGIN
 
         INSERT INTO @afCostBase
         SELECT * FROM ags.fnMasteringAgFeeCostBase_2606(@cstAgPn, @StCostKey, @stNet);
+
+        DECLARE @ralpCostBase TABLE
+        (
+            dEnd     date  NOT NULL,
+            stAccp   bit   NOT NULL,
+            stRet    bit   NOT NULL,
+            stInProc bit   NOT NULL,
+            stNotArr bit   NOT NULL,
+            CostSm   money NOT NULL
+        );
+
+        INSERT INTO @ralpCostBase
+        SELECT * FROM ags.fnMasteringRalpCostBase_2606(@cstAgPn, @StCostKey, @stNet);
+
+        DECLARE @prDocMnrlCostBase TABLE
+        (
+            kind   char(1) NOT NULL,
+            dEnd   date    NOT NULL,
+            CostSm money   NOT NULL
+        );
+
+        INSERT INTO @prDocMnrlCostBase
+        SELECT * FROM ags.fnMasteringPrDocMnrlCostBase_2606(@cstAgPn, @StCostKey, @stNet);
 
         INSERT INTO @TablRslt
         (
@@ -294,8 +319,46 @@ BEGIN
                                 FROM @afCostBase b
                             ) ax
                         ) af
-                        OUTER APPLY ags.fnMasteringRalpBundle_2606(d.dAll, @cstAgPn, @StCostKey, @stNet) rl
-                        OUTER APPLY ags.fnMasteringPrDocMnrlBundle_2606(d.dAll, @cstAgPn, @StCostKey, @stNet) pm
+                        OUTER APPLY
+                        (
+                            SELECT
+                                SUM(CASE WHEN rx.dfYLe = 1 THEN rx.CostSm ELSE 0 END) AS MstrngPrsRalp,
+                                SUM(CASE WHEN rx.dfYLe = 1 AND rx.stAccp = 1 THEN rx.CostSm ELSE 0 END) AS MstrngAcpRalp,
+                                SUM(CASE WHEN rx.dfYM = 1 THEN rx.CostSm ELSE 0 END) AS MstrngPrsRalpMn,
+                                SUM(CASE WHEN rx.dfYM = 1 AND rx.stAccp = 1 THEN rx.CostSm ELSE 0 END) AS MstrngAcpRalpMn,
+                                SUM(CASE WHEN rx.dfYLe = 1 AND rx.stRet = 1 THEN rx.CostSm ELSE 0 END) AS MstrngRetRalp,
+                                SUM(CASE WHEN rx.dfYM = 1 AND rx.stRet = 1 THEN rx.CostSm ELSE 0 END) AS MstrngRetRalpMn,
+                                SUM(CASE WHEN rx.dfYLe = 1 AND rx.stInProc = 1 THEN rx.CostSm ELSE 0 END) AS MstrngInPrcRalp,
+                                SUM(CASE WHEN rx.dfYM = 1 AND rx.stInProc = 1 THEN rx.CostSm ELSE 0 END) AS MstrngInPrcRalpMn,
+                                SUM(CASE WHEN rx.dfYLe = 1 AND rx.stNotArr = 1 THEN rx.CostSm ELSE 0 END) AS MstrngNtArrRalp,
+                                SUM(CASE WHEN rx.dfYM = 1 AND rx.stNotArr = 1 THEN rx.CostSm ELSE 0 END) AS MstrngNtArrRalpMn
+                            FROM
+                            (
+                                SELECT
+                                    b.*,
+                                    CASE WHEN YEAR(d.dAll) = YEAR(b.dEnd) AND d.dAll >= b.dEnd THEN 1 ELSE 0 END AS dfYLe,
+                                    CASE WHEN YEAR(d.dAll) = YEAR(b.dEnd) AND MONTH(d.dAll) = MONTH(b.dEnd) THEN 1 ELSE 0 END AS dfYM
+                                FROM @ralpCostBase b
+                            ) rx
+                        ) rl
+                        OUTER APPLY
+                        (
+                            SELECT
+                                SUM(CASE WHEN px.dfYLe = 1 AND px.kind = N'S' THEN px.CostSm ELSE 0 END) AS MstrngAcpStor,
+                                SUM(CASE WHEN px.dfYM = 1 AND px.kind = N'S' THEN px.CostSm ELSE 0 END) AS MstrngAcpStorMn,
+                                SUM(CASE WHEN px.dfYLe = 1 AND px.kind = N'C' THEN px.CostSm ELSE 0 END) AS MstrngAcpControl,
+                                SUM(CASE WHEN px.dfYM = 1 AND px.kind = N'C' THEN px.CostSm ELSE 0 END) AS MstrngAcpControlMn,
+                                SUM(CASE WHEN px.dfYLe = 1 AND px.kind = N'M' THEN px.CostSm ELSE 0 END) AS MstrngAcpMnrl,
+                                SUM(CASE WHEN px.dfYM = 1 AND px.kind = N'M' THEN px.CostSm ELSE 0 END) AS MstrngAcpMnrlMn
+                            FROM
+                            (
+                                SELECT
+                                    b.*,
+                                    CASE WHEN YEAR(d.dAll) = YEAR(b.dEnd) AND d.dAll >= b.dEnd THEN 1 ELSE 0 END AS dfYLe,
+                                    CASE WHEN YEAR(d.dAll) = YEAR(b.dEnd) AND MONTH(d.dAll) = MONTH(b.dEnd) THEN 1 ELSE 0 END AS dfYM
+                                FROM @prDocMnrlCostBase b
+                            ) px
+                        ) pm
             ) AS y
         ) AS x;
     END

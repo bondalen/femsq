@@ -291,4 +291,186 @@ bench   → 07h stIpg=46: цель <30 сек; 07h NULL: оценить полн
 
 ---
 
-*Файл создан: 2026-06-11. Автор: Александр.*
+---
+
+## 8. Актуальное состояние после П1–П4 и этапа 10.5 (2026-06-15)
+
+### 8.1. Замеры v9.0 (dev FishEye, цепь 5)
+
+| Сценарий | Цель | Факт | Статус |
+|----------|------|------|--------|
+| fn2 stIpg=46 (164 контракта) | < 60 с | **49,3 с** | ✅ К-6 |
+| fn2 stIpg=61 | ≤ 2 с | **2,6 с** | ✅ |
+| fn2 stIpg=NULL (полная цепь) | **< 120 с** | **279,8 с** | ❌ К-7 строгая |
+| spMstrg_2606 (fn2 + PercentBrn) | < 12 мин | **~10,5 мин** | ✅ пакетный режим |
+| `07f` PercentBrn | PASS | PASS (~5,3 мин) | ✅ К-8 |
+
+### 8.2. Профиль fn2 stIpg=NULL (`07h6`, v9.0)
+
+| Компонент | Время | Доля |
+|-----------|------:|-----:|
+| `fnMasteringStIpgStCost_2606(NULL)` | **197,9 с** | **~71%** |
+| fn2 overhead (accum, `allMonthsForIpg`, joins) | **~82 с** | **~29%** |
+| `@raFact*` (RRc, ralp, mnrl, PrDoc) | **117 мс** | <1% |
+| `ipgChContracts` | **25 мс** | <1% |
+| **Итого fn2 NULL** | **279,8 с** | 100% |
+
+**Вывод:** резервы П1–П4 и v8.1/v9.0 исчерпаны для сценария stIpg=46; для stIpg=NULL остаётся разрыв **×2,3** до К-7.
+
+### 8.3. Ограничения приёмки (2026-06-15)
+
+| Ограничение | Следствие |
+|-------------|-----------|
+| Клиент **MS Access** | app-level parallelism (N параллельных вызовов fn2 по stIpg) **недоступен** |
+| Многократный пересчёт в течение дня после Excel | persistent cache mastering **неприемлем** (устаревание данных) |
+| Продуктив **SQL Server 2012 SP4** | индексы на table variables в UDF **недоступны**; оптимизация — через SP + `#temp` |
+
+**Принято:** все усилия по К-7 строгой — **только в стеке `_2606`** (функции, процедуры, индексы). См. Решение 13 в `03-design-decisions.md`.
+
+---
+
+## 9. Оставшиеся узкие места (анализ кода, 2026-06-15)
+
+### УМ-6 — `fnMasteringRalpBundle_2606` / `fnMasteringPrDocMnrlBundle_2606`: 17× на контракт
+
+В `fnMasteringCstAgPn_2606` RA и AgFee оптимизированы (этап 9б): `@raCostBase` / `@afCostBase` строятся **1×**, даты применяются inline.
+
+**Ralp и PrDocMnrl не оптимизированы** — `OUTER APPLY` на каждую из 17 дат:
+
+```sql
+OUTER APPLY ags.fnMasteringRalpBundle_2606(d.dAll, @cstAgPn, ...) rl
+OUTER APPLY ags.fnMasteringPrDocMnrlBundle_2606(d.dAll, @cstAgPn, ...) pm
+```
+
+Каждый вызов bundle сканирует `ags.ralp` / `ags.cn_PrDocP` / `ags.cstAgPnMnrl` с нуля (дата фильтруется только в финальной агрегации).
+
+**Масштаб:** 17 дат × 680 контрактов = **11 560 вызовов** `fnMasteringRalpBundle_2606` на полную цепь.
+
+### УМ-7 — отсутствие индексов на горячих FK-полях
+
+| Таблица | Поле | Где используется | Строк |
+|---------|------|------------------|------:|
+| `ags.ra` | `ra_cac` | `fnMasteringRaCostBase_2606` | 49 479 |
+| `ags.ra_change` | `raс_ra` | JOIN к `ra` | — |
+| `ags.ra_summ` | `ras_ra` | batch lookup `ras_fdKey` | 35 851 |
+| `ags.ralp` | `ralpCstAgPn` | `fnMasteringRalpBundle_2606` | — |
+| `ags.cn_PrDocP` | `pdpCstAgPn` | `fnMasteringPrDocMnrlBundle_2606` | — |
+| `ags.cstAgPnMnrl` | `amCstAgPn` | то же | — |
+
+Без индекса по `ra_cac`: **49K scan × 680 вызовов** ≈ 33,5M обходов строк только для RA CostBase.
+
+### УМ-8 — fn2 overhead: `@schemeRows` без индекса
+
+`fn2_2606` (MSTVF) материализует `@schemeRows` в table variable **без индексов**.
+CTE `allMonthsForIpg` = `ipgSchemeCombo × mmmm(12)` (**23 688** строк) LEFT JOIN `@schemeRows` (**11 560** строк) — hash join без seek.
+
+**Доля:** ~82 с (29% fn2 NULL). Устраняется конверсией fn2 в SP с `#schemeRows` + составным индексом.
+
+### УМ-9 — ITVF `fnMasteringStIpgStCost_2606` + CROSS APPLY × 680
+
+`fnMasteringStIpgStCost_2606` — ITVF с `CROSS APPLY fnMasteringCstAgPnSh_2606` по каждому контракту.
+680 последовательных вызовов MSTVF; параллельный план внутри одного запроса **невозможен** (MSTVF serializes).
+
+Полный set-based рефакторинг (исторический П6) — высокое усилие; **Ступень 2** (CostBase для Ralp/PrDoc) закрывает основной остаток без полной переписки.
+
+---
+
+## 10. План закрытия К-7 строгой: Ступени 1–3
+
+> **Цель:** fn2 stIpg=NULL **< 120 с** при каждом вызове из MS Access / `spMstrg_2606`, без кэша и без app-parallelism.
+
+### Ступень 1 — Индексы горячих FK (П4b)
+
+**Суть:** шесть индексов на полях, по которым идут повторяющиеся сканы в CostBase/bundle.
+
+| Индекс | Таблица | Назначение |
+|--------|---------|------------|
+| `IX_ra_cac` | `ags.ra(ra_cac)` | CostBase RA: устранить 49K scan |
+| `IX_ra_change_rac_ra` | `ags.ra_change(raс_ra)` | JOIN ra_change → ra |
+| `IX_ra_summ_ras_ra` | `ags.ra_summ(ras_ra) INCLUDE (...)` | batch lookup ras_fdKey |
+| `IX_ralpRa_cac` | `ags.ralpRa(ralprCstAgPn)` | Ralp bundle (`ags.ralp` — VIEW) |
+| `IX_cn_PrDocP_cac` | `ags.cn_PrDocP(pdpCstAgPn)` | PrDoc bundle |
+| `IX_cstAgPnMnrl_cac` | `ags.cstAgPnMnrl(amCstAgPn)` | Mnrl bundle |
+
+**Файл:** `00-perf-indexes-k7.sql` (дополнение к `00-perf-indexes.sql`).  
+**Зеркало:** `MSSQL2012/00-perf-indexes-k7.sql`.  
+**Усилие:** минимальное. **Риск:** нулевой. **Совместимость:** SQL 2012 SP4 ✅.
+
+**Ожидаемый эффект:** StIpgStCost NULL **198 с → ~80–120 с**.
+
+**Факт (dev, 2026-06-15):** StIpgStCost NULL **45,7 с** (×4,3); fn2 NULL **127,7 с** (×2,2). К-7: FAIL на 7,7 с.
+
+**Факт после Ступени 2 (2026-06-15):** StIpgStCost **31,5 с**; fn2 NULL **111,5 с** — **К-7 PASS** ✅.
+
+**Приёмка:** `07h6` (К-7 gate); `07h` stIpg=46 pres/lim без регрессии.
+
+---
+
+### Ступень 2 — `@ralpCostBase` + `@prDocMnrlCostBase` (P6-lite)
+
+**Суть:** применить паттерн этапа 9б (RA/AgFee) к Ralp и PrDocMnrl.
+
+| Артефакт | Действие |
+|----------|----------|
+| `fnMasteringRalpCostBase_2606` | новая MSTVF в `03b1` (по образцу `fnMasteringAgFeeCostBase_2606`) |
+| `fnMasteringPrDocMnrlCostBase_2606` | новая MSTVF в `03b1` |
+| `fnMasteringCstAgPn_2606` (`03c`) | `@ralpCostBase` + `@prDocMnrlCostBase`; заменить OUTER APPLY bundle на inline-агрегацию |
+| `MSSQL2012/03b1`, `03c` | зеркало |
+
+**Устраняет:** 11 560 повторных сканов `ralp` / PrDoc / Mnrl.
+
+**Ожидаемый эффект** (после Ступени 1): StIpgStCost NULL **~80–120 с → ~20–50 с**.
+
+**Приёмка:** `07b` (fnStCost parity); `07h` stIpg=46/61 (pres/lim); `07h6` (К-7).
+
+---
+
+### Ступень 3 — fn2 MSTVF → Stored Procedure
+
+**Суть:** конвертировать `fnIpgChRsltCstUtl2_2606` в `ags.spIpgChRsltCstUtl2_2606` (или inline в `spMstrg_2606`).
+
+| Изменение | Эффект |
+|-----------|--------|
+| `@schemeRows` → `#schemeRows` + `INDEX (ipgKey, ipgpCstAgPn, iShKey, mNum)` | seek вместо hash join в `allMonthsForIpg` |
+| `@mastMonthEnd`, `@branchCache` → `#temp` с индексами | аналогично |
+| `spMstrg_2606` вызывает SP вместо `SELECT FROM fn2` | единая точка входа для Access |
+
+**Ожидаемый эффект:** fn2 overhead **~82 с → ~5–15 с**.
+
+**Приёмка:** `07h6` К-7; `07f` PercentBrn PASS; `07_VERIFY_after`; `07h` stIpg=46/61.
+
+---
+
+### 10.1. Сводная таблица Ступеней 1–3
+
+| Ступень | Артефакты | StIpgStCost | fn2 overhead | fn2 NULL (оценка) | Усилие | Риск |
+|---------|-----------|------------|--------------|-------------------|--------|------|
+| **1** | `00-perf-indexes-k7.sql` | 198→**46 с** | 82 с | **~128 с** ❌ | Мин. | Нулевой |
+| **2** | `03b1` CostBase + `03c` inline | 46→**31,5 с** | ~80 с | **~111,5 с** ✅ | Средн. | Низкий |
+| **2** | `03b1` + `03c` CostBase Ralp/PrDoc | 80–120→20–50 с | 82 с | **~100–130 с** | Средн. | Низкий |
+| **3** | `04`→SP, `06` spMstrg | — | 82→5–15 с | **~25–65 с** ✅ | Средн. | Средний |
+| **1+2+3** | все | — | — | **~25–65 с** | — | — |
+
+**К-7 строгая (<120 с):** достижима после **Ступени 2** (на грани) или **Ступени 3** (с запасом ×2–4).
+
+### 10.2. Исключённые из плана пути
+
+| Путь | Причина исключения |
+|------|-------------------|
+| App-level parallelism | MS Access — один поток вызова |
+| Persistent mastering cache | данные меняются многократно в день |
+| П5 RRcTimeListBase | RRc **117 мс** — не узкое место (`07h6`) |
+| Полный set-based П6 (680→1 JOIN) | высокое усилие; Ступень 2 закрывает основной остаток |
+
+### 10.3. Рекомендуемый порядок реализации
+
+```
+14.1  → Ступень 1: 00-perf-indexes-k7.sql → 07h6 (замер)
+14.2  → Ступень 2: fnMasteringRalpCostBase_2606 + PrDocMnrlCostBase → 03c → 07h6 + 07h + 07b
+14.3  → Ступень 3 (если 14.2 > 90 с): fn2→SP → 06 → 07h6 + 07f + 07_VERIFY_after
+14.4  → MSSQL2012/ зеркало + db-upgrade + journal
+```
+
+---
+
+*Файл создан: 2026-06-11. Разделы 8–10: 2026-06-15. Автор: Александр.*

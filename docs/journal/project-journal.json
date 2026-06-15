@@ -4927,7 +4927,7 @@
           "chat-attributes": {
             "id": "chat-2026-06-11-001",
             "created": "2026-06-11",
-            "lastUpdated": "2026-06-12",
+            "lastUpdated": "2026-06-15",
             "owner": "Александр",
             "status": "completed",
             "priority": "critical",
@@ -5086,6 +5086,35 @@
                     "references": [
                       "docs/development/notes/sql/26-0604/MSSQL2012/README.md",
                       "docs/development/notes/sql/26-0604/MSSQL2012/03b1_CREATE_FUNCTION_fnMasteringFact_2606.sql"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "К-7 строгая: анализ резервов, этап 14 (planning). № log-2026-06-15-001",
+                "log-attributes": {
+                  "id": "log-2026-06-15-001",
+                  "timestamp": "2026-06-15T12:00:00+03:00",
+                  "level": "info",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Этап 14.2: CostBase Ralp/PrDocMnrl (P6-lite)",
+                    "details": "03b1: fnMasteringRalpCostBase_2606, fnMasteringPrDocMnrlCostBase_2606. 03c: inline-агрегация вместо 17× OUTER APPLY bundle. 07h6: StIpgStCost 31,5 с; fn2 NULL 111,5 с — К-7 PASS. 07b PASS. fn2 stIpg=46: 18,1 с.",
+                    "outcome": "К-7 строгая достигнута без Ступени 3 (fn2→SP).",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/03b1_CREATE_FUNCTION_fnMasteringFact_2606.sql",
+                      "docs/development/notes/sql/26-0604/03c_CREATE_FUNCTION_fnMasteringCstAgPnSh_2606.sql",
+                      "docs/development/notes/sql/26-0604/MSSQL2012/03b1b_CREATE_FUNCTION_fnMasteringCostBase_2606.sql"
                     ]
                   }
                 ]
