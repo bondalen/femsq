@@ -87,6 +87,7 @@ WHERE EXISTS (
     SELECT 1
     FROM ags.ipgUtPlPnLmMn m
     INNER JOIN ags.ipgUtPlP up ON up.iuplpKey = m.iuplpmPlPn
+    INNER JOIN ags.ipgUtPlGrP gp ON gp.iuplgpPl = up.iuplpPl AND gp.iuplgpGr = r.ipgcrvUtPlGr
     WHERE up.iuplpIpgPn = r.ipgpKey AND m.iuplpmStCost = 212
 );
 
@@ -114,6 +115,7 @@ IF OBJECT_ID('tempdb..#utpl_cum') IS NOT NULL DROP TABLE #utpl_cum;
     FROM ags.ipgUtPlPnLmMn m
     INNER JOIN ags.ipgUtPlP up ON up.iuplpKey = m.iuplpmPlPn
     INNER JOIN #pn p ON p.ipgpKey = up.iuplpIpgPn
+    INNER JOIN ags.ipgUtPlGrP gp ON gp.iuplgpPl = up.iuplpPl AND gp.iuplgpGr = p.ipgcrvUtPlGr
     WHERE m.iuplpmStCost IN (212, 195, 172, 187)
 ),
 cum AS (
@@ -148,6 +150,7 @@ FROM (
         ABS(ISNULL(SUM(CASE WHEN m.iuplpmStCost = 187 THEN m.iuplpmLim END), 0) - p.ref187 / 1000000.0) AS d187
     FROM #pn p
     INNER JOIN ags.ipgUtPlP up ON up.iuplpIpgPn = p.ipgpKey
+    INNER JOIN ags.ipgUtPlGrP gp ON gp.iuplgpPl = up.iuplpPl AND gp.iuplgpGr = p.ipgcrvUtPlGr
     INNER JOIN ags.ipgUtPlPnLmMn m ON m.iuplpmPlPn = up.iuplpKey AND m.iuplpmStCost IN (212, 195, 172, 187)
     GROUP BY p.ipgpKey, p.ref212, p.ref195, p.ref172, p.ref187
 ) x

@@ -1,7 +1,7 @@
 # Приёмка помесячных плановых показателей по структуре затрат (dev)
 
 **Дата:** 2026-06-17  
-**lastUpdated:** 2026-06-23  
+**lastUpdated:** 2026-06-24  
 **Автор:** Александр  
 **Контекст:** пакет `spMstrg_2606`, тестовая цепь **5**, `@MounthEndDate = '2022-12-31'`  
 **Связанные документы:** `08-testing-strategy.md`, `12-dev-acceptance-protocol.md`, `04-computation-map.md`, `03-design-decisions.md` (Решение 14), [`glossary.md`](../../../../../project/glossary.md)
@@ -164,10 +164,11 @@ plan@212  ≈  plan@172 + plan@187 + plan@195
 | `07m_plan_additive_chain5.sql` | ✅ 2026-06-17, К-13 PASS @NULL ~302s, ε=5 |
 | `run_acceptance_dev_chain5.sh --with-plan-stcost` | ✅ wired (18.4) |
 | Прогон К-12/К-13 PASS | ✅ 2026-06-17, `run_plan_stcost_chain5.sh` |
-| `07n_plan_strict_cst_chain5.sql` | ✅ пилот cst 2102, 2026-06-17 |
-| `FIXTURE_05_pilot_cst_2102.sql` | ✅ dev-only |
+| `07n_plan_strict_cst_chain5.sql` | ✅ пилот cst 2102; фильтр по ipgcrvUtPlGr |
+| `FIXTURE_05_pilot_cst_2102.sql` | ✅ dev-only (superseded golden 06) |
+| `FIXTURE_06` + `07o` @ 17 дат | ✅ **2026-06-24**, cst 2102 PASS |
 
-**Готовность к исполнению:** К-12/К-13 (07m) PASS; строгая логика (07n) — **пилот cst 2102 PASS**; FIXTURE_06, 17 дат, полная цепь (18.7.2–18.7.4) — в работе; интерполяция плана/факта — отложено (18.9).
+**Готовность к исполнению:** К-12/К-13 (07m) PASS; 18.7.2a–b PASS на golden cst 2102; 18.7.2c / 18.7.4 — далее.
 
 ---
 
