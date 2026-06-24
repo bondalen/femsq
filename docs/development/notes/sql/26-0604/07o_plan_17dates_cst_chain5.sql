@@ -4,7 +4,7 @@ GO
 -- 07o_plan_17dates_cst_chain5.sql
 -- Строгая приёмка плана UtPl (18.7.2b): матрица 17 дат fnIpgChDatsV, пилот cst 2102.
 --
--- Предусловие: FIXTURE_06 (golden UtPl 2037/3290/5271, ipgcrvUtPlGr 18/19/20).
+-- Предусловие: FIXTURE_06 (golden UtPl, ipgcrvUtPlGr 18/19/20) для @cstAgPn.
 --
 -- Критерии:
 --   К-12b/c/t — как 07n; К-12t на датах ipgcrvEnd (ужесточение _2605, Решение 14)
@@ -50,11 +50,11 @@ INTO #rev
 FROM ags.ipgPn p
 INNER JOIN ags.ipgChRlV v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
 WHERE p.ipgpCstAgPn = @cstAgPn
-  AND p.ipgpKey IN (2037, 3290, 5271);
+  AND p.ipgpSh = 1;
 
 IF (SELECT COUNT(*) FROM #rev) <> 3
 BEGIN
-    RAISERROR(N'Golden ipgPn 2037/3290/5271 not found — apply FIXTURE_06.', 16, 1);
+    RAISERROR(N'Expected 3 ipgPn (sh=1) on cstAgPn %d in chain %d.', 16, 1, @cstAgPn, @ipgCh);
     RETURN;
 END;
 
@@ -74,7 +74,7 @@ WHERE EXISTS (
 
 IF (SELECT COUNT(*) FROM #pn) <> 3
 BEGIN
-    RAISERROR(N'Expected 3 ipgPn with golden UtPl in test groups.', 16, 1);
+    RAISERROR(N'Expected 3 ipgPn with golden UtPl on cstAgPn %d — apply FIXTURE_06.', 16, 1, @cstAgPn);
     RETURN;
 END;
 

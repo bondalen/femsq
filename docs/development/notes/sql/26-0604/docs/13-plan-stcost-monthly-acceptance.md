@@ -167,8 +167,9 @@ plan@212  ≈  plan@172 + plan@187 + plan@195
 | `07n_plan_strict_cst_chain5.sql` | ✅ пилот cst 2102; фильтр по ipgcrvUtPlGr |
 | `FIXTURE_05_pilot_cst_2102.sql` | ✅ dev-only (superseded golden 06) |
 | `FIXTURE_06` + `07o` @ 17 дат | ✅ **2026-06-24**, cst 2102 PASS |
+| `FIXTURE_06_pilots` + `run_07n_o_pilots` | ✅ **2026-06-24**, 9 cst PASS |
 
-**Готовность к исполнению:** К-12/К-13 (07m) PASS; 18.7.2a–b PASS на golden cst 2102; 18.7.2c / 18.7.4 — далее.
+**Готовность к исполнению:** К-12/К-13 (07m) PASS; 18.7.2a–c PASS; **18.7.3** / 18.7.4 — далее.
 
 ---
 

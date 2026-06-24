@@ -33,6 +33,15 @@ cd docs/development/notes/sql/26-0604
 SQL_HOST=10.7.0.3 ./run_07o_cst2102_17dates.sh
 ```
 
+Пилоты 18.7.2c (9 строек: 2102 + 121, 631, …):
+
+```bash
+cd docs/development/notes/sql/26-0604
+SQL_HOST=10.7.0.3 ./run_07n_o_pilots_chain5.sh
+```
+
+После `apply_fixture_06` выполнить `FIXTURE_06_pilots_cst_chain5.sql` (входит в скрипт выше).
+
 ## Откат (FIXTURE_01–05)
 
 ```bash
@@ -56,3 +65,5 @@ docker exec -i femsq-mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P '
 | `apply_fixture_06.sh` | оркестратор FIXTURE_06 (`SQL_HOST` на Fedora) | ✅ |
 | `07o_plan_17dates_cst_chain5.sql` | 17 дат, К-12…К-17, cst 2102 | ✅ **2026-06-24** |
 | `run_07o_cst2102_17dates.sh` | прогон 07o | ✅ |
+| `FIXTURE_06_pilots_cst_chain5.sql` | 8 доп. пилотных cst | ✅ **2026-06-24** |
+| `run_07n_o_pilots_chain5.sh` | 07n+07o × 9 cst | ✅ |
