@@ -58,3 +58,6 @@ fi
 echo ""
 echo "=== Установка завершена ==="
 echo "DBHub готов к использованию в проекте"
+echo ""
+echo "Следующий шаг: настроить .cursor/mcp.json"
+echo "  ./code/scripts/setup-cursor-mcp.sh"

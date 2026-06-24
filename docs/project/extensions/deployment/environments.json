@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$comment": "Реестр окружений FEMSQ: разработка и продуктивный SQL Server. Дублирует и дополняет project.development.environments в project-docs.json.",
-  "lastUpdated": "2026-06-15",
+  "lastUpdated": "2026-06-24",
 
   "summary": {
     "production_database": "FishEye на MS SQL Server 2012 SP4 (11.0.7507.2)",
@@ -26,6 +26,36 @@
         },
         "application": {
           "url": "http://localhost:8080"
+        },
+        "wireguard": {
+          "host_ip": "10.7.0.3",
+          "interface": "nb-win-cloud-ru",
+          "sql_port": 1433
+        }
+      },
+      {
+        "id": "alex-fedora",
+        "name": "Удалённая рабочая станция Fedora",
+        "role": "development_remote",
+        "database_server": "nb-win",
+        "sql_server": {
+          "deployment": "remote_docker",
+          "container_on_server": "femsq-mssql",
+          "host": "10.7.0.3",
+          "port": 1433,
+          "product_version": "2022",
+          "database": "FishEye",
+          "schema": "ags",
+          "connectivity": "wireguard",
+          "note": "Тот же Docker на nb-win; см. docs/development/remote-development-nb-win.md"
+        },
+        "application": {
+          "url": "http://localhost:8080",
+          "config_template": "docs/development/examples/database.properties.alex-fedora"
+        },
+        "cursor": {
+          "mcp_setup": "code/scripts/setup-cursor-mcp.sh",
+          "mcp_template": ".cursor/mcp.remote-nb-win.json.example"
         }
       }
     ],

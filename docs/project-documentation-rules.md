@@ -297,6 +297,7 @@
 - **Разработка:** Docker `femsq-mssql` (SQL Server 2022) — не является целевой платформой для DDL на prod.
 - **SQL-пакеты:** для продуктива обязательна подпапка `MSSQL2012/` в каталоге задачи; см. `docs/deployment/sql-server-deployment-rules.md` и `docs/project/extensions/database/compatibility.json`.
 - **Реестр окружений:** `project-docs.json` → `development.environments`; расширение `docs/project/extensions/deployment/environments.json`.
+- **Удалённая разработка (Fedora → БД на nb-win):** `docs/development/remote-development-nb-win.md`; после `git pull` — `code/scripts/setup-cursor-mcp.sh`.
 
 ## Правила обновления
 

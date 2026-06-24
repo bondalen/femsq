@@ -1,0 +1,9 @@
+# Шаблон для nb-win (WSL2): локальный Docker femsq-mssql
+# Скопировать: mkdir -p ~/.femsq && cp docs/development/examples/database.properties.nb-win ~/.femsq/database.properties
+host=localhost
+port=1433
+database=FishEye
+schema=ags
+username=sa
+password=kolob_OK1
+authMode=credentials

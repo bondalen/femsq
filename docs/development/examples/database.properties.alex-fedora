@@ -1,0 +1,10 @@
+# Шаблон для alex-fedora: тестовая БД на nb-win через WireGuard
+# Скопировать: mkdir -p ~/.femsq && cp docs/development/examples/database.properties.alex-fedora ~/.femsq/database.properties
+# Требуется: активный WireGuard, nb-win включён, порт 10.7.0.3:1433 доступен
+host=10.7.0.3
+port=1433
+database=FishEye
+schema=ags
+username=sa
+password=kolob_OK1
+authMode=credentials

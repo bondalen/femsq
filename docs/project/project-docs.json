@@ -6,7 +6,7 @@
       "description": "Cистема работы с контрагентами и объектами при капитальном строительстве на основе БД MS SQL Server FEMSQ (Fish Eye MS SQL Server)",
       "author": "Александр",
       "created": "2025-10-08",
-      "lastUpdated": "2026-06-17",
+      "lastUpdated": "2026-06-24",
       "status": "in_progress",
       "repository": "https://github.com/bondalen/femsq.git",
       "license": "MIT",
@@ -501,6 +501,7 @@
         "description": "Машины и серверы БД. Используется при проверке окружения (.cursorrules) и при выборе набора SQL-скриптов для деплоя.",
         "check_order": [
           "nb-win",
+          "alex-fedora",
           "prod-fisheye"
         ],
         "machines": {
@@ -529,7 +530,54 @@
             "hyperv_vm": {
               "name": "w10-26-0310",
               "purpose": "MS Access / Excel с ODBC к Docker SQL"
+            },
+            "wireguard": {
+              "interface": "nb-win-cloud-ru",
+              "host_ip": "10.7.0.3",
+              "sql_port": 1433,
+              "purpose": "Доступ удалённых клиентов (Fedora, DBeaver, Cursor) к Docker SQL Server",
+              "notes": "nb-win должен быть включён; на Windows — inbound TCP 1433 с подсети VPN. См. docs/development/remote-development-nb-win.md"
             }
+          },
+          "alex-fedora": {
+            "name": "Удалённая рабочая станция (Fedora)",
+            "role": "development_remote",
+            "hostname_pattern": ".*fedora.*|^alex-fedora$",
+            "os_pattern": ".*Fedora.*|.*Linux.*",
+            "priority": 2,
+            "database_server": "nb-win",
+            "database": {
+              "type": "remote_docker",
+              "container_on_server": "femsq-mssql",
+              "host": "10.7.0.3",
+              "port": 1433,
+              "database": "FishEye",
+              "schema": "ags",
+              "username": "sa",
+              "authentication": "sql_server",
+              "sql_server_product": "Microsoft SQL Server 2022 (Docker на nb-win)",
+              "connectivity": {
+                "method": "wireguard",
+                "vpn_required": true,
+                "port_check": "timeout 3 bash -c 'cat < /dev/null > /dev/tcp/10.7.0.3/1433'",
+                "verified_date": "2026-06-24",
+                "verified_by": "DBeaver и nc с Fedora"
+              },
+              "notes": "Тот же контейнер femsq-mssql, что на nb-win. host=10.7.0.3, не localhost. Источник данных не переносится на Fedora."
+            },
+            "dbhub": {
+              "type": "local",
+              "path": ".cursor/dbhub",
+              "entry_point": ".cursor/dbhub/node_modules/@bytebase/dbhub/dist/index.js",
+              "dsn": "sqlserver://sa:kolob_OK1@10.7.0.3:1433/FishEye?sslmode=disable&encrypt=false&trustServerCertificate=true",
+              "mcp_config_template": ".cursor/mcp.remote-nb-win.json.example",
+              "setup_script": "code/scripts/setup-cursor-mcp.sh"
+            },
+            "application_config": {
+              "path": "~/.femsq/database.properties",
+              "template": "docs/development/examples/database.properties.alex-fedora"
+            },
+            "notes": "Cursor и DBeaver на Fedora; после git pull — ./code/scripts/setup-cursor-mcp.sh && ./code/scripts/setup-dbhub.sh"
           },
           "prod-fisheye": {
             "name": "Продуктивный SQL Server (FishEye)",

@@ -2,7 +2,21 @@
 
 Скрипты для работы с базой данных FishEye
 
-## Резервное копирование FishEye
+## Cursor / DBHub (после git pull)
+
+| Скрипт | Назначение |
+|--------|------------|
+| `setup-cursor-mcp.sh` | Создаёт `.cursor/mcp.json` из шаблона по hostname (`nb-win` → localhost, Fedora → `10.7.0.3`) |
+| `setup-dbhub.sh` | Устанавливает DBHub в `.cursor/dbhub` |
+
+```bash
+./setup-cursor-mcp.sh   # Fedora: DSN на nb-win через WireGuard
+./setup-dbhub.sh
+```
+
+Подробнее: [docs/development/remote-development-nb-win.md](../../docs/development/remote-development-nb-win.md)
+
+---
 
 **Скрипт:** `backup-fisheye.sh` — `BACKUP DATABASE` в контейнере `femsq-mssql`, копия `.bak` на диск **D:** (вне `docker_data.vhdx`).
 

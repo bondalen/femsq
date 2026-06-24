@@ -3,7 +3,7 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-06-23"
+      "lastUpdated": "2026-06-24"
     },
     "sessions": [
       {
@@ -5279,6 +5279,78 @@
                       "docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606-v2.md",
                       "docs/development/notes/sql/26-0604/docs/08-testing-strategy.md",
                       "docs/development/notes/sql/26-0604/docs/07-performance-analysis.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "Удалённая разработка Fedora → nb-win (completed, medium). № chat-2026-06-24-001",
+          "chat-attributes": {
+            "id": "chat-2026-06-24-001",
+            "created": "2026-06-24",
+            "lastUpdated": "2026-06-24",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "medium",
+            "tags": [
+              "environment",
+              "wireguard",
+              "cursor",
+              "dbhub",
+              "alex-fedora",
+              "nb-win"
+            ],
+            "links": {
+              "projectDocsRefs": [
+                "environment:alex-fedora",
+                "environment:nb-win.wireguard"
+              ],
+              "developmentTasks": [],
+              "aiRuleRefs": []
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Документация удалённого доступа к FishEye (success). № log-2026-06-24-001",
+                "log-attributes": {
+                  "id": "log-2026-06-24-001",
+                  "timestamp": "2026-06-24T12:00:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "environment:alex-fedora",
+                      "environment:nb-win.wireguard"
+                    ],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Проверен доступ с Fedora к Docker SQL на nb-win",
+                    "details": "WireGuard IP nb-win 10.7.0.3:1433 доступен с Fedora (bash /dev/tcp, nc). DBeaver: FishEye, SQL Server 2022 в контейнере femsq-mssql.",
+                    "outcome": "Удалённый Cursor может использовать ту же тестовую БД без переноса данных",
+                    "references": [
+                      "docs/development/remote-development-nb-win.md"
+                    ]
+                  },
+                  {
+                    "action": "Добавлена машина alex-fedora в реестр окружений",
+                    "details": "project-docs.json и environments.json: development_remote, host 10.7.0.3, шаблоны mcp и database.properties, скрипт setup-cursor-mcp.sh.",
+                    "outcome": "После git pull на Fedora — ./code/scripts/setup-cursor-mcp.sh настраивает DBHub MCP",
+                    "references": [
+                      "docs/project/project-docs.json",
+                      "docs/project/extensions/deployment/environments.json",
+                      ".cursor/mcp.remote-nb-win.json.example",
+                      "code/scripts/setup-cursor-mcp.sh"
                     ]
                   }
                 ]
