@@ -67,3 +67,5 @@ docker exec -i femsq-mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P '
 | `run_07o_cst2102_17dates.sh` | прогон 07o | ✅ |
 | `FIXTURE_06_pilots_cst_chain5.sql` | 8 доп. пилотных cst | ✅ **2026-06-24** |
 | `run_07n_o_pilots_chain5.sh` | 07n+07o × 9 cst | ✅ |
+| `07p_plan_aggregate_chain5.sql` | К-18a–d, 17 дат | ✅ **2026-06-24** |
+| `run_07p_aggregate_chain5.sh` | прогон 07p | ✅ |

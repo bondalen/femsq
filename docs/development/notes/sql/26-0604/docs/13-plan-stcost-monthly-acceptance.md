@@ -168,8 +168,9 @@ plan@212  ≈  plan@172 + plan@187 + plan@195
 | `FIXTURE_05_pilot_cst_2102.sql` | ✅ dev-only (superseded golden 06) |
 | `FIXTURE_06` + `07o` @ 17 дат | ✅ **2026-06-24**, cst 2102 PASS |
 | `FIXTURE_06_pilots` + `run_07n_o_pilots` | ✅ **2026-06-24**, 9 cst PASS |
+| `07p_plan_aggregate_chain5.sql` | ✅ **2026-06-24**, К-18a–d PASS ~0,5 с |
 
-**Готовность к исполнению:** К-12/К-13 (07m) PASS; 18.7.2a–c PASS; **18.7.3** / 18.7.4 — далее.
+**Готовность к исполнению:** 18.7.2a–c PASS; 18.7.3 PASS (`07p`); **18.7.4** — далее.
 
 ---
 
@@ -244,6 +245,15 @@ plan@212  ≈  plan@172 + plan@187 + plan@195
 | **К-16** | P2 на 31.12: cum = лимит активного пункта ИП |
 | **К-17** | На `ipgcrvEnd`: cum = cum(UtPl) на дату окончания ИП |
 | **К-12t** | На датах смены ИП: политика «ужесточения» (Решение 14) |
+
+### Критерии агрегации (07p, этап 18.7.3)
+
+| Код | Условие |
+|-----|---------|
+| **К-18a** | SUM(ipgp plan) = `fnMasteringStIpgStCost(NULL)` на (cstAgPn, dt) |
+| **К-18b** | На stIpg 61 / 46: SUM(plan_cst пилотов) = SUM `StIpgStCost(@stIpg)` |
+| **К-18c** | Разбиение по филиалу (`cstAgPnBranch`) сохраняет grand total |
+| **К-18d** | Разбиение по агенту (`cstaInvestor`) сохраняет grand total |
 
 ---
 
