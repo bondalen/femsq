@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$comment": "Реестр окружений FEMSQ: разработка и продуктивный SQL Server. Дублирует и дополняет project.development.environments в project-docs.json.",
-  "lastUpdated": "2026-05-18",
+  "lastUpdated": "2026-06-15",
 
   "summary": {
     "production_database": "FishEye на MS SQL Server 2012 SP4 (11.0.7507.2)",
@@ -50,7 +50,14 @@
         "FEMSQ / JasperReports",
         "shell: execute_spMstrg_2605.sh"
       ],
-      "credentials": "Не хранить в репозитории; у DBA / ~/.femsq/database.properties"
+      "credentials": "Не хранить в репозитории; Windows Authentication на prod",
+      "deployment": {
+        "method": "offline_usb",
+        "tool": "SSMS",
+        "network_from_nb_win": false,
+        "executor": "Александр",
+        "planned_date": null
+      }
     }
   },
 

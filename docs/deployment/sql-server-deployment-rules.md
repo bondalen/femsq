@@ -14,6 +14,7 @@
 | `docs/project/extensions/database/compatibility.json` | Ограничения 2012, workarounds |
 | `docs/project/extensions/deployment/environments.json` | Краткий реестр dev/prod |
 | `docs/deployment/db-upgrade-*.md` | Порядок работ по конкретной задаче |
+| `docs/deployment/sql-flash-drive-packaging.md` | **Формирование флеш-носителя** для офлайн-деплоя |
 
 ---
 
@@ -73,10 +74,24 @@ docs/development/notes/sql/{код-задачи}/
 5. [ ] Прогнать `00` → `01`–`03` → `04` на dev в папке `MSSQL2012/` (если есть контейнер).
 6. [ ] Оформить `docs/deployment/db-upgrade-{task}.md` и чеклист дня деплоя.
 7. [ ] На продуктиве: бэкап → `MSSQL2012/00`–`04` → приёмка → клиенты (Access/FEMSQ).
+8. [ ] При офлайн-доставке: собрать флешку по [`sql-flash-drive-packaging.md`](sql-flash-drive-packaging.md).
 
 ---
 
-## 6. Проверка версии перед деплоем
+## 7. Флеш-носитель для офлайн-деплоя
+
+Когда с рабочей станции нет доступа к продуктивному SQL Server, пакет `MSSQL2012/` переносят на **флеш-носитель** в структуре `{YY-MMDD}_deploy/` (подпапки `open/` и `archive/`).
+
+| Документ | Содержание |
+|----------|------------|
+| [`sql-flash-drive-packaging.md`](sql-flash-drive-packaging.md) | Полный порядок: структура, ZIP, PDF, git, чеклист сборки |
+| `{код}/{YY-MMDD}_deploy/build_flash_package.sh` | Скрипт сборки (пример: `26-0604/26-0616_deploy/`) |
+
+**Правило:** в git — рецепт сборки и шаблоны; `open/` и `archive/*.zip` — артефакты, не коммитятся.
+
+---
+
+## 8. Проверка версии перед деплоем
 
 ```sql
 SELECT @@VERSION;
@@ -93,3 +108,4 @@ SELECT SERVERPROPERTY('ProductMajorVersion') AS major_version;
 | Версия | Дата | Описание |
 |--------|------|----------|
 | 1.0 | 2026-05-18 | Первый выпуск; конвенция MSSQL2012/ после опыта spMstrg_2605 |
+| 1.1 | 2026-06-16 | §7 флеш-носитель; ссылка на sql-flash-drive-packaging.md |

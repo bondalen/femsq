@@ -3,7 +3,9 @@
 **Дата начала:** 2026-06-04  
 **Статус:** в разработке  
 **Автор:** Александр  
-**План чата:** `docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606.md`  
+**План чата:** `docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606-v2.md`  
+**Приёмка планов UtPl по stCost (dev):** `docs/development/notes/sql/26-0604/docs/13-plan-stcost-monthly-acceptance.md`  
+**Словарь терминов:** `docs/project/glossary.md`
 **Предшествующая задача:** `docs/development/notes/sql/26-0508/` (`spMstrg_2605`)  
 **Порядок работ на продуктиве:** `docs/deployment/db-upgrade-spMstrg-2606.md` *(создать в Этапе 7)*  
 **Чеклист дня деплоя:** `docs/deployment/db-upgrade-spMstrg-2606-deploy-day-checklist.md` *(создать в Этапе 7)*

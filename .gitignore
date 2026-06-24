@@ -94,8 +94,16 @@ docs/sql_err/images/**/*.bmp
 # Локальная папка с Excel-источниками для ревизий
 excel/
 
-# Local temporary directories
-temp/
+# Deploy flash packages (built artifacts, not source)
+docs/development/notes/sql/**/*_deploy/open/
+docs/development/notes/sql/**/*_deploy/archive/*.zip
+docs/development/notes/sql/**/*_deploy/.venv_build/
+docs/development/notes/sql/**/*_deploy/MANIFEST.sha256
+
+# Python bytecode
+__pycache__/
+*.pyc
+
 code/femsq-backend/temp/
 code/temp/
 code/femsq-backend/femsq-web/temp/

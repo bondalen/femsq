@@ -42,5 +42,11 @@
 
 - [`docs/deployment/db-upgrade-spMstrg-2606.md`](../../../../deployment/db-upgrade-spMstrg-2606.md)
 - [`docs/deployment/db-upgrade-spMstrg-2606-deploy-day-checklist.md`](../../../../deployment/db-upgrade-spMstrg-2606-deploy-day-checklist.md)
+- [`docs/deployment/sql-flash-drive-packaging.md`](../../../../deployment/sql-flash-drive-packaging.md) — сборка флешки
+- **Флеш-пакет:** `../26-0616_deploy/build_flash_package.sh`
 
-**Обновлено:** 2026-06-12
+**Обновлено:** 2026-06-16
+
+Синхронизация dev→MSSQL2012: `python3 _sync_to_mssql2012.py 03c_*.sql 03b1_*.sql`
+
+Дополнительно (этап 14.3, 16): `04b`, `05b`, `06b`, `03b1b`, `00-perf-indexes-k7.sql`

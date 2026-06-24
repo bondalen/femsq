@@ -2,13 +2,13 @@ USE [FishEye];
 GO
 -- =============================================================================
 -- 07_VERIFY_spMstrg_2606_chain5.sql
--- Приёмка Этапа 11: spMstrg_2606 на цепи 5, @MounthEndDate='2022-09-30'
+-- Приёмка Этапа 11/15: spMstrg_2606 на цепи 5, @MounthEndDate='2022-12-31'
 -- =============================================================================
 SET NOCOUNT ON;
 GO
 
 DECLARE @ipgCh int = 5;
-DECLARE @dt    date = '2022-09-30';
+DECLARE @dt    date = '2022-12-31';
 DECLARE @t0    datetime2;
 DECLARE @ms    int;
 DECLARE @msg   nvarchar(300);

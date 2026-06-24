@@ -102,8 +102,8 @@ RS2–RS7 — **производные** от RS1; при совпадении R
 
 ```sql
 @ipgCh = 5
-@MounthEndDate = '2022-09-30'   -- для RS4–RS7
--- RS1: без фильтра по дате, весь 2022
+@MounthEndDate = '2022-12-31'   -- для RS4–RS7 (окт–ноя–дек 2022)
+-- RS1: без фильтра по дате, весь 2022 (~14 447 строк)
 ```
 
 ---
@@ -116,6 +116,11 @@ RS2–RS7 — **производные** от RS1; при совпадении R
 | `07e1_DIAG_m9_presented_chain5.sql` | Диагностика: RRcTimeList vs PresRaMn |
 | `07e2_COMPARE_fn2_single_cstAgPn.sql` | **Точечно по `@cstAgPnKey`:** помесячно, per ipgKey (сужение проблем) |
 | `07f_COMPARE_PercentBrn_full_chain5.sql` | Полный PercentBrn vs RS1 (~68 мин); `@cstAgPnKey` для spot |
+| `07k_RS_full_compare_chain5.sql` | **Полная проверка** RS1..RS7 `_2606` ↔ `_2605` (таблицы `*_2408_*`) после fill |
+| `07h_compare_fn2_to_2605.sql` | fn2 по stIpg — **эталон приёмки** (vs `07h_compare_fn2_by_stIpg` → fn_2408, диагностика) |
+| `run_acceptance_dev_chain5.sh` | **Оркестратор** dev-приёмки: 07h6, 07h, 07f, spMstrg, 07k, 07i/07j; фаза 3: `--with-plan-stcost` (К-12/К-13) |
+| `07m_plan_limit_conformance_chain5.sql` | **К-12:** план = лимит ipgPn по 212/195/172/187 @ `@dt` (dev, после fixture) |
+| `07m_plan_additive_chain5.sql` | **К-13:** `agSmmTtl@212 ≈ @172+@187+@195` @ `@dt` |
 | `07_VERIFY_after.sql` (этап 6) | RS1..RS7 при `@saveToTables=1` |
 
 ---

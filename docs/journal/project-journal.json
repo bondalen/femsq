@@ -3,7 +3,7 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-06-04"
+      "lastUpdated": "2026-06-23"
     },
     "sessions": [
       {
@@ -4927,7 +4927,7 @@
           "chat-attributes": {
             "id": "chat-2026-06-11-001",
             "created": "2026-06-11",
-            "lastUpdated": "2026-06-15",
+            "lastUpdated": "2026-06-17",
             "owner": "Александр",
             "status": "completed",
             "priority": "critical",
@@ -5127,6 +5127,164 @@
                       "docs/development/notes/sql/26-0604/MSSQL2012/04b_CREATE_PROCEDURE_spIpgChRsltCstUtl2_2606.sql"
                     ]
                   }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Этап 15: dev-приёмка _2606 @ 2022-12-31. № log-2026-06-15-002",
+                "log-attributes": {
+                  "id": "log-2026-06-15-002",
+                  "timestamp": "2026-06-15T15:00:00+03:00",
+                  "level": "success",
+                  "effort": "3h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Протокол и скрипты dev-приёмки",
+                    "details": "12-dev-acceptance-protocol.md, 07k (RS1 keyDiff + COUNT RS2–7), 07h_compare_fn2_to_2605, run_acceptance_dev_chain5.sh (@dt=2022-12-31). Исправлен ложный FAIL 07k (SELECT * EXCEPT) и 07h (эталон fn_2408 вместо fn2_2605).",
+                    "outcome": "Оркестратор и критерии К-9b зафиксированы.",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/docs/12-dev-acceptance-protocol.md",
+                      "docs/development/notes/sql/26-0604/07k_RS_full_compare_chain5.sql",
+                      "docs/development/notes/sql/26-0604/07h_compare_fn2_to_2605.sql",
+                      "docs/development/notes/sql/26-0604/run_acceptance_dev_chain5.sh"
+                    ]
+                  },
+                  {
+                    "action": "Прогон приёмки FishEye dev",
+                    "details": "07f PASS F.3=0 (14447). spMstrg RS1=14447 RS4=916. 07k PASS keyDiff=0. 07h→2605 PASS stIpg=61/46 (M.5=0). 07i/07j PASS stIpg=61,46. 07h6 fn2 NULL 122,8 с (разброс vs 111,5 с).",
+                    "outcome": "К-9, К-9b, К-11 подтверждены на dev @ 2022-12-31.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606-v2.md",
+                      "docs/development/notes/sql/26-0604/acceptance_dev_chain5_20260615_143306.log"
+                    ]
+                  },
+                  {
+                    "action": "Этап 16: устранение замечаний приёмки",
+                    "details": "06c ROWCOUNT (лог 14447); 07_VERIFY_spFn2_schema PASS; 07l PASS; MSSQL2012 resync 03c/03b1; db-upgrade-spMstrg-2606 v1.1; 05b INSERT EXEC spFn2.",
+                    "outcome": "Замечания закрыты без работы над perf. Готово к prod SQL.",
+                    "references": [
+                      "docs/deployment/db-upgrade-spMstrg-2606.md",
+                      "docs/development/notes/sql/26-0604/06c_FIX_spMstrg_ROWCOUNT_logging.sql",
+                      "docs/development/notes/sql/26-0604/07_VERIFY_spFn2_schema.sql"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Этап 18: приёмка планов UtPl по stCost — документация (planning). № log-2026-06-17-001",
+                "log-attributes": {
+                  "id": "log-2026-06-17-001",
+                  "timestamp": "2026-06-17T12:00:00+03:00",
+                  "level": "info",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Согласованы критерии К-12/К-13 для помесячных планов по stCost",
+                    "details": "К-12: накопленный план agSmmTtl на 2022-12-31 = лимит ipgPn по каждому stCost (212, 195, 172, 187) для строек с UtPlMn. К-13: agSmmTtl@212 ≈ @172+@187+@195. Dev-only fixture для split ipgUtPlPnLmMn; prod deploy без изменений. PERF: ≤8 мин на полную цепь NULL.",
+                    "outcome": "Создан 13-plan-stcost-monthly-acceptance.md; обновлены 08-testing, 12-dev-acceptance-protocol, chat-plan v2.7, db-upgrade v1.3. Fixture 18.1 применён на dev: 25441 INSERT, FIXTURE_04 PASS.",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/docs/13-plan-stcost-monthly-acceptance.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606-v2.md",
+                      "docs/deployment/db-upgrade-spMstrg-2606.md",
+                      "docs/development/notes/sql/26-0604/fixture/dev-chain5-utpl-stcost/"
+                    ]
+                  },
+                  {
+                    "action": "Fixture dev-chain5-utpl-stcost применён на FishEye dev",
+                    "details": "FIXTURE_01: 6 utpl normalized (56 rows). FIXTURE_03: 25441 rows @195/172/187. FIXTURE_04: 1164 pn lim match all stCost; 9708 month slices additive PASS.",
+                    "outcome": "Этап 18.1 завершён. Данные готовы для 07m (К-12/К-13).",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/fixture/dev-chain5-utpl-stcost/apply_fixture_chain5.sh"
+                    ]
+                  },
+                  {
+                    "action": "07m К-12/К-13: скрипты и прогон на полной цепи 5",
+                    "details": "07m_plan_limit_conformance: фаза 0 ipgPn; фаза 1 COALESCE(ag/in/dr SmmTtl) на последнем dAll≤@dt сверяется с cum(UtPl)×1e6. 07m_plan_additive: ipgPn, ε=5 (округление split). stIpg=61 PASS; NULL: К-12 1164 ipgPn 0 fail ~299s; К-13 1029 slices 0 fail max|diff|=2.06 ~302s.",
+                    "outcome": "Этапы 18.2–18.5 завершены. Разблокирован 18.6 → 17.2.3 (ZIP).",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/07m_plan_limit_conformance_chain5.sql",
+                      "docs/development/notes/sql/26-0604/07m_plan_additive_chain5.sql",
+                      "docs/development/notes/sql/26-0604/run_plan_stcost_chain5.sh",
+                      "docs/development/notes/sql/26-0604/plan_stcost_chain5_20221231_20260617_164603.log"
+                    ]
+                  },
+                  {
+                    "action": "Этап 18.7.1: строгая приёмка плана на пилотной стройке",
+                    "details": "07n: К-12b yearend=limit, К-12c timeline, К-12r revision-end, MASTERING @dt, К-13b. FIXTURE_05 UtPl на ipgp 5271 (cst 2102). PASS ~578ms.",
+                    "outcome": "Логика накопленного плана подтверждена в пределах ipgPn. Далее: 18.7.2 цепь, 18.7.3 агрегация.",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/07n_plan_strict_cst_chain5.sql",
+                      "docs/development/notes/sql/26-0604/fixture/dev-chain5-utpl-stcost/FIXTURE_05_pilot_cst_2102.sql"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Планы UtPl: словарь терминов, полный тест perf, Решение 14 (documentation). № log-2026-06-23-001",
+                "log-attributes": {
+                  "id": "log-2026-06-23-001",
+                  "timestamp": "2026-06-23T12:00:00+03:00",
+                  "level": "info",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["docs/project/glossary.md"],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Создан словарь терминов проекта",
+                    "details": "docs/project/glossary.md: алфавитный реестр (ИП, ревизия, расчёт освоения, UtPl, смена актуальности ИП, stCost и др.). Зафиксировано: ревизия — только ra_a (факт); смена ИП — не ревизия.",
+                    "outcome": "Ссылка в project-docs.json, project-documentation-rules.md, chat-plan v2.8, 00-overview.",
+                    "references": [
+                      "docs/project/glossary.md",
+                      "docs/project/project-docs.json"
+                    ]
+                  },
+                  {
+                    "action": "Решение 14: политика плана на датах смены ИП",
+                    "details": "Сохраняется «ужесточение» _2605 (полный месячный UtPl на ipgcrvEnd). Интерполяция плана по дням и согласованный cutoff факта по датам документов — отложенная объёмная задача (этап 18.9).",
+                    "outcome": "03-design-decisions.md Решение 14; 13-plan §15; glossary (смена актуальности ИП).",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/docs/03-design-decisions.md",
+                      "docs/development/notes/sql/26-0604/docs/13-plan-stcost-monthly-acceptance.md"
+                    ]
+                  },
+                  {
+                    "action": "Документированы FIXTURE_06/07 и наиболее полный тест 18.7.4",
+                    "details": "Изолированные ipgUtPlGr для приёмки; полная цепь 5 с тремя ИП (~90k UtPlMn). Отмечено: замеры К-6/К-7 без полных планов облегчали задачу; только 18.7.4 даёт репрезентативный wall-clock процедуры с планами.",
+                    "outcome": "chat-plan v2.8 (18.7.2a–18.7.4, 18.9); 08-testing фаза 3; 07-performance-analysis §11.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606-v2.md",
+                      "docs/development/notes/sql/26-0604/docs/08-testing-strategy.md",
+                      "docs/development/notes/sql/26-0604/docs/07-performance-analysis.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
         }
       }
     ],

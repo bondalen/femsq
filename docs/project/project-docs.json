@@ -6,7 +6,7 @@
       "description": "Cистема работы с контрагентами и объектами при капитальном строительстве на основе БД MS SQL Server FEMSQ (Fish Eye MS SQL Server)",
       "author": "Александр",
       "created": "2025-10-08",
-      "lastUpdated": "2026-05-18",
+      "lastUpdated": "2026-06-17",
       "status": "in_progress",
       "repository": "https://github.com/bondalen/femsq.git",
       "license": "MIT",
@@ -279,8 +279,12 @@
       },
       "production_upgrade_docs": [
         "docs/deployment/db-upgrade-spMstrg-2605.md",
-        "docs/deployment/db-upgrade-spMstrg-2605-deploy-day-checklist.md"
+        "docs/deployment/db-upgrade-spMstrg-2605-deploy-day-checklist.md",
+        "docs/deployment/db-upgrade-spMstrg-2606.md",
+        "docs/deployment/db-upgrade-spMstrg-2606-deploy-day-checklist.md"
       ],
+      "dev_acceptance_plan_stcost": "docs/development/notes/sql/26-0604/docs/13-plan-stcost-monthly-acceptance.md",
+      "glossary": "docs/project/glossary.md",
       "connection": {
         "type": "external",
         "driver": "com.microsoft.sqlserver.jdbc.SQLServerDriver",
@@ -515,7 +519,7 @@
               "schema": "ags",
               "compatibility_level_recommended": 110,
               "sql_server_product": "Microsoft SQL Server 2022 (dev only)",
-              "notes": "Для проверки совместимости с продуктивом использовать скрипты из подпапки MSSQL2012/ и/или COMPATIBILITY_LEVEL=110"
+              "notes": "Для проверки совместимости с продуктивом использовать скрипты из подпапки MSSQL2012/ и/или COMPATIBILITY_LEVEL=110. Приёмка планов UtPl по stCost (К-12/К-13): fixture dev-only, см. dev_acceptance_plan_stcost в database."
             },
             "dbhub": {
               "type": "local",
@@ -530,22 +534,36 @@
           "prod-fisheye": {
             "name": "Продуктивный SQL Server (FishEye)",
             "role": "production",
-            "hostname_pattern": ".*",
+            "hostname_pattern": "SPB-05-NV-SQL1",
             "os_pattern": ".*Windows.*",
             "priority": 2,
             "database": {
               "type": "remote_server",
-              "host": "(корпоративная сеть, уточнять у DBA)",
+              "host": "SPB-05-NV-SQL1",
+              "instance": "MSSQLSERVER (default)",
               "port": 1433,
               "database": "FishEye",
               "schema": "ags",
+              "authentication": "windows",
+              "network_from_nb_win": false,
+              "deployment": {
+                "method": "offline_usb",
+                "tool": "SQL Server Management Studio",
+                "executor": "Александр (владелец проекта)",
+                "planned_date": null,
+                "package_path_on_media": "femsq-sql-26-0604/MSSQL2012/",
+                "notes": "Пакет копируется на флешку с nb-win; sqlcmd/DBHub с рабочей станции к prod не используются."
+              },
               "sql_server_version": "11.0.7507.2",
               "sql_server_name": "Microsoft SQL Server 2012 (SP4-GDR)",
               "sql_server_major_version": 11,
               "compatibility_level": 110,
               "edition": "Standard Edition (64-bit)",
-              "verified_date": "2026-05-18",
-              "verified_by": "00_VERIFY_before.sql (@@VERSION на продуктиве)",
+              "collation": "SQL_Latin1_General_CP1_CI_AS",
+              "memory_mb": 32751,
+              "processors": 16,
+              "verified_date": "2026-06-16",
+              "verified_by": "SSMS precheck (Этап 17.1), bondale1@ADM-GAZPROM",
               "sql_scripts_path": "docs/development/notes/sql/{task}/MSSQL2012/",
               "clients": [
                 "MS Access (Form_ipgChMin)",
@@ -553,7 +571,7 @@
                 "legacy: ags.spMstrg_2408 / _SaveToTables"
               ]
             },
-            "notes": "Единственный целевой сервер для DDL-пакетов _2605 и аналогичных. Не использовать CREATE OR ALTER и DROP IF EXISTS — только папка MSSQL2012/."
+            "notes": "Единственный целевой сервер для DDL-пакетов _2605/_2606. Только MSSQL2012/. Деплой: флешка + SSMS, Windows auth; с nb-win сеть к prod отсутствует."
           }
         },
         "detection": {

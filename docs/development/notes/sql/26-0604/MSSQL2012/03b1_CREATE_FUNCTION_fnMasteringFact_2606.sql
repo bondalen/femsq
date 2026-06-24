@@ -1,14 +1,13 @@
 USE [FishEye];
 GO
--- MSSQL2012/03b1 — зеркало dev (DROP + CREATE вместо CREATE OR ALTER)
-PRINT N'=== 03b1 MSSQL2012: fnMasteringFact*_2606 ===';
-GO
-SET ANSI_NULLS ON;
-GO
-SET QUOTED_IDENTIFIER ON;
-GO
 
-PRINT N'=== 03b1 MSSQL2012: fnMasteringFact*_2606 ===';
+-- =============================================================================
+-- Файл:    MSSQL2012/03b1_CREATE_FUNCTION_fnMasteringFact_2606.sql
+-- Пакет:   docs/development/notes/sql/26-0604/
+-- Зеркало dev. Синхронизировано скриптом _sync_to_mssql2012.py
+-- =============================================================================
+
+PRINT '=== 03b1: CREATE fnMasteringFact*_2606 (43 функции) ===';
 GO
 
 SET ANSI_NULLS ON;
@@ -31,7 +30,13 @@ GO
 -- @dateMode: 0=год≤dAll, 1=месяц года, 2=все≤dAll, 3=месяц≤dAll, 4=прошлые годы
 -- @statusMode: 0=pres, 1=accp, 2=ret, 3=inproc, 4=notarr
 -- -----------------------------------------------------------------------------
-IF OBJECT_ID(N'ags.fnMasteringRaCostSet_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringRaCostSet_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringRaCostSet_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRaCostSet_2606;
+IF OBJECT_ID(N'ags.fnMasteringRaCostSet_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRaCostSet_2606;
+IF OBJECT_ID(N'ags.fnMasteringRaCostSet_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRaCostSet_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringRaCostSet_2606
@@ -185,7 +190,13 @@ GO
 -- fnMasteringRaBundle_2606 — все 17 RA-колонок за один проход (этап 9б.2а / P6-RA).
 -- Один скан ra/ra_change, batch fdKey, batch direct cost, общий rollup.
 -- -----------------------------------------------------------------------------
-IF OBJECT_ID(N'ags.fnMasteringRaBundle_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringRaBundle_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringRaBundle_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRaBundle_2606;
+IF OBJECT_ID(N'ags.fnMasteringRaBundle_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRaBundle_2606;
+IF OBJECT_ID(N'ags.fnMasteringRaBundle_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRaBundle_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringRaBundle_2606
@@ -380,7 +391,13 @@ GO
 -- -----------------------------------------------------------------------------
 -- fnMasteringRaCostBase_2606 — строки RA с CostSm (без @dAll); кэш на вызов CstAgPn.
 -- -----------------------------------------------------------------------------
-IF OBJECT_ID(N'ags.fnMasteringRaCostBase_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringRaCostBase_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringRaCostBase_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRaCostBase_2606;
+IF OBJECT_ID(N'ags.fnMasteringRaCostBase_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRaCostBase_2606;
+IF OBJECT_ID(N'ags.fnMasteringRaCostBase_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRaCostBase_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringRaCostBase_2606
@@ -506,7 +523,13 @@ GO
 -- -----------------------------------------------------------------------------
 -- fnMasteringAgFeeCostBase_2606 — строки АВ с CostSm (без @dAll).
 -- -----------------------------------------------------------------------------
-IF OBJECT_ID(N'ags.fnMasteringAgFeeCostBase_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringAgFeeCostBase_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringAgFeeCostBase_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAgFeeCostBase_2606;
+IF OBJECT_ID(N'ags.fnMasteringAgFeeCostBase_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAgFeeCostBase_2606;
+IF OBJECT_ID(N'ags.fnMasteringAgFeeCostBase_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAgFeeCostBase_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringAgFeeCostBase_2606
@@ -575,7 +598,13 @@ GO
 -- fnMasteringAgFeeBundle_2606 — 10 колонок АВ за один проход (этап 9б.3).
 -- Batch factDocCost (stc=148) + один fnStUpAll вместо fnStCostAgFee на каждую строку.
 -- -----------------------------------------------------------------------------
-IF OBJECT_ID(N'ags.fnMasteringAgFeeBundle_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringAgFeeBundle_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringAgFeeBundle_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAgFeeBundle_2606;
+IF OBJECT_ID(N'ags.fnMasteringAgFeeBundle_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAgFeeBundle_2606;
+IF OBJECT_ID(N'ags.fnMasteringAgFeeBundle_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAgFeeBundle_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringAgFeeBundle_2606
@@ -692,9 +721,223 @@ END
 GO
 
 -- -----------------------------------------------------------------------------
+-- fnMasteringRalpCostBase_2606 — строки РАЛП с CostSm (без @dAll); этап 14.2 / P6-lite.
+-- Один scan ags.ralp на вызов CstAgPn вместо 17× fnMasteringRalpBundle_2606.
+-- -----------------------------------------------------------------------------
+
+IF OBJECT_ID(N'ags.fnMasteringRalpCostBase_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRalpCostBase_2606;
+IF OBJECT_ID(N'ags.fnMasteringRalpCostBase_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRalpCostBase_2606;
+IF OBJECT_ID(N'ags.fnMasteringRalpCostBase_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRalpCostBase_2606;
+GO
+
+CREATE FUNCTION ags.fnMasteringRalpCostBase_2606
+(
+    @cstAgPn    int,
+    @StCostKey  int,
+    @stNet      int
+)
+RETURNS @t TABLE
+(
+    dEnd     date  NOT NULL,
+    stAccp   bit   NOT NULL,
+    stRet    bit   NOT NULL,
+    stInProc bit   NOT NULL,
+    stNotArr bit   NOT NULL,
+    CostSm   money NOT NULL
+)
+AS
+BEGIN
+    IF @cstAgPn IS NULL
+        RETURN;
+
+    DECLARE @stCostRalp int = 150;
+    DECLARE @dagHit     bit = 0;
+
+    IF @StCostKey = @stCostRalp
+        SET @dagHit = 1;
+    ELSE IF EXISTS (
+        SELECT 1 FROM ags.fnStUpAll(@stNet, @stCostRalp) u WHERE u.strParent = @StCostKey
+    )
+        SET @dagHit = 1;
+
+    DECLARE @docs TABLE
+    (
+        ralpraKey  int   NOT NULL,
+        dEnd       date  NOT NULL,
+        stAccp     bit   NOT NULL,
+        stRet      bit   NOT NULL,
+        stInProc   bit   NOT NULL,
+        stNotArr   bit   NOT NULL,
+        CostSm     money NOT NULL
+    );
+
+    INSERT INTO @docs
+    (
+        ralpraKey, dEnd, stAccp, stRet, stInProc, stNotArr, CostSm
+    )
+    SELECT
+        r.ralpraKey,
+        EOMONTH(DATEFROMPARTS(r.ralpY, r.ralpM, 1)),
+        CASE WHEN r.ralpSent IS NOT NULL AND r.ralpSent <> N'' THEN 1 ELSE 0 END,
+        CASE WHEN r.ralpReturned IS NOT NULL
+                  AND (r.ralpSent IS NULL OR r.ralpSentDate < r.ralpReturnedDate) THEN 1 ELSE 0 END,
+        CASE WHEN r.ralpReturned IS NULL AND r.ralpSent IS NULL AND r.ralpArrived IS NOT NULL THEN 1 ELSE 0 END,
+        CASE WHEN r.ralpReturned IS NULL AND r.ralpSent IS NULL AND r.ralpArrived IS NULL THEN 1 ELSE 0 END,
+        0
+    FROM ags.ralp r
+    WHERE r.ralpCstAgPn = @cstAgPn;
+
+    IF @dagHit = 1
+    BEGIN
+        UPDATE d
+        SET CostSm = ISNULL(s.simpleSum, 0)
+        FROM @docs d
+        INNER JOIN
+        (
+            SELECT r.ralpraKey, MAX(c.fdcoSumm) AS simpleSum
+            FROM ags.ralp r
+            INNER JOIN ags.ralpRaAu p ON p.ralpraKey = r.ralpraKey
+            INNER JOIN ags.factDocCost c ON c.fdcoFd = p.ralpra_fdKey AND c.fdcoStCost = @stCostRalp
+            WHERE r.ralpCstAgPn = @cstAgPn
+            GROUP BY r.ralpraKey
+        ) s ON s.ralpraKey = d.ralpraKey
+        WHERE ISNULL(s.simpleSum, 0) <> 0;
+    END
+
+    INSERT INTO @t (dEnd, stAccp, stRet, stInProc, stNotArr, CostSm)
+    SELECT dEnd, stAccp, stRet, stInProc, stNotArr, CostSm
+    FROM @docs;
+
+    RETURN;
+END
+GO
+
+-- -----------------------------------------------------------------------------
+-- fnMasteringPrDocMnrlCostBase_2606 — PrDoc (stor/control) + Mnrl без @dAll; этап 14.2.
+-- kind: S=storage, C=control, M=mnrl
+-- -----------------------------------------------------------------------------
+
+IF OBJECT_ID(N'ags.fnMasteringPrDocMnrlCostBase_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPrDocMnrlCostBase_2606;
+IF OBJECT_ID(N'ags.fnMasteringPrDocMnrlCostBase_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPrDocMnrlCostBase_2606;
+IF OBJECT_ID(N'ags.fnMasteringPrDocMnrlCostBase_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPrDocMnrlCostBase_2606;
+GO
+
+CREATE FUNCTION ags.fnMasteringPrDocMnrlCostBase_2606
+(
+    @cstAgPn    int,
+    @StCostKey  int,
+    @stNet      int
+)
+RETURNS @t TABLE
+(
+    kind   char(1) NOT NULL,
+    dEnd   date    NOT NULL,
+    CostSm money   NOT NULL
+)
+AS
+BEGIN
+    IF @cstAgPn IS NULL
+        RETURN;
+
+    DECLARE @stCostMnr int = 169;
+    DECLARE @hit205    bit = 0;
+    DECLARE @hit197    bit = 0;
+    DECLARE @hitMnr    bit = 0;
+
+    IF @StCostKey = 205 SET @hit205 = 1;
+    ELSE IF EXISTS (SELECT 1 FROM ags.fnStUpAll(@stNet, 205) u WHERE u.strParent = @StCostKey) SET @hit205 = 1;
+
+    IF @StCostKey = 197 SET @hit197 = 1;
+    ELSE IF EXISTS (SELECT 1 FROM ags.fnStUpAll(@stNet, 197) u WHERE u.strParent = @StCostKey) SET @hit197 = 1;
+
+    IF @StCostKey = @stCostMnr SET @hitMnr = 1;
+    ELSE IF EXISTS (SELECT 1 FROM ags.fnStUpAll(@stNet, @stCostMnr) u WHERE u.strParent = @StCostKey) SET @hitMnr = 1;
+
+    DECLARE @prDoc TABLE
+    (
+        pdpKey     int   NOT NULL,
+        dEnd       date  NOT NULL,
+        isStor     bit   NOT NULL,
+        isControl  bit   NOT NULL,
+        CostSm     money NOT NULL
+    );
+
+    INSERT INTO @prDoc (pdpKey, dEnd, isStor, isControl, CostSm)
+    SELECT
+        p.pdpKey,
+        EOMONTH(DATEFROMPARTS(YEAR(p.positingDate), MONTH(p.positingDate), 1)),
+        CASE WHEN d.cnpdTpOrd IN (1, 2, 4) THEN 1 ELSE 0 END,
+        CASE WHEN d.cnpdTpOrd = 3 AND i.ciasAccnt = 30 THEN 1 ELSE 0 END,
+        0
+    FROM ags.cn_PrDocP p
+    INNER JOIN ags.cn_PrDoc d ON p.pdpPrDoc = d.cnpdKey
+    LEFT JOIN ags.cnInvAccntSmpl i ON d.cnpdCnInvAccntSmpl = i.ciasKey
+    WHERE p.pdpCstAgPn = @cstAgPn
+      AND p.satstusOfOUKVtext = N'проведено';
+
+    UPDATE pd
+    SET CostSm =
+        CASE
+            WHEN fc.baseStCost = 205 AND @hit205 = 1 AND ISNULL(fc.simpleSum, 0) <> 0 THEN fc.simpleSum
+            WHEN fc.baseStCost = 197 AND @hit197 = 1 AND ISNULL(fc.simpleSum, 0) <> 0 THEN fc.simpleSum
+            ELSE 0
+        END
+    FROM @prDoc pd
+    INNER JOIN
+    (
+        SELECT p.pdpKey, c.fdcoStCost AS baseStCost, MAX(c.fdcoSumm) AS simpleSum
+        FROM ags.cn_PrDocP p
+        INNER JOIN ags.factDocCost c ON c.fdcoFd = p.pdp_fdKey AND c.fdcoStCost IN (205, 197)
+        WHERE p.pdpCstAgPn = @cstAgPn
+        GROUP BY p.pdpKey, c.fdcoStCost
+    ) fc ON fc.pdpKey = pd.pdpKey;
+
+    INSERT INTO @t (kind, dEnd, CostSm)
+    SELECT N'S', pd.dEnd, pd.CostSm
+    FROM @prDoc pd
+    WHERE pd.isStor = 1 AND pd.CostSm <> 0
+    UNION ALL
+    SELECT N'C', pd.dEnd, pd.CostSm
+    FROM @prDoc pd
+    WHERE pd.isControl = 1 AND pd.CostSm <> 0;
+
+    IF @hitMnr = 1
+    BEGIN
+        INSERT INTO @t (kind, dEnd, CostSm)
+        SELECT N'M', EOMONTH(DATEFROMPARTS(YEAR(m.amPositing), MONTH(m.amPositing), 1)), ISNULL(s.simpleSum, 0)
+        FROM ags.cstAgPnMnrl m
+        INNER JOIN
+        (
+            SELECT m2.amKey, MAX(c.fdcoSumm) AS simpleSum
+            FROM ags.cstAgPnMnrl m2
+            INNER JOIN ags.factDocCost c ON c.fdcoFd = m2.am_fdKey AND c.fdcoStCost = @stCostMnr
+            WHERE m2.amCstAgPn = @cstAgPn
+            GROUP BY m2.amKey
+        ) s ON s.amKey = m.amKey
+        WHERE m.amCstAgPn = @cstAgPn
+          AND ISNULL(s.simpleSum, 0) <> 0;
+    END
+
+    RETURN;
+END
+GO
+
+-- -----------------------------------------------------------------------------
 -- fnMasteringRalpBundle_2606 — 8 колонок РАЛП за один проход (этап 9б.3).
 -- -----------------------------------------------------------------------------
-IF OBJECT_ID(N'ags.fnMasteringRalpBundle_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringRalpBundle_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringRalpBundle_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRalpBundle_2606;
+IF OBJECT_ID(N'ags.fnMasteringRalpBundle_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRalpBundle_2606;
+IF OBJECT_ID(N'ags.fnMasteringRalpBundle_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRalpBundle_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringRalpBundle_2606
@@ -809,7 +1052,13 @@ GO
 -- -----------------------------------------------------------------------------
 -- fnMasteringPrDocMnrlBundle_2606 — PrDoc + Mnrl (6 колонок) за один проход (9б.3).
 -- -----------------------------------------------------------------------------
-IF OBJECT_ID(N'ags.fnMasteringPrDocMnrlBundle_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringPrDocMnrlBundle_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringPrDocMnrlBundle_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPrDocMnrlBundle_2606;
+IF OBJECT_ID(N'ags.fnMasteringPrDocMnrlBundle_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPrDocMnrlBundle_2606;
+IF OBJECT_ID(N'ags.fnMasteringPrDocMnrlBundle_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPrDocMnrlBundle_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringPrDocMnrlBundle_2606
@@ -990,7 +1239,13 @@ GO
 -- fnMasteringPresRa_2606 — RA представленные (все по году ≤ dAll)
 -- Прототип: ags.fnMasteringPresRa (без фильтра ra_sent)
 -- -----------------------------------------------------------------------------
-IF OBJECT_ID(N'ags.fnMasteringPresRa_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringPresRa_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringPresRa_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPresRa_2606;
+IF OBJECT_ID(N'ags.fnMasteringPresRa_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPresRa_2606;
+IF OBJECT_ID(N'ags.fnMasteringPresRa_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPresRa_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringPresRa_2606
@@ -1012,7 +1267,13 @@ GO
 -- fnMasteringAccpRa_2606 — RA принятые (ra_sent IS NOT NULL)
 -- Прототип: ags.fnMasteringAccpRa
 -- -----------------------------------------------------------------------------
-IF OBJECT_ID(N'ags.fnMasteringAccpRa_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringAccpRa_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringAccpRa_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpRa_2606;
+IF OBJECT_ID(N'ags.fnMasteringAccpRa_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpRa_2606;
+IF OBJECT_ID(N'ags.fnMasteringAccpRa_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpRa_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringAccpRa_2606
@@ -1034,7 +1295,13 @@ GO
 -- fnMasteringPresRaMn_2606 — RA представленные за текущий месяц
 -- Прототип: ags.fnMasteringPresRaMn
 -- -----------------------------------------------------------------------------
-IF OBJECT_ID(N'ags.fnMasteringPresRaMn_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringPresRaMn_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringPresRaMn_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPresRaMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringPresRaMn_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPresRaMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringPresRaMn_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPresRaMn_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringPresRaMn_2606
@@ -1056,7 +1323,13 @@ GO
 -- fnMasteringAccpRaMn_2606 — RA принятые за текущий месяц
 -- Прототип: ags.fnMasteringAccpRaMn
 -- -----------------------------------------------------------------------------
-IF OBJECT_ID(N'ags.fnMasteringAccpRaMn_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringAccpRaMn_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringAccpRaMn_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpRaMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringAccpRaMn_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpRaMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringAccpRaMn_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpRaMn_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringAccpRaMn_2606
@@ -1087,7 +1360,13 @@ GO
 -- fnMasteringPresAgFee_2606 — АВ представленные (без фильтра oafSent)
 -- Прототип: ags.fnMasteringPresAgFee
 -- -----------------------------------------------------------------------------
-IF OBJECT_ID(N'ags.fnMasteringPresAgFee_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringPresAgFee_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringPresAgFee_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPresAgFee_2606;
+IF OBJECT_ID(N'ags.fnMasteringPresAgFee_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPresAgFee_2606;
+IF OBJECT_ID(N'ags.fnMasteringPresAgFee_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPresAgFee_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringPresAgFee_2606
@@ -1125,7 +1404,13 @@ GO
 -- fnMasteringAccpAgFee_2606 — АВ принятые (oafSent IS NOT NULL)
 -- Прототип: ags.fnMasteringAccpAgFee
 -- -----------------------------------------------------------------------------
-IF OBJECT_ID(N'ags.fnMasteringAccpAgFee_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringAccpAgFee_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringAccpAgFee_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpAgFee_2606;
+IF OBJECT_ID(N'ags.fnMasteringAccpAgFee_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpAgFee_2606;
+IF OBJECT_ID(N'ags.fnMasteringAccpAgFee_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpAgFee_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringAccpAgFee_2606
@@ -1164,7 +1449,13 @@ GO
 -- fnMasteringPresAgFeeMn_2606 — АВ представленные за месяц
 -- Прототип: ags.fnMasteringPresAgFeeMn
 -- -----------------------------------------------------------------------------
-IF OBJECT_ID(N'ags.fnMasteringPresAgFeeMn_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringPresAgFeeMn_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringPresAgFeeMn_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPresAgFeeMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringPresAgFeeMn_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPresAgFeeMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringPresAgFeeMn_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPresAgFeeMn_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringPresAgFeeMn_2606
@@ -1202,7 +1493,13 @@ GO
 -- fnMasteringAccpAgFeeMn_2606 — АВ принятые за месяц
 -- Прототип: ags.fnMasteringAccpAgFeeMn
 -- -----------------------------------------------------------------------------
-IF OBJECT_ID(N'ags.fnMasteringAccpAgFeeMn_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringAccpAgFeeMn_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringAccpAgFeeMn_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpAgFeeMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringAccpAgFeeMn_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpAgFeeMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringAccpAgFeeMn_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpAgFeeMn_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringAccpAgFeeMn_2606
@@ -1250,7 +1547,13 @@ GO
 -- fnMasteringPresRalp_2606 — РАЛП представленные (без ralpSent)
 -- Прототип: ags.fnMasteringPresRalp
 -- -----------------------------------------------------------------------------
-IF OBJECT_ID(N'ags.fnMasteringPresRalp_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringPresRalp_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringPresRalp_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPresRalp_2606;
+IF OBJECT_ID(N'ags.fnMasteringPresRalp_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPresRalp_2606;
+IF OBJECT_ID(N'ags.fnMasteringPresRalp_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPresRalp_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringPresRalp_2606
@@ -1284,7 +1587,13 @@ GO
 -- fnMasteringAccpRalp_2606 — РАЛП принятые (ralpSent IS NOT NULL)
 -- Прототип: ags.fnMasteringAccpRalp
 -- -----------------------------------------------------------------------------
-IF OBJECT_ID(N'ags.fnMasteringAccpRalp_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringAccpRalp_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringAccpRalp_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpRalp_2606;
+IF OBJECT_ID(N'ags.fnMasteringAccpRalp_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpRalp_2606;
+IF OBJECT_ID(N'ags.fnMasteringAccpRalp_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpRalp_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringAccpRalp_2606
@@ -1319,7 +1628,13 @@ GO
 -- fnMasteringPresRalpMn_2606 — РАЛП представленные за месяц
 -- Прототип: ags.fnMasteringPresRalpMn
 -- -----------------------------------------------------------------------------
-IF OBJECT_ID(N'ags.fnMasteringPresRalpMn_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringPresRalpMn_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringPresRalpMn_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPresRalpMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringPresRalpMn_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPresRalpMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringPresRalpMn_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPresRalpMn_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringPresRalpMn_2606
@@ -1353,7 +1668,13 @@ GO
 -- fnMasteringAccpRalpMn_2606 — РАЛП принятые за месяц
 -- Прототип: ags.fnMasteringAccpRalpMn
 -- -----------------------------------------------------------------------------
-IF OBJECT_ID(N'ags.fnMasteringAccpRalpMn_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringAccpRalpMn_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringAccpRalpMn_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpRalpMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringAccpRalpMn_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpRalpMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringAccpRalpMn_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpRalpMn_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringAccpRalpMn_2606
@@ -1398,7 +1719,13 @@ GO
 -- fnMasteringAccpStor_2606 — Хранение принятое (cnpdTpOrd IN (1,2,4))
 -- Прототип: ags.fnMasteringAccpStor
 -- -----------------------------------------------------------------------------
-IF OBJECT_ID(N'ags.fnMasteringAccpStor_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringAccpStor_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringAccpStor_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpStor_2606;
+IF OBJECT_ID(N'ags.fnMasteringAccpStor_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpStor_2606;
+IF OBJECT_ID(N'ags.fnMasteringAccpStor_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpStor_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringAccpStor_2606
@@ -1435,7 +1762,13 @@ GO
 -- fnMasteringAccpStorMn_2606 — Хранение принятое за месяц
 -- Прототип: ags.fnMasteringAccpStorMn
 -- -----------------------------------------------------------------------------
-IF OBJECT_ID(N'ags.fnMasteringAccpStorMn_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringAccpStorMn_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringAccpStorMn_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpStorMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringAccpStorMn_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpStorMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringAccpStorMn_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpStorMn_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringAccpStorMn_2606
@@ -1472,7 +1805,13 @@ GO
 -- fnMasteringAccpControl_2606 — ССК принятый (cnpdTpOrd=3, ciasAccnt=30)
 -- Прототип: ags.fnMasteringAccpControl
 -- -----------------------------------------------------------------------------
-IF OBJECT_ID(N'ags.fnMasteringAccpControl_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringAccpControl_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringAccpControl_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpControl_2606;
+IF OBJECT_ID(N'ags.fnMasteringAccpControl_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpControl_2606;
+IF OBJECT_ID(N'ags.fnMasteringAccpControl_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpControl_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringAccpControl_2606
@@ -1511,7 +1850,13 @@ GO
 -- fnMasteringAccpControlMn_2606 — ССК принятый за месяц
 -- Прототип: ags.fnMasteringAccpControlMn
 -- -----------------------------------------------------------------------------
-IF OBJECT_ID(N'ags.fnMasteringAccpControlMn_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringAccpControlMn_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringAccpControlMn_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpControlMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringAccpControlMn_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpControlMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringAccpControlMn_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpControlMn_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringAccpControlMn_2606
@@ -1559,7 +1904,13 @@ GO
 -- fnMasteringAccpMnrl_2606 — ОПИ принятое
 -- Прототип: ags.fnMasteringAccpMnrl
 -- -----------------------------------------------------------------------------
-IF OBJECT_ID(N'ags.fnMasteringAccpMnrl_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringAccpMnrl_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringAccpMnrl_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpMnrl_2606;
+IF OBJECT_ID(N'ags.fnMasteringAccpMnrl_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpMnrl_2606;
+IF OBJECT_ID(N'ags.fnMasteringAccpMnrl_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpMnrl_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringAccpMnrl_2606
@@ -1593,7 +1944,13 @@ GO
 -- fnMasteringAccpMnrlMn_2606 — ОПИ принятое за месяц
 -- Прототип: ags.fnMasteringAccpMnrlMn
 -- -----------------------------------------------------------------------------
-IF OBJECT_ID(N'ags.fnMasteringAccpMnrlMn_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringAccpMnrlMn_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringAccpMnrlMn_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpMnrlMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringAccpMnrlMn_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpMnrlMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringAccpMnrlMn_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpMnrlMn_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringAccpMnrlMn_2606
@@ -1635,7 +1992,13 @@ GO
 -- -----------------------------------------------------------------------------
 -- fnMasteringRetRa_2606 — RA возвращённые (по году ≤ dAll)
 -- -----------------------------------------------------------------------------
-IF OBJECT_ID(N'ags.fnMasteringRetRa_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringRetRa_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringRetRa_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRetRa_2606;
+IF OBJECT_ID(N'ags.fnMasteringRetRa_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRetRa_2606;
+IF OBJECT_ID(N'ags.fnMasteringRetRa_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRetRa_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringRetRa_2606
@@ -1656,7 +2019,13 @@ GO
 -- -----------------------------------------------------------------------------
 -- fnMasteringRetRaMn_2606 — RA возвращённые за месяц
 -- -----------------------------------------------------------------------------
-IF OBJECT_ID(N'ags.fnMasteringRetRaMn_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringRetRaMn_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringRetRaMn_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRetRaMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringRetRaMn_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRetRaMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringRetRaMn_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRetRaMn_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringRetRaMn_2606
@@ -1682,7 +2051,13 @@ GO
 PRINT '--- 8.2 RA InProcess ---';
 GO
 
-IF OBJECT_ID(N'ags.fnMasteringInProcRa_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringInProcRa_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringInProcRa_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringInProcRa_2606;
+IF OBJECT_ID(N'ags.fnMasteringInProcRa_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringInProcRa_2606;
+IF OBJECT_ID(N'ags.fnMasteringInProcRa_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringInProcRa_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringInProcRa_2606
@@ -1700,7 +2075,13 @@ BEGIN
 END
 GO
 
-IF OBJECT_ID(N'ags.fnMasteringInProcRaMn_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringInProcRaMn_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringInProcRaMn_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringInProcRaMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringInProcRaMn_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringInProcRaMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringInProcRaMn_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringInProcRaMn_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringInProcRaMn_2606
@@ -1726,7 +2107,13 @@ GO
 PRINT '--- 8.2 RA NotArrived ---';
 GO
 
-IF OBJECT_ID(N'ags.fnMasteringNotArrRa_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringNotArrRa_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringNotArrRa_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringNotArrRa_2606;
+IF OBJECT_ID(N'ags.fnMasteringNotArrRa_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringNotArrRa_2606;
+IF OBJECT_ID(N'ags.fnMasteringNotArrRa_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringNotArrRa_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringNotArrRa_2606
@@ -1744,7 +2131,13 @@ BEGIN
 END
 GO
 
-IF OBJECT_ID(N'ags.fnMasteringNotArrRaMn_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringNotArrRaMn_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringNotArrRaMn_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringNotArrRaMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringNotArrRaMn_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringNotArrRaMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringNotArrRaMn_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringNotArrRaMn_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringNotArrRaMn_2606
@@ -1770,7 +2163,13 @@ GO
 PRINT '--- 8.2 RA PresAll ---';
 GO
 
-IF OBJECT_ID(N'ags.fnMasteringPresAllRa_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringPresAllRa_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringPresAllRa_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPresAllRa_2606;
+IF OBJECT_ID(N'ags.fnMasteringPresAllRa_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPresAllRa_2606;
+IF OBJECT_ID(N'ags.fnMasteringPresAllRa_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPresAllRa_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringPresAllRa_2606
@@ -1789,7 +2188,13 @@ END
 GO
 
 -- PresAll за текущий месяц (все годы, тот же номер месяца ≤ dAll)
-IF OBJECT_ID(N'ags.fnMasteringPresAllRaMn_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringPresAllRaMn_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringPresAllRaMn_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPresAllRaMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringPresAllRaMn_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPresAllRaMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringPresAllRaMn_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPresAllRaMn_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringPresAllRaMn_2606
@@ -1816,7 +2221,13 @@ PRINT '--- 8.2 RA PrevYears (5 шт.) ---';
 GO
 
 -- fnMasteringPresPrvYRa_2606 — все RA прошлых лет
-IF OBJECT_ID(N'ags.fnMasteringPresPrvYRa_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringPresPrvYRa_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringPresPrvYRa_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPresPrvYRa_2606;
+IF OBJECT_ID(N'ags.fnMasteringPresPrvYRa_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPresPrvYRa_2606;
+IF OBJECT_ID(N'ags.fnMasteringPresPrvYRa_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringPresPrvYRa_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringPresPrvYRa_2606
@@ -1835,7 +2246,13 @@ END
 GO
 
 -- fnMasteringAccpPrvYRa_2606 — принятые RA прошлых лет
-IF OBJECT_ID(N'ags.fnMasteringAccpPrvYRa_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringAccpPrvYRa_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringAccpPrvYRa_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpPrvYRa_2606;
+IF OBJECT_ID(N'ags.fnMasteringAccpPrvYRa_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpPrvYRa_2606;
+IF OBJECT_ID(N'ags.fnMasteringAccpPrvYRa_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringAccpPrvYRa_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringAccpPrvYRa_2606
@@ -1854,7 +2271,13 @@ END
 GO
 
 -- fnMasteringRetPrvYRa_2606 — возвращённые RA прошлых лет
-IF OBJECT_ID(N'ags.fnMasteringRetPrvYRa_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringRetPrvYRa_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringRetPrvYRa_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRetPrvYRa_2606;
+IF OBJECT_ID(N'ags.fnMasteringRetPrvYRa_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRetPrvYRa_2606;
+IF OBJECT_ID(N'ags.fnMasteringRetPrvYRa_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRetPrvYRa_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringRetPrvYRa_2606
@@ -1873,7 +2296,13 @@ END
 GO
 
 -- fnMasteringInProcPrvYRa_2606 — в обработке RA прошлых лет
-IF OBJECT_ID(N'ags.fnMasteringInProcPrvYRa_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringInProcPrvYRa_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringInProcPrvYRa_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringInProcPrvYRa_2606;
+IF OBJECT_ID(N'ags.fnMasteringInProcPrvYRa_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringInProcPrvYRa_2606;
+IF OBJECT_ID(N'ags.fnMasteringInProcPrvYRa_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringInProcPrvYRa_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringInProcPrvYRa_2606
@@ -1892,7 +2321,13 @@ END
 GO
 
 -- fnMasteringNotArrPrvYRa_2606 — не поступившие RA прошлых лет
-IF OBJECT_ID(N'ags.fnMasteringNotArrPrvYRa_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringNotArrPrvYRa_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringNotArrPrvYRa_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringNotArrPrvYRa_2606;
+IF OBJECT_ID(N'ags.fnMasteringNotArrPrvYRa_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringNotArrPrvYRa_2606;
+IF OBJECT_ID(N'ags.fnMasteringNotArrPrvYRa_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringNotArrPrvYRa_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringNotArrPrvYRa_2606
@@ -1920,7 +2355,13 @@ PRINT '--- 8.2 AgFee Ret/InProc/NotArr ---';
 GO
 
 -- fnMasteringRetAgFee_2606
-IF OBJECT_ID(N'ags.fnMasteringRetAgFee_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringRetAgFee_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringRetAgFee_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRetAgFee_2606;
+IF OBJECT_ID(N'ags.fnMasteringRetAgFee_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRetAgFee_2606;
+IF OBJECT_ID(N'ags.fnMasteringRetAgFee_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRetAgFee_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringRetAgFee_2606
@@ -1958,7 +2399,13 @@ END
 GO
 
 -- fnMasteringRetAgFeeMn_2606
-IF OBJECT_ID(N'ags.fnMasteringRetAgFeeMn_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringRetAgFeeMn_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringRetAgFeeMn_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRetAgFeeMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringRetAgFeeMn_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRetAgFeeMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringRetAgFeeMn_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRetAgFeeMn_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringRetAgFeeMn_2606
@@ -1996,7 +2443,13 @@ END
 GO
 
 -- fnMasteringInProcAgFee_2606
-IF OBJECT_ID(N'ags.fnMasteringInProcAgFee_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringInProcAgFee_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringInProcAgFee_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringInProcAgFee_2606;
+IF OBJECT_ID(N'ags.fnMasteringInProcAgFee_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringInProcAgFee_2606;
+IF OBJECT_ID(N'ags.fnMasteringInProcAgFee_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringInProcAgFee_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringInProcAgFee_2606
@@ -2033,7 +2486,13 @@ END
 GO
 
 -- fnMasteringInProcAgFeeMn_2606
-IF OBJECT_ID(N'ags.fnMasteringInProcAgFeeMn_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringInProcAgFeeMn_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringInProcAgFeeMn_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringInProcAgFeeMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringInProcAgFeeMn_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringInProcAgFeeMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringInProcAgFeeMn_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringInProcAgFeeMn_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringInProcAgFeeMn_2606
@@ -2070,7 +2529,13 @@ END
 GO
 
 -- fnMasteringNotArrAgFee_2606
-IF OBJECT_ID(N'ags.fnMasteringNotArrAgFee_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringNotArrAgFee_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringNotArrAgFee_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringNotArrAgFee_2606;
+IF OBJECT_ID(N'ags.fnMasteringNotArrAgFee_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringNotArrAgFee_2606;
+IF OBJECT_ID(N'ags.fnMasteringNotArrAgFee_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringNotArrAgFee_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringNotArrAgFee_2606
@@ -2107,7 +2572,13 @@ END
 GO
 
 -- fnMasteringNotArrAgFeeMn_2606
-IF OBJECT_ID(N'ags.fnMasteringNotArrAgFeeMn_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringNotArrAgFeeMn_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringNotArrAgFeeMn_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringNotArrAgFeeMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringNotArrAgFeeMn_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringNotArrAgFeeMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringNotArrAgFeeMn_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringNotArrAgFeeMn_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringNotArrAgFeeMn_2606
@@ -2153,7 +2624,13 @@ PRINT '--- 8.2 Ralp Ret/InProc/NotArr ---';
 GO
 
 -- fnMasteringRetRalp_2606
-IF OBJECT_ID(N'ags.fnMasteringRetRalp_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringRetRalp_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringRetRalp_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRetRalp_2606;
+IF OBJECT_ID(N'ags.fnMasteringRetRalp_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRetRalp_2606;
+IF OBJECT_ID(N'ags.fnMasteringRetRalp_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRetRalp_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringRetRalp_2606
@@ -2186,7 +2663,13 @@ END
 GO
 
 -- fnMasteringRetRalpMn_2606
-IF OBJECT_ID(N'ags.fnMasteringRetRalpMn_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringRetRalpMn_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringRetRalpMn_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRetRalpMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringRetRalpMn_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRetRalpMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringRetRalpMn_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringRetRalpMn_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringRetRalpMn_2606
@@ -2219,7 +2702,13 @@ END
 GO
 
 -- fnMasteringInProcRalp_2606
-IF OBJECT_ID(N'ags.fnMasteringInProcRalp_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringInProcRalp_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringInProcRalp_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringInProcRalp_2606;
+IF OBJECT_ID(N'ags.fnMasteringInProcRalp_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringInProcRalp_2606;
+IF OBJECT_ID(N'ags.fnMasteringInProcRalp_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringInProcRalp_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringInProcRalp_2606
@@ -2251,7 +2740,13 @@ END
 GO
 
 -- fnMasteringInProcRalpMn_2606
-IF OBJECT_ID(N'ags.fnMasteringInProcRalpMn_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringInProcRalpMn_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringInProcRalpMn_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringInProcRalpMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringInProcRalpMn_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringInProcRalpMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringInProcRalpMn_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringInProcRalpMn_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringInProcRalpMn_2606
@@ -2283,7 +2778,13 @@ END
 GO
 
 -- fnMasteringNotArrRalp_2606
-IF OBJECT_ID(N'ags.fnMasteringNotArrRalp_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringNotArrRalp_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringNotArrRalp_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringNotArrRalp_2606;
+IF OBJECT_ID(N'ags.fnMasteringNotArrRalp_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringNotArrRalp_2606;
+IF OBJECT_ID(N'ags.fnMasteringNotArrRalp_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringNotArrRalp_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringNotArrRalp_2606
@@ -2315,7 +2816,13 @@ END
 GO
 
 -- fnMasteringNotArrRalpMn_2606
-IF OBJECT_ID(N'ags.fnMasteringNotArrRalpMn_2606') IS NOT NULL DROP FUNCTION ags.fnMasteringNotArrRalpMn_2606;
+
+IF OBJECT_ID(N'ags.fnMasteringNotArrRalpMn_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringNotArrRalpMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringNotArrRalpMn_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringNotArrRalpMn_2606;
+IF OBJECT_ID(N'ags.fnMasteringNotArrRalpMn_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnMasteringNotArrRalpMn_2606;
 GO
 
 CREATE FUNCTION ags.fnMasteringNotArrRalpMn_2606

@@ -26,6 +26,7 @@ BEGIN
     DECLARE @StartTime datetime2 = SYSDATETIME();
     DECLARE @StepTime datetime2;
     DECLARE @StepName nvarchar(100);
+    DECLARE @SavedRs1 int, @SavedRs2 int, @SavedRs3 int, @SavedRs4 int, @SavedRs5 int, @SavedRs6 int, @SavedRs7 int;
     
     PRINT 'Начало выполнения процедуры: ' + CONVERT(nvarchar(50), @StartTime, 121);
     PRINT 'Параметры: @ipgCh = ' + CAST(@ipgCh AS nvarchar(10)) + ', @MounthEndDate = ' + CONVERT(nvarchar(50), @MounthEndDate, 23);
@@ -285,9 +286,10 @@ BEGIN
     
     INSERT INTO ags.spMstrg_2408_ResultSet1
     SELECT * FROM @TableFnIpgChRsltCstUtlPercentBrn_2408;
+    SET @SavedRs1 = @@ROWCOUNT;
     
     PRINT @StepName + ' выполнена за ' + CAST(DATEDIFF(MILLISECOND, @StepTime, SYSDATETIME()) AS nvarchar(20)) + ' мс';
-    PRINT 'Записей сохранено: ' + CAST(@@ROWCOUNT AS nvarchar(20));
+    PRINT 'Записей сохранено: ' + CAST(@SavedRs1 AS nvarchar(20));
     PRINT '';
     
     -- Для остальных рекордсетов (2-6) нужно скопировать логику из исходной процедуры
@@ -480,9 +482,10 @@ BEGIN
         , iv_PlRestLimit
         , iv_PlRestLimit_review
     FROM @TableFnIpgChRsltCstUtlPercentBrn_2408;
+    SET @SavedRs2 = @@ROWCOUNT;
     
     PRINT @StepName + ' выполнена за ' + CAST(DATEDIFF(MILLISECOND, @StepTime, SYSDATETIME()) AS nvarchar(20)) + ' мс';
-    PRINT 'Записей сохранено: ' + CAST(@@ROWCOUNT AS nvarchar(20));
+    PRINT 'Записей сохранено: ' + CAST(@SavedRs2 AS nvarchar(20));
     PRINT '';
     
     -- РЕКОРДСЕТ 3: Столбцы без префиксов ag_, iv_, ia_ (np_, uk_, oh_ и общие)
@@ -713,9 +716,10 @@ BEGIN
         , yKey
         , yyyy
     FROM @TableFnIpgChRsltCstUtlPercentBrn_2408;
+    SET @SavedRs3 = @@ROWCOUNT;
     
     PRINT @StepName + ' выполнена за ' + CAST(DATEDIFF(MILLISECOND, @StepTime, SYSDATETIME()) AS nvarchar(20)) + ' мс';
-    PRINT 'Записей сохранено: ' + CAST(@@ROWCOUNT AS nvarchar(20));
+    PRINT 'Записей сохранено: ' + CAST(@SavedRs3 AS nvarchar(20));
     PRINT '';
     
     -- РЕКОРДСЕТ 4: Данные из @TableFnIpgChRsltCstUtlPercentBrnRep01_2408 (с JOIN для текущего, предыдущего и предпредыдущего месяцев)
@@ -929,9 +933,10 @@ BEGIN
     -- Сохраняем данные из табличной переменной в ResultSet4
     INSERT INTO ags.spMstrg_2408_ResultSet4
     SELECT * FROM @TableFnIpgChRsltCstUtlPercentBrnRep01_2408;
+    SET @SavedRs4 = @@ROWCOUNT;
     
     PRINT @StepName + ' выполнена за ' + CAST(DATEDIFF(MILLISECOND, @StepTime, SYSDATETIME()) AS nvarchar(20)) + ' мс';
-    PRINT 'Записей сохранено: ' + CAST(@@ROWCOUNT AS nvarchar(20));
+    PRINT 'Записей сохранено: ' + CAST(@SavedRs4 AS nvarchar(20));
     PRINT '';
     
     -- РЕКОРДСЕТ 5: Данные из @TableFnIpgChRsltCstUtlPercentBrnRep01_2408 с фильтрацией WHERE cstAgPnCode = 'всего' и UNION
@@ -981,9 +986,10 @@ BEGIN
         , NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
         , NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL  
     ORDER BY ipgSh, limSort DESC, lim DESC;
+    SET @SavedRs5 = @@ROWCOUNT;
     
     PRINT @StepName + ' выполнена за ' + CAST(DATEDIFF(MILLISECOND, @StepTime, SYSDATETIME()) AS nvarchar(20)) + ' мс';
-    PRINT 'Записей сохранено: ' + CAST(@@ROWCOUNT AS nvarchar(20));
+    PRINT 'Записей сохранено: ' + CAST(@SavedRs5 AS nvarchar(20));
     PRINT '';
     
     -- РЕКОРДСЕТ 6: Данные из @TableFnIpgChRsltCstUtlPercentBrnRepSrc01_2408 (полный набор, без фильтрации)
@@ -1100,9 +1106,10 @@ BEGIN
         , np_iShKey, np_accepted, np_acceptedAccum, np_agFeeAccepted, np_agFeeAcceptedAccum, np_acceptedRalp, np_acceptedRalpAccum
         , np_storageSum, np_storageSumAccum, np_cctSum, np_cctSumAccum, np_MnrlSum, np_MnrlSumAccum, np_acceptedTtl, np_acceptedTtlAccum
     FROM @TableFnIpgChRsltCstUtlPercentBrnRepSrc01_2408;
+    SET @SavedRs6 = @@ROWCOUNT;
     
     PRINT @StepName + ' выполнена за ' + CAST(DATEDIFF(MILLISECOND, @StepTime, SYSDATETIME()) AS nvarchar(20)) + ' мс';
-    PRINT 'Записей сохранено: ' + CAST(@@ROWCOUNT AS nvarchar(20));
+    PRINT 'Записей сохранено: ' + CAST(@SavedRs6 AS nvarchar(20));
     PRINT '';
     
     -- РЕКОРДСЕТ 7: Данные из @TableFnIpgChRsltCstUtlPercentBrnRepSrc01_2408 с фильтрацией WHERE cstAgPnCode = 'всего' и UNION
@@ -1142,9 +1149,10 @@ BEGIN
         'агентская_', 0, 'Заказчики', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
         NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL   
     ORDER BY ipgSh, limSort DESC, lim DESC;
+    SET @SavedRs7 = @@ROWCOUNT;
     
     PRINT @StepName + ' выполнена за ' + CAST(DATEDIFF(MILLISECOND, @StepTime, SYSDATETIME()) AS nvarchar(20)) + ' мс';
-    PRINT 'Записей сохранено: ' + CAST(@@ROWCOUNT AS nvarchar(20));
+    PRINT 'Записей сохранено: ' + CAST(@SavedRs7 AS nvarchar(20));
     PRINT '';
     
     -- Итоговая информация

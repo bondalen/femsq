@@ -195,15 +195,22 @@ RAISERROR(@msg, 0, 1) WITH NOWAIT;
 -- D2. spIpgChRsltCstUtl2_2606 (Ступень 3) — замер SP на dev; целевой выигрыш на SQL 2012 prod
 -- -------------------------------------------------------------------------
 RAISERROR(N'--- D2. spFn2 stIpg=NULL (14.3) ---', 0, 1) WITH NOWAIT;
-SET @t0 = SYSDATETIME();
-IF OBJECT_ID(N'tempdb..#fn2k7') IS NOT NULL DROP TABLE #fn2k7;
-SELECT TOP 0 * INTO #fn2k7 FROM ags.fnIpgChRsltCstUtl2_2606(@ipgChKey, @ipgStKey, NULL);
-INSERT INTO #fn2k7 EXEC ags.spIpgChRsltCstUtl2_2606 @ipgChKey, @ipgStKey, NULL;
-SELECT @n = COUNT(*) FROM #fn2k7 f WHERE f.ipgKey IS NOT NULL;
-SET @ms = DATEDIFF(ms, @t0, SYSDATETIME());
-SET @msg = N'  spFn2 rows=' + CAST(@n AS nvarchar) + N' ms=' + CAST(@ms AS nvarchar)
-         + N'  (fn2 ref=' + CAST(@msFn2 AS nvarchar) + N' ms; на SQL2012 prod ожидается выигрыш от #schemeRows INDEX)';
-RAISERROR(@msg, 0, 1) WITH NOWAIT;
+BEGIN TRY
+    SET @t0 = SYSDATETIME();
+    IF OBJECT_ID(N'tempdb..#fn2k7') IS NOT NULL DROP TABLE #fn2k7;
+    SELECT TOP 0 * INTO #fn2k7 FROM ags.fnIpgChRsltCstUtl2_2606(@ipgChKey, @ipgStKey, NULL);
+    INSERT INTO #fn2k7 EXEC ags.spIpgChRsltCstUtl2_2606 @ipgChKey, @ipgStKey, NULL;
+    SELECT @n = COUNT(*) FROM #fn2k7 f WHERE f.ipgKey IS NOT NULL;
+    SET @ms = DATEDIFF(ms, @t0, SYSDATETIME());
+    SET @msg = N'  spFn2 rows=' + CAST(@n AS nvarchar) + N' ms=' + CAST(@ms AS nvarchar)
+             + N'  SCHEMA_OK (fn2 ref=' + CAST(@msFn2 AS nvarchar) + N' ms)';
+    RAISERROR(@msg, 0, 1) WITH NOWAIT;
+END TRY
+BEGIN CATCH
+    SET @msg = N'  spFn2 SCHEMA_FAIL: ' + ERROR_MESSAGE()
+             + N'  (dev: fn-path в 06; см. 07_VERIFY_spFn2_schema.sql)';
+    RAISERROR(@msg, 0, 1) WITH NOWAIT;
+END CATCH
 
 RAISERROR(N'=== 07h6 DONE ===', 0, 1) WITH NOWAIT;
 GO

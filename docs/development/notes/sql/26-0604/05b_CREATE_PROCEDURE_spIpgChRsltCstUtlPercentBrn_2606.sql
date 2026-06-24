@@ -63,7 +63,7 @@ SET @def = STUFF(@def, @insPos, 0,
     SET NOCOUNT ON;
     IF OBJECT_ID(N''tempdb..#fn2'') IS NOT NULL DROP TABLE #fn2;
     SELECT TOP 0 * INTO #fn2 FROM ags.fnIpgChRsltCstUtl2_2606(@ipgChKey, @ipgStKey, @stCostKey);
-    INSERT INTO #fn2 SELECT * FROM ags.fnIpgChRsltCstUtl2_2606(@ipgChKey, @ipgStKey, @stCostKey);
+    INSERT INTO #fn2 EXEC ags.spIpgChRsltCstUtl2_2606 @ipgChKey, @ipgStKey, @stCostKey;
 ');
 
 -- Финальный набор — INSERT в #TableFn... (создаётся в spMstrg_2606 до EXEC)

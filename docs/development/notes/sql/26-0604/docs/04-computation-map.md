@@ -191,6 +191,8 @@ fnMasteringStIpgStCost(@ipgRoot, @ipgCh, @stCostKey, @stNet)
 |-----|---------------|-------------------|----------------------------------|
 | 0. Даты | `fnIpgChDatsV` | `fnIpgChDats` (стек Б) | Точки перехода из `ipgChRlV`, дата 01.01 |
 | 1. Актуальность ИПГ | внутри `fnIpgChDatsV` + `fnStCostRsIpgPn_2606` | `ipg.ipgStr/ipgEnd` (стек А/Б) | `ipgChRlV.ipgcrvStr/ipgcrvEnd`, день |
+
+**Терминология:** смена актуальности **инвестпрограммы** в цепи — не «ревизия» (ревизия = `ra_a`, факт). См. `docs/project/glossary.md`, Решение 14 в `03-design-decisions.md`.
 | 2. DAG-отбор строек | `fnMasteringStIpgStCost_2606` | стек Б | Актуальная ИПГ на дату (не последняя) |
 | 3. Лимиты | `fnStCostRsIpgPn_2606` | стек Б | Дефект Б исправлен; fallback к `iuplpLim` |
 | 4. Планы | `fnStCostRsCstAgPn_2606` | стек Б | Использует `_2606`-подфункции |
