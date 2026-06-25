@@ -1,6 +1,6 @@
 # Удалённая разработка: Cursor на Fedora, БД на nb-win
 
-**Последнее обновление:** 2026-06-24
+**Последнее обновление:** 2026-06-25
 
 ## Схема
 
@@ -48,6 +48,25 @@ timeout 3 bash -c 'cat < /dev/null > /dev/tcp/10.7.0.3/1433' && echo OK || echo 
 
 Новое подключение → Microsoft SQL Server → параметры из таблицы выше.  
 Проверка: `SELECT @@VERSION, DB_NAME(), SUSER_SNAME();`
+
+## SSMS на nb-win (winget)
+
+SSMS **не** обновляется через патчи Windows 11; установка и апгрейд — **winget** или Visual Studio Installer.
+
+Пример установки SSMS 22 на `D:\Program_Files\SSMS` (PowerShell от администратора):
+
+```powershell
+mkdir D:\Program_Files\SSMS -Force
+winget install --id Microsoft.SQLServerManagementStudio.22 -e `
+  --accept-package-agreements --accept-source-agreements `
+  --override '--installPath "D:\Program_Files\SSMS" --passive --norestart'
+```
+
+Подключение в SSMS: `localhost,1433`, база `FishEye`, логин `sa` (пароль из `docs/development/examples/database.properties.nb-win`).
+
+Обновление: `winget upgrade --id Microsoft.SQLServerManagementStudio.22 -e`
+
+На Fedora для скриптов и сеток результатов — **Cursor + расширение MSSQL** (`10.7.0.3`); приёмка `07n`/`07o`/`07p` — **sqlcmd**.
 
 ## Cursor / DBHub
 
