@@ -28,6 +28,9 @@
 07_VERIFY_after.sql
 07_VERIFY_spMstrg_2606_chain5.sql   (в ../ — полный прогон spMstrg)
 08_ROLLBACK.sql
+09a_utpl_audit_zero_negative.sql   (аудит lim<=0, READ ONLY)
+09b_utpl_cleanup_nonpositive.sql   (DELETE lim<=0)
+09c_utpl_enable_check_constraints.sql
 ```
 
 ## Отличия от dev
@@ -45,7 +48,7 @@
 - [`docs/deployment/sql-flash-drive-packaging.md`](../../../../deployment/sql-flash-drive-packaging.md) — сборка флешки
 - **Флеш-пакет:** `../26-0616_deploy/build_flash_package.sh`
 
-**Обновлено:** 2026-06-16
+**Обновлено:** 2026-06-26
 
 Синхронизация dev→MSSQL2012: `python3 _sync_to_mssql2012.py 03c_*.sql 03b1_*.sql`
 

@@ -2,8 +2,8 @@
 
 **Файл:** `docs/deployment/db-upgrade-spMstrg-2606.md`  
 **Дата:** 2026-06-12  
-**lastUpdated:** 2026-06-17  
-**Версия:** 1.3  
+**lastUpdated:** 2026-06-26  
+**Версия:** 1.4  
 **Автор:** Александр
 
 **Краткий чеклист на день деплоя:** [`db-upgrade-spMstrg-2606-deploy-day-checklist.md`](db-upgrade-spMstrg-2606-deploy-day-checklist.md)
@@ -70,6 +70,9 @@
 | 6c | `06c_FIX_spMstrg_ROWCOUNT_logging.sql` | Патч лога saveToTables (опционально для `_2605`) |
 | 7 | `07_VERIFY_after.sql` | Объекты «после» |
 | — | `07_VERIFY_spFn2_schema.sql` | Gate: fn2 ↔ spFn2 INSERT EXEC |
+| 9a–9c | `09a_utpl_audit_zero_negative.sql` | Аудит UtPl `lim<=0` (READ ONLY) |
+| | `09b_utpl_cleanup_nonpositive.sql` | Очистка нулей/отрицательных (компенсация SUM) |
+| | `09c_utpl_enable_check_constraints.sql` | CHECK `lim > 0` на Mn/Qu/Ye |
 | — | `07k`, `07l`, `run_acceptance_dev_chain5.sh` | Dev-приёмка |
 | — | `08_ROLLBACK.sql` | Откат |
 
@@ -90,8 +93,11 @@
 8.  05b (таблицы), 06 или 06b
 9.  07_VERIFY_after.sql
 10. 07_VERIFY_spFn2_schema.sql      (если 04b/05b/06b)
-11. run_acceptance / 07_VERIFY_spMstrg_2606_chain5 @ 2022-12-31
+11. 09a → 09b → 09c                 (UtPl: аудит → очистка → CHECK lim>0)
+12. run_acceptance / 07_VERIFY_spMstrg_2606_chain5 @ 2022-12-31
 ```
+
+**Блок 09 (deploy-day, этап 17.3.1):** привести prod-данные UtPl к состоянию, эквивалентному dev после **18.8.3** (sparse, без `lim<=0`), затем включить CHECK. `09a` прерывает цепочку при обнаружении нарушений; `09b` удаляет нули и отрицательные значения с **компенсацией SUM** по `(plPn, stCost)`; `09c` включает `CK_*_gt0` (`lim > 0`).
 
 На продуктиве скрипты применяет **администратор БД** (или владелец проекта через **SSMS**).
 

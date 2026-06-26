@@ -18,8 +18,9 @@ FEMSQ — флеш-пакет деплоя spMstrg_2606 на продуктив 
   1. Бэкап FishEye
   2. PDF чеклист: open/03_docs/db-upgrade-spMstrg-2606-deploy-day-checklist.pdf
   3. SSMS: скрипты из open/01_MSSQL2012/ по README (00 → … → 06, не 06b без gate)
-  4. open/02_acceptance/07_VERIFY_spMstrg_2606_chain5.sql @ 2022-12-31
-  5. Заполнить чеклист и 04_prod_log/
+  4. UtPl (до финальной приёмки): 09a → 09b → 09c (аудит lim<=0 → очистка → CHECK lim>0)
+  5. open/02_acceptance/07_VERIFY_spMstrg_2606_chain5.sql @ 2022-12-31
+  6. Заполнить чеклист и 04_prod_log/
 
 ПАРОЛЬ АРХИВА
   Не хранится на флешке. Передаётся исполнителю отдельным каналом.

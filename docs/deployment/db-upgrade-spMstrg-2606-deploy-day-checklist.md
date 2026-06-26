@@ -23,7 +23,7 @@ DEPLOY_ARCHIVE_PASSWORD='…' ./build_flash_package.sh --zip-password
 
 | На флешке | Содержимое |
 |-----------|------------|
-| `open/01_MSSQL2012/` | все скрипты 00–08, 04b, 05b, 06b, 03b1b, 00-perf-indexes* |
+| `open/01_MSSQL2012/` | все скрипты 00–08, **09a–09c** (UtPl), 04b, 05b, 06b, 03b1b, 00-perf-indexes* |
 | `open/02_acceptance/` | `07_VERIFY_spMstrg_2606_chain5.sql`, `07_VERIFY_spFn2_schema.sql` |
 | `open/03_docs/` | **PDF** чеклиста + `db-upgrade-spMstrg-2606.md` |
 | `open/04_prod_log/` | шаблоны логов |
@@ -91,8 +91,9 @@ WHERE schema_id = SCHEMA_ID('ags') AND name LIKE 'spMstrg_2408_ResultSet%';
 | A.7 | `05b` (таблицы), `06` или `06b` | ☐ | fn-path рекомендуется до gate |
 | A.8 | `07_VERIFY_after.sql` | ☐ | |
 | A.9 | `07_VERIFY_spFn2_schema.sql` | ☐ | если A.6 |
-| A.10 | `07_VERIFY_spMstrg_2606_chain5.sql` @ `2022-12-31` | ☐ | RS1=____ RS4=____ |
-| A.11 | `08_ROLLBACK.sql` | ☐ | только откат |
+| A.10 | **09 UtPl:** `09a` → `09b` → `09c` | ☐ | аудит `lim<=0` → очистка (с компенсацией SUM) → CHECK `lim>0` |
+| A.11 | `07_VERIFY_spMstrg_2606_chain5.sql` @ `2022-12-31` | ☐ | RS1=____ RS4=____ |
+| A.12 | `08_ROLLBACK.sql` | ☐ | только откат |
 
 **Эталон (цепь 5, `2022-12-31`, dev):**
 
@@ -105,7 +106,7 @@ WHERE schema_id = SCHEMA_ID('ags') AND name LIKE 'spMstrg_2408_ResultSet%';
 
 ---
 
-## Часть B — Клиенты (после A.10)
+## Часть B — Клиенты (после A.11)
 
 | # | Действие | ✓ |
 |---|----------|---|

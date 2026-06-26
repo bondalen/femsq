@@ -16,9 +16,26 @@ from fpdf.enums import XPos, YPos
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parents[5]
 CHECKLIST_MD = REPO_ROOT / "docs/deployment/db-upgrade-spMstrg-2606-deploy-day-checklist.md"
-FONT = Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")
-FONT_B = Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf")
+FONT_CANDIDATES: list[tuple[Path, Path]] = [
+    (
+        Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+        Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
+    ),
+    (
+        Path("/usr/share/fonts/google-carlito-fonts/Carlito-Regular.ttf"),
+        Path("/usr/share/fonts/google-carlito-fonts/Carlito-Bold.ttf"),
+    ),
+]
 LINE_H = 4.2
+
+
+def resolve_fonts() -> tuple[Path, Path]:
+    """Возвращает пару (regular, bold) TTF с поддержкой кириллицы."""
+    for regular, bold in FONT_CANDIDATES:
+        if regular.is_file() and bold.is_file():
+            return regular, bold
+    tried = ", ".join(str(p) for pair in FONT_CANDIDATES for p in pair)
+    raise FileNotFoundError(f"Шрифт не найден (пробовали: {tried})")
 
 
 def clean_md(text: str) -> str:
@@ -56,12 +73,12 @@ def col_widths(pdf: FPDF, n: int) -> list[float]:
 class ChecklistPDF(FPDF):
     """PDF-документ чеклиста с кириллицей."""
 
-    def __init__(self) -> None:
+    def __init__(self, font: Path, font_b: Path) -> None:
         super().__init__(orientation="P", unit="mm", format="A4")
         self.set_margins(15, 15, 15)
         self.set_auto_page_break(auto=True, margin=15)
-        self.add_font("DV", "", str(FONT))
-        self.add_font("DV", "B", str(FONT_B))
+        self.add_font("DV", "", str(font))
+        self.add_font("DV", "B", str(font_b))
 
     def ensure_space(self, need_mm: float) -> None:
         """Добавляет страницу, если блок не помещается."""
@@ -122,11 +139,10 @@ class ChecklistPDF(FPDF):
 
 def md_to_pdf(md_path: Path, pdf_path: Path) -> None:
     """Конвертирует чеклист Markdown в PDF."""
-    if not FONT.exists():
-        raise FileNotFoundError(f"Шрифт не найден: {FONT}")
+    font, font_b = resolve_fonts()
 
     lines = md_path.read_text(encoding="utf-8").splitlines()
-    pdf = ChecklistPDF()
+    pdf = ChecklistPDF(font, font_b)
     pdf.add_page()
 
     in_code = False
