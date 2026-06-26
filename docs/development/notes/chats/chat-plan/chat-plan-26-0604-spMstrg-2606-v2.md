@@ -1,7 +1,8 @@
 # План работы чата: spMstrg_2606 — DAG-фильтрация и корректная цепь ИПГ (v2)
 
 **Дата:** 2026-06-04  
-**Версия плана:** v2.8 от 2026-06-23 (этап 18.7+: полный тест планов, словарь терминов, Решение 14)  
+**Версия плана:** v2.9 от 2026-06-26 (этап 18.8: sparse UtPl, CHECK>0, флешка)  
+**Предыдущая:** v2.8 от 2026-06-23 (этап 18.7+: полный тест планов, словарь терминов, Решение 14)  
 **Предыдущая:** v2.7 от 2026-06-17 (этап 18 — приёмка планов UtPl по stCost, dev-only)  
 **Предыдущая версия:** `chat-plan-26-0604-spMstrg-2606.md` (архив, сохранена)  
 **Автор:** Александр  
@@ -28,6 +29,7 @@
 | **7** | **LEGACY scalar UDF → `fnMasteringFact*_2606` через `factDocCost`** *(Решение 2026-06-11)* — устраняет узкое место ×70–140; одновременно реализует Вариант 6А (Ret/InProc/NotArr) |
 | **8** | **К-7 строгая — только SQL-стек `_2606`** *(Решение 13, 2026-06-15)* — без app-parallelism и без persistent cache; ступени 1–3 (индексы → CostBase Ralp/PrDoc → fn2→SP) |
 | **9** | **План на смене ИП — «ужесточение» `_2605`** *(Решение 14, 2026-06-23)* — полный месячный UtPl на датах перехода; интерполяция плана/факта по дням — отложенная задача 18.9 |
+| **10** | **Sparse UtPl — только строки с планом > 0** *(2026-06-26)* — отсутствие месяца = нет строки в `ipgUtPlPnLmMn`/`LmQu`/`LmYe`; CHECK `CK_ipgUtPlPnLm*<>0` (включить на prod после очистки данных); fixture без полной сетки 12×4 |
 
 Детали: `docs/development/notes/sql/26-0604/docs/03-design-decisions.md`  
 Анализ производительности: `docs/development/notes/sql/26-0604/docs/07-performance-analysis.md`  
@@ -636,14 +638,14 @@
 
 ## Следующий шаг реализации
 
-**Этап 18** — приёмка помесячных планов по stCost на dev (блокирует **17.2.3+** до PASS К-12/К-13). См. ниже.
+**Этап 18.8** ✅ — sparse UtPl и CHECK (разблокировал **18.7.4** и **17.2.2a**). См. ниже.
 
 ---
 
 ### Этап 18 — Помесячные планы UtPl по stCost (dev-only) ⬜
 
 > **Документация:** [`docs/13-plan-stcost-monthly-acceptance.md`](../sql/26-0604/docs/13-plan-stcost-monthly-acceptance.md)  
-> **Продуктив:** fixture и 07m **не входят** в `MSSQL2012/` и deploy-day; процесс деплоя не меняется после PASS на dev.
+> **Продуктив:** fixture и 07m **не входят** в `MSSQL2012/` и deploy-day; скрипты **09a–09c** (UtPl CHECK) — **входят** в флешку после **18.8.4**; порядок на prod: аудит → очистка `lim<=0` → ENABLE CHECK.
 
 **Цель:** полный тестовый помесячный план цепи 5 с разбивкой по stCost; подтвердить стек `_2606` до сборки флеша с паролем.
 
@@ -690,9 +692,60 @@
   - **PERF:** ~**504 ms**
   - **Ход:** согласованность SUM(ipgp plan) с `fnMasteringStIpgStCost(NULL)`; К-18b на stIpg **61** и **46** (упрощение без полного перебора stIpg — perf); разбиение по филиалу/агенту сохраняет grand total
 
-- [ ] **18.7.4** **Наиболее полный тест:** FIXTURE_07, все 3 ИП (~**1889** ipgp), полная цепь 5, perf gate ⬜
-  - **Цель:** ~90k строк `ipgUtPlPnLmMn`; 17 дат; К-12…К-17 + 07n/07o на полной цепи
+- [x] **18.7.4** **Наиболее полный тест:** FIXTURE_07, все 3 ИП (~**1889** ipgp), полная цепь 5, perf gate ✅ **2026-06-26**
+  - **Предусловие:** **18.8.3** (sparse fixture) — иначе раздувание `ipgUtPlPnLmMn` нулевыми строками
+  - **Цель:** sparse-оценка строк `ipgUtPlPnLmMn` (существенно < ~90k при полной сетке); 17 дат; К-12…К-17 + 07n/07o на полной цепи
   - **PERF (ориентир):** **30–90 мин**; `run_plan_full_chain5.sh`
+  - **FIXTURE_07 dev:** targets **1862**, UtPlMn copied **34763** + generated **27408**, batchId `69C0C049-4EE8-4A38-8C79-1A8D58C72A8C`
+  - **07o full:** **CORRECT** k12…k14/k16/k17 = **0**; **PERF ~138 с** (~2.3 мин); лог `plan_full_chain5_07o_20260626_140051.log`
+  - **К-15 (`k15=1`):** `ipgpKey=5258` `cstAgPn=1939` `sh=3` (активен с 2022-09-22) — план к 31.12 по лимитам ipgp есть, **mastering@31.12=0**. **Не дефект fixture/стека:** реалистичный prod-сценарий (агент спланировал освоение, фактов нет; лимит в цепи не снят). Критерий **отработал как задумано** — полезный тестовый кейс; устранение — предмет управления (смена агента, контроль, корректировка лимита при смене ИП), не SQL-релиза
+
+#### Этап 18.8 — Sparse UtPl и включение CHECK «лимит > 0» ✅
+
+> **Контекст (2026-06-26):** в схеме уже есть `CK_ipgUtPlPnLmMn<>0`, `CK_ipgUtPlPnLmQu<>0`, `CK_ipgUtPlPnLmYe<>0` — все **DISABLED** / NOT TRUSTED. Fixture FIXTURE_05/06 вставляют полную сетку 12×4 с нулями — не соответствует продуктивной модели («нет плана» = нет строки). См. `docs/project/glossary.md` (v1.1.0).
+
+- [x] **18.8.0** Аудит dev-БД: строки, противоречащие `CHECK (lim > 0)` ✅ **2026-06-26**
+  - **Артефакты:** запросы DBHub; настоящий пункт плана
+  - **Результат dev (FishEye @ 10.7.0.3):**
+
+  | Таблица | Всего строк | `lim = 0` | `lim < 0` | Источник нарушений |
+  |---------|-------------|-----------|-----------|-------------------|
+  | `ipgUtPlPnLmMn` | 46 159 | **888** | **9** | нули — **только FIXTURE_06** (9 пилотных cst); отриц. — **legacy** (округление mn=12 @212) |
+  | `ipgUtPlPnLmYe` | 2 426 | 0 | 0 | — |
+  | `ipgUtPlPnLmQu` | 1 484 | 0 | **1** | отриц. — **legacy** (`iuplpqKey=854`, mn Q4) |
+
+  - **Вывод:** prod-подобные UtPl на dev (**~45k** строк LmMn вне fixture) **уже sparse** (0 строк с `iuplpmLim=0`). Нарушения создали **наши fixture** (нули) и **legacy-округление** (10 отрицательных). CHECK можно включать после очистки и правки fixture.
+  - **Prod (допущение):** с момента отпочкования dev от prod **новых ценных данных** UtPl для стека `_2606` **не появлялось** → на prod ожидаются те же **legacy**-нарушения (`lim<0`, ~10 строк), **без** 888 нулей fixture. Скрипт `09b` на флешке приводит prod к тому же состоянию, что dev после **18.8.3** (по части prod-подобных данных).
+
+- [x] **18.8.1** Политика в документации ✅ **2026-06-26**
+  - **Артефакты:** `glossary.md` v1.2.0 (sparse, CHECK); `13-plan-stcost-monthly-acceptance.md` §16; `03-design-decisions.md` **Решение 15**
+  - **Ход:** зафиксированы sparse-модель, 09a→09b→09c, требования к fixture, порядок dev/prod, аудит 18.8.0
+- [x] **18.8.2** Fixture sparse: `FIXTURE_05`, `FIXTURE_06`, `FIXTURE_06_pilots` — INSERT только `iuplpmLim > 0`; обновить `04_verify` / `06_verify` (assert: `COUNT(lim=0)=0` на данных fixture) ✅ **2026-06-26**
+  - **SQL:** `WHERE c.iuplpmLim > 0` в FIXTURE_05/06/pilots; sparse-assert в `FIXTURE_04_verify_data.sql` (chain 5) и `FIXTURE_06_verify_golden.sql`
+  - **Dev re-apply:** `FIXTURE_06_99_rollback` (del UtPlMn=1296) → `apply_fixture_06.sh` → `FIXTURE_06_pilots_cst_chain5.sql`
+  - **Golden UtPlMn:** ipgpPn **2037=48**, **3290=12**, **5271=8** (было 48+48+48 с нулями)
+  - **Проверки:** `FIXTURE_06_verify_golden` **PASS**; `fixture06_zeros=0`; chain 5 `lim<=0` **0**
+  - **FIXTURE_04:** sparse-check chain 5 **OK**; `lim_fail_pn=12` — legacy sum≠limit вне scope 18.8.2 (было до sparse)
+- [x] **18.8.3** **Dev-only:** привести данные к состоянию перед ENABLE CHECK ✅ **2026-06-26**
+  - ~~удалить 888 нулевых строк FIXTURE_06~~ — **сделано в 18.8.2** (re-apply sparse);
+  - **09b** sparse-очистка с **компенсацией сумм** (не наивный DELETE): LmMn 9 + LmQu 1 legacy; dev repair после первого прогона ✅
+  - **Проверка:** 9 затронутых `iuplpKey` — `SUM(LmMn@212)=ipgPnLim` (δ=0); `982`: `SUM(кварталов)=LmYe` ✅
+  - **не** включает CHECK — только данные
+- [x] **18.8.4** SQL-пакет `MSSQL2012/` + **прогон на dev** (включение CHECK на dev — **здесь**) ✅ **2026-06-26**
+  - **Артефакты:** `09a_utpl_audit_zero_negative.sql`, `09b_utpl_cleanup_nonpositive.sql`, `09c_utpl_enable_check_constraints.sql` (dev + `MSSQL2012/`)
+  - **09c:** legacy `CK_*<>0` заменены на **`CK_*_gt0`** (`lim > 0`), `is_disabled=0`, `is_not_trusted=0`
+  - **Dev прогон:** `09a` PASS (0) → `09b` PASS (идемпотентно) → `09c` PASS; `FIXTURE_06_verify` PASS; INSERT `lim=0`/`<0` блокируется CHECK
+- [x] **18.8.5** Прогон 07n/07o на 9 пилотных cst после sparse fixture — **PASS** ✅ **2026-06-26**
+  - **Прогон:** `run_07n_o_pilots_chain5.sh` → **9/9 PASS** (~18 с); лог `pilots_07n_o_20260626_135453.log`
+  - **Правка приёмки:** `07n`/`07o` — К-12c/K-12t: cum на `mKey` = cum последнего sparse-месяца `≤ mKey` (не точное совпадение `iuplpmMn=mKey`)
+- [x] **18.8.6** Обновление флешки и deploy-доков — см. **17.2.2a**, **17.2.7** ✅ **2026-06-26**
+  - **Флешка:** `build_flash_package.sh` → `open/01_MSSQL2012/09a`–`09c`, ZIP `archive/spMstrg_2606_MSSQL2012_20260626.zip`, `MANIFEST.sha256`
+  - **Доки:** блок **09 UtPl** в `db-upgrade-spMstrg-2606.md`, deploy-day checklist (A.10), `README_DEPLOY.txt`
+  - **PDF:** `generate_checklist_pdf.py` — fallback Carlito (Fedora); предупреждение о глифах ☐/✓
+
+**Зависимости:** **18.7.4** (FIXTURE_07) — после **18.8.2** и **18.8.4** (CHECK на dev); **17.2.3** (ZIP с паролем) — после **18.8.6** (пересборка `open/` с `09a`–`09c`).
+
+**Порядок CHECK на dev:** `18.8.2` → `18.8.3` (данные) → `18.8.4` (`09a`→`09b`?→`09c`) → CHECK **включены**.
 
 #### Замеры perf и полнота теста
 
@@ -728,17 +781,18 @@
 | Эталон паттерна `07i` / `07j` | ✅ |
 | `ipgPnLim` + `ipgpSmTtl/Wrk/Equ/Oth` на цепи 5 | ✅ 1889 пн |
 | Fixture split UtPl → 172/187/195 | ✅ FIXTURE_04 PASS |
-| FIXTURE_06 golden + пилоты 9 cst | ✅ 18.7.2a–c |
+| FIXTURE_06 golden + пилоты 9 cst | ✅ 18.7.2a–c; sparse **18.8.2** (0 нулевых строк fixture) |
 | `07n` / `07o` / `07p` PASS | ✅ 18.7.1–18.7.3 |
-| **18.7.4** FIXTURE_07 + полная цепь | ⬜ следующий шаг |
+| **18.8** sparse UtPl + CHECK | ✅ **18.8.1–18.8.6** (флешка пересобрана) |
+| **18.7.4** FIXTURE_07 + полная цепь | ✅ perf **138 с**; К-15: 1 ожидаемая аномалия (5258) |
 
-**Вывод:** строгая логика плана и агрегация на пилотах подтверждены; **следующий шаг — 18.7.4** (perf gate, ~1889 ipgp).
+**Вывод:** **18.7.4** ✅; **18.8.6** ✅; следующий шаг — **18.6** journal → **17.2.3** ZIP с паролем.
 
 ---
 
 ## Следующий шаг реализации (prod)
 
-**Этап 18.7.4** — FIXTURE_07 и полная цепь (perf gate). После PASS — **18.6** journal и **17.2.3** ZIP с паролем.
+**Этап 18.8** ✅ (флешка `09a`–`09c`). **18.7.4** ✅. Далее **18.6** journal → **17.2.3** ZIP с паролем.
 
 ### Этап 17 — Prod: офлайн-деплой 🔄
 
@@ -747,7 +801,8 @@
 - [x] **17.1** SSMS precheck на **SPB-05-NV-SQL1** ✅ **2026-06-16** — _2605 OK, _2606 нет, ipgChRlV нет
 - [x] **17.1b** Dev-приёмка повтор @ `2022-11-30` ✅ **2026-06-16** (лог `acceptance_dev_chain5_20221130_*`)
 - [ ] **17.2** Сборка флешки `26-0616_deploy/` — см. ниже
-- [ ] **17.3** Деплой 00→08 в SSMS (порядок README)
+- [ ] **17.3** Деплой DDL/DML стека `_2606`: скрипты `00`→`08` в SSMS (порядок README)
+- [ ] **17.3.1** **Миграция данных UtPl** (после `08`, до приёмки): `09a` → `09b` → `09c` — привести prod к состоянию, **эквивалентному dev после 18.8.3**, и включить CHECK; пункт в PDF-чеклисте deploy-day
 - [ ] **17.4** Приёмка: `07_VERIFY_*` @ `2022-12-31`; заполнить PDF-чеклист
 - [ ] **17.5** Journal + переключение клиентов (отдельно, по решению)
 
@@ -758,16 +813,18 @@
 - [x] **17.2.0** Описан порядок сборки флешек (sql-flash-drive-packaging.md, sql-server-deployment-rules §7) ✅ **2026-06-16**
 - [x] **17.2.1** Каркас `26-0616_deploy/`: `build_flash_package.sh`, `generate_checklist_pdf.py`, `README_DEPLOY.txt`, `templates/` ✅
 - [x] **17.2.2** `./build_flash_package.sh` — `open/`, PDF, `MANIFEST.sha256`, ZIP без пароля ✅ **2026-06-16**
-- [ ] **17.2.3** `DEPLOY_ARCHIVE_PASSWORD=… ./build_flash_package.sh --zip-password` — ZIP в `archive/`
+- [x] **17.2.2a** Пересборка `open/` после **18.8.4** (`09a`–`09c` в `MSSQL2012/`): `./build_flash_package.sh`, сверка `MANIFEST.sha256` ✅ **2026-06-26**
+- [ ] **17.2.3** `DEPLOY_ARCHIVE_PASSWORD=… ./build_flash_package.sh --zip-password` — ZIP в `archive/` *(после **17.2.2a**)*
 - [ ] **17.2.4** Проверка на nb-win: PDF, `00_VERIFY_before.sql` в SSMS, сверка `MANIFEST.sha256`
 - [ ] **17.2.5** Копирование каталога `26-0616_deploy/` на флеш-носитель
 - [ ] **17.2.6** Пароль архива передан исполнителю **отдельно** от носителя
+- [x] **17.2.7** Deploy-доки: `db-upgrade-spMstrg-2606.md` + **deploy-day checklist (PDF)** — новый блок **«09 UtPl: аудит → очистка → CHECK»** (`09a`→`09b`→`09c`); `README_DEPLOY.txt` в `26-0616_deploy/` ✅ **2026-06-26**
 
 ---
 
 ## Следующий шаг реализации
 
-**Этап 18.7.4** — FIXTURE_07, полная цепь 5 (~1889 ipgp, 17 дат, perf gate 30–90 мин). После PASS — **18.6** journal и **17.2.3** ZIP с паролем.
+**Этап 18.6** journal → **17.2.3** ZIP с паролем.
 
 ---
 
@@ -840,7 +897,9 @@
 | `fixture/dev-chain5-utpl-stcost/` | **18** | ✅ FIXTURE_04 PASS |
 | `07m_plan_limit_conformance_chain5.sql` | **18** | ⬜ К-12 |
 | `07m_plan_additive_chain5.sql` | **18** | ⬜ К-13 |
-| `26-0616_deploy/` | **17.2** | 🔄 build_flash_package.sh |
+| `26-0616_deploy/` | **17.2** | ✅ пересборка **18.8.6** (`09a`–`09c`) |
+| `MSSQL2012/09a`–`09c` _utpl_* | **18.8** | ✅ 18.8.4 |
+| `docs/project/glossary.md` | термины | ✅ v1.2.0 (sparse, CHECK, Решение 15) |
 | `docs/12-dev-acceptance-protocol.md` | **15** | ✅ |
 | `MSSQL2012/04` … `06` | 11–12 | ✅ v9.0 + spMstrg |
 | `07_VERIFY_after.sql` | 12 | ✅ |
