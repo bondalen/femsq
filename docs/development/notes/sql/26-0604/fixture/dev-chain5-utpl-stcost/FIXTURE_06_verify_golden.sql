@@ -2,7 +2,7 @@ USE [FishEye];
 GO
 -- =============================================================================
 -- FIXTURE_06_verify_golden.sql
--- Dev-only: инварианты golden UtPl cst 2102 после FIXTURE_06.
+-- Dev-only: инварианты golden UtPl cst 2102 после FIXTURE_06 (sparse, Решение 15).
 -- =============================================================================
 SET NOCOUNT ON;
 GO
@@ -28,6 +28,20 @@ IF (SELECT COUNT(DISTINCT up.iuplpIpgPn)
     WHERE p.ipgpCstAgPn = @cstAgPn AND p.ipgpKey IN (2037, 3290, 5271)) <> 3
 BEGIN
     RAISERROR(N'Expected 3 golden ipgUtPlP in test groups.', 16, 1);
+    RETURN;
+END;
+
+DECLARE @zero_mn int;
+SELECT @zero_mn = COUNT(*)
+FROM ags.ipgUtPlPnLmMn m
+INNER JOIN ags.ipgUtPlP up ON up.iuplpKey = m.iuplpmPlPn
+INNER JOIN ags.ipgUtPlGrP gp ON gp.iuplgpPl = up.iuplpPl AND gp.iuplgpGr IN (18, 19, 20)
+INNER JOIN ags.ipgPn p ON p.ipgpKey = up.iuplpIpgPn
+WHERE p.ipgpKey IN (2037, 3290, 5271) AND m.iuplpmLim <= 0;
+
+IF @zero_mn > 0
+BEGIN
+    RAISERROR(N'SPARSE: %d rows with iuplpmLim<=0 in golden UtPl (expect 0).', 16, 1, @zero_mn);
     RETURN;
 END;
 

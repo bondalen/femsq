@@ -1,10 +1,10 @@
 USE [FishEye];
 GO
 -- =============================================================================
--- 07o_plan_17dates_cst_chain5.sql
--- Строгая приёмка плана UtPl (18.7.2b): матрица 17 дат fnIpgChDatsV, пилот cst 2102.
+-- 07o_plan_17dates_chain5.sql
+-- Строгая приёмка плана UtPl (18.7.4): матрица 17 дат, полная цепь 5 (~1889 ipgp).
 --
--- Предусловие: FIXTURE_06 (golden UtPl, ipgcrvUtPlGr 18/19/20) для @cstAgPn.
+-- Предусловие: FIXTURE_06 + FIXTURE_07 (UtPl в группах 18/19/20).
 --
 -- Критерии:
 --   К-12b/c/t — как 07n; К-12t на датах ipgcrvEnd (ужесточение _2605, Решение 14)
@@ -18,7 +18,6 @@ SET NOCOUNT ON;
 GO
 
 DECLARE @ipgCh           int   = 5;
-DECLARE @cstAgPn         int   = 2102;
 DECLARE @yearend         date  = '2022-12-31';
 DECLARE @epsilon         money = 0.01;
 DECLARE @epsilonAdd      money = 5.00;
@@ -29,7 +28,7 @@ DECLARE @t0      datetime2 = SYSDATETIME();
 
 DECLARE @msg nvarchar(800);
 SET @msg = N'=== 07o strict plan × 17 dates  chain=' + CAST(@ipgCh AS nvarchar)
-         + N'  cstAgPn=' + CAST(@cstAgPn AS nvarchar) + N' ===';
+         + N'  FULL ===';
 RAISERROR(@msg, 0, 1) WITH NOWAIT;
 
 -- =========================================================================
@@ -39,6 +38,7 @@ IF OBJECT_ID('tempdb..#rev') IS NOT NULL DROP TABLE #rev;
 SELECT
     p.ipgpKey,
     p.ipgpSh,
+    p.ipgpCstAgPn,
     v.ipgcrvStr,
     v.ipgcrvEnd,
     v.ipgcrvUtPlGr,
@@ -48,19 +48,14 @@ SELECT
     CAST(ISNULL(p.ipgpSmOth, 0) * 1000000 AS money) AS ref187
 INTO #rev
 FROM ags.ipgPn p
-INNER JOIN ags.ipgChRlV v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
-WHERE p.ipgpCstAgPn = @cstAgPn
-  AND p.ipgpSh = 1;
+INNER JOIN ags.ipgChRlV v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh;
 
-IF (SELECT COUNT(*) FROM #rev) <> 3
-BEGIN
-    RAISERROR(N'Expected 3 ipgPn (sh=1) on cstAgPn %d in chain %d.', 16, 1, @cstAgPn, @ipgCh);
-    RETURN;
-END;
+DECLARE @rev_cnt int = (SELECT COUNT(*) FROM #rev);
+RAISERROR(N'  ipgPn on chain: %d', 0, 1, @rev_cnt) WITH NOWAIT;
 
 IF OBJECT_ID('tempdb..#pn') IS NOT NULL DROP TABLE #pn;
 SELECT DISTINCT
-    r.ipgpKey, r.ipgpSh, r.ipgcrvUtPlGr, r.ipgcrvStr, r.ipgcrvEnd,
+    r.ipgpKey, r.ipgpSh, r.ipgpCstAgPn, r.ipgcrvUtPlGr, r.ipgcrvStr, r.ipgcrvEnd,
     r.ref212, r.ref195, r.ref172, r.ref187
 INTO #pn
 FROM #rev r
@@ -69,12 +64,15 @@ WHERE EXISTS (
     FROM ags.ipgUtPlPnLmMn m
     INNER JOIN ags.ipgUtPlP up ON up.iuplpKey = m.iuplpmPlPn
     INNER JOIN ags.ipgUtPlGrP gp ON gp.iuplgpPl = up.iuplpPl AND gp.iuplgpGr = r.ipgcrvUtPlGr
-    WHERE up.iuplpIpgPn = r.ipgpKey AND m.iuplpmStCost = 212
+    WHERE up.iuplpIpgPn = r.ipgpKey AND m.iuplpmStCost = 212 AND m.iuplpmLim > 0
 );
 
-IF (SELECT COUNT(*) FROM #pn) <> 3
+DECLARE @pn_cnt int = (SELECT COUNT(*) FROM #pn);
+RAISERROR(N'  ipgPn with test-gr UtPl: %d', 0, 1, @pn_cnt) WITH NOWAIT;
+
+IF @pn_cnt < 100
 BEGIN
-    RAISERROR(N'Expected 3 ipgPn with golden UtPl on cstAgPn %d — apply FIXTURE_06.', 16, 1, @cstAgPn);
+    RAISERROR(N'Too few ipgPn with UtPl (%d) — apply FIXTURE_07.', 16, 1, @pn_cnt);
     RETURN;
 END;
 
@@ -228,7 +226,7 @@ WHERE p.ipgcrvStr <= @yearend AND (p.ipgcrvEnd IS NULL OR p.ipgcrvEnd >= @yearen
       SELECT 1 FROM (VALUES (212, p.ref212),(195, p.ref195),(172, p.ref172),(187, p.ref187)) t(stc, ref)
       WHERE ABS(ISNULL((
           SELECT SUM(COALESCE(m.agSmmTtl, m.inSmmTtl, m.drSmmTtl, 0))
-          FROM ags.fnMasteringCstAgPnSh_2606(@ipgCh, @cstAgPn, t.stc, @stNet, @ipgRoot) m
+          FROM ags.fnMasteringCstAgPnSh_2606(@ipgCh, p.ipgpCstAgPn, t.stc, @stNet, @ipgRoot) m
           WHERE m.ipgpKey = p.ipgpKey AND m.dAll = @yearend
       ), 0) - t.ref) > @epsilon
   );
@@ -256,7 +254,7 @@ DECLARE @fail_total int = ISNULL(@fail_data, 0) + ISNULL(@fail_k12c, 0) + ISNULL
                         + ISNULL(@fail_k15, 0) + ISNULL(@fail_k16, 0) + ISNULL(@fail_k17, 0);
 DECLARE @ms int = DATEDIFF(ms, @t0, SYSDATETIME());
 
-SET @msg = N'07o | cstAgPn=' + CAST(@cstAgPn AS nvarchar)
+SET @msg = N'07o | chain=' + CAST(@ipgCh AS nvarchar) + N' | pn=' + CAST(@pn_cnt AS nvarchar)
          + N' | dates=' + CAST(@nd AS nvarchar)
          + N' | fail data/k12c/k12t/k13b/k14/k15/k16/k17='
          + CAST(ISNULL(@fail_data, 0) AS nvarchar) + N'/'

@@ -7,6 +7,7 @@ GO
 -- Критерии (в пределах одной ipgPn / периода актуальности в цепи):
 --   К-12b: на @MounthEndDate накопленный план = лимит по каждому stCost (212/195/172/187)
 --   К-12c: на каждой дате dd стека smmTtl = cum(UtPlMn через mKey) × 1e6
+--          (sparse: cum на mKey = cum последнего месяца с строкой ≤ mKey, иначе 0)
 --   К-13b: на каждой dd plan@212 ≈ @172+@187+@195
 --   К-12r: на ipgcrvEnd ревизии — план = cum(UtPl) на эту дату (смена ИП в цепи)
 --
@@ -202,11 +203,11 @@ DECLARE @fail_timeline int = 0, @fail_yearend int = 0, @fail_revn int = 0;
 
 SELECT @fail_timeline = COUNT(*)
 FROM #rs r
-WHERE NOT EXISTS (
-    SELECT 1 FROM #utpl_cum c
-    WHERE c.ipgpKey = r.ipgpKey AND c.iuplpmStCost = r.iuplpmStCost AND c.iuplpmMn = r.mKey
-      AND ABS(c.cum_money - ISNULL(r.smmTtl, 0)) <= @epsilon
-);
+WHERE ABS(ISNULL((
+    SELECT TOP 1 c.cum_money FROM #utpl_cum c
+    WHERE c.ipgpKey = r.ipgpKey AND c.iuplpmStCost = r.iuplpmStCost AND c.iuplpmMn <= r.mKey
+    ORDER BY c.iuplpmMn DESC
+), 0) - ISNULL(r.smmTtl, 0)) > @epsilon;
 
 SELECT @fail_yearend = COUNT(*)
 FROM #pn p
@@ -221,11 +222,11 @@ SELECT @fail_revn = COUNT(*)
 FROM #pn p
 INNER JOIN #rs r ON r.ipgpKey = p.ipgpKey AND r.iuplpmStCost = 212 AND r.dd = p.ipgcrvEnd
 WHERE p.ipgcrvEnd IS NOT NULL
-  AND NOT EXISTS (
-      SELECT 1 FROM #utpl_cum c
-      WHERE c.ipgpKey = r.ipgpKey AND c.iuplpmStCost = r.iuplpmStCost AND c.iuplpmMn = r.mKey
-        AND ABS(c.cum_money - ISNULL(r.smmTtl, 0)) <= @epsilon
-  );
+  AND ABS(ISNULL((
+      SELECT TOP 1 c.cum_money FROM #utpl_cum c
+      WHERE c.ipgpKey = r.ipgpKey AND c.iuplpmStCost = r.iuplpmStCost AND c.iuplpmMn <= r.mKey
+      ORDER BY c.iuplpmMn DESC
+  ), 0) - ISNULL(r.smmTtl, 0)) > @epsilon;
 
 SET @msg = N'  RS timeline fail=' + CAST(ISNULL(@fail_timeline, 0) AS nvarchar)
          + N'  yearend fail=' + CAST(ISNULL(@fail_yearend, 0) AS nvarchar)
@@ -237,13 +238,14 @@ BEGIN
     RAISERROR(N'  TOP RS timeline mismatches:', 0, 1) WITH NOWAIT;
     SELECT TOP 10 r.ipgpKey, r.iuplpmStCost, r.dd, r.mKey, r.smmTtl,
         (SELECT TOP 1 c.cum_money FROM #utpl_cum c
-         WHERE c.ipgpKey = r.ipgpKey AND c.iuplpmStCost = r.iuplpmStCost AND c.iuplpmMn = r.mKey) AS utpl_cum
+         WHERE c.ipgpKey = r.ipgpKey AND c.iuplpmStCost = r.iuplpmStCost AND c.iuplpmMn <= r.mKey
+         ORDER BY c.iuplpmMn DESC) AS utpl_cum
     FROM #rs r
-    WHERE NOT EXISTS (
-        SELECT 1 FROM #utpl_cum c
-        WHERE c.ipgpKey = r.ipgpKey AND c.iuplpmStCost = r.iuplpmStCost AND c.iuplpmMn = r.mKey
-          AND ABS(c.cum_money - ISNULL(r.smmTtl, 0)) <= @epsilon
-    );
+    WHERE ABS(ISNULL((
+        SELECT TOP 1 c.cum_money FROM #utpl_cum c
+        WHERE c.ipgpKey = r.ipgpKey AND c.iuplpmStCost = r.iuplpmStCost AND c.iuplpmMn <= r.mKey
+        ORDER BY c.iuplpmMn DESC
+    ), 0) - ISNULL(r.smmTtl, 0)) > @epsilon;
 END;
 
 -- =========================================================================

@@ -40,6 +40,8 @@ cd docs/development/notes/sql/26-0604
 SQL_HOST=10.7.0.3 ./run_07n_o_pilots_chain5.sh
 ```
 
+**Ручной `spMstrg_2606` на cst 2102:** см. `docs/13-plan-stcost-monthly-acceptance.md` §17. `@ipgStKey` (42 или 61) фильтрует **стройки** в цепи; декомпозиция UtPl по ИП 6/8/11 внутри 2102 **не зависит** от выбранного узла `stIpg`.
+
 После `apply_fixture_06` выполнить `FIXTURE_06_pilots_cst_chain5.sql` (входит в скрипт выше).
 
 ## Откат (FIXTURE_01–05)

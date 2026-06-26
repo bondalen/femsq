@@ -3,7 +3,7 @@ GO
 -- =============================================================================
 -- FIXTURE_05_pilot_cst_2102.sql
 -- Dev-only: пилот cstAgPn=2102, ipgPn=5271 (актуальна на 2022-12-31 в цепи 5).
--- UtPl: 40% лимита в mn=9, 60% в mn=11; остальные месяцы 0; split по stCost.
+-- UtPl: 40% лимита в mn=9, 60% в mn=11; split по stCost (sparse: только lim>0).
 -- =============================================================================
 SET NOCOUNT ON;
 GO
@@ -95,7 +95,8 @@ OUTPUT
     inserted.iuplpmStCost, inserted.iuplpmMn, CAST(NULL AS decimal(23, 8)), inserted.iuplpmLim
 INTO ags._fixture_utpl_stcost_log (batchId, action, iuplpmKey, iuplpmPlPn, iuplpmStCost, iuplpmMn, iuplpmLim_before, iuplpmLim_after)
 SELECT @iuplpKey, c.iuplpmStCost, c.iuplpmMn, c.iuplpmLim
-FROM calc c;
+FROM calc c
+WHERE c.iuplpmLim > 0;
 
 COMMIT;
 

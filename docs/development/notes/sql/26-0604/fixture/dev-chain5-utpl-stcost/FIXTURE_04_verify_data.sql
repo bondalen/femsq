@@ -5,6 +5,7 @@ GO
 -- Dev-only: инварианты UtPlMn после fixture (цепь 5).
 --   A) sum(месяцы@stCost) ≈ ipgplLim / ipgpSm* по каждому stCost
 --   B) помесячно: month@212 ≈ month@195+@172+@187
+--   C) sparse: нет строк с iuplpmLim <= 0 (Решение 15)
 -- =============================================================================
 SET NOCOUNT ON;
 GO
@@ -13,6 +14,20 @@ DECLARE @ipgCh   int = 5;
 DECLARE @epsilon decimal(23, 8) = 0.01;
 
 PRINT '=== FIXTURE_04: verify UtPlMn chain=' + CAST(@ipgCh AS varchar(10)) + ' ===';
+
+DECLARE @zero_mn int;
+SELECT @zero_mn = COUNT(*)
+FROM ags.ipgUtPlPnLmMn m
+INNER JOIN ags.ipgUtPlP up ON up.iuplpKey = m.iuplpmPlPn
+INNER JOIN ags.ipgPn p ON p.ipgpKey = up.iuplpIpgPn
+INNER JOIN ags.ipgChRlV v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
+WHERE m.iuplpmLim <= 0;
+
+IF @zero_mn > 0
+BEGIN
+    RAISERROR(N'SPARSE: %d rows iuplpmLim<=0 on chain %d (expect 0).', 16, 1, @zero_mn, @ipgCh);
+    RETURN;
+END;
 
 ;WITH ch AS (
     SELECT DISTINCT p.ipgpKey, p.ipgpSmTtl, p.ipgpSmWrk, p.ipgpSmEqu, p.ipgpSmOth

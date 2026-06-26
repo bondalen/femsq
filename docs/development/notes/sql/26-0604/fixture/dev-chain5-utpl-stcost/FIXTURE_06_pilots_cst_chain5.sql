@@ -140,7 +140,8 @@ BEGIN
         ipgcrvKey, ipgcrvIpg, utPlGr_before, utPlGr_after,
         iuplpKey, ipgpKey, iuplpmKey, note
     )
-    SELECT @iuplpKey, c.iuplpmStCost, c.iuplpmMn, c.iuplpmLim FROM calc c;
+    SELECT @iuplpKey, c.iuplpmStCost, c.iuplpmMn, c.iuplpmLim FROM calc c
+    WHERE c.iuplpmLim > 0;
 
     COMMIT;
 
