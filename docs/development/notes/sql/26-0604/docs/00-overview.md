@@ -241,7 +241,7 @@ EXEC ags.spMstrg_2606
 | [`04-computation-map.md`](04-computation-map.md) | Карта вычислений: какой стек — для лимита / плана / факта; решение «Разрыв 6А» |
 | [`05-fact-stcost-map.md`](05-fact-stcost-map.md) | Поля документов факта → `stcKey`; статусные поля RA/АВ/РАЛП; перечень ~25 новых скалярных функций |
 | [`06-sp-recordsets-and-acceptance.md`](06-sp-recordsets-and-acceptance.md) | Иерархия RS1..7, `@MounthEndDate`, контракт приёмки vs `_2605` |
-| [`14-stipg-stilim-contract-universe-proposals.md`](14-stipg-stilim-contract-universe-proposals.md) | Черновик: `stiLim`, универсум строек при `@ipgStKey`, предложения по доработке fn2/RS |
+| [`14-stipg-stilim-contract-universe-proposals.md`](14-stipg-stilim-contract-universe-proposals.md) | **Принято (Решение 16):** `stIpgOutLimPn`, универсум IN_GROUP ∪ OUT_GROUP, фильтр `fn2`; тип по 5-й литере кода САК |
 
 ---
 

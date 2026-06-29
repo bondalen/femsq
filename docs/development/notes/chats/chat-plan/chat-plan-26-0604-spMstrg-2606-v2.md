@@ -1,8 +1,8 @@
 # План работы чата: spMstrg_2606 — DAG-фильтрация и корректная цепь ИПГ (v2)
 
 **Дата:** 2026-06-04  
-**Версия плана:** v2.9 от 2026-06-26 (этап 18.8: sparse UtPl, CHECK>0, флешка)  
-**Предыдущая:** v2.8 от 2026-06-23 (этап 18.7+: полный тест планов, словарь терминов, Решение 14)  
+**Версия плана:** v2.10 от 2026-06-24 (этап 19: универсум строек `stIpgOutLimPn`, флешка)  
+**Предыдущая:** v2.9 от 2026-06-26 (этап 18.8: sparse UtPl, CHECK>0, флешка)  
 **Предыдущая:** v2.7 от 2026-06-17 (этап 18 — приёмка планов UtPl по stCost, dev-only)  
 **Предыдущая версия:** `chat-plan-26-0604-spMstrg-2606.md` (архив, сохранена)  
 **Автор:** Александр  
@@ -30,8 +30,10 @@
 | **8** | **К-7 строгая — только SQL-стек `_2606`** *(Решение 13, 2026-06-15)* — без app-parallelism и без persistent cache; ступени 1–3 (индексы → CostBase Ralp/PrDoc → fn2→SP) |
 | **9** | **План на смене ИП — «ужесточение» `_2605`** *(Решение 14, 2026-06-23)* — полный месячный UtPl на датах перехода; интерполяция плана/факта по дням — отложенная задача 18.9 |
 | **10** | **Sparse UtPl — только строки с планом > 0** *(2026-06-26)* — отсутствие месяца = нет строки в `ipgUtPlPnLmMn`/`LmQu`/`LmYe`; CHECK `CK_ipgUtPlPnLm*<>0` (включить на prod после очистки данных); fixture без полной сетки 12×4 |
+| **11** | **Универсум строек при `@ipgStKey` — IN_GROUP ∪ OUT_GROUP** *(Решение 16, 2026-06-24)* — таблица `stIpgOutLimPn` (1→N); фильтр `ipgChContracts` в `fn2_2606`; тип по 5-й литере САК; `stiLim`/`ipgStLm` не в runtime |
 
 Детали: `docs/development/notes/sql/26-0604/docs/03-design-decisions.md`  
+Анализ и обоснование: `docs/development/notes/sql/26-0604/docs/14-stipg-stilim-contract-universe-proposals.md`  
 Анализ производительности: `docs/development/notes/sql/26-0604/docs/07-performance-analysis.md`  
 **Словарь терминов:** `docs/project/glossary.md` (ревизия ≠ смена ИП; расчёт освоения ≠ ревизия)
 
@@ -638,7 +640,7 @@
 
 ## Следующий шаг реализации
 
-**Этап 18.8** ✅ — sparse UtPl и CHECK (разблокировал **18.7.4** и **17.2.2a**). См. ниже.
+**Этап 18.8** ✅ — sparse UtPl и CHECK (разблокировал **18.7.4** и **17.2.2a**). **Следующий:** этап **19** (универсум строек). См. ниже.
 
 ---
 
@@ -657,7 +659,7 @@
 | **18.3** | `07m_plan_additive_chain5.sql` — **К-13** (212 = 172+187+195) | ✅ **2026-06-17** |
 | **18.4** | `run_acceptance_dev_chain5.sh --with-plan-stcost` (фаза 3, timeout 480s) | ✅ wired |
 | **18.5** | Прогон: fixture → К-12 → К-13 @ `2022-12-31`, `stIpg=NULL` | ✅ **2026-06-17** (~299s+~302s) |
-| **18.6** | Journal; при PASS — продолжить этап **17.2.3** (ZIP с паролем) | ⬜ |
+| **18.6** | Journal; при PASS — этап **19**, затем **17.2.3** (ZIP с паролем после **19.7**) | ⬜ |
 
 #### Этап 18.7 — Строгая логика плана (пилот → цепь → агрегация → полный тест) 🔄
 
@@ -786,13 +788,36 @@
 | **18.8** sparse UtPl + CHECK | ✅ **18.8.1–18.8.6** (флешка пересобрана) |
 | **18.7.4** FIXTURE_07 + полная цепь | ✅ perf **138 с**; К-15: 1 ожидаемая аномалия (5258) |
 
-**Вывод:** **18.7.4** ✅; **18.8.6** ✅; следующий шаг — **18.6** journal → **17.2.3** ZIP с паролем.
+**Вывод:** **18.7.4** ✅; **18.8.6** ✅; следующий шаг — **этап 19** (универсум строек) → **18.6** journal → **17.2.3** ZIP с паролем.
+
+---
+
+### Этап 19 — Универсум строек при `@ipgStKey` (`stIpgOutLimPn`, фильтр fn2) ⬜
+
+> **Документация:** [`14-stipg-stilim-contract-universe-proposals.md`](../sql/26-0604/docs/14-stipg-stilim-contract-universe-proposals.md), **Решение 16** в `03-design-decisions.md`, `glossary.md` (IN_GROUP, OUT_GROUP, `stIpgOutLimPn`, тип по 5-й литере).  
+> **Проблема:** при `@ipgStKey ≠ NULL` mastering фильтрует по `ipgStPn`, но `fn2_2606` → RS1…7 отдают **всю цепь** (~829 cst при `@ipgStKey=42` вместо ~1 IN_GROUP).  
+> **Цель:** RS и PercentBrn сужаются до IN_GROUP ∪ OUT_GROUP; `@ipgStKey = NULL` без изменений.
+
+| # | Задача | Статус |
+|---|--------|--------|
+| **19.1** | DDL `ags.stIpgOutLimPn` + seed (узлы 1/2→`1,2,3`; 51→`2,3`; 45→`1`; листья без строк); `ags.fnCstAgPnTypeChar` | ⬜ |
+| **19.2** | `ags.fnIpgChContractsForStIpg_2606(@ipgCh, @ipgStKey)` — IN_GROUP ∪ OUT_GROUP (тип + предикат активности) | ⬜ |
+| **19.3** | Патч `fn2_2606` (`fnIpgChRsltCstUtl2_2606`): фильтр CTE `ipgChContracts`; при необходимости `nullIpgBase` | ⬜ |
+| **19.4** | Приёмка dev: `07q_stipg_contract_universe_chain5.sql` — COUNT/EXCEPT для `stIpg` **1, 51, 45, 42, 61**, `@ipgStKey=NULL` (полная цепь) | ⬜ |
+| **19.5** | Spot-check `spMstrg_2606` / RS1: `@ipgStKey=42` + `cstAgPn=2102` (~16 строк, не ~14k); сверка с `07f` / `07h` | ⬜ |
+| **19.6** | Sync `MSSQL2012/` (`10a`–`10c`, патч `04`); обновить `08_ROLLBACK` (DROP новых объектов) | ⬜ |
+| **19.7** | **Флешка деплоя:** скрипты `10a`–`10c` + патч `04` в `open/01_MSSQL2012/`; `./build_flash_package.sh`; `MANIFEST.sha256`; блок **«10 stIpgOutLimPn»** в `db-upgrade-spMstrg-2606.md` и deploy-day checklist (PDF); `README_DEPLOY.txt` | ⬜ |
+| **19.8** | Документация: `06-sp-recordsets-and-acceptance.md` (критерии RS при `@ipgStKey`); journal; глоссарий — финальная сверка | ⬜ |
+
+**Зависимости:** **19.7** — после **19.1–19.6** и PASS **19.4–19.5** на dev. **17.2.3** (ZIP с паролем) — после **19.7** (или параллельно, если prod-релиз без этапа 19 — по решению).
+
+**Открыто при реализации:** предикат **активности** OUT_GROUP (`lim > 0` vs `accepted > 0` vs `limNot`/`limOver`).
 
 ---
 
 ## Следующий шаг реализации (prod)
 
-**Этап 18.8** ✅ (флешка `09a`–`09c`). **18.7.4** ✅. Далее **18.6** journal → **17.2.3** ZIP с паролем.
+**Этап 19** (универсум строек) → **18.6** journal → **17.2.3** ZIP с паролем (после **19.7**).
 
 ### Этап 17 — Prod: офлайн-деплой 🔄
 
@@ -814,7 +839,8 @@
 - [x] **17.2.1** Каркас `26-0616_deploy/`: `build_flash_package.sh`, `generate_checklist_pdf.py`, `README_DEPLOY.txt`, `templates/` ✅
 - [x] **17.2.2** `./build_flash_package.sh` — `open/`, PDF, `MANIFEST.sha256`, ZIP без пароля ✅ **2026-06-16**
 - [x] **17.2.2a** Пересборка `open/` после **18.8.4** (`09a`–`09c` в `MSSQL2012/`): `./build_flash_package.sh`, сверка `MANIFEST.sha256` ✅ **2026-06-26**
-- [ ] **17.2.3** `DEPLOY_ARCHIVE_PASSWORD=… ./build_flash_package.sh --zip-password` — ZIP в `archive/` *(после **17.2.2a**)*
+- [ ] **17.2.2b** Пересборка `open/` после **19.7** (`10a`–`10c`, патч `04` в `MSSQL2012/`): `./build_flash_package.sh`, сверка `MANIFEST.sha256`
+- [ ] **17.2.3** `DEPLOY_ARCHIVE_PASSWORD=… ./build_flash_package.sh --zip-password` — ZIP в `archive/` *(после **17.2.2b**)*
 - [ ] **17.2.4** Проверка на nb-win: PDF, `00_VERIFY_before.sql` в SSMS, сверка `MANIFEST.sha256`
 - [ ] **17.2.5** Копирование каталога `26-0616_deploy/` на флеш-носитель
 - [ ] **17.2.6** Пароль архива передан исполнителю **отдельно** от носителя
@@ -824,7 +850,7 @@
 
 ## Следующий шаг реализации
 
-**Этап 18.6** journal → **17.2.3** ZIP с паролем.
+**Этап 19** — универсум строек (`stIpgOutLimPn`, фильтр fn2). Затем **18.6** journal → **17.2.3** ZIP с паролем.
 
 ---
 
@@ -897,9 +923,12 @@
 | `fixture/dev-chain5-utpl-stcost/` | **18** | ✅ FIXTURE_04 PASS |
 | `07m_plan_limit_conformance_chain5.sql` | **18** | ⬜ К-12 |
 | `07m_plan_additive_chain5.sql` | **18** | ⬜ К-13 |
-| `26-0616_deploy/` | **17.2** | ✅ пересборка **18.8.6** (`09a`–`09c`) |
+| `26-0616_deploy/` | **17.2** | ✅ пересборка **18.8.6** (`09a`–`09c`); ⬜ **19.7** (`10a`–`10c`) |
 | `MSSQL2012/09a`–`09c` _utpl_* | **18.8** | ✅ 18.8.4 |
-| `docs/project/glossary.md` | термины | ✅ v1.2.0 (sparse, CHECK, Решение 15) |
+| `MSSQL2012/10a`–`10c` _stIpgOutLimPn_* | **19** | ⬜ DDL + fn + seed |
+| `MSSQL2012/04` (патч fn2) | **19.3** | ⬜ фильтр `ipgChContracts` |
+| `07q_stipg_contract_universe_chain5.sql` | **19.4** | ⬜ приёмка универсума |
+| `docs/project/glossary.md` | термины | ✅ v1.3.0 (IN_GROUP, OUT_GROUP, Решение 16) |
 | `docs/12-dev-acceptance-protocol.md` | **15** | ✅ |
 | `MSSQL2012/04` … `06` | 11–12 | ✅ v9.0 + spMstrg |
 | `07_VERIFY_after.sql` | 12 | ✅ |
@@ -916,7 +945,8 @@
 | `docs/.../docs/08-testing-strategy.md` | **Стратегия тестирования: порядок stIpg, скрипты, правила безопасности** |
 | `docs/.../docs/04-computation-map.md` | Карта вычислений (§Шаг 5 пересмотрен: LEGACY → `_2606`) |
 | `docs/.../docs/05-fact-stcost-map.md` | Соответствие полей и stcKey для факт-функций |
-| `docs/.../docs/03-design-decisions.md` | Архитектурные решения 1–12, **13 (К-7 SQL-only)** |
+| `docs/.../docs/03-design-decisions.md` | Архитектурные решения 1–16 (**16:** универсум строек, `stIpgOutLimPn`) |
+| `docs/.../docs/14-stipg-stilim-contract-universe-proposals.md` | **Принято:** IN_GROUP ∪ OUT_GROUP, тип по 5-й литере, этап 19 |
 | `docs/.../docs/09-scheme-cascade-mastering.md` | Каскад схем, `4. Прочие` вне Mstrg |
 | `docs/.../docs/10-percentDev-218-diff-root-cause.md` | Корневая причина 218 расхождений `ag_percentDev` (v8.9) |
 | `docs/.../docs/diag-07h-stIpg61-half-rows.md` | Диагностика v7.1 (синтет. агентская схема) |
