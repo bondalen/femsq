@@ -4,7 +4,7 @@ GO
 -- =============================================================================
 -- Файл:    MSSQL2012/04_CREATE_FUNCTION_fnIpgChRsltCstUtl2_2606.sql
 -- Пакет:   docs/development/notes/sql/26-0604/
--- Зеркало dev v9.0. Совместимость: SQL Server 2012 SP4. Без CREATE OR ALTER.
+-- Зеркало dev v19.3. Совместимость: SQL Server 2012 SP4. Без CREATE OR ALTER.
 -- =============================================================================
 
 PRINT N'=== 04 MSSQL2012: CREATE fnIpgChRsltCstUtl2_2606 ===';
@@ -160,6 +160,9 @@ BEGIN
     DECLARE @branchCache TABLE (
         cstapbCstAgPn int NOT NULL PRIMARY KEY,
         branch int NULL
+    );
+    DECLARE @stIpgContracts TABLE (
+        cstAgPnKey int NOT NULL PRIMARY KEY
     );
 
     SELECT @yKey = MIN(y.yKey), @yyyy = MIN(y.yyyy)
@@ -356,6 +359,14 @@ BEGIN
       AND (b.cstapbStart IS NULL OR b.cstapbStart <= CAST(GETDATE() AS date))
     GROUP BY b.cstapbCstAgPn;
 
+    -- 19.3 (Решение 16): при @ipgStKey — IN_GROUP ∪ OUT_GROUP для ipgChContracts / nullIpgBase / extraBase.
+    IF @ipgStKey IS NOT NULL
+    BEGIN
+        INSERT INTO @stIpgContracts (cstAgPnKey)
+        SELECT cstAgPnKey
+        FROM ags.fnIpgChContractsForStIpg_2606(@ipgChKey, @ipgStKey);
+    END
+
     ;WITH ipgPnSchemePts AS (
         SELECT p.ipgpIpg AS ipgKey, p.ipgpCstAgPn, p.ipgpSh AS iShKey
         FROM ags.ipgPn p
@@ -431,6 +442,7 @@ BEGIN
     -- Полный контрактный универсум для nullIpgBase — inline-версия fnIpgChRsltCst (без вложенного TVF).
     -- Источники: ogAgFee, raFact2408, raFactRalp, cn_PrDocP, ipgPn, raFactMnrl (все 7 как fn_2408).
     -- CROSS JOIN mmmm × ra_typeGr → (cstAgPnKey, mKey, typeGr); DISTINCT убирает дубли.
+    -- v19.3: при @ipgStKey — только cstAgPn из fnIpgChContractsForStIpg_2606 (@stIpgContracts).
     ipgChContracts AS (
         SELECT DISTINCT src.cstAgPnKey, mm.mKey, tg.typeGr
         FROM (
@@ -463,6 +475,12 @@ BEGIN
         ) src
         CROSS JOIN ags.mmmm mm
         CROSS JOIN ags.ra_typeGr tg
+        WHERE @ipgStKey IS NULL
+           OR EXISTS (
+                SELECT 1
+                FROM @stIpgContracts u
+                WHERE u.cstAgPnKey = src.cstAgPnKey
+           )
     ),
     -- Строки с ipgKey=NULL: контрактный универсум как в fn_2408 (fnIpgChRsltCst):
     --   ogAgFee, ra, ralp, cn_PrDocP, ipgPn, cstAgPnMnrl — все 12 мес, ТОЛЬКО typeGr='2...'

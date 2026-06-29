@@ -792,7 +792,7 @@
 
 ---
 
-### Этап 19 — Универсум строек при `@ipgStKey` (`stIpgOutLimPn`, фильтр fn2) ⬜
+### Этап 19 — Универсум строек при `@ipgStKey` (`stIpgOutLimPn`, фильтр fn2) 🔄
 
 > **Документация:** [`14-stipg-stilim-contract-universe-proposals.md`](../sql/26-0604/docs/14-stipg-stilim-contract-universe-proposals.md), **Решение 16** в `03-design-decisions.md`, `glossary.md` (IN_GROUP, OUT_GROUP, `stIpgOutLimPn`, тип по 5-й литере).  
 > **Проблема:** при `@ipgStKey ≠ NULL` mastering фильтрует по `ipgStPn`, но `fn2_2606` → RS1…7 отдают **всю цепь** (~829 cst при `@ipgStKey=42` вместо ~1 IN_GROUP).  
@@ -800,24 +800,43 @@
 
 | # | Задача | Статус |
 |---|--------|--------|
-| **19.1** | DDL `ags.stIpgOutLimPn` + seed (узлы 1/2→`1,2,3`; 51→`2,3`; 45→`1`; листья без строк); `ags.fnCstAgPnTypeChar` | ⬜ |
-| **19.2** | `ags.fnIpgChContractsForStIpg_2606(@ipgCh, @ipgStKey)` — IN_GROUP ∪ OUT_GROUP (тип + предикат активности) | ⬜ |
-| **19.3** | Патч `fn2_2606` (`fnIpgChRsltCstUtl2_2606`): фильтр CTE `ipgChContracts`; при необходимости `nullIpgBase` | ⬜ |
-| **19.4** | Приёмка dev: `07q_stipg_contract_universe_chain5.sql` — COUNT/EXCEPT для `stIpg` **1, 51, 45, 42, 61**, `@ipgStKey=NULL` (полная цепь) | ⬜ |
+| **19.1** | DDL `ags.stIpgOutLimPn` + seed (узлы 1/2→`1,2,3`; 51→`2,3`; 45→`1`; листья без строк); `ags.fnCstAgPnTypeChar` | ✅ **2026-06-29** |
+| **19.2** | `ags.fnIpgChContractsForStIpg_2606(@ipgCh, @ipgStKey)` — IN_GROUP ∪ OUT_GROUP (тип + предикат активности) | ✅ **2026-06-29** |
+| **19.3** | Патч `fn2_2606` (`fnIpgChRsltCstUtl2_2606`): фильтр CTE `ipgChContracts`; при необходимости `nullIpgBase`. **Не менять** раскладку `np_`/`oh_` — см. `09-scheme-cascade-mastering.md` § «Два уровня» и «Примеры на данных» | ✅ **2026-06-29** |
+| **19.4** | Приёмка dev: `07q_stipg_contract_universe_chain5.sql` — COUNT/EXCEPT для `stIpg` **1, 51, 45, 42, 61**, `@ipgStKey=NULL` (полная цепь) | ✅ **2026-06-29** |
 | **19.5** | Spot-check `spMstrg_2606` / RS1: `@ipgStKey=42` + `cstAgPn=2102` (~16 строк, не ~14k); сверка с `07f` / `07h` | ⬜ |
 | **19.6** | Sync `MSSQL2012/` (`10a`–`10c`, патч `04`); обновить `08_ROLLBACK` (DROP новых объектов) | ⬜ |
-| **19.7** | **Флешка деплоя:** скрипты `10a`–`10c` + патч `04` в `open/01_MSSQL2012/`; `./build_flash_package.sh`; `MANIFEST.sha256`; блок **«10 stIpgOutLimPn»** в `db-upgrade-spMstrg-2606.md` и deploy-day checklist (PDF); `README_DEPLOY.txt` | ⬜ |
+| **19.7** | **Флешка деплоя:** скрипты `10a`–`10d` + патч `04` в `open/01_MSSQL2012/`; `./build_flash_package.sh`; `MANIFEST.sha256`; блок **«10 stIpgOutLimPn»** в `db-upgrade-spMstrg-2606.md` и deploy-day checklist (PDF); `README_DEPLOY.txt` | ⬜ |
 | **19.8** | Документация: `06-sp-recordsets-and-acceptance.md` (критерии RS при `@ipgStKey`); journal; глоссарий — финальная сверка | ⬜ |
+
+- [x] **19.1** DDL `stIpgOutLimPn` + `fnCstAgPnTypeChar` + seed (Решение 16) ✅ **2026-06-29**
+  - **Артефакты:** `10a_CREATE_TABLE_stIpgOutLimPn.sql`, `10b_CREATE_FUNCTION_fnCstAgPnTypeChar.sql`, `10c_SEED_stIpgOutLimPn.sql` (dev + `MSSQL2012/`)
+  - **DDL:** `ags.stIpgOutLimPn` (`siolpStIpg`→`stIpg.stiKey`, `siolpCstType char(1)` CHECK `IN ('1','2','3')`); `ags.fnCstAgPnTypeChar` — `SUBSTRING(cstapIpgPnN, 5, 1)`
+  - **Seed:** узлы **1, 2** → `1,2,3`; **51** → `2,3`; **45** → `1`; листья (**42, 61**) — без строк → **9** строк
+  - **Dev прогон:** `10a`→`10b`→`10c` @ `10.7.0.3` **PASS**; smoke `fnCstAgPnTypeChar` (`051-1001234`, `051-2001234`, `051-3001234`); `10c seed | PASS`
+- [x] **19.2** `fnIpgChContractsForStIpg_2606` — универсум IN_GROUP ∪ OUT_GROUP ✅ **2026-06-29**
+  - **Артефакты:** `10d_CREATE_FUNCTION_fnIpgChContractsForStIpg_2606.sql` (dev + `MSSQL2012/`)
+  - **Логика:** IN_GROUP = `ipgStPn` ∩ поддерево (`fnStDownAll` + корень, как `fnMasteringStIpgStCost_2606`); OUT_GROUP = `chainActive` \ IN_GROUP ∩ `stIpgOutLimPn` по `fnCstAgPnTypeChar`; `chainActive` — 7 источников CTE `ipgChContracts` fn2
+  - **Dev smoke:** цепь **5** — NULL/**1**=**968**, **51**=**967**, **45**=**0** (нет ПИР в цепи), **42**/**61**=**1** (2102); `10d smoke | PASS`
+- [x] **19.3** Патч `fn2_2606` / `spIpgChRsltCstUtl2_2606` — фильтр `ipgChContracts` ✅ **2026-06-29**
+  - **Артефакты:** `04_CREATE_FUNCTION_fnIpgChRsltCstUtl2_2606.sql`, `04b_…`, зеркала `MSSQL2012/04`, `04b`
+  - **Логика:** `@stIpgContracts` / `#stIpgContracts` ← `fnIpgChContractsForStIpg_2606` при `@ipgStKey IS NOT NULL`; `WHERE` в CTE `ipgChContracts` → наследуют `nullIpgBase`, `extraBase`, `masExtraBase`
+  - **Dev прогон:** `04` + `04b` @ `10.7.0.3` **PASS**; `stIpg=42` — 1 cst (2102), **14** строк fn2; EXCEPT с TVF: extra=0, missing=0; `NULL` — 908 distinct cst / 18482 строк (без сужения)
+- [x] **19.4** Приёмка `07q_stipg_contract_universe_chain5.sql` ✅ **2026-06-29**
+  - **Артефакт:** `07q_stipg_contract_universe_chain5.sql` — TVF COUNT, fn2 ⊆ TVF (extra=0), листья 42/61 missing=0, golden 2102, stIpg=45 пусто
+  - **Dev прогон @ `10.7.0.3`:** **PASS** (`fail_count=0`) для NULL/**1**=968, **51**=967, **45**=0, **42**/**61**=1 (2102)
 
 **Зависимости:** **19.7** — после **19.1–19.6** и PASS **19.4–19.5** на dev. **17.2.3** (ZIP с паролем) — после **19.7** (или параллельно, если prod-релиз без этапа 19 — по решению).
 
-**Открыто при реализации:** предикат **активности** OUT_GROUP (`lim > 0` vs `accepted > 0` vs `limNot`/`limOver`).
+**Решение 16 (дополнение 2026-06-29):** предикат активности OUT_GROUP = членство в **`chainActive`** (7 источников, паритет `fnIpgChRsltCst` / `_2605`); отдельный `lim>0` / `accepted>0` в TVF **не** применяется. Эталон COUNT — в `03-design-decisions.md` § Решение 16. Ужесточение — отдельное решение.
+
+**Справка (2026-06-29):** стройка **без `ipgPn`** с капфактом → `typeGrTtl = 2.2. Агентская, неплан` → колонки **`np_*`** в PercentBrn; **прочие затраты** (`typeGr = 2. ОА, прочие`) → **`oh_*`**, вне mastering и % лимита. Фильтр `@ipgStKey` (19.3) сужает **перечень строек**, не схему. Примеры: `051-2004714`, `033-2000973`, цепь 5 — `docs/09-scheme-cascade-mastering.md`.
 
 ---
 
 ## Следующий шаг реализации (prod)
 
-**Этап 19** (универсум строек) → **18.6** journal → **17.2.3** ZIP с паролем (после **19.7**).
+**Этап 19.5** — spot-check RS1 `@ipgStKey=42`; затем **19.6**…**19.8** → **18.6** journal → **17.2.3** ZIP с паролем (после **19.7**).
 
 ### Этап 17 — Prod: офлайн-деплой 🔄
 
@@ -839,7 +858,7 @@
 - [x] **17.2.1** Каркас `26-0616_deploy/`: `build_flash_package.sh`, `generate_checklist_pdf.py`, `README_DEPLOY.txt`, `templates/` ✅
 - [x] **17.2.2** `./build_flash_package.sh` — `open/`, PDF, `MANIFEST.sha256`, ZIP без пароля ✅ **2026-06-16**
 - [x] **17.2.2a** Пересборка `open/` после **18.8.4** (`09a`–`09c` в `MSSQL2012/`): `./build_flash_package.sh`, сверка `MANIFEST.sha256` ✅ **2026-06-26**
-- [ ] **17.2.2b** Пересборка `open/` после **19.7** (`10a`–`10c`, патч `04` в `MSSQL2012/`): `./build_flash_package.sh`, сверка `MANIFEST.sha256`
+- [ ] **17.2.2b** Пересборка `open/` после **19.7** (`10a`–`10d`, патч `04` в `MSSQL2012/`): `./build_flash_package.sh`, сверка `MANIFEST.sha256`
 - [ ] **17.2.3** `DEPLOY_ARCHIVE_PASSWORD=… ./build_flash_package.sh --zip-password` — ZIP в `archive/` *(после **17.2.2b**)*
 - [ ] **17.2.4** Проверка на nb-win: PDF, `00_VERIFY_before.sql` в SSMS, сверка `MANIFEST.sha256`
 - [ ] **17.2.5** Копирование каталога `26-0616_deploy/` на флеш-носитель
@@ -850,7 +869,7 @@
 
 ## Следующий шаг реализации
 
-**Этап 19** — универсум строек (`stIpgOutLimPn`, фильтр fn2). Затем **18.6** journal → **17.2.3** ZIP с паролем.
+**Этап 19.5** — spot-check RS1 `@ipgStKey=42`. Затем **19.6**…**19.8** → **18.6** journal → **17.2.3** ZIP с паролем.
 
 ---
 
@@ -925,9 +944,10 @@
 | `07m_plan_additive_chain5.sql` | **18** | ⬜ К-13 |
 | `26-0616_deploy/` | **17.2** | ✅ пересборка **18.8.6** (`09a`–`09c`); ⬜ **19.7** (`10a`–`10c`) |
 | `MSSQL2012/09a`–`09c` _utpl_* | **18.8** | ✅ 18.8.4 |
-| `MSSQL2012/10a`–`10c` _stIpgOutLimPn_* | **19** | ⬜ DDL + fn + seed |
-| `MSSQL2012/04` (патч fn2) | **19.3** | ⬜ фильтр `ipgChContracts` |
-| `07q_stipg_contract_universe_chain5.sql` | **19.4** | ⬜ приёмка универсума |
+| `10a`–`10c` _stIpgOutLimPn_* | **19.1** | ✅ dev + `MSSQL2012/` **2026-06-29** |
+| `10d` _fnIpgChContractsForStIpg_2606_ | **19.2** | ✅ dev + `MSSQL2012/` **2026-06-29** |
+| `MSSQL2012/04` (патч fn2) | **19.3** | ✅ фильтр `ipgChContracts` |
+| `07q_stipg_contract_universe_chain5.sql` | **19.4** | ✅ dev **2026-06-29** PASS |
 | `docs/project/glossary.md` | термины | ✅ v1.3.0 (IN_GROUP, OUT_GROUP, Решение 16) |
 | `docs/12-dev-acceptance-protocol.md` | **15** | ✅ |
 | `MSSQL2012/04` … `06` | 11–12 | ✅ v9.0 + spMstrg |
