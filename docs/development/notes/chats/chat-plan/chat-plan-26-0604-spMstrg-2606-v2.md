@@ -911,7 +911,7 @@
 | **21.0** | **Документация Решения 21** (до DDL rename): `03-design-decisions.md` §21; `glossary.md` (конвенция `_2606`, `ipgChRl_2606`, группы 18–20); `00-overview`, `04-computation-map`, `06-sp-recordsets-and-acceptance.md`; `09-scheme-cascade` (agency-golden); `13-plan-stcost` §17 (ручные прогоны `stIpg=4`); `db-upgrade-spMstrg-2606.md` + deploy-day checklist; journal | ✅ **2026-06-30** |
 | **21.1** | **Naming DDL:** `ipgChRlV`→`ipgChRl_2606`, `fnIpgChRlVEnd`→`fnIpgChRlEnd_2606`, `fnIpgChDatsV`→`fnIpgChDats_2606`, `stIpgOutLimPn`→`stIpgOutLimPn_2606`; dev-migration; массовая замена в `26-0604/` + fixture 06/07; `08_ROLLBACK`, `00/07_VERIFY` | ✅ **2026-06-30** |
 | **21.2** | **Патч PercentBrn:** plan-JOIN `gap`/`gip`/`gup` — `ipgChRl`→`ipgChRl_2606`; `05b_PATCH_PercentBrn_ipgChRl_2606.sql`; spot **2102**: `iv_Pl` на ИП **8/11** | ✅ **2026-06-30** |
-| **21.3** | **Agency-golden:** `stIpg=4`, cst **849**/**1862**; прогон К-12 на 849; при необходимости **FIXTURE_08** (UtPl @212/195/172/187 только в gr **18–20**); `07_*` spot / §17 ручной прогон | ⬜ |
+| **21.3** | **Agency-golden:** `stIpg=4`, cst **849**/**1862**; прогон К-12 на 849; при необходимости **FIXTURE_08** (UtPl @212/195/172/187 только в gr **18–20**); `07_*` spot / §17 ручной прогон | ✅ **2026-06-30** |
 | **21.4** | **Gate приёмки:** naming (`07_VERIFY_after`); plan-align (2102, `07o`/PercentBrn); agency-spot (`stIpg=4`); зафиксировать влияние на parity `07s` (ожидаемое отличие плана от `_2605`) | ⬜ |
 | **21.5** | Sync **`MSSQL2012/`** (01, 02, 05a/05b, 10a); обновить порядок в `README.md`; **19.7** пересборка флешки | ⬜ |
 
@@ -926,7 +926,10 @@
 - [x] **21.2** PercentBrn plan-JOIN → `ipgChRl_2606` ✅ **2026-06-30**
   - **Артефакты:** `05b_PATCH_PercentBrn_ipgChRl_2606.sql`, `07o_plan_align_spot_2102.sql`, `_gen_05b_plan_align.py`
   - **Dev:** `05b` applied (`05b_applied`); `07f4` PASS после refill RS1 полной цепи (15262/17); ложный FAIL при RS1=68 (после `07s` spot)
-- [ ] **21.3** Agency-golden + FIXTURE_08 (по результату К-12)
+- [x] **21.3** Agency-golden + FIXTURE_08 (по результату К-12) ✅ **2026-06-30**
+  - **К-12:** нативный UtPl в gr **18–20** достаточен; **FIXTURE_08 SQL не нужен** (`FIXTURE_08_agency_golden.md`)
+  - **Артефакты:** `07t_agency_spot_stipg4.sql`, `run_agency_golden_21_3.sh`
+  - **Gate:** `07t` PASS (warn=6: `ag_Pl` @ yearend — общий gap plan-align, см. `07o` invest 2102)
 - [ ] **21.4** Gates naming / plan-align / agency-spot
 - [ ] **21.5** MSSQL2012 sync → **19.7** флешка
 
@@ -978,7 +981,7 @@
 
 ## Следующий шаг реализации
 
-**Этап 21.3** — agency-golden (849/1862 @ `stIpg=4`). **Этап 19.7** — флешка после **21.5**.
+**Этап 21.4** — gates naming / plan-align / agency-spot. **Этап 19.7** — флешка после **21.5**.
 
 ---
 
@@ -1067,7 +1070,8 @@
 | `docs/project/glossary.md` | термины | ✅ v1.6.0 (Решение 21, `ipgChRl_2606`, agency-golden) |
 | `docs/03-design-decisions.md` §21 | **21.0** | ✅ **2026-06-30** |
 | `05b_PATCH_PercentBrn_ipgChRl_2606.sql` | **21.2** | ✅ plan-JOIN **2026-06-30** |
-| `fixture/.../FIXTURE_08_agency_golden.sql` | **21.3** | ⬜ при необходимости после К-12 |
+| `fixture/.../FIXTURE_08_agency_golden.md` | **21.3** | ✅ не нужен (К-12 PASS на нативном UtPl) |
+| `07t_agency_spot_stipg4.sql` | **21.3** | ✅ agency-spot gate **2026-06-30** |
 | `01_RENAME_ipgChRl_to_2606.sql` (или правка `01`) | **21.1** | ✅ `01b` + переименование файлов **2026-06-30** |
 | `docs/12-dev-acceptance-protocol.md` | **15** | ✅ |
 | `MSSQL2012/04` … `06` | 11–12 | ✅ v9.0 + spMstrg |

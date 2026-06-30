@@ -5372,6 +5372,46 @@
                   }
                 ]
               }
+            },
+            {
+              "log": {
+                "displayName": "Этап 21.2–21.3: plan-align PercentBrn, agency-golden (success). № log-2026-06-30-003",
+                "log-attributes": {
+                  "id": "log-2026-06-30-003",
+                  "timestamp": "2026-06-30T17:45:00+03:00",
+                  "level": "success",
+                  "effort": "4h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/project/glossary.md"
+                    ],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "21.2 PercentBrn plan-JOIN → ipgChRl_2606",
+                    "details": "05b_PATCH_PercentBrn_ipgChRl_2606.sql, 07o_plan_align_spot_2102.sql, _gen_05b_plan_align.py. Dev: 05b_applied; PercentBrn 15262/17.",
+                    "outcome": "Plan-JOIN на ipgChRl_2606; spot invest 2102 — gate 07o (ag_Pl @ yearend — отдельный gap).",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/05b_PATCH_PercentBrn_ipgChRl_2606.sql",
+                      "docs/development/notes/sql/26-0604/07o_plan_align_spot_2102.sql"
+                    ]
+                  },
+                  {
+                    "action": "21.3 Agency-golden stIpg=4, cst 849/1862",
+                    "details": "К-12 phase-0 PASS на нативном UtPl в gr 18–20; FIXTURE_08 SQL не нужен. 07t_agency_spot_stipg4.sql, run_agency_golden_21_3.sh, FIXTURE_08_agency_golden.md.",
+                    "outcome": "07t PASS (warn=6: ag_Pl @ yearend); ag_lim+ag_accepted на ИП 6/8/11. Следующий: 21.4 gates.",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/07t_agency_spot_stipg4.sql",
+                      "docs/development/notes/sql/26-0604/fixture/dev-chain5-utpl-stcost/FIXTURE_08_agency_golden.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606-v2.md"
+                    ]
+                  }
+                ]
+              }
             }
           ]
         }

@@ -103,7 +103,7 @@ spMstrg_2605 → ResultSet1..7
 | **parity** | Регрессия vs prod `_2605` до релиза fix календаря | Полное совпадение RS1 `_2606` ↔ `_2605` (**все** поля, вкл. `rowNum`, `limSort`); **16** `dateRslt` на цепи 5 | `07s_rs1_parity_chain5.sql` |
 | **calendar** | Контракт графика Java (17 дат) | `fnIpgChDats_2606 EXCEPT dateRslt(RS1)` = ∅; на **01.01**: plan=0, rest≈lim; COUNT spot 2102: **68** (=17×4) | `07s_calendar_chain5.sql` |
 | **plan-align** | План PercentBrn = mastering / fixture | spot **2102**: `iv_Pl` на ИП **6, 8, 11**; источник — `ipgChRl_2606`, группы **18–20** | этап **21.2** / `07o` |
-| **agency-spot** | Agency-golden | `@ipgStKey=4`, cst **849**/**1862**: `ag_Pl` и `ag_accepted` на ИП 6/8/11 | этап **21.3** / §17 `13-plan-stcost` |
+| **agency-spot** | Agency-golden | `@ipgStKey=4`, cst **849**/**1862**: `ag_lim` + `ag_accepted` на ИП 6/8/11 | этап **21.3** ✅ `07t` |
 
 Gate **parity** обязателен перед флешкой этапа 19. Gate **calendar** — после рефакторе `05` PercentBrn (этап 20). Состояние «parity PASS + calendar FAIL» — **ожидаемо** до fix.
 
