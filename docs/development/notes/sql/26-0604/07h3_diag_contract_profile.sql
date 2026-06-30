@@ -43,10 +43,10 @@ SELECT v.lbl, v.cac, cap.cstapIpgPnN AS code,
     (SELECT COUNT(*) FROM ags.cstAgPnMnrl m WHERE m.amCstAgPn = v.cac) AS mnrl_cnt,
     (SELECT COUNT(*) FROM ags.cn_PrDocP p WHERE p.pdpCstAgPn = v.cac) AS prDocP_cnt,
     (SELECT COUNT(DISTINCT p.ipgpSh) FROM ags.ipgPn p
-     INNER JOIN ags.ipgChRlV v2 ON v2.ipgcrvIpg = p.ipgpIpg AND v2.ipgcrvChain = @ipgCh
+     INNER JOIN ags.ipgChRl_2606 v2 ON v2.ipgcrvIpg = p.ipgpIpg AND v2.ipgcrvChain = @ipgCh
      WHERE p.ipgpCstAgPn = v.cac) AS ipgPn_schemes,
     (SELECT COUNT(*) FROM ags.ipgPn p
-     INNER JOIN ags.ipgChRlV v2 ON v2.ipgcrvIpg = p.ipgpIpg AND v2.ipgcrvChain = @ipgCh
+     INNER JOIN ags.ipgChRl_2606 v2 ON v2.ipgcrvIpg = p.ipgpIpg AND v2.ipgcrvChain = @ipgCh
      WHERE p.ipgpCstAgPn = v.cac) AS ipgPn_rows
 FROM (
     SELECT 1 AS ord, @cacSlow AS cac, N'slow' AS lbl

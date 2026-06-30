@@ -62,12 +62,14 @@ fnMasteringStIpgStCost(@ipgRoot, @ipgCh, @stCostKey, @stNet)
 
 ## Полная карта шагов `_2606`
 
+> **Имена объектов (Решение 21):** в таблицах ниже — **целевые** имена `_2606`. До этапа **21.1** в БД: `ipgChRl_2606`, `fnIpgChDats_2606`, `fnIpgChRlEnd_2606`. Колонки `ipgcrv*` не меняются.
+
 ### Шаг 0. Генерация дат
 
 | Аспект | Стек А `_2408` | Стек Б `fnMstrg` | `_2606` |
 |--------|---------------|-----------------|---------|
-| Функция | `fnIpgChDats(@ipgCh)` | `fnIpgChDats(@ipgCh)` | **`fnIpgChDatsV(@ipgCh)`** (новая) |
-| Источник дат переходов | `ipg.ipgStr` (глобальный) | `ipg.ipgStr` (глобальный) | **`ipgChRlV.ipgcrvStr`** (per-chain) |
+| Функция | `fnIpgChDats(@ipgCh)` | `fnIpgChDats(@ipgCh)` | **`fnIpgChDats_2606(@ipgCh)`** |
+| Источник дат переходов | `ipg.ipgStr` (глобальный) | `ipg.ipgStr` (глобальный) | **`ipgChRl_2606.ipgcrvStr`** (per-chain) |
 | Начальная точка | первый месяц ИПГ | первый месяц ИПГ | **01.01 расчётного года** |
 | Точки перехода ИПГ | только конец года | только конец года | **день перехода ± 1 день** |
 
@@ -81,9 +83,9 @@ fnMasteringStIpgStCost(@ipgRoot, @ipgCh, @stCostKey, @stNet)
 |--------|---------------|-----------------|---------|
 | Критерий | `MONTH(ipgStr) ≤ mNum ≤ MONTH(ipgEnd)` | то же (Дефект А) | **`ipgcrvStr ≤ dateRslt ≤ ipgcrvEnd`** |
 | Гранулярность | месяц (→ задвоение при переходе внутри мес.) | месяц | **день** (нет задвоений) |
-| Источник | `ipg.ipgStr/ipgEnd` (глобальный) | то же | **`ipgChRlV`** (per-chain, Дефект Б исправлен) |
+| Источник | `ipg.ipgStr/ipgEnd` (глобальный) | то же | **`ipgChRl_2606`** (per-chain, Дефект Б исправлен) |
 
-Источник для `_2606`: **`ipgChRlV` + `fnIpgChDatsV`** (исправляет Дефект Б).
+Источник для `_2606`: **`ipgChRl_2606` + `fnIpgChDats_2606`**.
 
 ---
 
@@ -104,7 +106,7 @@ fnMasteringStIpgStCost(@ipgRoot, @ipgCh, @stCostKey, @stNet)
 | Аспект | Стек А `_2408` | Стек Б `fnMstrg` | `_2606` |
 |--------|---------------|-----------------|---------|
 | Источник | `ipgPn.ipgpSmTtl × 1M` прямым JOIN | `fnStCostRsIpgPn → ipgUtPlPnLmMn` | **`fnStCostRsIpgPn_2606`** |
-| Актуальность | через `ipg.ipgKey` (Дефект Б) | через `ipg.ipgKey` (Дефект Б) | **через `ipgChRlV.ipgcrvIpg`** |
+| Актуальность | через `ipg.ipgKey` (Дефект Б) | через `ipg.ipgKey` (Дефект Б) | **через `ipgChRl_2606.ipgcrvIpg`** |
 | Fallback при NULL | — | — | **`ipgUtPlP.iuplpLim`** (для цепи 15) |
 | Фильтр по `@stCostKey` | нет | да (`fnStCostRs*`) | **да** (nullable) |
 
@@ -189,8 +191,8 @@ fnMasteringStIpgStCost(@ipgRoot, @ipgCh, @stCostKey, @stNet)
 
 | Шаг | Объект `_2606` | Источник-прототип | Изменения относительно прототипа |
 |-----|---------------|-------------------|----------------------------------|
-| 0. Даты | `fnIpgChDatsV` | `fnIpgChDats` (стек Б) | Точки перехода из `ipgChRlV`, дата 01.01 |
-| 1. Актуальность ИПГ | внутри `fnIpgChDatsV` + `fnStCostRsIpgPn_2606` | `ipg.ipgStr/ipgEnd` (стек А/Б) | `ipgChRlV.ipgcrvStr/ipgcrvEnd`, день |
+| 0. Даты | `fnIpgChDats_2606` | `fnIpgChDats` (стек Б) | Точки перехода из `ipgChRl_2606`, дата 01.01 |
+| 1. Актуальность ИПГ | внутри `fnIpgChDats_2606` + `fnStCostRsIpgPn_2606` | `ipg.ipgStr/ipgEnd` (стек А/Б) | `ipgChRl_2606.ipgcrvStr/ipgcrvEnd`, день |
 
 **Терминология:** смена актуальности **инвестпрограммы** в цепи — не «ревизия» (ревизия = `ra_a`, факт). См. `docs/project/glossary.md`, Решение 14 в `03-design-decisions.md`.
 | 2. DAG-отбор строек | `fnMasteringStIpgStCost_2606` | стек Б | Актуальная ИПГ на дату (не последняя) |
@@ -201,7 +203,7 @@ fnMasteringStIpgStCost(@ipgRoot, @ipgCh, @stCostKey, @stNet)
 | 5c. Факт PrevYears | `fnMasteringCstAgPnSh_2606` | **разрыв — выбрать вариант 6А/6Б/6В** | |
 | 6. Агрегация схем | `fnMasteringStIpgStCost_2606` | стек Б | Параметры `@ipgStKey`/`@stCostKey` nullable |
 | 7. Метаданные + вывод | `fnIpgChRsltCstUtl2_2606` | стек Б / стек А | Совместимый формат |
-| 8. Итог + % | `fnIpgChRsltCstUtlPercentBrn_2606` | стек А/Б | Использует `_2606`-функции |
+| 8. Итог + % | `fnIpgChRsltCstUtlPercentBrn_2606` | стек А/Б | `@dt` ← `fnIpgChDats_2606` (Реш. 17 ✅); plan-JOIN → **`ipgChRl_2606`** (Реш. 21, этап 21.2) |
 | 9. Процедура | `spMstrg_2606` | стек А | `@ipgStKey`, `@stCostKey` nullable |
 
 ---

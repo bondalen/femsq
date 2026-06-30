@@ -276,8 +276,8 @@ def main() -> None:
     scheme_insert = f"""
     INSERT INTO @mastMonthEnd (ipgKey, dAll)
     SELECT v.ipgcrvIpg AS ipgKey, MAX(d.dAll) AS dAll
-    FROM ags.fnIpgChDatsV(@ipgChKey) d
-    INNER JOIN ags.ipgChRlV v ON v.ipgcrvChain = @ipgChKey
+    FROM ags.fnIpgChDats_2606(@ipgChKey) d
+    INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvChain = @ipgChKey
         AND d.dAll >= v.ipgcrvStr AND (v.ipgcrvEnd IS NULL OR d.dAll <= v.ipgcrvEnd)
     GROUP BY v.ipgcrvIpg, YEAR(d.dAll), MONTH(d.dAll);
 
@@ -285,7 +285,7 @@ def main() -> None:
         SELECT m.*, me.ipgKey, MONTH(me.dAll) AS mNum, v.ipgcrvStr AS ipgActStr, v.ipgcrvEnd AS ipgActEnd
         FROM ags.fnMasteringStIpgStCost_2606(@ipgStKey, @ipgChKey, @stCostKey, NULL) m
         INNER JOIN @mastMonthEnd me ON me.dAll = m.dAll
-        INNER JOIN ags.ipgChRlV v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = me.ipgKey
+        INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = me.ipgKey
     )
     INSERT INTO @schemeRows
     {scheme_body}
@@ -386,7 +386,7 @@ END
         f"""    SELECT @yKey = MIN(y.yKey), @yyyy = MIN(y.yyyy)
     FROM (
         SELECT MAX(y2.yyyy) AS mxY
-        FROM ags.ipgChRlV v
+        FROM ags.ipgChRl_2606 v
         INNER JOIN ags.ipg i ON i.ipgKey = v.ipgcrvIpg
         INNER JOIN ags.yyyy y2 ON y2.yKey = i.ipgYy
         WHERE v.ipgcrvChain = @ipgChKey

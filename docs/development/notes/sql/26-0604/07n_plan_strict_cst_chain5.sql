@@ -32,7 +32,7 @@ BEGIN
     SELECT TOP (1) @cstAgPn = p.ipgpCstAgPn
     FROM ags.ipgStPn sp
     INNER JOIN ags.ipgPn p ON p.ipgpKey = sp.ipgspPn
-    INNER JOIN ags.ipgChRlV v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
+    INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
     WHERE sp.ipgspSt = @stIpg AND p.ipgpCstAgPn IS NOT NULL;
 END;
 
@@ -64,7 +64,7 @@ SELECT
          THEN 1 ELSE 0 END AS active_on_dt
 INTO #rev
 FROM ags.ipgPn p
-INNER JOIN ags.ipgChRlV v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
+INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
 WHERE p.ipgpCstAgPn = @cstAgPn
 ORDER BY v.ipgcrvStr;
 

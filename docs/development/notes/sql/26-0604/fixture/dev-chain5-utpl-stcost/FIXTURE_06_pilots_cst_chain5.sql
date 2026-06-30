@@ -22,7 +22,7 @@ BEGIN
 END;
 
 IF NOT EXISTS (
-    SELECT 1 FROM ags.ipgChRlV
+    SELECT 1 FROM ags.ipgChRl_2606
     WHERE ipgcrvChain = @ipgCh AND ipgcrvIpg = 6 AND ipgcrvUtPlGr = 18
 )
 BEGIN
@@ -50,7 +50,7 @@ SELECT
 INTO #targets
 FROM #pilots pl
 INNER JOIN ags.ipgPn p ON p.ipgpCstAgPn = pl.cstAgPn AND p.ipgpSh = 1
-INNER JOIN ags.ipgChRlV v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
+INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
 LEFT JOIN ags.ipgPnLim l212 ON l212.ipgplPn = p.ipgpKey AND l212.ipgplStCost = 212
 LEFT JOIN ags.ipgPnLim l195 ON l195.ipgplPn = p.ipgpKey AND l195.ipgplStCost = 195
 LEFT JOIN ags.ipgPnLim l172 ON l172.ipgplPn = p.ipgpKey AND l172.ipgplStCost = 172

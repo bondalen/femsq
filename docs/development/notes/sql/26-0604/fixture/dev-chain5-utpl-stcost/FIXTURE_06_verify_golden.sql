@@ -13,7 +13,7 @@ DECLARE @fail int = 0;
 PRINT N'=== FIXTURE_06 verify golden cstAgPn=' + CAST(@cstAgPn AS nvarchar) + N' ===';
 
 SELECT @fail = @fail + CASE WHEN ipgcrvUtPlGr NOT IN (18, 19, 20) THEN 1 ELSE 0 END
-FROM ags.ipgChRlV WHERE ipgcrvChain = 5;
+FROM ags.ipgChRl_2606 WHERE ipgcrvChain = 5;
 
 IF @fail > 0
 BEGIN

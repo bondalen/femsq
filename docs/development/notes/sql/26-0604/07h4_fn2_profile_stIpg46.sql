@@ -21,7 +21,7 @@ DECLARE @msg     nvarchar(500);
 SELECT @yKey = MIN(y.yKey)
 FROM (
     SELECT MAX(y2.yyyy) AS mxY
-    FROM ags.ipgChRlV v
+    FROM ags.ipgChRl_2606 v
     INNER JOIN ags.ipg i ON i.ipgKey = v.ipgcrvIpg
     INNER JOIN ags.yyyy y2 ON y2.yKey = i.ipgYy
     WHERE v.ipgcrvChain = @ipgCh

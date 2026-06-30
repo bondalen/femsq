@@ -1,0 +1,12 @@
+# Виртуальные окружения (Pylance зависает на site-packages)
+**/.venv/
+**/.venv_build/
+**/.venv_excel/
+**/node_modules/
+
+# Собранные артефакты deploy-пакетов
+docs/development/notes/sql/**/*_deploy/open/
+docs/development/notes/sql/**/*_deploy/archive/
+
+# DBHub локально
+.cursor/dbhub/node_modules/

@@ -5,7 +5,7 @@ GO
 -- Файл:    03d_CREATE_FUNCTION_fnMasteringStIpgStCost_2606.sql
 -- Пакет:   docs/development/notes/sql/26-0604/
 -- Назначение: Освоение по разделу ИПГ и статье затрат с раскрытием по стройкам (_2606).
---   Фикс Деф.А: ipgChRlV вместо ipgChRl; stNet из ipgCh (не max по цепи).
+--   Фикс Деф.А: ipgChRl_2606 вместо ipgChRl; stNet из ipgCh (не max по цепи).
 --   @ipgStKey / @stCostKey / @stNet — nullable (NULL = без фильтра / из ipgCh).
 -- Предусловия: 03c (fnMasteringCstAgPnSh_2606).
 -- Прототип: ags.fnMasteringStIpgStCost (legacy, не изменяется).
@@ -147,7 +147,7 @@ RETURN
                 RIGHT JOIN
                 (
                     SELECT p.ipgpCstAgPn, s.ipgspSt
-                    FROM ags.ipgChRlV v
+                    FROM ags.ipgChRl_2606 v
                     INNER JOIN ags.ipgPn p ON v.ipgcrvIpg = p.ipgpIpg
                     INNER JOIN ags.ipgStPn s ON p.ipgpKey = s.ipgspPn
                     WHERE v.ipgcrvChain = @ipgCh
@@ -176,13 +176,13 @@ IF NOT EXISTS (
 )
     EXEC sys.sp_addextendedproperty
         @name = N'MS_Description',
-        @value = N'Освоение по разделу ИПГ и статье затрат (_2606). ipgChRlV, nullable @ipgStKey/@stCostKey.',
+        @value = N'Освоение по разделу ИПГ и статье затрат (_2606). ipgChRl_2606, nullable @ipgStKey/@stCostKey.',
         @level0type = N'SCHEMA', @level0name = N'ags',
         @level1type = N'FUNCTION', @level1name = N'fnMasteringStIpgStCost_2606';
 ELSE
     EXEC sys.sp_updateextendedproperty
         @name = N'MS_Description',
-        @value = N'Освоение по разделу ИПГ и статье затрат (_2606). ipgChRlV, nullable @ipgStKey/@stCostKey.',
+        @value = N'Освоение по разделу ИПГ и статье затрат (_2606). ipgChRl_2606, nullable @ipgStKey/@stCostKey.',
         @level0type = N'SCHEMA', @level0name = N'ags',
         @level1type = N'FUNCTION', @level1name = N'fnMasteringStIpgStCost_2606';
 GO

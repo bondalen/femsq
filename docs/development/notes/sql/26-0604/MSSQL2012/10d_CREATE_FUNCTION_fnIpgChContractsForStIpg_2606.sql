@@ -4,13 +4,10 @@ GO
 -- =============================================================================
 -- Файл:    MSSQL2012/10d_CREATE_FUNCTION_fnIpgChContractsForStIpg_2606.sql
 -- Пакет:   docs/development/notes/sql/26-0604/
--- Назначение: IN_GROUP ∪ OUT_GROUP для фильтра fn2 (Решение 16, этап 19.2).
---   Совместимость: SQL Server 2012 SP4 (11.0.7507.2).
--- Автор:   Александр
--- Дата:    2026-06-29
+-- Зеркало dev. Синхронизировано скриптом _sync_to_mssql2012.py
 -- =============================================================================
 
-PRINT N'=== 10d MSSQL2012: CREATE FUNCTION ags.fnIpgChContractsForStIpg_2606 ===';
+PRINT N'=== 10d: CREATE FUNCTION ags.fnIpgChContractsForStIpg_2606 ===';
 GO
 
 SET ANSI_NULLS ON;
@@ -18,7 +15,12 @@ GO
 SET QUOTED_IDENTIFIER ON;
 GO
 
+
 IF OBJECT_ID(N'ags.fnIpgChContractsForStIpg_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnIpgChContractsForStIpg_2606;
+IF OBJECT_ID(N'ags.fnIpgChContractsForStIpg_2606', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnIpgChContractsForStIpg_2606;
+IF OBJECT_ID(N'ags.fnIpgChContractsForStIpg_2606', N'FN') IS NOT NULL
     DROP FUNCTION ags.fnIpgChContractsForStIpg_2606;
 GO
 
@@ -35,13 +37,14 @@ RETURN
         SELECT MIN(y.yKey) AS yKey
         FROM (
             SELECT MAX(y2.yyyy) AS mxY
-            FROM ags.ipgChRlV v
+            FROM ags.ipgChRl_2606 v
             INNER JOIN ags.ipg i ON i.ipgKey = v.ipgcrvIpg
             INNER JOIN ags.yyyy y2 ON y2.yKey = i.ipgYy
             WHERE v.ipgcrvChain = @ipgCh
         ) x
         INNER JOIN ags.yyyy y ON y.yyyy = x.mxY
     ),
+    -- Источники = UNION в CTE ipgChContracts fn2_2606 (без CROSS JOIN mmmm × ra_typeGr).
     chainActive AS (
         SELECT DISTINCT src.cstAgPnKey
         FROM (
@@ -89,7 +92,7 @@ RETURN
 
             SELECT ip.ipgpCstAgPn AS cstAgPnKey
             FROM ags.ipgPn ip
-            INNER JOIN ags.ipgChRlV v ON v.ipgcrvChain = @ipgCh AND v.ipgcrvIpg = ip.ipgpIpg
+            INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvChain = @ipgCh AND v.ipgcrvIpg = ip.ipgpIpg
             WHERE ip.ipgpCstAgPn IS NOT NULL
 
             UNION
@@ -107,7 +110,7 @@ RETURN
         SELECT x.ipgpCstAgPn AS cstAgPnKey
         FROM (
             SELECT p.ipgpCstAgPn, s.ipgspSt
-            FROM ags.ipgChRlV v
+            FROM ags.ipgChRl_2606 v
             INNER JOIN ags.ipgPn p ON v.ipgcrvIpg = p.ipgpIpg
             INNER JOIN ags.ipgStPn s ON p.ipgpKey = s.ipgspPn
             WHERE v.ipgcrvChain = @ipgCh
@@ -132,7 +135,7 @@ RETURN
           AND NOT EXISTS (SELECT 1 FROM inGroup ig WHERE ig.cstAgPnKey = ca.cstAgPnKey)
           AND EXISTS (
               SELECT 1
-              FROM ags.stIpgOutLimPn ol
+              FROM ags.stIpgOutLimPn_2606 ol
               WHERE ol.siolpStIpg = @ipgStKey
                 AND ol.siolpCstType = ags.fnCstAgPnTypeChar(cap.cstapIpgPnN)
           )
@@ -146,4 +149,49 @@ RETURN
 GO
 
 PRINT N'Функция ags.fnIpgChContractsForStIpg_2606 создана.';
+GO
+
+-- -----------------------------------------------------------------------------
+-- Smoke: цепь 5, ключевые stIpg (полная приёмка — 07q, этап 19.4)
+-- -----------------------------------------------------------------------------
+SET NOCOUNT ON;
+
+DECLARE @ch int = 5;
+DECLARE @nNull int, @n1 int, @n51 int, @n45 int, @n42 int, @n61 int;
+DECLARE @has2102 int;
+
+SELECT @nNull = COUNT(*) FROM ags.fnIpgChContractsForStIpg_2606(@ch, NULL);
+SELECT @n1   = COUNT(*) FROM ags.fnIpgChContractsForStIpg_2606(@ch, 1);
+SELECT @n51  = COUNT(*) FROM ags.fnIpgChContractsForStIpg_2606(@ch, 51);
+SELECT @n45  = COUNT(*) FROM ags.fnIpgChContractsForStIpg_2606(@ch, 45);
+SELECT @n42  = COUNT(*) FROM ags.fnIpgChContractsForStIpg_2606(@ch, 42);
+SELECT @n61  = COUNT(*) FROM ags.fnIpgChContractsForStIpg_2606(@ch, 61);
+SELECT @has2102 = COUNT(*) FROM ags.fnIpgChContractsForStIpg_2606(@ch, 42) WHERE cstAgPnKey = 2102;
+
+PRINT N'  chainActive (NULL): ' + CAST(@nNull AS nvarchar(10));
+PRINT N'  stIpg=1:   ' + CAST(@n1 AS nvarchar(10));
+PRINT N'  stIpg=51:  ' + CAST(@n51 AS nvarchar(10));
+PRINT N'  stIpg=45:  ' + CAST(@n45 AS nvarchar(10));
+PRINT N'  stIpg=42:  ' + CAST(@n42 AS nvarchar(10)) + N' (expect 2102: ' + CAST(@has2102 AS nvarchar(2)) + N')';
+PRINT N'  stIpg=61:  ' + CAST(@n61 AS nvarchar(10));
+
+IF @has2102 <> 1
+BEGIN
+    RAISERROR(N'10d FAIL: stIpg=42 must include cstAgPn 2102.', 16, 1);
+    RETURN;
+END;
+
+IF @n42 >= @nNull OR @n61 >= @nNull
+BEGIN
+    RAISERROR(N'10d FAIL: leaf stIpg (42/61) count must be < NULL chain (%d).', 16, 1, @nNull);
+    RETURN;
+END;
+
+IF @n1 <= @n42 OR @n51 <= @n42
+BEGIN
+    RAISERROR(N'10d FAIL: nodes with OUT_GROUP (1,51) must be wider than leaf 42.', 16, 1);
+    RETURN;
+END;
+
+PRINT N'10d smoke | PASS';
 GO

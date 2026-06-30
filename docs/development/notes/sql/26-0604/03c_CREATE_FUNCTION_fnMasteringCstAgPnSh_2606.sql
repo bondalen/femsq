@@ -5,14 +5,14 @@ GO
 -- Файл:    03c_CREATE_FUNCTION_fnMasteringCstAgPnSh_2606.sql
 -- Пакет:   docs/development/notes/sql/26-0604/
 -- Назначение: Освоение по стройке с учётом схем реализации (_2606).
---   fnMasteringCstAgPn_2606: fnIpgChDatsV + fnStCostRsCstAgPn_2606 + ipgChRlV.
+--   fnMasteringCstAgPn_2606: fnIpgChDats_2606 + fnStCostRsCstAgPn_2606 + ipgChRl_2606.
 --   fnMasteringCstAgPnSh_2606: агрегация схем (прототип fnMasteringCstAgPnSh).
 -- ИЗМЕНЕНИЯ (Этап 14.2, 2026-06-15):
 --   - @ralpCostBase + @prDocMnrlCostBase вместо 17× OUTER APPLY bundle (P6-lite).
 -- ИЗМЕНЕНИЯ (Этап 8.3, 2026-06-11):
 --   - Все LEGACY-вызовы fnMasteringPresRa/AccpRa/... → fnMasteringPresRa_2606/...
 --   - Добавлены 27 новых колонок Ret/InProc/NotArr/PresAll/PrevYears (Вариант 6А).
--- Предусловия: 02 (fnIpgChDatsV), 03a, 03b, 03b1 (fnMasteringFact*_2606).
+-- Предусловия: 02 (fnIpgChDats_2606), 03a, 03b, 03b1 (fnMasteringFact*_2606).
 -- Автор:   Александр
 -- Дата:    2026-06-15 (обновлён)
 -- =============================================================================
@@ -77,7 +77,7 @@ BEGIN
         SET @masteringTrue = 'true';
     ELSE IF @ipgSh = 1
         BEGIN
-            IF (SELECT COUNT(*) FROM ags.ipgChRlV v JOIN ags.ipgPn p ON v.ipgcrvIpg = p.ipgpIpg
+            IF (SELECT COUNT(*) FROM ags.ipgChRl_2606 v JOIN ags.ipgPn p ON v.ipgcrvIpg = p.ipgpIpg
                 WHERE v.ipgcrvChain = @ipgCh AND p.ipgpCstAgPn = @cstAgPn AND p.ipgpSh = 2) > 0
                 SET @masteringTrue = 'false';
             ELSE
@@ -85,7 +85,7 @@ BEGIN
         END
     ELSE
         BEGIN
-            IF (SELECT COUNT(*) FROM ags.ipgChRlV v JOIN ags.ipgPn p ON v.ipgcrvIpg = p.ipgpIpg
+            IF (SELECT COUNT(*) FROM ags.ipgChRl_2606 v JOIN ags.ipgPn p ON v.ipgcrvIpg = p.ipgpIpg
                 WHERE v.ipgcrvChain = @ipgCh AND p.ipgpCstAgPn = @cstAgPn AND p.ipgpSh IN (1, 2)) > 0
                 SET @masteringTrue = 'false';
             ELSE
@@ -258,7 +258,7 @@ BEGIN
                     IIF(z.ipgpCstAgPn IS NULL, NULL, rl.MstrngNtArrRalp) AS MstrngNtArrRalp,
                     IIF(z.ipgpCstAgPn IS NULL, NULL, rl.MstrngNtArrRalpMn) AS MstrngNtArrRalpMn
                 FROM
-                    ags.fnIpgChDatsV(@ipgCh) d
+                    ags.fnIpgChDats_2606(@ipgCh) d
                         LEFT JOIN (SELECT * FROM ags.fnStCostRsCstAgPn_2606(@ipgCh, @cstAgPn, @ipgSh, @StCostKey, @stNet, @ipgRoot)) AS z ON d.dAll = z.dd
                         LEFT JOIN ags.cstAgPn c ON z.ipgpCstAgPn = c.cstapKey
                             LEFT JOIN ags.cstAg a ON c.cstapCsta = a.cstaKey
@@ -410,7 +410,7 @@ BEGIN
                     z.ipgpCstAgPn, a.cstaAg, z.mKey, z.smm, z.smmTtl, z.lim, z.pct,
                     z.iuplpSubAg
                 FROM
-                    ags.fnIpgChDatsV(@ipgCh) d
+                    ags.fnIpgChDats_2606(@ipgCh) d
                         LEFT JOIN (SELECT * FROM ags.fnStCostRsCstAgPn_2606(@ipgCh, @cstAgPn, @ipgSh, @StCostKey, @stNet, @ipgRoot)) AS z ON d.dAll = z.dd
                         LEFT JOIN ags.cstAgPn c ON z.ipgpCstAgPn = c.cstapKey
                             LEFT JOIN ags.cstAg a ON c.cstapCsta = a.cstaKey
@@ -525,7 +525,7 @@ BEGIN
                 FROM
                 (
                     SELECT v.ipgcrvChain, p.ipgpIpg, p.ipgpCstAgPn, p.ipgpSh, 1 AS ccc
-                    FROM ags.ipgPn p INNER JOIN ags.ipgChRlV v ON p.ipgpIpg = v.ipgcrvIpg
+                    FROM ags.ipgPn p INNER JOIN ags.ipgChRl_2606 v ON p.ipgpIpg = v.ipgcrvIpg
                     WHERE p.ipgpCstAgPn = @cstAgPn AND v.ipgcrvChain = @ipgCh
                     GROUP BY v.ipgcrvChain, p.ipgpIpg, p.ipgpCstAgPn, p.ipgpSh
                 ) AS z
@@ -837,7 +837,7 @@ IF NOT EXISTS (
 )
     EXEC sys.sp_addextendedproperty
         @name = N'MS_Description',
-        @value = N'Освоение по стройке с учётом схем реализации (_2606). ipgChRlV + fnMasteringCstAgPn_2606. Обновлено 2026-06-11: LEGACY→_2606, Вариант 6А.',
+        @value = N'Освоение по стройке с учётом схем реализации (_2606). ipgChRl_2606 + fnMasteringCstAgPn_2606. Обновлено 2026-06-11: LEGACY→_2606, Вариант 6А.',
         @level0type = N'SCHEMA', @level0name = N'ags',
         @level1type = N'FUNCTION', @level1name = N'fnMasteringCstAgPnSh_2606';
 GO

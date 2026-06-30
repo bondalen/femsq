@@ -5,9 +5,9 @@ GO
 -- Файл:    03a_CREATE_FUNCTION_fnStCostRsIpgPn_2606.sql
 -- Пакет:   docs/development/notes/sql/26-0604/
 -- Назначение: График планируемого освоения по пункту ИПГ (_2606).
---   Фикс Деф.Б: actuality через ipgChRlV; расширенный fallback к ipgUtPlP.iuplpLim
+--   Фикс Деф.Б: actuality через ipgChRl_2606; расширенный fallback к ipgUtPlP.iuplpLim
 --   (Решение 7, docs/03-design-decisions.md).
--- Предусловия: 01 (ipgChRlV заполнена), 03a0 (fnStCostIpgPn_2606).
+-- Предусловия: 01 (ipgChRl_2606 заполнена), 03a0 (fnStCostIpgPn_2606).
 -- Прототип: ags.fnStCostRsIpgPn (legacy, не изменяется).
 -- Автор:   Александр
 -- Дата:    2026-06-09
@@ -22,7 +22,7 @@ SET QUOTED_IDENTIFIER ON;
 GO
 
 -- -----------------------------------------------------------------------------
--- fnStCostRsIpgPn_2606 — график освоения по пункту ИПГ с actuality из ipgChRlV
+-- fnStCostRsIpgPn_2606 — график освоения по пункту ИПГ с actuality из ipgChRl_2606
 -- -----------------------------------------------------------------------------
 CREATE OR ALTER FUNCTION ags.fnStCostRsIpgPn_2606
 (
@@ -146,7 +146,7 @@ BEGIN
                 ags.ipgPn i
                 INNER JOIN ags.ipg a ON i.ipgpIpg = a.ipgKey
                 INNER JOIN ags.yyyy y ON a.ipgYy = y.yKey
-                INNER JOIN ags.ipgChRlV v
+                INNER JOIN ags.ipgChRl_2606 v
                     ON v.ipgcrvChain = @ipgCh
                    AND v.ipgcrvIpg = i.ipgpIpg
                 LEFT JOIN ags.ipgUtPlP n ON i.ipgpKey = n.iuplpIpgPn
@@ -295,13 +295,13 @@ IF NOT EXISTS (
 )
     EXEC sys.sp_addextendedproperty
         @name = N'MS_Description',
-        @value = N'График планируемого освоения по пункту ИПГ (_2606). Actuality через ipgChRlV; fallback к ipgUtPlP.iuplpLim (DAG fnStUpAll, корень 212).',
+        @value = N'График планируемого освоения по пункту ИПГ (_2606). Actuality через ipgChRl_2606; fallback к ipgUtPlP.iuplpLim (DAG fnStUpAll, корень 212).',
         @level0type = N'SCHEMA', @level0name = N'ags',
         @level1type = N'FUNCTION', @level1name = N'fnStCostRsIpgPn_2606';
 ELSE
     EXEC sys.sp_updateextendedproperty
         @name = N'MS_Description',
-        @value = N'График планируемого освоения по пункту ИПГ (_2606). Actuality через ipgChRlV; fallback к ipgUtPlP.iuplpLim (DAG fnStUpAll, корень 212).',
+        @value = N'График планируемого освоения по пункту ИПГ (_2606). Actuality через ipgChRl_2606; fallback к ipgUtPlP.iuplpLim (DAG fnStUpAll, корень 212).',
         @level0type = N'SCHEMA', @level0name = N'ags',
         @level1type = N'FUNCTION', @level1name = N'fnStCostRsIpgPn_2606';
 GO

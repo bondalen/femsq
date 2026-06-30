@@ -2,7 +2,7 @@ USE [FishEye];
 GO
 -- =============================================================================
 -- FIXTURE_06_01_swap_utplgr.sql
--- Dev-only: подмена ipgChRlV.ipgcrvUtPlGr для ИП 6/8/11 цепи 5 → группы 18/19/20.
+-- Dev-only: подмена ipgChRl_2606.ipgcrvUtPlGr для ИП 6/8/11 цепи 5 → группы 18/19/20.
 -- Исходные значения (3/4/6) сохраняются в ags._fixture_utpl06_log.
 -- =============================================================================
 SET NOCOUNT ON;
@@ -53,7 +53,7 @@ INTO ags._fixture_utpl06_log (
     ipgcrvKey, ipgcrvIpg, utPlGr_before, utPlGr_after,
     iuplpKey, ipgpKey, iuplpmKey, note
 )
-FROM ags.ipgChRlV v
+FROM ags.ipgChRl_2606 v
 INNER JOIN @map m ON m.ipg = v.ipgcrvIpg
 WHERE v.ipgcrvChain = @ipgCh;
 
@@ -65,7 +65,7 @@ DECLARE @n int = (
 );
 
 SELECT ipgcrvIpg, ipgcrvStr, ipgcrvEnd, ipgcrvUtPlGr
-FROM ags.ipgChRlV
+FROM ags.ipgChRl_2606
 WHERE ipgcrvChain = @ipgCh
 ORDER BY ipgcrvStr;
 

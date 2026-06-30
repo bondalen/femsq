@@ -27,7 +27,7 @@ SELECT @existing = COUNT(*)
 FROM ags.ipgUtPlPnLmMn m
 INNER JOIN ags.ipgUtPlP up ON up.iuplpKey = m.iuplpmPlPn
 INNER JOIN ags.ipgPn p ON p.ipgpKey = up.iuplpIpgPn
-INNER JOIN ags.ipgChRlV v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
+INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
 WHERE m.iuplpmStCost IN (195, 172, 187);
 
 IF @existing > 0
@@ -42,7 +42,7 @@ IF OBJECT_ID('tempdb..#parts') IS NOT NULL DROP TABLE #parts;
 ;WITH ch AS (
     SELECT DISTINCT p.ipgpKey, p.ipgpSmTtl, p.ipgpSmWrk, p.ipgpSmEqu, p.ipgpSmOth
     FROM ags.ipgPn p
-    INNER JOIN ags.ipgChRlV v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
+    INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
 ),
 lim AS (
     SELECT

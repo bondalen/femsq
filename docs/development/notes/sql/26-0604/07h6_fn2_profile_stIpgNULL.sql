@@ -23,7 +23,7 @@ DECLARE @msg       nvarchar(500);
 SELECT @yKey = MIN(y.yKey), @yyyy = MIN(y.yyyy)
 FROM (
     SELECT MAX(y2.yyyy) AS mxY
-    FROM ags.ipgChRlV v
+    FROM ags.ipgChRl_2606 v
     INNER JOIN ags.ipg i ON i.ipgKey = v.ipgcrvIpg
     INNER JOIN ags.yyyy y2 ON y2.yKey = i.ipgYy
     WHERE v.ipgcrvChain = @ipgChKey
@@ -103,8 +103,8 @@ RAISERROR(N'--- C. CTE volumes ---', 0, 1) WITH NOWAIT;
 IF OBJECT_ID('tempdb..#mastMonthEnd') IS NOT NULL DROP TABLE #mastMonthEnd;
 SELECT v.ipgcrvIpg AS ipgKey, MAX(d.dAll) AS dAll
 INTO #mastMonthEnd
-FROM ags.fnIpgChDatsV(@ipgChKey) d
-INNER JOIN ags.ipgChRlV v ON v.ipgcrvChain = @ipgChKey
+FROM ags.fnIpgChDats_2606(@ipgChKey) d
+INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvChain = @ipgChKey
     AND d.dAll >= v.ipgcrvStr AND (v.ipgcrvEnd IS NULL OR d.dAll <= v.ipgcrvEnd)
 GROUP BY v.ipgcrvIpg, YEAR(d.dAll), MONTH(d.dAll);
 
@@ -114,7 +114,7 @@ SET @t0 = SYSDATETIME();
     SELECT m.*, me.ipgKey, MONTH(me.dAll) AS mNum, v.ipgcrvStr AS ipgActStr, v.ipgcrvEnd AS ipgActEnd
     FROM ags.fnMasteringStIpgStCost_2606(@ipgStKey, @ipgChKey, @stCostKey, NULL) m
     INNER JOIN #mastMonthEnd me ON me.dAll = m.dAll
-    INNER JOIN ags.ipgChRlV v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = me.ipgKey
+    INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = me.ipgKey
 )
 SELECT mst.ipgpCstAgPn, mst.mNum, mst.ipgKey, mst.ipgActStr, mst.ipgActEnd,
     sch.iShKey, N'1. ОА и Изм.' AS typeGr,
@@ -146,7 +146,7 @@ FROM (
         UNION SELECT DISTINCT cstAgPnKey FROM #raFactStorage
         UNION SELECT DISTINCT cstAgPnKey FROM #raFactCct
         UNION SELECT ip.ipgpCstAgPn FROM ags.ipgPn ip
-            INNER JOIN ags.ipgChRlV v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = ip.ipgpIpg
+            INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = ip.ipgpIpg
             WHERE ip.ipgpCstAgPn IS NOT NULL
     ) src
     CROSS JOIN ags.mmmm mm
@@ -159,15 +159,15 @@ RAISERROR(@msg, 0, 1) WITH NOWAIT;
 -- allMonthsForIpg volume estimate
 ;WITH ipgPnSchemePts AS (
     SELECT p.ipgpIpg AS ipgKey, p.ipgpCstAgPn, p.ipgpSh AS iShKey
-    FROM ags.ipgPn p INNER JOIN ags.ipgChRlV v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = p.ipgpIpg
+    FROM ags.ipgPn p INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = p.ipgpIpg
     UNION SELECT p.ipgpIpg, p.ipgpCstAgPn, 2 FROM ags.ipgPn p
-        INNER JOIN ags.ipgChRlV v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = p.ipgpIpg WHERE p.ipgpSh = 1
+        INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = p.ipgpIpg WHERE p.ipgpSh = 1
 ),
 ipgMasteringCombos AS (
     SELECT DISTINCT v.ipgcrvIpg AS ipgKey, v.ipgcrvStr AS ipgActStr, v.ipgcrvEnd AS ipgActEnd,
         p.ipgpCstAgPn, N'1. ОА и Изм.' AS typeGr
     FROM ags.ipgPn p
-    INNER JOIN ags.ipgChRlV v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = p.ipgpIpg
+    INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = p.ipgpIpg
     WHERE EXISTS (SELECT 1 FROM #schemeRows sr WHERE sr.ipgpCstAgPn = p.ipgpCstAgPn)
 ),
 ipgSchemeCombo AS (

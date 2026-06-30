@@ -51,7 +51,7 @@ DECLARE @delPl int = @@ROWCOUNT;
 -- 3) восстановить ipgcrvUtPlGr
 UPDATE v
 SET ipgcrvUtPlGr = l.utPlGr_before
-FROM ags.ipgChRlV v
+FROM ags.ipgChRl_2606 v
 INNER JOIN ags._fixture_utpl06_log l ON l.ipgcrvKey = v.ipgcrvKey AND l.action = N'SWAP_UTPLGR'
 INNER JOIN #batches b ON b.batchId = l.batchId;
 

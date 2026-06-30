@@ -41,7 +41,7 @@
 
 `ipg.ipgStr/ipgEnd` — глобальные атрибуты ИПГ, не зависящие от цепи. Из-за этого в месяцах 7–12 цепи 15 одновременно присутствуют `ipg=25` и `ipg=26` (716 + 690 строк вместо 690).
 
-**Решение:** таблица `ags.ipgChRlV` + скалярный UDF `ags.fnIpgChRlVEnd`. `ipgcrvEnd` — вычисляемый столбец (`MIN(next.ipgcrvStr) − 1 день`); не хранится, не обновляется вручную. Прямой доступ к `ipgcrvEnd` через `ags.ipgChRlV` без дополнительного объекта-обёртки.
+**Решение:** таблица `ags.ipgChRl_2606` (целевое имя; до этапа **21.1** в БД и скриптах: `ipgChRl_2606`) + UDF `ags.fnIpgChRlEnd_2606` (`fnIpgChRlEnd_2606` до 21.1). `ipgcrvEnd` — вычисляемый столбец (`MIN(next.ipgcrvStr) − 1 день`). См. **Решение 21** в `03-design-decisions.md`.
 
 ---
 
@@ -65,17 +65,19 @@
 
 | Объект | Тип | Статус |
 |--------|-----|--------|
-| `ags.fnIpgChRlVEnd` | Scalar UDF | ✅ вычисляет `ipgcrvEnd` для computed column |
-| `ags.ipgChRlV` | Таблица | ✅ цепи 5, 15 + `ipgcrvEnd` computed |
-| `ags.fnIpgChDatsV` | Inline TVF | ✅ переходы из ipgChRlV |
-| `ags.fnStCostRsIpgPn_2606` | Multi-stmt TVF | ✅ actuality ipgChRlV + fallback iuplpLim |
-| `ags.fnStCostRsCstAgPn_2606` | Multi-stmt TVF | ✅ ipgChRlV + fnStCostRsIpgPn_2606 |
-| `ags.fnMasteringCstAgPnSh_2606` | Multi-stmt TVF | ✅ fnMasteringCstAgPn_2606 + ipgChRlV |
-| `ags.fnMasteringStIpgStCost_2606` | Inline TVF | ✅ ipgChRlV, nullable params |
+| `ags.fnIpgChRlEnd_2606` | Scalar UDF | ✅ (`fnIpgChRlEnd_2606` до 21.1) |
+| `ags.ipgChRl_2606` | Таблица | ✅ цепи 5, 15 (`ipgChRl_2606` до 21.1) |
+| `ags.fnIpgChDats_2606` | Inline TVF | ✅ (`fnIpgChDats_2606` до 21.1) |
+| `ags.fnStCostRsIpgPn_2606` | Multi-stmt TVF | ✅ actuality `ipgChRl_2606` + fallback iuplpLim |
+| `ags.fnStCostRsCstAgPn_2606` | Multi-stmt TVF | ✅ `ipgChRl_2606` + fnStCostRsIpgPn_2606 |
+| `ags.fnMasteringCstAgPnSh_2606` | Multi-stmt TVF | ✅ fnMasteringCstAgPn_2606 + `ipgChRl_2606` |
+| `ags.fnMasteringStIpgStCost_2606` | Inline TVF | ✅ `ipgChRl_2606`, nullable params |
 | `ags.fnIpgChRsltCstUtl2_2606` | Inline TVF | ✅ FishEye dev; 07d PASS |
-| `ags.fnIpgChRsltCstUtlPercentBrn_2606` | Multi-stmt TVF | ✅ создан; 07f FAIL (9668≠14447) |
-| `ags.spMstrg_2606` | Stored Procedure | ⬜ не создан |
-| `ags.spMstrg_2606_ResultSet1..7` | Таблицы | ⬜ не созданы (отдельно от `*_2408_ResultSet*`) |
+| `ags.fnIpgChRsltCstUtlPercentBrn_2606` | Multi-stmt TVF | ✅ calendar fix (05a); **15262** / 17 dateRslt |
+| `ags.stIpgOutLimPn_2606` | Таблица | ✅ этап 19 (`stIpgOutLimPn_2606` до 21.1) |
+| `ags.fnIpgChContractsForStIpg_2606` | Inline TVF | ✅ IN_GROUP ∪ OUT_GROUP |
+| `ags.spMstrg_2606` | Stored Procedure | ✅ |
+| `ags.spMstrg_2606_ResultSet1..7` | Таблицы | ✅ (отдельно от `*_2408_ResultSet*`) |
 
 **Новые скалярные функции факта (Вариант 6А, ~25 шт.)** — см. `05-fact-stcost-map.md`:
 
@@ -89,16 +91,42 @@
 
 ---
 
+## Конвенция имён стека `_2606` (Решение 21)
+
+> **Статус:** документация ✅ (этап **21.0**); переименование в БД и SQL — этап **21.1**.
+
+| Категория | Правило | Примеры |
+|-----------|---------|---------|
+| FUNCTION / PROCEDURE | суффикс **`_2606`** | `fn2_2606`, `spMstrg_2606` |
+| TABLE-заменитель legacy | **`{legacyName}_2606`** | `ipgChRl` → `ipgChRl_2606` |
+| Legacy prod | без суффикса, не изменять | `ipgChRl`, `ipgPn` |
+| Validity-колонки | префикс **`ipgcrv*`** (не переименовывать) | `ipgcrvStr`, `ipgcrvEnd` |
+| Платформенный DDL | без `_2606` | `factDoc`, `factDocCost` |
+| Dev-fixture UtPl | группы **18–20** (`TEST_CH5_*`); **не трогать** 3/4/6 | FIXTURE_06 |
+
+**Целевые переименования (21.1):** `ipgChRl_2606`→`ipgChRl_2606`, `fnIpgChRlEnd_2606`→`fnIpgChRlEnd_2606`, `fnIpgChDats_2606`→`fnIpgChDats_2606`, `stIpgOutLimPn_2606`→`stIpgOutLimPn_2606`.
+
+**Золотые стройки приёмки:**
+
+| Роль | `@ipgStKey` | `cstAgPn` | Назначение |
+|------|-------------|-----------|------------|
+| invest-golden | **42** | **2102** | календарь 17 дат, инвест-колонки |
+| agency-golden | **4** | **849**, **1862** | `ag_*` факт+план, смена ИП 6/8/11 |
+
+**Известный дефект (до 21.2):** PercentBrn plan-JOIN читает legacy `ipgChRl` (группы 3/4/6); mastering — `ipgChRl_2606` / группы 18–20. Патч `05b` — этап 21.2.
+
+---
+
 ## SQL-пакет (файлы в `docs/development/notes/sql/26-0604/`)
 
 | Файл | Содержимое | Статус |
 |------|-----------|--------|
 | `00_VERIFY_before.sql` | Состояние БД до применения | ⬜ |
-| `01_CREATE_TABLE_ipgChRlV.sql` | DDL + INSERT цепи 5, 15 | ✅ |
+| `01_CREATE_TABLE_ipgChRl_2606.sql` | DDL + INSERT цепи 5, 15 (`01_CREATE_TABLE_ipgChRl_2606.sql` до 21.1) | ✅ |
 | `01b_CREATE_TABLE_factDoc.sql` | `factDoc`, `factDocCost`, `*_fdKey` | ✅ |
 | `01c_CREATE_TRIGGER_factDoc_sync.sql` | Триггеры на 6 подклассах | ✅ |
 | `01d_BACKFILL_factDoc.sql` | Миграция плоских полей + `ra_summCt` | ✅ |
-| `02_CREATE_FUNCTION_fnIpgChDatsV.sql` | Генератор дат | ✅ |
+| `02_CREATE_FUNCTION_fnIpgChDats_2606.sql` | Генератор дат | ✅ |
 | `03a_CREATE_FUNCTION_fnStCostRsIpgPn_2606.sql` | Фикс Деф.Б + fallback | ✅ |
 | `03b0_CREATE_FUNCTION_fnStCost_2606.sql` | `fnStCostRa/RaCh/AgFee/Ralp/PrDoc/Mnrl_2606` (B+F) | ✅ |
 | `07b_VERIFY_fnStCost_2606.sql` | Тест F: равенство legacy vs `_2606` | ✅ |
@@ -113,7 +141,8 @@
 | `07e1_DIAG_m9_presented_chain5.sql` | Диагностика m9: RRcTimeList vs PresRaMn | ✅ причина найдена |
 | `07e2_COMPARE_fn2_single_cstAgPn.sql` | Точечное сравнение fn2 по `@cstAgPnKey` | ✅ инструмент |
 | `05_CREATE_FUNCTION_fnIpgChRsltCstUtlPercentBrn_2606.sql` | PercentBrn / RS1 | ✅ создан |
-| `07f_COMPARE_PercentBrn_full_chain5.sql` | Полный PercentBrn vs RS1 | ❌ 9668≠14447 |
+| `07f_COMPARE_PercentBrn_full_chain5.sql` | Полный PercentBrn vs RS1 | ✅ calendar baseline 15262/17 |
+| `07f4_baseline_count_chain5.sql` | Быстрый COUNT эталона | ✅ **2026-06-30** |
 | `05b_CREATE_TABLE_spMstrg_2606_ResultSets.sql` | DDL `spMstrg_2606_ResultSet1..7` | ⬜ |
 | `06_CREATE_PROCEDURE_spMstrg_2606.sql` | Процедура → только `*_2606_ResultSet*` | ⬜ |
 | `07_VERIFY_after.sql` | Проверки после применения | ✅ 2026-06-13 |
@@ -155,15 +184,15 @@ EXEC ags.spMstrg_2606
 | 0.4 | Анализ стека `fnMasteringStIpgStCost` + ipgPnLim + ipgUtPlPn* | ✅ `docs/03-design-decisions.md §7` |
 | 0.5 | Выбор тестовой цепи: цепь 5 (8 510 строк ipgPnLim, 9 708 ipgUtPlPnLmMn) | ✅ `docs/02-q1-q4-answers.md §0.5` |
 
-### Этап 1 — Таблица `ipgChRlV` ✅
+### Этап 1 — Таблица `ipgChRl_2606` ✅
 
 | Подэтап | Описание | Статус |
 |---------|----------|--------|
-| 1.1 | DDL `01_CREATE_TABLE_ipgChRlV.sql` (+ `MSSQL2012/`) | ✅ |
+| 1.1 | DDL `01_CREATE_TABLE_ipgChRl_2606.sql` (+ `MSSQL2012/`) | ✅ |
 | 1.2 | INSERT цепи 5 и 15 из `ipg.ipgStr` | ✅ |
 | 1.3 | `ipgcrvEnd` = LEAD−1; перекрытий нет | ✅ |
 
-### Этап 2 — `fnIpgChDatsV` ✅
+### Этап 2 — `fnIpgChDats_2606` ✅
 
 | Подэтап | Описание | Статус |
 |---------|----------|--------|
@@ -174,10 +203,10 @@ EXEC ags.spMstrg_2606
 
 | Подэтап | Описание | Статус |
 |---------|----------|--------|
-| 3a | `fnStCostRsIpgPn_2606`: actuality через `ipgChRlV` + fallback `iuplpLim` | ✅ |
-| 3b | `fnStCostRsCstAgPn_2606`: ipgChRlV + fnStCostRsIpgPn_2606 | ✅ |
-| 3c | `fnMasteringCstAgPnSh_2606`: fnMasteringCstAgPn_2606 + ipgChRlV | ✅ 624/624 COUNT |
-| 3d | `fnMasteringStIpgStCost_2606`: ipgChRlV, nullable @ipgStKey/@stCostKey | ✅ |
+| 3a | `fnStCostRsIpgPn_2606`: actuality через `ipgChRl_2606` + fallback `iuplpLim` | ✅ |
+| 3b | `fnStCostRsCstAgPn_2606`: ipgChRl_2606 + fnStCostRsIpgPn_2606 | ✅ |
+| 3c | `fnMasteringCstAgPnSh_2606`: fnMasteringCstAgPn_2606 + ipgChRl_2606 | ✅ 624/624 COUNT |
+| 3d | `fnMasteringStIpgStCost_2606`: ipgChRl_2606, nullable @ipgStKey/@stCostKey | ✅ |
 | 3e | Тест `(NULL,5,NULL,NULL)` + `@ipgStKey=21`: 799=799, 17 дат, agSmmTtl=0 | ✅ 07c PASS; FULL — опц. |
 
 ### Этап 4 — `fnIpgChRsltCstUtl2_2606` ✅
@@ -221,8 +250,8 @@ EXEC ags.spMstrg_2606
 | Точка | Условие готовности | Статус |
 |-------|--------------------|--------|
 | К-0 | Q1–Q4 отвечены; анализ стека + данных завершён | ✅ |
-| К-1 | `ipgChRlV` создана, цепи 5 и 15 заполнены, нет перекрытий | ✅ |
-| К-2 | `fnIpgChDatsV(5)` → 17 дат; доп.: `fnIpgChDatsV(15)` → точка разрыва 2025-07-16 | ✅ |
+| К-1 | `ipgChRl_2606` создана, цепи 5 и 15 заполнены, нет перекрытий | ✅ |
+| К-2 | `fnIpgChDats_2606(5)` → 17 дат; доп.: `fnIpgChDats_2606(15)` → точка разрыва 2025-07-16 | ✅ |
 | К-3 | `fnMasteringStIpgStCost_2606(NULL,5,NULL,NULL)` без задвоения ИПГ по месяцам | ⬜ |
 | К-4 | `fnIpgChRsltCstUtl2_2606` на **цепи 5**: `@ipgStKey=NULL/21`, `@stCostKey=NULL/212` | ✅ 07d |
 | К-5 | Полный `PercentBrn_2606` = `_2605` (будущий **RS1**, все `dateRslt` 2022) | ⬜ |
@@ -240,8 +269,8 @@ EXEC ags.spMstrg_2606
 | [`03-design-decisions.md`](03-design-decisions.md) | Архитектурные решения, в т.ч. §8 — изоляция ResultSet и клиентов |
 | [`04-computation-map.md`](04-computation-map.md) | Карта вычислений: какой стек — для лимита / плана / факта; решение «Разрыв 6А» |
 | [`05-fact-stcost-map.md`](05-fact-stcost-map.md) | Поля документов факта → `stcKey`; статусные поля RA/АВ/РАЛП; перечень ~25 новых скалярных функций |
-| [`06-sp-recordsets-and-acceptance.md`](06-sp-recordsets-and-acceptance.md) | Иерархия RS1..7, `@MounthEndDate`, контракт приёмки vs `_2605` |
-| [`14-stipg-stilim-contract-universe-proposals.md`](14-stipg-stilim-contract-universe-proposals.md) | **Принято (Решение 16):** `stIpgOutLimPn`, универсум IN_GROUP ∪ OUT_GROUP, фильтр `fn2`; тип по 5-й литере кода САК |
+| [`06-sp-recordsets-and-acceptance.md`](06-sp-recordsets-and-acceptance.md) | Иерархия RS1..7, `@MounthEndDate`, dual gate приёмки (parity / calendar), Решение 17 |
+| [`14-stipg-stilim-contract-universe-proposals.md`](14-stipg-stilim-contract-universe-proposals.md) | **Принято (Решение 16):** `stIpgOutLimPn_2606`, универсум IN_GROUP ∪ OUT_GROUP, фильтр `fn2`; тип по 5-й литере кода САК |
 
 ---
 
@@ -253,15 +282,16 @@ EXEC ags.spMstrg_2606
 |----------|----------|----------|
 | `@ipgCh` | **5** | «Газпром, 2022-го года, полугодие» (3 ИПГ) |
 | `@MounthEndDate` | `2022-09-30` | Для **RS4–RS7** (Access): текущий + 2 пред. месяца; **не** для RS1 (полный год → Java) |
-| Полный PercentBrn / RS1 | ~14 447 строк, 16 `dateRslt` | Эталон приёмки `_2606` (цепь 5, 2022) |
+| Полный PercentBrn / RS1 | ~14 447 строк (**16** `dateRslt`, legacy); **целевое:** **17** дат = `fnIpgChDats_2606` | Эталон parity — `_2605`; контракт графика — Решение 17 |
 | `@ipgStKey` | NULL | Все стройки (без фильтра по разделу ИПГ) |
 | `@ipgStKey` | 21 | «Объекты добычи газа» (листовой узел) |
 | `@stCostKey` | NULL | Без фильтра по затратам |
-| Дат расчёта | 17 | 2022-01-01 + 12 концов мес. + 4 точки перехода |
+| Дат расчёта (mastering, `fnIpgChDats_2606`) | **17** | 2022-01-01 + 12 концов мес. + 4 точки перехода |
+| Дат в RS1 / PercentBrn (до fix Реш. 17) | **16** | 01.01 отсутствует — известный дефект |
 | `ipgPnLim` | 8 510 строк | Достаточно для проверки `@stCostKey` |
 | `ipgUtPlPnLmMn` | 9 708 строк | Месячная декомпозиция лимитов |
 
-**Дополнительно — цепь 15** *(только `ipgChRlV` + доп. проверка `fnIpgChDatsV`; не этапы 3–6):*
+**Дополнительно — цепь 15** *(только `ipgChRl_2606` + доп. проверка `fnIpgChDats_2606`; не этапы 3–6):*
 
 | Параметр | Значение | Описание |
 |----------|----------|----------|
@@ -279,7 +309,7 @@ EXEC ags.spMstrg_2606
 | План миграции `01c`/`01d1`/`07j` | ✅ `docs/11-ra-work-stCost195-fix-plan.md` |
 | SQL-правки и миграция на dev | ✅ `01c` + `01d1` (2026-06-13) |
 | `07h` pres/lim после 01d1 | ✅ stIpg=61 vdiff=0; stIpg=46 NULL↔0 only |
-| `07_VERIFY_after` после 01d1 | ✅ fn2=11587, PBrn=14447 |
+| `07_VERIFY_after` после 01d1 | ✅ fn2=11587, PBrn_2606=**15262**/17, _2605=14447/16 |
 | К-11: `07j` PASS, `regression_182=0` | ✅ stIpg=46; `07b` G-stCost195 PASS |
 
 ---

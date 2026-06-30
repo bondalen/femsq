@@ -22,7 +22,7 @@ fn2_2606  (fnIpgChRsltCstUtl2_2606) — ITVF
   │                                   ├── 3× INSERT (схемы ag=2 / in=1 / dr=3)
   │                                   └── каждый → fnMasteringCstAgPn_2606  (MSTVF)
   │                                                   │
-  │                                                   ├── fnIpgChDatsV(5) → 17 дат
+  │                                                   ├── fnIpgChDats_2606(5) → 17 дат
   │                                                   ├── fnStCostRsCstAgPn_2606 → лимиты  ✅ factDocCost
   │                                                   │
   │                                                   └── 22 LEGACY scalar UDF за каждую дату:
@@ -58,7 +58,7 @@ fn2_2606  (fnIpgChRsltCstUtl2_2606) — ITVF
 | `ags.cstAgPnBranch` | Таблица | 1 015 | **PK только по суррогатному ключу** |
 | `ags.ipgStPn` | Таблица | 8 719 | **PK только по ipgspKey** |
 | Контрактов в цепи 5 | — | 680 | — |
-| Дат в fnIpgChDatsV(5) | — | 17 | — |
+| Дат в fnIpgChDats_2606(5) | — | 17 | — |
 
 ---
 

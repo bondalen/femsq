@@ -2,7 +2,7 @@ USE [FishEye];
 GO
 
 -- =============================================================================
--- Файл:    10c_SEED_stIpgOutLimPn.sql
+-- Файл:    10c_SEED_stIpgOutLimPn_2606.sql
 -- Пакет:   docs/development/notes/sql/26-0604/
 -- Назначение: Начальные правила OUT_GROUP для узлов stIpg (Решение 16, этап 19.1).
 --   Узлы 1, 2 → типы 1,2,3; 51 → 2,3; 45 → 1; листья (42, 61, …) — без строк.
@@ -14,16 +14,16 @@ GO
 SET NOCOUNT ON;
 GO
 
-PRINT N'=== 10c: SEED ags.stIpgOutLimPn ===';
+PRINT N'=== 10c: SEED ags.stIpgOutLimPn_2606 ===';
 PRINT N'Дата: ' + CONVERT(nvarchar(30), GETDATE(), 121);
 GO
 
 -- Идемпотентно: пересоздаём seed только для известных узлов
-DELETE FROM ags.stIpgOutLimPn
+DELETE FROM ags.stIpgOutLimPn_2606
 WHERE siolpStIpg IN (1, 2, 45, 51);
 GO
 
-INSERT INTO ags.stIpgOutLimPn (siolpStIpg, siolpCstType)
+INSERT INTO ags.stIpgOutLimPn_2606 (siolpStIpg, siolpCstType)
 VALUES
     (1, '1'), (1, '2'), (1, '3'),
     (2, '1'), (2, '2'), (2, '3'),
@@ -35,8 +35,8 @@ DECLARE @cnt int;
 DECLARE @leaf int;
 DECLARE @fnFail int;
 
-SELECT @cnt = COUNT(*) FROM ags.stIpgOutLimPn;
-SELECT @leaf = COUNT(*) FROM ags.stIpgOutLimPn WHERE siolpStIpg IN (42, 61);
+SELECT @cnt = COUNT(*) FROM ags.stIpgOutLimPn_2606;
+SELECT @leaf = COUNT(*) FROM ags.stIpgOutLimPn_2606 WHERE siolpStIpg IN (42, 61);
 
 IF @cnt <> 9
 BEGIN
@@ -75,7 +75,7 @@ END;
 PRINT N'  seed rows: ' + CAST(@cnt AS nvarchar(10));
 
 SELECT siolpStIpg, siolpCstType
-FROM ags.stIpgOutLimPn
+FROM ags.stIpgOutLimPn_2606
 ORDER BY siolpStIpg, siolpCstType;
 
 PRINT N'10c seed | PASS';

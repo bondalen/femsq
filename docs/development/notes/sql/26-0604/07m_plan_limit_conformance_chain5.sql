@@ -46,7 +46,7 @@ IF OBJECT_ID('tempdb..#chk') IS NOT NULL DROP TABLE #chk;
 ;WITH ch AS (
     SELECT DISTINCT p.ipgpKey, p.ipgpSmTtl, p.ipgpSmWrk, p.ipgpSmEqu, p.ipgpSmOth, p.ipgpCstAgPn
     FROM ags.ipgPn p
-    INNER JOIN ags.ipgChRlV v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
+    INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
     WHERE @stIpg IS NULL
        OR EXISTS (SELECT 1 FROM ags.ipgStPn sp WHERE sp.ipgspSt = @stIpg AND sp.ipgspPn = p.ipgpKey)
 )
@@ -145,7 +145,7 @@ IF OBJECT_ID('tempdb..#stack_chk') IS NOT NULL DROP TABLE #stack_chk;
 SELECT DISTINCT c.ipgpCstAgPn AS cstAgPnKey
 INTO #contracts
 FROM ags.ipgPn c
-INNER JOIN ags.ipgChRlV cr ON cr.ipgcrvIpg = c.ipgpIpg AND cr.ipgcrvChain = @ipgCh
+INNER JOIN ags.ipgChRl_2606 cr ON cr.ipgcrvIpg = c.ipgpIpg AND cr.ipgcrvChain = @ipgCh
 WHERE c.ipgpCstAgPn IS NOT NULL
   AND EXISTS (
       SELECT 1

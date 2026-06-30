@@ -20,7 +20,7 @@ SELECT @zero_mn = COUNT(*)
 FROM ags.ipgUtPlPnLmMn m
 INNER JOIN ags.ipgUtPlP up ON up.iuplpKey = m.iuplpmPlPn
 INNER JOIN ags.ipgPn p ON p.ipgpKey = up.iuplpIpgPn
-INNER JOIN ags.ipgChRlV v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
+INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
 WHERE m.iuplpmLim <= 0;
 
 IF @zero_mn > 0
@@ -32,7 +32,7 @@ END;
 ;WITH ch AS (
     SELECT DISTINCT p.ipgpKey, p.ipgpSmTtl, p.ipgpSmWrk, p.ipgpSmEqu, p.ipgpSmOth
     FROM ags.ipgPn p
-    INNER JOIN ags.ipgChRlV v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
+    INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
 ),
 pn_ut AS (
     SELECT DISTINCT up.iuplpIpgPn AS ipgpKey
@@ -99,7 +99,7 @@ FROM chk_lim;
 ;WITH ch AS (
     SELECT DISTINCT p.ipgpKey
     FROM ags.ipgPn p
-    INNER JOIN ags.ipgChRlV v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
+    INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
 ),
 mn AS (
     SELECT
@@ -141,7 +141,7 @@ FROM (
             FROM ags.ipgUtPlPnLmMn m
             INNER JOIN ags.ipgUtPlP up ON up.iuplpKey = m.iuplpmPlPn
             INNER JOIN ags.ipgPn p ON p.ipgpKey = up.iuplpIpgPn
-            INNER JOIN ags.ipgChRlV v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
+            INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
             WHERE m.iuplpmStCost IN (212, 195, 172, 187)
             GROUP BY up.iuplpIpgPn, m.iuplpmStCost
         ) s GROUP BY ipgpKey
@@ -157,7 +157,7 @@ FROM (
             FROM ags.ipgUtPlPnLmMn m
             INNER JOIN ags.ipgUtPlP up ON up.iuplpKey = m.iuplpmPlPn
             INNER JOIN ags.ipgPn p ON p.ipgpKey = up.iuplpIpgPn
-            INNER JOIN ags.ipgChRlV v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
+            INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
             WHERE m.iuplpmStCost = 212
         ) u
         INNER JOIN ags.ipgPn c ON c.ipgpKey = u.ipgpKey
@@ -179,7 +179,7 @@ FROM (
     FROM ags.ipgUtPlPnLmMn m
     INNER JOIN ags.ipgUtPlP up ON up.iuplpKey = m.iuplpmPlPn
     INNER JOIN ags.ipgPn p ON p.ipgpKey = up.iuplpIpgPn
-    INNER JOIN ags.ipgChRlV v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
+    INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
     WHERE m.iuplpmStCost IN (212, 195, 172, 187)
     GROUP BY m.iuplpmPlPn, m.iuplpmMn
 ) z

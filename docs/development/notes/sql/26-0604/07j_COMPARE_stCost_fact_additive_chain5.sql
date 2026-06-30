@@ -66,7 +66,7 @@ WHERE rs.ras_work IS NOT NULL AND rs.ras_work <> 0
   AND EXISTS (
       SELECT 1
       FROM ags.ipgPn pp
-      INNER JOIN ags.ipgChRlV cr ON cr.ipgcrvIpg = pp.ipgpIpg AND cr.ipgcrvChain = @ipgCh
+      INNER JOIN ags.ipgChRl_2606 cr ON cr.ipgcrvIpg = pp.ipgpIpg AND cr.ipgcrvChain = @ipgCh
       WHERE pp.ipgpCstAgPn = r.ra_cac
   )
 ORDER BY rs.ras_key DESC;
@@ -96,7 +96,7 @@ IF OBJECT_ID('tempdb..#diff_accp') IS NOT NULL DROP TABLE #diff_accp;
 SELECT DISTINCT pp.ipgpCstAgPn AS cstAgPnKey
 INTO #contracts
 FROM ags.ipgPn pp
-INNER JOIN ags.ipgChRlV cr ON cr.ipgcrvIpg = pp.ipgpIpg AND cr.ipgcrvChain = @ipgCh
+INNER JOIN ags.ipgChRl_2606 cr ON cr.ipgcrvIpg = pp.ipgpIpg AND cr.ipgcrvChain = @ipgCh
 WHERE @stIpg IS NULL
    OR EXISTS (
        SELECT 1 FROM ags.ipgStPn sp

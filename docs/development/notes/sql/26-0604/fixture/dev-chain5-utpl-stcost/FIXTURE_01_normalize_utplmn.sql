@@ -27,7 +27,7 @@ IF OBJECT_ID('tempdb..#scaled') IS NOT NULL DROP TABLE #scaled;
 ;WITH ch AS (
     SELECT DISTINCT p.ipgpKey, p.ipgpSmTtl
     FROM ags.ipgPn p
-    INNER JOIN ags.ipgChRlV v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
+    INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
 ),
 ut AS (
     SELECT
@@ -123,7 +123,7 @@ FROM (
     FROM ags.ipgUtPlPnLmMn m
     INNER JOIN ags.ipgUtPlP up ON up.iuplpKey = m.iuplpmPlPn
     INNER JOIN ags.ipgPn p ON p.ipgpKey = up.iuplpIpgPn
-    INNER JOIN ags.ipgChRlV v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
+    INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
     WHERE m.iuplpmStCost = 212
     GROUP BY up.iuplpKey, p.ipgpSmTtl
 ) x

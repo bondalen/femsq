@@ -4,7 +4,7 @@ GO
 -- 07p_plan_aggregate_chain5.sql
 -- Этап 18.7.3: согласованность накопленного плана при агрегации
 --   ipgPn → cstAgPn → stIpg → филиал → агент (og)
--- на 17 датах fnIpgChDatsV, пилотные cst с golden UtPl (FIXTURE_06).
+-- на 17 датах fnIpgChDats_2606, пилотные cst с golden UtPl (FIXTURE_06).
 --
 -- Критерии:
 --   К-18a: SUM(ipgp plan) = fnMasteringStIpgStCost(NULL) на (cstAgPn, dt)
@@ -30,13 +30,13 @@ INSERT INTO #pilots (cstAgPn) VALUES
     (2102), (121), (631), (1251), (1608), (1713), (2080), (2146), (2212);
 
 IF OBJECT_ID('tempdb..#dates') IS NOT NULL DROP TABLE #dates;
-SELECT d.dAll AS dt INTO #dates FROM ags.fnIpgChDatsV(@ipgCh) d;
+SELECT d.dAll AS dt INTO #dates FROM ags.fnIpgChDats_2606(@ipgCh) d;
 
 IF OBJECT_ID('tempdb..#ipgp') IS NOT NULL DROP TABLE #ipgp;
 SELECT DISTINCT p.ipgpKey, p.ipgpCstAgPn AS cstAgPn
 INTO #ipgp
 FROM ags.ipgPn p
-INNER JOIN ags.ipgChRlV v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
+INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
 INNER JOIN #pilots pl ON pl.cstAgPn = p.ipgpCstAgPn
 WHERE p.ipgpSh = 1
   AND EXISTS (

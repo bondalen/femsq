@@ -39,13 +39,13 @@ LEFT JOIN sys.objects o
 GO
 
 -- -----------------------------------------------------------------------------
--- 2. Таблица ipgChRlV (до применения 01 — должна отсутствовать)
+-- 2. Таблица ipgChRl_2606 (до применения 01 — должна отсутствовать)
 -- -----------------------------------------------------------------------------
-PRINT '--- 2. ipgChRlV (ожидается отсутствие до 01) ---';
+PRINT '--- 2. ipgChRl_2606 (ожидается отсутствие до 01) ---';
 SELECT
-    OBJECT_ID(N'ags.ipgChRlV', N'U') AS object_id,
+    OBJECT_ID(N'ags.ipgChRl_2606', N'U') AS object_id,
     CASE
-        WHEN OBJECT_ID(N'ags.ipgChRlV', N'U') IS NULL THEN 'OK (not exists yet)'
+        WHEN OBJECT_ID(N'ags.ipgChRl_2606', N'U') IS NULL THEN 'OK (not exists yet)'
         ELSE 'EXISTS — повторное применение 01'
     END AS status;
 GO

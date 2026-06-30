@@ -2,17 +2,17 @@ USE [FishEye];
 GO
 
 -- =============================================================================
--- Файл:    02_CREATE_FUNCTION_fnIpgChDatsV.sql
+-- Файл:    02_CREATE_FUNCTION_fnIpgChDats_2606.sql
 -- Пакет:   docs/development/notes/sql/26-0604/
 -- Назначение: Генератор дат расчёта освоения для цепи ИПГ (_2606).
---   Источник переходов: ags.ipgChRlV (ipgcrvStr / ipgcrvEnd), не ipg.ipgStr/ipgEnd.
+--   Источник переходов: ags.ipgChRl_2606 (ipgcrvStr / ipgcrvEnd), не ipg.ipgStr/ipgEnd.
 --   Прототип: ags.fnIpgChDats (legacy, не изменяется).
--- Предусловия: 01 (ipgChRlV заполнена).
+-- Предусловия: 01 (ipgChRl_2606 заполнена).
 -- Автор:   Александр
 -- Дата:    2026-06-09
 -- =============================================================================
 
-PRINT '=== 02: CREATE FUNCTION ags.fnIpgChDatsV ===';
+PRINT '=== 02: CREATE FUNCTION ags.fnIpgChDats_2606 ===';
 GO
 
 SET ANSI_NULLS ON;
@@ -20,7 +20,7 @@ GO
 SET QUOTED_IDENTIFIER ON;
 GO
 
-CREATE OR ALTER FUNCTION ags.fnIpgChDatsV
+CREATE OR ALTER FUNCTION ags.fnIpgChDats_2606
 (
     @ipgCh int
 )
@@ -31,7 +31,7 @@ RETURN
     WITH chainYear AS
     (
         SELECT MIN(yy.yyyy) AS intYear
-        FROM ags.ipgChRlV v
+        FROM ags.ipgChRl_2606 v
         INNER JOIN ags.ipg i ON i.ipgKey = v.ipgcrvIpg
         INNER JOIN ags.yyyy yy ON yy.yKey = i.ipgYy
         WHERE v.ipgcrvChain = @ipgCh
@@ -45,7 +45,7 @@ RETURN
         UNION ALL
 
         SELECT v.ipgcrvStr
-        FROM ags.ipgChRlV v
+        FROM ags.ipgChRl_2606 v
         CROSS JOIN chainYear cy
         WHERE v.ipgcrvChain = @ipgCh
           AND v.ipgcrvStr IS NOT NULL
@@ -54,7 +54,7 @@ RETURN
         UNION ALL
 
         SELECT v.ipgcrvEnd
-        FROM ags.ipgChRlV v
+        FROM ags.ipgChRl_2606 v
         CROSS JOIN chainYear cy
         WHERE v.ipgcrvChain = @ipgCh
           AND v.ipgcrvEnd IS NOT NULL
@@ -71,28 +71,28 @@ GO
 
 IF NOT EXISTS (
     SELECT 1 FROM sys.extended_properties
-    WHERE major_id = OBJECT_ID(N'ags.fnIpgChDatsV') AND minor_id = 0 AND name = N'MS_Description'
+    WHERE major_id = OBJECT_ID(N'ags.fnIpgChDats_2606') AND minor_id = 0 AND name = N'MS_Description'
 )
     EXEC sys.sp_addextendedproperty
         @name = N'MS_Description',
-        @value = N'Даты расчёта освоения для цепи ИПГ (_2606). Переходы из ipgChRlV; 01.01 года + концы мес. + ipgcrvStr/ipgcrvEnd.',
+        @value = N'Даты расчёта освоения для цепи ИПГ (_2606). Переходы из ipgChRl_2606; 01.01 года + концы мес. + ipgcrvStr/ipgcrvEnd.',
         @level0type = N'SCHEMA', @level0name = N'ags',
-        @level1type = N'FUNCTION', @level1name = N'fnIpgChDatsV';
+        @level1type = N'FUNCTION', @level1name = N'fnIpgChDats_2606';
 ELSE
     EXEC sys.sp_updateextendedproperty
         @name = N'MS_Description',
-        @value = N'Даты расчёта освоения для цепи ИПГ (_2606). Переходы из ipgChRlV; 01.01 года + концы мес. + ipgcrvStr/ipgcrvEnd.',
+        @value = N'Даты расчёта освоения для цепи ИПГ (_2606). Переходы из ipgChRl_2606; 01.01 года + концы мес. + ipgcrvStr/ipgcrvEnd.',
         @level0type = N'SCHEMA', @level0name = N'ags',
-        @level1type = N'FUNCTION', @level1name = N'fnIpgChDatsV';
+        @level1type = N'FUNCTION', @level1name = N'fnIpgChDats_2606';
 GO
 
 -- -----------------------------------------------------------------------------
 -- Проверка 2.1: цепь 5 — 17 дат
 -- -----------------------------------------------------------------------------
-PRINT '--- fnIpgChDatsV(5) ---';
-SELECT d.dAll FROM ags.fnIpgChDatsV(5) d ORDER BY d.dAll;
+PRINT '--- fnIpgChDats_2606(5) ---';
+SELECT d.dAll FROM ags.fnIpgChDats_2606(5) d ORDER BY d.dAll;
 
-DECLARE @cnt5 int = (SELECT COUNT(*) FROM ags.fnIpgChDatsV(5));
+DECLARE @cnt5 int = (SELECT COUNT(*) FROM ags.fnIpgChDats_2606(5));
 PRINT N'COUNT(5) = ' + CAST(@cnt5 AS nvarchar(10))
     + CASE WHEN @cnt5 = 17 THEN N' — OK' ELSE N' — ОШИБКА (ожидалось 17)' END;
 GO
@@ -100,20 +100,20 @@ GO
 -- -----------------------------------------------------------------------------
 -- Проверка 2.2: цепь 15 — точка разрыва 2025-07-15 / 2025-07-16
 -- -----------------------------------------------------------------------------
-PRINT '--- fnIpgChDatsV(15) vs fnIpgChDats(15) ---';
+PRINT '--- fnIpgChDats_2606(15) vs fnIpgChDats(15) ---';
 
-SELECT N'V' AS src, d.dAll FROM ags.fnIpgChDatsV(15) d
+SELECT N'V' AS src, d.dAll FROM ags.fnIpgChDats_2606(15) d
 UNION ALL
 SELECT N'legacy', d.dAll FROM ags.fnIpgChDats(15) d
 ORDER BY dAll, src;
 
-DECLARE @cnt15v int = (SELECT COUNT(*) FROM ags.fnIpgChDatsV(15));
+DECLARE @cnt15v int = (SELECT COUNT(*) FROM ags.fnIpgChDats_2606(15));
 DECLARE @cnt15l int = (SELECT COUNT(*) FROM ags.fnIpgChDats(15));
 DECLARE @has715 bit = CASE WHEN EXISTS (
-    SELECT 1 FROM ags.fnIpgChDatsV(15) d WHERE d.dAll = '2025-07-15'
+    SELECT 1 FROM ags.fnIpgChDats_2606(15) d WHERE d.dAll = '2025-07-15'
 ) THEN 1 ELSE 0 END;
 DECLARE @has716 bit = CASE WHEN EXISTS (
-    SELECT 1 FROM ags.fnIpgChDatsV(15) d WHERE d.dAll = '2025-07-16'
+    SELECT 1 FROM ags.fnIpgChDats_2606(15) d WHERE d.dAll = '2025-07-16'
 ) THEN 1 ELSE 0 END;
 
 PRINT N'COUNT V(15)=' + CAST(@cnt15v AS nvarchar(10))
@@ -123,12 +123,12 @@ PRINT N'2025-07-15 в V: ' + CASE @has715 WHEN 1 THEN N'да' ELSE N'нет' END
 
 -- Расхождения: только даты, отсутствующие в legacy (исправление разрыва)
 SELECT N'только в V' AS diff, v.dAll
-FROM ags.fnIpgChDatsV(15) v
+FROM ags.fnIpgChDats_2606(15) v
 WHERE NOT EXISTS (SELECT 1 FROM ags.fnIpgChDats(15) l WHERE l.dAll = v.dAll)
 UNION ALL
 SELECT N'только legacy', l.dAll
 FROM ags.fnIpgChDats(15) l
-WHERE NOT EXISTS (SELECT 1 FROM ags.fnIpgChDatsV(15) v WHERE v.dAll = l.dAll)
+WHERE NOT EXISTS (SELECT 1 FROM ags.fnIpgChDats_2606(15) v WHERE v.dAll = l.dAll)
 ORDER BY dAll, diff;
 GO
 

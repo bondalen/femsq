@@ -640,7 +640,7 @@
 
 ## Следующий шаг реализации
 
-**Этап 18.8** ✅ — sparse UtPl и CHECK (разблокировал **18.7.4** и **17.2.2a**). **Следующий:** этап **19** (универсум строек). См. ниже.
+**Этап 18.8** ✅ — sparse UtPl и CHECK (разблокировал **18.7.4** и **17.2.2a**). **Этап 19** ✅ (19.1–19.6). **Следующий:** **этап 20** (календарь RS1, Решение 17). См. ниже.
 
 ---
 
@@ -794,7 +794,7 @@
 
 ### Этап 19 — Универсум строек при `@ipgStKey` (`stIpgOutLimPn`, фильтр fn2) 🔄
 
-> **Документация:** [`14-stipg-stilim-contract-universe-proposals.md`](../sql/26-0604/docs/14-stipg-stilim-contract-universe-proposals.md), **Решение 16** в `03-design-decisions.md`, `glossary.md` (IN_GROUP, OUT_GROUP, `stIpgOutLimPn`, тип по 5-й литере).  
+> **Документация:** [`14-stipg-stilim-contract-universe-proposals.md`](../sql/26-0604/docs/14-stipg-stilim-contract-universe-proposals.md), **Решение 16** в `03-design-decisions.md`, **Решение 17** (календарь RS1 — этап 20), `glossary.md` (IN_GROUP, OUT_GROUP, `stIpgOutLimPn`, календарь RS1).  
 > **Проблема:** при `@ipgStKey ≠ NULL` mastering фильтрует по `ipgStPn`, но `fn2_2606` → RS1…7 отдают **всю цепь** (~829 cst при `@ipgStKey=42` вместо ~1 IN_GROUP).  
 > **Цель:** RS и PercentBrn сужаются до IN_GROUP ∪ OUT_GROUP; `@ipgStKey = NULL` без изменений.
 
@@ -804,10 +804,10 @@
 | **19.2** | `ags.fnIpgChContractsForStIpg_2606(@ipgCh, @ipgStKey)` — IN_GROUP ∪ OUT_GROUP (тип + предикат активности) | ✅ **2026-06-29** |
 | **19.3** | Патч `fn2_2606` (`fnIpgChRsltCstUtl2_2606`): фильтр CTE `ipgChContracts`; при необходимости `nullIpgBase`. **Не менять** раскладку `np_`/`oh_` — см. `09-scheme-cascade-mastering.md` § «Два уровня» и «Примеры на данных» | ✅ **2026-06-29** |
 | **19.4** | Приёмка dev: `07q_stipg_contract_universe_chain5.sql` — COUNT/EXCEPT для `stIpg` **1, 51, 45, 42, 61**, `@ipgStKey=NULL` (полная цепь) | ✅ **2026-06-29** |
-| **19.5** | Spot-check `spMstrg_2606` / RS1: `@ipgStKey=42` + `cstAgPn=2102` (~16 строк, не ~14k); сверка с `07f` / `07h` | ⬜ |
-| **19.6** | Sync `MSSQL2012/` (`10a`–`10c`, патч `04`); обновить `08_ROLLBACK` (DROP новых объектов) | ⬜ |
-| **19.7** | **Флешка деплоя:** скрипты `10a`–`10d` + патч `04` в `open/01_MSSQL2012/`; `./build_flash_package.sh`; `MANIFEST.sha256`; блок **«10 stIpgOutLimPn»** в `db-upgrade-spMstrg-2606.md` и deploy-day checklist (PDF); `README_DEPLOY.txt` | ⬜ |
-| **19.8** | Документация: `06-sp-recordsets-and-acceptance.md` (критерии RS при `@ipgStKey`); journal; глоссарий — финальная сверка | ⬜ |
+| **19.5** | Spot-check `spMstrg_2606` / RS1: `@ipgStKey=42` + `cstAgPn=2102` (64=16×4 GROUPING SETS, не ~14k); сверка с `07f` / `07h` | ✅ **2026-06-29** |
+| **19.6** | Sync `MSSQL2012/` (`10a`–`10d`, патч `04`); обновить `08_ROLLBACK` (DROP новых объектов) | ✅ **2026-06-29** |
+| **19.7** | **Флешка деплоя:** скрипты `10a`–`10d` + патч `04` + **`05`+`05a`** + объекты **этапа 21** (`01` rename, `05b` plan-align) в `open/01_MSSQL2012/`; `./build_flash_package.sh`; `MANIFEST.sha256`; deploy-day checklist (PDF); `README_DEPLOY.txt` | ⬜ |
+| **19.8** | Документация: `06-sp-recordsets-and-acceptance.md` (критерии RS при `@ipgStKey`, Решение 17); journal; глоссарий — финальная сверка | 🔄 **2026-06-29** (Реш. 17, glossary) |
 
 - [x] **19.1** DDL `stIpgOutLimPn` + `fnCstAgPnTypeChar` + seed (Решение 16) ✅ **2026-06-29**
   - **Артефакты:** `10a_CREATE_TABLE_stIpgOutLimPn.sql`, `10b_CREATE_FUNCTION_fnCstAgPnTypeChar.sql`, `10c_SEED_stIpgOutLimPn.sql` (dev + `MSSQL2012/`)
@@ -825,18 +825,127 @@
 - [x] **19.4** Приёмка `07q_stipg_contract_universe_chain5.sql` ✅ **2026-06-29**
   - **Артефакт:** `07q_stipg_contract_universe_chain5.sql` — TVF COUNT, fn2 ⊆ TVF (extra=0), листья 42/61 missing=0, golden 2102, stIpg=45 пусто
   - **Dev прогон @ `10.7.0.3`:** **PASS** (`fail_count=0`) для NULL/**1**=968, **51**=967, **45**=0, **42**/**61**=1 (2102)
+- [x] **19.5** Spot-check RS1 `@ipgStKey=42`, cst **2102** ✅ **2026-06-29**
+  - **Артефакт:** `07r_stipg_spot_rs1_chain5.sql` — fn2 (07h), PercentBrn (07f), `spMstrg_2606`→RS1
+  - **Dev прогон:** fn2=**14**; PercentBrn/RS1 raw=**64**, dedup keys=**16** `dateRslt` (legacy календарь без 01.01 — **баг**, см. **Решение 17**), только 2102; RS1↔PB `keyDiff=0` (не ~14 447). Целевое после fix: **68** = 17×4
+- [x] **19.6** Sync `MSSQL2012/` + `08_ROLLBACK` ✅ **2026-06-29**
+  - **MSSQL2012:** `10a`–`10d`, `04`/`04b` v19.3 — зеркала проверены; `README.md` — порядок `10*` перед `04`
+  - **08_ROLLBACK:** DROP `spIpgChRsltCstUtl*`, `fnIpgChContractsForStIpg_2606`, `fnCstAgPnTypeChar`, `stIpgOutLimPn`
+  - **_sync_to_mssql2012.py:** regex только `^CREATE FUNCTION` (не ломает PRINT)
 
-**Зависимости:** **19.7** — после **19.1–19.6** и PASS **19.4–19.5** на dev. **17.2.3** (ZIP с паролем) — после **19.7** (или параллельно, если prod-релиз без этапа 19 — по решению).
+**Зависимости:** **19.7** — после **19.1–19.6**, PASS **19.4**, gate **parity** (**20.1**), fix календаря (**20.2–20.5**) и **этапа 21** (naming + plan-align). **17.2.3** (ZIP с паролем) — после **19.7**.
 
 **Решение 16 (дополнение 2026-06-29):** предикат активности OUT_GROUP = членство в **`chainActive`** (7 источников, паритет `fnIpgChRsltCst` / `_2605`); отдельный `lim>0` / `accepted>0` в TVF **не** применяется. Эталон COUNT — в `03-design-decisions.md` § Решение 16. Ужесточение — отдельное решение.
+
+**Решение 17 (2026-06-29):** RS1 обязан содержать **17** `dateRslt` = `fnIpgChDatsV`; legacy 16 дат + костыль `mNum=0` — дефект PercentBrn. Два gate приёмки: **parity** (до fix, `07s`) и **calendar** (после рефакторе `05`). См. `03-design-decisions.md` §17, `06-sp-recordsets-and-acceptance.md`, **этап 20**.
 
 **Справка (2026-06-29):** стройка **без `ipgPn`** с капфактом → `typeGrTtl = 2.2. Агентская, неплан` → колонки **`np_*`** в PercentBrn; **прочие затраты** (`typeGr = 2. ОА, прочие`) → **`oh_*`**, вне mastering и % лимита. Фильтр `@ipgStKey` (19.3) сужает **перечень строек**, не схему. Примеры: `051-2004714`, `033-2000973`, цепь 5 — `docs/09-scheme-cascade-mastering.md`.
 
 ---
 
+### Этап 20 — Календарь RS1: 17 дат (`fnIpgChDatsV` в PercentBrn) ✅
+
+> **Документация:** **Решение 17** в `03-design-decisions.md`, `06-sp-recordsets-and-acceptance.md`, `glossary.md` (календарь RS1, начальная точка графика).  
+> **Проблема:** mastering на **17** датах (`fnIpgChDatsV`); PercentBrn / RS1 — **16** `dateRslt` (нет **01.01**); костыль `mNum=0` + UNION в legacy plan-JOIN. Полный RS1 цепи 5: **14 447** строк — расхождение с контрактом графика Java.  
+> **Цель:** `@dt` в `fnIpgChRsltCstUtlPercentBrn_2606` ← `fnIpgChDatsV` + `ipgChRlV`; начальная точка **01.01**; новый dev-эталон **15 262** / **17** дат; два gate: **parity** (до fix) и **calendar** (после fix).
+
+| # | Задача | Статус |
+|---|--------|--------|
+| **20.0** | **Документация Решения 17:** `03-design-decisions.md` §17; dual gate (parity/calendar) в `06-sp-recordsets-and-acceptance.md`; глоссарий v1.5.0; `00-overview`, `04-computation-map`, `14-stipg` | ✅ **2026-06-29** |
+| **20.1** | **`07s_rs1_parity_chain5.sql`** — gate **parity**: полное сравнение RS1 по golden `cstAgPn=2102` `_2606`↔`_2605` (все поля кроме `rowNum`); агрегаты GROUPING SETS; RS1↔PercentBrn; **16** дат (legacy) | ✅ **2026-06-30** |
+| **20.2** | **`05a_PATCH_PercentBrn_fnIpgChDatsV_2606.sql`:** `@dt` ← `fnIpgChDatsV` + `ipgChRlV`; убрать UNION `01.01`/EOMONTH; `ISNULL(ipgcrvEnd, 31.12)`; join `mNum=0`→`oneD.mNum=1` | ✅ **2026-06-30** |
+| **20.3** | **`07s_calendar_chain5.sql`** — gate **calendar**: EXCEPT `fnIpgChDatsV`↔`dateRslt`; spot **01.01** (`ag_Pl`/`ag_PlAccum`=0); `stIpg=42` / 2102: **68** строк (=17×4) | ✅ **2026-06-30** |
+| **20.4** | **Пересчёт dev-эталона:** `07f4_baseline_count_chain5.sql`; обновить `07f`/`07k`/`07_VERIFY_*` (15262/17 vs 14447/16); прогон `spMstrg_2606` полной цепи; **К-9** / **К-9b** | ✅ **2026-06-30** |
+| **20.5** | Sync **`MSSQL2012/05a_PATCH_PercentBrn_fnIpgChDatsV_2606.sql`**; `08_ROLLBACK` (комментарий); dev-прогон `07f4` после deploy из `MSSQL2012/` | ✅ **2026-06-30** |
+| **20.6** | *(отложено)* **Фантомный филиал** (`branch=0` дубль агента в GROUPING SETS) — отдельное решение | 📋 |
+
+- [x] **20.0** Документация Решения 17 ✅ **2026-06-29**
+  - **Артефакты:** `03-design-decisions.md` §17; `06-sp-recordsets-and-acceptance.md` (dual gate); `glossary.md` v1.5.0; `00-overview`, `04-computation-map`, `14-stipg`
+  - **Содержание:** календарь 17 дат = `fnIpgChDatsV`; начальная точка 01.01; parity vs calendar; влияние на COUNT RS1
+- [x] **20.1** `07s_rs1_parity_chain5.sql` — gate parity ✅ **2026-06-30**
+  - **Артефакт:** `07s_rs1_parity_chain5.sql` — `@refresh=0`; EXCEPT всех полей RS1 (кроме `rowNum`); §4 roll-up; §5 RS1↔PercentBrn
+  - **Dev @ 10.7.0.3:** **PASS (parity)**; WARN calendar=1 (01.01 до 20.2 — ожидаемо)
+  - §3 detail EXCEPT **0/0**; §5 RS1↔PercentBrn=**0**; §4 aggregate=**0**; 16+48=**64** строки _2606
+- [x] **20.2** Рефактор PercentBrn `@dt` ← `fnIpgChDatsV` ✅ **2026-06-30**
+  - **Артефакт:** `05a_PATCH_PercentBrn_fnIpgChDatsV_2606.sql`; деплой: DROP + `sed -n '24,2807p'` (multi-statement TVF)
+  - **Логика:** `insert @dt` из `fnIpgChDatsV` ⋈ `ipgChRlV`; убран legacy UNION; plan-JOIN: `(mNum=0 AND oneD.mNum=1)`
+  - **Fix:** `ISNULL(ipgcrvEnd, DATEFROMPARTS(YEAR(d.dAll),12,31))` — ipg=11 с `ipgcrvEnd=NULL` обрезала даты после 09-22
+  - **Dev:** spot 2102 / stIpg=42 — **17** `dateRslt`, **68** строк; min=**2022-01-01**
+- [x] **20.3** `07s_calendar_chain5.sql` — gate calendar ✅ **2026-06-30**
+  - **Артефакт:** `07s_calendar_chain5.sql`; `@refresh=1` (spMstrg_2606 ~0,6 с на stIpg=42)
+  - **Dev @ 10.7.0.3:** **PASS (calendar)**; WARN=1 (`ag_lim` NULL на golden 2102)
+  - EXCEPT `fnIpgChDatsV`↔RS1/PercentBrn=**0**; Jan1 `ag_Pl`/`ag_PlAccum`=**0**
+- [x] **20.4** Пересчёт эталона `07f` / `07k` / COUNT RS1 ✅ **2026-06-30**
+  - **Артефакты:** `07f4_baseline_count_chain5.sql`; обновлены `07f`, `07k`, `07_VERIFY_after`, `07_VERIFY_spMstrg_2606_chain5`, `MSSQL2012/07_VERIFY_after`
+  - **Новый dev-эталон:** PBrn/RS1 **_2606** = **15 262** / **17** `dateRslt`; **_2605** = **14 447** / **16**; delta **+815**; **RS4=916** (без изменений)
+  - **07f:** F.1/F.2 — baseline _2606; F.3 — keyDiff на 16 общих датах (без 01.01)
+  - **07k:** RS1 cnt06=**15262**, keyDiff(excl.01.01)=**0**; **PASS (warn=3)** на RS1–RS3 COUNT
+  - **Прогон:** `07f4` **PASS**; `spMstrg_2606` NULL ~**116 с**; логи `07f4_*`, `07k_calendar_baseline_run.log`
+- [x] **20.5** Sync `MSSQL2012/05a` ✅ **2026-06-30**
+  - **Артефакты:** `MSSQL2012/05a_PATCH_PercentBrn_fnIpgChDatsV_2606.sql` (зеркало dev, body MATCH); `MSSQL2012/README.md` — порядок `05`→`05a`; `08_ROLLBACK` — комментарий (DROP покрывает 05a)
+  - **Dev deploy из MSSQL2012/:** `DROP` + `sed -n '33,2814p'`; `patch_check=OK`
+  - **07f4 post-20.5:** **PASS** — 15262/17, RS1=PercentBrn, RS4=916
+- [ ] **20.6** Фантомный филиал (отдельное решение)
+
+**Эталон COUNT (dev, цепь 5 @ `2022-12-31`):**
+
+| Объект | Legacy _2605 | Calendar _2606 | Примечание |
+|--------|-------------|----------------|------------|
+| `dateRslt` | 16 | **17** | +**2022-01-01** |
+| PercentBrn / RS1 | 14 447 | **15 262** | +815 |
+| RS4 (окт–ноя–дек) | 916 | **916** | без изменений |
+| spot 2102 / stIpg=42 | 64 (=16×4) | **68** (=17×4) | golden |
+
+**Зависимости:** **20.1** — до **20.2**. **19.7** — после **этапа 21** (naming + plan-align + sync prod). **20.6** — независимо.
+
+---
+
+### Этап 21 — Именование стека, plan-align PercentBrn, agency-golden 🔄
+
+> **Документация:** **Решение 21** в `03-design-decisions.md`, `09-scheme-cascade-mastering.md`, `13-plan-stcost-monthly-acceptance.md`, `glossary.md`.  
+> **Проблема:** `ipgChRlV` / `fnIpgChDatsV` не следуют конвенции `_2606`; PercentBrn читает план из legacy `ipgChRl` (группы 3/4/6), mastering — из `ipgChRlV` (18–20); golden **2102** не годится для agency-факта и multi-IP плана.  
+> **Цель:** единая конвенция имён; plan-JOIN PercentBrn → `ipgChRl_2606`; agency-golden **849**/**1862** @ `stIpg=4`; затем **19.7** флешка.
+
+| # | Задача | Статус |
+|---|--------|--------|
+| **21.0** | **Документация Решения 21** (до DDL rename): `03-design-decisions.md` §21; `glossary.md` (конвенция `_2606`, `ipgChRl_2606`, группы 18–20); `00-overview`, `04-computation-map`, `06-sp-recordsets-and-acceptance.md`; `09-scheme-cascade` (agency-golden); `13-plan-stcost` §17 (ручные прогоны `stIpg=4`); `db-upgrade-spMstrg-2606.md` + deploy-day checklist; journal | ✅ **2026-06-30** |
+| **21.1** | **Naming DDL:** `ipgChRlV`→`ipgChRl_2606`, `fnIpgChRlVEnd`→`fnIpgChRlEnd_2606`, `fnIpgChDatsV`→`fnIpgChDats_2606`, `stIpgOutLimPn`→`stIpgOutLimPn_2606`; dev-migration; массовая замена в `26-0604/` + fixture 06/07; `08_ROLLBACK`, `00/07_VERIFY` | ✅ **2026-06-30** |
+| **21.2** | **Патч PercentBrn:** plan-JOIN `gap`/`gip`/`gup` — `ipgChRl`→`ipgChRl_2606`; `05b_PATCH_PercentBrn_ipgChRl_2606.sql`; spot **2102**: `iv_Pl` на ИП **8/11** | ✅ **2026-06-30** |
+| **21.3** | **Agency-golden:** `stIpg=4`, cst **849**/**1862**; прогон К-12 на 849; при необходимости **FIXTURE_08** (UtPl @212/195/172/187 только в gr **18–20**); `07_*` spot / §17 ручной прогон | ⬜ |
+| **21.4** | **Gate приёмки:** naming (`07_VERIFY_after`); plan-align (2102, `07o`/PercentBrn); agency-spot (`stIpg=4`); зафиксировать влияние на parity `07s` (ожидаемое отличие плана от `_2605`) | ⬜ |
+| **21.5** | Sync **`MSSQL2012/`** (01, 02, 05a/05b, 10a); обновить порядок в `README.md`; **19.7** пересборка флешки | ⬜ |
+
+- [x] **21.0** Документация Решения 21 ✅ **2026-06-30**
+  - **Артефакты:** `03-design-decisions.md` §21; `glossary.md` v1.6.0; `00-overview`, `04-computation-map`, `06-sp-recordsets-and-acceptance`; `09-scheme-cascade` (пример 5 agency-golden); `13-plan-stcost` §17.1–17.2; `db-upgrade-spMstrg-2606.md` v1.5 + deploy-day checklist; `project-journal.json` log-2026-06-30-001
+  - **Артефакты:** `03-design-decisions.md` §21; `glossary.md` v1.6.0; …
+- [x] **21.1** Naming DDL + замена ссылок в SQL-пакете ✅ **2026-06-30**
+  - **Миграция dev:** `01b_MIGRATE_naming_21_1.sql` + `01b_RECREATE_fnIpgChRlEnd_2606.sql`; `apply_naming_21_1.sh`
+  - **Файлы:** `01`→`01_CREATE_TABLE_ipgChRl_2606.sql`, `02`→`fnIpgChDats_2606`, `10a`/`10c`→`stIpgOutLimPn_2606`, `05a`→`fnIpgChDats_2606`
+  - **Gate:** `07_VERIFY_after` — все объекты OK; fn2=11587, PercentBrn=15262/17 дат
+  - **Smoke post-21.1** ✅ **2026-06-30** (`smoke_post_naming_21_1.sh`): `07f4` PASS; `07k` PASS (warn=3); `07s` PASS (warn=1); лог `smoke_post_naming_21_1_20260630_161453.log`
+- [x] **21.2** PercentBrn plan-JOIN → `ipgChRl_2606` ✅ **2026-06-30**
+  - **Артефакты:** `05b_PATCH_PercentBrn_ipgChRl_2606.sql`, `07o_plan_align_spot_2102.sql`, `_gen_05b_plan_align.py`
+  - **Dev:** `05b` applied (`05b_applied`); `07f4` PASS после refill RS1 полной цепи (15262/17); ложный FAIL при RS1=68 (после `07s` spot)
+- [ ] **21.3** Agency-golden + FIXTURE_08 (по результату К-12)
+- [ ] **21.4** Gates naming / plan-align / agency-spot
+- [ ] **21.5** MSSQL2012 sync → **19.7** флешка
+
+**Золотые стройки после этапа 21:**
+
+| Роль | `@ipgStKey` | `cstAgPn` | Тесты |
+|------|-------------|-----------|-------|
+| invest-golden | **42** (лист) | **2102** | календарь 17 дат, `iv_*`, parity/calendar |
+| agency-golden | **4** | **849**, **1862** | `ag_*` факт+план, смена ИП, `@stCostKey` |
+
+**Не трогать:** `ipgUtPlGr` **3/4/6** (prod-подобные планы); fixture только в **18/19/20**.
+
+**Зависимости:** **21.0** полностью — **до 21.1**. **21.2** — после **21.1**. **19.7** / **17.2.2b** — после **21.5**.
+
+---
+
 ## Следующий шаг реализации (prod)
 
-**Этап 19.5** — spot-check RS1 `@ipgStKey=42`; затем **19.6**…**19.8** → **18.6** journal → **17.2.3** ZIP с паролем (после **19.7**).
+**Этап 21.2** — plan-JOIN PercentBrn → `ipgChRl_2606`. **Этап 19.7** (флешка) — после **21.5**.
 
 ### Этап 17 — Prod: офлайн-деплой 🔄
 
@@ -858,7 +967,7 @@
 - [x] **17.2.1** Каркас `26-0616_deploy/`: `build_flash_package.sh`, `generate_checklist_pdf.py`, `README_DEPLOY.txt`, `templates/` ✅
 - [x] **17.2.2** `./build_flash_package.sh` — `open/`, PDF, `MANIFEST.sha256`, ZIP без пароля ✅ **2026-06-16**
 - [x] **17.2.2a** Пересборка `open/` после **18.8.4** (`09a`–`09c` в `MSSQL2012/`): `./build_flash_package.sh`, сверка `MANIFEST.sha256` ✅ **2026-06-26**
-- [ ] **17.2.2b** Пересборка `open/` после **19.7** (`10a`–`10d`, патч `04` в `MSSQL2012/`): `./build_flash_package.sh`, сверка `MANIFEST.sha256`
+- [ ] **17.2.2b** Пересборка `open/` после **19.7** (`10a`–`10d`, патч `04`, **`05`+`05a`+`05b`**, rename **21.1** в `MSSQL2012/`): `./build_flash_package.sh`, сверка `MANIFEST.sha256`
 - [ ] **17.2.3** `DEPLOY_ARCHIVE_PASSWORD=… ./build_flash_package.sh --zip-password` — ZIP в `archive/` *(после **17.2.2b**)*
 - [ ] **17.2.4** Проверка на nb-win: PDF, `00_VERIFY_before.sql` в SSMS, сверка `MANIFEST.sha256`
 - [ ] **17.2.5** Копирование каталога `26-0616_deploy/` на флеш-носитель
@@ -869,7 +978,7 @@
 
 ## Следующий шаг реализации
 
-**Этап 19.5** — spot-check RS1 `@ipgStKey=42`. Затем **19.6**…**19.8** → **18.6** journal → **17.2.3** ZIP с паролем.
+**Этап 21.3** — agency-golden (849/1862 @ `stIpg=4`). **Этап 19.7** — флешка после **21.5**.
 
 ---
 
@@ -884,9 +993,9 @@
 | К-5 | Индексы `IX_ipgStPn_St_Pn`, `IX_cstAgPnBranch_Cst` добавлены | ✅ |
 | К-6 | 07h stIpg=46 **< 60 сек** | ✅ fn2 **49,3 с** (v9.0); Sh **37,5 с** (v8.9) |
 | К-7 | 07h NULL **< 2 мин** | ✅ **111,5 с** (14.1+14.2, dev 2026-06-15) |
-| К-8 | 07f PASS, < 10 мин | ✅ v9.0 **PASS** (F.3 dedup=0); ~5,3 мин |
-| К-9 | `spMstrg_2606`: RS1 полный; RS4–RS7 при `'2022-12-31'` | ✅ RS1=14447, RS4=916 **2026-06-15** |
-| **К-9b** | `07k` RS1 keyDiff=0 + COUNT RS2..RS7 @ `2022-12-31` | ✅ **2026-06-15** |
+| К-8 | 07f PASS (calendar baseline), < 10 мин | ✅ v9.0 parity; **20.4** calendar baseline **15262/17** |
+| К-9 | `spMstrg_2606`: RS1 полный; RS4–RS7 при `'2022-12-31'` | ✅ RS1=**15262**, RS4=**916** **2026-06-30** (было 14447) |
+| **К-9b** | `07k` RS1 keyDiff=0 (shared dates) + baseline COUNT @ `2022-12-31` | ✅ **2026-06-30** (warn=3 на RS1–RS3 COUNT) |
 | К-10 | Пакет передан: `db-upgrade.md` + чеклист + `MSSQL2012/` | ✅ |
 | **К-11** | stCost RA: `ras_work`→**195**; `01d1` + `07j` PASS; `regression_182=0` | ✅ этап 13 **2026-06-13** |
 | **К-12** | План = лимит ipgPn по **212/195/172/187** @ `2022-12-31` (dev, fixture) | ✅ **2026-06-17** (07m) |
@@ -948,11 +1057,22 @@
 | `10d` _fnIpgChContractsForStIpg_2606_ | **19.2** | ✅ dev + `MSSQL2012/` **2026-06-29** |
 | `MSSQL2012/04` (патч fn2) | **19.3** | ✅ фильтр `ipgChContracts` |
 | `07q_stipg_contract_universe_chain5.sql` | **19.4** | ✅ dev **2026-06-29** PASS |
-| `docs/project/glossary.md` | термины | ✅ v1.3.0 (IN_GROUP, OUT_GROUP, Решение 16) |
+| `07r_stipg_spot_rs1_chain5.sql` | **19.5** | ✅ dev **2026-06-29** PASS |
+| `07s_rs1_parity_chain5.sql` | **20.1** | ✅ dev **2026-06-30** PASS (WARN calendar) |
+| `07s_calendar_chain5.sql` | **20.3** | ✅ gate calendar **2026-06-30** |
+| `MSSQL2012/05a_PATCH_PercentBrn_fnIpgChDatsV_2606.sql` | **20.5** | ✅ зеркало dev **2026-06-30** |
+| `07f4_baseline_count_chain5.sql` | **20.4** | ✅ COUNT baseline **2026-06-30** |
+| `07f_COMPARE_PercentBrn_full_chain5.sql` | **20.4** | ✅ calendar mode (15262/17) |
+| `07k_RS_full_compare_chain5.sql` | **20.4** | ✅ PASS warn=3 **2026-06-30** |
+| `docs/project/glossary.md` | термины | ✅ v1.6.0 (Решение 21, `ipgChRl_2606`, agency-golden) |
+| `docs/03-design-decisions.md` §21 | **21.0** | ✅ **2026-06-30** |
+| `05b_PATCH_PercentBrn_ipgChRl_2606.sql` | **21.2** | ✅ plan-JOIN **2026-06-30** |
+| `fixture/.../FIXTURE_08_agency_golden.sql` | **21.3** | ⬜ при необходимости после К-12 |
+| `01_RENAME_ipgChRl_to_2606.sql` (или правка `01`) | **21.1** | ✅ `01b` + переименование файлов **2026-06-30** |
 | `docs/12-dev-acceptance-protocol.md` | **15** | ✅ |
 | `MSSQL2012/04` … `06` | 11–12 | ✅ v9.0 + spMstrg |
 | `07_VERIFY_after.sql` | 12 | ✅ |
-| `08_ROLLBACK.sql` | 1–12 | ✅ (дополнять) |
+| `08_ROLLBACK.sql` | 1–19 | ✅ DROP этап 19 **2026-06-29** |
 | `MSSQL2012/` | все | ✅ / ⬜ зеркалить |
 
 ---
@@ -965,7 +1085,7 @@
 | `docs/.../docs/08-testing-strategy.md` | **Стратегия тестирования: порядок stIpg, скрипты, правила безопасности** |
 | `docs/.../docs/04-computation-map.md` | Карта вычислений (§Шаг 5 пересмотрен: LEGACY → `_2606`) |
 | `docs/.../docs/05-fact-stcost-map.md` | Соответствие полей и stcKey для факт-функций |
-| `docs/.../docs/03-design-decisions.md` | Архитектурные решения 1–16 (**16:** универсум строек, `stIpgOutLimPn`) |
+| `docs/.../docs/03-design-decisions.md` | Архитектурные решения 1–**21** (**16:** универсум; **17:** календарь RS1; **21:** naming, plan-align, agency-golden) |
 | `docs/.../docs/14-stipg-stilim-contract-universe-proposals.md` | **Принято:** IN_GROUP ∪ OUT_GROUP, тип по 5-й литере, этап 19 |
 | `docs/.../docs/09-scheme-cascade-mastering.md` | Каскад схем, `4. Прочие` вне Mstrg |
 | `docs/.../docs/10-percentDev-218-diff-root-cause.md` | Корневая причина 218 расхождений `ag_percentDev` (v8.9) |

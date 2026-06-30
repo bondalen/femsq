@@ -5,9 +5,9 @@ GO
 -- Файл:    MSSQL2012/03a_CREATE_FUNCTION_fnStCostRsIpgPn_2606.sql
 -- Пакет:   docs/development/notes/sql/26-0604/
 -- Назначение: fnStCostRsIpgPn_2606 — график освоения по пункту ИПГ (_2606).
---   Фикс Деф.Б: actuality через ipgChRlV; fallback к ipgUtPlP.iuplpLim (Решение 7).
+--   Фикс Деф.Б: actuality через ipgChRl_2606; fallback к ipgUtPlP.iuplpLim (Решение 7).
 -- Совместимость: SQL Server 2012 SP4 (11.0.7507.2). Без CREATE OR ALTER.
--- Предусловия: 01 (ipgChRlV заполнена).
+-- Предусловия: 01 (ipgChRl_2606 заполнена).
 -- Автор:   Александр
 -- Дата:    2026-06-09
 -- =============================================================================
@@ -145,7 +145,7 @@ BEGIN
                 ags.ipgPn i
                 INNER JOIN ags.ipg a ON i.ipgpIpg = a.ipgKey
                 INNER JOIN ags.yyyy y ON a.ipgYy = y.yKey
-                INNER JOIN ags.ipgChRlV v
+                INNER JOIN ags.ipgChRl_2606 v
                     ON v.ipgcrvChain = @ipgCh
                    AND v.ipgcrvIpg = i.ipgpIpg
                 LEFT JOIN ags.ipgUtPlP n ON i.ipgpKey = n.iuplpIpgPn
@@ -281,7 +281,7 @@ GO
 
 EXEC sys.sp_addextendedproperty
     @name = N'MS_Description',
-    @value = N'График планируемого освоения по пункту ИПГ (_2606). Actuality через ipgChRlV; fallback к ipgUtPlP.iuplpLim (DAG fnStUpAll, корень 212).',
+    @value = N'График планируемого освоения по пункту ИПГ (_2606). Actuality через ipgChRl_2606; fallback к ipgUtPlP.iuplpLim (DAG fnStUpAll, корень 212).',
     @level0type = N'SCHEMA', @level0name = N'ags',
     @level1type = N'FUNCTION', @level1name = N'fnStCostRsIpgPn_2606';
 GO

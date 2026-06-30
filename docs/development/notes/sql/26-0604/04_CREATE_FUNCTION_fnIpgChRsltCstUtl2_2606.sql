@@ -6,7 +6,7 @@ GO
 -- Пакет:   docs/development/notes/sql/26-0604/
 -- Назначение: Результаты по стройкам для цепи ИПГ (_2606).
 --   Факт RA (presented/accepted/статусы) — агрегат RRcTimeList как в _2408 (_2605).
---   Лимиты и прочий факт (АВ, РАЛП, хранение…) — mastering + ipgChRlV.
+--   Лимиты и прочий факт (АВ, РАЛП, хранение…) — mastering + ipgChRl_2606.
 -- Автор:   Александр | Дата: 2026-06-09 | Обновлено: 2026-06-29 (v19.3: фильтр ipgChContracts по fnIpgChContractsForStIpg_2606)
 -- =============================================================================
 
@@ -166,7 +166,7 @@ BEGIN
     SELECT @yKey = MIN(y.yKey), @yyyy = MIN(y.yyyy)
     FROM (
         SELECT MAX(y2.yyyy) AS mxY
-        FROM ags.ipgChRlV v
+        FROM ags.ipgChRl_2606 v
         INNER JOIN ags.ipg i ON i.ipgKey = v.ipgcrvIpg
         INNER JOIN ags.yyyy y2 ON y2.yKey = i.ipgYy
         WHERE v.ipgcrvChain = @ipgChKey
@@ -317,8 +317,8 @@ BEGIN
 
     INSERT INTO @mastMonthEnd (ipgKey, dAll)
     SELECT v.ipgcrvIpg AS ipgKey, MAX(d.dAll) AS dAll
-    FROM ags.fnIpgChDatsV(@ipgChKey) d
-    INNER JOIN ags.ipgChRlV v ON v.ipgcrvChain = @ipgChKey
+    FROM ags.fnIpgChDats_2606(@ipgChKey) d
+    INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvChain = @ipgChKey
         AND d.dAll >= v.ipgcrvStr AND (v.ipgcrvEnd IS NULL OR d.dAll <= v.ipgcrvEnd)
     GROUP BY v.ipgcrvIpg, YEAR(d.dAll), MONTH(d.dAll);
 
@@ -327,7 +327,7 @@ BEGIN
         SELECT m.*, me.ipgKey, MONTH(me.dAll) AS mNum, v.ipgcrvStr AS ipgActStr, v.ipgcrvEnd AS ipgActEnd
         FROM ags.fnMasteringStIpgStCost_2606(@ipgStKey, @ipgChKey, @stCostKey, NULL) m
         INNER JOIN @mastMonthEnd me ON me.dAll = m.dAll
-        INNER JOIN ags.ipgChRlV v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = me.ipgKey
+        INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = me.ipgKey
     )
     INSERT INTO @schemeRows
     SELECT
@@ -368,14 +368,14 @@ BEGIN
     ;WITH ipgPnSchemePts AS (
         SELECT p.ipgpIpg AS ipgKey, p.ipgpCstAgPn, p.ipgpSh AS iShKey
         FROM ags.ipgPn p
-        INNER JOIN ags.ipgChRlV v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = p.ipgpIpg
+        INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = p.ipgpIpg
         UNION
         SELECT p.ipgpIpg, p.ipgpCstAgPn, 2
         FROM ags.ipgPn p
-        INNER JOIN ags.ipgChRlV v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = p.ipgpIpg
+        INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = p.ipgpIpg
         WHERE p.ipgpSh = 1
     ),
-    -- (ИПГ цепи, стройка) из ipgPn × ipgChRlV — как fn_2408: каждая стройка mastering
+    -- (ИПГ цепи, стройка) из ipgPn × ipgChRl_2606 — как fn_2408: каждая стройка mastering
     -- реплицируется на все ИПГ цепи (не только ИПГ из mastering-факта).
     ipgMasteringCombos AS (
         SELECT DISTINCT
@@ -385,7 +385,7 @@ BEGIN
             p.ipgpCstAgPn,
             N'1. ОА и Изм.' AS typeGr
         FROM ags.ipgPn p
-        INNER JOIN ags.ipgChRlV v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = p.ipgpIpg
+        INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = p.ipgpIpg
         WHERE EXISTS (SELECT 1 FROM @schemeRows sr WHERE sr.ipgpCstAgPn = p.ipgpCstAgPn)
     ),
     -- Уникальные комбинации (ИПГ, стройка, схема) — опорный список для разворота по 12 месяцам.
@@ -465,7 +465,7 @@ BEGIN
             -- стройки из ИПГ цепи
             SELECT ip.ipgpCstAgPn AS cstAgPnKey
             FROM ags.ipgPn ip
-            INNER JOIN ags.ipgChRlV v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = ip.ipgpIpg
+            INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = ip.ipgpIpg
             WHERE ip.ipgpCstAgPn IS NOT NULL
             UNION
             -- ОПИ (raFactMnrl уже фильтрован по году)

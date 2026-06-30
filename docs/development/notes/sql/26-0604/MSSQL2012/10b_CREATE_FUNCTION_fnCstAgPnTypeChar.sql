@@ -4,13 +4,10 @@ GO
 -- =============================================================================
 -- Файл:    MSSQL2012/10b_CREATE_FUNCTION_fnCstAgPnTypeChar.sql
 -- Пакет:   docs/development/notes/sql/26-0604/
--- Назначение: 5-я литера кода САК — тип стройки для OUT_GROUP (Решение 16).
---   Совместимость: SQL Server 2012 SP4 (11.0.7507.2).
--- Автор:   Александр
--- Дата:    2026-06-29
+-- Зеркало dev. Синхронизировано скриптом _sync_to_mssql2012.py
 -- =============================================================================
 
-PRINT N'=== 10b MSSQL2012: CREATE FUNCTION ags.fnCstAgPnTypeChar ===';
+PRINT N'=== 10b: CREATE FUNCTION ags.fnCstAgPnTypeChar ===';
 GO
 
 SET ANSI_NULLS ON;
@@ -18,6 +15,11 @@ GO
 SET QUOTED_IDENTIFIER ON;
 GO
 
+
+IF OBJECT_ID(N'ags.fnCstAgPnTypeChar', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnCstAgPnTypeChar;
+IF OBJECT_ID(N'ags.fnCstAgPnTypeChar', N'TF') IS NOT NULL
+    DROP FUNCTION ags.fnCstAgPnTypeChar;
 IF OBJECT_ID(N'ags.fnCstAgPnTypeChar', N'FN') IS NOT NULL
     DROP FUNCTION ags.fnCstAgPnTypeChar;
 GO

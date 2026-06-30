@@ -2,15 +2,15 @@ USE [FishEye];
 GO
 
 -- =============================================================================
--- Файл:    MSSQL2012/02_CREATE_FUNCTION_fnIpgChDatsV.sql
+-- Файл:    MSSQL2012/02_CREATE_FUNCTION_fnIpgChDats_2606.sql
 -- Пакет:   docs/development/notes/sql/26-0604/
--- Назначение: ags.fnIpgChDatsV — генератор дат расчёта (_2606).
+-- Назначение: ags.fnIpgChDats_2606 — генератор дат расчёта (_2606).
 --   Совместимость: SQL Server 2012 SP4 (11.0.7507.2). Без CREATE OR ALTER.
 -- Автор:   Александр
 -- Дата:    2026-06-09
 -- =============================================================================
 
-PRINT '=== 02 MSSQL2012: CREATE fnIpgChDatsV ===';
+PRINT '=== 02 MSSQL2012: CREATE fnIpgChDats_2606 ===';
 GO
 
 SET ANSI_NULLS ON;
@@ -18,11 +18,11 @@ GO
 SET QUOTED_IDENTIFIER ON;
 GO
 
-IF OBJECT_ID(N'ags.fnIpgChDatsV', N'IF') IS NOT NULL
-    DROP FUNCTION ags.fnIpgChDatsV;
+IF OBJECT_ID(N'ags.fnIpgChDats_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnIpgChDats_2606;
 GO
 
-CREATE FUNCTION ags.fnIpgChDatsV
+CREATE FUNCTION ags.fnIpgChDats_2606
 (
     @ipgCh int
 )
@@ -33,7 +33,7 @@ RETURN
     WITH chainYear AS
     (
         SELECT MIN(yy.yyyy) AS intYear
-        FROM ags.ipgChRlV v
+        FROM ags.ipgChRl_2606 v
         INNER JOIN ags.ipg i ON i.ipgKey = v.ipgcrvIpg
         INNER JOIN ags.yyyy yy ON yy.yKey = i.ipgYy
         WHERE v.ipgcrvChain = @ipgCh
@@ -47,7 +47,7 @@ RETURN
         UNION ALL
 
         SELECT v.ipgcrvStr
-        FROM ags.ipgChRlV v
+        FROM ags.ipgChRl_2606 v
         CROSS JOIN chainYear cy
         WHERE v.ipgcrvChain = @ipgCh
           AND v.ipgcrvStr IS NOT NULL
@@ -56,7 +56,7 @@ RETURN
         UNION ALL
 
         SELECT v.ipgcrvEnd
-        FROM ags.ipgChRlV v
+        FROM ags.ipgChRl_2606 v
         CROSS JOIN chainYear cy
         WHERE v.ipgcrvChain = @ipgCh
           AND v.ipgcrvEnd IS NOT NULL
@@ -73,10 +73,10 @@ GO
 
 EXEC sys.sp_addextendedproperty
     @name = N'MS_Description',
-    @value = N'Даты расчёта освоения для цепи ИПГ (_2606). Переходы из ipgChRlV; 01.01 года + концы мес. + ipgcrvStr/ipgcrvEnd.',
+    @value = N'Даты расчёта освоения для цепи ИПГ (_2606). Переходы из ipgChRl_2606; 01.01 года + концы мес. + ipgcrvStr/ipgcrvEnd.',
     @level0type = N'SCHEMA', @level0name = N'ags',
-    @level1type = N'FUNCTION', @level1name = N'fnIpgChDatsV';
+    @level1type = N'FUNCTION', @level1name = N'fnIpgChDats_2606';
 GO
 
-PRINT '=== 02 MSSQL2012: fnIpgChDatsV создана ===';
+PRINT '=== 02 MSSQL2012: fnIpgChDats_2606 создана ===';
 GO

@@ -30,7 +30,7 @@ date | tee -a "$LOG"
 
 echo "" | tee -a "$LOG"
 echo "========== FIXTURE_06 check ==========" | tee -a "$LOG"
-CHK="SET NOCOUNT ON; SELECT CASE WHEN EXISTS (SELECT 1 FROM ags.ipgChRlV WHERE ipgcrvChain=5 AND ipgcrvUtPlGr=18) THEN 1 ELSE 0 END AS ok;"
+CHK="SET NOCOUNT ON; SELECT CASE WHEN EXISTS (SELECT 1 FROM ags.ipgChRl_2606 WHERE ipgcrvChain=5 AND ipgcrvUtPlGr=18) THEN 1 ELSE 0 END AS ok;"
 if [[ -n "$SQL_HOST" ]]; then
     sqlcmd -S "$SQL_HOST" -U "$DB_USER" -P "$DB_PASSWORD" -d FishEye -C -Q "$CHK" | tee -a "$LOG"
 else

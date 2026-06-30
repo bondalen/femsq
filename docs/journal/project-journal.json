@@ -4927,9 +4927,9 @@
           "chat-attributes": {
             "id": "chat-2026-06-11-001",
             "created": "2026-06-11",
-            "lastUpdated": "2026-06-17",
+            "lastUpdated": "2026-06-30",
             "owner": "Александр",
-            "status": "completed",
+            "status": "active",
             "priority": "critical",
             "tags": ["sql", "performance", "spMstrg_2606", "fn2_2606", "factDocCost", "optimization", "PercentBrn", "deployment"],
             "links": {
@@ -5279,6 +5279,95 @@
                       "docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606-v2.md",
                       "docs/development/notes/sql/26-0604/docs/08-testing-strategy.md",
                       "docs/development/notes/sql/26-0604/docs/07-performance-analysis.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Этап 21.0: документация Решения 21 (naming, plan-align, agency-golden). № log-2026-06-30-001",
+                "log-attributes": {
+                  "id": "log-2026-06-30-001",
+                  "timestamp": "2026-06-30T12:00:00+03:00",
+                  "level": "info",
+                  "effort": "2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/project/glossary.md",
+                      "docs/deployment/db-upgrade-spMstrg-2606.md"
+                    ],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Решение 21: конвенция имён и dual golden",
+                    "details": "03-design-decisions.md §21: суффикс _2606 на fn/sp; table-заменители {legacy}_2606; ipgcrv* без rename; factDoc без суффикса. Переименования (этап 21.1): ipgChRlV→ipgChRl_2606, fnIpgChRlVEnd→fnIpgChRlEnd_2606, fnIpgChDatsV→fnIpgChDats_2606, stIpgOutLimPn→stIpgOutLimPn_2606. Dual golden: invest 2102@42, agency 849/1862@stIpg=4. PercentBrn plan-JOIN → ipgChRl_2606 (21.2); prod-группы UtPl 3/4/6 не трогать.",
+                    "outcome": "Документация согласована до DDL rename. SQL/БД без изменений до 21.1.",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/docs/03-design-decisions.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606-v2.md"
+                    ]
+                  },
+                  {
+                    "action": "Обновлены обзорные и приёмочные документы пакета 26-0604",
+                    "details": "00-overview (конвенция, целевые имена, дефект plan-JOIN); 04-computation-map; 06-sp-recordsets (gates calendar+plan-align+agency-spot); 09-scheme-cascade пример 5 (849/1862); 13-plan-stcost §17.1 invest + §17.2 agency ручные прогоны @ipgStKey=4.",
+                    "outcome": "Этап 21.0 закрыт в chat-plan.",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/docs/00-overview.md",
+                      "docs/development/notes/sql/26-0604/docs/09-scheme-cascade-mastering.md",
+                      "docs/development/notes/sql/26-0604/docs/13-plan-stcost-monthly-acceptance.md"
+                    ]
+                  },
+                  {
+                    "action": "Deploy-doc и glossary v1.6.0",
+                    "details": "db-upgrade-spMstrg-2606.md v1.5: целевые имена, порядок 05a/05b/10a; deploy-day checklist: precheck ipgChRl_2606, шаги A.5a/A.5b. glossary: ipgChRl_2606, agency/invest golden, конвенция _2606.",
+                    "outcome": "Готово к этапу 21.1 (naming DDL). 19.7 флешка — после 21.5.",
+                    "references": [
+                      "docs/deployment/db-upgrade-spMstrg-2606.md",
+                      "docs/deployment/db-upgrade-spMstrg-2606-deploy-day-checklist.md",
+                      "docs/project/glossary.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Этап 21.1: naming DDL ipgChRl_2606, dev-migration (success). № log-2026-06-30-002",
+                "log-attributes": {
+                  "id": "log-2026-06-30-002",
+                  "timestamp": "2026-06-30T16:00:00+03:00",
+                  "level": "success",
+                  "effort": "3h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Переименование объектов стека _2606",
+                    "details": "ipgChRlV→ipgChRl_2606, fnIpgChRlVEnd→fnIpgChRlEnd_2606, fnIpgChDatsV→fnIpgChDats_2606, stIpgOutLimPn→stIpgOutLimPn_2606. Массовая замена в 26-0604/, MSSQL2012/, fixture 06/07 (84 файла). Новые скрипты: 01b_MIGRATE, 01b_RECREATE, apply_naming_21_1.sh. Файлы 01/02/10a/10c/05a переименованы.",
+                    "outcome": "SQL-пакет и fixture без ссылок на старые имена (кроме 01b migration).",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/01b_MIGRATE_naming_21_1.sql",
+                      "docs/development/notes/sql/26-0604/apply_naming_21_1.sh",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606-v2.md"
+                    ]
+                  },
+                  {
+                    "action": "Dev FishEye @ 10.7.0.3: миграция + переприменение зависимостей",
+                    "details": "01b sp_rename + 01b_RECREATE fnIpgChRlEnd; 02, 03a–03d, 10d, 04, 05a (DROP TF). 07_VERIFY_after: все объекты OK; fn2=11587, PercentBrn=15262, 17 dateRslt. Исправлен DROP в 05a для multi-statement TVF.",
+                    "outcome": "Gate naming закрыт. Следующий: 21.2 plan-JOIN PercentBrn.",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/07_VERIFY_after.sql",
+                      "docs/development/notes/sql/26-0604/apply_naming_21_1_20260630_155830.log"
                     ]
                   }
                 ]

@@ -145,7 +145,7 @@ RETURN
                 RIGHT JOIN
                 (
                     SELECT p.ipgpCstAgPn, s.ipgspSt
-                    FROM ags.ipgChRlV v
+                    FROM ags.ipgChRl_2606 v
                     INNER JOIN ags.ipgPn p ON v.ipgcrvIpg = p.ipgpIpg
                     INNER JOIN ags.ipgStPn s ON p.ipgpKey = s.ipgspPn
                     WHERE v.ipgcrvChain = @ipgCh

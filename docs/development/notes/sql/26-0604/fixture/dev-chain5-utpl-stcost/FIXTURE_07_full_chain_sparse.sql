@@ -22,7 +22,7 @@ BEGIN
     RETURN;
 END;
 
-IF NOT EXISTS (SELECT 1 FROM ags.ipgChRlV WHERE ipgcrvChain = 5 AND ipgcrvIpg = 6 AND ipgcrvUtPlGr = 18)
+IF NOT EXISTS (SELECT 1 FROM ags.ipgChRl_2606 WHERE ipgcrvChain = 5 AND ipgcrvIpg = 6 AND ipgcrvUtPlGr = 18)
 BEGIN
     RAISERROR(N'ipgcrvUtPlGr not swapped. Run FIXTURE_06_01 first.', 16, 1);
     RETURN;
@@ -47,7 +47,7 @@ SELECT
     src.iuplpKey AS src_iuplpKey
 INTO #tgt
 FROM ags.ipgPn p
-INNER JOIN ags.ipgChRlV v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
+INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
 LEFT JOIN ags.ipgPnLim l212 ON l212.ipgplPn = p.ipgpKey AND l212.ipgplStCost = 212
 LEFT JOIN ags.ipgPnLim l195 ON l195.ipgplPn = p.ipgpKey AND l195.ipgplStCost = 195
 LEFT JOIN ags.ipgPnLim l172 ON l172.ipgplPn = p.ipgpKey AND l172.ipgplStCost = 172

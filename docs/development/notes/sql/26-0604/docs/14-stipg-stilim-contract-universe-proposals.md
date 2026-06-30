@@ -25,7 +25,7 @@
 | Строек в `ipgStPn` под узлом 42 | 1 (`2102`) |
 | Строк `fnMasteringStIpgStCost` по 2102 | есть |
 | Разных `cstapKey` в `PercentBrn` | ~829 |
-| Строк `PercentBrn` только по `cstapKey = 2102` | 16 |
+| Строк `PercentBrn` только по `cstapKey = 2102` | **64** (= **16** `dateRslt` × 4 уровня GROUPING SETS; legacy календарь без 01.01 — см. **Решение 17**) |
 
 **Вопрос:** должна ли процедура типа `_2606` возвращать данные по стройкам **вне** выбранного раздела ИПГ, или ограничиться **группой** (и при необходимости — внелимитными по типу)?
 
@@ -172,7 +172,7 @@ RS1 при `@ipgSt = NULL`: ~12 693 строк; при `@ipgSt = '12ОПР'`: 
 ```text
 UNION(
   IN_GROUP:  DISTINCT ipgpCstAgPn
-             FROM ipgChRlV × ipgPn × ipgStPn
+             FROM ipgChRl_2606 × ipgPn × ipgStPn
              WHERE ipgspSt ∈ fnStDownAll(@stNet, @ipgStKey) ∪ {@ipgStKey}
 
   OUT_GROUP: IF stiLim(@ipgStKey) IS NOT NULL:
@@ -228,7 +228,7 @@ WHERE @ipgStKey IS NULL
 | 42 | NULL | **только** IN_GROUP (2102) |
 | NULL | — | вся цепь |
 
-Сверка: `COUNT(RS1)`, ключевые поля на `dateRslt`, `SUM(ag_presented)` vs `fnMasteringStIpgStCost` на 17 датах `fnIpgChDatsV`.
+Сверка: `COUNT(RS1)`, ключевые поля на `dateRslt`, `SUM(ag_presented)` vs `fnMasteringStIpgStCost` на 17 датах `fnIpgChDats_2606`.
 
 ---
 
@@ -257,7 +257,7 @@ WHERE @ipgStKey IS NULL
 | Объект | Роль |
 |--------|------|
 | `ags.stIpg`, `ags.stIpgNm` | DAG разделов ИПГ |
-| **`ags.stIpgOutLimPn`** | **Принято:** разрешённые типы внелимитных для узла (1→N) |
+| **`ags.stIpgOutLimPn_2606`** | **Принято:** разрешённые типы внелимитных для узла (1→N) |
 | `ags.stIpg.stiLim` → `ags.ipgStLm` | Legacy; **не использовать** в runtime |
 | `ags.ipgStPn` | Связь `ipgPn` ↔ `stIpg` (IN_GROUP) |
 | `ags.fnCstAgPnTypeChar` | 5-я литера кода САК |
@@ -270,7 +270,7 @@ WHERE @ipgStKey IS NULL
 
 ## 10. Принятое решение (2026-06-24)
 
-**Хранение:** одна таблица `ags.stIpgOutLimPn` — прямая связь **узел `stIpg` → много типов** (`char(1)`). Без профилей `ipgStLm`, без строк `"2,3"` в колонке.
+**Хранение:** одна таблица `ags.stIpgOutLimPn_2606` — прямая связь **узел `stIpg` → много типов** (`char(1)`). Без профилей `ipgStLm`, без строк `"2,3"` в колонке.
 
 **Seed (минимум):**
 

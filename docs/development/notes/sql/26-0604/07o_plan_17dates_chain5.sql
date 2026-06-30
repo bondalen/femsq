@@ -48,7 +48,7 @@ SELECT
     CAST(ISNULL(p.ipgpSmOth, 0) * 1000000 AS money) AS ref187
 INTO #rev
 FROM ags.ipgPn p
-INNER JOIN ags.ipgChRlV v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh;
+INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh;
 
 DECLARE @rev_cnt int = (SELECT COUNT(*) FROM #rev);
 RAISERROR(N'  ipgPn on chain: %d', 0, 1, @rev_cnt) WITH NOWAIT;
@@ -79,7 +79,7 @@ END;
 IF OBJECT_ID('tempdb..#dates') IS NOT NULL DROP TABLE #dates;
 SELECT d.dAll AS dt
 INTO #dates
-FROM ags.fnIpgChDatsV(@ipgCh) d
+FROM ags.fnIpgChDats_2606(@ipgCh) d
 ORDER BY d.dAll;
 
 DECLARE @nd int = (SELECT COUNT(*) FROM #dates);

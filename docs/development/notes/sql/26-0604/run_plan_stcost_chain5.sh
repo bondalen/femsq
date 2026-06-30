@@ -45,7 +45,7 @@ docker exec -i "$CONTAINER" "$SQLCMD" \
     -Q "SET NOCOUNT ON; SELECT COUNT(*) AS utpl_stcost_split FROM ags.ipgUtPlPnLmMn m
         JOIN ags.ipgUtPlP up ON up.iuplpKey=m.iuplpmPlPn
         JOIN ags.ipgPn p ON p.ipgpKey=up.iuplpIpgPn
-        JOIN ags.ipgChRlV v ON v.ipgcrvIpg=p.ipgpIpg AND v.ipgcrvChain=5
+        JOIN ags.ipgChRl_2606 v ON v.ipgcrvIpg=p.ipgpIpg AND v.ipgcrvChain=5
         WHERE m.iuplpmStCost IN (195,172,187);" 2>&1 | tee -a "$LOG"
 
 run_07m "07m К-12 plan=limit" "$SCRIPT_DIR/07m_plan_limit_conformance_chain5.sql" 480

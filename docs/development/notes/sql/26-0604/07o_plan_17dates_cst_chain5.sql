@@ -2,7 +2,7 @@ USE [FishEye];
 GO
 -- =============================================================================
 -- 07o_plan_17dates_cst_chain5.sql
--- Строгая приёмка плана UtPl (18.7.2b): матрица 17 дат fnIpgChDatsV, пилот cst 2102.
+-- Строгая приёмка плана UtPl (18.7.2b): матрица 17 дат fnIpgChDats_2606, пилот cst 2102.
 --
 -- Предусловие: FIXTURE_06 (golden UtPl, ipgcrvUtPlGr 18/19/20) для @cstAgPn.
 --
@@ -48,7 +48,7 @@ SELECT
     CAST(ISNULL(p.ipgpSmOth, 0) * 1000000 AS money) AS ref187
 INTO #rev
 FROM ags.ipgPn p
-INNER JOIN ags.ipgChRlV v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
+INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
 WHERE p.ipgpCstAgPn = @cstAgPn
   AND p.ipgpSh = 1;
 
@@ -81,7 +81,7 @@ END;
 IF OBJECT_ID('tempdb..#dates') IS NOT NULL DROP TABLE #dates;
 SELECT d.dAll AS dt
 INTO #dates
-FROM ags.fnIpgChDatsV(@ipgCh) d
+FROM ags.fnIpgChDats_2606(@ipgCh) d
 ORDER BY d.dAll;
 
 DECLARE @nd int = (SELECT COUNT(*) FROM #dates);

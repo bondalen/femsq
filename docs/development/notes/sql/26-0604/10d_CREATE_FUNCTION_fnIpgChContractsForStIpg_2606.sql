@@ -6,7 +6,7 @@ GO
 -- Пакет:   docs/development/notes/sql/26-0604/
 -- Назначение: Универсум строек отчёта при @ipgStKey — IN_GROUP ∪ OUT_GROUP (Решение 16).
 --   IN_GROUP: ipgStPn в поддереве @ipgStKey (как fnMasteringStIpgStCost_2606).
---   OUT_GROUP: chainActive \ IN_GROUP, тип ∈ stIpgOutLimPn (fnCstAgPnTypeChar).
+--   OUT_GROUP: chainActive \ IN_GROUP, тип ∈ stIpgOutLimPn_2606 (fnCstAgPnTypeChar).
 --   chainActive: те же 7 источников, что CTE ipgChContracts в fn2_2606 (активность цепи).
 --   @ipgStKey = NULL → все chainActive (вся цепь).
 -- Предусловия: 10a–10c.
@@ -36,7 +36,7 @@ RETURN
         SELECT MIN(y.yKey) AS yKey
         FROM (
             SELECT MAX(y2.yyyy) AS mxY
-            FROM ags.ipgChRlV v
+            FROM ags.ipgChRl_2606 v
             INNER JOIN ags.ipg i ON i.ipgKey = v.ipgcrvIpg
             INNER JOIN ags.yyyy y2 ON y2.yKey = i.ipgYy
             WHERE v.ipgcrvChain = @ipgCh
@@ -91,7 +91,7 @@ RETURN
 
             SELECT ip.ipgpCstAgPn AS cstAgPnKey
             FROM ags.ipgPn ip
-            INNER JOIN ags.ipgChRlV v ON v.ipgcrvChain = @ipgCh AND v.ipgcrvIpg = ip.ipgpIpg
+            INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvChain = @ipgCh AND v.ipgcrvIpg = ip.ipgpIpg
             WHERE ip.ipgpCstAgPn IS NOT NULL
 
             UNION
@@ -109,7 +109,7 @@ RETURN
         SELECT x.ipgpCstAgPn AS cstAgPnKey
         FROM (
             SELECT p.ipgpCstAgPn, s.ipgspSt
-            FROM ags.ipgChRlV v
+            FROM ags.ipgChRl_2606 v
             INNER JOIN ags.ipgPn p ON v.ipgcrvIpg = p.ipgpIpg
             INNER JOIN ags.ipgStPn s ON p.ipgpKey = s.ipgspPn
             WHERE v.ipgcrvChain = @ipgCh
@@ -134,7 +134,7 @@ RETURN
           AND NOT EXISTS (SELECT 1 FROM inGroup ig WHERE ig.cstAgPnKey = ca.cstAgPnKey)
           AND EXISTS (
               SELECT 1
-              FROM ags.stIpgOutLimPn ol
+              FROM ags.stIpgOutLimPn_2606 ol
               WHERE ol.siolpStIpg = @ipgStKey
                 AND ol.siolpCstType = ags.fnCstAgPnTypeChar(cap.cstapIpgPnN)
           )

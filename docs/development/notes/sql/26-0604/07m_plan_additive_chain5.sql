@@ -37,7 +37,7 @@ IF OBJECT_ID('tempdb..#diff') IS NOT NULL DROP TABLE #diff;
 ;WITH ch AS (
     SELECT DISTINCT p.ipgpKey, p.ipgpCstAgPn
     FROM ags.ipgPn p
-    INNER JOIN ags.ipgChRlV v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
+    INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvIpg = p.ipgpIpg AND v.ipgcrvChain = @ipgCh
     WHERE @stIpg IS NULL
        OR EXISTS (SELECT 1 FROM ags.ipgStPn sp WHERE sp.ipgspSt = @stIpg AND sp.ipgspPn = p.ipgpKey)
 )
@@ -54,7 +54,7 @@ WHERE EXISTS (
 SELECT DISTINCT c.ipgpCstAgPn AS cstAgPnKey
 INTO #contracts
 FROM ags.ipgPn c
-INNER JOIN ags.ipgChRlV cr ON cr.ipgcrvIpg = c.ipgpIpg AND cr.ipgcrvChain = @ipgCh
+INNER JOIN ags.ipgChRl_2606 cr ON cr.ipgcrvIpg = c.ipgpIpg AND cr.ipgcrvChain = @ipgCh
 WHERE c.ipgpCstAgPn IS NOT NULL
   AND EXISTS (
       SELECT 1

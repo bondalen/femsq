@@ -50,7 +50,7 @@ GO
             f"CREATE FUNCTION ags.{short}"
         )
 
-    body = re.sub(r"CREATE FUNCTION (ags\.\w+)", add_drop, body)
+    body = re.sub(r"^CREATE FUNCTION (ags\.\w+)", add_drop, body, flags=re.MULTILINE)
 
     return header + body
 

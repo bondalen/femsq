@@ -22,10 +22,12 @@ SELECT
     t.obj_type,
     CASE WHEN o.object_id IS NOT NULL THEN N'OK' ELSE N'MISSING!' END AS status
 FROM (VALUES
-    (N'ipgChRlV',                    N'U'),
+    (N'ipgChRl_2606',                    N'U'),
+    (N'fnIpgChRlEnd_2606',               N'FN'),
     (N'factDoc',                     N'U'),
     (N'factDocCost',                 N'U'),
-    (N'fnIpgChDatsV',                N'IF'),
+    (N'fnIpgChDats_2606',                N'IF'),
+    (N'stIpgOutLimPn_2606',              N'U'),
     (N'fnIpgChRsltCstUtl2_2606',     N'TF'),
     (N'fnIpgChRsltCstUtlPercentBrn_2606', N'IF'),
     (N'fnMasteringStIpgStCost_2606', N'IF'),
@@ -39,6 +41,7 @@ LEFT JOIN sys.objects o
    AND (
         (t.obj_type = N'U'  AND o.type = N'U')
      OR (t.obj_type = N'P'  AND o.type = N'P')
+     OR (t.obj_type = N'FN' AND o.type = N'FN')
      OR (t.obj_type = N'IF' AND o.type IN (N'IF', N'TF', N'FN'))
      OR (t.obj_type = N'TF' AND o.type IN (N'TF', N'IF'))
    );
@@ -68,7 +71,7 @@ GO
 -- -----------------------------------------------------------------------------
 -- 4. PercentBrn / fn2 — COUNT (цепь 5, dev-эталон)
 -- -----------------------------------------------------------------------------
-PRINT N'--- 4. fn2 / PercentBrn chain 5 (ожидание dev: fn2~11587, PBrn~14447) ---';
+PRINT N'--- 4. fn2 / PercentBrn chain 5 (эталон dev post-calendar: PBrn_2606=15262/17 дат, _2605=14447/16) ---';
 DECLARE @ipgCh int = 5;
 
 SELECT N'fn2_2606' AS test_name,
@@ -77,11 +80,15 @@ SELECT N'fn2_2606' AS test_name,
 UNION ALL
 SELECT N'PercentBrn_2606',
        (SELECT COUNT(*) FROM ags.fnIpgChRsltCstUtlPercentBrn_2606(@ipgCh, NULL, NULL)),
-       14447
+       15262
 UNION ALL
 SELECT N'PercentBrn_2605',
        (SELECT COUNT(*) FROM ags.fnIpgChRsltCstUtlPercentBrn_2605(@ipgCh, NULL)),
-       14447;
+       14447
+UNION ALL
+SELECT N'dateRslt_2606',
+       (SELECT COUNT(DISTINCT dateRslt) FROM ags.fnIpgChRsltCstUtlPercentBrn_2606(@ipgCh, NULL, NULL)),
+       17;
 GO
 
 -- -----------------------------------------------------------------------------

@@ -1,6 +1,7 @@
 # Чеклист: день деплоя `spMstrg_2606` на продуктив
 
 **Дата деплоя:** _______________ (пока не назначена)  
+**lastUpdated:** 2026-06-30 (целевые имена Решение 21; этап **21.5** → пересборка флешки)
 **Ответственный (SQL):** Александр  
 **Среда:** продуктив FishEye, **Windows Authentication**, **SSMS**  
 **Доставка пакета:** флеш-носитель `{YY-MMDD}_deploy/` (см. [`sql-flash-drive-packaging.md`](sql-flash-drive-packaging.md))
@@ -43,7 +44,7 @@ SELECT name, type_desc FROM sys.objects
 WHERE schema_id = SCHEMA_ID('ags') AND name IN (
   'spMstrg_2605','spMstrg_2408_SaveToTables',
   'fnIpgChRsltCstUtl2_2605','fnIpgChRsltCstUtlPercentBrn_2605',
-  'ipgChRlV','spMstrg_2606'
+  'ipgChRl_2606','spMstrg_2606'
 ) ORDER BY name;
 SELECT COUNT(*) AS rs2408_tables FROM sys.tables
 WHERE schema_id = SCHEMA_ID('ags') AND name LIKE 'spMstrg_2408_ResultSet%';
@@ -60,7 +61,7 @@ WHERE schema_id = SCHEMA_ID('ags') AND name LIKE 'spMstrg_2408_ResultSet%';
 | `spMstrg_2605` | **EXISTS** | 2026-06-16 |
 | `fn2_2605`, `PercentBrn_2605` | **EXISTS** | 2026-06-16 |
 | `_2606` объекты | **нет** (ожидается) | 2026-06-16 |
-| `ipgChRlV` | **нет** (ожидается до 01) | 2026-06-16 |
+| `stIpgOutLimPn_2606` | **нет** до `10a` | 2026-06-30 |
 | `ipgChRl` | EXISTS (источник для 01) | 2026-06-16 |
 | RS `_2408` таблиц | **7** | 2026-06-16 |
 
@@ -87,6 +88,8 @@ WHERE schema_id = SCHEMA_ID('ags') AND name LIKE 'spMstrg_2408_ResultSet%';
 | A.3 | `01` … `01d1` | ☐ | work→195 |
 | A.4 | `02` … `03d`, `03b1`, `03b1b` | ☐ | CostBase |
 | A.5 | `04`, `05` | ☐ | fn2 + PercentBrn |
+| A.5a | `05a_PATCH_PercentBrn_fnIpgChDats_2606` | ☐ | календарь 17 дат (этап 20) |
+| A.5b | `05b_PATCH_PercentBrn_ipgChRl_2606` | ☐ | plan-JOIN → `ipgChRl_2606` (**21.2**, после rename **21.1**) |
 | A.6 | `04b`, `05b` (опционально) | ☐ | spFn2 path |
 | A.7 | `05b` (таблицы), `06` или `06b` | ☐ | fn-path рекомендуется до gate |
 | A.8 | `07_VERIFY_after.sql` | ☐ | |

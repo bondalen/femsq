@@ -5,8 +5,8 @@ GO
 -- Файл:    03b_CREATE_FUNCTION_fnStCostRsCstAgPn_2606.sql
 -- Пакет:   docs/development/notes/sql/26-0604/
 -- Назначение: График освоения по строй-агент-коду для цепи ИПГ (_2606).
---   ipgChRlV + fnStCostRsIpgPn_2606.
--- Предусловия: 01 (ipgChRlV), 03a (fnStCostRsIpgPn_2606).
+--   ipgChRl_2606 + fnStCostRsIpgPn_2606.
+-- Предусловия: 01 (ipgChRl_2606), 03a (fnStCostRsIpgPn_2606).
 -- Прототип: ags.fnStCostRsCstAgPn (legacy, не изменяется).
 -- Автор:   Александр
 -- Дата:    2026-06-09
@@ -73,7 +73,7 @@ BEGIN
                     p.ipgpSh,
                     s.ipgspSt,
                     c.ipgcStNetIpg
-                FROM ags.ipgChRlV v
+                FROM ags.ipgChRl_2606 v
                 INNER JOIN ags.ipgPn p ON v.ipgcrvIpg = p.ipgpIpg
                 INNER JOIN ags.ipgStPn s ON p.ipgpKey = s.ipgspPn
                 INNER JOIN ags.ipgCh c ON v.ipgcrvChain = c.ipgcKey
@@ -112,7 +112,7 @@ BEGIN
             p.ipgpKey,
             p.ipgpSh,
             f.*
-        FROM ags.ipgChRlV v
+        FROM ags.ipgChRl_2606 v
         INNER JOIN ags.ipgPn p ON v.ipgcrvIpg = p.ipgpIpg
         CROSS APPLY ags.fnStCostRsIpgPn_2606(
             @ipgCh, p.ipgpKey, v.ipgcrvUtPlGr, @stCostPn, @stCostNet, @ipgSh
@@ -137,7 +137,7 @@ BEGIN
             p.ipgpKey,
             p.ipgpSh,
             f.*
-        FROM ags.ipgChRlV v
+        FROM ags.ipgChRl_2606 v
         INNER JOIN ags.ipgPn p ON v.ipgcrvIpg = p.ipgpIpg
         CROSS APPLY ags.fnStCostRsIpgPn_2606(
             @ipgCh, p.ipgpKey, v.ipgcrvUtPlGr, @stCostPn, @stCostNet, @ipgSh
@@ -156,23 +156,23 @@ IF NOT EXISTS (
 )
     EXEC sys.sp_addextendedproperty
         @name = N'MS_Description',
-        @value = N'График освоения по строй-агент-коду для цепи ИПГ (_2606). ipgChRlV + fnStCostRsIpgPn_2606.',
+        @value = N'График освоения по строй-агент-коду для цепи ИПГ (_2606). ipgChRl_2606 + fnStCostRsIpgPn_2606.',
         @level0type = N'SCHEMA', @level0name = N'ags',
         @level1type = N'FUNCTION', @level1name = N'fnStCostRsCstAgPn_2606';
 ELSE
     EXEC sys.sp_updateextendedproperty
         @name = N'MS_Description',
-        @value = N'График освоения по строй-агент-коду для цепи ИПГ (_2606). ipgChRlV + fnStCostRsIpgPn_2606.',
+        @value = N'График освоения по строй-агент-коду для цепи ИПГ (_2606). ipgChRl_2606 + fnStCostRsIpgPn_2606.',
         @level0type = N'SCHEMA', @level0name = N'ags',
         @level1type = N'FUNCTION', @level1name = N'fnStCostRsCstAgPn_2606';
 GO
 
--- Проверка: цепь 5 — COUNT vs legacy (ipgChRl ≈ ipgChRlV на dev)
+-- Проверка: цепь 5 — COUNT vs legacy (ipgChRl ≈ ipgChRl_2606 на dev)
 PRINT '--- fnStCostRsCstAgPn vs _2606 (цепь 5, sample cstAgPn) ---';
 
 DECLARE @cst int = (
     SELECT TOP 1 p.ipgpCstAgPn
-    FROM ags.ipgChRlV v
+    FROM ags.ipgChRl_2606 v
     INNER JOIN ags.ipgPn p ON p.ipgpIpg = v.ipgcrvIpg
     WHERE v.ipgcrvChain = 5 AND p.ipgpSh = 2
 );

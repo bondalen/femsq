@@ -40,8 +40,9 @@ RAISERROR(@msg, 0, 1) WITH NOWAIT;
 IF @rs1 = 0 BEGIN RAISERROR(N'  FAIL: RS1 empty', 0, 1) WITH NOWAIT; SET @fail = @fail + 1; END
 IF @rs4 = 0 BEGIN RAISERROR(N'  FAIL: RS4 empty', 0, 1) WITH NOWAIT; SET @fail = @fail + 1; END
 
--- Сравнение RS1 с _2605 (эталон приёмки)
+-- Сравнение RS1 с _2605 (после календарного fix COUNT намеренно расходятся)
 DECLARE @rs1_05 int;
+DECLARE @expectRs1_06 int = 15262;
 SELECT @rs1_05 = COUNT(*) FROM ags.spMstrg_2408_ResultSet1;
 -- Запускаем _2605 для свежего эталона если пусто
 IF @rs1_05 = 0
@@ -51,13 +52,21 @@ BEGIN
     SELECT @rs1_05 = COUNT(*) FROM ags.spMstrg_2408_ResultSet1;
 END
 
-IF @rs1 <> @rs1_05
+IF @rs1 <> @expectRs1_06
 BEGIN
-    SET @msg = N'  WARN: RS1 count _2606=' + CAST(@rs1 AS nvarchar) + N' vs _2605=' + CAST(@rs1_05 AS nvarchar);
+    SET @msg = N'  FAIL: RS1 _2606=' + CAST(@rs1 AS nvarchar) + N' expect ' + CAST(@expectRs1_06 AS nvarchar);
     RAISERROR(@msg, 0, 1) WITH NOWAIT;
+    SET @fail = @fail + 1;
 END
 ELSE
-    RAISERROR(N'  RS1 count = _2605 OK', 0, 1) WITH NOWAIT;
+    RAISERROR(N'  RS1 _2606 baseline OK', 0, 1) WITH NOWAIT;
+
+IF @rs1 <> @rs1_05
+BEGIN
+    SET @msg = N'  INFO: RS1 _2606=' + CAST(@rs1 AS nvarchar) + N' vs _2605=' + CAST(@rs1_05 AS nvarchar)
+        + N' (calendar delta expected)';
+    RAISERROR(@msg, 0, 1) WITH NOWAIT;
+END
 
 -- 11.4 saveToTables=0 — 7 рекордсетов (Access); успех = без ошибки
 SET @t0 = SYSDATETIME();

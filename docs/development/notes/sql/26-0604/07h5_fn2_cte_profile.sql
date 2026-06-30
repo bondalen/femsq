@@ -21,7 +21,7 @@ DECLARE @msg       nvarchar(400);
 SELECT @yKey = MIN(y.yKey), @yyyy = MIN(y.yyyy)
 FROM (
     SELECT MAX(y2.yyyy) AS mxY
-    FROM ags.ipgChRlV v
+    FROM ags.ipgChRl_2606 v
     INNER JOIN ags.ipg i ON i.ipgKey = v.ipgcrvIpg
     INNER JOIN ags.yyyy y2 ON y2.yKey = i.ipgYy
     WHERE v.ipgcrvChain = @ipgChKey
@@ -108,8 +108,8 @@ RAISERROR(N'--- 1. #schemeRows (mastering) ---', 0, 1) WITH NOWAIT;
 IF OBJECT_ID('tempdb..#mastMonthEnd') IS NOT NULL DROP TABLE #mastMonthEnd;
 SELECT v.ipgcrvIpg AS ipgKey, MAX(d.dAll) AS dAll
 INTO #mastMonthEnd
-FROM ags.fnIpgChDatsV(@ipgChKey) d
-INNER JOIN ags.ipgChRlV v ON v.ipgcrvChain = @ipgChKey AND d.dAll >= v.ipgcrvStr AND (v.ipgcrvEnd IS NULL OR d.dAll <= v.ipgcrvEnd)
+FROM ags.fnIpgChDats_2606(@ipgChKey) d
+INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvChain = @ipgChKey AND d.dAll >= v.ipgcrvStr AND (v.ipgcrvEnd IS NULL OR d.dAll <= v.ipgcrvEnd)
 GROUP BY v.ipgcrvIpg, YEAR(d.dAll), MONTH(d.dAll);
 
 IF OBJECT_ID('tempdb..#schemeRows') IS NOT NULL DROP TABLE #schemeRows;
@@ -118,7 +118,7 @@ SET @t0 = SYSDATETIME();
     SELECT m.*, me.ipgKey, MONTH(me.dAll) AS mNum, v.ipgcrvStr AS ipgActStr, v.ipgcrvEnd AS ipgActEnd
     FROM ags.fnMasteringStIpgStCost_2606(@ipgStKey, @ipgChKey, @stCostKey, NULL) m
     INNER JOIN #mastMonthEnd me ON me.dAll = m.dAll
-    INNER JOIN ags.ipgChRlV v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = me.ipgKey
+    INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = me.ipgKey
 )
 SELECT ipgpCstAgPn, dAll, mNum, ipgKey, ipgActStr, ipgActEnd, 2 AS iShKey, N'Агентская' AS iShNm, N'1. ОА и Изм.' AS typeGr,
     agLim AS lim, agMstrngPrsRaMn AS presented, agMstrngAcpRaMn AS accepted,
@@ -148,8 +148,8 @@ IF OBJECT_ID('tempdb..#allMonths') IS NOT NULL DROP TABLE #allMonths;
 SET @t0 = SYSDATETIME();
 ;WITH ipgPnSchemePts AS (
     SELECT p.ipgpIpg AS ipgKey, p.ipgpCstAgPn, p.ipgpSh AS iShKey
-    FROM ags.ipgPn p INNER JOIN ags.ipgChRlV v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = p.ipgpIpg
-    UNION SELECT p.ipgpIpg, p.ipgpCstAgPn, 2 FROM ags.ipgPn p INNER JOIN ags.ipgChRlV v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = p.ipgpIpg WHERE p.ipgpSh = 1
+    FROM ags.ipgPn p INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = p.ipgpIpg
+    UNION SELECT p.ipgpIpg, p.ipgpCstAgPn, 2 FROM ags.ipgPn p INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = p.ipgpIpg WHERE p.ipgpSh = 1
 ),
 ipgMasteringCombos AS (SELECT DISTINCT sr.ipgKey, sr.ipgActStr, sr.ipgActEnd, sr.ipgpCstAgPn, sr.typeGr FROM #schemeRows sr),
 ipgSchemeCombo AS (
@@ -192,7 +192,7 @@ FROM (
         INNER JOIN ags.cn_PrDocT t ON d.cnpdTpOrd = t.pdtoKey INNER JOIN ags.yyyy yy ON YEAR(p.positingDate) = yy.yyyy
         INNER JOIN (SELECT @yKey AS yKey) ly ON yy.yKey = ly.yKey
         WHERE t.pdtoCode IN (N'ZKTG',N'ZPTG',N'ZUGH',N'ZKTA') AND p.pdpCstAgPn IS NOT NULL
-    UNION SELECT ip.ipgpCstAgPn FROM ags.ipgPn ip INNER JOIN ags.ipgChRlV v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = ip.ipgpIpg WHERE ip.ipgpCstAgPn IS NOT NULL
+    UNION SELECT ip.ipgpCstAgPn FROM ags.ipgPn ip INNER JOIN ags.ipgChRl_2606 v ON v.ipgcrvChain = @ipgChKey AND v.ipgcrvIpg = ip.ipgpIpg WHERE ip.ipgpCstAgPn IS NOT NULL
     UNION SELECT DISTINCT cstAgPnKey FROM #raFactMnrl
 ) src CROSS JOIN ags.mmmm mm CROSS JOIN ags.ra_typeGr tg;
 

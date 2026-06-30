@@ -26,7 +26,7 @@ BEGIN
 END;
 
 IF NOT EXISTS (
-    SELECT 1 FROM ags.ipgChRlV
+    SELECT 1 FROM ags.ipgChRl_2606
     WHERE ipgcrvChain = 5 AND ipgcrvIpg = 6 AND ipgcrvUtPlGr = 18
 )
 BEGIN

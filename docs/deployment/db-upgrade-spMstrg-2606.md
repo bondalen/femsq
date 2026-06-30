@@ -2,8 +2,8 @@
 
 **Файл:** `docs/deployment/db-upgrade-spMstrg-2606.md`  
 **Дата:** 2026-06-12  
-**lastUpdated:** 2026-06-26  
-**Версия:** 1.4  
+**lastUpdated:** 2026-06-30  
+**Версия:** 1.5  
 **Автор:** Александр
 
 **Краткий чеклист на день деплоя:** [`db-upgrade-spMstrg-2606-deploy-day-checklist.md`](db-upgrade-spMstrg-2606-deploy-day-checklist.md)
@@ -18,7 +18,7 @@
 
 Пакет внедряет стек **`_2606`** для отчёта об освоении с:
 
-- корректной цепью ИПГ (`ipgChRlV`, `fnIpgChDatsV`);
+- корректной цепью ИПГ (`ipgChRl_2606`, `fnIpgChDats_2606`, `fnIpgChRlEnd_2606`);
 - DAG-фильтрацией `@ipgStKey` / `@stCostKey` (int, NULL = без фильтра);
 - ускоренным освоением через `factDocCost` и bundles;
 - **отдельными** таблицами `spMstrg_2606_ResultSet1..7` (решение 8 — не трогаем `*_2408_ResultSet*`).
@@ -27,8 +27,10 @@
 
 | Компонент | Действие |
 |-----------|----------|
-| `ipgChRlV`, `factDoc`, `factDocCost`, триггеры | CREATE + бэкфилл |
+| `ipgChRl_2606`, `factDoc`, `factDocCost`, триггеры | CREATE + бэкфилл (`01`) |
+| `stIpgOutLimPn_2606` | CREATE + seed (`10a`–`10c`) |
 | `fnStCost*_2606`, `fnMastering*_2606`, `fn2_2606`, `PercentBrn_2606` | CREATE |
+| `05a` календарь RS1; **`05b` plan-align** (`ipgChRl_2606` в PercentBrn) | PATCH после `05` (этап 20 + **21.2**) |
 | `spMstrg_2606_ResultSet1..7` | CREATE (схема как `_2408`) |
 | `spMstrg_2606` | CREATE (fn-path: `06`; SP-path: `06b` после gate spFn2) |
 | `_2605`, `_2408`, `spMstrg_2408_ResultSet*` | **не изменяются** |
@@ -60,11 +62,14 @@
 |---|------|------------|
 | 0 | `00_VERIFY_before.sql` | Состояние «до» |
 | 0a | `00-perf-indexes.sql`, `00-perf-indexes-k7.sql` | Индексы |
-| 1–1d1 | `01` … `01d1` | ipgChRlV + factDoc + work→195 |
-| 2–3d | `02` … `03d` | fnStCost, mastering |
+| 1–1d1 | `01` … `01d1` | `ipgChRl_2606` + factDoc + work→195 |
+| 2–3d | `02` … `03d` | `fnIpgChDats_2606`, mastering |
+| 10a–10d | `10a` … `10d` | `stIpgOutLimPn_2606`, TVF универсума, патч `04` |
 | 3b1, 3b1b | bundles CostBase (этап 14.2) | |
 | 4, 4b | fn2 MSTVF + **spFn2** (ступень 3) | prod: `04b` |
 | 5, 5b | PercentBrn fn + **sp** | prod: `05b` (INSERT EXEC spFn2) |
+| 5a | `05a_PATCH_PercentBrn_fnIpgChDats_2606` | календарь 17 дат (этап 20) |
+| 5b | `05b_PATCH_PercentBrn_ipgChRl_2606` | plan-JOIN → `ipgChRl_2606` (этап **21.2**) |
 | 5b | `05b_CREATE_TABLE_spMstrg_2606_ResultSets.sql` | ResultSet1..7 |
 | 6, 6b | spMstrg fn-path / **SP-path** | dev: `06`; prod TBD после `07_VERIFY_spFn2_schema` |
 | 6c | `06c_FIX_spMstrg_ROWCOUNT_logging.sql` | Патч лога saveToTables (опционально для `_2605`) |

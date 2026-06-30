@@ -5,12 +5,13 @@ GO
 -- Файл:    07f_COMPARE_PercentBrn_full_chain5.sql
 -- Пакет:   docs/development/notes/sql/26-0604/
 -- Назначение: Полное сравнение PercentBrn_2606 ↔ _2605 (будущий RS1, цепь 5).
---   Материализация ~14 447 строк; ключевые поля ag_* на всех dateRslt 2022.
+--   После этапа 20 (календарь): _2606 = **15262** строк / **17** dateRslt;
+--   _2605 = **14447** / **16** (legacy). F.1/F.2 — эталон _2606; F.3 — parity на 16 общих датах.
 --   Опционально: @cstAgPnKey — сузить к одной стройке (быстрая отладка).
--- Предусловия: 05 (PercentBrn_2606), fnIpgChRsltCstUtlPercentBrn_2605.
+-- Предусловия: 05a (PercentBrn_2606), fnIpgChRsltCstUtlPercentBrn_2605.
 -- Ожидаемое время: 30–60 мин (полный набор); ~2–5 мин при @cstAgPnKey.
 -- Автор:   Александр
--- Дата:    2026-06-09 | Обновлено: 2026-06-11 (F.3: дедуп ключей GROUPING SETS)
+-- Дата:    2026-06-09 | Обновлено: 2026-06-30 (этап 20.4: calendar baseline)
 -- =============================================================================
 
 SET NOCOUNT ON;
@@ -19,6 +20,14 @@ GO
 DECLARE @ipgCh int = 5;
 DECLARE @cstAgPnKey int = NULL;  -- напр. 849 для точечной проверки
 DECLARE @fail int = 0;
+DECLARE @warn int = 0;
+DECLARE @jan1 date = '2022-01-01';
+
+-- Dev-эталон после календарного fix (цепь 5, 2022)
+DECLARE @expectCnt06 int = 15262;
+DECLARE @expectDt06  int = 17;
+DECLARE @expectCnt05 int = 14447;
+DECLARE @expectDt05  int = 16;
 
 PRINT N'=== 07f: FULL PercentBrn compare chain 5 ===';
 IF @cstAgPnKey IS NOT NULL
@@ -71,30 +80,62 @@ DECLARE @cnt06 int = (SELECT COUNT(*) FROM #pb06);
 SET @msg = N'  #pb06 rows: ' + CAST(@cnt06 AS nvarchar(10)) + N'  elapsed: ' + CAST(DATEDIFF(ms, @t0, SYSDATETIME()) AS nvarchar(10)) + N' ms';
 RAISERROR(@msg, 0, 1) WITH NOWAIT;
 
--- F.1 COUNT
+-- F.1 COUNT (_2606 = calendar baseline; расхождение с _2605 ожидаемо)
 PRINT N'';
 PRINT N'F.1 row counts: _2605=' + CAST(@cnt05 AS nvarchar(10)) + N' _2606=' + CAST(@cnt06 AS nvarchar(10));
-IF @cnt05 <> @cnt06
+IF @cstAgPnKey IS NULL
+BEGIN
+    IF @cnt06 <> @expectCnt06
+    BEGIN
+        SET @fail = @fail + 1;
+        PRINT N'  FAIL _2606 COUNT (expect ' + CAST(@expectCnt06 AS nvarchar(10)) + N')';
+    END
+    ELSE
+        PRINT N'  OK _2606 baseline';
+    IF @cnt05 <> @expectCnt05
+    BEGIN
+        SET @warn = @warn + 1;
+        PRINT N'  WARN _2605 COUNT drift (expect ' + CAST(@expectCnt05 AS nvarchar(10)) + N')';
+    END
+    IF @cnt05 = @cnt06
+    BEGIN
+        SET @warn = @warn + 1;
+        PRINT N'  WARN: _2606=_2605 (calendar fix not applied?)';
+    END
+    ELSE
+        PRINT N'  OK intentional delta=' + CAST(@cnt06 - @cnt05 AS nvarchar(10));
+END
+ELSE IF @cnt05 <> @cnt06
 BEGIN
     SET @fail = @fail + 1;
-    PRINT N'  FAIL (COUNT mismatch)';
+    PRINT N'  FAIL (COUNT mismatch on filtered cst)';
 END
 ELSE
-    PRINT N'  OK';
+    PRINT N'  OK (filtered cst)';
 
 -- F.2 dateRslt
 DECLARE @dt05 int = (SELECT COUNT(DISTINCT dateRslt) FROM #pb05);
 DECLARE @dt06 int = (SELECT COUNT(DISTINCT dateRslt) FROM #pb06);
 PRINT N'F.2 distinct dateRslt: _2605=' + CAST(@dt05 AS nvarchar(10)) + N' _2606=' + CAST(@dt06 AS nvarchar(10));
-IF @dt05 <> @dt06 OR @dt05 = 0
+IF @cstAgPnKey IS NULL
+BEGIN
+    IF @dt06 <> @expectDt06 OR @dt05 <> @expectDt05
+    BEGIN
+        SET @fail = @fail + 1;
+        PRINT N'  FAIL (expect 16 legacy / 17 calendar)';
+    END
+    ELSE
+        PRINT N'  OK (calendar 17 vs legacy 16)';
+END
+ELSE IF @dt05 <> @dt06 OR @dt05 = 0
 BEGIN
     SET @fail = @fail + 1;
     PRINT N'  FAIL';
 END
 ELSE
-    PRINT N'  OK (expected 16 on full chain 5)';
+    PRINT N'  OK';
 
--- F.3 key field mismatches — по дедуплицированным ключам (GROUPING SETS даёт дубли на агрегатах).
+-- F.3 key field mismatches — на **общих** dateRslt (без 01.01); GROUPING SETS → дедуп ключей.
 IF OBJECT_ID('tempdb..#da05') IS NOT NULL DROP TABLE #da05;
 IF OBJECT_ID('tempdb..#da06') IS NOT NULL DROP TABLE #da06;
 SELECT dateRslt, ipgKey, cstapKey,
@@ -115,14 +156,17 @@ DECLARE @keyDiff int = (
         ON a.dateRslt = b.dateRslt
        AND ISNULL(a.ipgKey, -1)    = ISNULL(b.ipgKey, -1)
        AND ISNULL(a.cstapKey, -1)  = ISNULL(b.cstapKey, -1)
-    WHERE a.dateRslt IS NULL OR b.dateRslt IS NULL
+    WHERE a.dateRslt <> @jan1 AND b.dateRslt <> @jan1
+      AND (
+           a.dateRslt IS NULL OR b.dateRslt IS NULL
        OR ABS(ISNULL(a.ag_presented, 0) - ISNULL(b.ag_presented, 0)) > 0.01
        OR ABS(ISNULL(a.ag_lim, 0) - ISNULL(b.ag_lim, 0)) > 0.01
        OR ABS(ISNULL(a.ag_Pl, 0) - ISNULL(b.ag_Pl, 0)) > 0.01
        OR ABS(ISNULL(a.ag_percentDev, 0) - ISNULL(b.ag_percentDev, 0)) > 0.0001
+      )
 );
 
-PRINT N'F.3 distinct keys with field diff (pres/lim/pl/percentDev): ' + CAST(@keyDiff AS nvarchar(10));
+PRINT N'F.3 distinct keys with field diff (excl. 01.01): ' + CAST(@keyDiff AS nvarchar(10));
 IF @keyDiff > 0
 BEGIN
     SET @fail = @fail + 1;
@@ -139,11 +183,14 @@ BEGIN
         ON a.dateRslt = b.dateRslt
        AND ISNULL(a.ipgKey, -1)    = ISNULL(b.ipgKey, -1)
        AND ISNULL(a.cstapKey, -1)  = ISNULL(b.cstapKey, -1)
-    WHERE a.dateRslt IS NULL OR b.dateRslt IS NULL
+    WHERE a.dateRslt <> @jan1 AND b.dateRslt <> @jan1
+      AND (
+           a.dateRslt IS NULL OR b.dateRslt IS NULL
        OR ABS(ISNULL(a.ag_presented, 0) - ISNULL(b.ag_presented, 0)) > 0.01
        OR ABS(ISNULL(a.ag_lim, 0) - ISNULL(b.ag_lim, 0)) > 0.01
        OR ABS(ISNULL(a.ag_Pl, 0) - ISNULL(b.ag_Pl, 0)) > 0.01
        OR ABS(ISNULL(a.ag_percentDev, 0) - ISNULL(b.ag_percentDev, 0)) > 0.0001
+      )
     ORDER BY ABS(ISNULL(a.ag_presented, 0) - ISNULL(b.ag_presented, 0)) DESC;
 END
 ELSE
@@ -191,8 +238,10 @@ BEGIN
 END
 
 PRINT N'';
-IF @fail = 0
+IF @fail = 0 AND @warn = 0
     PRINT N'=== 07f: PASS ===';
+ELSE IF @fail = 0
+    PRINT N'=== 07f: PASS (warn=' + CAST(@warn AS nvarchar(10)) + N') ===';
 ELSE
-    PRINT N'=== 07f: FAIL (' + CAST(@fail AS nvarchar(10)) + N' check(s)) ===';
+    PRINT N'=== 07f: FAIL (' + CAST(@fail AS nvarchar(10)) + N' check(s), warn=' + CAST(@warn AS nvarchar(10)) + N') ===';
 GO

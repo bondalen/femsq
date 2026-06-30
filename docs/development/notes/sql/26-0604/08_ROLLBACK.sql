@@ -5,6 +5,7 @@ GO
 -- Файл:    08_ROLLBACK.sql
 -- Пакет:   docs/development/notes/sql/26-0604/
 -- Назначение: Откат объектов _2606. Не затрагивает _2605 / _2408 / ResultSet_2408.
+-- PercentBrn: DROP покрывает и базовый 05, и патч 05a (календарь fnIpgChDats_2606).
 -- Выполнять: в обратном порядке создания (сначала процедуры/функции — по мере появления).
 -- =============================================================================
 
@@ -15,12 +16,33 @@ IF OBJECT_ID(N'ags.spMstrg_2606', N'P') IS NOT NULL
     DROP PROCEDURE ags.spMstrg_2606;
 GO
 
+IF OBJECT_ID(N'ags.spIpgChRsltCstUtlPercentBrn_2606', N'P') IS NOT NULL
+    DROP PROCEDURE ags.spIpgChRsltCstUtlPercentBrn_2606;
+GO
+
 IF OBJECT_ID(N'ags.fnIpgChRsltCstUtlPercentBrn_2606', N'IF') IS NOT NULL
     DROP FUNCTION ags.fnIpgChRsltCstUtlPercentBrn_2606;
 GO
 
+IF OBJECT_ID(N'ags.spIpgChRsltCstUtl2_2606', N'P') IS NOT NULL
+    DROP PROCEDURE ags.spIpgChRsltCstUtl2_2606;
+GO
+
 IF OBJECT_ID(N'ags.fnIpgChRsltCstUtl2_2606', N'TF') IS NOT NULL
     DROP FUNCTION ags.fnIpgChRsltCstUtl2_2606;
+GO
+
+-- Этап 19 (Решение 16): stIpgOutLimPn_2606, TVF универсума
+IF OBJECT_ID(N'ags.fnIpgChContractsForStIpg_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnIpgChContractsForStIpg_2606;
+GO
+
+IF OBJECT_ID(N'ags.fnCstAgPnTypeChar', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnCstAgPnTypeChar;
+GO
+
+IF OBJECT_ID(N'ags.stIpgOutLimPn_2606', N'U') IS NOT NULL
+    DROP TABLE ags.stIpgOutLimPn_2606;
 GO
 
 IF OBJECT_ID(N'ags.fnMasteringStIpgStCost_2606', N'IF') IS NOT NULL
@@ -67,8 +89,8 @@ IF OBJECT_ID(N'ags.fnStCostIpgPn_2606', N'FN') IS NOT NULL
     DROP FUNCTION ags.fnStCostIpgPn_2606;
 GO
 
-IF OBJECT_ID(N'ags.fnIpgChDatsV', N'IF') IS NOT NULL
-    DROP FUNCTION ags.fnIpgChDatsV;
+IF OBJECT_ID(N'ags.fnIpgChDats_2606', N'IF') IS NOT NULL
+    DROP FUNCTION ags.fnIpgChDats_2606;
 GO
 
 -- factDoc / factDocCost (01b–01c)
@@ -122,20 +144,20 @@ IF OBJECT_ID(N'ags.spMstrg_2606_ResultSet1', N'U') IS NOT NULL DROP TABLE ags.sp
 GO
 
 -- Вычисляемый столбец ссылается на функцию — сначала таблица, потом функция
-IF OBJECT_ID(N'ags.ipgChRlV', N'U') IS NOT NULL
+IF OBJECT_ID(N'ags.ipgChRl_2606', N'U') IS NOT NULL
 BEGIN
-    PRINT 'DROP TABLE ags.ipgChRlV';
-    DROP TABLE ags.ipgChRlV;
+    PRINT 'DROP TABLE ags.ipgChRl_2606';
+    DROP TABLE ags.ipgChRl_2606;
 END;
 GO
 
-IF OBJECT_ID(N'ags.fnIpgChRlVEnd', N'FN') IS NOT NULL
-    DROP FUNCTION ags.fnIpgChRlVEnd;
+IF OBJECT_ID(N'ags.fnIpgChRlEnd_2606', N'FN') IS NOT NULL
+    DROP FUNCTION ags.fnIpgChRlEnd_2606;
 GO
 
 -- Удаляем устаревшее представление, если осталось от предыдущей версии скрипта
-IF OBJECT_ID(N'ags.vIpgChRlV', N'V') IS NOT NULL
-    DROP VIEW ags.vIpgChRlV;
+IF OBJECT_ID(N'ags.vIpgChRl_2606', N'V') IS NOT NULL
+    DROP VIEW ags.vIpgChRl_2606;
 GO
 
 PRINT '=== 08_ROLLBACK: завершено (объекты _2606 удалены, _2605/_2408 не затронуты) ===';

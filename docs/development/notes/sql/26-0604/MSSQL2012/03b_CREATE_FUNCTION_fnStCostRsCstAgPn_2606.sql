@@ -72,7 +72,7 @@ BEGIN
                     p.ipgpSh,
                     s.ipgspSt,
                     c.ipgcStNetIpg
-                FROM ags.ipgChRlV v
+                FROM ags.ipgChRl_2606 v
                 INNER JOIN ags.ipgPn p ON v.ipgcrvIpg = p.ipgpIpg
                 INNER JOIN ags.ipgStPn s ON p.ipgpKey = s.ipgspPn
                 INNER JOIN ags.ipgCh c ON v.ipgcrvChain = c.ipgcKey
@@ -111,7 +111,7 @@ BEGIN
             p.ipgpKey,
             p.ipgpSh,
             f.*
-        FROM ags.ipgChRlV v
+        FROM ags.ipgChRl_2606 v
         INNER JOIN ags.ipgPn p ON v.ipgcrvIpg = p.ipgpIpg
         CROSS APPLY ags.fnStCostRsIpgPn_2606(
             @ipgCh, p.ipgpKey, v.ipgcrvUtPlGr, @stCostPn, @stCostNet, @ipgSh
@@ -136,7 +136,7 @@ BEGIN
             p.ipgpKey,
             p.ipgpSh,
             f.*
-        FROM ags.ipgChRlV v
+        FROM ags.ipgChRl_2606 v
         INNER JOIN ags.ipgPn p ON v.ipgcrvIpg = p.ipgpIpg
         CROSS APPLY ags.fnStCostRsIpgPn_2606(
             @ipgCh, p.ipgpKey, v.ipgcrvUtPlGr, @stCostPn, @stCostNet, @ipgSh
@@ -151,7 +151,7 @@ GO
 
 EXEC sys.sp_addextendedproperty
     @name = N'MS_Description',
-    @value = N'График освоения по строй-агент-коду для цепи ИПГ (_2606). ipgChRlV + fnStCostRsIpgPn_2606.',
+    @value = N'График освоения по строй-агент-коду для цепи ИПГ (_2606). ipgChRl_2606 + fnStCostRsIpgPn_2606.',
     @level0type = N'SCHEMA', @level0name = N'ags',
     @level1type = N'FUNCTION', @level1name = N'fnStCostRsCstAgPn_2606';
 GO

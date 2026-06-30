@@ -36,7 +36,7 @@ RAISERROR(N'--- [0/2] DATA AUDIT ipgPnLim / ipgUtPlPnLmMn ---', 0, 1) WITH NOWAI
 
 ;WITH pn AS (
     SELECT DISTINCT p.ipgpKey
-    FROM ags.ipgChRlV v
+    FROM ags.ipgChRl_2606 v
     INNER JOIN ags.ipgPn p ON v.ipgcrvIpg = p.ipgpIpg
     WHERE v.ipgcrvChain = @ipgCh
 ),
@@ -64,7 +64,7 @@ SELECT
 
 ;WITH pn AS (
     SELECT DISTINCT p.ipgpKey
-    FROM ags.ipgChRlV v
+    FROM ags.ipgChRl_2606 v
     INNER JOIN ags.ipgPn p ON v.ipgcrvIpg = p.ipgpIpg
     WHERE v.ipgcrvChain = @ipgCh
 )
@@ -92,7 +92,7 @@ IF OBJECT_ID('tempdb..#diff') IS NOT NULL DROP TABLE #diff;
 SELECT DISTINCT pp.ipgpCstAgPn AS cstAgPnKey
 INTO #contracts
 FROM ags.ipgPn pp
-INNER JOIN ags.ipgChRlV cr ON cr.ipgcrvIpg = pp.ipgpIpg AND cr.ipgcrvChain = @ipgCh
+INNER JOIN ags.ipgChRl_2606 cr ON cr.ipgcrvIpg = pp.ipgpIpg AND cr.ipgcrvChain = @ipgCh
 WHERE @stIpg IS NULL
    OR EXISTS (
        SELECT 1 FROM ags.ipgStPn sp
