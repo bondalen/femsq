@@ -1,7 +1,7 @@
 # Архитектура рекордсетов `spMstrg_2605` и контракт приёмки `_2606`
 
 **Дата:** 2026-06-09  
-**Последнее обновление:** 2026-06-30 (Решение 17: календарь 17 дат; Решение 21: naming, plan-align, agency-golden)  
+**Последнее обновление:** 2026-07-06 (Решение 17: календарь 17 дат; Решение 21: naming, plan-align, agency-golden; **Решение 22:** источник плана PercentBrn)  
 **Контекст:** уточнение роли `@MounthEndDate`, полного рекордсета для Java и единого стека `_2605`  
 **Источник кода:** `code/scripts/spMstrg_2408_SaveToTables.sql`, `ags.fnIpgChRsltCstUtlPercentBrn_2605`
 
@@ -39,8 +39,9 @@ spMstrg_2605 → ResultSet1..7
 
 ### Планы и лимиты
 
-- **Per `ipgKey`** из `ipgPn` / `ipgUtPlP` (iuplpM01…M12, Accum).
-- Скачок на графике между 21.09 и 22.09 — смена плана/лимита, не неоднозначность факта по дням.
+- **Mastering / `fnStCostRs*`:** помесячный план из **`ipgUtPlPnLmMn`** (по stCost); накопленный — `smmTtl` / `agSmmTtl`.
+- **PercentBrn RS1 (текущий код):** `ag_Pl`/`iv_Pl` из **`ipgUtPlP.iuplpM*`** (суммарный уровень **212**, без колонки stCost) — **legacy**; целевой источник после **Решения 22** — тот же путь, что mastering (этап **21.4.3**).
+- Скачок на графике между 21.09 и 22.09 — **смена актуальности инвестпрограммы** в цепи (лимит/план), не ревизия факта и не неоднозначность факта по дням.
 
 ### `dateRslt` в PercentBrn
 
@@ -100,20 +101,22 @@ spMstrg_2605 → ResultSet1..7
 
 | Gate | Назначение | Критерий PASS | Скрипт |
 |------|------------|---------------|--------|
-| **parity** | Регрессия vs prod `_2605` до релиза fix календаря | Полное совпадение RS1 `_2606` ↔ `_2605` (**все** поля, вкл. `rowNum`, `limSort`); **16** `dateRslt` на цепи 5 | `07s_rs1_parity_chain5.sql` |
-| **calendar** | Контракт графика Java (17 дат) | `fnIpgChDats_2606 EXCEPT dateRslt(RS1)` = ∅; на **01.01**: plan=0, rest≈lim; COUNT spot 2102: **68** (=17×4) | `07s_calendar_chain5.sql` |
-| **plan-align** | План PercentBrn = mastering / fixture | spot **2102**: `iv_Pl` на ИП **6, 8, 11**; источник — `ipgChRl_2606`, группы **18–20** | этап **21.2** / `07o` |
+| **parity** | Регрессия vs prod `_2605` | Non-plan поля RS1 `_2606`↔`_2605` на **16 общих** `dateRslt` = 0; plan (`ag_Pl`/`iv_Pl`/…) — **WARN** (ожидаемо, Реш. 22); `_2606` **17** дат / **68** строк | `07s_rs1_parity_chain5.sql` ✅ **21.4.6** |
+| **calendar** | Контракт графика Java (17 дат) | `fnIpgChDats_2606 EXCEPT dateRslt(RS1)` = ∅; на **01.01**: plan=0, rest≈lim; COUNT spot 2102: **68** (=17×4) | `07s_calendar_chain5.sql` ✅ **21.4.6** |
+| **plan-align** | План PercentBrn = mastering / LmMn | по **календарю `dateRslt`** + **К-12b@yearend** на цепях **501/502** (FIXTURE_10) | ✅ `07o`/`07t`/`07o_single_ip` **2026-07-06** |
 | **agency-spot** | Agency-golden | `@ipgStKey=4`, cst **849**/**1862**: `ag_lim` + `ag_accepted` на ИП 6/8/11 | этап **21.3** ✅ `07t` |
 
 Gate **parity** обязателен перед флешкой этапа 19. Gate **calendar** — после рефакторе `05` PercentBrn (этап 20). Состояние «parity PASS + calendar FAIL» — **ожидаемо** до fix.
 
 ### Приоритет 1 — полный рекордсет (Java)
 
-**До fix календаря (gate parity):** `spMstrg_2606_ResultSet1` = `spMstrg_2605_ResultSet1` (полный `fnIpgChRsltCstUtlPercentBrn_2606` = `_2605`).
+**После plan-align (Решение 22, этап 21.4.6):** на **16 общих** `dateRslt` (2022-01-31 … 2022-12-31) **факт** (presented/accepted/lim/… и ключи) `_2606` ↔ `_2605` совпадает. Plan-колонки (`ag_Pl`, `ag_PlAccum`, `iv_Pl`, `iv_PlAccum`, `uk_Pl`, `uk_PlAccum`) и **plan-derived** (`*PlFulfillment*`, `*Percent*`, `*restOfLimit*`) **расходятся** — ожидаемо: `_2605`/`iuplpM*` + legacy `ipgChRl` (gr 3/4/6); `_2606`/LmMn@212 + `ipgChRl_2606` (gr 18–20). Дополнительно только в `_2606`: строка **2022-01-01** (начальная точка графика). Gate parity §3a: EXCEPT по факту = 0; §3b: WARN на plan diff, не FAIL.
+
+**До fix календаря (gate parity, legacy):** `spMstrg_2606_ResultSet1` = `spMstrg_2605_ResultSet1` (полный `fnIpgChRsltCstUtlPercentBrn_2606` = `_2605`).
 
 **После fix календаря (gate calendar):** `_2606` **намеренно расходится** с `_2605` по COUNT и наличию 01.01; эталон — `fnIpgChDats_2606` + семантика начальной точки, не паритет с prod.
 
-**После plan-align (Решение 21):** расхождение `_2606` ↔ `_2605` по полям плана (`ag_Pl`, `iv_Pl`) на общих датах **допустимо и ожидаемо** — `_2605` читает legacy `ipgChRl`; `_2606` — `ipgChRl_2606` и тестовые группы UtPl **18–20**. Gate **parity** фиксирует состояние до plan-align; после 21.2 — отдельная фиксация в `07s`.
+**После plan-align (Решение 21, устарело полное совпадение):** расхождение `_2606` ↔ `_2605` по полям плана на общих датах **допустимо и ожидаемо** — см. уточнение **21.4.6** выше.
 
 Проверки (parity, текущий prod-like стек):
 

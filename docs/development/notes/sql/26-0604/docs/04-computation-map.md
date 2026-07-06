@@ -123,6 +123,14 @@ fnMasteringStIpgStCost(@ipgRoot, @ipgCh, @stCostKey, @stNet)
 
 Источник для `_2606`: **стек Б** (`fnStCostRsCstAgPn` клон).
 
+#### ⚠️ Разрыв: mastering vs колонки плана в PercentBrn (Решение 22)
+
+| Поле RS1 | Текущий источник в PercentBrn | Целевой источник `_2606` |
+|----------|------------------------------|--------------------------|
+| `ag_Pl`, `ag_PlAccum`, `iv_Pl`, `iv_PlAccum` | `ipgUtPlP.iuplpM01`…`M12` (итог **212**, без колонки stCost) | **`ipgUtPlPnLmMn`** @212, cumulative — как `fnStCostRsIpgPn_2606` |
+
+До этапа **21.4.3** mastering и К-12 используют LmMn; RS-колонки плана — legacy `iuplpM*`. См. `diag-21_4_2-plan-align-findings.md`, `glossary.md` (широкие месячные колонки).
+
 ---
 
 ### Шаг 5. Факт: Представлено / Принято (RA, АВ, РАЛП, Хранение, ССК, ОПИ)
@@ -203,7 +211,7 @@ fnMasteringStIpgStCost(@ipgRoot, @ipgCh, @stCostKey, @stNet)
 | 5c. Факт PrevYears | `fnMasteringCstAgPnSh_2606` | **разрыв — выбрать вариант 6А/6Б/6В** | |
 | 6. Агрегация схем | `fnMasteringStIpgStCost_2606` | стек Б | Параметры `@ipgStKey`/`@stCostKey` nullable |
 | 7. Метаданные + вывод | `fnIpgChRsltCstUtl2_2606` | стек Б / стек А | Совместимый формат |
-| 8. Итог + % | `fnIpgChRsltCstUtlPercentBrn_2606` | стек А/Б | `@dt` ← `fnIpgChDats_2606` (Реш. 17 ✅); plan-JOIN → **`ipgChRl_2606`** (Реш. 21, этап 21.2) |
+| 8. Итог + % | `fnIpgChRsltCstUtlPercentBrn_2606` | стек А/Б | `@dt` ← `fnIpgChDats_2606` (Реш. 17 ✅); plan-JOIN → **`ipgChRl_2606`** (Реш. 21.2); plan-колонки → **LmMn** (Реш. 22, этап 21.4.3) |
 | 9. Процедура | `spMstrg_2606` | стек А | `@ipgStKey`, `@stCostKey` nullable |
 
 ---

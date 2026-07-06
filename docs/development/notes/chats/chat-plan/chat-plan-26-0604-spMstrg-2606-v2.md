@@ -1,7 +1,8 @@
 # План работы чата: spMstrg_2606 — DAG-фильтрация и корректная цепь ИПГ (v2)
 
 **Дата:** 2026-06-04  
-**Версия плана:** v2.10 от 2026-06-24 (этап 19: универсум строек `stIpgOutLimPn`, флешка)  
+**Версия плана:** v2.11 от 2026-07-06 (этап 21.4: декомпозиция gate приёмки)  
+**Предыдущая:** v2.10 от 2026-06-24 (этап 19: универсум строек `stIpgOutLimPn`, флешка)  
 **Предыдущая:** v2.9 от 2026-06-26 (этап 18.8: sparse UtPl, CHECK>0, флешка)  
 **Предыдущая:** v2.7 от 2026-06-17 (этап 18 — приёмка планов UtPl по stCost, dev-only)  
 **Предыдущая версия:** `chat-plan-26-0604-spMstrg-2606.md` (архив, сохранена)  
@@ -912,7 +913,7 @@
 | **21.1** | **Naming DDL:** `ipgChRlV`→`ipgChRl_2606`, `fnIpgChRlVEnd`→`fnIpgChRlEnd_2606`, `fnIpgChDatsV`→`fnIpgChDats_2606`, `stIpgOutLimPn`→`stIpgOutLimPn_2606`; dev-migration; массовая замена в `26-0604/` + fixture 06/07; `08_ROLLBACK`, `00/07_VERIFY` | ✅ **2026-06-30** |
 | **21.2** | **Патч PercentBrn:** plan-JOIN `gap`/`gip`/`gup` — `ipgChRl`→`ipgChRl_2606`; `05b_PATCH_PercentBrn_ipgChRl_2606.sql`; spot **2102**: `iv_Pl` на ИП **8/11** | ✅ **2026-06-30** |
 | **21.3** | **Agency-golden:** `stIpg=4`, cst **849**/**1862**; прогон К-12 на 849; при необходимости **FIXTURE_08** (UtPl @212/195/172/187 только в gr **18–20**); `07_*` spot / §17 ручной прогон | ✅ **2026-06-30** |
-| **21.4** | **Gate приёмки:** naming (`07_VERIFY_after`); plan-align (2102, `07o`/PercentBrn); agency-spot (`stIpg=4`); зафиксировать влияние на parity `07s` (ожидаемое отличие плана от `_2605`) | ⬜ |
+| **21.4** | **Gate приёмки** (строгий **A**; подпункты **21.4.0–21.4.7**) | ✅ **2026-07-06** |
 | **21.5** | Sync **`MSSQL2012/`** (01, 02, 05a/05b, 10a); обновить порядок в `README.md`; **19.7** пересборка флешки | ⬜ |
 
 - [x] **21.0** Документация Решения 21 ✅ **2026-06-30**
@@ -930,7 +931,28 @@
   - **К-12:** нативный UtPl в gr **18–20** достаточен; **FIXTURE_08 SQL не нужен** (`FIXTURE_08_agency_golden.md`)
   - **Артефакты:** `07t_agency_spot_stipg4.sql`, `run_agency_golden_21_3.sh`
   - **Gate:** `07t` PASS (warn=6: `ag_Pl` @ yearend — общий gap plan-align, см. `07o` invest 2102)
-- [ ] **21.4** Gates naming / plan-align / agency-spot
+- [x] **21.4** Gates приёмки (строгий **A** — без перехода к **21.5** до PASS всех подпунктов) ✅ **2026-07-06**
+  - [x] **21.4.0** Hotfix div-by-zero RS4–RS6 (`ag_lim`/`iv_lim`=0): `_2408`/`_2605` SaveToTables + `05a`/`05b`; dev apply; `07u` smoke ✅ **2026-07-02** (коммит `ad67fc8`)
+  - [x] **21.4.1** Gate **naming:** `07_VERIFY_after` — объекты `_2606`, fn2=11587, PercentBrn=15262/17 ✅ (после 21.4.0)
+  - [x] **21.4.2** **Диагностика plan-align** ✅ **2026-07-06**
+    - **Preflight:** `07_VERIFY_after` PASS; `07n` 2102/849 PASS; `07o` FAIL (симптом)
+    - **Артефакты:** `07v_diag_plan_align_chain5.sql`, `run_diag_21_4_2.sh`, `docs/diag-21_4_2-plan-align-findings.md`
+    - **Точка обрыва:** `ipgUtPlP.iuplpM*` пуст в gr **18–20**; PercentBrn читает M-колонки (семантика **212**), не **LmMn**; `_2605` — legacy gr **3/4/6**
+    - **Документация:** Решение **22** (`03-design-decisions.md` §22), глоссарий v1.7.0, `13-plan-stcost` §18
+    - **Исход диагностики:** рефактор plan-колонок из LmMn@212 → выполнено в **21.4.3** ✅; пересмотр `07o` → **21.4.4**
+  - [x] **21.4.3** **Исправление plan-колонок** в PercentBrn (или смежном слое); dev apply; refill RS1 полной цепи (`@refresh=1`) ✅ **2026-07-06**
+    - **Артефакты:** `_gen_05c_plan_lmMn.py`, `05c_PATCH_PercentBrn_plan_LmMn_2606.sql` (+ `MSSQL2012/`), `apply_plan_lmMn_21_4_3.sh`, `07_refill_rs1_chain5.sql`
+    - **Dev apply:** `fnIpgChRsltCstUtlPercentBrn_2606` — plan из `ipgUtPlPnLmMn` @ stCost **212** (Решение 22)
+    - **Verify:** `07v` agency `ag_Pl` non-zero (849/1862); `07t` PASS (warn=4 → календарь ИП 6/8); `07_VERIFY_after` PASS; invest 2102 `iv_Pl`=0 @ m12 — **данные** (m12_only=0, accum=1334.283 млн)
+    - **Следующий:** **21.4.4** — пересмотр `07o` (календарь смены ИП, не yearend-only)
+  - [x] **21.4.4** Gate **plan-align** PASS: `07o_plan_align_spot_2102` (календарь ИП 6/8/11); plan в `07t` без warn ✅ **2026-07-06**
+    - **Изменения:** `07o` — ipgcrvEnd / yearend (iv_PlAccum; iv_Pl=0 @ m12 допустим); `07t` секция C — ag_Pl @ calendar
+    - **Артефакты:** `run_gate_21_4_4.sh`
+    - **К-12b@yearend (доп.):** FIXTURE_10 — цепи **501** (только ИП 6) / **502** (только ИП 8); `07o_single_ip_yearend_2606` PASS — `iv_PlAccum` = лимит @ `2022-12-31` для **2102**
+  - [x] **21.4.5** Gate **agency-spot** re-check: `07t_agency_spot_stipg4` — `ag_lim` + `ag_accepted` + `ag_Pl` на ИП 6/8/11 (849, 1862) ✅ **2026-07-06**
+    - **Прогон:** `run_gate_21_4_5.sh` → 07n 849/1862 PASS; 07t PASS (таймаут 120 с в скрипте — исправлен на 900)
+  - [x] **21.4.6** Gate **parity/calendar:** `07s_rs1_parity_chain5` + `07s_calendar_chain5` (@refresh=1); в `06-sp-recordsets` зафиксировать **expected** diff плана `_2606` ↔ `_2605`
+  - [x] **21.4.7** Оркестратор `run_gate_21_4.sh` + итоговый прогон; journal; закрытие этапа **21.4** ✅ **2026-07-06**
 - [ ] **21.5** MSSQL2012 sync → **19.7** флешка
 
 **Золотые стройки после этапа 21:**
@@ -942,7 +964,23 @@
 
 **Не трогать:** `ipgUtPlGr` **3/4/6** (prod-подобные планы); fixture только в **18/19/20**.
 
-**Зависимости:** **21.0** полностью — **до 21.1**. **21.2** — после **21.1**. **19.7** / **17.2.2b** — после **21.5**.
+**Зависимости:** **21.0** полностью — **до 21.1**. **21.2** — после **21.1**. **21.4** — после **21.3** (+ hotfix div-by-zero). **19.7** / **17.2.2b** — после **21.5** (только после PASS **21.4**).
+
+#### 21.4 — Gate приёмки (строгий вариант A) ✅
+
+> **Правило:** к **21.5** / развёртыванию — только после **PASS** всех подпунктов.  
+> **Закрыт:** `run_gate_21_4.sh` PASS @ dev **2026-07-06**.
+
+| # | Задача | Статус |
+|---|--------|--------|
+| **21.4.0** | Hotfix div-by-zero RS4–RS6; `07u` smoke | ✅ **2026-07-02** |
+| **21.4.1** | Gate **naming** — `07_VERIFY_after` | ✅ |
+| **21.4.2** | Диагностика **plan-align** (mastering → PercentBrn) | ✅ **2026-07-06** |
+| **21.4.3** | Fix plan-колонок; dev apply + refill RS1 | ✅ **2026-07-06** |
+| **21.4.4** | Gate **plan-align** — `07o` (2102) + plan в `07t` | ✅ **2026-07-06** |
+| **21.4.5** | Gate **agency-spot** re-check — `07t` (849/1862) | ✅ **2026-07-06** |
+| **21.4.6** | Gate **parity/calendar** — `07s` + expected diff vs `_2605` | ✅ **2026-07-06** |
+| **21.4.7** | `run_gate_21_4.sh`, итоговый прогон, journal | ✅ **2026-07-06** |
 
 ---
 
@@ -981,7 +1019,7 @@
 
 ## Следующий шаг реализации
 
-**Этап 21.4** — gates naming / plan-align / agency-spot. **Этап 19.7** — флешка после **21.5**.
+**Этап 21.5** — MSSQL2012 sync → **19.7** флешка.
 
 ---
 

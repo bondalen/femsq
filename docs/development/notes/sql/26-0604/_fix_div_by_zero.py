@@ -10,8 +10,10 @@ ROOT = Path(__file__).resolve().parents[5]  # femsq/
 PERCENTBRN_FILES = [
     Path(__file__).resolve().parent / "05a_PATCH_PercentBrn_fnIpgChDats_2606.sql",
     Path(__file__).resolve().parent / "05b_PATCH_PercentBrn_ipgChRl_2606.sql",
+    Path(__file__).resolve().parent / "05c_PATCH_PercentBrn_plan_LmMn_2606.sql",
     Path(__file__).resolve().parent / "MSSQL2012/05a_PATCH_PercentBrn_fnIpgChDats_2606.sql",
     Path(__file__).resolve().parent / "MSSQL2012/05b_PATCH_PercentBrn_ipgChRl_2606.sql",
+    Path(__file__).resolve().parent / "MSSQL2012/05c_PATCH_PercentBrn_plan_LmMn_2606.sql",
 ]
 
 SPMSTRG_FILES = [

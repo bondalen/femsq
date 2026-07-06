@@ -4927,7 +4927,7 @@
           "chat-attributes": {
             "id": "chat-2026-06-11-001",
             "created": "2026-06-11",
-            "lastUpdated": "2026-06-30",
+            "lastUpdated": "2026-07-06",
             "owner": "Александр",
             "status": "active",
             "priority": "critical",
@@ -5408,6 +5408,200 @@
                       "docs/development/notes/sql/26-0604/07t_agency_spot_stipg4.sql",
                       "docs/development/notes/sql/26-0604/fixture/dev-chain5-utpl-stcost/FIXTURE_08_agency_golden.md",
                       "docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606-v2.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Этап 21.4.2: диагностика plan-align + Решение 22 (success). № log-2026-07-06-001",
+                "log-attributes": {
+                  "id": "log-2026-07-06-001",
+                  "timestamp": "2026-07-06T12:30:00+03:00",
+                  "level": "success",
+                  "effort": "3h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/project/glossary.md",
+                      "docs/development/notes/sql/26-0604/docs/03-design-decisions.md"
+                    ],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "21.4.2 Диагностика plan-align на dev",
+                    "details": "07v_diag_plan_align_chain5.sql, run_diag_21_4_2.sh. Preflight: 07_VERIFY_after, 07n 2102/849 PASS. Точка обрыва: LmMn заполнен, iuplpM* пуст в gr 18–20; PercentBrn gap/gip читает M-колонки.",
+                    "outcome": "Блокер 21.4.3 идентифицирован; не fixture, а dual model UtPl.",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/07v_diag_plan_align_chain5.sql",
+                      "docs/development/notes/sql/26-0604/docs/diag-21_4_2-plan-align-findings.md"
+                    ]
+                  },
+                  {
+                    "action": "Решение 22: источник плана PercentBrn → LmMn",
+                    "details": "03-design-decisions.md §22; glossary v1.7.0 (широкие месячные колонки, семантика stCost 212); 04-computation-map, 06-sp-recordsets, 13-plan-stcost §18. iuplpM* — legacy для _2605; ipgUtPlP остаётся якорем.",
+                    "outcome": "Принят путь 21.4.3: рефактор PercentBrn без FIXTURE_09; пересмотр критерия 07o (смена ИП, не ревизия).",
+                    "references": [
+                      "docs/project/glossary.md",
+                      "docs/development/notes/sql/26-0604/docs/03-design-decisions.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606-v2.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Этап 21.4.3: PercentBrn plan из LmMn@212, dev apply (success). № log-2026-07-06-002",
+                "log-attributes": {
+                  "id": "log-2026-07-06-002",
+                  "timestamp": "2026-07-06T13:10:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/development/notes/sql/26-0604/docs/03-design-decisions.md"
+                    ],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "21.4.3 Патч 05c: plan-колонки из ipgUtPlPnLmMn @212",
+                    "details": "_gen_05c_plan_lmMn.py → 05c_PATCH_PercentBrn_plan_LmMn_2606.sql (3 блока gap/gip/gup). Решение 22: pivot LmMn вместо ipgUtPlP.iuplpM*.",
+                    "outcome": "fnIpgChRsltCstUtlPercentBrn_2606 на dev @10.7.0.3 применён.",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/05c_PATCH_PercentBrn_plan_LmMn_2606.sql",
+                      "docs/development/notes/sql/26-0604/_gen_05c_plan_lmMn.py"
+                    ]
+                  },
+                  {
+                    "action": "Dev verify + refill RS1 chain 5",
+                    "details": "07v: agency ag_Pl non-zero; 07t PASS (warn=4 календарь); 07_VERIFY_after PASS. Refill: spMstrg_2605 (14447) + spMstrg_2606@42 (68). Invest 2102 iv_Pl=0 @m12 — данные (m12_only=0, accum=1334.283 млн).",
+                    "outcome": "Блокер 21.4.2 снят; gate 07o/07t — этап 21.4.4.",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/apply_plan_lmMn_21_4_3.sh",
+                      "docs/development/notes/sql/26-0604/07_refill_rs1_chain5.sql",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606-v2.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Этап 21.4.4: gate plan-align, календарь 07o/07t (success). № log-2026-07-06-003",
+                "log-attributes": {
+                  "id": "log-2026-07-06-003",
+                  "timestamp": "2026-07-06T13:20:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/development/notes/sql/26-0604/docs/03-design-decisions.md"
+                    ],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "21.4.4 Пересмотр gate plan-align",
+                    "details": "07o: ipgcrvEnd для ИП 6/8, yearend для ИП 11; iv_PlAccum обязателен, iv_Pl=0 @ m12 допустим. 07t секция C: ag_Pl+ag_PlAccum @ calendar для 849/1862.",
+                    "outcome": "07o PASS, 07t PASS (без warn). run_gate_21_4_4.sh на dev.",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/07o_plan_align_spot_2102.sql",
+                      "docs/development/notes/sql/26-0604/07t_agency_spot_stipg4.sql",
+                      "docs/development/notes/sql/26-0604/run_gate_21_4_4.sh"
+                    ]
+                  },
+                  {
+                    "action": "FIXTURE_10: одиночные цепи 501/502, К-12b@yearend",
+                    "details": "Цепи dev-only: 501=ИП6+gr18, 502=ИП8+gr19, ipgcrvStr=2022-01-01. 07o_single_ip_yearend: iv_PlAccum=1160370000 для 2102 на обеих цепях; ИП8 iv_Pl=0 @m12 (как ИП11).",
+                    "outcome": "PASS на dev @10.7.0.3.",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/fixture/dev-single-ip-chains/FIXTURE_10_00_single_ip_chains.sql",
+                      "docs/development/notes/sql/26-0604/07o_single_ip_yearend_2606.sql",
+                      "docs/development/notes/sql/26-0604/run_fixture_10_single_ip.sh"
+                    ]
+                  },
+                  {
+                    "action": "21.4.5 Agency-spot re-check",
+                    "details": "run_gate_21_4_5.sh: 07n strict 849/1862 PASS; 07t A/B/C PASS. Shell exit 124 — timeout 07t 120с (факт ~10 мин); исправлено на 900 в run_agency_golden_21_3.sh.",
+                    "outcome": "Gate agency-spot закрыт.",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/run_gate_21_4_5.sh",
+                      "docs/development/notes/sql/26-0604/agency_golden_21_3_20260706_142856.log"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Этап 21.4.6: gate parity/calendar 07s (success). № log-2026-07-06-004",
+                "log-attributes": {
+                  "id": "log-2026-07-06-004",
+                  "timestamp": "2026-07-06T15:20:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/development/notes/sql/26-0604/docs/06-sp-recordsets-and-acceptance.md"
+                    ],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "21.4.6 Gate parity/calendar",
+                    "details": "07s_rs1_parity_chain5: §3a non-plan EXCEPT исключает plan-derived (*PlFulfillment*, *Percent*, *restOfLimit*); факт на 16 общих dateRslt = 0. §3b plan diff 16 rows — WARN (Решение 22). 07s_calendar: 17 дат, 68 строк, WARN Jan1 ag_lim NULL.",
+                    "outcome": "run_gate_21_4_6.sh PASS @ dev 10.7.0.3. Expected diff плана зафиксирован в 06-sp-recordsets.",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/07s_rs1_parity_chain5.sql",
+                      "docs/development/notes/sql/26-0604/07s_calendar_chain5.sql",
+                      "docs/development/notes/sql/26-0604/run_gate_21_4_6.sh",
+                      "docs/development/notes/sql/26-0604/run_gate_21_4_6_20260706_151046.log"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Этап 21.4.7: orchestrator run_gate_21_4, закрытие 21.4 (success). № log-2026-07-06-005",
+                "log-attributes": {
+                  "id": "log-2026-07-06-005",
+                  "timestamp": "2026-07-06T17:51:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/development/notes/sql/26-0604/docs/06-sp-recordsets-and-acceptance.md"
+                    ],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "21.4.7 Orchestrator run_gate_21_4.sh",
+                    "details": "Полный прогон 21.4.0–21.4.6 @ dev: 07_VERIFY_after, 07u, run_gate_21_4_4/5/6. Fix run_agency_golden: 07n PASS по маркеру (pipefail). Calendar sqlcmd ~2 мин задержка exit; parity PASS (WARN plan diff).",
+                    "outcome": "run_gate_21_4_20260706_164153.log: PASS — этап 21.4 закрыт. Допустим переход к 21.5.",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/run_gate_21_4.sh",
+                      "docs/development/notes/sql/26-0604/run_agency_golden_21_3.sh",
+                      "docs/development/notes/sql/26-0604/run_gate_21_4_20260706_164153.log"
                     ]
                   }
                 ]

@@ -7,9 +7,9 @@ GO
 -- Назначение: Gate agency-golden (этап 21.3) — stIpg=4, cst 849 / 1862.
 --   A. К-12 phase-0: SUM(UtPlMn@212) в ipgcrvUtPlGr ≈ лимит ipgPn на ИП 6/8/11.
 --   B. PercentBrn: ag_lim и ag_accepted ненулевые на каждом ИП 6/8/11 (календарь ревизий).
---   C. WARN: ag_Pl @ yearend — ожидается после plan-align (см. 07o invest-golden).
--- Предусловия: FIXTURE_06_01 (swap UtPlGr 18–20); нативный UtPl agency (FIXTURE_08 не нужен).
--- Автор:   Александр | Дата: 2026-06-30
+--   C. Plan-align: ag_Pl + ag_PlAccum на ipgcrvEnd / yearend (Решение 22, этап 21.4.4).
+-- Предусловия: FIXTURE_06_01 (swap UtPlGr 18–20); 05c (plan LmMn@212).
+-- Автор:   Александр | Дата: 2026-07-06 (plan gate 21.4.4)
 -- =============================================================================
 
 SET NOCOUNT ON;
@@ -22,7 +22,6 @@ DECLARE @stIpg   int  = 4;
 DECLARE @dt      date = '2022-12-31';
 DECLARE @epsilon money = 0.01;
 DECLARE @fail    int  = 0;
-DECLARE @warn    int  = 0;
 DECLARE @msg     nvarchar(500);
 
 -- ---------------------------------------------------------------------------
@@ -109,11 +108,11 @@ GROUP BY p.cstapKey, p.ipgKey;
 
 SELECT * FROM #pb ORDER BY cstapKey, ipgKey;
 
-DECLARE @cst2 int, @ipg2 int, @hl int, @ha int, @hp int, @hpy int;
+DECLARE @cst2 int, @ipg2 int, @hl int, @ha int, @hp int;
 DECLARE cpb CURSOR LOCAL FAST_FORWARD FOR
-    SELECT cstapKey, ipgKey, has_lim, has_acc, has_pl, has_pl_ye FROM #pb;
+    SELECT cstapKey, ipgKey, has_lim, has_acc, has_pl FROM #pb;
 OPEN cpb;
-FETCH NEXT FROM cpb INTO @cst2, @ipg2, @hl, @ha, @hp, @hpy;
+FETCH NEXT FROM cpb INTO @cst2, @ipg2, @hl, @ha, @hp;
 WHILE @@FETCH_STATUS = 0
 BEGIN
     IF @hl = 0 OR @ha = 0
@@ -132,15 +131,7 @@ BEGIN
             + N' lim+accepted';
         RAISERROR(@msg, 0, 1) WITH NOWAIT;
     END
-    IF @hpy = 0
-    BEGIN
-        SET @warn = @warn + 1;
-        SET @msg = N'  WARN: cst=' + CAST(@cst2 AS nvarchar(10))
-            + N' ipg=' + CAST(@ipg2 AS nvarchar(10))
-            + N' — ag_Pl=0 @ yearend (plan column; см. plan-align invest 2102)';
-        RAISERROR(@msg, 0, 1) WITH NOWAIT;
-    END
-    FETCH NEXT FROM cpb INTO @cst2, @ipg2, @hl, @ha, @hp, @hpy;
+    FETCH NEXT FROM cpb INTO @cst2, @ipg2, @hl, @ha, @hp;
 END
 CLOSE cpb;
 DEALLOCATE cpb;
@@ -152,17 +143,87 @@ BEGIN
 END
 
 -- ---------------------------------------------------------------------------
+-- C. Plan-align @ calendar: ag_Pl + ag_PlAccum (ipgcrvEnd / yearend)
+-- ---------------------------------------------------------------------------
+RAISERROR(N'--- C. PercentBrn ag_Pl @ calendar (ipgcrvEnd / yearend) ---', 0, 1) WITH NOWAIT;
+
+IF OBJECT_ID('tempdb..#expect') IS NOT NULL DROP TABLE #expect;
+
+SELECT
+    c.cstAgPn,
+    v.ipgcrvIpg AS ipgKey,
+    CASE
+        WHEN v.ipgcrvEnd IS NULL OR v.ipgcrvEnd >= @dt THEN @dt
+        ELSE CAST(v.ipgcrvEnd AS date)
+    END AS check_dt
+INTO #expect
+FROM (VALUES (849), (1862)) c(cstAgPn)
+CROSS JOIN ags.ipgChRl_2606 v
+WHERE v.ipgcrvChain = @ipgCh
+  AND v.ipgcrvIpg IN (6, 8, 11);
+
+IF OBJECT_ID('tempdb..#plan') IS NOT NULL DROP TABLE #plan;
+
+SELECT
+    e.cstAgPn,
+    e.ipgKey,
+    e.check_dt,
+    p.ag_Pl,
+    p.ag_PlAccum
+INTO #plan
+FROM #expect e
+LEFT JOIN ags.fnIpgChRsltCstUtlPercentBrn_2606(@ipgCh, @stIpg, NULL) p
+    ON p.cstapKey = e.cstAgPn
+   AND p.ipgKey = e.ipgKey
+   AND p.dateRslt = e.check_dt;
+
+SELECT cstAgPn, ipgKey, check_dt, ag_Pl, ag_PlAccum FROM #plan ORDER BY cstAgPn, ipgKey;
+
+DECLARE @cst3 int, @ipg3 int, @chk date, @apl money, @aplAcc money;
+DECLARE cpl CURSOR LOCAL FAST_FORWARD FOR
+    SELECT cstAgPn, ipgKey, check_dt, ag_Pl, ag_PlAccum FROM #plan;
+OPEN cpl;
+FETCH NEXT FROM cpl INTO @cst3, @ipg3, @chk, @apl, @aplAcc;
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    IF ISNULL(@apl, 0) = 0 OR ISNULL(@aplAcc, 0) = 0
+    BEGIN
+        SET @fail = @fail + 1;
+        SET @msg = N'  FAIL plan: cst=' + CAST(@cst3 AS nvarchar(10))
+            + N' ipg=' + CAST(@ipg3 AS nvarchar(10))
+            + N' @' + CONVERT(nvarchar(10), @chk, 120)
+            + N' — ag_Pl/ag_PlAccum expected non-zero';
+        RAISERROR(@msg, 0, 1) WITH NOWAIT;
+    END
+    ELSE
+    BEGIN
+        SET @msg = N'  OK plan: cst=' + CAST(@cst3 AS nvarchar(10))
+            + N' ipg=' + CAST(@ipg3 AS nvarchar(10))
+            + N' @' + CONVERT(nvarchar(10), @chk, 120);
+        RAISERROR(@msg, 0, 1) WITH NOWAIT;
+    END
+    FETCH NEXT FROM cpl INTO @cst3, @ipg3, @chk, @apl, @aplAcc;
+END
+CLOSE cpl;
+DEALLOCATE cpl;
+
+IF (SELECT COUNT(*) FROM #expect) <> 6
+BEGIN
+    SET @fail = @fail + 1;
+    RAISERROR(N'  FAIL plan: expected 6 calendar checkpoints', 0, 1) WITH NOWAIT;
+END
+
+-- ---------------------------------------------------------------------------
 -- Итог
 -- ---------------------------------------------------------------------------
 IF @fail = 0
 BEGIN
-    SET @msg = N'=== 07t agency-spot: PASS (warn=' + CAST(@warn AS nvarchar(10)) + N') ===';
+    SET @msg = N'=== 07t agency-spot: PASS ===';
     RAISERROR(@msg, 0, 1) WITH NOWAIT;
 END
 ELSE
 BEGIN
-    SET @msg = N'=== 07t agency-spot: FAIL (fail=' + CAST(@fail AS nvarchar(10))
-        + N', warn=' + CAST(@warn AS nvarchar(10)) + N') ===';
+    SET @msg = N'=== 07t agency-spot: FAIL (fail=' + CAST(@fail AS nvarchar(10)) + N') ===';
     RAISERROR(@msg, 0, 1) WITH NOWAIT;
 END
 GO
