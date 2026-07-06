@@ -834,7 +834,7 @@ BEGIN
                         , ISNULL(p.ag_lim, 0) + ISNULL(p.iv_lim, 0) + ISNULL(p.uk_lim, 0) AS lim
                         , p.ag_lim 
                         , CASE WHEN p.ag_PlFulfillment + p.ag_PlOverFulfillment = 0 THEN NULL ELSE p.ag_PlFulfillment + p.ag_PlOverFulfillment END AS ag_Ful_OverFul
-                        , CASE WHEN p.ag_lim IS NULL OR p.ag_lim = 0 THEN NULL ELSE (p.ag_PlFulfillment + p.ag_PlOverFulfillment)/p.ag_lim END AS ag_LimPc
+                        , CASE WHEN p.ag_lim IS NULL OR p.ag_lim = 0 THEN NULL ELSE CASE WHEN p.ag_lim IS NULL OR p.ag_lim = 0 THEN NULL ELSE (ISNULL(p.ag_PlFulfillment,0)+ISNULL(p.ag_PlOverFulfillment,0))/NULLIF(p.ag_lim,0) END END AS ag_LimPc
                         , CASE WHEN p.ag_PlOverLimit = 0 THEN NULL ELSE p.ag_PlOverLimit END AS ag_PlOverLimit_, p.iv_lim, p.uk_lim
                         , CASE WHEN p.ag_PlAccum = 0 THEN NULL ELSE p.ag_PlAccum END AS ag_PlAccum
                         , CASE WHEN p.ag_PlFulfillment = 0 THEN NULL ELSE p.ag_PlFulfillment END AS ag_PlFulfillment
@@ -842,7 +842,7 @@ BEGIN
                         , CASE WHEN p.ag_PlOverFulfillment = 0 THEN NULL ELSE p.ag_PlOverFulfillment END AS ag_PlOverFulfillment, p.ag_PlPercent
                         , p.ag_Pl AS ag_Pl_M, p.ag_acceptedTtl AS ag_acceptedTtl_M
                         , p.ag_inProcessTtlAccum as ag_acceptedNot
-                        , CASE WHEN p.ag_Pl IS NULL OR p.ag_Pl = 0 THEN NULL ELSE p.ag_acceptedTtl/p.ag_Pl END AS ag_PlPz_M
+                        , CASE WHEN p.ag_Pl IS NULL OR p.ag_Pl = 0 THEN NULL ELSE p.ag_acceptedTtl/NULLIF(p.ag_Pl, 0) END AS ag_PlPz_M
                         , CHOOSE(MONTH(dateRslt), 'январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь') mn
                         , p.ogNm AS ogNmSort, p.cstAgPnCode AS cstAgPnCodeSort, p.np_acceptedTtlAccum
                     FROM @TableFnIpgChRsltCstUtlPercentBrn_2408 AS p 
@@ -876,7 +876,7 @@ BEGIN
                             p.ag_PlPercentMinusOverFulf AS ag_PlPz,
                             CASE WHEN p.ag_PlOverFulfillment = 0 THEN NULL ELSE p.ag_PlOverFulfillment END AS ag_PlOverFulfillment, p.ag_PlPercent, 
                             p.ag_Pl AS ag_Pl_M, p.ag_acceptedTtl AS ag_acceptedTtl_M, 
-                            CASE WHEN p.ag_Pl IS NULL OR p.ag_Pl = 0 THEN NULL ELSE p.ag_acceptedTtl/p.ag_Pl END AS ag_PlPz_M, 
+                            CASE WHEN p.ag_Pl IS NULL OR p.ag_Pl = 0 THEN NULL ELSE p.ag_acceptedTtl/NULLIF(p.ag_Pl, 0) END AS ag_PlPz_M, 
                             CASE 
                                 WHEN dateRslt IS NULL THEN NULL
                                 ELSE CHOOSE(MONTH(dateRslt), 'январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь')
@@ -910,7 +910,7 @@ BEGIN
                             p.ag_PlPercentMinusOverFulf AS ag_PlPz,
                             CASE WHEN p.ag_PlOverFulfillment = 0 THEN NULL ELSE p.ag_PlOverFulfillment END AS ag_PlOverFulfillment, 
                             p.ag_PlPercent, p.ag_Pl AS ag_Pl_M, p.ag_acceptedTtl AS ag_acceptedTtl_M, 
-                            CASE WHEN p.ag_Pl IS NULL OR p.ag_Pl = 0 THEN NULL ELSE p.ag_acceptedTtl/p.ag_Pl END AS ag_PlPz_M, 
+                            CASE WHEN p.ag_Pl IS NULL OR p.ag_Pl = 0 THEN NULL ELSE p.ag_acceptedTtl/NULLIF(p.ag_Pl, 0) END AS ag_PlPz_M, 
                             CASE 
                                 WHEN dateRslt IS NULL THEN NULL
                                 ELSE CHOOSE(MONTH(dateRslt), 'январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь')
@@ -1062,17 +1062,17 @@ BEGIN
                         , ISNULL(p.cstAgPnCode, 'всего') AS cstAgPnCode, c.cstapCstName
                         , ISNULL(p.ag_lim, 0) + ISNULL(p.iv_lim, 0) + ISNULL(p.uk_lim, 0) AS lim, p.ag_lim
                         , CASE WHEN p.ag_PlFulfillment + p.ag_PlOverFulfillment = 0 THEN NULL ELSE p.ag_PlFulfillment + p.ag_PlOverFulfillment END AS ag_Ful_OverFul
-                        , CASE WHEN p.ag_lim IS NULL OR p.ag_lim = 0 THEN NULL ELSE (p.ag_PlFulfillment + p.ag_PlOverFulfillment)/p.ag_lim END AS ag_LimPc
+                        , CASE WHEN p.ag_lim IS NULL OR p.ag_lim = 0 THEN NULL ELSE CASE WHEN p.ag_lim IS NULL OR p.ag_lim = 0 THEN NULL ELSE (ISNULL(p.ag_PlFulfillment,0)+ISNULL(p.ag_PlOverFulfillment,0))/NULLIF(p.ag_lim,0) END END AS ag_LimPc
                         , CASE WHEN p.ag_PlOverLimit = 0 THEN NULL ELSE p.ag_PlOverLimit END AS ag_PlOverLimit_
                         , p.iv_lim, p.uk_lim, CASE WHEN p.ag_PlAccum = 0 THEN NULL ELSE p.ag_PlAccum END AS ag_PlAccum
                         , CASE WHEN p.ag_PlFulfillment = 0 THEN NULL ELSE p.ag_PlFulfillment END AS ag_PlFulfillment
-                        , CASE WHEN p.ag_PlAccum IS NULL OR p.ag_PlAccum = 0 THEN NULL ELSE p.ag_PlFulfillment/p.ag_PlAccum END AS ag_PlPz
+                        , CASE WHEN p.ag_PlAccum IS NULL OR p.ag_PlAccum = 0 THEN NULL ELSE p.ag_PlFulfillment/NULLIF(p.ag_PlAccum, 0) END AS ag_PlPz
                         , CASE WHEN p.ag_PlOverFulfillment = 0 THEN NULL ELSE p.ag_PlOverFulfillment END AS ag_PlOverFulfillment
                         , p.ag_PlPercent
                         , p.ag_Pl AS ag_Pl_M
                         , p.ag_acceptedTtl AS ag_acceptedTtl_M
                         , (ISNULL(p.ag_presentedAccum, 0) + ISNULL(p.ag_presentedRalpAccum, 0)) - (ISNULL(p.ag_acceptedAccum, 0) + ISNULL(p.ag_acceptedRalpAccum, 0)) AS ag_acceptedNot
-                        , CASE WHEN p.ag_Pl IS NULL OR p.ag_Pl = 0 THEN NULL ELSE p.ag_acceptedTtl/p.ag_Pl END AS ag_PlPz_M
+                        , CASE WHEN p.ag_Pl IS NULL OR p.ag_Pl = 0 THEN NULL ELSE p.ag_acceptedTtl/NULLIF(p.ag_Pl, 0) END AS ag_PlPz_M
                         , CHOOSE(MONTH(dateRslt), 'январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь') mn
                         , p.ogNm AS ogNmSort, p.cstAgPnCode AS cstAgPnCodeSort
                         , p.ag_accepted, p.ag_acceptedAccum, p.ag_agFeeAccepted, p.ag_agFeeAcceptedAccum, p.ag_acceptedRalp, p.ag_acceptedRalpAccum
