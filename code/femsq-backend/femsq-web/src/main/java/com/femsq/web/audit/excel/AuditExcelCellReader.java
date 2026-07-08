@@ -2,6 +2,12 @@ package com.femsq.web.audit.excel;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoField;
+import java.util.Locale;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DataFormatter;
@@ -9,16 +15,31 @@ import org.apache.poi.ss.usermodel.DateUtil;
 import org.springframework.stereotype.Component;
 
 /**
- * Утилита чтения значений из ячеек Apache POI.
- * Обеспечивает безопасное чтение с нормализацией null/blank.
+ * Унифицированное чтение значений ячеек Excel с преобразованием в нужные типы.
+ * Поддерживает formula cells, русское форматирование чисел и типичные российские форматы дат.
  */
 @Component
 public class AuditExcelCellReader {
 
     private final DataFormatter dataFormatter = new DataFormatter();
 
+    /** Двухзначный год в диапазоне 2000–2099 (как в Excel для «25» → 2025). */
+    private static final DateTimeFormatter DD_MM_YY = new DateTimeFormatterBuilder()
+            .appendPattern("dd.MM.")
+            .appendValueReduced(ChronoField.YEAR, 2, 2, 2000)
+            .toFormatter(Locale.ROOT);
+
+    private static final DateTimeFormatter D_M_YY = new DateTimeFormatterBuilder()
+            .appendPattern("d.M.")
+            .appendValueReduced(ChronoField.YEAR, 2, 2, 2000)
+            .toFormatter(Locale.ROOT);
+
+    private static final DateTimeFormatter DD_MM_YYYY = DateTimeFormatter.ofPattern("dd.MM.yyyy", Locale.ROOT);
+    private static final DateTimeFormatter D_M_YYYY = DateTimeFormatter.ofPattern("d.M.yyyy", Locale.ROOT);
+    private static final DateTimeFormatter DD_M_YYYY = DateTimeFormatter.ofPattern("dd.M.yyyy", Locale.ROOT);
+
     /**
-     * Читает ячейку как строку. Возвращает trimmed-значение или {@code null} для пустых ячеек.
+     * Возвращает строковое представление ячейки (trim) или null.
      */
     public String readString(Cell cell) {
         if (cell == null) {
@@ -45,99 +66,79 @@ public class AuditExcelCellReader {
     }
 
     /**
-     * Читает ячейку как дату ({@link LocalDate}). Возвращает {@code null} если ячейка пуста или не является датой.
+     * Возвращает LocalDate из date-ячейки или текстового формата, если возможно.
      */
     public LocalDate readDate(Cell cell) {
         if (cell == null) {
             return null;
         }
-        CellType effectiveType = cell.getCellType() == CellType.FORMULA
-                ? cell.getCachedFormulaResultType()
-                : cell.getCellType();
-        if (effectiveType == CellType.NUMERIC && DateUtil.isCellDateFormatted(cell)) {
+        if (isNumericCell(cell) && DateUtil.isCellDateFormatted(cell)) {
             try {
-                var ldt = cell.getLocalDateTimeCellValue();
-                return ldt == null ? null : ldt.toLocalDate();
-            } catch (Exception e) {
-                return null;
+                var localDateTime = cell.getLocalDateTimeCellValue();
+                if (localDateTime != null) {
+                    return localDateTime.toLocalDate();
+                }
+                return cell.getDateCellValue().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            } catch (Exception ignored) {
+                // fall through to text parsing
             }
         }
-        if (effectiveType == CellType.STRING) {
-            String raw = cell.getStringCellValue();
-            if (raw == null || raw.isBlank()) {
-                return null;
-            }
-            return tryParseDate(raw.trim());
+        String asString = readString(cell);
+        if (asString == null) {
+            return null;
         }
-        return null;
+        return parseExcelLocalDate(asString);
     }
 
     /**
-     * Читает ячейку как целое число. Возвращает {@code null} если ячейка пуста или не является числом.
+     * Возвращает целое число из ячейки или null.
      */
     public Integer readInt(Cell cell) {
-        if (cell == null) {
+        String asString = readString(cell);
+        if (asString == null) {
             return null;
         }
-        CellType effectiveType = cell.getCellType() == CellType.FORMULA
-                ? cell.getCachedFormulaResultType()
-                : cell.getCellType();
-        if (effectiveType == CellType.NUMERIC) {
-            return (int) cell.getNumericCellValue();
+        if ("-".equals(asString) || "—".equals(asString)) {
+            return null;
         }
-        if (effectiveType == CellType.STRING) {
-            String raw = cell.getStringCellValue();
-            if (raw == null || raw.isBlank()) {
-                return null;
+        try {
+            if (cell != null && isNumericCell(cell) && !DateUtil.isCellDateFormatted(cell)) {
+                return (int) Math.round(cell.getNumericCellValue());
             }
-            try {
-                return Integer.parseInt(raw.trim());
-            } catch (NumberFormatException e) {
-                try {
-                    return (int) Double.parseDouble(raw.trim());
-                } catch (NumberFormatException ex) {
-                    throw new AuditExcelException("Failed to parse Integer from cell value: " + raw, ex);
-                }
-            }
+            return Integer.valueOf(stripUnicodeSpaceSeparators(asString));
+        } catch (NumberFormatException exception) {
+            throw new AuditExcelException("Failed to parse Integer from cell value: " + asString, exception);
         }
-        return null;
     }
 
     /**
-     * Читает ячейку как BigDecimal. Возвращает {@code null} если ячейка пуста или не является числом.
+     * Возвращает decimal-значение из ячейки или null.
      */
     public BigDecimal readDecimal(Cell cell) {
-        if (cell == null) {
+        String asString = readString(cell);
+        if (asString == null) {
             return null;
         }
-        CellType effectiveType = cell.getCellType() == CellType.FORMULA
-                ? cell.getCachedFormulaResultType()
-                : cell.getCellType();
-        if (effectiveType == CellType.NUMERIC) {
-            return BigDecimal.valueOf(cell.getNumericCellValue());
+        if ("-".equals(asString) || "—".equals(asString)) {
+            return null;
         }
-        if (effectiveType == CellType.STRING) {
-            String raw = cell.getStringCellValue();
-            if (raw == null || raw.isBlank()) {
+        try {
+            if (cell != null && isNumericCell(cell) && !DateUtil.isCellDateFormatted(cell)) {
+                return BigDecimal.valueOf(cell.getNumericCellValue());
+            }
+            String cleaned = normalizeDecimalString(stripUnicodeSpaceSeparators(asString));
+            if (cleaned == null || cleaned.isEmpty() || "-".equals(cleaned)) {
                 return null;
             }
-            String cleaned = normalizeDecimalString(raw.trim());
-            if (cleaned == null || cleaned.equals("-") || cleaned.isEmpty()) {
-                return null;
-            }
-            try {
-                return new BigDecimal(cleaned);
-            } catch (NumberFormatException e) {
-                throw new AuditExcelException("Failed to parse Decimal from cell value: " + raw, e);
-            }
+            return new BigDecimal(cleaned);
+        } catch (NumberFormatException exception) {
+            throw new AuditExcelException("Failed to parse Decimal from cell value: " + asString, exception);
         }
-        return null;
     }
 
     /**
      * Нормализует строку числа с учётом русского форматирования:
      * пробел/неразрывный пробел как разделитель тысяч, запятая как десятичный разделитель.
-     * Примеры: "130 092,19" → "130092.19", "130,092,19" → "130092.19", "1.234.567,89" → "1234567.89".
      */
     private String normalizeDecimalString(String value) {
         if (value == null) {
@@ -159,42 +160,60 @@ public class AuditExcelCellReader {
             int lastComma = s.lastIndexOf(',');
             int lastDot = s.lastIndexOf('.');
             if (lastComma > lastDot) {
-                // comma is decimal separator, dots are thousands
                 return s.replace(".", "").replace(",", ".");
-            } else {
-                // dot is decimal separator, commas are thousands
-                return s.replace(",", "");
             }
+            return s.replace(",", "");
         }
         if (commaCount > 0) {
             if (commaCount == 1) {
                 return s.replace(",", ".");
             }
-            // Multiple commas: all but last are thousands separators
             int lastComma = s.lastIndexOf(',');
             return s.substring(0, lastComma).replace(",", "") + "." + s.substring(lastComma + 1);
         }
         if (dotCount > 1) {
-            // Multiple dots: all but last are thousands separators
             int lastDot = s.lastIndexOf('.');
             return s.substring(0, lastDot).replace(".", "") + "." + s.substring(lastDot + 1);
         }
         return s;
     }
 
-    private LocalDate tryParseDate(String raw) {
-        java.time.format.DateTimeFormatter[] formatters = {
-                java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy"),
-                java.time.format.DateTimeFormatter.ofPattern("d.MM.yyyy"),
-                java.time.format.DateTimeFormatter.ofPattern("dd.M.yyyy"),
-                java.time.format.DateTimeFormatter.ISO_LOCAL_DATE
-        };
-        for (var fmt : formatters) {
+    /**
+     * Разбор даты из текста ячейки: ISO, затем типичные российские форматы с точкой.
+     */
+    private static LocalDate parseExcelLocalDate(String asString) {
+        try {
+            return LocalDate.parse(asString);
+        } catch (DateTimeParseException ignored) {
+            // fall through
+        }
+        for (DateTimeFormatter formatter : new DateTimeFormatter[] {
+                DD_MM_YYYY, D_M_YYYY, DD_M_YYYY, DD_MM_YY, D_M_YY, DateTimeFormatter.ISO_LOCAL_DATE
+        }) {
             try {
-                return LocalDate.parse(raw, fmt);
-            } catch (Exception ignored) {
+                return LocalDate.parse(asString, formatter);
+            } catch (DateTimeParseException ignored) {
+                // try next
             }
         }
         return null;
+    }
+
+    /**
+     * Убирает Unicode-разделители пробела ({@code Zs}), в т.ч. неразрывный и узкий неразрывный пробел.
+     */
+    private static String stripUnicodeSpaceSeparators(String value) {
+        return value == null ? null : value.replaceAll("\\p{Zs}", "");
+    }
+
+    private boolean isNumericCell(Cell cell) {
+        if (cell == null) {
+            return false;
+        }
+        if (cell.getCellType() == CellType.NUMERIC) {
+            return true;
+        }
+        return cell.getCellType() == CellType.FORMULA
+                && cell.getCachedFormulaResultType() == CellType.NUMERIC;
     }
 }

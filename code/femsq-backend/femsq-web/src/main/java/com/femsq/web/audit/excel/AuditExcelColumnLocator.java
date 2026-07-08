@@ -89,6 +89,7 @@ public class AuditExcelColumnLocator {
         Map<String, Integer> result = new LinkedHashMap<>();
         for (Map.Entry<String, List<RaColMap>> entry : byColumn.entrySet()) {
             String stagingCol = entry.getKey();
+            boolean found = false;
             for (RaColMap mapping : entry.getValue()) {
                 String headerPattern = mapping.rcmXlHdr();
                 if (headerPattern == null || headerPattern.isBlank()) {
@@ -96,10 +97,21 @@ public class AuditExcelColumnLocator {
                 }
                 String patternNorm = normalizeHeaderText(headerPattern);
                 boolean partial = "P".equalsIgnoreCase(mapping.rcmXlMatch());
-                OptionalInt found = findColumnByHeader(cellTextCache, patternNorm, partial);
-                if (found.isPresent()) {
-                    result.put(stagingCol, found.getAsInt());
+                OptionalInt columnIndex = findColumnByHeader(cellTextCache, patternNorm, partial);
+                if (columnIndex.isPresent()) {
+                    result.put(stagingCol, columnIndex.getAsInt());
+                    found = true;
                     break;
+                }
+            }
+            if (!found) {
+                RaColMap requiredMapping = entry.getValue().stream()
+                        .filter(mapping -> Boolean.TRUE.equals(mapping.rcmRequired()))
+                        .findFirst()
+                        .orElse(null);
+                if (requiredMapping != null) {
+                    throw new AuditExcelException("Required header not found: " + requiredMapping.rcmXlHdr()
+                            + " for staging column " + stagingCol);
                 }
             }
         }

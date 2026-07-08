@@ -3,7 +3,7 @@
 **Дата создания:** 2026-07-07  
 **Последнее обновление:** 2026-07-08  
 **Проект:** FEMSQ  
-**Версия плана:** 0.5.0  
+**Версия плана:** 0.6.0  
 
 ---
 
@@ -371,6 +371,33 @@ SELECT COUNT(*) AS ralpRa_2026 FROM ags.ralpRa WHERE ralprY = 2026;
 
 ---
 
+## Фаза 5: Слияние функционала nb-win backup в audit/excel ✅
+
+**Контекст (2026-07-08):** после commit+push (`461b201`) и `git pull` на nb-win выявлены расхождения локальной backup-копии (`/tmp/audit-excel-nb-win-backup`) и версии в git (Fedora). Стратегия — **точечный merge**, не wholesale-replace.
+
+### 5.1. Принципы слияния ✅
+
+| Файл | Сохранить из Fedora | Вернуть из nb-win backup |
+|------|---------------------|--------------------------|
+| `AuditExcelReader` | Fix Zip bomb (`ZipSecureFile`) | Пароль `303` для encrypted xlsx, `Path` API |
+| `AuditExcelCellReader` | `normalizeDecimalString`, formula cells | Парсинг дат `dd.MM.yy`, `stripUnicodeSpaceSeparators`, `-`/`—` |
+| `AuditExcelColumnLocator` | Группировка алиасов по приоритету | Ранняя ошибка для `rcmRequired` заголовков |
+
+### 5.2. Верификация после merge ✅
+
+- ✅ 5.2.1. `mvn -pl femsq-backend/femsq-web -am package -DskipTests` → `0.1.0.115-SNAPSHOT`
+- ✅ 5.2.2. Smoke `executeAudit(id:14)` — exec_key=**1135**: `unchanged=1248`, `raInserted=0` (идемпотентность)
+- ✅ 5.2.3. Commit + push с Fedora
+- 🔄 5.2.4. nb-win: `git pull`, удалить `/tmp/audit-excel-nb-win-backup`
+
+### 5.3. Закрытие инцидента audit/excel 🔄
+
+- 🔄 5.3.1. Единая версия `audit/excel` в git на обеих машинах
+- 🔄 5.3.2. Backup nb-win удалён
+- ✅ 5.3.3. План обновлён до **0.6.0**
+
+---
+
 ## Блокирующие вопросы (требуют ответа перед Фазой 2)
 
 | # | Вопрос | Статус | Источник уточнения |
@@ -393,6 +420,5 @@ SELECT COUNT(*) AS ralpRa_2026 FROM ags.ralpRa WHERE ralprY = 2026;
 
 ---
 
-**Файл создан:** 2026-07-07  
 **Последнее обновление:** 2026-07-08  
-**Версия:** 0.5.0
+**Версия:** 0.6.0
