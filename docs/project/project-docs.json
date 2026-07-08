@@ -537,6 +537,16 @@
               "sql_port": 1433,
               "purpose": "Доступ удалённых клиентов (Fedora, DBeaver, Cursor) к Docker SQL Server",
               "notes": "nb-win должен быть включён; на Windows — inbound TCP 1433 с подсети VPN. См. docs/development/remote-development-nb-win.md"
+            },
+            "excel_share": {
+              "windows_path": "D:\\wire-guard-share-nb-win",
+              "smb_share_name": "wire-guard-share-nb-win",
+              "linux_mount": "/mnt/nb-win-share",
+              "excel_root": "/mnt/nb-win-share/femsq/excel/2026_03",
+              "mount_script_wsl": "code/scripts/mount-nb-win-share-wsl.sh",
+              "mount_method": "bind",
+              "wsl_source": "/mnt/d/wire-guard-share-nb-win",
+              "notes": "После git pull в WSL: ./code/scripts/mount-nb-win-share-wsl.sh. Пути ra_dir/af_name в БД — через /mnt/nb-win-share/..."
             }
           },
           "alex-fedora": {
@@ -577,7 +587,17 @@
               "path": "~/.femsq/database.properties",
               "template": "docs/development/examples/database.properties.alex-fedora"
             },
-            "notes": "Cursor и DBeaver на Fedora; после git pull — ./code/scripts/setup-cursor-mcp.sh && ./code/scripts/setup-dbhub.sh"
+            "excel_share": {
+              "smb_unc": "//10.7.0.3/wire-guard-share-nb-win",
+              "linux_mount": "/mnt/nb-win-share",
+              "excel_root": "/mnt/nb-win-share/femsq/excel/2026_03",
+              "credentials": "~/.smbcredentials",
+              "credentials_template": "docs/development/examples/smbcredentials.example",
+              "mount_script": "code/scripts/mount-nb-win-share.sh",
+              "mount_method": "cifs",
+              "notes": "После git pull: mount-nb-win-share.sh (WireGuard). Локальный docs/excel/ не используется."
+            },
+            "notes": "Cursor и DBeaver на Fedora; после git pull — mount-nb-win-share.sh, setup-cursor-mcp.sh, setup-dbhub.sh"
           },
           "prod-fisheye": {
             "name": "Продуктивный SQL Server (FishEye)",
@@ -1067,6 +1087,6 @@
     "version": "1.4.0",
     "lastUpdated": "2026-07-08",
     "updatedBy": "Александр",
-    "updateReason": "Реализован reconcile для af_type=3 (RALP, аренда земли): RalpReconcileService, пакет audit.excel, apply 1248 записей за 2026 год, идемпотентность подтверждена. Версия приложения 0.1.0.114-SNAPSHOT."
+    "updateReason": "Общее хранилище Excel через SMB-шару nb-win: единый mount /mnt/nb-win-share на Fedora (CIFS) и nb-win WSL (bind). Скрипты mount-nb-win-share.sh / mount-nb-win-share-wsl.sh, документация remote-development-nb-win.md."
   }
 }

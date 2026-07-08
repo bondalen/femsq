@@ -1,6 +1,6 @@
 # Удалённая разработка: Cursor на Fedora, БД на nb-win
 
-**Последнее обновление:** 2026-06-25
+**Последнее обновление:** 2026-07-08
 
 ## Схема
 
@@ -12,6 +12,69 @@ Fedora (alex-fedora)              WireGuard VPN              nb-win (10.7.0.3)
 ```
 
 Источник данных **не переносится** на Fedora: используется тот же контейнер `femsq-mssql` на nb-win. nb-win должен быть включён и доступен по VPN.
+
+**Excel-файлы ревизий** хранятся на nb-win в общей SMB-шаре и монтируются на обеих машинах в **один и тот же Linux-путь** `/mnt/nb-win-share`. Локальная копия `docs/excel/` в репозитории **не используется** (папка в `.gitignore`).
+
+## Общее хранилище Excel (SMB + единый mount)
+
+| Параметр | Значение |
+|----------|----------|
+| Windows-папка (nb-win) | `D:\wire-guard-share-nb-win` |
+| Имя SMB-шары | `wire-guard-share-nb-win` |
+| UNC | `\\10.7.0.3\wire-guard-share-nb-win` |
+| Linux mount (обе машины) | `/mnt/nb-win-share` |
+| Каталог Excel в шаре | `/mnt/nb-win-share/femsq/excel/2026_03/` |
+| Пример type=3 | `(2026)_Аренда_рабочий.xlsx` |
+| Пример type=5 | `2026 Свод инф-ции по ОА.xlsm` |
+
+Пути в БД (`ags.ra_dir.dir`, `ags.af.af_name`) указывают на **полный путь внутри mount**, например:
+`/mnt/nb-win-share/femsq/excel/2026_03/(2026)_Аренда_рабочий.xlsx`.
+
+### Fedora (CIFS mount)
+
+```bash
+# 1. Учётные данные (один раз)
+cp docs/development/examples/smbcredentials.example ~/.smbcredentials
+nano ~/.smbcredentials   # заполнить password
+chmod 600 ~/.smbcredentials
+
+# 2. Монтирование (после git pull или после перезагрузки)
+./code/scripts/mount-nb-win-share.sh
+
+# 3. Проверка
+ls -la /mnt/nb-win-share/femsq/excel/2026_03/
+```
+
+Требуется WireGuard до `10.7.0.3`. Пакет `cifs-utils` должен быть установлен.
+
+### nb-win (WSL bind mount)
+
+На nb-win шара уже лежит на диске `D:`; в WSL достаточно **bind mount** в тот же путь, что на Fedora:
+
+```bash
+# В терминале WSL на nb-win (после git pull или перезагрузки)
+./code/scripts/mount-nb-win-share-wsl.sh
+```
+
+Скрипт выполняет: `sudo mount --bind /mnt/d/wire-guard-share-nb-win /mnt/nb-win-share`.
+
+Проверка:
+
+```bash
+ls -la /mnt/nb-win-share/femsq/excel/2026_03/
+```
+
+**Важно:** команды монтирования выполняются в **терминале WSL**, не в PowerShell. Cursor на nb-win (если открыт на WSL-проекте) использует те же пути `/mnt/nb-win-share/...`.
+
+### Быстрый старт после `git pull` (nb-win, WSL)
+
+```bash
+cd ~/projects/femsq   # или ваш путь к клону
+
+git pull
+./code/scripts/mount-nb-win-share-wsl.sh
+./code/scripts/setup-cursor-mcp.sh   # при необходимости
+```
 
 ## Быстрый старт после `git pull` (Fedora)
 
@@ -26,10 +89,13 @@ chmod +x code/scripts/setup-cursor-mcp.sh code/scripts/setup-dbhub.sh
 mkdir -p ~/.femsq
 cp docs/development/examples/database.properties.alex-fedora ~/.femsq/database.properties
 
-# 3. Проверка сети (WireGuard должен быть активен)
+# 3. SMB-шара с Excel (WireGuard должен быть активен)
+./code/scripts/mount-nb-win-share.sh
+
+# 4. Проверка сети (WireGuard должен быть активен)
 timeout 3 bash -c 'cat < /dev/null > /dev/tcp/10.7.0.3/1433' && echo OK || echo FAIL
 
-# 4. Перезапустить Cursor (MCP DBHub подхватит новый .cursor/mcp.json)
+# 5. Перезапустить Cursor (MCP DBHub подхватит новый .cursor/mcp.json)
 ```
 
 ## Параметры подключения (alex-fedora)
@@ -107,6 +173,9 @@ New-NetFirewallRule -DisplayName "FEMSQ SQL Docker via WireGuard" `
 | `.cursor/mcp.remote-nb-win.json.example` | Fedora, `10.7.0.3:1433` |
 | `docs/development/examples/database.properties.nb-win` | FEMSQ на nb-win |
 | `docs/development/examples/database.properties.alex-fedora` | FEMSQ на Fedora |
+| `docs/development/examples/smbcredentials.example` | Шаблон `~/.smbcredentials` для CIFS |
+| `code/scripts/mount-nb-win-share.sh` | CIFS mount на Fedora |
+| `code/scripts/mount-nb-win-share-wsl.sh` | bind mount в WSL на nb-win |
 
 ## Реестр окружений
 

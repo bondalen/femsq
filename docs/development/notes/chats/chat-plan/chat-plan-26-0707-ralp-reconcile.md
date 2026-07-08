@@ -3,7 +3,7 @@
 **Дата создания:** 2026-07-07  
 **Последнее обновление:** 2026-07-08  
 **Проект:** FEMSQ  
-**Версия плана:** 0.6.1  
+**Версия плана:** 0.6.2  
 
 ---
 
@@ -28,8 +28,8 @@
   - `RalpAuditFileProcessor.java` — оркестратор Stage 1/2 для `af_type=3`
   - `RalpStage2Service.java` — FK / derived-resolution для `ra_stg_ralp` и `ra_stg_ralp_sm`
   - `RalpReconcileService.java` — reconcile `af_type=3` (bulk-load + in-memory matching + JDBC apply)
-- **Excel-файл для тестирования:** `docs/excel/ralp/(2026)_Аренда_рабочий.xlsx`
-- **Скриншоты ошибок VBA:** `docs/excel/ralp/26-0707-01.PNG`, `docs/excel/ralp/26-0707-02.PNG`
+- **Excel-файл для тестирования:** `/mnt/nb-win-share/femsq/excel/2026_03/(2026)_Аренда_рабочий.xlsx` (SMB-шара nb-win)
+- **Скриншоты ошибок VBA:** `docs/development/notes/assets/ralp-revision/26-0707-01.PNG`, `26-0707-02.PNG`
 
 ---
 
@@ -159,7 +159,7 @@ End If
 
 ### 0.2. Smoke-тест Stage 1 для `af_type=3` ✅
 
-- ✅ 0.2.1. Использован существующий аудит `adt_key=14` (`test_26`). Обновлены: `af_name` → `docs/excel/ralp/(2026)_Аренда_рабочий.xlsx`, `af_source=true`, `af_execute=true`, `ra_dir.dir` → Linux-путь к папке с файлом.
+- ✅ 0.2.1. Использован существующий аудит `adt_key=14` (`test_26`). Обновлены: `af_name` → путь на SMB-шаре, `af_source=true`, `af_execute=true`, `ra_dir.dir` → `/mnt/nb-win-share/femsq/excel/2026_03`.
 - ✅ 0.2.2. Stage 1 отработал без ошибок. `ra_stg_ralp` = **1262 строки**, `ra_stg_ralp_sm` = **27 строк** (exec_key=1128, статус COMPLETED, длительность 44 сек).
 - ✅ 0.2.3. Stage 2 отработал: `ralprtCstAgPn` и `ralprtOgSender` заполнены (7 строк из 1262 не resolved — норма). `ralprtStatus` = 0 NULL (все заполнены).
 - ✅ 0.2.4. Качество ключевых полей: `ralprtNum`=0 NULL, `ralprtDate`=0 NULL, `ralprtCstAgPn`=7 NULL (0.55%), `ralprtOgSender`=7 NULL (0.55%), `ralprtArrived`=0 NULL, `ralprtStatus`=0 NULL. **GO.**
@@ -414,13 +414,13 @@ SELECT COUNT(*) AS ralpRa_2026 FROM ags.ralpRa WHERE ralprY = 2026;
 
 ### 6.2. Smoke `af_type=5` (отчёты агента) 🔄
 
-**Fedora (exec_key=1135):** файл `af_key=312` (`2026 Свод инф-ции по ОА.xlsm`) **не найден** по пути `/home/alex/projects/femsq/excel/2026/...` — в журнале: «файл в файловой системе не обнаружен». Stage 1 type=5 **не выполнялся**.
+**Общее хранилище (2026-07-08):** Excel на SMB-шаре nb-win, mount `/mnt/nb-win-share` на Fedora (CIFS) и nb-win WSL (bind). Пути в БД обновлены (`ra_dir`, `af_key=312/314`). Локальный `docs/excel/` удалён.
 
-**nb-win:** файл есть в `~/projects/femsq/excel/2026/` — smoke type=5 выполняется там (см. шаги ниже).
+- [ ] 6.2.1. Fedora или nb-win: `./code/scripts/mount-nb-win-share.sh` / `mount-nb-win-share-wsl.sh`
+- [ ] 6.2.2. Проверить `ls /mnt/nb-win-share/femsq/excel/2026_03/` — оба файла (type=3, type=5)
+- [ ] 6.2.3. `executeAudit(14)` — Stage 1 type=5 + идемпотентность type=3/5
 
-- [ ] 6.2.1. nb-win: проверить наличие xlsm и обновить `af_name` при необходимости
-- [ ] 6.2.2. nb-win: `executeAudit(14)` dry-run (`adt_AddRA=false`) — Stage 1 type=5
-- [ ] 6.2.3. nb-win: повторный apply (`adt_AddRA=true`) — идемпотентность type=5
+См. `docs/development/remote-development-nb-win.md` → «Общее хранилище Excel».
 
 ### 6.3. Закрытие задачи 0042 ✅
 
@@ -430,9 +430,9 @@ SELECT COUNT(*) AS ralpRa_2026 FROM ags.ralpRa WHERE ralprY = 2026;
 | apply 1248 + идемпотентность (1134, 1135) | ✅ |
 | audit/excel в git, инцидент закрыт (фаза 5) | ✅ |
 | Документация (0042, journal, plan v0.6.0) | ✅ |
-| Smoke type=5 после merge excel | 🔄 nb-win |
+| Smoke type=5 после merge excel | 🔄 после mount share |
 
-**Коммиты:** `461b201`, `650fe01`, `c1b6831`
+**Коммиты:** `461b201`, `650fe01`, `c1b6831`, `e2bcef7`
 
 **Следующий спринт (вне 0042):** batch INSERT для производительности apply (~4 мин → цель <1 мин).
 
@@ -461,4 +461,4 @@ SELECT COUNT(*) AS ralpRa_2026 FROM ags.ralpRa WHERE ralprY = 2026;
 ---
 
 **Последнее обновление:** 2026-07-08  
-**Версия:** 0.6.1
+**Версия:** 0.6.2
