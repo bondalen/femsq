@@ -388,12 +388,12 @@ SELECT COUNT(*) AS ralpRa_2026 FROM ags.ralpRa WHERE ralprY = 2026;
 - ✅ 5.2.1. `mvn -pl femsq-backend/femsq-web -am package -DskipTests` → `0.1.0.115-SNAPSHOT`
 - ✅ 5.2.2. Smoke `executeAudit(id:14)` — exec_key=**1135**: `unchanged=1248`, `raInserted=0` (идемпотентность)
 - ✅ 5.2.3. Commit + push с Fedora
-- 🔄 5.2.4. nb-win: `git pull`, удалить `/tmp/audit-excel-nb-win-backup`
+- ✅ 5.2.4. nb-win: `git pull` → `650fe01`, backup удалён (`/tmp/audit-excel-nb-win-backup`)
 
-### 5.3. Закрытие инцидента audit/excel 🔄
+### 5.3. Закрытие инцидента audit/excel ✅
 
-- 🔄 5.3.1. Единая версия `audit/excel` в git на обеих машинах
-- 🔄 5.3.2. Backup nb-win удалён
+- ✅ 5.3.1. Единая версия `audit/excel` в git на обеих машинах (Fedora + nb-win)
+- ✅ 5.3.2. Backup nb-win удалён
 - ✅ 5.3.3. План обновлён до **0.6.0**
 
 ---
