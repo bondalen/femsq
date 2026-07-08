@@ -5612,6 +5612,70 @@
       },
       {
         "chat": {
+          "displayName": "RALP reconcile af_type=3: реализация и идемпотентность (completed, high). № chat-2026-07-08-001",
+          "chat-attributes": {
+            "id": "chat-2026-07-08-001",
+            "created": "2026-07-07",
+            "lastUpdated": "2026-07-08",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "high",
+            "tags": [
+              "reconcile",
+              "ralp",
+              "af_type=3",
+              "audit",
+              "excel"
+            ],
+            "links": {
+              "projectDocsRefs": ["module:backend.web"],
+              "developmentTasks": ["0042"],
+              "aiRuleRefs": []
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "RALP reconcile: apply + идемпотентность (success). № log-2026-07-08-001",
+                "log-attributes": {
+                  "id": "log-2026-07-08-001",
+                  "timestamp": "2026-07-08T09:33:00+03:00",
+                  "level": "success",
+                  "effort": "2d",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0042"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Реализован RalpReconcileService и пакет audit.excel",
+                    "details": "Bulk-load домена за год, in-memory matching по (ralprNum, ralprDate, ralprCstAgPn, ralprOgSender) и (ralpraRa, ralpraArrived). JDBC apply с RETURN_GENERATED_KEYS (триггеры на ralpRaAu). Созданы AuditExcelReader, AuditExcelCellReader, AuditExcelColumnLocator, AuditExcelException.",
+                    "outcome": "Reconcile af_type=3 функционален; первый apply: 1248 ralpRa + 1248 ralpRaAu (exec_key=1133).",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/RalpReconcileService.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/excel/"
+                    ]
+                  },
+                  {
+                    "action": "Тест идемпотентности и исправление .gitignore",
+                    "details": "Повторный apply (exec_key=1134): raInserted=0, unchanged=1248, invalid=14. Исправлено правило excel/ → /docs/excel/ в .gitignore.",
+                    "outcome": "Идемпотентность подтверждена; пакет audit/excel доступен для коммита.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md",
+                      ".gitignore"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
           "displayName": "Удалённая разработка Fedora → nb-win (completed, medium). № chat-2026-06-24-001",
           "chat-attributes": {
             "id": "chat-2026-06-24-001",

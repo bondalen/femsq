@@ -3,13 +3,13 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2026-06-11T00:00:00+03:00",
+      "lastUpdated": "2026-07-08T09:33:00+03:00",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0042",
+      "nextTaskId": "0043",
       "items": {
         "0001": {
           "task": {
@@ -1549,6 +1549,34 @@
               },
               "created": "2026-03-17",
               "lastUpdated": "2026-03-18"
+            }
+          }
+        },
+        "0042": {
+          "task": {
+            "displayName": "Reconcile af_type=3 (RALP, аренда земли): bulk-load + apply + идемпотентность (completed, high). № 0042",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Реализован RalpReconcileService: bulk-load домена, in-memory matching, JDBC apply (INSERT/UPDATE/DELETE)",
+                "Создан пакет com.femsq.web.audit.excel (AuditExcelReader, AuditExcelCellReader, AuditExcelColumnLocator, AuditExcelException)",
+                "Stage 1 smoke-тест: 1262 строки ra_stg_ralp + 27 ra_stg_ralp_sm",
+                "Apply прогон: 1248 ralpRa + 1248 ralpRaAu за 2026 год (exec_key=1133)",
+                "Идемпотентность: повторный apply — unchanged=1248, raInserted=0 (exec_key=1134)",
+                "Исправлен .gitignore: audit/excel не игнорируется",
+                "Документация обновлена (project-docs, development, journal, chat-plan)"
+              ],
+              "description": "Доменная reconcile-логика для af_type=3 (аренда земли): перенос staging → ags.ralpRa + ags.ralpRaAu по образцу af_type=5, устранение VBA per-row SQL, верификация на (2026)_Аренда_рабочий.xlsx.",
+              "links": {
+                "projectDocsRefs": ["module:backend.web"],
+                "journalRefs": ["chat:chat-2026-07-08-001", "log:log-2026-07-08-001"],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md"
+              },
+              "created": "2026-07-07",
+              "lastUpdated": "2026-07-08"
             }
           }
         }
