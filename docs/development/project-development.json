@@ -3,13 +3,13 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2026-07-09T11:10:00+03:00",
+      "lastUpdated": "2026-07-09T12:20:00+03:00",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0046",
+      "nextTaskId": "0049",
       "items": {
         "0001": {
           "task": {
@@ -1549,6 +1549,84 @@
               },
               "created": "2026-03-17",
               "lastUpdated": "2026-03-18"
+            }
+          }
+        },
+        "0048": {
+          "task": {
+            "displayName": "Dev/UAT/prod: thin JAR, веб-приёмка ревизий type=5 и type=3 (pending, critical). № 0048",
+            "task-attributes": {
+              "status": "pending",
+              "priority": "critical",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Dev: backend+frontend развёрнуты на alex-fedora/nb-win, smoke executeAudit type=5 и type=3 COMPLETED",
+                "UAT через AuditsView: dry-run и apply (где допустимо) для отчётов агентов и аренды земли",
+                "Таблица замечаний UAT закрыта, blocker исправлены",
+                "Prod: thin JAR развёрнут без полного переноса lib/; LibraryCompatibilityChecker OK",
+                "DDL adt_staging_log_level на prod (MSSQL2012/) при необходимости",
+                "Приёмка prod: dry-run ревизий type=5 и type=3",
+                "Документация: db-upgrade, журнал, chat-plan фаза 9"
+              ],
+              "description": "Завершающий цикл: тестовое развёртывание на dev, приёмочное тестирование ревизий через веб-интерфейс (AllAgents + RALP), устранение замечаний, вывод в продуктив методом thin JAR (минимальный объём файлов при уже развёрнутом lib/).",
+              "links": {
+                "projectDocsRefs": ["module:backend.web", "module:frontend", "environment:prod-fisheye"],
+                "journalRefs": [],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#фаза-9-доработка-производительности-приёмка-и-вывод-в-продуктив"
+              },
+              "created": "2026-07-09",
+              "lastUpdated": "2026-07-09"
+            }
+          }
+        },
+        "0047": {
+          "task": {
+            "displayName": "Batch INSERT новых RA/RC reconcile type=5 + RALP apply (pending, high). № 0047",
+            "task-attributes": {
+              "status": "pending",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "insertNewRaRows / insertNewRcChanges: batch или чанковый INSERT вместо per-row",
+                "Smoke apply type=5 (adt_AddRA=1): замер времени; идемпотентность Type5 IT на FishEye",
+                "Опционально: batch apply RalpReconcileService (<2 мин на 1248 строк)",
+                "Документация: chat-plan 9.1.2–9.1.3"
+              ],
+              "description": "Продолжение оптимизации reconcile после 0044: per-row INSERT новых строк RA/RC остаётся узким местом при apply. Опционально — batch для RALP apply.",
+              "links": {
+                "projectDocsRefs": ["module:backend.web"],
+                "journalRefs": [],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#912-batch-insert-новых-строк-reconcile-type5-задача-0047"
+              },
+              "created": "2026-07-09",
+              "lastUpdated": "2026-07-09"
+            }
+          }
+        },
+        "0046": {
+          "task": {
+            "displayName": "Оптимизация saveProgress и HTML-блоба adt_results (pending, high). № 0046",
+            "task-attributes": {
+              "status": "pending",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Замер доли saveProgress/buildHtmlLog на dry-run SUMMARY",
+                "Реже heartbeat при SUMMARY/MINIMAL; без полной перестройки HTML на каждый тик",
+                "Smoke dry-run март: время не хуже exec 1144 (~180 с), цель — улучшение",
+                "Документация: chat-plan 9.1.1, ra-execution-operations.md"
+              ],
+              "description": "Устранение узкого места ~15% dry-run: частый saveProgress с нарастающим HTML в adt_results по WireGuard к FishEye.",
+              "links": {
+                "projectDocsRefs": ["module:backend.web"],
+                "journalRefs": [],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#911-saveprogress-и-html-блоб-в-adt_results-задача-0046"
+              },
+              "created": "2026-07-09",
+              "lastUpdated": "2026-07-09"
             }
           }
         },

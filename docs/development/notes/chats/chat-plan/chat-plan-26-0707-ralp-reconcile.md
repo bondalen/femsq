@@ -1,9 +1,9 @@
 # План работы: Reconcile для `af_type=3` (Аренда земли, RALP)
 
 **Дата создания:** 2026-07-07  
-**Последнее обновление:** 2026-07-08  
+**Последнее обновление:** 2026-07-09  
 **Проект:** FEMSQ  
-**Версия плана:** 0.6.2  
+**Версия плана:** 0.8.0  
 
 ---
 
@@ -598,6 +598,122 @@ SELECT COUNT(*) AS ralpRa_2026 FROM ags.ralpRa WHERE ralprY = 2026;
 
 ---
 
+## Фаза 9: Доработка производительности, приёмка и вывод в продуктив
+
+**Контекст (2026-07-09):** фазы 7–8 закрыли Stage 1 (SUMMARY), парсинг Excel и batch reconcile apply. Остаточные узкие места (~15% dry-run — `saveProgress`/HTML, per-row INSERT новых RA/RC при apply) и цикл **dev → UAT в UI → prod** ещё не пройдены. На продуктиве (`prod-fisheye`, SQL Server 2012) каталог `lib/` уже развёрнут — обновления передаём **thin JAR** (~700 КБ), не fat JAR (~50 МБ).
+
+### 9.1. Доработка производительности (задачи 0046–0047)
+
+#### 9.1.1. `saveProgress` и HTML-блоб в `adt_results` (задача 0046)
+
+| # | Пункт | Статус |
+|---|-------|--------|
+| 9.1.1.1 | Замерить долю `saveProgress` / `buildHtmlLog()` на dry-run SUMMARY (exec 1144, март) | ⏳ |
+| 9.1.1.2 | Реже писать прогресс при SUMMARY/MINIMAL (интервал / дельта вместо 1 с) | ⏳ |
+| 9.1.1.3 | Не перестраивать полный HTML на каждый heartbeat; append-only или лимит размера блоба | ⏳ |
+| 9.1.1.4 | Smoke dry-run март: цель — сократить полный прогон относительно exec 1144 (~180 с) | ⏳ |
+
+**Ожидаемый эффект:** снятие ~15% времени dry-run (оценка exec 1136 / фаза 7.1.1).
+
+#### 9.1.2. Batch INSERT новых строк reconcile type=5 (задача 0047)
+
+| # | Пункт | Статус |
+|---|-------|--------|
+| 9.1.2.1 | `insertNewRaRows`: сгруппировать INSERT (где возможно без `RETURN_GENERATED_KEYS` на каждую строку) или чанковый batch | ⏳ |
+| 9.1.2.2 | `insertNewRcChanges`: аналогично для `ags.ra_change` + sums | ⏳ |
+| 9.1.2.3 | Smoke **apply** type=5 (`adt_AddRA=1`): замер до/после; идемпотентность (`Type5*IntegrationIT` с флагами на FishEye) | ⏳ |
+
+**Ожидаемый эффект:** основной выигрыш 0044 на apply (не dry-run), где INSERT новых RA/RC остаётся per-row.
+
+#### 9.1.3. Batch apply RALP `af_type=3` (опционально, в рамках 0047 или отдельный подпункт)
+
+| # | Пункт | Статус |
+|---|-------|--------|
+| 9.1.3.1 | `RalpReconcileService`: batch INSERT `ralpRa` / `ralpRaAu` вместо row-by-row (~4 мин → цель <2 мин) | ⏳ |
+| 9.1.3.2 | Повторный apply: идемпотентность `unchanged=1248` (exec 1134) | ⏳ |
+
+---
+
+### 9.2. Тестовое развёртывание на dev-машине
+
+**Целевые машины:** `alex-fedora` (Cursor, backend) + БД FishEye `10.7.0.3` (контейнер на `nb-win`); Excel — SMB `/mnt/nb-win-share/femsq/excel/`.
+
+| # | Пункт | Статус |
+|---|-------|--------|
+| 9.2.1 | `git pull` на Fedora и nb-win; mount SMB (`mount-nb-win-share.sh` / WSL bind) | ⏳ |
+| 9.2.2 | Сборка: `mvn -pl femsq-backend/femsq-web -am package` (или `./code/scripts/build-thin-jar.sh` после 9.1) | ⏳ |
+| 9.2.3 | DDL на dev FishEye: колонка `ags.ra_a.adt_staging_log_level` (Liquibase при старте или ручной скрипт, если ещё не применён) | ⏳ |
+| 9.2.4 | Запуск backend: `java -jar femsq-web-0.1.0.X-SNAPSHOT.jar` → `/api/v1/connection/status` = 200 | ⏳ |
+| 9.2.5 | Frontend: `npm run dev` (Fedora) **или** статика из JAR — согласовать сценарий UAT | ⏳ |
+| 9.2.6 | Smoke CLI: `executeAudit` для `adt_key=14` (type=5, SUMMARY) и ревизии RALP (type=3) — COMPLETED | ⏳ |
+| 9.2.7 | Зафиксировать версию JAR и `exec_key` в плане / журнале | ⏳ |
+
+---
+
+### 9.3. Приёмочное тестирование через веб-интерфейс (оператор — Александр)
+
+**Страница:** `AuditsView` — ревизии, файлы, запуск, просмотр `adt_results`.
+
+#### 9.3.1. Отчёты агентов (`af_type=5`, AllAgents)
+
+| # | Сценарий | Статус |
+|---|----------|--------|
+| 9.3.1.1 | Открыть ревизию с файлами type=5 (март / июль с SMB) | ⏳ |
+| 9.3.1.2 | Проверить select **StagingLogLevel** (VERBOSE / SUMMARY / MINIMAL) — сохранение в БД | ⏳ |
+| 9.3.1.3 | **Dry-run** (`adt_AddRA=false`): статус COMPLETED, лог SUMMARY (прогресс, warnings по parse) | ⏳ |
+| 9.3.1.4 | Просмотр `adt_results` в UI: читаемость, нет «зависания» страницы на большом логе | ⏳ |
+| 9.3.1.5 | **Apply** (на тестовой ревизии, если допустимо): домен не ломается, повторный прогон идемпотентен | ⏳ |
+
+#### 9.3.2. Аренда земли (`af_type=3`, RALP)
+
+| # | Сценарий | Статус |
+|---|----------|--------|
+| 9.3.2.1 | Ревизия с `(2026)_Аренда_рабочий.xlsx` на SMB | ⏳ |
+| 9.3.2.2 | Dry-run: счётчики reconcile в логе (`raInserted` planned, `invalid=14`) | ⏳ |
+| 9.3.2.3 | Apply (если допустимо на dev): `ralpRa`/`ralpRaAu` за год, повтор — `unchanged` | ⏳ |
+
+#### 9.3.3. Реестр замечаний UAT
+
+| # | Замечание | Критичность | Статус |
+|---|-----------|-------------|--------|
+| — | *(заполняется по ходу тестирования)* | | |
+
+---
+
+### 9.4. Устранение замечаний по UAT
+
+| # | Пункт | Статус |
+|---|-------|--------|
+| 9.4.1 | Приоритизация: blocker → major → minor | ⏳ |
+| 9.4.2 | Исправления в коде / UI; unit/smoke после каждого блока | ⏳ |
+| 9.4.3 | Повторный прогон сценариев 9.3.1–9.3.2 оператором | ⏳ |
+| 9.4.4 | Закрытие таблицы замечаний 9.3.3 | ⏳ |
+
+---
+
+### 9.5. Развёртывание в продуктиве (минимальный перенос файлов, thin JAR)
+
+**Принцип:** на рабочей станции / сервере приложения FEMSQ каталог `lib/` (**~50 МБ**, Spring, POI, Jasper и т.д.) уже извлечён из первого fat JAR. На prod переносим **только изменившееся приложение** — thin JAR и при смене версии — обновлённые `femsq-database-*.jar` / `femsq-reports-*.jar` в `lib/`.
+
+**Документация:** `docs/deployment/thin-jar-quick-start.md`, `docs/deployment/jar-lifecycle.md`, `docs/deployment/sql-server-deployment-rules.md`.
+
+| # | Пункт | Статус |
+|---|-------|--------|
+| 9.5.1 | **Pre-flight prod:** бэкап БД FishEye; проверка `lib/` и версий (`LibraryCompatibilityChecker` / `lib-manifest.json`) | ⏳ |
+| 9.5.2 | **SQL на prod (2012):** при необходимости — DDL `adt_staging_log_level` в папке `docs/development/notes/sql/{код}/MSSQL2012/` (без `CREATE OR ALTER`); прогон `00_VERIFY` → `04_VERIFY` | ⏳ |
+| 9.5.3 | Сборка: `./code/scripts/build-thin-jar.sh` → `femsq-web-X-SNAPSHOT-thin.jar` (~700 КБ) | ⏳ |
+| 9.5.4 | **Перенос на prod:** thin JAR (+ только изменённые `femsq-*.jar` в `lib/`, если версия модулей сменилась); **не** копировать весь `lib/` повторно | ⏳ |
+| 9.5.5 | Остановка старого процесса; запуск thin JAR (`java -cp "femsq-web-*-thin.jar;lib/*" org.springframework.boot.loader.launch.JarLauncher` или скрипт prod) | ⏳ |
+| 9.5.6 | Проверка логов: нет ошибок `LibraryCompatibilityChecker`; `/api/v1/connection/status` = 200 | ⏳ |
+| 9.5.7 | **Приёмка prod:** один dry-run ревизии type=5 (SUMMARY) и type=3 под контролем оператора; откат thin JAR при сбое | ⏳ |
+| 9.5.8 | Оформить `docs/deployment/db-upgrade-{дата}.md` и запись в журнале | ⏳ |
+
+**Критерий завершения фазы 9:** perf-задачи 0046–0047 выполнены или явно отложены с обоснованием; UAT 9.3 пройден без открытых blocker; prod обновлён thin JAR; ревизии type=5 и type=3 работают через веб-интерфейс.
+
+**Задачи в `project-development.json`:** 0046 (saveProgress), 0047 (batch INSERT + apply-smoke), 0048 (dev/UAT/prod thin deploy).
+
+---
+
 ## Блокирующие вопросы (требуют ответа перед Фазой 2)
 
 | # | Вопрос | Статус | Источник уточнения |
@@ -609,6 +725,8 @@ SELECT COUNT(*) AS ralpRa_2026 FROM ags.ralpRa WHERE ralprY = 2026;
 ---
 
 ## Доп. факты (актуализировано 2026-07-09)
+
+- **Фаза 9 (v0.8.0):** perf 0046–0047 → dev deploy → UAT в UI (type=5 + type=3) → исправления → prod thin JAR. Задачи: `0046`, `0047`, `0048`.
 
 - **Smoke SUMMARY SMB (2026-07-09):** март exec_key=1140 — dry-run **~183 с**; exec **1144** (0.1.0.118, batch reconcile) — **180 с**; июль exec_key=1143 — **363 с** COMPLETED (`parseErrorFields=2`); исправление парсинга — фаза **7.3** (задача 0045).
 
@@ -623,4 +741,4 @@ SELECT COUNT(*) AS ralpRa_2026 FROM ags.ralpRa WHERE ralprY = 2026;
 ---
 
 **Последнее обновление:** 2026-07-09  
-**Версия:** 0.7.6
+**Версия:** 0.8.0
