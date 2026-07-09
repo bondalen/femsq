@@ -1582,9 +1582,9 @@
         },
         "0047": {
           "task": {
-            "displayName": "Batch INSERT новых RA/RC reconcile type=5 + RALP apply (pending, high). № 0047",
+            "displayName": "Batch INSERT новых RA/RC reconcile type=5 + RALP apply (completed, high). № 0047",
             "task-attributes": {
-              "status": "pending",
+              "status": "completed",
               "priority": "high",
               "owner": "Александр",
               "completionCriteria": [

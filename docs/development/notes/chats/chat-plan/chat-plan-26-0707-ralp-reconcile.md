@@ -621,11 +621,11 @@ SELECT COUNT(*) AS ralpRa_2026 FROM ags.ralpRa WHERE ralprY = 2026;
 
 | # | Пункт | Статус |
 |---|-------|--------|
-| 9.1.2.1 | `insertNewRaRows`: сгруппировать INSERT (где возможно без `RETURN_GENERATED_KEYS` на каждую строку) или чанковый batch | ⏳ |
-| 9.1.2.2 | `insertNewRcChanges`: аналогично для `ags.ra_change` + sums | ⏳ |
-| 9.1.2.3 | Smoke **apply** type=5 (`adt_AddRA=1`): замер до/после; идемпотентность (`Type5*IntegrationIT` с флагами на FishEye) | ⏳ |
+| 9.1.2.1 | `insertNewRaRows`: bulk-load ключей + JDBC batch INSERT (`RETURN_GENERATED_KEYS`) | ✅ |
+| 9.1.2.2 | `insertNewRcChanges`: bulk-load + batch INSERT + bulk RC sums + batch `ra_change_summ` | ✅ |
+| 9.1.2.3 | Smoke **apply** type=5 (`adt_AddRA=1`): замер до/после; идемпотентность (`Type5*IntegrationIT` с флагами на FishEye) | ⏳ dry-run exec **1146** **150 с** (0.1.0.120); apply на `adt_key=14` не запускался (`adt_AddRA=false`) |
 
-**Ожидаемый эффект:** основной выигрыш 0044 на apply (не dry-run), где INSERT новых RA/RC остаётся per-row.
+**Реализация (0.1.0.120):** `RaPeriodNumKey`, `RcNaturalKey`, `bulkLoadRaKeysByPeriodNum`, `bulkLoadRacKeysByNatural`, batch по `APPLY_BATCH_SIZE=200`.
 
 #### 9.1.3. Batch apply RALP `af_type=3` (опционально, в рамках 0047 или отдельный подпункт)
 
@@ -730,7 +730,7 @@ SELECT COUNT(*) AS ralpRa_2026 FROM ags.ralpRa WHERE ralprY = 2026;
 
 - **Фаза 9 (v0.8.0):** perf 0046–0047 → dev deploy → UAT в UI (type=5 + type=3) → исправления → prod thin JAR. Задачи: `0046`, `0047`, `0048`.
 
-- **Smoke SUMMARY SMB (2026-07-09):** март exec 1140 — **~183 с**; exec 1144 (0.1.0.118) — **180 с**; exec **1145** (0.1.0.119, saveProgress 0046) — **155 с**; июль exec 1143 — **363 с** COMPLETED.
+- **Smoke SUMMARY SMB (2026-07-09):** март: 1140 ~183 с → 1144 **180 с** (118) → 1145 **155 с** (119, 0046) → 1146 **150 с** (120, 0047 dry-run); июль 1143 **363 с**.
 
 - Объём `ags.ralpRa`: **~12 386 строк** (2020–2026), `ags.ralpRaAu`: **~12 379 строк**.
 - **`ralpRa` за 2026 год: 1248 записей** (после apply, exec_key=1133).

@@ -10,6 +10,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.LocalDate;
@@ -617,94 +618,183 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         if (newRows.isEmpty()) {
             return new InsertNewRaResult(0, List.of());
         }
-        // 1.5.2: защититься от дублей на уровне SQL при insert-ветке RA.
-        // read-model для NEW-строк ищет ags.ra по (ra_period, ra_num), поэтому guard делаем по этим ключам.
-        String sql = """
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+        Map<RaPeriodNumKey, Long> keysByNatural = bulkLoadRaKeysByPeriodNum(connection, newRows);
+        Set<NewRaRow> pendingInsertSet = new HashSet<>();
+        List<NewRaRow> pendingInsert = new ArrayList<>();
+        for (NewRaRow row : newRows) {
+            RaPeriodNumKey naturalKey = toRaPeriodNumKey(row);
+            if (!keysByNatural.containsKey(naturalKey)) {
+                pendingInsert.add(row);
+                pendingInsertSet.add(row);
+            }
+        }
+        int insertedCount = batchInsertNewRaRows(connection, pendingInsert, keysByNatural, now);
+
+        int inserted = 0;
+        List<InsertedRaRow> insertedRows = new ArrayList<>(newRows.size());
+        boolean rowAudit = emitReconcileRowAudit(context);
+        for (NewRaRow row : newRows) {
+            RaPeriodNumKey naturalKey = toRaPeriodNumKey(row);
+            Long raKey = keysByNatural.get(naturalKey);
+            if (raKey == null) {
+                continue;
+            }
+            StagingRaRow source = row.stagingRow();
+            boolean wasInsert = pendingInsertSet.contains(row);
+            if (wasInsert) {
+                inserted++;
+            }
+            insertedRows.add(new InsertedRaRow(raKey, source));
+            if (rowAudit) {
+                appendRaNewCreatedAudit(context, source, row.lookupKeys(), raKey, wasInsert);
+            }
+        }
+        if (inserted != insertedCount) {
+            int counter = insertedCount;
+            int rows = inserted;
+            log.warning(() -> "[Type5] RA insert count mismatch: counter=" + counter + " rows=" + rows);
+        }
+        return new InsertNewRaResult(inserted, insertedRows);
+    }
+
+    private int batchInsertNewRaRows(
+            Connection connection,
+            List<NewRaRow> pendingInsert,
+            Map<RaPeriodNumKey, Long> keysByNatural,
+            Timestamp now
+    ) throws SQLException {
+        if (pendingInsert.isEmpty()) {
+            return 0;
+        }
+        String insertSql = """
                 INSERT INTO ags.ra (
                     ra_num, ra_date, ra_cac, ra_type, ra_work_type, ra_period,
                     ra_arrived, ra_arrived_date, ra_arrived_dateFact,
                     ra_returned, ra_returned_date, ra_returnedReason,
                     ra_sent, ra_sent_date,
                     ra_note_t, ra_created, ra_org_sender, ra_note
-                )
-                OUTPUT INSERTED.ra_key
-                SELECT
-                    ?, ?, ?, ?, NULL, ?,
-                    ?, ?, ?,
-                    ?, ?, ?,
-                    ?, ?,
-                    NULL, ?, ?,
-                    NULL
-                WHERE NOT EXISTS (
-                    SELECT 1 FROM ags.ra r
-                    WHERE r.ra_period = ? AND r.ra_num = ?
-                )
-                """;
-
-        String selectExistingRaKeySql = """
-                SELECT TOP 1 ra_key
-                FROM ags.ra
-                WHERE ra_period = ? AND ra_num = ?
-                ORDER BY ra_key DESC
+                ) VALUES (?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, NULL)
                 """;
         int inserted = 0;
-        List<InsertedRaRow> insertedRows = new ArrayList<>();
-        try (PreparedStatement statement = connection.prepareStatement(sql);
-             PreparedStatement selectExistingRaKey = connection.prepareStatement(selectExistingRaKeySql)) {
-            Timestamp now = new Timestamp(System.currentTimeMillis());
-            for (NewRaRow row : newRows) {
-                ResolvedLookupKeys keys = row.lookupKeys();
-                StagingRaRow source = row.stagingRow();
-                String raNum = trimToNull(source.raNum());
-                Integer raPeriod = keys.periodKey();
-                String raType = mapToDomainRaType(source.sign());
+        try (PreparedStatement statement = connection.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+            int batchCount = 0;
+            List<NewRaRow> batchRows = new ArrayList<>();
+            for (NewRaRow row : pendingInsert) {
+                bindNewRaRowInsert(statement, row, now);
+                statement.addBatch();
+                batchRows.add(row);
+                batchCount++;
+                if (batchCount >= APPLY_BATCH_SIZE) {
+                    inserted += executeRaInsertBatch(statement, batchRows, keysByNatural);
+                    batchRows.clear();
+                    batchCount = 0;
+                }
+            }
+            if (batchCount > 0) {
+                inserted += executeRaInsertBatch(statement, batchRows, keysByNatural);
+            }
+        }
+        return inserted;
+    }
 
-                // SELECT part
-                statement.setString(1, raNum);
-                statement.setObject(2, source.raDate());
-                statement.setInt(3, keys.cstapKey());
-                statement.setString(4, raType);
-                statement.setInt(5, raPeriod);
-                statement.setString(6, trimToNull(source.arrivedNum()));
-                statement.setObject(7, source.arrivedDate());
-                statement.setObject(8, source.arrivedDateFact());
-                statement.setString(9, trimToNull(source.returnedNum()));
-                statement.setObject(10, source.returnedDate());
-                statement.setString(11, trimToNull(source.returnedReason()));
-                statement.setString(12, trimToNull(source.sendNum()));
-                statement.setObject(13, source.sendDate());
-                statement.setTimestamp(14, now);
-                statement.setInt(15, keys.ogKey());
+    private int executeRaInsertBatch(
+            PreparedStatement statement,
+            List<NewRaRow> batchRows,
+            Map<RaPeriodNumKey, Long> keysByNatural
+    ) throws SQLException {
+        if (batchRows.isEmpty()) {
+            return 0;
+        }
+        statement.executeBatch();
+        List<Long> generatedKeys = new ArrayList<>(batchRows.size());
+        try (ResultSet keys = statement.getGeneratedKeys()) {
+            while (keys.next()) {
+                generatedKeys.add(keys.getLong(1));
+            }
+        }
+        if (generatedKeys.size() != batchRows.size()) {
+            throw new SQLException("RA batch insert: expected " + batchRows.size() + " keys, got " + generatedKeys.size());
+        }
+        for (int i = 0; i < batchRows.size(); i++) {
+            keysByNatural.put(toRaPeriodNumKey(batchRows.get(i)), generatedKeys.get(i));
+        }
+        return generatedKeys.size();
+    }
 
-                // WHERE NOT EXISTS part
-                statement.setInt(16, raPeriod);
-                statement.setString(17, raNum);
+    private void bindNewRaRowInsert(PreparedStatement statement, NewRaRow row, Timestamp now) throws SQLException {
+        ResolvedLookupKeys keys = row.lookupKeys();
+        StagingRaRow source = row.stagingRow();
+        statement.setString(1, trimToNull(source.raNum()));
+        statement.setObject(2, source.raDate());
+        statement.setInt(3, keys.cstapKey());
+        statement.setString(4, mapToDomainRaType(source.sign()));
+        statement.setInt(5, keys.periodKey());
+        statement.setString(6, trimToNull(source.arrivedNum()));
+        statement.setObject(7, source.arrivedDate());
+        statement.setObject(8, source.arrivedDateFact());
+        statement.setString(9, trimToNull(source.returnedNum()));
+        statement.setObject(10, source.returnedDate());
+        statement.setString(11, trimToNull(source.returnedReason()));
+        statement.setString(12, trimToNull(source.sendNum()));
+        statement.setObject(13, source.sendDate());
+        statement.setTimestamp(14, now);
+        statement.setInt(15, keys.ogKey());
+    }
+
+    private RaPeriodNumKey toRaPeriodNumKey(NewRaRow row) {
+        return new RaPeriodNumKey(row.lookupKeys().periodKey(), trimToNull(row.stagingRow().raNum()));
+    }
+
+    private Map<RaPeriodNumKey, Long> bulkLoadRaKeysByPeriodNum(Connection connection, List<NewRaRow> newRows)
+            throws SQLException {
+        Set<RaPeriodNumKey> keys = new HashSet<>();
+        for (NewRaRow row : newRows) {
+            RaPeriodNumKey key = toRaPeriodNumKey(row);
+            if (key.num() != null) {
+                keys.add(key);
+            }
+        }
+        return bulkLoadRaKeysByPeriodNumKeys(connection, keys);
+    }
+
+    private Map<RaPeriodNumKey, Long> bulkLoadRaKeysByPeriodNumKeys(
+            Connection connection,
+            Collection<RaPeriodNumKey> keys
+    ) throws SQLException {
+        Map<RaPeriodNumKey, Long> result = new HashMap<>();
+        if (keys == null || keys.isEmpty()) {
+            return result;
+        }
+        List<RaPeriodNumKey> list = keys.stream()
+                .filter(k -> k != null && k.num() != null && !k.num().isBlank())
+                .distinct()
+                .sorted(Comparator.comparing(RaPeriodNumKey::period).thenComparing(RaPeriodNumKey::num))
+                .toList();
+        for (int offset = 0; offset < list.size(); offset += BULK_IN_CHUNK) {
+            List<RaPeriodNumKey> chunk = list.subList(offset, Math.min(offset + BULK_IN_CHUNK, list.size()));
+            String valuesClause = String.join(", ", Collections.nCopies(chunk.size(), "(?,?)"));
+            String sql = """
+                    SELECT r.ra_period, r.ra_num, r.ra_key
+                    FROM ags.ra r
+                    INNER JOIN (VALUES %s) AS v(period_key, ra_num) ON r.ra_period = v.period_key AND r.ra_num = v.ra_num
+                    """.formatted(valuesClause);
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                int idx = 1;
+                for (RaPeriodNumKey key : chunk) {
+                    statement.setInt(idx++, key.period());
+                    statement.setString(idx++, key.num());
+                }
                 try (ResultSet resultSet = statement.executeQuery()) {
-                    if (resultSet.next()) {
-                        inserted++;
-                        long raKey = resultSet.getLong(1);
-                        insertedRows.add(new InsertedRaRow(raKey, source));
-                        if (emitReconcileRowAudit(context)) {
-                            appendRaNewCreatedAudit(context, source, keys, raKey, true);
-                        }
-                    } else {
-                        // Уже существует (SQL-idempotency). Разрешим ra_key, чтобы всё равно корректно эволюционировать суммы.
-                        selectExistingRaKey.setInt(1, raPeriod);
-                        selectExistingRaKey.setString(2, raNum);
-                        try (ResultSet rs = selectExistingRaKey.executeQuery()) {
-                            if (rs.next()) {
-                                long raKey = rs.getLong(1);
-                                insertedRows.add(new InsertedRaRow(raKey, source));
-                                if (emitReconcileRowAudit(context)) {
-                                    appendRaNewCreatedAudit(context, source, keys, raKey, false);
-                                }
-                            }
-                        }
+                    while (resultSet.next()) {
+                        result.put(
+                                new RaPeriodNumKey(resultSet.getInt("ra_period"), resultSet.getString("ra_num")),
+                                resultSet.getLong("ra_key"));
                     }
                 }
             }
         }
-        return new InsertNewRaResult(inserted, insertedRows);
+        return result;
     }
 
     private int updateChangedRaRows(Connection connection, ReconcileContext context, List<ChangedRaRow> changedRows)
@@ -1392,6 +1482,84 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             return new RcChangeApplyStats(0, 0);
         }
 
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+        Map<RcNaturalKey, Long> keysByNatural = bulkLoadRacKeysByNatural(connection, newRows);
+        Set<RcNewApplyRow> pendingInsertSet = new HashSet<>();
+        List<RcNewApplyRow> pendingInsert = new ArrayList<>();
+        for (RcNewApplyRow row : newRows) {
+            RcNaturalKey naturalKey = toRcNaturalKey(row);
+            if (!keysByNatural.containsKey(naturalKey)) {
+                pendingInsert.add(row);
+                pendingInsertSet.add(row);
+            }
+        }
+        int rcChangesInserted = batchInsertNewRcChanges(connection, pendingInsert, keysByNatural, now);
+
+        Set<Long> racKeys = new HashSet<>();
+        List<RcResolvedApplyRow> resolved = new ArrayList<>(newRows.size());
+        boolean rowAudit = emitReconcileRowAudit(context);
+        for (RcNewApplyRow row : newRows) {
+            Long racKey = keysByNatural.get(toRcNaturalKey(row));
+            if (racKey == null) {
+                continue;
+            }
+            boolean insertedNewRc = pendingInsertSet.contains(row);
+            racKeys.add(racKey);
+            resolved.add(new RcResolvedApplyRow(row, racKey, insertedNewRc));
+            if (rowAudit) {
+                appendRcNewCreatedAudit(context, row, racKey, insertedNewRc);
+            }
+        }
+
+        Map<Long, RaSumSnapshot> latestRcSums = loadLatestRcSumsBulk(connection, racKeys);
+        String insertSumSql = """
+                INSERT INTO ags.ra_change_summ (
+                    %s, %s, %s, %s, %s, %s
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                """.formatted(RACS_FK_RAC, RACS_TOTAL, RACS_WORK, RACS_EQUIP, RACS_OTHERS, RACS_DATE);
+
+        int rcSumsInserted = 0;
+        int rcSumsSkipped = 0;
+        try (PreparedStatement insertSum = connection.prepareStatement(insertSumSql)) {
+            for (RcResolvedApplyRow item : resolved) {
+                RcNewApplyRow row = item.row();
+                RaSummUpsertOutcome sumOutcome = evolveRcSumsWithOutcome(
+                        insertSum,
+                        item.racKey(),
+                        row.total(),
+                        row.work(),
+                        row.equip(),
+                        row.others(),
+                        now,
+                        latestRcSums.get(item.racKey()));
+                if (sumOutcome.versionInserted()) {
+                    rcSumsInserted++;
+                } else {
+                    rcSumsSkipped++;
+                }
+                if (rowAudit) {
+                    appendRcNewSumsAudit(context, row.stagingRowKey(), item.racKey(), row, sumOutcome);
+                }
+            }
+            insertSum.executeBatch();
+        }
+
+        if (rcChangesInserted != pendingInsert.size()) {
+            log.warning(() -> "[Type5] RC insert count mismatch: counter=" + rcChangesInserted
+                    + " pending=" + pendingInsert.size());
+        }
+        return new RcChangeApplyStats(rcChangesInserted, rcSumsInserted);
+    }
+
+    private int batchInsertNewRcChanges(
+            Connection connection,
+            List<RcNewApplyRow> pendingInsert,
+            Map<RcNaturalKey, Long> keysByNatural,
+            Timestamp now
+    ) throws SQLException {
+        if (pendingInsert.isEmpty()) {
+            return 0;
+        }
         String insertRcSql = """
                 INSERT INTO ags.ra_change (
                     ra_period, %s, %s, %s,
@@ -1399,105 +1567,136 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                     ra_returned, ra_returned_date, ra_returnedReason,
                     ra_sent, ra_sent_date,
                     ra_note_t, ra_created, ra_org_sender, ra_note
-                )
-                OUTPUT INSERTED.rac_key
-                SELECT
-                    ?, ?, ?, ?,
-                    ?, ?, ?,
-                    ?, ?, ?,
-                    ?, ?,
-                    NULL, ?, ?,
-                    NULL
-                WHERE NOT EXISTS (
-                    SELECT 1 FROM ags.ra_change c
-                    WHERE c.ra_period = ?
-                      AND c.%s = ?
-                      AND c.%s = ?
-                )
-                """.formatted(RC_COL_RA_FK, RC_COL_NUM, RC_COL_DATE, RC_COL_RA_FK, RC_COL_NUM);
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, NULL)
+                """.formatted(RC_COL_RA_FK, RC_COL_NUM, RC_COL_DATE);
 
-        String selectRacKeySql = """
-                SELECT TOP 1 rac_key
-                FROM ags.ra_change
-                WHERE ra_period = ?
-                  AND %s = ?
-                  AND %s = ?
-                ORDER BY rac_key DESC
-                """.formatted(RC_COL_RA_FK, RC_COL_NUM);
+        int inserted = 0;
+        try (PreparedStatement insertRc = connection.prepareStatement(insertRcSql, Statement.RETURN_GENERATED_KEYS)) {
+            int batchCount = 0;
+            List<RcNewApplyRow> batchRows = new ArrayList<>();
+            for (RcNewApplyRow row : pendingInsert) {
+                bindNewRcRowInsert(insertRc, row, now);
+                insertRc.addBatch();
+                batchRows.add(row);
+                batchCount++;
+                if (batchCount >= APPLY_BATCH_SIZE) {
+                    inserted += executeRcInsertBatch(insertRc, batchRows, keysByNatural);
+                    batchRows.clear();
+                    batchCount = 0;
+                }
+            }
+            if (batchCount > 0) {
+                inserted += executeRcInsertBatch(insertRc, batchRows, keysByNatural);
+            }
+        }
+        return inserted;
+    }
 
-        Timestamp now = new Timestamp(System.currentTimeMillis());
-        int rcChangesInserted = 0;
-        int rcSumsInserted = 0;
-        int rcSumsSkipped = 0;
+    private int executeRcInsertBatch(
+            PreparedStatement insertRc,
+            List<RcNewApplyRow> batchRows,
+            Map<RcNaturalKey, Long> keysByNatural
+    ) throws SQLException {
+        if (batchRows.isEmpty()) {
+            return 0;
+        }
+        insertRc.executeBatch();
+        List<Long> generatedKeys = new ArrayList<>(batchRows.size());
+        try (ResultSet keys = insertRc.getGeneratedKeys()) {
+            while (keys.next()) {
+                generatedKeys.add(keys.getLong(1));
+            }
+        }
+        if (generatedKeys.size() != batchRows.size()) {
+            throw new SQLException("RC batch insert: expected " + batchRows.size() + " keys, got " + generatedKeys.size());
+        }
+        for (int i = 0; i < batchRows.size(); i++) {
+            keysByNatural.put(toRcNaturalKey(batchRows.get(i)), generatedKeys.get(i));
+        }
+        return generatedKeys.size();
+    }
 
-        try (PreparedStatement insertRc = connection.prepareStatement(insertRcSql);
-             PreparedStatement selectRacKey = connection.prepareStatement(selectRacKeySql)) {
-            for (RcNewApplyRow row : newRows) {
+    private void bindNewRcRowInsert(PreparedStatement insertRc, RcNewApplyRow row, Timestamp now) throws SQLException {
+        int idx = 1;
+        insertRc.setInt(idx++, row.raPeriod());
+        insertRc.setLong(idx++, row.raFk());
+        insertRc.setString(idx++, row.changeNum());
+        insertRc.setObject(idx++, row.rcDate());
+        insertRc.setString(idx++, row.arrived());
+        insertRc.setObject(idx++, row.arrivedDate());
+        insertRc.setObject(idx++, row.arrivedDateFact());
+        insertRc.setString(idx++, row.returned());
+        insertRc.setObject(idx++, row.returnedDate());
+        insertRc.setString(idx++, row.returnedReason());
+        insertRc.setString(idx++, row.sent());
+        insertRc.setObject(idx++, row.sentDate());
+        insertRc.setTimestamp(idx++, now);
+        insertRc.setInt(idx++, row.raOrgSender());
+    }
+
+    private RcNaturalKey toRcNaturalKey(RcNewApplyRow row) {
+        return new RcNaturalKey(row.raPeriod(), row.raFk(), trimToNull(row.changeNum()));
+    }
+
+    private Map<RcNaturalKey, Long> bulkLoadRacKeysByNatural(Connection connection, List<RcNewApplyRow> newRows)
+            throws SQLException {
+        Set<RcNaturalKey> keys = new HashSet<>();
+        for (RcNewApplyRow row : newRows) {
+            RcNaturalKey key = toRcNaturalKey(row);
+            if (key.changeNum() != null) {
+                keys.add(key);
+            }
+        }
+        return bulkLoadRacKeysByNaturalKeys(connection, keys);
+    }
+
+    private Map<RcNaturalKey, Long> bulkLoadRacKeysByNaturalKeys(
+            Connection connection,
+            Collection<RcNaturalKey> keys
+    ) throws SQLException {
+        Map<RcNaturalKey, Long> result = new HashMap<>();
+        if (keys == null || keys.isEmpty()) {
+            return result;
+        }
+        List<RcNaturalKey> list = keys.stream()
+                .filter(k -> k != null && k.changeNum() != null && !k.changeNum().isBlank())
+                .distinct()
+                .sorted(Comparator.comparing(RcNaturalKey::period)
+                        .thenComparing(RcNaturalKey::raFk)
+                        .thenComparing(RcNaturalKey::changeNum))
+                .toList();
+        for (int offset = 0; offset < list.size(); offset += BULK_IN_CHUNK) {
+            List<RcNaturalKey> chunk = list.subList(offset, Math.min(offset + BULK_IN_CHUNK, list.size()));
+            String valuesClause = String.join(", ", Collections.nCopies(chunk.size(), "(?,?,?)"));
+            String sql = """
+                    SELECT c.ra_period, c.%s AS ra_fk, c.%s AS change_num, c.rac_key
+                    FROM ags.ra_change c
+                    INNER JOIN (VALUES %s) AS v(period_key, ra_fk, change_num)
+                        ON c.ra_period = v.period_key AND c.%s = v.ra_fk AND c.%s = v.change_num
+                    """.formatted(RC_COL_RA_FK, RC_COL_NUM, valuesClause, RC_COL_RA_FK, RC_COL_NUM);
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 int idx = 1;
-                insertRc.setInt(idx++, row.raPeriod());
-                insertRc.setLong(idx++, row.raFk());
-                insertRc.setString(idx++, row.changeNum());
-                insertRc.setObject(idx++, row.rcDate());
-
-                insertRc.setString(idx++, row.arrived());
-                insertRc.setObject(idx++, row.arrivedDate());
-                insertRc.setObject(idx++, row.arrivedDateFact());
-
-                insertRc.setString(idx++, row.returned());
-                insertRc.setObject(idx++, row.returnedDate());
-                insertRc.setString(idx++, row.returnedReason());
-
-                insertRc.setString(idx++, row.sent());
-                insertRc.setObject(idx++, row.sentDate());
-
-                // ra_created, ra_org_sender.
-                insertRc.setTimestamp(idx++, now);
-                insertRc.setInt(idx++, row.raOrgSender());
-
-                // WHERE NOT EXISTS keys.
-                insertRc.setInt(idx++, row.raPeriod());
-                insertRc.setLong(idx++, row.raFk());
-                insertRc.setString(idx++, row.changeNum());
-
-                try (ResultSet rs = insertRc.executeQuery()) {
-                    Long racKey;
-                    boolean insertedNewRc;
-                    if (rs.next()) {
-                        racKey = rs.getLong(1);
-                        rcChangesInserted++;
-                        insertedNewRc = true;
-                    } else {
-                        // Already exists (idempotency). Resolve rac_key and still apply sum evolution (1.3.4).
-                        selectRacKey.setInt(1, row.raPeriod());
-                        selectRacKey.setLong(2, row.raFk());
-                        selectRacKey.setString(3, row.changeNum());
-                        try (ResultSet rsk = selectRacKey.executeQuery()) {
-                            racKey = rsk.next() ? rsk.getLong(1) : null;
-                        }
-                        insertedNewRc = false;
-                    }
-                    if (racKey == null) {
-                        continue;
-                    }
-
-                    if (emitReconcileRowAudit(context)) {
-                        appendRcNewCreatedAudit(context, row, racKey, insertedNewRc);
-                    }
-                    RaSummUpsertOutcome sumOutcome = evolveRcSumsWithOutcome(
-                            connection, racKey, row.total(), row.work(), row.equip(), row.others(), now, null);
-                    if (sumOutcome.versionInserted()) {
-                        rcSumsInserted++;
-                    } else {
-                        rcSumsSkipped++;
-                    }
-                    if (emitReconcileRowAudit(context)) {
-                        appendRcNewSumsAudit(context, row.stagingRowKey(), racKey, row, sumOutcome);
+                for (RcNaturalKey key : chunk) {
+                    statement.setInt(idx++, key.period());
+                    statement.setLong(idx++, key.raFk());
+                    statement.setString(idx++, key.changeNum());
+                }
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    while (resultSet.next()) {
+                        result.put(
+                                new RcNaturalKey(
+                                        resultSet.getInt("ra_period"),
+                                        resultSet.getLong("ra_fk"),
+                                        resultSet.getString("change_num")),
+                                resultSet.getLong("rac_key"));
                     }
                 }
             }
         }
+        return result;
+    }
 
-        return new RcChangeApplyStats(rcChangesInserted, rcSumsInserted);
+    private record RcResolvedApplyRow(RcNewApplyRow row, long racKey, boolean insertedNewRc) {
     }
 
     /**
@@ -3125,6 +3324,14 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
      * Снимок последней версии сумм RA ({@code ags.ra_summ}) для bulk-сравнения.
      */
     private record RaSumSnapshot(BigDecimal total, BigDecimal work, BigDecimal equip, BigDecimal others) {
+    }
+
+    /** Натуральный ключ строки {@code ags.ra} для bulk-load. */
+    private record RaPeriodNumKey(int period, String num) {
+    }
+
+    /** Натуральный ключ строки {@code ags.ra_change} для bulk-load. */
+    private record RcNaturalKey(int period, long raFk, String changeNum) {
     }
 
     private Map<Long, RaSumSnapshot> loadLatestRaSumsBulk(Connection connection, Collection<Long> raKeys) throws SQLException {
