@@ -92,6 +92,14 @@ chmod +x code/scripts/watch-audit-progress.sh
 
 При `SUMMARY` / `MINIMAL` построчные записи apply reconcile (создание/обновление RA/RC, эволюция сумм) **не пишутся** в `adt_results` — только агрегаты (`RECONCILE_TYPE5_*`). Per-row аудит apply включается только при `adt_staging_log_level = VERBOSE` (`StagingLogLevel.emitReconcileRowAudit()`).
 
+### Сохранение HTML-лога (`saveProgress`, задача 0046)
+
+Интервал flush в БД при накоплении событий (`onEntryAppended`): **VERBOSE 1 с**, **SUMMARY 10 с**, **MINIMAL 30 с** (`StagingLogLevel.progressFlushIntervalMs()`). `buildHtmlLog()` кэшируется до следующей записи; flush пропускается, если число событий не изменилось.
+
+В конце ревизии в лог пишется `AUDIT_LOG_PERSIST_STATS` (и строка `[AuditProgress]` в server log): `flushes`, `skippedThrottled`, `buildHtmlMs`, `dbUpdateMs`, `lastHtmlChars`.
+
+**Замер (2026-07-09, exec 1145, март SUMMARY, 0.1.0.119):** dry-run **155 с** (vs exec 1144 **180 с**); `flushes=12`, `dbUpdateMs=5402`, HTML ≈463 КБ.
+
 ## Производительность reconcile type=5 (задача 0044)
 
 **Контекст:** после 0043 reconcile — ~8% dry-run SUMMARY. Оптимизация `AllAgentsReconcileService`: JDBC batch (`APPLY_BATCH_SIZE=200`) для UPDATE/INSERT, bulk-загрузка latest sums (`BULK_IN_CHUNK=500`) вместо per-row SELECT.

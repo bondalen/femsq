@@ -1607,9 +1607,9 @@
         },
         "0046": {
           "task": {
-            "displayName": "Оптимизация saveProgress и HTML-блоба adt_results (pending, high). № 0046",
+            "displayName": "Оптимизация saveProgress и HTML-блоба adt_results (completed, high). № 0046",
             "task-attributes": {
-              "status": "pending",
+              "status": "completed",
               "priority": "high",
               "owner": "Александр",
               "completionCriteria": [

@@ -39,7 +39,6 @@ import org.springframework.stereotype.Service;
 public class AuditExecutionServiceImpl implements AuditExecutionService {
 
     private static final Logger log = Logger.getLogger(AuditExecutionServiceImpl.class.getName());
-    private static final long LOG_FLUSH_INTERVAL_MS = 1000L;
     private static final DateTimeFormatter HUMAN_TS_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss z");
 
     private final RaAService raAService;
@@ -116,8 +115,9 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
             context.setStagingLogLevel(stagingLogLevel);
             log.info(() -> "[AuditExecution] stagingLogLevel=" + stagingLogLevel + " auditId=" + auditId);
             ThrottledProgressFlusher progressFlusher = new ThrottledProgressFlusher(
-                    LOG_FLUSH_INTERVAL_MS,
-                    () -> saveProgress(audit, context)
+                    stagingLogLevel.progressFlushIntervalMs(),
+                    context.getLogPersistStats(),
+                    () -> saveProgress(audit, context, false)
             );
             context.setOnEntryAppended(ctx -> progressFlusher.tryFlush());
 
@@ -167,7 +167,7 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
                         "<P>Директория ревизии не задана — обработка файлов пропущена</P>",
                         withPresentationMeta(Map.of("auditId", String.valueOf(auditId)), "WARNING", "RED", "NORMAL"));
                 appendAuditEnd(context, auditSpanId, "COMPLETED");
-                saveProgress(audit, context);
+                saveProgress(audit, context, true);
                 auditExecutionRegistry.markCompleted(auditId);
                 return;
             }
@@ -187,7 +187,7 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
             boolean dirMissing = verifyDirectoryExistsInFileSystem(context);
             if (dirMissing) {
                 appendAuditEnd(context, auditSpanId, "COMPLETED");
-                saveProgress(audit, context);
+                saveProgress(audit, context, true);
                 auditExecutionRegistry.markCompleted(auditId);
                 return;
             }
@@ -277,7 +277,7 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
                                     "filePath", resolvedPath,
                                     "durationHuman", formatDuration(fileStartedAt, Instant.now())
                             ), "END", "GREEN", "NORMAL"));
-                    saveProgress(audit, context);
+                    saveProgress(audit, context, true);
                     continue;
                 } else {
                     context.append(AuditLogLevel.INFO, AuditLogScope.FILE, "FILE_FS_FOUND",
@@ -358,7 +358,7 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
                         ), "END", "GREEN", "NORMAL"));
 
                 // Инкрементальное обновление лога и временной метки после каждого файла
-                saveProgress(audit, context);
+                saveProgress(audit, context, true);
             }
 
             // Шаг 4: финальное сохранение обновлённого adt_results (контрольная фиксация)
@@ -373,7 +373,8 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
                 );
             }
             appendAuditEnd(context, auditSpanId, "COMPLETED");
-            saveProgress(audit, context);
+            appendLogPersistStats(context);
+            saveProgress(audit, context, true);
 
             auditExecutionRegistry.markCompleted(auditId);
             log.info(() -> "[AuditExecution] Audit execution log saved for auditId=" + auditId);
@@ -392,7 +393,7 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
                     if (auditSpanId != null) {
                         appendAuditEnd(errContext, auditSpanId, "FAILED");
                     }
-                    saveProgress(audit, errContext);
+                    saveProgress(audit, errContext, true);
                 } catch (Exception persistEx) {
                     log.log(Level.WARNING,
                             "[AuditExecution] Failed to persist audit error log for auditId=" + auditId,
@@ -412,11 +413,13 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
 
     private static final class ThrottledProgressFlusher {
         private final long intervalMs;
+        private final AuditLogPersistStats stats;
         private final Runnable flushAction;
         private long lastFlushAtMs;
 
-        private ThrottledProgressFlusher(long intervalMs, Runnable flushAction) {
+        private ThrottledProgressFlusher(long intervalMs, AuditLogPersistStats stats, Runnable flushAction) {
             this.intervalMs = intervalMs;
+            this.stats = stats;
             this.flushAction = flushAction;
             this.lastFlushAtMs = 0L;
         }
@@ -424,11 +427,42 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
         private synchronized void tryFlush() {
             long now = System.currentTimeMillis();
             if (now - lastFlushAtMs < intervalMs) {
+                stats.recordSkippedThrottled();
                 return;
             }
             flushAction.run();
             lastFlushAtMs = now;
         }
+    }
+
+    private void appendLogPersistStats(AuditExecutionContext context) {
+        AuditLogPersistStats stats = context.getLogPersistStats();
+        String summary = "flushes=" + stats.getFlushCount()
+                + " skippedUnchanged=" + stats.getSkippedUnchanged()
+                + " skippedThrottled=" + stats.getSkippedThrottled()
+                + " buildHtmlMs=" + stats.getBuildHtmlTotalMs()
+                + " dbUpdateMs=" + stats.getDbUpdateTotalMs()
+                + " lastHtmlChars=" + stats.getLastHtmlChars();
+        log.info(() -> "[AuditProgress] auditId=" + context.getAuditId() + " " + summary);
+        context.append(
+                AuditLogLevel.INFO,
+                AuditLogScope.AUDIT,
+                "AUDIT_LOG_PERSIST_STATS",
+                "<P><b>Статистика сохранения лога:</b> " + escape(summary) + "</P>",
+                withPresentationMeta(
+                        Map.of(
+                                "flushCount", String.valueOf(stats.getFlushCount()),
+                                "skippedUnchanged", String.valueOf(stats.getSkippedUnchanged()),
+                                "skippedThrottled", String.valueOf(stats.getSkippedThrottled()),
+                                "buildHtmlTotalMs", String.valueOf(stats.getBuildHtmlTotalMs()),
+                                "dbUpdateTotalMs", String.valueOf(stats.getDbUpdateTotalMs()),
+                                "lastHtmlChars", String.valueOf(stats.getLastHtmlChars())
+                        ),
+                        "INFO",
+                        "BLUE",
+                        "NORMAL"
+                )
+        );
     }
 
     private boolean verifyDirectoryExistsInFileSystem(AuditExecutionContext context) {
@@ -536,9 +570,18 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
     /**
      * Сохраняет текущее состояние лога и временные метки в записи ревизии.
      * Используется как для инкрементальных обновлений, так и для финального сохранения.
+     *
+     * @param force при {@code true} — запись в БД даже если число событий не изменилось
      */
-    private void saveProgress(RaA audit, AuditExecutionContext context) {
+    private void saveProgress(RaA audit, AuditExecutionContext context, boolean force) {
+        int entryCount = context.getEntries().size();
+        if (!force && entryCount == context.getLastPersistedEntryCount()) {
+            context.getLogPersistStats().recordSkippedUnchanged();
+            return;
+        }
+        long buildStart = System.nanoTime();
         String newResults = context.buildHtmlLog();
+        long buildMs = (System.nanoTime() - buildStart) / 1_000_000L;
         RaA updated = new RaA(
                 audit.adtKey(),
                 audit.adtName(),
@@ -551,7 +594,11 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
                 audit.adtCreated(),
                 LocalDateTime.now()
         );
+        long updateStart = System.nanoTime();
         raAService.update(updated);
+        long updateMs = (System.nanoTime() - updateStart) / 1_000_000L;
+        context.setLastPersistedEntryCount(entryCount);
+        context.getLogPersistStats().recordFlush(buildMs, updateMs, newResults.length());
     }
 
     private static String escape(String value) {

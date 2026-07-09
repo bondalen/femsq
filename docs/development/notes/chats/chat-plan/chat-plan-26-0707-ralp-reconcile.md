@@ -608,12 +608,14 @@ SELECT COUNT(*) AS ralpRa_2026 FROM ags.ralpRa WHERE ralprY = 2026;
 
 | # | Пункт | Статус |
 |---|-------|--------|
-| 9.1.1.1 | Замерить долю `saveProgress` / `buildHtmlLog()` на dry-run SUMMARY (exec 1144, март) | ⏳ |
-| 9.1.1.2 | Реже писать прогресс при SUMMARY/MINIMAL (интервал / дельта вместо 1 с) | ⏳ |
-| 9.1.1.3 | Не перестраивать полный HTML на каждый heartbeat; append-only или лимит размера блоба | ⏳ |
-| 9.1.1.4 | Smoke dry-run март: цель — сократить полный прогон относительно exec 1144 (~180 с) | ⏳ |
+| 9.1.1.1 | Замерить долю `saveProgress` / `buildHtmlLog()` на dry-run SUMMARY (exec 1144, март) | ✅ exec **1145** (0.1.0.119): `flushes=12`, `skippedThrottled=3313`, `buildHtmlMs=110`, `dbUpdateMs=5402`, `lastHtmlChars≈463 КБ` |
+| 9.1.1.2 | Реже писать прогресс при SUMMARY/MINIMAL (интервал / дельта вместо 1 с) | ✅ `StagingLogLevel.progressFlushIntervalMs()`: VERBOSE 1 с, SUMMARY **10 с**, MINIMAL 30 с |
+| 9.1.1.3 | Не перестраивать полный HTML на каждый heartbeat; append-only или лимит размера блоба | ✅ кэш `buildHtmlLog()` по числу записей; skip flush если записей не прибавилось |
+| 9.1.1.4 | Smoke dry-run март: цель — сократить полный прогон относительно exec 1144 (~180 с) | ✅ exec **1145**: **155 с** (−25 с, ~14%), `ra_stg_ra=1720` |
 
-**Ожидаемый эффект:** снятие ~15% времени dry-run (оценка exec 1136 / фаза 7.1.1).
+**Реализация (0.1.0.119):** `AuditLogPersistStats`, `AUDIT_LOG_PERSIST_STATS` в логе, unit-тесты `AuditExecutionContextHtmlCacheTest`.
+
+**Остаток:** `dbUpdateMs≈5.4 с` на 12 flush — дальнейшее снижение только при уменьшении размера HTML или реже принудительных flush после каждого файла.
 
 #### 9.1.2. Batch INSERT новых строк reconcile type=5 (задача 0047)
 
@@ -728,7 +730,7 @@ SELECT COUNT(*) AS ralpRa_2026 FROM ags.ralpRa WHERE ralprY = 2026;
 
 - **Фаза 9 (v0.8.0):** perf 0046–0047 → dev deploy → UAT в UI (type=5 + type=3) → исправления → prod thin JAR. Задачи: `0046`, `0047`, `0048`.
 
-- **Smoke SUMMARY SMB (2026-07-09):** март exec_key=1140 — dry-run **~183 с**; exec **1144** (0.1.0.118, batch reconcile) — **180 с**; июль exec_key=1143 — **363 с** COMPLETED (`parseErrorFields=2`); исправление парсинга — фаза **7.3** (задача 0045).
+- **Smoke SUMMARY SMB (2026-07-09):** март exec 1140 — **~183 с**; exec 1144 (0.1.0.118) — **180 с**; exec **1145** (0.1.0.119, saveProgress 0046) — **155 с**; июль exec 1143 — **363 с** COMPLETED.
 
 - Объём `ags.ralpRa`: **~12 386 строк** (2020–2026), `ags.ralpRaAu`: **~12 379 строк**.
 - **`ralpRa` за 2026 год: 1248 записей** (после apply, exec_key=1133).

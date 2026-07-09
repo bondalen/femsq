@@ -79,6 +79,13 @@ public class AuditExecutionContext {
     private final List<String> spanStack = new ArrayList<>();
     private Consumer<AuditExecutionContext> onEntryAppended;
 
+    /** Кэш HTML для {@link #buildHtmlLog()} — сбрасывается при новой записи. */
+    private String cachedHtmlLog;
+    private int cachedHtmlEntryCount = -1;
+
+    private int lastPersistedEntryCount;
+    private final AuditLogPersistStats logPersistStats = new AuditLogPersistStats();
+
     public AuditExecutionContext(long auditId) {
         this.auditId = auditId;
     }
@@ -167,6 +174,7 @@ public class AuditExecutionContext {
         if (entry != null) {
             AuditLogEntry normalized = normalizeParentSpan(entry);
             entries.add(normalized);
+            invalidateHtmlCache();
             lastUpdatedAt = normalized.getTimestamp();
             if (onEntryAppended != null) {
                 onEntryAppended.accept(this);
@@ -176,6 +184,23 @@ public class AuditExecutionContext {
 
     public void setOnEntryAppended(Consumer<AuditExecutionContext> onEntryAppended) {
         this.onEntryAppended = onEntryAppended;
+    }
+
+    public int getLastPersistedEntryCount() {
+        return lastPersistedEntryCount;
+    }
+
+    public void setLastPersistedEntryCount(int lastPersistedEntryCount) {
+        this.lastPersistedEntryCount = lastPersistedEntryCount;
+    }
+
+    public AuditLogPersistStats getLogPersistStats() {
+        return logPersistStats;
+    }
+
+    private void invalidateHtmlCache() {
+        cachedHtmlLog = null;
+        cachedHtmlEntryCount = -1;
     }
 
     private AuditLogEntry normalizeParentSpan(AuditLogEntry entry) {
@@ -285,6 +310,17 @@ public class AuditExecutionContext {
      * чтобы "ход ревизии" читался как последовательность выполнения.
      */
     public String buildHtmlLog() {
+        int entryCount = entries.size();
+        if (cachedHtmlLog != null && cachedHtmlEntryCount == entryCount) {
+            return cachedHtmlLog;
+        }
+        String html = buildHtmlLogUncached();
+        cachedHtmlLog = html;
+        cachedHtmlEntryCount = entryCount;
+        return html;
+    }
+
+    private String buildHtmlLogUncached() {
         // Построение дерева span-ов для сворачивания/разворачивания (<details>/<summary>).
         Map<String, SpanNode> spans = new HashMap<>();
         for (AuditLogEntry entry : entries) {

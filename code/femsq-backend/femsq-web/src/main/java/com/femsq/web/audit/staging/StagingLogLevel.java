@@ -57,6 +57,19 @@ public enum StagingLogLevel {
     }
 
     /**
+     * Интервал throttled-flush HTML-лога в {@code adt_results} при накоплении событий (задача 0046).
+     *
+     * @return период в миллисекундах между попытками {@code saveProgress} из {@code onEntryAppended}
+     */
+    public long progressFlushIntervalMs() {
+        return switch (this) {
+            case VERBOSE -> 1_000L;
+            case SUMMARY -> 10_000L;
+            case MINIMAL -> 30_000L;
+        };
+    }
+
+    /**
      * Разрешает уровень из значения БД и дефолта приложения.
      *
      * @param dbValue             значение {@code adt_staging_log_level} (может быть {@code null})
