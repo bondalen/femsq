@@ -1,5 +1,6 @@
 package com.femsq.web.audit;
 
+import com.femsq.web.audit.staging.StagingLogLevel;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -61,6 +62,7 @@ public class AuditExecutionContext {
     private Integer year;
     private Boolean addRa;
     private Integer auditType;
+    private StagingLogLevel stagingLogLevel;
 
     /**
      * Записи лога в естественном хронологическом порядке (старые → новые).
@@ -131,6 +133,14 @@ public class AuditExecutionContext {
 
     public void setAuditType(Integer auditType) {
         this.auditType = auditType;
+    }
+
+    public StagingLogLevel getStagingLogLevel() {
+        return stagingLogLevel;
+    }
+
+    public void setStagingLogLevel(StagingLogLevel stagingLogLevel) {
+        this.stagingLogLevel = stagingLogLevel;
     }
 
     public Instant getStartedAt() {

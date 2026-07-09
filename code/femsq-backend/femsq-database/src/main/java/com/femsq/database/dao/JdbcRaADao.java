@@ -34,7 +34,7 @@ public class JdbcRaADao implements RaADao {
 
     @Override
     public Optional<RaA> findById(long adtKey) {
-        String sql = "SELECT adt_key, adt_name, adt_date, adt_results, adt_dir, adt_type, adt_AddRA, adt_created, adt_updated "
+        String sql = "SELECT adt_key, adt_name, adt_date, adt_results, adt_dir, adt_type, adt_AddRA, adt_staging_log_level, adt_created, adt_updated "
                 + "FROM " + TABLE_NAME + " WHERE adt_key = ?";
         log.log(Level.FINE, "Executing findById for adtKey={0}", adtKey);
         try (Connection connection = connectionFactory.createConnection();
@@ -54,7 +54,7 @@ public class JdbcRaADao implements RaADao {
 
     @Override
     public List<RaA> findAll() {
-        String sql = "SELECT adt_key, adt_name, adt_date, adt_results, adt_dir, adt_type, adt_AddRA, adt_created, adt_updated "
+        String sql = "SELECT adt_key, adt_name, adt_date, adt_results, adt_dir, adt_type, adt_AddRA, adt_staging_log_level, adt_created, adt_updated "
                 + "FROM " + TABLE_NAME + " ORDER BY adt_key";
         log.fine("Executing findAll for ra_a");
         try (Connection connection = connectionFactory.createConnection();
@@ -92,8 +92,8 @@ public class JdbcRaADao implements RaADao {
     public RaA create(RaA raA) {
         Objects.requireNonNull(raA, "raA");
         String sql = "INSERT INTO " + TABLE_NAME
-                + " (adt_name, adt_date, adt_results, adt_dir, adt_type, adt_AddRA) "
-                + "VALUES (?, ?, ?, ?, ?, ?)";
+                + " (adt_name, adt_date, adt_results, adt_dir, adt_type, adt_AddRA, adt_staging_log_level) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
         log.log(Level.INFO, "Creating audit {0}", raA.adtName());
         try (Connection connection = connectionFactory.createConnection();
              PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -119,13 +119,13 @@ public class JdbcRaADao implements RaADao {
             throw new DaoException("Для обновления ревизии необходим идентификатор");
         }
         String sql = "UPDATE " + TABLE_NAME
-                + " SET adt_name = ?, adt_date = ?, adt_results = ?, adt_dir = ?, adt_type = ?, adt_AddRA = ?, adt_updated = GETDATE() "
+                + " SET adt_name = ?, adt_date = ?, adt_results = ?, adt_dir = ?, adt_type = ?, adt_AddRA = ?, adt_staging_log_level = ?, adt_updated = GETDATE() "
                 + "WHERE adt_key = ?";
         log.log(Level.INFO, "Updating audit {0}", raA.adtKey());
         try (Connection connection = connectionFactory.createConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             bindRaA(statement, raA);
-            statement.setLong(7, raA.adtKey());
+            statement.setLong(8, raA.adtKey());
             int updated = statement.executeUpdate();
             if (updated == 0) {
                 throw new DaoException("Ревизия с идентификатором " + raA.adtKey() + " не найдена");
@@ -159,6 +159,7 @@ public class JdbcRaADao implements RaADao {
         statement.setInt(4, raA.adtDir());
         statement.setInt(5, raA.adtType());
         statement.setBoolean(6, raA.adtAddRA());
+        setNStringNullable(statement, 7, raA.adtStagingLogLevel());
     }
 
     private void setTimestamp(PreparedStatement statement, int index, LocalDateTime dateTime) throws SQLException {
@@ -186,6 +187,7 @@ public class JdbcRaADao implements RaADao {
                 resultSet.getInt("adt_dir"),
                 resultSet.getInt("adt_type"),
                 resultSet.getBoolean("adt_AddRA"),
+                resultSet.getNString("adt_staging_log_level"),
                 toLocalDateTime(resultSet.getTimestamp("adt_created")),
                 toLocalDateTime(resultSet.getTimestamp("adt_updated"))
         );
@@ -204,6 +206,7 @@ public class JdbcRaADao implements RaADao {
                 raA.adtDir(),
                 raA.adtType(),
                 raA.adtAddRA(),
+                raA.adtStagingLogLevel(),
                 raA.adtCreated(),
                 raA.adtUpdated()
         );

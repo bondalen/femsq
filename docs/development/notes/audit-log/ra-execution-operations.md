@@ -39,6 +39,94 @@ WHERE exec_key = ? /* и при необходимости */ AND exec_adt_key =
 
 ## Наблюдаемость в приложении
 
+### Терминал: `watch-audit-progress.sh`
+
+Во время длительного `executeAudit` (особенно type=5 по SMB) в **отдельном терминале**:
+
+```bash
+chmod +x code/scripts/watch-audit-progress.sh
+./code/scripts/watch-audit-progress.sh 14 15
+```
+
+Каждые 15 с выводит:
+- `adtStatus` из GraphQL (in-memory)
+- `exec_key`, `status`, минуты в `RUNNING` из `ags.ra_execution`
+- последний номер строки Excel из хвоста `adt_results`
+- счётчики `ra_stg_ra` / `ra_stg_ralp` для текущего `exec_key`
+
+Если `excel_row` растёт — процесс **идёт**; если `running_min` растёт без изменения строки >10 мин — возможное зависание (см. watchdog ниже).
+
+### Лог приложения
+
+При Stage 1 с построчным HTML-логом (type=5) каждые **50 строк** в лог пишется `[AuditStaging] progress auditId=… excelRow=… inserted=…` (сборка после 2026-07-08).
+
+## Производительность Stage 1 (`StagingLogLevel`)
+
+**Контекст (2026-07-09):** прогон `exec_key=1136` (type=5, март, dry-run, ~1720 строк) занял **~117 мин**. Основная причина — режим `VERBOSE`: одиночный `INSERT` + `RETURN_GENERATED_KEYS` на каждую строку и частый `saveProgress` с растущим HTML в `adt_results`. Чтение Excel по SMB — менее 1% времени.
+
+### Уровни детализации лога
+
+Поле ревизии `adt_staging_log_level` (или `NULL` → `audit.staging.default-log-level` в `application.yml`, по умолчанию `SUMMARY`):
+
+| Уровень | `adt_results` | INSERT | Когда использовать |
+|---------|---------------|--------|-------------------|
+| `VERBOSE` | Каждая строка Excel (как в VBA) | по одной строке | Приёмка, сравнение с VBA |
+| `SUMMARY` | Прогресс раз в 100 строк + проблемные строки (пустые обязательные поля, ошибки формата ячеек) | batch (200) | Обычная эксплуатация |
+| `MINIMAL` | Только итоги листа | batch | CI, быстрые smoke |
+
+Ожидаемое время Stage 1 type=5 при `SUMMARY`: **~3–5 мин** вместо ~106 мин.
+
+**Замер (2026-07-09, exec_key=1139, март 2026, dry-run):** Stage 1 type=5 — **~70 с** (1720 строк); полный прогон с reconcile — **~3 мин** (vs ~117 мин при VERBOSE, exec_key=1136).
+
+### Настройка
+
+| Источник | Параметр |
+|----------|----------|
+| UI | Форма ревизии → «Детализация лога Stage 1» |
+| БД | `ags.ra_a.adt_staging_log_level` (`VERBOSE` / `SUMMARY` / `MINIMAL`, `NULL` = default) |
+| `application.yml` | `audit.staging.default-log-level: SUMMARY` |
+
+Для сравнения с VBA временно выставить `VERBOSE` на конкретной ревизии; для smoke и эксплуатации — `SUMMARY`.
+
+### Построчный аудит reconcile (apply)
+
+При `SUMMARY` / `MINIMAL` построчные записи apply reconcile (создание/обновление RA/RC, эволюция сумм) **не пишутся** в `adt_results` — только агрегаты (`RECONCILE_TYPE5_*`). Per-row аудит apply включается только при `adt_staging_log_level = VERBOSE` (`StagingLogLevel.emitReconcileRowAudit()`).
+
+## Производительность reconcile type=5 (задача 0044)
+
+**Контекст:** после 0043 reconcile — ~8% dry-run SUMMARY. Оптимизация `AllAgentsReconcileService`: JDBC batch (`APPLY_BATCH_SIZE=200`) для UPDATE/INSERT, bulk-загрузка latest sums (`BULK_IN_CHUNK=500`) вместо per-row SELECT.
+
+**Замер dry-run март SMB (adt_key=14):** exec_key **1144** (0.1.0.118) — **180 с**, `ra_stg_ra=1720` (vs exec 1140 ~183 с на 0.1.0.117). Полный выигрыш по времени dry-run небольшой; основная польза — меньше round-trips при **apply** (`adt_AddRA=1`) и отсутствие лишнего построчного аудита reconcile в SUMMARY.
+
+## Ошибки формата ячеек Excel (Stage 1)
+
+**Задача 0045, фаза 7.3 чат-плана.** Сейчас `AuditExcelCellReader.readInt()` / `readDecimal()` при несовпадении типа бросают `AuditExcelException` → откат всего staging → ревизия `FAILED`. Целевое поведение: **ревизия не падает**, пользователь видит причину в `adt_results` и сам правит Excel.
+
+### Правила (после реализации 0045)
+
+| Поле в `ra_col_map` | Ошибка формата (int / decimal / date) | Строка в staging | Сообщение в логе |
+|---------------------|----------------------------------------|------------------|------------------|
+| `rcm_required = 0` | текст вместо числа и т.п. | **Принимается** | WARNING: колонка, заголовок, сырое значение; **«строка принята, поле записано как NULL»** |
+| `rcm_required = 1` | то же | **Пропускается** | WARNING: те же детали; **«строка пропущена»** |
+
+Пустое обязательное поле — как раньше: строка пропускается («недостаточно обязательных данных»), без изменения правил.
+
+### Пример (необязательное поле)
+
+Июльский smoke `exec_key=1141`: в `rainRaSheetsNumber` («Кол-во листов ОА») значение «в электронном виде». После 0045 ожидается:
+
+```
+⚠ Excel-строка 4601, лист «Отчеты»:
+  колонка rainRaSheetsNumber («Кол-во листов ОА»): ожидается целое число,
+  получено «в электронном виде» — строка принята, поле записано как NULL.
+```
+
+Строка попадает в `ra_stg_ra` с `rainRaSheetsNumber = NULL`; остальные поля строки сохраняются.
+
+### Итоги листа
+
+В `STAGING_LOAD_STATS` добавляются счётчики `parseErrorFields` (принятые строки с обнулённым полем) и `skippedParseError` (пропущенные из‑за обязательного поля с ошибкой формата). В режиме `MINIMAL` — только итоговые числа.
+
 Компонент `AuditExecutionStalenessWatchdog` раз в N минут ищет `RUNNING` старше порога и пишет в лог префикс `[AuditExecutionStale]`.
 
 **Micrometer** (при подключённом `spring-boot-starter-actuator`):
@@ -111,4 +199,4 @@ WHERE rsc_key = 1;
 Канонические **`.jrxml`** встроенных отчётов — только в `femsq-reports/src/main/resources/reports/embedded/`. Копии под `**/temp/**/*.jrxml` в репозиторий не коммитить (см. корневой `.gitignore`).
 
 **Файл создан:** 2026-04-03  
-**lastUpdated:** 2026-04-05
+**lastUpdated:** 2026-07-09

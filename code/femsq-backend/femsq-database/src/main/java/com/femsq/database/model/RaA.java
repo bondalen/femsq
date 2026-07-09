@@ -13,6 +13,7 @@ import java.util.Objects;
  * @param adtDir      идентификатор директории (FK → ra_dir.key)
  * @param adtType     идентификатор типа ревизии (FK → ra_at.at_key)
  * @param adtAddRA    флаг автодобавления отсутствующих отчётов
+ * @param adtStagingLogLevel уровень детализации лога Stage 1 ({@code VERBOSE}/{@code SUMMARY}/{@code MINIMAL}); {@code null} — дефолт приложения
  * @param adtCreated  дата создания записи
  * @param adtUpdated  дата последнего обновления записи
  */
@@ -24,6 +25,7 @@ public record RaA(
         Integer adtDir,
         Integer adtType,
         Boolean adtAddRA,
+        String adtStagingLogLevel,
         LocalDateTime adtCreated,
         LocalDateTime adtUpdated
 ) {

@@ -3,13 +3,13 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2026-07-08T09:33:00+03:00",
+      "lastUpdated": "2026-07-09T11:10:00+03:00",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0043",
+      "nextTaskId": "0046",
       "items": {
         "0001": {
           "task": {
@@ -1549,6 +1549,89 @@
               },
               "created": "2026-03-17",
               "lastUpdated": "2026-03-18"
+            }
+          }
+        },
+        "0044": {
+          "task": {
+            "displayName": "Batch apply reconcile type=5: bulk sums + JDBC batch (completed, high). № 0044",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "StagingLogLevel.emitReconcileRowAudit(): построчный аудит apply только в VERBOSE",
+                "JDBC batch UPDATE ags.ra (APPLY_BATCH_SIZE=200)",
+                "bulk loadLatestRaSumsBulk / loadLatestRcSumsBulk + batch INSERT ra_summ / ra_change_summ",
+                "estimateDryRunStats без per-row hasSameLatestSum",
+                "updateChangedRcChanges: batch UPDATE + bulk RC sums",
+                "Smoke dry-run executeAudit(14) COMPLETED на 0.1.0.118",
+                "Документация: chat-plan фаза 8"
+              ],
+              "description": "Оптимизация apply reconcile type=5 (AllAgentsReconcileService): JDBC batch для UPDATE/INSERT, bulk-загрузка latest sums вместо per-row SELECT, отключение построчного аудита apply при SUMMARY/MINIMAL. Цель — снизить долю reconcile в dry-run после 0043.",
+              "links": {
+                "projectDocsRefs": ["module:backend.web"],
+                "journalRefs": [],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#фаза-8-оптимизация-reconcile-type5-apply-задача-0044"
+              },
+              "created": "2026-07-09",
+              "lastUpdated": "2026-07-09"
+            }
+          }
+        },
+        "0045": {
+          "task": {
+            "displayName": "Устойчивый парсинг Excel: ошибки формата без FAILED (completed, high). № 0045",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "CellReadResult в AuditExcelCellReader: readInt/readDecimal/readDate не бросают при ошибке формата",
+                "bindRow: необязательное поле с parse error → NULL, строка принимается; обязательное → строка пропускается",
+                "STAGING_ROW_ISSUE с явным текстом: «строка принята, поле NULL» vs «строка пропущена»",
+                "Счётчики parseErrorFields и skippedParseError в STAGING_LOAD_STATS",
+                "Smoke июль SMB: COMPLETED с warnings, ra_stg_ra > 0, без правки Excel",
+                "Документация: chat-plan 7.3, ra-execution-operations.md"
+              ],
+              "description": "Ошибка формата ячейки (например «в электронном виде» в integer-колонке) не должна ронять ревизию. Необязательные поля — warning + NULL + строка в staging; обязательные — warning + пропуск строки. Пользователь исправляет Excel по логу.",
+              "links": {
+                "projectDocsRefs": ["module:backend.web"],
+                "journalRefs": [],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#73-устойчивый-парсинг-excel-ошибки-формата-без-падения-ревизии-задача-0045"
+              },
+              "created": "2026-07-09",
+              "lastUpdated": "2026-07-09"
+            }
+          }
+        },
+        "0043": {
+          "task": {
+            "displayName": "StagingLogLevel: оптимизация Stage 1 (completed, high). № 0043",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Создан enum StagingLogLevel (VERBOSE, SUMMARY, MINIMAL) в DefaultAuditStagingService",
+                "DDL: agt_staging_log_level NVARCHAR(16) NULL добавлен в ags.ra_a; маппер и GraphQL-схема обновлены",
+                "DefaultAuditStagingService: batch INSERT (200 строк) при SUMMARY/MINIMAL; heartbeat раз в 100 строк; логирование только ошибочных строк",
+                "fileTypeSupportsRowParagraph удалён; логика перенесена в StagingLogLevel.forFile()",
+                "Frontend: select для StagingLogLevel в форме редактирования ревизии",
+                "Smoke executeAudit(14) type=5 с SUMMARY: Stage 1 ≤5 мин (текущее ~106 мин)",
+                "Документация и тесты обновлены"
+              ],
+              "description": "Устранение узкого места Stage 1 для af_type=5 (AllAgents): переход с одиночных INSERT+RETURN_GENERATED_KEYS на batch INSERT. Ввести StagingLogLevel (VERBOSE/SUMMARY/MINIMAL), где SUMMARY — режим по умолчанию с прогрессом каждые 100 строк и логированием только ошибочных строк. Ожидаемое ускорение Stage 1: с ~106 мин до ~3–5 мин (>95%).",
+              "links": {
+                "projectDocsRefs": ["module:backend.web"],
+                "journalRefs": [],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#фаза-7"
+              },
+              "created": "2026-07-09",
+              "lastUpdated": "2026-07-09"
             }
           }
         },

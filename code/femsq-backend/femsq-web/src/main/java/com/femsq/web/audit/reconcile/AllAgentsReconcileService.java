@@ -4,6 +4,7 @@ import com.femsq.database.connection.ConnectionFactory;
 import com.femsq.web.audit.AuditExecutionContext;
 import com.femsq.web.audit.AuditLogLevel;
 import com.femsq.web.audit.AuditLogScope;
+import com.femsq.web.audit.staging.StagingLogLevel;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -12,6 +13,8 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.LocalDate;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -53,6 +56,10 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
     private static final String RACS_DATE = "[ra\u0441s_date]";
     private static final boolean ENABLE_DELETES = Boolean.parseBoolean(
             System.getProperty("femsq.reconcile.type5.enableDeletes", "false"));
+    /** Размер JDBC batch для apply UPDATE/INSERT сумм. */
+    private static final int APPLY_BATCH_SIZE = 200;
+    /** Максимум параметров в IN (...) за один запрос bulk-load latest sums. */
+    private static final int BULK_IN_CHUNK = 500;
     /** Цвет акцента для summary RA/RC (SCR-002-A/B/C, Crimson). */
     private static final String HTML_CRIMSON_SUMMARY = "#DC143C";
     /** SCR-002-B: несовпадение поля — «старое» в БД. */
@@ -677,7 +684,9 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                         inserted++;
                         long raKey = resultSet.getLong(1);
                         insertedRows.add(new InsertedRaRow(raKey, source));
-                        appendRaNewCreatedAudit(context, source, keys, raKey, true);
+                        if (emitReconcileRowAudit(context)) {
+                            appendRaNewCreatedAudit(context, source, keys, raKey, true);
+                        }
                     } else {
                         // Уже существует (SQL-idempotency). Разрешим ra_key, чтобы всё равно корректно эволюционировать суммы.
                         selectExistingRaKey.setInt(1, raPeriod);
@@ -686,7 +695,9 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                             if (rs.next()) {
                                 long raKey = rs.getLong(1);
                                 insertedRows.add(new InsertedRaRow(raKey, source));
-                                appendRaNewCreatedAudit(context, source, keys, raKey, false);
+                                if (emitReconcileRowAudit(context)) {
+                                    appendRaNewCreatedAudit(context, source, keys, raKey, false);
+                                }
                             }
                         }
                     }
@@ -717,7 +728,9 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                 WHERE ra_key = ?
                 """;
         int updated = 0;
+        boolean rowAudit = emitReconcileRowAudit(context);
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            int batchCount = 0;
             for (ChangedRaRow row : changedRows) {
                 StagingRaRow source = row.stagingRow();
                 DomainRaRow domainBefore = row.domainBefore();
@@ -732,11 +745,18 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                 statement.setString(9, trimToNull(source.sendNum()));
                 statement.setObject(10, source.sendDate());
                 statement.setLong(11, row.raKey());
-                int n = statement.executeUpdate();
-                updated += n;
-                if (n > 0) {
+                statement.addBatch();
+                batchCount++;
+                if (batchCount >= APPLY_BATCH_SIZE) {
+                    updated += sumBatchUpdateCounts(statement.executeBatch());
+                    batchCount = 0;
+                }
+                if (rowAudit) {
                     appendRaFieldMismatchAndUpdatedAudit(context, domainBefore, source, row.raKey());
                 }
+            }
+            if (batchCount > 0) {
+                updated += sumBatchUpdateCounts(statement.executeBatch());
             }
         }
         return updated;
@@ -751,40 +771,60 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
     ) throws SQLException {
         int inserted = 0;
         int unchangedSkipped = 0;
-        String selectLatestSql = """
-                SELECT TOP 1 ras_total, ras_work, ras_equip, ras_others
-                FROM ags.ra_summ
-                WHERE ras_ra = ?
-                ORDER BY ras_date DESC, ras_key DESC
-                """;
+        Set<Long> raKeys = new HashSet<>();
+        for (InsertedRaRow row : insertedRows) {
+            raKeys.add(row.raKey());
+        }
+        for (ChangedRaRow row : changedRows) {
+            raKeys.add(row.raKey());
+        }
+        Map<Long, RaSumSnapshot> latestByRaKey = loadLatestRaSumsBulk(connection, raKeys);
         String insertSql = """
                 INSERT INTO ags.ra_summ (ras_ra, ras_total, ras_work, ras_equip, ras_others, ras_date)
                 VALUES (?, ?, ?, ?, ?, ?)
                 """;
-        try (PreparedStatement selectLatest = connection.prepareStatement(selectLatestSql);
-             PreparedStatement insertStatement = connection.prepareStatement(insertSql)) {
+        boolean rowAudit = emitReconcileRowAudit(context);
+        try (PreparedStatement insertStatement = connection.prepareStatement(insertSql)) {
             Timestamp now = new Timestamp(System.currentTimeMillis());
+            int batchCount = 0;
             for (int i = 0; i < insertedRows.size(); i++) {
                 InsertedRaRow row = insertedRows.get(i);
                 NewRaRow newRa = newRaRows.get(i);
-                RaSummUpsertOutcome outcome = upsertRaSummForRowWithOutcome(
-                        selectLatest, insertStatement, now, row.raKey(), row.stagingRow());
+                RaSummUpsertOutcome outcome = upsertRaSummWithSnapshot(
+                        insertStatement, now, row.raKey(), row.stagingRow(), latestByRaKey.get(row.raKey()));
                 if (outcome.versionInserted()) {
                     inserted++;
-                    appendRaNewSumsAudit(context, newRa.stagingRow(), row.raKey(), outcome);
+                    batchCount++;
+                    if (batchCount >= APPLY_BATCH_SIZE) {
+                        insertStatement.executeBatch();
+                        batchCount = 0;
+                    }
+                    if (rowAudit) {
+                        appendRaNewSumsAudit(context, newRa.stagingRow(), row.raKey(), outcome);
+                    }
                 } else {
                     unchangedSkipped++;
                 }
             }
             for (ChangedRaRow row : changedRows) {
-                RaSummUpsertOutcome outcome = upsertRaSummForRowWithOutcome(
-                        selectLatest, insertStatement, now, row.raKey(), row.stagingRow());
+                RaSummUpsertOutcome outcome = upsertRaSummWithSnapshot(
+                        insertStatement, now, row.raKey(), row.stagingRow(), latestByRaKey.get(row.raKey()));
                 if (outcome.versionInserted()) {
                     inserted++;
-                    appendRaSumMismatchAudit(context, row.stagingRow(), row.raKey(), outcome);
+                    batchCount++;
+                    if (batchCount >= APPLY_BATCH_SIZE) {
+                        insertStatement.executeBatch();
+                        batchCount = 0;
+                    }
+                    if (rowAudit) {
+                        appendRaSumMismatchAudit(context, row.stagingRow(), row.raKey(), outcome);
+                    }
                 } else {
                     unchangedSkipped++;
                 }
+            }
+            if (batchCount > 0) {
+                insertStatement.executeBatch();
             }
         }
         return new SumEvolutionStats(inserted, unchangedSkipped);
@@ -798,8 +838,13 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         int plannedUpdated = readModelResult.changedRows().size();
         int plannedSumInserted = plannedInserted;
         int plannedSumUnchangedSkipped = 0;
+        Set<Long> raKeys = new HashSet<>();
         for (ChangedRaRow row : readModelResult.changedRows()) {
-            if (hasSameLatestSum(connection, row.raKey(), row.stagingRow())) {
+            raKeys.add(row.raKey());
+        }
+        Map<Long, RaSumSnapshot> latestByRaKey = loadLatestRaSumsBulk(connection, raKeys);
+        for (ChangedRaRow row : readModelResult.changedRows()) {
+            if (sameLatestSum(latestByRaKey.get(row.raKey()), row.stagingRow())) {
                 plannedSumUnchangedSkipped++;
             } else {
                 plannedSumInserted++;
@@ -811,6 +856,35 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                 plannedSumInserted,
                 plannedSumUnchangedSkipped
         );
+    }
+
+    private RaSummUpsertOutcome upsertRaSummWithSnapshot(
+            PreparedStatement insertStatement,
+            Timestamp now,
+            long raKey,
+            StagingRaRow source,
+            RaSumSnapshot latest
+    ) throws SQLException {
+        boolean hasLatest = latest != null;
+        BigDecimal dbTotal = hasLatest ? latest.total() : null;
+        BigDecimal dbWork = hasLatest ? latest.work() : null;
+        BigDecimal dbEquip = hasLatest ? latest.equip() : null;
+        BigDecimal dbOthers = hasLatest ? latest.others() : null;
+        if (hasLatest
+                && sameAmount(dbTotal, source.ttl())
+                && sameAmount(dbWork, source.work())
+                && sameAmount(dbEquip, source.equip())
+                && sameAmount(dbOthers, source.others())) {
+            return new RaSummUpsertOutcome(false, true, dbTotal, dbWork, dbEquip, dbOthers);
+        }
+        insertStatement.setLong(1, raKey);
+        setNullableMoney(insertStatement, 2, source.ttl());
+        setNullableMoney(insertStatement, 3, source.work());
+        setNullableMoney(insertStatement, 4, source.equip());
+        setNullableMoney(insertStatement, 5, source.others());
+        insertStatement.setTimestamp(6, now);
+        insertStatement.addBatch();
+        return new RaSummUpsertOutcome(true, hasLatest, dbTotal, dbWork, dbEquip, dbOthers);
     }
 
     private RaSummUpsertOutcome upsertRaSummForRowWithOutcome(
@@ -835,46 +909,25 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                 dbOthers = resultSet.getBigDecimal("ras_others");
             }
         }
-        if (hasLatest
-                && sameAmount(dbTotal, source.ttl())
-                && sameAmount(dbWork, source.work())
-                && sameAmount(dbEquip, source.equip())
-                && sameAmount(dbOthers, source.others())) {
-            return new RaSummUpsertOutcome(false, true, dbTotal, dbWork, dbEquip, dbOthers);
+        RaSumSnapshot snapshot = hasLatest
+                ? new RaSumSnapshot(dbTotal, dbWork, dbEquip, dbOthers)
+                : null;
+        return upsertRaSummWithSnapshot(insertStatement, now, raKey, source, snapshot);
+    }
+
+    private boolean sameLatestSum(RaSumSnapshot latest, StagingRaRow source) {
+        if (latest == null) {
+            return false;
         }
-        insertStatement.setLong(1, raKey);
-        setNullableMoney(insertStatement, 2, source.ttl());
-        setNullableMoney(insertStatement, 3, source.work());
-        setNullableMoney(insertStatement, 4, source.equip());
-        setNullableMoney(insertStatement, 5, source.others());
-        insertStatement.setTimestamp(6, now);
-        insertStatement.executeUpdate();
-        return new RaSummUpsertOutcome(true, hasLatest, dbTotal, dbWork, dbEquip, dbOthers);
+        return sameAmount(latest.total(), source.ttl())
+                && sameAmount(latest.work(), source.work())
+                && sameAmount(latest.equip(), source.equip())
+                && sameAmount(latest.others(), source.others());
     }
 
     private boolean hasSameLatestSum(Connection connection, long raKey, StagingRaRow source) throws SQLException {
-        String sql = """
-                SELECT TOP 1 ras_total, ras_work, ras_equip, ras_others
-                FROM ags.ra_summ
-                WHERE ras_ra = ?
-                ORDER BY ras_date DESC, ras_key DESC
-                """;
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setLong(1, raKey);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (!resultSet.next()) {
-                    return false;
-                }
-                BigDecimal dbTotal = resultSet.getBigDecimal("ras_total");
-                BigDecimal dbWork = resultSet.getBigDecimal("ras_work");
-                BigDecimal dbEquip = resultSet.getBigDecimal("ras_equip");
-                BigDecimal dbOthers = resultSet.getBigDecimal("ras_others");
-                return sameAmount(dbTotal, source.ttl())
-                        && sameAmount(dbWork, source.work())
-                        && sameAmount(dbEquip, source.equip())
-                        && sameAmount(dbOthers, source.others());
-            }
-        }
+        Map<Long, RaSumSnapshot> loaded = loadLatestRaSumsBulk(connection, List.of(raKey));
+        return sameLatestSum(loaded.get(raKey), source);
     }
 
     private void setNullableMoney(PreparedStatement statement, int index, BigDecimal value) throws SQLException {
@@ -1427,15 +1480,19 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                         continue;
                     }
 
-                    appendRcNewCreatedAudit(context, row, racKey, insertedNewRc);
+                    if (emitReconcileRowAudit(context)) {
+                        appendRcNewCreatedAudit(context, row, racKey, insertedNewRc);
+                    }
                     RaSummUpsertOutcome sumOutcome = evolveRcSumsWithOutcome(
-                            connection, racKey, row.total(), row.work(), row.equip(), row.others(), now);
+                            connection, racKey, row.total(), row.work(), row.equip(), row.others(), now, null);
                     if (sumOutcome.versionInserted()) {
                         rcSumsInserted++;
                     } else {
                         rcSumsSkipped++;
                     }
-                    appendRcNewSumsAudit(context, row.stagingRowKey(), racKey, row, sumOutcome);
+                    if (emitReconcileRowAudit(context)) {
+                        appendRcNewSumsAudit(context, row.stagingRowKey(), racKey, row, sumOutcome);
+                    }
                 }
             }
         }
@@ -1473,9 +1530,21 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         int sumsInserted = 0;
         int sumsUnchangedSkipped = 0;
         Timestamp now = new Timestamp(System.currentTimeMillis());
+        boolean rowAudit = emitReconcileRowAudit(context);
+        Set<Long> racKeys = new HashSet<>();
+        for (RcChangedApplyRow row : changedRows) {
+            racKeys.add(row.racKey());
+        }
+        Map<Long, RaSumSnapshot> latestRcSums = loadLatestRcSumsBulk(connection, racKeys);
+        String insertSumSql = """
+                INSERT INTO ags.ra_change_summ (
+                    %s, %s, %s, %s, %s, %s
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                """.formatted(RACS_FK_RAC, RACS_TOTAL, RACS_WORK, RACS_EQUIP, RACS_OTHERS, RACS_DATE);
 
         try (PreparedStatement updateStmt = connection.prepareStatement(updateSql);
-             PreparedStatement ignored = connection.prepareStatement("SELECT 1")) {
+             PreparedStatement insertSum = connection.prepareStatement(insertSumSql)) {
+            int batchCount = 0;
             for (RcChangedApplyRow row : changedRows) {
                 int idx = 1;
                 updateStmt.setObject(idx++, row.rcDate());
@@ -1489,21 +1558,32 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                 updateStmt.setString(idx++, row.sent());
                 updateStmt.setObject(idx++, row.sentDate());
                 updateStmt.setLong(idx++, row.racKey());
-                int n = updateStmt.executeUpdate();
-                updated += n;
-                if (n > 0) {
+                updateStmt.addBatch();
+                batchCount++;
+                if (batchCount >= APPLY_BATCH_SIZE) {
+                    updated += sumBatchUpdateCounts(updateStmt.executeBatch());
+                    batchCount = 0;
+                }
+                if (rowAudit) {
                     appendRcFieldMismatchAndUpdatedAudit(context, row.domainBefore(), row);
                 }
 
                 RaSummUpsertOutcome sumOutcome = evolveRcSumsWithOutcome(
-                        connection, row.racKey(), row.total(), row.work(), row.equip(), row.others(), now);
+                        insertSum, row.racKey(), row.total(), row.work(), row.equip(), row.others(), now,
+                        latestRcSums.get(row.racKey()));
                 if (sumOutcome.versionInserted()) {
                     sumsInserted++;
-                    appendRcSumMismatchAudit(context, row, sumOutcome);
                 } else {
                     sumsUnchangedSkipped++;
                 }
+                if (rowAudit) {
+                    appendRcSumMismatchAudit(context, row, sumOutcome);
+                }
             }
+            if (batchCount > 0) {
+                updated += sumBatchUpdateCounts(updateStmt.executeBatch());
+            }
+            insertSum.executeBatch();
         }
 
         return new RcChangeUpdateStats(updated, sumsInserted, sumsUnchangedSkipped);
@@ -1520,7 +1600,8 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             BigDecimal work,
             BigDecimal equip,
             BigDecimal others,
-            Timestamp now
+            Timestamp now,
+            RaSumSnapshot preloadedLatest
     ) throws SQLException {
         String selectLatestSumSql = """
                 SELECT %s AS total, %s AS work, %s AS equip, %s AS others
@@ -1533,23 +1614,26 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                 ) VALUES (?, ?, ?, ?, ?, ?)
                 """.formatted(RACS_FK_RAC, RACS_TOTAL, RACS_WORK, RACS_EQUIP, RACS_OTHERS, RACS_DATE);
 
-        BigDecimal dbTotal = null;
-        BigDecimal dbWork = null;
-        BigDecimal dbEquip = null;
-        BigDecimal dbOthers = null;
-        boolean hasLatest = false;
-        try (PreparedStatement selectLatest = connection.prepareStatement(selectLatestSumSql)) {
-            selectLatest.setLong(1, racKey);
-            try (ResultSet rs = selectLatest.executeQuery()) {
-                if (rs.next()) {
-                    hasLatest = true;
-                    dbTotal = rs.getBigDecimal("total");
-                    dbWork = rs.getBigDecimal("work");
-                    dbEquip = rs.getBigDecimal("equip");
-                    dbOthers = rs.getBigDecimal("others");
+        RaSumSnapshot latest = preloadedLatest;
+        if (latest == null) {
+            try (PreparedStatement selectLatest = connection.prepareStatement(selectLatestSumSql)) {
+                selectLatest.setLong(1, racKey);
+                try (ResultSet rs = selectLatest.executeQuery()) {
+                    if (rs.next()) {
+                        latest = new RaSumSnapshot(
+                                rs.getBigDecimal("total"),
+                                rs.getBigDecimal("work"),
+                                rs.getBigDecimal("equip"),
+                                rs.getBigDecimal("others"));
+                    }
                 }
             }
         }
+        boolean hasLatest = latest != null;
+        BigDecimal dbTotal = hasLatest ? latest.total() : null;
+        BigDecimal dbWork = hasLatest ? latest.work() : null;
+        BigDecimal dbEquip = hasLatest ? latest.equip() : null;
+        BigDecimal dbOthers = hasLatest ? latest.others() : null;
         if (hasLatest
                 && sameAmount(dbTotal, total)
                 && sameAmount(dbWork, work)
@@ -1567,6 +1651,38 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             insertSum.executeUpdate();
             return new RaSummUpsertOutcome(true, hasLatest, dbTotal, dbWork, dbEquip, dbOthers);
         }
+    }
+
+    private RaSummUpsertOutcome evolveRcSumsWithOutcome(
+            PreparedStatement insertSum,
+            long racKey,
+            BigDecimal total,
+            BigDecimal work,
+            BigDecimal equip,
+            BigDecimal others,
+            Timestamp now,
+            RaSumSnapshot preloadedLatest
+    ) throws SQLException {
+        boolean hasLatest = preloadedLatest != null;
+        BigDecimal dbTotal = hasLatest ? preloadedLatest.total() : null;
+        BigDecimal dbWork = hasLatest ? preloadedLatest.work() : null;
+        BigDecimal dbEquip = hasLatest ? preloadedLatest.equip() : null;
+        BigDecimal dbOthers = hasLatest ? preloadedLatest.others() : null;
+        if (hasLatest
+                && sameAmount(dbTotal, total)
+                && sameAmount(dbWork, work)
+                && sameAmount(dbEquip, equip)
+                && sameAmount(dbOthers, others)) {
+            return new RaSummUpsertOutcome(false, true, dbTotal, dbWork, dbEquip, dbOthers);
+        }
+        insertSum.setLong(1, racKey);
+        setNullableMoney(insertSum, 2, total);
+        setNullableMoney(insertSum, 3, work);
+        setNullableMoney(insertSum, 4, equip);
+        setNullableMoney(insertSum, 5, others);
+        insertSum.setTimestamp(6, now);
+        insertSum.addBatch();
+        return new RaSummUpsertOutcome(true, hasLatest, dbTotal, dbWork, dbEquip, dbOthers);
     }
 
     /**
@@ -2982,6 +3098,106 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             int rcSumsInserted,
             int rcSumsUnchangedSkipped
     ) {
+    }
+
+    /**
+     * @return {@code true}, если построчный аудит apply reconcile пишется в {@code adt_results} (только {@link StagingLogLevel#VERBOSE}).
+     */
+    private boolean emitReconcileRowAudit(ReconcileContext context) {
+        AuditExecutionContext auditContext = context.auditExecutionContext();
+        if (auditContext == null || auditContext.getStagingLogLevel() == null) {
+            return false;
+        }
+        return auditContext.getStagingLogLevel().emitReconcileRowAudit();
+    }
+
+    private int sumBatchUpdateCounts(int[] batchResults) {
+        int total = 0;
+        for (int value : batchResults) {
+            if (value >= 0) {
+                total += value;
+            }
+        }
+        return total;
+    }
+
+    /**
+     * Снимок последней версии сумм RA ({@code ags.ra_summ}) для bulk-сравнения.
+     */
+    private record RaSumSnapshot(BigDecimal total, BigDecimal work, BigDecimal equip, BigDecimal others) {
+    }
+
+    private Map<Long, RaSumSnapshot> loadLatestRaSumsBulk(Connection connection, Collection<Long> raKeys) throws SQLException {
+        Map<Long, RaSumSnapshot> result = new HashMap<>();
+        if (raKeys == null || raKeys.isEmpty()) {
+            return result;
+        }
+        List<Long> keys = raKeys.stream().filter(k -> k != null && k > 0).distinct().sorted().toList();
+        for (int offset = 0; offset < keys.size(); offset += BULK_IN_CHUNK) {
+            List<Long> chunk = keys.subList(offset, Math.min(offset + BULK_IN_CHUNK, keys.size()));
+            String inClause = String.join(",", Collections.nCopies(chunk.size(), "?"));
+            String sql = """
+                    WITH ranked AS (
+                        SELECT ras_ra, ras_total, ras_work, ras_equip, ras_others,
+                            ROW_NUMBER() OVER (PARTITION BY ras_ra ORDER BY ras_date DESC, ras_key DESC) AS rn
+                        FROM ags.ra_summ
+                        WHERE ras_ra IN (%s)
+                    )
+                    SELECT ras_ra, ras_total, ras_work, ras_equip, ras_others
+                    FROM ranked WHERE rn = 1
+                    """.formatted(inClause);
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                for (int i = 0; i < chunk.size(); i++) {
+                    statement.setLong(i + 1, chunk.get(i));
+                }
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    while (resultSet.next()) {
+                        result.put(
+                                resultSet.getLong("ras_ra"),
+                                new RaSumSnapshot(
+                                        resultSet.getBigDecimal("ras_total"),
+                                        resultSet.getBigDecimal("ras_work"),
+                                        resultSet.getBigDecimal("ras_equip"),
+                                        resultSet.getBigDecimal("ras_others")));
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    private Map<Long, RaSumSnapshot> loadLatestRcSumsBulk(Connection connection, Collection<Long> racKeys) throws SQLException {
+        Map<Long, RaSumSnapshot> result = new HashMap<>();
+        if (racKeys == null || racKeys.isEmpty()) {
+            return result;
+        }
+        List<Long> keys = racKeys.stream().filter(k -> k != null && k > 0).distinct().sorted().toList();
+        for (int offset = 0; offset < keys.size(); offset += BULK_IN_CHUNK) {
+            List<Long> chunk = keys.subList(offset, Math.min(offset + BULK_IN_CHUNK, keys.size()));
+            String inClause = String.join(",", Collections.nCopies(chunk.size(), "?"));
+            String sql = """
+                    SELECT %s AS rac_key, %s AS total, %s AS work, %s AS equip, %s AS others
+                    FROM ags.ra_chSmLt
+                    WHERE %s IN (%s)
+                    """.formatted(RACS_FK_RAC, RACS_TOTAL, RACS_WORK, RACS_EQUIP, RACS_OTHERS, RACS_FK_RAC, inClause);
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                for (int i = 0; i < chunk.size(); i++) {
+                    statement.setLong(i + 1, chunk.get(i));
+                }
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    while (resultSet.next()) {
+                        result.put(
+                                resultSet.getLong("rac_key"),
+                                new RaSumSnapshot(
+                                        resultSet.getBigDecimal("total"),
+                                        resultSet.getBigDecimal("work"),
+                                        resultSet.getBigDecimal("equip"),
+                                        resultSet.getBigDecimal("others")));
+                    }
+                }
+            }
+        }
+        return result;
     }
 
     /**

@@ -41,6 +41,7 @@ public class RaAMapper {
                 raA.adtDir(),
                 raA.adtType(),
                 raA.adtAddRA(),
+                raA.adtStagingLogLevel(),
                 toOffsetDateTime(raA.adtCreated()),
                 toOffsetDateTime(raA.adtUpdated()),
                 status
@@ -74,6 +75,7 @@ public class RaAMapper {
                 request.adtDir(),
                 request.adtType(),
                 request.adtAddRA(),
+                request.adtStagingLogLevel(),
                 null,
                 null
         );
@@ -96,6 +98,7 @@ public class RaAMapper {
                 request.adtDir(),
                 request.adtType(),
                 request.adtAddRA(),
+                request.adtStagingLogLevel(),
                 null,
                 null
         );

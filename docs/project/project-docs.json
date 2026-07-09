@@ -542,7 +542,8 @@
               "windows_path": "D:\\wire-guard-share-nb-win",
               "smb_share_name": "wire-guard-share-nb-win",
               "linux_mount": "/mnt/nb-win-share",
-              "excel_root": "/mnt/nb-win-share/femsq/excel/2026_03",
+              "excel_root": "/mnt/nb-win-share/femsq/excel",
+              "folder_naming": "год_данных[_год_состояния]_месяц_состояния; при совпадении годов данных и состояния — один год + месяц (примеры: 2025_2026_01, 2026_03, 2026-07)",
               "mount_script_wsl": "code/scripts/mount-nb-win-share-wsl.sh",
               "mount_method": "bind",
               "wsl_source": "/mnt/d/wire-guard-share-nb-win",
@@ -590,7 +591,8 @@
             "excel_share": {
               "smb_unc": "//10.7.0.3/wire-guard-share-nb-win",
               "linux_mount": "/mnt/nb-win-share",
-              "excel_root": "/mnt/nb-win-share/femsq/excel/2026_03",
+              "excel_root": "/mnt/nb-win-share/femsq/excel",
+              "folder_naming": "год_данных[_год_состояния]_месяц_состояния; при совпадении годов данных и состояния — один год + месяц (примеры: 2025_2026_01, 2026_03, 2026-07)",
               "credentials": "~/.smbcredentials",
               "credentials_template": "docs/development/examples/smbcredentials.example",
               "mount_script": "code/scripts/mount-nb-win-share.sh",
@@ -1087,6 +1089,6 @@
     "version": "1.4.0",
     "lastUpdated": "2026-07-08",
     "updatedBy": "Александр",
-    "updateReason": "Общее хранилище Excel через SMB-шару nb-win: единый mount /mnt/nb-win-share на Fedora (CIFS) и nb-win WSL (bind). Скрипты mount-nb-win-share.sh / mount-nb-win-share-wsl.sh, документация remote-development-nb-win.md."
+    "updateReason": "Документирована схема именования подпапок excel на SMB-шаре (снимки по году данных/состояния/месяцу); smoke март vs июль 2026."
   }
 }

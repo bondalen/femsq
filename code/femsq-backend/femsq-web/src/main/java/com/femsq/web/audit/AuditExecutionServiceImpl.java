@@ -7,6 +7,8 @@ import com.femsq.database.service.RaDirService;
 import com.femsq.database.service.RaExecutionService;
 import com.femsq.database.service.RaFService;
 import com.femsq.web.audit.runtime.AuditExecutionRegistry;
+import com.femsq.web.audit.staging.AuditStagingProperties;
+import com.femsq.web.audit.staging.StagingLogLevel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -46,19 +48,22 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
     private final RaFService raFService;
     private final List<AuditFileProcessor> fileProcessors;
     private final AuditExecutionRegistry auditExecutionRegistry;
+    private final AuditStagingProperties auditStagingProperties;
 
     public AuditExecutionServiceImpl(RaAService raAService,
                                      RaDirService raDirService,
                                      RaExecutionService raExecutionService,
                                      RaFService raFService,
                                      List<AuditFileProcessor> fileProcessors,
-                                     AuditExecutionRegistry auditExecutionRegistry) {
+                                     AuditExecutionRegistry auditExecutionRegistry,
+                                     AuditStagingProperties auditStagingProperties) {
         this.raAService = raAService;
         this.raDirService = raDirService;
         this.raExecutionService = raExecutionService;
         this.raFService = raFService;
         this.fileProcessors = fileProcessors;
         this.auditExecutionRegistry = auditExecutionRegistry;
+        this.auditStagingProperties = Objects.requireNonNull(auditStagingProperties, "auditStagingProperties");
     }
 
     @Async
@@ -105,6 +110,11 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
             context.setLastUpdatedAt(context.getStartedAt());
             context.setAuditType(audit.adtType());
             context.setAddRa(audit.adtAddRA());
+            StagingLogLevel stagingLogLevel = StagingLogLevel.resolve(
+                    audit.adtStagingLogLevel(),
+                    auditStagingProperties.getDefaultLogLevel());
+            context.setStagingLogLevel(stagingLogLevel);
+            log.info(() -> "[AuditExecution] stagingLogLevel=" + stagingLogLevel + " auditId=" + auditId);
             ThrottledProgressFlusher progressFlusher = new ThrottledProgressFlusher(
                     LOG_FLUSH_INTERVAL_MS,
                     () -> saveProgress(audit, context)
@@ -181,6 +191,8 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
                 auditExecutionRegistry.markCompleted(auditId);
                 return;
             }
+
+            boolean anyFileProcessingError = false;
 
             for (RaF raF : files) {
                 // Учитываем только файлы, помеченные к выполнению
@@ -310,7 +322,31 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
                     continue;
                 }
 
-                context.inSpan(fileSpanId, () -> processor.process(context, auditFile));
+                try {
+                    context.inSpan(fileSpanId, () -> processor.process(context, auditFile));
+                } catch (Exception ex) {
+                    anyFileProcessingError = true;
+                    log.log(Level.SEVERE,
+                            "[AuditExecution] Error processing file auditId=" + auditId + " file=" + raF.afName(),
+                            ex);
+                    context.append(
+                            AuditLogLevel.ERROR,
+                            AuditLogScope.FILE,
+                            "FILE_PROCESSING_ERROR",
+                            "<P><b>Ошибка обработки файла</b> " + escape(raF.afName()) + ": "
+                                    + escape(throwableMessage(ex)) + "</P>",
+                            withPresentationMeta(
+                                    Map.of(
+                                            "auditId", String.valueOf(auditId),
+                                            "filePath", resolvedPath,
+                                            "fileType", String.valueOf(raF.afType())
+                                    ),
+                                    "ERROR",
+                                    "RED",
+                                    "BOLD"
+                            )
+                    );
+                }
 
                 // Завершение обработки файла
                 context.endSpan(fileSpanId, AuditLogLevel.INFO, AuditLogScope.FILE, "FILE_END",
@@ -326,6 +362,16 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
             }
 
             // Шаг 4: финальное сохранение обновлённого adt_results (контрольная фиксация)
+            if (anyFileProcessingError) {
+                context.append(
+                        AuditLogLevel.WARNING,
+                        AuditLogScope.AUDIT,
+                        "AUDIT_FILE_ERRORS",
+                        "<P>Ревизия завершена с ошибками в одном или нескольких файлах. Подробности — события "
+                                + "<code>FILE_PROCESSING_ERROR</code>.</P>",
+                        withPresentationMeta(Map.of("auditId", String.valueOf(auditId)), "WARNING", "ORANGE", "BOLD")
+                );
+            }
             appendAuditEnd(context, auditSpanId, "COMPLETED");
             saveProgress(audit, context);
 
@@ -501,6 +547,7 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
                 audit.adtDir(),
                 audit.adtType(),
                 audit.adtAddRA(),
+                audit.adtStagingLogLevel(),
                 audit.adtCreated(),
                 LocalDateTime.now()
         );

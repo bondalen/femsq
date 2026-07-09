@@ -138,6 +138,17 @@
                 />
               </div>
               <div class="compact-row compact-row-actions">
+                <QSelect
+                  v-model="form.adtStagingLogLevel"
+                  :options="stagingLogLevelOptions"
+                  label="Детализация лога Stage 1"
+                  emit-value
+                  map-options
+                  :disable="saving"
+                  outlined
+                  dense
+                  class="field field-staging-log"
+                />
                 <QCheckbox
                   v-model="form.adtAddRA"
                   label="Обновляем базу данных?"
@@ -288,7 +299,7 @@ import { useQuasar, Notify } from 'quasar';
 import { useAuditsStore } from '@/stores/audits';
 import { useAuditTypesStore } from '@/stores/lookups/audit-types';
 import { useDirectoriesStore as useDirectoriesLookupStore } from '@/stores/lookups/directories';
-import type { RaADto, RaACreateRequest, RaAUpdateRequest, RaDirDto } from '@/types/audits';
+import type { RaADto, RaACreateRequest, RaAUpdateRequest, RaDirDto, StagingLogLevel } from '@/types/audits';
 import * as directoriesApi from '@/api/directories-api';
 import DirectoryInfo from '@/components/audits/DirectoryInfo.vue';
 
@@ -310,6 +321,12 @@ const executing = ref(false);
 const currentDirectory = ref<RaDirDto | null>(null);
 const loadingDirectory = ref(false);
 
+const stagingLogLevelOptions: { label: string; value: StagingLogLevel }[] = [
+  { label: 'SUMMARY — прогресс и ошибки (быстро)', value: 'SUMMARY' },
+  { label: 'VERBOSE — построчно как в VBA (медленно)', value: 'VERBOSE' },
+  { label: 'MINIMAL — только итоги', value: 'MINIMAL' }
+];
+
 // Форма ревизии
 const form = ref<{
   adtName: string;
@@ -318,13 +335,15 @@ const form = ref<{
   adtDateDate: string;
   adtDateTime: string;
   adtAddRA: boolean;
+  adtStagingLogLevel: StagingLogLevel | null;
 }>({
   adtName: '',
   adtType: null,
   adtDir: null,
   adtDateDate: '',
   adtDateTime: '',
-  adtAddRA: false
+  adtAddRA: false,
+  adtStagingLogLevel: 'SUMMARY'
 });
 
 const errors = ref<{
@@ -479,7 +498,8 @@ function resetForm(): void {
     adtDir: null,
     adtDateDate: '',
     adtDateTime: '',
-    adtAddRA: false
+    adtAddRA: false,
+    adtStagingLogLevel: 'SUMMARY'
   };
   errors.value = {};
   errorMessage.value = null;
@@ -491,6 +511,7 @@ function loadAuditToForm(audit: RaADto): void {
   form.value.adtType = audit.adtType || null;
   form.value.adtDir = audit.adtDir || null;
   form.value.adtAddRA = audit.adtAddRA || false;
+  form.value.adtStagingLogLevel = audit.adtStagingLogLevel ?? 'SUMMARY';
 
   if (audit.adtDate) {
     const date = new Date(audit.adtDate);
@@ -605,7 +626,8 @@ async function handleSave(): Promise<void> {
         adtType: form.value.adtType!,
         adtDir: form.value.adtDir!,
         adtDate: adtDate,
-        adtAddRA: form.value.adtAddRA
+        adtAddRA: form.value.adtAddRA,
+        adtStagingLogLevel: form.value.adtStagingLogLevel
       };
 
       const created = await auditsStore.createAudit(createRequest);
@@ -627,7 +649,8 @@ async function handleSave(): Promise<void> {
         adtType: form.value.adtType!,
         adtDir: form.value.adtDir!,
         adtDate: adtDate,
-        adtAddRA: form.value.adtAddRA
+        adtAddRA: form.value.adtAddRA,
+        adtStagingLogLevel: form.value.adtStagingLogLevel
       };
 
       const updated = await auditsStore.updateAudit(selectedAudit.value.adtKey, updateRequest);

@@ -12,6 +12,7 @@ import com.femsq.web.audit.excel.AuditExcelCellReader;
 import com.femsq.web.audit.excel.AuditExcelColumnLocator;
 import com.femsq.web.audit.excel.AuditExcelException;
 import com.femsq.web.audit.excel.AuditExcelReader;
+import com.femsq.web.audit.excel.CellReadResult;
 import com.femsq.web.audit.mapping.AuditColumnMappingRepository;
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -73,19 +74,22 @@ public class DefaultAuditStagingService implements AuditStagingService {
     private final AuditExcelColumnLocator columnLocator;
     private final AuditExcelCellReader cellReader;
     private final ConnectionFactory connectionFactory;
+    private final AuditStagingProperties auditStagingProperties;
 
     public DefaultAuditStagingService(
             AuditColumnMappingRepository mappingRepository,
             AuditExcelReader excelReader,
             AuditExcelColumnLocator columnLocator,
             AuditExcelCellReader cellReader,
-            ConnectionFactory connectionFactory
+            ConnectionFactory connectionFactory,
+            AuditStagingProperties auditStagingProperties
     ) {
         this.mappingRepository = Objects.requireNonNull(mappingRepository, "mappingRepository");
         this.excelReader = Objects.requireNonNull(excelReader, "excelReader");
         this.columnLocator = Objects.requireNonNull(columnLocator, "columnLocator");
         this.cellReader = Objects.requireNonNull(cellReader, "cellReader");
         this.connectionFactory = Objects.requireNonNull(connectionFactory, "connectionFactory");
+        this.auditStagingProperties = Objects.requireNonNull(auditStagingProperties, "auditStagingProperties");
     }
 
     @Override
@@ -101,7 +105,8 @@ public class DefaultAuditStagingService implements AuditStagingService {
             log.info(() -> "[AuditStaging] No sheet config for file type=" + file.getType());
             return 0;
         }
-        final boolean emitRowParagraphPreview = fileTypeSupportsRowParagraph(file);
+        final StagingLogLevel stagingLogLevel = resolveStagingLogLevel(context);
+        final boolean isType5 = Integer.valueOf(5).equals(file.getType());
 
         Instant openedAt = Instant.now();
         String workbookSpanId = context.beginSpan(
@@ -124,7 +129,7 @@ public class DefaultAuditStagingService implements AuditStagingService {
             return context.inSpan(
                     workbookSpanId,
                     () -> excelReader.withWorkbook(file.getPath(), workbook -> loadWorkbook(context, workbook, sheetConfigs,
-                            emitRowParagraphPreview))
+                            stagingLogLevel, isType5))
             );
         } finally {
             Instant closedAt = Instant.now();
@@ -147,14 +152,15 @@ public class DefaultAuditStagingService implements AuditStagingService {
     private int loadWorkbook(AuditExecutionContext context,
                              Workbook workbook,
                              List<RaSheetConf> sheetConfigs,
-                             boolean emitRowParagraphPreview) {
+                             StagingLogLevel stagingLogLevel,
+                             boolean isType5) {
         int totalInserted = 0;
         try (Connection connection = connectionFactory.createConnection()) {
             connection.setAutoCommit(false);
             try {
                 for (RaSheetConf config : sheetConfigs) {
-                    Set<String> allowedSigns = resolveAllowedSigns(config, emitRowParagraphPreview);
-                    totalInserted += loadSheet(context, connection, workbook, config, emitRowParagraphPreview, allowedSigns);
+                    Set<String> allowedSigns = resolveAllowedSigns(config, isType5);
+                    totalInserted += loadSheet(context, connection, workbook, config, stagingLogLevel, allowedSigns);
                 }
                 connection.commit();
             } catch (Exception exception) {
@@ -171,7 +177,7 @@ public class DefaultAuditStagingService implements AuditStagingService {
                           Connection connection,
                           Workbook workbook,
                           RaSheetConf config,
-                          boolean emitRowParagraphPreview,
+                          StagingLogLevel stagingLogLevel,
                           Set<String> allowedSigns)
             throws SQLException {
         Instant stagingStartedAt = Instant.now();
@@ -276,6 +282,7 @@ public class DefaultAuditStagingService implements AuditStagingService {
                 .map(RaColMap::rcmTblCol)
                 .filter(excelColumns::containsKey)
                 .collect(java.util.stream.Collectors.toSet());
+        Map<String, String> columnExcelHeaders = buildColumnExcelHeaders(mappings, excelColumns);
 
         Map<String, Integer> dbColumnTypes = readColumnTypes(connection, config.rscStgTbl());
         Map<String, Integer> dbColumnSizes = readColumnSizes(connection, config.rscStgTbl());
@@ -290,7 +297,11 @@ public class DefaultAuditStagingService implements AuditStagingService {
         int inserted = 0;
         int batchCount = 0;
         SheetLoadStats stats = new SheetLoadStats(sheet.getSheetName(), config.rscStgTbl(), headerRowIndex + 1, sheet.getLastRowNum());
-        boolean logEachStagingRow = emitRowParagraphPreview;
+        boolean logEachStagingRow = stagingLogLevel.logEachStagingRow();
+        boolean emitRowParagraphPreview = stagingLogLevel.emitRowParagraphPreview();
+        boolean emitSummaryProgress = stagingLogLevel.emitSummaryProgress();
+        boolean emitParseIssueLog = stagingLogLevel != StagingLogLevel.MINIMAL;
+        int summaryProgressInterval = stagingLogLevel.summaryProgressInterval();
         try (PreparedStatement statement = logEachStagingRow
                 ? connection.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)
                 : connection.prepareStatement(insertSql)) {
@@ -316,6 +327,7 @@ public class DefaultAuditStagingService implements AuditStagingService {
                         row,
                         insertColumns,
                         excelColumns,
+                        columnExcelHeaders,
                         dbColumnTypes,
                         dbColumnSizes,
                         execColumn,
@@ -323,10 +335,15 @@ public class DefaultAuditStagingService implements AuditStagingService {
                         requiredColumns
                 );
                 if (!outcome.insertable()) {
-                    if (outcome.missingRequiredData()) {
+                    if (outcome.skippedDueToRequiredParseError()) {
+                        stats.skippedParseError++;
+                    } else if (outcome.missingRequiredData()) {
                         stats.skippedMissingRequired++;
                     } else {
                         stats.skippedNoBusinessData++;
+                    }
+                    if (emitParseIssueLog && !outcome.parseIssues().isEmpty()) {
+                        appendStagingRowParseIssues(context, sheet, rowIndex + 1, outcome.parseIssues());
                     }
                     if (emitRowParagraphPreview) {
                         stats.rowParagraphTotal++;
@@ -349,8 +366,17 @@ public class DefaultAuditStagingService implements AuditStagingService {
                                         "NORMAL"
                                 )
                         );
+                    } else if (emitSummaryProgress && outcome.missingRequiredData()) {
+                        appendSummaryIssue(context, sheet, rowIndex + 1,
+                                "пропущено — недостаточно обязательных данных");
                     }
                     continue;
+                }
+                if (outcome.optionalParseErrorFields() > 0) {
+                    stats.parseErrorFields += outcome.optionalParseErrorFields();
+                }
+                if (emitParseIssueLog && !outcome.parseIssues().isEmpty()) {
+                    appendStagingRowParseIssues(context, sheet, rowIndex + 1, outcome.parseIssues());
                 }
                 if (outcome.truncatedFields() > 0) {
                     stats.rowsWithTruncation++;
@@ -362,6 +388,14 @@ public class DefaultAuditStagingService implements AuditStagingService {
                     stats.rowParagraphTotal++;
                     statement.executeUpdate();
                     inserted++;
+                    if (inserted % 50 == 0) {
+                        int excelRowOneBased = rowIndex + 1;
+                        int insertedSnapshot = inserted;
+                        log.info(() -> "[AuditStaging] progress auditId=" + context.getAuditId()
+                                + " sheet=" + sheet.getSheetName()
+                                + " excelRow=" + excelRowOneBased
+                                + " inserted=" + insertedSnapshot);
+                    }
                     long rainKey = readGeneratedRainKey(statement);
                     appendStagingRowInserted(context, sheet, config, rowIndex + 1, rainKey);
                     stats.rowParagraphSampled++;
@@ -387,6 +421,18 @@ public class DefaultAuditStagingService implements AuditStagingService {
                 } else {
                     statement.addBatch();
                     batchCount++;
+                    if (emitSummaryProgress && stats.sourceRows % summaryProgressInterval == 0) {
+                        appendSummaryProgress(context, sheet, rowIndex + 1, inserted);
+                    }
+                    if (stats.sourceRows % 200 == 0) {
+                        int excelRowOneBased = rowIndex + 1;
+                        int insertedSnapshot = inserted;
+                        log.info(() -> "[AuditStaging] progress auditId=" + context.getAuditId()
+                                + " sheet=" + sheet.getSheetName()
+                                + " excelRow=" + excelRowOneBased
+                                + " inserted=" + insertedSnapshot
+                                + " (batch mode)");
+                    }
                     if (batchCount >= BATCH_SIZE) {
                         inserted += executeBatch(statement);
                         batchCount = 0;
@@ -398,7 +444,7 @@ public class DefaultAuditStagingService implements AuditStagingService {
             }
         }
         stats.insertedRows = inserted;
-        logSheetStats(context, stats);
+        logSheetStats(context, stats, stagingLogLevel);
         Instant stagingEndedAt = Instant.now();
         context.endSpan(stagingSpanId, AuditLogLevel.INFO, AuditLogScope.FILE, "STAGING_END",
                 "<P>Staging end: table=" + escape(config.rscStgTbl()) + ", sheet=" + escape(sheet.getSheetName())
@@ -418,7 +464,7 @@ public class DefaultAuditStagingService implements AuditStagingService {
         return inserted;
     }
 
-    private void logSheetStats(AuditExecutionContext context, SheetLoadStats stats) {
+    private void logSheetStats(AuditExecutionContext context, SheetLoadStats stats, StagingLogLevel stagingLogLevel) {
         String signStats = formatSignStats(stats.acceptedSignCounts);
         String filteredSignsTop = formatTopN(stats.filteredSignCounts, FILTERED_SIGN_TOP_LIMIT);
         String message = "[AuditStaging] sheet=" + stats.sheetName
@@ -432,22 +478,45 @@ public class DefaultAuditStagingService implements AuditStagingService {
                 + ", skippedNullRow=" + stats.skippedNullRow
                 + ", skippedNoBusinessData=" + stats.skippedNoBusinessData
                 + ", skippedMissingRequired=" + stats.skippedMissingRequired
+                + ", parseErrorFields=" + stats.parseErrorFields
+                + ", skippedParseError=" + stats.skippedParseError
                 + ", rowsWithTruncation=" + stats.rowsWithTruncation
                 + ", truncatedFields=" + stats.totalTruncatedFields
                 + ", signStats=" + signStats;
         log.info(message);
-        context.append(
-                AuditLogLevel.INFO,
-                AuditLogScope.FILE,
-                "STAGING_LOAD_STATS",
-                "<P>" + message + "</P>",
-                withPresentationMeta(
-                        stagingStatsMeta(context, stats, filteredSignsTop),
-                        "INFO",
-                        "SILVER",
-                        "NORMAL"
-                )
-        );
+        if (stagingLogLevel != StagingLogLevel.MINIMAL) {
+            context.append(
+                    AuditLogLevel.INFO,
+                    AuditLogScope.FILE,
+                    "STAGING_LOAD_STATS",
+                    "<P>" + message + "</P>",
+                    withPresentationMeta(
+                            stagingStatsMeta(context, stats, filteredSignsTop),
+                            "INFO",
+                            "SILVER",
+                            "NORMAL"
+                    )
+            );
+        } else {
+            String minimalHtml = "<P>Итог, лист «" + escape(stats.sheetName) + "»: исходных="
+                    + stats.sourceRows + ", принято=" + stats.insertedRows
+                    + ", пропущено (нет данных)=" + (stats.skippedNullRow + stats.skippedNoBusinessData + stats.skippedMissingRequired)
+                    + ", ошибки формата (поля NULL)=" + stats.parseErrorFields
+                    + ", пропущено (обязат. поле, формат)=" + stats.skippedParseError
+                    + ".</P>";
+            context.append(
+                    AuditLogLevel.INFO,
+                    AuditLogScope.FILE,
+                    "STAGING_LOAD_STATS",
+                    minimalHtml,
+                    withPresentationMeta(
+                            stagingStatsMeta(context, stats, filteredSignsTop),
+                            "INFO",
+                            "SILVER",
+                            "NORMAL"
+                    )
+            );
+        }
         if (stats.rowParagraphTotal > 0) {
             context.append(
                     AuditLogLevel.INFO,
@@ -472,8 +541,91 @@ public class DefaultAuditStagingService implements AuditStagingService {
         }
     }
 
-    private boolean fileTypeSupportsRowParagraph(AuditFile file) {
-        return file != null && Integer.valueOf(5).equals(file.getType());
+    private StagingLogLevel resolveStagingLogLevel(AuditExecutionContext context) {
+        if (context.getStagingLogLevel() != null) {
+            return context.getStagingLogLevel();
+        }
+        return auditStagingProperties.getDefaultLogLevel();
+    }
+
+    private void appendSummaryProgress(AuditExecutionContext context, Sheet sheet, int excelRowOneBased, int inserted) {
+        context.append(
+                AuditLogLevel.INFO,
+                AuditLogScope.FILE,
+                "STAGING_PROGRESS",
+                "<P>Прогресс: Excel-строка " + excelRowOneBased + " — внесено в staging: " + inserted + "</P>",
+                withPresentationMeta(
+                        Map.of(
+                                "auditId", String.valueOf(context.getAuditId()),
+                                "sheetName", String.valueOf(sheet.getSheetName()),
+                                "rowIndex", String.valueOf(excelRowOneBased),
+                                "inserted", String.valueOf(inserted)
+                        ),
+                        "INFO",
+                        "BLUE",
+                        "NORMAL"
+                )
+        );
+    }
+
+    private void appendStagingRowParseIssues(
+            AuditExecutionContext context,
+            Sheet sheet,
+            int excelRowOneBased,
+            List<CellParseIssue> issues
+    ) {
+        if (issues == null || issues.isEmpty()) {
+            return;
+        }
+        StringBuilder html = new StringBuilder();
+        html.append("<P>⚠ Excel-строка ").append(excelRowOneBased)
+                .append(", лист «").append(escape(sheet.getSheetName())).append("»:");
+        String rowAction = "ПРИНЯТА_NULL";
+        for (CellParseIssue issue : issues) {
+            html.append("<br/>  колонка ").append(escape(issue.column()))
+                    .append(" («").append(escape(issue.excelHeader())).append("»): ожидается ")
+                    .append(escape(issue.expectedType())).append(", получено «")
+                    .append(escape(issue.rawValue())).append("» — ");
+            if (issue.required()) {
+                html.append("строка пропущена.");
+                rowAction = "ПРОПУЩЕНА";
+            } else {
+                html.append("строка принята, поле записано как NULL.");
+            }
+        }
+        html.append("</P>");
+        Map<String, String> meta = new HashMap<>();
+        meta.put("auditId", String.valueOf(context.getAuditId()));
+        meta.put("sheetName", String.valueOf(sheet.getSheetName()));
+        meta.put("rowIndex", String.valueOf(excelRowOneBased));
+        meta.put("rowAction", rowAction);
+        context.append(
+                AuditLogLevel.WARNING,
+                AuditLogScope.FILE,
+                "STAGING_ROW_ISSUE",
+                html.toString(),
+                withPresentationMeta(meta, "WARN", "ORANGE", "NORMAL")
+        );
+    }
+
+    private void appendSummaryIssue(AuditExecutionContext context, Sheet sheet, int excelRowOneBased, String reason) {
+        context.append(
+                AuditLogLevel.WARNING,
+                AuditLogScope.FILE,
+                "STAGING_ROW_ISSUE",
+                "<P>⚠ Excel-строка " + excelRowOneBased + ": " + escape(reason) + ".</P>",
+                withPresentationMeta(
+                        Map.of(
+                                "auditId", String.valueOf(context.getAuditId()),
+                                "sheetName", String.valueOf(sheet.getSheetName()),
+                                "rowIndex", String.valueOf(excelRowOneBased),
+                                "reason", reason
+                        ),
+                        "WARN",
+                        "ORANGE",
+                        "NORMAL"
+                )
+        );
     }
 
     /**
@@ -580,11 +732,15 @@ public class DefaultAuditStagingService implements AuditStagingService {
             return escape("(дата не указана)");
         }
         try {
-            LocalDate d = cellReader.readDate(cell);
-            if (d == null) {
-                return escape("(дата не указана)");
+            CellReadResult<LocalDate> dateResult = cellReader.readDateResult(cell);
+            if (dateResult.ok() && dateResult.value() != null) {
+                return escape(RAIN_DATE_HUMAN.format(dateResult.value()));
             }
-            return escape(RAIN_DATE_HUMAN.format(d));
+            String raw = dateResult.rawText();
+            if (raw != null && !raw.isBlank()) {
+                return escape(raw.trim());
+            }
+            return escape("(дата не указана)");
         } catch (RuntimeException ex) {
             String raw = readStringByColumnName(row, excelColumns, "rainRaDate");
             if (raw != null && !raw.isBlank()) {
@@ -845,7 +1001,21 @@ public class DefaultAuditStagingService implements AuditStagingService {
         meta.put("rowParagraphSampled", String.valueOf(stats.rowParagraphSampled));
         meta.put("rowParagraphSuppressed", String.valueOf(stats.rowParagraphSuppressed));
         meta.put("rowParagraphTotal", String.valueOf(stats.rowParagraphTotal));
+        meta.put("parseErrorFields", String.valueOf(stats.parseErrorFields));
+        meta.put("skippedParseError", String.valueOf(stats.skippedParseError));
         return meta;
+    }
+
+    private Map<String, String> buildColumnExcelHeaders(List<RaColMap> mappings, Map<String, Integer> excelColumns) {
+        Map<String, String> headers = new HashMap<>();
+        for (RaColMap mapping : mappings) {
+            String column = mapping.rcmTblCol();
+            if (column == null || mapping.rcmXlHdr() == null || !excelColumns.containsKey(column)) {
+                continue;
+            }
+            headers.putIfAbsent(column, mapping.rcmXlHdr());
+        }
+        return headers;
     }
 
     private Sheet resolveSheet(Workbook workbook, String sheetName) {
@@ -931,6 +1101,7 @@ public class DefaultAuditStagingService implements AuditStagingService {
             Row row,
             List<String> insertColumns,
             Map<String, Integer> excelColumns,
+            Map<String, String> columnExcelHeaders,
             Map<String, Integer> dbColumnTypes,
             Map<String, Integer> dbColumnSizes,
             String execColumn,
@@ -939,8 +1110,11 @@ public class DefaultAuditStagingService implements AuditStagingService {
     ) throws SQLException {
         boolean hasBusinessData = false;
         boolean missingRequiredData = false;
+        boolean skippedDueToRequiredParseError = false;
+        int optionalParseErrorFields = 0;
         int truncatedFields = 0;
         String rainSign = "(null)";
+        List<CellParseIssue> parseIssues = new ArrayList<>();
         for (int i = 0; i < insertColumns.size(); i++) {
             String column = insertColumns.get(i);
             int jdbcType = dbColumnTypes.getOrDefault(column, Types.NVARCHAR);
@@ -954,7 +1128,19 @@ public class DefaultAuditStagingService implements AuditStagingService {
                 continue;
             }
             Integer excelColIndex = excelColumns.get(column);
-            Object value = excelColIndex != null ? readTyped(row.getCell(excelColIndex), jdbcType) : null;
+            TypedRead typedRead = excelColIndex != null
+                    ? readTypedResult(row.getCell(excelColIndex), jdbcType, column, columnExcelHeaders, requiredColumns)
+                    : new TypedRead(null, null);
+            Object value = typedRead.value();
+            if (typedRead.parseIssue() != null) {
+                parseIssues.add(typedRead.parseIssue());
+                if (typedRead.parseIssue().required()) {
+                    skippedDueToRequiredParseError = true;
+                } else {
+                    optionalParseErrorFields++;
+                }
+                value = null;
+            }
             if (value instanceof String stringValue) {
                 Integer maxLength = dbColumnSizes.get(column);
                 if (maxLength != null && maxLength > 0 && stringValue.length() > maxLength) {
@@ -973,7 +1159,16 @@ public class DefaultAuditStagingService implements AuditStagingService {
             }
             bindValue(statement, parameterIndex, jdbcType, value);
         }
-        return new RowBindOutcome(hasBusinessData && !missingRequiredData, missingRequiredData, truncatedFields, rainSign);
+        boolean insertable = hasBusinessData && !missingRequiredData && !skippedDueToRequiredParseError;
+        return new RowBindOutcome(
+                insertable,
+                missingRequiredData,
+                skippedDueToRequiredParseError,
+                optionalParseErrorFields,
+                parseIssues,
+                truncatedFields,
+                rainSign
+        );
     }
 
     private boolean isEmptyValue(Object value) {
@@ -986,17 +1181,86 @@ public class DefaultAuditStagingService implements AuditStagingService {
         return false;
     }
 
-    private Object readTyped(org.apache.poi.ss.usermodel.Cell cell, int jdbcType) {
+    private TypedRead readTypedResult(
+            org.apache.poi.ss.usermodel.Cell cell,
+            int jdbcType,
+            String column,
+            Map<String, String> columnExcelHeaders,
+            Set<String> requiredColumns
+    ) {
         return switch (jdbcType) {
-            case Types.DATE -> cellReader.readDate(cell);
-            case Types.INTEGER, Types.SMALLINT, Types.TINYINT, Types.BIGINT -> cellReader.readInt(cell);
-            case Types.DECIMAL, Types.NUMERIC, Types.FLOAT, Types.DOUBLE, Types.REAL -> cellReader.readDecimal(cell);
+            case Types.DATE -> fromDateResult(cellReader.readDateResult(cell), column, columnExcelHeaders, requiredColumns);
+            case Types.INTEGER, Types.SMALLINT, Types.TINYINT, Types.BIGINT ->
+                    fromIntResult(cellReader.readIntResult(cell), column, columnExcelHeaders, requiredColumns);
+            case Types.DECIMAL, Types.NUMERIC, Types.FLOAT, Types.DOUBLE, Types.REAL ->
+                    fromDecimalResult(cellReader.readDecimalResult(cell), column, columnExcelHeaders, requiredColumns);
             case Types.BIT, Types.BOOLEAN -> {
-                Integer integerValue = cellReader.readInt(cell);
-                yield integerValue == null ? null : integerValue != 0;
+                CellReadResult<Integer> integerResult = cellReader.readIntResult(cell);
+                if (!integerResult.ok()) {
+                    yield fromIntResult(integerResult, column, columnExcelHeaders, requiredColumns);
+                }
+                Integer integerValue = integerResult.value();
+                yield new TypedRead(integerValue == null ? null : integerValue != 0, null);
             }
-            default -> cellReader.readString(cell);
+            default -> new TypedRead(cellReader.readString(cell), null);
         };
+    }
+
+    private TypedRead fromIntResult(
+            CellReadResult<Integer> result,
+            String column,
+            Map<String, String> columnExcelHeaders,
+            Set<String> requiredColumns
+    ) {
+        if (result.ok()) {
+            return new TypedRead(result.value(), null);
+        }
+        return new TypedRead(null, buildParseIssue(column, columnExcelHeaders, requiredColumns, result));
+    }
+
+    private TypedRead fromDecimalResult(
+            CellReadResult<BigDecimal> result,
+            String column,
+            Map<String, String> columnExcelHeaders,
+            Set<String> requiredColumns
+    ) {
+        if (result.ok()) {
+            return new TypedRead(result.value(), null);
+        }
+        return new TypedRead(null, buildParseIssue(column, columnExcelHeaders, requiredColumns, result));
+    }
+
+    private TypedRead fromDateResult(
+            CellReadResult<LocalDate> result,
+            String column,
+            Map<String, String> columnExcelHeaders,
+            Set<String> requiredColumns
+    ) {
+        if (result.ok()) {
+            return new TypedRead(result.value(), null);
+        }
+        return new TypedRead(null, buildParseIssue(column, columnExcelHeaders, requiredColumns, result));
+    }
+
+    private CellParseIssue buildParseIssue(
+            String column,
+            Map<String, String> columnExcelHeaders,
+            Set<String> requiredColumns,
+            CellReadResult<?> result
+    ) {
+        String header = columnExcelHeaders.getOrDefault(column, column);
+        String raw = result.rawText() != null ? result.rawText() : "";
+        String expected = result.expectedType() != null ? result.expectedType() : "значение";
+        return new CellParseIssue(column, header, raw, expected, requiredColumns.contains(column));
+    }
+
+    private record TypedRead(Object value, CellParseIssue parseIssue) {
+    }
+
+    /**
+     * Ошибка формата ячейки при привязке строки staging.
+     */
+    private record CellParseIssue(String column, String excelHeader, String rawValue, String expectedType, boolean required) {
     }
 
     private void bindValue(PreparedStatement statement, int parameterIndex, int jdbcType, Object value) throws SQLException {
@@ -1026,7 +1290,15 @@ public class DefaultAuditStagingService implements AuditStagingService {
         return affected;
     }
 
-    private record RowBindOutcome(boolean insertable, boolean missingRequiredData, int truncatedFields, String rainSign) {
+    private record RowBindOutcome(
+            boolean insertable,
+            boolean missingRequiredData,
+            boolean skippedDueToRequiredParseError,
+            int optionalParseErrorFields,
+            List<CellParseIssue> parseIssues,
+            int truncatedFields,
+            String rainSign
+    ) {
     }
 
     private static final class SheetLoadStats {
@@ -1042,6 +1314,8 @@ public class DefaultAuditStagingService implements AuditStagingService {
         private long skippedNullRow;
         private long skippedNoBusinessData;
         private long skippedMissingRequired;
+        private long parseErrorFields;
+        private long skippedParseError;
         private long rowsWithTruncation;
         private long totalTruncatedFields;
         private final Map<String, Integer> acceptedSignCounts = new java.util.TreeMap<>();

@@ -42,8 +42,29 @@
               },
               "dependencies" : [ ],
               "buildHistory" : {
-                "lastUpdated" : "2026-07-08T12:06:25+03:00",
+                "lastUpdated" : "2026-07-09T11:57:05+03:00",
                 "builds" : [ {
+                  "version" : "0.1.0.118-SNAPSHOT",
+                  "sha256" : "ecfdd8bff64cd59bc09e96ba1e8bc877e7400b1703d520999f476156bbcfe420",
+                  "buildTimestamp" : "2026-07-09T11:57:05+03:00",
+                  "buildNumber" : "202607091157050",
+                  "changed" : true,
+                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.118-SNAPSHOT.jar"
+                }, {
+                  "version" : "0.1.0.117-SNAPSHOT",
+                  "sha256" : "66714af377bbdee0af7bc2c2379a985a21334853bcb9ce5a5eed95b0e0e67da2",
+                  "buildTimestamp" : "2026-07-09T11:23:37+03:00",
+                  "buildNumber" : "202607091123370",
+                  "changed" : true,
+                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.117-SNAPSHOT.jar"
+                }, {
+                  "version" : "0.1.0.116-SNAPSHOT",
+                  "sha256" : "c6d8b45271b95c3947a3ecdacb1d5a8a351af68c1d34d21bbf15d12392be3ba7",
+                  "buildTimestamp" : "2026-07-09T10:17:50+03:00",
+                  "buildNumber" : "202607091017500",
+                  "changed" : true,
+                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.116-SNAPSHOT.jar"
+                }, {
                   "version" : "0.1.0.115-SNAPSHOT",
                   "sha256" : "bd606d4a09b9869e9740a9dfac07b9593a4b8cdb98e45d0bb98954eb6073f59b",
                   "buildTimestamp" : "2026-07-08T12:06:25+03:00",
@@ -161,27 +182,6 @@
                   "buildTimestamp" : "2026-03-16T12:02:58+03:00",
                   "buildNumber" : "202603161202580",
                   "changed" : false,
-                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.86-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.86-SNAPSHOT",
-                  "sha256" : "df1d1c80f1e21cd116cdc8c4e1f79e544256b8690601c10c56b3a30afbea4748",
-                  "buildTimestamp" : "2026-03-16T12:00:23+03:00",
-                  "buildNumber" : "202603161200230",
-                  "changed" : false,
-                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.86-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.86-SNAPSHOT",
-                  "sha256" : "df1d1c80f1e21cd116cdc8c4e1f79e544256b8690601c10c56b3a30afbea4748",
-                  "buildTimestamp" : "2026-03-16T11:57:46+03:00",
-                  "buildNumber" : "202603161157460",
-                  "changed" : false,
-                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.86-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.86-SNAPSHOT",
-                  "sha256" : "df1d1c80f1e21cd116cdc8c4e1f79e544256b8690601c10c56b3a30afbea4748",
-                  "buildTimestamp" : "2026-03-16T11:09:28+03:00",
-                  "buildNumber" : "202603161109280",
-                  "changed" : true,
                   "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.86-SNAPSHOT.jar"
                 } ]
               }
@@ -1011,8 +1011,29 @@
               "technologies" : [ "JasperReports 7.0.3", "Spring Boot", "JRXML", "Jaspersoft Studio 7.0.3" ],
               "responsibilities" : [ "Обнаружение и сканирование шаблонов отчётов (.jasper и .jrxml)", "Загрузка предкомпилированных .jasper файлов из JAR", "Fallback на компиляцию .jrxml при отсутствии .jasper", "Генерация PDF отчётов через JRPdfExporter", "Генерация Excel отчётов через JRXlsxExporter", "Генерация HTML отчётов", "Управление метаданными отчётов (JSON)", "REST API для работы с отчётами", "Поддержка внешних отчётов (hot-reload без перезапуска)" ],
               "buildHistory" : {
-                "lastUpdated" : "2026-07-08T12:06:25+03:00",
+                "lastUpdated" : "2026-07-09T11:57:05+03:00",
                 "builds" : [ {
+                  "version" : "0.1.0.118-SNAPSHOT",
+                  "sha256" : "390c82aa50041936710c1e6d85f7c25e57c7e3de939f9ed2107daf9959d194af",
+                  "buildTimestamp" : "2026-07-09T11:57:05+03:00",
+                  "buildNumber" : "202607091157050",
+                  "changed" : true,
+                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.118-SNAPSHOT.jar"
+                }, {
+                  "version" : "0.1.0.117-SNAPSHOT",
+                  "sha256" : "cf113ee78517fa57b5a8f2edea38a87179978350e455dc1dd3145a65aaa24799",
+                  "buildTimestamp" : "2026-07-09T11:23:37+03:00",
+                  "buildNumber" : "202607091123370",
+                  "changed" : true,
+                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.117-SNAPSHOT.jar"
+                }, {
+                  "version" : "0.1.0.116-SNAPSHOT",
+                  "sha256" : "a3c97b3cd17b2f644e32a9306eb7f62ec159534442a17c9f727663521ac1e3b7",
+                  "buildTimestamp" : "2026-07-09T10:17:50+03:00",
+                  "buildNumber" : "202607091017500",
+                  "changed" : true,
+                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.116-SNAPSHOT.jar"
+                }, {
                   "version" : "0.1.0.115-SNAPSHOT",
                   "sha256" : "6eb34073f6cd679e78ee08a3a12b37836cf08eed3d2e5bdf7eb9b64bcb94c8f7",
                   "buildTimestamp" : "2026-07-08T12:06:25+03:00",
@@ -1129,27 +1150,6 @@
                   "sha256" : "13c02d43de94ade53b26b507871fb68ac050e16d8894aa0075762fce1323fef7",
                   "buildTimestamp" : "2026-03-16T12:02:58+03:00",
                   "buildNumber" : "202603161202580",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.86-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.86-SNAPSHOT",
-                  "sha256" : "98652daed6cf379e0b8c62a6c54d887ca23a65b771a0cd3164f685c1ea35b461",
-                  "buildTimestamp" : "2026-03-16T12:00:23+03:00",
-                  "buildNumber" : "202603161200230",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.86-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.86-SNAPSHOT",
-                  "sha256" : "889d8efe1a24106c4cab161532e43d310a97e320f7d25fb5679016345b332182",
-                  "buildTimestamp" : "2026-03-16T11:57:46+03:00",
-                  "buildNumber" : "202603161157460",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.86-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.86-SNAPSHOT",
-                  "sha256" : "bfd650fe270a2694e3eee369fb9e58c598b9459a50f8698c3a1f1452037abec9",
-                  "buildTimestamp" : "2026-03-16T11:09:28+03:00",
-                  "buildNumber" : "202603161109280",
                   "changed" : true,
                   "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.86-SNAPSHOT.jar"
                 } ]

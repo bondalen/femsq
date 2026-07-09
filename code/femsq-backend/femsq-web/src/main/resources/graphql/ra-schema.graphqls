@@ -1,5 +1,11 @@
 scalar DateTime
 
+enum StagingLogLevel {
+  VERBOSE
+  SUMMARY
+  MINIMAL
+}
+
 type Audit {
   adtKey: Int
   adtName: String!
@@ -8,6 +14,7 @@ type Audit {
   adtDir: Int
   adtType: Int
   adtAddRA: Boolean
+  adtStagingLogLevel: StagingLogLevel
   adtCreated: DateTime
   adtUpdated: DateTime
   adtStatus: AuditRunStatus!
@@ -66,6 +73,7 @@ input AuditCreateInput {
   adtDir: Int!
   adtType: Int!
   adtAddRA: Boolean!
+  adtStagingLogLevel: StagingLogLevel
 }
 
 input AuditUpdateInput {
@@ -75,6 +83,7 @@ input AuditUpdateInput {
   adtDir: Int!
   adtType: Int!
   adtAddRA: Boolean!
+  adtStagingLogLevel: StagingLogLevel
 }
 
 input FileCreateInput {

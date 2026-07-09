@@ -412,13 +412,23 @@ SELECT COUNT(*) AS ralpRa_2026 FROM ags.ralpRa WHERE ralprY = 2026;
 
 Вывод: **не баг reconcile**, а следствие неполного FK-resolution на Stage 2. Даты (`ralprtDate`) — 0 NULL.
 
-### 6.2. Smoke `af_type=5` (отчёты агента) 🔄
+### 6.2. Smoke `af_type=5` (отчёты агента) ✅
 
 **Общее хранилище (2026-07-08):** Excel на SMB-шаре nb-win, mount `/mnt/nb-win-share` на Fedora (CIFS) и nb-win WSL (bind). Пути в БД обновлены (`ra_dir`, `af_key=312/314`). Локальный `docs/excel/` удалён.
 
-- [ ] 6.2.1. Fedora или nb-win: `./code/scripts/mount-nb-win-share.sh` / `mount-nb-win-share-wsl.sh`
-- [ ] 6.2.2. Проверить `ls /mnt/nb-win-share/femsq/excel/2026_03/` — оба файла (type=3, type=5)
-- [ ] 6.2.3. `executeAudit(14)` — Stage 1 type=5 + идемпотентность type=3/5
+- ✅ 6.2.1. Fedora: `./code/scripts/mount-nb-win-share.sh` (creds из `~/.smbcredentials` пользователя)
+- ✅ 6.2.2. `ls /mnt/nb-win-share/femsq/excel/2026_03/` — файлы type=3 и type=5 на месте
+- ✅ 6.2.3. Smoke SUMMARY с SMB-шары (2026-07-09): март **exec_key=1140**, июль **exec_key=1141** — см. сравнение ниже
+
+#### 6.2.4. Сравнение SUMMARY: март vs июль (SMB `/mnt/nb-win-share`, `adt_key=14`, dry-run)
+
+| | **Март `2026_03`** | **Июль `2026-07`** (до 7.3.3) | **Июль после 7.3.3** |
+|---|---|---|---|
+| `exec_key` | 1140 ✅ | 1141/1142 ❌ | **1143 ✅** |
+| Строк staging type=5 | 1720 | 0 (rollback) | **5959** |
+| **Stage 1 type=5** | **~64 с** | ~170 с → FAILED | **~330 с** (лист «Отчеты») |
+| **Полный dry-run** | **~183 с** | FAILED | **~363 с** (~6 мин) |
+| Ошибки формата | — | падение на «в электронном виде» | **2 поля → NULL, warning** (`parseErrorFields=2`) |
 
 См. `docs/development/remote-development-nb-win.md` → «Общее хранилище Excel».
 
@@ -430,11 +440,161 @@ SELECT COUNT(*) AS ralpRa_2026 FROM ags.ralpRa WHERE ralprY = 2026;
 | apply 1248 + идемпотентность (1134, 1135) | ✅ |
 | audit/excel в git, инцидент закрыт (фаза 5) | ✅ |
 | Документация (0042, journal, plan v0.6.0) | ✅ |
-| Smoke type=5 после merge excel | 🔄 после mount share |
+| Smoke type=5 SUMMARY SMB (exec 1140/1141) | ✅ март ~3 мин; июль FAILED (данные) |
 
 **Коммиты:** `461b201`, `650fe01`, `c1b6831`, `e2bcef7`
 
-**Следующий спринт (вне 0042):** batch INSERT для производительности apply (~4 мин → цель <1 мин).
+**Следующий спринт (вне 0042):** задача 0043 — оптимизация Stage 1 (StagingLogLevel) и batch apply (задача 0044).
+
+---
+
+## Фаза 7: Оптимизация производительности Stage 1 (задача 0043)
+
+### 7.1. Анализ и решения ✅
+
+#### 7.1.1. Контекст: анализ узких мест (2026-07-09)
+
+Прогон `exec_key=1136` (март, dry-run): **~117 мин** при 1720 строках type=5.
+
+| Источник | Доля | Причина |
+|----------|------|---------|
+| Одиночный INSERT / `RETURN_GENERATED_KEYS` на каждую строку | ~75% | `logEachStagingRow=true` для type=5 — batch невозможен |
+| `saveProgress` каждую секунду c растущим HTML-блобом >400 КБ | ~15% | `buildHtmlLog()` перестраивает весь лог, пишет по WireGuard |
+| Reconcile type=5 (dry-run) | ~8% | отдельная задача 0044 |
+| Чтение xlsm по SMB | <1% | POI читает файл в RAM один раз |
+
+#### 7.1.2. Решение: `StagingLogLevel` — уровень детализации лога
+
+Ввести enum `StagingLogLevel` в `DefaultAuditStagingService` и `AuditExecutionContext`:
+
+| Уровень | Что пишется в `adt_results` | INSERT-режим | Назначение |
+|---------|-----------------------------|--------------|-----------|
+| `VERBOSE` | Каждая строка Excel (текущее поведение) | одиночный + `RETURN_GENERATED_KEYS` | Приёмка нового типа файла / сравнение с VBA |
+| `SUMMARY` ← **по умолчанию** | Прогресс раз в 100 строк + строки с проблемами (обязательное поле пустое, ошибка формата ячейки, NULL FK на Stage 2) | batch (200 строк) | Обычная эксплуатация |
+| `MINIMAL` | Только итоги (`logSheetStats`) | batch | CI / интеграционные тесты |
+
+Ожидаемое время Stage 1 при `SUMMARY`: **~3–5 мин** вместо ~106 мин (экономия >95%).
+
+#### 7.1.3. Переключатель
+
+Поле `adt_staging_log_level` (NVARCHAR) в таблице `ags.ra_a` + GraphQL input `AuditUpdateInput`.
+По умолчанию `NULL` = `SUMMARY`. Управляется из UI (выпадающий список в форме ревизии).
+Можно переопределить через `application.yml` свойство `audit.staging.default-log-level`.
+
+#### 7.1.4. Примерный вывод SUMMARY-режима в `adt_results`
+
+```
+Книга открыта: 2026 Свод инф-ции по ОА.xlsm (3.1 МБ)
+Лист «Отчеты»: якорь найден, строка 5. Диапазон данных: строки 6–2500.
+Прогресс: Excel-строка 100 — внесено в staging: 87
+Прогресс: Excel-строка 200 — внесено в staging: 171
+  ⚠ Excel-строка 218: отчёт ГП26-2001234-1, стройка «002-2001234» не найдена (ralprtCstAgPn=NULL)
+Прогресс: Excel-строка 300 — внесено в staging: 258
+...
+Итог, лист «Отчеты»: исходных=2494, принято=1720, пропущено (нет данных)=774, batch-вызовов=9
+Книга закрыта. Длительность Stage 1: 3m 42s
+```
+
+### 7.2. Реализация ✅
+
+- ✅ 7.2.1. Создать `StagingLogLevel.java` (enum: `VERBOSE`, `SUMMARY`, `MINIMAL`)
+- ✅ 7.2.2. DDL: добавить `adt_staging_log_level NVARCHAR(16) NULL` в `ags.ra_a`; добавить в `AuditUpdateInput`, GraphQL-схему, маппер, `RaA` record
+- ✅ 7.2.3. `DefaultAuditStagingService`: ветвить по `StagingLogLevel` — batch / одиночный INSERT, частота heartbeat, фильтр ошибок
+- ✅ 7.2.4. Удалить `fileTypeSupportsRowParagraph`; уровень лога — из `adt_staging_log_level` / `audit.staging.default-log-level`
+- ✅ 7.2.5. Frontend: select в форме ревизии (`VERBOSE` / `SUMMARY` / `MINIMAL`)
+- ✅ 7.2.6. Верификация: `exec_key=1139`, `adt_staging_log_level=SUMMARY` — Stage 1 type=5 **~70 с** (1720 строк), полный dry-run **~3 мин** (vs ~117 мин при VERBOSE, exec_key=1136)
+- ✅ 7.2.7. Обновить `Type5AcceptanceAdtResultsIntegrationIT` и документацию
+
+### 7.3. Устойчивый парсинг Excel: ошибки формата без падения ревизии (задача 0045)
+
+**Контекст:** smoke июль `exec_key=1141` — `AuditExcelCellReader.readInt()` бросает `AuditExcelException` на тексте «в электронном виде» в колонке `rainRaSheetsNumber` («Кол-во листов ОА», `rcm_required=0`). Транзакция staging откатывается, ревизия `FAILED`. Данные в Excel **не правим в коде** — пользователь исправляет файл по сообщению в `adt_results`.
+
+#### 7.3.1. Правила обработки (зафиксировано)
+
+| Ситуация | Действие со строкой | Значение в staging | Запись в лог (`STAGING_ROW_ISSUE`) |
+|----------|---------------------|--------------------|-------------------------------------|
+| **Необязательное** поле (`rcm_required=0`), ошибка формата (int/decimal/date) | **Строка принимается** | `NULL` в проблемном поле | WARNING: поле, заголовок Excel, сырое значение, ожидаемый тип; **«строка принята, поле записано как NULL»** |
+| **Обязательное** поле (`rcm_required=1`), ошибка формата | **Строка пропускается** | строка не вставляется | WARNING: те же детали; **«строка пропущена»** |
+| **Обязательное** поле пустое (текущее поведение) | Строка пропускается | — | «пропущено — недостаточно обязательных данных» |
+
+**Важно:** для необязательных полей ошибка формата **не** является основанием пропустить строку — только обнулить поле и предупредить. Пропуск строки — только при ошибке в **обязательном** поле или при отсутствии обязательных данных.
+
+Счётчики в `STAGING_LOAD_STATS`: `parseErrorFields` (поля с warning, строка принята), `skippedParseError` (строки целиком пропущены из‑за обязательного поля).
+
+#### 7.3.2. Пример сообщения в `adt_results` (SUMMARY)
+
+Необязательное поле (июльский кейс — строка **принимается**):
+
+```
+⚠ Excel-строка 4601, лист «Отчеты»:
+  колонка rainRaSheetsNumber («Кол-во листов ОА»): ожидается целое число,
+  получено «в электронном виде» — строка принята, поле записано как NULL.
+```
+
+Обязательное поле (для сравнения):
+
+```
+⚠ Excel-строка 512, лист «Отчеты»:
+  колонка rainReportNumber («№ отчёта»): ожидается текст, получено «#REF!» — строка пропущена.
+```
+
+#### 7.3.3. Реализация
+
+- ✅ 7.3.3.1. `CellReadResult<T>` в `AuditExcelCellReader` — `readIntResult` / `readDecimalResult` / `readDateResult`
+- ✅ 7.3.3.2. `DefaultAuditStagingService.bindRow`: `CellParseIssue`; необязательное → `NULL` + warning; обязательное → пропуск строки
+- ✅ 7.3.3.3. `STAGING_ROW_ISSUE`: метаданные `rowAction` (`ПРИНЯТА_NULL` / `ПРОПУЩЕНА`), текст по правилам 7.3.1
+- ✅ 7.3.3.4. `parseErrorFields`, `skippedParseError` в `logSheetStats` и `STAGING_LOAD_STATS`
+- ✅ 7.3.3.5. `AuditExcelCellReaderTest` (unit)
+- ✅ 7.3.3.6. Smoke июль SMB **exec_key=1143** (0.1.0.117): **COMPLETED** за **363 с**, `ra_stg_ra=5959`, `parseErrorFields=2`, `skippedParseError=0` (vs FAILED exec 1141/1142 на 0.1.0.116)
+- ✅ 7.3.3.7. `try-catch` per-file в `AuditExecutionServiceImpl` + `AUDIT_FILE_ERRORS`
+
+**Критерий приёмки:** `executeAudit(14)` на июльском файле с шары завершается `COMPLETED`; в логе есть предупреждение по строке ~4601; `ra_stg_ra` > 0; данные Excel не изменялись.
+
+---
+
+## Фаза 8: Оптимизация reconcile type=5 apply (задача 0044)
+
+### 8.1. Контекст
+
+После **0043** (SUMMARY) полный dry-run type=5: март **~183 с**, июль **~363 с**. Reconcile type=5 — **~8%** времени (оценка на exec 1136); узкие места apply:
+
+| Операция | Было | Проблема |
+|----------|------|----------|
+| `UPDATE ags.ra` (changed rows) | по одному `executeUpdate` | N round-trips |
+| `INSERT ags.ra_summ` | по одному INSERT + per-row SELECT latest | N+M запросов |
+| dry-run `estimateDryRunStats` | `hasSameLatestSum` на каждую changed-строку | N SELECT |
+| `UPDATE ags.ra_change` + RC sums | per-row UPDATE + per-row latest из VIEW | N round-trips |
+| Построчный аудит apply в `adt_results` | всегда (как при VERBOSE staging) | лишние `appendResult` при SUMMARY |
+
+### 8.2. Решение
+
+| Механизм | Описание |
+|----------|----------|
+| `StagingLogLevel.emitReconcileRowAudit()` | Построчный аудит apply (created/updated/sums) — **только VERBOSE**; при SUMMARY/MINIMAL — агрегаты reconcile без per-row |
+| `APPLY_BATCH_SIZE = 200` | JDBC `addBatch` / `executeBatch` для UPDATE `ags.ra`, batch INSERT `ra_summ`, UPDATE `ra_change` |
+| `BULK_IN_CHUNK = 500` | `loadLatestRaSumsBulk` / `loadLatestRcSumsBulk` — один запрос на чанк ключей (ROW_NUMBER / VIEW `ra_chSmLt`) |
+| `upsertRaSummWithSnapshot` | Сравнение с preloaded snapshot; batch INSERT только для изменившихся сумм |
+| `estimateDryRunStats` | bulk latest sums вместо per-row `hasSameLatestSum` |
+
+### 8.3. Реализация ✅
+
+- ✅ 8.3.1. `StagingLogLevel.emitReconcileRowAudit()` + `emitReconcileRowAudit(ReconcileContext)` в `AllAgentsReconcileService`
+- ✅ 8.3.2. `updateChangedRaRows` — JDBC batch UPDATE
+- ✅ 8.3.3. `evolveRaSums` — bulk load + batch INSERT `ra_summ`
+- ✅ 8.3.4. `estimateDryRunStats` — bulk `loadLatestRaSumsBulk`
+- ✅ 8.3.5. `updateChangedRcChanges` — batch UPDATE + bulk RC sums + batch INSERT `ra_change_summ`
+- ✅ 8.3.6. `insertNewRaRows` / `insertNewRcChanges` — аудит apply gated по VERBOSE
+- ✅ 8.3.7. Helpers: `RaSumSnapshot`, `loadLatestRaSumsBulk`, `loadLatestRcSumsBulk`, `sumBatchUpdateCounts`
+- ✅ 8.3.8. Smoke dry-run март SMB **exec_key=1144** (0.1.0.118): **COMPLETED** за **180 с**, `ra_stg_ra=1720` (vs exec 1140 **~183 с** на 0.1.0.117)
+
+| exec_key | JAR | Статус | Время | ra_stg_ra |
+|----------|-----|--------|-------|-----------|
+| 1140 | 0.1.0.117 | COMPLETED | ~183 с | 1720 |
+| **1144** | **0.1.0.118** | **COMPLETED** | **180 с** | **1720** |
+
+**Вывод:** при доле reconcile ~8% в dry-run SUMMARY ускорение полного прогона незначительно (~2%); основной выигрыш — меньше round-trips к БД при apply (`adt_AddRA=1`) и отсутствие построчного аудита reconcile при SUMMARY.
+
+**Критерий приёмки:** dry-run `executeAudit(14)` COMPLETED; время не хуже baseline 0043+0045; идемпотентность type=5 не нарушена (тесты компилируются; IT — при доступной FishEye).
 
 ---
 
@@ -448,7 +608,9 @@ SELECT COUNT(*) AS ralpRa_2026 FROM ags.ralpRa WHERE ralprY = 2026;
 
 ---
 
-## Доп. факты (актуализировано 2026-07-08)
+## Доп. факты (актуализировано 2026-07-09)
+
+- **Smoke SUMMARY SMB (2026-07-09):** март exec_key=1140 — dry-run **~183 с**; exec **1144** (0.1.0.118, batch reconcile) — **180 с**; июль exec_key=1143 — **363 с** COMPLETED (`parseErrorFields=2`); исправление парсинга — фаза **7.3** (задача 0045).
 
 - Объём `ags.ralpRa`: **~12 386 строк** (2020–2026), `ags.ralpRaAu`: **~12 379 строк**.
 - **`ralpRa` за 2026 год: 1248 записей** (после apply, exec_key=1133).
@@ -460,5 +622,5 @@ SELECT COUNT(*) AS ralpRa_2026 FROM ags.ralpRa WHERE ralprY = 2026;
 
 ---
 
-**Последнее обновление:** 2026-07-08  
-**Версия:** 0.6.2
+**Последнее обновление:** 2026-07-09  
+**Версия:** 0.7.6

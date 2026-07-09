@@ -19,6 +19,8 @@ export interface RaDirDto {
 
 export type AuditRunStatus = 'IDLE' | 'RUNNING' | 'COMPLETED' | 'FAILED';
 
+export type StagingLogLevel = 'VERBOSE' | 'SUMMARY' | 'MINIMAL';
+
 export interface RaADto {
   adtKey: number;
   adtName: string;
@@ -27,6 +29,7 @@ export interface RaADto {
   adtDir: number;
   adtType: number;
   adtAddRA: boolean;
+  adtStagingLogLevel?: StagingLogLevel | null;
   adtCreated?: string | null;
   adtUpdated?: string | null;
   adtStatus?: AuditRunStatus | null;
@@ -39,6 +42,7 @@ export interface RaACreateRequest {
   adtDir: number;
   adtType: number;
   adtAddRA: boolean;
+  adtStagingLogLevel?: StagingLogLevel | null;
 }
 
 export interface RaAUpdateRequest {
@@ -48,4 +52,5 @@ export interface RaAUpdateRequest {
   adtDir: number;
   adtType: number;
   adtAddRA: boolean;
+  adtStagingLogLevel?: StagingLogLevel | null;
 }

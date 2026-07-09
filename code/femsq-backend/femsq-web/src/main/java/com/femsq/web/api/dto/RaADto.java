@@ -12,6 +12,7 @@ import java.time.OffsetDateTime;
  * @param adtDir     идентификатор директории (FK → ra_dir.key)
  * @param adtType    идентификатор типа ревизии (FK → ra_at.at_key)
  * @param adtAddRA   флаг автодобавления отсутствующих отчётов
+ * @param adtStagingLogLevel уровень детализации лога Stage 1
  * @param adtCreated дата создания записи
  * @param adtUpdated дата последнего обновления записи
  * @param adtStatus  технический статус выполнения (in-memory): IDLE/RUNNING/COMPLETED/FAILED
@@ -24,6 +25,7 @@ public record RaADto(
         Integer adtDir,
         Integer adtType,
         Boolean adtAddRA,
+        String adtStagingLogLevel,
         OffsetDateTime adtCreated,
         OffsetDateTime adtUpdated,
         String adtStatus

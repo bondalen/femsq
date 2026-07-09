@@ -3,7 +3,7 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-06-24"
+      "lastUpdated": "2026-07-09"
     },
     "sessions": [
       {
@@ -5612,6 +5612,139 @@
       },
       {
         "chat": {
+          "displayName": "Stage 1 + reconcile perf + Excel parsing (completed, high). № chat-2026-07-09-001",
+          "chat-attributes": {
+            "id": "chat-2026-07-09-001",
+            "created": "2026-07-09",
+            "lastUpdated": "2026-07-09",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "high",
+            "tags": [
+              "performance",
+              "staging",
+              "audit",
+              "af_type=5",
+              "StagingLogLevel",
+              "reconcile",
+              "excel-parsing",
+              "smb-share"
+            ],
+            "links": {
+              "projectDocsRefs": ["module:backend.web"],
+              "developmentTasks": ["0043", "0044", "0045"],
+              "aiRuleRefs": []
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "SMB-шара Excel + анализ производительности Stage 1 (success). № log-2026-07-09-001",
+                "log-attributes": {
+                  "id": "log-2026-07-09-001",
+                  "timestamp": "2026-07-09T09:43:00+03:00",
+                  "level": "success",
+                  "effort": "3h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0043"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Настроено общее хранилище Excel: SMB-шара nb-win + mount Fedora/WSL",
+                    "details": "Создан mount-nb-win-share.sh (Fedora, CIFS) и mount-nb-win-share-wsl.sh (nb-win WSL, bind). Пути в БД обновлены (ra_dir, af_key=312/314). Схема именования подпапок excel: {data_year}_{snapshot_year}_{snapshot_month}. Документация remote-development-nb-win.md и project-docs.json обновлены.",
+                    "outcome": "Единый путь /mnt/nb-win-share/femsq/excel/ доступен на Fedora и nb-win WSL. Дублирование docs/excel/ устранено.",
+                    "references": [
+                      "code/scripts/mount-nb-win-share.sh",
+                      "code/scripts/mount-nb-win-share-wsl.sh",
+                      "docs/development/remote-development-nb-win.md",
+                      "docs/project/project-docs.json"
+                    ]
+                  },
+                  {
+                    "action": "Создан watch-audit-progress.sh — мониторинг хода executeAudit",
+                    "details": "Скрипт опрашивает ags.ra_execution (статус, elapsed min), парсит excel_row из adt_results (SUBSTRING, не полный блоб), выводит stg_ra / stg_ralp счётчики. Параметры: adt_key, интервал. Завершается автоматически по COMPLETED/FAILED.",
+                    "outcome": "Оперативное наблюдение за долгими прогонами без ручных SQL-запросов.",
+                    "references": [
+                      "code/scripts/watch-audit-progress.sh",
+                      "docs/development/notes/audit-log/ra-execution-operations.md"
+                    ]
+                  },
+                  {
+                    "action": "Анализ узких мест Stage 1 для af_type=5",
+                    "details": "exec_key=1136 (тип=5, март 2026, dry-run, 1720 строк): Stage 1 ~106 мин. Причина: logEachStagingRow=true → одиночный INSERT + RETURN_GENERATED_KEYS на каждую строку; saveProgress каждую ~1с перестраивает нарастающий HTML-блоб >400 КБ. Сетевая задержка (SMB по WireGuard) — <1% времени.",
+                    "outcome": "Определён root cause; exec_key=1137 остановлен оператором. Зафиксирована метрика: ~3.7с/строку при одиночном INSERT.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/staging/DefaultAuditStagingService.java",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md"
+                    ]
+                  },
+                  {
+                    "action": "Создана задача 0043: StagingLogLevel",
+                    "details": "Предложено ввести enum StagingLogLevel (VERBOSE/SUMMARY/MINIMAL). SUMMARY = batch INSERT (200 строк) + heartbeat раз в 100 строк + лог только ошибочных строк. Ожидаемое ускорение Stage 1: >95% (с ~106 мин до ~3–5 мин). Обновлены chat-plan (фаза 7), project-development.json (задача 0043), project-journal.json.",
+                    "outcome": "Задача 0043 зарегистрирована. Реализация — следующий шаг после Smoke executeAudit(14).",
+                    "references": [
+                      "docs/development/project-development.json",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#фаза-7"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "0043–0045: StagingLogLevel, batch reconcile, tolerant Excel parsing (success). № log-2026-07-09-002",
+                "log-attributes": {
+                  "id": "log-2026-07-09-002",
+                  "timestamp": "2026-07-09T12:01:00+03:00",
+                  "level": "success",
+                  "effort": "1d",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0043", "0044", "0045"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "0043 StagingLogLevel: batch Stage 1",
+                    "details": "enum StagingLogLevel, adt_staging_log_level, batch INSERT 200 строк. Smoke март SUMMARY: Stage 1 ~64–70 с, dry-run ~3 мин (vs ~117 мин VERBOSE).",
+                    "outcome": "Задача 0043 completed.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/staging/StagingLogLevel.java",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#фаза-7"
+                    ]
+                  },
+                  {
+                    "action": "0045 устойчивый парсинг Excel",
+                    "details": "CellReadResult, lenient readIntResult/readDecimalResult/readDateResult; bindRow с NULL для необязательных полей. Smoke июль exec 1143: COMPLETED 363 с, parseErrorFields=2.",
+                    "outcome": "Задача 0045 completed.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/excel/AuditExcelCellReader.java",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#73-устойчивый-парсинг-excel"
+                    ]
+                  },
+                  {
+                    "action": "0044 batch apply reconcile type=5",
+                    "details": "AllAgentsReconcileService: JDBC batch UPDATE/INSERT (200), bulk loadLatestRaSumsBulk/loadLatestRcSumsBulk (500), emitReconcileRowAudit только VERBOSE. JAR 0.1.0.118. Smoke март exec 1144: COMPLETED 180 с, ra_stg_ra=1720.",
+                    "outcome": "Задача 0044 completed.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/AllAgentsReconcileService.java",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#фаза-8"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
           "displayName": "RALP reconcile af_type=3: реализация и идемпотентность (completed, high). № chat-2026-07-08-001",
           "chat-attributes": {
             "id": "chat-2026-07-08-001",
@@ -5753,3 +5886,4 @@
     }
   }
 }
+

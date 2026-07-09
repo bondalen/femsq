@@ -15,6 +15,7 @@ import com.femsq.database.service.RaDirService;
 import com.femsq.database.service.RaExecutionService;
 import com.femsq.database.service.RaFService;
 import com.femsq.web.audit.runtime.AuditExecutionRegistry;
+import com.femsq.web.audit.staging.AuditStagingProperties;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -57,6 +58,7 @@ class AuditExecutionServiceImplThrowableTest {
                 1,
                 1,
                 true,
+                null,
                 LocalDateTime.now(),
                 LocalDateTime.now());
         when(raAService.getById(auditId)).thenReturn(Optional.of(audit));
@@ -78,13 +80,16 @@ class AuditExecutionServiceImplThrowableTest {
             }
         };
 
+        AuditStagingProperties auditStagingProperties = new AuditStagingProperties();
+
         AuditExecutionServiceImpl service = new AuditExecutionServiceImpl(
                 raAService,
                 raDirService,
                 raExecutionService,
                 raFService,
                 List.of(throwingProcessor),
-                auditExecutionRegistry);
+                auditExecutionRegistry,
+                auditStagingProperties);
 
         service.executeAudit(auditId);
 

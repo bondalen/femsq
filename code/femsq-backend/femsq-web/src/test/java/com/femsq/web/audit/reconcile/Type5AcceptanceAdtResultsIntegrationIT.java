@@ -34,8 +34,8 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
  * mvn test -pl femsq-web -Dtest=Type5AcceptanceAdtResultsIntegrationIT -Dfemsq.integration.type5Acceptance=true
  * }</pre>
  *
- * <p>{@code adt_key} по умолчанию совпадает с прочими type=5 IT; при необходимости:
- * {@code -Dfemsq.integration.auditId=14}.</p>
+ * <p>Stage 1 по умолчанию выполняется в режиме {@code SUMMARY} (batch INSERT, без построчного HTML).
+ * Для полного VBA-лога выставить {@code adt_staging_log_level = VERBOSE} на ревизии.</p>
  */
 @Tag("integration")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)

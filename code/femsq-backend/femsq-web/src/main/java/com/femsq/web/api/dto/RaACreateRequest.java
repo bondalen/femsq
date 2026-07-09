@@ -24,6 +24,8 @@ public record RaACreateRequest(
         Integer adtType,
 
         @NotNull(message = "adtAddRA обязателен")
-        Boolean adtAddRA
+        Boolean adtAddRA,
+
+        String adtStagingLogLevel
 ) {
 }

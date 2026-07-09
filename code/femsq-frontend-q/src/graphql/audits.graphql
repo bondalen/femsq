@@ -6,8 +6,9 @@ query GetAudits {
     adtResults
     adtDir
     adtType
-    adtAddRA
-    adtCreated
+      adtAddRA
+      adtStagingLogLevel
+      adtCreated
     adtUpdated
     adtStatus
   }
@@ -21,8 +22,9 @@ query GetAudit($id: Int!) {
     adtResults
     adtDir
     adtType
-    adtAddRA
-    adtCreated
+      adtAddRA
+      adtStagingLogLevel
+      adtCreated
     adtUpdated
     adtStatus
   }
@@ -36,8 +38,9 @@ query GetAuditWithDetails($id: Int!) {
     adtResults
     adtDir
     adtType
-    adtAddRA
-    adtCreated
+      adtAddRA
+      adtStagingLogLevel
+      adtCreated
     adtUpdated
     adtStatus
     directory {
@@ -62,8 +65,9 @@ mutation CreateAudit($input: AuditCreateInput!) {
     adtResults
     adtDir
     adtType
-    adtAddRA
-    adtCreated
+      adtAddRA
+      adtStagingLogLevel
+      adtCreated
     adtUpdated
     adtStatus
   }
@@ -77,8 +81,9 @@ mutation UpdateAudit($id: Int!, $input: AuditUpdateInput!) {
     adtResults
     adtDir
     adtType
-    adtAddRA
-    adtCreated
+      adtAddRA
+      adtStagingLogLevel
+      adtCreated
     adtUpdated
     adtStatus
   }

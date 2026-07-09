@@ -30,6 +30,7 @@ const GET_AUDITS = gql`
       adtDir
       adtType
       adtAddRA
+      adtStagingLogLevel
       adtCreated
       adtUpdated
       adtStatus
@@ -47,6 +48,7 @@ const GET_AUDIT = gql`
       adtDir
       adtType
       adtAddRA
+      adtStagingLogLevel
       adtCreated
       adtUpdated
       adtStatus
@@ -64,6 +66,7 @@ const CREATE_AUDIT = gql`
       adtDir
       adtType
       adtAddRA
+      adtStagingLogLevel
       adtCreated
       adtUpdated
       adtStatus
@@ -81,6 +84,7 @@ const UPDATE_AUDIT = gql`
       adtDir
       adtType
       adtAddRA
+      adtStagingLogLevel
       adtCreated
       adtUpdated
       adtStatus
