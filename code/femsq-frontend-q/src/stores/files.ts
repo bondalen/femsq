@@ -7,6 +7,15 @@ import { ref, computed } from 'vue'
 import type { RaFDto, RaFCreateRequest, RaFUpdateRequest } from '@/types/files'
 import * as filesApi from '@/api/files-api'
 
+/** Копия DTO: объекты из Apollo cache могут быть read-only. */
+function cloneFileDto(file: RaFDto): RaFDto {
+  return { ...file }
+}
+
+function cloneFileList(list: RaFDto[]): RaFDto[] {
+  return list.map(cloneFileDto)
+}
+
 export const useFilesStore = defineStore('files', () => {
   // State
   const files = ref<RaFDto[]>([])
@@ -47,7 +56,7 @@ export const useFilesStore = defineStore('files', () => {
     
     try {
       const data = await filesApi.getFilesByDirId(dirId)
-      files.value = data
+      files.value = cloneFileList(data)
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Ошибка загрузки файлов'
       console.error('Failed to load files:', err)
@@ -63,7 +72,7 @@ export const useFilesStore = defineStore('files', () => {
     
     try {
       const data = await filesApi.getAllFiles()
-      files.value = data
+      files.value = cloneFileList(data)
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Ошибка загрузки файлов'
       console.error('Failed to load all files:', err)
@@ -79,14 +88,16 @@ export const useFilesStore = defineStore('files', () => {
     
     try {
       const data = await filesApi.getFileById(id)
-      // Обновляем или добавляем файл в список
+      const copy = cloneFileDto(data)
       const index = files.value.findIndex(f => f.afKey === id)
       if (index >= 0) {
-        files.value[index] = data
+        const next = files.value.slice()
+        next[index] = copy
+        files.value = next
       } else {
-        files.value.push(data)
+        files.value = [...files.value, copy]
       }
-      return data
+      return copy
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Ошибка загрузки файла'
       console.error('Failed to load file:', err)
@@ -102,7 +113,7 @@ export const useFilesStore = defineStore('files', () => {
     
     try {
       const created = await filesApi.createFile(request)
-      files.value.push(created)
+      files.value = [...files.value, cloneFileDto(created)]
       return created
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Ошибка создания файла'
@@ -119,11 +130,14 @@ export const useFilesStore = defineStore('files', () => {
     
     try {
       const updated = await filesApi.updateFile(id, request)
+      const copy = cloneFileDto(updated)
       const index = files.value.findIndex(f => f.afKey === id)
       if (index >= 0) {
-        files.value[index] = updated
+        const next = files.value.slice()
+        next[index] = copy
+        files.value = next
       }
-      return updated
+      return copy
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Ошибка обновления файла'
       console.error('Failed to update file:', err)

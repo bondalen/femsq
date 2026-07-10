@@ -38,6 +38,10 @@ import org.springframework.stereotype.Service;
  *   <li>{@code ralpRa}: {@code (ralprNum, ralprDate, ralprCstAgPn, ralprOgSender)}</li>
  *   <li>{@code ralpRaAu}: {@code (ralpraRa, ralpraArrived)} — только при непустом ralprtArrived</li>
  * </ul>
+ *
+ * <p>Отклонение от VBA orphan-delete: при смене письма поступления в Excel старые рассмотрения того же
+ * отчёта не удаляются, а закрываются синтетическим {@code returned} (см. {@link #demoteSiblingAus}).
+ * Инвариант освоения: не более одного {@code sent} на {@code ralpRa}.
  */
 @Service
 public class RalpReconcileService extends AbstractTransactionalReconcileService {
@@ -86,6 +90,9 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
         int raAuInserted = 0;
         int raAuUpdated = 0;
         int unchanged = 0;
+        int auDemotedSent = 0;
+        int auClosedInProcess = 0;
+        int auUnchangedReturned = 0;
 
         // Ключи, которые пережили reconcile (для определения orphan-записей под удаление)
         Set<Integer> survivingRaKeys = new HashSet<>();
@@ -129,6 +136,12 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
             if (arrived == null || arrived.isBlank()) {
                 continue;
             }
+
+            DemoteStats demoteStats = demoteSiblingAus(
+                    conn, raDbKey, arrived, domainRaAu, addRa, survivingRaAuKeys);
+            auDemotedSent += demoteStats.demotedSent;
+            auClosedInProcess += demoteStats.closedInProcess;
+            auUnchangedReturned += demoteStats.unchangedReturned;
 
             RaAuKey raAuKey = new RaAuKey(raDbKey, arrived);
             DomainRaAu existingAu = domainRaAu.get(raAuKey);
@@ -180,11 +193,19 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
         // Обновление staging-ссылок (batch)
         int stagingLinked = updateStagingRefs(conn, staging);
 
-        log.info("[RALP] done: raInserted=%d raAuInserted=%d raAuUpdated=%d unchanged=%d invalid=%d raDeleted=%d raAuDeleted=%d stagingLinked=%d"
-                .formatted(raInserted, raAuInserted, raAuUpdated, unchanged, invalid, raDeleted, raAuDeleted, stagingLinked));
+        log.info(("[RALP] done: raInserted=%d raAuInserted=%d raAuUpdated=%d unchanged=%d invalid=%d"
+                + " auDemotedSent=%d auClosedInProcess=%d auUnchangedReturned=%d"
+                + " raDeleted=%d raAuDeleted=%d stagingLinked=%d")
+                .formatted(raInserted, raAuInserted, raAuUpdated, unchanged, invalid,
+                        auDemotedSent, auClosedInProcess, auUnchangedReturned,
+                        raDeleted, raAuDeleted, stagingLinked));
 
-        String msg = "type=3 RALP year=%d staging=%d invalid=%d raInserted=%d raAuInserted=%d raAuUpdated=%d unchanged=%d raDeleted=%d raAuDeleted=%d addRa=%b"
-                .formatted(year, staging.size(), invalid, raInserted, raAuInserted, raAuUpdated, unchanged, raDeleted, raAuDeleted, addRa);
+        String msg = ("type=3 RALP year=%d staging=%d invalid=%d raInserted=%d raAuInserted=%d raAuUpdated=%d"
+                + " unchanged=%d auDemotedSent=%d auClosedInProcess=%d auUnchangedReturned=%d"
+                + " raDeleted=%d raAuDeleted=%d addRa=%b")
+                .formatted(year, staging.size(), invalid, raInserted, raAuInserted, raAuUpdated, unchanged,
+                        auDemotedSent, auClosedInProcess, auUnchangedReturned,
+                        raDeleted, raAuDeleted, addRa);
         int affected = raInserted + raAuInserted + raAuUpdated + raDeleted + raAuDeleted;
         return addRa ? ReconcileResult.applied(affected, msg) : ReconcileResult.skipped(msg);
     }
@@ -270,6 +291,7 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
         String inClause = String.join(",", Collections.nCopies(raKeys.size(), "?"));
         String sql = """
                 SELECT ralpraKey, ralpraRa, ralpraArrived,
+                       ralpraArrivedDate, ralpraSentDate, ralpraReturnedDate,
                        ralpraCostAndVat, ralpraSent, ralpraReturned,
                        ralpraNote, ralpraStatus, ralpraTestStartDate
                 FROM ags.ralpRaAu
@@ -286,12 +308,18 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
                     au.key = rs.getInt("ralpraKey");
                     au.ralpraRa = rs.getInt("ralpraRa");
                     au.arrived = rs.getString("ralpraArrived");
+                    Date arrivedD = rs.getDate("ralpraArrivedDate");
+                    au.arrivedDate = (arrivedD != null) ? arrivedD.toLocalDate() : null;
                     au.costAndVat = rs.getBigDecimal("ralpraCostAndVat");
                     if (rs.wasNull()) {
                         au.costAndVat = null;
                     }
                     au.sent = rs.getString("ralpraSent");
+                    Date sentD = rs.getDate("ralpraSentDate");
+                    au.sentDate = (sentD != null) ? sentD.toLocalDate() : null;
                     au.returned = rs.getString("ralpraReturned");
+                    Date returnedD = rs.getDate("ralpraReturnedDate");
+                    au.returnedDate = (returnedD != null) ? returnedD.toLocalDate() : null;
                     au.note = rs.getString("ralpraNote");
                     au.status = rs.getInt("ralpraStatus");
                     Date tsd = rs.getDate("ralpraTestStartDate");
@@ -302,6 +330,112 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
             }
         }
         return map;
+    }
+
+    // -------------------------------------------------------------------------
+    // Demote sibling considerations (chain policy)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Закрывает «чужие» рассмотрения того же отчёта перед upsert текущего из Excel.
+     *
+     * <p>Уже закрытые возвратом ({@code returned} без {@code sent}) не изменяются. Открытые и успешные
+     * ({@code sent}) переводятся в синтетический {@code returned} с очисткой {@code sent}.
+     */
+    private DemoteStats demoteSiblingAus(
+            Connection conn,
+            int raDbKey,
+            String currentArrived,
+            Map<RaAuKey, DomainRaAu> domainRaAu,
+            boolean addRa,
+            Set<Integer> survivingRaAuKeys) throws SQLException {
+        DemoteStats stats = new DemoteStats();
+        LocalDate newArrivedDate = parseDate(currentArrived);
+        List<DomainRaAu> siblings = new ArrayList<>();
+        for (DomainRaAu au : domainRaAu.values()) {
+            if (au.ralpraRa == raDbKey) {
+                siblings.add(au);
+            }
+        }
+        for (DomainRaAu au : siblings) {
+            String auArrived = (au.arrived != null) ? au.arrived.trim() : "";
+            if (auArrived.equals(currentArrived)) {
+                continue;
+            }
+            survivingRaAuKeys.add(au.key);
+            if (isReturnedOnly(au)) {
+                stats.unchangedReturned++;
+                continue;
+            }
+            LocalDate oldArrivedDate = au.arrivedDate != null ? au.arrivedDate : parseDate(au.arrived);
+            LocalDate oldSentDate = au.sentDate != null ? au.sentDate : parseDate(au.sent);
+            LocalDate closeDate = computeCloseDate(oldArrivedDate, oldSentDate, newArrivedDate);
+            String returnedText = syntheticReturned(closeDate);
+            boolean hadSent = !isBlank(au.sent);
+            if (addRa) {
+                demoteRaAuToReturned(conn, au.key, returnedText, closeDate);
+            }
+            au.sent = null;
+            au.sentDate = null;
+            au.returned = returnedText;
+            au.returnedDate = closeDate;
+            if (hadSent) {
+                stats.demotedSent++;
+                log.info("[RALP] demote sent→returned: ralpraKey=%d ralpraRa=%d arrived=%s closeDate=%s"
+                        .formatted(au.key, raDbKey, auArrived, closeDate));
+            } else {
+                stats.closedInProcess++;
+                log.info("[RALP] close in-process: ralpraKey=%d ralpraRa=%d arrived=%s closeDate=%s"
+                        .formatted(au.key, raDbKey, auArrived, closeDate));
+            }
+        }
+        return stats;
+    }
+
+    private void demoteRaAuToReturned(Connection conn, int raAuKey, String returnedText, LocalDate returnedDate)
+            throws SQLException {
+        String sql = """
+                UPDATE ags.ralpRaAu SET
+                    ralpraSent         = NULL,
+                    ralpraSentDate     = NULL,
+                    ralpraReturned     = ?,
+                    ralpraReturnedDate = ?
+                WHERE ralpraKey = ?
+                """;
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, returnedText);
+            setDateOrNull(ps, 2, returnedDate);
+            ps.setInt(3, raAuKey);
+            ps.executeUpdate();
+        }
+    }
+
+    private static boolean isReturnedOnly(DomainRaAu au) {
+        return !isBlank(au.returned) && isBlank(au.sent);
+    }
+
+    private static boolean isBlank(String s) {
+        return s == null || s.isBlank();
+    }
+
+    /**
+     * Дата синтетического возврата: день перед новым поступлением, но не раньше дат старого цикла.
+     */
+    static LocalDate computeCloseDate(LocalDate oldArrivedDate, LocalDate oldSentDate, LocalDate newArrivedDate) {
+        LocalDate candidate = newArrivedDate != null ? newArrivedDate.minusDays(1) : LocalDate.now();
+        LocalDate floor = oldArrivedDate;
+        if (oldSentDate != null && (floor == null || oldSentDate.isAfter(floor))) {
+            floor = oldSentDate;
+        }
+        if (floor == null) {
+            return candidate;
+        }
+        return candidate.isBefore(floor) ? floor : candidate;
+    }
+
+    static String syntheticReturned(LocalDate closeDate) {
+        return "автозакрытие от %02d.%02d.%04d".formatted(
+                closeDate.getDayOfMonth(), closeDate.getMonthValue(), closeDate.getYear());
     }
 
     // -------------------------------------------------------------------------
@@ -555,12 +689,21 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
         int key;
         int ralpraRa;
         String arrived;
+        LocalDate arrivedDate;
         BigDecimal costAndVat;
         String sent;
+        LocalDate sentDate;
         String returned;
+        LocalDate returnedDate;
         String note;
         int status;
         LocalDate testStartDate;
+    }
+
+    private static class DemoteStats {
+        int demotedSent;
+        int closedInProcess;
+        int unchangedReturned;
     }
 
     private static class StgRow {

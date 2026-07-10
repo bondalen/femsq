@@ -677,7 +677,7 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                 ) VALUES (?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, NULL)
                 """;
         int inserted = 0;
-        try (PreparedStatement statement = connection.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement statement = connection.prepareStatement(insertSql)) {
             int batchCount = 0;
             List<NewRaRow> batchRows = new ArrayList<>();
             for (NewRaRow row : pendingInsert) {
@@ -686,19 +686,25 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                 batchRows.add(row);
                 batchCount++;
                 if (batchCount >= APPLY_BATCH_SIZE) {
-                    inserted += executeRaInsertBatch(statement, batchRows, keysByNatural);
+                    inserted += executeRaInsertBatch(connection, statement, batchRows, keysByNatural);
                     batchRows.clear();
                     batchCount = 0;
                 }
             }
             if (batchCount > 0) {
-                inserted += executeRaInsertBatch(statement, batchRows, keysByNatural);
+                inserted += executeRaInsertBatch(connection, statement, batchRows, keysByNatural);
             }
         }
         return inserted;
     }
 
+    /**
+     * Выполняет JDBC batch INSERT в {@code ags.ra} и подгружает {@code ra_key} по натуральному ключу
+     * {@code (ra_period, ra_num)}. На SQL Server {@code getGeneratedKeys()} после {@code executeBatch()}
+     * недоступен — см. apply-smoke exec 1147.
+     */
     private int executeRaInsertBatch(
+            Connection connection,
             PreparedStatement statement,
             List<NewRaRow> batchRows,
             Map<RaPeriodNumKey, Long> keysByNatural
@@ -707,19 +713,20 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             return 0;
         }
         statement.executeBatch();
-        List<Long> generatedKeys = new ArrayList<>(batchRows.size());
-        try (ResultSet keys = statement.getGeneratedKeys()) {
-            while (keys.next()) {
-                generatedKeys.add(keys.getLong(1));
+        statement.clearBatch();
+        List<RaPeriodNumKey> naturalKeys = batchRows.stream().map(this::toRaPeriodNumKey).toList();
+        Map<RaPeriodNumKey, Long> loaded = bulkLoadRaKeysByPeriodNumKeys(connection, naturalKeys);
+        int found = 0;
+        for (RaPeriodNumKey key : naturalKeys) {
+            Long raKey = loaded.get(key);
+            if (raKey == null) {
+                throw new SQLException(
+                        "RA batch insert: key not found after insert for period=" + key.period() + " num=" + key.num());
             }
+            keysByNatural.put(key, raKey);
+            found++;
         }
-        if (generatedKeys.size() != batchRows.size()) {
-            throw new SQLException("RA batch insert: expected " + batchRows.size() + " keys, got " + generatedKeys.size());
-        }
-        for (int i = 0; i < batchRows.size(); i++) {
-            keysByNatural.put(toRaPeriodNumKey(batchRows.get(i)), generatedKeys.get(i));
-        }
-        return generatedKeys.size();
+        return found;
     }
 
     private void bindNewRaRowInsert(PreparedStatement statement, NewRaRow row, Timestamp now) throws SQLException {
@@ -1571,7 +1578,7 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                 """.formatted(RC_COL_RA_FK, RC_COL_NUM, RC_COL_DATE);
 
         int inserted = 0;
-        try (PreparedStatement insertRc = connection.prepareStatement(insertRcSql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement insertRc = connection.prepareStatement(insertRcSql)) {
             int batchCount = 0;
             List<RcNewApplyRow> batchRows = new ArrayList<>();
             for (RcNewApplyRow row : pendingInsert) {
@@ -1580,19 +1587,23 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                 batchRows.add(row);
                 batchCount++;
                 if (batchCount >= APPLY_BATCH_SIZE) {
-                    inserted += executeRcInsertBatch(insertRc, batchRows, keysByNatural);
+                    inserted += executeRcInsertBatch(connection, insertRc, batchRows, keysByNatural);
                     batchRows.clear();
                     batchCount = 0;
                 }
             }
             if (batchCount > 0) {
-                inserted += executeRcInsertBatch(insertRc, batchRows, keysByNatural);
+                inserted += executeRcInsertBatch(connection, insertRc, batchRows, keysByNatural);
             }
         }
         return inserted;
     }
 
+    /**
+     * JDBC batch INSERT в {@code ags.ra_change}; ключи {@code rac_key} — post-batch lookup по натуральному ключу.
+     */
     private int executeRcInsertBatch(
+            Connection connection,
             PreparedStatement insertRc,
             List<RcNewApplyRow> batchRows,
             Map<RcNaturalKey, Long> keysByNatural
@@ -1601,19 +1612,21 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             return 0;
         }
         insertRc.executeBatch();
-        List<Long> generatedKeys = new ArrayList<>(batchRows.size());
-        try (ResultSet keys = insertRc.getGeneratedKeys()) {
-            while (keys.next()) {
-                generatedKeys.add(keys.getLong(1));
+        insertRc.clearBatch();
+        List<RcNaturalKey> naturalKeys = batchRows.stream().map(this::toRcNaturalKey).toList();
+        Map<RcNaturalKey, Long> loaded = bulkLoadRacKeysByNaturalKeys(connection, naturalKeys);
+        int found = 0;
+        for (RcNaturalKey key : naturalKeys) {
+            Long racKey = loaded.get(key);
+            if (racKey == null) {
+                throw new SQLException(
+                        "RC batch insert: key not found after insert for period=" + key.period()
+                                + " raFk=" + key.raFk() + " num=" + key.changeNum());
             }
+            keysByNatural.put(key, racKey);
+            found++;
         }
-        if (generatedKeys.size() != batchRows.size()) {
-            throw new SQLException("RC batch insert: expected " + batchRows.size() + " keys, got " + generatedKeys.size());
-        }
-        for (int i = 0; i < batchRows.size(); i++) {
-            keysByNatural.put(toRcNaturalKey(batchRows.get(i)), generatedKeys.get(i));
-        }
-        return generatedKeys.size();
+        return found;
     }
 
     private void bindNewRcRowInsert(PreparedStatement insertRc, RcNewApplyRow row, Timestamp now) throws SQLException {

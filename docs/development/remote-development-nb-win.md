@@ -1,6 +1,6 @@
 # Удалённая разработка: Cursor на Fedora, БД на nb-win
 
-**Последнее обновление:** 2026-07-08
+**Последнее обновление:** 2026-07-09
 
 ## Схема
 
@@ -45,9 +45,44 @@ Fedora (alex-fedora)              WireGuard VPN              nb-win (10.7.0.3)
 
 Разные снимки позволяют **тестировать ревизию на разных версиях** одних и тех же типов файлов (март vs июль и т.д.) без копирования в репозиторий.
 
-Перед прогоном ревизии обновите в БД `ags.ra_dir.dir` и полные пути `ags.ra_f.af_name` на нужную подпапку. Файлы в снимке могут отличаться (например, в `2026-07` нет `(2026)_Аренда_рабочий.xlsx` — только type=5/6).
+Перед прогоном ревизии обновите в БД `ags.ra_dir.dir` и полные пути `ags.ra_f.af_name` на нужную подпапку — вручную или скриптом:
 
-| Пример type=3 | `(2026)_Аренда_рабочий.xlsx` (есть в `2026_03`) |
+```bash
+./code/scripts/audit-switch-excel-snapshot.sh march   # 2026_03
+./code/scripts/audit-switch-excel-snapshot.sh july    # 2026-07
+```
+
+### База RALP (`af_type=3`) для dev/smoke
+
+**Мартовский снимок `2026_03` — эталонный перечень документов** (меньший набор). Июльский `2026-07` — расширенный снимок для теста apply/отката.
+
+| Метрика | **Март** `2026_03` | **Июль** `2026-07` |
+|---------|-------------------|-------------------|
+| Строк в Excel (num+date+cst+og) | **424** | **1262** |
+| Staging (valid, cst+og resolved) | **420** | **1248** |
+| `ralpRaAu` (при непустом `arrived`) | **408** | **1248** |
+| Только в этом файле | 0 | **+838** |
+| В обоих файлах | 424 | 424 |
+| Разное состояние (arrived/sent/…) в общих | — | **15** |
+
+**Домен dev (мартовская база):** `ralpRa_2026=420`, `ralpRaAu_2026=408` (12 записей без `arrived` — Au не создаётся, как в VBA).
+
+**UAT через UI (2026-07-10):** ревизия `adt_key=14`, exec **1162–1166** — функционально пройден (март dry → июль dry → apply → откат → идемпотентность). **Blocker:** читаемость лога `adt_results` — задача **0049**, chat-plan §9.3.3–9.3.4, `ra-execution-operations.md` → «Читаемость лога в UI».
+
+Скрипты:
+
+```bash
+# Сравнение перечней в Excel
+python3 code/scripts/compare-ralp-excel-snapshots.py
+
+# Обрезка домена до мартовского перечня (staging exec_key=1152)
+# sqlcmd ... -i code/scripts/trim-ralp-domain-to-march-baseline.sql
+
+# Откат к марту после эксперимента с июлем
+./code/scripts/rollback-ralp-to-march-baseline.sh
+```
+
+| Пример type=3 | `(2026)_Аренда_рабочий.xlsx` (`2026_03` — baseline 420; `2026-07` — apply +838) |
 | Пример type=5 | `2026 Свод инф-ции по ОА.xlsm` |
 
 Пути в БД (`ags.ra_dir.dir`, `ags.af.af_name`) указывают на **полный путь внутри mount**, например:
@@ -202,6 +237,11 @@ New-NetFirewallRule -DisplayName "FEMSQ SQL Docker via WireGuard" `
 | `code/scripts/mount-nb-win-share.sh` | CIFS mount на Fedora |
 | `code/scripts/mount-nb-win-share-wsl.sh` | bind mount в WSL на nb-win |
 | `code/scripts/watch-audit-progress.sh` | мониторинг хода `executeAudit` в терминале |
+| `code/scripts/audit-switch-excel-snapshot.sh` | переключение `ra_dir` / пути RALP: `march` \| `july` |
+| `code/scripts/rollback-ralp-to-march-baseline.sh` | откат домена RALP к мартовской базе (420/408) |
+| `code/scripts/compare-ralp-excel-snapshots.py` | сравнение перечней документов в двух Excel |
+| `code/scripts/trim-ralp-domain-to-march-baseline.sql` | обрезка домена до мартовского перечня (420) |
+| `code/scripts/smoke-ralp-march-vs-july.sh` | smoke RALP: март dry-run → июль dry-run → июль apply |
 
 ## Реестр окружений
 
