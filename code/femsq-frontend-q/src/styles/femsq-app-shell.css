@@ -1,0 +1,228 @@
+/**
+ * Оболочка приложения: фон страницы, header/footer, Quasar overrides (0050 B.1).
+ */
+
+html,
+body,
+#app,
+#app-wrapper {
+  background: var(--femsq-bg-page);
+  color: var(--femsq-text);
+}
+
+.femsq-app-header,
+.femsq-app-footer {
+  background: var(--femsq-bg-surface) !important;
+  color: var(--femsq-text) !important;
+  box-shadow: var(--femsq-header-elevation);
+}
+
+.femsq-app-header .text-grey-7,
+.femsq-app-footer .text-grey-7,
+.femsq-text-muted {
+  color: var(--femsq-text-muted) !important;
+}
+
+.femsq-top-bar {
+  backdrop-filter: blur(8px);
+}
+
+/* Primary-кнопки: тёплый акцент в Kimbie, VS blue в светлой теме */
+html[data-femsq-theme='kimbie-dark'] .q-btn.bg-primary,
+html[data-femsq-theme='kimbie-dark'] .q-btn--unelevated.bg-primary,
+html[data-femsq-theme='kimbie-dark'] .q-btn--standard.bg-primary {
+  background: var(--femsq-primary) !important;
+}
+
+html[data-femsq-theme='kimbie-dark'] .q-btn.text-primary,
+html[data-femsq-theme='kimbie-dark'] .q-btn--flat.text-primary {
+  color: var(--femsq-primary) !important;
+}
+
+html[data-femsq-theme='vs-light'] .q-btn.bg-primary,
+html[data-femsq-theme='vs-light'] .q-btn--unelevated.bg-primary {
+  background: var(--femsq-primary) !important;
+}
+
+html[data-femsq-theme='vs-light'] .q-btn.text-primary,
+html[data-femsq-theme='vs-light'] .q-btn--flat.text-primary {
+  color: var(--femsq-primary) !important;
+}
+
+.q-page {
+  background: var(--femsq-bg-page);
+}
+
+.q-card {
+  background: var(--femsq-bg-surface);
+  color: var(--femsq-text);
+}
+
+.q-card--bordered {
+  border-color: var(--femsq-border);
+}
+
+.q-field--outlined .q-field__control:before {
+  border-color: var(--femsq-border);
+}
+
+.q-field--filled .q-field__control,
+.q-field--filled .q-field__control:before {
+  background: var(--femsq-field-filled-bg);
+}
+
+.q-field--filled .q-field__control:after {
+  border-color: var(--femsq-border);
+}
+
+.q-expansion-item {
+  background: transparent;
+  color: var(--femsq-text);
+}
+
+.q-table thead th {
+  background: var(--femsq-bg-elevated);
+  color: var(--femsq-text);
+}
+
+.q-table__title {
+  color: var(--femsq-text);
+}
+
+.reports-catalog {
+  padding: 24px;
+}
+
+.q-tab-panel,
+.q-tabs {
+  background: transparent;
+  color: var(--femsq-text);
+}
+
+.q-item--active {
+  background: var(--femsq-item-active-bg);
+}
+
+/* Приглушённый текст Quasar → токены темы */
+.text-grey-7,
+.text-grey-6,
+.text-grey-5,
+.q-tab--inactive {
+  color: var(--femsq-text-muted) !important;
+}
+
+.bg-grey-3 {
+  background: var(--femsq-panel-header-bg) !important;
+  color: var(--femsq-text) !important;
+}
+
+.bg-grey-2 {
+  background: var(--femsq-banner-hint-bg) !important;
+  color: var(--femsq-banner-hint-text) !important;
+}
+
+.bg-warning.text-dark,
+.bg-warning.text-black {
+  background: var(--femsq-banner-warning-bg) !important;
+  color: var(--femsq-banner-warning-text) !important;
+}
+
+.bg-red-1.text-negative {
+  background: var(--femsq-banner-error-bg) !important;
+  color: var(--femsq-banner-error-text) !important;
+}
+
+.bg-blue-1.text-blue-10,
+.bg-blue-1.text-blue-9 {
+  background: var(--femsq-banner-info-bg) !important;
+  color: var(--femsq-banner-info-text) !important;
+}
+
+.bg-white {
+  background: var(--femsq-bg-surface) !important;
+  color: var(--femsq-text) !important;
+}
+
+.femsq-surface-card {
+  background: var(--femsq-bg-surface);
+  color: var(--femsq-text);
+  border: 1px solid var(--femsq-border);
+  box-shadow: var(--femsq-shadow-surface);
+  max-width: 720px;
+  width: 100%;
+}
+
+.femsq-panel-header {
+  background: var(--femsq-panel-header-bg) !important;
+  color: var(--femsq-text) !important;
+}
+
+.femsq-info-banner {
+  background: var(--femsq-banner-info-bg) !important;
+  color: var(--femsq-banner-info-text) !important;
+}
+
+.femsq-chip-neutral {
+  background: var(--femsq-chip-neutral-bg) !important;
+  color: var(--femsq-chip-neutral-text) !important;
+}
+
+.femsq-chip-type {
+  background: var(--femsq-chip-type-bg) !important;
+  color: var(--femsq-chip-type-text) !important;
+}
+
+.femsq-dialog-header {
+  background: var(--femsq-primary) !important;
+  color: #fff !important;
+}
+
+.q-separator {
+  background: var(--femsq-border) !important;
+}
+
+.q-list--bordered,
+.q-item {
+  border-color: var(--femsq-border);
+}
+
+.q-field__label {
+  color: var(--femsq-text-muted);
+}
+
+.q-field__native,
+.q-field__input,
+.q-field__prefix,
+.q-field__suffix {
+  color: var(--femsq-text);
+}
+
+.q-table {
+  background: var(--femsq-bg-surface);
+  color: var(--femsq-text);
+}
+
+.q-table thead tr,
+.q-table tbody td,
+.q-table__bottom {
+  border-color: var(--femsq-border);
+}
+
+.q-table tbody tr:hover td {
+  background: var(--femsq-item-hover-bg);
+}
+
+.q-table__card {
+  background: var(--femsq-bg-surface);
+  color: var(--femsq-text);
+}
+
+.q-menu,
+.q-dialog .q-card {
+  background: var(--femsq-bg-surface);
+  color: var(--femsq-text);
+}
+
+.q-item:hover {
+  background: var(--femsq-item-hover-bg);
+}

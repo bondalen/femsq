@@ -1,6 +1,6 @@
 <template>
   <QLayout view="hHh lpR fFf">
-    <QHeader elevated class="bg-white text-dark">
+    <QHeader elevated class="femsq-app-header">
       <TopBar
         :status="status"
         :active-view="activeView"
@@ -16,7 +16,7 @@
       <slot />
     </QPageContainer>
 
-    <QFooter elevated class="bg-white text-dark">
+    <QFooter elevated class="femsq-app-footer">
       <StatusBar
         :status="status"
         :status-tone="statusTone"

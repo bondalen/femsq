@@ -62,7 +62,7 @@
         <!-- Колонка: Номер -->
         <template v-slot:body-cell-afNum="props">
           <q-td :props="props">
-            <q-chip size="sm" color="grey-3">
+            <q-chip size="sm" class="femsq-chip-neutral">
               {{ props.row.afNum ?? '—' }}
             </q-chip>
           </q-td>
@@ -81,7 +81,7 @@
         <!-- Колонка: Тип -->
         <template v-slot:body-cell-afType="props">
           <q-td :props="props">
-            <q-chip size="sm" color="blue-2" text-color="blue-9">
+            <q-chip size="sm" class="femsq-chip-type">
               {{ getFileTypeName(props.row.afType) }}
             </q-chip>
           </q-td>

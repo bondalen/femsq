@@ -196,7 +196,7 @@ public class AuditReconcileCoordinator {
                         AuditLogLevel.INFO,
                         AuditLogScope.FILE,
                         "RECONCILE_TYPE5_MATCH_STATS",
-                        "<P>Type5 match/apply counters: " + escape(countersSummary) + "</P>",
+                        "<P>Сверка type=5 — показатели: " + escape(countersSummary) + "</P>",
                         withPresentationMeta(
                                 Map.of(
                                         "auditId", String.valueOf(context.getAuditId()),
@@ -217,7 +217,7 @@ public class AuditReconcileCoordinator {
                     AuditLogLevel.WARNING,
                     AuditLogScope.FILE,
                     "RECONCILE_TYPE5_DIAGNOSTICS",
-                    "<P>Type5 diagnostics (top): " + escape(missingDetails) + "</P>",
+                    "<P>Диагностика type=5 (топ): " + escape(missingDetails) + "</P>",
                     withPresentationMeta(
                             Map.of(
                                     "auditId", String.valueOf(context.getAuditId()),
@@ -234,11 +234,16 @@ public class AuditReconcileCoordinator {
     }
 
     private void appendType5MatchStats(AuditExecutionContext context, Type5ReconcileAuditCounters.MatchStats match) {
-        String html = "<P>Type5 match — RA: NEW=" + match.raNew() + ", CHANGED=" + match.raChanged()
-                + ", UNCHANGED=" + match.raUnchanged() + ", INVALID=" + match.raInvalid()
-                + ", AMBIGUOUS=" + match.raAmbiguous() + "; RC: NEW=" + match.rcNew()
-                + ", CHANGED=" + match.rcChanged() + ", UNCHANGED=" + match.rcUnchanged()
-                + ", INVALID=" + match.rcInvalid() + ", AMBIGUOUS=" + match.rcAmbiguous() + ".</P>";
+        String html = "<P>Сверка type=5 — отчёты: новые=" + match.raNew()
+                + ", изменённые=" + match.raChanged()
+                + ", безИзменений=" + match.raUnchanged()
+                + ", некорректные=" + match.raInvalid()
+                + ", неоднозначные=" + match.raAmbiguous()
+                + "; изменения: новые=" + match.rcNew()
+                + ", изменённые=" + match.rcChanged()
+                + ", безИзменений=" + match.rcUnchanged()
+                + ", некорректные=" + match.rcInvalid()
+                + ", неоднозначные=" + match.rcAmbiguous() + ".</P>";
         Map<String, String> meta = new LinkedHashMap<>();
         meta.put("auditId", String.valueOf(context.getAuditId()));
         meta.put("executionKey", String.valueOf(context.getExecutionKey()));
@@ -263,11 +268,15 @@ public class AuditReconcileCoordinator {
     }
 
     private void appendType5ApplyStats(AuditExecutionContext context, Type5ReconcileAuditCounters.ApplyStats apply) {
-        String html = "<P>Type5 apply — RA: inserted=" + apply.raInserted() + ", updated=" + apply.raUpdated()
-                + ", unchanged=" + apply.raUnchanged() + ", deleted=" + apply.raDeleted()
-                + "; RC: inserted=" + apply.rcInserted() + ", updated=" + apply.rcUpdated()
-                + ", unchanged=" + apply.rcUnchanged() + ", deleted=" + apply.rcDeleted()
-                + "; sums inserted (RA+RC)=" + apply.sumInserted() + ".</P>";
+        String html = "<P>Применение type=5 — отчёты: добавлено=" + apply.raInserted()
+                + ", обновлено=" + apply.raUpdated()
+                + ", безИзменений=" + apply.raUnchanged()
+                + ", удалено=" + apply.raDeleted()
+                + "; изменения: добавлено=" + apply.rcInserted()
+                + ", обновлено=" + apply.rcUpdated()
+                + ", безИзменений=" + apply.rcUnchanged()
+                + ", удалено=" + apply.rcDeleted()
+                + "; сумм добавлено (отчёты+изменения)=" + apply.sumInserted() + ".</P>";
         Map<String, String> meta = new LinkedHashMap<>();
         meta.put("auditId", String.valueOf(context.getAuditId()));
         meta.put("executionKey", String.valueOf(context.getExecutionKey()));

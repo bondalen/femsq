@@ -3,13 +3,13 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2026-07-10T16:40:00+03:00",
+      "lastUpdated": "2026-07-13T12:55:00+03:00",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0050",
+      "nextTaskId": "0051",
       "items": {
         "0001": {
           "task": {
@@ -1552,23 +1552,53 @@
             }
           }
         },
-        "0049": {
+        "0050": {
           "task": {
-            "displayName": "Читаемость лога ревизий adt_results и UI AuditsView (pending, critical). № 0049",
+            "displayName": "Глобальные темы UI: Kimbie Dark / VS Light (completed, critical). № 0050",
             "task-attributes": {
-              "status": "pending",
+              "status": "completed",
               "priority": "critical",
               "owner": "Александр",
               "completionCriteria": [
-                "Темы лога: Kimbie Dark (по умолчанию) и VS Light; переключатель в AuditsView, localStorage femsq.auditLogTheme",
+                "Две глобальные темы: kimbie-dark (по умолчанию) и vs-light; единый ключ localStorage femsq.theme",
+                "Переключатель — иконка в TopBar; Quasar Dark + CSS-токены --femsq-* (femsq-theme-tokens.css)",
+                "Акцент Kimbie Dark — тёплый (#d19a66); VS Light — #0078d4",
+                "Лог adt_results наследует глобальную тему; локальный селект в AuditsView удалён",
+                "Фаза B.2: экран Ревизии — sign-off оператора; фаза B.3: остальные модули",
+                "UAT всех экранов × обе темы; закрытие U1 в реестре 9.3.3",
+                "Документация: frontend-themes.md, chat-plan §9.3.5"
+              ],
+              "description": "Единая палитра всего femsq-frontend-q (оболочка + лог ревизий). Заменяет локальные темы 0049. Kimbie Dark по умолчанию, переключение иконкой в TopBar. Блокирует prod (0048) до визуального sign-off.",
+              "links": {
+                "projectDocsRefs": ["module:frontend"],
+                "journalRefs": [],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#935-глобальные-темы-приложения-kimbie-dark-vs-light-задача-0050",
+                "documentation": "docs/development/frontend-themes.md"
+              },
+              "created": "2026-07-13",
+              "lastUpdated": "2026-07-13",
+              "completed": "2026-07-13"
+            }
+          }
+        },
+        "0049": {
+          "task": {
+            "displayName": "Читаемость лога ревизий adt_results и UI AuditsView (completed, critical). № 0049",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "critical",
+              "owner": "Александр",
+              "completionCriteria": [
                 "Межстрочный интервал лога уменьшен ~в 3 раза без потери иерархии details",
                 "Пропуск Excel-строк: конкретные обязательные поля (первые 3 + «и ещё N»); различение пустая строка / нет данных / ошибка формата",
                 "Type5 match/apply и остаточные EN-фрагменты — русские подписи в adt_results",
                 "Badge фазы *_START: «+» вместо START",
-                "Пересборка JAR 0.1.0.123+ и frontend с fixes U6/U7; повторный sign-off оператора на exec 1162–1166",
-                "Документация: chat-plan §9.3.3–9.3.4, ra-execution-operations.md; реестр UAT U1–U5 закрыт"
+                "Пересборка JAR 0.1.0.123+; sign-off содержания лога на exec 1162–1166",
+                "Визуальное согласование тем — задача 0050 (не входит в критерий закрытия 0049)",
+                "Документация: chat-plan §9.3.4, ra-execution-operations.md"
               ],
-              "description": "Blocker UAT: оператор не воспринимает информацию в HTML-логе adt_results. Доработка тем (тёмная Kimbie Dark по умолчанию, светлая VS Light), плотности строк, информативности warnings Excel, русификации Type5, badge «+». Блокирует prod (0048) до sign-off.",
+              "description": "Blocker UAT по содержанию HTML-лога adt_results: плотность строк, информативность warnings Excel, русификация Type5, badge «+». Прототип палитр лога — в 0049; глобальные темы приложения — в 0050.",
               "links": {
                 "projectDocsRefs": ["module:backend.web", "module:frontend"],
                 "journalRefs": [],
@@ -1576,7 +1606,8 @@
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#934-доработка-читаемости-лога-и-ui-ревизий-задача-0049"
               },
               "created": "2026-07-10",
-              "lastUpdated": "2026-07-10"
+              "lastUpdated": "2026-07-13",
+              "completed": "2026-07-13"
             }
           }
         },
@@ -1590,7 +1621,7 @@
               "completionCriteria": [
                 "Dev: backend+frontend развёрнуты на alex-fedora/nb-win, smoke executeAudit type=5 и type=3 COMPLETED",
                 "UAT через AuditsView: dry-run и apply (где допустимо) для отчётов агентов и аренды земли",
-                "Задача 0049 закрыта: читаемость лога adt_results (реестр UAT U1–U5 без blocker)",
+                "Задачи 0049 и 0050 закрыты: содержание лога и глобальные темы (реестр UAT U1 без blocker)",
                 "Таблица замечаний UAT 9.3.3 закрыта, blocker исправлены",
                 "Prod: thin JAR развёрнут без полного переноса lib/; LibraryCompatibilityChecker OK",
                 "DDL adt_staging_log_level на prod (MSSQL2012/) при необходимости",
@@ -1605,7 +1636,7 @@
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#фаза-9-доработка-производительности-приёмка-и-вывод-в-продуктив"
               },
               "created": "2026-07-09",
-              "lastUpdated": "2026-07-10"
+              "lastUpdated": "2026-07-13"
             }
           }
         },

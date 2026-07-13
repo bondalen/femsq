@@ -5878,6 +5878,68 @@
             }
           ]
         }
+      },
+      {
+        "chat": {
+          "displayName": "Глобальные темы UI Kimbie/VS Light (completed, critical). № chat-2026-07-13-001",
+          "chat-attributes": {
+            "id": "chat-2026-07-13-001",
+            "created": "2026-07-13",
+            "lastUpdated": "2026-07-13",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "critical",
+            "tags": [
+              "frontend",
+              "themes",
+              "kimbie-dark",
+              "vs-light",
+              "U1",
+              "0050"
+            ],
+            "links": {
+              "projectDocsRefs": ["module:frontend"],
+              "developmentTasks": ["0050"],
+              "aiRuleRefs": []
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "0050: глобальные темы, закрытие U1 (success). № log-2026-07-13-001",
+                "log-attributes": {
+                  "id": "log-2026-07-13-001",
+                  "timestamp": "2026-07-13T17:20:00+03:00",
+                  "level": "success",
+                  "effort": "1d",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:frontend"],
+                    "developmentTasks": ["0050"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Реализованы глобальные темы femsq-frontend-q (фазы B.1–B.4)",
+                    "details": "Kimbie Dark (по умолчанию) и VS Light; store theme.ts, токены femsq-theme-tokens.css, переключатель в TopBar, anti-flash в index.html. Экраны: ревизии, организации, отчёты, цепочки, welcome, Test Grid, ConnectionModal. Лог adt_results на CSS-переменных; line-height 1.15 после настройки плотности.",
+                    "outcome": "Задача 0050 закрыта; U1 в реестре 9.3.3 — ✅; sign-off оператора по основным модулям × 2 темы.",
+                    "references": [
+                      "code/femsq-frontend-q/src/stores/theme.ts",
+                      "code/femsq-frontend-q/src/theme/femsq-theme.ts",
+                      "code/femsq-frontend-q/src/styles/femsq-theme-tokens.css",
+                      "code/femsq-frontend-q/src/styles/femsq-app-shell.css",
+                      "code/femsq-frontend-q/src/styles/audit-log.css",
+                      "docs/development/frontend-themes.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#935-глобальные-темы-приложения-kimbie-dark-vs-light-задача-0050",
+                      "code/femsq-frontend-q/tests/unit/femsq-theme.spec.ts"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
       }
     ],
     "links": {

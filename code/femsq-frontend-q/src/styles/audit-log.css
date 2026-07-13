@@ -1,0 +1,101 @@
+/**
+ * Стили HTML-лога ревизий (adt_results). Задачи 0049 / 0050.
+ * Палитра — CSS-переменные из femsq-theme-tokens.css (глобальная тема).
+ */
+
+.audit-log-surface {
+  border-radius: 4px;
+  background: var(--femsq-log-surface-bg);
+  color: var(--femsq-log-text);
+  border: 1px solid var(--femsq-log-border);
+}
+
+.audit-log-surface .femsq-auditlog {
+  font-size: 13px;
+  line-height: 1.15;
+}
+
+.audit-log-surface .femsq-auditlog .row,
+.audit-log-surface .femsq-auditlog .summary {
+  margin: 0;
+  padding: 0 4px;
+  line-height: 1.15;
+}
+
+/* Backend оборачивает сообщения в <P> — сбрасываем браузерные отступы */
+.audit-log-surface .femsq-auditlog p,
+.audit-log-surface .femsq-auditlog P {
+  margin: 0;
+  padding: 0;
+  line-height: 1.15;
+}
+
+.audit-log-surface .femsq-auditlog .summary {
+  padding: 0 4px;
+}
+
+.audit-log-surface .femsq-auditlog .badge {
+  line-height: 12px;
+  font-size: 10px;
+  padding: 0 4px;
+  margin-right: 4px;
+}
+
+.audit-log-surface .femsq-auditlog details {
+  border-left-color: var(--femsq-log-details-border);
+}
+
+.audit-log-surface .femsq-auditlog .lvl-info {
+  color: var(--femsq-log-lvl-info);
+}
+
+.audit-log-surface .femsq-auditlog .lvl-success {
+  color: var(--femsq-log-lvl-success-fg);
+  background: var(--femsq-log-lvl-success-bg);
+  border-left: 3px solid var(--femsq-log-lvl-success-border);
+}
+
+.audit-log-surface .femsq-auditlog .lvl-warning {
+  color: var(--femsq-log-lvl-warning-fg);
+  background: var(--femsq-log-lvl-warning-bg);
+  border-left: 3px solid var(--femsq-log-lvl-warning-border);
+}
+
+.audit-log-surface .femsq-auditlog .lvl-error {
+  color: var(--femsq-log-lvl-error-fg);
+  background: var(--femsq-log-lvl-error-bg);
+  border-left: 3px solid var(--femsq-log-lvl-error-border);
+}
+
+.audit-log-surface .femsq-auditlog .lvl-summary {
+  color: var(--femsq-log-lvl-summary-fg);
+  background: var(--femsq-log-lvl-summary-bg);
+  border-left: 3px solid var(--femsq-log-lvl-summary-border);
+}
+
+.audit-log-surface .femsq-auditlog .badge-start {
+  background: var(--femsq-log-badge-start-bg);
+  color: var(--femsq-log-badge-start-fg);
+  border: 1px solid var(--femsq-log-badge-start-border);
+}
+
+.audit-log-surface .femsq-auditlog .badge-end {
+  background: var(--femsq-log-badge-end-bg);
+  color: var(--femsq-log-badge-end-fg);
+  border: 1px solid var(--femsq-log-badge-end-border);
+}
+
+.audit-log-surface .femsq-auditlog .badge-info {
+  background: var(--femsq-log-badge-info-bg);
+  color: var(--femsq-log-badge-info-fg);
+  border: 1px solid var(--femsq-log-badge-info-border);
+}
+
+.audit-log-surface .audit-log-empty {
+  padding: 8px;
+  color: var(--femsq-log-empty-text);
+}
+
+.audit-log-container {
+  border-color: var(--femsq-border);
+}

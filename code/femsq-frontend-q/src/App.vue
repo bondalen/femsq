@@ -21,8 +21,8 @@
     <AuditsView v-else-if="connection.activeView === 'audits'" />
     <TestGridView v-else-if="connection.activeView === 'test-grid'" />
 
-    <QPage v-else class="column q-gutter-lg">
-      <div class="q-pa-xl bg-white rounded-borders shadow-2">
+    <QPage v-else class="column items-center q-pa-lg">
+      <div class="femsq-surface-card q-pa-xl rounded-borders">
         <div class="text-h5 q-mb-md">Добро пожаловать в FEMSQ UI</div>
         <p>
           Этот экран содержит подсказки по подключению к базе данных и навигации.
@@ -67,7 +67,7 @@
 
 <script setup lang="ts">
 import { ref, nextTick, onMounted, watch } from 'vue';
-import { QPage, QList, QItem, QItemSection, QIcon, QBanner } from 'quasar';
+import { useQuasar, QPage, QList, QItem, QItemSection, QIcon } from 'quasar';
 
 import AppLayout from '@/components/layout/AppLayout.vue';
 import ConnectionModal from '@/components/setup/ConnectionModal.vue';
@@ -78,6 +78,7 @@ import AuditsView from '@/views/audits/AuditsView.vue';
 import TestGridView from '@/views/TestGridView.vue';
 import type { ActiveView, ConnectionFormValues } from '@/stores/connection';
 import { useConnectionStore } from '@/stores/connection';
+import { useThemeStore } from '@/stores/theme';
 import { useOrganizationsStore } from '@/stores/organizations';
 import {
   getConnectionStatus,
@@ -88,6 +89,8 @@ import {
 } from '@/api/connection-api';
 
 const connection = useConnectionStore();
+const themeStore = useThemeStore();
+const $q = useQuasar();
 const organizationsStore = useOrganizationsStore();
 const modalOpen = ref(false);
 const modalStatus = ref<'idle' | 'validating' | 'connecting' | 'success' | 'error'>('idle');
@@ -356,6 +359,7 @@ function handleCloseModal(): void {
 
 // Загружаем статус подключения при монтировании компонента
 onMounted(async () => {
+  themeStore.bindQuasar($q);
   await loadConnectionStatus();
 });
 

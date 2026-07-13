@@ -13,7 +13,7 @@
 
     <div class="status-bar__segment status-bar__segment--right">
       <span>{{ schemaLabel }}</span>
-      <span v-if="user" class="text-caption text-grey-7">{{ user }}</span>
+      <span v-if="user" class="text-caption femsq-text-muted">{{ user }}</span>
       <QBtn
         v-if="status === 'connected'"
         flat
@@ -101,7 +101,7 @@ const schemaLabel = computed(() => {
 
 .status-bar__segment--center {
   justify-content: center;
-  color: rgba(28, 35, 51, 0.72);
+  color: var(--femsq-status-center-text);
 }
 
 .status-bar__segment--right {
@@ -109,15 +109,15 @@ const schemaLabel = computed(() => {
 }
 
 .status-bar--info {
-  background: linear-gradient(90deg, rgba(14, 165, 233, 0.08), rgba(14, 165, 233, 0));
+  background: var(--femsq-status-info-bg);
 }
 
 .status-bar--positive {
-  background: linear-gradient(90deg, rgba(34, 197, 94, 0.12), rgba(34, 197, 94, 0));
+  background: var(--femsq-status-positive-bg);
 }
 
 .status-bar--negative {
-  background: linear-gradient(90deg, rgba(239, 68, 68, 0.12), rgba(239, 68, 68, 0));
+  background: var(--femsq-status-negative-bg);
 }
 
 @media (max-width: 768px) {

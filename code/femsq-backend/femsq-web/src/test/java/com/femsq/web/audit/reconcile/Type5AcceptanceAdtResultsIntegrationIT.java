@@ -80,8 +80,8 @@ class Type5AcceptanceAdtResultsIntegrationIT {
                         "addRa=false",
                         "Всего строк отчётов",
                         "Всего строк изменений",
-                        "Type5 match — RA:",
-                        "Type5 apply — RA:",
+                        "Сверка type=5 — отчёты:",
+                        "Применение type=5 — отчёты:",
                         "сухойПрогон=true");
             } finally {
                 exec(connection, "UPDATE ags.ra_a SET adt_AddRA = ? WHERE adt_key = ?", prevAddRa, adtKey);
@@ -121,8 +121,8 @@ class Type5AcceptanceAdtResultsIntegrationIT {
                         results,
                         "применение",
                         "addRa=true",
-                        "Type5 match — RA:",
-                        "Type5 apply — RA:",
+                        "Сверка type=5 — отчёты:",
+                        "Применение type=5 — отчёты:",
                         "сухойПрогон=false");
                 boolean rowLevelSignal = results.contains("Создана новая запись ags.ra")
                         || results.contains("Создана новая запись ags.ra_change")

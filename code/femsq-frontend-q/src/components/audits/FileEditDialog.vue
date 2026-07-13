@@ -1,7 +1,7 @@
 <template>
   <q-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)" persistent>
     <q-card style="min-width: 500px; max-width: 600px">
-      <q-card-section class="row items-center bg-primary text-white">
+      <q-card-section class="row items-center femsq-dialog-header">
         <q-icon name="edit_document" size="sm" class="q-mr-sm" />
         <div class="text-h6">{{ isEdit ? 'Редактирование файла' : 'Добавление файла' }}</div>
         <q-space />

@@ -5,6 +5,27 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FEMSQ UI (Quasar)</title>
+    <script>
+      (function () {
+        try {
+          var key = 'femsq.theme';
+          var theme = localStorage.getItem(key);
+          if (theme !== 'vs-light' && theme !== 'kimbie-dark') {
+            var legacy = localStorage.getItem('femsq.auditLogTheme');
+            if (legacy === 'vs-light' || legacy === 'kimbie-dark') {
+              theme = legacy;
+              localStorage.setItem(key, legacy);
+            }
+          }
+          if (theme !== 'vs-light' && theme !== 'kimbie-dark') {
+            theme = 'kimbie-dark';
+          }
+          document.documentElement.dataset.femsqTheme = theme;
+        } catch (e) {
+          document.documentElement.dataset.femsqTheme = 'kimbie-dark';
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="app"></div>

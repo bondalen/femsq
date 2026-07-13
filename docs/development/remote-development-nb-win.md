@@ -67,7 +67,9 @@ Fedora (alex-fedora)              WireGuard VPN              nb-win (10.7.0.3)
 
 **Домен dev (мартовская база):** `ralpRa_2026=420`, `ralpRaAu_2026=408` (12 записей без `arrived` — Au не создаётся, как в VBA).
 
-**UAT через UI (2026-07-10):** ревизия `adt_key=14`, exec **1162–1166** — функционально пройден (март dry → июль dry → apply → откат → идемпотентность). **Blocker:** читаемость лога `adt_results` — задача **0049**, chat-plan §9.3.3–9.3.4, `ra-execution-operations.md` → «Читаемость лога в UI».
+**UAT через UI (2026-07-10):** ревизия `adt_key=14`, exec **1162–1166** — функционально пройден.
+
+**Blocker:** читаемость лога `adt_results` — **0049** (содержание, JAR 0.1.0.123) + **0050** (глобальные темы Kimbie Dark / VS Light). Док: `frontend-themes.md`, chat-plan §9.3.3–9.3.5.
 
 Скрипты:
 

@@ -1,6 +1,6 @@
 <template>
   <q-card flat bordered class="directory-card">
-    <q-card-section :class="compact ? 'directory-header-compact' : 'bg-grey-3'">
+    <q-card-section :class="compact ? 'directory-header-compact' : 'femsq-panel-header'">
       <div :class="compact ? 'text-subtitle2 row items-center no-wrap' : 'text-h6'">
         <q-icon name="folder_open" class="q-mr-sm" />
         <span v-if="compact">Директория:</span>
@@ -42,9 +42,9 @@
     </q-card-section>
 
     <q-card-section v-else>
-      <q-banner class="bg-blue-1 text-blue-9">
+      <q-banner class="femsq-info-banner">
         <template v-slot:avatar>
-          <q-icon name="info" color="blue" />
+          <q-icon name="info" color="primary" />
         </template>
         Директория не загружена
       </q-banner>
@@ -105,8 +105,8 @@ function formatDate(date: string | null | undefined): string {
 
 .directory-header-compact {
   padding: 4px 8px !important;
-  background: rgba(255, 255, 255, 0.04);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--femsq-bg-elevated);
+  border-bottom: 1px solid var(--femsq-border);
 }
 
 .files-host-compact {

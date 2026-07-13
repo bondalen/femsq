@@ -1,0 +1,136 @@
+/**
+ * CSS-токены глобальных тем FEMSQ (0050, фаза B.1).
+ * Активная тема: html[data-femsq-theme="kimbie-dark" | "vs-light"].
+ */
+
+html[data-femsq-theme='kimbie-dark'] {
+  --femsq-bg-page: #1a1409;
+  --femsq-bg-surface: #221a0f;
+  --femsq-bg-elevated: #2d2318;
+  --femsq-text: #d3af86;
+  --femsq-text-muted: #a68b5b;
+  --femsq-border: rgba(211, 175, 134, 0.25);
+  --femsq-primary: #d19a66;
+  --femsq-primary-hover: #e5c07b;
+  --femsq-header-elevation: 0 1px 0 rgba(211, 175, 134, 0.12);
+  --femsq-shadow-surface: 0 2px 10px rgba(0, 0, 0, 0.35);
+
+  --femsq-item-hover-bg: rgba(211, 175, 134, 0.06);
+  --femsq-item-active-bg: rgba(209, 154, 102, 0.14);
+  --femsq-panel-header-bg: var(--femsq-bg-elevated);
+  --femsq-banner-info-bg: rgba(209, 154, 102, 0.12);
+  --femsq-banner-info-text: #e5c07b;
+  --femsq-chip-neutral-bg: rgba(211, 175, 134, 0.12);
+  --femsq-chip-neutral-text: var(--femsq-text);
+  --femsq-chip-type-bg: rgba(209, 154, 102, 0.18);
+  --femsq-chip-type-text: #f0d0a8;
+  --femsq-table-stripe-bg: rgba(211, 175, 134, 0.04);
+  --femsq-banner-warning-bg: rgba(229, 192, 123, 0.16);
+  --femsq-banner-warning-text: #e5c07b;
+  --femsq-banner-error-bg: rgba(244, 71, 71, 0.12);
+  --femsq-banner-error-text: #f44747;
+  --femsq-banner-hint-bg: rgba(211, 175, 134, 0.08);
+  --femsq-banner-hint-text: rgba(211, 175, 134, 0.85);
+  --femsq-field-filled-bg: rgba(45, 35, 24, 0.65);
+
+  --femsq-status-info-bg: linear-gradient(90deg, rgba(209, 154, 102, 0.14), rgba(209, 154, 102, 0));
+  --femsq-status-positive-bg: linear-gradient(90deg, rgba(152, 195, 121, 0.16), rgba(152, 195, 121, 0));
+  --femsq-status-negative-bg: linear-gradient(90deg, rgba(244, 71, 71, 0.14), rgba(244, 71, 71, 0));
+  --femsq-status-center-text: rgba(211, 175, 134, 0.82);
+
+  --femsq-log-surface-bg: var(--femsq-bg-surface);
+  --femsq-log-text: var(--femsq-text);
+  --femsq-log-border: var(--femsq-border);
+  --femsq-log-details-border: rgba(211, 175, 134, 0.25);
+  --femsq-log-lvl-info: #d3af86;
+  --femsq-log-lvl-success-fg: #98c379;
+  --femsq-log-lvl-success-bg: rgba(152, 195, 121, 0.08);
+  --femsq-log-lvl-success-border: #98c379;
+  --femsq-log-lvl-warning-fg: #e5c07b;
+  --femsq-log-lvl-warning-bg: rgba(229, 192, 123, 0.1);
+  --femsq-log-lvl-warning-border: #d19a66;
+  --femsq-log-lvl-error-fg: #f44747;
+  --femsq-log-lvl-error-bg: rgba(244, 71, 71, 0.1);
+  --femsq-log-lvl-error-border: #f44747;
+  --femsq-log-lvl-summary-fg: #e5c07b;
+  --femsq-log-lvl-summary-bg: rgba(209, 154, 102, 0.12);
+  --femsq-log-lvl-summary-border: #d19a66;
+  --femsq-log-badge-start-bg: rgba(209, 154, 102, 0.18);
+  --femsq-log-badge-start-fg: #f0d0a8;
+  --femsq-log-badge-start-border: rgba(209, 154, 102, 0.45);
+  --femsq-log-badge-end-bg: rgba(152, 195, 121, 0.12);
+  --femsq-log-badge-end-fg: #b5e890;
+  --femsq-log-badge-end-border: rgba(152, 195, 121, 0.35);
+  --femsq-log-badge-info-bg: rgba(211, 175, 134, 0.1);
+  --femsq-log-badge-info-fg: #d3af86;
+  --femsq-log-badge-info-border: rgba(211, 175, 134, 0.25);
+  --femsq-log-empty-text: rgba(211, 175, 134, 0.75);
+
+  color-scheme: dark;
+}
+
+html[data-femsq-theme='vs-light'] {
+  --femsq-bg-page: #f3f3f3;
+  --femsq-bg-surface: #ffffff;
+  --femsq-bg-elevated: #e8e8e8;
+  --femsq-text: #1e1e1e;
+  --femsq-text-muted: #6e6e6e;
+  --femsq-border: #d4d4d4;
+  --femsq-primary: #0078d4;
+  --femsq-primary-hover: #005a9e;
+  --femsq-header-elevation: 0 1px 0 rgba(0, 0, 0, 0.08);
+  --femsq-shadow-surface: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+  --femsq-item-hover-bg: rgba(0, 0, 0, 0.04);
+  --femsq-item-active-bg: rgba(0, 120, 212, 0.1);
+  --femsq-panel-header-bg: var(--femsq-bg-elevated);
+  --femsq-banner-info-bg: #e8f4fd;
+  --femsq-banner-info-text: #004275;
+  --femsq-chip-neutral-bg: #f3f3f3;
+  --femsq-chip-neutral-text: #1e1e1e;
+  --femsq-chip-type-bg: #deecf9;
+  --femsq-chip-type-text: #004275;
+  --femsq-table-stripe-bg: rgba(0, 0, 0, 0.02);
+  --femsq-banner-warning-bg: #fff4ce;
+  --femsq-banner-warning-text: #5c4b00;
+  --femsq-banner-error-bg: #fde7e9;
+  --femsq-banner-error-text: #a80000;
+  --femsq-banner-hint-bg: #f3f3f3;
+  --femsq-banner-hint-text: #6e6e6e;
+  --femsq-field-filled-bg: #f3f3f3;
+
+  --femsq-status-info-bg: linear-gradient(90deg, rgba(0, 120, 212, 0.1), rgba(0, 120, 212, 0));
+  --femsq-status-positive-bg: linear-gradient(90deg, rgba(16, 124, 16, 0.12), rgba(16, 124, 16, 0));
+  --femsq-status-negative-bg: linear-gradient(90deg, rgba(232, 17, 35, 0.1), rgba(232, 17, 35, 0));
+  --femsq-status-center-text: rgba(30, 30, 30, 0.72);
+
+  --femsq-log-surface-bg: var(--femsq-bg-surface);
+  --femsq-log-text: var(--femsq-text);
+  --femsq-log-border: var(--femsq-border);
+  --femsq-log-details-border: rgba(0, 0, 0, 0.12);
+  --femsq-log-lvl-info: #1e1e1e;
+  --femsq-log-lvl-success-fg: #107c10;
+  --femsq-log-lvl-success-bg: #dff6dd;
+  --femsq-log-lvl-success-border: #107c10;
+  --femsq-log-lvl-warning-fg: #5c4b00;
+  --femsq-log-lvl-warning-bg: #fff4ce;
+  --femsq-log-lvl-warning-border: #c19c00;
+  --femsq-log-lvl-error-fg: #a80000;
+  --femsq-log-lvl-error-bg: #fde7e9;
+  --femsq-log-lvl-error-border: #e81123;
+  --femsq-log-lvl-summary-fg: #004275;
+  --femsq-log-lvl-summary-bg: #e8f4fd;
+  --femsq-log-lvl-summary-border: #0078d4;
+  --femsq-log-badge-start-bg: #e8f4fd;
+  --femsq-log-badge-start-fg: #004275;
+  --femsq-log-badge-start-border: #0078d4;
+  --femsq-log-badge-end-bg: #dff6dd;
+  --femsq-log-badge-end-fg: #107c10;
+  --femsq-log-badge-end-border: #107c10;
+  --femsq-log-badge-info-bg: #f3f3f3;
+  --femsq-log-badge-info-fg: #1e1e1e;
+  --femsq-log-badge-info-border: #d4d4d4;
+  --femsq-log-empty-text: #6e6e6e;
+
+  color-scheme: light;
+}

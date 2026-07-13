@@ -193,13 +193,15 @@
                   class="q-pa-sm audit-log-container"
                   @scroll="handleAuditLogScroll"
                 >
-                  <div
-                    v-if="displayedAuditResults"
-                    class="text-body2 text-grey-7"
-                    v-html="displayedAuditResults"
-                  />
-                  <div v-else class="text-body2 text-grey-7">
-                    Лог выполнения ревизии будет отображаться здесь после запуска функции "Выполнить ревизию".
+                  <div class="audit-log-surface">
+                    <div
+                      v-if="displayedAuditResults"
+                      class="audit-log-html"
+                      v-html="displayedAuditResults"
+                    />
+                    <div v-else class="audit-log-empty text-body2">
+                      Лог выполнения ревизии будет отображаться здесь после запуска функции «Выполнить ревизию».
+                    </div>
                   </div>
                 </div>
                 <div v-if="showJumpToLatest" class="jump-to-latest-wrap">
@@ -314,6 +316,7 @@ const saving = ref(false);
 const errorMessage = ref<string | null>(null);
 const activeTab = ref<'progress' | 'files'>('progress');
 const executeDialogOpen = ref(false);
+
 const executing = ref(false);
 
 
@@ -823,11 +826,11 @@ function handleAuditLogScroll(): void {
 }
 
 .audit-list-item:hover {
-  background-color: rgba(0, 0, 0, 0.03);
+  background-color: var(--femsq-item-hover-bg);
 }
 
 .audit-list-item.q-item--active {
-  background-color: rgba(25, 118, 210, 0.1);
+  background-color: var(--femsq-item-active-bg);
 }
 
 /* Левая панель: ширина в 2.5 раза меньше чем было (col-md-4 = 33.33% -> 13.33%) */
@@ -871,16 +874,13 @@ function handleAuditLogScroll(): void {
 }
 
 .audit-log-container {
-  /* max-height на карточке (.audit-form-card) — первичный ограничитель.
-     max-height на логе — вторичный: предотвращает рост лога внутри карточки
-     при broken flex-chain (когда flex: 1 1 auto даёт неограниченную высоту).
-     350px = card overhead (210) + form+tabs (~140): log ≤ видимой области. */
   flex: 1 1 auto;
   min-height: 80px;
   max-height: calc(100vh - 350px);
   overflow-y: auto;
   border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--femsq-border);
+  background: transparent;
 }
 
 /* Внешний скролл у карточки допускаем только при аномально малой высоте окна */

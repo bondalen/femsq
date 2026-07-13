@@ -366,9 +366,11 @@ public class DefaultAuditStagingService implements AuditStagingService {
                                         "NORMAL"
                                 )
                         );
-                    } else if (emitSummaryProgress && outcome.missingRequiredData()) {
-                        appendSummaryIssue(context, sheet, rowIndex + 1,
-                                "пропущено — недостаточно обязательных данных");
+                    } else if (emitSummaryProgress) {
+                        String reason = resolveSummarySkipReason(outcome, columnExcelHeaders);
+                        if (reason != null) {
+                            appendSummaryIssue(context, sheet, rowIndex + 1, reason);
+                        }
                     }
                     continue;
                 }
@@ -606,6 +608,22 @@ public class DefaultAuditStagingService implements AuditStagingService {
                 html.toString(),
                 withPresentationMeta(meta, "WARN", "ORANGE", "NORMAL")
         );
+    }
+
+    private String resolveSummarySkipReason(RowBindOutcome outcome, Map<String, String> columnExcelHeaders) {
+        if (outcome.skippedDueToRequiredParseError()) {
+            return null;
+        }
+        if (outcome.missingRequiredData()) {
+            return StagingRowSkipReasonFormatter.formatMissingRequiredFields(
+                    outcome.missingRequiredColumns(),
+                    columnExcelHeaders
+            );
+        }
+        if (!outcome.hasBusinessData()) {
+            return "пропущено — в строке нет данных";
+        }
+        return null;
     }
 
     private void appendSummaryIssue(AuditExecutionContext context, Sheet sheet, int excelRowOneBased, String reason) {
@@ -1115,6 +1133,7 @@ public class DefaultAuditStagingService implements AuditStagingService {
         int truncatedFields = 0;
         String rainSign = "(null)";
         List<CellParseIssue> parseIssues = new ArrayList<>();
+        List<String> missingRequiredColumns = new ArrayList<>();
         for (int i = 0; i < insertColumns.size(); i++) {
             String column = insertColumns.get(i);
             int jdbcType = dbColumnTypes.getOrDefault(column, Types.NVARCHAR);
@@ -1153,6 +1172,7 @@ public class DefaultAuditStagingService implements AuditStagingService {
             }
             if (requiredColumns.contains(column) && isEmptyValue(value)) {
                 missingRequiredData = true;
+                missingRequiredColumns.add(column);
             }
             if (value != null) {
                 hasBusinessData = true;
@@ -1167,7 +1187,9 @@ public class DefaultAuditStagingService implements AuditStagingService {
                 optionalParseErrorFields,
                 parseIssues,
                 truncatedFields,
-                rainSign
+                rainSign,
+                hasBusinessData,
+                List.copyOf(missingRequiredColumns)
         );
     }
 
@@ -1297,7 +1319,9 @@ public class DefaultAuditStagingService implements AuditStagingService {
             int optionalParseErrorFields,
             List<CellParseIssue> parseIssues,
             int truncatedFields,
-            String rainSign
+            String rainSign,
+            boolean hasBusinessData,
+            List<String> missingRequiredColumns
     ) {
     }
 

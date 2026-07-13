@@ -1,8 +1,8 @@
 <template>
-  <QToolbar class="q-px-lg q-py-sm top-bar" data-test="top-bar">
+  <QToolbar class="q-px-lg q-py-sm femsq-top-bar" data-test="top-bar">
     <div class="row items-center q-gutter-sm">
       <div class="text-subtitle1 text-weight-bold">FEMSQ</div>
-      <div class="text-caption text-grey-7">Контрагенты и объекты</div>
+      <div class="text-caption femsq-text-muted">Контрагенты и объекты</div>
     </div>
 
     <QSpace />
@@ -11,6 +11,14 @@
       <QChip :color="statusColor" text-color="white" dense>
         {{ statusLabel }}
       </QChip>
+      <QBtn
+        flat
+        round
+        :icon="themeToggleIcon"
+        color="primary"
+        :aria-label="themeToggleLabel"
+        @click="handleToggleTheme"
+      />
       <QBtn
         color="primary"
         unelevated
@@ -24,7 +32,8 @@
         rounded
         icon="business"
         label="Организации"
-        :color="activeView === 'organizations' ? 'primary' : 'dark'"
+        :color="activeView === 'organizations' ? 'primary' : undefined"
+        :class="{ 'femsq-nav-btn--inactive': activeView !== 'organizations' }"
         :disable="!organizationsEnabled"
         @click="handleNavigate('organizations')"
       />
@@ -33,7 +42,8 @@
         rounded
         icon="analytics"
         label="Отчёты"
-        :color="activeView === 'reports' ? 'primary' : 'dark'"
+        :color="activeView === 'reports' ? 'primary' : undefined"
+        :class="{ 'femsq-nav-btn--inactive': activeView !== 'reports' }"
         :disable="!reportsEnabled"
         @click="handleNavigate('reports')"
       />
@@ -42,7 +52,8 @@
         rounded
         icon="account_tree"
         label="Инвестиционные цепочки"
-        :color="activeView === 'investment-chains' ? 'primary' : 'dark'"
+        :color="activeView === 'investment-chains' ? 'primary' : undefined"
+        :class="{ 'femsq-nav-btn--inactive': activeView !== 'investment-chains' }"
         :disable="!investmentChainsEnabled"
         @click="handleNavigate('investment-chains')"
       />
@@ -51,7 +62,8 @@
         rounded
         icon="verified_user"
         label="Ревизии"
-        :color="activeView === 'audits' ? 'primary' : 'dark'"
+        :color="activeView === 'audits' ? 'primary' : undefined"
+        :class="{ 'femsq-nav-btn--inactive': activeView !== 'audits' }"
         @click="handleNavigate('audits')"
       />
       <QBtn
@@ -59,7 +71,8 @@
         rounded
         icon="grid_on"
         label="Test Grid"
-        :color="activeView === 'test-grid' ? 'primary' : 'dark'"
+        :color="activeView === 'test-grid' ? 'primary' : undefined"
+        :class="{ 'femsq-nav-btn--inactive': activeView !== 'test-grid' }"
         @click="handleNavigate('test-grid')"
       />
     </div>
@@ -75,6 +88,12 @@
 
     <QMenu v-model="menu" anchor="bottom right" self="top right">
       <QList style="min-width: 220px">
+        <QItem clickable @click="handleToggleTheme">
+          <QItemSection avatar>
+            <QIcon :name="themeToggleIcon" />
+          </QItemSection>
+          <QItemSection>{{ themeMenuLabel }}</QItemSection>
+        </QItem>
         <QItem clickable @click="handleOpenConnection">
           <QItemSection avatar>
             <QIcon name="link" />
@@ -121,6 +140,8 @@ import { computed, ref } from 'vue';
 import { useQuasar, QToolbar, QBtn, QSpace, QChip, QMenu, QList, QItem, QItemSection, QIcon } from 'quasar';
 
 import type { ActiveView, ConnectionState } from '@/stores/connection';
+import { useThemeStore } from '@/stores/theme';
+import { themeToggleAriaLabel, themeToggleIcon as resolveThemeToggleIcon } from '@/theme/femsq-theme';
 
 interface Props {
   status: ConnectionState;
@@ -137,9 +158,16 @@ const emit = defineEmits<{
 }>();
 
 const $q = useQuasar();
+const themeStore = useThemeStore();
 const menu = ref(false);
 
 const isXs = computed(() => $q.screen.xs);
+
+const themeToggleIcon = computed(() => resolveThemeToggleIcon(themeStore.themeId));
+const themeToggleLabel = computed(() => themeToggleAriaLabel(themeStore.themeId));
+const themeMenuLabel = computed(() =>
+  themeStore.isDark ? 'Светлая тема (Visual Studio)' : 'Тёмная тема (Kimbie Dark)'
+);
 
 const statusLabel = computed(() => {
   switch (props.status) {
@@ -170,6 +198,11 @@ const statusColor = computed(() => {
   }
 });
 
+function handleToggleTheme(): void {
+  themeStore.toggleTheme();
+  menu.value = false;
+}
+
 function handleOpenConnection(): void {
   emit('open-connection');
   menu.value = false;
@@ -182,7 +215,7 @@ function handleNavigate(view: ActiveView): void {
 </script>
 
 <style scoped>
-.top-bar {
-  backdrop-filter: blur(8px);
+.femsq-nav-btn--inactive {
+  color: var(--femsq-text-muted) !important;
 }
 </style>

@@ -116,14 +116,21 @@ chmod +x code/scripts/watch-audit-progress.sh
 
 **Контекст (2026-07-10):** функциональный UAT RALP (type=3, exec **1162–1166**) пройден, но оператор **не воспринимает** HTML-лог в `AuditsView` — blocker для эксплуатации. Задача **0049**, chat-plan §9.3.3–9.3.4.
 
-### Темы
+### Темы (глобальные, задача 0050)
 
-| Тема | CSS-класс | Назначение |
-|------|-----------|------------|
-| **Kimbie Dark** (по умолчанию) | `.femsq-auditlog.theme-kimbie-dark` | Тёплая тёмная палитра (ориентир Cursor Kimbie Dark) |
-| **Светлая (Visual Studio)** | `.femsq-auditlog.theme-vs-light` | Светлый фон, тёмный текст (ориентир Cursor VS Light) |
+С **2026-07-13** темы лога **не переключаются отдельно** — наследуют глобальную тему приложения.
 
-Переключатель — в `AuditsView`; предпочтение в `localStorage` (`femsq.auditLogTheme`). Стили — во frontend (`audit-log.scss`), не в backend HTML.
+| Тема | ID | По умолчанию |
+|------|-----|--------------|
+| **Kimbie Dark** | `kimbie-dark` | да |
+| **Светлая (Visual Studio)** | `vs-light` | |
+
+- Переключатель: **иконка в TopBar** (не в `AuditsView`).
+- Хранение: `localStorage` **`femsq.theme`** (миграция с устаревшего `femsq.auditLogTheme`).
+- Акцент Kimbie: **тёплый** `#d19a66`.
+- Подробности: `docs/development/frontend-themes.md`, chat-plan §9.3.5.
+
+Стили лога — `code/femsq-frontend-q/src/styles/audit-log.css` на CSS-переменных `--femsq-*`.
 
 ### Плотность и оформление
 

@@ -25,33 +25,25 @@ public class AuditExecutionContext {
      * Визуальный контракт отступов (px на уровень вложенности).
      */
     private static final int INDENT_STEP_PX = 16;
+    /**
+     * Минимальная разметка без цветов: палитры и плотность строк — во frontend ({@code audit-log.scss}).
+     */
     private static final String STYLE_BLOCK = """
             <style>
               .femsq-auditlog details {
                 margin: 0;
-                border-left: 1px solid rgba(120, 139, 166, 0.45);
-                margin-left: 2px;
+                border-left: 1px solid rgba(120, 139, 166, 0.35);
+                margin-left: 1px;
               }
               .femsq-auditlog summary { list-style: none; }
               .femsq-auditlog summary::-webkit-details-marker { display: none; }
               .femsq-auditlog summary::marker { content: ""; }
-
-              .femsq-auditlog .row { margin: 0; padding: 2px 8px; }
-              .femsq-auditlog .summary { padding: 3px 8px; border-radius: 8px; cursor: pointer; user-select: none; }
-              .femsq-auditlog .badge { display: inline-block; font-size: 11px; line-height: 16px; padding: 0 6px; border-radius: 999px; margin-right: 8px; vertical-align: baseline; }
-
-              .femsq-auditlog .lvl-info { color: #c9d1d9; }
-              .femsq-auditlog .lvl-success { color: #1f7a3f; background: #0f2a1a; border-left: 3px solid #2ea043; }
-              .femsq-auditlog .lvl-warning { color: #f2cc60; background: #2a200f; border-left: 3px solid #d29922; }
-              .femsq-auditlog .lvl-error { color: #ffb4b4; background: #2a1414; border-left: 3px solid #f85149; }
-              .femsq-auditlog .lvl-summary { color: #b7d7ff; background: #0f1f2a; border-left: 3px solid #58a6ff; }
-
+              .femsq-auditlog .row { margin: 0; padding: 0 4px; line-height: 1.15; }
+              .femsq-auditlog .summary { padding: 0 4px; border-radius: 4px; cursor: pointer; user-select: none; line-height: 1.15; }
+              .femsq-auditlog p, .femsq-auditlog P { margin: 0; padding: 0; line-height: 1.15; }
+              .femsq-auditlog .badge { display: inline-block; font-size: 10px; line-height: 12px; padding: 0 4px; border-radius: 999px; margin-right: 4px; vertical-align: baseline; }
               .femsq-auditlog .phase-start { font-weight: 650; }
               .femsq-auditlog .phase-end { font-weight: 650; opacity: 0.95; }
-
-              .femsq-auditlog .badge-start { background: rgba(88,166,255,0.14); color: #b7d7ff; border: 1px solid rgba(88,166,255,0.35); }
-              .femsq-auditlog .badge-end { background: rgba(46,160,67,0.12); color: #98e19a; border: 1px solid rgba(46,160,67,0.35); }
-              .femsq-auditlog .badge-info { background: rgba(201,209,217,0.08); color: #c9d1d9; border: 1px solid rgba(201,209,217,0.18); }
             </style>
             """;
 
@@ -462,7 +454,7 @@ public class AuditExecutionContext {
             return "<span class=\"badge badge-info\">INFO</span>";
         }
         if (entry.getCode().endsWith("_START")) {
-            return "<span class=\"badge badge-start\">START</span>";
+            return "<span class=\"badge badge-start\">+</span>";
         }
         if (entry.getCode().endsWith("_END")) {
             return "<span class=\"badge badge-end\">END</span>";
@@ -554,6 +546,22 @@ public class AuditExecutionContext {
         out = replaceKey(out, "marker_raStepAlreadyDone", "маркерШагRAУжеВыполнен");
         out = replaceKey(out, "marker_rcStepAlreadyDone", "маркерШагИзмененийУжеВыполнен");
         out = replaceKey(out, "deleteEnabled", "удалениеВключено");
+
+        // Type5 reconcile (русские подписи; fallback для старых записей в adt_results).
+        out = out.replace("Type5 match — RA:", "Сверка type=5 — отчёты:");
+        out = out.replace("Type5 apply — RA:", "Применение type=5 — отчёты:");
+        out = out.replace("Type5 match/apply counters:", "Сверка type=5 — показатели:");
+        out = out.replace("Type5 diagnostics (top):", "Диагностика type=5 (топ):");
+        out = out.replace("NEW=", "новые=");
+        out = out.replace("CHANGED=", "изменённые=");
+        out = out.replace("UNCHANGED=", "безИзменений=");
+        out = out.replace("INVALID=", "некорректные=");
+        out = out.replace("AMBIGUOUS=", "неоднозначные=");
+        out = out.replace("; RC:", "; изменения:");
+        out = out.replace("inserted=", "добавлено=");
+        out = out.replace("deleted=", "удалено=");
+        out = out.replace("sums inserted (RA+RC)=", "сумм добавлено (отчёты+изменения)=");
+
         return out;
     }
 

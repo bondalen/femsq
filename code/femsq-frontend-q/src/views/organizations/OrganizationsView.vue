@@ -314,7 +314,7 @@ onMounted(() => {
 
 <style scoped>
 .organizations-view {
-  background: var(--q-background, #f5f6f8);
+  background: var(--femsq-bg-page);
   min-height: 100%;
 }
 
