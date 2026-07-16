@@ -41,7 +41,8 @@
       <div class="text-center q-mt-sm text-grey-7">Загрузка директории...</div>
     </q-card-section>
 
-    <q-card-section v-else>
+    <!-- compact: путь в шапке; баннер только если директории нет -->
+    <q-card-section v-else-if="!directory">
       <q-banner class="femsq-info-banner">
         <template v-slot:avatar>
           <q-icon name="info" color="primary" />

@@ -3,14 +3,105 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2026-07-13T12:55:00+03:00",
+      "lastUpdated": "2026-07-15T17:35:00+03:00",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0051",
+      "nextTaskId": "0054",
       "items": {
+        "0053": {
+          "task": {
+            "displayName": "Дерево сверки в логе: ОА / ОА прочие / изм. + группировка ошибок (completed, critical). № 0053",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "critical",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Type=5: nested spans ОА / ОА прочие; под каждым — собственно отчёты и изменения к базе соответствующего ra_type",
+                "NEW ≠ ошибки; группировка ошибок значение→номера Excel-строк",
+                "Изм. без резолва базы — отдельная ветка",
+                "Type=3: один ствол с NEW/CHANGED/ошибки (A1–A4) без ОА/прочие",
+                "Badge details open/closed: + / − (CSS)",
+                "Smoke март/июль SUMMARY; документация §9.3.8 + ops; sign-off"
+              ],
+              "description": "Иерархия Access-подобной сверки в adt_results. §9.3.8.0–9.3.8.5 закрыты: деревья type=5/3, A5-span, без задвоения flat WARN в SUMMARY, smoke март/июль (JAR 0.1.0.134; exec 1186/1188 type=5, 1183 type=3 apply+откат); sign-off оператора 2026-07-15.",
+              "links": {
+                "projectDocsRefs": ["module:backend.web", "module:frontend"],
+                "journalRefs": ["log:log-2026-07-15-001", "log:log-2026-07-15-002", "log:log-2026-07-15-003", "log:log-2026-07-15-004", "log:log-2026-07-15-005", "log:log-2026-07-15-006"],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#938-дерево-сверки-в-логе-оа--оа-прочие--изм--группировка-ошибок-задача-0053",
+                "documentation": "docs/development/notes/audit-log/ra-execution-operations.md"
+              },
+              "created": "2026-07-15",
+              "lastUpdated": "2026-07-15",
+              "completed": "2026-07-15"
+            }
+          }
+        },
+        "0052": {
+          "task": {
+          "displayName": "Stage 1 type=5: диапазон листа и классификация строк (completed, critical). № 0052",
+          "task-attributes": {
+              "status": "completed",
+              "priority": "critical",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Пустые строки в диапазоне — счётчик empty; не UNKNOWN_SIGN в топе фильтра",
+                "«ОА Аренда» — исключение только по Признак; агрегат в SUMMARY (не поштучно)",
+                "Нижняя граница диапазона — последняя значимая строка (whitelist / ОА Аренда / № с app-regex \\d{7}), не «последняя непустая в якоре»",
+                "femsq.audit.staging.type5.ra-num-regex (default \\d{7}) в application config; OTHER непустые без паттерна — поштучный WARN",
+                "rsc_row_pattern в runtime не использовать (или явно deprecate в docs)",
+                "Unit + smoke март/июль: диапазон и счётчики согласованы с шарой; время Stage 1 не деградирует",
+                "Документация ra-execution-operations.md + chat-plan §9.3.7; sign-off оператора"
+              ],
+              "description": "UAT type=5: диапазон/фильтр Stage 1. §9.3.7.1–9.3.7.5 закрыты (smoke 1175/1176; formal sign-off 2026-07-15 с G4; повтор подтверждён exec 1186/1188).",
+              "links": {
+                "projectDocsRefs": ["module:backend.web"],
+                "journalRefs": ["log:log-2026-07-14-008", "log:log-2026-07-14-009", "log:log-2026-07-14-010", "log:log-2026-07-14-011", "log:log-2026-07-14-012", "log:log-2026-07-15-007"],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#937-stage-1-type5-диапазон-и-классификация-строк-задача-0052",
+                "documentation": "docs/development/notes/audit-log/ra-execution-operations.md"
+              },
+              "created": "2026-07-14",
+              "lastUpdated": "2026-07-15",
+              "completed": "2026-07-15"
+            }
+          }
+        },
+        "0051": {
+          "task": {
+            "displayName": "Трассировка Excel-строки и построчные аномалии сверки type=3/5 (completed, critical). № 0051",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "critical",
+              "owner": "Александр",
+              "completionCriteria": [
+                "DDL: ags.ra_stg_ralp.ralprtRow INT NULL (+ опц. ralprsRow); пакет sql/26-0714 + MSSQL2012; Liquibase; apply на abs",
+                "Stage 1 заполняет rainRow (type=5) и ralprtRow (type=3) номером Excel-строки 1-based",
+                "SUMMARY/VERBOSE: каждая invalid/FK-аномалия type=3 — ⚠ с Excel-строкой, листом и причиной в духе Access",
+                "Type=5: построчные WARN для invalid/ambiguous/missing lookup с rainRow (не только топ-диагностика)",
+                "Пустой arrived, orphan delete и прочие нештатные ситуации из реестра A1–A9 учтены в логе или явно отложены с записью в плане",
+                "Smoke dry-run type=3 (март): число детальных ⚠ = некорректных в details; type=5 выборка с rainRow",
+                "Закрытие U10 / P5; документация ra-execution-operations.md и chat-plan §9.3.6 (formal 9.3.6.7; фильтр диапазона type=5 — задача 0052)"
+              ],
+              "description": "Blocker UAT U10 закрыт. §9.3.6.1–9.3.6.7 ✅; детализация в дереве сверки (0053); formal G3/U10/P5 2026-07-15.",
+              "links": {
+                "projectDocsRefs": ["module:backend.web"],
+                "journalRefs": ["log:log-2026-07-14-001", "log:log-2026-07-14-002", "log:log-2026-07-14-003", "log:log-2026-07-14-004", "log:log-2026-07-14-005", "log:log-2026-07-14-006", "log:log-2026-07-14-007", "log:log-2026-07-14-008", "log:log-2026-07-15-007"],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#936-трассировка-excel-строки-и-построчные-аномалии-задача-0051",
+                "documentation": "docs/development/notes/audit-log/ra-execution-operations.md",
+                "sqlPackage": "docs/development/notes/sql/26-0714/",
+                "dbUpgrade": "docs/deployment/db-upgrade-26-0714-ralp-excel-row.md"
+              },
+              "created": "2026-07-14",
+              "lastUpdated": "2026-07-15",
+              "completed": "2026-07-15"
+            }
+          }
+        },
         "0001": {
           "task": {
             "displayName": "Разработка системы FEMSQ (in-progress, critical). № 0001",
@@ -1621,14 +1712,14 @@
               "completionCriteria": [
                 "Dev: backend+frontend развёрнуты на alex-fedora/nb-win, smoke executeAudit type=5 и type=3 COMPLETED",
                 "UAT через AuditsView: dry-run и apply (где допустимо) для отчётов агентов и аренды земли",
-                "Задачи 0049 и 0050 закрыты: содержание лога и глобальные темы (реестр UAT U1 без blocker)",
+                "Задачи 0049, 0050, 0051, 0052 и 0053 закрыты: содержание лога, темы, Excel-строка/аномалии (U10), диапазон/фильтр Stage 1, дерево сверки type=5/3",
                 "Таблица замечаний UAT 9.3.3 закрыта, blocker исправлены",
                 "Prod: thin JAR развёрнут без полного переноса lib/; LibraryCompatibilityChecker OK",
-                "DDL adt_staging_log_level на prod (MSSQL2012/) при необходимости",
-                "Приёмка prod: dry-run ревизий type=5 и type=3",
+                "DDL adt_staging_log_level и ralprtRow (пакет 26-0714/MSSQL2012) на prod при необходимости",
+                "Приёмка prod: dry-run ревизий type=5 и type=3 с читаемыми аномалиями по строкам Excel",
                 "Документация: db-upgrade, журнал, chat-plan фаза 9"
               ],
-              "description": "Завершающий цикл: тестовое развёртывание на dev, приёмочное тестирование ревизий через веб-интерфейс (AllAgents + RALP), устранение замечаний (в т.ч. 0049 — читаемость лога), вывод в продуктив методом thin JAR (минимальный объём файлов при уже развёрнутом lib/).",
+              "description": "Завершающий цикл: тестовое развёртывание на dev, приёмочное тестирование ревизий через веб-интерфейс (AllAgents + RALP), устранение замечаний (0049/0050/0051 — читаемость лога), вывод в продуктив методом thin JAR (минимальный объём файлов при уже развёрнутом lib/).",
               "links": {
                 "projectDocsRefs": ["module:backend.web", "module:frontend", "environment:prod-fisheye"],
                 "journalRefs": [],
@@ -1636,7 +1727,7 @@
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#фаза-9-доработка-производительности-приёмка-и-вывод-в-продуктив"
               },
               "created": "2026-07-09",
-              "lastUpdated": "2026-07-13"
+              "lastUpdated": "2026-07-14"
             }
           }
         },

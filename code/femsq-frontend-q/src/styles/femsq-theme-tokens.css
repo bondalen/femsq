@@ -65,6 +65,12 @@ html[data-femsq-theme='kimbie-dark'] {
   --femsq-log-badge-info-fg: #d3af86;
   --femsq-log-badge-info-border: rgba(211, 175, 134, 0.25);
   --femsq-log-empty-text: rgba(211, 175, 134, 0.75);
+  /* Бордовое выделение некорректных значений — читаемо на тёплом warning-фоне */
+  --femsq-log-anomaly-value: #e07090;
+  /* Фиолетовый — номер Excel-строки / номер отчёта */
+  --femsq-log-anomaly-ref: #c9a0ff;
+  --femsq-log-scrollbar-thumb: rgba(209, 154, 102, 0.55);
+  --femsq-log-scrollbar-track: rgba(0, 0, 0, 0.25);
 
   color-scheme: dark;
 }
@@ -131,6 +137,12 @@ html[data-femsq-theme='vs-light'] {
   --femsq-log-badge-info-fg: #1e1e1e;
   --femsq-log-badge-info-border: #d4d4d4;
   --femsq-log-empty-text: #6e6e6e;
+  /* Бордовый на светлом warning-фоне */
+  --femsq-log-anomaly-value: #8b1a3a;
+  /* Фиолетовый — номер Excel-строки / номер отчёта */
+  --femsq-log-anomaly-ref: #6b3fa0;
+  --femsq-log-scrollbar-thumb: rgba(0, 0, 0, 0.35);
+  --femsq-log-scrollbar-track: rgba(0, 0, 0, 0.06);
 
   color-scheme: light;
 }

@@ -4,6 +4,7 @@ import com.femsq.database.config.ConfigurationFileManager;
 import com.femsq.database.config.ConfigurationValidator;
 import com.femsq.database.config.DatabaseConfigurationService;
 import com.femsq.database.connection.ConnectionFactory;
+import com.femsq.web.audit.stage2.RalpStage2Service;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -46,7 +47,8 @@ class RalpReconcileApplySmokeIT {
         try (ConnectionFactory factory = new ConnectionFactory(cfgService)) {
             ensureMarchBaseline(factory, restoreScript);
 
-            RalpReconcileService service = new RalpReconcileService(factory);
+            RalpReconcileService service = new RalpReconcileService(
+                    factory, new RalpStage2Service(factory));
 
             ReconcileResult marchDry = service.reconcile(new ReconcileContext(EXEC_MARCH, AUDIT_ID, false, FILE_TYPE));
             org.junit.jupiter.api.Assertions.assertFalse(marchDry.applied(), marchDry.message());
@@ -58,7 +60,7 @@ class RalpReconcileApplySmokeIT {
             ReconcileResult julyDry = service.reconcile(new ReconcileContext(EXEC_JULY, AUDIT_ID, false, FILE_TYPE));
             org.junit.jupiter.api.Assertions.assertFalse(julyDry.applied(), julyDry.message());
             org.junit.jupiter.api.Assertions.assertTrue(
-                    julyDry.message().contains("raInserted=828"),
+                    julyDry.message().contains("RA добавлено = 828"),
                     () -> "july dry-run: " + julyDry.message());
 
             ReconcileResult julyApply = service.reconcile(new ReconcileContext(EXEC_JULY, AUDIT_ID, true, FILE_TYPE));
@@ -69,9 +71,9 @@ class RalpReconcileApplySmokeIT {
             org.junit.jupiter.api.Assertions.assertEquals(1248, afterApply.ralpRaAu2026());
 
             String msg = julyApply.message();
-            org.junit.jupiter.api.Assertions.assertTrue(msg.contains("raInserted=828"), msg);
-            org.junit.jupiter.api.Assertions.assertTrue(msg.contains("auDemotedSent=0"), msg);
-            org.junit.jupiter.api.Assertions.assertTrue(msg.contains("auClosedInProcess=0"), msg);
+            org.junit.jupiter.api.Assertions.assertTrue(msg.contains("RA добавлено = 828"), msg);
+            org.junit.jupiter.api.Assertions.assertTrue(msg.contains("AU понижено (отправлен) = 0"), msg);
+            org.junit.jupiter.api.Assertions.assertTrue(msg.contains("AU закрыто в процессе = 0"), msg);
 
             int multiSent = readIntViaFactory(factory,
                     """

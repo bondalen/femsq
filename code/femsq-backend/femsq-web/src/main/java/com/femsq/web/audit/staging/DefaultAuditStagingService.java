@@ -59,6 +59,10 @@ public class DefaultAuditStagingService implements AuditStagingService {
     private static final String HTML_ORANGE_ID = "#D06000";
     private static final String HTML_GRAY_NOTE = "#606060";
     private static final int FILTERED_SIGN_TOP_LIMIT = 5;
+    /**
+     * Максимум поштучных WARN для OTHER type=5 (внутри диапазона + хвост); остаток — одной строкой.
+     */
+    private static final int TYPE5_OTHER_DETAIL_LIMIT = 40;
     private static final Set<String> TYPE5_ALLOWED_SIGNS = Set.of("оа", "оа изм", "оа прочие");
     /**
      * Логические колонки staging для описания вертикального диапазона на листе (аналог VBA {@code ra_RA} по ключевому столбцу).
@@ -185,7 +189,8 @@ public class DefaultAuditStagingService implements AuditStagingService {
                 AuditLogLevel.INFO,
                 AuditLogScope.FILE,
                 "STAGING_START",
-                "<P>Staging start: table=" + escape(config.rscStgTbl()) + ", sheet=" + escape(config.rscSheet()) + "</P>",
+                "<P>Начало загрузки в промежуточную таблицу: таблица = " + escape(friendlyStagingTable(config.rscStgTbl()))
+                        + ", лист = «" + escape(config.rscSheet()) + "»</P>",
                 withPresentationMeta(
                         Map.of(
                                 "auditId", String.valueOf(context.getAuditId()),
@@ -275,7 +280,12 @@ public class DefaultAuditStagingService implements AuditStagingService {
         List<RaColMap> mappings = mappingRepository.getColumnMappings(config.rscKey());
         Map<String, Integer> excelColumns = columnLocator.locateColumns(headerRow, mappings);
         int rangeColumnIndex0 = resolveRangeColumnIndex0(excelColumns, mappings);
-        SheetDataRangeSpec dataRange = buildSheetDataRangeSpec(sheet, headerRowIndex, rangeColumnIndex0);
+        java.util.regex.Pattern type5RaNumPattern = allowedSigns != null
+                ? Type5SignFilterClassifier.compileRaNumPattern(
+                        auditStagingProperties.getType5().getRaNumRegex())
+                : null;
+        SheetDataRangeSpec dataRange = buildSheetDataRangeSpec(
+                sheet, headerRowIndex, rangeColumnIndex0, excelColumns, allowedSigns, type5RaNumPattern);
         appendSheetFound(context, config, sheet, dataRange);
         Set<String> requiredColumns = mappings.stream()
                 .filter(mapping -> Boolean.TRUE.equals(mapping.rcmRequired()))
@@ -287,8 +297,16 @@ public class DefaultAuditStagingService implements AuditStagingService {
         Map<String, Integer> dbColumnTypes = readColumnTypes(connection, config.rscStgTbl());
         Map<String, Integer> dbColumnSizes = readColumnSizes(connection, config.rscStgTbl());
         String execColumn = findExecColumn(dbColumnTypes.keySet());
+        String excelRowColumn = StagingExcelRowColumns.find(dbColumnTypes.keySet());
 
-        List<String> insertColumns = resolveInsertColumns(mappings, excelColumns, dbColumnTypes.keySet(), execColumn, context.getExecutionKey());
+        List<String> insertColumns = resolveInsertColumns(
+                mappings,
+                excelColumns,
+                dbColumnTypes.keySet(),
+                execColumn,
+                context.getExecutionKey(),
+                excelRowColumn
+        );
         if (insertColumns.isEmpty()) {
             return 0;
         }
@@ -296,28 +314,74 @@ public class DefaultAuditStagingService implements AuditStagingService {
         String insertSql = buildInsertSql(config.rscStgTbl(), insertColumns);
         int inserted = 0;
         int batchCount = 0;
-        SheetLoadStats stats = new SheetLoadStats(sheet.getSheetName(), config.rscStgTbl(), headerRowIndex + 1, sheet.getLastRowNum());
+        int firstDataRowIndex0 = headerRowIndex + 1;
+        int lastDataRowIndex0 = Math.max(firstDataRowIndex0 - 1, dataRange.lastRowOneBased() - 1);
+        int poiLastRowIndex0 = sheet.getLastRowNum();
+        int beyondRangeRows = Math.max(0, poiLastRowIndex0 - lastDataRowIndex0);
+        SheetLoadStats stats = new SheetLoadStats(
+                sheet.getSheetName(),
+                config.rscStgTbl(),
+                dataRange.firstRowOneBased(),
+                dataRange.lastRowOneBased()
+        );
+        stats.skippedBeyondRange = beyondRangeRows;
         boolean logEachStagingRow = stagingLogLevel.logEachStagingRow();
         boolean emitRowParagraphPreview = stagingLogLevel.emitRowParagraphPreview();
         boolean emitSummaryProgress = stagingLogLevel.emitSummaryProgress();
         boolean emitParseIssueLog = stagingLogLevel != StagingLogLevel.MINIMAL;
         int summaryProgressInterval = stagingLogLevel.summaryProgressInterval();
+        // Накопитель пустых строк → одно INFO SUMMARY вместо тысяч ⚠.
+        EmptyRowSkipBatch emptyRowSkipBatch = new EmptyRowSkipBatch();
         try (PreparedStatement statement = logEachStagingRow
                 ? connection.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)
                 : connection.prepareStatement(insertSql)) {
-            for (int rowIndex = headerRowIndex + 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
+            for (int rowIndex = firstDataRowIndex0; rowIndex <= lastDataRowIndex0; rowIndex++) {
                 stats.sourceRows++;
                 Row row = sheet.getRow(rowIndex);
                 if (row == null) {
                     stats.skippedNullRow++;
+                    if (emitSummaryProgress && !emitRowParagraphPreview) {
+                        emptyRowSkipBatch.add(rowIndex + 1);
+                    }
                     continue;
                 }
                 if (allowedSigns != null) {
                     String signRaw = readStringByColumnName(row, excelColumns, "rainSign");
-                    String normalizedSign = normalizeSign(signRaw);
-                    if (!allowedSigns.contains(normalizedSign)) {
+                    String raNumRaw = readStringByColumnName(row, excelColumns, "rainRaNum");
+                    Type5SignFilterClassifier.Decision signDecision =
+                            Type5SignFilterClassifier.classify(signRaw, raNumRaw, allowedSigns);
+                    if (signDecision.kind() == Type5SignFilterClassifier.Kind.EMPTY) {
+                        // Пустой резерв / нет № и признака — не UNKNOWN_SIGN в топе фильтра.
+                        stats.skippedEmptyBeforeSign++;
+                        if (emitSummaryProgress && !emitRowParagraphPreview) {
+                            emptyRowSkipBatch.add(rowIndex + 1);
+                        }
+                        continue;
+                    }
+                    if (signDecision.kind() == Type5SignFilterClassifier.Kind.FILTERED_ARENDA
+                            || signDecision.kind() == Type5SignFilterClassifier.Kind.FILTERED_OTHER) {
+                        flushEmptyRowSkipBatch(context, sheet, emptyRowSkipBatch);
                         stats.filteredBySign++;
-                        stats.filteredSignCounts.compute(safeSignLabel(signRaw), (k, v) -> v == null ? 1 : v + 1);
+                        if (signDecision.kind() == Type5SignFilterClassifier.Kind.FILTERED_ARENDA) {
+                            stats.filteredArendaBySign++;
+                        }
+                        String label = signDecision.label() != null
+                                ? signDecision.label()
+                                : Type5SignFilterClassifier.UNKNOWN_SIGN_LABEL;
+                        stats.filteredSignCounts.compute(label, (k, v) -> v == null ? 1 : v + 1);
+                        if (type5RaNumPattern != null
+                                && Type5SignFilterClassifier.isOtherWithoutRaNumMarker(
+                                        signDecision, raNumRaw, type5RaNumPattern)) {
+                            recordType5OtherRow(
+                                    context,
+                                    sheet,
+                                    rowIndex + 1,
+                                    signRaw,
+                                    raNumRaw,
+                                    stats,
+                                    emitParseIssueLog
+                            );
+                        }
                         continue;
                     }
                     stats.acceptedBySign++;
@@ -332,20 +396,28 @@ public class DefaultAuditStagingService implements AuditStagingService {
                         dbColumnSizes,
                         execColumn,
                         context.getExecutionKey(),
+                        excelRowColumn,
+                        rowIndex + 1,
                         requiredColumns
                 );
                 if (!outcome.insertable()) {
+                    // Пустая строка (null Excel-row уже выше): без бизнес-данных — не «ошибка обязательных полей».
                     if (outcome.skippedDueToRequiredParseError()) {
                         stats.skippedParseError++;
+                    } else if (!outcome.hasBusinessData()) {
+                        stats.skippedNoBusinessData++;
                     } else if (outcome.missingRequiredData()) {
                         stats.skippedMissingRequired++;
                     } else {
                         stats.skippedNoBusinessData++;
                     }
-                    if (emitParseIssueLog && !outcome.parseIssues().isEmpty()) {
+                    boolean loggedParseIssues = emitParseIssueLog && !outcome.parseIssues().isEmpty();
+                    if (loggedParseIssues) {
+                        flushEmptyRowSkipBatch(context, sheet, emptyRowSkipBatch);
                         appendStagingRowParseIssues(context, sheet, rowIndex + 1, outcome.parseIssues());
                     }
                     if (emitRowParagraphPreview) {
+                        flushEmptyRowSkipBatch(context, sheet, emptyRowSkipBatch);
                         stats.rowParagraphTotal++;
                         stats.rowParagraphSampled++;
                         String html = buildRowParagraphVbaHtml(row, excelColumns, rowIndex + 1, false, -1L);
@@ -367,13 +439,20 @@ public class DefaultAuditStagingService implements AuditStagingService {
                                 )
                         );
                     } else if (emitSummaryProgress) {
-                        String reason = resolveSummarySkipReason(outcome, columnExcelHeaders);
-                        if (reason != null) {
-                            appendSummaryIssue(context, sheet, rowIndex + 1, reason);
+                        boolean emptyLike = !outcome.hasBusinessData() && !outcome.skippedDueToRequiredParseError();
+                        if (emptyLike && !loggedParseIssues) {
+                            emptyRowSkipBatch.add(rowIndex + 1);
+                        } else if (!emptyLike) {
+                            flushEmptyRowSkipBatch(context, sheet, emptyRowSkipBatch);
+                            String reason = resolveSummarySkipReason(outcome, columnExcelHeaders);
+                            if (reason != null) {
+                                appendSummaryIssue(context, sheet, rowIndex + 1, reason);
+                            }
                         }
                     }
                     continue;
                 }
+                flushEmptyRowSkipBatch(context, sheet, emptyRowSkipBatch);
                 if (outcome.optionalParseErrorFields() > 0) {
                     stats.parseErrorFields += outcome.optionalParseErrorFields();
                 }
@@ -444,13 +523,33 @@ public class DefaultAuditStagingService implements AuditStagingService {
             if (!logEachStagingRow && batchCount > 0) {
                 inserted += executeBatch(statement);
             }
+            flushEmptyRowSkipBatch(context, sheet, emptyRowSkipBatch);
+        }
+        if (allowedSigns != null && type5RaNumPattern != null && stagingLogLevel != StagingLogLevel.MINIMAL) {
+            scanType5OtherBeyondRange(
+                    context,
+                    sheet,
+                    lastDataRowIndex0,
+                    poiLastRowIndex0,
+                    excelColumns,
+                    allowedSigns,
+                    type5RaNumPattern,
+                    stats,
+                    emitParseIssueLog
+            );
+        }
+        if (beyondRangeRows > 0 && stagingLogLevel != StagingLogLevel.MINIMAL) {
+            appendBeyondDataRangeInfo(context, sheet, dataRange, beyondRangeRows);
         }
         stats.insertedRows = inserted;
         logSheetStats(context, stats, stagingLogLevel);
+        appendType5OtherOverflowIfNeeded(context, sheet, stats, stagingLogLevel);
         Instant stagingEndedAt = Instant.now();
         context.endSpan(stagingSpanId, AuditLogLevel.INFO, AuditLogScope.FILE, "STAGING_END",
-                "<P>Staging end: table=" + escape(config.rscStgTbl()) + ", sheet=" + escape(sheet.getSheetName())
-                        + ", inserted=" + inserted + ", duration=" + formatDuration(stagingStartedAt, stagingEndedAt) + "</P>",
+                "<P>Завершение загрузки в промежуточную таблицу: таблица = " + escape(friendlyStagingTable(config.rscStgTbl()))
+                        + ", лист = «" + escape(sheet.getSheetName()) + "»"
+                        + ", добавлено = " + inserted
+                        + ", длительность = " + formatDuration(stagingStartedAt, stagingEndedAt) + "</P>",
                 withPresentationMeta(
                         Map.of(
                                 "auditId", String.valueOf(context.getAuditId()),
@@ -469,29 +568,53 @@ public class DefaultAuditStagingService implements AuditStagingService {
     private void logSheetStats(AuditExecutionContext context, SheetLoadStats stats, StagingLogLevel stagingLogLevel) {
         String signStats = formatSignStats(stats.acceptedSignCounts);
         String filteredSignsTop = formatTopN(stats.filteredSignCounts, FILTERED_SIGN_TOP_LIMIT);
-        String message = "[AuditStaging] sheet=" + stats.sheetName
+        long emptySkippedTotal = stats.skippedNullRow + stats.skippedEmptyBeforeSign;
+        String techMessage = "[AuditStaging] sheet=" + stats.sheetName
                 + ", table=" + stats.stagingTable
                 + ", rowRange=" + stats.firstDataRow + "-" + stats.lastDataRow
                 + ", sourceRows=" + stats.sourceRows
                 + ", acceptedBySign=" + stats.acceptedBySign
                 + ", filteredBySign=" + stats.filteredBySign
+                + ", filteredArendaBySign=" + stats.filteredArendaBySign
+                + ", filteredOtherWithoutMarker=" + stats.filteredOtherWithoutMarker
                 + ", filteredSignsTop=" + filteredSignsTop
                 + ", inserted=" + stats.insertedRows
                 + ", skippedNullRow=" + stats.skippedNullRow
+                + ", skippedEmptyBeforeSign=" + stats.skippedEmptyBeforeSign
                 + ", skippedNoBusinessData=" + stats.skippedNoBusinessData
                 + ", skippedMissingRequired=" + stats.skippedMissingRequired
+                + ", skippedBeyondRange=" + stats.skippedBeyondRange
                 + ", parseErrorFields=" + stats.parseErrorFields
                 + ", skippedParseError=" + stats.skippedParseError
                 + ", rowsWithTruncation=" + stats.rowsWithTruncation
                 + ", truncatedFields=" + stats.totalTruncatedFields
                 + ", signStats=" + signStats;
-        log.info(message);
+        log.info(techMessage);
+        String humanMessage = "[Загрузка промежуточной таблицы] лист = «" + stats.sheetName + "»"
+                + ", таблица = " + friendlyStagingTable(stats.stagingTable)
+                + ", диапазон строк = " + stats.firstDataRow + "–" + stats.lastDataRow
+                + ", строк в диапазоне = " + stats.sourceRows
+                + ", принято по типу = " + stats.acceptedBySign
+                + ", отфильтровано по типу = " + stats.filteredBySign
+                + ", исключено по признаку «ОА Аренда» = " + stats.filteredArendaBySign
+                + ", прочих без маркера № = " + stats.filteredOtherWithoutMarker
+                + ", топ отфильтрованных типов = " + filteredSignsTop
+                + ", добавлено = " + stats.insertedRows
+                + ", пропущено пустых строк = " + emptySkippedTotal
+                + ", пропущено без бизнес-данных = " + stats.skippedNoBusinessData
+                + ", пропущено без обязательных полей = " + stats.skippedMissingRequired
+                + ", за пределами диапазона = " + stats.skippedBeyondRange
+                + ", ошибок формата полей = " + stats.parseErrorFields
+                + ", пропущено из‑за ошибки формата = " + stats.skippedParseError
+                + ", строк с усечением = " + stats.rowsWithTruncation
+                + ", усечённых полей = " + stats.totalTruncatedFields
+                + ", статистика по типам = " + signStats;
         if (stagingLogLevel != StagingLogLevel.MINIMAL) {
             context.append(
                     AuditLogLevel.INFO,
                     AuditLogScope.FILE,
                     "STAGING_LOAD_STATS",
-                    "<P>" + message + "</P>",
+                    "<P>" + escape(humanMessage) + "</P>",
                     withPresentationMeta(
                             stagingStatsMeta(context, stats, filteredSignsTop),
                             "INFO",
@@ -500,11 +623,16 @@ public class DefaultAuditStagingService implements AuditStagingService {
                     )
             );
         } else {
-            String minimalHtml = "<P>Итог, лист «" + escape(stats.sheetName) + "»: исходных="
-                    + stats.sourceRows + ", принято=" + stats.insertedRows
-                    + ", пропущено (нет данных)=" + (stats.skippedNullRow + stats.skippedNoBusinessData + stats.skippedMissingRequired)
-                    + ", ошибки формата (поля NULL)=" + stats.parseErrorFields
-                    + ", пропущено (обязат. поле, формат)=" + stats.skippedParseError
+            String minimalHtml = "<P>Итог, лист «" + escape(stats.sheetName) + "»: строк в диапазоне = "
+                    + stats.sourceRows + ", добавлено = " + stats.insertedRows
+                    + ", пропущено (нет данных) = "
+                    + (stats.skippedNullRow + stats.skippedEmptyBeforeSign
+                    + stats.skippedNoBusinessData + stats.skippedMissingRequired)
+                    + ", исключено «ОА Аренда» = " + stats.filteredArendaBySign
+                    + ", прочих без маркера № = " + stats.filteredOtherWithoutMarker
+                    + ", за пределами диапазона = " + stats.skippedBeyondRange
+                    + ", ошибки формата (поля NULL) = " + stats.parseErrorFields
+                    + ", пропущено (обязат. поле, формат) = " + stats.skippedParseError
                     + ".</P>";
             context.append(
                     AuditLogLevel.INFO,
@@ -524,7 +652,7 @@ public class DefaultAuditStagingService implements AuditStagingService {
                     AuditLogLevel.INFO,
                     AuditLogScope.FILE,
                     "ROW_PARAGRAPH_PREVIEW_SUMMARY",
-                    "<P>Row-level staging: залогировано сообщений " + stats.rowParagraphSampled
+                    "<P>Подробный лог строк staging: залогировано сообщений " + stats.rowParagraphSampled
                             + " по " + stats.rowParagraphTotal + " строкам (без лимита, полный вывод).</P>",
                     withPresentationMeta(
                             Map.of(
@@ -543,6 +671,164 @@ public class DefaultAuditStagingService implements AuditStagingService {
         }
     }
 
+    /**
+     * Сообщает, что хвост листа за найденным диапазоном не разбирался.
+     */
+    private void appendBeyondDataRangeInfo(
+            AuditExecutionContext context,
+            Sheet sheet,
+            SheetDataRangeSpec range,
+            int beyondRangeRows
+    ) {
+        String text = StagingRowSkipReasonFormatter.formatBeyondDataRange(
+                range.address(),
+                range.lastRowOneBased(),
+                beyondRangeRows
+        );
+        context.append(
+                AuditLogLevel.INFO,
+                AuditLogScope.FILE,
+                "STAGING_BEYOND_DATA_RANGE",
+                "<P>" + escape(text) + "</P>",
+                withPresentationMeta(
+                        Map.of(
+                                "auditId", String.valueOf(context.getAuditId()),
+                                "sheetName", String.valueOf(sheet.getSheetName()),
+                                "address", String.valueOf(range.address()),
+                                "lastRow", String.valueOf(range.lastRowOneBased()),
+                                "beyondRows", String.valueOf(beyondRangeRows)
+                        ),
+                        "INFO",
+                        "SILVER",
+                        "NORMAL"
+                )
+        );
+    }
+
+    /**
+     * Сканирует хвост листа за нижней границей диапазона на OTHER без маркера № ОА.
+     */
+    private void scanType5OtherBeyondRange(
+            AuditExecutionContext context,
+            Sheet sheet,
+            int lastDataRowIndex0,
+            int poiLastRowIndex0,
+            Map<String, Integer> excelColumns,
+            Set<String> allowedSigns,
+            java.util.regex.Pattern type5RaNumPattern,
+            SheetLoadStats stats,
+            boolean emitDetail
+    ) {
+        for (int rowIndex = lastDataRowIndex0 + 1; rowIndex <= poiLastRowIndex0; rowIndex++) {
+            Row row = sheet.getRow(rowIndex);
+            if (row == null) {
+                continue;
+            }
+            String signRaw = readStringByColumnName(row, excelColumns, "rainSign");
+            String raNumRaw = readStringByColumnName(row, excelColumns, "rainRaNum");
+            Type5SignFilterClassifier.Decision decision =
+                    Type5SignFilterClassifier.classify(signRaw, raNumRaw, allowedSigns);
+            if (Type5SignFilterClassifier.isOtherWithoutRaNumMarker(
+                    decision, raNumRaw, type5RaNumPattern)) {
+                recordType5OtherRow(
+                        context, sheet, rowIndex + 1, signRaw, raNumRaw, stats, emitDetail);
+            }
+        }
+    }
+
+    /**
+     * Учитывает OTHER type=5 и при необходимости пишет поштучный WARN (лимит топа).
+     */
+    private void recordType5OtherRow(
+            AuditExecutionContext context,
+            Sheet sheet,
+            int excelRowOneBased,
+            String signRaw,
+            String raNumRaw,
+            SheetLoadStats stats,
+            boolean emitDetail
+    ) {
+        stats.filteredOtherWithoutMarker++;
+        if (!emitDetail || stats.filteredOtherDetailsLogged >= TYPE5_OTHER_DETAIL_LIMIT) {
+            return;
+        }
+        String reason = StagingRowSkipReasonFormatter.formatType5OtherWithoutMarker(signRaw, raNumRaw);
+        context.append(
+                AuditLogLevel.WARNING,
+                AuditLogScope.FILE,
+                "STAGING_TYPE5_OTHER",
+                "<P>⚠ Excel-строка " + excelRowOneBased + ": " + escape(reason) + ".</P>",
+                withPresentationMeta(
+                        Map.of(
+                                "auditId", String.valueOf(context.getAuditId()),
+                                "sheetName", String.valueOf(sheet.getSheetName()),
+                                "rowIndex", String.valueOf(excelRowOneBased),
+                                "reason", reason,
+                                "sign", signRaw == null ? "" : signRaw,
+                                "raNum", raNumRaw == null ? "" : raNumRaw
+                        ),
+                        "WARN",
+                        "ORANGE",
+                        "NORMAL"
+                )
+        );
+        stats.filteredOtherDetailsLogged++;
+    }
+
+    /**
+     * Пишет INFO, если OTHER больше лимита поштучных WARN.
+     */
+    private void appendType5OtherOverflowIfNeeded(
+            AuditExecutionContext context,
+            Sheet sheet,
+            SheetLoadStats stats,
+            StagingLogLevel stagingLogLevel
+    ) {
+        if (stagingLogLevel == StagingLogLevel.MINIMAL) {
+            return;
+        }
+        long remaining = stats.filteredOtherWithoutMarker - stats.filteredOtherDetailsLogged;
+        if (remaining <= 0) {
+            return;
+        }
+        String text = StagingRowSkipReasonFormatter.formatType5OtherOverflow((int) remaining);
+        context.append(
+                AuditLogLevel.INFO,
+                AuditLogScope.FILE,
+                "STAGING_TYPE5_OTHER_OVERFLOW",
+                "<P>" + escape(text) + ".</P>",
+                withPresentationMeta(
+                        Map.of(
+                                "auditId", String.valueOf(context.getAuditId()),
+                                "sheetName", String.valueOf(sheet.getSheetName()),
+                                "remaining", String.valueOf(remaining),
+                                "logged", String.valueOf(stats.filteredOtherDetailsLogged),
+                                "total", String.valueOf(stats.filteredOtherWithoutMarker)
+                        ),
+                        "INFO",
+                        "SILVER",
+                        "NORMAL"
+                )
+        );
+    }
+
+    /**
+     * Краткое имя staging-таблицы для пользовательского лога.
+     */
+    private String friendlyStagingTable(String tableName) {
+        if (tableName == null || tableName.isBlank()) {
+            return "(таблица не указана)";
+        }
+        return switch (tableName.trim().toLowerCase(Locale.ROOT)) {
+            case "ags.ra_stg_ra" -> "промежуточная РА";
+            case "ags.ra_stg_cn_prdoc" -> "промежуточная CN_PrDoc";
+            case "ags.ra_stg_ralp" -> "промежуточная RALP";
+            case "ags.ra_stg_ralp_sm" -> "промежуточная RALP_SM";
+            case "ags.ra_stg_agfee" -> "промежуточная AgFee";
+            default -> tableName;
+        };
+    }
+
     private StagingLogLevel resolveStagingLogLevel(AuditExecutionContext context) {
         if (context.getStagingLogLevel() != null) {
             return context.getStagingLogLevel();
@@ -555,7 +841,7 @@ public class DefaultAuditStagingService implements AuditStagingService {
                 AuditLogLevel.INFO,
                 AuditLogScope.FILE,
                 "STAGING_PROGRESS",
-                "<P>Прогресс: Excel-строка " + excelRowOneBased + " — внесено в staging: " + inserted + "</P>",
+                "<P>Прогресс: Excel-строка " + excelRowOneBased + " — внесено в промежуточную таблицу: " + inserted + "</P>",
                 withPresentationMeta(
                         Map.of(
                                 "auditId", String.valueOf(context.getAuditId()),
@@ -614,14 +900,14 @@ public class DefaultAuditStagingService implements AuditStagingService {
         if (outcome.skippedDueToRequiredParseError()) {
             return null;
         }
+        if (!outcome.hasBusinessData()) {
+            return null;
+        }
         if (outcome.missingRequiredData()) {
             return StagingRowSkipReasonFormatter.formatMissingRequiredFields(
                     outcome.missingRequiredColumns(),
                     columnExcelHeaders
             );
-        }
-        if (!outcome.hasBusinessData()) {
-            return "пропущено — в строке нет данных";
         }
         return null;
     }
@@ -644,6 +930,78 @@ public class DefaultAuditStagingService implements AuditStagingService {
                         "NORMAL"
                 )
         );
+    }
+
+    /**
+     * Сбрасывает накопленный диапазон пустых строк одним INFO-сообщением SUMMARY.
+     */
+    private void flushEmptyRowSkipBatch(AuditExecutionContext context, Sheet sheet, EmptyRowSkipBatch batch) {
+        if (batch == null || batch.isEmpty()) {
+            return;
+        }
+        String reason = StagingRowSkipReasonFormatter.formatEmptyRowsBatch(
+                batch.firstRow(),
+                batch.lastRow(),
+                batch.count()
+        );
+        context.append(
+                AuditLogLevel.INFO,
+                AuditLogScope.FILE,
+                "STAGING_EMPTY_ROWS_BATCH",
+                "<P>" + escape(reason) + ".</P>",
+                withPresentationMeta(
+                        Map.of(
+                                "auditId", String.valueOf(context.getAuditId()),
+                                "sheetName", String.valueOf(sheet.getSheetName()),
+                                "firstRow", String.valueOf(batch.firstRow()),
+                                "lastRow", String.valueOf(batch.lastRow()),
+                                "count", String.valueOf(batch.count())
+                        ),
+                        "INFO",
+                        "SILVER",
+                        "NORMAL"
+                )
+        );
+        batch.clear();
+    }
+
+    /**
+     * Непрерывный диапазон пустых Excel-строк для пакетного лога SUMMARY.
+     */
+    private static final class EmptyRowSkipBatch {
+        private int firstRow;
+        private int lastRow;
+        private int count;
+
+        private void add(int excelRowOneBased) {
+            if (count == 0) {
+                firstRow = excelRowOneBased;
+            }
+            lastRow = excelRowOneBased;
+            count++;
+        }
+
+        private boolean isEmpty() {
+            return count == 0;
+        }
+
+        private int firstRow() {
+            return firstRow;
+        }
+
+        private int lastRow() {
+            return lastRow;
+        }
+
+        private int count() {
+            return count;
+        }
+
+        private void clear() {
+            firstRow = 0;
+            lastRow = 0;
+            count = 0;
+        }
     }
 
     /**
@@ -842,9 +1200,21 @@ public class DefaultAuditStagingService implements AuditStagingService {
     }
 
     /**
-     * Вертикальный диапазон в одной колонке: от первой строки под заголовком до последней непустой ячейки (нумерация строк Excel, 1-based).
+     * Вертикальный диапазон в одной колонке: от первой строки под заголовком до нижней границы.
+     * <p>
+     * Для type=5 ({@code allowedSigns != null}) нижняя граница — последняя <em>значимая</em> строка
+     * (whitelist / «ОА Аренда» / № ОА с {@code type5RaNumPattern}), а не последняя непустая в якоре.
+     * Для прочих типов — по-прежнему последняя непустая ячейка в колонке диапазона.
+     * </p>
      */
-    private SheetDataRangeSpec buildSheetDataRangeSpec(Sheet sheet, int headerRowIndex, int rangeColumnIndex0) {
+    private SheetDataRangeSpec buildSheetDataRangeSpec(
+            Sheet sheet,
+            int headerRowIndex,
+            int rangeColumnIndex0,
+            Map<String, Integer> excelColumns,
+            Set<String> allowedSigns,
+            java.util.regex.Pattern type5RaNumPattern
+    ) {
         int firstDataRowIndex = headerRowIndex + 1;
         int firstRowOneBased = firstDataRowIndex + 1;
         String colLetters = CellReference.convertNumToColString(rangeColumnIndex0);
@@ -853,20 +1223,69 @@ public class DefaultAuditStagingService implements AuditStagingService {
             String address = "$" + colLetters + "$" + firstRowOneBased + ":$" + colLetters + "$" + firstRowOneBased;
             return new SheetDataRangeSpec(rangeColumnIndex0 + 1, firstRowOneBased, firstRowOneBased, address);
         }
-        int lastNonEmpty = -1;
+        int lastDataRowIndex0;
+        if (allowedSigns != null && type5RaNumPattern != null) {
+            lastDataRowIndex0 = findLastSignificantType5RowIndex0(
+                    sheet, firstDataRowIndex, lastPoi, excelColumns, allowedSigns, type5RaNumPattern);
+        } else {
+            lastDataRowIndex0 = findLastNonEmptyInColumnIndex0(sheet, firstDataRowIndex, lastPoi, rangeColumnIndex0);
+        }
+        int lastRowOneBased = lastDataRowIndex0 >= 0 ? lastDataRowIndex0 + 1 : firstRowOneBased;
+        String address = "$" + colLetters + "$" + firstRowOneBased + ":$" + colLetters + "$" + lastRowOneBased;
+        return new SheetDataRangeSpec(rangeColumnIndex0 + 1, firstRowOneBased, lastRowOneBased, address);
+    }
+
+    /**
+     * Индекс последней значимой строки type=5 (0-based) или {@code -1}, если таких нет.
+     */
+    private int findLastSignificantType5RowIndex0(
+            Sheet sheet,
+            int firstDataRowIndex,
+            int lastPoi,
+            Map<String, Integer> excelColumns,
+            Set<String> allowedSigns,
+            java.util.regex.Pattern type5RaNumPattern
+    ) {
+        Integer signCol = excelColumns.get("rainSign");
+        Integer raNumCol = excelColumns.get("rainRaNum");
+        if (signCol == null && raNumCol == null) {
+            return findLastNonEmptyInColumnIndex0(sheet, firstDataRowIndex, lastPoi,
+                    excelColumns.values().stream().min(Integer::compareTo).orElse(0));
+        }
+        for (int r = lastPoi; r >= firstDataRowIndex; r--) {
+            Row row = sheet.getRow(r);
+            if (row == null) {
+                continue;
+            }
+            String signRaw = signCol != null ? cellReader.readString(row.getCell(signCol)) : null;
+            String raNumRaw = raNumCol != null ? cellReader.readString(row.getCell(raNumCol)) : null;
+            if (Type5SignFilterClassifier.isSignificantForDataRange(
+                    signRaw, raNumRaw, allowedSigns, type5RaNumPattern)) {
+                return r;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Индекс последней непустой ячейки в колонке (0-based) или {@code -1}.
+     */
+    private int findLastNonEmptyInColumnIndex0(
+            Sheet sheet,
+            int firstDataRowIndex,
+            int lastPoi,
+            int rangeColumnIndex0
+    ) {
         for (int r = lastPoi; r >= firstDataRowIndex; r--) {
             Row row = sheet.getRow(r);
             if (row == null) {
                 continue;
             }
             if (cellReader.readString(row.getCell(rangeColumnIndex0)) != null) {
-                lastNonEmpty = r;
-                break;
+                return r;
             }
         }
-        int lastRowOneBased = lastNonEmpty >= 0 ? lastNonEmpty + 1 : firstRowOneBased;
-        String address = "$" + colLetters + "$" + firstRowOneBased + ":$" + colLetters + "$" + lastRowOneBased;
-        return new SheetDataRangeSpec(rangeColumnIndex0 + 1, firstRowOneBased, lastRowOneBased, address);
+        return -1;
     }
 
     /**
@@ -904,20 +1323,6 @@ public class DefaultAuditStagingService implements AuditStagingService {
         return value == null ? "" : value;
     }
 
-    private String normalizeSign(String value) {
-        if (value == null) {
-            return "";
-        }
-        return value.trim().toLowerCase(Locale.ROOT);
-    }
-
-    private String safeSignLabel(String value) {
-        if (value == null || value.trim().isEmpty()) {
-            return "UNKNOWN_SIGN";
-        }
-        return value.trim();
-    }
-
     private Set<String> resolveAllowedSigns(RaSheetConf config, boolean isType5) {
         if (!isType5) {
             return null;
@@ -926,7 +1331,7 @@ public class DefaultAuditStagingService implements AuditStagingService {
             return TYPE5_ALLOWED_SIGNS;
         }
         Set<String> configured = java.util.Arrays.stream(config.rscSignWhitelist().split("[,;\\n]+"))
-                .map(this::normalizeSign)
+                .map(Type5SignFilterClassifier::normalizeSign)
                 .filter(value -> !value.isBlank())
                 .collect(Collectors.toCollection(LinkedHashSet::new));
         return configured.isEmpty() ? TYPE5_ALLOWED_SIGNS : configured;
@@ -1014,6 +1419,9 @@ public class DefaultAuditStagingService implements AuditStagingService {
         meta.put("sourceRows", String.valueOf(stats.sourceRows));
         meta.put("acceptedBySign", String.valueOf(stats.acceptedBySign));
         meta.put("filteredBySign", String.valueOf(stats.filteredBySign));
+        meta.put("filteredArendaBySign", String.valueOf(stats.filteredArendaBySign));
+        meta.put("filteredOtherWithoutMarker", String.valueOf(stats.filteredOtherWithoutMarker));
+        meta.put("skippedEmptyBeforeSign", String.valueOf(stats.skippedEmptyBeforeSign));
         meta.put("filteredSignsTop", filteredSignsTop);
         meta.put("insertedRows", String.valueOf(stats.insertedRows));
         meta.put("rowParagraphSampled", String.valueOf(stats.rowParagraphSampled));
@@ -1082,12 +1490,17 @@ public class DefaultAuditStagingService implements AuditStagingService {
                 .orElse(null);
     }
 
+    /**
+     * Собирает список колонок INSERT: {@code *_exec_key}, колонка Excel-строки (если есть),
+     * затем поля из {@code ra_col_map}, найденные на листе.
+     */
     private List<String> resolveInsertColumns(
             List<RaColMap> mappings,
             Map<String, Integer> excelColumns,
             Set<String> dbColumns,
             String execColumn,
-            Long executionKey
+            Long executionKey,
+            String excelRowColumn
     ) {
         List<RaColMap> sorted = new ArrayList<>(mappings);
         sorted.sort(Comparator
@@ -1099,9 +1512,16 @@ public class DefaultAuditStagingService implements AuditStagingService {
         if (execColumn != null && executionKey != null) {
             columns.add(execColumn);
         }
+        if (excelRowColumn != null && dbColumns.contains(excelRowColumn)) {
+            columns.add(excelRowColumn);
+        }
         for (RaColMap mapping : sorted) {
             String stagingCol = mapping.rcmTblCol();
             if (excelColumns.containsKey(stagingCol) && dbColumns.contains(stagingCol)) {
+                // Не перезаписывать синтетический номер строки значением из Excel-заголовка.
+                if (StagingExcelRowColumns.isSynthetic(stagingCol, excelRowColumn)) {
+                    continue;
+                }
                 columns.add(stagingCol);
             }
         }
@@ -1114,6 +1534,12 @@ public class DefaultAuditStagingService implements AuditStagingService {
         return "INSERT INTO " + tableName + " (" + cols + ") VALUES (" + placeholders + ")";
     }
 
+    /**
+     * Биндит одну Excel-строку в {@link PreparedStatement}.
+     *
+     * @param excelRowColumn   синтетическая колонка номера строки или {@code null}
+     * @param excelRowOneBased номер строки на листе (1-based)
+     */
     private RowBindOutcome bindRow(
             PreparedStatement statement,
             Row row,
@@ -1124,6 +1550,8 @@ public class DefaultAuditStagingService implements AuditStagingService {
             Map<String, Integer> dbColumnSizes,
             String execColumn,
             Long executionKey,
+            String excelRowColumn,
+            int excelRowOneBased,
             Set<String> requiredColumns
     ) throws SQLException {
         boolean hasBusinessData = false;
@@ -1143,6 +1571,14 @@ public class DefaultAuditStagingService implements AuditStagingService {
                     statement.setNull(parameterIndex, Types.INTEGER);
                 } else {
                     statement.setLong(parameterIndex, executionKey);
+                }
+                continue;
+            }
+            if (StagingExcelRowColumns.isSynthetic(column, excelRowColumn)) {
+                if (excelRowOneBased > 0) {
+                    statement.setInt(parameterIndex, excelRowOneBased);
+                } else {
+                    statement.setNull(parameterIndex, Types.INTEGER);
                 }
                 continue;
             }
@@ -1333,9 +1769,22 @@ public class DefaultAuditStagingService implements AuditStagingService {
         private long sourceRows;
         private long acceptedBySign;
         private long filteredBySign;
+        /** Отсев по признаку «ОА Аренда» (входит в {@link #filteredBySign}). */
+        private long filteredArendaBySign;
+        /**
+         * Прочие строки без маркера № ОА ({@code \d{7}} и т.п.) — внутри диапазона и в хвосте.
+         */
+        private long filteredOtherWithoutMarker;
+        /** Сколько OTHER уже выведено поштучным WARN (лимит топа). */
+        private long filteredOtherDetailsLogged;
         private long acceptedRows;
         private long insertedRows;
         private long skippedNullRow;
+        /**
+         * Пустые строки (нет признака и № ОА), отсечённые до фильтра whitelist —
+         * не входят в {@link #filteredBySign} / UNKNOWN_SIGN.
+         */
+        private long skippedEmptyBeforeSign;
         private long skippedNoBusinessData;
         private long skippedMissingRequired;
         private long parseErrorFields;
@@ -1347,6 +1796,8 @@ public class DefaultAuditStagingService implements AuditStagingService {
         private long rowParagraphSampled;
         private long rowParagraphSuppressed;
         private long rowParagraphTotal;
+        /** Строк листа ниже нижней границы найденного диапазона (не обрабатывались). */
+        private long skippedBeyondRange;
 
         private SheetLoadStats(String sheetName, String stagingTable, int firstDataRow, int lastDataRow) {
             this.sheetName = sheetName;

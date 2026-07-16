@@ -17,6 +17,11 @@ body,
   box-shadow: var(--femsq-header-elevation);
 }
 
+/* Footer без лишнего Quasar-padding — высоту задаёт StatusBar (+10% к содержимому). */
+.femsq-app-footer.q-footer {
+  padding: 0;
+}
+
 .femsq-app-header .text-grey-7,
 .femsq-app-footer .text-grey-7,
 .femsq-text-muted {

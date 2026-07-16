@@ -21,7 +21,7 @@
             />
           </QCardSection>
           <QSeparator />
-          <QCardSection class="q-pa-none">
+          <QCardSection class="q-pa-none audits-list-scroll">
             <QList bordered separator>
               <QItem
                 v-for="audit in sortedAudits"
@@ -591,6 +591,73 @@ function validateForm(): boolean {
 }
 
 /**
+ * Параметры запуска в форме отличаются от сохранённой ревизии в store.
+ * executeAudit на backend читает adt_AddRA и adt_staging_log_level из БД.
+ */
+function hasExecutionParamsChanged(): boolean {
+  const audit = selectedAudit.value;
+  if (!audit) {
+    return false;
+  }
+  return (
+    form.value.adtAddRA !== (audit.adtAddRA || false)
+    || form.value.adtStagingLogLevel !== (audit.adtStagingLogLevel ?? 'SUMMARY')
+  );
+}
+
+/**
+ * Сохраняет в БД флаги запуска (AddRA, детализация лога) перед executeAudit,
+ * если оператор изменил их без «Сохранить».
+ */
+async function syncExecutionParamsBeforeRun(): Promise<boolean> {
+  if (!selectedAudit.value || !hasExecutionParamsChanged()) {
+    return true;
+  }
+
+  if (!validateForm()) {
+    Notify.create({
+      type: 'warning',
+      message: 'Заполните обязательные поля ревизии перед запуском',
+      position: 'top'
+    });
+    return false;
+  }
+
+  const adtDate = toRfc3339WithLocalOffset(form.value.adtDateDate, form.value.adtDateTime);
+  const updateRequest: RaAUpdateRequest = {
+    adtName: form.value.adtName.trim(),
+    adtType: form.value.adtType!,
+    adtDir: form.value.adtDir!,
+    adtDate,
+    adtAddRA: form.value.adtAddRA,
+    adtStagingLogLevel: form.value.adtStagingLogLevel
+  };
+
+  try {
+    const updated = await auditsStore.updateAudit(selectedAudit.value.adtKey, updateRequest);
+    if (!updated) {
+      return false;
+    }
+    await auditsStore.fetchAudits();
+    Notify.create({
+      type: 'info',
+      message: 'Параметры запуска сохранены перед выполнением ревизии',
+      position: 'top',
+      timeout: 2500
+    });
+    return true;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Не удалось сохранить параметры запуска';
+    Notify.create({
+      type: 'negative',
+      message,
+      position: 'top'
+    });
+    return false;
+  }
+}
+
+/**
  * Формирует RFC3339 c локальным смещением (без сдвига "настенного" времени).
  * Пример: 2026-04-06T15:46:00+03:00
  */
@@ -707,6 +774,10 @@ async function handleExecuteAudit(): Promise<void> {
 
   try {
     executing.value = true;
+    const synced = await syncExecutionParamsBeforeRun();
+    if (!synced) {
+      return;
+    }
     const result = await auditsStore.executeAudit(selectedAudit.value.adtKey);
     console.log('[AuditsView] handleExecuteAudit: executeAudit finished');
     activeTab.value = 'progress';
@@ -798,6 +869,7 @@ function handleAuditLogScroll(): void {
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
+  align-items: stretch;
 }
 
 .audits-list-card,
@@ -806,18 +878,19 @@ function handleAuditLogScroll(): void {
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
+  height: 100%;
   overflow: hidden;
 }
 
-/* Явно ограничиваем высоту карточки, чтобы она не выходила за viewport.
-   Overhead: header (50–105px) + footer (28–52px) + q-pa-md (32px) + q-col-gutter-md (16px) ≈ max 205px.
-   Запас 5px → 210px. Это гарантирует, что max-height всегда < доступной высоты страницы. */
-.audit-form-card {
-  max-height: calc(100vh - 210px);
+/* Список ревизий прокручивается внутри карточки; низ карточек совпадает. */
+.audits-list-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .full-height {
-  height: 100%; /* используется только в панелях вне flex-цепочки */
+  height: 100%;
 }
 
 .audit-list-item {
@@ -834,10 +907,15 @@ function handleAuditLogScroll(): void {
 }
 
 /* Левая панель: ширина в 2.5 раза меньше чем было (col-md-4 = 33.33% -> 13.33%) */
-.audits-list-panel {
+.audits-list-panel,
+.audit-form-panel {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  align-self: stretch;
+}
+
+.audits-list-panel {
   flex: 0 0 100%;
   max-width: 100%;
 }
@@ -847,11 +925,8 @@ function handleAuditLogScroll(): void {
     flex: 0 0 13.33%;
     max-width: 13.33%;
   }
-  
+
   .audit-form-panel {
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
     flex: 0 0 86.67%;
     max-width: 86.67%;
   }
@@ -874,13 +949,24 @@ function handleAuditLogScroll(): void {
 }
 
 .audit-log-container {
-  flex: 1 1 auto;
-  min-height: 80px;
-  max-height: calc(100vh - 350px);
-  overflow-y: auto;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: scroll;
+  overflow-x: auto;
   border-radius: 4px;
   border: 1px solid var(--femsq-border);
   background: transparent;
+  /* всегда резервируем место под вертикальную полосу — контент не «съедает» width */
+  scrollbar-gutter: stable;
+}
+
+.progress-tab-panel,
+.files-tab-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Внешний скролл у карточки допускаем только при аномально малой высоте окна */
@@ -916,12 +1002,6 @@ function handleAuditLogScroll(): void {
 
 /* .q-panel НЕ вставляется Quasar в QTabPanels (только в QCarousel).
    Это правило бесполезно — удалено. */
-
-.progress-tab-panel,
-.files-tab-panel {
-  min-height: 0;
-  overflow: hidden;
-}
 
 .compact-form-grid {
   display: flex;

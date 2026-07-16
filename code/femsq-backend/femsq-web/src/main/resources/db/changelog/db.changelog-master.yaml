@@ -7,3 +7,5 @@ databaseChangeLog:
       file: db/changelog/changes/2026-04-02-ra-sheet-conf-sign-whitelist.sql
   - include:
       file: db/changelog/changes/2026-07-09-ra-a-staging-log-level.sql
+  - include:
+      file: db/changelog/changes/2026-07-14-ra-stg-excel-row.sql

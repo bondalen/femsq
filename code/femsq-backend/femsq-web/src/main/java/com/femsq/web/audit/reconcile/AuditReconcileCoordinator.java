@@ -125,14 +125,14 @@ public class AuditReconcileCoordinator {
         AuditLogLevel level = result.applied() ? AuditLogLevel.INFO : AuditLogLevel.WARNING;
         String duration = formatDuration(reconcileStartedAt, Instant.now());
         String countersSummary = summarizeCounters(result.message());
-        String summaryLine = "<P><b>Reconcile</b>: type=" + file.getType()
-                + ", applied=" + result.applied()
-                + ", affectedRows=" + result.affectedRows()
-                + ", duration=" + duration
+        String summaryLine = "<P><b>Сверка</b>: тип = " + file.getType()
+                + ", применено = " + (result.applied() ? "да" : "нет")
+                + ", изменено строк = " + result.affectedRows()
+                + ", длительность = " + duration
                 + "</P>";
         String countersLine = countersSummary.isBlank()
-                ? "<P>details: " + escape(result.message()) + "</P>"
-                : "<P>counters: " + escape(countersSummary) + "</P>";
+                ? "<P>подробности: " + escape(result.message()) + "</P>"
+                : "<P>показатели: " + escape(countersSummary) + "</P>";
         context.endSpan(reconcileSpanId, level, AuditLogScope.FILE, code,
                 summaryLine + countersLine,
                 withPresentationMeta(
@@ -157,13 +157,13 @@ public class AuditReconcileCoordinator {
                 : codeForType(file, "RECONCILE_SKIPPED", "RECONCILE_TYPE5_SKIPPED");
         AuditLogLevel level = result.applied() ? AuditLogLevel.INFO : AuditLogLevel.WARNING;
         String countersSummary = summarizeCounters(result.message());
-        String summaryLine = "<P><b>Reconcile</b>: type=" + file.getType()
-                + ", applied=" + result.applied()
-                + ", affectedRows=" + result.affectedRows()
+        String summaryLine = "<P><b>Сверка</b>: тип = " + file.getType()
+                + ", применено = " + (result.applied() ? "да" : "нет")
+                + ", изменено строк = " + result.affectedRows()
                 + "</P>";
         String countersLine = countersSummary.isBlank()
-                ? "<P>details: " + escape(result.message()) + "</P>"
-                : "<P>counters: " + escape(countersSummary) + "</P>";
+                ? "<P>подробности: " + escape(result.message()) + "</P>"
+                : "<P>показатели: " + escape(countersSummary) + "</P>";
         context.append(level, AuditLogScope.FILE, code,
                 summaryLine + countersLine,
                 withPresentationMeta(

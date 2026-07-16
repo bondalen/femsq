@@ -77,6 +77,20 @@
   background: var(--femsq-log-badge-start-bg);
   color: var(--femsq-log-badge-start-fg);
   border: 1px solid var(--femsq-log-badge-start-border);
+  /* Скрыть литерал «+» из старых HTML; знак рисует ::before */
+  font-size: 0;
+  min-width: 1.1em;
+  text-align: center;
+}
+
+.audit-log-surface .femsq-auditlog details > summary .badge-start::before {
+  content: "+";
+  font-size: 10px;
+  line-height: 12px;
+}
+
+.audit-log-surface .femsq-auditlog details[open] > summary .badge-start::before {
+  content: "\2212";
 }
 
 .audit-log-surface .femsq-auditlog .badge-end {
@@ -96,6 +110,42 @@
   color: var(--femsq-log-empty-text);
 }
 
+/* Некорректные значения в WARN (стройка, отправитель, имя поля и т.п.) */
+.audit-log-surface .femsq-auditlog .femsq-anomaly-val,
+.audit-log-surface .femsq-anomaly-val {
+  color: var(--femsq-log-anomaly-value);
+  font-weight: 650;
+}
+
+/* Номер Excel-строки и номер отчёта */
+.audit-log-surface .femsq-auditlog .femsq-anomaly-ref,
+.audit-log-surface .femsq-anomaly-ref {
+  color: var(--femsq-log-anomaly-ref);
+  font-weight: 650;
+}
+
 .audit-log-container {
   border-color: var(--femsq-border);
+  /* Явная полоса прокрутки (Firefox); WebKit — ниже в AuditsView scoped + здесь */
+  scrollbar-width: thin;
+  scrollbar-color: var(--femsq-log-scrollbar-thumb) var(--femsq-log-scrollbar-track);
+}
+
+.audit-log-container::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.audit-log-container::-webkit-scrollbar-track {
+  background: var(--femsq-log-scrollbar-track);
+  border-radius: 4px;
+}
+
+.audit-log-container::-webkit-scrollbar-thumb {
+  background: var(--femsq-log-scrollbar-thumb);
+  border-radius: 4px;
+}
+
+.audit-log-container::-webkit-scrollbar-thumb:hover {
+  background: var(--femsq-primary);
 }

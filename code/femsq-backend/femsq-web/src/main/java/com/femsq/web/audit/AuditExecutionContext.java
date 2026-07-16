@@ -42,6 +42,20 @@ public class AuditExecutionContext {
               .femsq-auditlog .summary { padding: 0 4px; border-radius: 4px; cursor: pointer; user-select: none; line-height: 1.15; }
               .femsq-auditlog p, .femsq-auditlog P { margin: 0; padding: 0; line-height: 1.15; }
               .femsq-auditlog .badge { display: inline-block; font-size: 10px; line-height: 12px; padding: 0 4px; border-radius: 999px; margin-right: 4px; vertical-align: baseline; }
+              /* Toggle +/- для свёрнутых блоков (<details>): работает и для старых «+» в HTML */
+              .femsq-auditlog details > summary .badge-start {
+                font-size: 0;
+                min-width: 1.1em;
+                text-align: center;
+              }
+              .femsq-auditlog details > summary .badge-start::before {
+                content: "+";
+                font-size: 10px;
+                line-height: 12px;
+              }
+              .femsq-auditlog details[open] > summary .badge-start::before {
+                content: "\u2212";
+              }
               .femsq-auditlog .phase-start { font-weight: 650; }
               .femsq-auditlog .phase-end { font-weight: 650; opacity: 0.95; }
             </style>
@@ -501,38 +515,93 @@ public class AuditExecutionContext {
         out = out.replace("<b>Reconcile</b>:", "<b>Сверка</b>:");
         out = out.replace("counters:", "показатели:");
         out = out.replace("Duration:", "Длительность:");
-        out = out.replace("duration=", "длительность=");
-        out = out.replace("affectedRows=", "измененоСтрок=");
-        out = out.replace("applied=", "применено=");
-        out = out.replace("execKey=", "ключВыполнения=");
+        out = out.replace("duration=", "длительность = ");
+        out = out.replace("affectedRows=", "изменено строк = ");
+        out = out.replace("applied=true", "применено = да");
+        out = out.replace("applied=false", "применено = нет");
+        out = out.replace("applied=", "применено = ");
+        out = out.replace("execKey=", "ключ выполнения = ");
         out = out.replace("Stage 1 (AllAgents)", "Этап 1 (Все агенты)");
+        out = out.replace("Stage 1 (RALP)", "Этап 1 (RALP)");
+        out = out.replace("Stage 2 (RALP)", "Этап 2 (RALP)");
         out = out.replace("Stage 2 (AllAgents): no-op, дополнительные FK/derived вычисления не требуются",
                 "Этап 2 (Все агенты): пропуск, дополнительные вычисления внешних ключей/производных не требуются");
-        out = out.replace("Staging start:", "Начало загрузки в staging:");
-        out = out.replace("Staging end:", "Завершение загрузки в staging:");
-        out = out.replace("table=", "таблица=");
-        out = out.replace("sheet=", "лист=");
-        out = out.replace("inserted=", "добавлено=");
-        out = out.replace("updated=", "обновлено=");
-        out = out.replace("unchanged=", "безИзменений=");
-        out = out.replace("errors=", "ошибок=");
-        out = out.replace("dryRun=", "сухойПрогон=");
-        out = out.replace("applyRequested=", "применениеЗапрошено=");
-        out = out.replace("applyBlocked=", "применениеЗаблокировано=");
-        out = out.replace("type=", "тип=");
-        out = out.replace("sourceRows=", "строкВИсточнике=");
-        out = out.replace("rowRange=", "диапазонСтрок=");
-        out = out.replace("skippedNullRow=", "пропущеноПустыхСтрок=");
-        out = out.replace("skippedNoBusinessData=", "пропущеноБезБизнесДанных=");
-        out = out.replace("skippedMissingRequired=", "пропущеноБезОбязательныхПолей=");
-        out = out.replace("rowsWithTruncation=", "строкСУсечением=");
-        out = out.replace("truncatedFields=", "усечённыхПолей=");
-        out = out.replace("signStats=", "статистикаПоТипам=");
-        out = out.replace("таблица=ags.ra_stg_ra", "таблица=staging РА");
-        out = out.replace("таблица=ags.ra_stg_cn_prdoc", "таблица=staging CN_PrDoc");
-        out = out.replace("таблица=ags.ra_stg_ralp", "таблица=staging RALP");
-        out = out.replace("таблица=ags.ra_stg_ralp_sm", "таблица=staging RALP_SM");
-        out = out.replace("таблица=ags.ra_stg_agfee", "таблица=staging AgFee");
+        out = out.replace("Staging start:", "Начало загрузки в промежуточную таблицу:");
+        out = out.replace("Staging end:", "Завершение загрузки в промежуточную таблицу:");
+        out = out.replace("Начало загрузки в staging:", "Начало загрузки в промежуточную таблицу:");
+        out = out.replace("Завершение загрузки в staging:", "Завершение загрузки в промежуточную таблицу:");
+        out = out.replace("[Загрузка staging]", "[Загрузка промежуточной таблицы]");
+        out = out.replace("внесено в staging:", "внесено в промежуточную таблицу:");
+        out = out.replace("details:", "подробности:");
+        out = out.replace("counters:", "показатели:");
+        out = out.replace("table=", "таблица = ");
+        out = out.replace("sheet=", "лист = ");
+        out = out.replace("inserted=", "добавлено = ");
+        out = out.replace("updated=", "обновлено = ");
+        out = out.replace("unchanged=", "без изменений = ");
+        out = out.replace("errors=", "ошибок = ");
+        out = out.replace("dryRun=", "сухой прогон = ");
+        out = out.replace("applyRequested=", "применение запрошено = ");
+        out = out.replace("applyBlocked=", "применение заблокировано = ");
+        out = out.replace("type=", "тип = ");
+        out = out.replace("sourceRows=", "строк в диапазоне = ");
+        out = out.replace("rowRange=", "диапазон строк = ");
+        out = out.replace("skippedNullRow=", "пропущено пустых строк = ");
+        out = out.replace("skippedNoBusinessData=", "пропущено без бизнес-данных = ");
+        out = out.replace("skippedMissingRequired=", "пропущено без обязательных полей = ");
+        out = out.replace("skippedBeyondRange=", "за пределами диапазона = ");
+        out = out.replace("acceptedBySign=", "принято по типу = ");
+        out = out.replace("filteredBySign=", "отфильтровано по типу = ");
+        out = out.replace("filteredSignsTop=", "топ отфильтрованных типов = ");
+        out = out.replace("parseErrorFields=", "ошибок формата полей = ");
+        out = out.replace("skippedParseError=", "пропущено из‑за ошибки формата = ");
+        out = out.replace("rowsWithTruncation=", "строк с усечением = ");
+        out = out.replace("truncatedFields=", "усечённых полей = ");
+        out = out.replace("signStats=", "статистика по типам = ");
+        out = out.replace("flushes=", "записей в БД = ");
+        out = out.replace("skippedUnchanged=", "пропущено без изменений = ");
+        out = out.replace("skippedThrottled=", "пропущено по интервалу = ");
+        out = out.replace("buildHtmlMs=", "сборка HTML = ");
+        out = out.replace("dbUpdateMs=", "запись в БД = ");
+        out = out.replace("lastHtmlChars=", "размер HTML = ");
+        out = out.replace("таблица=ags.ra_stg_ra", "таблица = промежуточная РА");
+        out = out.replace("таблица = ags.ra_stg_ra", "таблица = промежуточная РА");
+        out = out.replace("таблица=ags.ra_stg_cn_prdoc", "таблица = промежуточная CN_PrDoc");
+        out = out.replace("таблица = ags.ra_stg_cn_prdoc", "таблица = промежуточная CN_PrDoc");
+        out = out.replace("таблица=ags.ra_stg_ralp", "таблица = промежуточная RALP");
+        out = out.replace("таблица = ags.ra_stg_ralp", "таблица = промежуточная RALP");
+        out = out.replace("таблица=ags.ra_stg_ralp_sm", "таблица = промежуточная RALP_SM");
+        out = out.replace("таблица = ags.ra_stg_ralp_sm", "таблица = промежуточная RALP_SM");
+        out = out.replace("таблица=ags.ra_stg_agfee", "таблица = промежуточная AgFee");
+        out = out.replace("таблица = ags.ra_stg_agfee", "таблица = промежуточная AgFee");
+        out = out.replace("таблица = staging РА", "таблица = промежуточная РА");
+        out = out.replace("таблица = staging CN_PrDoc", "таблица = промежуточная CN_PrDoc");
+        out = out.replace("таблица = staging RALP", "таблица = промежуточная RALP");
+        out = out.replace("таблица = staging RALP_SM", "таблица = промежуточная RALP_SM");
+        out = out.replace("таблица = staging AgFee", "таблица = промежуточная AgFee");
+        out = out.replace("таблица=staging РА", "таблица = промежуточная РА");
+        out = out.replace("таблица=staging CN_PrDoc", "таблица = промежуточная CN_PrDoc");
+        out = out.replace("таблица=staging RALP", "таблица = промежуточная RALP");
+        out = out.replace("таблица=staging RALP_SM", "таблица = промежуточная RALP_SM");
+        out = out.replace("таблица=staging AgFee", "таблица = промежуточная AgFee");
+        // legacy camelCase (до P4) → читаемые подписи
+        out = out.replace("пропущеноПустыхСтрок=", "пропущено пустых строк = ");
+        out = out.replace("пропущеноБезБизнесДанных=", "пропущено без бизнес-данных = ");
+        out = out.replace("пропущеноБезОбязательныхПолей=", "пропущено без обязательных полей = ");
+        out = out.replace("диапазонСтрок=", "диапазон строк = ");
+        out = out.replace("строкВИсточнике=", "строк в диапазоне = ");
+        out = out.replace("строкСУсечением=", "строк с усечением = ");
+        out = out.replace("усечённыхПолей=", "усечённых полей = ");
+        out = out.replace("статистикаПоТипам=", "статистика по типам = ");
+        out = out.replace("измененоСтрок=", "изменено строк = ");
+        out = out.replace("безИзменений=", "без изменений = ");
+        out = out.replace("ключВыполнения=", "ключ выполнения = ");
+        out = out.replace("длительность=", "длительность = ");
+        out = out.replace("добавлено=", "добавлено = ");
+        out = out.replace("таблица=", "таблица = ");
+        out = out.replace("лист=", "лист = ");
+        out = out.replace("тип=", "тип = ");
+        out = out.replace("применено=", "применено = ");
 
         // Reconcile counters: переводим служебные ключи в пользовательские подписи.
         out = replaceKey(out, "rcRowsConsidered", "строкИзмененийРассмотрено");

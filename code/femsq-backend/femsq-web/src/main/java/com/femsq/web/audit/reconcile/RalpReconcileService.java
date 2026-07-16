@@ -1,6 +1,12 @@
 package com.femsq.web.audit.reconcile;
 
 import com.femsq.database.connection.ConnectionFactory;
+import com.femsq.web.audit.AuditExecutionContext;
+import com.femsq.web.audit.AuditLogLevel;
+import com.femsq.web.audit.AuditLogScope;
+import com.femsq.web.audit.staging.StagingLogLevel;
+import com.femsq.web.audit.stage2.RalpFkAnomalyRow;
+import com.femsq.web.audit.stage2.RalpStage2Service;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Date;
@@ -52,8 +58,11 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
     /** Шаблон для извлечения даты в формате {@code dd.mm.yyyy} из строкового поля письма (аналог VBA {@code ParseDate}). */
     private static final Pattern DATE_PATTERN = Pattern.compile("\\b(\\d{2})\\.(\\d{2})\\.(\\d{4})\\b");
 
-    public RalpReconcileService(ConnectionFactory connectionFactory) {
+    private final RalpStage2Service ralpStage2Service;
+
+    public RalpReconcileService(ConnectionFactory connectionFactory, RalpStage2Service ralpStage2Service) {
         super(connectionFactory);
+        this.ralpStage2Service = Objects.requireNonNull(ralpStage2Service, "ralpStage2Service");
     }
 
     @Override
@@ -86,6 +95,7 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
                 .formatted(domainRa.size(), domainRaAu.size(), year));
 
         int invalid = 0;
+        int emptyArrivedSkipped = 0;
         int raInserted = 0;
         int raAuInserted = 0;
         int raAuUpdated = 0;
@@ -97,6 +107,14 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
         // Ключи, которые пережили reconcile (для определения orphan-записей под удаление)
         Set<Integer> survivingRaKeys = new HashSet<>();
         Set<Integer> survivingRaAuKeys = new HashSet<>();
+        List<DemoteEvent> demoteEvents = new ArrayList<>();
+        List<String> newReportLines = new ArrayList<>();
+        List<String> newAuLines = new ArrayList<>();
+        List<String> changedAuLines = new ArrayList<>();
+        List<String> emptyArrivedLines = new ArrayList<>();
+        int newReportIdx = 0;
+        int newAuIdx = 0;
+        int changedAuIdx = 0;
 
         for (StgRow row : staging) {
             if (row.cstAgPn == null || row.ogSender == null || row.date == null) {
@@ -112,6 +130,17 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
 
             if (existingRa == null) {
                 // NEW: ralpRa не найден в домене
+                newReportIdx++;
+                newReportLines.add(Type5ReconcileTreeLineFormatter.formatRaNewLine(
+                        newReportIdx,
+                        row.excelRow,
+                        normalizedNum,
+                        row.date,
+                        row.costAndVat,
+                        null,
+                        null,
+                        null
+                ));
                 if (addRa) {
                     raDbKey = insertRa(conn, normalizedNum, row);
                     row.resolvedRaKey = raDbKey;
@@ -134,11 +163,14 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
             // ralpRaAu обрабатывается только при непустом arrived
             String arrived = (row.arrived != null) ? row.arrived.trim() : null;
             if (arrived == null || arrived.isBlank()) {
+                emptyArrivedSkipped++;
+                emptyArrivedLines.add(
+                        RalpReconcileAnomalyFormatter.formatEmptyArrivedHtml(row.excelRow, row.num, row.date));
                 continue;
             }
 
             DemoteStats demoteStats = demoteSiblingAus(
-                    conn, raDbKey, arrived, domainRaAu, addRa, survivingRaAuKeys);
+                    conn, raDbKey, arrived, domainRaAu, addRa, survivingRaAuKeys, demoteEvents, row);
             auDemotedSent += demoteStats.demotedSent;
             auClosedInProcess += demoteStats.closedInProcess;
             auUnchangedReturned += demoteStats.unchangedReturned;
@@ -148,6 +180,8 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
 
             if (existingAu == null) {
                 // NEW: ralpRaAu не найден
+                newAuIdx++;
+                newAuLines.add(formatNewAuTreeLine(newAuIdx, row, arrived));
                 if (addRa) {
                     int raAuDbKey = insertRaAu(conn, raDbKey, arrived, row);
                     row.resolvedRaAuKey = raAuDbKey;
@@ -160,6 +194,8 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
                 row.resolvedRaAuKey = existingAu.key;
                 survivingRaAuKeys.add(existingAu.key);
                 if (raAuNeedsUpdate(row, existingAu)) {
+                    changedAuIdx++;
+                    changedAuLines.add(formatChangedAuTreeLine(changedAuIdx, row, arrived));
                     if (addRa) {
                         updateRaAu(conn, existingAu.key, row);
                     }
@@ -173,6 +209,7 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
         // DELETE orphan ralpRaAu и ralpRa (только при addRa=true)
         int raDeleted = 0;
         int raAuDeleted = 0;
+        List<String> orphanReportNums = List.of();
         if (addRa) {
             Set<Integer> orphanRaAuKeys = new HashSet<>();
             for (DomainRaAu au : domainRaAu.values()) {
@@ -186,26 +223,54 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
             Set<Integer> orphanRaKeys = new HashSet<>(domainRaKeySet);
             orphanRaKeys.removeAll(survivingRaKeys);
             if (!orphanRaKeys.isEmpty()) {
+                orphanReportNums = loadRaNums(conn, orphanRaKeys);
                 raDeleted = deleteByKeys(conn, "DELETE FROM ags.ralpRa WHERE ralprKey IN (%s)", orphanRaKeys);
+            }
+        } else {
+            // dry-run: показать потенциальные orphan RA (если домен «лишний» относительно staging)
+            Set<Integer> orphanRaKeys = new HashSet<>(domainRaKeySet);
+            orphanRaKeys.removeAll(survivingRaKeys);
+            if (!orphanRaKeys.isEmpty()) {
+                orphanReportNums = loadRaNums(conn, orphanRaKeys);
             }
         }
 
         // Обновление staging-ссылок (batch)
         int stagingLinked = updateStagingRefs(conn, staging);
 
+        appendType3ReconcileTree(
+                conn,
+                ctx,
+                staging.size(),
+                raInserted,
+                raAuInserted,
+                raAuUpdated,
+                newReportLines,
+                newAuLines,
+                changedAuLines,
+                emptyArrivedLines,
+                orphanReportNums,
+                addRa
+        );
+        appendReconcileAnomalyLog(ctx, demoteEvents, addRa);
+
         log.info(("[RALP] done: raInserted=%d raAuInserted=%d raAuUpdated=%d unchanged=%d invalid=%d"
-                + " auDemotedSent=%d auClosedInProcess=%d auUnchangedReturned=%d"
+                + " emptyArrivedSkipped=%d auDemotedSent=%d auClosedInProcess=%d auUnchangedReturned=%d"
                 + " raDeleted=%d raAuDeleted=%d stagingLinked=%d")
-                .formatted(raInserted, raAuInserted, raAuUpdated, unchanged, invalid,
+                .formatted(raInserted, raAuInserted, raAuUpdated, unchanged, invalid, emptyArrivedSkipped,
                         auDemotedSent, auClosedInProcess, auUnchangedReturned,
                         raDeleted, raAuDeleted, stagingLinked));
 
-        String msg = ("type=3 RALP year=%d staging=%d invalid=%d raInserted=%d raAuInserted=%d raAuUpdated=%d"
-                + " unchanged=%d auDemotedSent=%d auClosedInProcess=%d auUnchangedReturned=%d"
-                + " raDeleted=%d raAuDeleted=%d addRa=%b")
-                .formatted(year, staging.size(), invalid, raInserted, raAuInserted, raAuUpdated, unchanged,
+        String msg = ("тип = 3 (RALP), год = %d, промежуточная таблица = %d, некорректных = %d, "
+                + "без рассмотрения (пустое Поступило) = %d, "
+                + "RA добавлено = %d, RA_AU добавлено = %d, RA_AU обновлено = %d, "
+                + "без изменений = %d, AU понижено (отправлен) = %d, AU закрыто в процессе = %d, "
+                + "AU возвращено без изменений = %d, RA удалено = %d, RA_AU удалено = %d, "
+                + "обновлять БД = %s")
+                .formatted(year, staging.size(), invalid, emptyArrivedSkipped,
+                        raInserted, raAuInserted, raAuUpdated, unchanged,
                         auDemotedSent, auClosedInProcess, auUnchangedReturned,
-                        raDeleted, raAuDeleted, addRa);
+                        raDeleted, raAuDeleted, addRa ? "да" : "нет");
         int affected = raInserted + raAuInserted + raAuUpdated + raDeleted + raAuDeleted;
         return addRa ? ReconcileResult.applied(affected, msg) : ReconcileResult.skipped(msg);
     }
@@ -216,7 +281,7 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
 
     private List<StgRow> loadStaging(Connection conn, long execKey) throws SQLException {
         String sql = """
-                SELECT ralprt_key, ralprtNum, ralprtDate, ralprtCstAgPn, ralprtOgSender,
+                SELECT ralprt_key, ralprtRow, ralprtNum, ralprtDate, ralprtCstAgPn, ralprtOgSender,
                        ralprtArrived, ralprtSent, ralprtReturned, ralprtNote, ralprtStatus,
                        ralprtCostAndVat, ralprtTestStartDate, ralprtPresented
                 FROM ags.ra_stg_ralp
@@ -230,6 +295,8 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
                 while (rs.next()) {
                     StgRow row = new StgRow();
                     row.stgKey = rs.getLong("ralprt_key");
+                    int excelRow = rs.getInt("ralprtRow");
+                    row.excelRow = rs.wasNull() ? null : excelRow;
                     row.num = rs.getString("ralprtNum");
                     Date d = rs.getDate("ralprtDate");
                     row.date = (d != null) ? d.toLocalDate() : null;
@@ -348,7 +415,9 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
             String currentArrived,
             Map<RaAuKey, DomainRaAu> domainRaAu,
             boolean addRa,
-            Set<Integer> survivingRaAuKeys) throws SQLException {
+            Set<Integer> survivingRaAuKeys,
+            List<DemoteEvent> demoteEvents,
+            StgRow stagingRow) throws SQLException {
         DemoteStats stats = new DemoteStats();
         LocalDate newArrivedDate = parseDate(currentArrived);
         List<DomainRaAu> siblings = new ArrayList<>();
@@ -388,6 +457,12 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
                 log.info("[RALP] close in-process: ralpraKey=%d ralpraRa=%d arrived=%s closeDate=%s"
                         .formatted(au.key, raDbKey, auArrived, closeDate));
             }
+            demoteEvents.add(new DemoteEvent(
+                    stagingRow.excelRow,
+                    stagingRow.num,
+                    auArrived,
+                    hadSent
+            ));
         }
         return stats;
     }
@@ -706,8 +781,12 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
         int unchangedReturned;
     }
 
+    private record DemoteEvent(Integer excelRow, String reportNum, String oldArrived, boolean hadSent) {
+    }
+
     private static class StgRow {
         long stgKey;
+        Integer excelRow;
         String num;
         LocalDate date;
         Integer cstAgPn;
@@ -722,5 +801,158 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
         boolean presented;
         Integer resolvedRaKey;
         Integer resolvedRaAuKey;
+    }
+
+    // -------------------------------------------------------------------------
+    // Audit log (0051 / §9.3.6.4 / §9.3.8.4)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Дерево сверки type=3 (§9.3.8.4): NEW/CHANGED / A5 / ошибки A1–A4.
+     * Аномалии A1–A4 читаются на {@code conn} сверки — отдельное соединение даёт самоблокировку.
+     */
+    private void appendType3ReconcileTree(
+            Connection conn,
+            ReconcileContext ctx,
+            int stagingTotal,
+            int newReports,
+            int newAu,
+            int changedAu,
+            List<String> newReportLines,
+            List<String> newAuLines,
+            List<String> changedAuLines,
+            List<String> emptyArrivedLines,
+            List<String> orphanReportNums,
+            boolean addRa
+    ) {
+        AuditExecutionContext audit = ctx.auditExecutionContext();
+        if (audit == null) {
+            return;
+        }
+        StagingLogLevel level = resolveLogLevel(ctx);
+        int detailLimit = Type5ReconcileTreeLineFormatter.detailLimit(level);
+
+        List<String> combinedNew = new ArrayList<>(newReportLines.size() + newAuLines.size());
+        combinedNew.addAll(newReportLines);
+        combinedNew.addAll(newAuLines);
+
+        List<RalpFkAnomalyRow> anomalies = ralpStage2Service.loadUnresolvedAnomalies(conn, ctx.executionKey());
+        Type5ReconcileErrorGrouper.ErrorTree errors = Type5ReconcileErrorGrouper.group(
+                RalpReconcileErrorMapper.toErrorHits(anomalies),
+                detailLimit
+        );
+
+        RalpReconcileTreeLogger.TreeModel model = new RalpReconcileTreeLogger.TreeModel(
+                stagingTotal,
+                newReports,
+                newAu,
+                changedAu,
+                Type5ReconcileTreeLineFormatter.limitLines(combinedNew, detailLimit),
+                Type5ReconcileTreeLineFormatter.limitLines(changedAuLines, detailLimit),
+                Type5ReconcileTreeLineFormatter.limitLines(emptyArrivedLines, detailLimit),
+                errors,
+                orphanReportNums == null ? List.of() : orphanReportNums,
+                addRa
+        );
+        RalpReconcileTreeLogger.appendScaffold(audit, ctx.auditId(), ctx.executionKey(), model);
+    }
+
+    private static String formatNewAuTreeLine(int index, StgRow row, String arrived) {
+        String num = row.num == null ? "—" : row.num.trim();
+        String datePart = row.date == null ? "—" : row.date.format(java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+        String rowLabel = row.excelRow == null ? "—" : String.valueOf(row.excelRow);
+        return "<P>" + index + ". " + escapeHtml(rowLabel) + ". Рассмотрение к ОА № "
+                + escapeHtml(num) + " от " + datePart
+                + ", поступило «" + escapeHtml(arrived == null ? "—" : arrived) + "».</P>";
+    }
+
+    private static String formatChangedAuTreeLine(int index, StgRow row, String arrived) {
+        String num = row.num == null ? "—" : row.num.trim();
+        String rowLabel = row.excelRow == null ? "—" : String.valueOf(row.excelRow);
+        return "<P>" + index + ". " + escapeHtml(rowLabel) + ". Рассмотрение ОА № "
+                + escapeHtml(num) + " / поступило «" + escapeHtml(arrived == null ? "—" : arrived)
+                + "»: поля направления/возврата/статуса отличаются от БД.</P>";
+    }
+
+    private static String escapeHtml(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
+
+    private void appendReconcileAnomalyLog(
+            ReconcileContext ctx,
+            List<DemoteEvent> demoteEvents,
+            boolean addRa
+    ) {
+        AuditExecutionContext audit = ctx.auditExecutionContext();
+        if (audit == null) {
+            return;
+        }
+        StagingLogLevel level = resolveLogLevel(ctx);
+        if (level == StagingLogLevel.MINIMAL) {
+            return;
+        }
+
+        // A5 и A1–A4 / A6 — в дереве сверки (§9.3.8.4 / A5-span), без плоских WARN.
+
+        // A7: per-row demote only in VERBOSE (SUMMARY имеет агрегаты в details)
+        if (level == StagingLogLevel.VERBOSE) {
+            for (DemoteEvent event : demoteEvents) {
+                Map<String, String> meta = baseMeta(ctx);
+                if (event.excelRow() != null) {
+                    meta.put("rowIndex", String.valueOf(event.excelRow()));
+                }
+                audit.append(
+                        AuditLogLevel.INFO,
+                        AuditLogScope.FILE,
+                        "RALP_RECONCILE_AU_DEMOTE",
+                        RalpReconcileAnomalyFormatter.formatDemoteHtml(
+                                event.excelRow(),
+                                event.reportNum(),
+                                event.oldArrived(),
+                                event.hadSent(),
+                                addRa
+                        ),
+                        meta
+                );
+            }
+        }
+    }
+
+    private List<String> loadRaNums(Connection conn, Set<Integer> raKeys) throws SQLException {
+        if (raKeys.isEmpty()) {
+            return List.of();
+        }
+        String inClause = String.join(",", Collections.nCopies(raKeys.size(), "?"));
+        String sql = "SELECT ralprNum FROM ags.ralpRa WHERE ralprKey IN (" + inClause + ") ORDER BY ralprNum";
+        List<String> nums = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            int idx = 1;
+            for (int key : raKeys) {
+                ps.setInt(idx++, key);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String num = rs.getString(1);
+                    nums.add(num == null ? "" : num);
+                }
+            }
+        }
+        return nums;
+    }
+
+    private static StagingLogLevel resolveLogLevel(ReconcileContext ctx) {
+        StagingLogLevel level = ctx.auditExecutionContext().getStagingLogLevel();
+        return level != null ? level : StagingLogLevel.SUMMARY;
+    }
+
+    private static Map<String, String> baseMeta(ReconcileContext ctx) {
+        Map<String, String> meta = new HashMap<>();
+        meta.put("auditId", String.valueOf(ctx.auditId()));
+        meta.put("executionKey", String.valueOf(ctx.executionKey()));
+        meta.put("fileType", "3");
+        return meta;
     }
 }

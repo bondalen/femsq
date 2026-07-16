@@ -3,7 +3,7 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-07-09"
+      "lastUpdated": "2026-07-16"
     },
     "sessions": [
       {
@@ -5933,6 +5933,685 @@
                       "docs/development/frontend-themes.md",
                       "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#935-глобальные-темы-приложения-kimbie-dark-vs-light-задача-0050",
                       "code/femsq-frontend-q/tests/unit/femsq-theme.spec.ts"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "0051/0052: Excel-строка, аномалии и диапазон Stage 1 (completed, critical). № chat-2026-07-14-001",
+          "chat-attributes": {
+            "id": "chat-2026-07-14-001",
+            "created": "2026-07-14",
+            "lastUpdated": "2026-07-15",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "critical",
+            "tags": [
+              "audit-log",
+              "RALP",
+              "type5",
+              "U10",
+              "0051",
+              "0052",
+              "excelRow",
+              "staging-filter"
+            ],
+            "links": {
+              "projectDocsRefs": ["module:backend.web"],
+              "developmentTasks": ["0051", "0052", "0048"],
+              "aiRuleRefs": []
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "План 0051: DDL ralprtRow + построчные аномалии (info). № log-2026-07-14-001",
+                "log-attributes": {
+                  "id": "log-2026-07-14-001",
+                  "timestamp": "2026-07-14T12:15:00+03:00",
+                  "level": "info",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0051"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксирован полный вариант (б): DDL excelRow + тексты Access для type=3 и type=5",
+                    "details": "Анализ exec 1168: 4 invalid из-за FK стройки/отправителя. rainRow у type=5 есть, но не заполняется. В план внесён §9.3.6 (задача 0051), U10/P5, ворота G3/G4. Первый пункт выполнения — 9.3.6.1 DDL.",
+                    "outcome": "Задача 0051 создана в project-development.json; обновлены chat-plan v0.12.0 и ra-execution-operations.md.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#936-трассировка-excel-строки-и-построчные-аномалии-задача-0051",
+                      "docs/development/notes/audit-log/ra-execution-operations.md",
+                      "docs/development/project-development.json"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "9.3.6.1 DDL ralprtRow/ralprsRow на abs (success). № log-2026-07-14-002",
+                "log-attributes": {
+                  "id": "log-2026-07-14-002",
+                  "timestamp": "2026-07-14T12:20:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0051"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Применён DDL excel-row staging (26-0714) на FishEye abs",
+                    "details": "Добавлены ags.ra_stg_ralp.ralprtRow INT NULL и ags.ra_stg_ralp_sm.ralprsRow INT NULL. Пакет docs/development/notes/sql/26-0714 (+ MSSQL2012). Liquibase 2026-07-14-ra-stg-excel-row.sql в master. VERIFY: col_length=4 для обеих колонок.",
+                    "outcome": "§9.3.6.1 закрыт; следующий шаг 9.3.6.2 — заполнение Stage 1.",
+                    "references": [
+                      "docs/development/notes/sql/26-0714/",
+                      "docs/deployment/db-upgrade-26-0714-ralp-excel-row.md",
+                      "code/femsq-backend/femsq-web/src/main/resources/db/changelog/changes/2026-07-14-ra-stg-excel-row.sql"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "9.3.6.2 Stage 1 заполняет excel-row (success). № log-2026-07-14-003",
+                "log-attributes": {
+                  "id": "log-2026-07-14-003",
+                  "timestamp": "2026-07-14T12:25:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0051"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Stage 1 пишет rainRow/ralprtRow/ralprsRow при INSERT",
+                    "details": "Класс StagingExcelRowColumns; DefaultAuditStagingService.resolveInsertColumns/bindRow — синтетическая колонка как *_exec_key. Unit: StagingExcelRowColumnsTest.",
+                    "outcome": "§9.3.6.2 закрыт; следующий — 9.3.6.3 (WARN после Stage 2).",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/staging/StagingExcelRowColumns.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/staging/DefaultAuditStagingService.java",
+                      "code/femsq-backend/femsq-web/src/test/java/com/femsq/web/audit/staging/StagingExcelRowColumnsTest.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "9.3.6.3 Stage 2 WARN по FK A1–A4 (success). № log-2026-07-14-004",
+                "log-attributes": {
+                  "id": "log-2026-07-14-004",
+                  "timestamp": "2026-07-14T12:35:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0051"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "После Stage 2 type=3 — построчные WARN и расширенный итог",
+                    "details": "RalpFkAnomalyFormatter (A1–A4 Access-стиль); RalpStage2Service.loadUnresolvedAnomalies + counters в ResolutionResult; RalpAuditFileProcessor пишет RALP_STAGE2_FK_UNRESOLVED в SUMMARY/VERBOSE. Unit: RalpFkAnomalyFormatterTest (6).",
+                    "outcome": "§9.3.6.3 закрыт; следующий — 9.3.6.4.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/stage2/RalpFkAnomalyFormatter.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/stage2/RalpStage2Service.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/RalpAuditFileProcessor.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "9.3.6.4 reconcile A5–A7 + invalid ref (success). № log-2026-07-14-005",
+                "log-attributes": {
+                  "id": "log-2026-07-14-005",
+                  "timestamp": "2026-07-14T12:45:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0051"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Сверка RALP: лог A5/A6/A7 и отсылка к invalid Stage 2",
+                    "details": "RalpReconcileAnomalyFormatter; load ralprtRow; EMPTY_ARRIVED WARN; ORPHAN_RA; demote VERBOSE; details +пустой Поступило. Не дублирует A1–A4. Unit + smoke IT OK.",
+                    "outcome": "§9.3.6.4 закрыт; следующий — 9.3.6.5.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/RalpReconcileService.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/RalpReconcileAnomalyFormatter.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "9.3.6.5 Type5 построчные WARN с rainRow (success). № log-2026-07-14-006",
+                "log-attributes": {
+                  "id": "log-2026-07-14-006",
+                  "timestamp": "2026-07-14T13:00:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0051"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Type=5: построчные WARN invalid/ambiguous/missing с rainRow",
+                    "details": "Type5RowAnomalyFormatter; AllAgentsReconcileService читает rainRow; appendRa/RcValidationFail с Excel-строкой и листом «Отчеты»; русские причины missing lookup; MINIMAL без построчных WARN. Unit Type5RowAnomalyFormatterTest 4/4 OK.",
+                    "outcome": "§9.3.6.5 закрыт; следующий — 9.3.6.6 (smoke dry-run).",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/Type5RowAnomalyFormatter.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/AllAgentsReconcileService.java",
+                      "code/femsq-backend/femsq-web/src/test/java/com/femsq/web/audit/reconcile/Type5RowAnomalyFormatterTest.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "9.3.6.6 smoke type=3/5 Excel-row WARN (success). № log-2026-07-14-007",
+                "log-attributes": {
+                  "id": "log-2026-07-14-007",
+                  "timestamp": "2026-07-14T13:10:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0051"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Smoke dry-run type=3 и type=5 с построчными WARN",
+                    "details": "JAR 0.1.0.126; unit formatters OK. exec 1169 type=3: ralprtRow 424/424, 4 FK-WARN (Excel 91/151/243/283), некорректных=4. exec 1170 type=5: rainRow 1720/1720, некорректные=71, ≥130 WARN с Excel-строкой на листе Отчеты. af_execute восстановлен: 314=1, 312=0.",
+                    "outcome": "§9.3.6.6 закрыт; следующий — 9.3.6.7 (sign-off U10).",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md",
+                      "docs/development/notes/audit-log/ra-execution-operations.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Решение Stage 1 type=5 фильтр/диапазон → задача 0052 (info). № log-2026-07-14-008",
+                "log-attributes": {
+                  "id": "log-2026-07-14-008",
+                  "timestamp": "2026-07-14T16:20:00+03:00",
+                  "level": "info",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0052", "0051"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксировано решение по фильтру и диапазону Stage 1 type=5",
+                    "details": "Проверка на шаре 2025_2026_01 / 2026_03 / 2026-07: «ОА Аренда» — только по Признак; пустые ≠ UNKNOWN_SIGN; маркер № ОА — app-config \\d{7}; нижняя граница — последняя значимая строка. rsc_row_pattern в runtime не используется. Создана задача 0052 (§9.3.7), chat-plan v0.12.7, ops обновлены.",
+                    "outcome": "Документация синхронизирована; следующий шаг реализации — 9.3.7.1 (счётчики empty vs filtered-by-sign).",
+                    "references": [
+                      "docs/development/notes/audit-log/ra-execution-operations.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#937-stage-1-type5-диапазон-и-классификация-строк-задача-0052",
+                      "docs/development/project-development.json",
+                      "docs/development/notes/analysis/ra-audit-file-processor-architecture.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "9.3.7.1 счётчики empty vs ОА Аренда (success). № log-2026-07-14-009",
+                "log-attributes": {
+                  "id": "log-2026-07-14-009",
+                  "timestamp": "2026-07-14T16:30:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0052"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Stage 1 type=5: пустые не UNKNOWN_SIGN; агрегат «ОА Аренда»",
+                    "details": "Type5SignFilterClassifier + интеграция в DefaultAuditStagingService: skippedEmptyBeforeSign, filteredArendaBySign, SUMMARY «исключено по признаку ОА Аренда». Unit Type5SignFilterClassifierTest 6/6 OK.",
+                    "outcome": "§9.3.7.1 закрыт; следующий — 9.3.7.2 (нижняя граница диапазона).",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/staging/Type5SignFilterClassifier.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/staging/DefaultAuditStagingService.java",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "9.3.7.2 нижняя граница диапазона type=5 (success). № log-2026-07-14-010",
+                "log-attributes": {
+                  "id": "log-2026-07-14-010",
+                  "timestamp": "2026-07-14T16:40:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0052"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Stage 1 type=5: диапазон до последней значимой строки",
+                    "details": "isSignificantForDataRange (whitelist / ОА Аренда / \\d{7}); audit.staging.type5.ra-num-regex; buildSheetDataRangeSpec для type=5 больше не по last-non-empty якоря. Unit Type5SignFilterClassifierTest расширен.",
+                    "outcome": "§9.3.7.2 закрыт; следующий — 9.3.7.3 (OTHER поштучно) или smoke 9.3.7.4.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/staging/Type5SignFilterClassifier.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/staging/DefaultAuditStagingService.java",
+                      "code/femsq-backend/femsq-web/src/main/resources/application.yml"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "9.3.7.3 OTHER поштучно type=5 (success). № log-2026-07-14-011",
+                "log-attributes": {
+                  "id": "log-2026-07-14-011",
+                  "timestamp": "2026-07-14T16:50:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0052"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Stage 1 type=5: поштучный WARN для OTHER без маркера №",
+                    "details": "isOtherWithoutRaNumMarker; STAGING_TYPE5_OTHER в диапазоне и в хвосте за SHEET_FOUND; лимит 40 + STAGING_TYPE5_OTHER_OVERFLOW; счётчик прочих без маркера №. Unit classifier + StagingRowSkipReasonFormatter.",
+                    "outcome": "§9.3.7.3 закрыт; следующий — 9.3.7.4 (smoke март/июль).",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/staging/DefaultAuditStagingService.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/staging/Type5SignFilterClassifier.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/staging/StagingRowSkipReasonFormatter.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "9.3.7.4 smoke март/июль type=5 диапазон (success). № log-2026-07-14-012",
+                "log-attributes": {
+                  "id": "log-2026-07-14-012",
+                  "timestamp": "2026-07-14T17:05:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0052"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Smoke dry-run type=5 март и июль после фильтра диапазона",
+                    "details": "JAR 0.1.0.129. exec 1175 март: $D$2:$D$2133, принято 1720, ОА Аренда 412, OTHER=1 (стр.19135 SUBTOTAL), Stage1 1m5s, полный 119с. exec 1176 июль: $D$2:$D$7438, 5959/1478/OTHER=1 (стр.19232), Stage1 4m54s, полный 360с. UNKNOWN_SIGN отсутствует. Пути SMB возвращены на 2026_03.",
+                    "outcome": "§9.3.7.4 закрыт; следующий — 9.3.7.5 (sign-off / G4).",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md",
+                      "docs/development/notes/audit-log/ra-execution-operations.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Formal close 0051/0052 + ворота G3/G4/G6/G7 (success). № log-2026-07-15-007",
+                "log-attributes": {
+                  "id": "log-2026-07-15-007",
+                  "timestamp": "2026-07-15T17:35:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0051", "0052", "0053"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Formal sign-off задач 0051/0052 и ворот G3/G4/G6/G7",
+                    "details": "По факту smoke: 0051 (1169/1170 + дерево 0053), 0052 (1175/1176 + 1186/1188). U10/P5 закрыты. Blocker реестра 9.3.3 закрыты. Остались G5(U8) и G8(thin JAR). Chat-plan v0.12.14.",
+                    "outcome": "0051 и 0052 completed; formal ворота до soft-deploy закрыты кроме G5/G8.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md",
+                      "docs/development/project-development.json",
+                      "docs/development/notes/audit-log/ra-execution-operations.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "0053: дерево сверки ОА/прочие/изм. (completed, critical). № chat-2026-07-15-001",
+          "chat-attributes": {
+            "id": "chat-2026-07-15-001",
+            "created": "2026-07-15",
+            "lastUpdated": "2026-07-15",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "critical",
+            "tags": ["audit-log", "type5", "reconcile-tree", "0053"],
+            "links": {
+              "projectDocsRefs": ["module:backend.web", "module:frontend"],
+              "developmentTasks": ["0053", "0052"],
+              "aiRuleRefs": []
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "§9.3.8 дерево сверки + UI +/− (info). № log-2026-07-15-001",
+                "log-attributes": {
+                  "id": "log-2026-07-15-001",
+                  "timestamp": "2026-07-15T10:50:00+03:00",
+                  "level": "info",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web", "module:frontend"],
+                    "developmentTasks": ["0053"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксировано дерево сверки type=5/3; CSS toggle +/−",
+                    "details": "БД: изм. к «ОА прочие» 2/3047 — ветка обязательна. Дерево: ОА / ОА прочие × (собственно + изм. к базе). NEW≠ошибки. Задача 0053, chat-plan v0.12.12, ops. CSS details[open] badge − в audit-log.css и STYLE_BLOCK.",
+                    "outcome": "§9.3.8.0 закрыт; следующий — 9.3.8.1 (каркас nested spans).",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md",
+                      "docs/development/notes/audit-log/ra-execution-operations.md",
+                      "code/femsq-frontend-q/src/styles/audit-log.css",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/AuditExecutionContext.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "§9.3.8.1 каркас nested spans type=5 (success). № log-2026-07-15-002",
+                "log-attributes": {
+                  "id": "log-2026-07-15-002",
+                  "timestamp": "2026-07-15T11:00:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0053"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Каркас дерева сверки type=5 в adt_results",
+                    "details": "Type5ReconcileTreeLogger: ОА / ОА прочие × (собственно + изм. к базе по ra_type); «Не найдены…» при 0; orphan RC. AllAgentsReconcileService грузит ra_type вместе с индексом периода+№. Unit Type5ReconcileTreeLoggerTest 2 OK. Построчные NEW/CHANGED — §9.3.8.2.",
+                    "outcome": "§9.3.8.1 закрыт; следующий — 9.3.8.2.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/Type5ReconcileTreeLogger.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/AllAgentsReconcileService.java",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "§9.3.8.2 NEW/CHANGED + готово/внесено (success). № log-2026-07-15-003",
+                "log-attributes": {
+                  "id": "log-2026-07-15-003",
+                  "timestamp": "2026-07-15T11:25:00+03:00",
+                  "level": "success",
+                  "effort": "2.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0053"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Списки NEW/CHANGED в дереве сверки type=5",
+                    "details": "Type5ReconcileTreeLineFormatter + span «готово к внесению»/«внесено». SUMMARY лимит 40 + overflow; VERBOSE полный; MINIMAL без списков. Access-стиль сумм и inline-diff. Unit Type5ReconcileTreeLoggerTest 6 OK.",
+                    "outcome": "§9.3.8.2 закрыт; следующий — 9.3.8.3 (группировка ошибок).",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/Type5ReconcileTreeLineFormatter.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/Type5ReconcileTreeLogger.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/AllAgentsReconcileService.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "§9.3.8.3 группировка ошибок сверки (success). № log-2026-07-15-004",
+                "log-attributes": {
+                  "id": "log-2026-07-15-004",
+                  "timestamp": "2026-07-15T11:40:00+03:00",
+                  "level": "success",
+                  "effort": "2.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0053"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Ветка ошибок в дереве сверки type=5",
+                    "details": "Type5ReconcileErrorGrouper: primary MISSING_CSTAP/SENDER/AMBIGUOUS/OTHER; значение→Excel-строки; meta primaryReason. Сбор hit'ов в RA/RC read-model. Unit Type5ReconcileTreeLoggerTest 8 OK.",
+                    "outcome": "§9.3.8.3 закрыт; следующий — 9.3.8.4 (type=3).",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/Type5ReconcileErrorGrouper.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/Type5ReconcileTreeLogger.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/AllAgentsReconcileService.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "§9.3.8.4 дерево сверки type=3 RALP (success). № log-2026-07-15-005",
+                "log-attributes": {
+                  "id": "log-2026-07-15-005",
+                  "timestamp": "2026-07-15T12:00:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0053"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Дерево сверки type=3 + отключение дублей Stage 2 WARN",
+                    "details": "RalpReconcileTreeLogger: ствол «Отчёты аренды» (NEW/CHANGED/A1–A4/orphans). RalpReconcileErrorMapper → Type5ReconcileErrorGrouper. RalpReconcileService + RalpStage2Service; построчные WARN Stage 2 сняты. Unit RalpReconcileTreeLoggerTest 6 OK.",
+                    "outcome": "§9.3.8.4 закрыт; следующий — 9.3.8.5 (smoke март/июль + sign-off).",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/RalpReconcileTreeLogger.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/RalpReconcileErrorMapper.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/RalpReconcileService.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/RalpAuditFileProcessor.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "§9.3.8.5 smoke март/июль + sign-off 0053 (success). № log-2026-07-15-006",
+                "log-attributes": {
+                  "id": "log-2026-07-15-006",
+                  "timestamp": "2026-07-15T17:22:00+03:00",
+                  "level": "success",
+                  "effort": "3h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web", "module:frontend"],
+                    "developmentTasks": ["0053"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Smoke/sign-off дерева сверки; закрытие задачи 0053",
+                    "details": "JAR 0.1.0.134. Type=5: март dry 1186 / apply 1187 (+откат), июль dry 1188 (5959, ~340 с). Type=3: июль apply 1183 (+откат к март baseline). A5 в дереве; flat VALIDATION_FAIL только VERBOSE. Оператор: «замечаний нет». Июль type=5 apply не запускался.",
+                    "outcome": "§9.3.8.5 и задача 0053 закрыты. G4 soft; formal G4 → 0052/9.3.7.5; далее G8/U8.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md",
+                      "docs/development/notes/audit-log/ra-execution-operations.md",
+                      "docs/development/project-development.json"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "U8/G5: баннер директории в compact (completed, minor). № chat-2026-07-16-001",
+          "chat-attributes": {
+            "id": "chat-2026-07-16-001",
+            "created": "2026-07-16",
+            "lastUpdated": "2026-07-16",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "minor",
+            "tags": ["audit-ui", "U8", "G5", "DirectoryInfo"],
+            "links": {
+              "projectDocsRefs": ["module:frontend"],
+              "developmentTasks": ["0048"],
+              "aiRuleRefs": []
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Исправлен ложный баннер «Директория не загружена» (success). № log-2026-07-16-001",
+                "log-attributes": {
+                  "id": "log-2026-07-16-001",
+                  "timestamp": "2026-07-16T09:37:00+03:00",
+                  "level": "success",
+                  "effort": "0.25h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:frontend"],
+                    "developmentTasks": ["0048"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "U8: баннер директории в compact-режиме AuditsView",
+                    "details": "DirectoryInfo.vue: при compact=true и загруженной directory срабатывал v-else и показывал «Директория не загружена» поверх заполненного FilesList. Исправлено: баннер только при v-else-if=\"!directory\". Ворота G5 закрыты.",
+                    "outcome": "U8/G5 ✅; следующий шаг — G8 soft-deploy.",
+                    "references": [
+                      "code/femsq-frontend-q/src/components/audits/DirectoryInfo.vue",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "P6: sync AddRA перед executeAudit (success). № log-2026-07-16-002",
+                "log-attributes": {
+                  "id": "log-2026-07-16-002",
+                  "timestamp": "2026-07-16T11:34:00+03:00",
+                  "level": "success",
+                  "effort": "0.25h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:frontend"],
+                    "developmentTasks": ["0048"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Автосохранение параметров запуска перед executeAudit",
+                    "details": "AuditsView.vue: если изменены adtAddRA или adtStagingLogLevel без «Сохранить», перед «Выполнить ревизию» вызывается updateAudit. Backend читает adt_AddRA из БД. P6 в chat-plan.",
+                    "outcome": "UX dry-run/apply соответствует чекбоксу без лишнего клика «Сохранить».",
+                    "references": [
+                      "code/femsq-frontend-q/src/views/audits/AuditsView.vue",
+                      "docs/development/notes/audit-log/ra-execution-operations.md"
                     ]
                   }
                 ]

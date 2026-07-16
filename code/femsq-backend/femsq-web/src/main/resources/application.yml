@@ -23,6 +23,9 @@ management:
 audit:
   staging:
     default-log-level: SUMMARY
+    type5:
+      # Маркер в «№ ОА» для нижней границы диапазона листа (§9.3.7.2) и OTHER (§9.3.7.3)
+      ra-num-regex: "\\d{7}"
   execution:
     stale-watchdog-enabled: true
     stale-warning-after-minutes: 45

@@ -47,6 +47,73 @@ public final class StagingRowSkipReasonFormatter {
     }
 
     /**
+     * Пакетное сообщение о пустых строках Excel (нет данных по колонкам маппинга).
+     *
+     * @param firstExcelRow первая строка диапазона (1-based)
+     * @param lastExcelRow  последняя строка диапазона (1-based)
+     * @param count         число пропущенных пустых строк
+     * @return текст без префикса «⚠»
+     */
+    public static String formatEmptyRowsBatch(int firstExcelRow, int lastExcelRow, int count) {
+        if (count <= 0) {
+            return "пропущено пустых строк: 0";
+        }
+        if (count == 1) {
+            return "Excel-строка " + firstExcelRow
+                    + ": пропущено как пустая (нет данных по колонкам маппинга)";
+        }
+        return "Excel-строки " + firstExcelRow + "–" + lastExcelRow
+                + " (" + count + " шт.): пропущено как пустые (нет данных по колонкам маппинга)";
+    }
+
+    /**
+     * Сообщение о хвосте листа за нижней границей найденного диапазона.
+     *
+     * @param address         адрес диапазона (например {@code $P$2:$P$426})
+     * @param lastExcelRow    нижняя строка диапазона (1-based)
+     * @param beyondRowCount  число строк листа ниже диапазона
+     */
+    public static String formatBeyondDataRange(String address, int lastExcelRow, int beyondRowCount) {
+        String addr = address == null || address.isBlank() ? "(адрес не указан)" : address.trim();
+        return "За пределами диапазона " + addr
+                + " (ниже строки " + lastExcelRow + ") не обрабатывалось "
+                + beyondRowCount + " строк листа (хвост Excel / форматирование)";
+    }
+
+    /**
+     * Причина OTHER type=5: непустая строка не whitelist/не аренда и без маркера в № ОА.
+     * Подставляется в {@code ⚠ Excel-строка N: …} без собственного префикса строки.
+     *
+     * @param signDisplay отображаемый признак (уже trim; может быть {@code null})
+     * @param raNumDisplay отображаемый № ОА (может быть {@code null})
+     * @return текст причины
+     */
+    public static String formatType5OtherWithoutMarker(String signDisplay, String raNumDisplay) {
+        String sign = blankToDash(signDisplay);
+        String raNum = blankToDash(raNumDisplay);
+        return "прочий номер/признак без маркера ОА (\\d{7}): Признак = «" + sign + "», № ОА = «" + raNum + "»";
+    }
+
+    /**
+     * Итог: остальные OTHER не показаны поштучно (лимит топа).
+     *
+     * @param remaining сколько строк сверх уже залогированных
+     */
+    public static String formatType5OtherOverflow(int remaining) {
+        if (remaining <= 0) {
+            return "прочих строк без маркера № ОА: 0";
+        }
+        return "и ещё " + remaining + " прочих строк без маркера № ОА (см. топ выше / хвост)";
+    }
+
+    private static String blankToDash(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return "—";
+        }
+        return value.trim();
+    }
+
+    /**
      * Подпись поля: {@code columnName («заголовок Excel»)} или только имя колонки.
      */
     public static String formatFieldLabel(String column, Map<String, String> excelHeaders) {

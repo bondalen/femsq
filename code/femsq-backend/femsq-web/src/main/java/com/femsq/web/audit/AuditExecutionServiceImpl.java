@@ -437,13 +437,19 @@ public class AuditExecutionServiceImpl implements AuditExecutionService {
 
     private void appendLogPersistStats(AuditExecutionContext context) {
         AuditLogPersistStats stats = context.getLogPersistStats();
-        String summary = "flushes=" + stats.getFlushCount()
+        String summary = "записей в БД = " + stats.getFlushCount()
+                + ", пропущено без изменений = " + stats.getSkippedUnchanged()
+                + ", пропущено по интервалу = " + stats.getSkippedThrottled()
+                + ", сборка HTML = " + stats.getBuildHtmlTotalMs() + " мс"
+                + ", запись в БД = " + stats.getDbUpdateTotalMs() + " мс"
+                + ", размер HTML = " + stats.getLastHtmlChars() + " символов";
+        log.info(() -> "[AuditProgress] auditId=" + context.getAuditId()
+                + " flushes=" + stats.getFlushCount()
                 + " skippedUnchanged=" + stats.getSkippedUnchanged()
                 + " skippedThrottled=" + stats.getSkippedThrottled()
                 + " buildHtmlMs=" + stats.getBuildHtmlTotalMs()
                 + " dbUpdateMs=" + stats.getDbUpdateTotalMs()
-                + " lastHtmlChars=" + stats.getLastHtmlChars();
-        log.info(() -> "[AuditProgress] auditId=" + context.getAuditId() + " " + summary);
+                + " lastHtmlChars=" + stats.getLastHtmlChars());
         context.append(
                 AuditLogLevel.INFO,
                 AuditLogScope.AUDIT,

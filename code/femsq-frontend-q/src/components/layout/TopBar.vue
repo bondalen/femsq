@@ -77,66 +77,83 @@
       />
     </div>
 
+    <!-- Меню только на xs и только как потомок кнопки — иначе QMenu «висит» у toolbar. -->
     <QBtn
       v-else
       round
       flat
       icon="menu"
-      @click="menu = !menu"
       aria-label="Меню"
-    />
-
-    <QMenu v-model="menu" anchor="bottom right" self="top right">
-      <QList style="min-width: 220px">
-        <QItem clickable @click="handleToggleTheme">
-          <QItemSection avatar>
-            <QIcon :name="themeToggleIcon" />
-          </QItemSection>
-          <QItemSection>{{ themeMenuLabel }}</QItemSection>
-        </QItem>
-        <QItem clickable @click="handleOpenConnection">
-          <QItemSection avatar>
-            <QIcon name="link" />
-          </QItemSection>
-          <QItemSection>Подключение к БД</QItemSection>
-        </QItem>
-        <QItem clickable :disable="!organizationsEnabled" @click="handleNavigate('organizations')">
-          <QItemSection avatar>
-            <QIcon name="business" />
-          </QItemSection>
-          <QItemSection>Организации</QItemSection>
-        </QItem>
-        <QItem clickable :disable="!reportsEnabled" @click="handleNavigate('reports')">
-          <QItemSection avatar>
-            <QIcon name="analytics" />
-          </QItemSection>
-          <QItemSection>Отчёты</QItemSection>
-        </QItem>
-        <QItem clickable :disable="!investmentChainsEnabled" @click="handleNavigate('investment-chains')">
-          <QItemSection avatar>
-            <QIcon name="account_tree" />
-          </QItemSection>
-          <QItemSection>Инвестиционные цепочки</QItemSection>
-        </QItem>
-        <QItem clickable @click="handleNavigate('audits')">
-          <QItemSection avatar>
-            <QIcon name="verified_user" />
-          </QItemSection>
-          <QItemSection>Ревизии</QItemSection>
-        </QItem>
-        <QItem clickable @click="handleNavigate('test-grid')">
-          <QItemSection avatar>
-            <QIcon name="grid_on" />
-          </QItemSection>
-          <QItemSection>Test Grid</QItemSection>
-        </QItem>
-      </QList>
-    </QMenu>
+      aria-haspopup="menu"
+      :aria-expanded="menu"
+    >
+      <QMenu v-model="menu" anchor="bottom right" self="top right">
+        <QList style="min-width: 220px" role="menu">
+          <QItem clickable v-close-popup @click="handleToggleTheme">
+            <QItemSection avatar>
+              <QIcon :name="themeToggleIcon" />
+            </QItemSection>
+            <QItemSection>{{ themeMenuLabel }}</QItemSection>
+          </QItem>
+          <QItem clickable v-close-popup @click="handleOpenConnection">
+            <QItemSection avatar>
+              <QIcon name="link" />
+            </QItemSection>
+            <QItemSection>Подключение к БД</QItemSection>
+          </QItem>
+          <QItem
+            clickable
+            v-close-popup
+            :disable="!organizationsEnabled"
+            @click="handleNavigate('organizations')"
+          >
+            <QItemSection avatar>
+              <QIcon name="business" />
+            </QItemSection>
+            <QItemSection>Организации</QItemSection>
+          </QItem>
+          <QItem
+            clickable
+            v-close-popup
+            :disable="!reportsEnabled"
+            @click="handleNavigate('reports')"
+          >
+            <QItemSection avatar>
+              <QIcon name="analytics" />
+            </QItemSection>
+            <QItemSection>Отчёты</QItemSection>
+          </QItem>
+          <QItem
+            clickable
+            v-close-popup
+            :disable="!investmentChainsEnabled"
+            @click="handleNavigate('investment-chains')"
+          >
+            <QItemSection avatar>
+              <QIcon name="account_tree" />
+            </QItemSection>
+            <QItemSection>Инвестиционные цепочки</QItemSection>
+          </QItem>
+          <QItem clickable v-close-popup @click="handleNavigate('audits')">
+            <QItemSection avatar>
+              <QIcon name="verified_user" />
+            </QItemSection>
+            <QItemSection>Ревизии</QItemSection>
+          </QItem>
+          <QItem clickable v-close-popup @click="handleNavigate('test-grid')">
+            <QItemSection avatar>
+              <QIcon name="grid_on" />
+            </QItemSection>
+            <QItemSection>Test Grid</QItemSection>
+          </QItem>
+        </QList>
+      </QMenu>
+    </QBtn>
   </QToolbar>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useQuasar, QToolbar, QBtn, QSpace, QChip, QMenu, QList, QItem, QItemSection, QIcon } from 'quasar';
 
 import type { ActiveView, ConnectionState } from '@/stores/connection';
@@ -162,6 +179,13 @@ const themeStore = useThemeStore();
 const menu = ref(false);
 
 const isXs = computed(() => $q.screen.xs);
+
+/** На desktop меню не должно оставаться открытым / привязанным к header. */
+watch(isXs, (xs) => {
+  if (!xs) {
+    menu.value = false;
+  }
+});
 
 const themeToggleIcon = computed(() => resolveThemeToggleIcon(themeStore.themeId));
 const themeToggleLabel = computed(() => themeToggleAriaLabel(themeStore.themeId));
@@ -200,17 +224,14 @@ const statusColor = computed(() => {
 
 function handleToggleTheme(): void {
   themeStore.toggleTheme();
-  menu.value = false;
 }
 
 function handleOpenConnection(): void {
   emit('open-connection');
-  menu.value = false;
 }
 
 function handleNavigate(view: ActiveView): void {
   emit('navigate', view);
-  menu.value = false;
 }
 </script>
 

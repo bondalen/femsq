@@ -389,7 +389,7 @@ CREATE TABLE ags.ra_sheet_conf (
     rsc_stg_tbl      NVARCHAR(100) NOT NULL,            -- целевая staging-таблица SQL Server (формат: ags.ra_stg_xxx)
     rsc_anchor       NVARCHAR(200) NOT NULL,            -- текст ячейки-якоря (для поиска строки заголовков)
     rsc_anchor_match CHAR(1)       NOT NULL DEFAULT 'W',-- 'W' = xlWhole, 'P' = xlPart
-    rsc_row_pattern  NVARCHAR(200) NULL,                -- LIKE-паттерн для строк данных в колонке якоря (NULL = любое непустое)
+    rsc_row_pattern  NVARCHAR(200) NULL,                -- LIKE-паттерн для строк в колонке якоря (исторически; type=5 seed `%_______-%`). **Runtime Java (на 2026-07-14) не применяет** — отбор type=5 по `rsc_sign_whitelist`; граница/OTHER-маркер — app-config `\d{7}` (задача 0052, ops Stage 1 type=5).
     CONSTRAINT PK_ra_sheet_conf PRIMARY KEY (rsc_key),
     CONSTRAINT FK_rsc_ft FOREIGN KEY (rsc_ft_key) REFERENCES ags.ra_ft(ft_key)
 );

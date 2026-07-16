@@ -1,18 +1,18 @@
 <template>
-  <div class="status-bar q-pa-md" :class="[`status-bar--${statusTone}`]">
+  <div class="status-bar" :class="[`status-bar--${statusTone}`]">
     <div class="status-bar__segment">
-      <QChip dense outline :color="chipColor">
+      <QChip dense outline :color="chipColor" class="status-bar__chip">
         {{ statusLabel }}
       </QChip>
-      <span v-if="error" class="text-negative text-weight-medium">{{ error }}</span>
+      <span v-if="error" class="text-negative text-weight-medium status-bar__error">{{ error }}</span>
     </div>
 
     <div class="status-bar__segment status-bar__segment--center">
-      <span>{{ message || '—' }}</span>
+      <span class="status-bar__message">{{ message || '—' }}</span>
     </div>
 
     <div class="status-bar__segment status-bar__segment--right">
-      <span>{{ schemaLabel }}</span>
+      <span class="status-bar__schema">{{ schemaLabel }}</span>
       <span v-if="user" class="text-caption femsq-text-muted">{{ user }}</span>
       <QBtn
         v-if="status === 'connected'"
@@ -21,6 +21,7 @@
         dense
         icon="logout"
         color="primary"
+        class="status-bar__logout"
         @click="emit('disconnect')"
         aria-label="Отключиться"
       />
@@ -84,19 +85,30 @@ const schemaLabel = computed(() => {
 </script>
 
 <style scoped>
+/*
+ * Высота = высота самого высокого компонента (chip dense / btn dense ≈ 24px)
+ * плюс ~10% запаса по вертикали (padding-block).
+ */
 .status-bar {
+  --status-bar-tallest: 24px;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 16px;
+  gap: 8px;
   align-items: center;
-  font-size: 14px;
+  min-height: calc(var(--status-bar-tallest) * 1.1);
+  padding-block: calc(var(--status-bar-tallest) * 0.05);
+  padding-inline: 12px;
+  font-size: 13px;
+  line-height: 1.2;
+  box-sizing: border-box;
 }
 
 .status-bar__segment {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: 8px;
+  flex-wrap: nowrap;
+  min-height: var(--status-bar-tallest);
 }
 
 .status-bar__segment--center {
@@ -106,6 +118,14 @@ const schemaLabel = computed(() => {
 
 .status-bar__segment--right {
   justify-content: flex-end;
+}
+
+.status-bar__message,
+.status-bar__schema,
+.status-bar__error {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .status-bar--info {
@@ -123,13 +143,15 @@ const schemaLabel = computed(() => {
 @media (max-width: 768px) {
   .status-bar {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 4px;
+    padding-block: 6px;
   }
 
   .status-bar__segment,
   .status-bar__segment--center,
   .status-bar__segment--right {
     justify-content: flex-start;
+    flex-wrap: wrap;
   }
 }
 </style>

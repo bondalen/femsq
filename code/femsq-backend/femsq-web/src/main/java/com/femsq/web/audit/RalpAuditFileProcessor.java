@@ -1,25 +1,23 @@
 package com.femsq.web.audit;
 
-import com.femsq.web.audit.staging.AuditStagingService;
-import com.femsq.web.audit.stage2.RalpStage2Service;
 import com.femsq.web.audit.reconcile.AuditReconcileCoordinator;
+import com.femsq.web.audit.staging.AuditStagingService;
+import com.femsq.web.audit.stage2.RalpFkAnomalyFormatter;
+import com.femsq.web.audit.stage2.RalpStage2Service;
 import java.util.Objects;
 import java.util.logging.Logger;
 import org.springframework.stereotype.Service;
 
 /**
- * Заглушка обработчика файлов типа "ralp" (RAAudit_ralp и связанные сценарии).
- *
- * Пока только логирует факт обработки файла; реальная логика будет добавлена
- * на последующих этапах переноса из VBA.
+ * Обработчик файлов type=3 (аренда земли, RALP): Stage 1 → Stage 2 → reconcile.
  */
 @Service
 public class RalpAuditFileProcessor implements AuditFileProcessor {
 
     private static final Logger log = Logger.getLogger(RalpAuditFileProcessor.class.getName());
 
-    // TODO: согласовать реальные значения af_type для сценария RAAudit_ralp.
     private static final int TYPE_RALP = 3;
+
     private final AuditStagingService auditStagingService;
     private final RalpStage2Service ralpStage2Service;
     private final AuditReconcileCoordinator reconcileCoordinator;
@@ -50,7 +48,7 @@ public class RalpAuditFileProcessor implements AuditFileProcessor {
                 AuditLogLevel.INFO,
                 AuditLogScope.FILE,
                 "FILE_RALP_STAGE1",
-                "<P>Stage 1 (RALP) завершён: " + file.getPath() + ", вставлено строк: " + inserted + "</P>",
+                "<P>Этап 1 (RALP) завершён: " + file.getPath() + ", вставлено строк = " + inserted + "</P>",
                 null
         );
 
@@ -60,7 +58,7 @@ public class RalpAuditFileProcessor implements AuditFileProcessor {
                     AuditLogLevel.WARNING,
                     AuditLogScope.FILE,
                     "FILE_RALP_STAGE2_SKIPPED",
-                    "<P>Stage 2 (RALP) пропущен: executionKey отсутствует</P>",
+                    "<P>Этап 2 (RALP) пропущен: отсутствует ключ выполнения</P>",
                     null
             );
             return;
@@ -71,12 +69,21 @@ public class RalpAuditFileProcessor implements AuditFileProcessor {
                 AuditLogLevel.INFO,
                 AuditLogScope.FILE,
                 "FILE_RALP_STAGE2A2B",
-                "<P>Stage 2 (RALP) выполнен: ralprtCstAgPn=" + resolutionResult.resolvedCstAgPn()
-                        + ", ralprtOgSender=" + resolutionResult.resolvedOgSender()
-                        + ", ralprsSender=" + resolutionResult.resolvedSmSender()
-                        + ", ralprtStatus=" + resolutionResult.computedStatus() + "</P>",
+                RalpFkAnomalyFormatter.formatStage2SummaryHtml(
+                        resolutionResult.resolvedCstAgPn(),
+                        resolutionResult.resolvedOgSender(),
+                        resolutionResult.resolvedSmSender(),
+                        resolutionResult.computedStatus(),
+                        resolutionResult.stagingRows(),
+                        resolutionResult.unresolvedRows(),
+                        resolutionResult.unresolvedCst(),
+                        resolutionResult.unresolvedOg(),
+                        resolutionResult.unresolvedDate()
+                ),
                 null
         );
+
+        // §9.3.8.4: детализация A1–A4 — в дереве сверки (одна точка истины); здесь только агрегат Stage 2.
 
         reconcileCoordinator.run(context, file);
     }

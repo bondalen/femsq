@@ -94,6 +94,8 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         RcChangeReadModelResult rcReadModelResult = new RcChangeReadModelResult(
                 new RcChangeReadModelStats(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
                 List.of(),
+                List.of(),
+                RcTreePartition.empty(),
                 List.of()
         );
         RcChangeReadModelStats rcReadStats = rcReadModelResult.stats();
@@ -112,7 +114,7 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         // VBA semantics for type=5: row-level reject, not global apply blocker.
         boolean applyBlocked = false;
         boolean dryRun = !applyRequested;
-        appendType5ModeAndRaRowsAuditLog(context, readModelStats.considered(), applyRequested);
+        appendType5ModeAuditLog(context, applyRequested);
         int rcChangesInserted = 0;
         int rcSumsInserted = 0;
         int rcChangesUpdated = 0;
@@ -121,7 +123,6 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         int rcNewPlanned = 0;
         int rcChangedPlanned = 0;
         RaDeletePlan raDeletePlan = planRaDeletes(connection, stagingRowsData, lookupResult.byRowKey());
-        appendRaExcessItemsAudit(context, raDeletePlan);
         // rcDeletePlan зависит от domainRcByKey, который для apply нужно грузить после RA apply.
         RcDeletePlan rcDeletePlan = new RcDeletePlan(List.of(), 0);
         int raDeleted = 0;
@@ -131,18 +132,22 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         boolean raDeleteAlreadyDone = false;
         boolean rcDeleteAlreadyDone = false;
         if (dryRun) {
-            Map<PeriodRaNumKey, List<Long>> raByPeriodAndNum = loadRaKeysByPeriodAndRaNum(connection);
+            RaPeriodNumIndex raIndex = loadRaKeysByPeriodAndRaNum(connection);
+            Map<PeriodRaNumKey, List<Long>> raByPeriodAndNum = raIndex.byPeriodAndNum();
             Map<RcChangeMatchKey, List<DomainRcChangeRow>> domainRcByKey = loadDomainRcChangeRows(connection);
             rcReadModelResult = buildRcChangeReadModel(
                     stagingRowsData,
                     lookupResult.byRowKey(),
                     lookupCaches,
                     raByPeriodAndNum,
+                    raIndex.raTypeByKey(),
                     domainRcByKey,
                     context
             );
             rcReadStats = rcReadModelResult.stats();
-            appendRcRowsSummaryAuditLog(context, rcReadStats.rcRowsConsidered());
+            appendType5ReconcileTreeScaffold(
+                    context, stagingRowsData, readModelResult, rcReadModelResult, raIndex.raTypeByKey());
+            appendRaExcessItemsAudit(context, raDeletePlan);
             rcNewPlanned = rcReadModelResult.newRows().size();
             rcChangedPlanned = rcReadModelResult.changedRows().size();
             rcDeletePlan = planRcDeletes(
@@ -187,18 +192,22 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             }
 
             // После apply RA обновляем кэши, которые нужны для RC сопоставления/удалений.
-            Map<PeriodRaNumKey, List<Long>> raByPeriodAndNum = loadRaKeysByPeriodAndRaNum(connection);
+            RaPeriodNumIndex raIndex = loadRaKeysByPeriodAndRaNum(connection);
+            Map<PeriodRaNumKey, List<Long>> raByPeriodAndNum = raIndex.byPeriodAndNum();
             Map<RcChangeMatchKey, List<DomainRcChangeRow>> domainRcByKey = loadDomainRcChangeRows(connection);
             rcReadModelResult = buildRcChangeReadModel(
                     stagingRowsData,
                     lookupResult.byRowKey(),
                     lookupCaches,
                     raByPeriodAndNum,
+                    raIndex.raTypeByKey(),
                     domainRcByKey,
                     context
             );
             rcReadStats = rcReadModelResult.stats();
-            appendRcRowsSummaryAuditLog(context, rcReadStats.rcRowsConsidered());
+            appendType5ReconcileTreeScaffold(
+                    context, stagingRowsData, readModelResult, rcReadModelResult, raIndex.raTypeByKey());
+            appendRaExcessItemsAudit(context, raDeletePlan);
             rcNewPlanned = rcReadModelResult.newRows().size();
             rcChangedPlanned = rcReadModelResult.changedRows().size();
             rcDeletePlan = planRcDeletes(
@@ -302,6 +311,7 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         String sql = """
                 SELECT
                     rain_key,
+                    rainRow,
                     rainRaNum,
                     rainRaDate,
                     rainCstAgPnStr,
@@ -328,8 +338,10 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             statement.setLong(1, executionKey);
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
+                    Integer excelRow = (Integer) resultSet.getObject("rainRow");
                     rows.add(new StagingRaRow(
                             resultSet.getLong("rain_key"),
+                            excelRow,
                             resultSet.getString("rainRaNum"),
                             resultSet.getDate("rainRaDate") != null ? resultSet.getDate("rainRaDate").toLocalDate() : null,
                             resultSet.getString("rainCstAgPnStr"),
@@ -517,6 +529,7 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         Map<CanonicalMatchKey, List<DomainRaRow>> domainByKey = loadDomainRaRows(connection);
         List<NewRaRow> newRows = new ArrayList<>();
         List<ChangedRaRow> changedRows = new ArrayList<>();
+        List<Type5ReconcileErrorGrouper.ErrorHit> errorHits = new ArrayList<>();
         int considered = 0;
         int filteredSign = 0;
         int invalid = 0;
@@ -546,14 +559,26 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                 invalid++;
                 categoryInvalid++;
                 rejectedInvalidCanonical++;
-                appendRaValidationFail(context, row, "INVALID_CANONICAL_KEY", describeMissingCanonicalParts(row, byRowKey.get(row.key())));
+                ResolvedLookupKeys failKeys = byRowKey.get(row.key());
+                String detail = describeMissingCanonicalParts(row, failKeys);
+                appendRaValidationFail(context, row, "INVALID_CANONICAL_KEY", detail);
+                errorHits.add(toRaCanonicalErrorHit(row, failKeys, detail));
                 continue;
             }
             if (!isAllowedRaSign(sign)) {
                 invalid++;
                 categoryInvalid++;
                 rejectedDisallowedSign++;
-                appendRaValidationFail(context, row, "DISALLOWED_SIGN", "Знак «" + escapeHtml(trimToNull(sign)) + "» не допускается для ветки RA (ожидаются ОА / ОА прочие).");
+                String detail = "Знак «" + escapeHtml(trimToNull(sign)) + "» не допускается для ветки RA (ожидаются ОА / ОА прочие).";
+                appendRaValidationFail(context, row, "DISALLOWED_SIGN", detail);
+                errorHits.add(Type5ReconcileErrorGrouper.ErrorHit.of(
+                        sign,
+                        row.excelRow(),
+                        Type5ReconcileErrorGrouper.PRIMARY_OTHER,
+                        null,
+                        "DISALLOWED_SIGN",
+                        detail
+                ));
                 continue;
             }
             List<DomainRaRow> candidates = domainByKey.get(canonical);
@@ -566,8 +591,16 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             if (candidates.size() > 1) {
                 matchedAmbiguous++;
                 categoryAmbiguous++;
-                appendRaValidationFail(context, row, "AMBIGUOUS_MATCH",
-                        "Найдено " + candidates.size() + " записей ags.ra по ключу (отправитель, стройка, период, номер).");
+                String detail = "Найдено " + candidates.size() + " записей ags.ra по ключу (отправитель, стройка, период, номер).";
+                appendRaValidationFail(context, row, "AMBIGUOUS_MATCH", detail);
+                errorHits.add(Type5ReconcileErrorGrouper.ErrorHit.of(
+                        sign,
+                        row.excelRow(),
+                        Type5ReconcileErrorGrouper.PRIMARY_AMBIGUOUS,
+                        trimToNull(row.raNum()) == null ? "(без номера)" : trimToNull(row.raNum()),
+                        "AMBIGUOUS_MATCH",
+                        detail
+                ));
                 continue;
             }
             matchedSingle++;
@@ -609,7 +642,41 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                         rejectedAmbiguous
                 ),
                 newRows,
-                changedRows
+                changedRows,
+                List.copyOf(errorHits)
+        );
+    }
+
+    /**
+     * Классифицирует отказ RA по primary reason (стройка → отправитель → иное).
+     */
+    private static Type5ReconcileErrorGrouper.ErrorHit toRaCanonicalErrorHit(
+            StagingRaRow row,
+            ResolvedLookupKeys keys,
+            String detail
+    ) {
+        String sign = trimToNullStatic(row.sign());
+        boolean cstapMissing = keys == null || keys.cstapKey() == null;
+        boolean senderMissing = keys == null || keys.ogKey() == null;
+        boolean periodMissing = keys == null || keys.periodKey() == null;
+        boolean raNumMissing = trimToNullStatic(row.raNum()) == null;
+        String primary = Type5ReconcileErrorGrouper.primaryForCanonicalGaps(
+                cstapMissing, senderMissing, periodMissing, raNumMissing);
+        String groupValue = null;
+        if (Type5ReconcileErrorGrouper.PRIMARY_MISSING_CSTAP.equals(primary)) {
+            String cst = trimToNullStatic(row.cstAgPnStr());
+            groupValue = cst == null ? "(пусто)" : cst;
+        } else if (Type5ReconcileErrorGrouper.PRIMARY_MISSING_SENDER.equals(primary)) {
+            String sender = trimToNullStatic(row.sender());
+            groupValue = sender == null ? "(пусто)" : sender;
+        }
+        return Type5ReconcileErrorGrouper.ErrorHit.of(
+                sign,
+                row.excelRow(),
+                primary,
+                groupValue,
+                "INVALID_CANONICAL_KEY",
+                detail
         );
     }
 
@@ -1229,12 +1296,16 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
      * 1.3.1 Read-model для ветки изменений (аналог {@code ra_ImpNewQuRc}): парсинг {@code rainRaNum}, поиск {@code ags.ra}
      * по {@code (ra_period, ra_num)}, сопоставление с {@code ags.ra_change} по {@code (ra_period, raс_ra, raс_num)} и сверка полей со staging.
      */
-    private Map<PeriodRaNumKey, List<Long>> loadRaKeysByPeriodAndRaNum(Connection connection) throws SQLException {
+    /**
+     * Индекс {@code ags.ra} по (период, №) плюс {@code ra_type} по ключу — для ветки RC (§9.3.8).
+     */
+    private RaPeriodNumIndex loadRaKeysByPeriodAndRaNum(Connection connection) throws SQLException {
         String sql = """
-                SELECT r.ra_key, r.ra_period, r.ra_num
+                SELECT r.ra_key, r.ra_period, r.ra_num, r.ra_type
                 FROM ags.ra r
                 """;
         Map<PeriodRaNumKey, List<Long>> byKey = new HashMap<>();
+        Map<Long, String> typeByKey = new HashMap<>();
         try (PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet resultSet = statement.executeQuery()) {
             while (resultSet.next()) {
@@ -1245,9 +1316,10 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                 PeriodRaNumKey key = new PeriodRaNumKey(resultSet.getInt("ra_period"), raNum);
                 long raKey = resultSet.getLong("ra_key");
                 byKey.computeIfAbsent(key, ignored -> new ArrayList<>()).add(raKey);
+                typeByKey.put(raKey, trimToNull(resultSet.getString("ra_type")));
             }
         }
-        return byKey;
+        return new RaPeriodNumIndex(byKey, typeByKey);
     }
 
     private Map<RcChangeMatchKey, List<DomainRcChangeRow>> loadDomainRcChangeRows(Connection connection) throws SQLException {
@@ -1315,6 +1387,7 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             Map<Long, ResolvedLookupKeys> byRowKey,
             LookupCaches lookupCaches,
             Map<PeriodRaNumKey, List<Long>> raByPeriodAndNum,
+            Map<Long, String> raTypeByKey,
             Map<RcChangeMatchKey, List<DomainRcChangeRow>> domainRcByKey,
             ReconcileContext context
     ) {
@@ -1329,9 +1402,18 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         int categoryNew = 0;
         int categoryUnchanged = 0;
         int categoryChanged = 0;
+        int oaTotal = 0;
+        int oaNew = 0;
+        int oaChanged = 0;
+        int otherTotal = 0;
+        int otherNew = 0;
+        int otherChanged = 0;
+        int orphanTotal = 0;
         List<RcNewApplyRow> newRows = new ArrayList<>();
         List<RcChangedApplyRow> changedRows = new ArrayList<>();
+        List<Type5ReconcileErrorGrouper.ErrorHit> errorHits = new ArrayList<>();
         Map<LocalDate, Integer> periodByDate = lookupCaches.periodByDate();
+        Map<Long, String> types = raTypeByKey != null ? raTypeByKey : Map.of();
         for (StagingRaRow row : rows) {
             if (!"ОА изм".equals(trimToNull(row.sign()))) {
                 continue;
@@ -1340,58 +1422,83 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             Optional<RcStagingLineParser.ParsedRcLine> parsedOpt = RcStagingLineParser.parse(row.raNum());
             if (parsedOpt.isEmpty()) {
                 parseInvalid++;
-                appendRcValidationFail(
-                        context, row, "RC_PARSE_INVALID", "Не удалось разобрать строку изменения в rain_ra_num.");
+                orphanTotal++;
+                String detail = "Не удалось разобрать строку изменения в rain_ra_num.";
+                appendRcValidationFail(context, row, "RC_PARSE_INVALID", detail);
+                errorHits.add(rcErrorHit(row, Type5ReconcileErrorGrouper.PRIMARY_OTHER, null, null,
+                        "RC_PARSE_INVALID", detail));
                 continue;
             }
             RcStagingLineParser.ParsedRcLine parsed = parsedOpt.get();
             Integer rcPeriod = resolvePeriodKey(row.raDate(), periodByDate);
             if (rcPeriod == null) {
                 missingRcPeriod++;
-                appendRcValidationFail(
-                        context, row, "RC_MISSING_RC_PERIOD", "Не найден ключ периода по дате строки изменения.");
+                orphanTotal++;
+                String detail = "Не найден ключ периода по дате строки изменения.";
+                appendRcValidationFail(context, row, "RC_MISSING_RC_PERIOD", detail);
+                errorHits.add(rcErrorHit(row, Type5ReconcileErrorGrouper.PRIMARY_OTHER, null, null,
+                        "RC_MISSING_RC_PERIOD", detail));
                 continue;
             }
             Integer reportPeriodKey = resolvePeriodKey(parsed.reportDate(), periodByDate);
             if (reportPeriodKey == null) {
                 missingReportPeriod++;
-                appendRcValidationFail(
-                        context, row, "RC_MISSING_REPORT_PERIOD", "Не найден ключ периода по дате отчёта из строки изменения.");
+                orphanTotal++;
+                String detail = "Не найден ключ периода по дате отчёта из строки изменения.";
+                appendRcValidationFail(context, row, "RC_MISSING_REPORT_PERIOD", detail);
+                errorHits.add(rcErrorHit(row, Type5ReconcileErrorGrouper.PRIMARY_OTHER, null, null,
+                        "RC_MISSING_REPORT_PERIOD", detail));
                 continue;
             }
             String reportNum = trimToNull(parsed.reportNumber());
             if (reportNum == null) {
                 missingBaseRa++;
-                appendRcValidationFail(
-                        context, row, "RC_MISSING_REPORT_NUM", "В строке изменения отсутствует номер базового отчёта.");
+                orphanTotal++;
+                String detail = "В строке изменения отсутствует номер базового отчёта.";
+                appendRcValidationFail(context, row, "RC_MISSING_REPORT_NUM", detail);
+                errorHits.add(rcErrorHit(row, Type5ReconcileErrorGrouper.PRIMARY_OTHER, null, null,
+                        "RC_MISSING_REPORT_NUM", detail));
                 continue;
             }
             PeriodRaNumKey raLookup = new PeriodRaNumKey(reportPeriodKey, reportNum);
             List<Long> raKeys = raByPeriodAndNum.getOrDefault(raLookup, List.of());
             if (raKeys.isEmpty()) {
                 missingBaseRa++;
-                appendRcValidationFail(
-                        context,
-                        row,
-                        "RC_MISSING_BASE_RA",
-                        "В домене нет RA для пары (период отчёта, ra_num) из строки изменения.");
+                orphanTotal++;
+                String detail = "В домене нет RA для пары (период отчёта, ra_num) из строки изменения.";
+                appendRcValidationFail(context, row, "RC_MISSING_BASE_RA", detail);
+                errorHits.add(rcErrorHit(row, Type5ReconcileErrorGrouper.PRIMARY_OTHER, reportNum, null,
+                        "RC_MISSING_BASE_RA", detail));
                 continue;
             }
             if (raKeys.size() > 1) {
                 ambiguousBaseRa++;
-                appendRcValidationFail(
-                        context,
-                        row,
-                        "RC_AMBIGUOUS_BASE_RA",
-                        "Найдено " + raKeys.size() + " записей ags.ra по ключу период+номер отчёта.");
+                orphanTotal++;
+                String detail = "Найдено " + raKeys.size() + " записей ags.ra по ключу период+номер отчёта.";
+                appendRcValidationFail(context, row, "RC_AMBIGUOUS_BASE_RA", detail);
+                errorHits.add(rcErrorHit(row, Type5ReconcileErrorGrouper.PRIMARY_AMBIGUOUS, reportNum, null,
+                        "RC_AMBIGUOUS_BASE_RA", detail));
                 continue;
             }
             long raKey = raKeys.get(0);
+            String baseType = types.get(raKey);
             ResolvedLookupKeys keys = byRowKey.get(row.key());
             if (keys == null || keys.ogKey() == null) {
                 missingLookupForCompare++;
-                appendRcValidationFail(
-                        context, row, "RC_MISSING_LOOKUP", "Не разрешён отправитель (ra_org_sender / og) для строки изменения.");
+                if (baseType == null) {
+                    orphanTotal++;
+                }
+                String detail = "Не разрешён отправитель (ra_org_sender / og) для строки изменения.";
+                appendRcValidationFail(context, row, "RC_MISSING_LOOKUP", detail);
+                String sender = trimToNull(row.sender());
+                errorHits.add(rcErrorHit(
+                        row,
+                        Type5ReconcileErrorGrouper.PRIMARY_MISSING_SENDER,
+                        sender == null ? "(пусто)" : sender,
+                        baseType,
+                        "RC_MISSING_LOOKUP",
+                        detail
+                ));
                 continue;
             }
             String changeNumKey = normalizeRcChangeNumKey(String.valueOf(parsed.changeNumber()));
@@ -1399,6 +1506,15 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             List<DomainRcChangeRow> racList = domainRcByKey.getOrDefault(rcKey, List.of());
             if (racList.isEmpty()) {
                 categoryNew++;
+                if (Type5ReconcileTreeLogger.DOMAIN_OA_OTHER.equals(baseType)) {
+                    otherTotal++;
+                    otherNew++;
+                } else if (Type5ReconcileTreeLogger.DOMAIN_OA.equals(baseType)) {
+                    oaTotal++;
+                    oaNew++;
+                } else {
+                    orphanTotal++;
+                }
                 newRows.add(new RcNewApplyRow(
                         row.key(),
                         raKey,
@@ -1423,18 +1539,43 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             }
             if (racList.size() > 1) {
                 ambiguousRac++;
-                appendRcValidationFail(
-                        context,
+                String detail = "Найдено " + racList.size()
+                        + " записей ags.ra_change по ключу (период изменения, ra_key, № изм.).";
+                appendRcValidationFail(context, row, "RC_AMBIGUOUS_RAC", detail);
+                if (baseType == null) {
+                    orphanTotal++;
+                }
+                errorHits.add(rcErrorHit(
                         row,
+                        Type5ReconcileErrorGrouper.PRIMARY_AMBIGUOUS,
+                        changeNumKey,
+                        baseType,
                         "RC_AMBIGUOUS_RAC",
-                        "Найдено " + racList.size() + " записей ags.ra_change по ключу (период изменения, ra_key, № изм.).");
+                        detail
+                ));
                 continue;
             }
             DomainRcChangeRow domain = racList.get(0);
             if (isRcRowMatchingStaging(domain, row, keys)) {
                 categoryUnchanged++;
+                if (Type5ReconcileTreeLogger.DOMAIN_OA_OTHER.equals(baseType)) {
+                    otherTotal++;
+                } else if (Type5ReconcileTreeLogger.DOMAIN_OA.equals(baseType)) {
+                    oaTotal++;
+                } else {
+                    orphanTotal++;
+                }
             } else {
                 categoryChanged++;
+                if (Type5ReconcileTreeLogger.DOMAIN_OA_OTHER.equals(baseType)) {
+                    otherTotal++;
+                    otherChanged++;
+                } else if (Type5ReconcileTreeLogger.DOMAIN_OA.equals(baseType)) {
+                    oaTotal++;
+                    oaChanged++;
+                } else {
+                    orphanTotal++;
+                }
                 changedRows.add(new RcChangedApplyRow(
                         row.key(),
                         domain.racKey(),
@@ -1472,7 +1613,31 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                 categoryUnchanged,
                 categoryChanged
         );
-        return new RcChangeReadModelResult(stats, newRows, changedRows);
+        RcTreePartition treePartition = new RcTreePartition(
+                oaTotal, oaNew, oaChanged,
+                otherTotal, otherNew, otherChanged,
+                orphanTotal
+        );
+        return new RcChangeReadModelResult(stats, newRows, changedRows, treePartition, List.copyOf(errorHits));
+    }
+
+    private static Type5ReconcileErrorGrouper.ErrorHit rcErrorHit(
+            StagingRaRow row,
+            String primary,
+            String groupValue,
+            String domainRaType,
+            String reasonCode,
+            String detail
+    ) {
+        return new Type5ReconcileErrorGrouper.ErrorHit(
+                "ОА изм",
+                row.excelRow(),
+                primary,
+                groupValue,
+                reasonCode,
+                detail,
+                domainRaType
+        );
     }
 
     /**
@@ -2215,9 +2380,9 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
     }
 
     /**
-     * Явные MSG для журнала аудита: режим reconcile и сводка по строкам RA перед обработкой RA (1.8.11.3.1, 4.5).
+     * Режим сверки type=5 в журнале (диагностика / применение).
      */
-    private void appendType5ModeAndRaRowsAuditLog(ReconcileContext context, int raRowsConsidered, boolean addRa) {
+    private void appendType5ModeAuditLog(ReconcileContext context, boolean addRa) {
         AuditExecutionContext audit = context.auditExecutionContext();
         if (audit == null) {
             return;
@@ -2244,52 +2409,319 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                         "NORMAL"
                 )
         );
-        audit.append(
-                AuditLogLevel.INFO,
-                AuditLogScope.FILE,
-                "RA_ROWS_SUMMARY",
-                "<P>Всего строк отчётов: <b><font color=\"" + HTML_CRIMSON_SUMMARY + "\">"
-                        + raRowsConsidered + "</font></b></P>",
-                withPresentationMeta(
-                        Map.of(
-                                "auditId", String.valueOf(context.auditId()),
-                                "execKey", String.valueOf(context.executionKey()),
-                                "fileType", String.valueOf(context.fileType()),
-                                "raRowsCount", String.valueOf(raRowsConsidered)
-                        ),
-                        "INFO",
-                        "CRIMSON",
-                        "BOLD"
-                )
-        );
     }
 
     /**
-     * Сводка по строкам изменений перед блоком RC (1.8.11.3.2).
+     * Дерево сверки type=5 (§9.3.8.1–9.3.8.3): каркас + списки NEW/CHANGED + группировка ошибок.
      */
-    private void appendRcRowsSummaryAuditLog(ReconcileContext context, int rcRowsConsidered) {
+    private void appendType5ReconcileTreeScaffold(
+            ReconcileContext context,
+            List<StagingRaRow> stagingRows,
+            RaReadModelResult raRead,
+            RcChangeReadModelResult rcRead,
+            Map<Long, String> raTypeByKey
+    ) {
         AuditExecutionContext audit = context.auditExecutionContext();
         if (audit == null) {
             return;
         }
-        audit.append(
-                AuditLogLevel.INFO,
-                AuditLogScope.FILE,
-                "RC_ROWS_SUMMARY",
-                "<P>Всего строк изменений: <b><font color=\"" + HTML_CRIMSON_SUMMARY + "\">"
-                        + rcRowsConsidered + "</font></b></P>",
-                withPresentationMeta(
-                        Map.of(
-                                "auditId", String.valueOf(context.auditId()),
-                                "execKey", String.valueOf(context.executionKey()),
-                                "fileType", String.valueOf(context.fileType()),
-                                "rcRowsCount", String.valueOf(rcRowsConsidered)
-                        ),
-                        "INFO",
-                        "CRIMSON",
-                        "BOLD"
-                )
+        int stagingTotal = stagingRows == null ? 0 : stagingRows.size();
+        int detailLimit = Type5ReconcileTreeLineFormatter.detailLimit(resolveStagingLogLevel(audit));
+        Map<Long, StagingRaRow> stagingByKey = indexStagingByKey(stagingRows);
+        Map<Long, String> types = raTypeByKey != null ? raTypeByKey : Map.of();
+
+        Type5ReconcileTreeLogger.BranchCounts oaRaCounts =
+                countRaBranch(stagingRows, raRead, Type5ReconcileTreeLogger.SIGN_OA);
+        Type5ReconcileTreeLogger.BranchCounts otherRaCounts =
+                countRaBranch(stagingRows, raRead, Type5ReconcileTreeLogger.SIGN_OA_OTHER);
+        RcTreePartition part = rcRead.treePartition() != null ? rcRead.treePartition() : RcTreePartition.empty();
+
+        Type5ReconcileTreeLogger.TreeCounts counts = new Type5ReconcileTreeLogger.TreeCounts(
+                stagingTotal,
+                buildRaBranchDetail(raRead, Type5ReconcileTreeLogger.SIGN_OA, oaRaCounts, detailLimit),
+                buildRcBranchDetail(
+                        rcRead,
+                        stagingByKey,
+                        types,
+                        Type5ReconcileTreeLogger.DOMAIN_OA,
+                        new Type5ReconcileTreeLogger.BranchCounts(part.oaTotal(), part.oaNew(), part.oaChanged()),
+                        detailLimit
+                ),
+                buildRaBranchDetail(raRead, Type5ReconcileTreeLogger.SIGN_OA_OTHER, otherRaCounts, detailLimit),
+                buildRcBranchDetail(
+                        rcRead,
+                        stagingByKey,
+                        types,
+                        Type5ReconcileTreeLogger.DOMAIN_OA_OTHER,
+                        new Type5ReconcileTreeLogger.BranchCounts(
+                                part.otherTotal(), part.otherNew(), part.otherChanged()),
+                        detailLimit
+                ),
+                buildOrphanRcBranchDetail(rcRead, part.orphanTotal(), detailLimit)
         );
+        Type5ReconcileTreeLogger.appendScaffold(
+                audit,
+                context.auditId(),
+                context.executionKey(),
+                counts,
+                context.addRa()
+        );
+    }
+
+    private static StagingLogLevel resolveStagingLogLevel(AuditExecutionContext audit) {
+        StagingLogLevel level = audit.getStagingLogLevel();
+        return level != null ? level : StagingLogLevel.SUMMARY;
+    }
+
+    private static Map<Long, StagingRaRow> indexStagingByKey(List<StagingRaRow> stagingRows) {
+        if (stagingRows == null || stagingRows.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, StagingRaRow> byKey = new HashMap<>();
+        for (StagingRaRow row : stagingRows) {
+            byKey.put(row.key(), row);
+        }
+        return byKey;
+    }
+
+    private static Type5ReconcileTreeLogger.BranchDetail buildRaBranchDetail(
+            RaReadModelResult raRead,
+            String excelSign,
+            Type5ReconcileTreeLogger.BranchCounts counts,
+            int detailLimit
+    ) {
+        List<String> newLines = new ArrayList<>();
+        List<String> changedLines = new ArrayList<>();
+        if (raRead != null && detailLimit > 0) {
+            int idx = 0;
+            for (NewRaRow row : raRead.newRows()) {
+                if (!excelSign.equals(trimToNullStatic(row.stagingRow().sign()))) {
+                    continue;
+                }
+                idx++;
+                StagingRaRow s = row.stagingRow();
+                newLines.add(Type5ReconcileTreeLineFormatter.formatRaNewLine(
+                        idx,
+                        s.excelRow(),
+                        s.raNum(),
+                        s.raDate(),
+                        s.ttl(),
+                        s.work(),
+                        s.equip(),
+                        s.others()
+                ));
+            }
+            idx = 0;
+            for (ChangedRaRow row : raRead.changedRows()) {
+                if (!excelSign.equals(trimToNullStatic(row.stagingRow().sign()))) {
+                    continue;
+                }
+                idx++;
+                StagingRaRow s = row.stagingRow();
+                changedLines.add(Type5ReconcileTreeLineFormatter.formatRaChangedLine(
+                        idx,
+                        s.excelRow(),
+                        s.raNum(),
+                        buildRaTreeFieldDiffs(row.domainBefore(), s)
+                ));
+            }
+        }
+        List<Type5ReconcileErrorGrouper.ErrorHit> hits = raRead == null || raRead.errorHits() == null
+                ? List.of()
+                : Type5ReconcileErrorGrouper.filterByExcelSign(raRead.errorHits(), excelSign);
+        Type5ReconcileErrorGrouper.ErrorTree errors = Type5ReconcileErrorGrouper.group(hits, detailLimit);
+        return new Type5ReconcileTreeLogger.BranchDetail(
+                counts,
+                Type5ReconcileTreeLineFormatter.limitLines(newLines, detailLimit),
+                Type5ReconcileTreeLineFormatter.limitLines(changedLines, detailLimit),
+                errors
+        );
+    }
+
+    private static Type5ReconcileTreeLogger.BranchDetail buildRcBranchDetail(
+            RcChangeReadModelResult rcRead,
+            Map<Long, StagingRaRow> stagingByKey,
+            Map<Long, String> raTypeByKey,
+            String domainRaType,
+            Type5ReconcileTreeLogger.BranchCounts counts,
+            int detailLimit
+    ) {
+        List<String> newLines = new ArrayList<>();
+        List<String> changedLines = new ArrayList<>();
+        if (rcRead != null && detailLimit > 0) {
+            int idx = 0;
+            for (RcNewApplyRow row : rcRead.newRows()) {
+                if (!domainRaType.equals(raTypeByKey.get(row.raFk()))) {
+                    continue;
+                }
+                idx++;
+                StagingRaRow stg = stagingByKey.get(row.stagingRowKey());
+                Integer excelRow = stg != null ? stg.excelRow() : null;
+                Optional<RcStagingLineParser.ParsedRcLine> parsed = RcStagingLineParser.parse(
+                        stg != null ? stg.raNum() : null);
+                String changeNum = row.changeNum();
+                String reportNum = parsed.map(RcStagingLineParser.ParsedRcLine::reportNumber).orElse(null);
+                LocalDate reportDate = parsed.map(RcStagingLineParser.ParsedRcLine::reportDate).orElse(null);
+                newLines.add(Type5ReconcileTreeLineFormatter.formatRcNewLine(
+                        idx,
+                        excelRow,
+                        changeNum,
+                        reportNum,
+                        reportDate,
+                        row.rcDate(),
+                        row.total(),
+                        row.work(),
+                        row.equip(),
+                        row.others()
+                ));
+            }
+            idx = 0;
+            for (RcChangedApplyRow row : rcRead.changedRows()) {
+                if (!domainRaType.equals(raTypeByKey.get(row.raFk()))) {
+                    continue;
+                }
+                idx++;
+                StagingRaRow stg = stagingByKey.get(row.stagingRowKey());
+                Integer excelRow = stg != null ? stg.excelRow() : null;
+                String hint = stg != null ? trimToNullStatic(stg.raNum()) : null;
+                changedLines.add(Type5ReconcileTreeLineFormatter.formatRcChangedLine(
+                        idx,
+                        excelRow,
+                        row.changeNum(),
+                        hint,
+                        buildRcTreeFieldDiffs(row.domainBefore(), row)
+                ));
+            }
+        }
+        List<Type5ReconcileErrorGrouper.ErrorHit> hits = rcRead == null || rcRead.errorHits() == null
+                ? List.of()
+                : Type5ReconcileErrorGrouper.filterByDomainRaType(rcRead.errorHits(), domainRaType);
+        Type5ReconcileErrorGrouper.ErrorTree errors = Type5ReconcileErrorGrouper.group(hits, detailLimit);
+        return new Type5ReconcileTreeLogger.BranchDetail(
+                counts,
+                Type5ReconcileTreeLineFormatter.limitLines(newLines, detailLimit),
+                Type5ReconcileTreeLineFormatter.limitLines(changedLines, detailLimit),
+                errors
+        );
+    }
+
+    /**
+     * Ветка RC без определённой базы + её ошибки.
+     */
+    private static Type5ReconcileTreeLogger.BranchDetail buildOrphanRcBranchDetail(
+            RcChangeReadModelResult rcRead,
+            int orphanTotal,
+            int detailLimit
+    ) {
+        List<Type5ReconcileErrorGrouper.ErrorHit> hits = rcRead == null || rcRead.errorHits() == null
+                ? List.of()
+                : Type5ReconcileErrorGrouper.filterByDomainRaType(rcRead.errorHits(), null);
+        Type5ReconcileErrorGrouper.ErrorTree errors = Type5ReconcileErrorGrouper.group(hits, detailLimit);
+        int total = Math.max(orphanTotal, errors.totalHits());
+        return new Type5ReconcileTreeLogger.BranchDetail(
+                new Type5ReconcileTreeLogger.BranchCounts(total, 0, 0),
+                Type5ReconcileTreeLogger.ListedBlock.empty(),
+                Type5ReconcileTreeLogger.ListedBlock.empty(),
+                errors
+        );
+    }
+
+    private static List<Type5ReconcileTreeLineFormatter.FieldDiff> buildRaTreeFieldDiffs(
+            DomainRaRow d,
+            StagingRaRow s
+    ) {
+        List<Type5ReconcileTreeLineFormatter.FieldDiff> diffs = new ArrayList<>();
+        if (d == null || s == null) {
+            return diffs;
+        }
+        Type5ReconcileTreeLineFormatter.addDiffIfChanged(
+                diffs, "Тип", d.raType(), mapToDomainRaType(trimToNullStatic(s.sign())));
+        Type5ReconcileTreeLineFormatter.addDiffIfChanged(
+                diffs, "Дата", formatAuditDate(d.raDate()), formatAuditDate(s.raDate()));
+        Type5ReconcileTreeLineFormatter.addDiffIfChanged(
+                diffs, "Поступило", d.arrived(), trimToNullStatic(s.arrivedNum()));
+        Type5ReconcileTreeLineFormatter.addDiffIfChanged(
+                diffs, "Дата поступления", formatAuditDate(d.arrivedDate()), formatAuditDate(s.arrivedDate()));
+        Type5ReconcileTreeLineFormatter.addDiffIfChanged(
+                diffs,
+                "Дата факт. поступления",
+                formatAuditDate(d.arrivedDateFact()),
+                formatAuditDate(s.arrivedDateFact()));
+        Type5ReconcileTreeLineFormatter.addDiffIfChanged(
+                diffs, "Возврат", d.returned(), trimToNullStatic(s.returnedNum()));
+        Type5ReconcileTreeLineFormatter.addDiffIfChanged(
+                diffs, "Дата возврата", formatAuditDate(d.returnedDate()), formatAuditDate(s.returnedDate()));
+        Type5ReconcileTreeLineFormatter.addDiffIfChanged(
+                diffs, "Причина возврата", d.returnedReason(), trimToNullStatic(s.returnedReason()));
+        Type5ReconcileTreeLineFormatter.addDiffIfChanged(
+                diffs, "Письмо направления", d.sent(), trimToNullStatic(s.sendNum()));
+        Type5ReconcileTreeLineFormatter.addDiffIfChanged(
+                diffs, "Дата направления", formatAuditDate(d.sentDate()), formatAuditDate(s.sendDate()));
+        return diffs;
+    }
+
+    private static List<Type5ReconcileTreeLineFormatter.FieldDiff> buildRcTreeFieldDiffs(
+            DomainRcChangeRow d,
+            RcChangedApplyRow s
+    ) {
+        List<Type5ReconcileTreeLineFormatter.FieldDiff> diffs = new ArrayList<>();
+        if (d == null || s == null) {
+            return diffs;
+        }
+        Type5ReconcileTreeLineFormatter.addDiffIfChanged(
+                diffs, "Дата изменения", formatAuditDate(d.rcDate()), formatAuditDate(s.rcDate()));
+        Type5ReconcileTreeLineFormatter.addDiffIfChanged(
+                diffs, "Поступило", d.arrived(), s.arrived());
+        Type5ReconcileTreeLineFormatter.addDiffIfChanged(
+                diffs, "Дата поступления", formatAuditDate(d.arrivedDate()), formatAuditDate(s.arrivedDate()));
+        Type5ReconcileTreeLineFormatter.addDiffIfChanged(
+                diffs,
+                "Дата факт. поступления",
+                formatAuditDate(d.arrivedDateFact()),
+                formatAuditDate(s.arrivedDateFact()));
+        Type5ReconcileTreeLineFormatter.addDiffIfChanged(diffs, "Возврат", d.returned(), s.returned());
+        Type5ReconcileTreeLineFormatter.addDiffIfChanged(
+                diffs, "Дата возврата", formatAuditDate(d.returnedDate()), formatAuditDate(s.returnedDate()));
+        Type5ReconcileTreeLineFormatter.addDiffIfChanged(
+                diffs, "Причина возврата", d.returnedReason(), s.returnedReason());
+        Type5ReconcileTreeLineFormatter.addDiffIfChanged(diffs, "Письмо направления", d.sent(), s.sent());
+        Type5ReconcileTreeLineFormatter.addDiffIfChanged(
+                diffs, "Дата направления", formatAuditDate(d.sentDate()), formatAuditDate(s.sentDate()));
+        return diffs;
+    }
+
+    /**
+     * Считает NEW/CHANGED собственно RA по Excel-признаку (ОА / ОА прочие); total — все staging с этим признаком.
+     */
+    private static Type5ReconcileTreeLogger.BranchCounts countRaBranch(
+            List<StagingRaRow> stagingRows,
+            RaReadModelResult raRead,
+            String excelSign
+    ) {
+        int total = 0;
+        if (stagingRows != null) {
+            for (StagingRaRow row : stagingRows) {
+                if (excelSign.equals(trimToNullStatic(row.sign()))) {
+                    total++;
+                }
+            }
+        }
+        if (raRead == null) {
+            return new Type5ReconcileTreeLogger.BranchCounts(total, 0, 0);
+        }
+        int neu = 0;
+        for (NewRaRow row : raRead.newRows()) {
+            if (excelSign.equals(trimToNullStatic(row.stagingRow().sign()))) {
+                neu++;
+            }
+        }
+        int changed = 0;
+        for (ChangedRaRow row : raRead.changedRows()) {
+            if (excelSign.equals(trimToNullStatic(row.stagingRow().sign()))) {
+                changed++;
+            }
+        }
+        return new Type5ReconcileTreeLogger.BranchCounts(total, neu, changed);
     }
 
     /**
@@ -2308,19 +2740,27 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
     private static String describeMissingCanonicalParts(StagingRaRow row, ResolvedLookupKeys keys) {
         List<String> parts = new ArrayList<>();
         if (trimToNullStatic(row.raNum()) == null) {
-            parts.add("нет ra_num");
+            parts.add("нет номера отчёта");
         }
         if (keys == null) {
             parts.add("lookup не разрешён");
         } else {
             if (keys.ogKey() == null) {
-                parts.add("нет отправителя (og)");
+                String sender = trimToNullStatic(row.sender());
+                parts.add(sender == null
+                        ? "нет отправителя"
+                        : "отправитель «" + sender + "» не найден");
             }
             if (keys.cstapKey() == null) {
-                parts.add("нет стройки (cac)");
+                String cst = trimToNullStatic(row.cstAgPnStr());
+                parts.add(cst == null
+                        ? "нет стройки"
+                        : "стройка «" + cst + "» не найдена");
             }
             if (keys.periodKey() == null) {
-                parts.add("нет периода отчёта");
+                parts.add(row.raDate() == null
+                        ? "нет даты/периода отчёта"
+                        : "период по дате " + row.raDate() + " не найден");
             }
         }
         return parts.isEmpty() ? "неизвестная причина" : String.join("; ", parts);
@@ -2350,19 +2790,25 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
     }
 
     private void appendRaValidationFail(ReconcileContext context, StagingRaRow row, String reasonCode, String detailText) {
-        AuditExecutionContext audit = context.auditExecutionContext();
-        if (audit == null) {
+        if (!emitValidationAnomalies(context)) {
             return;
         }
-        String safeDetail = escapeHtml(detailText);
-        String html = "<P>RA: отказ валидации (staging key=<b>" + row.key() + "</b>, ra_num=<b>"
-                + formatAuditString(trimToNull(row.raNum())) + "</b>): <b>" + escapeHtml(reasonCode) + "</b>. "
-                + safeDetail + "</P>";
+        AuditExecutionContext audit = context.auditExecutionContext();
+        String html = Type5RowAnomalyFormatter.formatRaFailHtml(
+                row.excelRow(),
+                trimToNull(row.raNum()),
+                row.raDate(),
+                reasonCode,
+                detailText
+        );
         Map<String, String> meta = new HashMap<>();
         meta.put("auditId", String.valueOf(context.auditId()));
         meta.put("execKey", String.valueOf(context.executionKey()));
         meta.put("fileType", String.valueOf(context.fileType()));
-        meta.put("rowIndex", String.valueOf(row.key()));
+        meta.put("stagingKey", String.valueOf(row.key()));
+        if (row.excelRow() != null) {
+            meta.put("rowIndex", String.valueOf(row.excelRow()));
+        }
         meta.put("raNum", trimToNull(row.raNum()) == null ? "" : trimToNull(row.raNum()));
         meta.put("reason", reasonCode);
         meta.put("detail", detailText);
@@ -2636,19 +3082,25 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
      * Row-level события аудита для ветки RC (1.8.11.6.1–6.7). При {@code audit == null} — без записей.
      */
     private void appendRcValidationFail(ReconcileContext context, StagingRaRow row, String reasonCode, String detailText) {
-        AuditExecutionContext audit = context.auditExecutionContext();
-        if (audit == null) {
+        if (!emitValidationAnomalies(context)) {
             return;
         }
-        String safeDetail = escapeHtml(detailText);
-        String html = "<P>RC (ОА изм): отказ валидации (staging key=<b>" + row.key() + "</b>, rain_ra_num=<b>"
-                + formatAuditString(trimToNull(row.raNum())) + "</b>): <b>" + escapeHtml(reasonCode) + "</b>. "
-                + safeDetail + "</P>";
+        AuditExecutionContext audit = context.auditExecutionContext();
+        String html = Type5RowAnomalyFormatter.formatRcFailHtml(
+                row.excelRow(),
+                trimToNull(row.raNum()),
+                row.raDate(),
+                reasonCode,
+                detailText
+        );
         Map<String, String> meta = new HashMap<>();
         meta.put("auditId", String.valueOf(context.auditId()));
         meta.put("execKey", String.valueOf(context.executionKey()));
         meta.put("fileType", String.valueOf(context.fileType()));
-        meta.put("rowIndex", String.valueOf(row.key()));
+        meta.put("stagingKey", String.valueOf(row.key()));
+        if (row.excelRow() != null) {
+            meta.put("rowIndex", String.valueOf(row.excelRow()));
+        }
         meta.put("raNum", trimToNull(row.raNum()) == null ? "" : trimToNull(row.raNum()));
         meta.put("reason", reasonCode);
         meta.put("detail", detailText);
@@ -3105,6 +3557,7 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
      */
     private record StagingRaRow(
             long key,
+            Integer excelRow,
             String raNum,
             LocalDate raDate,
             String cstAgPnStr,
@@ -3241,11 +3694,37 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
     ) {
     }
 
-    /** Результат построения RC read-model: статистика + список NEW-строк для apply (1.3.2). */
+    /** Результат построения RC read-model: статистика + списки + разбиение для дерева лога (§9.3.8). */
     private record RcChangeReadModelResult(
             RcChangeReadModelStats stats,
             List<RcNewApplyRow> newRows,
-            List<RcChangedApplyRow> changedRows
+            List<RcChangedApplyRow> changedRows,
+            RcTreePartition treePartition,
+            List<Type5ReconcileErrorGrouper.ErrorHit> errorHits
+    ) {
+    }
+
+    /**
+     * Разбиение RC по {@code ra_type} базы для дерева сверки.
+     */
+    private record RcTreePartition(
+            int oaTotal,
+            int oaNew,
+            int oaChanged,
+            int otherTotal,
+            int otherNew,
+            int otherChanged,
+            int orphanTotal
+    ) {
+        static RcTreePartition empty() {
+            return new RcTreePartition(0, 0, 0, 0, 0, 0, 0);
+        }
+    }
+
+    /** Индекс ключей {@code ags.ra} и типов для классификации изменений. */
+    private record RaPeriodNumIndex(
+            Map<PeriodRaNumKey, List<Long>> byPeriodAndNum,
+            Map<Long, String> raTypeByKey
     ) {
     }
 
@@ -3321,6 +3800,22 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             return false;
         }
         return auditContext.getStagingLogLevel().emitReconcileRowAudit();
+    }
+
+    /**
+     * Построчные WARN invalid/ambiguous/RC (вне дерева сверки).
+     * В SUMMARY достаточно дерева (§9.3.8); плоская лента — только VERBOSE.
+     */
+    private boolean emitValidationAnomalies(ReconcileContext context) {
+        AuditExecutionContext auditContext = context.auditExecutionContext();
+        if (auditContext == null) {
+            return false;
+        }
+        StagingLogLevel level = auditContext.getStagingLogLevel();
+        if (level == null) {
+            level = StagingLogLevel.SUMMARY;
+        }
+        return level == StagingLogLevel.VERBOSE;
     }
 
     private int sumBatchUpdateCounts(int[] batchResults) {
@@ -3451,7 +3946,8 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
     private record RaReadModelResult(
             RaReadModelStats stats,
             List<NewRaRow> newRows,
-            List<ChangedRaRow> changedRows
+            List<ChangedRaRow> changedRows,
+            List<Type5ReconcileErrorGrouper.ErrorHit> errorHits
     ) {
     }
 
