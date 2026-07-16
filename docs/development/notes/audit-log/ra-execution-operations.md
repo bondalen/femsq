@@ -12,7 +12,7 @@
 - текущая рабочая гипотеза подтвердилась: в thin-режиме ломалось автообнаружение schema resources;
 - локальный фикс через явную регистрацию `graphql/*.graphqls` в `GraphQlConfig` восстановил `Loaded 2 resource(s) in the GraphQL schema`, публикацию `POST /graphql` и ответ `200` на thin smoke (`:8083`).
 
-**Следствие (обновлено 2026-07-16):** G8 закрыт на thin JAR **0.1.0.136** — `POST /graphql` = 200; smoke `executeAudit(14)` dry-run: type=5 **exec 1189**, type=3 RALP **exec 1191** (для RALP нужен `af_source=1` на файле type=3).
+**Следствие (обновлено 2026-07-16):** G8 и soft-deploy rehearsal закрыты на thin JAR **0.1.0.136** (`/home/alex/femsq-test/test-26-0716`): `POST /graphql` = 200; CLI dry-run type=5 **exec 1193**, type=3 **exec 1194**; UI AuditsView sign-off. Для RALP нужен `af_source=1` на файле type=3. Далее — prod (§9.5.1+, задача 0048).
 
 ## Разовая проверка БД
 

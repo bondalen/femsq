@@ -1,9 +1,9 @@
 # План работы: Reconcile для `af_type=3` (Аренда земли, RALP)
 
 **Дата создания:** 2026-07-07  
-**Последнее обновление:** 2026-07-15  
+**Последнее обновление:** 2026-07-16  
 **Проект:** FEMSQ  
-**Версия плана:** 0.12.16
+**Версия плана:** 0.12.18
 
 ---
 
@@ -1170,16 +1170,33 @@ Badge `_START` был всегда «+». **Решено:** CSS `details[open] >
 
 | # | Пункт | Статус |
 |---|-------|--------|
+| 9.5.0 | **Soft-deploy rehearsal (dev, «как prod»)** — каталог `/home/alex/femsq-test/test-26-0716`, thin JAR **0.1.0.136** + `lib/` (93 jar), health/GraphQL, CLI+UI smoke | ✅ 2026-07-16 |
 | 9.5.1 | **Pre-flight prod:** бэкап БД FishEye; проверка `lib/` и версий (`LibraryCompatibilityChecker` / `lib-manifest.json`) | ⏳ |
 | 9.5.2 | **SQL на prod (2012):** DDL `adt_staging_log_level`; DDL **`ralprtRow`** (и связанные) из `docs/development/notes/sql/26-0714/MSSQL2012/` (без `CREATE OR ALTER`); прогон `00_VERIFY` → `04_VERIFY` | ⏳ |
-| 9.5.3 | Сборка: `./code/scripts/build-thin-jar.sh` → `femsq-web-X-SNAPSHOT-thin.jar` (~700 КБ) | ⏳ |
-| 9.5.4 | **Перенос на prod:** thin JAR (+ только изменённые `femsq-*.jar` в `lib/`, если версия модулей сменилась); **не** копировать весь `lib/` повторно | ⏳ |
-| 9.5.5 | Остановка старого процесса; запуск thin JAR (`java -cp "femsq-web-*-thin.jar;lib/*" org.springframework.boot.loader.launch.JarLauncher` или скрипт prod) | ⏳ |
-| 9.5.6 | Проверка логов: нет ошибок `LibraryCompatibilityChecker`; `/api/v1/connection/status` = 200 | ⏳ |
-| 9.5.7 | **Приёмка prod:** один dry-run ревизии type=5 (SUMMARY) и type=3 под контролем оператора; откат thin JAR при сбое | ⏳ |
-| 9.5.8 | Оформить `docs/deployment/db-upgrade-{дата}.md` и запись в журнале | ⏳ |
+| 9.5.3 | Сборка: `./code/scripts/build-thin-jar.sh` → `femsq-web-X-SNAPSHOT-thin.jar` (~700 КБ) | ✅ soft: **0.1.0.136**; prod — повтор перед переносом |
+| 9.5.4 | **Перенос на prod:** thin JAR (+ только изменённые `femsq-*.jar` в `lib/`, если версия модулей сменилась); **не** копировать весь `lib/` повторно | ⏳ (репетиция: полный `lib/` в `test-26-0716`) |
+| 9.5.5 | Остановка старого процесса; запуск thin JAR (`java -cp "femsq-web-*-thin.jar;lib/*" org.springframework.boot.loader.launch.JarLauncher` или скрипт prod) | ⏳ (репетиция: `run-with-external-libs.sh` в `test-26-0716`) |
+| 9.5.6 | Проверка логов: нет ошибок `LibraryCompatibilityChecker`; `/api/v1/connection/status` = 200 | ✅ soft: connection + `POST /graphql` = 200 |
+| 9.5.7 | **Приёмка:** один dry-run ревизии type=5 (SUMMARY) и type=3 под контролем оператора; откат thin JAR при сбое | ✅ soft: CLI **1193**/**1194** + UI sign-off |
+| 9.5.8 | Оформить `docs/deployment/db-upgrade-{дата}.md` и запись в журнале | ⏳ (prod); soft зафиксирован в journal |
 
-**Критерий завершения фазы 9:** perf 0046–0047 выполнены или отложены; **0049–0053** закрыты; UAT blocker в 9.3.3 закрыты (minor U8/U9); soft-deploy **G8**; prod thin JAR **0048**/§9.5.
+##### 9.5.0. Soft-deploy rehearsal (закрыт 2026-07-16)
+
+**Каталог:** `/home/alex/femsq-test/test-26-0716`  
+**JAR:** `femsq-web-0.1.0.136-SNAPSHOT-thin.jar` + `lib/` (93 файла, ~72 МБ)  
+**БД:** dev FishEye (`ags`), не prod.
+
+| Проверка | Результат |
+|----------|-----------|
+| Startup / GraphQL | `Loaded 2 resource(s)`, `POST /graphql` = 200 |
+| Connection | `connected=true`, database=`FishEye` |
+| CLI type=5 dry-run | **exec 1193** COMPLETED 103 с, `ra_stg_ra`=1720 |
+| CLI type=3 RALP dry-run | **exec 1194** COMPLETED 21 с, `ra_stg_ralp`=424 |
+| UI | AuditsView: лог 1194 (type=3) + повторный type=5 через «Выполнить ревизию»; polling без ошибок |
+
+**Следующий шаг фазы 9:** реальный prod (§9.5.1–9.5.8), задача **0048**.
+
+**Критерий завершения фазы 9:** perf 0046–0047 выполнены или отложены; **0049–0053** закрыты; UAT blocker в 9.3.3 закрыты (minor U8/U9); soft-deploy **G8** + **§9.5.0** ✅; prod thin JAR **0048**/§9.5.1+.
 
 **Задачи в `project-development.json`:** 0046, 0047, **0049**, **0050**, **0051**, **0052**, **0053**, 0048.
 
@@ -1197,7 +1214,7 @@ Badge `_START` был всегда «+». **Решено:** CSS `details[open] >
 
 ## Доп. факты (актуализировано 2026-07-14)
 
-- **Фаза 9 (v0.12.15):** 0049–**0053** + **U8/G5** закрыты; ворота **G0–G7** ✅; далее **G8** thin JAR → prod **0048**/§9.5.
+- **Фаза 9 (v0.12.18):** 0049–**0053**, **G0–G8**, soft-deploy **§9.5.0** ✅ (`test-26-0716`, JAR **0.1.0.136**, exec **1193**/**1194** + UI); далее prod **0048**/§9.5.1+.
 
 - **0051 (2026-07-15):** §9.3.6 **закрыта**; U10/P5/G3 formal.
 
@@ -1226,7 +1243,7 @@ Badge `_START` был всегда «+». **Решено:** CSS `details[open] >
 
 ---
 
-- **Ворота 9.4a (2026-07-16):** **G0–G8** ✅; thin parity восстановлен (§9.2.8, JAR **0.1.0.136**).
+- **Ворота 9.4a (2026-07-16):** **G0–G8** ✅; thin parity (§9.2.8); soft-deploy rehearsal **§9.5.0** ✅ (`/home/alex/femsq-test/test-26-0716`).
 
 **Последнее обновление:** 2026-07-16  
-**Версия:** 0.12.17
+**Версия:** 0.12.18

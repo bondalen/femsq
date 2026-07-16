@@ -6616,6 +6616,35 @@
                   }
                 ]
               }
+            },
+            {
+              "log": {
+                "displayName": "Soft-deploy rehearsal test-26-0716 закрыт (success). № log-2026-07-16-003",
+                "log-attributes": {
+                  "id": "log-2026-07-16-003",
+                  "timestamp": "2026-07-16T14:42:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web", "module:frontend"],
+                    "developmentTasks": ["0048"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Имитация prod: thin JAR + lib/ в /home/alex/femsq-test/test-26-0716",
+                    "details": "Каталог test-26-0716: lib/ 93 jar (~72 МБ), femsq-web-0.1.0.136-SNAPSHOT-thin.jar, run-with-external-libs.sh. Startup: GraphQL schema + POST /graphql. Connection FishEye OK. CLI dry-run: type=5 exec 1193 (103 с, stg=1720), type=3 exec 1194 (21 с, stg=424). UI AuditsView: просмотр лога 1194 и повторный type=5 через «Выполнить ревизию», polling без ошибок. G8/§9.5.0 закрыты; остаётся prod §9.5.1+.",
+                    "outcome": "Soft-deploy «как prod» принят оператором; задача 0048 → in-progress (остаток — prod).",
+                    "references": [
+                      "/home/alex/femsq-test/test-26-0716",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md",
+                      "docs/deployment/thin-jar-quick-start.md"
+                    ]
+                  }
+                ]
+              }
             }
           ]
         }

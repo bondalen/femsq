@@ -3,7 +3,7 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2026-07-15T17:35:00+03:00",
+      "lastUpdated": "2026-07-16T14:42:00+03:00",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     
@@ -1704,9 +1704,9 @@
         },
         "0048": {
           "task": {
-            "displayName": "Dev/UAT/prod: thin JAR, веб-приёмка ревизий type=5 и type=3 (pending, critical). № 0048",
+            "displayName": "Dev/UAT/prod: thin JAR, веб-приёмка ревизий type=5 и type=3 (in-progress, critical). № 0048",
             "task-attributes": {
-              "status": "pending",
+              "status": "in-progress",
               "priority": "critical",
               "owner": "Александр",
               "completionCriteria": [
@@ -1714,20 +1714,21 @@
                 "UAT через AuditsView: dry-run и apply (где допустимо) для отчётов агентов и аренды земли",
                 "Задачи 0049, 0050, 0051, 0052 и 0053 закрыты: содержание лога, темы, Excel-строка/аномалии (U10), диапазон/фильтр Stage 1, дерево сверки type=5/3",
                 "Таблица замечаний UAT 9.3.3 закрыта, blocker исправлены",
+                "Soft-deploy rehearsal «как prod»: /home/alex/femsq-test/test-26-0716, thin 0.1.0.136, CLI+UI smoke type=5/3",
                 "Prod: thin JAR развёрнут без полного переноса lib/; LibraryCompatibilityChecker OK",
                 "DDL adt_staging_log_level и ralprtRow (пакет 26-0714/MSSQL2012) на prod при необходимости",
                 "Приёмка prod: dry-run ревизий type=5 и type=3 с читаемыми аномалиями по строкам Excel",
                 "Документация: db-upgrade, журнал, chat-plan фаза 9"
               ],
-              "description": "Завершающий цикл: тестовое развёртывание на dev, приёмочное тестирование ревизий через веб-интерфейс (AllAgents + RALP), устранение замечаний (0049/0050/0051 — читаемость лога), вывод в продуктив методом thin JAR (минимальный объём файлов при уже развёрнутом lib/).",
+              "description": "Завершающий цикл: тестовое развёртывание на dev, приёмочное тестирование ревизий через веб-интерфейс (AllAgents + RALP), устранение замечаний (0049/0050/0051 — читаемость лога), вывод в продуктив методом thin JAR (минимальный объём файлов при уже развёрнутом lib/). Soft-deploy rehearsal (§9.5.0) закрыт 2026-07-16; остаётся prod.",
               "links": {
                 "projectDocsRefs": ["module:backend.web", "module:frontend", "environment:prod-fisheye"],
-                "journalRefs": [],
+                "journalRefs": ["log-2026-07-16-003"],
                 "aiRuleRefs": [],
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#фаза-9-доработка-производительности-приёмка-и-вывод-в-продуктив"
               },
               "created": "2026-07-09",
-              "lastUpdated": "2026-07-14"
+              "lastUpdated": "2026-07-16"
             }
           }
         },

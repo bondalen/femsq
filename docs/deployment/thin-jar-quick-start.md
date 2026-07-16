@@ -1,7 +1,8 @@
 # Thin JAR: Быстрый старт
 
-> Статус на 2026-07-16: thin JAR **0.1.0.136** прошёл G8 smoke (GraphQL + `executeAudit` type=5/type=3).  
-> Фикс parity: явная регистрация `graphql/*.graphqls` в `GraphQlConfig` (см. §Blocker G8 ниже).
+> Статус на 2026-07-16: thin JAR **0.1.0.136** прошёл G8 и soft-deploy rehearsal  
+> (`/home/alex/femsq-test/test-26-0716`: GraphQL + CLI/UI `executeAudit` type=5/3).  
+> Фикс parity: явная регистрация `graphql/*.graphqls` в `GraphQlConfig`.
 
 ## 📊 Результат оптимизации
 
@@ -173,8 +174,9 @@ bash extract-libs-from-fatjar.sh femsq-web-0.1.0.1-SNAPSHOT.jar
 1. `build-thin-jar.sh` → thin JAR + внешний `lib/`
 2. startup: `Loaded 2 resource(s) in the GraphQL schema`, `POST /graphql` = 200
 3. smoke `executeAudit(14)` dry-run SUMMARY:
-   - type=5 **exec 1189** — COMPLETED, `ra_stg_ra` = 1720
-   - type=3 RALP **exec 1191** — COMPLETED, `ra_stg_ralp` = 424 (`af_source=1` обязателен)
+   - type=5 **exec 1189** (G8 thin-smoke) / **1193** (soft-deploy `test-26-0716`) — COMPLETED, `ra_stg_ra` = 1720
+   - type=3 RALP **exec 1191** / **1194** — COMPLETED, `ra_stg_ralp` = 424 (`af_source=1` обязателен)
+4. Soft-deploy UI: AuditsView на http://localhost:8080/ — лог и «Выполнить ревизию» OK
 
 ---
 
