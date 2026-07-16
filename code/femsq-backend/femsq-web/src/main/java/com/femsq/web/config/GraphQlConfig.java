@@ -1,8 +1,10 @@
 package com.femsq.web.config;
 
 import graphql.scalars.ExtendedScalars;
+import org.springframework.boot.autoconfigure.graphql.GraphQlSourceBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.graphql.execution.RuntimeWiringConfigurer;
 
 /**
@@ -30,5 +32,19 @@ public class GraphQlConfig {
     @Bean
     public RuntimeWiringConfigurer dateTimeScalarConfigurer() {
         return builder -> builder.scalar(ExtendedScalars.DateTime);
+    }
+
+    /**
+     * Явно регистрирует schema-файлы GraphQL.
+     * Это снижает зависимость от авто-сканирования ресурсов в thin JAR режиме.
+     *
+     * @return кастомизатор источника схемы GraphQL
+     */
+    @Bean
+    public GraphQlSourceBuilderCustomizer graphQlSchemaResourcesCustomizer() {
+        return builder -> builder.schemaResources(
+            new ClassPathResource("graphql/ra-schema.graphqls"),
+            new ClassPathResource("graphql/og-schema.graphqls")
+        );
     }
 }

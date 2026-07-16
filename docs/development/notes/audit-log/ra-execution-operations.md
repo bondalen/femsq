@@ -2,6 +2,18 @@
 
 **Назначение:** разовая диагностика «зависших» запусков и ручное снятие блокировки перед повторным `executeAudit`.
 
+## Blocker thin JAR (G8)
+
+**Факт (2026-07-16, `0.1.0.135`):**
+- fat JAR публикует `POST /graphql` и позволяет запускать `executeAudit`;
+- thin JAR поднимает REST/health и подключение к БД, но `POST /graphql` возвращает `404`;
+- в thin-логе отсутствуют строки `Loaded ... GraphQL schema` и `GraphQL endpoint HTTP POST /graphql`;
+- удаление `BOOT-INF/classpath.idx`/`layers.idx` и запуск через `PropertiesLauncher` ситуацию не меняют: `/graphql` остаётся `404`, а `REST`/health доступны;
+- текущая рабочая гипотеза подтвердилась: в thin-режиме ломалось автообнаружение schema resources;
+- локальный фикс через явную регистрацию `graphql/*.graphqls` в `GraphQlConfig` восстановил `Loaded 2 resource(s) in the GraphQL schema`, публикацию `POST /graphql` и ответ `200` на thin smoke (`:8083`).
+
+**Следствие (обновлено 2026-07-16):** G8 закрыт на thin JAR **0.1.0.136** — `POST /graphql` = 200; smoke `executeAudit(14)` dry-run: type=5 **exec 1189**, type=3 RALP **exec 1191** (для RALP нужен `af_source=1` на файле type=3).
+
 ## Разовая проверка БД
 
 Записи в статусе `RUNNING` и возраст в минутах:

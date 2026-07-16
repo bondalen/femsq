@@ -3,7 +3,7 @@
 **Дата создания:** 2026-07-07  
 **Последнее обновление:** 2026-07-15  
 **Проект:** FEMSQ  
-**Версия плана:** 0.12.15  
+**Версия плана:** 0.12.16
 
 ---
 
@@ -649,6 +649,37 @@ SELECT COUNT(*) AS ralpRa_2026 FROM ags.ralpRa WHERE ralprY = 2026;
 | 9.2.5 | Frontend: `npm run dev` (Fedora) **или** статика из JAR — согласовать сценарий UAT | ✅ `npm run dev` (Fedora) |
 | 9.2.6 | Smoke CLI: `executeAudit` для `adt_key=14` (type=5, SUMMARY) и ревизии RALP (type=3) — COMPLETED | ✅ RALP exec **1158–1160**; type=5 apply — ⏳ |
 | 9.2.7 | Зафиксировать версию JAR и `exec_key` в плане / журнале | ✅ JAR 0.1.0.122; UAT RALP exec **1162–1166** |
+| 9.2.8 | **Parity thin vs fat JAR**: восстановить `/graphql` и `executeAudit` в thin-режиме до уровня fat JAR | ✅ 2026-07-16 JAR **0.1.0.136** |
+
+##### 9.2.8. Восстановление thin JAR до уровня fat JAR (blocker G8)
+
+**Факт (2026-07-16, JAR `0.1.0.135`):**
+- fat JAR на `:8081` поднимает GraphQL полностью: в логе есть `Loaded 2 resource(s) in the GraphQL schema` и `GraphQL endpoint HTTP POST /graphql`;
+- thin JAR на `:8080` стартует, БД/health работают, но `POST /graphql` даёт **404**, а в логе **нет** строк про загрузку GraphQL schema / HTTP endpoint;
+- запрос `POST /graphql` в thin-режиме уходит в `ResourceHttpRequestHandler` как статический ресурс, поэтому `executeAudit`/UI ревизий недоступны;
+- в thin JAR сохранён `BOOT-INF/classpath.idx` со ссылками на отсутствующие `BOOT-INF/lib/*.jar`;
+- дополнительная проверка 2026-07-16 показала: удаление `classpath.idx`/`layers.idx` и запуск через `PropertiesLauncher` **не восстанавливают** `POST /graphql`, при этом `REST`/`/graphiql`/health продолжают работать;
+- рабочая гипотеза после проверки: проблема не только в launcher/index, а в автопоиске GraphQL schema resources в thin-режиме;
+- локальный фикс 2026-07-16: явная регистрация `graphql/ra-schema.graphqls` и `graphql/og-schema.graphqls` через `GraphQlSourceBuilderCustomizer` в `GraphQlConfig` восстановила thin parity на smoke `:8083` (`Loaded 2 resource(s) in the GraphQL schema`, `GraphQL endpoint HTTP POST /graphql`, `POST /graphql` = `200`).
+
+| # | Пункт | Статус |
+|---|-------|--------|
+| 9.2.8.1 | Зафиксировать parity-check: fat `POST /graphql` = OK, thin `POST /graphql` = 404; приложить логи | ✅ 2026-07-16 |
+| 9.2.8.2 | Проверить упаковку thin JAR: `classpath.idx`, `layers.idx`, `MANIFEST.MF`, способ запуска `JarLauncher` + внешний `lib/*` | ✅ 2026-07-16: удаление index/смена launcher не устраняет 404 |
+| 9.2.8.3 | Исправить thin-сборку так, чтобы GraphQL schema и HTTP endpoint поднимались как в fat JAR | ✅ 2026-07-16: локально восстановлено через явную регистрацию schema-resources |
+| 9.2.8.4 | Повторить G8 smoke после фикса: dry-run type=5 и type=3 через `executeAudit`/UI | ✅ 2026-07-16 thin **0.1.0.136**: type=5 **exec 1189** (105 с, stg=1720); type=3 **exec 1191** (20 с, stg=424, `af_source=1`) |
+| 9.2.8.5 | Fallback: если thin не чинится быстро, выполнить soft-smoke на fat JAR и оставить thin parity отдельным blocker'ом | — не потребовался |
+
+**Фикс (2026-07-16):** `GraphQlConfig.graphQlSchemaResourcesCustomizer()` — явная регистрация `graphql/*.graphqls` (обход ломающегося автосканирования schema resources в thin-режиме).
+
+**Факт G8 smoke (thin JAR `0.1.0.136`, `adt_key=14`, март SMB, dry-run SUMMARY):**
+
+| Прогон | exec | Статус | Длительность | staging |
+|--------|------|--------|--------------|---------|
+| type=5 (`af_key=312`) | **1189** | COMPLETED | 105 с | `ra_stg_ra` = 1720 |
+| type=3 RALP (`af_key=314`, `af_source=1`) | **1191** | COMPLETED | 20 с | `ra_stg_ralp` = 424 |
+
+*Замечание:* прогон **1190** (RALP без `af_source=1`) дал `COMPLETED` за 1 с с пустым staging — не считается валидным smoke.
 
 ---
 
@@ -1112,7 +1143,7 @@ Badge `_START` был всегда «+». **Решено:** CSS `details[open] >
 | **G5** | **U8**: баннер «Директория не загружена» — исправить или явно отложить | 9.3.3 U8; 9.3.4.6.3 | ✅ 2026-07-16 |
 | **G6** | Закрытие реестра blocker **U1–U6** (+ **U10** через 0051) | 9.4.5; 9.4.6 | ✅ 2026-07-15 (blocker закрыты; minor U8/U9 вне G6) |
 | **G7** | (опц.) Apply type=5 на тестовой ревизии, если домен допускает | 9.3.1.5; 9.1.2.3 | ✅ 2026-07-15 exec **1187** (март apply + откат) |
-| **G8** | Soft-deploy «как prod»: `build-thin-jar.sh`, запуск thin JAR + `lib/`, smoke type=3+5 | §9.2 повтор | ⏳ |
+| **G8** | Soft-deploy «как prod»: `build-thin-jar.sh`, запуск thin JAR + `lib/`, smoke type=3+5 | §9.2 повтор; **§9.2.8** | ✅ 2026-07-16 JAR **0.1.0.136**; exec **1189**/**1191** |
 
 **Отложено (не блокирует G0–G8):** U9 / §9.1.3 (perf RALP batch); §9.3.5.4.3 (`<font color>`); §9.5 prod.
 
@@ -1195,7 +1226,7 @@ Badge `_START` был всегда «+». **Решено:** CSS `details[open] >
 
 ---
 
-- **Ворота 9.4a (2026-07-16):** **G0–G5, G6, G7** ✅; открыт **G8** (thin JAR soft-deploy).
+- **Ворота 9.4a (2026-07-16):** **G0–G8** ✅; thin parity восстановлен (§9.2.8, JAR **0.1.0.136**).
 
 **Последнее обновление:** 2026-07-16  
-**Версия:** 0.12.15
+**Версия:** 0.12.17
