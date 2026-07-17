@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.femsq</groupId>
         <artifactId>femsq</artifactId>
-        <version>0.1.0.136-SNAPSHOT</version>
+        <version>0.1.0.137-SNAPSHOT</version>
     </parent>
 
     <artifactId>femsq-backend</artifactId>
@@ -16,6 +16,7 @@
 
     <properties>
         <spring.boot.version>3.4.5</spring.boot.version>
+        <mssql.jdbc.version>13.2.0.jre11</mssql.jdbc.version>
     </properties>
 
     <dependencyManagement>
@@ -26,6 +27,12 @@
                 <version>${spring.boot.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <!-- Явная фиксация JDBC: Spring Boot BOM 3.4.5 иначе подменяет 13.2.0 → 12.8.1 -->
+            <dependency>
+                <groupId>com.microsoft.sqlserver</groupId>
+                <artifactId>mssql-jdbc</artifactId>
+                <version>${mssql.jdbc.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

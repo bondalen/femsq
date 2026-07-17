@@ -1,9 +1,9 @@
 # План работы: Reconcile для `af_type=3` (Аренда земли, RALP)
 
 **Дата создания:** 2026-07-07  
-**Последнее обновление:** 2026-07-16  
+**Последнее обновление:** 2026-07-17  
 **Проект:** FEMSQ  
-**Версия плана:** 0.12.18
+**Версия плана:** 0.12.32
 
 ---
 
@@ -1172,13 +1172,14 @@ Badge `_START` был всегда «+». **Решено:** CSS `details[open] >
 |---|-------|--------|
 | 9.5.0 | **Soft-deploy rehearsal (dev, «как prod»)** — каталог `/home/alex/femsq-test/test-26-0716`, thin JAR **0.1.0.136** + `lib/` (93 jar), health/GraphQL, CLI+UI smoke | ✅ 2026-07-16 |
 | 9.5.1 | **Pre-flight prod:** бэкап БД FishEye; проверка `lib/` и версий (`LibraryCompatibilityChecker` / `lib-manifest.json`) | ⏳ |
-| 9.5.2 | **SQL на prod (2012):** DDL `adt_staging_log_level`; DDL **`ralprtRow`** (и связанные) из `docs/development/notes/sql/26-0714/MSSQL2012/` (без `CREATE OR ALTER`); прогон `00_VERIFY` → `04_VERIFY` | ⏳ |
-| 9.5.3 | Сборка: `./code/scripts/build-thin-jar.sh` → `femsq-web-X-SNAPSHOT-thin.jar` (~700 КБ) | ✅ soft: **0.1.0.136**; prod — повтор перед переносом |
-| 9.5.4 | **Перенос на prod:** thin JAR (+ только изменённые `femsq-*.jar` в `lib/`, если версия модулей сменилась); **не** копировать весь `lib/` повторно | ⏳ (репетиция: полный `lib/` в `test-26-0716`) |
+| 9.5.2 | **SQL на prod (2012):** DDL `adt_staging_log_level`; DDL **`ralprtRow`** из `MSSQL2012/` | ⏳ в архиве `prod-thin-137-26-0717.zip` |
+| 9.5.3 | Сборка thin JAR **0.1.0.137** | ✅ |
+| 9.5.4 | **Перенос на prod:** thin JAR + `femsq-*` 137 | ⏳ архив `prod-thin-137-26-0717.zip` |
 | 9.5.5 | Остановка старого процесса; запуск thin JAR (`java -cp "femsq-web-*-thin.jar;lib/*" org.springframework.boot.loader.launch.JarLauncher` или скрипт prod) | ⏳ (репетиция: `run-with-external-libs.sh` в `test-26-0716`) |
 | 9.5.6 | Проверка логов: нет ошибок `LibraryCompatibilityChecker`; `/api/v1/connection/status` = 200 | ✅ soft: connection + `POST /graphql` = 200 |
 | 9.5.7 | **Приёмка:** один dry-run ревизии type=5 (SUMMARY) и type=3 под контролем оператора; откат thin JAR при сбое | ✅ soft: CLI **1193**/**1194** + UI sign-off |
 | 9.5.8 | Оформить `docs/deployment/db-upgrade-{дата}.md` и запись в журнале | ⏳ (prod); soft зафиксирован в journal |
+| 9.5.9 | **Контроль переноса `lib/`:** три группы jar (§9.5.9); пилотный архив `replace-pilot-26-0717.zip` (~5 МБ) | ⏳ |
 
 ##### 9.5.0. Soft-deploy rehearsal (закрыт 2026-07-16)
 
@@ -1194,11 +1195,420 @@ Badge `_START` был всегда «+». **Решено:** CSS `details[open] >
 | CLI type=3 RALP dry-run | **exec 1194** COMPLETED 21 с, `ra_stg_ralp`=424 |
 | UI | AuditsView: лог 1194 (type=3) + повторный type=5 через «Выполнить ревизию»; polling без ошибок |
 
-**Следующий шаг фазы 9:** реальный prod (§9.5.1–9.5.8), задача **0048**.
+##### 9.5.9. Контроль переноса `lib/` на prod (сличение prod **0.1.0.50** / 61 jar vs target **0.1.0.137** / 94 jar)
+
+**Prod-деплой:** `26-0113-1531`, каталог `lib/` на рабочей станции приложения.  
+**Источник jar 137:** `/home/alex/femsq-test/test-26-0716/lib/`.  
+**Каталог переноса (пилот):** `/home/alex/femsq-test/test-26-0716/to_prod_26-0717/`.
+
+| Группа | Смысл | Кол-во |
+|--------|--------|--------|
+| **1 — оставить с prod** | Имя файла совпадает с требуемым для 136 | **44** |
+| **2 — заменить** | Артефакт есть на prod, нужна другая версия из 136 | **14** |
+| **3 — добавить** | На prod отсутствует (новые артефакты / доп. версии) | **36** |
+
+**Только на prod (убрать при полном переходе на lib 136, не входят в замену группы 2):** `commons-digester-2.1.jar`, `jcommon-1.0.23.jar`, `jfreechart-1.0.19.jar`.
+
+#### Группа 1 — оставить с prod (не переносить)
+
+- `HikariCP-5.1.0.jar`
+- `commons-beanutils-1.9.4.jar`
+- `commons-collections-3.2.2.jar`
+- `context-propagation-1.1.3.jar`
+- `ecj-4.4.2.jar`
+- `graphql-java-extended-scalars-22.0.jar`
+- `hibernate-validator-8.0.2.Final.jar`
+- `jackson-annotations-2.18.3.jar`
+- `jackson-core-2.18.3.jar`
+- `jackson-databind-2.18.3.jar`
+- `jackson-dataformat-xml-2.18.3.jar`
+- `jackson-datatype-jdk8-2.18.3.jar`
+- `jackson-datatype-jsr310-2.18.3.jar`
+- `jackson-module-parameter-names-2.18.3.jar`
+- `jakarta.annotation-api-2.1.1.jar`
+- `jakarta.validation-api-3.0.2.jar`
+- `jasperreports-7.0.3.jar`
+- `jasperreports-fonts-7.0.3.jar`
+- `jasperreports-functions-7.0.3.jar`
+- `jasperreports-jdt-7.0.3.jar`
+- `jasperreports-pdf-7.0.3.jar`
+- `java-dataloader-3.3.0.jar`
+- `jul-to-slf4j-2.0.17.jar`
+- `log4j-api-2.24.3.jar`
+- `log4j-to-slf4j-2.24.3.jar`
+- `logback-classic-1.5.18.jar`
+- `logback-core-1.5.18.jar`
+- `openpdf-1.3.32.jar`
+- `slf4j-api-2.0.16.jar`
+- `snakeyaml-2.3.jar`
+- `spring-aop-6.2.6.jar`
+- `spring-beans-6.2.6.jar`
+- `spring-boot-3.4.5.jar`
+- `spring-boot-autoconfigure-3.4.5.jar`
+- `spring-boot-jarmode-tools-3.4.5.jar`
+- `spring-core-6.2.6.jar`
+- `spring-expression-6.2.6.jar`
+- `spring-graphql-1.3.5.jar`
+- `spring-jcl-6.2.6.jar`
+- `spring-web-6.2.6.jar`
+- `spring-webmvc-6.2.6.jar`
+- `tomcat-embed-core-10.1.40.jar`
+- `tomcat-embed-el-10.1.40.jar`
+- `tomcat-embed-websocket-10.1.40.jar`
+
+#### Группа 2 — заменить (prod → 136)
+
+| # | На prod (удалить) | Заменить на (136) | Статус переноса |
+|---|-------------------|-------------------|-----------------|
+| 1 | `classmate-1.5.1.jar` | `classmate-1.7.0.jar` | ✅ перенесено на prod в `replace-pilot-26-0717.zip` |
+| 2 | `commons-collections4-4.2.jar` | `commons-collections4-4.4.jar` | ✅ перенесено на prod в `replace-pilot-26-0717.zip` |
+| 3 | `femsq-database-0.1.0.50-SNAPSHOT.jar` | `femsq-database-0.1.0.136-SNAPSHOT.jar` | ✅ перенесено на prod в `replace-pilot-26-0717.zip` |
+| 4 | `femsq-reports-0.1.0.50-SNAPSHOT.jar` | `femsq-reports-0.1.0.136-SNAPSHOT.jar` | ✅ перенесено на prod в `replace-pilot-26-0717.zip` |
+| 5 | `graphql-java-22.0.jar` | `graphql-java-22.3.jar` | ✅ перенесено на prod в `replace-pilot-26-0717.zip` |
+| 6 | `jboss-logging-3.4.3.Final.jar` | `jboss-logging-3.6.1.Final.jar` | ✅ перенесено на prod в `replace-pilot-2-26-0717.zip` |
+| 7 | `micrometer-commons-1.14.5.jar` | `micrometer-commons-1.14.6.jar` | ✅ перенесено на prod в `replace-pilot-2-26-0717.zip` |
+| 8 | `micrometer-observation-1.14.5.jar` | `micrometer-observation-1.14.6.jar` | ✅ перенесено на prod в `replace-pilot-2-26-0717.zip` |
+| 9 | `mssql-jdbc-13.2.0.jre11.jar` | `mssql-jdbc-12.8.1.jre11.jar` | ⏸ **не применять** — на prod оставить **13.2.0**; архив №3 отложен |
+| 10 | `reactive-streams-1.0.3.jar` | `reactive-streams-1.0.4.jar` | ✅ перенесено на prod в `replace-pilot-2-26-0717.zip` |
+| 11 | `reactor-core-3.6.16.jar` | `reactor-core-3.7.5.jar` | ✅ перенесено на prod в `replace-pilot-2-26-0717.zip` |
+| 12 | `spring-context-6.1.19.jar` | `spring-context-6.2.6.jar` | ✅ перенесено на prod в `replace-pilot-2-26-0717.zip` |
+| 13 | `stax2-api-4.2.1.jar` | `stax2-api-4.2.2.jar` | ✅ перенесено на prod в `replace-pilot-2-26-0717.zip` |
+| 14 | `woodstox-core-6.5.1.jar` | `woodstox-core-7.0.0.jar` | ✅ перенесено на prod в `replace-pilot-2-26-0717.zip` |
+
+#### Группа 3 — добавить на prod (новые jar)
+
+*Цели замены из группы 2 сюда не дублируются.*
+
+- `HdrHistogram-2.2.2.jar` ✅ подтверждено на prod по контрольному снимку (`add-pilot-9-26-0717.zip`)
+- `LatencyUtils-2.0.3.jar` ✅ подтверждено на prod по контрольному снимку (`add-pilot-9-26-0717.zip`)
+- `SparseBitSet-1.3.jar` ✅ подтверждено на prod по контрольному снимку (`add-pilot-9-26-0717.zip`)
+- `batik-anim-1.18.jar` ✅ перенесено на prod в `add-pilot-7-26-0717.zip`
+- `batik-awt-util-1.18.jar` ✅ перенесено на prod в `add-pilot-7-26-0717.zip`
+- `batik-bridge-1.18.jar` ✅ перенесено на prod в `add-pilot-7-26-0717.zip`
+- `batik-constants-1.18.jar` ✅ перенесено на prod в `add-pilot-7-26-0717.zip`
+- `batik-css-1.18.jar` ✅ перенесено на prod в `add-pilot-7-26-0717.zip`
+- `batik-dom-1.18.jar` ✅ перенесено на prod в `add-pilot-7-26-0717.zip`
+- `batik-ext-1.18.jar` ✅ перенесено на prod в `add-pilot-7-26-0717.zip`
+- `batik-gvt-1.18.jar` ✅ перенесено на prod в `add-pilot-7-26-0717.zip`
+- `batik-i18n-1.18.jar` ✅ перенесено на prod в `add-pilot-7-26-0717.zip`
+- `batik-parser-1.18.jar` ✅ перенесено на prod в `add-pilot-7-26-0717.zip`
+- `batik-script-1.18.jar` ✅ перенесено на prod в `add-pilot-7-26-0717.zip`
+- `batik-shared-resources-1.18.jar` ✅ перенесено на prod в `add-pilot-7-26-0717.zip`
+- `batik-svg-dom-1.18.jar` ✅ перенесено на prod в `add-pilot-7-26-0717.zip`
+- `batik-util-1.18.jar` ✅ перенесено на prod в `add-pilot-7-26-0717.zip`
+- `batik-xml-1.18.jar` ✅ перенесено на prod в `add-pilot-7-26-0717.zip`
+- `byte-buddy-1.15.11.jar` 📦 *в архиве `add-pilot-10-26-0717.zip`*
+- `commons-codec-1.17.2.jar` ✅ перенесено на prod в `add-pilot-4-26-0717.zip`
+- `commons-compress-1.25.0.jar` ✅ перенесено на prod в `add-pilot-6-26-0717.zip`
+- `commons-io-2.15.0.jar` ✅ перенесено на prod в `add-pilot-6-26-0717.zip`
+- `commons-math3-3.6.1.jar` ✅ перенесено на prod в `add-pilot-8-26-0717.zip`
+- `curvesapi-1.08.jar` ✅ перенесено на prod в `add-pilot-8-26-0717.zip`
+- `ecj-3.21.0.jar` ✅ перенесено на prod в `add-pilot-8-26-0717.zip`
+- `micrometer-core-1.14.6.jar` ✅ подтверждено на prod по контрольному снимку (`add-pilot-9-26-0717.zip`)
+- `micrometer-jakarta9-1.14.6.jar` ✅ подтверждено на prod по контрольному снимку (`add-pilot-9-26-0717.zip`)
+- `poi-5.2.5.jar` ✅ перенесено на prod в `add-pilot-4-26-0717.zip`
+- `poi-ooxml-5.2.5.jar` ✅ перенесено на prod в `add-pilot-6-26-0717.zip`
+- `poi-ooxml-lite-5.2.5.jar` ✅ перенесено на prod в `add-pilot-5-26-0717.zip`
+- `spring-boot-actuator-3.4.5.jar` ✅ подтверждено на prod по контрольному снимку (`add-pilot-9-26-0717.zip`)
+- `spring-boot-actuator-autoconfigure-3.4.5.jar` ✅ подтверждено на prod по контрольному снимку (`add-pilot-9-26-0717.zip`)
+- `xml-apis-ext-1.3.04.jar` ✅ подтверждено на prod по контрольному снимку (`add-pilot-9-26-0717.zip`)
+- `xmlbeans-5.2.0.jar` ✅ перенесено на prod в `add-pilot-4-26-0717.zip`
+- `xmlgraphics-commons-2.10.jar` ✅ перенесено на prod в `add-pilot-7-26-0717.zip`
+- `xmpcore-6.1.11.jar` ✅ подтверждено на prod по контрольному снимку (`add-pilot-9-26-0717.zip`)
+
+#### Пилотный архив замен №1 (2026-07-17)
+
+| Параметр | Значение |
+|----------|----------|
+| Файл | `/home/alex/femsq-test/test-26-0716/to_prod_26-0717/replace-pilot-26-0717.zip` |
+| Пароль | `LaDog%17` (также в `to_prod_26-0717/README.md`) |
+| Размер (несжатые jar) | ~5,0 МБ (5 jar); сжатый ~4,7 МБ |
+| Назначение | Проверка канала переноса ~5 МБ; замена части группы 2 без полного lib |
+| Статус | ✅ перенесён на prod оператором |
+
+**Содержимое архива:**
+- `classmate-1.7.0.jar`
+- `commons-collections4-4.4.jar`
+- `femsq-database-0.1.0.136-SNAPSHOT.jar`
+- `femsq-reports-0.1.0.136-SNAPSHOT.jar`
+- `graphql-java-22.3.jar`
+
+#### Пилотный архив замен №2 (2026-07-17)
+
+| Параметр | Значение |
+|----------|----------|
+| Файл | `/home/alex/femsq-test/test-26-0716/to_prod_26-0717/replace-pilot-2-26-0717.zip` |
+| Пароль | `LaDog%17` (также в `to_prod_26-0717/README-replace-pilot-2-26-0717.md`) |
+| Размер (несжатые jar) | ~5,0 МБ (8 jar); сжатый ~4,6 МБ |
+| Назначение | Следующая партия замен из группы 2 после успешного переноса архива №1 |
+| Статус | ✅ перенесён на prod оператором |
+
+**Содержимое архива:**
+- `jboss-logging-3.6.1.Final.jar`
+- `micrometer-commons-1.14.6.jar`
+- `micrometer-observation-1.14.6.jar`
+- `reactive-streams-1.0.4.jar`
+- `reactor-core-3.7.5.jar`
+- `spring-context-6.2.6.jar`
+- `stax2-api-4.2.2.jar`
+- `woodstox-core-7.0.0.jar`
+
+#### Пилотный архив замен №3 (2026-07-17)
+
+| Параметр | Значение |
+|----------|----------|
+| Файл | `/home/alex/femsq-test/test-26-0716/to_prod_26-0717/replace-pilot-3-26-0717.zip` |
+| Пароль | `LaDog%17` (также в `to_prod_26-0717/README-replace-pilot-3-26-0717.md`) |
+| Размер (несжатые jar) | ~1,4 МБ (1 jar); сжатый ~1,4 МБ |
+| Назначение | Последняя оставшаяся замена из группы 2; меньше предыдущих архивов, потому что других заменяемых jar больше не осталось |
+| Статус | ⏸ отложен — понижение JDBC на prod **не требуется**; оставить `mssql-jdbc-13.2.0.jre11.jar` |
+
+**Содержимое архива:**
+- `mssql-jdbc-12.8.1.jre11.jar`
+
+**После успешного переноса архива №3:** оператор сообщает → отметка ✅ у строки группы 2 и в таблице архива.
+
+#### Пилотный архив добавлений №4 (2026-07-17, группа 3)
+
+| Параметр | Значение |
+|----------|----------|
+| Файл | `/home/alex/femsq-test/test-26-0716/to_prod_26-0717/add-pilot-4-26-0717.zip` |
+| Пароль | `LaDog%17` (также в `to_prod_26-0717/README-add-pilot-4-26-0717.md`) |
+| Размер (несжатые jar) | ~5,3 МБ (3 jar); сжатый ~4,8 МБ |
+| Назначение | Первая партия **новых** jar группы 3 — POI / Excel foundation |
+| Статус | ✅ перенесён на prod (оператор 2026-07-17) |
+
+**Содержимое архива:**
+- `poi-5.2.5.jar`
+- `xmlbeans-5.2.0.jar`
+- `commons-codec-1.17.2.jar`
+
+**После успешного переноса архива №4:** оператор сообщает → отметка ✅ у строк группы 3 и в таблице архива. ✅ **2026-07-17**
+
+#### Пилотный архив добавлений №5 (2026-07-17, группа 3)
+
+| Параметр | Значение |
+|----------|----------|
+| Файл | `/home/alex/femsq-test/test-26-0716/to_prod_26-0717/add-pilot-5-26-0717.zip` |
+| Пароль | `LaDog%17` (также в `to_prod_26-0717/README-add-pilot-5-26-0717.md`) |
+| Размер (несжатые jar) | ~5,7 МБ (1 jar); сжатый ~4,9 МБ |
+| Назначение | Вторая партия **новых** jar группы 3 — POI OOXML lite |
+| Статус | ✅ перенесён на prod (оператор 2026-07-17) |
+
+**Содержимое архива:**
+- `poi-ooxml-lite-5.2.5.jar`
+
+**После успешного переноса архива №5:** оператор сообщает → отметка ✅ у строки группы 3 и в таблице архива. ✅ **2026-07-17**
+
+#### Пилотный архив добавлений №6 (2026-07-17, группа 3)
+
+| Параметр | Значение |
+|----------|----------|
+| Файл | `/home/alex/femsq-test/test-26-0716/to_prod_26-0717/add-pilot-6-26-0717.zip` |
+| Пароль | `LaDog%17` (также в `to_prod_26-0717/README-add-pilot-6-26-0717.md`) |
+| Размер (несжатые jar) | ~3,5 МБ (3 jar); сжатый ~3,2 МБ |
+| Назначение | Третья партия **новых** jar группы 3 — POI OOXML + commons |
+| Статус | ✅ перенесён на prod (оператор 2026-07-17) |
+
+**Содержимое архива:**
+- `poi-ooxml-5.2.5.jar`
+- `commons-compress-1.25.0.jar`
+- `commons-io-2.15.0.jar`
+
+**После успешного переноса архива №6:** оператор сообщает → отметка ✅ у строк группы 3 и в таблице архива. ✅ **2026-07-17**
+
+#### Пилотный архив добавлений №7 (2026-07-17, группа 3)
+
+| Параметр | Значение |
+|----------|----------|
+| Файл | `/home/alex/femsq-test/test-26-0716/to_prod_26-0717/add-pilot-7-26-0717.zip` |
+| Пароль | `LaDog%17` (также в `to_prod_26-0717/README-add-pilot-7-26-0717.md`) |
+| Размер (несжатые jar) | ~3,5 МБ (16 jar); сжатый ~3,1 МБ |
+| Назначение | Четвёртая партия **новых** jar группы 3 — Batik + xmlgraphics |
+| Статус | ✅ перенесён на prod (оператор 2026-07-17) |
+
+**Содержимое архива:**
+- `batik-anim-1.18.jar` … `batik-xml-1.18.jar` (15 jar)
+- `xmlgraphics-commons-2.10.jar`
+
+**После успешного переноса архива №7:** оператор сообщает → отметка ✅ у строк группы 3 и в таблице архива. ✅ **2026-07-17**
+
+#### Пилотный архив добавлений №8 (2026-07-17, группа 3)
+
+| Параметр | Значение |
+|----------|----------|
+| Файл | `/home/alex/femsq-test/test-26-0716/to_prod_26-0717/add-pilot-8-26-0717.zip` |
+| Пароль | `LaDog%17` (также в `to_prod_26-0717/README-add-pilot-8-26-0717.md`) |
+| Размер (несжатые jar) | ~5,1 МБ (3 jar); сжатый ~4,7 МБ |
+| Назначение | Пятая партия **новых** jar группы 3 — math + ECJ + curves |
+| Статус | ✅ перенесён на prod (оператор 2026-07-17) |
+
+**Содержимое архива:**
+- `commons-math3-3.6.1.jar`
+- `ecj-3.21.0.jar`
+- `curvesapi-1.08.jar`
+
+**После успешного переноса архива №8:** оператор сообщает → отметка ✅ у строк группы 3 и в таблице архива. ✅ **2026-07-17**
+
+#### Пилотный архив добавлений №9 (2026-07-17, группа 3 — финальная)
+
+| Параметр | Значение |
+|----------|----------|
+| Файл | `/home/alex/femsq-test/test-26-0716/to_prod_26-0717/add-pilot-9-26-0717.zip` |
+| Пароль | `LaDog%17` (также в `to_prod_26-0717/README-add-pilot-9-26-0717.md`) |
+| Размер (несжатые jar) | ~2,8 МБ (9 jar); сжатый ~2,4 МБ |
+| Назначение | **Финальная** партия группы 3 — actuator + micrometer + остатки |
+| Статус | ✅ содержимое подтверждено на prod по контрольному снимку (2026-07-17) |
+
+**Содержимое архива:**
+- `spring-boot-actuator-3.4.5.jar`
+- `spring-boot-actuator-autoconfigure-3.4.5.jar`
+- `micrometer-core-1.14.6.jar`
+- `micrometer-jakarta9-1.14.6.jar`
+- `HdrHistogram-2.2.2.jar`
+- `LatencyUtils-2.0.3.jar`
+- `SparseBitSet-1.3.jar`
+- `xml-apis-ext-1.3.04.jar`
+- `xmpcore-6.1.11.jar`
+
+**После успешного переноса архива №9:** содержимое подтверждено на prod. При контрольном сравнении с `lib/` 137 дополнительно выявлен `byte-buddy-1.15.11.jar`.
+
+#### Пилотный архив добавлений №10 (2026-07-17, дополнительный для 0.1.0.137)
+
+| Параметр | Значение |
+|----------|----------|
+| Файл | `/home/alex/femsq-test/test-26-0716/to_prod_26-0717/add-pilot-10-26-0717.zip` |
+| Пароль | `LaDog%17` (также в `to_prod_26-0717/README-add-pilot-10-26-0717.md`) |
+| Размер (несжатый jar) | ~8,1 МБ (1 jar); сжатый ~6,9 МБ |
+| Назначение | Дополнительная зависимость целевой сборки **0.1.0.137** |
+| Статус | ✅ перенесён на prod (оператор 2026-07-17) |
+
+**Содержимое архива:**
+- `byte-buddy-1.15.11.jar`
+
+**Контроль prod `lib/` (2026-07-17, уточнение оператора):**
+- `mssql-jdbc-13.2.0.jre11.jar` ✅ добавлен из предыдущего prod-развёртывания;
+- `spring-jcl-6.2.6.jar` ✅ уже присутствует;
+- `jboss-logging-3.6.1.Final.jar` ✅ уже присутствует;
+- `byte-buddy-1.15.11.jar` ✅ перенесён (архив №10).
+
+**Итоговое сличение prod `lib/` vs эталон 0.1.0.137 (2026-07-17, `lib-list.txt`):**
+- prod **94 jar**, эталон **94 jar** — совпадение;
+- единственное расхождение — `femsq-database`/`femsq-reports` **0.1.0.136** (обновятся с thin JAR 137);
+- лишних jar нет. **Библиотечная часть для 0.1.0.137 готова** → §9.5.10.7.
+
+#### Пакет prod thin JAR 0.1.0.137 + DDL (2026-07-17)
+
+| Параметр | Значение |
+|----------|----------|
+| Файл | `/home/alex/femsq-test/test-26-0716/to_prod_26-0717/prod-thin-137-26-0717.zip` |
+| Пароль | `LaDog%17` (также в `README-prod-thin-137-26-0717.md`) |
+| Размер | ~1,9 МБ (сжатый) |
+| Назначение | §9.5.4 + §9.5.2: thin JAR 137, `femsq-*` 137, DDL MSSQL2012 |
+| Статус | ⏳ подготовлен, ожидает переноса и применения на prod |
+
+**Содержимое:**
+- `app/femsq-web-0.1.0.137-SNAPSHOT-thin.jar`
+- `app/lib-updates/femsq-database-0.1.0.137-SNAPSHOT.jar`, `femsq-reports-0.1.0.137-SNAPSHOT.jar`
+- `scripts/run-with-external-libs.cmd` (+ `.sh` справочно)
+- `sql/MSSQL2012/26-0709-adt_staging_log_level/` (00→01→02)
+- `sql/MSSQL2012/26-0714-ralprtRow/` (00→01→04, откат 05)
+
+**Порядок на prod:** бэкап → DDL (оба пакета) → замена thin JAR + `femsq-*` 136→137 в `lib/` → запуск → smoke §9.5.6–9.5.7.
+
+##### 9.5.10. Dev-gate перед prod (закрыть на dev до thin JAR + полного lib)
+
+**Решение (2026-07-17):** prod thin JAR и полный запуск — **после** закрытия dev-gate. Все библиотечные архивы №1–2 и №4–10 ✅ перенесены; prod `lib/` сверен с эталоном 137 (94 jar). Готово к §9.5.10.7.
+
+**Рекомендуемая последовательность на dev (закрыта 2026-07-17):**
+
+| Шаг | Действие | Статус |
+|-----|----------|--------|
+| 1 | Fix BOM: `femsq-backend/pom.xml` → `dependencyManagement` + `mssql.jdbc.version=13.2.0.jre11` | ✅ |
+| 2 | `femsq-graphql-tests` test-dep `12.8.1` → `13.2.0` | ✅ |
+| 3 | `mvn dependency:tree -pl femsq-backend/femsq-web -am` → только **13.2.0** | ✅ |
+| 4 | `./code/scripts/build-thin-jar.sh` → fat/thin **0.1.0.137**, `BOOT-INF/lib/mssql-jdbc-13.2.0.jre11.jar` | ✅ |
+| 5 | Перегенерация `lib/` в `test-26-0716` (94 jar, JDBC 13.2.0) | ✅ |
+| 6 | Soft-deploy smoke: health 200, `POST /graphql` 200, dry-run type=5 **exec 1197** (102 с, stg=1720) | ✅ |
+| 7 | Excel/POI + SMB: `2026 Свод инф-ции по ОА.xlsm` с `/mnt/nb-win-share/femsq/excel/2026_03/` | ✅ |
+| 8 | Prod thin JAR + оставшиеся jar группы 3 + DDL | ⏳ после пилотных архивов |
+
+| # | Шаг | Статус |
+|---|-----|--------|
+| 9.5.10.1 | **JDBC 13.2.0 в сборке:** устранить override Spring Boot BOM | ✅ `femsq-backend/pom.xml` dependencyManagement; tree → 13.2.0 |
+| 9.5.10.2 | Пересборка thin JAR **0.1.0.137** | ✅ `femsq-web-0.1.0.137-SNAPSHOT-thin.jar` |
+| 9.5.10.3 | Перегенерация `lib/` в `test-26-0716` (94 jar, JDBC 13.2.0) | ✅ `lib.old-136` сохранён |
+| 9.5.10.4 | Soft-deploy smoke: health, GraphQL, dry-run type=5 | ✅ exec **1197**: 102 с, reconcile dry-run, errors=0 |
+| 9.5.10.5 | Excel/POI: dry-run с SMB-файлом (Stage 1) | ✅ POI прочитал `.xlsm`, inserted=**1720** (лист «Отчеты») |
+| 9.5.10.6 | §9.5.9: JDBC — оставить prod 13.2.0; архив №3 не применять | ✅ |
+| 9.5.10.7 | Prod: thin JAR 137 + DDL §9.5.2 | ⏸ blocked by **0054** — на prod возможна локальная Access `ra_a`, требуется bootstrap SQL-таблиц ревизий |
+
+**Smoke 137 (2026-07-17, после монтирования шары):**
+- Сервер: thin **0.1.0.137** + `lib/` (94 jar), лог `logs/app_26-0717-137-smoke.log`
+- `executeAudit(id:14)` → exec **1197**, **COMPLETED** за **102 с** (baseline 1193: 103 с)
+- Stage 1: `/mnt/nb-win-share/femsq/excel/2026_03/2026 Свод инф-ции по ОА.xlsm`, type=5, **1720** строк в `ra_stg_ra`
+- Reconcile type=5 dry-run: stagingRows=1720, summInserted=1578, errors=0
+- Предыдущий прогон **1196** (1 с) — шара не была смонтирована; директория не найдена
+
+**Корневая причина JDBC-расхождения (устранена 2026-07-17):**
+- Spring Boot BOM подменял `mssql-jdbc` на **12.8.1** несмотря на property `13.2.0.jre11`;
+- fat JAR `0.1.0.136` и `lib/` содержали `mssql-jdbc-12.8.1.jre11.jar`;
+- **Fix:** `dependencyManagement` в `femsq-backend/pom.xml`; сборка **0.1.0.137** → `mssql-jdbc-13.2.0.jre11.jar`;
+- prod уже на **13.2.0** — понижать не нужно; архив №3 **не применять**.
+
+##### 9.5.11. Prod bootstrap таблиц ревизий Access → MSSQL (новая задача 0054)
+
+**Решение (2026-07-17):** вынести в отдельный чат, но вести статусы в этом плане. Это не продолжение переноса `lib/`, а отдельный prod-блокер для запуска ревизий через FEMSQ.
+
+**Контекст:**
+- на prod `lib/` и thin JAR **0.1.0.137** разложены корректно;
+- при первом DDL-проверочном скрипте выяснилось, что `COL_LENGTH('ags.ra_a', 'adt_staging_log_level') = NULL` не различает «нет колонки» и «нет таблицы»;
+- оператор подтвердил, что `ra_a` в текущем Access-контуре является локальной таблицей Access;
+- Java/FEMSQ ожидает серверную `ags.ra_a` (и связанные `ra_at`, `ra_dir`, `ra_f`), а Access может продолжать legacy-процесс на локальной `ra_a`;
+- существующий `code/config/sql/01_create_ra_tables.sql` **нельзя применять на prod как есть**: там `DROP TABLE`, `USE [femsq]`, dev-контекст.
+
+| # | Шаг 0054 | Статус |
+|---|----------|--------|
+| 0054.1 | Inventory FishEye: `OBJECT_ID`/схема для `ags.ra_a`, `ra_at`, `ra_dir`, `ra_f`, `ra_ft`, `ra_ft_s`, `ra_ft_sn`, staging (`ra_stg_*`) | ⏳ |
+| 0054.2 | Inventory Access: подтвердить локальные/linked таблицы (`TableDef.Connect`) для `ra_a`, `ra_at`, `ra_dir`, `ra_f` | ⏳ |
+| 0054.3 | Сформировать MSSQL2012 DDL-пакет **CREATE-if-missing** без `DROP`, без `CREATE OR ALTER`, без `USE [femsq]` | ⏳ |
+| 0054.4 | Импорт минимальных данных ревизий из Access в SQL с сохранением ключей (`adt_key`, справочники, директории, файлы) | ⏳ |
+| 0054.5 | Применить ALTER-пакеты `adt_staging_log_level` и `ralprtRow` только после существования базовых таблиц | ⏳ |
+| 0054.6 | Smoke FEMSQ prod: `audits`, health/GraphQL, dry-run type=5/type=3; Access **не перелинковывать** | ⏳ |
+
+**Правило совместимости с текущим Access-процессом:** в рамках 0054 **не заменять** локальную Access `ra_a` на linked table. SQL-таблицы создаются для FEMSQ/GraphQL параллельно; полная миграция Access-linking — отдельная будущая задача после теста копии `.accdb`.
+
+**Критерий закрытия 0054:** на FishEye есть полный минимальный контур ревизий для FEMSQ; импортированы рабочие записи для `adt_key=14`/type=5 и type=3; `executeAudit` на prod запускается через FEMSQ; Access legacy продолжает работать без перелинковки `ra_a`.
+
+**Первый запрос для нового чата** (копировать целиком; можно использовать на другой машине с тем же планом):
+
+```text
+Продолжаем проект FEMSQ. Работать по плану:
+docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md
+
+Нужна задача 0054 / §9.5.11:
+Prod bootstrap таблиц ревизий Access → MSSQL для FEMSQ.
+
+Контекст:
+- Prod lib и thin JAR 0.1.0.137 уже разложены и сверены.
+- Prod-приёмка ревизий заблокирована: на prod таблица ra_a, вероятно, локальная Access-таблица, а FEMSQ Java/GraphQL ожидает ags.ra_a в FishEye.
+- Access legacy должен продолжать работать как сейчас; локальную Access ra_a НЕ перелинковывать в рамках этой задачи.
+- Существующий code/config/sql/01_create_ra_tables.sql нельзя применять на prod как есть: там DROP TABLE и dev-контекст.
+- Нужно подготовить безопасный MSSQL2012 пакет CREATE-if-missing без DROP, без CREATE OR ALTER, без USE [femsq].
+
+Начать с inventory:
+1. FishEye: OBJECT_ID/схемы для ags.ra_a, ra_at, ra_dir, ra_f, ra_ft, ra_ft_s, ra_ft_sn и staging ra_stg_*.
+2. Access: какие таблицы ревизий локальные, какие linked через ODBC.
+3. Затем предложить минимальный DDL/import-план, чтобы FEMSQ мог запускать executeAudit type=5/type=3 на prod, не ломая текущий Access-процесс.
+
+Вести результаты обратно в текущий chat-plan §9.5.11 и задачу 0054.
+```
+
+**Следующий шаг фазы 9:** новый чат по **0054** → после закрытия 0054 вернуться к §9.5.10.7 / §9.5.5–9.5.8, задача **0048**.
 
 **Критерий завершения фазы 9:** perf 0046–0047 выполнены или отложены; **0049–0053** закрыты; UAT blocker в 9.3.3 закрыты (minor U8/U9); soft-deploy **G8** + **§9.5.0** ✅; prod thin JAR **0048**/§9.5.1+.
 
-**Задачи в `project-development.json`:** 0046, 0047, **0049**, **0050**, **0051**, **0052**, **0053**, 0048.
+**Задачи в `project-development.json`:** 0046, 0047, **0049**, **0050**, **0051**, **0052**, **0053**, 0048, **0054**.
 
 ---
 
@@ -1214,7 +1624,7 @@ Badge `_START` был всегда «+». **Решено:** CSS `details[open] >
 
 ## Доп. факты (актуализировано 2026-07-14)
 
-- **Фаза 9 (v0.12.18):** 0049–**0053**, **G0–G8**, soft-deploy **§9.5.0** ✅ (`test-26-0716`, JAR **0.1.0.136**, exec **1193**/**1194** + UI); далее prod **0048**/§9.5.1+.
+- **Фаза 9 (v0.12.32):** … **§9.5.9** lib ✅; prod thin JAR/files ✅; DDL §9.5.2 остановлен: на prod `ra_a` вероятно локальная Access. Создана **0054 / §9.5.11** — bootstrap SQL-таблиц ревизий на FishEye без перелинковки Access; в плане зафиксирован первый запрос для нового чата; затем возврат к §9.5.10.7 / §9.5.5–9.5.8.
 
 - **0051 (2026-07-15):** §9.3.6 **закрыта**; U10/P5/G3 formal.
 
@@ -1245,5 +1655,5 @@ Badge `_START` был всегда «+». **Решено:** CSS `details[open] >
 
 - **Ворота 9.4a (2026-07-16):** **G0–G8** ✅; thin parity (§9.2.8); soft-deploy rehearsal **§9.5.0** ✅ (`/home/alex/femsq-test/test-26-0716`).
 
-**Последнее обновление:** 2026-07-16  
-**Версия:** 0.12.18
+**Последнее обновление:** 2026-07-17  
+**Версия:** 0.12.32

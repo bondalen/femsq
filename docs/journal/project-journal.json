@@ -6645,6 +6645,35 @@
                   }
                 ]
               }
+            },
+            {
+              "log": {
+                "displayName": "Dev-gate §9.5.10 закрыт: JDBC 13.2.0, thin 0.1.0.137, smoke exec 1197. № log-2026-07-17-001",
+                "log-attributes": {
+                  "id": "log-2026-07-17-001",
+                  "timestamp": "2026-07-17T11:46:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0048"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Dev-gate перед prod: fix BOM JDBC, сборка 0.1.0.137, smoke с SMB",
+                    "details": "femsq-backend/pom.xml: dependencyManagement mssql-jdbc 13.2.0.jre11; femsq-graphql-tests test-dep обновлён. build-thin-jar → 0.1.0.137; lib/ test-26-0716 перегенерирован (94 jar). Smoke thin 137: health 200, GraphQL 200. executeAudit(14) exec 1197 COMPLETED 102 с: POI прочитал xlsm с /mnt/nb-win-share, Stage1 inserted=1720, reconcile type=5 dry-run errors=0. add-pilot-4 ✅ на prod; add-pilot-5 ожидает переноса.",
+                    "outcome": "§9.5.10.1–9.5.10.6 закрыты; остаётся §9.5.10.7 prod thin JAR + оставшиеся jar группы 3.",
+                    "references": [
+                      "/home/alex/femsq-test/test-26-0716",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md",
+                      "code/femsq-backend/pom.xml"
+                    ]
+                  }
+                ]
+              }
             }
           ]
         }
