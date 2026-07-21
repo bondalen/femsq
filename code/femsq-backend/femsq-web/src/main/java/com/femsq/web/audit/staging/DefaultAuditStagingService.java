@@ -284,8 +284,10 @@ public class DefaultAuditStagingService implements AuditStagingService {
                 ? Type5SignFilterClassifier.compileRaNumPattern(
                         auditStagingProperties.getType5().getRaNumRegex())
                 : null;
+        boolean isAgFee = isAgFeeStagingTable(config.rscStgTbl());
         SheetDataRangeSpec dataRange = buildSheetDataRangeSpec(
-                sheet, headerRowIndex, rangeColumnIndex0, excelColumns, allowedSigns, type5RaNumPattern);
+                sheet, headerRowIndex, rangeColumnIndex0, excelColumns, allowedSigns, type5RaNumPattern,
+                isAgFee);
         appendSheetFound(context, config, sheet, dataRange);
         Set<String> requiredColumns = mappings.stream()
                 .filter(mapping -> Boolean.TRUE.equals(mapping.rcmRequired()))
@@ -1204,6 +1206,9 @@ public class DefaultAuditStagingService implements AuditStagingService {
      * <p>
      * Для type=5 ({@code allowedSigns != null}) нижняя граница — последняя <em>значимая</em> строка
      * (whitelist / «ОА Аренда» / № ОА с {@code type5RaNumPattern}), а не последняя непустая в якоре.
+     * Для type=6 (AgFee) — последняя <em>значимая</em> строка:
+     * непустой «№ Акта» плюс код стройки или ячейка даты Excel
+     * (не хвост UsedRange с итогами/счётчиками вроде «665» без стройки).
      * Для прочих типов — по-прежнему последняя непустая ячейка в колонке диапазона.
      * </p>
      */
@@ -1213,7 +1218,8 @@ public class DefaultAuditStagingService implements AuditStagingService {
             int rangeColumnIndex0,
             Map<String, Integer> excelColumns,
             Set<String> allowedSigns,
-            java.util.regex.Pattern type5RaNumPattern
+            java.util.regex.Pattern type5RaNumPattern,
+            boolean isAgFee
     ) {
         int firstDataRowIndex = headerRowIndex + 1;
         int firstRowOneBased = firstDataRowIndex + 1;
@@ -1227,12 +1233,54 @@ public class DefaultAuditStagingService implements AuditStagingService {
         if (allowedSigns != null && type5RaNumPattern != null) {
             lastDataRowIndex0 = findLastSignificantType5RowIndex0(
                     sheet, firstDataRowIndex, lastPoi, excelColumns, allowedSigns, type5RaNumPattern);
+        } else if (isAgFee) {
+            lastDataRowIndex0 = findLastSignificantAgFeeRowIndex0(
+                    sheet, firstDataRowIndex, lastPoi, excelColumns, rangeColumnIndex0);
         } else {
             lastDataRowIndex0 = findLastNonEmptyInColumnIndex0(sheet, firstDataRowIndex, lastPoi, rangeColumnIndex0);
         }
         int lastRowOneBased = lastDataRowIndex0 >= 0 ? lastDataRowIndex0 + 1 : firstRowOneBased;
         String address = "$" + colLetters + "$" + firstRowOneBased + ":$" + colLetters + "$" + lastRowOneBased;
         return new SheetDataRangeSpec(rangeColumnIndex0 + 1, firstRowOneBased, lastRowOneBased, address);
+    }
+
+    /**
+     * Признак staging-таблицы type=6 (Акты агентского вознаграждения).
+     */
+    private static boolean isAgFeeStagingTable(String stagingTable) {
+        if (stagingTable == null || stagingTable.isBlank()) {
+            return false;
+        }
+        String normalized = stagingTable.trim().toLowerCase(Locale.ROOT);
+        return normalized.endsWith("ra_stg_agfee") || normalized.contains(".ra_stg_agfee");
+    }
+
+    /**
+     * Индекс последней значимой строки type=6 (0-based).
+     * Критерий: {@link AgFeeDataRangeClassifier} (№ Акта + код стройки или дата Excel).
+     * Иначе — fallback на последнюю непустую ячейку в колонке диапазона.
+     */
+    private int findLastSignificantAgFeeRowIndex0(
+            Sheet sheet,
+            int firstDataRowIndex,
+            int lastPoi,
+            Map<String, Integer> excelColumns,
+            int rangeColumnIndex0
+    ) {
+        Integer nameCol = excelColumns == null ? null : excelColumns.get("oafptOafName");
+        if (nameCol == null) {
+            return findLastNonEmptyInColumnIndex0(sheet, firstDataRowIndex, lastPoi, rangeColumnIndex0);
+        }
+        Integer cstCol = excelColumns.get("oafptPnCstAgPn");
+        Integer dateCol = excelColumns.get("oafptOafDate");
+        for (int r = lastPoi; r >= firstDataRowIndex; r--) {
+            Row row = sheet.getRow(r);
+            if (AgFeeDataRangeClassifier.isSignificantRow(
+                    row, nameCol, cstCol, dateCol, cellReader)) {
+                return r;
+            }
+        }
+        return -1;
     }
 
     /**

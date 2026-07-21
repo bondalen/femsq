@@ -523,9 +523,15 @@ public class AuditExecutionContext {
         out = out.replace("execKey=", "ключ выполнения = ");
         out = out.replace("Stage 1 (AllAgents)", "Этап 1 (Все агенты)");
         out = out.replace("Stage 1 (RALP)", "Этап 1 (RALP)");
+        out = out.replace("Stage 1 (AgFee2306)", "Этап 1 (AgFee2306)");
         out = out.replace("Stage 2 (RALP)", "Этап 2 (RALP)");
+        out = out.replace("Stage 2 (AgFee2306)", "Этап 2 (AgFee2306)");
+        out = out.replace("Stage 2a (AgFee2306)", "Этап 2a (AgFee2306)");
         out = out.replace("Stage 2 (AllAgents): no-op, дополнительные FK/derived вычисления не требуются",
                 "Этап 2 (Все агенты): пропуск, дополнительные вычисления внешних ключей/производных не требуются");
+        out = out.replace("Stage 2a (CnPrDoc)", "Этап 2a (CnPrDoc)");
+        out = out.replace("Stage 1 (CnPrDoc)", "Этап 1 (CnPrDoc)");
+        out = out.replace("Stage 2 (CnPrDoc)", "Этап 2 (CnPrDoc)");
         out = out.replace("Staging start:", "Начало загрузки в промежуточную таблицу:");
         out = out.replace("Staging end:", "Завершение загрузки в промежуточную таблицу:");
         out = out.replace("Начало загрузки в staging:", "Начало загрузки в промежуточную таблицу:");

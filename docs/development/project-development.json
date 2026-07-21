@@ -3,14 +3,71 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2026-07-17T16:26:00+03:00",
+      "lastUpdated": "2026-07-21T14:10:00+03:00",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0055",
+      "nextTaskId": "0057",
       "items": {
+        "0056": {
+          "task": {
+            "displayName": "Type=6: читаемость лога Stage1/CstNo/дерево сверки (completed, high). № 0056",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Stage 1 type=6: нижняя граница диапазона — последняя значимая строка (№ Акта + стройка/дата Excel); нет тысяч WARN по хвосту листа",
+                "DDL oafptRow + Stage 1 заполняет номер Excel-строки",
+                "CstNo: одна стройка — один пункт лога со списком Excel-строк; Agent/Cst — свёртываемые spans",
+                "Type6ReconcileTreeLogger + message: русские подписи; SUMMARY без спама UNCHANGED; суммы с разрядами; Stage→Этап",
+                "Unit-тесты; smoke dry-run test_26 / af_key=313; UAT sign-off",
+                "Документация: chat-plan-26-0720-agfee-type6.md, sql/26-0721, журнал"
+              ],
+              "description": "UAT G.5 шаг 2 (0055) выявил: хвост Excel → тысячи WARN; CstNo с привязкой к акту вместо списка строк; англо/техно статусы NEW/UNCH в дереве. Порт практик 0051–0053 на type=6. Закрыто 2026-07-21 (exec 1207–1208, JAR 0.1.0.142+).",
+              "links": {
+                "projectDocsRefs": ["module:backend.web"],
+                "journalRefs": ["chat:chat-2026-07-20-001"],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0720-agfee-type6.md"
+              },
+              "created": "2026-07-21",
+              "lastUpdated": "2026-07-21",
+              "completed": "2026-07-21"
+            }
+          }
+        },
+        "0055": {
+          "task": {
+            "displayName": "Type=6 (AgFee2306): reconcile Акты→Пункты по стройкам (completed, high). № 0055",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Инвентаризация подтверждена: точный DDL ags.ogAgFee/ogAgFeeP + lookup-таблиц (ogAgCs, cstAgPn, yyyy, ogNmF_allVariantsAg)",
+                "Stage 2a портирован: резолюция агента (ogNmF_allVariantsAg + код стройки + keyCount=1) и стройки (cstAgPn), с diagnostic неоднозначностей (AgentNo/CstNo)",
+                "Stage 2b/2c реализован в правильном порядке: сначала уровень заголовка (Акт), затем уровень строки (Пункт) — порт T-SQL на ra_stg_agfee + exec_key",
+                "AgFee2306ReconcileService больше не заглушка; AgFeeStage2Service доработан",
+                "Реализован Type6ReconcileTreeLogger: дерево Акт→Пункты в adt_results",
+                "Smoke 2026_03/2026-07 (af_key=313): dry-run, idempotency, apply seed марта (baseline 31/521 за 2026), july apply, rollback; UAT браузер — G.5 плана (оператор)",
+                "Документация: ra-audit-file-processor-architecture.md, audit-log-vba-to-java-mapping.md, chat-plan-26-0720-agfee-type6.md"
+              ],
+              "description": "Reconcile af_type=6 (Акты агентского вознаграждения). Домен ags.ogAgFee/ogAgFeeP уже на сервере. Двухуровневая сверка Акт→Пункты + tree-лог. Инженерный scope A–F + G.1–G.4 закрыт 2026-07-21; приёмка UI — G.5 плана.",
+              "links": {
+                "projectDocsRefs": ["module:backend.web", "environment:prod-fisheye"],
+                "journalRefs": ["chat:chat-2026-07-20-001"],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0720-agfee-type6.md"
+              },
+              "created": "2026-07-20",
+              "lastUpdated": "2026-07-21",
+              "completed": "2026-07-21"
+            }
+          }
+        },
         "0053": {
           "task": {
             "displayName": "Дерево сверки в логе: ОА / ОА прочие / изм. + группировка ошибок (completed, critical). № 0053",

@@ -9,7 +9,7 @@ import java.util.Set;
 public final class StagingExcelRowColumns {
 
     /** Известные имена колонок по типам staging-таблиц. */
-    public static final Set<String> KNOWN = Set.of("rainRow", "ralprtRow", "ralprsRow");
+    public static final Set<String> KNOWN = Set.of("rainRow", "ralprtRow", "ralprsRow", "oafptRow");
 
     private StagingExcelRowColumns() {
     }

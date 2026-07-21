@@ -3,7 +3,7 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-07-16"
+      "lastUpdated": "2026-07-21"
     },
     "sessions": [
       {
@@ -6670,6 +6670,490 @@
                       "/home/alex/femsq-test/test-26-0716",
                       "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md",
                       "code/femsq-backend/pom.xml"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "AgFee2306 (type=6): 0055+0056 completed, UAT G.5 PASS (completed, high). № chat-2026-07-20-001",
+          "chat-attributes": {
+            "id": "chat-2026-07-20-001",
+            "created": "2026-07-20",
+            "lastUpdated": "2026-07-21",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "high",
+            "tags": ["type6", "agfee", "reconcile", "vba-analysis", "uat", "nb-win", "audit-log"],
+            "links": {
+              "projectDocsRefs": ["module:backend.web", "environment:prod-fisheye"],
+              "developmentTasks": ["0055", "0056"],
+              "aiRuleRefs": []
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Синхронизация с GitHub (main отставал на 10 коммитов) (success). № log-2026-07-20-001",
+                "log-attributes": {
+                  "id": "log-2026-07-20-001",
+                  "timestamp": "2026-07-20T16:16:00+03:00",
+                  "level": "success",
+                  "effort": "0.25h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "git fetch/pull origin main через credential.helper=(без store)",
+                    "details": "Обычный git fetch с credential.helper=store зависал без вывода. С credential.helper= (пустым) fetch/pull прошли штатно: cc4f0ed → 491011b, 10 коммитов (audit/reconcile 0043–0050, темы UI, soft-deploy/thin JAR, pin JDBC 13.2.0, задача 0054).",
+                    "outcome": "main синхронизирован с origin/main; рабочее дерево чистое.",
+                    "references": []
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Анализ целесообразности 0054 vs альтернатив; выбор type=6 (success). № log-2026-07-20-002",
+                "log-attributes": {
+                  "id": "log-2026-07-20-002",
+                  "timestamp": "2026-07-20T16:53:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web", "environment:prod-fisheye"],
+                    "developmentTasks": ["0054"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Оценка целесообразности работы над 0054 без доступа к проду",
+                    "details": "Вывод: полноценно закрыть 0054 (bootstrap ags.ra_a на проде) без доступа к серверу нельзя без риска переделки (~80%); предложена частичная подготовка (inventory-скрипты, черновик DDL). В качестве альтернативы предложено рассмотреть type=6 (AgFee2306) — оператор подтвердил интерес и указал на связь Акт(1)→Пункты(N) как ключевую сложность.",
+                    "outcome": "Решение отложить полноценную реализацию 0054 до доступа к проду; начать работу по type=6, которая не имеет этого риска.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Инвентаризация type=6: домен на сервере, T-SQL референс, VBA (success). № log-2026-07-20-003",
+                "log-attributes": {
+                  "id": "log-2026-07-20-003",
+                  "timestamp": "2026-07-20T17:07:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0055"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Подтверждён домен ags.ogAgFee/ogAgFeeP на сервере (не bootstrap, как 0054)",
+                    "details": "DBHub: ags.ogAgFee=837 строк, ags.ogAgFeeP=26628 строк; все T-SQL views/procs/functions легаси-контура (ogAgFeePnTestActNew/DbNo/ActPnNoEq/ActAttrTrue/AgentKey/CstKey/ActAdd/ActPnAdd/ActDbOnlyDel/ExcNoDel/AgentNo/CstNo, fnOgAgFeePnTestActDbOnly/ExcNo) существуют на dev и захвачены целиком через OBJECT_DEFINITION. Файл '2026 Свод инф-ции по Актам.xlsx' подтверждён физически в снимках 2026_03 и 2026-07 на шаре nb-win (/mnt/d/wire-guard-share-nb-win/femsq/excel/...), зашифрован тем же способом (CDFV2), что уже рабочий файл type=5 — AuditExcelReader уже поддерживает пароль '303' без доработок. af_key=313 (af_type=6, af_dir=15) существует, но af_execute/af_source=false.",
+                    "outcome": "Высокая уверенность в переносимости результата на прод без переделки.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/AgFee2306AuditFileProcessor.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/stage2/AgFeeStage2Service.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/AgFee2306ReconcileService.java"
+                    ]
+                  },
+                  {
+                    "action": "Изучены VBA-классы ra_aAgFee23_06.cls, ogAgFee.cls, ogAgFeePn.cls",
+                    "details": "Подтверждена связь 1:N Акт(ogAgFee)→Пункт(ogAgFeePn) на уровне VBA-модели (ogAgFeePn.parent As ogAgFee, parentKey=oafpOaf) и T-SQL (oafpOaf FK). Восстановлен точный порядок вызовов Audit(): AgentKey→ActDbOnlyDel→ActAdd→ActAttrTrue (уровень заголовка), затем CstKey→ExcNoDel→ActPnAdd→ActPnNoEq (уровень строки, требует уже существующего oafKey). Только oafpTotal относится к уровню Пункта; все временные/статусные атрибуты — к заголовку.",
+                    "outcome": "Зафиксирована обязательная двухфазность Stage 2 (заголовок → строки) и необходимость отдельного двухуровневого tree-логгера (в отличие от плоских логов type=3/5).",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/VBA-Code-Export/Class-Modules/ra_aAgFee23_06.cls",
+                      "docs/project/proposals/vba-analysis/VBA-Code-Export/Class-Modules/ogAgFee.cls",
+                      "docs/project/proposals/vba-analysis/VBA-Code-Export/Class-Modules/ogAgFeePn.cls"
+                    ]
+                  },
+                  {
+                    "action": "Документирован порядок доступа к SMB-шаре на nb-win (без монтирования)",
+                    "details": "На nb-win диск D: доступен нативно через drvfs WSL2 (/mnt/d/wire-guard-share-nb-win/...) без sudo и без bind mount. Bind mount (mount-nb-win-share-wsl.sh → /mnt/nb-win-share) нужен только для единообразия путей с Fedora (пути в ags.ra_dir.dir/af_name всегда в конвенции /mnt/nb-win-share/...).",
+                    "outcome": "remote-development-nb-win.md дополнен разделом «Порядок доступа к шаре на nb-win (приоритет)».",
+                    "references": [
+                      "docs/development/remote-development-nb-win.md"
+                    ]
+                  },
+                  {
+                    "action": "Создан план и задача 0055 для type=6",
+                    "details": "Новый chat-plan-26-0720-agfee-type6.md: контекст/отличие от 0054, обязательное требование изучения VBA перед реализацией, полный T-SQL референс (views/procs), доменная модель (ogAgFee/ogAgFeeP), раздел про двухфазность Акт→Пункты и его влияние на Stage2 и логирование (Type6ReconcileTreeLogger), фазы A–G с чек-листами, открытые вопросы. Задача 0055 создана в project-development.json (nextTaskId → 0056).",
+                    "outcome": "План готов к реализации; следующий шаг — Фаза A (инвентаризация DDL) и Фаза B (Stage 2a).",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0720-agfee-type6.md",
+                      "docs/development/project-development.json"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Фаза A type=6 закрыта: DDL, lookup, Excel-сверка (success). № log-2026-07-20-004",
+                "log-attributes": {
+                  "id": "log-2026-07-20-004",
+                  "timestamp": "2026-07-20T17:30:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0055"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "A.1–A.4: инвентаризация DDL/lookup и сверка Excel с ra_col_map",
+                    "details": "ogAgFee 16 колонок (FK на ogAg/yyyy/mmmm), ogAgFeeP 12 колонок + unique(oafpOaf,oafpCstAgPn). ogAgCs/ogNmF_allVariantsAg — views; цель FK — ogAg.ogaKey. Excel 2026_03/2026-07 лист «Акты»: 666/32 и 1987/117 строк/актов; заголовки совместимы с ra_col_map (нормализация trim/newline). Gap: Stage2a пишет og.ogKey в oafptOgKey вместо ogaKey; нет колонок ключа стройки в staging. В1 закрыт; В5 открыт для Фазы B.",
+                    "outcome": "Фаза A ✅; план v0.2.0; следующий шаг — Фаза B (Stage 2a).",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0720-agfee-type6.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Фаза B type=6 закрыта: Stage 2a AgentKey/CstKey (success). № log-2026-07-20-005",
+                "log-attributes": {
+                  "id": "log-2026-07-20-005",
+                  "timestamp": "2026-07-20T17:40:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0055"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "B.1–B.4: DDL FK-колонок, порт Stage 2a, diagnostic, тесты",
+                    "details": "Добавлены oafptOafSenderKey/oafptPnCstAgPnKey (Liquibase + sql/26-0720/MSSQL2012). AgFeeStage2Service: резолюция через ogNmF_allVariantsAg+LEFT(cst,3) и cstAgPn; AgentNo/CstNo в лог через AgFeeFkAnomalyFormatter. Processor обновлён. Unit 4/4 OK; DBHub-фикстура exec=-72001 подтвердила резолюцию «Газпром инвест»/051. В5 закрыт.",
+                    "outcome": "Фаза B ✅; план v0.3.0; следующий шаг — Фаза C (Акты).",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/stage2/AgFeeStage2Service.java",
+                      "docs/development/notes/sql/26-0720/README.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0720-agfee-type6.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Фаза C type=6 закрыта: reconcile уровня Акт (success). № log-2026-07-20-006",
+                "log-attributes": {
+                  "id": "log-2026-07-20-006",
+                  "timestamp": "2026-07-20T17:50:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0055"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "C.1–C.5: AgFee2306ReconcileService — match/NEW/MISSING/ATTR + dry-run",
+                    "details": "Реализован уровень заголовка ogAgFee: группировка staging по ActKey(sender,name,date), modal year, ActAdd/ActDbOnlyDel(addRa)/ActAttrTrue + ActAttr diagnostic. CASCADE delete пунктов при удалении акта. Unit AgFee2306ReconcileServiceTest 5/5. Пункты отложены на Фазу D. В2 частично закрыт (акты).",
+                    "outcome": "Фаза C ✅; план v0.4.0; следующий шаг — Фаза D (Пункты).",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/AgFee2306ReconcileService.java",
+                      "code/femsq-backend/femsq-web/src/test/java/com/femsq/web/audit/reconcile/AgFee2306ReconcileServiceTest.java",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0720-agfee-type6.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Фаза D type=6 закрыта: reconcile уровня Пункт (success). № log-2026-07-20-007",
+                "log-attributes": {
+                  "id": "log-2026-07-20-007",
+                  "timestamp": "2026-07-20T18:20:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0055"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "D.1–D.5: пункты ExcNo/ActPnAdd/ActPnNoEq + годовая сумма; docs",
+                    "details": "AgFee2306ReconcileService: после актов — MISSING пунктов (addRa), NEW, SUM_CHANGED oafpTotal; @yearAct через resolveYearAct (ctx.year приоритетнее). Итоговая сумма ист vs БД. Unit 9/9. План v0.5.0 (F уточнён под 2026); обновлены ra-audit-file-processor-architecture.md, audit-log-vba-to-java-mapping.md (J-C.6). В2 закрыт; В6 частично.",
+                    "outcome": "Фаза D ✅; следующий шаг — Фаза E (tree-лог) или F.0 dry-run.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/AgFee2306ReconcileService.java",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0720-agfee-type6.md",
+                      "docs/development/notes/analysis/ra-audit-file-processor-architecture.md",
+                      "docs/development/notes/audit-log/audit-log-vba-to-java-mapping.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "F.0 dry-run марта + Фаза E type=6 tree-лог (success). № log-2026-07-20-008",
+                "log-attributes": {
+                  "id": "log-2026-07-20-008",
+                  "timestamp": "2026-07-20T18:30:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0055"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "F.0: dry-run af_key=313 март 2026_03 (addRa=false)",
+                    "details": "Включён только type=6 на dir=15; путь /mnt/d/.../2026_03/...Актам.xlsx. exec_key=1198 (JAR 0.1.0.138): staging=666, актов NEW=31, пунктов NEW=521 (pendingParent), MISSING=0, skipCst=144, сумма ист≈5.56e9, БД=0. Домен 2026 не менялся.",
+                    "outcome": "F.0 ✅ — ожидания на пустом 2026 подтверждены.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0720-agfee-type6.md"
+                    ]
+                  },
+                  {
+                    "action": "E.1–E.3: Type6ReconcileTreeLogger + smoke exec 1199",
+                    "details": "Дерево Акт→Пункты в adt_results (Тип=6, year sum, nested spans). Unit 2/2. Повторный dry-run exec_key=1199 (JAR 0.1.0.139) — has_tree/has_sum в adt_results (~967 КБ). План v0.6.0.",
+                    "outcome": "Фаза E ✅; следующий шаг — F.2–F.5 (seed марта).",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/Type6ReconcileTreeLogger.java",
+                      "docs/development/notes/analysis/ra-audit-file-processor-architecture.md",
+                      "docs/development/notes/audit-log/audit-log-vba-to-java-mapping.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "F.5–F.6: seed марта, apply июля, rollback (success). № log-2026-07-20-009",
+                "log-attributes": {
+                  "id": "log-2026-07-20-009",
+                  "timestamp": "2026-07-20T18:40:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0055"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "F.5 seed марта apply (exec 1201)",
+                    "details": "adt_AddRA=1; домен 2026: 31 акт / 521 пункт, сумма=ист Δ=0, oafKey 2452–2482.",
+                    "outcome": "Мартовский baseline 2026 установлен.",
+                    "references": []
+                  },
+                  {
+                    "action": "F.6 july apply (exec 1202) → rollback → re-seed",
+                    "details": "Июль: 1987 строк, 86 заголовков; NEW актов 56 / UNCH 30 / MISSING del 1; пунктов NEW 1037 / UNCH 513; домен 86/1550. Rollback: DELETE YEAR=2026 + re-seed марта; идемпотентность dry-run exec 1203: NEW=0 UNCH=31+521. Скрипты audit-switch-agfee-snapshot.sh, rollback-agfee-to-march-baseline.sh, femsq-sql.js. adt_AddRA=0. План v0.7.0; В3/G.4 закрыты.",
+                    "outcome": "Домен снова март 31/521; цикл март↔июль подтверждён.",
+                    "references": [
+                      "code/scripts/audit-switch-agfee-snapshot.sh",
+                      "code/scripts/rollback-agfee-to-march-baseline.sh",
+                      "code/scripts/femsq-sql.js",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0720-agfee-type6.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Фаза G: закрытие 0055 + UAT браузер в плане (success). № log-2026-07-21-001",
+                "log-attributes": {
+                  "id": "log-2026-07-21-001",
+                  "timestamp": "2026-07-21T08:45:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0055"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "План v0.8.0: G.5 UAT браузер + «После 0055»; G.1–G.4 закрыты",
+                    "details": "Уточнён контекст F (baseline 31/521). Добавлены G.5 чек-лист UI для оператора и таблица П1–П5 (В6, флаги type3/5, 0054, DDL prod, git). Architecture 0.6.3 и J-C.6: type=6 present; gap F.5–F.6 снят.",
+                    "outcome": "Инженерный scope 0055 → completed; G.5 ждёт PASS в браузере.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0720-agfee-type6.md",
+                      "docs/development/project-development.json",
+                      "docs/development/notes/analysis/ra-audit-file-processor-architecture.md",
+                      "docs/development/notes/audit-log/audit-log-vba-to-java-mapping.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "UAT G.5.2 OK + задача 0056: лог type=6 (success). № log-2026-07-21-002",
+                "log-attributes": {
+                  "id": "log-2026-07-21-002",
+                  "timestamp": "2026-07-21T13:45:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0055", "0056"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "UAT G.5 шаги 1–2: OK на nb-win (JAR 0.1.0.139, WSL IP:8080)",
+                    "details": "Ревизия test_26 (adt_key=14), файл 313 март, adt_AddRA=false → COMPLETED; дерево и сумма за год на месте (31/521 UNCH, Δ=0). Замечания оператора: тысячи WARN «пусто № Акта» с Excel-строки 667; CstNo как 72 записи «акт—стройка»; англо/техно NEW/UNCH/skipCst в сводке.",
+                    "outcome": "Шаги 1–2 G.5 отмечены ✅; читаемость лога вынесена в 0056.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0720-agfee-type6.md"
+                    ]
+                  },
+                  {
+                    "action": "0056 P1+P2: диапазон Stage1, oafptRow, CstNo по Excel-строкам, русское дерево SUMMARY",
+                    "details": "findLastSignificantAgFeeRowIndex0; Liquibase/sql/26-0721 oafptRow; AgFeeCstAnomaly(excelRows); Type6ReconcileTreeLogger русские подписи + скрытие UNCHANGED в SUMMARY; formatHumanMessage в AgFee2306ReconcileService. Unit 17/17. DDL oafptRow применён на abs.",
+                    "outcome": "Код 0056.1–0056.4 готов; нужен JAR ≥0.1.0.140 и повтор dry-run UAT (G.5.3 / 0056.5).",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/staging/DefaultAuditStagingService.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/Type6ReconcileTreeLogger.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/stage2/AgFeeFkAnomalyFormatter.java",
+                      "docs/development/notes/sql/26-0721/README.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "UAT G.5 PASS + 0056 closed; Stage→Этап (success). № log-2026-07-21-003",
+                "log-attributes": {
+                  "id": "log-2026-07-21-003",
+                  "timestamp": "2026-07-21T14:10:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0055", "0056"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "DB verify exec 1207–1208: диапазон/spans/суммы OK; оператор — замечаний нет",
+                    "details": "1207: oafname_warns=0, диапазон 2–666, beyond≈5892, html≈13–14 КБ. 1208: свёртываемые Agent/Cst spans, суммы «5 558 976 847,24» / разница «0,00». Dry-run baseline NEW≈0, без изменений 31/521.",
+                    "outcome": "G.5 PASS; 0056 → completed.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0720-agfee-type6.md"
+                    ]
+                  },
+                  {
+                    "action": "«Stage» → «Этап» в логе type=6 (+ localize AgFee/CnPrDoc)",
+                    "details": "AgFee2306AuditFileProcessor: Этап 1/2/2a; AuditExecutionContext.localizeMessageHtml — замены для AgFee2306 и CnPrDoc. JAR 0.1.0.143.",
+                    "outcome": "Последнее косметическое замечание закрыто.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/AgFee2306AuditFileProcessor.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/AuditExecutionContext.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "UAT G.5.4 B+C: UI apply март/июль + rollback (success). № log-2026-07-21-004",
+                "log-attributes": {
+                  "id": "log-2026-07-21-004",
+                  "timestamp": "2026-07-21T14:40:00+03:00",
+                  "level": "success",
+                  "effort": "0.75h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0055", "0056"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "B: UI-apply идемпотентность на марте (exec 1209)",
+                    "details": "adt_AddRA=true → COMPLETED, NEW=0, домен 31/521; затем adt_AddRA=false.",
+                    "outcome": "B PASS.",
+                    "references": []
+                  },
+                  {
+                    "action": "C: UI июль dry-run/apply + rollback к марту",
+                    "details": "C.1 switch july; C.2 dry-run exec 1210 (NEW 56/1037); C.3 apply exec 1211 → домен 86/1550 Δ=0; C.4 rollback-agfee-to-march-baseline.sh → 31/521, снимок 2026_03, adt_AddRA=0. По пути: JAR 144 — badge +/− вместо СОБЫТИЕ, подпись агента из ogAgCs.",
+                    "outcome": "C PASS; G.5 полностью закрыт включая UI apply.",
+                    "references": [
+                      "code/scripts/audit-switch-agfee-snapshot.sh",
+                      "code/scripts/rollback-agfee-to-march-baseline.sh",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0720-agfee-type6.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "План закрыт: резюме + commit/push (success). № log-2026-07-21-005",
+                "log-attributes": {
+                  "id": "log-2026-07-21-005",
+                  "timestamp": "2026-07-21T14:43:00+03:00",
+                  "level": "success",
+                  "effort": "0.25h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:backend.web"],
+                    "developmentTasks": ["0055", "0056"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Резюме чата и фиксация в git",
+                    "details": "План chat-plan-26-0720-agfee-type6 v1.0.0 (A–G + UAT B/C) признан выполненным; вне scope П1–П4. Создан chat-resume-26-0720-agfee-type6.md; коммит и push в origin/main.",
+                    "outcome": "Документация закрытия и код type=6 в remote.",
+                    "references": [
+                      "docs/development/notes/chats/chat-resume/chat-resume-26-0720-agfee-type6.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0720-agfee-type6.md"
                     ]
                   }
                 ]

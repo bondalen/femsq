@@ -552,8 +552,12 @@ public Map<String, Integer> buildColumnMap(Sheet sheet, List<RaColMap> mappings)
 | Колонка | Стадия | Источник |
 |---------|--------|---------|
 | `oafptOafName` … `oafptReturnedSum` (17 колонок) | Stage 1 | `ra_col_map` (rsc_key=2) |
-| `oafptOgKey` | Stage 2a | `UPDATE ... SET oafptOgKey = (SELECT og_key FROM ags.ogNm WHERE og_name LIKE oafptOafSender)` |
+| `oafptOafSenderKey` | Stage 2a | `AgFeeStage2Service`: `ogNmF_allVariantsAg` + `LEFT(cst,3)`, `keyCount=1` |
+| `oafptPnCstAgPnKey` | Stage 2a | `cstAgPn.cstapIpgPnN` |
 | `oafpt_exec_key` | Stage 2c | `ctx.getExecKey()` |
+| reconcile Акт→Пункты | reconcileWithDb | ✅ **Реализовано (0055, 2026-07-20/21):** `AgFee2306ReconcileService` (Акт→Пункты) + `Type6ReconcileTreeLogger`; scope `@yearAct`; `addRa`; smoke март/июль + seed/rollback. |
+
+> **Устарело:** заполнение `oafptOgKey` из `ags.og` — не используется для матчинга (ключ агента = `ogaKey` в `oafptOafSenderKey`).
 
 #### Тип 2 (`ags.ra_stg_cn_prdoc`)
 
@@ -616,5 +620,5 @@ protected abstract void reconcileWithDb(AuditExecutionContext ctx, AuditFile fil
 
 ---
 
-**Последнее обновление:** 2026-07-09
-**Версия:** 0.6.1
+**Последнее обновление:** 2026-07-21
+**Версия:** 0.6.3

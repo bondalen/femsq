@@ -663,7 +663,11 @@ version: "0.4.1"
 
   - `J-C.5.3 [TERMINAL]` `### TERMINAL: TYPE5_ROW_LEVEL_PARAGRAPH_EQUIVALENT_PARTIAL`
     - Комментарий: `ROW_PARAGRAPH_PREVIEW*` для type=5: лимит `top-N` снят (1.8.11.9.7); HTML и цвета выровнены по SCR-003-D; `rain_key` подставляется после `INSERT` (`RETURN_GENERATED_KEYS`). Оставшийся gap к VBA: формулировки `WORKBOOK_*` («Книга…» vs «Приложение Excel…») и мелкие отличия в шаблоне `AUDIT_START`.
-- `J-C.6 [ACTION]` Type 6: `AgFee2306AuditFileProcessor`
+- `J-C.6 [ACTION]` Type 6: `AgFee2306AuditFileProcessor` + `AgFeeStage2Service` + `AgFee2306ReconcileService` + `Type6ReconcileTreeLogger`
+  - **status → present** (задача 0055, фазы A–F + G docs, 2026-07-20/21).
+  - Stage 1 → `ra_stg_agfee`; Stage 2a FK; reconcile Акт→Пункты; tree `RECONCILE_TYPE6_*`; AgentNo/CstNo в процессоре.
+  - Smoke: F.0–F.6 (март seed 31/521; июль 86/1550; rollback; idempotency NEW=0).
+  - **gap (опционально):** заполнение `AuditExecutionContext.year` при старте ревизии (В6/П1); UAT браузер — G.5 плана 26-0720.
 - `J-C.x [TERMINAL]` `### TERMINAL: PARAGRAPH_EQUIVALENT_NOT_IMPLEMENTED`
 
 ## Таблица связей узлов (актуализировано после row-level preview)

@@ -9,3 +9,7 @@ databaseChangeLog:
       file: db/changelog/changes/2026-07-09-ra-a-staging-log-level.sql
   - include:
       file: db/changelog/changes/2026-07-14-ra-stg-excel-row.sql
+  - include:
+      file: db/changelog/changes/2026-07-20-ra-stg-agfee-fk-keys.sql
+  - include:
+      file: db/changelog/changes/2026-07-21-ra-stg-agfee-excel-row.sql
