@@ -8,16 +8,24 @@ body,
 #app-wrapper {
   background: var(--femsq-bg-page);
   color: var(--femsq-text);
+  /* Quasar body default 14px > TopBar 13px — выравниваем контент с chrome */
+  font-size: var(--femsq-content-body-size);
 }
 
 .femsq-app-header,
 .femsq-app-footer {
   background: var(--femsq-bg-surface) !important;
   color: var(--femsq-text) !important;
-  box-shadow: var(--femsq-header-elevation);
+  box-shadow: none;
 }
 
-/* Footer без лишнего Quasar-padding — высоту задаёт StatusBar (+10% к содержимому). */
+/* Header/footer: тонкая граница вместо elevation (Design chrome A0). */
+.femsq-app-header.q-header--bordered,
+.femsq-app-footer.q-footer--bordered {
+  border-color: var(--femsq-border) !important;
+}
+
+/* Footer без лишнего Quasar-padding — высоту задаёт StatusBar. */
 .femsq-app-footer.q-footer {
   padding: 0;
 }
@@ -29,7 +37,7 @@ body,
 }
 
 .femsq-top-bar {
-  backdrop-filter: blur(8px);
+  min-height: 40px;
 }
 
 /* Primary-кнопки: тёплый акцент в Kimbie, VS blue в светлой теме */
@@ -56,6 +64,28 @@ html[data-femsq-theme='vs-light'] .q-btn--flat.text-primary {
 
 .q-page {
   background: var(--femsq-bg-page);
+  font-size: var(--femsq-content-body-size);
+}
+
+/* Заголовок экрана: тот же кегль, что FEMSQ; иерархия — через weight/цвет, не через размер */
+.femsq-page-title {
+  font-size: var(--femsq-content-title-size);
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--femsq-text);
+}
+
+.femsq-page-subtitle {
+  font-size: var(--femsq-content-caption-size);
+  line-height: 1.35;
+  color: var(--femsq-text-muted);
+}
+
+.femsq-section-title {
+  font-size: var(--femsq-content-body-size);
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--femsq-text);
 }
 
 .q-card {
@@ -193,6 +223,7 @@ html[data-femsq-theme='vs-light'] .q-btn--flat.text-primary {
 
 .q-field__label {
   color: var(--femsq-text-muted);
+  font-size: var(--femsq-content-body-size);
 }
 
 .q-field__native,
@@ -200,17 +231,47 @@ html[data-femsq-theme='vs-light'] .q-btn--flat.text-primary {
 .q-field__prefix,
 .q-field__suffix {
   color: var(--femsq-text);
+  font-size: var(--femsq-content-body-size);
 }
 
 .q-table {
   background: var(--femsq-bg-surface);
   color: var(--femsq-text);
+  font-size: var(--femsq-content-body-size);
 }
 
 .q-table thead tr,
 .q-table tbody td,
 .q-table__bottom {
   border-color: var(--femsq-border);
+}
+
+/* Quasar задаёт td { font-size: 13px } — явно перебиваем на content-body (12px < TopBar) */
+.q-table tbody td,
+.q-table--dense .q-table tbody td,
+.q-markup-table td {
+  font-size: var(--femsq-content-body-size) !important;
+}
+
+.q-table thead th,
+.q-table--dense .q-table thead th {
+  font-size: var(--femsq-content-caption-size);
+}
+
+.q-table__bottom {
+  font-size: var(--femsq-content-caption-size);
+}
+
+/* Кнопки/вкладки: не крупнее TopBar; в контенте — body size */
+.q-page .q-btn,
+.q-dialog .q-btn {
+  font-size: var(--femsq-content-body-size);
+}
+
+.q-tab__label {
+  font-size: var(--femsq-content-body-size);
+  line-height: 1.4;
+  letter-spacing: 0.02em;
 }
 
 .q-table tbody tr:hover td {

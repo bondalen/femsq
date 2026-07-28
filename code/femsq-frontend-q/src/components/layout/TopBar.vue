@@ -1,116 +1,149 @@
 <template>
-  <QToolbar class="q-px-lg q-py-sm femsq-top-bar" data-test="top-bar">
-    <div class="row items-center q-gutter-sm">
-      <div class="text-subtitle1 text-weight-bold">FEMSQ</div>
-      <div class="text-caption femsq-text-muted">Контрагенты и объекты</div>
-    </div>
+  <QToolbar class="q-px-md femsq-top-bar" data-test="top-bar">
+    <div class="femsq-brand" data-test="top-bar-brand">FEMSQ</div>
 
     <QSpace />
 
-    <div class="row items-center q-gutter-sm" v-if="!isXs">
-      <QChip :color="statusColor" text-color="white" dense>
-        {{ statusLabel }}
-      </QChip>
-      <QBtn
-        flat
-        round
-        :icon="themeToggleIcon"
-        color="primary"
-        :aria-label="themeToggleLabel"
-        @click="handleToggleTheme"
-      />
-      <QBtn
-        color="primary"
-        unelevated
-        rounded
-        icon="link"
-        label="Подключение к БД"
-        @click="handleOpenConnection"
-      />
-      <QBtn
-        flat
-        rounded
-        icon="business"
-        label="Организации"
-        :color="activeView === 'organizations' ? 'primary' : undefined"
-        :class="{ 'femsq-nav-btn--inactive': activeView !== 'organizations' }"
-        :disable="!organizationsEnabled"
+    <nav v-if="!isXs" class="femsq-nav" aria-label="Основная навигация">
+      <button
+        type="button"
+        class="femsq-nav-item"
+        :class="{ 'femsq-nav-item--active': activeView === 'organizations' }"
+        :disabled="!organizationsEnabled"
+        data-test="nav-organizations"
         @click="handleNavigate('organizations')"
-      />
+      >
+        Организации
+      </button>
       <QBtn
         flat
-        rounded
-        icon="analytics"
-        label="Отчёты"
-        :color="activeView === 'reports' ? 'primary' : undefined"
-        :class="{ 'femsq-nav-btn--inactive': activeView !== 'reports' }"
-        :disable="!reportsEnabled"
+        dense
+        no-caps
+        class="femsq-nav-item femsq-nav-item--btn"
+        :class="{
+          'femsq-nav-item--active':
+            activeView === 'construction-sites' || activeView === 'construction-sites-by-code'
+        }"
+        :disable="!constructionSitesEnabled"
+        label="Стройки"
+        icon-right="expand_more"
+        data-test="nav-construction-sites"
+      >
+        <QMenu anchor="bottom right" self="top right">
+          <QList dense style="min-width: 160px" role="menu">
+            <QItem
+              clickable
+              v-close-popup
+              :active="activeView === 'construction-sites'"
+              data-test="nav-construction-sites-list"
+              @click="handleNavigate('construction-sites')"
+            >
+              <QItemSection>Стройки (cst)</QItemSection>
+            </QItem>
+            <QItem
+              clickable
+              v-close-popup
+              :active="activeView === 'construction-sites-by-code'"
+              data-test="nav-construction-sites-by-code"
+              @click="handleNavigate('construction-sites-by-code')"
+            >
+              <QItemSection>САК (cstAgPn)</QItemSection>
+            </QItem>
+          </QList>
+        </QMenu>
+      </QBtn>
+      <button
+        type="button"
+        class="femsq-nav-item"
+        :class="{ 'femsq-nav-item--active': activeView === 'reports' }"
+        :disabled="!reportsEnabled"
+        data-test="nav-reports"
         @click="handleNavigate('reports')"
-      />
-      <QBtn
-        flat
-        rounded
-        icon="account_tree"
-        label="Инвестиционные цепочки"
-        :color="activeView === 'investment-chains' ? 'primary' : undefined"
-        :class="{ 'femsq-nav-btn--inactive': activeView !== 'investment-chains' }"
-        :disable="!investmentChainsEnabled"
+      >
+        Отчёты
+      </button>
+      <button
+        type="button"
+        class="femsq-nav-item"
+        :class="{ 'femsq-nav-item--active': activeView === 'investment-chains' }"
+        :disabled="!investmentChainsEnabled"
+        data-test="nav-investment-chains"
         @click="handleNavigate('investment-chains')"
-      />
-      <QBtn
-        flat
-        rounded
-        icon="verified_user"
-        label="Ревизии"
-        :color="activeView === 'audits' ? 'primary' : undefined"
-        :class="{ 'femsq-nav-btn--inactive': activeView !== 'audits' }"
+      >
+        Инвестиции
+      </button>
+      <button
+        type="button"
+        class="femsq-nav-item"
+        :class="{ 'femsq-nav-item--active': activeView === 'audits' }"
+        data-test="nav-audits"
         @click="handleNavigate('audits')"
-      />
+      >
+        Ревизии
+      </button>
+
       <QBtn
         flat
-        rounded
-        icon="grid_on"
-        label="Test Grid"
-        :color="activeView === 'test-grid' ? 'primary' : undefined"
-        :class="{ 'femsq-nav-btn--inactive': activeView !== 'test-grid' }"
-        @click="handleNavigate('test-grid')"
-      />
-    </div>
+        dense
+        no-caps
+        class="femsq-nav-item femsq-nav-item--btn"
+        :class="{ 'femsq-nav-item--active': activeView === 'test-grid' }"
+        label="Сервис"
+        icon-right="expand_more"
+        data-test="nav-service"
+      >
+        <QMenu anchor="bottom right" self="top right">
+          <QList dense style="min-width: 160px" role="menu">
+            <QItem
+              clickable
+              v-close-popup
+              :active="activeView === 'test-grid'"
+              data-test="nav-test-grid"
+              @click="handleNavigate('test-grid')"
+            >
+              <QItemSection>Test Grid</QItemSection>
+            </QItem>
+          </QList>
+        </QMenu>
+      </QBtn>
+    </nav>
 
-    <!-- Меню только на xs и только как потомок кнопки — иначе QMenu «висит» у toolbar. -->
     <QBtn
       v-else
-      round
       flat
+      dense
       icon="menu"
+      class="femsq-chrome-icon-btn"
       aria-label="Меню"
       aria-haspopup="menu"
       :aria-expanded="menu"
+      data-test="top-bar-menu"
     >
       <QMenu v-model="menu" anchor="bottom right" self="top right">
-        <QList style="min-width: 220px" role="menu">
-          <QItem clickable v-close-popup @click="handleToggleTheme">
-            <QItemSection avatar>
-              <QIcon :name="themeToggleIcon" />
-            </QItemSection>
-            <QItemSection>{{ themeMenuLabel }}</QItemSection>
-          </QItem>
-          <QItem clickable v-close-popup @click="handleOpenConnection">
-            <QItemSection avatar>
-              <QIcon name="link" />
-            </QItemSection>
-            <QItemSection>Подключение к БД</QItemSection>
-          </QItem>
+        <QList dense style="min-width: 200px" role="menu">
           <QItem
             clickable
             v-close-popup
             :disable="!organizationsEnabled"
             @click="handleNavigate('organizations')"
           >
-            <QItemSection avatar>
-              <QIcon name="business" />
-            </QItemSection>
             <QItemSection>Организации</QItemSection>
+          </QItem>
+          <QItem
+            clickable
+            v-close-popup
+            :disable="!constructionSitesEnabled"
+            @click="handleNavigate('construction-sites')"
+          >
+            <QItemSection>Стройки (cst)</QItemSection>
+          </QItem>
+          <QItem
+            clickable
+            v-close-popup
+            :disable="!constructionSitesEnabled"
+            @click="handleNavigate('construction-sites-by-code')"
+          >
+            <QItemSection>САК (cstAgPn)</QItemSection>
           </QItem>
           <QItem
             clickable
@@ -118,9 +151,6 @@
             :disable="!reportsEnabled"
             @click="handleNavigate('reports')"
           >
-            <QItemSection avatar>
-              <QIcon name="analytics" />
-            </QItemSection>
             <QItemSection>Отчёты</QItemSection>
           </QItem>
           <QItem
@@ -129,22 +159,13 @@
             :disable="!investmentChainsEnabled"
             @click="handleNavigate('investment-chains')"
           >
-            <QItemSection avatar>
-              <QIcon name="account_tree" />
-            </QItemSection>
-            <QItemSection>Инвестиционные цепочки</QItemSection>
+            <QItemSection>Инвестиции</QItemSection>
           </QItem>
           <QItem clickable v-close-popup @click="handleNavigate('audits')">
-            <QItemSection avatar>
-              <QIcon name="verified_user" />
-            </QItemSection>
             <QItemSection>Ревизии</QItemSection>
           </QItem>
           <QItem clickable v-close-popup @click="handleNavigate('test-grid')">
-            <QItemSection avatar>
-              <QIcon name="grid_on" />
-            </QItemSection>
-            <QItemSection>Test Grid</QItemSection>
+            <QItemSection>Сервис · Test Grid</QItemSection>
           </QItem>
         </QList>
       </QMenu>
@@ -154,89 +175,113 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { useQuasar, QToolbar, QBtn, QSpace, QChip, QMenu, QList, QItem, QItemSection, QIcon } from 'quasar';
+import { useQuasar, QToolbar, QBtn, QSpace, QMenu, QList, QItem, QItemSection } from 'quasar';
 
-import type { ActiveView, ConnectionState } from '@/stores/connection';
-import { useThemeStore } from '@/stores/theme';
-import { themeToggleAriaLabel, themeToggleIcon as resolveThemeToggleIcon } from '@/theme/femsq-theme';
+import type { ActiveView } from '@/stores/connection';
 
 interface Props {
-  status: ConnectionState;
   activeView: ActiveView;
   organizationsEnabled: boolean;
+  constructionSitesEnabled: boolean;
   investmentChainsEnabled: boolean;
   reportsEnabled: boolean;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 const emit = defineEmits<{
-  (event: 'open-connection'): void;
   (event: 'navigate', view: ActiveView): void;
 }>();
 
 const $q = useQuasar();
-const themeStore = useThemeStore();
 const menu = ref(false);
 
 const isXs = computed(() => $q.screen.xs);
 
-/** На desktop меню не должно оставаться открытым / привязанным к header. */
 watch(isXs, (xs) => {
   if (!xs) {
     menu.value = false;
   }
 });
 
-const themeToggleIcon = computed(() => resolveThemeToggleIcon(themeStore.themeId));
-const themeToggleLabel = computed(() => themeToggleAriaLabel(themeStore.themeId));
-const themeMenuLabel = computed(() =>
-  themeStore.isDark ? 'Светлая тема (Visual Studio)' : 'Тёмная тема (Kimbie Dark)'
-);
-
-const statusLabel = computed(() => {
-  switch (props.status) {
-    case 'connecting':
-      return 'Подключение…';
-    case 'connected':
-      return 'Подключено';
-    case 'connectionError':
-      return 'Ошибка';
-    case 'disconnecting':
-      return 'Отключение…';
-    default:
-      return 'Не подключено';
-  }
-});
-
-const statusColor = computed(() => {
-  switch (props.status) {
-    case 'connecting':
-    case 'disconnecting':
-      return 'info';
-    case 'connected':
-      return 'positive';
-    case 'connectionError':
-      return 'negative';
-    default:
-      return 'grey-6';
-  }
-});
-
-function handleToggleTheme(): void {
-  themeStore.toggleTheme();
-}
-
-function handleOpenConnection(): void {
-  emit('open-connection');
-}
-
+/**
+ * Переключает активный доменный экран.
+ */
 function handleNavigate(view: ActiveView): void {
   emit('navigate', view);
 }
 </script>
 
 <style scoped>
-.femsq-nav-btn--inactive {
+.femsq-top-bar {
+  min-height: 40px;
+  padding-block: 4px;
+}
+
+.femsq-brand {
+  font-size: var(--femsq-chrome-font-size);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--femsq-text);
+  user-select: none;
+}
+
+.femsq-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.femsq-nav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: var(--femsq-nav-item-height);
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--femsq-control-radius);
+  background: transparent;
+  color: var(--femsq-text-muted);
+  font: inherit;
+  font-size: var(--femsq-chrome-font-size);
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.femsq-nav-item:hover:not(:disabled) {
+  background: var(--femsq-item-hover-bg);
+  color: var(--femsq-text);
+}
+
+.femsq-nav-item--active {
+  background: var(--femsq-item-active-bg);
+  color: var(--femsq-primary);
+  box-shadow: inset 0 -2px 0 var(--femsq-primary);
+}
+
+.femsq-nav-item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.femsq-nav-item__chevron {
+  opacity: 0.7;
+}
+
+.femsq-nav-item--btn {
+  min-height: var(--femsq-nav-item-height);
+  padding: 0 10px;
+  font-size: var(--femsq-chrome-font-size);
+  color: var(--femsq-text-muted);
+  border-radius: var(--femsq-control-radius);
+}
+
+.femsq-nav-item--btn :deep(.q-icon) {
+  font-size: 16px;
+}
+
+.femsq-chrome-icon-btn {
   color: var(--femsq-text-muted) !important;
+  border-radius: var(--femsq-control-radius) !important;
 }
 </style>

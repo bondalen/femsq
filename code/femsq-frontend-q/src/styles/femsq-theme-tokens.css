@@ -1,7 +1,21 @@
 /**
  * CSS-токены глобальных тем FEMSQ (0050, фаза B.1).
  * Активная тема: html[data-femsq-theme="kimbie-dark" | "vs-light"].
+ *
+ * Геометрия chrome (A0 / вариант B) — общая для обеих тем; меняются только цвета ниже.
  */
+
+html {
+  --femsq-control-radius: 4px;
+  --femsq-chrome-font-size: 13px;
+  --femsq-chrome-icon-size: 18px;
+  --femsq-nav-item-height: 32px;
+  --femsq-status-bar-font-size: 12px;
+  /* Контент: заголовок = FEMSQ (13px); строчный текст СТРОГО меньше пунктов TopBar */
+  --femsq-content-title-size: var(--femsq-chrome-font-size);
+  --femsq-content-body-size: 12px;
+  --femsq-content-caption-size: var(--femsq-status-bar-font-size);
+}
 
 html[data-femsq-theme='kimbie-dark'] {
   --femsq-bg-page: #1a1409;

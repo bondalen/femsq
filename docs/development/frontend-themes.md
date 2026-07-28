@@ -11,9 +11,20 @@
 | # | Вопрос | Решение |
 |---|--------|---------|
 | 1 | Тема по умолчанию | **Kimbie Dark** |
-| 2 | Переключатель | **Иконка** в `TopBar` (`dark_mode` / `light_mode`) |
+| 2 | Переключатель | **Иконка** (с 2026-07-22 — в **StatusBar**, не TopBar) |
 | 3 | Акцент в Kimbie Dark | **Тёплый** (`#d19a66`, `#e5c07b`), не холодный синий |
 | 4 | Порядок внедрения | **Сначала** экран «Ревизии» (демо оператору), затем остальные модули |
+
+### Уточнение Design chrome (2026-07-22, вариант B)
+
+| # | Вопрос | Решение |
+|---|--------|---------|
+| 5 | Две темы | **Ок**: Kimbie Dark (default) + VS Light (глянцевые экраны / блики) |
+| 6 | Геометрия | **Одинаковая** в обеих темах; меняются только цветовые токены |
+| 7 | Подключение / сообщения оболочки | **StatusBar**; TopBar — только доменная навигация |
+| 8 | Визуальный ориентир | Cursor IDE (плотность, плоские контролы) — см. `02-4_app-forms-ia.md` |
+
+**Геометрия (общая):** `--femsq-control-radius`, `--femsq-chrome-font-size`, … на `html` в `femsq-theme-tokens.css`.
 
 ---
 
@@ -52,7 +63,7 @@
 ## Архитектура
 
 ```
-TopBar (иконка темы)
+StatusBar (иконка темы) + TopBar (навигация)
     → useFemsqTheme / stores/theme.ts
         → localStorage femsq.theme
         → html[data-femsq-theme]
@@ -67,7 +78,7 @@ TopBar (иконка темы)
 | Store / composable | `src/stores/theme.ts`, `src/theme/femsq-theme.ts` |
 | Токены | `src/styles/femsq-theme-tokens.css` |
 | Bootstrap | `src/main.ts` (Dark plugin, apply theme) |
-| Оболочка | `AppLayout.vue`, `TopBar.vue`, `StatusBar.vue` |
+| Оболочка | `AppLayout.vue`, `TopBar.vue` (навигация), `StatusBar.vue` (connection + тема) |
 | Ревизии (приоритет) | `AuditsView.vue`, `audit-log.css`, компоненты `components/audits/*` |
 | Остальные экраны | Organizations, Reports, Investment chains, Test Grid, ConnectionModal |
 
@@ -95,9 +106,10 @@ TopBar (иконка темы)
 
 ## Приёмка
 
-- Переключение иконкой в TopBar на **любом** экране.
+- Переключение иконкой темы в **StatusBar** на **любом** экране.
 - После перезагрузки страницы тема сохраняется (`femsq.theme`).
 - Экран «Ревизии»: лог визуально **в одной** палитре с карточками и формой.
 - Чеклист UAT: каждый модуль × `kimbie-dark` × `vs-light`.
+- Геометрия chrome (радиус, кегль nav/status) **одинакова** в обеих темах.
 
-**lastUpdated:** 2026-07-13
+**lastUpdated:** 2026-07-22

@@ -1,5 +1,5 @@
 import { createApp } from 'vue';
-import { Dark, Quasar, Notify } from 'quasar';
+import { Dark, Dialog, Quasar, Notify } from 'quasar';
 import { createPinia } from 'pinia';
 import { DefaultApolloClient } from '@vue/apollo-composable';
 
@@ -30,6 +30,7 @@ function bootstrap(): void {
   app.use(Quasar, {
     plugins: {
       Notify,
+      Dialog,
       Dark
     },
     config: {

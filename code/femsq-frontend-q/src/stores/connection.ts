@@ -2,7 +2,15 @@ import { computed, reactive, ref } from 'vue';
 import { defineStore } from 'pinia';
 
 export type ConnectionState = 'idle' | 'connecting' | 'connected' | 'connectionError' | 'disconnecting';
-export type ActiveView = 'home' | 'organizations' | 'investment-chains' | 'reports' | 'audits' | 'test-grid';
+export type ActiveView =
+  | 'home'
+  | 'organizations'
+  | 'construction-sites'
+  | 'construction-sites-by-code'
+  | 'investment-chains'
+  | 'reports'
+  | 'audits'
+  | 'test-grid';
 export type AuthMode = 'sql' | 'windows' | 'token';
 
 export interface ConnectionFormValues {
@@ -46,6 +54,7 @@ export const useConnectionStore = defineStore('connection', () => {
   const savedForm = reactive<ConnectionFormValues>({ ...DEFAULT_FORM_VALUES });
 
   const organizationsEnabled = computed(() => status.value === 'connected');
+  const constructionSitesEnabled = computed(() => status.value === 'connected');
   const investmentChainsEnabled = computed(() => status.value === 'connected');
   const reportsEnabled = computed(() => true);
 
@@ -130,6 +139,7 @@ export const useConnectionStore = defineStore('connection', () => {
     lastMessage,
     lastError,
     organizationsEnabled,
+    constructionSitesEnabled,
     investmentChainsEnabled,
     reportsEnabled,
     statusTone,

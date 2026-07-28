@@ -1,13 +1,12 @@
 <template>
   <QLayout view="hHh lpR fFf">
-    <QHeader elevated class="femsq-app-header">
+    <QHeader class="femsq-app-header" bordered>
       <TopBar
-        :status="status"
         :active-view="activeView"
         :organizations-enabled="organizationsEnabled"
+        :construction-sites-enabled="constructionSitesEnabled"
         :investment-chains-enabled="investmentChainsEnabled"
         :reports-enabled="reportsEnabled"
-        @open-connection="emit('open-connection')"
         @navigate="emit('navigate', $event)"
       />
     </QHeader>
@@ -16,7 +15,7 @@
       <slot />
     </QPageContainer>
 
-    <QFooter elevated class="femsq-app-footer">
+    <QFooter class="femsq-app-footer" bordered>
       <StatusBar
         :status="status"
         :status-tone="statusTone"
@@ -24,6 +23,7 @@
         :schema="schema"
         :user="user"
         :error="error"
+        @open-connection="emit('open-connection')"
         @disconnect="emit('disconnect')"
       />
     </QFooter>
@@ -46,11 +46,12 @@ interface Props {
   error: string;
   activeView: ActiveView;
   organizationsEnabled: boolean;
+  constructionSitesEnabled: boolean;
   investmentChainsEnabled: boolean;
   reportsEnabled: boolean;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 const emit = defineEmits<{
   (event: 'open-connection'): void;
   (event: 'navigate', view: ActiveView): void;
