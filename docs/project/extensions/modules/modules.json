@@ -1678,6 +1678,108 @@
                   }
                 }
               }
+            }, {
+              "class" : {
+                "displayName" : "ConstructionSitesView.vue (Quasar). № 02.06.12",
+                "attributes" : {
+                  "id" : "frontend.quasar.ConstructionSitesView",
+                  "number" : "02.06.12",
+                  "name" : "ConstructionSitesView",
+                  "description" : "Экран строек (Access cst): master–detail + вкладка агенты/отчёты; гриды на FemsqTable из fequlib",
+                  "status" : "completed",
+                  "artifact" : {
+                    "location" : "src/views/construction-sites/ConstructionSitesView.vue",
+                    "file_path" : "code/femsq-frontend-q/src/views/construction-sites/ConstructionSitesView.vue",
+                    "type" : "vue-component",
+                    "artifact_type" : "file"
+                  }
+                }
+              }
+            }, {
+              "class" : {
+                "displayName" : "ConstructionSitesByCodeView.vue (Quasar). № 02.06.13",
+                "attributes" : {
+                  "id" : "frontend.quasar.ConstructionSitesByCodeView",
+                  "number" : "02.06.13",
+                  "name" : "ConstructionSitesByCodeView",
+                  "description" : "Режим входа по коду САК (Access cstAgPn)",
+                  "status" : "completed",
+                  "artifact" : {
+                    "location" : "src/views/construction-sites/ConstructionSitesByCodeView.vue",
+                    "file_path" : "code/femsq-frontend-q/src/views/construction-sites/ConstructionSitesByCodeView.vue",
+                    "type" : "vue-component",
+                    "artifact_type" : "file"
+                  }
+                }
+              }
+            }, {
+              "class" : {
+                "displayName" : "CstReportsTab.vue / CstRentReportsTab.vue. № 02.06.14",
+                "attributes" : {
+                  "id" : "frontend.quasar.CstReportsTabs",
+                  "number" : "02.06.14",
+                  "name" : "CstReportsTabs",
+                  "description" : "Вкладки отчётов и отчётов аренды формы cst; FemsqTable из fequlib",
+                  "status" : "completed",
+                  "artifact" : {
+                    "location" : "src/views/construction-sites/",
+                    "file_path" : "code/femsq-frontend-q/src/views/construction-sites/",
+                    "type" : "vue-component",
+                    "artifact_type" : "directory"
+                  }
+                }
+              }
+            }, {
+              "class" : {
+                "displayName" : "construction-sites.ts (Pinia store). № 02.06.15",
+                "attributes" : {
+                  "id" : "frontend.quasar.constructionSitesStore",
+                  "number" : "02.06.15",
+                  "name" : "useConstructionSitesStore",
+                  "description" : "Pinia-стор строек: иерархия cst→агенты→САК→филиалы, отчёты, аренда",
+                  "status" : "completed",
+                  "artifact" : {
+                    "location" : "src/stores/construction-sites.ts",
+                    "file_path" : "code/femsq-frontend-q/src/stores/construction-sites.ts",
+                    "type" : "ts-module",
+                    "artifact_type" : "file"
+                  }
+                }
+              }
+            }, {
+              "class" : {
+                "displayName" : "construction-sites-api.ts (Apollo). № 02.06.16",
+                "attributes" : {
+                  "id" : "frontend.quasar.constructionSitesApi",
+                  "number" : "02.06.16",
+                  "name" : "construction-sites-api",
+                  "description" : "Apollo GraphQL API для строек и связанных сущностей",
+                  "status" : "completed",
+                  "artifact" : {
+                    "location" : "src/api/construction-sites-api.ts",
+                    "file_path" : "code/femsq-frontend-q/src/api/construction-sites-api.ts",
+                    "type" : "ts-module",
+                    "artifact_type" : "file"
+                  }
+                }
+              }
+            }, {
+              "class" : {
+                "displayName" : "ConstructionSitesView.spec.ts (component tests). № 02.06.17",
+                "attributes" : {
+                  "id" : "frontend.quasar.constructionSitesComponentTests",
+                  "number" : "02.06.17",
+                  "name" : "ConstructionSitesView Component Tests",
+                  "description" : "Компонентные тесты ConstructionSitesView: рендер списка, выбор записи, ошибка API",
+                  "status" : "completed",
+                  "artifact" : {
+                    "location" : "tests/component/ConstructionSitesView.spec.ts",
+                    "file_path" : "code/femsq-frontend-q/tests/component/ConstructionSitesView.spec.ts",
+                    "type" : "vitest-spec",
+                    "artifact_type" : "file"
+                  }
+                }
+              }
             } ]
           }
         }, {
@@ -1753,6 +1855,35 @@
                 }
               }
             } ]
+          }
+        }, {
+          "component" : {
+            "displayName" : "App Forms IA + Стройки. № 02.08",
+            "attributes" : {
+              "id" : "appFormsIa",
+              "number" : "02.08",
+              "name" : "App Forms IA",
+              "description" : "IA верхней строки меню и экраны Стройки (cst/cstAgPn); MVP закрыт 2026-07-28",
+              "status" : "completed",
+              "artifact" : {
+                "location" : "docs/development/notes/UI/02-4_app-forms-ia.md",
+                "file_path" : "docs/development/notes/UI/02-4_app-forms-ia.md",
+                "type" : "documentation",
+                "artifact_type" : "file"
+              },
+              "responsibilities" : [
+                "Реестр доменов TopBar (Организации, Стройки, Инвестиции, Договоры, Ревизии, Отчёты, Сервис)",
+                "Карта покрытия Access↔Java",
+                "Общие UX-подходы master–detail / GraphQL / смена текущей записи",
+                "Экраны ConstructionSitesView / ConstructionSitesByCodeView"
+              ],
+              "documentation" : [
+                "docs/development/notes/UI/02-4_app-forms-ia.md",
+                "docs/development/notes/chats/chat-plan/chat-plan-26-0722-forms-ia-cst.md",
+                "docs/development/notes/chats/chat-resume/chat-resume-26-0722-forms-ia-cst.md"
+              ]
+            },
+            "classes" : [ ]
           }
         } ]
       }

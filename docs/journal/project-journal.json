@@ -3,9 +3,555 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-07-21"
+      "lastUpdated": "2026-07-28"
     },
     "sessions": [
+      {
+        "chat": {
+          "displayName": "✅ 0058 экраны Стройки: продолжение после feQuLib (completed, high). № chat-2026-07-28-002",
+          "chat-attributes": {
+            "id": "chat-2026-07-28-002",
+            "created": "2026-07-28",
+            "lastUpdated": "2026-07-28",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "high",
+            "tags": [
+              "ui",
+              "construction-sites",
+              "cst",
+              "testing",
+              "quasar"
+            ],
+            "links": {
+              "projectDocsRefs": ["module:frontend"],
+              "developmentTasks": ["0058", "0057"],
+              "aiRuleRefs": []
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Фаза E + A.5: UAT smoke, закрытие 0057/0058 (success). № log-2026-07-28-003",
+                "log-attributes": {
+                  "id": "log-2026-07-28-003",
+                  "timestamp": "2026-07-28T22:45:00+03:00",
+                  "level": "success",
+                  "effort": "45m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:frontend", "component:frontend.quasar.ConstructionSitesView"],
+                    "developmentTasks": ["0058", "0057"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Закрыты фазы A.5 и E плана 26-0722; задачи 0057 и 0058 → completed",
+                    "details": "A.5: type-check + vite build OK; Playwright UI — StatusBar Подключено, nav Org/Cst/Reports/Audits/Chains/Service, construction-sites-view (5064) + agents + by-code, переключение экранов. GraphQL: 5064 cst; cstAgents(3321)=049 Газпромтранс. E.1 resume; E.3 modules.json 02.06.12–17 и 02.08 completed; E.2 journal/статусы.",
+                    "outcome": "План chat-plan-26-0722 v0.5.0 выполнен (MVP). Follow-up: ra_change, chart/util, TreeList, 0062, feQuLib D–G.",
+                    "references": [
+                      "docs/development/notes/chats/chat-resume/chat-resume-26-0722-forms-ia-cst.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0722-forms-ia-cst.md",
+                      "docs/project/extensions/modules/modules.json",
+                      "docs/development/project-development.json"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "C.5: компонентные тесты ConstructionSitesView (success). № log-2026-07-28-002",
+                "log-attributes": {
+                  "id": "log-2026-07-28-002",
+                  "timestamp": "2026-07-28T22:35:06+03:00",
+                  "level": "success",
+                  "effort": "30m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:frontend"],
+                    "developmentTasks": ["0058"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Добавлены компонентные тесты ConstructionSitesView (фаза C.5 плана 26-0722)",
+                    "details": "tests/component/ConstructionSitesView.spec.ts + renderConstructionSitesView.ts. Mock Apollo API (construction-sites-api / organizations-api); stub вкладок отчётов. 4 теста: рендер списка + агенты первой стройки, selectSite, клик по строке, баннер ошибки. vitest: 4 passed. 0058 → in_progress.",
+                    "outcome": "Фаза C плана 26-0722 закрыта (C.5 ✅); следующий шаг — фаза E (UAT/док/закрытие) или A.5 smoke для 0057",
+                    "references": [
+                      "code/femsq-frontend-q/tests/component/ConstructionSitesView.spec.ts",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0722-forms-ia-cst.md",
+                      "docs/development/project-development.json"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "FemsqTable, feQuLib, docs-registry: план 008 и projectize 0063 (active, high). № chat-2026-07-25-001",
+          "chat-attributes": {
+            "id": "chat-2026-07-25-001",
+            "created": "2026-07-25",
+            "lastUpdated": "2026-07-28",
+            "owner": "Александр",
+            "status": "active",
+            "priority": "high",
+            "tags": [
+              "ui",
+              "grid",
+              "quasar",
+              "femsq-table",
+              "planning",
+              "documentation",
+              "docker",
+              "fequlib",
+              "docs-registry"
+            ],
+            "links": {
+              "projectDocsRefs": ["module:frontend"],
+              "developmentTasks": ["0058", "0059", "0060", "0061", "0062", "0063"],
+              "aiRuleRefs": []
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "0063 projectize завершён: GitHub + docs + окна Cursor; 0058 разблокирована (info). № log-2026-07-28-001",
+                "log-attributes": {
+                  "id": "log-2026-07-28-001",
+                  "timestamp": "2026-07-28T16:35:00+03:00",
+                  "level": "info",
+                  "effort": "2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:frontend"],
+                    "developmentTasks": ["0058", "0063", "0060", "0061"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Оформлены docs-registry и feQuLib как отдельные проекты (задача 0063)",
+                    "details": "Шаги §6 chat-plan-26-0725: initial commit, GitHub push, docs/ + .cursorrules, backlog в Postgres CLI, отдельные окна Cursor (WSL: Ubuntu). Репозитории: https://github.com/bondalen/docs-registry и https://github.com/bondalen/fequlib. ADR 008 обновлён URL; 02-8 и chat-plan-26-0722 — разблокировка 0058.",
+                    "outcome": "0063 completed; 0058 pending; шаг 10 — новый чат по chat-plan-26-0722-forms-ia-cst.md",
+                    "references": [
+                      "https://github.com/bondalen/docs-registry",
+                      "https://github.com/bondalen/fequlib",
+                      "docs/project/decisions/008-fequlib-and-docs-registry.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0725-femsq-table.md",
+                      "docs/development/project-development.json"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Порядок 0059→0061→0060: реестр документации MVP перед feQuLib, не после (info). № log-2026-07-25-006",
+                "log-attributes": {
+                  "id": "log-2026-07-25-006",
+                  "timestamp": "2026-07-25T13:05:00+03:00",
+                  "level": "info",
+                  "effort": "15m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:frontend"],
+                    "developmentTasks": ["0058", "0059", "0060", "0061", "0062"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Пользователь применил принцип «не переделывать» рекурсивно к самому feQuLib: реестр документации должен существовать до scaffold feQuLib, а не после",
+                    "details": "Задача 0061 сужена до MVP (схема + Postgres + минимальный способ создавать записи, без полноценного API) и переставлена перед 0060 в цепочке зависимостей. Историческая миграция самой FEMSQ выделена в новую задачу 0062 (low, независима, не срочна). Итоговый порядок: 0059 (фаза A в FEMSQ) → 0061 (реестр MVP) → 0060 (feQuLib, регистрируется в реестре с чистого листа) → 0058 разблокирована. Зафиксирован риск: цепочка перед 0058 удлинялась дважды за сессию — дальше не растягивать.",
+                    "outcome": "0060.dependsOnTasks += 0061; 0061 переименована/сужена до MVP, priority high; создана задача 0062. Обновлены chat-plan-26-0725, chat-plan-26-0722, Решение 008.",
+                    "references": [
+                      "docs/development/project-development.json",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0725-femsq-table.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0722-forms-ia-cst.md",
+                      "docs/project/decisions/008-fequlib-and-docs-registry.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Уточнение: 0058 блокирован до 0060 (вынос в feQuLib), не только до 0059 (info). № log-2026-07-25-005",
+                "log-attributes": {
+                  "id": "log-2026-07-25-005",
+                  "timestamp": "2026-07-25T12:55:00+03:00",
+                  "level": "info",
+                  "effort": "15m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:frontend"],
+                    "developmentTasks": ["0058", "0059", "0060", "0061"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Задача 0060 разделена на две: 0060 (feQuLib, high, блокирует 0058) и 0061 (реестр документации Postgres, low, независим от 0058)",
+                    "details": "Пользователь указал: если 0058 продолжится сразу после фазы A на локальной (не вынесенной) версии FemsqTable, при последующем выносе в feQuLib пришлось бы переключать импорты и перепроверять уже сделанные экраны — та же переделка, которой избегали изначально. Решено: 0058 остаётся blocked до завершения именно 0060 (компонент подключён из feQuLib), а не только 0059.",
+                    "outcome": "0058.dependsOnTasks += 0060; 0060 выделена из бывшей общей задачи с приоритетом high; 0061 (реестр документации) осталась low и независимой. Обновлены chat-plan-26-0725, chat-plan-26-0722, Решение 008.",
+                    "references": [
+                      "docs/development/project-development.json",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0725-femsq-table.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0722-forms-ia-cst.md",
+                      "docs/project/decisions/008-fequlib-and-docs-registry.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "0058 → blocked: сначала FemsqTable фаза A, потом продолжение форм cst/cstAgPn (info). № log-2026-07-25-004",
+                "log-attributes": {
+                  "id": "log-2026-07-25-004",
+                  "timestamp": "2026-07-25T12:46:00+03:00",
+                  "level": "info",
+                  "effort": "10m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:frontend"],
+                    "developmentTasks": ["0058", "0059"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Задача 0058 переведена в blocked по решению пользователя",
+                    "details": "Причина: не наращивать в формах cst/cstAgPn новые ad-hoc гриды, пока не готов FemsqTable (0059, фаза A). Фаза A будет вестись в отдельном новом чате и применена сразу к трём существующим гридам: ConstructionSitesView.vue (перечень строек), CstReportsTab.vue, CstRentReportsTab.vue. Разблокировка 0058 — после завершения фазы A; вынос в feQuLib (фаза H / задача 0060) 0058 уже не блокирует.",
+                    "outcome": "0058 → blocked (displayName и структурный пункт 02.02.05 обновлены, dependsOnTasks += 0059). chat-plan-26-0722 и chat-plan-26-0725 получили перекрёстные пометки о паузе/приоритете.",
+                    "references": [
+                      "docs/development/project-development.json",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0722-forms-ia-cst.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0725-femsq-table.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Решение 008: feQuLib и реестр документации — два внешних проекта (success). № log-2026-07-25-003",
+                "log-attributes": {
+                  "id": "log-2026-07-25-003",
+                  "timestamp": "2026-07-25T12:35:00+03:00",
+                  "level": "success",
+                  "effort": "30m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:frontend"],
+                    "developmentTasks": ["0059", "0060"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Пересмотрена сцена: боль от отсутствия переиспользуемого грид-компонента и системы документации уже повторялась на прошлых проектах Александра, не гипотетическая",
+                    "details": "Решено: два отдельных репозитория. feQuLib (FemsqTable/FemsqTreeList на Quasar) — сначала фаза A внутри FEMSQ на реальных экранах, сразу после — вынос (не откладывать). Реестр документации проектов — отдельный проект на PostgreSQL, стартует сразу без ожидания собственной боли в FEMSQ, т.к. датасет FEMSQ (72 задачи/53 сессии) уже пригоден для валидации схемы; FEMSQ — первый онбордингуемый проект. Scaffold обоих репозиториев — в отдельном будущем чате/окружении, не блокирует cst/cstAgPn.",
+                    "outcome": "Создано Решение 008; задача 0060 заведена (pending, low, зависит от 0059); ссылки добавлены в задачу 0059, chat-plan-26-0725 и 02-8_femsq-table-component.md.",
+                    "references": [
+                      "docs/project/decisions/008-fequlib-and-docs-registry.md",
+                      "docs/development/project-development.json",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0725-femsq-table.md",
+                      "docs/development/notes/UI/02-8_femsq-table-component.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Ревизия JSON-документации и Docker-инфраструктуры (success). № log-2026-07-25-002",
+                "log-attributes": {
+                  "id": "log-2026-07-25-002",
+                  "timestamp": "2026-07-25T11:45:00+03:00",
+                  "level": "success",
+                  "effort": "30m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:frontend"],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Проверены размеры JSON-документации и состав Docker на машине разработки",
+                    "details": "project-development.json 160КБ/2893 строк/71 задача; project-journal.json 432КБ/7629 строк/52 сессии; project-docs.json 48КБ. Docker: у FEMSQ только femsq-mssql (SQL Server 2022, 10.6ГБ); postgres:16 и Jena Fuseki (RDF/ontology) уже подняты, но принадлежат другому проекту (ferag/nb-win) на этой же машине — не femsq-compose.",
+                    "outcome": "Текущий объём (~640КБ суммарно) не создаёт проблем для редактирования/диффов. Переход на SQL/онтологию — не сейчас; триггеры на будущее: журнал > ~150 сессий или файл > ~1МБ, либо появление реальной потребности в кросс-запросах (граф зависимостей, отчётность) сверх grep/ручного чтения, либо параллельная работа нескольких человек с этими файлами. При переходе — сначала простые таблицы (SQLite/Postgres) под DAG/дерево, RDF/Fuseki — только если связи реально выйдут за рамки DAG.",
+                    "references": [
+                      "docs/development/project-development.json",
+                      "docs/journal/project-journal.json",
+                      "docs/project/project-docs.json"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Разбор DevExpress GridControl/DataGrid vs TreeList и roadmap FemsqTable (success). № log-2026-07-25-001",
+                "log-attributes": {
+                  "id": "log-2026-07-25-001",
+                  "timestamp": "2026-07-25T11:20:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:frontend"],
+                    "developmentTasks": ["0059"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Подтверждена архитектурная граница FemsqTable vs будущий TreeList; заведён план и задача компонента",
+                    "details": "DevExpress разделяет GridControl/DataGrid (Group By по плоским строкам) и TreeList (родитель-потомок структура) как два разных класса — не режимы одного виджета. Зафиксирован контракт cellText()/filterValue/actionsColumn()/mode client|server, roadmap фаз A–G, TreeList вынесен в 'future, не MVP'. Проверены готовые Quasar-обёртки (quasar-grouped-table, table-builder, zod-editable-table) — не закрывают задачу целиком.",
+                    "outcome": "Создан chat-plan-26-0725-femsq-table.md, UI-нота 02-8_femsq-table-component.md, задача 0059 в project-development.json (структура 02.02.06), ссылка в components.md.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0725-femsq-table.md",
+                      "docs/development/notes/UI/02-8_femsq-table-component.md",
+                      "docs/development/notes/UI/components.md",
+                      "docs/development/project-development.json"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "IA меню и формы строек cst/cstAgPn (active, high). № chat-2026-07-22-001",
+          "chat-attributes": {
+            "id": "chat-2026-07-22-001",
+            "created": "2026-07-22",
+            "lastUpdated": "2026-07-23",
+            "owner": "Александр",
+            "status": "active",
+            "priority": "high",
+            "tags": [
+              "ui",
+              "ia",
+              "topbar",
+              "forms",
+              "cst",
+              "cstAgPn",
+              "navigation",
+              "quasar"
+            ],
+            "links": {
+              "projectDocsRefs": [
+                "module:frontend",
+                "component:frontend.quasar.TopBar"
+              ],
+              "developmentTasks": [
+                "0057",
+                "0058"
+              ],
+              "aiRuleRefs": []
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Layout Access: master сверху + дерево агентов (success). № log-2026-07-23-002",
+                "log-attributes": {
+                  "id": "log-2026-07-23-002",
+                  "timestamp": "2026-07-23T11:20:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:frontend"],
+                    "developmentTasks": ["0058"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Перестроен UI Стройки по Access и Design chrome",
+                    "details": "Master cst на всю ширину сверху + полоса полного имени; дерево агент→САК→филиал с multi-expand; кнопки flat/dense (убран filled «+ Стройка»).",
+                    "outcome": "Длинные имена читаются; ветви сравнимы при одновременном раскрытии.",
+                    "references": [
+                      "code/femsq-frontend-q/src/views/construction-sites/ConstructionSitesView.vue",
+                      "docs/development/notes/UI/02-5_cst-form-agents-tab.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "CRUD сразу: GraphQL + UI Стройки/агенты (success). № log-2026-07-23-001",
+                "log-attributes": {
+                  "id": "log-2026-07-23-001",
+                  "timestamp": "2026-07-23T11:00:00+03:00",
+                  "level": "success",
+                  "effort": "3h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0058"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксировано решение оператора: CRUD сразу для MVP строек",
+                    "details": "Обновлены 02-5_cst-form-agents-tab.md и chat-plan-26-0722: Allow Add/Edit/Delete как в Access; R5 закрыт.",
+                    "outcome": "MVP включает полный CRUD по иерархии cst→cstAg→cstAgPn→cstAgPnBranch.",
+                    "references": [
+                      "docs/development/notes/UI/02-5_cst-form-agents-tab.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0722-forms-ia-cst.md"
+                    ]
+                  },
+                  {
+                    "action": "Реализован backend GraphQL стек строек (фаза B)",
+                    "details": "DAO/service для cst, cstAg (+ogAgCs label), cstAgPn, cstAgPnBranch, ogAgCs; cst-schema.graphqls; CstGraphqlController; beans в DatabaseModuleConfiguration; scalar Date. Версия 0.1.0.145-SNAPSHOT. Compile SUCCESS.",
+                    "outcome": "Apollo может читать иерархию и выполнять mutations CRUD.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/resources/graphql/cst-schema.graphqls",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/graphql/CstGraphqlController.java"
+                    ]
+                  },
+                  {
+                    "action": "Реализован frontend экран Стройки с CRUD вкладки агенты (фаза C)",
+                    "details": "construction-sites-api.ts, store, ConstructionSitesView: master–detail, L1–L3 таблицы, dialogs, lookups ogAgCs/og. type-check OK. Остаток: smoke на JAR, тесты, режим входа по САК.",
+                    "outcome": "UI готов к проверке после перезапуска backend с новой схемой.",
+                    "references": [
+                      "code/femsq-frontend-q/src/views/construction-sites/ConstructionSitesView.vue",
+                      "code/femsq-frontend-q/src/api/construction-sites-api.ts"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Изучение Access cst/cstAgPn; предложение IA меню (success). № log-2026-07-22-001",
+                "log-attributes": {
+                  "id": "log-2026-07-22-001",
+                  "timestamp": "2026-07-22T18:00:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Поиск и изучение материалов обследования Access по формам cst и cstAgPn",
+                    "details": "Найдены Form_cst.cls, Form_cstAgPn.cls, Form_cst_gt_ra_t.cls, доменные классы cst/cstAg/cstAgPn/cstCol, RefreshCstChart в Module1.bas. Скриншотов layout нет — визуал Java не восстанавливается из VBA.",
+                    "outcome": "Подтверждена иерархия cst←cstAg←cstAgPn и поведение Form_Current / requery / fnRRcList*.",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/VBA-Code-Export/Form-Modules/Form_cst.cls",
+                      "docs/project/proposals/vba-analysis/VBA-Code-Export/Form-Modules/Form_cstAgPn.cls"
+                    ]
+                  },
+                  {
+                    "action": "Предложение целевого дерева верхней строки меню Java",
+                    "details": "Инвентаризация топ-форм Access vs текущий TopBar (Организации, Отчёты, Инвестиционные цепочки, Ревизии, Test Grid). Предложена IA: Стройки, Инвестиции (расширение), Договоры (заготовка), Сервис (Test Grid), с принципами master–detail и GraphQL-only.",
+                    "outcome": "Оператор принял структуру как основу с возможностью последующей корректировки.",
+                    "references": []
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "План 26-0722, задачи 0057–0058, документ IA (success). № log-2026-07-22-002",
+                "log-attributes": {
+                  "id": "log-2026-07-22-002",
+                  "timestamp": "2026-07-22T22:55:00+03:00",
+                  "level": "success",
+                  "effort": "0.75h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0057",
+                      "0058"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Создан план чата и обновлена документация проекта",
+                    "details": "chat-plan-26-0722-forms-ia-cst.md (фазы A–E: IA/инфраструктура + экраны cst/cstAgPn). Документ 02-4_app-forms-ia.md; ссылка в components.md. Задачи 0057 (IA+инфраструктура), 0058 (экраны строек); пункты структуры 02.02.04 / 02.02.05; nextTaskId=0059. Обновлены project-docs.json (lastUpdated, features.core).",
+                    "outcome": "Scope чата зафиксирован: инфраструктура форм + cst/cstAgPn; реализация кода — следующие фазы плана.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0722-forms-ia-cst.md",
+                      "docs/development/notes/UI/02-4_app-forms-ia.md",
+                      "docs/development/project-development.json"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Design chrome A0: вариант B, TopBar/StatusBar (success). № log-2026-07-22-003",
+                "log-attributes": {
+                  "id": "log-2026-07-22-003",
+                  "timestamp": "2026-07-22T23:15:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "component:frontend.quasar.TopBar"
+                    ],
+                    "developmentTasks": [
+                      "0057"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Принят вариант B тем + Design chrome",
+                    "details": "Две темы (Kimbie Dark default, VS Light для глянца); одинаковая геометрия. Подключение и тема перенесены в StatusBar; TopBar — плоская доменная навигация; Test Grid → Сервис.",
+                    "outcome": "Фаза A0 плана 26-0722 закрыта в коде и документации; type-check OK.",
+                    "references": [
+                      "docs/development/notes/UI/02-4_app-forms-ia.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0722-forms-ia-cst.md",
+                      "code/femsq-frontend-q/src/components/layout/TopBar.vue",
+                      "code/femsq-frontend-q/src/components/layout/StatusBar.vue"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
       {
         "chat": {
           "displayName": "Правила планирования (completed, high). № chat-2025-10-09-001",
@@ -4931,7 +5477,16 @@
             "owner": "Александр",
             "status": "active",
             "priority": "critical",
-            "tags": ["sql", "performance", "spMstrg_2606", "fn2_2606", "factDocCost", "optimization", "PercentBrn", "deployment"],
+            "tags": [
+              "sql",
+              "performance",
+              "spMstrg_2606",
+              "fn2_2606",
+              "factDocCost",
+              "optimization",
+              "PercentBrn",
+              "deployment"
+            ],
             "links": {
               "projectDocsRefs": [],
               "developmentTasks": [],
@@ -5247,7 +5802,9 @@
                   "effort": "1h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["docs/project/glossary.md"],
+                    "projectDocsRefs": [
+                      "docs/project/glossary.md"
+                    ],
                     "developmentTasks": [],
                     "aiRuleRefs": []
                   }
@@ -5631,8 +6188,14 @@
               "smb-share"
             ],
             "links": {
-              "projectDocsRefs": ["module:backend.web"],
-              "developmentTasks": ["0043", "0044", "0045"],
+              "projectDocsRefs": [
+                "module:backend.web"
+              ],
+              "developmentTasks": [
+                "0043",
+                "0044",
+                "0045"
+              ],
               "aiRuleRefs": []
             }
           },
@@ -5647,8 +6210,12 @@
                   "effort": "3h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0043"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0043"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -5704,8 +6271,14 @@
                   "effort": "1d",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0043", "0044", "0045"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0043",
+                      "0044",
+                      "0045"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -5761,8 +6334,12 @@
               "excel"
             ],
             "links": {
-              "projectDocsRefs": ["module:backend.web"],
-              "developmentTasks": ["0042"],
+              "projectDocsRefs": [
+                "module:backend.web"
+              ],
+              "developmentTasks": [
+                "0042"
+              ],
               "aiRuleRefs": []
             }
           },
@@ -5777,8 +6354,12 @@
                   "effort": "2d",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0042"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0042"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -5898,8 +6479,12 @@
               "0050"
             ],
             "links": {
-              "projectDocsRefs": ["module:frontend"],
-              "developmentTasks": ["0050"],
+              "projectDocsRefs": [
+                "module:frontend"
+              ],
+              "developmentTasks": [
+                "0050"
+              ],
               "aiRuleRefs": []
             }
           },
@@ -5914,8 +6499,12 @@
                   "effort": "1d",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:frontend"],
-                    "developmentTasks": ["0050"],
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0050"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -5962,8 +6551,14 @@
               "staging-filter"
             ],
             "links": {
-              "projectDocsRefs": ["module:backend.web"],
-              "developmentTasks": ["0051", "0052", "0048"],
+              "projectDocsRefs": [
+                "module:backend.web"
+              ],
+              "developmentTasks": [
+                "0051",
+                "0052",
+                "0048"
+              ],
               "aiRuleRefs": []
             }
           },
@@ -5978,8 +6573,12 @@
                   "effort": "0.5h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0051"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0051"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6007,8 +6606,12 @@
                   "effort": "0.5h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0051"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0051"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6036,8 +6639,12 @@
                   "effort": "0.5h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0051"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0051"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6065,8 +6672,12 @@
                   "effort": "1h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0051"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0051"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6094,8 +6705,12 @@
                   "effort": "1h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0051"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0051"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6122,8 +6737,12 @@
                   "effort": "1h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0051"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0051"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6151,8 +6770,12 @@
                   "effort": "1.5h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0051"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0051"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6179,8 +6802,13 @@
                   "effort": "1h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0052", "0051"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0052",
+                      "0051"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6209,8 +6837,12 @@
                   "effort": "1h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0052"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0052"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6238,8 +6870,12 @@
                   "effort": "1h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0052"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0052"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6267,8 +6903,12 @@
                   "effort": "1h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0052"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0052"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6296,8 +6936,12 @@
                   "effort": "1.5h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0052"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0052"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6324,8 +6968,14 @@
                   "effort": "0.5h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0051", "0052", "0053"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0051",
+                      "0052",
+                      "0053"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6356,10 +7006,21 @@
             "owner": "Александр",
             "status": "completed",
             "priority": "critical",
-            "tags": ["audit-log", "type5", "reconcile-tree", "0053"],
+            "tags": [
+              "audit-log",
+              "type5",
+              "reconcile-tree",
+              "0053"
+            ],
             "links": {
-              "projectDocsRefs": ["module:backend.web", "module:frontend"],
-              "developmentTasks": ["0053", "0052"],
+              "projectDocsRefs": [
+                "module:backend.web",
+                "module:frontend"
+              ],
+              "developmentTasks": [
+                "0053",
+                "0052"
+              ],
               "aiRuleRefs": []
             }
           },
@@ -6374,8 +7035,13 @@
                   "effort": "1.5h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web", "module:frontend"],
-                    "developmentTasks": ["0053"],
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0053"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6404,8 +7070,12 @@
                   "effort": "2h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0053"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0053"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6433,8 +7103,12 @@
                   "effort": "2.5h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0053"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0053"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6462,8 +7136,12 @@
                   "effort": "2.5h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0053"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0053"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6491,8 +7169,12 @@
                   "effort": "2h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0053"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0053"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6521,8 +7203,13 @@
                   "effort": "3h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web", "module:frontend"],
-                    "developmentTasks": ["0053"],
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0053"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6553,10 +7240,19 @@
             "owner": "Александр",
             "status": "completed",
             "priority": "minor",
-            "tags": ["audit-ui", "U8", "G5", "DirectoryInfo"],
+            "tags": [
+              "audit-ui",
+              "U8",
+              "G5",
+              "DirectoryInfo"
+            ],
             "links": {
-              "projectDocsRefs": ["module:frontend"],
-              "developmentTasks": ["0048"],
+              "projectDocsRefs": [
+                "module:frontend"
+              ],
+              "developmentTasks": [
+                "0048"
+              ],
               "aiRuleRefs": []
             }
           },
@@ -6571,8 +7267,12 @@
                   "effort": "0.25h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:frontend"],
-                    "developmentTasks": ["0048"],
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0048"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6599,8 +7299,12 @@
                   "effort": "0.25h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:frontend"],
-                    "developmentTasks": ["0048"],
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0048"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6627,8 +7331,13 @@
                   "effort": "1.5h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web", "module:frontend"],
-                    "developmentTasks": ["0048"],
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0048"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6656,8 +7365,12 @@
                   "effort": "2h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0048"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0048"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6688,10 +7401,24 @@
             "owner": "Александр",
             "status": "completed",
             "priority": "high",
-            "tags": ["type6", "agfee", "reconcile", "vba-analysis", "uat", "nb-win", "audit-log"],
+            "tags": [
+              "type6",
+              "agfee",
+              "reconcile",
+              "vba-analysis",
+              "uat",
+              "nb-win",
+              "audit-log"
+            ],
             "links": {
-              "projectDocsRefs": ["module:backend.web", "environment:prod-fisheye"],
-              "developmentTasks": ["0055", "0056"],
+              "projectDocsRefs": [
+                "module:backend.web",
+                "environment:prod-fisheye"
+              ],
+              "developmentTasks": [
+                "0055",
+                "0056"
+              ],
               "aiRuleRefs": []
             }
           },
@@ -6731,8 +7458,13 @@
                   "effort": "1h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web", "environment:prod-fisheye"],
-                    "developmentTasks": ["0054"],
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "environment:prod-fisheye"
+                    ],
+                    "developmentTasks": [
+                      "0054"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6758,8 +7490,12 @@
                   "effort": "1.5h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0055"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0055"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6814,8 +7550,12 @@
                   "effort": "1h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0055"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0055"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6841,8 +7581,12 @@
                   "effort": "1.5h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0055"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0055"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6870,8 +7614,12 @@
                   "effort": "1.5h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0055"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0055"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6899,8 +7647,12 @@
                   "effort": "2h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0055"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0055"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6929,8 +7681,12 @@
                   "effort": "1.5h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0055"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0055"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -6966,8 +7722,12 @@
                   "effort": "1h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0055"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0055"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -7002,8 +7762,12 @@
                   "effort": "0.5h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0055"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0055"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -7032,8 +7796,13 @@
                   "effort": "2h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0055", "0056"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0055",
+                      "0056"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -7070,8 +7839,13 @@
                   "effort": "1h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0055", "0056"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0055",
+                      "0056"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -7106,8 +7880,13 @@
                   "effort": "0.75h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0055", "0056"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0055",
+                      "0056"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -7141,8 +7920,13 @@
                   "effort": "0.25h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:backend.web"],
-                    "developmentTasks": ["0055", "0056"],
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0055",
+                      "0056"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -7169,4 +7953,3 @@
     }
   }
 }
-

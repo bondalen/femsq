@@ -19,7 +19,11 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
-    }
+    },
+    dedupe: ['vue', 'quasar']
+  },
+  optimizeDeps: {
+    exclude: ['fequlib']
   },
   // Настройки для production build
   base: '/', // Относительные пути для встраивания в Spring Boot JAR
@@ -39,6 +43,12 @@ export default defineConfig({
   server: {
     port: 5175,
     open: false,
+    fs: {
+      allow: [
+        fileURLToPath(new URL('.', import.meta.url)),
+        fileURLToPath(new URL('../../../feQuLib', import.meta.url))
+      ]
+    },
     proxy: {
       // Прокси для API запросов в development режиме
       // Все запросы к /api/* перенаправляются на backend (http://localhost:8080)

@@ -35,6 +35,16 @@ public class GraphQlConfig {
     }
 
     /**
+     * Регистрирует поддержку Date-скаляра ({@link java.time.LocalDate}).
+     *
+     * @return конфигуратор RuntimeWiring
+     */
+    @Bean
+    public RuntimeWiringConfigurer dateScalarConfigurer() {
+        return builder -> builder.scalar(ExtendedScalars.Date);
+    }
+
+    /**
      * Явно регистрирует schema-файлы GraphQL.
      * Это снижает зависимость от авто-сканирования ресурсов в thin JAR режиме.
      *
@@ -44,7 +54,8 @@ public class GraphQlConfig {
     public GraphQlSourceBuilderCustomizer graphQlSchemaResourcesCustomizer() {
         return builder -> builder.schemaResources(
             new ClassPathResource("graphql/ra-schema.graphqls"),
-            new ClassPathResource("graphql/og-schema.graphqls")
+            new ClassPathResource("graphql/og-schema.graphqls"),
+            new ClassPathResource("graphql/cst-schema.graphqls")
         );
     }
 }

@@ -1,0 +1,378 @@
+scalar Date
+
+extend type Query {
+  constructionSites: [ConstructionSite!]!
+  constructionSite(id: Int!): ConstructionSite
+  cstAgents(cstKey: Int!): [CstAgent!]!
+  cstAgent(id: Int!): CstAgent
+  cstAgPoints(cstaKey: Int!): [CstAgPoint!]!
+  cstAgPoint(id: Int!): CstAgPoint
+  cstAgPnBranches(cstapKey: Int!): [CstAgPnBranch!]!
+  cstAgPnBranch(id: Int!): CstAgPnBranch
+  ogAgCsLookups: [OgAgCsLookup!]!
+  cstAgPnCodes(codeFilter: String): [CstAgPnCodeEntry!]!
+
+  """ Перечень отчётов/изменений стройки (Access cst>ra_t / ags.fnRRcList). """
+  cstRaList(cstKey: Int!): [CstRaListEntry!]!
+  constructionSiteReport(id: Int!): RaReport
+  raSums(raKey: Int!): [RaSumm!]!
+  raPeriodLookups: [RaPeriodLookup!]!
+  cstAgPnLookupsForSite(cstKey: Int!): [CstAgPnSiteLookup!]!
+
+  """ Перечень отчётов аренды стройки (Access ralpRaCst). """
+  cstRalpRaList(cstKey: Int!): [RalpRaCstListEntry!]!
+  ralpRa(id: Int!): RalpRa
+  ralpRaAus(ralprKey: Int!): [RalpRaAu!]!
+  ralpRaAuStatusLookups: [RalpRaAuStatusLookup!]!
+}
+
+extend type Mutation {
+  createConstructionSite(input: CstCreateRequest!): ConstructionSite!
+  updateConstructionSite(id: Int!, input: CstUpdateRequest!): ConstructionSite!
+  deleteConstructionSite(id: Int!): Boolean!
+
+  createCstAgent(input: CstAgCreateRequest!): CstAgent!
+  updateCstAgent(id: Int!, input: CstAgUpdateRequest!): CstAgent!
+  deleteCstAgent(id: Int!): Boolean!
+
+  createCstAgPoint(input: CstAgPnCreateRequest!): CstAgPoint!
+  updateCstAgPoint(id: Int!, input: CstAgPnUpdateRequest!): CstAgPoint!
+  deleteCstAgPoint(id: Int!): Boolean!
+
+  createCstAgPnBranch(input: CstAgPnBranchCreateRequest!): CstAgPnBranch!
+  updateCstAgPnBranch(id: Int!, input: CstAgPnBranchUpdateRequest!): CstAgPnBranch!
+  deleteCstAgPnBranch(id: Int!): Boolean!
+
+  createRaReport(input: RaReportCreateRequest!): RaReport!
+  updateRaReport(id: Int!, input: RaReportUpdateRequest!): RaReport!
+  deleteRaReport(id: Int!): Boolean!
+
+  createRaSumm(input: RaSummCreateRequest!): RaSumm!
+  updateRaSumm(id: Int!, input: RaSummUpdateRequest!): RaSumm!
+  deleteRaSumm(id: Int!): Boolean!
+
+  createRalpRa(input: RalpRaCreateRequest!): RalpRa!
+  updateRalpRa(id: Int!, input: RalpRaUpdateRequest!): RalpRa!
+  deleteRalpRa(id: Int!): Boolean!
+
+  createRalpRaAu(input: RalpRaAuCreateRequest!): RalpRaAu!
+  updateRalpRaAu(id: Int!, input: RalpRaAuUpdateRequest!): RalpRaAu!
+  deleteRalpRaAu(id: Int!): Boolean!
+}
+
+type ConstructionSite {
+  cstKey: Int
+  cstName: String!
+  cstBusSgm: String
+  cstOidOld: UUID
+  cstMark: Int
+}
+
+type CstAgent {
+  cstaKey: Int
+  cstaAg: Int!
+  cstaCst: Int!
+  cstaOidOld: UUID
+  cstaInvestor: Int
+  agentLabel: String
+}
+
+type CstAgPoint {
+  cstapKey: Int
+  cstapCsta: Int!
+  cstapIpgPnN: String!
+  cstapOidOld: UUID
+}
+
+""" Строка списка САК для формы поиска по коду (Access cstAgPn). """
+type CstAgPnCodeEntry {
+  cstapKey: Int!
+  cstapIpgPnN: String!
+  cstapCsta: Int!
+  cstaCst: Int!
+  cstName: String
+}
+
+type CstAgPnBranch {
+  cstapbKey: Int
+  cstapbCstAgPn: Int!
+  cstapbBranch: Int!
+  cstapbStart: Date
+  cstapbEnd: Date
+  branchName: String
+}
+
+type OgAgCsLookup {
+  ogaKey: Int!
+  ogaNm: String!
+}
+
+input CstCreateRequest {
+  cstName: String!
+  cstBusSgm: String
+  cstOidOld: UUID
+  cstMark: Int
+}
+
+input CstUpdateRequest {
+  cstName: String!
+  cstBusSgm: String
+  cstOidOld: UUID
+  cstMark: Int
+}
+
+input CstAgCreateRequest {
+  cstaAg: Int!
+  cstaCst: Int!
+  cstaOidOld: UUID
+  cstaInvestor: Int
+}
+
+input CstAgUpdateRequest {
+  cstaAg: Int!
+  cstaCst: Int!
+  cstaOidOld: UUID
+  cstaInvestor: Int
+}
+
+input CstAgPnCreateRequest {
+  cstapCsta: Int!
+  cstapIpgPnN: String!
+  cstapOidOld: UUID
+}
+
+input CstAgPnUpdateRequest {
+  cstapCsta: Int!
+  cstapIpgPnN: String!
+  cstapOidOld: UUID
+}
+
+input CstAgPnBranchCreateRequest {
+  cstapbCstAgPn: Int!
+  cstapbBranch: Int!
+  cstapbStart: Date
+  cstapbEnd: Date
+}
+
+input CstAgPnBranchUpdateRequest {
+  cstapbCstAgPn: Int!
+  cstapbBranch: Int!
+  cstapbStart: Date
+  cstapbEnd: Date
+}
+
+""" Строка continuous-form отчётов (fnRRcList). """
+type CstRaListEntry {
+  yyyy: Int
+  mNum: Int
+  p: String
+  cstaKey: Int
+  cstaAg: Int
+  cstaCst: Int
+  ogaNm: String
+  cstapKey: Int
+  cstapIpgPnN: String
+  raKey: Int!
+  raNum: String
+  raDate: Date
+  raType: String
+  raChKey: Int
+  raChNum: String
+  raChDate: Date
+  raOrgSender: Int
+  ogNm: String
+  rasTotal: Float
+  rasWork: Float
+  rasEquip: Float
+  rasOthers: Float
+  raArrived: String
+  raArrivedDate: Date
+  raReturned: String
+  raReturnedDate: Date
+  raSent: String
+  raSentDate: Date
+}
+
+type RaReport {
+  raKey: Int
+  raNum: String!
+  raDate: Date
+  raCac: Int!
+  raType: String!
+  raWorkType: String
+  raPeriod: Int!
+  raArrived: String
+  raArrivedDate: Date
+  raReturned: String
+  raReturnedDate: Date
+  raSent: String
+  raSentDate: Date
+  raNoteT: String
+  raCreated: DateTime
+  raOrgSender: Int!
+  raNote: String
+}
+
+type RaSumm {
+  rasKey: Int
+  rasRa: Int!
+  rasTotal: Float
+  rasWork: Float
+  rasEquip: Float
+  rasOthers: Float
+  rasDate: DateTime
+}
+
+type RaPeriodLookup {
+  key: Int!
+  p: String!
+}
+
+type CstAgPnSiteLookup {
+  cstapKey: Int!
+  cstapIpgPnN: String!
+  cstaKey: Int!
+  agentLabel: String
+}
+
+input RaReportCreateRequest {
+  raNum: String!
+  raDate: Date
+  raCac: Int!
+  raType: String!
+  raWorkType: String
+  raPeriod: Int!
+  raArrived: String
+  raArrivedDate: Date
+  raReturned: String
+  raReturnedDate: Date
+  raSent: String
+  raSentDate: Date
+  raNoteT: String
+  raOrgSender: Int!
+  raNote: String
+}
+
+input RaReportUpdateRequest {
+  raNum: String!
+  raDate: Date
+  raCac: Int!
+  raType: String!
+  raWorkType: String
+  raPeriod: Int!
+  raArrived: String
+  raArrivedDate: Date
+  raReturned: String
+  raReturnedDate: Date
+  raSent: String
+  raSentDate: Date
+  raNoteT: String
+  raOrgSender: Int!
+  raNote: String
+}
+
+input RaSummCreateRequest {
+  rasRa: Int!
+  rasTotal: Float
+  rasWork: Float
+  rasEquip: Float
+  rasOthers: Float
+  rasDate: DateTime
+}
+
+input RaSummUpdateRequest {
+  rasRa: Int!
+  rasTotal: Float
+  rasWork: Float
+  rasEquip: Float
+  rasOthers: Float
+  rasDate: DateTime
+}
+
+""" Строка списка Access ralpRaCst. """
+type RalpRaCstListEntry {
+  cstKey: Int
+  ogaNm: String
+  cstapIpgPnN: String
+  ralprKey: Int!
+  ralprNum: String
+  ralprDate: Date
+  ralprCstAgPn: Int
+  ralprOgSender: Int
+  ogNm: String
+  """ Число строк рассмотрения (ralpRaAu). """
+  auCnt: Int!
+  """ Есть Au со статусом «возвращён» или заполненным ralpraReturned. """
+  hasReturned: Boolean!
+}
+
+type RalpRa {
+  ralprKey: Int
+  ralprNum: String!
+  ralprDate: Date!
+  ralprCstAgPn: Int!
+  ralprOgSender: Int!
+  """ Наименование отправителя: og.ogNm или вариант из ogNmF (onfKey→onfOg). """
+  ogNm: String
+  ralprY: Int
+  ralprM: Int
+}
+
+type RalpRaAu {
+  ralpraKey: Int
+  ralpraRa: Int!
+  ralpraCostAndVat: Float
+  ralpraArrived: String
+  ralpraArrivedDate: Date
+  ralpraReturned: String
+  ralpraReturnedDate: Date
+  ralpraSent: String
+  ralpraSentDate: Date
+  ralpraNote: String
+  ralpraStatus: Int!
+}
+
+type RalpRaAuStatusLookup {
+  code: Int!
+  label: String!
+}
+
+input RalpRaCreateRequest {
+  ralprNum: String!
+  ralprDate: Date!
+  ralprCstAgPn: Int!
+  ralprOgSender: Int!
+}
+
+input RalpRaUpdateRequest {
+  ralprNum: String!
+  ralprDate: Date!
+  ralprCstAgPn: Int!
+  ralprOgSender: Int!
+}
+
+input RalpRaAuCreateRequest {
+  ralpraRa: Int!
+  ralpraCostAndVat: Float
+  ralpraArrived: String
+  ralpraArrivedDate: Date
+  ralpraReturned: String
+  ralpraReturnedDate: Date
+  ralpraSent: String
+  ralpraSentDate: Date
+  ralpraNote: String
+  ralpraStatus: Int!
+}
+
+input RalpRaAuUpdateRequest {
+  ralpraRa: Int!
+  ralpraCostAndVat: Float
+  ralpraArrived: String
+  ralpraArrivedDate: Date
+  ralpraReturned: String
+  ralpraReturnedDate: Date
+  ralpraSent: String
+  ralpraSentDate: Date
+  ralpraNote: String
+  ralpraStatus: Int!
+}

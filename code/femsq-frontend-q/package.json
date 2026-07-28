@@ -16,6 +16,7 @@
   "dependencies": {
     "@apollo/client": "^3.14.1",
     "@vue/apollo-composable": "^4.2.2",
+    "fequlib": "file:../../../feQuLib",
     "graphql": "^16.13.1",
     "pinia": "^2.1.7",
     "quasar": "^2.16.11",

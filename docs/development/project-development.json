@@ -3,14 +3,271 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2026-07-21T14:10:00+03:00",
+      "lastUpdated": "2026-07-28T16:35:00+03:00",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
-    
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0057",
+      "nextTaskId": "0064",
       "items": {
+        "0063": {
+          "task": {
+            "displayName": "✅ Projectize: docs-registry и feQuLib как отдельные проекты (completed, high). № 0063",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "docs-registry: initial commit, remote GitHub, push синхронизирован",
+                "docs-registry: docs/ (README, roadmap, chat-plan), .cursorrules, открыт отдельным окном Cursor",
+                "feQuLib: initial commit, remote GitHub, push синхронизирован",
+                "feQuLib: docs/ (компонент, roadmap, chat-plan), .cursorrules, открыт отдельным окном Cursor",
+                "Backlog замечаний ревью и roadmap зафиксирован в docs-registry (CLI tasks), не локальный JSON",
+                "ADR 008 и chat-plan-26-0725 §6 обновлены URL репозиториев; journal FEMSQ — запись о завершении 0063",
+                "Задача 0058 разблокирована после закрытия всех пунктов выше"
+              ],
+              "description": "MVP 0061/0060 создан локально без коммитов и GitHub. Перед возвратом к 0058 оформить оба репозитория как самостоятельные проекты. План шагов — chat-plan-26-0725-femsq-table.md §6. Не блокирует 0062. 2026-07-28: завершено — https://github.com/bondalen/docs-registry и https://github.com/bondalen/fequlib; окна Cursor открыты; 0058 разблокирована.",
+              "links": {
+                "projectDocsRefs": [
+                  "module:frontend"
+                ],
+                "journalRefs": [
+                  "chat:chat-2026-07-25-001"
+                ],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0725-femsq-table.md",
+                "decisionRefs": [
+                  "docs/project/decisions/008-fequlib-and-docs-registry.md"
+                ],
+                "dependsOnTasks": [
+                  "0060",
+                  "0061"
+                ]
+              },
+              "created": "2026-07-28",
+              "lastUpdated": "2026-07-28",
+              "completed": "2026-07-28"
+            }
+          }
+        },
+        "0062": {
+          "task": {
+            "displayName": "Реестр документации: перенос исторических данных FEMSQ (pending, low). № 0062",
+            "task-attributes": {
+              "status": "pending",
+              "priority": "low",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Текущий JSON FEMSQ (project-development.json, project-journal.json, project-docs.json) смигрирован в реестр (0061)",
+                "Реальные кросс-запросы (граф зависимостей задач, поиск по журналу) провалидированы на данных FEMSQ",
+                "FEMSQ переключена на реестр как основной источник документации (JSON — опционально экспорт/бэкап)"
+              ],
+              "description": "Не блокирует ничего (ни 0058, ни 0060) — независимый последующий шаг после того, как реестр (0061) уже существует и обкатан на feQuLib. Можно сделать в любое время, спешки нет: JSON FEMSQ и так работает без проблем (см. ревизию объёма 2026-07-25).",
+              "links": {
+                "projectDocsRefs": [
+                  "module:frontend"
+                ],
+                "journalRefs": [
+                  "chat:chat-2026-07-25-001"
+                ],
+                "aiRuleRefs": [],
+                "decisionRefs": [
+                  "docs/project/decisions/008-fequlib-and-docs-registry.md"
+                ],
+                "dependsOnTasks": [
+                  "0061"
+                ]
+              },
+              "created": "2026-07-25",
+              "lastUpdated": "2026-07-25"
+            }
+          }
+        },
+        "0061": {
+          "task": {
+            "displayName": "Реестр документации проектов (Postgres) — MVP-схема (completed, high). № 0061",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Отдельный репозиторий реестра создан; Postgres поднят (docker), схема-миграция применена",
+                "Минимальные таблицы: projects, tasks, task-items, journal-sessions, journal-entries — по мотивам уже проверенной модели FEMSQ, без раздувания на старте",
+                "Есть минимальный рабочий способ создать/прочитать запись проекта и задачи (скрипт/CLI/тонкий DAO — полноценный API не обязателен для MVP)",
+                "Схема готова принять feQuLib как первый зарегистрированный проект «с чистого листа» (без исторических данных)"
+              ],
+              "description": "Приоритет high и место ПЕРЕД 0060 в цепочке — уточнено 2026-07-25: feQuLib должен использовать новую систему документации изначально, а не начинать с JSON/markdown с последующей миграцией. Историческая миграция самой FEMSQ — отдельная, не срочная задача 0062. Scaffold — в отдельном выделенном чате/окружении. Архитектура зафиксирована в Решении 008.",
+              "links": {
+                "projectDocsRefs": [
+                  "module:frontend"
+                ],
+                "journalRefs": [
+                  "chat:chat-2026-07-25-001"
+                ],
+                "aiRuleRefs": [],
+                "decisionRefs": [
+                  "docs/project/decisions/008-fequlib-and-docs-registry.md"
+                ]
+              },
+              "created": "2026-07-25",
+              "lastUpdated": "2026-07-25"
+            }
+          }
+        },
+        "0060": {
+          "task": {
+            "displayName": "feQuLib: вынос FemsqTable в отдельный репозиторий (completed, high). № 0060",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Репозиторий feQuLib создан (Quasar UI Kit/App Extension) после завершения фазы A задачи 0059",
+                "FemsqTable перенесён в feQuLib, опубликован/доступен как зависимость",
+                "feQuLib зарегистрирован в реестре документации (0061) как первый проект — своя документация не заводится заново в JSON/markdown",
+                "FEMSQ подключает FemsqTable из feQuLib (npm-зависимость), локальная копия внутри femsq-frontend-q удалена",
+                "Задача 0058 разблокирована только после этого пункта — формы cst/cstAgPn продолжаются сразу на библиотечной версии, без переключения импортов задним числом"
+              ],
+              "description": "Приоритет high: от этой задачи прямо зависит разблокировка 0058 (см. dependsOnTasks в 0058). Зависит также от 0061 (MVP реестра) — уточнено 2026-07-25, чтобы feQuLib с самого начала вёл документацию в новой системе, а не заводил очередной локальный JSON под будущую миграцию. Scaffold репозитория — в отдельном выделенном чате/окружении. Архитектура и последовательность зафиксированы в Решении 008.",
+              "links": {
+                "projectDocsRefs": [
+                  "module:frontend"
+                ],
+                "journalRefs": [
+                  "chat:chat-2026-07-25-001"
+                ],
+                "aiRuleRefs": [],
+                "decisionRefs": [
+                  "docs/project/decisions/008-fequlib-and-docs-registry.md"
+                ],
+                "dependsOnTasks": [
+                  "0059",
+                  "0061"
+                ]
+              },
+              "created": "2026-07-25",
+              "lastUpdated": "2026-07-25"
+            }
+          }
+        },
+        "0059": {
+          "task": {
+            "displayName": "Компонент FemsqTable: единая фильтрация/сортировка гридов (completed, high). № 0059",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "FemsqTable.vue: обёртка над QTable, контракт cellText()/filterValue, actionsColumn()",
+                "Глобальный фильтр по всем видимым полям; sortable по умолчанию с компараторами число/дата/null",
+                "Перечень строек (ConstructionSitesView.vue) фильтруется по cstKey/имени (исходный триггер задачи)",
+                "CstReportsTab.vue и CstRentReportsTab.vue переведены на компонент, ad-hoc фильтрация удалена",
+                "Контракт mode: client|server зарезервирован (@request), реализован только client",
+                "Манифест форм-потребителей начат в 02-8_femsq-table-component.md",
+                "Type-check/lint frontend чисто; фазы B–G — отдельные шаги плана, не в этом критерии"
+              ],
+              "description": "Единая обёртка над Quasar QTable для фильтрации/сортировки, чтобы доработки компонента автоматически применялись ко всем гридам-потребителям. Roadmap A (core/MVP) → B (поколоночные фильтры) → C (аудит остальных гридов) → D (Group By по плоским строкам) → E (column chooser) → F (Filter Editor) → G (server-side режим точечно). TreeList для иерархий (дерево агентов) — отдельный будущий компонент, не входит в этот roadmap.",
+              "links": {
+                "projectDocsRefs": [
+                  "module:frontend",
+                  "component:frontend.quasar.FemsqTable"
+                ],
+                "journalRefs": [
+                  "chat:chat-2026-07-25-001"
+                ],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0725-femsq-table.md",
+                "uiNote": "docs/development/notes/UI/02-8_femsq-table-component.md",
+                "decisionRefs": [
+                  "docs/project/decisions/008-fequlib-and-docs-registry.md"
+                ]
+              },
+              "created": "2026-07-25",
+              "lastUpdated": "2026-07-25"
+            }
+          }
+        },
+        "0058": {
+          "task": {
+            "displayName": "✅ Экраны Стройки: cst и cstAgPn (GraphQL + Quasar) (completed, high). № 0058",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "GraphQL CRUD: cst, cstAg, cstAgPn, cstAgPnBranch + lookup ogAgCs",
+                "Связь уровней по parent key доступна UI (агенты → САК → филиалы)",
+                "Frontend: раздел Стройки master–detail + вкладка агенты CRUD",
+                "Смена текущей записи перезагружает дочерний контекст; фильтр по имени стройки",
+                "MVP без обязательного полного порта fnRRcList/chart (stub допустим)",
+                "CRUD сразу (решение 2026-07-23); режим входа по САК — C.6",
+                "Smoke/UAT на dev; компонентные тесты C.5 ✅; фаза E ✅",
+                "Документация: chat-plan-26-0722 + chat-resume-26-0722-forms-ia-cst.md"
+              ],
+              "description": "Порт Access-форм cst / cstAgPn в FEMSQ: backend GraphQL + экраны Quasar. MVP закрыт 2026-07-28 (фаза E): UAT smoke GraphQL 5064 cst / агент 3321; Playwright UI; modules 02.06.12–17. Follow-up: ra_change, chart/util, TreeList агентов.",
+              "links": {
+                "projectDocsRefs": [
+                  "module:frontend",
+                  "module:backend.web",
+                  "component:frontend.quasar.ConstructionSitesView"
+                ],
+                "journalRefs": [
+                  "chat:chat-2026-07-22-001",
+                  "chat:chat-2026-07-25-001",
+                  "chat:chat-2026-07-28-002"
+                ],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0722-forms-ia-cst.md",
+                "chatResume": "docs/development/notes/chats/chat-resume/chat-resume-26-0722-forms-ia-cst.md",
+                "dependsOnTasks": [
+                  "0057",
+                  "0059",
+                  "0060",
+                  "0063"
+                ]
+              },
+              "created": "2026-07-22",
+              "lastUpdated": "2026-07-28",
+              "completed": "2026-07-28"
+            }
+          }
+        },
+        "0057": {
+          "task": {
+            "displayName": "✅ IA меню и инфраструктура доменных экранов (completed, high). № 0057",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Документ IA 02-4_app-forms-ia.md зафиксирован и связан из components.md",
+                "Описаны общие подходы к дизайну доменных экранов (master–detail, GraphQL, Form_Current-аналог)",
+                "TopBar: группы Стройки / Инвестиции / Сервис; Test Grid убран с основной полосы",
+                "ActiveView/реестр экранов расширен без регрессии существующих экранов",
+                "Smoke: сборка frontend, навигация Organizations/Reports/Chains/Audits (A.5 ✅ 2026-07-28)",
+                "Документация: chat-plan-26-0722-forms-ia-cst.md фаза A"
+              ],
+              "description": "Целевая IA верхней строки FEMSQ и инфраструктура экранов. A0–A.4 готовы 2026-07-22/23; A.5 smoke (type-check, build, Playwright nav) — 2026-07-28. Закрыта вместе с фазой E плана 26-0722.",
+              "links": {
+                "projectDocsRefs": [
+                  "module:frontend",
+                  "component:frontend.quasar.TopBar"
+                ],
+                "journalRefs": [
+                  "chat:chat-2026-07-22-001",
+                  "chat:chat-2026-07-28-002"
+                ],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0722-forms-ia-cst.md",
+                "chatResume": "docs/development/notes/chats/chat-resume/chat-resume-26-0722-forms-ia-cst.md",
+                "uiIa": "docs/development/notes/UI/02-4_app-forms-ia.md"
+              },
+              "created": "2026-07-22",
+              "lastUpdated": "2026-07-28",
+              "completed": "2026-07-28"
+            }
+          }
+        },
         "0056": {
           "task": {
             "displayName": "Type=6: читаемость лога Stage1/CstNo/дерево сверки (completed, high). № 0056",
@@ -28,8 +285,12 @@
               ],
               "description": "UAT G.5 шаг 2 (0055) выявил: хвост Excel → тысячи WARN; CstNo с привязкой к акту вместо списка строк; англо/техно статусы NEW/UNCH в дереве. Порт практик 0051–0053 на type=6. Закрыто 2026-07-21 (exec 1207–1208, JAR 0.1.0.142+).",
               "links": {
-                "projectDocsRefs": ["module:backend.web"],
-                "journalRefs": ["chat:chat-2026-07-20-001"],
+                "projectDocsRefs": [
+                  "module:backend.web"
+                ],
+                "journalRefs": [
+                  "chat:chat-2026-07-20-001"
+                ],
                 "aiRuleRefs": [],
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0720-agfee-type6.md"
               },
@@ -57,8 +318,13 @@
               ],
               "description": "Reconcile af_type=6 (Акты агентского вознаграждения). Домен ags.ogAgFee/ogAgFeeP уже на сервере. Двухуровневая сверка Акт→Пункты + tree-лог. Инженерный scope A–F + G.1–G.4 закрыт 2026-07-21; приёмка UI — G.5 плана.",
               "links": {
-                "projectDocsRefs": ["module:backend.web", "environment:prod-fisheye"],
-                "journalRefs": ["chat:chat-2026-07-20-001"],
+                "projectDocsRefs": [
+                  "module:backend.web",
+                  "environment:prod-fisheye"
+                ],
+                "journalRefs": [
+                  "chat:chat-2026-07-20-001"
+                ],
                 "aiRuleRefs": [],
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0720-agfee-type6.md"
               },
@@ -85,8 +351,18 @@
               ],
               "description": "Иерархия Access-подобной сверки в adt_results. §9.3.8.0–9.3.8.5 закрыты: деревья type=5/3, A5-span, без задвоения flat WARN в SUMMARY, smoke март/июль (JAR 0.1.0.134; exec 1186/1188 type=5, 1183 type=3 apply+откат); sign-off оператора 2026-07-15.",
               "links": {
-                "projectDocsRefs": ["module:backend.web", "module:frontend"],
-                "journalRefs": ["log:log-2026-07-15-001", "log:log-2026-07-15-002", "log:log-2026-07-15-003", "log:log-2026-07-15-004", "log:log-2026-07-15-005", "log:log-2026-07-15-006"],
+                "projectDocsRefs": [
+                  "module:backend.web",
+                  "module:frontend"
+                ],
+                "journalRefs": [
+                  "log:log-2026-07-15-001",
+                  "log:log-2026-07-15-002",
+                  "log:log-2026-07-15-003",
+                  "log:log-2026-07-15-004",
+                  "log:log-2026-07-15-005",
+                  "log:log-2026-07-15-006"
+                ],
                 "aiRuleRefs": [],
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#938-дерево-сверки-в-логе-оа--оа-прочие--изм--группировка-ошибок-задача-0053",
                 "documentation": "docs/development/notes/audit-log/ra-execution-operations.md"
@@ -99,8 +375,8 @@
         },
         "0052": {
           "task": {
-          "displayName": "Stage 1 type=5: диапазон листа и классификация строк (completed, critical). № 0052",
-          "task-attributes": {
+            "displayName": "Stage 1 type=5: диапазон листа и классификация строк (completed, critical). № 0052",
+            "task-attributes": {
               "status": "completed",
               "priority": "critical",
               "owner": "Александр",
@@ -115,8 +391,17 @@
               ],
               "description": "UAT type=5: диапазон/фильтр Stage 1. §9.3.7.1–9.3.7.5 закрыты (smoke 1175/1176; formal sign-off 2026-07-15 с G4; повтор подтверждён exec 1186/1188).",
               "links": {
-                "projectDocsRefs": ["module:backend.web"],
-                "journalRefs": ["log:log-2026-07-14-008", "log:log-2026-07-14-009", "log:log-2026-07-14-010", "log:log-2026-07-14-011", "log:log-2026-07-14-012", "log:log-2026-07-15-007"],
+                "projectDocsRefs": [
+                  "module:backend.web"
+                ],
+                "journalRefs": [
+                  "log:log-2026-07-14-008",
+                  "log:log-2026-07-14-009",
+                  "log:log-2026-07-14-010",
+                  "log:log-2026-07-14-011",
+                  "log:log-2026-07-14-012",
+                  "log:log-2026-07-15-007"
+                ],
                 "aiRuleRefs": [],
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#937-stage-1-type5-диапазон-и-классификация-строк-задача-0052",
                 "documentation": "docs/development/notes/audit-log/ra-execution-operations.md"
@@ -145,8 +430,20 @@
               ],
               "description": "Blocker UAT U10 закрыт. §9.3.6.1–9.3.6.7 ✅; детализация в дереве сверки (0053); formal G3/U10/P5 2026-07-15.",
               "links": {
-                "projectDocsRefs": ["module:backend.web"],
-                "journalRefs": ["log:log-2026-07-14-001", "log:log-2026-07-14-002", "log:log-2026-07-14-003", "log:log-2026-07-14-004", "log:log-2026-07-14-005", "log:log-2026-07-14-006", "log:log-2026-07-14-007", "log:log-2026-07-14-008", "log:log-2026-07-15-007"],
+                "projectDocsRefs": [
+                  "module:backend.web"
+                ],
+                "journalRefs": [
+                  "log:log-2026-07-14-001",
+                  "log:log-2026-07-14-002",
+                  "log:log-2026-07-14-003",
+                  "log:log-2026-07-14-004",
+                  "log:log-2026-07-14-005",
+                  "log:log-2026-07-14-006",
+                  "log:log-2026-07-14-007",
+                  "log:log-2026-07-14-008",
+                  "log:log-2026-07-15-007"
+                ],
                 "aiRuleRefs": [],
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#936-трассировка-excel-строки-и-построчные-аномалии-задача-0051",
                 "documentation": "docs/development/notes/audit-log/ra-execution-operations.md",
@@ -174,7 +471,10 @@
               ],
               "description": "Корневая задача разработки всей системы FEMSQ - системы работы с контрагентами и объектами при капитальном строительстве",
               "links": {
-                "projectDocsRefs": ["module:backend", "module:frontend"],
+                "projectDocsRefs": [
+                  "module:backend",
+                  "module:frontend"
+                ],
                 "journalRefs": [],
                 "aiRuleRefs": []
               },
@@ -183,7 +483,6 @@
             }
           }
         },
-        
         "0002": {
           "task": {
             "displayName": "Backend модуль (in-progress, critical). № 0002",
@@ -199,7 +498,9 @@
               ],
               "description": "Разработка серверной части на Spring Boot 3.4.5 с поддержкой GraphQL и работой с MS SQL Server",
               "links": {
-                "projectDocsRefs": ["module:backend"],
+                "projectDocsRefs": [
+                  "module:backend"
+                ],
                 "journalRefs": [],
                 "aiRuleRefs": []
               },
@@ -208,7 +509,6 @@
             }
           }
         },
-        
         "0003": {
           "task": {
             "displayName": "Database модуль (in-progress, critical). № 0003",
@@ -225,8 +525,14 @@
               ],
               "description": "Модуль работы с MS SQL Server: конфигурация, Hikari-пул, аутентификация и слой доступа к данным",
               "links": {
-                "projectDocsRefs": ["module:backend.database"],
-                "journalRefs": ["log:log-2025-11-10-004", "log:log-2025-11-10-005", "log:log-2025-11-10-006"],
+                "projectDocsRefs": [
+                  "module:backend.database"
+                ],
+                "journalRefs": [
+                  "log:log-2025-11-10-004",
+                  "log:log-2025-11-10-005",
+                  "log:log-2025-11-10-006"
+                ],
                 "aiRuleRefs": []
               },
               "created": "2025-10-09",
@@ -234,7 +540,6 @@
             }
           }
         },
-        
         "0004": {
           "task": {
             "displayName": "Configuration Management компонент (completed, high). № 0004",
@@ -251,8 +556,12 @@
               ],
               "description": "Компонент управления конфигурацией подключения к БД - чтение, валидация, сохранение параметров",
               "links": {
-                "projectDocsRefs": ["component:backend.database.config"],
-                "journalRefs": ["log:log-2025-11-10-003"],
+                "projectDocsRefs": [
+                  "component:backend.database.config"
+                ],
+                "journalRefs": [
+                  "log:log-2025-11-10-003"
+                ],
                 "aiRuleRefs": []
               },
               "created": "2025-10-09",
@@ -260,7 +569,6 @@
             }
           }
         },
-        
         "0005": {
           "task": {
             "displayName": "Connection Management компонент (completed, critical). № 0005",
@@ -276,8 +584,13 @@
               ],
               "description": "Компонент управления подключениями к базе данных - создание, пул соединений, тестирование",
               "links": {
-                "projectDocsRefs": ["component:backend.database.connection"],
-                "journalRefs": ["log:log-2025-11-10-004", "log:log-2025-11-10-005"],
+                "projectDocsRefs": [
+                  "component:backend.database.connection"
+                ],
+                "journalRefs": [
+                  "log:log-2025-11-10-004",
+                  "log:log-2025-11-10-005"
+                ],
                 "aiRuleRefs": []
               },
               "created": "2025-10-09",
@@ -285,7 +598,6 @@
             }
           }
         },
-        
         "0006": {
           "task": {
             "displayName": "Authentication Providers компонент (completed, high). № 0006",
@@ -303,8 +615,13 @@
               ],
               "description": "Провайдеры аутентификации для MS SQL Server - поддержка разных методов аутентификации",
               "links": {
-                "projectDocsRefs": ["component:backend.database.auth"],
-                "journalRefs": ["log:log-2025-11-10-004", "log:log-2025-11-10-005"],
+                "projectDocsRefs": [
+                  "component:backend.database.auth"
+                ],
+                "journalRefs": [
+                  "log:log-2025-11-10-004",
+                  "log:log-2025-11-10-005"
+                ],
                 "aiRuleRefs": []
               },
               "created": "2025-10-09",
@@ -312,7 +629,6 @@
             }
           }
         },
-        
         "0007": {
           "task": {
             "displayName": "Web API модуль (pending, high). № 0007",
@@ -328,7 +644,9 @@
               ],
               "description": "Модуль веб-API и жизненного цикла приложения - REST контроллеры, инициализация, health checks",
               "links": {
-                "projectDocsRefs": ["module:backend.web"],
+                "projectDocsRefs": [
+                  "module:backend.web"
+                ],
                 "journalRefs": [],
                 "aiRuleRefs": []
               },
@@ -337,34 +655,36 @@
             }
           }
         },
-        
         "0008": {
-        
-        "0024": {
-          "task": {
-            "displayName": "Smoke‑тест единого JAR (completed, high). № 0024",
-            "task-attributes": {
-              "status": "completed",
-              "priority": "high",
-              "owner": "Александр",
-              "completionCriteria": [
-                "JAR собран и запущен в WSL",
-                "Настройка подключения через /setup выполнена",
-                "REST и GraphQL отвечают корректно",
-                "Устойчивость подтверждена при рестарте MSSQL",
-                "Перезапуск приложения сохраняет настройки"
-              ],
-              "description": "Ручное тестирование единого fat JAR (backend+frontend) через браузер Windows",
-              "links": {
-                "projectDocsRefs": ["deployment:fat-jar-corporate-network"],
-                "journalRefs": ["log:log-2025-11-16-001"],
-                "aiRuleRefs": []
-              },
-              "created": "2025-11-16",
-              "lastUpdated": "2025-11-16"
+          "0024": {
+            "task": {
+              "displayName": "Smoke‑тест единого JAR (completed, high). № 0024",
+              "task-attributes": {
+                "status": "completed",
+                "priority": "high",
+                "owner": "Александр",
+                "completionCriteria": [
+                  "JAR собран и запущен в WSL",
+                  "Настройка подключения через /setup выполнена",
+                  "REST и GraphQL отвечают корректно",
+                  "Устойчивость подтверждена при рестарте MSSQL",
+                  "Перезапуск приложения сохраняет настройки"
+                ],
+                "description": "Ручное тестирование единого fat JAR (backend+frontend) через браузер Windows",
+                "links": {
+                  "projectDocsRefs": [
+                    "deployment:fat-jar-corporate-network"
+                  ],
+                  "journalRefs": [
+                    "log:log-2025-11-16-001"
+                  ],
+                  "aiRuleRefs": []
+                },
+                "created": "2025-11-16",
+                "lastUpdated": "2025-11-16"
+              }
             }
-          }
-        },
+          },
           "task": {
             "displayName": "Frontend модуль (pending, medium). № 0008",
             "task-attributes": {
@@ -380,7 +700,9 @@
               ],
               "description": "Разработка клиентской части на Vue.js 3 с Quasar Framework и Apollo Client",
               "links": {
-                "projectDocsRefs": ["module:frontend"],
+                "projectDocsRefs": [
+                  "module:frontend"
+                ],
                 "journalRefs": [],
                 "aiRuleRefs": []
               },
@@ -389,7 +711,6 @@
             }
           }
         },
-        
         "0009": {
           "task": {
             "displayName": "DatabaseConfigurationService класс (completed, critical). № 0009",
@@ -406,8 +727,12 @@
               ],
               "description": "Основной сервис управления конфигурацией БД - загрузка, сохранение, валидация параметров подключения",
               "links": {
-                "projectDocsRefs": ["class:backend.database.config.DatabaseConfigurationService"],
-                "journalRefs": ["log:log-2025-11-10-003"],
+                "projectDocsRefs": [
+                  "class:backend.database.config.DatabaseConfigurationService"
+                ],
+                "journalRefs": [
+                  "log:log-2025-11-10-003"
+                ],
                 "aiRuleRefs": []
               },
               "created": "2025-10-09",
@@ -415,7 +740,6 @@
             }
           }
         },
-        
         "0010": {
           "task": {
             "displayName": "ConnectionFactory класс (completed, critical). № 0010",
@@ -432,8 +756,12 @@
               ],
               "description": "Фабрика подключений к БД - создание connections с различными типами аутентификации",
               "links": {
-                "projectDocsRefs": ["class:backend.database.connection.ConnectionFactory"],
-                "journalRefs": ["log:log-2025-11-10-005"],
+                "projectDocsRefs": [
+                  "class:backend.database.connection.ConnectionFactory"
+                ],
+                "journalRefs": [
+                  "log:log-2025-11-10-005"
+                ],
                 "aiRuleRefs": []
               },
               "created": "2025-10-09",
@@ -471,7 +799,6 @@
             }
           }
         },
-        
         "0012": {
           "task": {
             "displayName": "OgAg DAO слой (completed, high). № 0012",
@@ -794,7 +1121,6 @@
             }
           }
         },
-        
         "0023": {
           "task": {
             "displayName": "Исправление конфигурации Spring Boot для интеграционных тестов (completed, high). № 0023",
@@ -1044,7 +1370,6 @@
             }
           }
         },
-        
         "0035": {
           "task": {
             "displayName": "Оптимизация производительности и устранение предупреждений (completed, high). № 0035",
@@ -1075,7 +1400,6 @@
             }
           }
         },
-        
         "0035.1": {
           "task": {
             "displayName": "Кэширование конфигурации БД (completed, critical). № 0035.1",
@@ -1104,7 +1428,6 @@
             }
           }
         },
-        
         "0035.2": {
           "task": {
             "displayName": "Увеличение интервала сканирования отчётов (completed, medium). № 0035.2",
@@ -1131,7 +1454,6 @@
             }
           }
         },
-        
         "0035.3": {
           "task": {
             "displayName": "Удаление commons-logging (completed, medium). № 0035.3",
@@ -1157,7 +1479,6 @@
             }
           }
         },
-        
         "0035.4": {
           "task": {
             "displayName": "Фильтрация предупреждений об optional libraries (completed, low). № 0035.4",
@@ -1184,7 +1505,6 @@
             }
           }
         },
-        
         "0035.5": {
           "task": {
             "displayName": "Обновление версий библиотек (completed, low). № 0035.5",
@@ -1209,7 +1529,6 @@
             }
           }
         },
-        
         "0036": {
           "task": {
             "displayName": "Исправление проблем сборки проекта (completed, critical). № 0036",
@@ -1240,7 +1559,6 @@
             }
           }
         },
-        
         "0036.1": {
           "task": {
             "displayName": "femsq-graphql-tests — зависимость от femsq-web (completed, critical). № 0036.1",
@@ -1268,7 +1586,6 @@
             }
           }
         },
-        
         "0036.2": {
           "task": {
             "displayName": "femsq-reports — исправление .classpath (completed, critical). № 0036.2",
@@ -1294,7 +1611,6 @@
             }
           }
         },
-        
         "0036.3": {
           "task": {
             "displayName": "femsq-reports — ошибки build path (completed, critical). № 0036.3",
@@ -1319,7 +1635,6 @@
             }
           }
         },
-        
         "0036.4": {
           "task": {
             "displayName": "femsq-web — зависимость от femsq-reports (completed, critical). № 0036.4",
@@ -1345,7 +1660,6 @@
             }
           }
         },
-        
         "0036.5": {
           "task": {
             "displayName": "pom.xml (femsq-web) — предупреждение о доступе к директории (planned, low). № 0036.5",
@@ -1371,7 +1685,6 @@
             }
           }
         },
-        
         "0036.6": {
           "task": {
             "displayName": "pom.xml (femsq-web) — frontend-maven-plugin lifecycle mapping (completed, medium). № 0036.6",
@@ -1397,7 +1710,6 @@
             }
           }
         },
-        
         "0036.7": {
           "task": {
             "displayName": "pom.xml (femsq-reports) — exec-maven-plugin lifecycle mapping (planned, medium). № 0036.7",
@@ -1424,7 +1736,6 @@
             }
           }
         },
-        
         "0037": {
           "task": {
             "displayName": "Заполнение шести таблиц данными из процедуры spMstrg_2408 (completed, high). № 0037",
@@ -1452,7 +1763,6 @@
             }
           }
         },
-        
         "0037.1": {
           "task": {
             "displayName": "Реализация заполнения ResultSet1 (completed, high). № 0037.1",
@@ -1479,7 +1789,6 @@
             }
           }
         },
-        
         "0037.2": {
           "task": {
             "displayName": "Реализация заполнения ResultSet2 (completed, high). № 0037.2",
@@ -1506,7 +1815,6 @@
             }
           }
         },
-        
         "0037.3": {
           "task": {
             "displayName": "Реализация заполнения ResultSet3 (completed, high). № 0037.3",
@@ -1533,7 +1841,6 @@
             }
           }
         },
-        
         "0037.4": {
           "task": {
             "displayName": "Реализация заполнения ResultSet4 (completed, high). № 0037.4",
@@ -1561,7 +1868,6 @@
             }
           }
         },
-        
         "0037.5": {
           "task": {
             "displayName": "Реализация заполнения ResultSet5 (completed, high). № 0037.5",
@@ -1588,7 +1894,6 @@
             }
           }
         },
-        
         "0037.6": {
           "task": {
             "displayName": "Реализация заполнения ResultSet6 (completed, high). № 0037.6",
@@ -1633,8 +1938,13 @@
               ],
               "description": "Обновление до версии 0.1.0.45: поддержка Java 23 через JDBC Driver 13.2.0, реализация True Single Sign-On для Kerberos (автоматическое определение principal), упрощение UX, оптимизация структуры логов",
               "links": {
-                "projectDocsRefs": ["module:backend.database.auth"],
-                "journalRefs": ["chat:chat-2025-12-24-001", "log:log-2025-12-24-001"],
+                "projectDocsRefs": [
+                  "module:backend.database.auth"
+                ],
+                "journalRefs": [
+                  "chat:chat-2025-12-24-001",
+                  "log:log-2025-12-24-001"
+                ],
                 "aiRuleRefs": [],
                 "chatResume": "docs/development/notes/chats/chat-resume/chat-resume-25-1224-kerberos-sso.md"
               },
@@ -1660,8 +1970,13 @@
               ],
               "description": "Восстановление работоспособной страницы ревизий на базе версии .53, перенос улучшений, интеграция DirectoryInfo + FilesList, исправления (таймаут статуса подключения, ogName→ogNm), удаление версии .68 и финализация.",
               "links": {
-                "projectDocsRefs": ["module:frontend"],
-                "journalRefs": ["chat:chat-2026-01-19-001", "log:log-2026-01-20-001"],
+                "projectDocsRefs": [
+                  "module:frontend"
+                ],
+                "journalRefs": [
+                  "chat:chat-2026-01-19-001",
+                  "log:log-2026-01-20-001"
+                ],
                 "aiRuleRefs": [],
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0119-restore-audits.md",
                 "chatResume": "docs/development/notes/chats/chat-resume/chat-resume-26-0119-restore-audits.md"
@@ -1689,8 +2004,15 @@
               ],
               "description": "Полный перевод домена ревизий (RA) на GraphQL transport: схемы и резолверы на backend (Spring GraphQL), Apollo Client на frontend, переписывание доменных API-клиентов и Pinia-сторов, удаление/запрет доменного REST (за исключением осознанных технических/бинарных REST-эндпойнтов), а также устранение интеграционных ошибок (DateTime scalar, конфликт store id, Apollo cache keyFields).",
               "links": {
-                "projectDocsRefs": ["module:backend.web", "module:frontend", "component:backend.web.api.graphql"],
-                "journalRefs": ["chat:chat-2026-03-17-001", "log:log-2026-03-18-001"],
+                "projectDocsRefs": [
+                  "module:backend.web",
+                  "module:frontend",
+                  "component:backend.web.api.graphql"
+                ],
+                "journalRefs": [
+                  "chat:chat-2026-03-17-001",
+                  "log:log-2026-03-18-001"
+                ],
                 "aiRuleRefs": [],
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0317-graphql-migration.md",
                 "chatResume": "docs/development/notes/chats/chat-resume/chat-resume-26-0317-graphql-migration.md"
@@ -1718,7 +2040,9 @@
               ],
               "description": "Единая палитра всего femsq-frontend-q (оболочка + лог ревизий). Заменяет локальные темы 0049. Kimbie Dark по умолчанию, переключение иконкой в TopBar. Блокирует prod (0048) до визуального sign-off.",
               "links": {
-                "projectDocsRefs": ["module:frontend"],
+                "projectDocsRefs": [
+                  "module:frontend"
+                ],
                 "journalRefs": [],
                 "aiRuleRefs": [],
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#935-глобальные-темы-приложения-kimbie-dark-vs-light-задача-0050",
@@ -1748,7 +2072,10 @@
               ],
               "description": "Blocker UAT по содержанию HTML-лога adt_results: плотность строк, информативность warnings Excel, русификация Type5, badge «+». Прототип палитр лога — в 0049; глобальные темы приложения — в 0050.",
               "links": {
-                "projectDocsRefs": ["module:backend.web", "module:frontend"],
+                "projectDocsRefs": [
+                  "module:backend.web",
+                  "module:frontend"
+                ],
                 "journalRefs": [],
                 "aiRuleRefs": [],
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#934-доработка-читаемости-лога-и-ui-ревизий-задача-0049"
@@ -1776,7 +2103,10 @@
               ],
               "description": "Новый prod-блокер после раскладки thin JAR/lib 0.1.0.137: на рабочем Access-контуре таблица ra_a, вероятно, локальная, а FEMSQ Java/GraphQL ожидает серверную ags.ra_a и связанные таблицы ревизий в FishEye. Задача — безопасно создать SQL-контур ревизий для FEMSQ, не ломая текущий Access-процесс и не перелинковывая локальную ra_a.",
               "links": {
-                "projectDocsRefs": ["module:backend.web", "environment:prod-fisheye"],
+                "projectDocsRefs": [
+                  "module:backend.web",
+                  "environment:prod-fisheye"
+                ],
                 "journalRefs": [],
                 "aiRuleRefs": [],
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#9511-prod-bootstrap-таблиц-ревизий-access--mssql-новая-задача-0054"
@@ -1807,8 +2137,15 @@
               ],
               "description": "Завершающий цикл: тестовое развёртывание на dev, приёмочное тестирование ревизий через веб-интерфейс (AllAgents + RALP), устранение замечаний (0049/0050/0051 — читаемость лога), вывод в продуктив методом thin JAR. Soft-deploy §9.5.0 закрыт 2026-07-16; dev-gate §9.5.10 закрыт 2026-07-17 (JAR 0.1.0.137, exec 1197); файлы 137 на prod разложены. Prod-приёмка ревизий заблокирована задачей 0054: bootstrap SQL-таблиц ревизий FishEye при сохранении локальной Access ra_a.",
               "links": {
-                "projectDocsRefs": ["module:backend.web", "module:frontend", "environment:prod-fisheye"],
-                "journalRefs": ["log-2026-07-16-003", "log-2026-07-17-001"],
+                "projectDocsRefs": [
+                  "module:backend.web",
+                  "module:frontend",
+                  "environment:prod-fisheye"
+                ],
+                "journalRefs": [
+                  "log-2026-07-16-003",
+                  "log-2026-07-17-001"
+                ],
                 "aiRuleRefs": [],
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#фаза-9-доработка-производительности-приёмка-и-вывод-в-продуктив"
               },
@@ -1832,7 +2169,9 @@
               ],
               "description": "Продолжение оптимизации reconcile после 0044: per-row INSERT новых строк RA/RC остаётся узким местом при apply. Опционально — batch для RALP apply.",
               "links": {
-                "projectDocsRefs": ["module:backend.web"],
+                "projectDocsRefs": [
+                  "module:backend.web"
+                ],
                 "journalRefs": [],
                 "aiRuleRefs": [],
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#912-batch-insert-новых-строк-reconcile-type5-задача-0047"
@@ -1857,7 +2196,9 @@
               ],
               "description": "Устранение узкого места ~15% dry-run: частый saveProgress с нарастающим HTML в adt_results по WireGuard к FishEye.",
               "links": {
-                "projectDocsRefs": ["module:backend.web"],
+                "projectDocsRefs": [
+                  "module:backend.web"
+                ],
                 "journalRefs": [],
                 "aiRuleRefs": [],
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#911-saveprogress-и-html-блоб-в-adt_results-задача-0046"
@@ -1885,7 +2226,9 @@
               ],
               "description": "Оптимизация apply reconcile type=5 (AllAgentsReconcileService): JDBC batch для UPDATE/INSERT, bulk-загрузка latest sums вместо per-row SELECT, отключение построчного аудита apply при SUMMARY/MINIMAL. Цель — снизить долю reconcile в dry-run после 0043.",
               "links": {
-                "projectDocsRefs": ["module:backend.web"],
+                "projectDocsRefs": [
+                  "module:backend.web"
+                ],
                 "journalRefs": [],
                 "aiRuleRefs": [],
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#фаза-8-оптимизация-reconcile-type5-apply-задача-0044"
@@ -1912,7 +2255,9 @@
               ],
               "description": "Ошибка формата ячейки (например «в электронном виде» в integer-колонке) не должна ронять ревизию. Необязательные поля — warning + NULL + строка в staging; обязательные — warning + пропуск строки. Пользователь исправляет Excel по логу.",
               "links": {
-                "projectDocsRefs": ["module:backend.web"],
+                "projectDocsRefs": [
+                  "module:backend.web"
+                ],
                 "journalRefs": [],
                 "aiRuleRefs": [],
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#73-устойчивый-парсинг-excel-ошибки-формата-без-падения-ревизии-задача-0045"
@@ -1940,7 +2285,9 @@
               ],
               "description": "Устранение узкого места Stage 1 для af_type=5 (AllAgents): переход с одиночных INSERT+RETURN_GENERATED_KEYS на batch INSERT. Ввести StagingLogLevel (VERBOSE/SUMMARY/MINIMAL), где SUMMARY — режим по умолчанию с прогрессом каждые 100 строк и логированием только ошибочных строк. Ожидаемое ускорение Stage 1: с ~106 мин до ~3–5 мин (>95%).",
               "links": {
-                "projectDocsRefs": ["module:backend.web"],
+                "projectDocsRefs": [
+                  "module:backend.web"
+                ],
                 "journalRefs": [],
                 "aiRuleRefs": [],
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#фаза-7"
@@ -1968,8 +2315,13 @@
               ],
               "description": "Доменная reconcile-логика для af_type=3 (аренда земли): перенос staging → ags.ralpRa + ags.ralpRaAu по образцу af_type=5, устранение VBA per-row SQL, верификация на (2026)_Аренда_рабочий.xlsx.",
               "links": {
-                "projectDocsRefs": ["module:backend.web"],
-                "journalRefs": ["chat:chat-2026-07-08-001", "log:log-2026-07-08-001"],
+                "projectDocsRefs": [
+                  "module:backend.web"
+                ],
+                "journalRefs": [
+                  "chat:chat-2026-07-08-001",
+                  "log:log-2026-07-08-001"
+                ],
                 "aiRuleRefs": [],
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md"
               },
@@ -1980,7 +2332,6 @@
         }
       }
     },
-    
     "structure": {
       "description": "Иерархическая структура пунктов задач с номерами деревьев",
       "trees": [
@@ -2291,7 +2642,6 @@
             ]
           }
         },
-        
         {
           "tree": {
             "displayName": "Дерево функционала. № 02",
@@ -2611,6 +2961,90 @@
                           }
                         ]
                       }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "✅ IA меню и инфраструктура доменных экранов (completed, high). № 02.02.04 → 0057",
+                        "item-attributes": {
+                          "structureId": "02.02.04",
+                          "taskId": "0057",
+                          "positionInParent": 4,
+                          "comment": "A.5 smoke ✅ 2026-07-28; chat-resume-26-0722"
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "✅ Экраны Стройки cst / cstAgPn (completed, high). № 02.02.05 → 0058",
+                        "item-attributes": {
+                          "structureId": "02.02.05",
+                          "taskId": "0058",
+                          "positionInParent": 5,
+                          "comment": "MVP закрыт 2026-07-28; follow-up ra_change/chart/TreeList"
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "✅ Компонент FemsqTable: фильтрация/сортировка гридов (completed, high). № 02.02.06 → 0059",
+                        "item-attributes": {
+                          "structureId": "02.02.06",
+                          "taskId": "0059",
+                          "positionInParent": 6,
+                          "comment": "Сквозной для всех гридов; chat-plan-26-0725; TreeList для дерева агентов — future, не в этой задаче"
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "✅ Реестр документации проектов (Postgres) — MVP-схема (completed, high). № 02.02.07 → 0061",
+                        "item-attributes": {
+                          "structureId": "02.02.07",
+                          "taskId": "0061",
+                          "positionInParent": 7,
+                          "comment": "Перед 0060: feQuLib должен использовать реестр изначально, не JSON с последующей миграцией; Решение 008"
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "✅ feQuLib: вынос FemsqTable в отдельный репозиторий (completed, high). № 02.02.08 → 0060",
+                        "item-attributes": {
+                          "structureId": "02.02.08",
+                          "taskId": "0060",
+                          "positionInParent": 8,
+                          "comment": "Зависит от 0059 и 0061; от этой задачи зависит разблокировка 0058; Решение 008"
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "⏳ Реестр документации: перенос исторических данных FEMSQ (pending, low). № 02.02.09 → 0062",
+                        "item-attributes": {
+                          "structureId": "02.02.09",
+                          "taskId": "0062",
+                          "positionInParent": 9,
+                          "comment": "Не блокирует ничего; можно в любое время после 0061"
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "✅ Projectize docs-registry и feQuLib (completed, high). № 02.02.10 → 0063",
+                        "item-attributes": {
+                          "structureId": "02.02.10",
+                          "taskId": "0063",
+                          "positionInParent": 10,
+                          "comment": "GitHub docs-registry + fequlib; docs/; окна Cursor; 0058 разблокирована"
+                        },
+                        "task-items": []
+                      }
                     }
                   ]
                 }
@@ -2618,7 +3052,6 @@
             ]
           }
         },
-        
         {
           "tree": {
             "displayName": "Дерево модулей архитектуры. № 0a",

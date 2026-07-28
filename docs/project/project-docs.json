@@ -6,7 +6,7 @@
       "description": "Cистема работы с контрагентами и объектами при капитальном строительстве на основе БД MS SQL Server FEMSQ (Fish Eye MS SQL Server)",
       "author": "Александр",
       "created": "2025-10-08",
-      "lastUpdated": "2026-07-15",
+      "lastUpdated": "2026-07-22",
       "status": "in_progress",
       "repository": "https://github.com/bondalen/femsq.git",
       "license": "MIT",
@@ -229,6 +229,7 @@
         "Управление отношениями с контрагентами",
         "CRM функциональность",
         "Документооборот",
+        "Стройки и САК (cst / cstAgPn) — UI в работе (задачи 0057–0058)",
         "Ревизии (аудит/проверка файлов Excel)",
         "Управленческий финансовый учет"
       ],

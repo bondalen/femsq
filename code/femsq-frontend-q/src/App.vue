@@ -9,6 +9,7 @@
     :error="connection.lastError"
     :active-view="connection.activeView"
     :organizations-enabled="connection.organizationsEnabled"
+    :construction-sites-enabled="connection.constructionSitesEnabled"
     :investment-chains-enabled="connection.investmentChainsEnabled"
     :reports-enabled="connection.reportsEnabled"
     @open-connection="handleOpenConnection"
@@ -16,6 +17,8 @@
     @disconnect="handleDisconnect"
   >
     <OrganizationsView v-if="connection.activeView === 'organizations'" />
+    <ConstructionSitesView v-else-if="connection.activeView === 'construction-sites'" />
+    <ConstructionSitesByCodeView v-else-if="connection.activeView === 'construction-sites-by-code'" />
     <InvestmentChainsView v-else-if="connection.activeView === 'investment-chains'" />
     <ReportsCatalog v-else-if="connection.activeView === 'reports'" />
     <AuditsView v-else-if="connection.activeView === 'audits'" />
@@ -26,26 +29,31 @@
         <div class="text-h5 q-mb-md">Добро пожаловать в FEMSQ UI</div>
         <p>
           Этот экран содержит подсказки по подключению к базе данных и навигации.
-          Нажмите «Подключение к БД», чтобы установить соединение, либо воспользуйтесь кнопкой «Организации» после успешного подключения.
+          Откройте параметры подключения в нижней строке состояния (индикатор слева),
+          затем выберите раздел в верхней панели.
         </p>
         <QList bordered class="rounded-borders">
           <QItem>
             <QItemSection avatar>
               <QIcon name="info" color="primary" />
             </QItemSection>
-            <QItemSection>Строка состояния внизу отображает текущий статус соединения и выбранную схему.</QItemSection>
+            <QItemSection>
+              Нижняя строка: статус соединения, схема, сообщения, тема и отключение.
+            </QItemSection>
           </QItem>
           <QItem>
             <QItemSection avatar>
               <QIcon name="apps" color="primary" />
             </QItemSection>
-            <QItemSection>Верхняя панель доступна из любой части приложения и содержит основные действия.</QItemSection>
+            <QItemSection>
+              Верхняя панель — доменная навигация (Организации, Стройки, Инвестиции, Ревизии, Отчёты, Сервис).
+            </QItemSection>
           </QItem>
           <QItem>
             <QItemSection avatar>
               <QIcon name="smartphone" color="primary" />
             </QItemSection>
-            <QItemSection>Интерфейс адаптирован для мобильных устройств: кнопки сворачиваются в меню.</QItemSection>
+            <QItemSection>На узких экранах навигация сворачивается в меню.</QItemSection>
           </QItem>
         </QList>
       </div>
@@ -72,6 +80,8 @@ import { useQuasar, QPage, QList, QItem, QItemSection, QIcon } from 'quasar';
 import AppLayout from '@/components/layout/AppLayout.vue';
 import ConnectionModal from '@/components/setup/ConnectionModal.vue';
 import OrganizationsView from '@/views/organizations/OrganizationsView.vue';
+import ConstructionSitesView from '@/views/construction-sites/ConstructionSitesView.vue';
+import ConstructionSitesByCodeView from '@/views/construction-sites/ConstructionSitesByCodeView.vue';
 import InvestmentChainsView from '@/views/investment-chains/InvestmentChainsView.vue';
 import ReportsCatalog from '@/modules/reports/views/ReportsCatalog.vue';
 import AuditsView from '@/views/audits/AuditsView.vue';

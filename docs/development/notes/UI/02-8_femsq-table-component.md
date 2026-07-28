@@ -1,0 +1,47 @@
+# Компонент `FemsqTable` — единая фильтрация/сортировка гридов
+
+**Дата:** 2026-07-25 · **обновлено:** 2026-07-28  
+**Статус:** ✅ фазы A–B + generic Row (fequlib 0003) + вынесен в `fequlib` (0060) + projectize (0063) + unit-тесты (0004)  
+**Задача:** [0059](../../project-development.json) · [0060](../../project-development.json) · [0063](../../project-development.json)  
+**План:** [chat-plan-26-0725-femsq-table.md](../chats/chat-plan/chat-plan-26-0725-femsq-table.md) §7  
+**Пакет:** `fequlib` — https://github.com/bondalen/fequlib · локально `file:../../../feQuLib`  
+**Импорт:** `import { FemsqTable, actionsColumn } from 'fequlib'`
+
+## Зачем
+
+Каждая форма (перечень строек, отчёты, аренда, agents-list) заново решала фильтрацию/сортировку ad-hoc. `FemsqTable` — тонкая обёртка над Quasar `QTable`, дающая единый контракт один раз, чтобы доработки автоматически долетали до всех форм-потребителей.
+
+## Контракт
+
+- **`cellText(row, col)`** — единая точка «что такое ячейка для фильтра/сортировки». По умолчанию `col.format ? col.format(value, row) : String(value ?? '')`. Работает для всех обычных колонок без доп. кода.
+- **`filterValue?: (row) => string`** — для колонок с `#body-cell-*`, если колонка в поиске; иначе `filterable: false` или dev-warning.
+- **`actionsColumn()`** — `filterable: false`, `sortable: false`; без UI колоночного фильтра.
+- **Агрегатные предикаты — это колонка.** COUNT/EXISTS приходят полем строки (`auCnt`, `hasReturned`); тумблер — опциональный пресет.
+- **`mode: 'client' | 'server'`** — server эмитит `@request` с `{ filter, columnFilters?, sortBy, descending, page, rowsPerPage }`.
+- **Глобальный фильтр** — `v-model:filter` / `showFilter` (фаза A).
+- **Поколоночные фильтры (фаза B ✅)** — dense-поле под заголовком; `v-model:columnFilters` (`Record<column.name, string>`); `showColumnFilters` (default `true`); AND с глобальным; `filterable: false` — без поля; кастомный `#header-cell-*` перекрывает встроенный UI.
+- **Generic Row (fequlib 0003 ✅)** — `FemsqTableRowBase`, `rows: Row[]` / `FemsqTableColumn<Row>[]` без `as unknown as` для DTO-интерфейсов.
+- **Additive-first** — новые API опциональны; ниже манифест потребителей.
+
+Подробности контракта B — в репозитории fequlib: `docs/components/FemsqTable.md`.
+
+## Границы компонента
+
+- **Group By (фаза D)** — группировка **плоских** строк по колонке. Не путать с иерархией.
+- **Иерархия** (дерево агентов) — **не `FemsqTable`** (будущий TreeList).
+- **Filter Editor (F)** — не реализован.
+
+## Roadmap
+
+A ✅ → B ✅ → generic Row ✅ (0003 `51d1021`) → C (аудит гридов в FEMSQ) → D → E → F → G → H ✅.  
+Тесты чистых функций: fequlib 0004 (`b0b8ef7`, `npm test`). UI SFC — ещё не покрыт.
+
+**Репозиторий:** https://github.com/bondalen/fequlib · локально `/home/alex/projects/feQuLib` — [Решение 008](../../../project/decisions/008-fequlib-and-docs-registry.md).
+
+## Манифест форм-потребителей
+
+| Форма | Файл | Версия контракта | Статус |
+|---|---|---|---|
+| Стройки · перечень | `ConstructionSitesView.vue` | A–B / client · fequlib | ✅ smoke §7.2 |
+| Стройки · отчёты (ra) | `CstReportsTab.vue` | A–B / client · fequlib | ✅ |
+| Стройки · аренда (ralpRa + Au) | `CstRentReportsTab.vue` | A–B / client · fequlib | ✅ |
