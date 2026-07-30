@@ -1,8 +1,8 @@
 # Резюме чата 26-0722: IA форм + экраны Стройки (`cst` / `cstAgPn`)
 
 **Дата:** 2026-07-22 – 2026-07-28  
-**Последнее обновление:** 2026-07-28  
-**Тема:** Целевая IA верхней строки FEMSQ (Design chrome), GraphQL CRUD строек и дерево агентов, Quasar-экраны `cst` / `cstAgPn`, отчёты/аренда; пауза на FemsqTable→feQuLib→projectize и возврат.  
+**Последнее обновление:** 2026-07-29  
+**Тема:** Целевая IA верхней строки FEMSQ (Design chrome), GraphQL CRUD строек и дерево агентов, Quasar-экраны `cst` / `cstAgPn`, отчёты/аренда; пауза на FemsqTable→feQuLib→projectize и возврат. Follow-up визуала грида — F6 / fequlib 0011.  
 **Задачи:** [0057](../../../project-development.json), [0058](../../../project-development.json) — **completed**  
 **Журнал:** `chat-2026-07-22-001`, `chat-2026-07-28-002`  
 **Машина:** nb-win (WSL2); frontend `npm run build` OK; backend connected (`FishEye`/`ags`); Vite `:5175`
@@ -61,7 +61,8 @@
 | F3 | TreeList для дерева агентов (отдельный компонент, не FemsqTable) |
 | F4 | feQuLib фазы D–G; задача 0062 (миграция JSON → docs-registry) — вне этой цепочки |
 | F5 | Полный порт вкладок ipg/общее/освоение/графики формы `cst` |
+| **F6** | **Визуальный контракт FemsqTable: DX-эталоны + `--fequlib-table-*` (fequlib 0011; план 26-0725 §8 / 26-0729)** — перед углублённым живым UAT плотности |
 
 ## Итог
 
-План **chat-plan-26-0722-forms-ia-cst** в пределах MVP выполнен: IA+chrome (0057), экраны строек GraphQL+Quasar (0058). Follow-up — F1–F5 выше.
+План **chat-plan-26-0722-forms-ia-cst** в пределах MVP выполнен: IA+chrome (0057), экраны строек GraphQL+Quasar (0058). Follow-up — F1–F6 выше.

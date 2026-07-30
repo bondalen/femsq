@@ -1,11 +1,11 @@
 # План: компонент `FemsqTable` — единая фильтрация/сортировка гридов
 
 **Дата создания:** 2026-07-25  
-**Последнее обновление:** 2026-07-28  
+**Последнее обновление:** 2026-07-29  
 **Проект:** FEMSQ  
-**Версия плана:** 1.4.0 (0063 ✅; §7 ✅; возврат к 0058)  
-**Задача:** [0059](../../../project-development.json) (completed) · [0061](../../../project-development.json) (completed) · [0060](../../../project-development.json) (completed) · [0063](../../../project-development.json) (completed)  
-**Статус плана:** ✅ закрыт для FemsqTable/projectize; продолжение — `chat-plan-26-0722` (0058)  
+**Версия плана:** 1.5.0 (0058 ✅; §8 визуальный контракт хост↔fequlib)  
+**Задача:** [0059](../../../project-development.json) (completed) · [0061](../../../project-development.json) (completed) · [0060](../../../project-development.json) (completed) · [0063](../../../project-development.json) (completed) · 0058 (completed)  
+**Статус плана:** ✅ функциональный MVP FemsqTable/projectize/0058; 🔄 §8 визуал (fequlib **0011**)  
 **Компонент:** [02-8_femsq-table-component.md](../../UI/02-8_femsq-table-component.md)
 
 ---
@@ -142,3 +142,41 @@
 **Не делать в §7:** 0006–0009, Group By, CI workflow (нет PAT scope), App Extension.
 
 **feQuLib на момент §7:** A+B (`7850bf6`), тесты 0004 (`b0b8ef7`), GitHub https://github.com/bondalen/fequlib.
+
+---
+
+## 8. Визуальный контракт хост ↔ fequlib (2026-07-29)
+
+После закрытия MVP 0058 живой UAT должен оценивать **функционал** и **хроматику грида** раздельно от темы оболочки.
+
+### 8.1. Распределение
+
+| Владелец | Ответственность |
+|----------|-----------------|
+| **FEMSQ** | Тема продукта (Kimbie/VS Light), `--femsq-*`, шрифты, chrome; позже — переопределение `--fequlib-table-*` |
+| **fequlib** | Контракт filter/sort; метрики грида (`--fequlib-table-*`); эталоны DX по плотности |
+| **Форма** | Редкие исключения (слот/`dense`), не локальная «своя тема таблицы» |
+
+Подробности (репозиторий [fequlib](https://github.com/bondalen/fequlib)): `docs/design/FemsqTable-visual-target.md`, план `docs/development/notes/chats/chat-plan/chat-plan-26-0729-femsq-table-visual.md`, задача registry **0011**. Локально: `/home/alex/projects/feQuLib/docs/…`.
+
+### 8.2. DevExpress
+
+4–6 скринов light/dark + filter row → `feQuLib/docs/assets/devexpress-grid/`. Эталон **плотности/паттернов**, не палитры FEMSQ и не WinForms chrome.
+
+### 8.3. Шаги
+
+| Шаг | Действие | Где | Статус |
+|-----|----------|-----|--------|
+| **8.1** | Бриф + кросс-доки + задача 0011 | fequlib + FEMSQ | ☑ 2026-07-29 |
+| **8.2** | Скрины DX в assets | fequlib (оператор) | ☐ |
+| **8.3** | Токены `--fequlib-table-*` + дефолтная плотность | окно feQuLib | ☐ |
+| **8.4** | Переопределения в `femsq-theme-tokens` | FEMSQ | ☐ |
+| **8.5** | Живой UAT: поведение / плотность / тема — три чеклиста | браузер | ☐ после 8.3–8.4 |
+
+**Не смешивать в §8:** фазы D–G fequlib, 0062, TreeList.
+
+---
+
+**Автор плана:** Cursor AI Assistant + Александр  
+**Создано:** 2026-07-25
+**§8 добавлен:** 2026-07-29

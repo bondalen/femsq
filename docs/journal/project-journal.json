@@ -3,7 +3,7 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-07-28"
+      "lastUpdated": "2026-07-29"
     },
     "sessions": [
       {
@@ -30,6 +30,36 @@
             }
           },
           "entries": [
+            {
+              "log": {
+                "displayName": "Визуальный контракт FemsqTable: хост↔fequlib + задача 0011 (info). № log-2026-07-29-001",
+                "log-attributes": {
+                  "id": "log-2026-07-29-001",
+                  "timestamp": "2026-07-29T09:50:00+03:00",
+                  "level": "info",
+                  "effort": "30m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": ["module:frontend", "component:frontend.quasar.ConstructionSitesView"],
+                    "developmentTasks": ["0058", "0059", "0060"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксировано распределение дизайна FEMSQ↔fequlib и план визуала FemsqTable",
+                    "details": "Тема/цвета/шрифты — хост; хроматика грида — fequlib (--fequlib-table-*); DX — эталон плотности в docs/assets/devexpress-grid. Бриф и план 26-0729 в fequlib; §8 в chat-plan-26-0725; 02-8, frontend-themes, ADR 008; registry task 0011 (high).",
+                    "outcome": "V0 документации готов; дальше — скрины DX (оператор), затем V1 токены в feQuLib и V2 override в FEMSQ перед живым UAT плотности",
+                    "references": [
+                      "/home/alex/projects/feQuLib/docs/design/FemsqTable-visual-target.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0725-femsq-table.md",
+                      "docs/development/notes/UI/02-8_femsq-table-component.md",
+                      "docs/project/decisions/008-fequlib-and-docs-registry.md"
+                    ]
+                  }
+                ]
+              }
+            },
             {
               "log": {
                 "displayName": "Фаза E + A.5: UAT smoke, закрытие 0057/0058 (success). № log-2026-07-28-003",

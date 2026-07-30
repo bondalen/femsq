@@ -1,15 +1,32 @@
 # Компонент `FemsqTable` — единая фильтрация/сортировка гридов
 
-**Дата:** 2026-07-25 · **обновлено:** 2026-07-28  
-**Статус:** ✅ фазы A–B + generic Row (fequlib 0003) + вынесен в `fequlib` (0060) + projectize (0063) + unit-тесты (0004)  
+**Дата:** 2026-07-25 · **обновлено:** 2026-07-29  
+**Статус:** ✅ фазы A–B + generic Row (fequlib 0003) + вынесен в `fequlib` (0060) + projectize (0063) + unit-тесты (0004); 🔄 визуальный контракт хост↔lib (fequlib **0011**)  
 **Задача:** [0059](../../project-development.json) · [0060](../../project-development.json) · [0063](../../project-development.json)  
-**План:** [chat-plan-26-0725-femsq-table.md](../chats/chat-plan/chat-plan-26-0725-femsq-table.md) §7  
+**План:** [chat-plan-26-0725-femsq-table.md](../chats/chat-plan/chat-plan-26-0725-femsq-table.md) §7–§8  
 **Пакет:** `fequlib` — https://github.com/bondalen/fequlib · локально `file:../../../feQuLib`  
 **Импорт:** `import { FemsqTable, actionsColumn } from 'fequlib'`
 
 ## Зачем
 
 Каждая форма (перечень строек, отчёты, аренда, agents-list) заново решала фильтрацию/сортировку ad-hoc. `FemsqTable` — тонкая обёртка над Quasar `QTable`, дающая единый контракт один раз, чтобы доработки автоматически долетали до всех форм-потребителей.
+
+## Распределение дизайна (FEMSQ ↔ fequlib)
+
+Зафиксировано 2026-07-29 (бриф в fequlib):
+
+| Слой | Где | Примеры |
+|------|-----|---------|
+| Тема продукта | **FEMSQ** | Kimbie Dark / VS Light, `--femsq-*`, шрифты, TopBar/StatusBar |
+| Контракт грида | **fequlib** | filter, sort, columnFilters, slots, API |
+| Хроматика грида | **fequlib** (`--fequlib-table-*`, задача **0011**) | высоты строк/шапки/filter-row, padding; DX — эталон плотности |
+| Переопределение плотности | **FEMSQ** тема | один блок в `femsq-theme-tokens.css` после появления токенов в lib |
+| Исключение экрана | форма | редко |
+
+**Не делать:** копировать палитру Kimbie в fequlib; UAT «цвет шапки» как дефект грида; пиксель-копия DevExpress WinForms.
+
+Полный бриф: fequlib `docs/design/FemsqTable-visual-target.md` · план `chat-plan-26-0729-femsq-table-visual.md` · эталоны DX `docs/assets/devexpress-grid/`.  
+В FEMSQ: [frontend-themes.md](../../frontend-themes.md) § fequlib; план [§8](../chats/chat-plan/chat-plan-26-0725-femsq-table.md).
 
 ## Контракт
 
@@ -30,11 +47,12 @@
 - **Group By (фаза D)** — группировка **плоских** строк по колонке. Не путать с иерархией.
 - **Иерархия** (дерево агентов) — **не `FemsqTable`** (будущий TreeList).
 - **Filter Editor (F)** — не реализован.
+- **Тема продукта** — не в fequlib (см. распределение дизайна выше).
 
 ## Roadmap
 
-A ✅ → B ✅ → generic Row ✅ (0003 `51d1021`) → C (аудит гридов в FEMSQ) → D → E → F → G → H ✅.  
-Тесты чистых функций: fequlib 0004 (`b0b8ef7`, `npm test`). UI SFC — ещё не покрыт.
+A ✅ → B ✅ → generic Row ✅ (0003) → **visual 0011** (хроматика) → C (аудит гридов в FEMSQ) → D → E → F → G → H ✅.  
+Тесты чистых функций: fequlib 0004. UI SFC — ещё не покрыт.
 
 **Репозиторий:** https://github.com/bondalen/fequlib · локально `/home/alex/projects/feQuLib` — [Решение 008](../../../project/decisions/008-fequlib-and-docs-registry.md).
 

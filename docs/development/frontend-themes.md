@@ -26,6 +26,21 @@
 
 **Геометрия (общая):** `--femsq-control-radius`, `--femsq-chrome-font-size`, … на `html` в `femsq-theme-tokens.css`.
 
+### fequlib / FemsqTable (2026-07-29)
+
+Тема FEMSQ **не** дублируется в библиотеке. `FemsqTable` наследует цвета/шрифты/Quasar dark от хоста.
+
+Плотность грида (высоты строк, filter-row, padding) задаёт fequlib через `--fequlib-table-*` (задача fequlib **0011**). После появления токенов в lib — **один блок** переопределений в `femsq-theme-tokens.css` (не в каждой форме).
+
+| Слой | Токены / место |
+|------|----------------|
+| Продукт | `--femsq-*`, `dataset.femsqTheme`, Quasar `$q.dark` |
+| Грид | `--fequlib-table-*` (дефолт в fequlib, override здесь) |
+
+Бриф: fequlib `docs/design/FemsqTable-visual-target.md` · FEMSQ `02-8_femsq-table-component.md` · план 26-0725 §8.
+
+UAT: замечания по **цвету темы** ≠ дефект грида; замечания по **плотности строк** → fequlib / override токенов.
+
 ---
 
 ## Две темы
@@ -112,4 +127,4 @@ StatusBar (иконка темы) + TopBar (навигация)
 - Чеклист UAT: каждый модуль × `kimbie-dark` × `vs-light`.
 - Геометрия chrome (радиус, кегль nav/status) **одинакова** в обеих темах.
 
-**lastUpdated:** 2026-07-22
+**lastUpdated:** 2026-07-29
