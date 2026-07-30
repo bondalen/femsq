@@ -42,8 +42,15 @@
               },
               "dependencies" : [ ],
               "buildHistory" : {
-                "lastUpdated" : "2026-07-17T11:22:06+03:00",
+                "lastUpdated" : "2026-07-30T18:14:57+03:00",
                 "builds" : [ {
+                  "version" : "0.1.0.153-SNAPSHOT",
+                  "sha256" : "741b0d4dcee569c204222c212491b53ef7ae68b47a5a10ace90187bc85787bd2",
+                  "buildTimestamp" : "2026-07-30T18:14:57+03:00",
+                  "buildNumber" : "202607301814570",
+                  "changed" : true,
+                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.153-SNAPSHOT.jar"
+                }, {
                   "version" : "0.1.0.137-SNAPSHOT",
                   "sha256" : "5c50c2edca7c9f23c037c3aad58a3939e03a94a1e9c9f16754d878bc0b87d778",
                   "buildTimestamp" : "2026-07-17T11:22:06+03:00",
@@ -176,13 +183,6 @@
                   "buildNumber" : "202607091252330",
                   "changed" : true,
                   "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.120-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.119-SNAPSHOT",
-                  "sha256" : "d620400560212f0634e80358742b08420f886f7b91f75ed89653ef3b5be51083",
-                  "buildTimestamp" : "2026-07-09T12:37:01+03:00",
-                  "buildNumber" : "202607091237010",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.119-SNAPSHOT.jar"
                 } ]
               }
             },
@@ -1011,8 +1011,15 @@
               "technologies" : [ "JasperReports 7.0.3", "Spring Boot", "JRXML", "Jaspersoft Studio 7.0.3" ],
               "responsibilities" : [ "Обнаружение и сканирование шаблонов отчётов (.jasper и .jrxml)", "Загрузка предкомпилированных .jasper файлов из JAR", "Fallback на компиляцию .jrxml при отсутствии .jasper", "Генерация PDF отчётов через JRPdfExporter", "Генерация Excel отчётов через JRXlsxExporter", "Генерация HTML отчётов", "Управление метаданными отчётов (JSON)", "REST API для работы с отчётами", "Поддержка внешних отчётов (hot-reload без перезапуска)" ],
               "buildHistory" : {
-                "lastUpdated" : "2026-07-17T11:22:06+03:00",
+                "lastUpdated" : "2026-07-30T18:14:57+03:00",
                 "builds" : [ {
+                  "version" : "0.1.0.153-SNAPSHOT",
+                  "sha256" : "9f864b3f38f4e1a0a74d94f0f6517c4fbc58969f88e4eae51271266fafc5bd08",
+                  "buildTimestamp" : "2026-07-30T18:14:57+03:00",
+                  "buildNumber" : "202607301814570",
+                  "changed" : true,
+                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.153-SNAPSHOT.jar"
+                }, {
                   "version" : "0.1.0.137-SNAPSHOT",
                   "sha256" : "aa4d475e21958dd9b6d553b7e9c701bd609bb74697840a0f0a0cdf1967eafe41",
                   "buildTimestamp" : "2026-07-17T11:22:06+03:00",
@@ -1145,13 +1152,6 @@
                   "buildNumber" : "202607091252330",
                   "changed" : true,
                   "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.120-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.119-SNAPSHOT",
-                  "sha256" : "7ebdab66f4f399a4a23e34cb2fcd368ef4e6d2eed04e91ccd64ec09577c41d17",
-                  "buildTimestamp" : "2026-07-09T12:37:01+03:00",
-                  "buildNumber" : "202607091237010",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.119-SNAPSHOT.jar"
                 } ]
               },
               "deployment" : {
@@ -1871,17 +1871,8 @@
                 "type" : "documentation",
                 "artifact_type" : "file"
               },
-              "responsibilities" : [
-                "Реестр доменов TopBar (Организации, Стройки, Инвестиции, Договоры, Ревизии, Отчёты, Сервис)",
-                "Карта покрытия Access↔Java",
-                "Общие UX-подходы master–detail / GraphQL / смена текущей записи",
-                "Экраны ConstructionSitesView / ConstructionSitesByCodeView"
-              ],
-              "documentation" : [
-                "docs/development/notes/UI/02-4_app-forms-ia.md",
-                "docs/development/notes/chats/chat-plan/chat-plan-26-0722-forms-ia-cst.md",
-                "docs/development/notes/chats/chat-resume/chat-resume-26-0722-forms-ia-cst.md"
-              ]
+              "responsibilities" : [ "Реестр доменов TopBar (Организации, Стройки, Инвестиции, Договоры, Ревизии, Отчёты, Сервис)", "Карта покрытия Access↔Java", "Общие UX-подходы master–detail / GraphQL / смена текущей записи", "Экраны ConstructionSitesView / ConstructionSitesByCodeView" ],
+              "documentation" : [ "docs/development/notes/UI/02-4_app-forms-ia.md", "docs/development/notes/chats/chat-plan/chat-plan-26-0722-forms-ia-cst.md", "docs/development/notes/chats/chat-resume/chat-resume-26-0722-forms-ia-cst.md" ]
             },
             "classes" : [ ]
           }

@@ -1,9 +1,9 @@
 # План работы: Reconcile для `af_type=3` (Аренда земли, RALP)
 
 **Дата создания:** 2026-07-07  
-**Последнее обновление:** 2026-07-17  
+**Последнее обновление:** 2026-07-30  
 **Проект:** FEMSQ  
-**Версия плана:** 0.12.32
+**Версия плана:** 0.12.33
 
 ---
 
@@ -1174,7 +1174,7 @@ Badge `_START` был всегда «+». **Решено:** CSS `details[open] >
 | 9.5.1 | **Pre-flight prod:** бэкап БД FishEye; проверка `lib/` и версий (`LibraryCompatibilityChecker` / `lib-manifest.json`) | ⏳ |
 | 9.5.2 | **SQL на prod (2012):** DDL `adt_staging_log_level`; DDL **`ralprtRow`** из `MSSQL2012/` | ⏳ в архиве `prod-thin-137-26-0717.zip` |
 | 9.5.3 | Сборка thin JAR **0.1.0.137** | ✅ |
-| 9.5.4 | **Перенос на prod:** thin JAR + `femsq-*` 137 | ⏳ архив `prod-thin-137-26-0717.zip` |
+| 9.5.4 | **Перенос на prod:** thin JAR + `femsq-*` | ⏳ пакет готов: thin **0.1.0.153** (`18-15.zip`); ждём оператора 0054.6.4+ |
 | 9.5.5 | Остановка старого процесса; запуск thin JAR (`java -cp "femsq-web-*-thin.jar;lib/*" org.springframework.boot.loader.launch.JarLauncher` или скрипт prod) | ⏳ (репетиция: `run-with-external-libs.sh` в `test-26-0716`) |
 | 9.5.6 | Проверка логов: нет ошибок `LibraryCompatibilityChecker`; `/api/v1/connection/status` = 200 | ✅ soft: connection + `POST /graphql` = 200 |
 | 9.5.7 | **Приёмка:** один dry-run ревизии type=5 (SUMMARY) и type=3 под контролем оператора; откат thin JAR при сбое | ✅ soft: CLI **1193**/**1194** + UI sign-off |
@@ -1541,7 +1541,7 @@ Badge `_START` был всегда «+». **Решено:** CSS `details[open] >
 | 9.5.10.4 | Soft-deploy smoke: health, GraphQL, dry-run type=5 | ✅ exec **1197**: 102 с, reconcile dry-run, errors=0 |
 | 9.5.10.5 | Excel/POI: dry-run с SMB-файлом (Stage 1) | ✅ POI прочитал `.xlsm`, inserted=**1720** (лист «Отчеты») |
 | 9.5.10.6 | §9.5.9: JDBC — оставить prod 13.2.0; архив №3 не применять | ✅ |
-| 9.5.10.7 | Prod: thin JAR 137 + DDL §9.5.2 | ⏸ blocked by **0054** — на prod возможна локальная Access `ra_a`, требуется bootstrap SQL-таблиц ревизий |
+| 9.5.10.7 | Prod: thin JAR (≥152, цель **153**) + SQL-контур ревизий (**0054** 0–5 ✅) + smoke type=5/3 | ⏳ пакет **153** готов (`18-15.zip`); оператор 0054.6.4+ |
 
 **Smoke 137 (2026-07-17, после монтирования шары):**
 - Сервер: thin **0.1.0.137** + `lib/` (94 jar), лог `logs/app_26-0717-137-smoke.log`
@@ -1560,52 +1560,122 @@ Badge `_START` был всегда «+». **Решено:** CSS `details[open] >
 
 **Решение (2026-07-17):** вынести в отдельный чат, но вести статусы в этом плане. Это не продолжение переноса `lib/`, а отдельный prod-блокер для запуска ревизий через FEMSQ.
 
+**Возобновление (2026-07-30, Variant A):** новый чат + уточнение целевого SQL-контура перед DDL. Работы по 0054.1–0054.6 до 2026-07-30 **не начинались** (seed только зафиксирован).
+
+**Сеанс 2026-07-30 (этот чат):** 0054.0–0054.5 ✅. Осталось **0054.6**: smoke FEMSQ prod thin JAR ≥0.1.0.152, dry-run type=5/3; Access `ra_a` не перелинковывать. Пути `ra_dir.dir` пока `X:\\...` — учесть при smoke.
+
 **Контекст:**
-- на prod `lib/` и thin JAR **0.1.0.137** разложены корректно;
-- при первом DDL-проверочном скрипте выяснилось, что `COL_LENGTH('ags.ra_a', 'adt_staging_log_level') = NULL` не различает «нет колонки» и «нет таблицы»;
+- на prod `lib/` и thin JAR **0.1.0.137** разложены корректно; код на `main` уже **0.1.0.152** (после 0055–0058);
+- при первом DDL-проверочном скрипте (2026-07-17, SSMS) выяснилось, что `COL_LENGTH('ags.ra_a', 'adt_staging_log_level') = NULL` не различает «нет колонки» и «нет таблицы»;
 - оператор подтвердил, что `ra_a` в текущем Access-контуре является локальной таблицей Access;
 - Java/FEMSQ ожидает серверную `ags.ra_a` (и связанные `ra_at`, `ra_dir`, `ra_f`), а Access может продолжать legacy-процесс на локальной `ra_a`;
-- существующий `code/config/sql/01_create_ra_tables.sql` **нельзя применять на prod как есть**: там `DROP TABLE`, `USE [femsq]`, dev-контекст.
+- существующий `code/config/sql/01_create_ra_tables.sql` **нельзя применять на prod как есть**: там `DROP TABLE`, `USE [femsq]`, dev-контекст;
+- после 17.07 на `main` добавлены DDL **26-0720** / **26-0721** (AgFee staging) — включать в очередь после bootstrap.
+
+**Два контура FishEye (обязательно различать):**
+
+| Контур | Где | SQL | Роль для 0054 |
+|--------|-----|-----|----------------|
+| **dev / soft** | `alex-fedora` → `10.7.0.3:1433` (Docker `femsq-mssql`) | **2022** | Рабочая копия под FEMSQ Java: схема уже «наращена» Liquibase/dev-прогонами. **Не** источник истины по данным/составу полей Access. Использовать только как образец того, *что ожидает код FEMSQ*. |
+| **prod Access** | локальные таблицы в `.accdb` на рабочей станции prod | — | **Источник истины для метаданных ревизий** (`ra_a` и связанные, если локальные): состав полей, ключи, записи. Целевое состояние SQL на prod — **аналог Access**, плюс только необходимые поля FEMSQ (`adt_staging_log_level` и т.п.). |
+| **prod-fisheye** | `SPB-05-NV-SQL1`, БД `FishEye` | **2012 SP4** | Куда переносим/создаём SQL-контур для FEMSQ; inventory и DDL только здесь (SSMS/USB). |
+
+**Принцип синхронизации (уточнение 2026-07-30):**  
+`Access (prod) → schema/data mapping → MSSQL2012 на SPB-05-NV-SQL1`.  
+Docker `10.7.0.3` **не копировать** на prod как «правильную» схему; сверять его лишь с требованиями Java (`JdbcRaADao`, GraphQL). Расхождения Access↔Docker — ожидаемы.
 
 | # | Шаг 0054 | Статус |
 |---|----------|--------|
-| 0054.1 | Inventory FishEye: `OBJECT_ID`/схема для `ags.ra_a`, `ra_at`, `ra_dir`, `ra_f`, `ra_ft`, `ra_ft_s`, `ra_ft_sn`, staging (`ra_stg_*`) | ⏳ |
-| 0054.2 | Inventory Access: подтвердить локальные/linked таблицы (`TableDef.Connect`) для `ra_a`, `ra_at`, `ra_dir`, `ra_f` | ⏳ |
-| 0054.3 | Сформировать MSSQL2012 DDL-пакет **CREATE-if-missing** без `DROP`, без `CREATE OR ALTER`, без `USE [femsq]` | ⏳ |
-| 0054.4 | Импорт минимальных данных ревизий из Access в SQL с сохранением ключей (`adt_key`, справочники, директории, файлы) | ⏳ |
-| 0054.5 | Применить ALTER-пакеты `adt_staging_log_level` и `ralprtRow` только после существования базовых таблиц | ⏳ |
-| 0054.6 | Smoke FEMSQ prod: `audits`, health/GraphQL, dry-run type=5/type=3; Access **не перелинковывать** | ⏳ |
+| 0054.0 | Уточнить целевой контур: inventory **только** на `prod-fisheye` (`SPB-05-NV-SQL1`); не путать с Docker `10.7.0.3` | ✅ 2026-07-30 (seed + этот чат) |
+| 0054.0-SSMS | Оператор: SSMS → `SPB-05-NV-SQL1`, БД `FishEye`, версия ~11.0 (2012) | ✅ 2026-07-30: `FishEye` / `SPB-05-NV-SQL1` / `11.0.7507.2` / Standard 64-bit |
+| 0054.1 | Inventory FishEye **prod**: `OBJECT_ID`/схема для `ags.ra_a`, `ra_at`, `ra_dir`, `ra_f`, `ra_ft`, `ra_ft_s`, `ra_ft_sn`, staging (`ra_stg_*`) | ✅ 2026-07-30: **все 12 таблиц MISSING**; `ra_a` = TABLE_MISSING; `ralprtRow`/`oafptRow` MISSING |
+| 0054.1-dev | Inventory **dev** `10.7.0.3`: что уже есть у FEMSQ (справка по ожиданиям кода, не эталон Access) | ✅ 2026-07-30 (повтор: все 12 таблиц OK, SQL 16.0) |
+| 0054.2 | Inventory Access: подтвердить локальные/linked таблицы (`TableDef.Connect`) для `ra_a`, `ra_at`, `ra_dir`, `ra_f` | ✅ 2026-07-30: VBA упал (CurrentDb/3420); **Design+Data PNG** — `ra_a/at/dir/f/ft/ft_s/ft_sn` локальные (иконки без globe; `ags_*` — linked). Схемы полей зафиксированы |
+| 0054.3 | Сформировать MSSQL2012 DDL-пакет **CREATE-if-missing** (или сузить до ALTER-only, если таблицы на prod уже есть) без `DROP`, без `CREATE OR ALTER`, без `USE [femsq]` | ✅ 2026-07-30: пакет применён на prod (`14-04_16-11`); VERIFY_after: 15×OK, `adt_staging_log_level` OK, staging cols OK, seed `ra_ft=6`/`ra_at=1`/`sheet_conf=5`/`col_map=66` |
+| 0054.4 | Импорт минимальных данных ревизий из Access в SQL с сохранением ключей (`adt_key`, справочники, директории, файлы) — только если CREATE | ✅ 2026-07-30 prod (`16-54_17-02`): counts at=1/dir=12/ft=6/ft_st=6/ft_s=41/ft_sn=126/**ra_a=9**/**ra_f=141**; без ошибок |
+| 0054.5 | ALTER после базовых таблиц: `adt_staging_log_level`, `ralprtRow` (**26-0714**), плюс **26-0720** / **26-0721** (AgFee) | ✅ 2026-07-30 (`17-22_17-27`): before EXISTS; все ALTER **Skip**; after 6×OK |
+| 0054.6 | Smoke FEMSQ prod: thin JAR **≥0.1.0.152** (не оставлять 137 как целевой), dry-run type=5/3 (+ type=6 при готовности); Access **не перелинковывать** | ⏳ агент 0054.6.1–3 ✅; пакет `18-15.zip` (thin **153**); оператор с **0054.6.4** |
+
+**Чеклист 0054.6 / 0048 (2026-07-30):**
+
+| # | Мероприятие | Кто | Статус |
+|---|-------------|-----|--------|
+| 0054.6.1 | fequlib: клон + symlink `…/vue/feQuLib`; `npm install` в `femsq-frontend-q` (в prod `lib/` **не** копировать) | агент | ✅ 2026-07-30 |
+| 0054.6.2 | `./code/scripts/build-thin-jar.sh` → thin **≥152** (bump 152→**153**); fat+thin+`femsq-*` одной версии | агент | ✅ thin **0.1.0.153** + FemsqTable в static |
+| 0054.6.3 | §9.5.9: delta `lib/` vs prod 94 jar; пакет to_prod: thin + `femsq-database`/`femsq-reports` (+ delta только если нужно) | агент | ✅ delta только 137→153 `femsq-*`; zip `26-0730_to_prod/18-15.zip` |
+| 0054.6.4 | Оператор: подтвердить, что JVM на prod видит диск `X:` (как Access) для абсолютных `af_name` | оператор | ✅ 2026-07-30: Linux host `23121PC05780077`, mount `/mnt/Общий_(X)` (`grp`/`APPS`/`SCAN`/`Store`); zip `2026-07-30_18-45.zip` |
+| 0054.6.4a | Оператор: `ls` двух smoke-файлов под mount (до UPDATE SQL) | оператор | ✅ 2026-07-30 `18-54/result.zip`: type=5 **3,9M**, type=3 **1,2M** под `/mnt/Общий_(X)/grp/...` |
+| 0054.6.5 | SSMS: remap `af_name` 304/305 → `/mnt/Общий_(X)/…` + `af_execute`/`af_source`; Access `ra_a` не трогать | оператор | ✅ 2026-07-30 `19-08_19-13`: BEFORE `X:\` + flags 0; AFTER `/mnt/…_(X)/…` + `af_execute=1`/`af_source=1`; 19:12 MSK |
+| 0054.6.6 | Перенос zip на prod: заменить thin 137→153 + `femsq-*` в `lib/` | оператор | ✅ 2026-07-30 скрин `19-31`: `26-0716-1600` thin **153** + `lib` `femsq-database/reports` **153** |
+| 0054.6.7 | Запуск thin JAR; health + GraphQL | оператор | ⏳ блокер: `UnsupportedClassVersionError` 65.0 vs runtime 61.0 (нужна **Java 21**; `deploy_check` 153 ✅; `femsq.zip`) |
+| 0054.6.8 | dry-run SUMMARY type=5 (`adt_key` 2026 / dir=12) и type=3 | оператор | ⏳ |
+| 0054.6.9 | UI: AuditsView + экран с FemsqTable (fequlib в static) | оператор | ⏳ |
+| 0054.6.10 | Обновить §9.5.4 / §9.5.10.7 / 0054.6 / 0048 | агент | ⏳ после smoke |
+
+**Пути Excel:** type=5/3 в `ags.ra_f.af_name` — абсолютные `X:\…` (Access). На prod FEMSQ JVM = **Linux** (`23121PC05780077`): `X:` → `/mnt/Общий_(X)` (есть `grp`). `resolveFilePath` **не** мапит `X:` → mount — перед smoke UPDATE `af_name` 304/305 на Linux-пути (см. `01_smoke_prep_af_execute.sql`). Access не трогать.
 
 **Правило совместимости с текущим Access-процессом:** в рамках 0054 **не заменять** локальную Access `ra_a` на linked table. SQL-таблицы создаются для FEMSQ/GraphQL параллельно; полная миграция Access-linking — отдельная будущая задача после теста копии `.accdb`.
 
-**Критерий закрытия 0054:** на FishEye есть полный минимальный контур ревизий для FEMSQ; импортированы рабочие записи для `adt_key=14`/type=5 и type=3; `executeAudit` на prod запускается через FEMSQ; Access legacy продолжает работать без перелинковки `ra_a`.
+**Критерий закрытия 0054:** на **prod-fisheye** есть полный минимальный контур ревизий для FEMSQ; импортированы рабочие записи (Access keys: `ra_a=9`, в т.ч. 2026); `executeAudit` dry-run type=5 и type=3 на prod через FEMSQ (thin ≥152); Access legacy без перелинковки `ra_a`.
 
-**Первый запрос для нового чата** (копировать целиком; можно использовать на другой машине с тем же планом):
+**Первый запрос для нового чата** (копировать целиком; 2026-07-30, Access = источник истины):
 
 ```text
 Продолжаем проект FEMSQ. Работать по плану:
 docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md
+§9.5.11 / задача 0054.
 
-Нужна задача 0054 / §9.5.11:
-Prod bootstrap таблиц ревизий Access → MSSQL для FEMSQ.
+Нужна задача 0054: Prod bootstrap таблиц ревизий Access → MSSQL для FEMSQ.
 
-Контекст:
-- Prod lib и thin JAR 0.1.0.137 уже разложены и сверены.
-- Prod-приёмка ревизий заблокирована: на prod таблица ra_a, вероятно, локальная Access-таблица, а FEMSQ Java/GraphQL ожидает ags.ra_a в FishEye.
-- Access legacy должен продолжать работать как сейчас; локальную Access ra_a НЕ перелинковывать в рамках этой задачи.
-- Существующий code/config/sql/01_create_ra_tables.sql нельзя применять на prod как есть: там DROP TABLE и dev-контекст.
-- Нужно подготовить безопасный MSSQL2012 пакет CREATE-if-missing без DROP, без CREATE OR ALTER, без USE [femsq].
+Принцип:
+- Источник истины по метаданным ревизий — локальные таблицы MS Access на prod (ra_a и связанные, если локальные).
+- Целевой SQL — SPB-05-NV-SQL1 / БД FishEye / SQL Server 2012 SP4 (MSSQL2012-скрипты).
+- SQL на prod делать аналогичным состоянию Access + только поля, обязательные для FEMSQ (например adt_staging_log_level).
+- Docker 10.7.0.3 (SQL2022) — НЕ эталон и НЕ копировать на prod; использовать лишь как справку по ожиданиям Java/FEMSQ.
+- Локальную Access ra_a НЕ перелинковывать в рамках 0054.
+- code/config/sql/01_create_ra_tables.sql на prod не применять (DROP, USE femsq).
 
-Начать с inventory:
-1. FishEye: OBJECT_ID/схемы для ags.ra_a, ra_at, ra_dir, ra_f, ra_ft, ra_ft_s, ra_ft_sn и staging ra_stg_*.
-2. Access: какие таблицы ревизий локальные, какие linked через ODBC.
-3. Затем предложить минимальный DDL/import-план, чтобы FEMSQ мог запускать executeAudit type=5/type=3 на prod, не ломая текущий Access-процесс.
+Контекст деплоя:
+- Prod lib + thin JAR 0.1.0.137 уже разложены; код на main сейчас 0.1.0.152 (0055–0058 закрыты).
+- После появления базовых таблиц ALTER-очередь: adt_staging_log_level, пакет 26-0714 (ralprtRow), 26-0720, 26-0721.
+- Smoke на prod — thin JAR ≥0.1.0.152.
 
-Вести результаты обратно в текущий chat-plan §9.5.11 и задачу 0054.
+Сначала (по шагам, запрашивать результат у оператора):
+1. Подтвердить SSMS: сервер SPB-05-NV-SQL1, БД FishEye, версия ~11.0 (2012).
+2. 0054.1 — inventory SQL на prod (скрипт OBJECT_ID/COL_LENGTH из §9.5.11); прислать result sets.
+3. 0054.2 — inventory Access: какие ra_a/ra_at/ra_dir/ra_f локальные vs linked (TableDef.Connect); список полей локальных таблиц.
+4. По матрице Access ↔ prod SQL (± справка FEMSQ/Docker) предложить: CREATE-if-missing и/или ALTER-only + план импорта из Access с сохранением ключей.
+5. Вести статусы в §9.5.11 и задачу 0054 в project-development.json.
 ```
 
-**Следующий шаг фазы 9:** новый чат по **0054** → после закрытия 0054 вернуться к §9.5.10.7 / §9.5.5–9.5.8, задача **0048**.
+**Inventory-скрипт для SSMS на prod (0054.1) — выполнить и прислать result sets:**
 
+```sql
+SELECT DB_NAME() AS db_name,
+       @@SERVERNAME AS server_name,
+       CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(50)) AS product_version;
+
+SELECT t.name AS table_name,
+       CASE WHEN OBJECT_ID(N'ags.' + t.name, N'U') IS NOT NULL THEN N'OK' ELSE N'MISSING' END AS status
+FROM (VALUES
+    (N'ra_a'),(N'ra_at'),(N'ra_dir'),(N'ra_f'),(N'ra_ft'),(N'ra_ft_s'),(N'ra_ft_sn'),
+    (N'ra_stg_ra'),(N'ra_stg_ralp'),(N'ra_stg_ralp_sm'),(N'ra_stg_agfee'),(N'ra_execution')
+) t(name)
+ORDER BY table_name;
+
+SELECT CASE
+    WHEN OBJECT_ID(N'ags.ra_a', N'U') IS NULL THEN N'TABLE_MISSING'
+    WHEN COL_LENGTH(N'ags.ra_a', N'adt_staging_log_level') IS NULL THEN N'COLUMN_MISSING'
+    ELSE N'TABLE_AND_COLUMN_EXIST'
+END AS ra_a_verification;
+
+SELECT N'ralprtRow' AS col,
+       CASE WHEN COL_LENGTH(N'ags.ra_stg_ralp', N'ralprtRow') IS NULL THEN N'MISSING' ELSE N'OK' END AS status
+UNION ALL SELECT N'oafptRow',
+       CASE WHEN COL_LENGTH(N'ags.ra_stg_agfee', N'oafptRow') IS NULL THEN N'MISSING' ELSE N'OK' END;
+```
+
+**Следующий шаг фазы 9:** новый чат по **0054** (seed выше) → inventory на **SPB-05-NV-SQL1** → после закрытия 0054 вернуться к §9.5.10.7 / §9.5.5–9.5.8, задача **0048**.
 **Критерий завершения фазы 9:** perf 0046–0047 выполнены или отложены; **0049–0053** закрыты; UAT blocker в 9.3.3 закрыты (minor U8/U9); soft-deploy **G8** + **§9.5.0** ✅; prod thin JAR **0048**/§9.5.1+.
 
 **Задачи в `project-development.json`:** 0046, 0047, **0049**, **0050**, **0051**, **0052**, **0053**, 0048, **0054**.
@@ -1624,7 +1694,7 @@ Prod bootstrap таблиц ревизий Access → MSSQL для FEMSQ.
 
 ## Доп. факты (актуализировано 2026-07-14)
 
-- **Фаза 9 (v0.12.32):** … **§9.5.9** lib ✅; prod thin JAR/files ✅; DDL §9.5.2 остановлен: на prod `ra_a` вероятно локальная Access. Создана **0054 / §9.5.11** — bootstrap SQL-таблиц ревизий на FishEye без перелинковки Access; в плане зафиксирован первый запрос для нового чата; затем возврат к §9.5.10.7 / §9.5.5–9.5.8.
+- **Фаза 9 (v0.12.33):** … **0054**: источник истины — Access prod; Docker 10.7.0.3 — лишь справка по ожиданиям FEMSQ; inventory/DDL на `SPB-05-NV-SQL1`.
 
 - **0051 (2026-07-15):** §9.3.6 **закрыта**; U10/P5/G3 formal.
 
@@ -1655,5 +1725,5 @@ Prod bootstrap таблиц ревизий Access → MSSQL для FEMSQ.
 
 - **Ворота 9.4a (2026-07-16):** **G0–G8** ✅; thin parity (§9.2.8); soft-deploy rehearsal **§9.5.0** ✅ (`/home/alex/femsq-test/test-26-0716`).
 
-**Последнее обновление:** 2026-07-17  
-**Версия:** 0.12.32
+**Последнее обновление:** 2026-07-30  
+**Версия:** 0.12.33

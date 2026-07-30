@@ -1,8 +1,15 @@
 # Thin JAR: Быстрый старт
 
-> Статус на 2026-07-16: thin JAR **0.1.0.136** прошёл G8 и soft-deploy rehearsal  
-> (`/home/alex/femsq-test/test-26-0716`: GraphQL + CLI/UI `executeAudit` type=5/3).  
+> Статус на 2026-07-30: soft-deploy / G8 закрыты на thin **0.1.0.136–137**.  
+> Prod SQL-контур ревизий (**0054.0–0054.5**) ✅. Целевой smoke-JAR: **≥0.1.0.152** (сборка **153**).  
 > Фикс parity: явная регистрация `graphql/*.graphqls` в `GraphQlConfig`.
+
+### Frontend dependency: fequlib
+
+Пакет `fequlib` (`file:../../../feQuLib` → клон `/home/alex/projects/feQuLib`, symlink `…/java/spring/vue/feQuLib`) входит в **frontend static** при Vite/Maven build и попадает внутрь thin/fat JAR.
+
+- Перед `./scripts/build-thin-jar.sh`: `npm install` в `code/femsq-frontend-q` (должен появиться `node_modules/fequlib`).
+- На prod в каталог `lib/` **не** копировать fequlib — это не Java-jar.
 
 ## 📊 Результат оптимизации
 

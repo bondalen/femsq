@@ -2099,9 +2099,9 @@
                 "Подготовлен MSSQL2012 DDL-пакет CREATE-if-missing без DROP, без CREATE OR ALTER и без USE [femsq]",
                 "Импортированы минимальные данные ревизий для FEMSQ с сохранением ключей и связей; Access legacy продолжает работать",
                 "ALTER-пакеты adt_staging_log_level и ralprtRow применены после создания базовых таблиц",
-                "Prod smoke FEMSQ: GraphQL audits/executeAudit, dry-run type=5 и type=3 проходят на FishEye"
+                "Prod smoke FEMSQ: GraphQL audits/executeAudit, dry-run type=5 и type=3 проходят на FishEye; thin JAR ≥0.1.0.152"
               ],
-              "description": "Новый prod-блокер после раскладки thin JAR/lib 0.1.0.137: на рабочем Access-контуре таблица ra_a, вероятно, локальная, а FEMSQ Java/GraphQL ожидает серверную ags.ra_a и связанные таблицы ревизий в FishEye. Задача — безопасно создать SQL-контур ревизий для FEMSQ, не ломая текущий Access-процесс и не перелинковывая локальную ra_a.",
+              "description": "Prod-блокер Access→MSSQL. 0054.0–0054.5 ✅. 0054.6.1–3 ✅ (thin 153, zip 18-15). Оператор: 0054.6.4 X: → smoke type=5/3. Access ra_a не перелинковывать.",
               "links": {
                 "projectDocsRefs": [
                   "module:backend.web",
@@ -2112,7 +2112,7 @@
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#9511-prod-bootstrap-таблиц-ревизий-access--mssql-новая-задача-0054"
               },
               "created": "2026-07-17",
-              "lastUpdated": "2026-07-17"
+              "lastUpdated": "2026-07-30"
             }
           }
         },
@@ -2135,7 +2135,7 @@
                 "Приёмка prod: dry-run ревизий type=5 и type=3 с читаемыми аномалиями по строкам Excel",
                 "Документация: db-upgrade, журнал, chat-plan фаза 9"
               ],
-              "description": "Завершающий цикл: тестовое развёртывание на dev, приёмочное тестирование ревизий через веб-интерфейс (AllAgents + RALP), устранение замечаний (0049/0050/0051 — читаемость лога), вывод в продуктив методом thin JAR. Soft-deploy §9.5.0 закрыт 2026-07-16; dev-gate §9.5.10 закрыт 2026-07-17 (JAR 0.1.0.137, exec 1197); файлы 137 на prod разложены. Prod-приёмка ревизий заблокирована задачей 0054: bootstrap SQL-таблиц ревизий FishEye при сохранении локальной Access ra_a.",
+              "description": "Завершающий цикл thin JAR → prod. Soft-deploy/dev-gate 137 ✅; 0054 SQL 0–5 ✅; пакет thin 153 готов (18-15.zip). Текущее: оператор 0054.6.4+ / §9.5.4 smoke. Access ra_a не перелинковывать.",
               "links": {
                 "projectDocsRefs": [
                   "module:backend.web",
