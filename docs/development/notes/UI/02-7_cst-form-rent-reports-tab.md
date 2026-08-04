@@ -32,7 +32,9 @@ cst
 
 Статусы Au: 0 не представлен · 1 в работе · 2 направлен в бухгалтерию · 3 возвращён агенту.
 
-**Отправитель (`ralprOgSender`):** в БД встречается и `og.ogKey`, и ключ варианта имени `ogNmF.onfKey` (Stage 2 reconcile пишет `onfKey`). Подпись в UI: `og.ogNm`, иначе `ogNmF.onfOg`→`og.ogNm` / `onfName`. Не путать с `ogAgCs` (агент стройки).
+**Отправитель (`ralprOgSender`):** канон — `og.ogKey` (VBA/`FK_ralpRa_og`; с **0054.7** Stage 2 пишет `ogNmF.onfOg`). Исторически в Docker могли остаться значения `ogNmF.onfKey` до remap **0054.7.4**. Подпись в UI: `COALESCE(og.ogNm, ogViaNmF.ogNm, …)` — сначала JOIN по `ogKey`, иначе legacy `onfKey`→`onfOg`. Не путать с `ogAgCs` (агент стройки).
+
+**Дата док.:** 2026-07-24; уточнение отправителя — 2026-08-04 (0054.7.2).
 
 ## UI (Java)
 

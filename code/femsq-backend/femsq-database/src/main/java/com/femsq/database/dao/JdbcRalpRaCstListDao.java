@@ -18,6 +18,9 @@ import java.util.logging.Logger;
 
 /**
  * JDBC-реализация списка Access {@code ralpRaCst} через JOIN.
+ *
+ * <p>Подпись отправителя: {@code COALESCE(og.ogNm, …)} при {@code ralprOgSender = og.ogKey} (канон);
+ * fallback по {@code ogNmF.onfKey} для legacy-строк до remap 0054.7.4.
  */
 public class JdbcRalpRaCstListDao implements RalpRaCstListDao {
 

@@ -1708,8 +1708,20 @@ public class DefaultAuditStagingService implements AuditStagingService {
                 Integer integerValue = integerResult.value();
                 yield new TypedRead(integerValue == null ? null : integerValue != 0, null);
             }
-            default -> new TypedRead(cellReader.readString(cell), null);
+            default -> {
+                if (isReportNumberColumn(column)) {
+                    yield new TypedRead(cellReader.readReportNumber(cell), null);
+                }
+                yield new TypedRead(cellReader.readString(cell), null);
+            }
         };
+    }
+
+    /**
+     * Колонки «№ отчёта / № ОА»: numeric Excel → канон без {@code ,00} (VBA {@code CStr}).
+     */
+    private static boolean isReportNumberColumn(String column) {
+        return "ralprtNum".equals(column) || "rainRaNum".equals(column);
     }
 
     private TypedRead fromIntResult(

@@ -80,6 +80,27 @@ class AuditExcelCellReaderTest {
         assertThrows(AuditExcelException.class, () -> reader.readInt(cell));
     }
 
+    @Test
+    void readReportNumber_numericWhole_returnsIntegerStringWithoutFraction() {
+        Cell cell = numericCell(480);
+
+        assertEquals("480", reader.readReportNumber(cell));
+    }
+
+    @Test
+    void readReportNumber_stringWithZeroFraction_stripsFraction() {
+        Cell cell = stringCell("480,00");
+
+        assertEquals("480", reader.readReportNumber(cell));
+    }
+
+    @Test
+    void readReportNumber_slashForm_unchanged() {
+        Cell cell = stringCell("480/310326");
+
+        assertEquals("480/310326", reader.readReportNumber(cell));
+    }
+
     private Cell stringCell(String value) {
         var sheet = workbook.createSheet();
         var row = sheet.createRow(0);

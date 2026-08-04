@@ -3,13 +3,44 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2026-07-28T16:35:00+03:00",
+      "lastUpdated": "2026-08-04T16:16:00+03:00",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0064",
+      "nextTaskId": "0065",
       "items": {
+        "0064": {
+          "task": {
+            "displayName": "✅ Нормализация № отчёта RALP/ОА: 480 vs 480,00 (completed, high). № 0064",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Stage 1 пишет ralprtNum/rainRaNum без ложного хвоста ,00/.00 для целых numeric-ячеек (канон VBA CStr)",
+                "RalpReconcileService матчит domain 480 ↔ staging 480,00; составные номера 480/310326 без изменений",
+                "Unit-тесты ReportNumberNormalizer + readReportNumber + normalizeNum зелёные",
+                "Prod dry-run type=3 после redeploy: нет orphan №480 (ralprKey 16436 matched); thin JAR ≥0.1.0.155"
+              ],
+              "description": "False orphan 480 закрыт. Код + thin155 + soft-cycle + prod dry-run 14-22_15-10 ✅. Prod apply type=3 ✅ 15-38 (VERIFY 1542/1543, №480 на месте) — см. chat-plan §0054.9.",
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.web"
+                ],
+                "journalRefs": [
+                  "chat:chat-2026-08-04-001",
+                  "log-2026-08-04-001"
+                ],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#00548--задача-0064-нормализация-номера-отчёта-480-vs-48000-2026-08-04"
+              },
+              "created": "2026-08-04",
+              "lastUpdated": "2026-08-04",
+              "completed": "2026-08-04"
+            }
+          }
+        },
         "0063": {
           "task": {
             "displayName": "✅ Projectize: docs-registry и feQuLib как отдельные проекты (completed, high). № 0063",
@@ -2101,18 +2132,21 @@
                 "ALTER-пакеты adt_staging_log_level и ralprtRow применены после создания базовых таблиц",
                 "Prod smoke FEMSQ: GraphQL audits/executeAudit, dry-run type=5 и type=3 проходят на FishEye; thin JAR ≥0.1.0.152"
               ],
-              "description": "Prod-блокер Access→MSSQL. 0054.0–0054.5 ✅. 0054.6.1–3 ✅ (thin 153, zip 18-15). Оператор: 0054.6.4 X: → smoke type=5/3. Access ra_a не перелинковывать.",
+              "description": "Prod-блокер Access→MSSQL. 0054.0–5 SQL ✅; 0054.7 type=3 ✅ (onfOg, 0064, thin155, apply 15-38 → ralpRa_2026=1542). Далее 0054.7.11: dry-run type=5 + FemsqTable; закрытие 0054.6.9–10 / 0048. Access ra_a не перелинковывать.",
               "links": {
                 "projectDocsRefs": [
                   "module:backend.web",
                   "environment:prod-fisheye"
                 ],
-                "journalRefs": [],
+                "journalRefs": [
+                  "chat:chat-2026-08-04-001",
+                  "log-2026-08-04-001"
+                ],
                 "aiRuleRefs": [],
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#9511-prod-bootstrap-таблиц-ревизий-access--mssql-новая-задача-0054"
               },
               "created": "2026-07-17",
-              "lastUpdated": "2026-07-30"
+              "lastUpdated": "2026-08-04"
             }
           }
         },
@@ -2135,7 +2169,7 @@
                 "Приёмка prod: dry-run ревизий type=5 и type=3 с читаемыми аномалиями по строкам Excel",
                 "Документация: db-upgrade, журнал, chat-plan фаза 9"
               ],
-              "description": "Завершающий цикл thin JAR → prod. Soft-deploy/dev-gate 137 ✅; 0054 SQL 0–5 ✅; пакет thin 153 готов (18-15.zip). Текущее: оператор 0054.6.4+ / §9.5.4 smoke. Access ra_a не перелинковывать.",
+              "description": "Завершающий цикл thin JAR → prod. Thin 155 на prod; type=3 dry-run+apply ✅ (0054.9, ralp 1542/1543). Остаётся type=5 dry-run + FemsqTable (0054.7.11) и закрытие 0054. Access ra_a не перелинковывать.",
               "links": {
                 "projectDocsRefs": [
                   "module:backend.web",
@@ -2144,13 +2178,15 @@
                 ],
                 "journalRefs": [
                   "log-2026-07-16-003",
-                  "log-2026-07-17-001"
+                  "log-2026-07-17-001",
+                  "chat:chat-2026-08-04-001",
+                  "log-2026-08-04-001"
                 ],
                 "aiRuleRefs": [],
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#фаза-9-доработка-производительности-приёмка-и-вывод-в-продуктив"
               },
               "created": "2026-07-09",
-              "lastUpdated": "2026-07-17"
+              "lastUpdated": "2026-08-04"
             }
           }
         },

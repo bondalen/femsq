@@ -66,6 +66,33 @@ public class AuditExcelCellReader {
     }
 
     /**
+     * Читает номер отчёта/ОА как строку в каноне VBA {@code CStr} для целых numeric-ячеек.
+     * <p>
+     * Для целого {@code 480} возвращает {@code "480"} (не {@code "480,00"} от {@link DataFormatter}).
+     * Строковые значения дополнительно проходят {@link ReportNumberNormalizer#normalize(String)}.
+     * </p>
+     *
+     * @param cell ячейка Excel или {@code null}
+     * @return нормализованный номер или {@code null}
+     */
+    public String readReportNumber(Cell cell) {
+        if (cell == null) {
+            return null;
+        }
+        CellType effectiveType = cell.getCellType() == CellType.FORMULA
+                ? cell.getCachedFormulaResultType()
+                : cell.getCellType();
+        if (effectiveType == CellType.NUMERIC && !DateUtil.isCellDateFormatted(cell)) {
+            double value = cell.getNumericCellValue();
+            if (Math.abs(value - Math.rint(value)) < 1e-9) {
+                return Long.toString(Math.round(value));
+            }
+            return ReportNumberNormalizer.normalize(dataFormatter.formatCellValue(cell));
+        }
+        return ReportNumberNormalizer.normalize(readString(cell));
+    }
+
+    /**
      * Возвращает LocalDate из date-ячейки или текстового формата; при нераспознанном непустом тексте — {@link CellReadResult#parseError()}.
      */
     public CellReadResult<LocalDate> readDateResult(Cell cell) {

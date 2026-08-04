@@ -14,9 +14,45 @@ import org.springframework.stereotype.Service;
 
 /**
  * Stage 2a/2b сервис для type 3 ({@code ra_stg_ralp}, {@code ra_stg_ralp_sm}).
+ *
+ * <p>Отправитель резолвится через {@code ags.ogNmF} по имени/филиалу (как VBA {@code Form_ra_a.cls}),
+ * но в staging пишется {@code onfOg} (= {@code og.ogKey}), а не {@code onfKey}.
+ * Так совпадает с доменом Access ({@code ralpRa.ralprOgSender} → FK {@code FK_ralpRa_og})
+ * и с ключом матчинга reconcile (0054.7 / RCA prod dry-run 2026-08-04).
  */
 @Service
 public class RalpStage2Service {
+
+    /**
+     * VBA: {@code ogID = rsSender!onfOg}. Домен/FK: {@code ralprOgSender → og.ogKey}.
+     * Package-visible для unit-теста 0054.7.3.
+     */
+    static final String SQL_OG_SENDER = """
+            UPDATE stg
+            SET stg.ralprtOgSender = og.onfOg
+            FROM ags.ra_stg_ralp stg
+            INNER JOIN ags.ogNmF og
+                ON LTRIM(RTRIM(ISNULL(stg.ralprtOgSenderStr, N''))) = LTRIM(RTRIM(ISNULL(og.onfName, N'')))
+               AND (
+                    LTRIM(RTRIM(ISNULL(stg.ralprtOgBranchStr, N''))) = LTRIM(RTRIM(ISNULL(og.onfNameExt, N'')))
+                    OR LTRIM(RTRIM(ISNULL(stg.ralprtOgBranchStr, N''))) = N''
+               )
+            WHERE stg.ralprt_exec_key = ?
+              AND stg.ralprtOgSender IS NULL
+              AND og.onfOg IS NOT NULL
+            """;
+
+    /** Package-visible для unit-теста 0054.7.3. */
+    static final String SQL_SENDER_SM = """
+            UPDATE sm
+            SET sm.ralprsSender = og.onfOg
+            FROM ags.ra_stg_ralp_sm sm
+            INNER JOIN ags.ogNmF og
+                ON LTRIM(RTRIM(ISNULL(sm.ralprsSenderStr, N''))) = LTRIM(RTRIM(ISNULL(og.onfName, N'')))
+            WHERE sm.ralprs_exec_key = ?
+              AND sm.ralprsSender IS NULL
+              AND og.onfOg IS NOT NULL
+            """;
 
     private final ConnectionFactory connectionFactory;
 
@@ -38,30 +74,6 @@ public class RalpStage2Service {
                   AND stg.ralprtCstAgPn IS NULL
                 """;
 
-        String sqlOgSender = """
-                UPDATE stg
-                SET stg.ralprtOgSender = og.onfKey
-                FROM ags.ra_stg_ralp stg
-                INNER JOIN ags.ogNmF og
-                    ON LTRIM(RTRIM(ISNULL(stg.ralprtOgSenderStr, N''))) = LTRIM(RTRIM(ISNULL(og.onfName, N'')))
-                   AND (
-                        LTRIM(RTRIM(ISNULL(stg.ralprtOgBranchStr, N''))) = LTRIM(RTRIM(ISNULL(og.onfNameExt, N'')))
-                        OR LTRIM(RTRIM(ISNULL(stg.ralprtOgBranchStr, N''))) = N''
-                   )
-                WHERE stg.ralprt_exec_key = ?
-                  AND stg.ralprtOgSender IS NULL
-                """;
-
-        String sqlSenderSm = """
-                UPDATE sm
-                SET sm.ralprsSender = og.onfKey
-                FROM ags.ra_stg_ralp_sm sm
-                INNER JOIN ags.ogNmF og
-                    ON LTRIM(RTRIM(ISNULL(sm.ralprsSenderStr, N''))) = LTRIM(RTRIM(ISNULL(og.onfName, N'')))
-                WHERE sm.ralprs_exec_key = ?
-                  AND sm.ralprsSender IS NULL
-                """;
-
         String sqlStatus = """
                 UPDATE stg
                 SET stg.ralprtStatus =
@@ -79,8 +91,8 @@ public class RalpStage2Service {
             connection.setAutoCommit(false);
             try {
                 int resolvedCst = executeUpdate(connection, sqlCstAgPn, executionKey);
-                int resolvedOg = executeUpdate(connection, sqlOgSender, executionKey);
-                int resolvedSmSender = executeUpdate(connection, sqlSenderSm, executionKey);
+                int resolvedOg = executeUpdate(connection, SQL_OG_SENDER, executionKey);
+                int resolvedSmSender = executeUpdate(connection, SQL_SENDER_SM, executionKey);
                 int computedStatus = executeUpdate(connection, sqlStatus, executionKey);
                 UnresolvedStats stats = loadUnresolvedStats(connection, executionKey);
                 connection.commit();

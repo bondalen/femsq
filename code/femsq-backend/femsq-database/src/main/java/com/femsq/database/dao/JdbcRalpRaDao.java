@@ -56,7 +56,8 @@ public class JdbcRalpRaDao implements RalpRaDao {
     }
 
     /**
-     * SELECT с подписью отправителя: {@code og.ogKey}, иначе вариант имени {@code ogNmF.onfKey}→{@code onfOg}.
+     * SELECT с подписью отправителя: канон {@code og.ogKey}→{@code og.ogNm};
+     * fallback legacy {@code ogNmF.onfKey}→{@code onfOg}→{@code og.ogNm} (dev-домен до 0054.7.4).
      */
     private String selectWithSenderLabel() {
         String p = schemaPrefix();

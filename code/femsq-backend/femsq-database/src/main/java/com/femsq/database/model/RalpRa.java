@@ -12,8 +12,8 @@ import java.util.Objects;
  * @param ralprNum       номер
  * @param ralprDate      дата
  * @param ralprCstAgPn   САК ({@code cstAgPn.cstapKey})
- * @param ralprOgSender  отправитель ({@code og.ogKey})
- * @param ogNm           наименование отправителя ({@code og} или вариант {@code ogNmF}, только чтение)
+ * @param ralprOgSender  отправитель (канон {@code og.ogKey}; Stage 2 с 0054.7 пишет {@code onfOg})
+ * @param ogNm           наименование отправителя (чтение: сначала {@code og}, иначе legacy {@code ogNmF})
  * @param ralprY         год (read-only, computed)
  * @param ralprM         месяц (read-only, computed)
  */

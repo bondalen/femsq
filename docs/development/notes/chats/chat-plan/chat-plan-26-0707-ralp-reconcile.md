@@ -1,9 +1,9 @@
 # План работы: Reconcile для `af_type=3` (Аренда земли, RALP)
 
 **Дата создания:** 2026-07-07  
-**Последнее обновление:** 2026-07-30  
+**Последнее обновление:** 2026-08-04  
 **Проект:** FEMSQ  
-**Версия плана:** 0.12.33
+**Версия плана:** 0.12.35
 
 ---
 
@@ -1174,8 +1174,8 @@ Badge `_START` был всегда «+». **Решено:** CSS `details[open] >
 | 9.5.1 | **Pre-flight prod:** бэкап БД FishEye; проверка `lib/` и версий (`LibraryCompatibilityChecker` / `lib-manifest.json`) | ⏳ |
 | 9.5.2 | **SQL на prod (2012):** DDL `adt_staging_log_level`; DDL **`ralprtRow`** из `MSSQL2012/` | ⏳ в архиве `prod-thin-137-26-0717.zip` |
 | 9.5.3 | Сборка thin JAR **0.1.0.137** | ✅ |
-| 9.5.4 | **Перенос на prod:** thin JAR + `femsq-*` | ⏳ пакет готов: thin **0.1.0.153** (`18-15.zip`); ждём оператора 0054.6.4+ |
-| 9.5.5 | Остановка старого процесса; запуск thin JAR (`java -cp "femsq-web-*-thin.jar;lib/*" org.springframework.boot.loader.launch.JarLauncher` или скрипт prod) | ⏳ (репетиция: `run-with-external-libs.sh` в `test-26-0716`) |
+| 9.5.4 | **Перенос на prod:** thin JAR + `femsq-*` | ⏳ на prod **155** + Java 23; type=3 apply ✅ (0054.9); type=5 — ⏳ |
+| 9.5.5 | Остановка старого процесса; запуск thin JAR (`java -cp …JarLauncher` или скрипт/`jdk-23.0.1`) | ✅ 2026-07-30 prod (`20-09`); soft: `run-with-external-libs.sh` в `test-26-0716` |
 | 9.5.6 | Проверка логов: нет ошибок `LibraryCompatibilityChecker`; `/api/v1/connection/status` = 200 | ✅ soft: connection + `POST /graphql` = 200 |
 | 9.5.7 | **Приёмка:** один dry-run ревизии type=5 (SUMMARY) и type=3 под контролем оператора; откат thin JAR при сбое | ✅ soft: CLI **1193**/**1194** + UI sign-off |
 | 9.5.8 | Оформить `docs/deployment/db-upgrade-{дата}.md` и запись в журнале | ⏳ (prod); soft зафиксирован в journal |
@@ -1541,7 +1541,7 @@ Badge `_START` был всегда «+». **Решено:** CSS `details[open] >
 | 9.5.10.4 | Soft-deploy smoke: health, GraphQL, dry-run type=5 | ✅ exec **1197**: 102 с, reconcile dry-run, errors=0 |
 | 9.5.10.5 | Excel/POI: dry-run с SMB-файлом (Stage 1) | ✅ POI прочитал `.xlsm`, inserted=**1720** (лист «Отчеты») |
 | 9.5.10.6 | §9.5.9: JDBC — оставить prod 13.2.0; архив №3 не применять | ✅ |
-| 9.5.10.7 | Prod: thin JAR (≥152, цель **153**) + SQL-контур ревизий (**0054** 0–5 ✅) + smoke type=5/3 | ⏳ пакет **153** готов (`18-15.zip`); оператор 0054.6.4+ |
+| 9.5.10.7 | Prod: thin JAR (**155**) + SQL-контур ревизий (**0054** 0–5 ✅) + smoke type=5/3 | ⏳ type=3 dry-run+apply ✅ (0054.9); type=5 — ⏳ 0054.7.11; материалы `00_26-0804/` |
 
 **Smoke 137 (2026-07-17, после монтирования шары):**
 - Сервер: thin **0.1.0.137** + `lib/` (94 jar), лог `logs/app_26-0717-137-smoke.log`
@@ -1562,7 +1562,8 @@ Badge `_START` был всегда «+». **Решено:** CSS `details[open] >
 
 **Возобновление (2026-07-30, Variant A):** новый чат + уточнение целевого SQL-контура перед DDL. Работы по 0054.1–0054.6 до 2026-07-30 **не начинались** (seed только зафиксирован).
 
-**Сеанс 2026-07-30 (этот чат):** 0054.0–0054.5 ✅. Осталось **0054.6**: smoke FEMSQ prod thin JAR ≥0.1.0.152, dry-run type=5/3; Access `ra_a` не перелинковывать. Пути `ra_dir.dir` пока `X:\\...` — учесть при smoke.
+**Сеанс 2026-07-30:** 0054.0–0054.5 ✅; thin **153** на prod + Java 23.
+**Сеанс 2026-08-04:** dry-run type=3 на prod → RCA `onfKey`≠`onfOg` → блок **0054.7** (fix Stage 2 + минимальный redeploy **154**) → **0064** (нормализация №, thin **155**) → **prod apply type=3** ✅ (`15-38`, VERIFY OK, `ralpRa_2026=1542`). Рабочая папка: `…/26-0730_to_prod/00_26-0804/`. Access `ra_a` не перелинковывать.
 
 **Контекст:**
 - на prod `lib/` и thin JAR **0.1.0.137** разложены корректно; код на `main` уже **0.1.0.152** (после 0055–0058);
@@ -1594,9 +1595,10 @@ Docker `10.7.0.3` **не копировать** на prod как «правил�
 | 0054.3 | Сформировать MSSQL2012 DDL-пакет **CREATE-if-missing** (или сузить до ALTER-only, если таблицы на prod уже есть) без `DROP`, без `CREATE OR ALTER`, без `USE [femsq]` | ✅ 2026-07-30: пакет применён на prod (`14-04_16-11`); VERIFY_after: 15×OK, `adt_staging_log_level` OK, staging cols OK, seed `ra_ft=6`/`ra_at=1`/`sheet_conf=5`/`col_map=66` |
 | 0054.4 | Импорт минимальных данных ревизий из Access в SQL с сохранением ключей (`adt_key`, справочники, директории, файлы) — только если CREATE | ✅ 2026-07-30 prod (`16-54_17-02`): counts at=1/dir=12/ft=6/ft_st=6/ft_s=41/ft_sn=126/**ra_a=9**/**ra_f=141**; без ошибок |
 | 0054.5 | ALTER после базовых таблиц: `adt_staging_log_level`, `ralprtRow` (**26-0714**), плюс **26-0720** / **26-0721** (AgFee) | ✅ 2026-07-30 (`17-22_17-27`): before EXISTS; все ALTER **Skip**; after 6×OK |
-| 0054.6 | Smoke FEMSQ prod: thin JAR **≥0.1.0.152** (не оставлять 137 как целевой), dry-run type=5/3 (+ type=6 при готовности); Access **не перелинковывать** | ⏳ агент 0054.6.1–3 ✅; пакет `18-15.zip` (thin **153**); оператор с **0054.6.4** |
+| 0054.6 | Smoke FEMSQ prod: thin JAR **≥0.1.0.152** (не оставлять 137 как целевой), dry-run type=5/3 (+ type=6 при готовности); Access **не перелинковывать** | ⏳ thin **155** на prod; type=3 dry-run+**apply** ✅ (0054.9); type=5 — ⏳ 0054.7.11 |
+| 0054.7 | **Fix Stage 2 отправителя:** `ogNmF.onfOg` + 0064 + apply type=3 | ✅ 2026-08-04 type=3 (dry-run+apply); type=5 → 0054.7.11 |
 
-**Чеклист 0054.6 / 0048 (2026-07-30):**
+**Чеклист 0054.6 / 0048 (2026-07-30 … 2026-08-04):**
 
 | # | Мероприятие | Кто | Статус |
 |---|-------------|-----|--------|
@@ -1607,12 +1609,84 @@ Docker `10.7.0.3` **не копировать** на prod как «правил�
 | 0054.6.4a | Оператор: `ls` двух smoke-файлов под mount (до UPDATE SQL) | оператор | ✅ 2026-07-30 `18-54/result.zip`: type=5 **3,9M**, type=3 **1,2M** под `/mnt/Общий_(X)/grp/...` |
 | 0054.6.5 | SSMS: remap `af_name` 304/305 → `/mnt/Общий_(X)/…` + `af_execute`/`af_source`; Access `ra_a` не трогать | оператор | ✅ 2026-07-30 `19-08_19-13`: BEFORE `X:\` + flags 0; AFTER `/mnt/…_(X)/…` + `af_execute=1`/`af_source=1`; 19:12 MSK |
 | 0054.6.6 | Перенос zip на prod: заменить thin 137→153 + `femsq-*` в `lib/` | оператор | ✅ 2026-07-30 скрин `19-31`: `26-0716-1600` thin **153** + `lib` `femsq-database/reports` **153** |
-| 0054.6.7 | Запуск thin JAR; health + GraphQL | оператор | ⏳ блокер: `UnsupportedClassVersionError` 65.0 vs runtime 61.0 (нужна **Java 21**; `deploy_check` 153 ✅; `femsq.zip`) |
-| 0054.6.8 | dry-run SUMMARY type=5 (`adt_key` 2026 / dir=12) и type=3 | оператор | ⏳ |
+| 0054.6.7 | Запуск thin JAR; health + GraphQL | оператор | ✅ 2026-07-30: Java **`jdk-23.0.1`** (не PATH java 17); ярлыки/скрипты `20-09`; health OK |
+| 0054.6.8 | dry-run SUMMARY type=5 (`adt_key` 2026 / dir=12) и type=3 | оператор | ✅ type=3 dry-run **154** (`12-35_13-24`, 13:09): 1210 unchanged / 46 NEW / orphan **1** (не 1217); type=5 — ⏳ 0054.7.11 |
 | 0054.6.9 | UI: AuditsView + экран с FemsqTable (fequlib в static) | оператор | ⏳ |
-| 0054.6.10 | Обновить §9.5.4 / §9.5.10.7 / 0054.6 / 0048 | агент | ⏳ после smoke |
+| 0054.6.10 | Обновить §9.5.4 / §9.5.10.7 / 0054.6 / 0048 | агент | ⏳ частично 2026-08-04 (type=3/apply); fully после type=5 |
+
+**Диагностика type=3 на prod (2026-08-04, папка `00_26-0804/`):**
+
+| Факт | Значение |
+|------|----------|
+| Excel | тот же MD5, что тестовый july `(2026)_Аренда_рабочий.xlsx` |
+| Staging / domain | 1262 / `ralpRa`=**1217** |
+| `matched_full_key` | **0**; `num_date_cst`=**1216**; `num_date_og`=**0** |
+| Примеры | stg `12`→dom `3`; stg `13`→dom `172` |
+| Корень | Stage 2 пишет `ogNmF.**onfKey**`; VBA/Access и FK `FK_ralpRa_og` — `**onfOg**` (=`og.ogKey`) |
+| Почему тест «молчал» | домен 420 на Docker сам записан FEMSQ с `onfKey` → ключи согласованы ошибочно |
 
 **Пути Excel:** type=5/3 в `ags.ra_f.af_name` — абсолютные `X:\…` (Access). На prod FEMSQ JVM = **Linux** (`23121PC05780077`): `X:` → `/mnt/Общий_(X)` (есть `grp`). `resolveFilePath` **не** мапит `X:` → mount — перед smoke UPDATE `af_name` 304/305 на Linux-пути (см. `01_smoke_prep_af_execute.sql`). Access не трогать.
+
+##### 0054.7. Fix `ralprtOgSender` / `onfOg` + минимальный redeploy (2026-08-04)
+
+**Цель:** Stage 2 и INSERT reconcile пишут отправителя как VBA (`onfOg` → `og.ogKey`), чтобы dry-run type=3 на prod давал match ≈1216, insert ≈46, orphan ≈0 — без массового DELETE+INSERT.
+
+**Не делать:** массовый UPDATE `ags.ralpRa.ralprOgSender` на prod под `onfKey` (сломает FK/`og` и Access); apply type=3 до повторного dry-run с нормальным match.
+
+| # | Мероприятие | Кто | Статус |
+|---|-------------|-----|--------|
+| 0054.7.0 | Зафиксировать RCA в плане + материалы `00_26-0804/` (`11-14_11-29`, `11-14_12-02`) | агент | ✅ 2026-08-04 |
+| 0054.7.1 | Код: `RalpStage2Service` — `SET ralprtOgSender = og.onfOg` (и `ralprsSender = og.onfOg` для `ra_stg_ralp_sm`); комментарий VBA/`FK_ralpRa_og` | агент | ✅ 2026-08-04 |
+| 0054.7.2 | Согласовать UI/DAO подписи отправителя (уже dual JOIN `og`/`ogNmF`) — убедиться, что после фикса первичный путь = `og.ogKey`; обновить `docs/.../02-7_cst-form-rent-reports-tab.md` одной фразой | агент | ✅ 2026-08-04: канон `ogKey`; dual JOIN оставлен как legacy fallback; док + javadoc |
+| 0054.7.3 | Unit/IT: Stage 2 резолв → `onfOg`; при наличии — SQL-симуляция match july stg↔domain как на prod (ожидание full_key≫0) | агент | ✅ 2026-08-04: `RalpStage2OgSenderSqlTest`; IT `RalpOgSenderKeyMatchIT` (exec 1183→match **420**) |
+| 0054.7.4 | **Лечение тестовой БД (`10.7.0.3`):** домен 420/`ralpRaAu` записан FEMSQ с `onfKey` — после 0054.7.1 перестанет матчиться с Stage 2. One-shot **только Docker**: `UPDATE r SET r.ralprOgSender = n.onfOg FROM ags.ralpRa r INNER JOIN ags.ogNmF n ON n.onfKey = r.ralprOgSender WHERE r.ralprY=2026 AND …`; проверить FK на `og.ogKey`, counts 420; SQL-симуляция match july stg↔domain → full_key≈420. **Prod FishEye не трогать** (там уже `ogKey`) | агент | ✅ 2026-08-04: `UPDATE` **420** rows; `as_ogKey=420`, orphan FK=0; sim vs exec 1183: raw stg (ещё `onfKey`) full=0; via `onfOg` **full_key=420**, orphan=0. `ralpRaAu` без поля sender — не трогали. Prod не меняли |
+| 0054.7.5 | Soft dry-run type=3 на Docker **после** 0054.7.4 (март-база + july file): ожидание ~420 unchanged / ~828 insert / ~0 orphan | агент | ✅ 2026-08-04: thin/fat **0.1.0.154**, `executeAudit(14)` **exec=1213** COMPLETED ~54с; `[RALP] done: raInserted=828 unchanged=405 … raDeleted=0 … stagingLinked=420` invalid=14; SQL sim full_key=**420** / insert=**828** / orphan=**0**; stg `ralprtOgSender`→`og.ogKey` (топ 172/3/…) |
+| 0054.7.6 | Bump версии (153→**154**), `build-thin-jar.sh`; §9.5.9: delta `lib/` — ожидаемо только `femsq-web` thin + при монорепо-version bump `femsq-database`/`femsq-reports` **той же** версии (без новых 3rd-party jar) | агент | ✅ 2026-08-04: **0.1.0.154**; thin + `femsq-database`/`femsq-reports` 154 (собраны вместе с 0054.7.5) |
+| 0054.7.7 | Пакет минимальный в `00_26-0804/`: thin **154** + при необходимости два `femsq-*` 154; README/скрипты start (Java 23); **без** полного `lib/` | агент | ✅ 2026-08-04: `00_26-0804/12-35.zip` (пароль `au#LL891`) — thin + `lib-updates` femsq-* + scripts/desktop Java23 |
+| 0054.7.8 | Оператор: Stop → заменить артефакты 153→154 → Start (`jdk-23.0.1`) → health | оператор | ✅ 2026-08-04: thin **154** на prod; health OK (`12-35_13-24`) |
+| 0054.7.9 | Оператор: dry-run type=3 (`adt_key=12`, файл аренды 2026) — критерий: `matched`/`без изменений` ≫0, **нет** списка «лишние 1217», insert порядка десятков (не 1262) | оператор | ✅ 2026-08-04 `12-35_13-24`: Stage2 og=**1262**/0 NULL; **без изменений=1210**; RA+46 / Au+1 / AuΔ5; **RA удалено=0**; лишние **1** (№480), не 1217 — RCA: Excel row 579 numeric→`480,00` vs domain `ralprKey=16436` `480` (cst=660, og=3, 31.03.2026); см. **0064** |
+| 0054.7.10 | Повтор SSMS diag / dry-run после 0064: orphan≈0, match ≫0 | оператор | ✅ 2026-08-04: dry-run `14-22_15-10` — без изменений **1211**, RA удалено **0**, нет «лишние»; №480 matched |
+| 0054.7.11 | dry-run type=5 (файл свода) + UI FemsqTable; закрыть 0054.6.8–10 / §9.5.4 / 0048 gate | оператор+агент | ⏳ |
+| 0054.7.12 | Prod **apply** type=3 (файл 04.08) после dry-run 0064 + пакет backup/verify | оператор+агент | ✅ 2026-08-04 — см. **0054.9** |
+
+##### 0054.8 / задача 0064. Нормализация номера отчёта (`480` vs `480,00`) (2026-08-04)
+
+**Цель:** единый строковый канон номера (как VBA `CStr` для целых): Stage 1 не пишет `480,00`; reconcile матчит domain `480` ↔ staging `480,00`; без ложного orphan.
+
+| # | Мероприятие | Кто | Статус |
+|---|-------------|-----|--------|
+| 0064.1 | `ReportNumberNormalizer` + `AuditExcelCellReader.readReportNumber`; Stage 1 для `ralprtNum`/`rainRaNum` | агент | ✅ 2026-08-04 |
+| 0064.2 | `RalpReconcileService`: normalize staging+domain + `normalizeNum` (`,00` + `-`→`/`) | агент | ✅ 2026-08-04 |
+| 0064.3 | Unit-тесты: `480` / `480,00` / `480/310326` | агент | ✅ 2026-08-04 |
+| 0064.4 | Redeploy thin ≥155 + dry-run type=3: orphan №480 исчез, без изменений ≥1211 | оператор | ✅ 2026-08-04 `14-22_15-10`: thin **155**; файл **04.08** (stg=1542); Stage2 1542/0 NULL; **без изменений=1211**; RA+**325** / Au+1 / AuΔ5; **RA удалено=0**; **нет** блока «лишние»; orphan **480** исчез |
+| 0064.5 | (следствие) Prod apply type=3 по dry-run 0064 — см. **0054.9** | оператор | ✅ 2026-08-04 `15-38` |
+
+**Критерий закрытия 0064:** unit OK; на prod после redeploy dry-run type=3 без лишнего `480` (match `16436`). **Закрыта 2026-08-04** (dry-run); apply зафиксирован в 0054.9.
+
+##### 0054.9. Prod apply type=3 RALP (год 2026) с backup/verify (2026-08-04)
+
+**Контекст:** thin **0.1.0.155**; Excel `/mnt/Общий_(X)/grp/F644/All/ОСАИ/(2026)_Аренда_рабочий.xlsx` (файл **04.08**); пакет SQL `docs/development/notes/sql/26-0804-0054-ralp-apply-rollback/`; передача `…/00_26-0804/15-38*`.
+
+| # | Шаг | Артефакт / лог | Статус |
+|---|-----|----------------|--------|
+| 1 | BACKUP `ralpRa`/`ralpRaAu` → `*_bak_20260804` | `15-38_15-47` | ✅ ra/au bak=**1217**; max_ralprKey=**17056**, max_ralpraKey=**19532** |
+| 2 | UI apply: AddRA=1, type=3, SUMMARY, VERBOSE Stage1 | `15-38_15-59.txt` | ✅ **применено=да**; RA+**325**, RA_AU+**326**, AuΔ**5**, unchanged=**1211**; RA/Au удалено=**0**; Stage2 1542/0 NULL; нет «лишние»; изменено строк=**656** (~5 с) |
+| 3 | VERIFY vs bak | `15-38_16-06` (PNG) | ✅ `ra_now`/**1542**, `ra_bak`/**1217**, `ra_delta`/**325**; `au_now`/**1543**, `au_bak`/**1217**; `new_ra_keys`/**325** (с 17057); №**480** на месте (`ralprKey=16436`); `DONE verify` 16:05 |
+| 4 | Снять AddRA в UI; rollback **не** запускать | — | ✅ (оператору) |
+
+**Итог домена prod (2026):** `ags.ralpRa` = **1542**, `ags.ralpRaAu` = **1543**. Откат только из `*_bak_20260804` (не Docker march). Bak оставить 1–2 дня.
+
+**Критерий закрытия 0054.7:** prod dry-run type=3 без ложного массового DELETE; SSMS/verify match ≈ domain∩excel; thin ≥154; **apply 2026 выполнен и сверен** (0054.9). **0054.7 закрыт по type=3**; остаётся **0054.7.11** (type=5 + FemsqTable) для полного закрытия 0054/0048.
+
+**Минимальные артефакты на prod (0054.7.7–8):**
+
+| Артефакт | Нужен? | Примечание |
+|----------|--------|------------|
+| `femsq-web-*-15x-SNAPSHOT-thin.jar` | **да** | на prod сейчас **155** (0064); 154 = `onfOg` |
+| `lib/femsq-database` / `femsq-reports` той же версии | да при bump | иначе classpath version skew |
+| Остальные 92 jar в `lib/` | **нет** | без изменений |
+| DDL / Access / remap `ralpRa` на FishEye **prod** | **нет** | домен уже с `og.ogKey` |
+| Remap `ralpRa` на Docker **test** (`10.7.0.3`) | **да** (0054.7.4) | иначе soft-smoke после фикса снова даст 0 match |
 
 **Правило совместимости с текущим Access-процессом:** в рамках 0054 **не заменять** локальную Access `ra_a` на linked table. SQL-таблицы создаются для FEMSQ/GraphQL параллельно; полная миграция Access-linking — отдельная будущая задача после теста копии `.accdb`.
 
@@ -1712,9 +1786,8 @@ UNION ALL SELECT N'oafptRow',
 
 - **Smoke SUMMARY SMB (2026-07-09):** март: 1140 ~183 с → 1144 **180 с** (118) → 1145 **155 с** (119, 0046) → 1146 **150 с** (120, 0047 dry-run); июль 1143 **363 с**.
 
-- Объём `ags.ralpRa`: **~12 386 строк** (2020–2026), `ags.ralpRaAu`: **~12 379 строк**.
-- **`ralpRa` за 2026 год: 1248 записей** (после apply, exec_key=1133).
-- Staging `ags.ra_stg_ralp`: заполняется при каждом прогоне (~1262 строки на exec_key).
+- Объём `ags.ralpRa` / `ralpRaAu`: на **prod** после apply 2026-08-04: `ralpRa_2026`=**1542**, `ralpRaAu_2026`=**1543** (bak 1217/1217). Исторически на Docker после apply 1133: ~1248/1248.
+- Staging `ags.ra_stg_ralp`: на prod apply 04.08 — **1542** строк (ранее july ~1262).
 - Таблицы с маской `*ralp*` в схеме `ags`: `ra_stg_ralp`, `ra_stg_ralp_sm`, `ralp`, `ralpGr`, `ralpOld`, `ralpRa`, `ralpRaAu`.
 - Доменной таблицы для сводного листа `учет_аренды` нет — только `ags.ra_stg_ralp_sm`.
 - `ralprtArrived` в `ra_col_map` подтверждён (rcm_key=130, ординал=12).
@@ -1725,5 +1798,7 @@ UNION ALL SELECT N'oafptRow',
 
 - **Ворота 9.4a (2026-07-16):** **G0–G8** ✅; thin parity (§9.2.8); soft-deploy rehearsal **§9.5.0** ✅ (`/home/alex/femsq-test/test-26-0716`).
 
-**Последнее обновление:** 2026-07-30  
-**Версия:** 0.12.33
+- **0054.9 (2026-08-04):** prod apply type=3 ✅ — thin **155**, backup→apply→verify; `15-38_15-47` / `15-38_15-59` / `15-38_16-06`; домен 1542/1543; №480 сохранён; откат не нужен.
+
+**Последнее обновление:** 2026-08-04  
+**Версия:** 0.12.36

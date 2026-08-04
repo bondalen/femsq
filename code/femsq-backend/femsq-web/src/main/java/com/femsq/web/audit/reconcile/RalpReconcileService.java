@@ -4,6 +4,7 @@ import com.femsq.database.connection.ConnectionFactory;
 import com.femsq.web.audit.AuditExecutionContext;
 import com.femsq.web.audit.AuditLogLevel;
 import com.femsq.web.audit.AuditLogScope;
+import com.femsq.web.audit.excel.ReportNumberNormalizer;
 import com.femsq.web.audit.staging.StagingLogLevel;
 import com.femsq.web.audit.stage2.RalpFkAnomalyRow;
 import com.femsq.web.audit.stage2.RalpStage2Service;
@@ -297,7 +298,7 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
                     row.stgKey = rs.getLong("ralprt_key");
                     int excelRow = rs.getInt("ralprtRow");
                     row.excelRow = rs.wasNull() ? null : excelRow;
-                    row.num = rs.getString("ralprtNum");
+                    row.num = ReportNumberNormalizer.normalize(rs.getString("ralprtNum"));
                     Date d = rs.getDate("ralprtDate");
                     row.date = (d != null) ? d.toLocalDate() : null;
                     int cst = rs.getInt("ralprtCstAgPn");
@@ -340,7 +341,7 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     int key = rs.getInt("ralprKey");
-                    String num = rs.getString("ralprNum");
+                    String num = ReportNumberNormalizer.normalize(rs.getString("ralprNum"));
                     LocalDate date = rs.getDate("ralprDate").toLocalDate();
                     int cst = rs.getInt("ralprCstAgPn");
                     int og = rs.getInt("ralprOgSender");
@@ -715,17 +716,20 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
     }
 
     /**
-     * Нормализует номер отчёта: при {@code presented=true} заменяет первое вхождение {@code '-'} на {@code '/'}
+     * Нормализует номер отчёта: снимает ложный хвост {@code ,00}/{@code .00} (POI vs VBA {@code CStr}),
+     * затем при {@code presented=true} заменяет первое {@code '-'} на {@code '/'}
      * (VBA: {@code Replace(valueCellReNum, "-", "/", 1, 1)}).
+     * <p>Package-visible для unit-теста 0064.</p>
      */
-    private static String normalizeNum(String num, boolean presented) {
-        if (num == null) {
+    static String normalizeNum(String num, boolean presented) {
+        String normalized = ReportNumberNormalizer.normalize(num);
+        if (normalized == null) {
             return null;
         }
-        if (presented && num.contains("-")) {
-            return num.replaceFirst("-", "/");
+        if (presented && normalized.contains("-")) {
+            return normalized.replaceFirst("-", "/");
         }
-        return num;
+        return normalized;
     }
 
     /**

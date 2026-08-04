@@ -3,9 +3,83 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-07-29"
+      "lastUpdated": "2026-08-04"
     },
     "sessions": [
+      {
+        "chat": {
+          "displayName": "✅ 0054.9 / chat-plan-26-0707: prod apply type=3 RALP (completed, critical). № chat-2026-08-04-001",
+          "chat-attributes": {
+            "id": "chat-2026-08-04-001",
+            "created": "2026-08-04",
+            "lastUpdated": "2026-08-04",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "critical",
+            "tags": [
+              "ralp",
+              "reconcile",
+              "prod",
+              "type=3",
+              "apply",
+              "0054",
+              "0064"
+            ],
+            "links": {
+              "projectDocsRefs": [
+                "module:backend.web",
+                "environment:prod-fisheye"
+              ],
+              "developmentTasks": [
+                "0054",
+                "0064",
+                "0048"
+              ],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md#00549-prod-apply-type3-ralp-год-2026-с-backupverify-2026-08-04"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Prod apply type=3: backup → UI apply → VERIFY (success). № log-2026-08-04-001",
+                "log-attributes": {
+                  "id": "log-2026-08-04-001",
+                  "timestamp": "2026-08-04T16:16:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "environment:prod-fisheye"
+                    ],
+                    "developmentTasks": [
+                      "0054",
+                      "0064",
+                      "0048"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Принят prod apply type=3 RALP (год 2026) по §0054.9",
+                    "details": "Thin 0.1.0.155; Excel 04.08. BACKUP 15-38_15-47 (bak ra/au=1217). Apply 15-38_15-59: применено=да; RA+325, RA_AU+326, AuΔ5, unchanged=1211, deleted=0; Stage2 1542/0 NULL. VERIFY 15-38_16-06: ra 1542/1217/+325; au 1543/1217; new_ra_keys=325; №480 ralprKey=16436 на месте. Rollback не запускался. Пакет SQL docs/development/notes/sql/26-0804-0054-ralp-apply-rollback/; передача …/00_26-0804/15-38*.",
+                    "outcome": "Домен prod 2026: ralpRa=1542, ralpRaAu=1543. 0054.7 по type=3 закрыт; остаётся 0054.7.11 (type=5 + FemsqTable). План v0.12.36; project-development 0054/0048/0064 обновлены.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md",
+                      "docs/development/notes/sql/26-0804-0054-ralp-apply-rollback/README.md",
+                      "/home/alex/femsq-test/test-26-0716/to_prod_26-0717/26-0730_to_prod/00_26-0804/15-38/15-38_15-59.zip",
+                      "/home/alex/femsq-test/test-26-0716/to_prod_26-0717/26-0730_to_prod/00_26-0804/15-38/15-38_16-06.zip"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
       {
         "chat": {
           "displayName": "✅ 0058 экраны Стройки: продолжение после feQuLib (completed, high). № chat-2026-07-28-002",
@@ -24,8 +98,13 @@
               "quasar"
             ],
             "links": {
-              "projectDocsRefs": ["module:frontend"],
-              "developmentTasks": ["0058", "0057"],
+              "projectDocsRefs": [
+                "module:frontend"
+              ],
+              "developmentTasks": [
+                "0058",
+                "0057"
+              ],
               "aiRuleRefs": []
             }
           },
@@ -40,8 +119,15 @@
                   "effort": "30m",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:frontend", "component:frontend.quasar.ConstructionSitesView"],
-                    "developmentTasks": ["0058", "0059", "0060"],
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "component:frontend.quasar.ConstructionSitesView"
+                    ],
+                    "developmentTasks": [
+                      "0058",
+                      "0059",
+                      "0060"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -70,8 +156,14 @@
                   "effort": "45m",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:frontend", "component:frontend.quasar.ConstructionSitesView"],
-                    "developmentTasks": ["0058", "0057"],
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "component:frontend.quasar.ConstructionSitesView"
+                    ],
+                    "developmentTasks": [
+                      "0058",
+                      "0057"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -100,8 +192,12 @@
                   "effort": "30m",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:frontend"],
-                    "developmentTasks": ["0058"],
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0058"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -144,8 +240,17 @@
               "docs-registry"
             ],
             "links": {
-              "projectDocsRefs": ["module:frontend"],
-              "developmentTasks": ["0058", "0059", "0060", "0061", "0062", "0063"],
+              "projectDocsRefs": [
+                "module:frontend"
+              ],
+              "developmentTasks": [
+                "0058",
+                "0059",
+                "0060",
+                "0061",
+                "0062",
+                "0063"
+              ],
               "aiRuleRefs": []
             }
           },
@@ -160,8 +265,15 @@
                   "effort": "2h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:frontend"],
-                    "developmentTasks": ["0058", "0063", "0060", "0061"],
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0058",
+                      "0063",
+                      "0060",
+                      "0061"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -191,8 +303,16 @@
                   "effort": "15m",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:frontend"],
-                    "developmentTasks": ["0058", "0059", "0060", "0061", "0062"],
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0058",
+                      "0059",
+                      "0060",
+                      "0061",
+                      "0062"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -221,8 +341,15 @@
                   "effort": "15m",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:frontend"],
-                    "developmentTasks": ["0058", "0059", "0060", "0061"],
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0058",
+                      "0059",
+                      "0060",
+                      "0061"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -251,8 +378,13 @@
                   "effort": "10m",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:frontend"],
-                    "developmentTasks": ["0058", "0059"],
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0058",
+                      "0059"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -280,8 +412,13 @@
                   "effort": "30m",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:frontend"],
-                    "developmentTasks": ["0059", "0060"],
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0059",
+                      "0060"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -310,7 +447,9 @@
                   "effort": "30m",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:frontend"],
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
                     "developmentTasks": [],
                     "aiRuleRefs": []
                   }
@@ -339,8 +478,12 @@
                   "effort": "1h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:frontend"],
-                    "developmentTasks": ["0059"],
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0059"
+                    ],
                     "aiRuleRefs": []
                   }
                 },
@@ -405,8 +548,12 @@
                   "effort": "1h",
                   "status": "completed",
                   "links": {
-                    "projectDocsRefs": ["module:frontend"],
-                    "developmentTasks": ["0058"],
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0058"
+                    ],
                     "aiRuleRefs": []
                   }
                 },

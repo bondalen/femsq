@@ -2,7 +2,7 @@
 # Переключение SMB-снимка Excel для ревизии test_26 (adt_key=14, ra_dir.key=15).
 #
 # Использование:
-#   ./code/scripts/audit-switch-excel-snapshot.sh march|july
+#   ./code/scripts/audit-switch-excel-snapshot.sh march|july|august
 #
 # Обновляет ags.ra_dir.dir и полный путь af_type=3 (аренда).
 
@@ -24,8 +24,11 @@ case "$SNAPSHOT" in
   july|2026-07)
     DIR="$BASE/2026-07"
     ;;
+  august|2026-08|2026-08-04|today)
+    DIR="$BASE/2026-08-04"
+    ;;
   *)
-    echo "Укажите снимок: march | july" >&2
+    echo "Укажите снимок: march | july | august" >&2
     exit 1
     ;;
 esac
