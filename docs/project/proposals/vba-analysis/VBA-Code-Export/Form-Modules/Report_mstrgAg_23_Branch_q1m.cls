@@ -9,21 +9,21 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Compare Database
 
-Private Sub ОбластьДанных_Format(Cancel As Integer, FormatCount As Integer)
+Private Sub РћР±Р»Р°СЃС‚СЊР”Р°РЅРЅС‹С…_Format(Cancel As Integer, FormatCount As Integer)
 
-'ошибки кидать не будем
+'РѕС€РёР±РєРё РєРёРґР°С‚СЊ РЅРµ Р±СѓРґРµРј
 On Error Resume Next
 
 Select Case Me!ogNm
-    Case "итого"
-        ОбластьДанных.BackColor = 14020607
-        ОбластьДанных.AlternateBackColor = 14020607
-    Case "Заказчики"
-        ОбластьДанных.BackColor = 14020607
-        ОбластьДанных.AlternateBackColor = 14020607
+    Case "РёС‚РѕРіРѕ"
+        РћР±Р»Р°СЃС‚СЊР”Р°РЅРЅС‹С….BackColor = 14020607
+        РћР±Р»Р°СЃС‚СЊР”Р°РЅРЅС‹С….AlternateBackColor = 14020607
+    Case "Р—Р°РєР°Р·С‡РёРєРё"
+        РћР±Р»Р°СЃС‚СЊР”Р°РЅРЅС‹С….BackColor = 14020607
+        РћР±Р»Р°СЃС‚СЊР”Р°РЅРЅС‹С….AlternateBackColor = 14020607
     Case Else
-        ОбластьДанных.BackColor = vbWhite
-        ОбластьДанных.AlternateBackColor = RGB(242, 242, 242)
+        РћР±Р»Р°СЃС‚СЊР”Р°РЅРЅС‹С….BackColor = vbWhite
+        РћР±Р»Р°СЃС‚СЊР”Р°РЅРЅС‹С….AlternateBackColor = RGB(242, 242, 242)
 End Select
 
 End Sub

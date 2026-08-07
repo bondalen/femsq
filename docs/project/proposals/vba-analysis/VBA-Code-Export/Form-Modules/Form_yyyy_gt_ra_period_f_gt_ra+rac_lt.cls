@@ -11,7 +11,7 @@ Option Compare Database
 
 Private Sub Form_Current()
 
-'îøèáêè êèäàòü íå áóäåì
+'Ğ¾ÑˆĞ¸Ğ±ĞºĞ¸ ĞºĞ¸Ğ´Ğ°Ñ‚ÑŒ Ğ½Ğµ Ğ±ÑƒĞ´ĞµĞ¼
 On Error Resume Next
 
 Me.parent![yyyy>ra_period_f>ra_f].Form.Form.Filter = "ra_key = " & Me!ra_key

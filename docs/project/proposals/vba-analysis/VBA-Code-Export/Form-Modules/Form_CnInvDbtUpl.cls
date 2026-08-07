@@ -9,6 +9,6 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Compare Database
 
-Private Sub Кнопка41_Click()
+Private Sub РљРЅРѕРїРєР°41_Click()
 MsgBox ("nnn")
 End Sub

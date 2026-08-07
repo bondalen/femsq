@@ -11,7 +11,7 @@ Option Compare Database
 
 Private Sub Form_Current()
 
-'ошибки кидать не будем
+'РѕС€РёР±РєРё РєРёРґР°С‚СЊ РЅРµ Р±СѓРґРµРј
 On Error Resume Next
 
 Dim ipgpKey As Integer

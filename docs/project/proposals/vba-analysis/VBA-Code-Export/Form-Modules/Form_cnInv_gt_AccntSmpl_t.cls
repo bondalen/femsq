@@ -15,7 +15,7 @@ Private Sub Form_Current()
 
 Dim ciasKey As Long
 
-'ошибки кидать не будем
+'РѕС€РёР±РєРё РєРёРґР°С‚СЊ РЅРµ Р±СѓРґРµРј
 On Error Resume Next
 
 If IsNull(Me!ciasKey) Then

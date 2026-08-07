@@ -13,7 +13,7 @@ Private Sub Form_Current()
     
     Dim raKey As Double
     
-    Const cstrTitle As String = "Ôóíêöèÿ *Òåêóùàÿ çàïèñü ~Ïåðå÷íÿ îò÷¸òîâ ñòðîéêè~*"
+    Const cstrTitle As String = "Ð¤ÑƒÐ½ÐºÑ†Ð¸Ñ *Ð¢ÐµÐºÑƒÑ‰Ð°Ñ Ð·Ð°Ð¿Ð¸ÑÑŒ ~ÐŸÐµÑ€ÐµÑ‡Ð½Ñ Ð¾Ñ‚Ñ‡Ñ‘Ñ‚Ð¾Ð² ÑÑ‚Ñ€Ð¾Ð¹ÐºÐ¸~*"
 
     ' ***************************************************************************************************************************
 
@@ -25,7 +25,7 @@ On Error GoTo ErrHandler
         raKey = Me!ra_key
     End If
     
-    ' ôèëüòðóåì îò÷¸ò
+    ' Ñ„Ð¸Ð»ÑŒÑ‚Ñ€ÑƒÐµÐ¼ Ð¾Ñ‚Ñ‡Ñ‘Ñ‚
     Me.parent.Form![cst>ra_f].Form.FilterOn = False
     Me.parent.Form![cst>ra_f].Form.Filter = "ra_key = " & raKey
     Me.parent.Form![cst>ra_f].Form.FilterOn = True

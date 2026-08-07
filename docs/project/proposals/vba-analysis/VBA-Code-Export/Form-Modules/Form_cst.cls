@@ -14,7 +14,7 @@ Private Sub Form_Current()
     Dim raKey As Integer
 
     Const cstrTitle As String _
-    = "œÓˆÂ‰Û‡ *—ÏÂÌ‡ ÚÂÍÛ˘ÂÈ Á‡ÔËÒË ÙÓÏ˚ —“–Œ… »*"
+    = "–ü—Ä–æ—Ü–µ–¥—É—Ä–∞ *–°–º–µ–Ω–∞ —Ç–µ–∫—É—â–µ–π –∑–∞–ø–∏—Å–∏ —Ñ–æ—Ä–º—ã –°–¢–†–û–ô–ö–ò*"
     ' ***************************************************************************************************************************
 
 On Error GoTo ErrHandler
@@ -36,7 +36,7 @@ On Error GoTo ErrHandler
         raKey = Me.Form![cst>ra_t].Form![ra_key]
     End If
     
-    ' ÙËÎ¸ÚÛÂÏ ÓÚ˜∏Ú
+    ' —Ñ–∏–ª—å—Ç—Ä—É–µ–º –æ—Ç—á—ë—Ç
     Me.Form![cst>ra_f].Form.Filter = "ra_key = " & raKey
     Me.Form![cst>ra_f].Form.FilterOn = True
 
@@ -50,7 +50,7 @@ ErrHandler:
         raKey = 0
         Resume Next
     Else
-        MsgBox Err.Description & vbCrLf & "π Ó¯Ë·ÍË: " & Err.Number & vbCrLf & cstrTitle, vbExclamation, cstrTitle
+        MsgBox Err.Description & vbCrLf & "‚Ññ –æ—à–∏–±–∫–∏: " & Err.Number & vbCrLf & cstrTitle, vbExclamation, cstrTitle
         Resume NormalExit
     End If
 

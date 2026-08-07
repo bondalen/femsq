@@ -14,24 +14,24 @@ Private Sub Form_Current()
 Dim invNum As String
 Dim cnKey As Long
 
-'îøèáêè êèäàòü íå áóäåì
+'Ð¾ÑˆÐ¸Ð±ÐºÐ¸ ÐºÐ¸Ð´Ð°Ñ‚ÑŒ Ð½Ðµ Ð±ÑƒÐ´ÐµÐ¼
 On Error Resume Next
 
-' îïðåäåëÿåì íîìåð, ñòðî÷íûé, ñ÷¸òà-ôàêòóðû
+' Ð¾Ð¿Ñ€ÐµÐ´ÐµÐ»ÑÐµÐ¼ Ð½Ð¾Ð¼ÐµÑ€, ÑÑ‚Ñ€Ð¾Ñ‡Ð½Ñ‹Ð¹, ÑÑ‡Ñ‘Ñ‚Ð°-Ñ„Ð°ÐºÑ‚ÑƒÑ€Ñ‹
 If IsNull(Me!cidufiInvNum) Then
     invNum = "Nulll"
 Else
     invNum = Me!cidufiInvNum
 End If
 
-' îïðåäåëÿåì èäåíòèôèêàòîð, äëòííîå öåëîå, äîãîâîðà
+' Ð¾Ð¿Ñ€ÐµÐ´ÐµÐ»ÑÐµÐ¼ Ð¸Ð´ÐµÐ½Ñ‚Ð¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ñ€, Ð´Ð»Ñ‚Ð½Ð½Ð¾Ðµ Ñ†ÐµÐ»Ð¾Ðµ, Ð´Ð¾Ð³Ð¾Ð²Ð¾Ñ€Ð°
 If IsNull(Me!cidufiCnKey) Then
     cnKey = 0
 Else
     cnKey = Me!cidufiCnKey
 End If
 
-' ôèëüòðóåì ôîðìó ñòàðûõ ñ÷¸òîâ-ôàêòóð
+' Ñ„Ð¸Ð»ÑŒÑ‚Ñ€ÑƒÐµÐ¼ Ñ„Ð¾Ñ€Ð¼Ñƒ ÑÑ‚Ð°Ñ€Ñ‹Ñ… ÑÑ‡Ñ‘Ñ‚Ð¾Ð²-Ñ„Ð°ÐºÑ‚ÑƒÑ€
 If invNum = "Nulll" Then
     Me.parent![CnInvDbtUpl>File_f>InvDouble_f].Form.Filter _
         = "IsNull([inNum]) = true"
@@ -43,7 +43,7 @@ Else
     Me.parent![CnInvDbtUpl>File_f>InvDouble_f].Form.FilterOn = True
 End If
 
-' ôèëüòðóåì ôîðìó èñïîëíèòåëåé ïî íîâîìó äîãîâîðó
+' Ñ„Ð¸Ð»ÑŒÑ‚Ñ€ÑƒÐµÐ¼ Ñ„Ð¾Ñ€Ð¼Ñƒ Ð¸ÑÐ¿Ð¾Ð»Ð½Ð¸Ñ‚ÐµÐ»ÐµÐ¹ Ð¿Ð¾ Ð½Ð¾Ð²Ð¾Ð¼Ñƒ Ð´Ð¾Ð³Ð¾Ð²Ð¾Ñ€Ñƒ
     Me.parent![CnInvDbtUpl>File_f>cns].Form.Filter _
         = "[cn_key] = " & cnKey
     Me.parent![CnInvDbtUpl>File_f>cns].Form.FilterOn = True

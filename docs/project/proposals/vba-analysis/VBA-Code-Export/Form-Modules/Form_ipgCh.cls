@@ -10,17 +10,17 @@ Attribute VB_Exposed = False
 Option Compare Database
 
 ' ***************************************************************************************************************************************************
-' заполняем таблицу освоения по стройкам. 27.09.2022
+' Р·Р°РїРѕР»РЅСЏРµРј С‚Р°Р±Р»РёС†Сѓ РѕСЃРІРѕРµРЅРёСЏ РїРѕ СЃС‚СЂРѕР№РєР°Рј. 27.09.2022
 ' ---------------------------------------------------------------------------------------------------------------------------------------------------
 Private Sub btnMasteringCst_Click()
     ' -----------------------------------------------------------------------------------------------------------------------------------------------
     Dim db As DAO.Database, dbAccessTest As dbAccess, myArray(1 To 124, 1 To 2) As Variant, strSql As String
     ' -----------------------------------------------------------------------------------------------------------------------------------------------
-    Const cstrTitle As String = "Процедура *Заполняем таблицу освоения по стройкам. Кнопка btnMasteringCst*."
+    Const cstrTitle As String = "РџСЂРѕС†РµРґСѓСЂР° *Р—Р°РїРѕР»РЅСЏРµРј С‚Р°Р±Р»РёС†Сѓ РѕСЃРІРѕРµРЅРёСЏ РїРѕ СЃС‚СЂРѕР№РєР°Рј. РљРЅРѕРїРєР° btnMasteringCst*."
     ' -----------------------------------------------------------------------------------------------------------------------------------------------
 On Error GoTo ErrHandler
     
-    ' формируем массив по принципу поле № 1 - откуда, поле № 2 - куда
+    ' С„РѕСЂРјРёСЂСѓРµРј РјР°СЃСЃРёРІ РїРѕ РїСЂРёРЅС†РёРїСѓ РїРѕР»Рµ в„– 1 - РѕС‚РєСѓРґР°, РїРѕР»Рµ в„– 2 - РєСѓРґР°
     myArray(1, 1) = "dateRslt": myArray(1, 2) = "dateRslt"
     myArray(2, 1) = "ogNm": myArray(2, 2) = "ogNm"
     myArray(3, 1) = "cstAgPnCode": myArray(3, 2) = "cstAgPnCode"
@@ -146,12 +146,12 @@ On Error GoTo ErrHandler
     myArray(123, 1) = "oh_acceptedTtlAccum": myArray(123, 2) = "oh_acceptedTtlAccum"
     myArray(124, 1) = "ipgChKey": myArray(124, 2) = "ipgChKey"
     
-    ' переносим данные с сервера используя класс работы с базой данных
+    ' РїРµСЂРµРЅРѕСЃРёРј РґР°РЅРЅС‹Рµ СЃ СЃРµСЂРІРµСЂР° РёСЃРїРѕР»СЊР·СѓСЏ РєР»Р°СЃСЃ СЂР°Р±РѕС‚С‹ СЃ Р±Р°Р·РѕР№ РґР°РЅРЅС‹С…
     Set db = CurrentDb
     Set dbAccessTest = ClassFactory.dbAccessByDB(db)
     strSql = "ags.spIpgChRsltCstUtl3_GP_3 " & Me![ipgcKey].value
     If dbAccessTest.SqlSrvRecordsetToTable(strSql, "ipgChRsltPlCstSum", myArray()) Then
-        MsgBox ("Перенесено в ipgChRsltPlCstSum")
+        MsgBox ("РџРµСЂРµРЅРµСЃРµРЅРѕ РІ ipgChRsltPlCstSum")
     End If
     Set dbAccessTest = Nothing
 
@@ -161,21 +161,21 @@ ErrHandler:
     MsgBox Err.Description & vbCrLf & "Error number: " & Err.Number & vbCrLf & cstrTitle, vbExclamation, cstrTitle: Resume NormalExit
 End Sub
 ' ---------------------------------------------------------------------------------------------------------------------------------------------------
-' заполняем таблицу освоения по стройкам. 27.09.2022. Окончание
+' Р·Р°РїРѕР»РЅСЏРµРј С‚Р°Р±Р»РёС†Сѓ РѕСЃРІРѕРµРЅРёСЏ РїРѕ СЃС‚СЂРѕР№РєР°Рј. 27.09.2022. РћРєРѕРЅС‡Р°РЅРёРµ
 ' ***************************************************************************************************************************************************
 
 ' ***************************************************************************************************************************************************
-' заполняем таблицу освоения по стройкам с процентом. 30.09.2022
+' Р·Р°РїРѕР»РЅСЏРµРј С‚Р°Р±Р»РёС†Сѓ РѕСЃРІРѕРµРЅРёСЏ РїРѕ СЃС‚СЂРѕР№РєР°Рј СЃ РїСЂРѕС†РµРЅС‚РѕРј. 30.09.2022
 ' ---------------------------------------------------------------------------------------------------------------------------------------------------
 Private Sub btnMasteringPercent_Click()
     ' -----------------------------------------------------------------------------------------------------------------------------------------------
     Dim db As DAO.Database, dbAccessTest As dbAccess, myArray(1 To 170, 1 To 2) As Variant, strSql As String
     ' -----------------------------------------------------------------------------------------------------------------------------------------------
-    Const cstrTitle As String = "Процедура *Заполняем таблицу освоения по стройкам с процентом. Кнопка btnMasteringPercent*."
+    Const cstrTitle As String = "РџСЂРѕС†РµРґСѓСЂР° *Р—Р°РїРѕР»РЅСЏРµРј С‚Р°Р±Р»РёС†Сѓ РѕСЃРІРѕРµРЅРёСЏ РїРѕ СЃС‚СЂРѕР№РєР°Рј СЃ РїСЂРѕС†РµРЅС‚РѕРј. РљРЅРѕРїРєР° btnMasteringPercent*."
     ' -----------------------------------------------------------------------------------------------------------------------------------------------
 On Error GoTo ErrHandler
     
-    ' формируем массив по принципу поле № 1 - откуда, поле № 2 - куда
+    ' С„РѕСЂРјРёСЂСѓРµРј РјР°СЃСЃРёРІ РїРѕ РїСЂРёРЅС†РёРїСѓ РїРѕР»Рµ в„– 1 - РѕС‚РєСѓРґР°, РїРѕР»Рµ в„– 2 - РєСѓРґР°
     myArray(1, 1) = "ogNm": myArray(1, 2) = "ogNm"
     myArray(2, 1) = "cstAgPnCode": myArray(2, 2) = "cstAgPnCode"
     myArray(3, 1) = "dateRslt": myArray(3, 2) = "dateRslt"
@@ -350,12 +350,12 @@ On Error GoTo ErrHandler
 
     ' branch, ogBrn.ogNm as branchName
     
-    ' переносим данные с сервера используя класс работы с базой данных
+    ' РїРµСЂРµРЅРѕСЃРёРј РґР°РЅРЅС‹Рµ СЃ СЃРµСЂРІРµСЂР° РёСЃРїРѕР»СЊР·СѓСЏ РєР»Р°СЃСЃ СЂР°Р±РѕС‚С‹ СЃ Р±Р°Р·РѕР№ РґР°РЅРЅС‹С…
     Set db = CurrentDb
     Set dbAccessTest = ClassFactory.dbAccessByDB(db)
     strSql = "select * from ags.fnIpgChRsltCstUtlPercentBrn (" & Me![ipgcKey].value & ")"
     If dbAccessTest.SqlSrvRecordsetToTable(strSql, "ipgChRsltPlCstPercent", myArray()) Then
-        MsgBox ("Перенесено в ipgChRsltPlCstPercent")
+        MsgBox ("РџРµСЂРµРЅРµСЃРµРЅРѕ РІ ipgChRsltPlCstPercent")
     End If
     Set dbAccessTest = Nothing
 
@@ -365,7 +365,7 @@ ErrHandler:
     MsgBox Err.Description & vbCrLf & "Error number: " & Err.Number & vbCrLf & cstrTitle, vbExclamation, cstrTitle: Resume NormalExit
 End Sub
 ' ---------------------------------------------------------------------------------------------------------------------------------------------------
-' заполняем таблицу освоения по стройкам с процентом. 30.09.2022. Окончание
+' Р·Р°РїРѕР»РЅСЏРµРј С‚Р°Р±Р»РёС†Сѓ РѕСЃРІРѕРµРЅРёСЏ РїРѕ СЃС‚СЂРѕР№РєР°Рј СЃ РїСЂРѕС†РµРЅС‚РѕРј. 30.09.2022. РћРєРѕРЅС‡Р°РЅРёРµ
 ' ***************************************************************************************************************************************************
 
 Private Sub Form_Current()
@@ -378,7 +378,7 @@ Private Sub Form_Current()
     
     Set db = CurrentDb
     
-    'очищаем таблицу
+    'РѕС‡РёС‰Р°РµРј С‚Р°Р±Р»РёС†Сѓ
     strSql = "DELETE * FROM ipgChRslt"
     Set qd = db.CreateQueryDef("", strSql)
     qd.Execute dbFailOnError
@@ -391,7 +391,7 @@ Private Sub Form_Current()
 
 End Sub
 
-Private Sub Кнопка11_Click()
+Private Sub РљРЅРѕРїРєР°11_Click()
 
     Dim qd As DAO.QueryDef
     Dim db As DAO.Database
@@ -402,14 +402,14 @@ Private Sub Кнопка11_Click()
     
     Set db = CurrentDb
     
-    'очищаем таблицу
+    'РѕС‡РёС‰Р°РµРј С‚Р°Р±Р»РёС†Сѓ
     strSql = "DELETE * FROM ipgChRslt"
     Set qd = db.CreateQueryDef("", strSql)
     qd.Execute dbFailOnError
     qd.Close
     Set qd = Nothing
     
-    'получаем набор записей от сервера
+    'РїРѕР»СѓС‡Р°РµРј РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РѕС‚ СЃРµСЂРІРµСЂР°
     'strSQL = "EXEC [ags].[ipgChRslt] " & Me.ipgcKey
     Set qd = db.CreateQueryDef("")
     qd.Connect = db.TableDefs("ags_yyyy").Connect
@@ -419,22 +419,22 @@ Private Sub Кнопка11_Click()
     
     Set rstD = qd.OpenRecordset(dbOpenSnapshot)
     rstD.MoveLast
-    'MsgBox ("записей " & rs.RecordCount)
+    'MsgBox ("Р·Р°РїРёСЃРµР№ " & rs.RecordCount)
     
     'Set Me![ipgCh>qqq].Form.Recordset = rs
     
-    'переносим набор записей в таблицу
+    'РїРµСЂРµРЅРѕСЃРёРј РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РІ С‚Р°Р±Р»РёС†Сѓ
     If rstD.RecordCount > 0 Then
     
         rstD.MoveFirst
     
-        'открываем на редактирование рекордсет формируемой таблицы
+        'РѕС‚РєСЂС‹РІР°РµРј РЅР° СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ СЂРµРєРѕСЂРґСЃРµС‚ С„РѕСЂРјРёСЂСѓРµРјРѕР№ С‚Р°Р±Р»РёС†С‹
         Set rstP = db.OpenRecordset("ipgChRslt", dbOpenDynaset)
         
         With rstD
             Do Until .EOF = True
             
-                'собственно присваиваем
+                'СЃРѕР±СЃС‚РІРµРЅРЅРѕ РїСЂРёСЃРІР°РёРІР°РµРј
                 rstP.AddNew
                     rstP!dateRslt = !dateRslt
                     rstP!ipgcrChain = !ipgcrChain
@@ -466,14 +466,14 @@ Private Sub Кнопка11_Click()
                     rstP!oth_acceptedTtlAccum = !oth_acceptedTtlAccum
                 rstP.Update
                 rstP.Bookmark = rstP.LastModified
-                'идем к следующей записи
+                'РёРґРµРј Рє СЃР»РµРґСѓСЋС‰РµР№ Р·Р°РїРёСЃРё
                 .MoveNext
             Loop
         End With
         rstP.Close: Set rstP = Nothing
     End If
     
-    'закрываем рекордсет
+    'Р·Р°РєСЂС‹РІР°РµРј СЂРµРєРѕСЂРґСЃРµС‚
     rstD.Close: Set rstD = Nothing
     
     db.Close: Set db = Nothing
@@ -482,7 +482,7 @@ Private Sub Кнопка11_Click()
 
 End Sub
 
-Private Sub Кнопка53_Click()
+Private Sub РљРЅРѕРїРєР°53_Click()
 
     Dim qd As DAO.QueryDef
     Dim db As DAO.Database
@@ -493,14 +493,14 @@ Private Sub Кнопка53_Click()
     
     Set db = CurrentDb
     
-    'очищаем таблицу
+    'РѕС‡РёС‰Р°РµРј С‚Р°Р±Р»РёС†Сѓ
     strSql = "DELETE * FROM ipgChRsltFull"
     Set qd = db.CreateQueryDef("", strSql)
     qd.Execute dbFailOnError
     qd.Close
     Set qd = Nothing
     
-    'получаем набор записей от сервера
+    'РїРѕР»СѓС‡Р°РµРј РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РѕС‚ СЃРµСЂРІРµСЂР°
     Set qd = db.CreateQueryDef("")
     qd.Connect = db.TableDefs("ags_yyyy").Connect
     qd.SQL = "EXEC [ags].[ipgChRsltFull] " & Me.ipgcKey
@@ -508,22 +508,22 @@ Private Sub Кнопка53_Click()
     
     Set rstD = qd.OpenRecordset(dbOpenSnapshot)
     rstD.MoveLast
-    'MsgBox ("записей " & rs.RecordCount)
+    'MsgBox ("Р·Р°РїРёСЃРµР№ " & rs.RecordCount)
     
     'Set Me![ipgCh>qqq].Form.Recordset = rs
     
-    'переносим набор записей в таблицу
+    'РїРµСЂРµРЅРѕСЃРёРј РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РІ С‚Р°Р±Р»РёС†Сѓ
     If rstD.RecordCount > 0 Then
     
         rstD.MoveFirst
     
-        'открываем на редактирование рекордсет формируемой таблицы
+        'РѕС‚РєСЂС‹РІР°РµРј РЅР° СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ СЂРµРєРѕСЂРґСЃРµС‚ С„РѕСЂРјРёСЂСѓРµРјРѕР№ С‚Р°Р±Р»РёС†С‹
         Set rstP = db.OpenRecordset("ipgChRsltFull", dbOpenDynaset)
         
         With rstD
             Do Until .EOF = True
             
-                'собственно присваиваем
+                'СЃРѕР±СЃС‚РІРµРЅРЅРѕ РїСЂРёСЃРІР°РёРІР°РµРј
                 rstP.AddNew
                     rstP!dateRslt = !dateRslt
                     rstP!ipgcrChain = !ipgcrChain
@@ -567,14 +567,14 @@ Private Sub Кнопка53_Click()
                     rstP!oth_acceptedTtlAccum = !oth_acceptedTtlAccum
                 rstP.Update
                 rstP.Bookmark = rstP.LastModified
-                'идем к следующей записи
+                'РёРґРµРј Рє СЃР»РµРґСѓСЋС‰РµР№ Р·Р°РїРёСЃРё
                 .MoveNext
             Loop
         End With
         rstP.Close: Set rstP = Nothing
     End If
     
-    'закрываем рекордсет
+    'Р·Р°РєСЂС‹РІР°РµРј СЂРµРєРѕСЂРґСЃРµС‚
     rstD.Close: Set rstD = Nothing
     
     db.Close: Set db = Nothing
@@ -583,7 +583,7 @@ Private Sub Кнопка53_Click()
 
 End Sub
 
-Private Sub Кнопка57_Click()
+Private Sub РљРЅРѕРїРєР°57_Click()
 
     Dim qd As DAO.QueryDef
     Dim db As DAO.Database
@@ -594,14 +594,14 @@ Private Sub Кнопка57_Click()
     
     Set db = CurrentDb
     
-    'очищаем таблицу
+    'РѕС‡РёС‰Р°РµРј С‚Р°Р±Р»РёС†Сѓ
     strSql = "DELETE * FROM ipgChRsltPl"
     Set qd = db.CreateQueryDef("", strSql)
     qd.Execute dbFailOnError
     qd.Close
     Set qd = Nothing
     
-    'получаем набор записей от сервера
+    'РїРѕР»СѓС‡Р°РµРј РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РѕС‚ СЃРµСЂРІРµСЂР°
     Set qd = db.CreateQueryDef("")
     qd.Connect = db.TableDefs("ags_yyyy").Connect
     qd.SQL = "EXEC [ags].[spIpgChRsltCstUtl3_GP_2] " & Me.ipgcKey
@@ -610,26 +610,26 @@ Private Sub Кнопка57_Click()
     
     Set rstD = qd.OpenRecordset(dbOpenSnapshot)
     rstD.MoveLast
-    'MsgBox ("записей " & rs.RecordCount)
+    'MsgBox ("Р·Р°РїРёСЃРµР№ " & rs.RecordCount)
     
     'Set Me![ipgCh>qqq].Form.Recordset = rs
     
-    'переносим набор записей в таблицу
+    'РїРµСЂРµРЅРѕСЃРёРј РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РІ С‚Р°Р±Р»РёС†Сѓ
     If rstD.RecordCount > 0 Then
     
         rstD.MoveFirst
     
-        'открываем на редактирование рекордсет формируемой таблицы
+        'РѕС‚РєСЂС‹РІР°РµРј РЅР° СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ СЂРµРєРѕСЂРґСЃРµС‚ С„РѕСЂРјРёСЂСѓРµРјРѕР№ С‚Р°Р±Р»РёС†С‹
         Set rstP = db.OpenRecordset("ipgChRsltPl", dbOpenDynaset)
         
         With rstD
             Do Until .EOF = True
             
-                'собственно присваиваем
+                'СЃРѕР±СЃС‚РІРµРЅРЅРѕ РїСЂРёСЃРІР°РёРІР°РµРј
                 rstP.AddNew
                     rstP!dateRslt = !dateRslt
                     If IsNull(!ogNm) = True Then
-                        rstP!ogNm = "а. Всего"
+                        rstP!ogNm = "Р°. Р’СЃРµРіРѕ"
                     Else
                         rstP!ogNm = !ogNm
                     End If
@@ -756,14 +756,14 @@ Private Sub Кнопка57_Click()
                     rstP!ipgCh = Me.ipgcKey
                 rstP.Update
                 rstP.Bookmark = rstP.LastModified
-                'идем к следующей записи
+                'РёРґРµРј Рє СЃР»РµРґСѓСЋС‰РµР№ Р·Р°РїРёСЃРё
                 .MoveNext
             Loop
         End With
         rstP.Close: Set rstP = Nothing
     End If
     
-    'закрываем рекордсет
+    'Р·Р°РєСЂС‹РІР°РµРј СЂРµРєРѕСЂРґСЃРµС‚
     rstD.Close: Set rstD = Nothing
     
     db.Close: Set db = Nothing

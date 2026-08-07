@@ -2,7 +2,7 @@ Attribute VB_Name = "ClassFunc"
 Option Compare Database
 
 ' ***************************************************************************************************************************************************
-' читаем значение поля в переменную типа Variant. 20.07.2022
+' С‡РёС‚Р°РµРј Р·РЅР°С‡РµРЅРёРµ РїРѕР»СЏ РІ РїРµСЂРµРјРµРЅРЅСѓСЋ С‚РёРїР° Variant. 20.07.2022
 Public Function varReadField(ByVal strFieldName As String, ByVal strTblName As String, ByVal lngKey As Long, _
     ByVal strFieldKey As String, ByRef db As DAO.Database) As Variant
     
@@ -18,11 +18,11 @@ Public Function varReadField(ByVal strFieldName As String, ByVal strTblName As S
     rs.Close: Set rs = Nothing
 
 End Function
-' читаем значение поля в переменную типа Variant. 20.07.2022. Окончание
+' С‡РёС‚Р°РµРј Р·РЅР°С‡РµРЅРёРµ РїРѕР»СЏ РІ РїРµСЂРµРјРµРЅРЅСѓСЋ С‚РёРїР° Variant. 20.07.2022. РћРєРѕРЅС‡Р°РЅРёРµ
 ' ***************************************************************************************************************************************************
 
 ' ***************************************************************************************************************************************************
-' редактируем поле даты. 20.07.2022
+' СЂРµРґР°РєС‚РёСЂСѓРµРј РїРѕР»Рµ РґР°С‚С‹. 20.07.2022
 Public Sub varEditFieldDate(ByVal dateFieldName As String, ByVal dateNew As Variant, ByVal tblName As String, ByVal lngKey As Long, _
     ByVal strFieldKey As String, ByRef db As DAO.Database)
     
@@ -37,11 +37,11 @@ Public Sub varEditFieldDate(ByVal dateFieldName As String, ByVal dateNew As Vari
     db.Execute strSql, dbFailOnError + dbSeeChanges
     
 End Sub
-' редактируем поле даты. 20.07.2022. Окончание
+' СЂРµРґР°РєС‚РёСЂСѓРµРј РїРѕР»Рµ РґР°С‚С‹. 20.07.2022. РћРєРѕРЅС‡Р°РЅРёРµ
 ' ***************************************************************************************************************************************************
 
 ' ***************************************************************************************************************************************************
-' редактируем числовое поле. 20.07.2022
+' СЂРµРґР°РєС‚РёСЂСѓРµРј С‡РёСЃР»РѕРІРѕРµ РїРѕР»Рµ. 20.07.2022
 Public Sub varEditFieldNum(ByVal numFieldName As String, ByVal numNew As Variant, ByVal tblName As String, ByVal lngKey As Long, _
     ByVal strFieldKey As String, ByRef db As DAO.Database)
     
@@ -56,17 +56,17 @@ Public Sub varEditFieldNum(ByVal numFieldName As String, ByVal numNew As Variant
     db.Execute strSql, dbFailOnError + dbSeeChanges
 
 End Sub
-' редактируем числовое поле. 20.07.2022. Окончание
+' СЂРµРґР°РєС‚РёСЂСѓРµРј С‡РёСЃР»РѕРІРѕРµ РїРѕР»Рµ. 20.07.2022. РћРєРѕРЅС‡Р°РЅРёРµ
 ' ***************************************************************************************************************************************************
 
 ' ***************************************************************************************************************************************************
-' редактируем строковое поле. 19.07.2022
+' СЂРµРґР°РєС‚РёСЂСѓРµРј СЃС‚СЂРѕРєРѕРІРѕРµ РїРѕР»Рµ. 19.07.2022
 Public Sub varEditFieldStr(ByVal strFieldName As String, ByVal strNew As Variant, ByVal tblName As String, ByVal lngKey As Long, _
     ByVal strFieldKey As String, ByRef db As DAO.Database)
     
     Dim rs As DAO.Recordset
 
-    ' текст с кавычками не ест, нужно вставлять через рекордсет
+    ' С‚РµРєСЃС‚ СЃ РєР°РІС‹С‡РєР°РјРё РЅРµ РµСЃС‚, РЅСѓР¶РЅРѕ РІСЃС‚Р°РІР»СЏС‚СЊ С‡РµСЂРµР· СЂРµРєРѕСЂРґСЃРµС‚
     Set rs = db.OpenRecordset(tblName, dbOpenDynaset, dbFailOnError + dbSeeChanges)
     With rs
         If Not .NoMatch Then
@@ -82,50 +82,50 @@ Public Sub varEditFieldStr(ByVal strFieldName As String, ByVal strNew As Variant
     End With
 
 End Sub
-' редактируем строковое поле. 19.07.2022. Окончание
+' СЂРµРґР°РєС‚РёСЂСѓРµРј СЃС‚СЂРѕРєРѕРІРѕРµ РїРѕР»Рµ. 19.07.2022. РћРєРѕРЅС‡Р°РЅРёРµ
 ' ***************************************************************************************************************************************************
 
-' отыскиваем ячейку по содержимому. 08.07.2022 ******************************************************************************************************
+' РѕС‚С‹СЃРєРёРІР°РµРј СЏС‡РµР№РєСѓ РїРѕ СЃРѕРґРµСЂР¶РёРјРѕРјСѓ. 08.07.2022 ******************************************************************************************************
 Public Function CellFind( _
     ByRef xlS As Excel.Worksheet, ByVal findStr As String, ByVal findAtXlLookAt As XlLookAt, ByRef findTextBox As TextBox, _
     ByRef findedCell As Range, _
     Optional ByRef findedColumn As Integer = -1, Optional ByVal startCellColumn As Integer = -1, Optional ByRef findedOffset As Integer = 0 _
     ) As Boolean
-    ' здесь:
-    ' xlS - лист, с которым работаем, findTextBox - объект отображающий записи о ходе ревизии
+    ' Р·РґРµСЃСЊ:
+    ' xlS - Р»РёСЃС‚, СЃ РєРѕС‚РѕСЂС‹Рј СЂР°Р±РѕС‚Р°РµРј, findTextBox - РѕР±СЉРµРєС‚ РѕС‚РѕР±СЂР°Р¶Р°СЋС‰РёР№ Р·Р°РїРёСЃРё Рѕ С…РѕРґРµ СЂРµРІРёР·РёРё
     ' -------------------------------------------------------------------------------------------------------------------------------------
     
     Dim c As Range
     
     Const cstrTitle As String _
-        = "Процедура *Отыскиваем ячейку по содержимому*"
+        = "РџСЂРѕС†РµРґСѓСЂР° *РћС‚С‹СЃРєРёРІР°РµРј СЏС‡РµР№РєСѓ РїРѕ СЃРѕРґРµСЂР¶РёРјРѕРјСѓ*"
         
     '**************************************************************************************************************************************
     
 On Error GoTo ErrHandler
 
-    ' отыскиваем колонку номеров отчётов
+    ' РѕС‚С‹СЃРєРёРІР°РµРј РєРѕР»РѕРЅРєСѓ РЅРѕРјРµСЂРѕРІ РѕС‚С‡С‘С‚РѕРІ
     Set c = xlS.UsedRange.Find(what:=findStr, LookAt:=findAtXlLookAt)
     If Not c Is Nothing Then
-        'присваиваем возвращаемой переменной ячейки найденную ячейку
+        'РїСЂРёСЃРІР°РёРІР°РµРј РІРѕР·РІСЂР°С‰Р°РµРјРѕР№ РїРµСЂРµРјРµРЅРЅРѕР№ СЏС‡РµР№РєРё РЅР°Р№РґРµРЅРЅСѓСЋ СЏС‡РµР№РєСѓ
         Set findedCell = c:
         
-        ' присваиваем возвращаемой переменной номер колонки найденной ячейки
+        ' РїСЂРёСЃРІР°РёРІР°РµРј РІРѕР·РІСЂР°С‰Р°РµРјРѕР№ РїРµСЂРµРјРµРЅРЅРѕР№ РЅРѕРјРµСЂ РєРѕР»РѕРЅРєРё РЅР°Р№РґРµРЅРЅРѕР№ СЏС‡РµР№РєРё
         If findedColumn <> -1 Then
             findedColumn = c.Column
         End If
         
         If startCellColumn <> -1 Then
-            'определяем смещение от начальной ячейки до найденой
+            'РѕРїСЂРµРґРµР»СЏРµРј СЃРјРµС‰РµРЅРёРµ РѕС‚ РЅР°С‡Р°Р»СЊРЅРѕР№ СЏС‡РµР№РєРё РґРѕ РЅР°Р№РґРµРЅРѕР№
             findedOffset = c.Column - startCellColumn
         End If
         
-        findTextBox.value = "<P> <font color=""MediumSeaGreen"">Найдена</font> ячейка <b>" & findStr & "</b> колонка - " & c.Column & ", строка - " & c.Row & "." _
-            & " Содержание: <font color=""blue"">" & c & "</font>.</P>" & findTextBox.value
+        findTextBox.value = "<P> <font color=""MediumSeaGreen"">РќР°Р№РґРµРЅР°</font> СЏС‡РµР№РєР° <b>" & findStr & "</b> РєРѕР»РѕРЅРєР° - " & c.Column & ", СЃС‚СЂРѕРєР° - " & c.Row & "." _
+            & " РЎРѕРґРµСЂР¶Р°РЅРёРµ: <font color=""blue"">" & c & "</font>.</P>" & findTextBox.value
         CellFind = True
     Else
         findTextBox.value = _
-        "<P> <font color=""silver"">Ячейка</font> <b>" & findStr & "</b> <B><font color=""red"">не найдена</font></B></P>" & findTextBox.value
+        "<P> <font color=""silver"">РЇС‡РµР№РєР°</font> <b>" & findStr & "</b> <B><font color=""red"">РЅРµ РЅР°Р№РґРµРЅР°</font></B></P>" & findTextBox.value
         CellFind = False
     End If
 
@@ -137,7 +137,7 @@ ErrHandler:
     Resume NormalExit
 
 End Function
-' отыскиваем ячейку по содержимому. 08.07.2022. Окончание *******************************************************************************************
+' РѕС‚С‹СЃРєРёРІР°РµРј СЏС‡РµР№РєСѓ РїРѕ СЃРѕРґРµСЂР¶РёРјРѕРјСѓ. 08.07.2022. РћРєРѕРЅС‡Р°РЅРёРµ *******************************************************************************************
 
 
 ' test stCost
@@ -159,7 +159,7 @@ Private Sub testDB()
     Dim myF As Field
     Dim fso As Object, oFile As Object, strPath As String
     
-    ' 1 - откуда, 2 - куда
+    ' 1 - РѕС‚РєСѓРґР°, 2 - РєСѓРґР°
 '    myArray(1, 1) = "cstKey": myArray(1, 2) = "testNumder"
 '    myArray(2, 1) = "cstName": myArray(2, 2) = "testText"
 '    myArray(3, 1) = "cstBusSgm": myArray(3, 2) = "testTextSecond"
@@ -289,7 +289,7 @@ Private Sub testDB()
     myArray(123, 1) = "oh_acceptedTtlAccum": myArray(123, 2) = "oh_acceptedTtlAccum"
     myArray(124, 1) = "ipgChKey": myArray(124, 2) = "ipgChKey"
     
-'    strPath = "D:\db\Ф644Д_20-1207\sql.txt"
+'    strPath = "D:\db\Р¤644Р”_20-1207\sql.txt"
 '    Set fso = CreateObject("Scripting.FileSystemObject")
 '    Set oFile = fso.CreateTextFile(strPath)
     
@@ -303,7 +303,7 @@ Private Sub testDB()
     
     If dbAccessTest.SqlSrvRecordsetToTable("ags.spIpgChRsltCstUtl3_GP_3 4", "ipgChRsltPlCstSum", myArray()) Then
         
-        MsgBox ("Перенесено в ipgChRsltPlCstSum")
+        MsgBox ("РџРµСЂРµРЅРµСЃРµРЅРѕ РІ ipgChRsltPlCstSum")
 
 '        Set myTab = db.CreateTableDef("ipgChRsltPlCst_2")
 
@@ -336,7 +336,7 @@ Private Sub TabCreateArray()
     Dim myF As Field
     Dim fso As Object, oFile As Object, strPath As String
 
-    strPath = "D:\db\Ф644Д_20-1207\sql.txt"
+    strPath = "D:\db\Р¤644Р”_20-1207\sql.txt"
     Set fso = CreateObject("Scripting.FileSystemObject")
     Set oFile = fso.CreateTextFile(strPath)
     
@@ -361,13 +361,13 @@ Private Sub TabCreateArray()
 
 End Sub
 
-' инвойс с пустой датой
+' РёРЅРІРѕР№СЃ СЃ РїСѓСЃС‚РѕР№ РґР°С‚РѕР№
 Private Sub testInvDateNull()
 Dim db As DAO.Database, invTest As Inv
 
 Set db = CurrentDb
 
-Set invTest = ClassFactory.invCreateNewNumDate("test", Null, db, "убрать потом")
+Set invTest = ClassFactory.invCreateNewNumDate("test", Null, db, "СѓР±СЂР°С‚СЊ РїРѕС‚РѕРј")
 
 Set invTest = Nothing
 End Sub
@@ -398,7 +398,7 @@ Private Sub testCstAg()
     
     Set db = CurrentDb
     
-    Set cstAgPnObj = ClassFactory.cstAgPnByNameAndCodeNew("Техническое перевооружение ГРС ст. Новолабинская", "051-1006060", db)
+    Set cstAgPnObj = ClassFactory.cstAgPnByNameAndCodeNew("РўРµС…РЅРёС‡РµСЃРєРѕРµ РїРµСЂРµРІРѕРѕСЂСѓР¶РµРЅРёРµ Р“Р РЎ СЃС‚. РќРѕРІРѕР»Р°Р±РёРЅСЃРєР°СЏ", "051-1006060", db)
 '    ogAgFeeObj.strArrived = "08/023-5134"
     
     Set cstAgPnObj = Nothing

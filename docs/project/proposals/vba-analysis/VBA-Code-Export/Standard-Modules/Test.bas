@@ -3,7 +3,7 @@ Option Compare Database
 
 ' Dim MyArrayBrnPart1(1 To 179, 1 To 2)
 
-' проверим существование объекта форма у контроля. 19.09.2022
+' РїСЂРѕРІРµСЂРёРј СЃСѓС‰РµСЃС‚РІРѕРІР°РЅРёРµ РѕР±СЉРµРєС‚Р° С„РѕСЂРјР° Сѓ РєРѕРЅС‚СЂРѕР»СЏ. 19.09.2022
 Public Function controlFormNoError(controlTest As Control) As Boolean
     Dim testForm As Form
 On Error GoTo noErrorFalse

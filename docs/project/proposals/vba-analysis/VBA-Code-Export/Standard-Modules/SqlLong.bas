@@ -3,22 +3,22 @@ Option Compare Database
 
 
 '****************************************************************************************************************************************************
-' клеем длинный SQL для процедуры *Отображаем новые счета-фактуры для существующих договоров* *******************************************************
-' заполняющий табличку новых счётов-фактур **********************************************************************************************************
+' РєР»РµРµРј РґР»РёРЅРЅС‹Р№ SQL РґР»СЏ РїСЂРѕС†РµРґСѓСЂС‹ *РћС‚РѕР±СЂР°Р¶Р°РµРј РЅРѕРІС‹Рµ СЃС‡РµС‚Р°-С„Р°РєС‚СѓСЂС‹ РґР»СЏ СЃСѓС‰РµСЃС‚РІСѓСЋС‰РёС… РґРѕРіРѕРІРѕСЂРѕРІ* *******************************************************
+' Р·Р°РїРѕР»РЅСЏСЋС‰РёР№ С‚Р°Р±Р»РёС‡РєСѓ РЅРѕРІС‹С… СЃС‡С‘С‚РѕРІ-С„Р°РєС‚СѓСЂ **********************************************************************************************************
 Public Function SqlCnCtptExistInvNot() As String
 
     Dim strSql As String
 
     strSql = ""
     
-    ' заполняем табличку новых счётов-фактур
+    ' Р·Р°РїРѕР»РЅСЏРµРј С‚Р°Р±Р»РёС‡РєСѓ РЅРѕРІС‹С… СЃС‡С‘С‚РѕРІ-С„Р°РєС‚СѓСЂ
 '    strSQL = strSQL & "insert into CnInvDbtUplTblCnInv "
 '    strSQL = strSQL & "    (cidutciCntrPrtNum, cidutciCntrPrtName, cidutciCnName, cidutciCnDate, cidutciCn_key, cidutciCn_s_org_key, cidutciCnInv, cidutciCiKey) "
 '    strSQL = strSQL & "select "
 '    strSQL = strSQL & " f.cidutCntrPrtNum , f.cidutCntrPrtName, "
-'    strSQL = strSQL & " iif(f.cidutCnName = ""NullИлиПусто"", null, f.cidutCnName) as cidutCnName, "
+'    strSQL = strSQL & " iif(f.cidutCnName = ""NullРР»РёРџСѓСЃС‚Рѕ"", null, f.cidutCnName) as cidutCnName, "
 '    strSQL = strSQL & " f.cidutCnDate, f.cn_key, f.cn_s_org_key, "
-'    strSQL = strSQL & " iif(f.cidutCnInv = ""NullИлиПусто"", null, f.cidutCnInv) as cidutCnInv, "
+'    strSQL = strSQL & " iif(f.cidutCnInv = ""NullРР»РёРџСѓСЃС‚Рѕ"", null, f.cidutCnInv) as cidutCnInv, "
 '    strSQL = strSQL & " f.ciKey "
 '    strSQL = strSQL & "from "
 '    strSQL = strSQL & " ciduCnCtptExistInvNot As f "
@@ -31,20 +31,20 @@ Public Function SqlCnCtptExistInvNot() As String
     strSql = strSql & "GROUP BY cn_key, cidutCnNameNull, cidutCnInvNull, inNumCount; "
 
     
-    ' заполняем табличку новых счётов-фактур
+    ' Р·Р°РїРѕР»РЅСЏРµРј С‚Р°Р±Р»РёС‡РєСѓ РЅРѕРІС‹С… СЃС‡С‘С‚РѕРІ-С„Р°РєС‚СѓСЂ
 '    strSQL = strSQL & "insert into CnInvDbtUplTblCnInv "
 '    strSQL = strSQL & "    (cidutciCntrPrtNum, cidutciCntrPrtName, cidutciCnName, cidutciCnDate, cidutciCn_key, cidutciCn_s_org_key, cidutciCnInv, cidutciCiKey) "
 '    strSQL = strSQL & "select "
 '    strSQL = strSQL & "    f.cidutCntrPrtNum , f.cidutCntrPrtName, "
-'    strSQL = strSQL & "    iif(f.cidutCnName = ""NullИлиПусто"", null, f.cidutCnName) as cidutCnName, "
+'    strSQL = strSQL & "    iif(f.cidutCnName = ""NullРР»РёРџСѓСЃС‚Рѕ"", null, f.cidutCnName) as cidutCnName, "
 '    strSQL = strSQL & "    f.cidutCnDate, f.cn_key, f.cn_s_org_key, "
-'    strSQL = strSQL & "    iif(f.cidutCnInv = ""NullИлиПусто"", null, f.cidutCnInv) as cidutCnInv, "
+'    strSQL = strSQL & "    iif(f.cidutCnInv = ""NullРР»РёРџСѓСЃС‚Рѕ"", null, f.cidutCnInv) as cidutCnInv, "
 '    strSQL = strSQL & "    g.ciKey "
 '    strSQL = strSQL & "from "
 '    strSQL = strSQL & "    ( "
 '    strSQL = strSQL & "        select "
 '    strSQL = strSQL & "            h.cidutCntrPrtNum, h.cidutCntrPrtName, h.cidutCnName, h.cidutCnDate, h.cn_key, h.cn_s_org_key, "
-'    strSQL = strSQL & "            iif(isnull(h.cidutCnInv), ""NullИлиПусто"", iif(h.cidutCnInv = '', ""NullИлиПусто"", trim(h.cidutCnInv))) as cidutCnInv "
+'    strSQL = strSQL & "            iif(isnull(h.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(h.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(h.cidutCnInv))) as cidutCnInv "
 '    strSQL = strSQL & "        from "
 '    strSQL = strSQL & "            ( "
 '    strSQL = strSQL & "                select u.cidutCntrPrtNum, u.cidutCntrPrtName, u.cidutCntrPrtITN, u.cidutCnName, u.cidutCnDate, u.cn_key, u.cn_s_org_key, t.cidutCnInv, t.cidutAccount "
@@ -56,7 +56,7 @@ Public Function SqlCnCtptExistInvNot() As String
 '    strSQL = strSQL & "                            ( "
 '    strSQL = strSQL & "                                SELECT "
 '    strSQL = strSQL & "                                    a.cidutAccount, a.cidutCntrPrtNum, a.cidutCntrPrtName, a.cidutCntrPrtITN, a.cidutCnDate, "
-'    strSQL = strSQL & "                                    iif(isnull(a.cidutCnName), ""NullИлиПусто"", iif(a.cidutCnName = '', ""NullИлиПусто"", TRIM(a.cidutCnName))) AS cidutCnName, "
+'    strSQL = strSQL & "                                    iif(isnull(a.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(a.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(a.cidutCnName))) AS cidutCnName, "
 '    strSQL = strSQL & "                                    a.cidutCnInv, a.cidutFormtnDate, a.cidutMatrtyDate, a.cidutDebt, a.cidutDebtOverdue, a.cidutDoc, "
 '    strSQL = strSQL & "                                    a.cidutLink , a.cidutSheet, a.cidutSheetNum, a.cidutUnloadKey "
 '    strSQL = strSQL & "                                from "
@@ -85,7 +85,7 @@ Public Function SqlCnCtptExistInvNot() As String
 '    strSQL = strSQL & "                                ( "
 '    strSQL = strSQL & "                                    SELECT "
 '    strSQL = strSQL & "                                        c.cn_key, "
-'    strSQL = strSQL & "                                        iif(isnull(c.cn_number), ""NullИлиПусто"", iif(c.cn_number = '', ""NullИлиПусто"", TRIM(c.cn_number))) AS cn_number, "
+'    strSQL = strSQL & "                                        iif(isnull(c.cn_number), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(c.cn_number = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(c.cn_number))) AS cn_number, "
 '    strSQL = strSQL & "                                        s.cn_s_key, s.cn_s_type, o.cn_s_org_key, o.org_id, c.cn_date, o.date_beg, o.date_end, "
 '    strSQL = strSQL & "                                        o.csoCnDate , i.org_id_value_l, g.ogNm "
 '    strSQL = strSQL & "                                    from "
@@ -118,7 +118,7 @@ Public Function SqlCnCtptExistInvNot() As String
 '    strSQL = strSQL & "    Left Join "
 '    strSQL = strSQL & "        ( "
 '    strSQL = strSQL & "            select "
-'    strSQL = strSQL & "                i.ciKey, i.ciCn, iif(isnull(i.ciNum), ""NullИлиПусто"", iif(i.ciNum = '', ""NullИлиПусто"", trim(i.ciNum))) as ciNum "
+'    strSQL = strSQL & "                i.ciKey, i.ciCn, iif(isnull(i.ciNum), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.ciNum = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.ciNum))) as ciNum "
 '    strSQL = strSQL & "            from "
 '    strSQL = strSQL & "                ags_cnInv i "
 '    strSQL = strSQL & "        ) as g on f.cn_key = g.ciCn and f.cidutCnInv = g.ciNum "
@@ -127,20 +127,20 @@ Public Function SqlCnCtptExistInvNot() As String
     SqlCnCtptExistInvNot = strSql
 
 End Function
-' клеем длинный SQL для процедуры *Отображаем новые счета-фактуры для существующих договоров* *******************************************************
-' заполняющий табличку новых счётов-фактур, окончание ***********************************************************************************************
+' РєР»РµРµРј РґР»РёРЅРЅС‹Р№ SQL РґР»СЏ РїСЂРѕС†РµРґСѓСЂС‹ *РћС‚РѕР±СЂР°Р¶Р°РµРј РЅРѕРІС‹Рµ СЃС‡РµС‚Р°-С„Р°РєС‚СѓСЂС‹ РґР»СЏ СЃСѓС‰РµСЃС‚РІСѓСЋС‰РёС… РґРѕРіРѕРІРѕСЂРѕРІ* *******************************************************
+' Р·Р°РїРѕР»РЅСЏСЋС‰РёР№ С‚Р°Р±Р»РёС‡РєСѓ РЅРѕРІС‹С… СЃС‡С‘С‚РѕРІ-С„Р°РєС‚СѓСЂ, РѕРєРѕРЅС‡Р°РЅРёРµ ***********************************************************************************************
 '****************************************************************************************************************************************************
 
 '****************************************************************************************************************************************************
-' клеем длинный SQL для процедуры *Отображаем новые счета-фактуры для существующих договоров* *******************************************************
-' отображающий договора, имеющие новые счета-фактуры ************************************************************************************************
+' РєР»РµРµРј РґР»РёРЅРЅС‹Р№ SQL РґР»СЏ РїСЂРѕС†РµРґСѓСЂС‹ *РћС‚РѕР±СЂР°Р¶Р°РµРј РЅРѕРІС‹Рµ СЃС‡РµС‚Р°-С„Р°РєС‚СѓСЂС‹ РґР»СЏ СЃСѓС‰РµСЃС‚РІСѓСЋС‰РёС… РґРѕРіРѕРІРѕСЂРѕРІ* *******************************************************
+' РѕС‚РѕР±СЂР°Р¶Р°СЋС‰РёР№ РґРѕРіРѕРІРѕСЂР°, РёРјРµСЋС‰РёРµ РЅРѕРІС‹Рµ СЃС‡РµС‚Р°-С„Р°РєС‚СѓСЂС‹ ************************************************************************************************
 Public Function SqlCnCtptExistInvNotRead() As String
 
     Dim strSql As String
 
     strSql = ""
 
-    ' отображаем договора, имеющие новые счета-фактуры
+    ' РѕС‚РѕР±СЂР°Р¶Р°РµРј РґРѕРіРѕРІРѕСЂР°, РёРјРµСЋС‰РёРµ РЅРѕРІС‹Рµ СЃС‡РµС‚Р°-С„Р°РєС‚СѓСЂС‹
     strSql = ""
     
 '    strSQL = strSQL & "SELECT "
@@ -172,13 +172,13 @@ Public Function SqlCnCtptExistInvNotRead() As String
     SqlCnCtptExistInvNotRead = strSql
 
 End Function
-' клеем длинный SQL для процедуры *Отображаем новые счета-фактуры для существующих договоров* *******************************************************
-' отображающий договора, имеющие новые счета-фактуры, окончание *************************************************************************************
+' РєР»РµРµРј РґР»РёРЅРЅС‹Р№ SQL РґР»СЏ РїСЂРѕС†РµРґСѓСЂС‹ *РћС‚РѕР±СЂР°Р¶Р°РµРј РЅРѕРІС‹Рµ СЃС‡РµС‚Р°-С„Р°РєС‚СѓСЂС‹ РґР»СЏ СЃСѓС‰РµСЃС‚РІСѓСЋС‰РёС… РґРѕРіРѕРІРѕСЂРѕРІ* *******************************************************
+' РѕС‚РѕР±СЂР°Р¶Р°СЋС‰РёР№ РґРѕРіРѕРІРѕСЂР°, РёРјРµСЋС‰РёРµ РЅРѕРІС‹Рµ СЃС‡РµС‚Р°-С„Р°РєС‚СѓСЂС‹, РѕРєРѕРЅС‡Р°РЅРёРµ *************************************************************************************
 '****************************************************************************************************************************************************
 
 
 '****************************************************************************************************************************************************
-' клеем длинный SQL для процедуры *Отображаем новые счета-фактуры для существующих договоров либо добавляем их в БД* ********************************
+' РєР»РµРµРј РґР»РёРЅРЅС‹Р№ SQL РґР»СЏ РїСЂРѕС†РµРґСѓСЂС‹ *РћС‚РѕР±СЂР°Р¶Р°РµРј РЅРѕРІС‹Рµ СЃС‡РµС‚Р°-С„Р°РєС‚СѓСЂС‹ РґР»СЏ СЃСѓС‰РµСЃС‚РІСѓСЋС‰РёС… РґРѕРіРѕРІРѕСЂРѕРІ Р»РёР±Рѕ РґРѕР±Р°РІР»СЏРµРј РёС… РІ Р‘Р”* ********************************
 Public Function SqlCnCtptExistInvNotLoad() As String
 
     Dim strSql As String
@@ -187,7 +187,7 @@ Public Function SqlCnCtptExistInvNotLoad() As String
     
     strSql = strSql & "INSERT INTO ags_cnInv (ciCn, ciNum, ciCounterParty, ciMark, ciNote) "
     strSql = strSql & "SELECT z.cidutciCn_key, z.cidutciCnInv, z.cidutciCn_s_org_key, " _
-        & strMark(Now()) & " AS mark, ""Загружено "" & Date() & "" в "" & Time() AS [note] "
+        & strMark(Now()) & " AS mark, ""Р—Р°РіСЂСѓР¶РµРЅРѕ "" & Date() & "" РІ "" & Time() AS [note] "
     strSql = strSql & "FROM (SELECT cidutciCn_key, cidutciCnInv, cidutciCn_s_org_key "
     strSql = strSql & "FROM CnInvDbtUplTblCnInv "
     strSql = strSql & "GROUP BY cidutciCn_key, cidutciCnInv, cidutciCn_s_org_key "
@@ -196,12 +196,12 @@ Public Function SqlCnCtptExistInvNotLoad() As String
     SqlCnCtptExistInvNotLoad = strSql
 
 End Function
-' клеем длинный SQL для процедуры *Отображаем новые счета-фактуры для существующих договоров либо добавляем их в БД*, окончание *********************
+' РєР»РµРµРј РґР»РёРЅРЅС‹Р№ SQL РґР»СЏ РїСЂРѕС†РµРґСѓСЂС‹ *РћС‚РѕР±СЂР°Р¶Р°РµРј РЅРѕРІС‹Рµ СЃС‡РµС‚Р°-С„Р°РєС‚СѓСЂС‹ РґР»СЏ СЃСѓС‰РµСЃС‚РІСѓСЋС‰РёС… РґРѕРіРѕРІРѕСЂРѕРІ Р»РёР±Рѕ РґРѕР±Р°РІР»СЏРµРј РёС… РІ Р‘Р”*, РѕРєРѕРЅС‡Р°РЅРёРµ *********************
 '****************************************************************************************************************************************************
 
 
 '****************************************************************************************************************************************************
-' клеем длинный SQL для процедуры *Отображаем договора, в которых отсутствует обнаруженный в БД исполнитель либо добавляем их* 22.11.2021 10:17 *****
+' РєР»РµРµРј РґР»РёРЅРЅС‹Р№ SQL РґР»СЏ РїСЂРѕС†РµРґСѓСЂС‹ *РћС‚РѕР±СЂР°Р¶Р°РµРј РґРѕРіРѕРІРѕСЂР°, РІ РєРѕС‚РѕСЂС‹С… РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚ РѕР±РЅР°СЂСѓР¶РµРЅРЅС‹Р№ РІ Р‘Р” РёСЃРїРѕР»РЅРёС‚РµР»СЊ Р»РёР±Рѕ РґРѕР±Р°РІР»СЏРµРј РёС…* 22.11.2021 10:17 *****
 Public Function SqlCnExistCtptNotLoad() As String
 
     Dim strSql As String
@@ -218,7 +218,7 @@ Public Function SqlCnExistCtptNotLoad() As String
     strSql = strSql & "            ( "
     strSql = strSql & "                SELECT "
     strSql = strSql & "                    a.cidutAccount, a.cidutCntrPrtNum, a.cidutCntrPrtName, a.cidutCntrPrtITN, "
-    strSql = strSql & "                    iif(isnull(a.cidutCnName), ""NullИлиПусто"", iif(a.cidutCnName = '', ""NullИлиПусто"", TRIM(a.cidutCnName))) AS cidutCnName, "
+    strSql = strSql & "                    iif(isnull(a.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(a.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(a.cidutCnName))) AS cidutCnName, "
     strSql = strSql & "                    a.cidutCnDate, "
     strSql = strSql & "                    a.cidutCnInv, a.cidutFormtnDate, a.cidutMatrtyDate, a.cidutDebt, a.cidutDebtOverdue, a.cidutDoc, "
     strSql = strSql & "                    a.cidutLink , a.cidutSheet, a.cidutSheetNum, a.cidutUnloadKey "
@@ -248,7 +248,7 @@ Public Function SqlCnExistCtptNotLoad() As String
     strSql = strSql & "                ( "
     strSql = strSql & "                    SELECT "
     strSql = strSql & "                        c.cn_key, "
-    strSql = strSql & "                        iif(isnull(c.cn_number), ""NullИлиПусто"", iif(c.cn_number = '', ""NullИлиПусто"", TRIM(c.cn_number))) AS cn_number, "
+    strSql = strSql & "                        iif(isnull(c.cn_number), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(c.cn_number = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(c.cn_number))) AS cn_number, "
     strSql = strSql & "                        s.cn_s_key, s.cn_s_type, o.cn_s_org_key, o.org_id, c.cn_date, o.date_beg, o.date_end, "
     strSql = strSql & "                        o.csoCnDate , i.org_id_value_l, g.ogNm "
     strSql = strSql & "                    from "
@@ -273,7 +273,7 @@ Public Function SqlCnExistCtptNotLoad() As String
     strSql = strSql & "    ) as z "
     strSql = strSql & "    Left Join "
     strSql = strSql & "        ( "
-    strSql = strSql & "            select iif(isnull(o.cn_number), ""NullИлиПусто"", iif(o.cn_number = '', ""NullИлиПусто"", TRIM(o.cn_number))) AS cn_number, o.cn_key "
+    strSql = strSql & "            select iif(isnull(o.cn_number), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(o.cn_number = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(o.cn_number))) AS cn_number, o.cn_key "
     strSql = strSql & "            from ags_cn as o "
     strSql = strSql & "        )as y on z.cidutCnName = y.cn_number "
     strSql = strSql & "GROUP BY z.cidutCntrPrtNum, z.cidutCntrPrtName, z.cidutCntrPrtITN, z.cidutCnName, z.cidutCnDate "
@@ -282,12 +282,12 @@ Public Function SqlCnExistCtptNotLoad() As String
     SqlCnExistCtptNotLoad = strSql
 
 End Function
-' клеем длинный SQL для процедуры *Отображаем договора, в которых отсутствует обнаруженный в БД исполнитель либо добавляем их*, окончание ***********
+' РєР»РµРµРј РґР»РёРЅРЅС‹Р№ SQL РґР»СЏ РїСЂРѕС†РµРґСѓСЂС‹ *РћС‚РѕР±СЂР°Р¶Р°РµРј РґРѕРіРѕРІРѕСЂР°, РІ РєРѕС‚РѕСЂС‹С… РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚ РѕР±РЅР°СЂСѓР¶РµРЅРЅС‹Р№ РІ Р‘Р” РёСЃРїРѕР»РЅРёС‚РµР»СЊ Р»РёР±Рѕ РґРѕР±Р°РІР»СЏРµРј РёС…*, РѕРєРѕРЅС‡Р°РЅРёРµ ***********
 '****************************************************************************************************************************************************
 
 
 '****************************************************************************************************************************************************
-' клеем длинный SQL для процедуры *Отображаем отсутствующие в БД договоры с исполнителями либо добавляем их* 19.11.2021 12:38 ***********************
+' РєР»РµРµРј РґР»РёРЅРЅС‹Р№ SQL РґР»СЏ РїСЂРѕС†РµРґСѓСЂС‹ *РћС‚РѕР±СЂР°Р¶Р°РµРј РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёРµ РІ Р‘Р” РґРѕРіРѕРІРѕСЂС‹ СЃ РёСЃРїРѕР»РЅРёС‚РµР»СЏРјРё Р»РёР±Рѕ РґРѕР±Р°РІР»СЏРµРј РёС…* 19.11.2021 12:38 ***********************
 Public Function SqlCnNotLoad() As String
 
     Dim strSql As String
@@ -312,7 +312,7 @@ Public Function SqlCnNotLoad() As String
     strSql = strSql & "                            ( "
     strSql = strSql & "                                SELECT "
     strSql = strSql & "                                    a.cidutAccount, a.cidutCntrPrtNum, a.cidutCntrPrtName, a.cidutCntrPrtITN, "
-    strSql = strSql & "                                    iif(isnull(a.cidutCnName), ""NullИлиПусто"", iif(a.cidutCnName = '', ""NullИлиПусто"", TRIM(a.cidutCnName))) AS cidutCnName, "
+    strSql = strSql & "                                    iif(isnull(a.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(a.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(a.cidutCnName))) AS cidutCnName, "
     strSql = strSql & "                                    a.cidutCnDate, "
     strSql = strSql & "                                    a.cidutCnInv, a.cidutFormtnDate, a.cidutMatrtyDate, a.cidutDebt, a.cidutDebtOverdue, a.cidutDoc, "
     strSql = strSql & "                                    a.cidutLink , a.cidutSheet, a.cidutSheetNum, a.cidutUnloadKey "
@@ -342,7 +342,7 @@ Public Function SqlCnNotLoad() As String
     strSql = strSql & "                                ( "
     strSql = strSql & "                                    SELECT "
     strSql = strSql & "                                        c.cn_key, "
-    strSql = strSql & "                                        iif(isnull(c.cn_number), ""NullИлиПусто"", iif(c.cn_number = '', ""NullИлиПусто"", TRIM(c.cn_number))) AS cn_number, "
+    strSql = strSql & "                                        iif(isnull(c.cn_number), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(c.cn_number = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(c.cn_number))) AS cn_number, "
     strSql = strSql & "                                        s.cn_s_key, s.cn_s_type, o.cn_s_org_key, o.org_id, c.cn_date, o.date_beg, o.date_end, "
     strSql = strSql & "                                        o.csoCnDate , i.org_id_value_l, g.ogNm "
     strSql = strSql & "                                    FROM "
@@ -367,7 +367,7 @@ Public Function SqlCnNotLoad() As String
     strSql = strSql & "                ) as z "
     strSql = strSql & "                Left Join "
     strSql = strSql & "                    ( "
-    strSql = strSql & "                        select iif(isnull(o.cn_number), ""NullИлиПусто"", iif(o.cn_number = '', ""NullИлиПусто"", TRIM(o.cn_number))) AS cn_number, o.cn_key "
+    strSql = strSql & "                        select iif(isnull(o.cn_number), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(o.cn_number = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(o.cn_number))) AS cn_number, o.cn_key "
     strSql = strSql & "                        from ags_cn as o "
     strSql = strSql & "                    )as y on z.cidutCnName = y.cn_number "
     strSql = strSql & "            GROUP BY z.cidutCntrPrtNum, z.cidutCntrPrtName, z.cidutCntrPrtITN, z.cidutCnName, z.cidutCnDate "
@@ -388,7 +388,7 @@ Public Function SqlCnNotLoad() As String
     strSql = strSql & "                                    ( "
     strSql = strSql & "                                        SELECT "
     strSql = strSql & "                                            a.cidutAccount, a.cidutCntrPrtNum, a.cidutCntrPrtName, a.cidutCntrPrtITN, "
-    strSql = strSql & "                                            iif(isnull(a.cidutCnName), ""NullИлиПусто"", iif(a.cidutCnName = '', ""NullИлиПусто"", TRIM(a.cidutCnName))) AS cidutCnName, "
+    strSql = strSql & "                                            iif(isnull(a.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(a.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(a.cidutCnName))) AS cidutCnName, "
     strSql = strSql & "                                            a.cidutCnDate, "
     strSql = strSql & "                                            a.cidutCnInv, a.cidutFormtnDate, a.cidutMatrtyDate, a.cidutDebt, a.cidutDebtOverdue, a.cidutDoc, "
     strSql = strSql & "                                            a.cidutLink , a.cidutSheet, a.cidutSheetNum, a.cidutUnloadKey "
@@ -418,7 +418,7 @@ Public Function SqlCnNotLoad() As String
     strSql = strSql & "                                        ( "
     strSql = strSql & "                                            SELECT "
     strSql = strSql & "                                                c.cn_key, "
-    strSql = strSql & "                                                iif(isnull(c.cn_number), ""NullИлиПусто"", iif(c.cn_number = '', ""NullИлиПусто"", TRIM(c.cn_number))) AS cn_number, "
+    strSql = strSql & "                                                iif(isnull(c.cn_number), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(c.cn_number = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(c.cn_number))) AS cn_number, "
     strSql = strSql & "                                                s.cn_s_key, s.cn_s_type, o.cn_s_org_key, o.org_id, c.cn_date, o.date_beg, o.date_end, "
     strSql = strSql & "                                                o.csoCnDate , i.org_id_value_l, g.ogNm "
     strSql = strSql & "                                            FROM "
@@ -443,7 +443,7 @@ Public Function SqlCnNotLoad() As String
     strSql = strSql & "                            ) as z "
     strSql = strSql & "                            Left Join "
     strSql = strSql & "                                ( "
-    strSql = strSql & "                                    select iif(isnull(o.cn_number), ""NullИлиПусто"", iif(o.cn_number = '', ""NullИлиПусто"", TRIM(o.cn_number))) AS cn_number, o.cn_key "
+    strSql = strSql & "                                    select iif(isnull(o.cn_number), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(o.cn_number = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(o.cn_number))) AS cn_number, o.cn_key "
     strSql = strSql & "                                    from ags_cn as o "
     strSql = strSql & "                                )as y on z.cidutCnName = y.cn_number "
     strSql = strSql & "                        GROUP BY z.cidutCntrPrtNum, z.cidutCntrPrtName, z.cidutCntrPrtITN, z.cidutCnName, z.cidutCnDate "
@@ -463,12 +463,12 @@ Public Function SqlCnNotLoad() As String
     SqlCnNotLoad = strSql
 
 End Function
-' клеем длинный SQL для процедуры *Отображаем отсутствующие в БД договоры с исполнителями либо добавляем их*, окончание *****************************
+' РєР»РµРµРј РґР»РёРЅРЅС‹Р№ SQL РґР»СЏ РїСЂРѕС†РµРґСѓСЂС‹ *РћС‚РѕР±СЂР°Р¶Р°РµРј РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёРµ РІ Р‘Р” РґРѕРіРѕРІРѕСЂС‹ СЃ РёСЃРїРѕР»РЅРёС‚РµР»СЏРјРё Р»РёР±Рѕ РґРѕР±Р°РІР»СЏРµРј РёС…*, РѕРєРѕРЅС‡Р°РЅРёРµ *****************************
 '****************************************************************************************************************************************************
 
 
 '****************************************************************************************************************************************************
-' клеем длинный SQL для процедуры *Отображаем счета-фактуры не имеющие пар #счёт-фактура + счёт главной книги# в БД либо добавляем их* **************
+' РєР»РµРµРј РґР»РёРЅРЅС‹Р№ SQL РґР»СЏ РїСЂРѕС†РµРґСѓСЂС‹ *РћС‚РѕР±СЂР°Р¶Р°РµРј СЃС‡РµС‚Р°-С„Р°РєС‚СѓСЂС‹ РЅРµ РёРјРµСЋС‰РёРµ РїР°СЂ #СЃС‡С‘С‚-С„Р°РєС‚СѓСЂР° + СЃС‡С‘С‚ РіР»Р°РІРЅРѕР№ РєРЅРёРіРё# РІ Р‘Р” Р»РёР±Рѕ РґРѕР±Р°РІР»СЏРµРј РёС…* **************
 ' 18.11.2021 17:37 **********************************************************************************************************************************
 Public Function SqlCnCtptInvExistAccNotLoad() As String
 
@@ -489,7 +489,7 @@ Public Function SqlCnCtptInvExistAccNotLoad() As String
     sQ = sQ & "                    ( "
     sQ = sQ & "                        select "
     sQ = sQ & "                            h.cidutCntrPrtNum, h.cidutCntrPrtName, h.cidutCnName, h.cidutCnDate, h.cn_key, "
-    sQ = sQ & "                            iif(isnull(h.cidutCnInv), ""NullИлиПусто"", iif(h.cidutCnInv = '', ""NullИлиПусто"", trim(h.cidutCnInv))) as cidutCnInv "
+    sQ = sQ & "                            iif(isnull(h.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(h.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(h.cidutCnInv))) as cidutCnInv "
     sQ = sQ & "                        from "
     sQ = sQ & "                            ( "
     sQ = sQ & "                                select u.cidutCntrPrtNum, u.cidutCntrPrtName, u.cidutCntrPrtITN, u.cidutCnName, u.cidutCnDate, u.cn_key, t.cidutCnInv, t.cidutAccount "
@@ -501,7 +501,7 @@ Public Function SqlCnCtptInvExistAccNotLoad() As String
     sQ = sQ & "                                            ( "
     sQ = sQ & "                                                SELECT "
     sQ = sQ & "                                                    a.cidutAccount, a.cidutCntrPrtNum, a.cidutCntrPrtName, a.cidutCntrPrtITN, a.cidutCnDate, "
-    sQ = sQ & "                                                    iif(isnull(a.cidutCnName), ""NullИлиПусто"", iif(a.cidutCnName = '', ""NullИлиПусто"", TRIM(a.cidutCnName))) AS cidutCnName, "
+    sQ = sQ & "                                                    iif(isnull(a.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(a.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(a.cidutCnName))) AS cidutCnName, "
     sQ = sQ & "                                                    a.cidutCnInv, a.cidutFormtnDate, a.cidutMatrtyDate, a.cidutDebt, a.cidutDebtOverdue, a.cidutDoc, "
     sQ = sQ & "                                                    a.cidutLink , a.cidutSheet, a.cidutSheetNum, a.cidutUnloadKey "
     sQ = sQ & "                                                from "
@@ -530,7 +530,7 @@ Public Function SqlCnCtptInvExistAccNotLoad() As String
     sQ = sQ & "                                                ( "
     sQ = sQ & "                                                    SELECT "
     sQ = sQ & "                                                        c.cn_key, "
-    sQ = sQ & "                                                        iif(isnull(c.cn_number), ""NullИлиПусто"", iif(c.cn_number = '', ""NullИлиПусто"", TRIM(c.cn_number))) AS cn_number, "
+    sQ = sQ & "                                                        iif(isnull(c.cn_number), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(c.cn_number = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(c.cn_number))) AS cn_number, "
     sQ = sQ & "                                                        s.cn_s_key, s.cn_s_type, o.cn_s_org_key, o.org_id, c.cn_date, o.date_beg, o.date_end, "
     sQ = sQ & "                                                        o.csoCnDate , i.org_id_value_l, g.ogNm "
     sQ = sQ & "                                                    from "
@@ -563,7 +563,7 @@ Public Function SqlCnCtptInvExistAccNotLoad() As String
     sQ = sQ & "                    Left Join "
     sQ = sQ & "                        ( "
     sQ = sQ & "                            select "
-    sQ = sQ & "                                i.ciKey, i.ciCn, iif(isnull(i.ciNum), ""NullИлиПусто"", iif(i.ciNum = '', ""NullИлиПусто"", trim(i.ciNum))) as ciNum "
+    sQ = sQ & "                                i.ciKey, i.ciCn, iif(isnull(i.ciNum), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.ciNum = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.ciNum))) as ciNum "
     sQ = sQ & "                            from "
     sQ = sQ & "                                ags_cnInv i "
     sQ = sQ & "                        ) as g on f.cn_key = g.ciCn and f.cidutCnInv = g.ciNum "
@@ -573,9 +573,9 @@ Public Function SqlCnCtptInvExistAccNotLoad() As String
     sQ = sQ & "                ( "
     sQ = sQ & "                    select "
     sQ = sQ & "                        i.cidutCntrPrtNum, "
-    sQ = sQ & "                        iif(isnull(i.cidutCnName), ""NullИлиПусто"", iif(i.cidutCnName = '', ""NullИлиПусто"", trim(i.cidutCnName))) as cidutCnName, "
+    sQ = sQ & "                        iif(isnull(i.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnName))) as cidutCnName, "
     sQ = sQ & "                        i.cidutCnDate, ii.account_num, "
-    sQ = sQ & "                        iif(isnull(i.cidutCnInv), ""NullИлиПусто"", iif(i.cidutCnInv = '', ""NullИлиПусто"", trim(i.cidutCnInv))) as cidutCnInv, "
+    sQ = sQ & "                        iif(isnull(i.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnInv))) as cidutCnInv, "
     sQ = sQ & "                        i.cidutAccount "
     sQ = sQ & "                    from "
     sQ = sQ & "                        CnInvDbtUplTbl As i "
@@ -591,11 +591,11 @@ Public Function SqlCnCtptInvExistAccNotLoad() As String
     SqlCnCtptInvExistAccNotLoad = sQ
 
 End Function
-' клеем длинный SQL для процедуры *Отображаем счета-фактуры не имеющие пар #счёт-фактура + счёт главной книги# в БД либо добавляем их*, окончание ***
+' РєР»РµРµРј РґР»РёРЅРЅС‹Р№ SQL РґР»СЏ РїСЂРѕС†РµРґСѓСЂС‹ *РћС‚РѕР±СЂР°Р¶Р°РµРј СЃС‡РµС‚Р°-С„Р°РєС‚СѓСЂС‹ РЅРµ РёРјРµСЋС‰РёРµ РїР°СЂ #СЃС‡С‘С‚-С„Р°РєС‚СѓСЂР° + СЃС‡С‘С‚ РіР»Р°РІРЅРѕР№ РєРЅРёРіРё# РІ Р‘Р” Р»РёР±Рѕ РґРѕР±Р°РІР»СЏРµРј РёС…*, РѕРєРѕРЅС‡Р°РЅРёРµ ***
 '****************************************************************************************************************************************************
 
 '****************************************************************************************************************************************************
-' клеем длинный SQL для процедуры *Отображаем счета-фактуры не имеющие пар #счёт-фактура + счёт главной книги# в БД* 18.11.2021 14:43 ***************
+' РєР»РµРµРј РґР»РёРЅРЅС‹Р№ SQL РґР»СЏ РїСЂРѕС†РµРґСѓСЂС‹ *РћС‚РѕР±СЂР°Р¶Р°РµРј СЃС‡РµС‚Р°-С„Р°РєС‚СѓСЂС‹ РЅРµ РёРјРµСЋС‰РёРµ РїР°СЂ #СЃС‡С‘С‚-С„Р°РєС‚СѓСЂР° + СЃС‡С‘С‚ РіР»Р°РІРЅРѕР№ РєРЅРёРіРё# РІ Р‘Р”* 18.11.2021 14:43 ***************
 Public Function SqlCnCtptInvExistAccNot() As String
 
     Dim strSql As String
@@ -616,7 +616,7 @@ Public Function SqlCnCtptInvExistAccNot() As String
     strSql = strSql & "                    ( "
     strSql = strSql & "                        select "
     strSql = strSql & "                            h.cidutCntrPrtNum, h.cidutCntrPrtName, h.cidutCnName, h.cidutCnDate, h.cn_key, "
-    strSql = strSql & "                            iif(isnull(h.cidutCnInv), ""NullИлиПусто"", iif(h.cidutCnInv = '', ""NullИлиПусто"", trim(h.cidutCnInv))) as cidutCnInv "
+    strSql = strSql & "                            iif(isnull(h.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(h.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(h.cidutCnInv))) as cidutCnInv "
     strSql = strSql & "                        from "
     strSql = strSql & "                            ( "
     strSql = strSql & "                                select u.cidutCntrPrtNum, u.cidutCntrPrtName, u.cidutCntrPrtITN, u.cidutCnName, u.cidutCnDate, u.cn_key, t.cidutCnInv, t.cidutAccount "
@@ -628,7 +628,7 @@ Public Function SqlCnCtptInvExistAccNot() As String
     strSql = strSql & "                                            ( "
     strSql = strSql & "                                                SELECT "
     strSql = strSql & "                                                    a.cidutAccount, a.cidutCntrPrtNum, a.cidutCntrPrtName, a.cidutCntrPrtITN, a.cidutCnDate, "
-    strSql = strSql & "                                                    iif(isnull(a.cidutCnName), ""NullИлиПусто"", iif(a.cidutCnName = '', ""NullИлиПусто"", TRIM(a.cidutCnName))) AS cidutCnName, "
+    strSql = strSql & "                                                    iif(isnull(a.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(a.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(a.cidutCnName))) AS cidutCnName, "
     strSql = strSql & "                                                    a.cidutCnInv, a.cidutFormtnDate, a.cidutMatrtyDate, a.cidutDebt, a.cidutDebtOverdue, a.cidutDoc, "
     strSql = strSql & "                                                    a.cidutLink , a.cidutSheet, a.cidutSheetNum, a.cidutUnloadKey "
     strSql = strSql & "                                                from "
@@ -657,7 +657,7 @@ Public Function SqlCnCtptInvExistAccNot() As String
     strSql = strSql & "                                                ( "
     strSql = strSql & "                                                    SELECT "
     strSql = strSql & "                                                        c.cn_key, "
-    strSql = strSql & "                                                        iif(isnull(c.cn_number), ""NullИлиПусто"", iif(c.cn_number = '', ""NullИлиПусто"", TRIM(c.cn_number))) AS cn_number, "
+    strSql = strSql & "                                                        iif(isnull(c.cn_number), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(c.cn_number = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(c.cn_number))) AS cn_number, "
     strSql = strSql & "                                                        s.cn_s_key, s.cn_s_type, o.cn_s_org_key, o.org_id, c.cn_date, o.date_beg, o.date_end, "
     strSql = strSql & "                                                        o.csoCnDate , i.org_id_value_l, g.ogNm "
     strSql = strSql & "                                                    from "
@@ -690,7 +690,7 @@ Public Function SqlCnCtptInvExistAccNot() As String
     strSql = strSql & "                    Left Join "
     strSql = strSql & "                        ( "
     strSql = strSql & "                            select "
-    strSql = strSql & "                                i.ciKey, i.ciCn, iif(isnull(i.ciNum), ""NullИлиПусто"", iif(i.ciNum = '', ""NullИлиПусто"", trim(i.ciNum))) as ciNum "
+    strSql = strSql & "                                i.ciKey, i.ciCn, iif(isnull(i.ciNum), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.ciNum = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.ciNum))) as ciNum "
     strSql = strSql & "                            from "
     strSql = strSql & "                                ags_cnInv i "
     strSql = strSql & "                        ) as g on f.cn_key = g.ciCn and f.cidutCnInv = g.ciNum "
@@ -700,9 +700,9 @@ Public Function SqlCnCtptInvExistAccNot() As String
     strSql = strSql & "                ( "
     strSql = strSql & "                    select "
     strSql = strSql & "                        i.cidutCntrPrtNum, "
-    strSql = strSql & "                        iif(isnull(i.cidutCnName), ""NullИлиПусто"", iif(i.cidutCnName = '', ""NullИлиПусто"", trim(i.cidutCnName))) as cidutCnName, "
+    strSql = strSql & "                        iif(isnull(i.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnName))) as cidutCnName, "
     strSql = strSql & "                        i.cidutCnDate, ii.account_num, "
-    strSql = strSql & "                        iif(isnull(i.cidutCnInv), ""NullИлиПусто"", iif(i.cidutCnInv = '', ""NullИлиПусто"", trim(i.cidutCnInv))) as cidutCnInv, "
+    strSql = strSql & "                        iif(isnull(i.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnInv))) as cidutCnInv, "
     strSql = strSql & "                        i.cidutAccount "
     strSql = strSql & "                    from "
     strSql = strSql & "                        CnInvDbtUplTbl As i "
@@ -719,11 +719,11 @@ Public Function SqlCnCtptInvExistAccNot() As String
     SqlCnCtptInvExistAccNot = strSql
 
 End Function
-' клеем длинный SQL для процедуры *Отображаем счета-фактуры не имеющие пар #счёт-фактура + счёт главной книги# в БД*, окончание *********************
+' РєР»РµРµРј РґР»РёРЅРЅС‹Р№ SQL РґР»СЏ РїСЂРѕС†РµРґСѓСЂС‹ *РћС‚РѕР±СЂР°Р¶Р°РµРј СЃС‡РµС‚Р°-С„Р°РєС‚СѓСЂС‹ РЅРµ РёРјРµСЋС‰РёРµ РїР°СЂ #СЃС‡С‘С‚-С„Р°РєС‚СѓСЂР° + СЃС‡С‘С‚ РіР»Р°РІРЅРѕР№ РєРЅРёРіРё# РІ Р‘Р”*, РѕРєРѕРЅС‡Р°РЅРёРµ *********************
 '****************************************************************************************************************************************************
 
 '****************************************************************************************************************************************************
-' клеем длинный SQL для процедуры *Отображаем пары СФ+СГК имеющие задолженности в БД* 18.11.2021 15:39 **********************************************
+' РєР»РµРµРј РґР»РёРЅРЅС‹Р№ SQL РґР»СЏ РїСЂРѕС†РµРґСѓСЂС‹ *РћС‚РѕР±СЂР°Р¶Р°РµРј РїР°СЂС‹ РЎР¤+РЎР“Рљ РёРјРµСЋС‰РёРµ Р·Р°РґРѕР»Р¶РµРЅРЅРѕСЃС‚Рё РІ Р‘Р”* 18.11.2021 15:39 **********************************************
 Public Function SqlCnCtptInvAccDbtExist() As String
 
     Dim sQ As String
@@ -739,8 +739,8 @@ Public Function SqlCnCtptInvAccDbtExist() As String
     sQ = sQ & " iif(n.cidutMatrtyDate = m.cn_inv_date_maturity, true, false) as MatrtyDateDiff, "
     sQ = sQ & " iif(n.cidutDebt = m.dbt_ttl, true, false) as DebtDiff, "
     sQ = sQ & " iif(n.cidutDebtOverdue = m.dbt_overd, true, false) as DebtOverdueDiff, "
-    sQ = sQ & " iif(iif(isnull(n.cidutDoc), ""пусто"",iif(n.cidutDoc = '', ""пусто"", n.cidutDoc)) = iif(isnull(m.doc_base), ""пусто"",iif(m.doc_base = '', ""пусто"", m.doc_base)), true, false) as DocDiff, "
-    sQ = sQ & " iif(iif(isnull(n.cidutLink), ""пусто"",iif(n.cidutLink = '', ""пусто"", n.cidutLink)) = iif(isnull(m.link), ""пусто"",iif(m.link = '', ""пусто"", m.link)), true, false) as LinkDiff, "
+    sQ = sQ & " iif(iif(isnull(n.cidutDoc), ""РїСѓСЃС‚Рѕ"",iif(n.cidutDoc = '', ""РїСѓСЃС‚Рѕ"", n.cidutDoc)) = iif(isnull(m.doc_base), ""РїСѓСЃС‚Рѕ"",iif(m.doc_base = '', ""РїСѓСЃС‚Рѕ"", m.doc_base)), true, false) as DocDiff, "
+    sQ = sQ & " iif(iif(isnull(n.cidutLink), ""РїСѓСЃС‚Рѕ"",iif(n.cidutLink = '', ""РїСѓСЃС‚Рѕ"", n.cidutLink)) = iif(isnull(m.link), ""РїСѓСЃС‚Рѕ"",iif(m.link = '', ""РїСѓСЃС‚Рѕ"", m.link)), true, false) as LinkDiff, "
     sQ = sQ & " iif(n.cidutSheetNum = m.Number, True, False) As NumDiff "
     sQ = sQ & "from "
     sQ = sQ & " ( "
@@ -765,8 +765,8 @@ Public Function SqlCnCtptInvAccDbtExist() As String
 '    sQ = sQ & " iif(n.cidutMatrtyDate = m.cn_inv_date_maturity, true, false) as MatrtyDateDiff, "
 '    sQ = sQ & " iif(n.cidutDebt = m.dbt_ttl, true, false) as DebtDiff, "
 '    sQ = sQ & " iif(n.cidutDebtOverdue = m.dbt_overd, true, false) as DebtOverdueDiff, "
-'    sQ = sQ & " iif(iif(isnull(n.cidutDoc), ""пусто"",iif(n.cidutDoc = '', ""пусто"", n.cidutDoc)) = iif(isnull(m.doc_base), ""пусто"",iif(m.doc_base = '', ""пусто"", m.doc_base)), true, false) as DocDiff, "
-'    sQ = sQ & " iif(iif(isnull(n.cidutLink), ""пусто"",iif(n.cidutLink = '', ""пусто"", n.cidutLink)) = iif(isnull(m.link), ""пусто"",iif(m.link = '', ""пусто"", m.link)), true, false) as LinkDiff, "
+'    sQ = sQ & " iif(iif(isnull(n.cidutDoc), ""РїСѓСЃС‚Рѕ"",iif(n.cidutDoc = '', ""РїСѓСЃС‚Рѕ"", n.cidutDoc)) = iif(isnull(m.doc_base), ""РїСѓСЃС‚Рѕ"",iif(m.doc_base = '', ""РїСѓСЃС‚Рѕ"", m.doc_base)), true, false) as DocDiff, "
+'    sQ = sQ & " iif(iif(isnull(n.cidutLink), ""РїСѓСЃС‚Рѕ"",iif(n.cidutLink = '', ""РїСѓСЃС‚Рѕ"", n.cidutLink)) = iif(isnull(m.link), ""РїСѓСЃС‚Рѕ"",iif(m.link = '', ""РїСѓСЃС‚Рѕ"", m.link)), true, false) as LinkDiff, "
 '    sQ = sQ & " iif(n.cidutSheetNum = m.Number, True, False) As NumDiff "
 '    sQ = sQ & "from "
 '    sQ = sQ & " ( "
@@ -797,7 +797,7 @@ Public Function SqlCnCtptInvAccDbtExist() As String
 '    sQ = sQ & "                                         ( "
 '    sQ = sQ & "                                             select  "
 '    sQ = sQ & "                                                 h.cidutCntrPrtNum, h.cidutCntrPrtName, h.cidutCnName, h.cidutCnDate, h.cn_key,  "
-'    sQ = sQ & "                                                 iif(isnull(h.cidutCnInv), ""NullИлиПусто"", iif(h.cidutCnInv = '', ""NullИлиПусто"", trim(h.cidutCnInv))) as cidutCnInv "
+'    sQ = sQ & "                                                 iif(isnull(h.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(h.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(h.cidutCnInv))) as cidutCnInv "
 '    sQ = sQ & "                                             from "
 '    sQ = sQ & "                                                 ( "
 '    sQ = sQ & "                                                     select u.cidutCntrPrtNum, u.cidutCntrPrtName, u.cidutCntrPrtITN, u.cidutCnName, u.cidutCnDate, u.cn_key, t.cidutCnInv, t.cidutAccount "
@@ -809,7 +809,7 @@ Public Function SqlCnCtptInvAccDbtExist() As String
 '    sQ = sQ & "                                                                 ( "
 '    sQ = sQ & "                                                                     SELECT  "
 '    sQ = sQ & "                                                                         a.cidutAccount, a.cidutCntrPrtNum, a.cidutCntrPrtName, a.cidutCntrPrtITN, a.cidutCnDate,  "
-'    sQ = sQ & "                                                                         iif(isnull(a.cidutCnName), ""NullИлиПусто"", iif(a.cidutCnName = '', ""NullИлиПусто"", TRIM(a.cidutCnName))) AS cidutCnName,  "
+'    sQ = sQ & "                                                                         iif(isnull(a.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(a.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(a.cidutCnName))) AS cidutCnName,  "
 '    sQ = sQ & "                                                                         a.cidutCnInv, a.cidutFormtnDate, a.cidutMatrtyDate, a.cidutDebt, a.cidutDebtOverdue, a.cidutDoc,  "
 '    sQ = sQ & "                                                                         a.cidutLink, a.cidutSheet, a.cidutSheetNum, a.cidutUnloadKey "
 '    sQ = sQ & "                                                                     FROM  "
@@ -838,7 +838,7 @@ Public Function SqlCnCtptInvAccDbtExist() As String
 '    sQ = sQ & "                                                                     ( "
 '    sQ = sQ & "                                                                         SELECT  "
 '    sQ = sQ & "                                                                             c.cn_key,  "
-'    sQ = sQ & "                                                                             iif(isnull(c.cn_number), ""NullИлиПусто"", iif(c.cn_number = '', ""NullИлиПусто"", TRIM(c.cn_number))) AS cn_number,  "
+'    sQ = sQ & "                                                                             iif(isnull(c.cn_number), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(c.cn_number = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(c.cn_number))) AS cn_number,  "
 '    sQ = sQ & "                                                                             s.cn_s_key, s.cn_s_type, o.cn_s_org_key, o.org_id, c.cn_date, o.date_beg, o.date_end,  "
 '    sQ = sQ & "                                                                             o.csoCnDate, i.org_id_value_l, g.ogNm "
 '    sQ = sQ & "                                                                         FROM  "
@@ -871,7 +871,7 @@ Public Function SqlCnCtptInvAccDbtExist() As String
 '    sQ = sQ & "                                         left join "
 '    sQ = sQ & "                                             ( "
 '    sQ = sQ & "                                                 select  "
-'    sQ = sQ & "                                                     i.ciKey, i.ciCn, iif(isnull(i.ciNum), ""NullИлиПусто"", iif(i.ciNum = '', ""NullИлиПусто"", trim(i.ciNum))) as ciNum "
+'    sQ = sQ & "                                                     i.ciKey, i.ciCn, iif(isnull(i.ciNum), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.ciNum = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.ciNum))) as ciNum "
 '    sQ = sQ & "                                                 from  "
 '    sQ = sQ & "                                                     ags_cnInv i "
 '    sQ = sQ & "                                             ) as g on f.cn_key = g.ciCn and f.cidutCnInv = g.ciNum "
@@ -881,9 +881,9 @@ Public Function SqlCnCtptInvAccDbtExist() As String
 '    sQ = sQ & "                                     ( "
 '    sQ = sQ & "                                         select "
 '    sQ = sQ & "                                             i.cidutCntrPrtNum,  "
-'    sQ = sQ & "                                             iif(isnull(i.cidutCnName), ""NullИлиПусто"", iif(i.cidutCnName = '', ""NullИлиПусто"", trim(i.cidutCnName))) as cidutCnName, "
+'    sQ = sQ & "                                             iif(isnull(i.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnName))) as cidutCnName, "
 '    sQ = sQ & "                                             i.cidutCnDate, ii.account_num, "
-'    sQ = sQ & "                                             iif(isnull(i.cidutCnInv), ""NullИлиПусто"", iif(i.cidutCnInv = '', ""NullИлиПусто"", trim(i.cidutCnInv))) as cidutCnInv, "
+'    sQ = sQ & "                                             iif(isnull(i.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnInv))) as cidutCnInv, "
 '    sQ = sQ & "                                             i.cidutAccount "
 '    sQ = sQ & "                                         from "
 '    sQ = sQ & "                                             CnInvDbtUplTbl as i "
@@ -901,9 +901,9 @@ Public Function SqlCnCtptInvAccDbtExist() As String
 '    sQ = sQ & "                     ( "
 '    sQ = sQ & "                         select  "
 '    sQ = sQ & "                             i.cidutCntrPrtNum,  "
-'    sQ = sQ & "                             iif(isnull(i.cidutCnName), ""NullИлиПусто"", iif(i.cidutCnName = '', ""NullИлиПусто"", trim(i.cidutCnName))) as cidutCnName, "
+'    sQ = sQ & "                             iif(isnull(i.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnName))) as cidutCnName, "
 '    sQ = sQ & "                             i.cidutCnDate, "
-'    sQ = sQ & "                             iif(isnull(i.cidutCnInv), ""NullИлиПусто"", iif(i.cidutCnInv = '', ""NullИлиПусто"", trim(i.cidutCnInv))) as cidutCnInv, "
+'    sQ = sQ & "                             iif(isnull(i.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnInv))) as cidutCnInv, "
 '    sQ = sQ & "                             i.cidutAccount, i.cidutUnloadKey, "
 '    sQ = sQ & "                             i.cidutFormtnDate, i.cidutMatrtyDate, i.cidutDebt, i.cidutDebtOverdue, i.cidutDoc, i.cidutLink, i.cidutSheet, i.cidutSheetNum "
 '    sQ = sQ & "                         from "
@@ -936,7 +936,7 @@ Public Function SqlCnCtptInvAccDbtExist() As String
 '    sQ = sQ & "                                                     ( "
 '    sQ = sQ & "                                                         select  "
 '    sQ = sQ & "                                                             h.cidutCntrPrtNum, h.cidutCntrPrtName, h.cidutCnName, h.cidutCnDate, h.cn_key,  "
-'    sQ = sQ & "                                                             iif(isnull(h.cidutCnInv), ""NullИлиПусто"", iif(h.cidutCnInv = '', ""NullИлиПусто"", trim(h.cidutCnInv))) as cidutCnInv "
+'    sQ = sQ & "                                                             iif(isnull(h.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(h.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(h.cidutCnInv))) as cidutCnInv "
 '    sQ = sQ & "                                                         from "
 '    sQ = sQ & "                                                             ( "
 '    sQ = sQ & "                                                                 select u.cidutCntrPrtNum, u.cidutCntrPrtName, u.cidutCntrPrtITN, u.cidutCnName, u.cidutCnDate, u.cn_key, t.cidutCnInv, t.cidutAccount "
@@ -948,7 +948,7 @@ Public Function SqlCnCtptInvAccDbtExist() As String
 '    sQ = sQ & "                                                                             ( "
 '    sQ = sQ & "                                                                                 SELECT  "
 '    sQ = sQ & "                                                                                     a.cidutAccount, a.cidutCntrPrtNum, a.cidutCntrPrtName, a.cidutCntrPrtITN, a.cidutCnDate,  "
-'    sQ = sQ & "                                                                                     iif(isnull(a.cidutCnName), ""NullИлиПусто"", iif(a.cidutCnName = '', ""NullИлиПусто"", TRIM(a.cidutCnName))) AS cidutCnName,  "
+'    sQ = sQ & "                                                                                     iif(isnull(a.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(a.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(a.cidutCnName))) AS cidutCnName,  "
 '    sQ = sQ & "                                                                                     a.cidutCnInv, a.cidutFormtnDate, a.cidutMatrtyDate, a.cidutDebt, a.cidutDebtOverdue, a.cidutDoc,  "
 '    sQ = sQ & "                                                                                     a.cidutLink, a.cidutSheet, a.cidutSheetNum, a.cidutUnloadKey "
 '    sQ = sQ & "                                                                                 FROM  "
@@ -977,7 +977,7 @@ Public Function SqlCnCtptInvAccDbtExist() As String
 '    sQ = sQ & "                                                                                 ( "
 '    sQ = sQ & "                                                                                     SELECT  "
 '    sQ = sQ & "                                                                                         c.cn_key,  "
-'    sQ = sQ & "                                                                                         iif(isnull(c.cn_number), ""NullИлиПусто"", iif(c.cn_number = '', ""NullИлиПусто"", TRIM(c.cn_number))) AS cn_number,  "
+'    sQ = sQ & "                                                                                         iif(isnull(c.cn_number), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(c.cn_number = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(c.cn_number))) AS cn_number,  "
 '    sQ = sQ & "                                                                                         s.cn_s_key, s.cn_s_type, o.cn_s_org_key, o.org_id, c.cn_date, o.date_beg, o.date_end,  "
 '    sQ = sQ & "                                                                                         o.csoCnDate, i.org_id_value_l, g.ogNm "
 '    sQ = sQ & "                                                                                     FROM  "
@@ -1010,7 +1010,7 @@ Public Function SqlCnCtptInvAccDbtExist() As String
 '    sQ = sQ & "                                                     left join "
 '    sQ = sQ & "                                                         ( "
 '    sQ = sQ & "                                                             select  "
-'    sQ = sQ & "                                                                 i.ciKey, i.ciCn, iif(isnull(i.ciNum), ""NullИлиПусто"", iif(i.ciNum = '', ""NullИлиПусто"", trim(i.ciNum))) as ciNum "
+'    sQ = sQ & "                                                                 i.ciKey, i.ciCn, iif(isnull(i.ciNum), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.ciNum = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.ciNum))) as ciNum "
 '    sQ = sQ & "                                                             from  "
 '    sQ = sQ & "                                                                 ags_cnInv i "
 '    sQ = sQ & "                                                         ) as g on f.cn_key = g.ciCn and f.cidutCnInv = g.ciNum "
@@ -1020,9 +1020,9 @@ Public Function SqlCnCtptInvAccDbtExist() As String
 '    sQ = sQ & "                                                 ( "
 '    sQ = sQ & "                                                     select "
 '    sQ = sQ & "                                                         i.cidutCntrPrtNum,  "
-'    sQ = sQ & "                                                         iif(isnull(i.cidutCnName), ""NullИлиПусто"", iif(i.cidutCnName = '', ""NullИлиПусто"", trim(i.cidutCnName))) as cidutCnName, "
+'    sQ = sQ & "                                                         iif(isnull(i.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnName))) as cidutCnName, "
 '    sQ = sQ & "                                                         i.cidutCnDate, ii.account_num, "
-'    sQ = sQ & "                                                         iif(isnull(i.cidutCnInv), ""NullИлиПусто"", iif(i.cidutCnInv = '', ""NullИлиПусто"", trim(i.cidutCnInv))) as cidutCnInv, "
+'    sQ = sQ & "                                                         iif(isnull(i.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnInv))) as cidutCnInv, "
 '    sQ = sQ & "                                                         i.cidutAccount "
 '    sQ = sQ & "                                                     from "
 '    sQ = sQ & "                                                         CnInvDbtUplTbl as i "
@@ -1040,9 +1040,9 @@ Public Function SqlCnCtptInvAccDbtExist() As String
 '    sQ = sQ & "                                 ( "
 '    sQ = sQ & "                                     select  "
 '    sQ = sQ & "                                         i.cidutCntrPrtNum,  "
-'    sQ = sQ & "                                         iif(isnull(i.cidutCnName), ""NullИлиПусто"", iif(i.cidutCnName = '', ""NullИлиПусто"", trim(i.cidutCnName))) as cidutCnName, "
+'    sQ = sQ & "                                         iif(isnull(i.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnName))) as cidutCnName, "
 '    sQ = sQ & "                                         i.cidutCnDate, "
-'    sQ = sQ & "                                         iif(isnull(i.cidutCnInv), ""NullИлиПусто"", iif(i.cidutCnInv = '', ""NullИлиПусто"", trim(i.cidutCnInv))) as cidutCnInv, "
+'    sQ = sQ & "                                         iif(isnull(i.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnInv))) as cidutCnInv, "
 '    sQ = sQ & "                                         i.cidutAccount, i.cidutUnloadKey "
 '    sQ = sQ & "                                     from "
 '    sQ = sQ & "                                         CnInvDbtUplTbl as i "
@@ -1062,12 +1062,12 @@ Public Function SqlCnCtptInvAccDbtExist() As String
     SqlCnCtptInvAccDbtExist = sQ
 
 End Function
-' клеем длинный SQL для процедуры *Отображаем пары СФ+СГК имеющие задолженности в БД*, окончание ****************************************************
+' РєР»РµРµРј РґР»РёРЅРЅС‹Р№ SQL РґР»СЏ РїСЂРѕС†РµРґСѓСЂС‹ *РћС‚РѕР±СЂР°Р¶Р°РµРј РїР°СЂС‹ РЎР¤+РЎР“Рљ РёРјРµСЋС‰РёРµ Р·Р°РґРѕР»Р¶РµРЅРЅРѕСЃС‚Рё РІ Р‘Р”*, РѕРєРѕРЅС‡Р°РЅРёРµ ****************************************************
 '****************************************************************************************************************************************************
 
 
 '****************************************************************************************************************************************************
-' клеем длинный SQL для процедуры *Отображаем пары СФ+СГК не имеющие задолженности в БД* 18.11.2021 15:31 *******************************************
+' РєР»РµРµРј РґР»РёРЅРЅС‹Р№ SQL РґР»СЏ РїСЂРѕС†РµРґСѓСЂС‹ *РћС‚РѕР±СЂР°Р¶Р°РµРј РїР°СЂС‹ РЎР¤+РЎР“Рљ РЅРµ РёРјРµСЋС‰РёРµ Р·Р°РґРѕР»Р¶РµРЅРЅРѕСЃС‚Рё РІ Р‘Р”* 18.11.2021 15:31 *******************************************
 Public Function SqlCnCtptInvAccExistDbtNot() As String
 
     Dim sQ As String
@@ -1076,9 +1076,9 @@ Public Function SqlCnCtptInvAccExistDbtNot() As String
     
     sQ = sQ & "select "
     sQ = sQ & "    n.cidutCntrPrtNum, n.cidutCntrPrtName, "
-    sQ = sQ & "    iif(n.cidutCnName = ""NullИлиПусто"", null, n.cidutCnName) as cidutCnName, "
+    sQ = sQ & "    iif(n.cidutCnName = ""NullРР»РёРџСѓСЃС‚Рѕ"", null, n.cidutCnName) as cidutCnName, "
     sQ = sQ & "    n.cidutCnDate, n.cn_key, "
-    sQ = sQ & "    iif(n.cidutCnInv = ""NullИлиПусто"", null, n.cidutCnInv) as cidutCnInv, "
+    sQ = sQ & "    iif(n.cidutCnInv = ""NullРР»РёРџСѓСЃС‚Рѕ"", null, n.cidutCnInv) as cidutCnInv, "
     sQ = sQ & "    n.ciKey, "
     sQ = sQ & "    n.cidutAccount, n.account_num, n.ciaKey, n.cidutUnloadKey, n.cidutUnloadKeyCount, "
     sQ = sQ & "    n.cidutFormtnDate, n.cidutMatrtyDate, n.cidutDebt, n.cidutDebtOverdue, n.cidutDoc, n.cidutLink, n.cidutSheet, n.cidutSheetNum, "
@@ -1099,9 +1099,9 @@ Public Function SqlCnCtptInvAccExistDbtNot() As String
     
 '    sQ = sQ & "select "
 '    sQ = sQ & "    n.cidutCntrPrtNum, n.cidutCntrPrtName, "
-'    sQ = sQ & "    iif(n.cidutCnName = ""NullИлиПусто"", null, n.cidutCnName) as cidutCnName, "
+'    sQ = sQ & "    iif(n.cidutCnName = ""NullРР»РёРџСѓСЃС‚Рѕ"", null, n.cidutCnName) as cidutCnName, "
 '    sQ = sQ & "    n.cidutCnDate, n.cn_key, "
-'    sQ = sQ & "    iif(n.cidutCnInv = ""NullИлиПусто"", null, n.cidutCnInv) as cidutCnInv, "
+'    sQ = sQ & "    iif(n.cidutCnInv = ""NullРР»РёРџСѓСЃС‚Рѕ"", null, n.cidutCnInv) as cidutCnInv, "
 '    sQ = sQ & "    n.ciKey, "
 '    sQ = sQ & "    n.cidutAccount, n.account_num, n.ciaKey, n.cidutUnloadKey, n.cidutUnloadKeyCount, "
 '    sQ = sQ & "    n.cidutFormtnDate, n.cidutMatrtyDate, n.cidutDebt, n.cidutDebtOverdue, n.cidutDoc, n.cidutLink, n.cidutSheet, n.cidutSheetNum, "
@@ -1135,7 +1135,7 @@ Public Function SqlCnCtptInvAccExistDbtNot() As String
 '    sQ = sQ & "                                            ( "
 '    sQ = sQ & "                                                select "
 '    sQ = sQ & "                                                    h.cidutCntrPrtNum, h.cidutCntrPrtName, h.cidutCnName, h.cidutCnDate, h.cn_key, "
-'    sQ = sQ & "                                                    iif(isnull(h.cidutCnInv), ""NullИлиПусто"", iif(h.cidutCnInv = '', ""NullИлиПусто"", trim(h.cidutCnInv))) as cidutCnInv "
+'    sQ = sQ & "                                                    iif(isnull(h.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(h.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(h.cidutCnInv))) as cidutCnInv "
 '    sQ = sQ & "                                                from "
 '    sQ = sQ & "                                                    ( "
 '    sQ = sQ & "                                                        select u.cidutCntrPrtNum, u.cidutCntrPrtName, u.cidutCntrPrtITN, u.cidutCnName, u.cidutCnDate, u.cn_key, t.cidutCnInv, t.cidutAccount "
@@ -1147,7 +1147,7 @@ Public Function SqlCnCtptInvAccExistDbtNot() As String
 '    sQ = sQ & "                                                                    ( "
 '    sQ = sQ & "                                                                        SELECT "
 '    sQ = sQ & "                                                                            a.cidutAccount, a.cidutCntrPrtNum, a.cidutCntrPrtName, a.cidutCntrPrtITN, a.cidutCnDate,"
-'    sQ = sQ & "                                                                            iif(isnull(a.cidutCnName), ""NullИлиПусто"", iif(a.cidutCnName = '', ""NullИлиПусто"", TRIM(a.cidutCnName))) AS cidutCnName,"
+'    sQ = sQ & "                                                                            iif(isnull(a.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(a.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(a.cidutCnName))) AS cidutCnName,"
 '    sQ = sQ & "                                                                            a.cidutCnInv, a.cidutFormtnDate, a.cidutMatrtyDate, a.cidutDebt, a.cidutDebtOverdue, a.cidutDoc,"
 '    sQ = sQ & "                                                                            a.cidutLink , a.cidutSheet, a.cidutSheetNum, a.cidutUnloadKey "
 '    sQ = sQ & "                                                                        from "
@@ -1176,7 +1176,7 @@ Public Function SqlCnCtptInvAccExistDbtNot() As String
 '    sQ = sQ & "                                                                        ( "
 '    sQ = sQ & "                                                                            SELECT "
 '    sQ = sQ & "                                                                                c.cn_key, "
-'    sQ = sQ & "                                                                                iif(isnull(c.cn_number), ""NullИлиПусто"", iif(c.cn_number = '', ""NullИлиПусто"", TRIM(c.cn_number))) AS cn_number, "
+'    sQ = sQ & "                                                                                iif(isnull(c.cn_number), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(c.cn_number = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(c.cn_number))) AS cn_number, "
 '    sQ = sQ & "                                                                                s.cn_s_key, s.cn_s_type, o.cn_s_org_key, o.org_id, c.cn_date, o.date_beg, o.date_end, "
 '    sQ = sQ & "                                                                                o.csoCnDate , i.org_id_value_l, g.ogNm "
 '    sQ = sQ & "                                                                            from "
@@ -1209,7 +1209,7 @@ Public Function SqlCnCtptInvAccExistDbtNot() As String
 '    sQ = sQ & "                                            Left Join "
 '    sQ = sQ & "                                                ( "
 '    sQ = sQ & "                                                    select "
-'    sQ = sQ & "                                                        i.ciKey, i.ciCn, iif(isnull(i.ciNum), ""NullИлиПусто"", iif(i.ciNum = '', ""NullИлиПусто"", trim(i.ciNum))) as ciNum "
+'    sQ = sQ & "                                                        i.ciKey, i.ciCn, iif(isnull(i.ciNum), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.ciNum = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.ciNum))) as ciNum "
 '    sQ = sQ & "                                                    from "
 '    sQ = sQ & "                                                        ags_cnInv i "
 '    sQ = sQ & "                                                ) as g on f.cn_key = g.ciCn and f.cidutCnInv = g.ciNum "
@@ -1219,9 +1219,9 @@ Public Function SqlCnCtptInvAccExistDbtNot() As String
 '    sQ = sQ & "                                        ( "
 '    sQ = sQ & "                                            select "
 '    sQ = sQ & "                                                i.cidutCntrPrtNum, "
-'    sQ = sQ & "                                                iif(isnull(i.cidutCnName), ""NullИлиПусто"", iif(i.cidutCnName = '', ""NullИлиПусто"", trim(i.cidutCnName))) as cidutCnName, "
+'    sQ = sQ & "                                                iif(isnull(i.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnName))) as cidutCnName, "
 '    sQ = sQ & "                                                i.cidutCnDate, ii.account_num, "
-'    sQ = sQ & "                                                iif(isnull(i.cidutCnInv), ""NullИлиПусто"", iif(i.cidutCnInv = '', ""NullИлиПусто"", trim(i.cidutCnInv))) as cidutCnInv, "
+'    sQ = sQ & "                                                iif(isnull(i.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnInv))) as cidutCnInv, "
 '    sQ = sQ & "                                                i.cidutAccount "
 '    sQ = sQ & "                                            from "
 '    sQ = sQ & "                                                CnInvDbtUplTbl As i "
@@ -1239,9 +1239,9 @@ Public Function SqlCnCtptInvAccExistDbtNot() As String
 '    sQ = sQ & "                        ( "
 '    sQ = sQ & "                            select "
 '    sQ = sQ & "                                i.cidutCntrPrtNum, "
-'    sQ = sQ & "                                iif(isnull(i.cidutCnName), ""NullИлиПусто"", iif(i.cidutCnName = '', ""NullИлиПусто"", trim(i.cidutCnName))) as cidutCnName, "
+'    sQ = sQ & "                                iif(isnull(i.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnName))) as cidutCnName, "
 '    sQ = sQ & "                                i.cidutCnDate, "
-'    sQ = sQ & "                                iif(isnull(i.cidutCnInv), ""NullИлиПусто"", iif(i.cidutCnInv = '', ""NullИлиПусто"", trim(i.cidutCnInv))) as cidutCnInv, "
+'    sQ = sQ & "                                iif(isnull(i.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnInv))) as cidutCnInv, "
 '    sQ = sQ & "                                i.cidutAccount, i.cidutUnloadKey, "
 '    sQ = sQ & "                                i.cidutFormtnDate , i.cidutMatrtyDate, i.cidutDebt, i.cidutDebtOverdue, i.cidutDoc, i.cidutLink, i.cidutSheet, i.cidutSheetNum "
 '    sQ = sQ & "                            from "
@@ -1274,7 +1274,7 @@ Public Function SqlCnCtptInvAccExistDbtNot() As String
 '    sQ = sQ & "                                                        ( "
 '    sQ = sQ & "                                                            select "
 '    sQ = sQ & "                                                                h.cidutCntrPrtNum, h.cidutCntrPrtName, h.cidutCnName, h.cidutCnDate, h.cn_key, "
-'    sQ = sQ & "                                                                iif(isnull(h.cidutCnInv), ""NullИлиПусто"", iif(h.cidutCnInv = '', ""NullИлиПусто"", trim(h.cidutCnInv))) as cidutCnInv "
+'    sQ = sQ & "                                                                iif(isnull(h.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(h.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(h.cidutCnInv))) as cidutCnInv "
 '    sQ = sQ & "                                                            from "
 '    sQ = sQ & "                                                                ( "
 '    sQ = sQ & "                                                                    select u.cidutCntrPrtNum, u.cidutCntrPrtName, u.cidutCntrPrtITN, u.cidutCnName, u.cidutCnDate, u.cn_key, t.cidutCnInv, t.cidutAccount "
@@ -1286,7 +1286,7 @@ Public Function SqlCnCtptInvAccExistDbtNot() As String
 '    sQ = sQ & "                                                                                ( "
 '    sQ = sQ & "                                                                                    SELECT "
 '    sQ = sQ & "                                                                                        a.cidutAccount, a.cidutCntrPrtNum, a.cidutCntrPrtName, a.cidutCntrPrtITN, a.cidutCnDate, "
-'    sQ = sQ & "                                                                                        iif(isnull(a.cidutCnName), ""NullИлиПусто"", iif(a.cidutCnName = '', ""NullИлиПусто"", TRIM(a.cidutCnName))) AS cidutCnName, "
+'    sQ = sQ & "                                                                                        iif(isnull(a.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(a.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(a.cidutCnName))) AS cidutCnName, "
 '    sQ = sQ & "                                                                                        a.cidutCnInv, a.cidutFormtnDate, a.cidutMatrtyDate, a.cidutDebt, a.cidutDebtOverdue, a.cidutDoc, "
 '    sQ = sQ & "                                                                                        a.cidutLink , a.cidutSheet, a.cidutSheetNum, a.cidutUnloadKey "
 '    sQ = sQ & "                                                                                    from "
@@ -1315,7 +1315,7 @@ Public Function SqlCnCtptInvAccExistDbtNot() As String
 '    sQ = sQ & "                                                                                    ( "
 '    sQ = sQ & "                                                                                        SELECT "
 '    sQ = sQ & "                                                                                            c.cn_key, "
-'    sQ = sQ & "                                                                                            iif(isnull(c.cn_number), ""NullИлиПусто"", iif(c.cn_number = '', ""NullИлиПусто"", TRIM(c.cn_number))) AS cn_number, "
+'    sQ = sQ & "                                                                                            iif(isnull(c.cn_number), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(c.cn_number = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(c.cn_number))) AS cn_number, "
 '    sQ = sQ & "                                                                                            s.cn_s_key, s.cn_s_type, o.cn_s_org_key, o.org_id, c.cn_date, o.date_beg, o.date_end, "
 '    sQ = sQ & "                                                                                            o.csoCnDate , i.org_id_value_l, g.ogNm "
 '    sQ = sQ & "                                                                                        from "
@@ -1348,7 +1348,7 @@ Public Function SqlCnCtptInvAccExistDbtNot() As String
 '    sQ = sQ & "                                                        Left Join "
 '    sQ = sQ & "                                                            ( "
 '    sQ = sQ & "                                                                select "
-'    sQ = sQ & "                                                                    i.ciKey, i.ciCn, iif(isnull(i.ciNum), ""NullИлиПусто"", iif(i.ciNum = '', ""NullИлиПусто"", trim(i.ciNum))) as ciNum "
+'    sQ = sQ & "                                                                    i.ciKey, i.ciCn, iif(isnull(i.ciNum), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.ciNum = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.ciNum))) as ciNum "
 '    sQ = sQ & "                                                                from "
 '    sQ = sQ & "                                                                    ags_cnInv i "
 '    sQ = sQ & "                                                            ) as g on f.cn_key = g.ciCn and f.cidutCnInv = g.ciNum "
@@ -1358,9 +1358,9 @@ Public Function SqlCnCtptInvAccExistDbtNot() As String
 '    sQ = sQ & "                                                    ( "
 '    sQ = sQ & "                                                        select "
 '    sQ = sQ & "                                                            i.cidutCntrPrtNum, "
-'    sQ = sQ & "                                                            iif(isnull(i.cidutCnName), ""NullИлиПусто"", iif(i.cidutCnName = '', ""NullИлиПусто"", trim(i.cidutCnName))) as cidutCnName, "
+'    sQ = sQ & "                                                            iif(isnull(i.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnName))) as cidutCnName, "
 '    sQ = sQ & "                                                            i.cidutCnDate, ii.account_num, "
-'    sQ = sQ & "                                                            iif(isnull(i.cidutCnInv), ""NullИлиПусто"", iif(i.cidutCnInv = '', ""NullИлиПусто"", trim(i.cidutCnInv))) as cidutCnInv, "
+'    sQ = sQ & "                                                            iif(isnull(i.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnInv))) as cidutCnInv, "
 '    sQ = sQ & "                                                            i.cidutAccount "
 '    sQ = sQ & "                                                        from "
 '    sQ = sQ & "                                                            CnInvDbtUplTbl As i "
@@ -1378,9 +1378,9 @@ Public Function SqlCnCtptInvAccExistDbtNot() As String
 '    sQ = sQ & "                                    ( "
 '    sQ = sQ & "                                        select "
 '    sQ = sQ & "                                            i.cidutCntrPrtNum, "
-'    sQ = sQ & "                                            iif(isnull(i.cidutCnName), ""NullИлиПусто"", iif(i.cidutCnName = '', ""NullИлиПусто"", trim(i.cidutCnName))) as cidutCnName, "
+'    sQ = sQ & "                                            iif(isnull(i.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnName))) as cidutCnName, "
 '    sQ = sQ & "                                            i.cidutCnDate, "
-'    sQ = sQ & "                                            iif(isnull(i.cidutCnInv), ""NullИлиПусто"", iif(i.cidutCnInv = '', ""NullИлиПусто"", trim(i.cidutCnInv))) as cidutCnInv, "
+'    sQ = sQ & "                                            iif(isnull(i.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnInv))) as cidutCnInv, "
 '    sQ = sQ & "                                            i.cidutAccount , i.cidutUnloadKey "
 '    sQ = sQ & "                                        from "
 '    sQ = sQ & "                                            CnInvDbtUplTbl As i "
@@ -1400,12 +1400,12 @@ Public Function SqlCnCtptInvAccExistDbtNot() As String
     SqlCnCtptInvAccExistDbtNot = sQ
 
 End Function
-' клеем длинный SQL для процедуры *Отображаем пары СФ+СГК не имеющие задолженности в БД*, окончание *************************************************
+' РєР»РµРµРј РґР»РёРЅРЅС‹Р№ SQL РґР»СЏ РїСЂРѕС†РµРґСѓСЂС‹ *РћС‚РѕР±СЂР°Р¶Р°РµРј РїР°СЂС‹ РЎР¤+РЎР“Рљ РЅРµ РёРјРµСЋС‰РёРµ Р·Р°РґРѕР»Р¶РµРЅРЅРѕСЃС‚Рё РІ Р‘Р”*, РѕРєРѕРЅС‡Р°РЅРёРµ *************************************************
 '****************************************************************************************************************************************************
 
 
 '****************************************************************************************************************************************************
-' клеем длинный SQL для процедуры *Отображаем пары СФ+СГК имеющие более одной задолженности в выгрузке* *********************************************
+' РєР»РµРµРј РґР»РёРЅРЅС‹Р№ SQL РґР»СЏ РїСЂРѕС†РµРґСѓСЂС‹ *РћС‚РѕР±СЂР°Р¶Р°РµРј РїР°СЂС‹ РЎР¤+РЎР“Рљ РёРјРµСЋС‰РёРµ Р±РѕР»РµРµ РѕРґРЅРѕР№ Р·Р°РґРѕР»Р¶РµРЅРЅРѕСЃС‚Рё РІ РІС‹РіСЂСѓР·РєРµ* *********************************************
 Public Function SqlCnCtptInvAccExistDbl() As String
 
     Dim sQ As String
@@ -1446,7 +1446,7 @@ Public Function SqlCnCtptInvAccExistDbl() As String
 '    sQ = sQ & "                                    ( "
 '    sQ = sQ & "                                        select "
 '    sQ = sQ & "                                            h.cidutCntrPrtNum, h.cidutCntrPrtName, h.cidutCnName, h.cidutCnDate, h.cn_key, "
-'    sQ = sQ & "                                            iif(isnull(h.cidutCnInv), ""NullИлиПусто"", iif(h.cidutCnInv = '', ""NullИлиПусто"", trim(h.cidutCnInv))) as cidutCnInv "
+'    sQ = sQ & "                                            iif(isnull(h.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(h.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(h.cidutCnInv))) as cidutCnInv "
 '    sQ = sQ & "                                        from "
 '    sQ = sQ & "                                            ( "
 '    sQ = sQ & "                                                select u.cidutCntrPrtNum, u.cidutCntrPrtName, u.cidutCntrPrtITN, u.cidutCnName, u.cidutCnDate, u.cn_key, t.cidutCnInv, t.cidutAccount "
@@ -1458,7 +1458,7 @@ Public Function SqlCnCtptInvAccExistDbl() As String
 '    sQ = sQ & "                                                            ( "
 '    sQ = sQ & "                                                                SELECT "
 '    sQ = sQ & "                                                                    a.cidutAccount, a.cidutCntrPrtNum, a.cidutCntrPrtName, a.cidutCntrPrtITN, a.cidutCnDate, "
-'    sQ = sQ & "                                                                    iif(isnull(a.cidutCnName), ""NullИлиПусто"", iif(a.cidutCnName = '', ""NullИлиПусто"", TRIM(a.cidutCnName))) AS cidutCnName, "
+'    sQ = sQ & "                                                                    iif(isnull(a.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(a.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(a.cidutCnName))) AS cidutCnName, "
 '    sQ = sQ & "                                                                    a.cidutCnInv, a.cidutFormtnDate, a.cidutMatrtyDate, a.cidutDebt, a.cidutDebtOverdue, a.cidutDoc, "
 '    sQ = sQ & "                                                                    a.cidutLink , a.cidutSheet, a.cidutSheetNum, a.cidutUnloadKey "
 '    sQ = sQ & "                                                                from "
@@ -1487,7 +1487,7 @@ Public Function SqlCnCtptInvAccExistDbl() As String
 '    sQ = sQ & "                                                                ( "
 '    sQ = sQ & "                                                                    SELECT "
 '    sQ = sQ & "                                                                        c.cn_key, "
-'    sQ = sQ & "                                                                        iif(isnull(c.cn_number), ""NullИлиПусто"", iif(c.cn_number = '', ""NullИлиПусто"", TRIM(c.cn_number))) AS cn_number, "
+'    sQ = sQ & "                                                                        iif(isnull(c.cn_number), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(c.cn_number = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(c.cn_number))) AS cn_number, "
 '    sQ = sQ & "                                                                        s.cn_s_key, s.cn_s_type, o.cn_s_org_key, o.org_id, c.cn_date, o.date_beg, o.date_end, "
 '    sQ = sQ & "                                                                        o.csoCnDate , i.org_id_value_l, g.ogNm "
 '    sQ = sQ & "                                                                    from "
@@ -1520,7 +1520,7 @@ Public Function SqlCnCtptInvAccExistDbl() As String
 '    sQ = sQ & "                                    Left Join "
 '    sQ = sQ & "                                        ( "
 '    sQ = sQ & "                                            select "
-'    sQ = sQ & "                                                i.ciKey, i.ciCn, iif(isnull(i.ciNum), ""NullИлиПусто"", iif(i.ciNum = '', ""NullИлиПусто"", trim(i.ciNum))) as ciNum "
+'    sQ = sQ & "                                                i.ciKey, i.ciCn, iif(isnull(i.ciNum), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.ciNum = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.ciNum))) as ciNum "
 '    sQ = sQ & "                                            from "
 '    sQ = sQ & "                                                ags_cnInv i "
 '    sQ = sQ & "                                        ) as g on f.cn_key = g.ciCn and f.cidutCnInv = g.ciNum "
@@ -1530,9 +1530,9 @@ Public Function SqlCnCtptInvAccExistDbl() As String
 '    sQ = sQ & "                                ( "
 '    sQ = sQ & "                                    select "
 '    sQ = sQ & "                                        i.cidutCntrPrtNum, "
-'    sQ = sQ & "                                        iif(isnull(i.cidutCnName), ""NullИлиПусто"", iif(i.cidutCnName = '', ""NullИлиПусто"", trim(i.cidutCnName))) as cidutCnName, "
+'    sQ = sQ & "                                        iif(isnull(i.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnName))) as cidutCnName, "
 '    sQ = sQ & "                                        i.cidutCnDate, ii.account_num, "
-'    sQ = sQ & "                                        iif(isnull(i.cidutCnInv), ""NullИлиПусто"", iif(i.cidutCnInv = '', ""NullИлиПусто"", trim(i.cidutCnInv))) as cidutCnInv, "
+'    sQ = sQ & "                                        iif(isnull(i.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnInv))) as cidutCnInv, "
 '    sQ = sQ & "                                        i.cidutAccount "
 '    sQ = sQ & "                                    from "
 '    sQ = sQ & "                                        CnInvDbtUplTbl As i "
@@ -1550,9 +1550,9 @@ Public Function SqlCnCtptInvAccExistDbl() As String
 '    sQ = sQ & "                ( "
 '    sQ = sQ & "                    select "
 '    sQ = sQ & "                        i.cidutCntrPrtNum, "
-'    sQ = sQ & "                        iif(isnull(i.cidutCnName), ""NullИлиПусто"", iif(i.cidutCnName = '', ""NullИлиПусто"", trim(i.cidutCnName))) as cidutCnName, "
+'    sQ = sQ & "                        iif(isnull(i.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnName))) as cidutCnName, "
 '    sQ = sQ & "                        i.cidutCnDate, "
-'    sQ = sQ & "                        iif(isnull(i.cidutCnInv), ""NullИлиПусто"", iif(i.cidutCnInv = '', ""NullИлиПусто"", trim(i.cidutCnInv))) as cidutCnInv, "
+'    sQ = sQ & "                        iif(isnull(i.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnInv))) as cidutCnInv, "
 '    sQ = sQ & "                        i.cidutAccount , i.cidutUnloadKey "
 '    sQ = sQ & "                    from "
 '    sQ = sQ & "                        CnInvDbtUplTbl As i "
@@ -1584,7 +1584,7 @@ Public Function SqlCnCtptInvAccExistDbl() As String
 '    sQ = sQ & "                                                ( "
 '    sQ = sQ & "                                                    select "
 '    sQ = sQ & "                                                        h.cidutCntrPrtNum, h.cidutCntrPrtName, h.cidutCnName, h.cidutCnDate, h.cn_key, "
-'    sQ = sQ & "                                                        iif(isnull(h.cidutCnInv), ""NullИлиПусто"", iif(h.cidutCnInv = '', ""NullИлиПусто"", trim(h.cidutCnInv))) as cidutCnInv "
+'    sQ = sQ & "                                                        iif(isnull(h.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(h.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(h.cidutCnInv))) as cidutCnInv "
 '    sQ = sQ & "                                                    from "
 '    sQ = sQ & "                                                        ( "
 '    sQ = sQ & "                                                            select u.cidutCntrPrtNum, u.cidutCntrPrtName, u.cidutCntrPrtITN, u.cidutCnName, u.cidutCnDate, u.cn_key, t.cidutCnInv, t.cidutAccount "
@@ -1596,7 +1596,7 @@ Public Function SqlCnCtptInvAccExistDbl() As String
 '    sQ = sQ & "                                                                        ( "
 '    sQ = sQ & "                                                                            SELECT "
 '    sQ = sQ & "                                                                                a.cidutAccount, a.cidutCntrPrtNum, a.cidutCntrPrtName, a.cidutCntrPrtITN, a.cidutCnDate, "
-'    sQ = sQ & "                                                                                iif(isnull(a.cidutCnName), ""NullИлиПусто"", iif(a.cidutCnName = '', ""NullИлиПусто"", TRIM(a.cidutCnName))) AS cidutCnName, "
+'    sQ = sQ & "                                                                                iif(isnull(a.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(a.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(a.cidutCnName))) AS cidutCnName, "
 '    sQ = sQ & "                                                                                a.cidutCnInv, a.cidutFormtnDate, a.cidutMatrtyDate, a.cidutDebt, a.cidutDebtOverdue, a.cidutDoc, "
 '    sQ = sQ & "                                                                                a.cidutLink , a.cidutSheet, a.cidutSheetNum, a.cidutUnloadKey "
 '    sQ = sQ & "                                                                            from "
@@ -1625,7 +1625,7 @@ Public Function SqlCnCtptInvAccExistDbl() As String
 '    sQ = sQ & "                                                                            ( "
 '    sQ = sQ & "                                                                                SELECT "
 '    sQ = sQ & "                                                                                    c.cn_key, "
-'    sQ = sQ & "                                                                                    iif(isnull(c.cn_number), ""NullИлиПусто"", iif(c.cn_number = '', ""NullИлиПусто"", TRIM(c.cn_number))) AS cn_number, "
+'    sQ = sQ & "                                                                                    iif(isnull(c.cn_number), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(c.cn_number = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(c.cn_number))) AS cn_number, "
 '    sQ = sQ & "                                                                                    s.cn_s_key, s.cn_s_type, o.cn_s_org_key, o.org_id, c.cn_date, o.date_beg, o.date_end, "
 '    sQ = sQ & "                                                                                    o.csoCnDate , i.org_id_value_l, g.ogNm "
 '    sQ = sQ & "                                                                                from "
@@ -1658,7 +1658,7 @@ Public Function SqlCnCtptInvAccExistDbl() As String
 '    sQ = sQ & "                                                Left Join "
 '    sQ = sQ & "                                                    ( "
 '    sQ = sQ & "                                                        select "
-'    sQ = sQ & "                                                            i.ciKey, i.ciCn, iif(isnull(i.ciNum), ""NullИлиПусто"", iif(i.ciNum = '', ""NullИлиПусто"", trim(i.ciNum))) as ciNum "
+'    sQ = sQ & "                                                            i.ciKey, i.ciCn, iif(isnull(i.ciNum), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.ciNum = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.ciNum))) as ciNum "
 '    sQ = sQ & "                                                        from "
 '    sQ = sQ & "                                                            ags_cnInv i "
 '    sQ = sQ & "                                                    ) as g on f.cn_key = g.ciCn and f.cidutCnInv = g.ciNum "
@@ -1668,9 +1668,9 @@ Public Function SqlCnCtptInvAccExistDbl() As String
 '    sQ = sQ & "                                            ( "
 '    sQ = sQ & "                                                select "
 '    sQ = sQ & "                                                    i.cidutCntrPrtNum, "
-'    sQ = sQ & "                                                    iif(isnull(i.cidutCnName), ""NullИлиПусто"", iif(i.cidutCnName = '', ""NullИлиПусто"", trim(i.cidutCnName))) as cidutCnName, "
+'    sQ = sQ & "                                                    iif(isnull(i.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnName))) as cidutCnName, "
 '    sQ = sQ & "                                                    i.cidutCnDate, ii.account_num, "
-'    sQ = sQ & "                                                    iif(isnull(i.cidutCnInv), ""NullИлиПусто"", iif(i.cidutCnInv = '', ""NullИлиПусто"", trim(i.cidutCnInv))) as cidutCnInv, "
+'    sQ = sQ & "                                                    iif(isnull(i.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnInv))) as cidutCnInv, "
 '    sQ = sQ & "                                                    i.cidutAccount "
 '    sQ = sQ & "                                                from "
 '    sQ = sQ & "                                                    CnInvDbtUplTbl As i "
@@ -1688,9 +1688,9 @@ Public Function SqlCnCtptInvAccExistDbl() As String
 '    sQ = sQ & "                            ( "
 '    sQ = sQ & "                                select "
 '    sQ = sQ & "                                    i.cidutCntrPrtNum, "
-'    sQ = sQ & "                                    iif(isnull(i.cidutCnName), ""NullИлиПусто"", iif(i.cidutCnName = '', ""NullИлиПусто"", trim(i.cidutCnName))) as cidutCnName, "
+'    sQ = sQ & "                                    iif(isnull(i.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnName))) as cidutCnName, "
 '    sQ = sQ & "                                    i.cidutCnDate, "
-'    sQ = sQ & "                                    iif(isnull(i.cidutCnInv), ""NullИлиПусто"", iif(i.cidutCnInv = '', ""NullИлиПусто"", trim(i.cidutCnInv))) as cidutCnInv, "
+'    sQ = sQ & "                                    iif(isnull(i.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnInv))) as cidutCnInv, "
 '    sQ = sQ & "                                    i.cidutAccount , i.cidutUnloadKey "
 '    sQ = sQ & "                                from "
 '    sQ = sQ & "                                    CnInvDbtUplTbl As i "
@@ -1705,12 +1705,12 @@ Public Function SqlCnCtptInvAccExistDbl() As String
     SqlCnCtptInvAccExistDbl = sQ
 
 End Function
-' клеем длинный SQL для процедуры *Отображаем пары СФ+СГК имеющие более одной задолженности в выгрузке*, окончание **********************************
+' РєР»РµРµРј РґР»РёРЅРЅС‹Р№ SQL РґР»СЏ РїСЂРѕС†РµРґСѓСЂС‹ *РћС‚РѕР±СЂР°Р¶Р°РµРј РїР°СЂС‹ РЎР¤+РЎР“Рљ РёРјРµСЋС‰РёРµ Р±РѕР»РµРµ РѕРґРЅРѕР№ Р·Р°РґРѕР»Р¶РµРЅРЅРѕСЃС‚Рё РІ РІС‹РіСЂСѓР·РєРµ*, РѕРєРѕРЅС‡Р°РЅРёРµ **********************************
 '****************************************************************************************************************************************************
 
 
 '****************************************************************************************************************************************************
-' Формируем метку из даты по форме месяц-день-часы-минуты *******************************************************************************************
+' Р¤РѕСЂРјРёСЂСѓРµРј РјРµС‚РєСѓ РёР· РґР°С‚С‹ РїРѕ С„РѕСЂРјРµ РјРµСЃСЏС†-РґРµРЅСЊ-С‡Р°СЃС‹-РјРёРЅСѓС‚С‹ *******************************************************************************************
 Public Function strMark(ByVal dateMark As Date) As String
 
     Dim sM As String
@@ -1723,11 +1723,11 @@ Public Function strMark(ByVal dateMark As Date) As String
     strMark = sM
 
 End Function
-' Формируем метку из даты по форме месяц-день-часы-минуты, окончание ********************************************************************************
+' Р¤РѕСЂРјРёСЂСѓРµРј РјРµС‚РєСѓ РёР· РґР°С‚С‹ РїРѕ С„РѕСЂРјРµ РјРµСЃСЏС†-РґРµРЅСЊ-С‡Р°СЃС‹-РјРёРЅСѓС‚С‹, РѕРєРѕРЅС‡Р°РЅРёРµ ********************************************************************************
 '****************************************************************************************************************************************************
 
 '****************************************************************************************************************************************************
-' клеем длинный SQL для процедуры *Отображаем отсутствующие договоры (по выгрузке платежей)* 29.11.2021 11:38 ***************************************
+' РєР»РµРµРј РґР»РёРЅРЅС‹Р№ SQL РґР»СЏ РїСЂРѕС†РµРґСѓСЂС‹ *РћС‚РѕР±СЂР°Р¶Р°РµРј РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёРµ РґРѕРіРѕРІРѕСЂС‹ (РїРѕ РІС‹РіСЂСѓР·РєРµ РїР»Р°С‚РµР¶РµР№)* 29.11.2021 11:38 ***************************************
 Public Function SqlCipuCn_CtptCnNot() As String
 
     Dim sQ As String
@@ -1739,7 +1739,7 @@ Public Function SqlCipuCn_CtptCnNot() As String
 '    sQ = sQ & "Left Join "
 '    sQ = sQ & " ( "
 '    sQ = sQ & "     select "
-'    sQ = sQ & "         iif(isnull(c.cn_number), ""NullИлиПусто"", iif(c.cn_number = '', ""NullИлиПусто"", c.cn_number)) as cn_number, c.cn_key "
+'    sQ = sQ & "         iif(isnull(c.cn_number), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(c.cn_number = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", c.cn_number)) as cn_number, c.cn_key "
 '    sQ = sQ & "     from "
 '    sQ = sQ & "         ags_cn As c "
 '    sQ = sQ & " ) as b ON a.CnName = b.cn_number "
@@ -1764,11 +1764,11 @@ Public Function SqlCipuCn_CtptCnNot() As String
     SqlCipuCn_CtptCnNot = sQ
     
 End Function
-' клеем длинный SQL для процедуры *Отображаем отсутствующие договоры (по выгрузке платежей)*, окончание *********************************************
+' РєР»РµРµРј РґР»РёРЅРЅС‹Р№ SQL РґР»СЏ РїСЂРѕС†РµРґСѓСЂС‹ *РћС‚РѕР±СЂР°Р¶Р°РµРј РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёРµ РґРѕРіРѕРІРѕСЂС‹ (РїРѕ РІС‹РіСЂСѓР·РєРµ РїР»Р°С‚РµР¶РµР№)*, РѕРєРѕРЅС‡Р°РЅРёРµ *********************************************
 '****************************************************************************************************************************************************
 
 '****************************************************************************************************************************************************
-' клеем длинный SQL для процедуры *Отображаем пары СФ+СГК не имеющие задолженности в БД либо добавляем их туда* *************************************
+' РєР»РµРµРј РґР»РёРЅРЅС‹Р№ SQL РґР»СЏ РїСЂРѕС†РµРґСѓСЂС‹ *РћС‚РѕР±СЂР°Р¶Р°РµРј РїР°СЂС‹ РЎР¤+РЎР“Рљ РЅРµ РёРјРµСЋС‰РёРµ Р·Р°РґРѕР»Р¶РµРЅРЅРѕСЃС‚Рё РІ Р‘Р” Р»РёР±Рѕ РґРѕР±Р°РІР»СЏРµРј РёС… С‚СѓРґР°* *************************************
 Public Function SqlCnCtptInvAccExistDbtNotLoad() As String
 
     Dim sQ As String
@@ -1831,7 +1831,7 @@ Public Function SqlCnCtptInvAccExistDbtNotLoad() As String
 '    sQ = sQ & "                                         ( "
 '    sQ = sQ & "                                             select  "
 '    sQ = sQ & "                                                 h.cidutCntrPrtNum, h.cidutCntrPrtName, h.cidutCnName, h.cidutCnDate, h.cn_key, h.cn_s_org_key,  "
-'    sQ = sQ & "                                                 iif(isnull(h.cidutCnInv), ""NullИлиПусто"", iif(h.cidutCnInv = '', ""NullИлиПусто"", trim(h.cidutCnInv))) as cidutCnInv "
+'    sQ = sQ & "                                                 iif(isnull(h.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(h.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(h.cidutCnInv))) as cidutCnInv "
 '    sQ = sQ & "                                             from "
 '    sQ = sQ & "                                                 ( "
 '    sQ = sQ & "                                                     select  "
@@ -1846,7 +1846,7 @@ Public Function SqlCnCtptInvAccExistDbtNotLoad() As String
 '    sQ = sQ & "                                                                 ( "
 '    sQ = sQ & "                                                                     SELECT  "
 '    sQ = sQ & "                                                                         a.cidutAccount, a.cidutCntrPrtNum, a.cidutCntrPrtName, a.cidutCntrPrtITN, a.cidutCnDate,  "
-'    sQ = sQ & "                                                                         iif(isnull(a.cidutCnName), ""NullИлиПусто"", iif(a.cidutCnName = '', ""NullИлиПусто"", TRIM(a.cidutCnName))) AS cidutCnName,  "
+'    sQ = sQ & "                                                                         iif(isnull(a.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(a.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(a.cidutCnName))) AS cidutCnName,  "
 '    sQ = sQ & "                                                                         a.cidutCnInv, a.cidutFormtnDate, a.cidutMatrtyDate, a.cidutDebt, a.cidutDebtOverdue, a.cidutDoc,  "
 '    sQ = sQ & "                                                                         a.cidutLink, a.cidutSheet, a.cidutSheetNum, a.cidutUnloadKey "
 '    sQ = sQ & "                                                                     FROM  "
@@ -1875,7 +1875,7 @@ Public Function SqlCnCtptInvAccExistDbtNotLoad() As String
 '    sQ = sQ & "                                                                     ( "
 '    sQ = sQ & "                                                                         SELECT  "
 '    sQ = sQ & "                                                                             c.cn_key,  "
-'    sQ = sQ & "                                                                             iif(isnull(c.cn_number), ""NullИлиПусто"", iif(c.cn_number = '', ""NullИлиПусто"", TRIM(c.cn_number))) AS cn_number,  "
+'    sQ = sQ & "                                                                             iif(isnull(c.cn_number), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(c.cn_number = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(c.cn_number))) AS cn_number,  "
 '    sQ = sQ & "                                                                             s.cn_s_key, s.cn_s_type, o.cn_s_org_key, o.org_id, c.cn_date, o.date_beg, o.date_end,  "
 '    sQ = sQ & "                                                                             o.csoCnDate, i.org_id_value_l, g.ogNm "
 '    sQ = sQ & "                                                                         FROM  "
@@ -1908,7 +1908,7 @@ Public Function SqlCnCtptInvAccExistDbtNotLoad() As String
 '    sQ = sQ & "                                         left join "
 '    sQ = sQ & "                                             ( "
 '    sQ = sQ & "                                                 select  "
-'    sQ = sQ & "                                                     i.ciKey, i.ciCn, iif(isnull(i.ciNum), ""NullИлиПусто"", iif(i.ciNum = '', ""NullИлиПусто"", trim(i.ciNum))) as ciNum "
+'    sQ = sQ & "                                                     i.ciKey, i.ciCn, iif(isnull(i.ciNum), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.ciNum = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.ciNum))) as ciNum "
 '    sQ = sQ & "                                                 from  "
 '    sQ = sQ & "                                                     ags_cnInv i "
 '    sQ = sQ & "                                             ) as g on f.cn_key = g.ciCn and f.cidutCnInv = g.ciNum "
@@ -1918,9 +1918,9 @@ Public Function SqlCnCtptInvAccExistDbtNotLoad() As String
 '    sQ = sQ & "                                     ( "
 '    sQ = sQ & "                                         select "
 '    sQ = sQ & "                                             i.cidutCntrPrtNum,  "
-'    sQ = sQ & "                                             iif(isnull(i.cidutCnName), ""NullИлиПусто"", iif(i.cidutCnName = '', ""NullИлиПусто"", trim(i.cidutCnName))) as cidutCnName, "
+'    sQ = sQ & "                                             iif(isnull(i.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnName))) as cidutCnName, "
 '    sQ = sQ & "                                             i.cidutCnDate, ii.account_num, "
-'    sQ = sQ & "                                             iif(isnull(i.cidutCnInv), ""NullИлиПусто"", iif(i.cidutCnInv = '', ""NullИлиПусто"", trim(i.cidutCnInv))) as cidutCnInv, "
+'    sQ = sQ & "                                             iif(isnull(i.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnInv))) as cidutCnInv, "
 '    sQ = sQ & "                                             i.cidutAccount "
 '    sQ = sQ & "                                         from "
 '    sQ = sQ & "                                             CnInvDbtUplTbl as i "
@@ -1938,9 +1938,9 @@ Public Function SqlCnCtptInvAccExistDbtNotLoad() As String
 '    sQ = sQ & "                     ( "
 '    sQ = sQ & "                         select  "
 '    sQ = sQ & "                             i.cidutCntrPrtNum,  "
-'    sQ = sQ & "                             iif(isnull(i.cidutCnName), ""NullИлиПусто"", iif(i.cidutCnName = '', ""NullИлиПусто"", trim(i.cidutCnName))) as cidutCnName, "
+'    sQ = sQ & "                             iif(isnull(i.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnName))) as cidutCnName, "
 '    sQ = sQ & "                             i.cidutCnDate, "
-'    sQ = sQ & "                             iif(isnull(i.cidutCnInv), ""NullИлиПусто"", iif(i.cidutCnInv = '', ""NullИлиПусто"", trim(i.cidutCnInv))) as cidutCnInv, "
+'    sQ = sQ & "                             iif(isnull(i.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnInv))) as cidutCnInv, "
 '    sQ = sQ & "                             i.cidutAccount, i.cidutUnloadKey, "
 '    sQ = sQ & "                             i.cidutFormtnDate, i.cidutMatrtyDate, i.cidutDebt, i.cidutDebtOverdue, i.cidutDoc, i.cidutLink, i.cidutSheet, i.cidutSheetNum "
 '    sQ = sQ & "                         from "
@@ -1973,7 +1973,7 @@ Public Function SqlCnCtptInvAccExistDbtNotLoad() As String
 '    sQ = sQ & "                                                     ( "
 '    sQ = sQ & "                                                         select  "
 '    sQ = sQ & "                                                             h.cidutCntrPrtNum, h.cidutCntrPrtName, h.cidutCnName, h.cidutCnDate, h.cn_key,  "
-'    sQ = sQ & "                                                             iif(isnull(h.cidutCnInv), ""NullИлиПусто"", iif(h.cidutCnInv = '', ""NullИлиПусто"", trim(h.cidutCnInv))) as cidutCnInv "
+'    sQ = sQ & "                                                             iif(isnull(h.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(h.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(h.cidutCnInv))) as cidutCnInv "
 '    sQ = sQ & "                                                         from "
 '    sQ = sQ & "                                                             ( "
 '    sQ = sQ & "                                                                 select u.cidutCntrPrtNum, u.cidutCntrPrtName, u.cidutCntrPrtITN, u.cidutCnName, u.cidutCnDate, u.cn_key, t.cidutCnInv, t.cidutAccount "
@@ -1985,7 +1985,7 @@ Public Function SqlCnCtptInvAccExistDbtNotLoad() As String
 '    sQ = sQ & "                                                                             ( "
 '    sQ = sQ & "                                                                                 SELECT  "
 '    sQ = sQ & "                                                                                     a.cidutAccount, a.cidutCntrPrtNum, a.cidutCntrPrtName, a.cidutCntrPrtITN, a.cidutCnDate,  "
-'    sQ = sQ & "                                                                                     iif(isnull(a.cidutCnName), ""NullИлиПусто"", iif(a.cidutCnName = '', ""NullИлиПусто"", TRIM(a.cidutCnName))) AS cidutCnName,  "
+'    sQ = sQ & "                                                                                     iif(isnull(a.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(a.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(a.cidutCnName))) AS cidutCnName,  "
 '    sQ = sQ & "                                                                                     a.cidutCnInv, a.cidutFormtnDate, a.cidutMatrtyDate, a.cidutDebt, a.cidutDebtOverdue, a.cidutDoc,  "
 '    sQ = sQ & "                                                                                     a.cidutLink, a.cidutSheet, a.cidutSheetNum, a.cidutUnloadKey "
 '    sQ = sQ & "                                                                                 FROM  "
@@ -2014,7 +2014,7 @@ Public Function SqlCnCtptInvAccExistDbtNotLoad() As String
 '    sQ = sQ & "                                                                                 ( "
 '    sQ = sQ & "                                                                                     SELECT  "
 '    sQ = sQ & "                                                                                         c.cn_key,  "
-'    sQ = sQ & "                                                                                         iif(isnull(c.cn_number), ""NullИлиПусто"", iif(c.cn_number = '', ""NullИлиПусто"", TRIM(c.cn_number))) AS cn_number,  "
+'    sQ = sQ & "                                                                                         iif(isnull(c.cn_number), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(c.cn_number = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", TRIM(c.cn_number))) AS cn_number,  "
 '    sQ = sQ & "                                                                                         s.cn_s_key, s.cn_s_type, o.cn_s_org_key, o.org_id, c.cn_date, o.date_beg, o.date_end,  "
 '    sQ = sQ & "                                                                                         o.csoCnDate, i.org_id_value_l, g.ogNm "
 '    sQ = sQ & "                                                                                     FROM  "
@@ -2047,7 +2047,7 @@ Public Function SqlCnCtptInvAccExistDbtNotLoad() As String
 '    sQ = sQ & "                                                     left join "
 '    sQ = sQ & "                                                         ( "
 '    sQ = sQ & "                                                             select  "
-'    sQ = sQ & "                                                                 i.ciKey, i.ciCn, iif(isnull(i.ciNum), ""NullИлиПусто"", iif(i.ciNum = '', ""NullИлиПусто"", trim(i.ciNum))) as ciNum "
+'    sQ = sQ & "                                                                 i.ciKey, i.ciCn, iif(isnull(i.ciNum), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.ciNum = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.ciNum))) as ciNum "
 '    sQ = sQ & "                                                             from  "
 '    sQ = sQ & "                                                                 ags_cnInv i "
 '    sQ = sQ & "                                                         ) as g on f.cn_key = g.ciCn and f.cidutCnInv = g.ciNum "
@@ -2057,9 +2057,9 @@ Public Function SqlCnCtptInvAccExistDbtNotLoad() As String
 '    sQ = sQ & "                                                 ( "
 '    sQ = sQ & "                                                     select "
 '    sQ = sQ & "                                                         i.cidutCntrPrtNum,  "
-'    sQ = sQ & "                                                         iif(isnull(i.cidutCnName), ""NullИлиПусто"", iif(i.cidutCnName = '', ""NullИлиПусто"", trim(i.cidutCnName))) as cidutCnName, "
+'    sQ = sQ & "                                                         iif(isnull(i.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnName))) as cidutCnName, "
 '    sQ = sQ & "                                                         i.cidutCnDate, ii.account_num, "
-'    sQ = sQ & "                                                         iif(isnull(i.cidutCnInv), ""NullИлиПусто"", iif(i.cidutCnInv = '', ""NullИлиПусто"", trim(i.cidutCnInv))) as cidutCnInv, "
+'    sQ = sQ & "                                                         iif(isnull(i.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnInv))) as cidutCnInv, "
 '    sQ = sQ & "                                                         i.cidutAccount "
 '    sQ = sQ & "                                                     from "
 '    sQ = sQ & "                                                         CnInvDbtUplTbl as i "
@@ -2077,9 +2077,9 @@ Public Function SqlCnCtptInvAccExistDbtNotLoad() As String
 '    sQ = sQ & "                                 ( "
 '    sQ = sQ & "                                     select  "
 '    sQ = sQ & "                                         i.cidutCntrPrtNum,  "
-'    sQ = sQ & "                                         iif(isnull(i.cidutCnName), ""NullИлиПусто"", iif(i.cidutCnName = '', ""NullИлиПусто"", trim(i.cidutCnName))) as cidutCnName, "
+'    sQ = sQ & "                                         iif(isnull(i.cidutCnName), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnName = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnName))) as cidutCnName, "
 '    sQ = sQ & "                                         i.cidutCnDate, "
-'    sQ = sQ & "                                         iif(isnull(i.cidutCnInv), ""NullИлиПусто"", iif(i.cidutCnInv = '', ""NullИлиПусто"", trim(i.cidutCnInv))) as cidutCnInv, "
+'    sQ = sQ & "                                         iif(isnull(i.cidutCnInv), ""NullРР»РёРџСѓСЃС‚Рѕ"", iif(i.cidutCnInv = '', ""NullРР»РёРџСѓСЃС‚Рѕ"", trim(i.cidutCnInv))) as cidutCnInv, "
 '    sQ = sQ & "                                         i.cidutAccount, i.cidutUnloadKey "
 '    sQ = sQ & "                                     from "
 '    sQ = sQ & "                                         CnInvDbtUplTbl as i "
@@ -2099,17 +2099,17 @@ Public Function SqlCnCtptInvAccExistDbtNotLoad() As String
     SqlCnCtptInvAccExistDbtNotLoad = sQ
 
 End Function
-' клеем длинный SQL для процедуры *Отображаем пары СФ+СГК не имеющие задолженности в БД либо добавляем их туда*, окончание **************************
+' РєР»РµРµРј РґР»РёРЅРЅС‹Р№ SQL РґР»СЏ РїСЂРѕС†РµРґСѓСЂС‹ *РћС‚РѕР±СЂР°Р¶Р°РµРј РїР°СЂС‹ РЎР¤+РЎР“Рљ РЅРµ РёРјРµСЋС‰РёРµ Р·Р°РґРѕР»Р¶РµРЅРЅРѕСЃС‚Рё РІ Р‘Р” Р»РёР±Рѕ РґРѕР±Р°РІР»СЏРµРј РёС… С‚СѓРґР°*, РѕРєРѕРЅС‡Р°РЅРёРµ **************************
 '****************************************************************************************************************************************************
 
 
 '****************************************************************************************************************************************************
-' формируем склейку номеров счетов-фактур ***********************************************************************************************************
+' С„РѕСЂРјРёСЂСѓРµРј СЃРєР»РµР№РєСѓ РЅРѕРјРµСЂРѕРІ СЃС‡РµС‚РѕРІ-С„Р°РєС‚СѓСЂ ***********************************************************************************************************
 Function CnInvConcat(db As DAO.Database, cidutciCn_key As Long, _
     Optional ByVal pCiduf = 0, Optional ByVal pCnNnn = 0 _
     ) As String
     Dim strSql As String, strDate As String, rs As DAO.Recordset, iii As Integer, strRslt As String, strNull As String
-    Const cstrTitle As String = "Процедура *Формируем склейку номеров счетов-фактур*"
+    Const cstrTitle As String = "РџСЂРѕС†РµРґСѓСЂР° *Р¤РѕСЂРјРёСЂСѓРµРј СЃРєР»РµР№РєСѓ РЅРѕРјРµСЂРѕРІ СЃС‡РµС‚РѕРІ-С„Р°РєС‚СѓСЂ*"
     '************************************************************************************************************************************************
     
 On Error GoTo ErrHandler
@@ -2122,49 +2122,49 @@ On Error GoTo ErrHandler
     
     Set rs = db.OpenRecordset(strSql, dbOpenSnapshot)
     
-    ' имеются ли записи?
+    ' РёРјРµСЋС‚СЃСЏ Р»Рё Р·Р°РїРёСЃРё?
     If rs.RecordCount > 0 Then
-        ' да, записи имеются
-        ' проходим по каждой записи
+        ' РґР°, Р·Р°РїРёСЃРё РёРјРµСЋС‚СЃСЏ
+        ' РїСЂРѕС…РѕРґРёРј РїРѕ РєР°Р¶РґРѕР№ Р·Р°РїРёСЃРё
         rs.MoveFirst: iii = 1: strRslt = ""
         Do Until rs.EOF = True
-            ' проверяем на пустоту, пустой?
+            ' РїСЂРѕРІРµСЂСЏРµРј РЅР° РїСѓСЃС‚РѕС‚Сѓ, РїСѓСЃС‚РѕР№?
             If IsNull(rs!cidutciCnInv) Or rs!cidutciCnInv = "" Then
-                ' да, пустой
-                strNull = "*<font color=""DarkOrange"">пустая строка</font>*"
-                ' если ранее номер встречался, то указываем сколько раз
+                ' РґР°, РїСѓСЃС‚РѕР№
+                strNull = "*<font color=""DarkOrange"">РїСѓСЃС‚Р°СЏ СЃС‚СЂРѕРєР°</font>*"
+                ' РµСЃР»Рё СЂР°РЅРµРµ РЅРѕРјРµСЂ РІСЃС‚СЂРµС‡Р°Р»СЃСЏ, С‚Рѕ СѓРєР°Р·С‹РІР°РµРј СЃРєРѕР»СЊРєРѕ СЂР°Р·
                 If Not IsNull(rs!inNumCount) Then
-                    strNull = strNull & " {<font color=""Salmon"">встречался " & rs!inNumCount & " раз(а)</font>}"
-                    ' добавляем записи двоящих счётов-фактур в специальную таблицу
+                    strNull = strNull & " {<font color=""Salmon"">РІСЃС‚СЂРµС‡Р°Р»СЃСЏ " & rs!inNumCount & " СЂР°Р·(Р°)</font>}"
+                    ' РґРѕР±Р°РІР»СЏРµРј Р·Р°РїРёСЃРё РґРІРѕСЏС‰РёС… СЃС‡С‘С‚РѕРІ-С„Р°РєС‚СѓСЂ РІ СЃРїРµС†РёР°Р»СЊРЅСѓСЋ С‚Р°Р±Р»РёС†Сѓ
                     If pCiduf <> 0 Then
                         CnInvDbtUplFileInvDoubleAdd db, pCiduf, pCnNnn, rs!cidutciCnName, cidutciCn_key, iii, rs!cidutciCnInv, rs!inNumCount
                     End If
                 End If
                 Else
-                ' нет, не пустой
+                ' РЅРµС‚, РЅРµ РїСѓСЃС‚РѕР№
                 strNull = rs!cidutciCnInv
-                ' если ранее номер встречался, то указываем сколько раз
+                ' РµСЃР»Рё СЂР°РЅРµРµ РЅРѕРјРµСЂ РІСЃС‚СЂРµС‡Р°Р»СЃСЏ, С‚Рѕ СѓРєР°Р·С‹РІР°РµРј СЃРєРѕР»СЊРєРѕ СЂР°Р·
                 If Not IsNull(rs!inNumCount) Then
-                    strNull = strNull & " {<font color=""Salmon"">встречался " & rs!inNumCount & " раз(а)</font>}"
-                    ' добавляем записи двоящих счётов-фактур в специальную таблицу
+                    strNull = strNull & " {<font color=""Salmon"">РІСЃС‚СЂРµС‡Р°Р»СЃСЏ " & rs!inNumCount & " СЂР°Р·(Р°)</font>}"
+                    ' РґРѕР±Р°РІР»СЏРµРј Р·Р°РїРёСЃРё РґРІРѕСЏС‰РёС… СЃС‡С‘С‚РѕРІ-С„Р°РєС‚СѓСЂ РІ СЃРїРµС†РёР°Р»СЊРЅСѓСЋ С‚Р°Р±Р»РёС†Сѓ
                     If pCiduf <> 0 Then
                         CnInvDbtUplFileInvDoubleAdd db, pCiduf, pCnNnn, rs!cidutciCnName, cidutciCn_key, iii, rs!cidutciCnInv, rs!inNumCount
                     End If
                 End If
             End If
-            ' формируем результат
+            ' С„РѕСЂРјРёСЂСѓРµРј СЂРµР·СѓР»СЊС‚Р°С‚
             If iii = 1 Then
                 strRslt = "<font color=""MediumOrchid"">" & iii & "</font>. " & strNull
                 Else
                 strRslt = strRslt & "; <font color=""MediumOrchid"">" & iii & "</font>. " & strNull
             End If
-            ' переходим к следующей записи
+            ' РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РµР№ Р·Р°РїРёСЃРё
             rs.MoveNext: iii = iii + 1
         Loop
         CnInvConcat = strRslt
         Else
-        ' нет, записи отсутствуют
-        CnInvConcat = "*нет записей*"
+        ' РЅРµС‚, Р·Р°РїРёСЃРё РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‚
+        CnInvConcat = "*РЅРµС‚ Р·Р°РїРёСЃРµР№*"
     End If
     
     rs.Close: Set rs = Nothing
@@ -2177,24 +2177,24 @@ ErrHandler:
     Resume NormalExit
 
 End Function
-' формируем склейку номеров счетов-фактур, окончание ************************************************************************************************
+' С„РѕСЂРјРёСЂСѓРµРј СЃРєР»РµР№РєСѓ РЅРѕРјРµСЂРѕРІ СЃС‡РµС‚РѕРІ-С„Р°РєС‚СѓСЂ, РѕРєРѕРЅС‡Р°РЅРёРµ ************************************************************************************************
 '****************************************************************************************************************************************************
 
 '****************************************************************************************************************************************************
-' добавляем записи двоящих счётов-фактур в специальную таблицу 25.10.2022 10:14 *********************************************************************
+' РґРѕР±Р°РІР»СЏРµРј Р·Р°РїРёСЃРё РґРІРѕСЏС‰РёС… СЃС‡С‘С‚РѕРІ-С„Р°РєС‚СѓСЂ РІ СЃРїРµС†РёР°Р»СЊРЅСѓСЋ С‚Р°Р±Р»РёС†Сѓ 25.10.2022 10:14 *********************************************************************
 Private Sub CnInvDbtUplFileInvDoubleAdd(ByRef db As DAO.Database, _
         ByVal pCiduf As Long, ByVal pCnNnn As Long, ByVal pCnNum As String, ByVal pCnKey As Long, ByVal pInvNnn As Long, _
         ByVal pInvNum As String, ByVal pInvNumCount As Long _
     )
     Dim rs As DAO.Recordset, lngCnInvDbtUplFileInvDouble As Long
-    Const cstrTitle As String = "Процедура Добавляем записи двоящих счётов-фактур в специальную таблицу*"
+    Const cstrTitle As String = "РџСЂРѕС†РµРґСѓСЂР° Р”РѕР±Р°РІР»СЏРµРј Р·Р°РїРёСЃРё РґРІРѕСЏС‰РёС… СЃС‡С‘С‚РѕРІ-С„Р°РєС‚СѓСЂ РІ СЃРїРµС†РёР°Р»СЊРЅСѓСЋ С‚Р°Р±Р»РёС†Сѓ*"
     '************************************************************************************************************************************************
     
 On Error GoTo ErrHandler
     
     Set rs = db.OpenRecordset("CnInvDbtUplFileInvDouble", dbOpenDynaset)
         
-    ' добавляем счёт-фактуру
+    ' РґРѕР±Р°РІР»СЏРµРј СЃС‡С‘С‚-С„Р°РєС‚СѓСЂСѓ
     With rs
         .AddNew
             !cidufiCiduf = pCiduf
@@ -2218,18 +2218,18 @@ ErrHandler:
     MsgBox Err.Description & vbCrLf & "Error number: " & Err.Number & vbCrLf & cstrTitle, vbExclamation, cstrTitle
     Resume NormalExit
 End Sub
-' добавляем записи двоящих счётов-фактур в специальную таблицу 25.10.2022 10:14, окончание **********************************************************
+' РґРѕР±Р°РІР»СЏРµРј Р·Р°РїРёСЃРё РґРІРѕСЏС‰РёС… СЃС‡С‘С‚РѕРІ-С„Р°РєС‚СѓСЂ РІ СЃРїРµС†РёР°Р»СЊРЅСѓСЋ С‚Р°Р±Р»РёС†Сѓ 25.10.2022 10:14, РѕРєРѕРЅС‡Р°РЅРёРµ **********************************************************
 '****************************************************************************************************************************************************
 
 '****************************************************************************************************************************************************
-' формируем склейку номеров счетов-фактур для платежей 14.12.2021 16:55 *****************************************************************************
+' С„РѕСЂРјРёСЂСѓРµРј СЃРєР»РµР№РєСѓ РЅРѕРјРµСЂРѕРІ СЃС‡РµС‚РѕРІ-С„Р°РєС‚СѓСЂ РґР»СЏ РїР»Р°С‚РµР¶РµР№ 14.12.2021 16:55 *****************************************************************************
 Function CnInvConcatPm(db As DAO.Database, CntrPrtNum As Long, cnName As String, _
     Optional CnDate As Date = #1/1/1900#) As String
 
     Dim strSql As String, strDate As String, rs As DAO.Recordset, iii As Integer, strRslt As String, strNull As String
 
     Const cstrTitle As String _
-        = "Процедура *Формируем склейку номеров счетов-фактур для платежей. Модуль: SqlLong, CnInvConcatPm.*"
+        = "РџСЂРѕС†РµРґСѓСЂР° *Р¤РѕСЂРјРёСЂСѓРµРј СЃРєР»РµР№РєСѓ РЅРѕРјРµСЂРѕРІ СЃС‡РµС‚РѕРІ-С„Р°РєС‚СѓСЂ РґР»СЏ РїР»Р°С‚РµР¶РµР№. РњРѕРґСѓР»СЊ: SqlLong, CnInvConcatPm.*"
     '************************************************************************************************************************************************
     
 On Error GoTo ErrHandler
@@ -2251,35 +2251,35 @@ On Error GoTo ErrHandler
     
     Set rs = db.OpenRecordset(strSql, dbOpenSnapshot)
     
-    ' имеются ли записи?
+    ' РёРјРµСЋС‚СЃСЏ Р»Рё Р·Р°РїРёСЃРё?
     If rs.RecordCount > 0 Then
-        ' да, записи имеются
-        ' проходим по каждой записи
+        ' РґР°, Р·Р°РїРёСЃРё РёРјРµСЋС‚СЃСЏ
+        ' РїСЂРѕС…РѕРґРёРј РїРѕ РєР°Р¶РґРѕР№ Р·Р°РїРёСЃРё
         rs.MoveFirst: iii = 1: strRslt = ""
         Do Until rs.EOF = True
-            ' проверяем на пустоту
+            ' РїСЂРѕРІРµСЂСЏРµРј РЅР° РїСѓСЃС‚РѕС‚Сѓ
             If IsNull(rs!ciputciCnInv) Or rs!ciputciCnInv = "" Then
-                strNull = "*<font color=""DarkOrange"">пустая строка</font>*"
+                strNull = "*<font color=""DarkOrange"">РїСѓСЃС‚Р°СЏ СЃС‚СЂРѕРєР°</font>*"
                 Else
                 strNull = rs!ciputciCnInv
             End If
-            ' формируем результат
+            ' С„РѕСЂРјРёСЂСѓРµРј СЂРµР·СѓР»СЊС‚Р°С‚
             If iii = 1 Then
                 strRslt = "<font color=""MediumOrchid"">" & iii & "</font>. " & strNull
                 Else
                 strRslt = strRslt & "; <font color=""MediumOrchid"">" & iii & "</font>. " & strNull
             End If
-            ' если ранее номер встречался, то указываем сколько раз
+            ' РµСЃР»Рё СЂР°РЅРµРµ РЅРѕРјРµСЂ РІСЃС‚СЂРµС‡Р°Р»СЃСЏ, С‚Рѕ СѓРєР°Р·С‹РІР°РµРј СЃРєРѕР»СЊРєРѕ СЂР°Р·
             If Not IsNull(rs!ciputciCnInvNumCount) Then
-                strRslt = strRslt & " {<font color=""Salmon"">был " & rs!ciputciCnInvNumCount & " раз(а)</font>}"
+                strRslt = strRslt & " {<font color=""Salmon"">Р±С‹Р» " & rs!ciputciCnInvNumCount & " СЂР°Р·(Р°)</font>}"
             End If
-            ' переходим к следующей записи
+            ' РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РµР№ Р·Р°РїРёСЃРё
             rs.MoveNext: iii = iii + 1
         Loop
         CnInvConcatPm = strRslt
         Else
-        ' нет, записи отсутствуют
-        CnInvConcatPm = "*нет записей*"
+        ' РЅРµС‚, Р·Р°РїРёСЃРё РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‚
+        CnInvConcatPm = "*РЅРµС‚ Р·Р°РїРёСЃРµР№*"
     End If
     
     rs.Close: Set rs = Nothing
@@ -2292,7 +2292,7 @@ ErrHandler:
     Resume NormalExit
 
 End Function
-' формируем склейку номеров счетов-фактур для платежей, окончание ***********************************************************************************
+' С„РѕСЂРјРёСЂСѓРµРј СЃРєР»РµР№РєСѓ РЅРѕРјРµСЂРѕРІ СЃС‡РµС‚РѕРІ-С„Р°РєС‚СѓСЂ РґР»СЏ РїР»Р°С‚РµР¶РµР№, РѕРєРѕРЅС‡Р°РЅРёРµ ***********************************************************************************
 '****************************************************************************************************************************************************
 
 

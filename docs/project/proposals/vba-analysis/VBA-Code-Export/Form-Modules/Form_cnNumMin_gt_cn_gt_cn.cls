@@ -21,7 +21,7 @@ End If
 
 End Sub
 
-' добавляем новый счёт-фактуру cnAddNewInv
+' РґРѕР±Р°РІР»СЏРµРј РЅРѕРІС‹Р№ СЃС‡С‘С‚-С„Р°РєС‚СѓСЂСѓ cnAddNewInv
 Private Sub btnInvNewAdd_Click()
 Dim strA As String
 
@@ -33,7 +33,7 @@ End Sub
 
 Private Sub Form_Current()
 
-'ошибки кидать не будем
+'РѕС€РёР±РєРё РєРёРґР°С‚СЊ РЅРµ Р±СѓРґРµРј
 On Error Resume Next
 
 Dim InvKey As Integer

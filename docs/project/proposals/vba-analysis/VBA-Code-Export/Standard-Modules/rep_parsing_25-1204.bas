@@ -3,18 +3,18 @@ Option Compare Database
 Option Explicit
 
 ' =====================================================================
-' ИСПРАВЛЕННЫЙ VBA СКРИПТ ДЛЯ ЭКСПОРТА СТРУКТУРЫ ОТЧЁТА MS ACCESS
+' РРЎРџР РђР’Р›Р•РќРќР«Р™ VBA РЎРљР РРџРў Р”Р›РЇ Р­РљРЎРџРћР РўРђ РЎРўР РЈРљРўРЈР Р« РћРўР§РЃРўРђ MS ACCESS
 ' =====================================================================
-' Версия: 1.0.1 (исправлена ошибка с GroupLevel)
-' Дата: 2025-12-05
-' Автор: Александр (проект FEMSQ)
+' Р’РµСЂСЃРёСЏ: 1.0.1 (РёСЃРїСЂР°РІР»РµРЅР° РѕС€РёР±РєР° СЃ GroupLevel)
+' Р”Р°С‚Р°: 2025-12-05
+' РђРІС‚РѕСЂ: РђР»РµРєСЃР°РЅРґСЂ (РїСЂРѕРµРєС‚ FEMSQ)
 ' =====================================================================
 
-' ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
+' Р“Р›РћР‘РђР›Р¬РќР«Р• РџР•Р Р•РњР•РќРќР«Р•
 Private intFileNum As Integer
 
 ' =====================================================================
-' ОСНОВНАЯ ПРОЦЕДУРА ЭКСПОРТА mstrgAg_23_Branch_q2m_2408_25
+' РћРЎРќРћР’РќРђРЇ РџР РћР¦Р•Р”РЈР Рђ Р­РљРЎРџРћР РўРђ mstrgAg_23_Branch_q2m_2408_25
 ' =====================================================================
 Sub ExportAccessReportStructure()
     On Error GoTo ErrorHandler
@@ -24,68 +24,68 @@ Sub ExportAccessReportStructure()
     Dim strOutputPath As String
     Dim strFilePath As String
     
-    ' === НАСТРОЙКИ ===
-    strReportName = InputBox("Введите имя отчёта для экспорта:", "Экспорт структуры отчёта", "")
+    ' === РќРђРЎРўР РћР™РљР ===
+    strReportName = InputBox("Р’РІРµРґРёС‚Рµ РёРјСЏ РѕС‚С‡С‘С‚Р° РґР»СЏ СЌРєСЃРїРѕСЂС‚Р°:", "Р­РєСЃРїРѕСЂС‚ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕС‚С‡С‘С‚Р°", "")
     
     If strReportName = "" Then
-        MsgBox "Операция отменена.", vbInformation
+        MsgBox "РћРїРµСЂР°С†РёСЏ РѕС‚РјРµРЅРµРЅР°.", vbInformation
         Exit Sub
     End If
     
-    ' Проверка существования отчёта
+    ' РџСЂРѕРІРµСЂРєР° СЃСѓС‰РµСЃС‚РІРѕРІР°РЅРёСЏ РѕС‚С‡С‘С‚Р°
     If Not ReportExists(strReportName) Then
-        MsgBox "Отчёт '" & strReportName & "' не найден в базе данных.", vbCritical
+        MsgBox "РћС‚С‡С‘С‚ '" & strReportName & "' РЅРµ РЅР°Р№РґРµРЅ РІ Р±Р°Р·Рµ РґР°РЅРЅС‹С….", vbCritical
         Exit Sub
     End If
     
-    ' Путь для сохранения
+    ' РџСѓС‚СЊ РґР»СЏ СЃРѕС…СЂР°РЅРµРЅРёСЏ
     strOutputPath = CurrentProject.path & "\"
     strFilePath = strOutputPath & strReportName & "_structure.txt"
     
-    ' Предложить пользователю выбрать путь
+    ' РџСЂРµРґР»РѕР¶РёС‚СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ РІС‹Р±СЂР°С‚СЊ РїСѓС‚СЊ
     Dim strCustomPath As String
-    strCustomPath = InputBox("Укажите полный путь для сохранения файла:" & vbCrLf & _
-                            "(оставьте пустым для использования пути по умолчанию)", _
-                            "Путь сохранения", strFilePath)
+    strCustomPath = InputBox("РЈРєР°Р¶РёС‚Рµ РїРѕР»РЅС‹Р№ РїСѓС‚СЊ РґР»СЏ СЃРѕС…СЂР°РЅРµРЅРёСЏ С„Р°Р№Р»Р°:" & vbCrLf & _
+                            "(РѕСЃС‚Р°РІСЊС‚Рµ РїСѓСЃС‚С‹Рј РґР»СЏ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ РїСѓС‚Рё РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ)", _
+                            "РџСѓС‚СЊ СЃРѕС…СЂР°РЅРµРЅРёСЏ", strFilePath)
     
     If strCustomPath <> "" Then
         strFilePath = strCustomPath
     End If
     
-    ' === ОТКРЫТИЕ ОТЧЁТА В РЕЖИМЕ КОНСТРУКТОРА ===
+    ' === РћРўРљР Р«РўРР• РћРўР§РЃРўРђ Р’ Р Р•Р–РРњР• РљРћРќРЎРўР РЈРљРўРћР Рђ ===
     DoCmd.Echo False
     DoCmd.OpenReport strReportName, acViewDesign
     Set rpt = Reports(strReportName)
     
-    ' === СОЗДАНИЕ ВЫХОДНОГО ФАЙЛА ===
+    ' === РЎРћР—Р”РђРќРР• Р’Р«РҐРћР”РќРћР“Рћ Р¤РђР™Р›Рђ ===
     intFileNum = FreeFile
     Open strFilePath For Output As intFileNum
     
-    ' === ЗАГОЛОВОК ФАЙЛА ===
+    ' === Р—РђР“РћР›РћР’РћРљ Р¤РђР™Р›Рђ ===
     WriteHeader strReportName
     
-    ' === ЭКСПОРТ ОСНОВНЫХ СВОЙСТВ ОТЧЁТА ===
+    ' === Р­РљРЎРџРћР Рў РћРЎРќРћР’РќР«РҐ РЎР’РћР™РЎРўР’ РћРўР§РЃРўРђ ===
     WriteReportProperties rpt
     
-    ' === ЭКСПОРТ ГРУПП (ГРУППИРОВКИ) ===
+    ' === Р­РљРЎРџРћР Рў Р“Р РЈРџРџ (Р“Р РЈРџРџРР РћР’РљР) ===
     WriteReportGroups rpt
     
-    ' === ЭКСПОРТ СЕКЦИЙ ===
+    ' === Р­РљРЎРџРћР Рў РЎР•РљР¦РР™ ===
     WriteReportSections rpt
     
-    ' === ЭКСПОРТ ЭЛЕМЕНТОВ УПРАВЛЕНИЯ ===
+    ' === Р­РљРЎРџРћР Рў Р­Р›Р•РњР•РќРўРћР’ РЈРџР РђР’Р›Р•РќРРЇ ===
     WriteReportControls rpt
     
-    ' === ЭКСПОРТ VBA КОДА (если есть) ===
+    ' === Р­РљРЎРџРћР Рў VBA РљРћР”Рђ (РµСЃР»Рё РµСЃС‚СЊ) ===
     WriteReportVBACode rpt
     
-    ' === ЗАВЕРШЕНИЕ ===
+    ' === Р—РђР’Р•Р РЁР•РќРР• ===
     Close #intFileNum
     DoCmd.Close acReport, strReportName, acSaveNo
     DoCmd.Echo True
     
-    MsgBox "Структура отчёта успешно экспортирована!" & vbCrLf & vbCrLf & _
-           "Файл: " & strFilePath, vbInformation, "Экспорт завершён"
+    MsgBox "РЎС‚СЂСѓРєС‚СѓСЂР° РѕС‚С‡С‘С‚Р° СѓСЃРїРµС€РЅРѕ СЌРєСЃРїРѕСЂС‚РёСЂРѕРІР°РЅР°!" & vbCrLf & vbCrLf & _
+           "Р¤Р°Р№Р»: " & strFilePath, vbInformation, "Р­РєСЃРїРѕСЂС‚ Р·Р°РІРµСЂС€С‘РЅ"
     
     Exit Sub
 
@@ -95,24 +95,24 @@ ErrorHandler:
     On Error Resume Next
     DoCmd.Close acReport, strReportName, acSaveNo
     On Error GoTo 0
-    MsgBox "Ошибка при экспорте структуры отчёта:" & vbCrLf & vbCrLf & _
-           "Описание: " & Err.Description & vbCrLf & _
-           "Номер: " & Err.Number, vbCritical, "Ошибка"
+    MsgBox "РћС€РёР±РєР° РїСЂРё СЌРєСЃРїРѕСЂС‚Рµ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕС‚С‡С‘С‚Р°:" & vbCrLf & vbCrLf & _
+           "РћРїРёСЃР°РЅРёРµ: " & Err.Description & vbCrLf & _
+           "РќРѕРјРµСЂ: " & Err.Number, vbCritical, "РћС€РёР±РєР°"
 End Sub
 
 ' =====================================================================
-' ВСПОМОГАТЕЛЬНЫЕ ПРОЦЕДУРЫ ЗАПИСИ
+' Р’РЎРџРћРњРћР“РђРўР•Р›Р¬РќР«Р• РџР РћР¦Р•Р”РЈР Р« Р—РђРџРРЎР
 ' =====================================================================
 
 Private Sub WriteHeader(strReportName As String)
     Print #intFileNum, "====================================================================="
-    Print #intFileNum, "СТРУКТУРА ОТЧЁТА MS ACCESS"
+    Print #intFileNum, "РЎРўР РЈРљРўРЈР Рђ РћРўР§РЃРўРђ MS ACCESS"
     Print #intFileNum, "====================================================================="
-    Print #intFileNum, "Имя отчёта: " & strReportName
-    Print #intFileNum, "Дата экспорта: " & Format(Now(), "dd.mm.yyyy hh:nn:ss")
-    Print #intFileNum, "База данных: " & CurrentProject.name
-    Print #intFileNum, "Путь к БД: " & CurrentProject.path
-    Print #intFileNum, "Версия Access: " & Application.Version
+    Print #intFileNum, "РРјСЏ РѕС‚С‡С‘С‚Р°: " & strReportName
+    Print #intFileNum, "Р”Р°С‚Р° СЌРєСЃРїРѕСЂС‚Р°: " & Format(Now(), "dd.mm.yyyy hh:nn:ss")
+    Print #intFileNum, "Р‘Р°Р·Р° РґР°РЅРЅС‹С…: " & CurrentProject.name
+    Print #intFileNum, "РџСѓС‚СЊ Рє Р‘Р”: " & CurrentProject.path
+    Print #intFileNum, "Р’РµСЂСЃРёСЏ Access: " & Application.Version
     Print #intFileNum, "====================================================================="
     Print #intFileNum, ""
 End Sub
@@ -121,7 +121,7 @@ Private Sub WriteReportProperties(rpt As Report)
     On Error Resume Next
     
     Print #intFileNum, "====================================================================="
-    Print #intFileNum, "ОСНОВНЫЕ СВОЙСТВА ОТЧЁТА"
+    Print #intFileNum, "РћРЎРќРћР’РќР«Р• РЎР’РћР™РЎРўР’Рђ РћРўР§РЃРўРђ"
     Print #intFileNum, "====================================================================="
     Print #intFileNum, ""
     
@@ -152,19 +152,19 @@ Private Sub WriteReportProperties(rpt As Report)
     On Error GoTo 0
 End Sub
 
-' ИСПРАВЛЕННАЯ ПРОЦЕДУРА - без использования переменной GroupLevel
+' РРЎРџР РђР’Р›Р•РќРќРђРЇ РџР РћР¦Р•Р”РЈР Рђ - Р±РµР· РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ РїРµСЂРµРјРµРЅРЅРѕР№ GroupLevel
 Private Sub WriteReportGroups(rpt As Report)
     On Error Resume Next
     
     Print #intFileNum, "====================================================================="
-    Print #intFileNum, "Группировки и сортировка"
+    Print #intFileNum, "Р“СЂСѓРїРїРёСЂРѕРІРєРё Рё СЃРѕСЂС‚РёСЂРѕРІРєР°"
     Print #intFileNum, "====================================================================="
     Print #intFileNum, ""
     
     Dim i As Integer
     Dim hasGroups As Boolean
     
-    ' Попытка получить первую группу для проверки наличия
+    ' РџРѕРїС‹С‚РєР° РїРѕР»СѓС‡РёС‚СЊ РїРµСЂРІСѓСЋ РіСЂСѓРїРїСѓ РґР»СЏ РїСЂРѕРІРµСЂРєРё РЅР°Р»РёС‡РёСЏ
     hasGroups = False
     On Error Resume Next
     If Not IsNull(rpt.GroupLevel(0).ControlSource) Then
@@ -173,10 +173,10 @@ Private Sub WriteReportGroups(rpt As Report)
     On Error GoTo 0
     
     If Not hasGroups Then
-        Print #intFileNum, "Группировки отсутствуют"
+        Print #intFileNum, "Р“СЂСѓРїРїРёСЂРѕРІРєРё РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‚"
         Print #intFileNum, ""
     Else
-        ' Проходим по группам до ошибки
+        ' РџСЂРѕС…РѕРґРёРј РїРѕ РіСЂСѓРїРїР°Рј РґРѕ РѕС€РёР±РєРё
         i = 0
         On Error Resume Next
         Do While Err.Number = 0
@@ -191,7 +191,7 @@ Private Sub WriteReportGroups(rpt As Report)
             Print #intFileNum, ""
             
             i = i + 1
-            ' Пробуем получить следующую группу
+            ' РџСЂРѕР±СѓРµРј РїРѕР»СѓС‡РёС‚СЊ СЃР»РµРґСѓСЋС‰СѓСЋ РіСЂСѓРїРїСѓ
             Dim testVar As Variant
             testVar = rpt.GroupLevel(i).ControlSource
         Loop
@@ -203,28 +203,28 @@ Private Sub WriteReportSections(rpt As Report)
     On Error Resume Next
     
     Print #intFileNum, "====================================================================="
-    Print #intFileNum, "СЕКЦИИ ОТЧЁТА"
+    Print #intFileNum, "РЎР•РљР¦РР РћРўР§РЃРўРђ"
     Print #intFileNum, "====================================================================="
     Print #intFileNum, ""
     
     Dim sec As Section
     Dim i As Integer
     
-    ' Проходим по секциям до ошибки (обычно до 10 секций максимум)
+    ' РџСЂРѕС…РѕРґРёРј РїРѕ СЃРµРєС†РёСЏРј РґРѕ РѕС€РёР±РєРё (РѕР±С‹С‡РЅРѕ РґРѕ 10 СЃРµРєС†РёР№ РјР°РєСЃРёРјСѓРј)
     i = 0
-    Do While i < 20  ' Ограничение на 20 секций (с запасом)
+    Do While i < 20  ' РћРіСЂР°РЅРёС‡РµРЅРёРµ РЅР° 20 СЃРµРєС†РёР№ (СЃ Р·Р°РїР°СЃРѕРј)
         On Error Resume Next
         
-        ' Пытаемся получить секцию
+        ' РџС‹С‚Р°РµРјСЃСЏ РїРѕР»СѓС‡РёС‚СЊ СЃРµРєС†РёСЋ
         Set sec = rpt.Section(i)
         
-        ' Если ошибка - секций больше нет
+        ' Р•СЃР»Рё РѕС€РёР±РєР° - СЃРµРєС†РёР№ Р±РѕР»СЊС€Рµ РЅРµС‚
         If Err.Number <> 0 Then
             Err.Clear
             Exit Do
         End If
         
-        ' Выводим информацию о секции
+        ' Р’С‹РІРѕРґРёРј РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ СЃРµРєС†РёРё
         Print #intFileNum, "[" & GetSectionName(sec.name) & "]"
         Print #intFileNum, "Name = " & sec.name
         Print #intFileNum, "Height = " & sec.Height & " twips (" & TwipsToMM(sec.Height) & " mm)"
@@ -247,7 +247,7 @@ End Sub
 
 Private Sub WriteReportControls(rpt As Report)
     Print #intFileNum, "====================================================================="
-    Print #intFileNum, "ЭЛЕМЕНТЫ УПРАВЛЕНИЯ (ВСЕГО: " & rpt.Controls.count & ")"
+    Print #intFileNum, "Р­Р›Р•РњР•РќРўР« РЈРџР РђР’Р›Р•РќРРЇ (Р’РЎР•Р“Рћ: " & rpt.Controls.count & ")"
     Print #intFileNum, "====================================================================="
     Print #intFileNum, ""
     
@@ -276,7 +276,7 @@ Private Sub WriteControlBasicProperties(ctl As Control)
     On Error Resume Next
     
     Print #intFileNum, ""
-    Print #intFileNum, "== ОСНОВНЫЕ СВОЙСТВА =="
+    Print #intFileNum, "== РћРЎРќРћР’РќР«Р• РЎР’РћР™РЎРўР’Рђ =="
     Print #intFileNum, "Name = " & ctl.name
     Print #intFileNum, "Type = " & GetControlTypeName(ctl.ControlType) & " (" & ctl.ControlType & ")"
     Print #intFileNum, "Section = " & GetSectionName(ctl.Section)
@@ -291,7 +291,7 @@ Private Sub WriteControlLayout(ctl As Control)
     On Error Resume Next
     
     Print #intFileNum, ""
-    Print #intFileNum, "== ПОЗИЦИЯ И РАЗМЕРЫ =="
+    Print #intFileNum, "== РџРћР—РР¦РРЇ Р Р РђР—РњР•Р Р« =="
     Print #intFileNum, "Left = " & ctl.Left & " twips (" & TwipsToMM(ctl.Left) & " mm)"
     Print #intFileNum, "Top = " & ctl.Top & " twips (" & TwipsToMM(ctl.Top) & " mm)"
     Print #intFileNum, "Width = " & ctl.Width & " twips (" & TwipsToMM(ctl.Width) & " mm)"
@@ -310,7 +310,7 @@ Private Sub WriteControlTextFormatting(ctl As Control)
     On Error Resume Next
     
     Print #intFileNum, ""
-    Print #intFileNum, "== ФОРМАТИРОВАНИЕ ТЕКСТА =="
+    Print #intFileNum, "== Р¤РћР РњРђРўРР РћР’РђРќРР• РўР•РљРЎРўРђ =="
     Print #intFileNum, "FontName = " & ctl.FontName
     Print #intFileNum, "FontSize = " & ctl.FontSize
     Print #intFileNum, "FontWeight = " & ctl.FontWeight & " (Bold: " & ctl.FontBold & ")"
@@ -328,7 +328,7 @@ Private Sub WriteControlDataFormatting(ctl As Control)
     On Error Resume Next
     
     Print #intFileNum, ""
-    Print #intFileNum, "== ФОРМАТИРОВАНИЕ ДАННЫХ =="
+    Print #intFileNum, "== Р¤РћР РњРђРўРР РћР’РђРќРР• Р”РђРќРќР«РҐ =="
     Print #intFileNum, "Format = " & ctl.Format
     Print #intFileNum, "DecimalPlaces = " & ctl.DecimalPlaces
     Print #intFileNum, "InputMask = " & ctl.InputMask
@@ -342,7 +342,7 @@ Private Sub WriteControlBorders(ctl As Control)
     On Error Resume Next
     
     Print #intFileNum, ""
-    Print #intFileNum, "== ГРАНИЦЫ И ВИЗУАЛЬНЫЕ ЭФФЕКТЫ =="
+    Print #intFileNum, "== Р“Р РђРќРР¦Р« Р Р’РР—РЈРђР›Р¬РќР«Р• Р­Р¤Р¤Р•РљРўР« =="
     Print #intFileNum, "Visible = " & ctl.Visible
     Print #intFileNum, "DisplayWhen = " & GetDisplayWhenName(ctl.displayWhen) & " (" & ctl.displayWhen & ")"
     Print #intFileNum, "BorderStyle = " & GetBorderStyleName(ctl.borderStyle) & " (" & ctl.borderStyle & ")"
@@ -357,7 +357,7 @@ Private Sub WriteControlSpecificProperties(ctl As Control)
     On Error Resume Next
     
     Print #intFileNum, ""
-    Print #intFileNum, "== Специфические свойства =="
+    Print #intFileNum, "== РЎРїРµС†РёС„РёС‡РµСЃРєРёРµ СЃРІРѕР№СЃС‚РІР° =="
     
     Select Case ctl.ControlType
         Case 109  ' TextBox
@@ -424,17 +424,17 @@ Private Sub WriteReportVBACode(rpt As Report)
     On Error Resume Next
     
     Print #intFileNum, "====================================================================="
-    Print #intFileNum, "VBA КОД ОТЧЁТА"
+    Print #intFileNum, "VBA РљРћР” РћРўР§РЃРўРђ"
     Print #intFileNum, "====================================================================="
     Print #intFileNum, ""
     
     If rpt.HasModule Then
-        Print #intFileNum, "Отчёт содержит VBA модуль с программным кодом."
-        Print #intFileNum, "Для экспорта VBA кода используйте Visual Basic Editor (Alt+F11)."
+        Print #intFileNum, "РћС‚С‡С‘С‚ СЃРѕРґРµСЂР¶РёС‚ VBA РјРѕРґСѓР»СЊ СЃ РїСЂРѕРіСЂР°РјРјРЅС‹Рј РєРѕРґРѕРј."
+        Print #intFileNum, "Р”Р»СЏ СЌРєСЃРїРѕСЂС‚Р° VBA РєРѕРґР° РёСЃРїРѕР»СЊР·СѓР№С‚Рµ Visual Basic Editor (Alt+F11)."
         Print #intFileNum, ""
-        Print #intFileNum, "ПРИМЕЧАНИЕ: VBA код требует ручного переноса в JasperReports."
+        Print #intFileNum, "РџР РРњР•Р§РђРќРР•: VBA РєРѕРґ С‚СЂРµР±СѓРµС‚ СЂСѓС‡РЅРѕРіРѕ РїРµСЂРµРЅРѕСЃР° РІ JasperReports."
     Else
-        Print #intFileNum, "VBA модуль отсутствует."
+        Print #intFileNum, "VBA РјРѕРґСѓР»СЊ РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚."
     End If
     Print #intFileNum, ""
     
@@ -442,7 +442,7 @@ Private Sub WriteReportVBACode(rpt As Report)
 End Sub
 
 ' =====================================================================
-' ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+' Р’РЎРџРћРњРћР“РђРўР•Р›Р¬РќР«Р• Р¤РЈРќРљР¦РР
 ' =====================================================================
 
 Private Function ReportExists(strReportName As String) As Boolean
@@ -478,7 +478,7 @@ Private Function ColorToRGB(lngColor As Long) As String
 End Function
 
 Private Function GetControlTypeName(ctlType As Long) As String
-    ' Используем Long вместо AcControlType для совместимости
+    ' РСЃРїРѕР»СЊР·СѓРµРј Long РІРјРµСЃС‚Рѕ AcControlType РґР»СЏ СЃРѕРІРјРµСЃС‚РёРјРѕСЃС‚Рё
     Select Case ctlType
         Case 100: GetControlTypeName = "Label"
         Case 109: GetControlTypeName = "TextBox"
@@ -647,7 +647,7 @@ Private Function GetSizeModeName(sizeMode As Integer) As String
 End Function
 
 ' =====================================================================
-' ДОПОЛНИТЕЛЬНАЯ ПРОЦЕДУРА: ЭКСПОРТ ВСЕХ ОТЧЁТОВ
+' Р”РћРџРћР›РќРРўР•Р›Р¬РќРђРЇ РџР РћР¦Р•Р”РЈР Рђ: Р­РљРЎРџРћР Рў Р’РЎР•РҐ РћРўР§РЃРўРћР’
 ' =====================================================================
 Sub ExportAllReportsStructure()
     On Error GoTo ErrorHandler
@@ -664,7 +664,7 @@ Sub ExportAllReportsStructure()
     intCount = 0
     
     For Each obj In CurrentProject.AllReports
-        DoCmd.Echo True, "Экспорт отчёта: " & obj.name & " (" & (intCount + 1) & " из " & CurrentProject.AllReports.count & ")"
+        DoCmd.Echo True, "Р­РєСЃРїРѕСЂС‚ РѕС‚С‡С‘С‚Р°: " & obj.name & " (" & (intCount + 1) & " РёР· " & CurrentProject.AllReports.count & ")"
         
         ExportSingleReport obj.name, strExportFolder
         
@@ -673,16 +673,16 @@ Sub ExportAllReportsStructure()
     
     DoCmd.Echo True
     
-    MsgBox "Экспорт завершён!" & vbCrLf & vbCrLf & _
-           "Обработано отчётов: " & intCount & vbCrLf & _
-           "Папка: " & strExportFolder, vbInformation, "Массовый экспорт"
+    MsgBox "Р­РєСЃРїРѕСЂС‚ Р·Р°РІРµСЂС€С‘РЅ!" & vbCrLf & vbCrLf & _
+           "РћР±СЂР°Р±РѕС‚Р°РЅРѕ РѕС‚С‡С‘С‚РѕРІ: " & intCount & vbCrLf & _
+           "РџР°РїРєР°: " & strExportFolder, vbInformation, "РњР°СЃСЃРѕРІС‹Р№ СЌРєСЃРїРѕСЂС‚"
     
     Exit Sub
 
 ErrorHandler:
     DoCmd.Echo True
-    MsgBox "Ошибка при массовом экспорте отчётов:" & vbCrLf & vbCrLf & _
-           "Описание: " & Err.Description, vbCritical, "Ошибка"
+    MsgBox "РћС€РёР±РєР° РїСЂРё РјР°СЃСЃРѕРІРѕРј СЌРєСЃРїРѕСЂС‚Рµ РѕС‚С‡С‘С‚РѕРІ:" & vbCrLf & vbCrLf & _
+           "РћРїРёСЃР°РЅРёРµ: " & Err.Description, vbCritical, "РћС€РёР±РєР°"
 End Sub
 
 Private Sub ExportSingleReport(strReportName As String, strOutputFolder As String)
@@ -711,7 +711,7 @@ Private Sub ExportSingleReport(strReportName As String, strOutputFolder As Strin
 End Sub
 
 ' =====================================================================
-' КОНЕЦ СКРИПТА
+' РљРћРќР•Р¦ РЎРљР РРџРўРђ
 ' =====================================================================
 
 

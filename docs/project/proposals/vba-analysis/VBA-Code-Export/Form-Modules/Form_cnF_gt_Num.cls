@@ -13,7 +13,7 @@ Private Sub Form_Current()
 
 Dim Cn As Long
 
-'ошибки кидать не будем
+'РѕС€РёР±РєРё РєРёРґР°С‚СЊ РЅРµ Р±СѓРґРµРј
 On Error Resume Next
 
 If IsNull(Me!cnnCn) Then

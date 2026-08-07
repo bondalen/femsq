@@ -7,15 +7,15 @@ Sub ExportAllModules()
     Dim subPath As String
     Dim filename As String
     
-    ' Укажите путь для экспорта
+    ' РЈРєР°Р¶РёС‚Рµ РїСѓС‚СЊ РґР»СЏ СЌРєСЃРїРѕСЂС‚Р°
     path = "D:\db\jre\vba_export\"
     
-    ' Создайте основную папку если не существует
+    ' РЎРѕР·РґР°Р№С‚Рµ РѕСЃРЅРѕРІРЅСѓСЋ РїР°РїРєСѓ РµСЃР»Рё РЅРµ СЃСѓС‰РµСЃС‚РІСѓРµС‚
     If Dir(path, vbDirectory) = "" Then
         MkDir path
     End If
     
-    ' Создайте подпапки
+    ' РЎРѕР·РґР°Р№С‚Рµ РїРѕРґРїР°РїРєРё
     If Dir(path & "Standard-Modules\", vbDirectory) = "" Then
         MkDir path & "Standard-Modules\"
     End If
@@ -28,11 +28,11 @@ Sub ExportAllModules()
         MkDir path & "Form-Modules\"
     End If
     
-    ' Счётчик файлов
+    ' РЎС‡С‘С‚С‡РёРє С„Р°Р№Р»РѕРІ
     Dim count As Integer
     count = 0
     
-    ' Экспорт всех модулей
+    ' Р­РєСЃРїРѕСЂС‚ РІСЃРµС… РјРѕРґСѓР»РµР№
     For Each obj In Application.VBE.ActiveVBProject.VBComponents
     
         filename = Replace(obj.name, ">", "_gt_")
@@ -52,8 +52,8 @@ Sub ExportAllModules()
         End Select
     Next obj
     
-    MsgBox "Экспорт завершен!" & vbCrLf & _
-           "Всего файлов: " & count & vbCrLf & _
-           "Путь: " & path, vbInformation
+    MsgBox "Р­РєСЃРїРѕСЂС‚ Р·Р°РІРµСЂС€РµРЅ!" & vbCrLf & _
+           "Р’СЃРµРіРѕ С„Р°Р№Р»РѕРІ: " & count & vbCrLf & _
+           "РџСѓС‚СЊ: " & path, vbInformation
 End Sub
 

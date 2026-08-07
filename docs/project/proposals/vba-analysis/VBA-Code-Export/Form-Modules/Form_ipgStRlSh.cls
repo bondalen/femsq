@@ -13,13 +13,13 @@ Private Sub Form_Current()
 
     Dim db As DAO.Database, qd As DAO.QueryDef, strSql As String
 
-    Const cstrTitle As String = "Функция *Текущая запись ~Схемы структуры инвестпрограммы~*"
+    Const cstrTitle As String = "Р¤СѓРЅРєС†РёСЏ *РўРµРєСѓС‰Р°СЏ Р·Р°РїРёСЃСЊ ~РЎС…РµРјС‹ СЃС‚СЂСѓРєС‚СѓСЂС‹ РёРЅРІРµСЃС‚РїСЂРѕРіСЂР°РјРјС‹~*"
 
     ' ***************************************************************************************************************************
 
 On Error GoTo ErrHandler
 
-    Set db = CurrentDb 'открываем переменную базы данных ---------------------------------------------------
+    Set db = CurrentDb 'РѕС‚РєСЂС‹РІР°РµРј РїРµСЂРµРјРµРЅРЅСѓСЋ Р±Р°Р·С‹ РґР°РЅРЅС‹С… ---------------------------------------------------
 
     Set qd = db.QueryDefs("ags_fnIpgStNumSm")
     strSql = "select * from ags.fnIpgStNumSm(" & Me![ipgStRlSh>ipg_t].Form.ipgKey & ", " & Me!ipgstrshRoot & ") f Order by f.stNum"
@@ -30,7 +30,7 @@ On Error GoTo ErrHandler
     
     qd.Close: Set qd = Nothing
 
-    db.Close 'закрываем переменную базы данных -------------------------------------------------------------
+    db.Close 'Р·Р°РєСЂС‹РІР°РµРј РїРµСЂРµРјРµРЅРЅСѓСЋ Р±Р°Р·С‹ РґР°РЅРЅС‹С… -------------------------------------------------------------
     Set db = Nothing
 
 NormalExit:

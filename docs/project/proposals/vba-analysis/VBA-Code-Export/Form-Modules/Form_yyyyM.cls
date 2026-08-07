@@ -9,7 +9,7 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Compare Database
 
-' получаем освоение вместе со стройками
+' РїРѕР»СѓС‡Р°РµРј РѕСЃРІРѕРµРЅРёРµ РІРјРµСЃС‚Рµ СЃРѕ СЃС‚СЂРѕР№РєР°РјРё
 Private Sub btn_obtainUtl_Click()
 
     Dim qd As DAO.QueryDef
@@ -21,14 +21,14 @@ Private Sub btn_obtainUtl_Click()
     
     Set db = CurrentDb
     
-    'очищаем таблицу
+    'РѕС‡РёС‰Р°РµРј С‚Р°Р±Р»РёС†Сѓ
     strSql = "DELETE * FROM ipgChRsltPlCst"
     Set qd = db.CreateQueryDef("", strSql)
     qd.Execute dbFailOnError
     qd.Close
     Set qd = Nothing
     
-    'получаем набор записей от сервера
+    'РїРѕР»СѓС‡Р°РµРј РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РѕС‚ СЃРµСЂРІРµСЂР°
     Set qd = db.CreateQueryDef("")
     qd.Connect = db.TableDefs("ags_yyyy").Connect
     qd.SQL = "[ags].[spIpgChRsltCstUtl3_GP_cst] " & Me![yyyyM>ipgCh_t].Form!ipgcKey & ", '" _
@@ -37,26 +37,26 @@ Private Sub btn_obtainUtl_Click()
     
     Set rstD = qd.OpenRecordset(dbOpenSnapshot)
     rstD.MoveLast
-    'MsgBox ("записей " & rs.RecordCount)
+    'MsgBox ("Р·Р°РїРёСЃРµР№ " & rs.RecordCount)
     
     'Set Me![ipgCh>qqq].Form.Recordset = rs
     
-    'переносим набор записей в таблицу
+    'РїРµСЂРµРЅРѕСЃРёРј РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РІ С‚Р°Р±Р»РёС†Сѓ
     If rstD.RecordCount > 0 Then
     
         rstD.MoveFirst
     
-        'открываем на редактирование рекордсет формируемой таблицы
+        'РѕС‚РєСЂС‹РІР°РµРј РЅР° СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ СЂРµРєРѕСЂРґСЃРµС‚ С„РѕСЂРјРёСЂСѓРµРјРѕР№ С‚Р°Р±Р»РёС†С‹
         Set rstP = db.OpenRecordset("ipgChRsltPlCst", dbOpenDynaset)
         
         With rstD
             Do Until .EOF = True
             
-                'собственно присваиваем
+                'СЃРѕР±СЃС‚РІРµРЅРЅРѕ РїСЂРёСЃРІР°РёРІР°РµРј
                 rstP.AddNew
                     rstP!dateRslt = !dateRslt
                     If IsNull(!ogNm) = True Then
-                        rstP!ogNm = "а. Всего"
+                        rstP!ogNm = "Р°. Р’СЃРµРіРѕ"
                     Else
                         rstP!ogNm = !ogNm
                     End If
@@ -184,14 +184,14 @@ Private Sub btn_obtainUtl_Click()
                     'rstP!ipgCh = Me.ipgcKey
                 rstP.Update
                 rstP.Bookmark = rstP.LastModified
-                'идем к следующей записи
+                'РёРґРµРј Рє СЃР»РµРґСѓСЋС‰РµР№ Р·Р°РїРёСЃРё
                 .MoveNext
             Loop
         End With
         rstP.Close: Set rstP = Nothing
     End If
     
-    'закрываем рекордсет
+    'Р·Р°РєСЂС‹РІР°РµРј СЂРµРєРѕСЂРґСЃРµС‚
     rstD.Close: Set rstD = Nothing
     
     db.Close: Set db = Nothing

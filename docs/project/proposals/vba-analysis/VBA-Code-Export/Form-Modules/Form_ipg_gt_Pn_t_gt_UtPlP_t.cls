@@ -13,7 +13,7 @@ Private Sub Form_Current()
 
     Dim pnKey As Long
     
-    Const cstrTitle As String = "Ôóíêöèÿ *Òåêóùàÿ çàïèñü ~Ïóíêò óòî÷íåííîãî ïëàíà~*"
+    Const cstrTitle As String = "Ð¤ÑƒÐ½ÐºÑ†Ð¸Ñ *Ð¢ÐµÐºÑƒÑ‰Ð°Ñ Ð·Ð°Ð¿Ð¸ÑÑŒ ~ÐŸÑƒÐ½ÐºÑ‚ ÑƒÑ‚Ð¾Ñ‡Ð½ÐµÐ½Ð½Ð¾Ð³Ð¾ Ð¿Ð»Ð°Ð½Ð°~*"
 
     ' ***************************************************************************************************************************
 
@@ -25,13 +25,13 @@ On Error GoTo ErrHandler
         pnKey = Me!iuplpKey
     End If
     
-    ' ôèëüòðóåì ãîä
+    ' Ñ„Ð¸Ð»ÑŒÑ‚Ñ€ÑƒÐµÐ¼ Ð³Ð¾Ð´
     Me.parent.Form![ipg>Pn_f>UtPlPnLmYe].Form.Filter = "iuplpyPlPn = " & pnKey
     Me.parent.Form![ipg>Pn_f>UtPlPnLmYe].Form.FilterOn = True
-    ' ôèëüòðóåì êâàðòàë
+    ' Ñ„Ð¸Ð»ÑŒÑ‚Ñ€ÑƒÐµÐ¼ ÐºÐ²Ð°Ñ€Ñ‚Ð°Ð»
     Me.parent.Form![ipg>Pn_f>UtPlPnLmQu].Form.Filter = "iuplpqPlPn = " & pnKey
     Me.parent.Form![ipg>Pn_f>UtPlPnLmQu].Form.FilterOn = True
-    ' ôèëüòðóåì ìåñÿö
+    ' Ñ„Ð¸Ð»ÑŒÑ‚Ñ€ÑƒÐµÐ¼ Ð¼ÐµÑÑÑ†
     Me.parent.Form![ipg>Pn_f>UtPlPnLmMn].Form.Filter = "iuplpmPlPn = " & pnKey
     Me.parent.Form![ipg>Pn_f>UtPlPnLmMn].Form.FilterOn = True
 

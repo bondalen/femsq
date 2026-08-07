@@ -14,7 +14,7 @@ Attribute VB_Exposed = False
 '    Dim raKey As Integer
 '
 '    Const cstrTitle As String _
-'    = "Процедура *Смена текущей записи отчёта ВнеИнвестпрограммы*"
+'    = "РџСЂРѕС†РµРґСѓСЂР° *РЎРјРµРЅР° С‚РµРєСѓС‰РµР№ Р·Р°РїРёСЃРё РѕС‚С‡С‘С‚Р° Р’РЅРµРРЅРІРµСЃС‚РїСЂРѕРіСЂР°РјРјС‹*"
 '    ' ***************************************************************************************************************************
 '
 'On Error GoTo ErrHandler
@@ -38,7 +38,7 @@ Attribute VB_Exposed = False
 ''        raKey = Me.Form![cst>ra_t].Form![ra_key]
 ''    End If
 '
-'    ' фильтруем отчёт
+'    ' С„РёР»СЊС‚СЂСѓРµРј РѕС‚С‡С‘С‚
 ''    Me.Form![cst>ra_f].Form.Filter = "ra_key = " & raKey
 ''    Me.Form![cst>ra_f].Form.FilterOn = True
 '
@@ -52,7 +52,7 @@ Attribute VB_Exposed = False
 '        raKey = 0
 '        Resume Next
 '    Else
-'        MsgBox Err.Description & vbCrLf & "№ ошибки: " & Err.Number & vbCrLf & cstrTitle, vbExclamation, cstrTitle
+'        MsgBox Err.Description & vbCrLf & "в„– РѕС€РёР±РєРё: " & Err.Number & vbCrLf & cstrTitle, vbExclamation, cstrTitle
 '        Resume NormalExit
 '    End If
 '
@@ -84,14 +84,14 @@ Attribute VB_Exposed = False
 '
 'End Sub
 '
-'Private Sub ОбластьДанных_Format(Cancel As Integer, FormatCount As Integer)
+'Private Sub РћР±Р»Р°СЃС‚СЊР”Р°РЅРЅС‹С…_Format(Cancel As Integer, FormatCount As Integer)
 '
-''    'Установить переменную базы данных на текущую базу данных.
+''    'РЈСЃС‚Р°РЅРѕРІРёС‚СЊ РїРµСЂРµРјРµРЅРЅСѓСЋ Р±Р°Р·С‹ РґР°РЅРЅС‹С… РЅР° С‚РµРєСѓС‰СѓСЋ Р±Р°Р·Сѓ РґР°РЅРЅС‹С….
 ''    Set db = CurrentDb
 ''
 ''    If IsNull(Me!cstapKey) Then
 '''        'RefreshCstChart (0)
-'''        MsgBox ("область данных " & "net net")
+'''        MsgBox ("РѕР±Р»Р°СЃС‚СЊ РґР°РЅРЅС‹С… " & "net net")
 ''
 ''            DoCmd.SetWarnings False
 ''            DoCmd.Close acTable, "ags_fnCstapOverIpg_tmp"
@@ -101,13 +101,13 @@ Attribute VB_Exposed = False
 ''        Else
 '''        'RefreshCstChart (Me!cstapKey)
 '''        Me!FieldTest.Text = "est " & Me!cstapKey
-'''        MsgBox ("область данных " & Me!cstapKey & " " & Me!nameAll)
+'''        MsgBox ("РѕР±Р»Р°СЃС‚СЊ РґР°РЅРЅС‹С… " & Me!cstapKey & " " & Me!nameAll)
 '''        RefreshFnCstapOverIpg Me!cstapKey.value, Me!yearOfDate.value
 ''
-''            'Открыть объект QueryDef.
+''            'РћС‚РєСЂС‹С‚СЊ РѕР±СЉРµРєС‚ QueryDef.
 ''            Set qdf = db.QueryDefs("ags_fnCstapOverIpg")
 ''
-''            'Создание строки SQL для передачи в sp_GetWorklistAMI на основе введенных пользователем параметров.
+''            'РЎРѕР·РґР°РЅРёРµ СЃС‚СЂРѕРєРё SQL РґР»СЏ РїРµСЂРµРґР°С‡Рё РІ sp_GetWorklistAMI РЅР° РѕСЃРЅРѕРІРµ РІРІРµРґРµРЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј РїР°СЂР°РјРµС‚СЂРѕРІ.
 ''
 ''            ' strSQLString = "EXEC sp_GenerateVarianceReportData_AMI10 " & "'" & strFYQtrYr & "'"
 ''
@@ -122,7 +122,7 @@ Attribute VB_Exposed = False
 ''                " from ags.fnCstapOverIpg(" & cstapStr & ", " & yearStr & ")"
 ''
 ''            qdf.ReturnsRecords = True
-''            'Назначение команды query def sql для строки SQL, созданной из выбранных пользователем данных.
+''            'РќР°Р·РЅР°С‡РµРЅРёРµ РєРѕРјР°РЅРґС‹ query def sql РґР»СЏ СЃС‚СЂРѕРєРё SQL, СЃРѕР·РґР°РЅРЅРѕР№ РёР· РІС‹Р±СЂР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј РґР°РЅРЅС‹С….
 ''            qdf.SQL = strSQLString
 ''
 ''            qdf.Close: Set qdf = Nothing
@@ -130,12 +130,12 @@ Attribute VB_Exposed = False
 ''            DoCmd.SetWarnings False
 ''            DoCmd.Close acTable, "ags_fnCstapOverIpg_tmp"
 ''            DoCmd.RunSQL "Delete * from ags_fnCstapOverIpg_tmp"
-''            'Создание временной таблицы для хранения данных AMI10 VarianceReport.
+''            'РЎРѕР·РґР°РЅРёРµ РІСЂРµРјРµРЅРЅРѕР№ С‚Р°Р±Р»РёС†С‹ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РґР°РЅРЅС‹С… AMI10 VarianceReport.
 ''            strSQLMakeTable = "insert into ags_fnCstapOverIpg_tmp (ra_key, ra_num, ra_date) " & _
 ''            "select ra_key, ra_num, ra_date " & _
 ''            "FROM ags_fnCstapOverIpg;"
 ''
-''            'Выполнить оператор создания таблицы.
+''            'Р’С‹РїРѕР»РЅРёС‚СЊ РѕРїРµСЂР°С‚РѕСЂ СЃРѕР·РґР°РЅРёСЏ С‚Р°Р±Р»РёС†С‹.
 ''            db.Execute strSQLMakeTable, dbFailOnError
 ''            DoCmd.SetWarnings True
 ''
@@ -145,13 +145,13 @@ Attribute VB_Exposed = False
 '
 'End Sub
 '
-'Private Sub ОбластьДанных_Print(Cancel As Integer, PrintCount As Integer)
-'    'Установить переменную базы данных на текущую базу данных.
+'Private Sub РћР±Р»Р°СЃС‚СЊР”Р°РЅРЅС‹С…_Print(Cancel As Integer, PrintCount As Integer)
+'    'РЈСЃС‚Р°РЅРѕРІРёС‚СЊ РїРµСЂРµРјРµРЅРЅСѓСЋ Р±Р°Р·С‹ РґР°РЅРЅС‹С… РЅР° С‚РµРєСѓС‰СѓСЋ Р±Р°Р·Сѓ РґР°РЅРЅС‹С….
 '    Set db = CurrentDb
 '
 '    If IsNull(Me!cstapKey) Then
 ''        'RefreshCstChart (0)
-''        MsgBox ("область данных " & "net net")
+''        MsgBox ("РѕР±Р»Р°СЃС‚СЊ РґР°РЅРЅС‹С… " & "net net")
 '
 '            DoCmd.SetWarnings False
 '            DoCmd.Close acTable, "ags_fnCstapOverIpg_tmp"
@@ -161,13 +161,13 @@ Attribute VB_Exposed = False
 '        Else
 ''        'RefreshCstChart (Me!cstapKey)
 ''        Me!FieldTest.Text = "est " & Me!cstapKey
-''        MsgBox ("область данных " & Me!cstapKey & " " & Me!nameAll)
+''        MsgBox ("РѕР±Р»Р°СЃС‚СЊ РґР°РЅРЅС‹С… " & Me!cstapKey & " " & Me!nameAll)
 ''        RefreshFnCstapOverIpg Me!cstapKey.value, Me!yearOfDate.value
 '
-'            'Открыть объект QueryDef.
+'            'РћС‚РєСЂС‹С‚СЊ РѕР±СЉРµРєС‚ QueryDef.
 '            Set qdf = db.QueryDefs("ags_fnCstapOverIpg")
 '
-'            'Создание строки SQL для передачи в sp_GetWorklistAMI на основе введенных пользователем параметров.
+'            'РЎРѕР·РґР°РЅРёРµ СЃС‚СЂРѕРєРё SQL РґР»СЏ РїРµСЂРµРґР°С‡Рё РІ sp_GetWorklistAMI РЅР° РѕСЃРЅРѕРІРµ РІРІРµРґРµРЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј РїР°СЂР°РјРµС‚СЂРѕРІ.
 '
 '            ' strSQLString = "EXEC sp_GenerateVarianceReportData_AMI10 " & "'" & strFYQtrYr & "'"
 '
@@ -182,7 +182,7 @@ Attribute VB_Exposed = False
 '                " from ags.fnCstapOverIpg(" & cstapStr & ", " & yearStr & ")"
 '
 '            qdf.ReturnsRecords = True
-'            'Назначение команды query def sql для строки SQL, созданной из выбранных пользователем данных.
+'            'РќР°Р·РЅР°С‡РµРЅРёРµ РєРѕРјР°РЅРґС‹ query def sql РґР»СЏ СЃС‚СЂРѕРєРё SQL, СЃРѕР·РґР°РЅРЅРѕР№ РёР· РІС‹Р±СЂР°РЅРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј РґР°РЅРЅС‹С….
 '            qdf.SQL = strSQLString
 '
 '            qdf.Close: Set qdf = Nothing
@@ -190,7 +190,7 @@ Attribute VB_Exposed = False
 '            DoCmd.SetWarnings False
 '            DoCmd.Close acTable, "ags_fnCstapOverIpg_tmp"
 '            DoCmd.RunSQL "Delete * from ags_fnCstapOverIpg_tmp"
-'            'Создание временной таблицы для хранения данных AMI10 VarianceReport.
+'            'РЎРѕР·РґР°РЅРёРµ РІСЂРµРјРµРЅРЅРѕР№ С‚Р°Р±Р»РёС†С‹ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РґР°РЅРЅС‹С… AMI10 VarianceReport.
 '            strSQLMakeTable = "insert into ags_fnCstapOverIpg_tmp (ra_key, ra_num, ra_date) " & _
 '            "select ra_key, ra_num, ra_date " & _
 '            "FROM ags_fnCstapOverIpg;"
@@ -212,7 +212,7 @@ Attribute VB_Exposed = False
 'End Sub
 '
 ''
-''            'Выполнить оператор создания таблицы.
+''            'Р’С‹РїРѕР»РЅРёС‚СЊ РѕРїРµСЂР°С‚РѕСЂ СЃРѕР·РґР°РЅРёСЏ С‚Р°Р±Р»РёС†С‹.
 ''            db.Execute strSQLMakeTable, dbFailOnError
 ''            DoCmd.SetWarnings True
 ''

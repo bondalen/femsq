@@ -11,7 +11,7 @@ Option Compare Database
 
 Private Sub Form_Current()
 
-'îøèáêè êèäàòü íå áóäåì inv>cnInv
+'Ð¾ÑˆÐ¸Ð±ÐºÐ¸ ÐºÐ¸Ð´Ð°Ñ‚ÑŒ Ð½Ðµ Ð±ÑƒÐ´ÐµÐ¼ inv>cnInv
 On Error Resume Next
 
 Dim ciKey As Long

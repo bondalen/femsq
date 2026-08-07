@@ -11,69 +11,69 @@ Option Compare Database
 
 
 ' *****************************************************************************************************************************************
-' добавляем новый счёт-фактуру. 07.04.2023
+' РґРѕР±Р°РІР»СЏРµРј РЅРѕРІС‹Р№ СЃС‡С‘С‚-С„Р°РєС‚СѓСЂСѓ. 07.04.2023
 Private Sub btnSave_Click()
     Dim cnInvNew As cnInv, cnKey As Long
-    Const cstrTitle As String = "Процедура кнопки *Добавляем новый счёт-фактуру*."
+    Const cstrTitle As String = "РџСЂРѕС†РµРґСѓСЂР° РєРЅРѕРїРєРё *Р”РѕР±Р°РІР»СЏРµРј РЅРѕРІС‹Р№ СЃС‡С‘С‚-С„Р°РєС‚СѓСЂСѓ*."
     '************************************************************************************************************************************************
 On Error GoTo ErrHandler
 
-' проверяем данные
+' РїСЂРѕРІРµСЂСЏРµРј РґР°РЅРЅС‹Рµ
 cnKey = CLng(Me!txtCn_key.Caption)
 
 If cnKey > 0 Then
-    ' отсутствуют ли №?
+    ' РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‚ Р»Рё в„–?
     If IsNull(Me!invNum) Then
-        ' да, № отсутствует
-        ' отсутствует ли дата, либо она имеет неверный формат?
+        ' РґР°, в„– РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚
+        ' РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚ Р»Рё РґР°С‚Р°, Р»РёР±Рѕ РѕРЅР° РёРјРµРµС‚ РЅРµРІРµСЂРЅС‹Р№ С„РѕСЂРјР°С‚?
         If IsDate(Me!invDate) = False Then
-            ' да, дата отсутствует, либо она имеет неверный формат
-            If MsgBox("Отсутствуют № и дата (либо неверный её формат)! Создать такой счёт-фактуру?", _
+            ' РґР°, РґР°С‚Р° РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚, Р»РёР±Рѕ РѕРЅР° РёРјРµРµС‚ РЅРµРІРµСЂРЅС‹Р№ С„РѕСЂРјР°С‚
+            If MsgBox("РћС‚СЃСѓС‚СЃС‚РІСѓСЋС‚ в„– Рё РґР°С‚Р° (Р»РёР±Рѕ РЅРµРІРµСЂРЅС‹Р№ РµС‘ С„РѕСЂРјР°С‚)! РЎРѕР·РґР°С‚СЊ С‚Р°РєРѕР№ СЃС‡С‘С‚-С„Р°РєС‚СѓСЂСѓ?", _
                 vbOKCancel + vbExclamation) = vbOK Then
-                ' дата отсутствует?
+                ' РґР°С‚Р° РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚?
                 If IsNull(Me!invDate) Then
-                    ' да, дата отсутствует
+                    ' РґР°, РґР°С‚Р° РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚
                     Set cnInvNew = ClassFactory.cnInvCreateNewInvNew _
-                        (Null, Null, cnKey, CurrentDb, Trim("по кнопке, без № и даты. " & Me!invNote))
+                        (Null, Null, cnKey, CurrentDb, Trim("РїРѕ РєРЅРѕРїРєРµ, Р±РµР· в„– Рё РґР°С‚С‹. " & Me!invNote))
                     DoCmd.Close acForm, Me.name, acSaveNo
                     Set cnInvNew = Nothing
                 Else
-                    ' нет, дата имеет неверный формат
-                    MsgBox ("Неверный формат даты. Счёт-фактура не создан")
+                    ' РЅРµС‚, РґР°С‚Р° РёРјРµРµС‚ РЅРµРІРµСЂРЅС‹Р№ С„РѕСЂРјР°С‚
+                    MsgBox ("РќРµРІРµСЂРЅС‹Р№ С„РѕСЂРјР°С‚ РґР°С‚С‹. РЎС‡С‘С‚-С„Р°РєС‚СѓСЂР° РЅРµ СЃРѕР·РґР°РЅ")
                 End If
             End If
         Else
-            ' нет, дата имеется
-            If MsgBox("Отсутствует №! Создать такой счёт-фактуру?", vbOKCancel + vbExclamation) = vbOK Then
+            ' РЅРµС‚, РґР°С‚Р° РёРјРµРµС‚СЃСЏ
+            If MsgBox("РћС‚СЃСѓС‚СЃС‚РІСѓРµС‚ в„–! РЎРѕР·РґР°С‚СЊ С‚Р°РєРѕР№ СЃС‡С‘С‚-С„Р°РєС‚СѓСЂСѓ?", vbOKCancel + vbExclamation) = vbOK Then
                 Set cnInvNew = ClassFactory.cnInvCreateNewInvNew _
-                    (Null, Me!invDate, cnKey, CurrentDb, Trim("по кнопке, без №. " & Me!invNote))
+                    (Null, Me!invDate, cnKey, CurrentDb, Trim("РїРѕ РєРЅРѕРїРєРµ, Р±РµР· в„–. " & Me!invNote))
                 DoCmd.Close acForm, Me.name, acSaveNo
                 Set cnInvNew = Nothing
             End If
         End If
     Else
-        ' нет, № имеется
-        ' отстутствует ли дата?
+        ' РЅРµС‚, в„– РёРјРµРµС‚СЃСЏ
+        ' РѕС‚СЃС‚СѓС‚СЃС‚РІСѓРµС‚ Р»Рё РґР°С‚Р°?
         If IsDate(Me!invDate) = False Then
-            ' да, дата отсутствует
-            If MsgBox("Отсутствует дата (либо неверный её формат)! Создать такой счёт-фактуру?", _
+            ' РґР°, РґР°С‚Р° РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚
+            If MsgBox("РћС‚СЃСѓС‚СЃС‚РІСѓРµС‚ РґР°С‚Р° (Р»РёР±Рѕ РЅРµРІРµСЂРЅС‹Р№ РµС‘ С„РѕСЂРјР°С‚)! РЎРѕР·РґР°С‚СЊ С‚Р°РєРѕР№ СЃС‡С‘С‚-С„Р°РєС‚СѓСЂСѓ?", _
                 vbOKCancel + vbExclamation) = vbOK Then
-                ' дата отсутствует?
+                ' РґР°С‚Р° РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚?
                 If IsNull(Me!invDate) Then
-                    ' да, дата отсутствует
+                    ' РґР°, РґР°С‚Р° РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚
                     Set cnInvNew = ClassFactory.cnInvCreateNewInvNew _
-                        (Me!invNum, Null, cnKey, CurrentDb, Trim("по кнопке, без даты. " & Me!invNote))
+                        (Me!invNum, Null, cnKey, CurrentDb, Trim("РїРѕ РєРЅРѕРїРєРµ, Р±РµР· РґР°С‚С‹. " & Me!invNote))
                     DoCmd.Close acForm, Me.name, acSaveNo
                     Set cnInvNew = Nothing
                 Else
-                    ' нет, дата имеет неверный формат
-                    MsgBox ("Неверный формат даты. Счёт-фактура не создан")
+                    ' РЅРµС‚, РґР°С‚Р° РёРјРµРµС‚ РЅРµРІРµСЂРЅС‹Р№ С„РѕСЂРјР°С‚
+                    MsgBox ("РќРµРІРµСЂРЅС‹Р№ С„РѕСЂРјР°С‚ РґР°С‚С‹. РЎС‡С‘С‚-С„Р°РєС‚СѓСЂР° РЅРµ СЃРѕР·РґР°РЅ")
                 End If
             End If
         Else
-            ' нет, дата имеется
+            ' РЅРµС‚, РґР°С‚Р° РёРјРµРµС‚СЃСЏ
             Set cnInvNew = ClassFactory.cnInvCreateNewInvNew _
-                (Me!invNum, Me!invDate, cnKey, CurrentDb, Trim("по кнопке. " & Me!invNote))
+                (Me!invNum, Me!invDate, cnKey, CurrentDb, Trim("РїРѕ РєРЅРѕРїРєРµ. " & Me!invNote))
             DoCmd.Close acForm, Me.name, acSaveNo
             Set cnInvNew = Nothing
         End If

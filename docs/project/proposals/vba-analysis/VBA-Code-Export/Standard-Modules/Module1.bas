@@ -1,7 +1,7 @@
 Attribute VB_Name = "Module1"
 Option Compare Database
 
-' определяем первый или последний дни месяца
+' РѕРїСЂРµРґРµР»СЏРµРј РїРµСЂРІС‹Р№ РёР»Рё РїРѕСЃР»РµРґРЅРёР№ РґРЅРё РјРµСЃСЏС†Р°
 Function GetDay(dat As Date, typ As String) As Date
     If typ = "First" Then
         GetDay = DateSerial(year(dat), Month(dat), 1)
@@ -11,11 +11,11 @@ Function GetDay(dat As Date, typ As String) As Date
 End Function
 
 ' ***********************************************************************************************************
-' Для объектов "стройка-агент-код", имеющих освоение сверх лимита и вне Инвестпрограммы возвращаем отчёты
+' Р”Р»СЏ РѕР±СЉРµРєС‚РѕРІ "СЃС‚СЂРѕР№РєР°-Р°РіРµРЅС‚-РєРѕРґ", РёРјРµСЋС‰РёС… РѕСЃРІРѕРµРЅРёРµ СЃРІРµСЂС… Р»РёРјРёС‚Р° Рё РІРЅРµ РРЅРІРµСЃС‚РїСЂРѕРіСЂР°РјРјС‹ РІРѕР·РІСЂР°С‰Р°РµРј РѕС‚С‡С‘С‚С‹
 Sub RefreshFnCstapOverIpg(ByVal cstap As Integer, ByVal yearIpg As Integer)
 
     Const cstrTitle As String _
-    = "Module1. Процедура RefreshFnCstapOverIpg *Для объектов стройка-агент-код, имеющих освоение сверх лимита и вне Инвестпрограммы возвращаем отчёты*"
+    = "Module1. РџСЂРѕС†РµРґСѓСЂР° RefreshFnCstapOverIpg *Р”Р»СЏ РѕР±СЉРµРєС‚РѕРІ СЃС‚СЂРѕР№РєР°-Р°РіРµРЅС‚-РєРѕРґ, РёРјРµСЋС‰РёС… РѕСЃРІРѕРµРЅРёРµ СЃРІРµСЂС… Р»РёРјРёС‚Р° Рё РІРЅРµ РРЅРІРµСЃС‚РїСЂРѕРіСЂР°РјРјС‹ РІРѕР·РІСЂР°С‰Р°РµРј РѕС‚С‡С‘С‚С‹*"
 
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
@@ -51,19 +51,19 @@ NormalExit:
     Exit Sub
     
 ErrHandler:
-    MsgBox Err.Description & vbCrLf & "№ ошибки: " & Err.Number & vbCrLf & cstrTitle, vbExclamation, cstrTitle
+    MsgBox Err.Description & vbCrLf & "в„– РѕС€РёР±РєРё: " & Err.Number & vbCrLf & cstrTitle, vbExclamation, cstrTitle
     Resume NormalExit
 
 End Sub
-' Для объектов "стройка-агент-код", имеющих освоение сверх лимита и вне Инвестпрограммы возвращаем отчёты. Окончание
+' Р”Р»СЏ РѕР±СЉРµРєС‚РѕРІ "СЃС‚СЂРѕР№РєР°-Р°РіРµРЅС‚-РєРѕРґ", РёРјРµСЋС‰РёС… РѕСЃРІРѕРµРЅРёРµ СЃРІРµСЂС… Р»РёРјРёС‚Р° Рё РІРЅРµ РРЅРІРµСЃС‚РїСЂРѕРіСЂР°РјРјС‹ РІРѕР·РІСЂР°С‰Р°РµРј РѕС‚С‡С‘С‚С‹. РћРєРѕРЅС‡Р°РЅРёРµ
 ' ***********************************************************************************************************
 
 
-' обновляем источники данных для освоения по стройке и графиков
+' РѕР±РЅРѕРІР»СЏРµРј РёСЃС‚РѕС‡РЅРёРєРё РґР°РЅРЅС‹С… РґР»СЏ РѕСЃРІРѕРµРЅРёСЏ РїРѕ СЃС‚СЂРѕР№РєРµ Рё РіСЂР°С„РёРєРѕРІ
 Sub RefreshCstChart(cstKey As Integer)
 
     Const cstrTitle As String _
-    = "Module1. Процедура RefreshCstChart *Обновляем источники данных для освоения по стройке и графиков*"
+    = "Module1. РџСЂРѕС†РµРґСѓСЂР° RefreshCstChart *РћР±РЅРѕРІР»СЏРµРј РёСЃС‚РѕС‡РЅРёРєРё РґР°РЅРЅС‹С… РґР»СЏ РѕСЃРІРѕРµРЅРёСЏ РїРѕ СЃС‚СЂРѕР№РєРµ Рё РіСЂР°С„РёРєРѕРІ*"
     
     Dim db As DAO.Database
     Dim qdf As DAO.QueryDef
@@ -90,7 +90,7 @@ On Error GoTo ErrHandler
         qdf.Close
         Set qdf = Nothing
         
-        ' проверяем наличие освоения
+        ' РїСЂРѕРІРµСЂСЏРµРј РЅР°Р»РёС‡РёРµ РѕСЃРІРѕРµРЅРёСЏ
         Set qdf = db.QueryDefs("ags_fnRRcListUtil")
             Set rs = qdf.OpenRecordset()
             If rs.EOF = False Then
@@ -101,10 +101,10 @@ On Error GoTo ErrHandler
         qdf.Close
         Set qdf = Nothing
         
-        ' имеется освоение?
+        ' РёРјРµРµС‚СЃСЏ РѕСЃРІРѕРµРЅРёРµ?
         If iii > 0 Then
-            ' да, освоение имеется
-            ' тогда обновляем источник данных для графика
+            ' РґР°, РѕСЃРІРѕРµРЅРёРµ РёРјРµРµС‚СЃСЏ
+            ' С‚РѕРіРґР° РѕР±РЅРѕРІР»СЏРµРј РёСЃС‚РѕС‡РЅРёРє РґР°РЅРЅС‹С… РґР»СЏ РіСЂР°С„РёРєР°
             Set qdf = db.QueryDefs("ags_fnRRcListUtil_Ch")
             qdf.SQL = "select dateRslt, agent, cstapIpgPnN, ra_type, sender, costsType, " & _
                 "costsSumm, costsSummAccum, sortAgent, sortType, " & cstKey & "as cst from  ags.fnRRcListUtil(" & cstKey & ")"
@@ -119,7 +119,7 @@ NormalExit:
     Exit Sub
     
 ErrHandler:
-    MsgBox Err.Description & vbCrLf & "№ ошибки: " & Err.Number & vbCrLf & cstrTitle, vbExclamation, cstrTitle
+    MsgBox Err.Description & vbCrLf & "в„– РѕС€РёР±РєРё: " & Err.Number & vbCrLf & cstrTitle, vbExclamation, cstrTitle
     Resume NormalExit
 
 End Sub
@@ -129,7 +129,7 @@ On Error Resume Next
     WorksheetIsExist = (TypeOf xlW.Worksheets(WorkSheetName) Is Worksheet)
 End Function
 
-' отыскиваем на сервере ключи объектов и строковые величины для них
+' РѕС‚С‹СЃРєРёРІР°РµРј РЅР° СЃРµСЂРІРµСЂРµ РєР»СЋС‡Рё РѕР±СЉРµРєС‚РѕРІ Рё СЃС‚СЂРѕРєРѕРІС‹Рµ РІРµР»РёС‡РёРЅС‹ РґР»СЏ РЅРёС…
 Function FindOneKey(ByRef db As DAO.Database, ByVal StringFindSv As String, ByVal KeyFieldName As String, ByRef key As Integer, _
     Optional ByVal KeyFieldName2 As String = "Empty", Optional ByVal KeyFieldName3 As String = "Empty", _
     Optional ByRef key2 As Variant, Optional ByRef key3 As Variant, _
@@ -137,14 +137,14 @@ Function FindOneKey(ByRef db As DAO.Database, ByVal StringFindSv As String, ByVa
     Optional ByRef strValue As String = "Empty", Optional ByRef strValue2 As String = "Empty", Optional ByRef strValue3 As String = "Empty", _
     Optional dbKind As String = "msSql" _
     ) As Boolean
-    ' dbKind - указываем где искать. По умолчанию в msSql. Если любые другие строки - то в Access
+    ' dbKind - СѓРєР°Р·С‹РІР°РµРј РіРґРµ РёСЃРєР°С‚СЊ. РџРѕ СѓРјРѕР»С‡Р°РЅРёСЋ РІ msSql. Р•СЃР»Рё Р»СЋР±С‹Рµ РґСЂСѓРіРёРµ СЃС‚СЂРѕРєРё - С‚Рѕ РІ Access
     
-    ' может вернуть из одной строки запроса от одного до трёх ключей и от одного до трёх полей
+    ' РјРѕР¶РµС‚ РІРµСЂРЅСѓС‚СЊ РёР· РѕРґРЅРѕР№ СЃС‚СЂРѕРєРё Р·Р°РїСЂРѕСЃР° РѕС‚ РѕРґРЅРѕРіРѕ РґРѕ С‚СЂС‘С… РєР»СЋС‡РµР№ Рё РѕС‚ РѕРґРЅРѕРіРѕ РґРѕ С‚СЂС‘С… РїРѕР»РµР№
 
-    Dim qdFindSv As DAO.QueryDef, rsFindSv As DAO.Recordset ' для поиска в SQL сервере
+    Dim qdFindSv As DAO.QueryDef, rsFindSv As DAO.Recordset ' РґР»СЏ РїРѕРёСЃРєР° РІ SQL СЃРµСЂРІРµСЂРµ
 
     Const cstrTitle As String _
-        = "Процедура *Отыскиваем на сервере ключи объектов и строковые величины для них*"
+        = "РџСЂРѕС†РµРґСѓСЂР° *РћС‚С‹СЃРєРёРІР°РµРј РЅР° СЃРµСЂРІРµСЂРµ РєР»СЋС‡Рё РѕР±СЉРµРєС‚РѕРІ Рё СЃС‚СЂРѕРєРѕРІС‹Рµ РІРµР»РёС‡РёРЅС‹ РґР»СЏ РЅРёС…*"
         
     '**************************************************************************************************************************************
     
@@ -152,24 +152,24 @@ On Error GoTo ErrHandler
 
     FindOneKey = False
     
-    ' требуется искать в msSql?
+    ' С‚СЂРµР±СѓРµС‚СЃСЏ РёСЃРєР°С‚СЊ РІ msSql?
     If dbKind = "msSql" Then
-        ' да, требуется искать в msSql
+        ' РґР°, С‚СЂРµР±СѓРµС‚СЃСЏ РёСЃРєР°С‚СЊ РІ msSql
         Set qdFindSv = db.QueryDefs("ags_PdSdRRcList")
         qdFindSv.SQL = StringFindSv
         Set rsFindSv = qdFindSv.OpenRecordset(dbOpenSnapshot)
-        ' закрываем запрос
+        ' Р·Р°РєСЂС‹РІР°РµРј Р·Р°РїСЂРѕСЃ
         qdFindSv.Close: Set qdFindSv = Nothing
         Else
-        ' нет, не требуется искать в msSql
-        ' тогда ищем в Access
+        ' РЅРµС‚, РЅРµ С‚СЂРµР±СѓРµС‚СЃСЏ РёСЃРєР°С‚СЊ РІ msSql
+        ' С‚РѕРіРґР° РёС‰РµРј РІ Access
         Set rsFindSv = db.OpenRecordset(StringFindSv, dbOpenSnapshot)
     End If
 
     If rsFindSv.RecordCount = 1 Then
-        ' имеется ли значение ключевого поля?
+        ' РёРјРµРµС‚СЃСЏ Р»Рё Р·РЅР°С‡РµРЅРёРµ РєР»СЋС‡РµРІРѕРіРѕ РїРѕР»СЏ?
         If IsNull(rsFindSv.Fields(KeyFieldName).value) = False Then
-            ' да, значение ключевого поля имеется
+            ' РґР°, Р·РЅР°С‡РµРЅРёРµ РєР»СЋС‡РµРІРѕРіРѕ РїРѕР»СЏ РёРјРµРµС‚СЃСЏ
             key = rsFindSv.Fields(KeyFieldName).value
             If Not KeyFieldName2 = "Empty" And IsMissing(key2) = False Then
                 key2 = rsFindSv.Fields(KeyFieldName2).value
@@ -189,7 +189,7 @@ On Error GoTo ErrHandler
             FindOneKey = True
         End If
     End If
-    ' закрываем набор записей
+    ' Р·Р°РєСЂС‹РІР°РµРј РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№
     rsFindSv.Close: Set rsFindSv = Nothing:
 
 NormalExit:
@@ -197,23 +197,23 @@ NormalExit:
     
 ErrHandler:
     MsgBox Err.Description & vbCrLf & "Error number: " & Err.Number & vbCrLf & cstrTitle _
-        & " . Ищем: " & StringFindSv _
+        & " . РС‰РµРј: " & StringFindSv _
         , vbExclamation, cstrTitle
     Resume NormalExit
 
 End Function
 
-' отыскиваем стройку (объект САК) в базе данных. Имеется ли стройка в базе данных?
+' РѕС‚С‹СЃРєРёРІР°РµРј СЃС‚СЂРѕР№РєСѓ (РѕР±СЉРµРєС‚ РЎРђРљ) РІ Р±Р°Р·Рµ РґР°РЅРЅС‹С…. РРјРµРµС‚СЃСЏ Р»Рё СЃС‚СЂРѕР№РєР° РІ Р±Р°Р·Рµ РґР°РЅРЅС‹С…?
 Function FindCstAP(ByVal cstCodeStr As String, ByRef cstapKey As Long, _
     ByRef db As DAO.Database, Optional ByRef rstC_A_C As Variant) As Boolean
-    ' первичный ключ объекта стройка-агент-пункт *cstapKey* и набор записей, содержащий стройку *rstC_A_C* ВОЗВРАЩАЕМ
+    ' РїРµСЂРІРёС‡РЅС‹Р№ РєР»СЋС‡ РѕР±СЉРµРєС‚Р° СЃС‚СЂРѕР№РєР°-Р°РіРµРЅС‚-РїСѓРЅРєС‚ *cstapKey* Рё РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№, СЃРѕРґРµСЂР¶Р°С‰РёР№ СЃС‚СЂРѕР№РєСѓ *rstC_A_C* Р’РћР—Р’Р РђР©РђР•Рњ
     ' ByRef rstC_A_C As DAO.Recordset
     
     Dim qdString As String, rsCstAgPn As DAO.Recordset
-    Dim qdFindSv As DAO.QueryDef, StringFindSv As String, rsFindSv As DAO.Recordset ' для поиска в SQL сервере
+    Dim qdFindSv As DAO.QueryDef, StringFindSv As String, rsFindSv As DAO.Recordset ' РґР»СЏ РїРѕРёСЃРєР° РІ SQL СЃРµСЂРІРµСЂРµ
         
     Const cstrTitle As String _
-        = "Процедура *Отыскиваем стройку (объект САК) в базе данных*"
+        = "РџСЂРѕС†РµРґСѓСЂР° *РћС‚С‹СЃРєРёРІР°РµРј СЃС‚СЂРѕР№РєСѓ (РѕР±СЉРµРєС‚ РЎРђРљ) РІ Р±Р°Р·Рµ РґР°РЅРЅС‹С…*"
 
     '**************************************************************************************************************************************
     
@@ -221,32 +221,32 @@ On Error GoTo ErrHandler
         
         cstapKey = 0
         
-        ' пробуем отыскать стройку
+        ' РїСЂРѕР±СѓРµРј РѕС‚С‹СЃРєР°С‚СЊ СЃС‚СЂРѕР№РєСѓ
         Set qdFindSv = db.QueryDefs("ags_PdSdRRcList")
         StringFindSv = "select * from ags.cstAgPn where  cstapIpgPnN = '" & cstCodeStr & "'"
         qdFindSv.SQL = StringFindSv
         Set rsFindSv = qdFindSv.OpenRecordset()
-        ' имеется ли хотя бы одна запись стройки?
+        ' РёРјРµРµС‚СЃСЏ Р»Рё С…РѕС‚СЏ Р±С‹ РѕРґРЅР° Р·Р°РїРёСЃСЊ СЃС‚СЂРѕР№РєРё?
         If rsFindSv.RecordCount > 0 Then
-            ' да, хотя бы одна запись агента стройки
+            ' РґР°, С…РѕС‚СЏ Р±С‹ РѕРґРЅР° Р·Р°РїРёСЃСЊ Р°РіРµРЅС‚Р° СЃС‚СЂРѕР№РєРё
             rsFindSv.MoveFirst
             cstapKey = rsFindSv!cstapKey
             FindCstAP = True
             Else
-            ' нет, стройка в базе данных отсутствует
+            ' РЅРµС‚, СЃС‚СЂРѕР№РєР° РІ Р±Р°Р·Рµ РґР°РЅРЅС‹С… РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚
             FindCstAP = False
         End If
             
-        ' нужен ли вызывающему функцию коду рекордсет со стройкой?
+        ' РЅСѓР¶РµРЅ Р»Рё РІС‹Р·С‹РІР°СЋС‰РµРјСѓ С„СѓРЅРєС†РёСЋ РєРѕРґСѓ СЂРµРєРѕСЂРґСЃРµС‚ СЃРѕ СЃС‚СЂРѕР№РєРѕР№?
         If IsMissing(rstC_A_C) = False Then
-            ' да, вызывающему функцию коду рекордсет со стройкой нужен
+            ' РґР°, РІС‹Р·С‹РІР°СЋС‰РµРјСѓ С„СѓРЅРєС†РёСЋ РєРѕРґСѓ СЂРµРєРѕСЂРґСЃРµС‚ СЃРѕ СЃС‚СЂРѕР№РєРѕР№ РЅСѓР¶РµРЅ
             Set rstC_A_C = rsFindSv
             Else
-            ' нет, вызывающему функцию коду рекордсет со стройкой не нужен
+            ' РЅРµС‚, РІС‹Р·С‹РІР°СЋС‰РµРјСѓ С„СѓРЅРєС†РёСЋ РєРѕРґСѓ СЂРµРєРѕСЂРґСЃРµС‚ СЃРѕ СЃС‚СЂРѕР№РєРѕР№ РЅРµ РЅСѓР¶РµРЅ
             rsFindSv.Close: Set rsFindSv = Nothing
         End If
         
-        ' закрываем всё, что было нужно для поиска стройку
+        ' Р·Р°РєСЂС‹РІР°РµРј РІСЃС‘, С‡С‚Рѕ Р±С‹Р»Рѕ РЅСѓР¶РЅРѕ РґР»СЏ РїРѕРёСЃРєР° СЃС‚СЂРѕР№РєСѓ
         qdFindSv.Close: Set qdFindSv = Nothing
             
 NormalExit:
@@ -262,11 +262,11 @@ Function UserNameWindows() As String
     UserNameWindows = Environ("USERNAME")
 End Function
 
-' используем запросы к серверу
+' РёСЃРїРѕР»СЊР·СѓРµРј Р·Р°РїСЂРѕСЃС‹ Рє СЃРµСЂРІРµСЂСѓ
 Sub PassThroughQuery(ByRef db As DAO.Database, ByVal strSql As String, Optional rs As Variant)
 
     Const cstrTitle As String _
-        = "Процедура *Используем запросы к серверу*"
+        = "РџСЂРѕС†РµРґСѓСЂР° *РСЃРїРѕР»СЊР·СѓРµРј Р·Р°РїСЂРѕСЃС‹ Рє СЃРµСЂРІРµСЂСѓ*"
 
     '**************************************************************************************************************************************
     
@@ -275,12 +275,12 @@ On Error GoTo ErrHandler
     Set qd = db.CreateQueryDef("", strSql)
     qd.Connect = "ODBC;DSN=FishEye;UID=" & UserNameWindows() & ";Trusted_Connection=Yes;DATABASE=FishEye;"
     
-    ' необходимо вернуть набор записей?
+    ' РЅРµРѕР±С…РѕРґРёРјРѕ РІРµСЂРЅСѓС‚СЊ РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№?
     If IsMissing(rs) = False Then
-        ' да, вернуть набор записей необходимо
+        ' РґР°, РІРµСЂРЅСѓС‚СЊ РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РЅРµРѕР±С…РѕРґРёРјРѕ
         Set rs = db.OpenRecordset(dbOpenSnapshot)
         Else
-        ' нет, возвращать набор записей не нужно
+        ' РЅРµС‚, РІРѕР·РІСЂР°С‰Р°С‚СЊ РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РЅРµ РЅСѓР¶РЅРѕ
         qd.ReturnsRecords = False
         qd.Execute dbFailOnError
     End If
@@ -393,7 +393,7 @@ Err_Handler:
     Resume Exit_Handler
 End Function
 
-' очищаем строку
+' РѕС‡РёС‰Р°РµРј СЃС‚СЂРѕРєСѓ
 Public Function StringClean(ByVal Text As String) As String
 
     Dim strTemp As String
@@ -401,14 +401,14 @@ Public Function StringClean(ByVal Text As String) As String
     If Text = "" Then
         StringClean = ""
     Else
-        ' очистим строку
+        ' РѕС‡РёСЃС‚РёРј СЃС‚СЂРѕРєСѓ
         strTemp = Replace(Text, vbCr, " ")
         strTemp = Replace(strTemp, vbLf, " ")
         strTemp = Replace(strTemp, vbTab, " ")
         strTemp = Replace(strTemp, vbVerticalTab, " ")
         strTemp = Replace(strTemp, vbBack, " ")
         strTemp = Replace(strTemp, vbNullChar, " ")
-        ' здесь заменяем неразрывный пробел на обычный пробел
+        ' Р·РґРµСЃСЊ Р·Р°РјРµРЅСЏРµРј РЅРµСЂР°Р·СЂС‹РІРЅС‹Р№ РїСЂРѕР±РµР» РЅР° РѕР±С‹С‡РЅС‹Р№ РїСЂРѕР±РµР»
         strTemp = Replace(strTemp, ChrW(&HA0), " ")
         While InStr(strTemp, "  ") > 0
             strTemp = Replace(strTemp, "  ", " ")
@@ -423,7 +423,7 @@ Public Function StringClean(ByVal Text As String) As String
 End Function
 
 
-' конвертируем дату в строку для вставки в строку запроса Target = 'sql'
+' РєРѕРЅРІРµСЂС‚РёСЂСѓРµРј РґР°С‚Сѓ РІ СЃС‚СЂРѕРєСѓ РґР»СЏ РІСЃС‚Р°РІРєРё РІ СЃС‚СЂРѕРєСѓ Р·Р°РїСЂРѕСЃР° Target = 'sql'
 Public Function DateConvertToQuery(ByVal DateToConv As Date, Optional ByVal Target As String = "access") As String
 
     Select Case Target
@@ -435,11 +435,11 @@ Public Function DateConvertToQuery(ByVal DateToConv As Date, Optional ByVal Targ
 
 End Function
 
-' Пребразование строки к дате
+' РџСЂРµР±СЂР°Р·РѕРІР°РЅРёРµ СЃС‚СЂРѕРєРё Рє РґР°С‚Рµ
 Public Function StrToDate(str_date As String) As Date
     Dim str_date_10 As String
     
-    Const cstrTitle As String = "Функция *Пребразование строки к дате*"
+    Const cstrTitle As String = "Р¤СѓРЅРєС†РёСЏ *РџСЂРµР±СЂР°Р·РѕРІР°РЅРёРµ СЃС‚СЂРѕРєРё Рє РґР°С‚Рµ*"
     
 On Error GoTo ErrHandler
     
@@ -468,10 +468,10 @@ ErrHandler:
     
 End Function
 
-' получаем номер изменения из строки. 12.07.2022 ****************************************************************************************************
+' РїРѕР»СѓС‡Р°РµРј РЅРѕРјРµСЂ РёР·РјРµРЅРµРЅРёСЏ РёР· СЃС‚СЂРѕРєРё. 12.07.2022 ****************************************************************************************************
 Public Function RcStringNum(ByVal strValue As String) As Variant
 
-    Dim StrArray() As String ' массив для найденных слов
+    Dim StrArray() As String ' РјР°СЃСЃРёРІ РґР»СЏ РЅР°Р№РґРµРЅРЅС‹С… СЃР»РѕРІ
     Dim li As Integer, ssss As String, iii As Integer, stSm As String
     Dim Rddd As Date, RdddV As Variant, RdddS As String, Rnum As String, isChange As Boolean, ChNum As Integer, stst As String
     
@@ -481,26 +481,26 @@ Public Function RcStringNum(ByVal strValue As String) As Variant
     Dim nummStr As String
 
     Const cstrTitle As String _
-        = "Module1. Функция *Получаем номер изменения из строки*"
+        = "Module1. Р¤СѓРЅРєС†РёСЏ *РџРѕР»СѓС‡Р°РµРј РЅРѕРјРµСЂ РёР·РјРµРЅРµРЅРёСЏ РёР· СЃС‚СЂРѕРєРё*"
         
     '------------------------------------------------------------------------------------------------------------------------------------------------
 
 On Error GoTo ErrHandler
 
-    ' для начала пометим, что это не изменение, что номер его 0, номера отчёта нет, даты отчёта нет
-    isChange = False: ChNum = 0: Rnum = "Нет номера отчёта" ': Rddd = Null
+    ' РґР»СЏ РЅР°С‡Р°Р»Р° РїРѕРјРµС‚РёРј, С‡С‚Рѕ СЌС‚Рѕ РЅРµ РёР·РјРµРЅРµРЅРёРµ, С‡С‚Рѕ РЅРѕРјРµСЂ РµРіРѕ 0, РЅРѕРјРµСЂР° РѕС‚С‡С‘С‚Р° РЅРµС‚, РґР°С‚С‹ РѕС‚С‡С‘С‚Р° РЅРµС‚
+    isChange = False: ChNum = 0: Rnum = "РќРµС‚ РЅРѕРјРµСЂР° РѕС‚С‡С‘С‚Р°" ': Rddd = Null
     
-    ' попробуем найти номер изменения сразу
+    ' РїРѕРїСЂРѕР±СѓРµРј РЅР°Р№С‚Рё РЅРѕРјРµСЂ РёР·РјРµРЅРµРЅРёСЏ СЃСЂР°Р·Сѓ
     Set RegExp = CreateObject("VBScript.RegExp")
-    ' определяем шаблон регулярного выражения
-    strReg = "(Изм|изм|Изменение|изменение)(\.| \.)*(№| №)*( )*([0-9]{1,3})"
-    ' присваиваем шаблон регулярного выражения
+    ' РѕРїСЂРµРґРµР»СЏРµРј С€Р°Р±Р»РѕРЅ СЂРµРіСѓР»СЏСЂРЅРѕРіРѕ РІС‹СЂР°Р¶РµРЅРёСЏ
+    strReg = "(РР·Рј|РёР·Рј|РР·РјРµРЅРµРЅРёРµ|РёР·РјРµРЅРµРЅРёРµ)(\.| \.)*(в„–| в„–)*( )*([0-9]{1,3})"
+    ' РїСЂРёСЃРІР°РёРІР°РµРј С€Р°Р±Р»РѕРЅ СЂРµРіСѓР»СЏСЂРЅРѕРіРѕ РІС‹СЂР°Р¶РµРЅРёСЏ
     RegExp.Pattern = strReg
-    ' устанавливаем вместо поиска всех совпадений в строке поиск первого совпадения
+    ' СѓСЃС‚Р°РЅР°РІР»РёРІР°РµРј РІРјРµСЃС‚Рѕ РїРѕРёСЃРєР° РІСЃРµС… СЃРѕРІРїР°РґРµРЅРёР№ РІ СЃС‚СЂРѕРєРµ РїРѕРёСЃРє РїРµСЂРІРѕРіРѕ СЃРѕРІРїР°РґРµРЅРёСЏ
     RegExp.Global = False
     Set Match = RegExp.Execute(StringClean(strValue))
     If Match.count > 0 Then
-        ' ищем номер
+        ' РёС‰РµРј РЅРѕРјРµСЂ
         nummStr = StringClean(Match(0).value)
         
         Set RegExpD = CreateObject("VBScript.RegExp")
@@ -516,10 +516,10 @@ On Error GoTo ErrHandler
         
     End If
     
-    ' разобьём строку на отдельные слова, сначала почистив
+    ' СЂР°Р·РѕР±СЊС‘Рј СЃС‚СЂРѕРєСѓ РЅР° РѕС‚РґРµР»СЊРЅС‹Рµ СЃР»РѕРІР°, СЃРЅР°С‡Р°Р»Р° РїРѕС‡РёСЃС‚РёРІ
     StrArray() = Split(StringClean(strValue))
     
-    ' пройдём по всем словам
+    ' РїСЂРѕР№РґС‘Рј РїРѕ РІСЃРµРј СЃР»РѕРІР°Рј
     ssss = "": iii = 1
     For li = LBound(StrArray) To UBound(StrArray)
         If iii = 1 Then
@@ -528,14 +528,14 @@ On Error GoTo ErrHandler
             ssss = ssss & ", " & iii & ". " & StrArray(li)
         End If
         
-        ' проверяем, что это изменение
-        If StrArray(li) Like "*Изм*" Then
+        ' РїСЂРѕРІРµСЂСЏРµРј, С‡С‚Рѕ СЌС‚Рѕ РёР·РјРµРЅРµРЅРёРµ
+        If StrArray(li) Like "*РР·Рј*" Then
             isChange = True
-            ssss = ssss & ", это действительно изм."
+            ssss = ssss & ", СЌС‚Рѕ РґРµР№СЃС‚РІРёС‚РµР»СЊРЅРѕ РёР·Рј."
         End If
 
-        ' пробуем перевести в номер изменения
-        If Left(StrArray(li), 1) = "№" And Len(StrArray(li)) > 1 Then
+        ' РїСЂРѕР±СѓРµРј РїРµСЂРµРІРµСЃС‚Рё РІ РЅРѕРјРµСЂ РёР·РјРµРЅРµРЅРёСЏ
+        If Left(StrArray(li), 1) = "в„–" And Len(StrArray(li)) > 1 Then
             stst = Right(StrArray(li), Len(StrArray(li)) - 1)
             Else
             stst = StrArray(li)
@@ -544,47 +544,47 @@ On Error GoTo ErrHandler
         If IsNumeric(stst) Then
             If ChNum = 0 Then
                 ChNum = CInt(stst)
-                ssss = ssss & ", это номер изм."
+                ssss = ssss & ", СЌС‚Рѕ РЅРѕРјРµСЂ РёР·Рј."
                 Else
-                ssss = ssss & ", это ВТОРОЙ номер изм.? Плохо. Оставим номером первый."
+                ssss = ssss & ", СЌС‚Рѕ Р’РўРћР РћР™ РЅРѕРјРµСЂ РёР·Рј.? РџР»РѕС…Рѕ. РћСЃС‚Р°РІРёРј РЅРѕРјРµСЂРѕРј РїРµСЂРІС‹Р№."
             End If
         End If
         
-        ' отыскиваем номер отчёта
+        ' РѕС‚С‹СЃРєРёРІР°РµРј РЅРѕРјРµСЂ РѕС‚С‡С‘С‚Р°
         If StrArray(li) Like "*-???????-*" Then
-            If Left(StrArray(li), 1) = "№" Then
+            If Left(StrArray(li), 1) = "в„–" Then
                 Rnum = Right(StrArray(li), Len(StrArray(li)) - 1)
                 Else
                 Rnum = StrArray(li)
             End If
-            ssss = ssss & ", № отч."
+            ssss = ssss & ", в„– РѕС‚С‡."
         End If
         
         iii = iii + 1
     Next li
     
-    ' отыскиваем самую раннюю дату как дату отчёта
+    ' РѕС‚С‹СЃРєРёРІР°РµРј СЃР°РјСѓСЋ СЂР°РЅРЅСЋСЋ РґР°С‚Сѓ РєР°Рє РґР°С‚Сѓ РѕС‚С‡С‘С‚Р°
     RdddV = ParseDate(RTrim(LTrim(strValue)), True, RdddS)
     If IsNull(RdddV) = False Then
         Rddd = RdddV
-        ssss = ssss & ", " & Rddd & " - дата отч."
+        ssss = ssss & ", " & Rddd & " - РґР°С‚Р° РѕС‚С‡."
         Else
-        ssss = ssss & ", <font color=""DarkRed"">дата отч. не найдена, " & RdddS & "</font>"
+        ssss = ssss & ", <font color=""DarkRed"">РґР°С‚Р° РѕС‚С‡. РЅРµ РЅР°Р№РґРµРЅР°, " & RdddS & "</font>"
     End If
     
-    ' посмотрим, что у нас вышло после анализа отдельных слов
-    ' вообще это изменение?
+    ' РїРѕСЃРјРѕС‚СЂРёРј, С‡С‚Рѕ Сѓ РЅР°СЃ РІС‹С€Р»Рѕ РїРѕСЃР»Рµ Р°РЅР°Р»РёР·Р° РѕС‚РґРµР»СЊРЅС‹С… СЃР»РѕРІ
+    ' РІРѕРѕР±С‰Рµ СЌС‚Рѕ РёР·РјРµРЅРµРЅРёРµ?
     If isChange Then
-        ' да, это изменение
-        ' имеется ли номер изменения?
+        ' РґР°, СЌС‚Рѕ РёР·РјРµРЅРµРЅРёРµ
+        ' РёРјРµРµС‚СЃСЏ Р»Рё РЅРѕРјРµСЂ РёР·РјРµРЅРµРЅРёСЏ?
         If ChNum > 0 Then
             RcStringNum = ChNum
         Else
-            ' нет, номер изменения отсутствует
+            ' РЅРµС‚, РЅРѕРјРµСЂ РёР·РјРµРЅРµРЅРёСЏ РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚
             RcStringNum = Null
         End If
     Else
-        ' нет, это не изменение
+        ' РЅРµС‚, СЌС‚Рѕ РЅРµ РёР·РјРµРЅРµРЅРёРµ
         RcStringNum = Null
     End If
 
@@ -598,47 +598,47 @@ ErrHandler:
     Resume NormalExit
 
 End Function
-' получаем номер изменения из строки. 12.07.2022. Окончание *****************************************************************************************
+' РїРѕР»СѓС‡Р°РµРј РЅРѕРјРµСЂ РёР·РјРµРЅРµРЅРёСЏ РёР· СЃС‚СЂРѕРєРё. 12.07.2022. РћРєРѕРЅС‡Р°РЅРёРµ *****************************************************************************************
 
-' получаем дату из строки, Start - давать самую раннюю дату, иначе - самую позднюю
-' CountDates - показывает сколько дат в строке
+' РїРѕР»СѓС‡Р°РµРј РґР°С‚Сѓ РёР· СЃС‚СЂРѕРєРё, Start - РґР°РІР°С‚СЊ СЃР°РјСѓСЋ СЂР°РЅРЅСЋСЋ РґР°С‚Сѓ, РёРЅР°С‡Рµ - СЃР°РјСѓСЋ РїРѕР·РґРЅСЋСЋ
+' CountDates - РїРѕРєР°Р·С‹РІР°РµС‚ СЃРєРѕР»СЊРєРѕ РґР°С‚ РІ СЃС‚СЂРѕРєРµ
 Function ParseDate(ByVal Text As String, Start As Boolean, _
     Optional ByRef ErrDescr As String, Optional ByRef CountDates As Integer) As Variant
 
-    ' для разных дат
+    ' РґР»СЏ СЂР°Р·РЅС‹С… РґР°С‚
     Dim Match As Object, RegExp As Object, d As Date, di As Date, strReg As String, strTemp As String
     
     Const cstrTitle As String _
-        = "Процедура *Получаем дату из строки*"
+        = "РџСЂРѕС†РµРґСѓСЂР° *РџРѕР»СѓС‡Р°РµРј РґР°С‚Сѓ РёР· СЃС‚СЂРѕРєРё*"
     '------------------------------------------------------------------------------------------------------------------------------------------------
 On Error GoTo ErrHandler
 
-    ' для начала установим возвращаемую величину в Null
+    ' РґР»СЏ РЅР°С‡Р°Р»Р° СѓСЃС‚Р°РЅРѕРІРёРј РІРѕР·РІСЂР°С‰Р°РµРјСѓСЋ РІРµР»РёС‡РёРЅСѓ РІ Null
     ParseDate = Null: ErrDescr = "": CountDates = 0
     
-    ' очистим строку
+    ' РѕС‡РёСЃС‚РёРј СЃС‚СЂРѕРєСѓ
     strTemp = StringClean(Text)
     
-    ' ищем разные даты
+    ' РёС‰РµРј СЂР°Р·РЅС‹Рµ РґР°С‚С‹
     Set RegExp = CreateObject("VBScript.RegExp")
-    ' определяем шаблон регулярного выражения
+    ' РѕРїСЂРµРґРµР»СЏРµРј С€Р°Р±Р»РѕРЅ СЂРµРіСѓР»СЏСЂРЅРѕРіРѕ РІС‹СЂР°Р¶РµРЅРёСЏ
     RealQ = Chr(34)
     strReg = "((\d{2}\.\d{2}\.(\d{2}(\D|$)|\d{4}))" & _
         "|(\d{2}|" & RealQ & "\d{2}" & RealQ & ") " & _
-        "((я|Я)нваря|(ф|Ф)евраля|(м|М)арта|(а|А)преля|(м|М)ая|(и|И)юня|(и|И)юля|(а|А)вгуста|(с|С)ентября|(о|О)ктября|(н|Н)оября|(д|Д)екабря) \d{4})"
-    ' присваиваем шаблон регулярного выражения
+        "((СЏ|РЇ)РЅРІР°СЂСЏ|(С„|Р¤)РµРІСЂР°Р»СЏ|(Рј|Рњ)Р°СЂС‚Р°|(Р°|Рђ)РїСЂРµР»СЏ|(Рј|Рњ)Р°СЏ|(Рё|Р)СЋРЅСЏ|(Рё|Р)СЋР»СЏ|(Р°|Рђ)РІРіСѓСЃС‚Р°|(СЃ|РЎ)РµРЅС‚СЏР±СЂСЏ|(Рѕ|Рћ)РєС‚СЏР±СЂСЏ|(РЅ|Рќ)РѕСЏР±СЂСЏ|(Рґ|Р”)РµРєР°Р±СЂСЏ) \d{4})"
+    ' РїСЂРёСЃРІР°РёРІР°РµРј С€Р°Р±Р»РѕРЅ СЂРµРіСѓР»СЏСЂРЅРѕРіРѕ РІС‹СЂР°Р¶РµРЅРёСЏ
     RegExp.Pattern = strReg
-    ' устанавливаем поиск всех совпадений в строке вместо поиска первого совпадения
+    ' СѓСЃС‚Р°РЅР°РІР»РёРІР°РµРј РїРѕРёСЃРє РІСЃРµС… СЃРѕРІРїР°РґРµРЅРёР№ РІ СЃС‚СЂРѕРєРµ РІРјРµСЃС‚Рѕ РїРѕРёСЃРєР° РїРµСЂРІРѕРіРѕ СЃРѕРІРїР°РґРµРЅРёСЏ
     RegExp.Global = True
     Set Match = RegExp.Execute(strTemp)
     If Match.count > 0 Then
         CountDates = Match.count
         If Start Then
-            ' самая ранняя
+            ' СЃР°РјР°СЏ СЂР°РЅРЅСЏСЏ
             For i = 0 To Match.count - 1
-                ' убираем кавычки, если они есть
+                ' СѓР±РёСЂР°РµРј РєР°РІС‹С‡РєРё, РµСЃР»Рё РѕРЅРё РµСЃС‚СЊ
                 strTemp = Replace(Match(i).value, RealQ, "")
-                ' дата вида 02.02.20 будет иметь на хвосте лишний знак. Ну пробел, конец строки, запятую или ещё чего. Нужно убрать
+                ' РґР°С‚Р° РІРёРґР° 02.02.20 Р±СѓРґРµС‚ РёРјРµС‚СЊ РЅР° С…РІРѕСЃС‚Рµ Р»РёС€РЅРёР№ Р·РЅР°Рє. РќСѓ РїСЂРѕР±РµР», РєРѕРЅРµС† СЃС‚СЂРѕРєРё, Р·Р°РїСЏС‚СѓСЋ РёР»Рё РµС‰С‘ С‡РµРіРѕ. РќСѓР¶РЅРѕ СѓР±СЂР°С‚СЊ
                 If Len(strTemp) = 9 Then
                     strTemp = Left(strTemp, 8)
                 End If
@@ -648,11 +648,11 @@ On Error GoTo ErrHandler
                 End If
             Next
             Else
-            'самая поздняя
+            'СЃР°РјР°СЏ РїРѕР·РґРЅСЏСЏ
             For i = 0 To Match.count - 1
-                ' убираем кавычки, если они есть
+                ' СѓР±РёСЂР°РµРј РєР°РІС‹С‡РєРё, РµСЃР»Рё РѕРЅРё РµСЃС‚СЊ
                 strTemp = Replace(Match(i).value, RealQ, "")
-                ' дата вида 02.02.20 будет иметь на хвосте лишний знак. Ну пробел, конец строки, запятую или ещё чего. Нужно убрать
+                ' РґР°С‚Р° РІРёРґР° 02.02.20 Р±СѓРґРµС‚ РёРјРµС‚СЊ РЅР° С…РІРѕСЃС‚Рµ Р»РёС€РЅРёР№ Р·РЅР°Рє. РќСѓ РїСЂРѕР±РµР», РєРѕРЅРµС† СЃС‚СЂРѕРєРё, Р·Р°РїСЏС‚СѓСЋ РёР»Рё РµС‰С‘ С‡РµРіРѕ. РќСѓР¶РЅРѕ СѓР±СЂР°С‚СЊ
                 If Len(strTemp) = 9 Then
                     strTemp = Left(strTemp, 8)
                 End If
@@ -664,7 +664,7 @@ On Error GoTo ErrHandler
         End If
     End If
     
-    'ну и возвращаем величину
+    'РЅСѓ Рё РІРѕР·РІСЂР°С‰Р°РµРј РІРµР»РёС‡РёРЅСѓ
     If d > 0 Then
         ParseDate = d
     End If
@@ -673,16 +673,16 @@ NormalExit:
     Exit Function
     
 ErrHandler:
-    ErrDescr = strTemp & ", " & "№ ошибки: " & Err.Number & ", " & Err.Description
-    'MsgBox Err.Description & vbCrLf & "№ ошибки: " & Err.Number & vbCrLf & cstrTitle, vbExclamation, cstrTitle
+    ErrDescr = strTemp & ", " & "в„– РѕС€РёР±РєРё: " & Err.Number & ", " & Err.Description
+    'MsgBox Err.Description & vbCrLf & "в„– РѕС€РёР±РєРё: " & Err.Number & vbCrLf & cstrTitle, vbExclamation, cstrTitle
     Resume NormalExit
     
 End Function
 
-' получаем номер отчёта агента изменения из строки. 13.07.2022 **************************************************************************************
+' РїРѕР»СѓС‡Р°РµРј РЅРѕРјРµСЂ РѕС‚С‡С‘С‚Р° Р°РіРµРЅС‚Р° РёР·РјРµРЅРµРЅРёСЏ РёР· СЃС‚СЂРѕРєРё. 13.07.2022 **************************************************************************************
 Public Function RcStringRaNum(ByVal strValue As String) As Variant
 
-    Dim StrArray() As String ' массив для найденных слов
+    Dim StrArray() As String ' РјР°СЃСЃРёРІ РґР»СЏ РЅР°Р№РґРµРЅРЅС‹С… СЃР»РѕРІ
     Dim li As Integer, ssss As String, iii As Integer, stSm As String
     Dim Rddd As Date, RdddV As Variant, RdddS As String, Rnum As String, isChange As Boolean, ChNum As Integer, stst As String
     
@@ -692,19 +692,19 @@ Public Function RcStringRaNum(ByVal strValue As String) As Variant
     Dim nummStr As String
 
     Const cstrTitle As String _
-        = "Module1. Функция *Получаем номер отчёта агента изменения из строки*"
+        = "Module1. Р¤СѓРЅРєС†РёСЏ *РџРѕР»СѓС‡Р°РµРј РЅРѕРјРµСЂ РѕС‚С‡С‘С‚Р° Р°РіРµРЅС‚Р° РёР·РјРµРЅРµРЅРёСЏ РёР· СЃС‚СЂРѕРєРё*"
         
     '------------------------------------------------------------------------------------------------------------------------------------------------
 
 On Error GoTo ErrHandler
 
-    ' для начала пометим, что это не изменение, что номер его 0, номера отчёта нет, даты отчёта нет
-    isChange = False: ChNum = 0: Rnum = "Нет номера отчёта" ': Rddd = Null
+    ' РґР»СЏ РЅР°С‡Р°Р»Р° РїРѕРјРµС‚РёРј, С‡С‚Рѕ СЌС‚Рѕ РЅРµ РёР·РјРµРЅРµРЅРёРµ, С‡С‚Рѕ РЅРѕРјРµСЂ РµРіРѕ 0, РЅРѕРјРµСЂР° РѕС‚С‡С‘С‚Р° РЅРµС‚, РґР°С‚С‹ РѕС‚С‡С‘С‚Р° РЅРµС‚
+    isChange = False: ChNum = 0: Rnum = "РќРµС‚ РЅРѕРјРµСЂР° РѕС‚С‡С‘С‚Р°" ': Rddd = Null
     
-    ' разобьём строку на отдельные слова, сначала почистив
+    ' СЂР°Р·РѕР±СЊС‘Рј СЃС‚СЂРѕРєСѓ РЅР° РѕС‚РґРµР»СЊРЅС‹Рµ СЃР»РѕРІР°, СЃРЅР°С‡Р°Р»Р° РїРѕС‡РёСЃС‚РёРІ
     StrArray() = Split(StringClean(strValue))
     
-    ' пройдём по всем словам
+    ' РїСЂРѕР№РґС‘Рј РїРѕ РІСЃРµРј СЃР»РѕРІР°Рј
     ssss = "": iii = 1
     For li = LBound(StrArray) To UBound(StrArray)
         If iii = 1 Then
@@ -713,40 +713,40 @@ On Error GoTo ErrHandler
             ssss = ssss & ", " & iii & ". " & StrArray(li)
         End If
         
-        ' проверяем, что это изменение
-        If StrArray(li) Like "*Изм*" Then
+        ' РїСЂРѕРІРµСЂСЏРµРј, С‡С‚Рѕ СЌС‚Рѕ РёР·РјРµРЅРµРЅРёРµ
+        If StrArray(li) Like "*РР·Рј*" Then
             isChange = True
-            ssss = ssss & ", это действительно изм."
+            ssss = ssss & ", СЌС‚Рѕ РґРµР№СЃС‚РІРёС‚РµР»СЊРЅРѕ РёР·Рј."
         End If
 
-        ' отыскиваем номер отчёта
-        ' вот здесь 17.04.2025 стали попадаться номера всего лишь с одним дефисом...
-        ' If StrArray(li) Like "*-???????-*" Then - так было до 17.04.2025
-        If StrArray(li) Like "*-*" Then ' так с 17.04.2025
-            If Left(StrArray(li), 1) = "№" Then
+        ' РѕС‚С‹СЃРєРёРІР°РµРј РЅРѕРјРµСЂ РѕС‚С‡С‘С‚Р°
+        ' РІРѕС‚ Р·РґРµСЃСЊ 17.04.2025 СЃС‚Р°Р»Рё РїРѕРїР°РґР°С‚СЊСЃСЏ РЅРѕРјРµСЂР° РІСЃРµРіРѕ Р»РёС€СЊ СЃ РѕРґРЅРёРј РґРµС„РёСЃРѕРј...
+        ' If StrArray(li) Like "*-???????-*" Then - С‚Р°Рє Р±С‹Р»Рѕ РґРѕ 17.04.2025
+        If StrArray(li) Like "*-*" Then ' С‚Р°Рє СЃ 17.04.2025
+            If Left(StrArray(li), 1) = "в„–" Then
                 Rnum = Right(StrArray(li), Len(StrArray(li)) - 1)
                 Else
                 Rnum = StrArray(li)
             End If
-            ssss = ssss & ", № отч."
+            ssss = ssss & ", в„– РѕС‚С‡."
         End If
         
         iii = iii + 1
     Next li
     
-    ' посмотрим, что у нас вышло после анализа отдельных слов
-    ' вообще это изменение?
+    ' РїРѕСЃРјРѕС‚СЂРёРј, С‡С‚Рѕ Сѓ РЅР°СЃ РІС‹С€Р»Рѕ РїРѕСЃР»Рµ Р°РЅР°Р»РёР·Р° РѕС‚РґРµР»СЊРЅС‹С… СЃР»РѕРІ
+    ' РІРѕРѕР±С‰Рµ СЌС‚Рѕ РёР·РјРµРЅРµРЅРёРµ?
     If isChange Then
-        ' да, это изменение
-        ' найден номер отчёта?
-        If Rnum <> "Нет номера отчёта" Then
+        ' РґР°, СЌС‚Рѕ РёР·РјРµРЅРµРЅРёРµ
+        ' РЅР°Р№РґРµРЅ РЅРѕРјРµСЂ РѕС‚С‡С‘С‚Р°?
+        If Rnum <> "РќРµС‚ РЅРѕРјРµСЂР° РѕС‚С‡С‘С‚Р°" Then
             RcStringRaNum = Rnum
         Else
-            ' нет, номер отчёта отсутствует
+            ' РЅРµС‚, РЅРѕРјРµСЂ РѕС‚С‡С‘С‚Р° РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚
             RcStringRaNum = Null
         End If
     Else
-        ' нет, это не изменение
+        ' РЅРµС‚, СЌС‚Рѕ РЅРµ РёР·РјРµРЅРµРЅРёРµ
         RcStringRaNum = Null
     End If
 
@@ -760,9 +760,9 @@ ErrHandler:
     Resume NormalExit
 
 End Function
-' получаем номер отчёта агента изменения из строки. 13.07.2022. Окончание ***************************************************************************
+' РїРѕР»СѓС‡Р°РµРј РЅРѕРјРµСЂ РѕС‚С‡С‘С‚Р° Р°РіРµРЅС‚Р° РёР·РјРµРЅРµРЅРёСЏ РёР· СЃС‚СЂРѕРєРё. 13.07.2022. РћРєРѕРЅС‡Р°РЅРёРµ ***************************************************************************
 
-' получаем дату окончания отчётного периода по дате. 07.12.2023 *************************************************************************************
+' РїРѕР»СѓС‡Р°РµРј РґР°С‚Сѓ РѕРєРѕРЅС‡Р°РЅРёСЏ РѕС‚С‡С‘С‚РЅРѕРіРѕ РїРµСЂРёРѕРґР° РїРѕ РґР°С‚Рµ. 07.12.2023 *************************************************************************************
 Public Function PeriodDateOfDate(ByVal ofDate As Variant) As Variant
 
 Dim dateResult As Date, dateMonthPlus As Date
@@ -781,31 +781,31 @@ Else
 End If
 
 End Function
-' получаем номер отчёта агента изменения из строки. 13.07.2022. Окончание ***************************************************************************
+' РїРѕР»СѓС‡Р°РµРј РЅРѕРјРµСЂ РѕС‚С‡С‘С‚Р° Р°РіРµРЅС‚Р° РёР·РјРµРЅРµРЅРёСЏ РёР· СЃС‚СЂРѕРєРё. 13.07.2022. РћРєРѕРЅС‡Р°РЅРёРµ ***************************************************************************
 
-' получаем дату отчёта агента для изменения из строки. 13.07.2022 ***********************************************************************************
+' РїРѕР»СѓС‡Р°РµРј РґР°С‚Сѓ РѕС‚С‡С‘С‚Р° Р°РіРµРЅС‚Р° РґР»СЏ РёР·РјРµРЅРµРЅРёСЏ РёР· СЃС‚СЂРѕРєРё. 13.07.2022 ***********************************************************************************
 Public Function RcStringRaDate(ByVal strValue As String) As Variant
 
-    Dim StrArray() As String ' массив для найденных слов
+    Dim StrArray() As String ' РјР°СЃСЃРёРІ РґР»СЏ РЅР°Р№РґРµРЅРЅС‹С… СЃР»РѕРІ
     Dim li As Integer, ssss As String, iii As Integer, stSm As String
     Dim Rddd As Date, RdddV As Variant, RdddS As String, isChange As Boolean, stst As String
     
     Dim nummStr As String
 
     Const cstrTitle As String _
-        = "Module1. Функция *Получаем дату отчёта агента для изменения из строки*"
+        = "Module1. Р¤СѓРЅРєС†РёСЏ *РџРѕР»СѓС‡Р°РµРј РґР°С‚Сѓ РѕС‚С‡С‘С‚Р° Р°РіРµРЅС‚Р° РґР»СЏ РёР·РјРµРЅРµРЅРёСЏ РёР· СЃС‚СЂРѕРєРё*"
         
     '------------------------------------------------------------------------------------------------------------------------------------------------
 
 On Error GoTo ErrHandler
 
-    ' для начала пометим, что это не изменение, что номер его 0, номера отчёта нет, даты отчёта нет
+    ' РґР»СЏ РЅР°С‡Р°Р»Р° РїРѕРјРµС‚РёРј, С‡С‚Рѕ СЌС‚Рѕ РЅРµ РёР·РјРµРЅРµРЅРёРµ, С‡С‚Рѕ РЅРѕРјРµСЂ РµРіРѕ 0, РЅРѕРјРµСЂР° РѕС‚С‡С‘С‚Р° РЅРµС‚, РґР°С‚С‹ РѕС‚С‡С‘С‚Р° РЅРµС‚
     isChange = False
     
-    ' разобьём строку на отдельные слова, сначала почистив
+    ' СЂР°Р·РѕР±СЊС‘Рј СЃС‚СЂРѕРєСѓ РЅР° РѕС‚РґРµР»СЊРЅС‹Рµ СЃР»РѕРІР°, СЃРЅР°С‡Р°Р»Р° РїРѕС‡РёСЃС‚РёРІ
     StrArray() = Split(StringClean(strValue))
     
-    ' пройдём по всем словам
+    ' РїСЂРѕР№РґС‘Рј РїРѕ РІСЃРµРј СЃР»РѕРІР°Рј
     ssss = "": iii = 1
     For li = LBound(StrArray) To UBound(StrArray)
         If iii = 1 Then
@@ -814,37 +814,37 @@ On Error GoTo ErrHandler
             ssss = ssss & ", " & iii & ". " & StrArray(li)
         End If
         
-        ' проверяем, что это изменение
-        If StrArray(li) Like "*Изм*" Then
+        ' РїСЂРѕРІРµСЂСЏРµРј, С‡С‚Рѕ СЌС‚Рѕ РёР·РјРµРЅРµРЅРёРµ
+        If StrArray(li) Like "*РР·Рј*" Then
             isChange = True
-            ssss = ssss & ", это действительно изм."
+            ssss = ssss & ", СЌС‚Рѕ РґРµР№СЃС‚РІРёС‚РµР»СЊРЅРѕ РёР·Рј."
         End If
 
         iii = iii + 1
     Next li
     
-    ' отыскиваем самую раннюю дату как дату отчёта
+    ' РѕС‚С‹СЃРєРёРІР°РµРј СЃР°РјСѓСЋ СЂР°РЅРЅСЋСЋ РґР°С‚Сѓ РєР°Рє РґР°С‚Сѓ РѕС‚С‡С‘С‚Р°
     RdddV = ParseDate(RTrim(LTrim(strValue)), True, RdddS)
     If IsNull(RdddV) = False Then
         Rddd = RdddV
-        ssss = ssss & ", " & Rddd & " - дата отч."
+        ssss = ssss & ", " & Rddd & " - РґР°С‚Р° РѕС‚С‡."
         Else
-        ssss = ssss & ", <font color=""DarkRed"">дата отч. не найдена, " & RdddS & "</font>"
+        ssss = ssss & ", <font color=""DarkRed"">РґР°С‚Р° РѕС‚С‡. РЅРµ РЅР°Р№РґРµРЅР°, " & RdddS & "</font>"
     End If
     
-    ' посмотрим, что у нас вышло после анализа отдельных слов
-    ' вообще это изменение?
+    ' РїРѕСЃРјРѕС‚СЂРёРј, С‡С‚Рѕ Сѓ РЅР°СЃ РІС‹С€Р»Рѕ РїРѕСЃР»Рµ Р°РЅР°Р»РёР·Р° РѕС‚РґРµР»СЊРЅС‹С… СЃР»РѕРІ
+    ' РІРѕРѕР±С‰Рµ СЌС‚Рѕ РёР·РјРµРЅРµРЅРёРµ?
     If isChange Then
-        ' да, это изменение
-        ' дата отчёта отлична от ноля?
+        ' РґР°, СЌС‚Рѕ РёР·РјРµРЅРµРЅРёРµ
+        ' РґР°С‚Р° РѕС‚С‡С‘С‚Р° РѕС‚Р»РёС‡РЅР° РѕС‚ РЅРѕР»СЏ?
         If Rddd <> 0 Then
             RcStringRaDate = Rddd
         Else
-            ' нет, дата отчёта не отлична от ноля
+            ' РЅРµС‚, РґР°С‚Р° РѕС‚С‡С‘С‚Р° РЅРµ РѕС‚Р»РёС‡РЅР° РѕС‚ РЅРѕР»СЏ
             RcStringRaDate = Null
         End If
     Else
-        ' нет, это не изменение
+        ' РЅРµС‚, СЌС‚Рѕ РЅРµ РёР·РјРµРЅРµРЅРёРµ
         RcStringRaDate = Null
     End If
 
@@ -858,5 +858,5 @@ ErrHandler:
     Resume NormalExit
 
 End Function
-' получаем дату отчёта агента для изменения из строки. 13.07.2022. Окончание ************************************************************************
+' РїРѕР»СѓС‡Р°РµРј РґР°С‚Сѓ РѕС‚С‡С‘С‚Р° Р°РіРµРЅС‚Р° РґР»СЏ РёР·РјРµРЅРµРЅРёСЏ РёР· СЃС‚СЂРѕРєРё. 13.07.2022. РћРєРѕРЅС‡Р°РЅРёРµ ************************************************************************
 

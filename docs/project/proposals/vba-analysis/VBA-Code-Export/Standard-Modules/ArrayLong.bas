@@ -1,7 +1,7 @@
 Attribute VB_Name = "ArrayLong"
 Option Compare Database
 
-' позаполняю я длинные массивы через процедуры. 12.11.2024 ======================================================================
+' РїРѕР·Р°РїРѕР»РЅСЏСЋ СЏ РґР»РёРЅРЅС‹Рµ РјР°СЃСЃРёРІС‹ С‡РµСЂРµР· РїСЂРѕС†РµРґСѓСЂС‹. 12.11.2024 ======================================================================
 
 Public Sub subMyArrayBrnPart1(ByRef MyArrayBrnPart1() As Variant)
     
@@ -414,7 +414,7 @@ End Sub
 
 Public Sub subMyArrayBrnRep01(ByRef myArrayBrnRep01() As Variant)
 
-    ' формируем массив по принципу поле № 1 - откуда, поле № 2 - куда
+    ' С„РѕСЂРјРёСЂСѓРµРј РјР°СЃСЃРёРІ РїРѕ РїСЂРёРЅС†РёРїСѓ РїРѕР»Рµ в„– 1 - РѕС‚РєСѓРґР°, РїРѕР»Рµ в„– 2 - РєСѓРґР°
     myArrayBrnRep01(1, 1) = "ag_acceptedNot": myArrayBrnRep01(1, 2) = "ag_acceptedNot"
     myArrayBrnRep01(2, 1) = "ag_acceptedTtl_M": myArrayBrnRep01(2, 2) = "ag_acceptedTtl_M"
     myArrayBrnRep01(3, 1) = "ag_Ful_OverFul": myArrayBrnRep01(3, 2) = "ag_Ful_OverFul"
@@ -464,7 +464,7 @@ End Sub
 
 Public Sub subMyArrayBrnRep02(ByRef myArrayBrnRep02() As Variant)
 
-    ' формируем массив по принципу поле № 1 - откуда, поле № 2 - куда
+    ' С„РѕСЂРјРёСЂСѓРµРј РјР°СЃСЃРёРІ РїРѕ РїСЂРёРЅС†РёРїСѓ РїРѕР»Рµ в„– 1 - РѕС‚РєСѓРґР°, РїРѕР»Рµ в„– 2 - РєСѓРґР°
     myArrayBrnRep02(1, 1) = "ag_acceptedNot": myArrayBrnRep02(1, 2) = "ag_acceptedNot"
     myArrayBrnRep02(2, 1) = "ag_acceptedTtl_M": myArrayBrnRep02(2, 2) = "ag_acceptedTtl_M"
     myArrayBrnRep02(3, 1) = "ag_Ful_OverFul": myArrayBrnRep02(3, 2) = "ag_Ful_OverFul"
@@ -514,7 +514,7 @@ End Sub
 
 Public Sub subMyArrayBrnSrcPart1(ByRef myArrayBrnSrcPart1() As Variant)
 
-    ' формируем массив по принципу поле № 1 - откуда, поле № 2 - куда
+    ' С„РѕСЂРјРёСЂСѓРµРј РјР°СЃСЃРёРІ РїРѕ РїСЂРёРЅС†РёРїСѓ РїРѕР»Рµ в„– 1 - РѕС‚РєСѓРґР°, РїРѕР»Рµ в„– 2 - РєСѓРґР°
     myArrayBrnSrcPart1(1, 1) = "ogNm": myArrayBrnSrcPart1(1, 2) = "ogNm"
     myArrayBrnSrcPart1(2, 1) = "branchName": myArrayBrnSrcPart1(2, 2) = "branchName"
     myArrayBrnSrcPart1(3, 1) = "cstAgPnCode": myArrayBrnSrcPart1(3, 2) = "cstAgPnCode"
@@ -625,5 +625,5 @@ Public Sub subMyArrayBrnSrcPart2(ByRef myArrayBrnSrcPart2() As Variant)
 
 End Sub
 
-' позаполняю я длинные массивы через процедуры. 12.11.2024 Окончание ============================================================
+' РїРѕР·Р°РїРѕР»РЅСЏСЋ СЏ РґР»РёРЅРЅС‹Рµ РјР°СЃСЃРёРІС‹ С‡РµСЂРµР· РїСЂРѕС†РµРґСѓСЂС‹. 12.11.2024 РћРєРѕРЅС‡Р°РЅРёРµ ============================================================
 ' ***

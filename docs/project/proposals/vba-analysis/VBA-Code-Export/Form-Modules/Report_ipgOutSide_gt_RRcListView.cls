@@ -9,7 +9,7 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Compare Database
 
-Private Sub ОбластьДанных_Format(Cancel As Integer, FormatCount As Integer)
+Private Sub РћР±Р»Р°СЃС‚СЊР”Р°РЅРЅС‹С…_Format(Cancel As Integer, FormatCount As Integer)
     If Me.txtCount = 0 Then
         Me.Section(0).Visible = False
         Me.Section(1).Visible = False

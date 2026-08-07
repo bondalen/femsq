@@ -9,68 +9,68 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Compare Database
 
-' класс *Ревизия отчётов агента. Проверка файла Отчётов всех агентов*
+' РєР»Р°СЃСЃ *Р РµРІРёР·РёСЏ РѕС‚С‡С‘С‚РѕРІ Р°РіРµРЅС‚Р°. РџСЂРѕРІРµСЂРєР° С„Р°Р№Р»Р° РћС‚С‡С‘С‚РѕРІ РІСЃРµС… Р°РіРµРЅС‚РѕРІ*
 
-' область определения закрытых пременных, содержащих значения свойств ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-' !!! не нужно их писать в других местах, это приведет к ошибке. 07.07.2022
-' ключ объекта *Ревизия отчётов агента. Проверка файла Отчётов всех агентов*
+' РѕР±Р»Р°СЃС‚СЊ РѕРїСЂРµРґРµР»РµРЅРёСЏ Р·Р°РєСЂС‹С‚С‹С… РїСЂРµРјРµРЅРЅС‹С…, СЃРѕРґРµСЂР¶Р°С‰РёС… Р·РЅР°С‡РµРЅРёСЏ СЃРІРѕР№СЃС‚РІ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+' !!! РЅРµ РЅСѓР¶РЅРѕ РёС… РїРёСЃР°С‚СЊ РІ РґСЂСѓРіРёС… РјРµСЃС‚Р°С…, СЌС‚Рѕ РїСЂРёРІРµРґРµС‚ Рє РѕС€РёР±РєРµ. 07.07.2022
+' РєР»СЋС‡ РѕР±СЉРµРєС‚Р° *Р РµРІРёР·РёСЏ РѕС‚С‡С‘С‚РѕРІ Р°РіРµРЅС‚Р°. РџСЂРѕРІРµСЂРєР° С„Р°Р№Р»Р° РћС‚С‡С‘С‚РѕРІ РІСЃРµС… Р°РіРµРЅС‚РѕРІ*
 Private mlngRa_aAllAgentsKey As Long
-' здесь, если -1 , то не реинициализировалась. Если 0, то реинициализировалась и объект не был найден
+' Р·РґРµСЃСЊ, РµСЃР»Рё -1 , С‚Рѕ РЅРµ СЂРµРёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°Р»Р°СЃСЊ. Р•СЃР»Рё 0, С‚Рѕ СЂРµРёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°Р»Р°СЃСЊ Рё РѕР±СЉРµРєС‚ РЅРµ Р±С‹Р» РЅР°Р№РґРµРЅ
 
-' вышестоящий класс *Ревизия отчётов агента*
+' РІС‹С€РµСЃС‚РѕСЏС‰РёР№ РєР»Р°СЃСЃ *Р РµРІРёР·РёСЏ РѕС‚С‡С‘С‚РѕРІ Р°РіРµРЅС‚Р°*
 Private mobjParent As ra_a
 
-' № пп
+' в„– РїРї
 Private mlngAf_num As Long
-' файл, имя
+' С„Р°Р№Р», РёРјСЏ
 Private mstrAf_name As String
-' файл, директория
+' С„Р°Р№Р», РґРёСЂРµРєС‚РѕСЂРёСЏ
 Private mlngAf_dir As Long
-' тип файла
+' С‚РёРї С„Р°Р№Р»Р°
 Private mlngAf_type As Long
-' организация отправитель
+' РѕСЂРіР°РЅРёР·Р°С†РёСЏ РѕС‚РїСЂР°РІРёС‚РµР»СЊ
 Private mlngRa_org_sender As Long
-' выполнять?
+' РІС‹РїРѕР»РЅСЏС‚СЊ?
 Private mblnAf_execute As Boolean
-' обновлять по источнику?
+' РѕР±РЅРѕРІР»СЏС‚СЊ РїРѕ РёСЃС‚РѕС‡РЅРёРєСѓ?
 Private mblnAf_source As Boolean
-' область определения закрытых пременных, содержащих значения свойств ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+' РѕР±Р»Р°СЃС‚СЊ РѕРїСЂРµРґРµР»РµРЅРёСЏ Р·Р°РєСЂС‹С‚С‹С… РїСЂРµРјРµРЅРЅС‹С…, СЃРѕРґРµСЂР¶Р°С‰РёС… Р·РЅР°С‡РµРЅРёСЏ СЃРІРѕР№СЃС‚РІ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-' геттер свойства ключ объекта *Ревизия отчётов агента. Проверка файла Отчётов всех агентов*
+' РіРµС‚С‚РµСЂ СЃРІРѕР№СЃС‚РІР° РєР»СЋС‡ РѕР±СЉРµРєС‚Р° *Р РµРІРёР·РёСЏ РѕС‚С‡С‘С‚РѕРІ Р°РіРµРЅС‚Р°. РџСЂРѕРІРµСЂРєР° С„Р°Р№Р»Р° РћС‚С‡С‘С‚РѕРІ РІСЃРµС… Р°РіРµРЅС‚РѕРІ*
 Public Property Get Ra_aAllAgentsKey() As Long
     Ra_aAllAgentsKey = mlngRa_aAllAgentsKey
 End Property
 
-' сеттер свойства вышестоящий класс *Ревизия отчётов агента*
+' СЃРµС‚С‚РµСЂ СЃРІРѕР№СЃС‚РІР° РІС‹С€РµСЃС‚РѕСЏС‰РёР№ РєР»Р°СЃСЃ *Р РµРІРёР·РёСЏ РѕС‚С‡С‘С‚РѕРІ Р°РіРµРЅС‚Р°*
 Public Property Set parent(ByRef objParent As ra_a)
     If mobjParent Is Nothing Then
         Set mobjParent = objParent
     End If
 End Property
 
-' обработка встроенного события инициализации
+' РѕР±СЂР°Р±РѕС‚РєР° РІСЃС‚СЂРѕРµРЅРЅРѕРіРѕ СЃРѕР±С‹С‚РёСЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё
 Private Sub Class_Initialize()
-    ' инициализируем объект с нулевым ключём. В таком виде он не имеет смысла.
-    ' Требуется реинициализация.
+    ' РёРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј РѕР±СЉРµРєС‚ СЃ РЅСѓР»РµРІС‹Рј РєР»СЋС‡С‘Рј. Р’ С‚Р°РєРѕРј РІРёРґРµ РѕРЅ РЅРµ РёРјРµРµС‚ СЃРјС‹СЃР»Р°.
+    ' РўСЂРµР±СѓРµС‚СЃСЏ СЂРµРёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ.
     mlngRa_aAllAgentsKey = -1
 End Sub
 
-' реинициализируем объект *Ревизия отчётов агента. Проверка файла Отчётов всех агентов* по известному ключу такого объекта. 06.07.2022 **************
+' СЂРµРёРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј РѕР±СЉРµРєС‚ *Р РµРІРёР·РёСЏ РѕС‚С‡С‘С‚РѕРІ Р°РіРµРЅС‚Р°. РџСЂРѕРІРµСЂРєР° С„Р°Р№Р»Р° РћС‚С‡С‘С‚РѕРІ РІСЃРµС… Р°РіРµРЅС‚РѕРІ* РїРѕ РёР·РІРµСЃС‚РЅРѕРјСѓ РєР»СЋС‡Сѓ С‚Р°РєРѕРіРѕ РѕР±СЉРµРєС‚Р°. 06.07.2022 **************
 Public Sub riRa_aAllAgentReadKey(ByVal Ra_aAllAgentKey As Long, ByRef boResult As Boolean, db As DAO.Database)
 
     Dim rsRa_aAllAgent As DAO.Recordset, strSql As String
     
     Const cstrTitle As String _
-        = "Процедура *Реинициализируем объект *Ревизия отчётов агента - проверка файла Отчётов всех агентов* по известному ключу такого объекта*."
+        = "РџСЂРѕС†РµРґСѓСЂР° *Р РµРёРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј РѕР±СЉРµРєС‚ *Р РµРІРёР·РёСЏ РѕС‚С‡С‘С‚РѕРІ Р°РіРµРЅС‚Р° - РїСЂРѕРІРµСЂРєР° С„Р°Р№Р»Р° РћС‚С‡С‘С‚РѕРІ РІСЃРµС… Р°РіРµРЅС‚РѕРІ* РїРѕ РёР·РІРµСЃС‚РЅРѕРјСѓ РєР»СЋС‡Сѓ С‚Р°РєРѕРіРѕ РѕР±СЉРµРєС‚Р°*."
         
     '************************************************************************************************************************************************
     
 On Error GoTo ErrHandler
 
-    ' объект не реинициализировался?
+    ' РѕР±СЉРµРєС‚ РЅРµ СЂРµРёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°Р»СЃСЏ?
     If mlngRa_aAllAgentsKey = -1 Then
-        ' да, объект не реинициализировался
-        ' отыскиваем в БД *проверку файла Отчётов всех агентов* по известному ключу
+        ' РґР°, РѕР±СЉРµРєС‚ РЅРµ СЂРµРёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°Р»СЃСЏ
+        ' РѕС‚С‹СЃРєРёРІР°РµРј РІ Р‘Р” *РїСЂРѕРІРµСЂРєСѓ С„Р°Р№Р»Р° РћС‚С‡С‘С‚РѕРІ РІСЃРµС… Р°РіРµРЅС‚РѕРІ* РїРѕ РёР·РІРµСЃС‚РЅРѕРјСѓ РєР»СЋС‡Сѓ
         strSql = _
         "SELECT f.af_key, f.af_num, f.af_name, f.af_dir, f.af_type, f.ra_org_sender, f.af_execute, f.af_source " _
         & "FROM ra_f AS f " _
@@ -78,10 +78,10 @@ On Error GoTo ErrHandler
     
         Set rsRa_aAllAgent = db.OpenRecordset(strSql, dbOpenSnapshot)
     
-        ' имеются ли записи с указанным ключём?
+        ' РёРјРµСЋС‚СЃСЏ Р»Рё Р·Р°РїРёСЃРё СЃ СѓРєР°Р·Р°РЅРЅС‹Рј РєР»СЋС‡С‘Рј?
         With rsRa_aAllAgent
             If .RecordCount = 1 Then
-                ' да, записи с указанным ключём имеются
+                ' РґР°, Р·Р°РїРёСЃРё СЃ СѓРєР°Р·Р°РЅРЅС‹Рј РєР»СЋС‡С‘Рј РёРјРµСЋС‚СЃСЏ
                 mlngRa_aAllAgentsKey = Ra_aAllAgentKey
                 
                 .MoveFirst
@@ -95,13 +95,13 @@ On Error GoTo ErrHandler
                 
                 boResult = True
                 Else
-                ' нет, записи с указанным ключём отсутствуют
+                ' РЅРµС‚, Р·Р°РїРёСЃРё СЃ СѓРєР°Р·Р°РЅРЅС‹Рј РєР»СЋС‡С‘Рј РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‚
                 boResult = False
             End If
         End With
     End If
 
-    ' закрываем набор записей
+    ' Р·Р°РєСЂС‹РІР°РµРј РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№
     rsRa_aAllAgent.Close: Set rsRa_aAllAgent = Nothing
     
 NormalExit:
@@ -112,121 +112,121 @@ ErrHandler:
     Resume NormalExit
     
 End Sub
-' реинициализируем объект *Ревизия отчётов агента. Проверка файла Отчётов всех агентов* по известному ключу такого объекта. 06.07.2022. Окончание ***
+' СЂРµРёРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј РѕР±СЉРµРєС‚ *Р РµРІРёР·РёСЏ РѕС‚С‡С‘С‚РѕРІ Р°РіРµРЅС‚Р°. РџСЂРѕРІРµСЂРєР° С„Р°Р№Р»Р° РћС‚С‡С‘С‚РѕРІ РІСЃРµС… Р°РіРµРЅС‚РѕРІ* РїРѕ РёР·РІРµСЃС‚РЅРѕРјСѓ РєР»СЋС‡Сѓ С‚Р°РєРѕРіРѕ РѕР±СЉРµРєС‚Р°. 06.07.2022. РћРєРѕРЅС‡Р°РЅРёРµ ***
 
-' работаем с листом Отчётов всех агентов. 05.07.2022 ************************************************************************************************
+' СЂР°Р±РѕС‚Р°РµРј СЃ Р»РёСЃС‚РѕРј РћС‚С‡С‘С‚РѕРІ РІСЃРµС… Р°РіРµРЅС‚РѕРІ. 05.07.2022 ************************************************************************************************
 Public Sub Audit( _
     xlS As Excel.Worksheet, db As DAO.Database, xlA As Object _
     )
-    ' здесь:
-    ' xlS - лист, с которым работаем, AddRA - потребность в корректировке БД, fff - объект отображающий записи о ходе ревизии
-    ' db - база данных, открытая,
-    ' AdtKey - идентификатор текущей ревизии, yyyy - год текущей ревизии, xlA - приложение эксель
+    ' Р·РґРµСЃСЊ:
+    ' xlS - Р»РёСЃС‚, СЃ РєРѕС‚РѕСЂС‹Рј СЂР°Р±РѕС‚Р°РµРј, AddRA - РїРѕС‚СЂРµР±РЅРѕСЃС‚СЊ РІ РєРѕСЂСЂРµРєС‚РёСЂРѕРІРєРµ Р‘Р”, fff - РѕР±СЉРµРєС‚ РѕС‚РѕР±СЂР°Р¶Р°СЋС‰РёР№ Р·Р°РїРёСЃРё Рѕ С…РѕРґРµ СЂРµРІРёР·РёРё
+    ' db - Р±Р°Р·Р° РґР°РЅРЅС‹С…, РѕС‚РєСЂС‹С‚Р°СЏ,
+    ' AdtKey - РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ С‚РµРєСѓС‰РµР№ СЂРµРІРёР·РёРё, yyyy - РіРѕРґ С‚РµРєСѓС‰РµР№ СЂРµРІРёР·РёРё, xlA - РїСЂРёР»РѕР¶РµРЅРёРµ СЌРєСЃРµР»СЊ
     ' -------------------------------------------------------------------------------------------------------------------------------------
     
     Dim c As Range, PrDocNum As String, PrDocDate As Date, invNum As String, invDate As Date, CnNum As String
     
     Dim rstCn_PrDocImp As DAO.Recordset
-    Dim qdFindSv As DAO.QueryDef, StringFindSv As String, rsFindSv As DAO.Recordset ' для поиска в SQL сервере
+    Dim qdFindSv As DAO.QueryDef, StringFindSv As String, rsFindSv As DAO.Recordset ' РґР»СЏ РїРѕРёСЃРєР° РІ SQL СЃРµСЂРІРµСЂРµ
     Dim cstapKey As Long
-    Dim strFFF As String ' для формирования дополнительных фрагментов текста и последующего дополнения их к fff
-    Dim intFind As Integer, intFind2 As Integer, strFind As String, strFind2 As String ' для поисков
+    Dim strFFF As String ' РґР»СЏ С„РѕСЂРјРёСЂРѕРІР°РЅРёСЏ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹С… С„СЂР°РіРјРµРЅС‚РѕРІ С‚РµРєСЃС‚Р° Рё РїРѕСЃР»РµРґСѓСЋС‰РµРіРѕ РґРѕРїРѕР»РЅРµРЅРёСЏ РёС… Рє fff
+    Dim intFind As Integer, intFind2 As Integer, strFind As String, strFind2 As String ' РґР»СЏ РїРѕРёСЃРєРѕРІ
     Dim qd As DAO.QueryDef, strSql As String, Ra_aNew As ra_a
     
     Dim offsetCnpdDate As Integer, startColumn As Integer, offsetFindet As Integer
     
-    Dim ra_RA As Range ' диапазон отчётов до нижней ячейки
-    ' данные ячейки номера отчёта агента
+    Dim ra_RA As Range ' РґРёР°РїР°Р·РѕРЅ РѕС‚С‡С‘С‚РѕРІ РґРѕ РЅРёР¶РЅРµР№ СЏС‡РµР№РєРё
+    ' РґР°РЅРЅС‹Рµ СЏС‡РµР№РєРё РЅРѕРјРµСЂР° РѕС‚С‡С‘С‚Р° Р°РіРµРЅС‚Р°
     Dim cellRaNumFinded As Boolean, cellRaNum As Range, cellRaNumColumn As Integer
-    ' данные ячейки даты отчёта агента
+    ' РґР°РЅРЅС‹Рµ СЏС‡РµР№РєРё РґР°С‚С‹ РѕС‚С‡С‘С‚Р° Р°РіРµРЅС‚Р°
     Dim cellRaDateFinded As Boolean, cellRaDate As Range, cellRaDateOffset As Integer
-    ' данные ячейки номеров строек
+    ' РґР°РЅРЅС‹Рµ СЏС‡РµР№РєРё РЅРѕРјРµСЂРѕРІ СЃС‚СЂРѕРµРє
     Dim cellCstAgPnFinded As Boolean, cellCstAgPn As Range, cellCstAgPnOffset As Integer
-    ' данные ячейки признака
+    ' РґР°РЅРЅС‹Рµ СЏС‡РµР№РєРё РїСЂРёР·РЅР°РєР°
     Dim cellSignFinded As Boolean, cellSign As Range, cellSignOffset As Integer
-    ' данные ячейки "Всего"
+    ' РґР°РЅРЅС‹Рµ СЏС‡РµР№РєРё "Р’СЃРµРіРѕ"
     Dim cellTotalFinded As Boolean, cellTotal As Range, cellTotalOffset As Integer
-    ' данные ячейки "СМР"
+    ' РґР°РЅРЅС‹Рµ СЏС‡РµР№РєРё "РЎРњР "
     Dim cellWorkFinded As Boolean, cellWork As Range, cellWorkOffset As Integer
-    ' данные ячейки "Оборудование"
+    ' РґР°РЅРЅС‹Рµ СЏС‡РµР№РєРё "РћР±РѕСЂСѓРґРѕРІР°РЅРёРµ"
     Dim cellEquipFinded As Boolean, cellEquip As Range, cellEquipOffset As Integer
-    ' данные ячейки "Прочее"
+    ' РґР°РЅРЅС‹Рµ СЏС‡РµР№РєРё "РџСЂРѕС‡РµРµ"
     Dim cellOthersFinded As Boolean, cellOthers As Range, cellOthersOffset As Integer
-    ' данные ячейки "Поступило"
+    ' РґР°РЅРЅС‹Рµ СЏС‡РµР№РєРё "РџРѕСЃС‚СѓРїРёР»Рѕ"
     Dim cellArrivedFinded As Boolean, cellArrived As Range, cellArrivedOffset As Integer
-    ' данные ячейки "Поступило, дата"
+    ' РґР°РЅРЅС‹Рµ СЏС‡РµР№РєРё "РџРѕСЃС‚СѓРїРёР»Рѕ, РґР°С‚Р°"
     Dim cellArrivedDateFinded As Boolean, cellArrivedDate As Range, cellArrivedDateOffset As Integer
-    ' данные ячейки "Поступило, дата, факт"
+    ' РґР°РЅРЅС‹Рµ СЏС‡РµР№РєРё "РџРѕСЃС‚СѓРїРёР»Рѕ, РґР°С‚Р°, С„Р°РєС‚"
     Dim cellArrivedDateFactFinded As Boolean, cellArrivedDateFact As Range, cellArrivedDateFactOffset As Integer
-    ' данные ячейки "Направлен"
+    ' РґР°РЅРЅС‹Рµ СЏС‡РµР№РєРё "РќР°РїСЂР°РІР»РµРЅ"
     Dim cellSentFinded As Boolean, cellSent As Range, cellSentOffset As Integer
-    ' данные ячейки "Направлен, дата"
+    ' РґР°РЅРЅС‹Рµ СЏС‡РµР№РєРё "РќР°РїСЂР°РІР»РµРЅ, РґР°С‚Р°"
     Dim cellSentDateFinded As Boolean, cellSentDate As Range, cellSentDateOffset As Integer
-    ' данные ячейки "Возвращен"
+    ' РґР°РЅРЅС‹Рµ СЏС‡РµР№РєРё "Р’РѕР·РІСЂР°С‰РµРЅ"
     Dim cellReturnedFinded As Boolean, cellReturned As Range, cellReturnedOffset As Integer
-    ' данные ячейки "Возвращен, дата"
+    ' РґР°РЅРЅС‹Рµ СЏС‡РµР№РєРё "Р’РѕР·РІСЂР°С‰РµРЅ, РґР°С‚Р°"
     Dim cellReturnedDateFinded As Boolean, cellReturnedDate As Range, cellReturnedDateOffset As Integer
-    ' данные ячейки "Возвращен, причина"
+    ' РґР°РЅРЅС‹Рµ СЏС‡РµР№РєРё "Р’РѕР·РІСЂР°С‰РµРЅ, РїСЂРёС‡РёРЅР°"
     Dim cellReturnedReasonFinded As Boolean, cellReturnedReason As Range, cellReturnedReasonOffset As Integer
-    ' данные ячейки "Отдел Управления"
+    ' РґР°РЅРЅС‹Рµ СЏС‡РµР№РєРё "РћС‚РґРµР» РЈРїСЂР°РІР»РµРЅРёСЏ"
     Dim cellUnitFinded As Boolean, cellUnit As Range, cellUnitOffset As Integer
-    ' данные ячейки "Кол-во листов ОА"
+    ' РґР°РЅРЅС‹Рµ СЏС‡РµР№РєРё "РљРѕР»-РІРѕ Р»РёСЃС‚РѕРІ РћРђ"
     Dim cellRaSheetsNumberFinded As Boolean, cellRaSheetsNumber As Range, cellRaSheetsNumberOffset As Integer
-    ' данные ячейки "Кол-во листов ПУД"
+    ' РґР°РЅРЅС‹Рµ СЏС‡РµР№РєРё "РљРѕР»-РІРѕ Р»РёСЃС‚РѕРІ РџРЈР”"
     Dim cellTitleDocSheetsNumberFinded As Boolean, cellTitleDocSheetsNumber As Range, cellTitleDocSheetsNumberOffset As Integer
-    ' данные ячейки "План кол-во"
+    ' РґР°РЅРЅС‹Рµ СЏС‡РµР№РєРё "РџР»Р°РЅ РєРѕР»-РІРѕ"
     Dim cellPlanNumberFinded As Boolean, cellPlanNumber As Range, cellPlanNumberOffset As Integer
-    ' данные ячейки "План дата"
+    ' РґР°РЅРЅС‹Рµ СЏС‡РµР№РєРё "РџР»Р°РЅ РґР°С‚Р°"
     Dim cellPlanDateFinded As Boolean, cellPlanDate As Range, cellPlanDateOffset As Integer
-    ' данные ячейки "Признак проверки ОА"
+    ' РґР°РЅРЅС‹Рµ СЏС‡РµР№РєРё "РџСЂРёР·РЅР°Рє РїСЂРѕРІРµСЂРєРё РћРђ"
     Dim cellRaSignOfTestFinded As Boolean, cellRaSignOfTest As Range, cellRaSignOfTestOffset As Integer
-    ' данные ячейки "Сумма переданных ОА"
+    ' РґР°РЅРЅС‹Рµ СЏС‡РµР№РєРё "РЎСѓРјРјР° РїРµСЂРµРґР°РЅРЅС‹С… РћРђ"
     Dim cellRaSendedSumFinded As Boolean, cellRaSendedSum As Range, cellRaSendedSumOffset As Integer
-    ' данные ячейки "Cумма возвращенных ОА"
+    ' РґР°РЅРЅС‹Рµ СЏС‡РµР№РєРё "CСѓРјРјР° РІРѕР·РІСЂР°С‰РµРЅРЅС‹С… РћРђ"
     Dim cellRaReturnedSumFinded As Boolean, cellRaReturnedSum As Range, cellRaReturnedSumOffset As Integer
     
-    ' данные ячейки "Агент"
+    ' РґР°РЅРЅС‹Рµ СЏС‡РµР№РєРё "РђРіРµРЅС‚"
     Dim cellSenderFinded As Boolean, cellSender As Range, cellSenderOffset As Integer
-    ' данные ячейки "Наименование стройки"
+    ' РґР°РЅРЅС‹Рµ СЏС‡РµР№РєРё "РќР°РёРјРµРЅРѕРІР°РЅРёРµ СЃС‚СЂРѕР№РєРё"
     Dim cellCstNameFinded As Boolean, cellCstName As Range, cellCstNameOffset As Integer
     
     Dim str As String
     
-    Dim fff As Variant ' текст в ТекстБоксе
+    Dim fff As Variant ' С‚РµРєСЃС‚ РІ РўРµРєСЃС‚Р‘РѕРєСЃРµ
     
-    ' для второй части процедуры
-    Dim rsRaAll As DAO.Recordset ' все обнаруженные отчёты
-    Dim rsRaNew As DAO.Recordset ' отчёты не обнаруженные в БД
-    Dim rsRaErr As DAO.Recordset ' отчёты имеющие несоответствия в данных
-    Dim rsRaExr As DAO.Recordset ' отчёты имеющиеся в БД, но отсутствующие в источнике
+    ' РґР»СЏ РІС‚РѕСЂРѕР№ С‡Р°СЃС‚Рё РїСЂРѕС†РµРґСѓСЂС‹
+    Dim rsRaAll As DAO.Recordset ' РІСЃРµ РѕР±РЅР°СЂСѓР¶РµРЅРЅС‹Рµ РѕС‚С‡С‘С‚С‹
+    Dim rsRaNew As DAO.Recordset ' РѕС‚С‡С‘С‚С‹ РЅРµ РѕР±РЅР°СЂСѓР¶РµРЅРЅС‹Рµ РІ Р‘Р”
+    Dim rsRaErr As DAO.Recordset ' РѕС‚С‡С‘С‚С‹ РёРјРµСЋС‰РёРµ РЅРµСЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ РІ РґР°РЅРЅС‹С…
+    Dim rsRaExr As DAO.Recordset ' РѕС‚С‡С‘С‚С‹ РёРјРµСЋС‰РёРµСЃСЏ РІ Р‘Р”, РЅРѕ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёРµ РІ РёСЃС‚РѕС‡РЅРёРєРµ
     Dim raRaExr As ra, rcRcExr As rc
     Dim iii As Integer
     
     Const cstrTitle As String _
-        = "Процедура *Работаем с листом Отчётов всех агентов*"
+        = "РџСЂРѕС†РµРґСѓСЂР° *Р Р°Р±РѕС‚Р°РµРј СЃ Р»РёСЃС‚РѕРј РћС‚С‡С‘С‚РѕРІ РІСЃРµС… Р°РіРµРЅС‚РѕРІ*"
         
     '**************************************************************************************************************************************
     
 On Error GoTo ErrHandler
 
-    ' Здесь будем делать следующее:
-    ' 1. Обновляем промежуточную таблицу если нужно
-    ' ну и так далее...
+    ' Р—РґРµСЃСЊ Р±СѓРґРµРј РґРµР»Р°С‚СЊ СЃР»РµРґСѓСЋС‰РµРµ:
+    ' 1. РћР±РЅРѕРІР»СЏРµРј РїСЂРѕРјРµР¶СѓС‚РѕС‡РЅСѓСЋ С‚Р°Р±Р»РёС†Сѓ РµСЃР»Рё РЅСѓР¶РЅРѕ
+    ' РЅСѓ Рё С‚Р°Рє РґР°Р»РµРµ...
     
     ' ===============================================================================================================================================
     ' ===============================================================================================================================================
-    ' 1. Обновляем (или не обновляем) промежуточную таблицу по источнику данных =====================================================================
+    ' 1. РћР±РЅРѕРІР»СЏРµРј (РёР»Рё РЅРµ РѕР±РЅРѕРІР»СЏРµРј) РїСЂРѕРјРµР¶СѓС‚РѕС‡РЅСѓСЋ С‚Р°Р±Р»РёС†Сѓ РїРѕ РёСЃС‚РѕС‡РЅРёРєСѓ РґР°РЅРЅС‹С… =====================================================================
     ' ===============================================================================================================================================
-    ' нужно ли обновлять промежуточную таблицу по источнику данных?
+    ' РЅСѓР¶РЅРѕ Р»Рё РѕР±РЅРѕРІР»СЏС‚СЊ РїСЂРѕРјРµР¶СѓС‚РѕС‡РЅСѓСЋ С‚Р°Р±Р»РёС†Сѓ РїРѕ РёСЃС‚РѕС‡РЅРёРєСѓ РґР°РЅРЅС‹С…?
     If mblnAf_source Then
-        ' да, обновлять промежуточную таблицу по источнику данных нужно
+        ' РґР°, РѕР±РЅРѕРІР»СЏС‚СЊ РїСЂРѕРјРµР¶СѓС‚РѕС‡РЅСѓСЋ С‚Р°Р±Р»РёС†Сѓ РїРѕ РёСЃС‚РѕС‡РЅРёРєСѓ РґР°РЅРЅС‹С… РЅСѓР¶РЅРѕ
         
-        ' снимаем фильтры листа, если есть
+        ' СЃРЅРёРјР°РµРј С„РёР»СЊС‚СЂС‹ Р»РёСЃС‚Р°, РµСЃР»Рё РµСЃС‚СЊ
         If (xlS.AutoFilterMode And xlS.FilterMode) Or xlS.FilterMode Then
             xlS.ShowAllData
         End If
         
-        ' очищаем таблицу сводных значений
+        ' РѕС‡РёС‰Р°РµРј С‚Р°Р±Р»РёС†Сѓ СЃРІРѕРґРЅС‹С… Р·РЅР°С‡РµРЅРёР№
         strSql = "DELETE * FROM ra_ImpNew"
         Set qd = db.CreateQueryDef("", strSql)
         qd.Execute dbFailOnError
@@ -234,108 +234,108 @@ On Error GoTo ErrHandler
         Set qd = Nothing
 
         
-        ' проверяем наличие всех необходимых колонок
-        ' отыскиваем колонку номеров отчётов
-        cellRaNumFinded = CellFind(xlS:=xlS, findStr:="№ ОА", findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
+        ' РїСЂРѕРІРµСЂСЏРµРј РЅР°Р»РёС‡РёРµ РІСЃРµС… РЅРµРѕР±С…РѕРґРёРјС‹С… РєРѕР»РѕРЅРѕРє
+        ' РѕС‚С‹СЃРєРёРІР°РµРј РєРѕР»РѕРЅРєСѓ РЅРѕРјРµСЂРѕРІ РѕС‚С‡С‘С‚РѕРІ
+        cellRaNumFinded = CellFind(xlS:=xlS, findStr:="в„– РћРђ", findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
             findedCell:=cellRaNum, findedColumn:=cellRaNumColumn)
     
-        ' найдена ли ячейка номера отчёта?
+        ' РЅР°Р№РґРµРЅР° Р»Рё СЏС‡РµР№РєР° РЅРѕРјРµСЂР° РѕС‚С‡С‘С‚Р°?
         If cellRaNumFinded Then
-            ' да, ячейка номера отчёта найдена
-            ' другие необходимые колонки и их смещения
-            ' отыскиваем колонку даты отчёта агента
-            cellRaDateFinded = CellFind(xlS:=xlS, findStr:="Дата ОА", findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
+            ' РґР°, СЏС‡РµР№РєР° РЅРѕРјРµСЂР° РѕС‚С‡С‘С‚Р° РЅР°Р№РґРµРЅР°
+            ' РґСЂСѓРіРёРµ РЅРµРѕР±С…РѕРґРёРјС‹Рµ РєРѕР»РѕРЅРєРё Рё РёС… СЃРјРµС‰РµРЅРёСЏ
+            ' РѕС‚С‹СЃРєРёРІР°РµРј РєРѕР»РѕРЅРєСѓ РґР°С‚С‹ РѕС‚С‡С‘С‚Р° Р°РіРµРЅС‚Р°
+            cellRaDateFinded = CellFind(xlS:=xlS, findStr:="Р”Р°С‚Р° РћРђ", findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
                 findedCell:=cellRaDate, startCellColumn:=cellRaNum.Column, findedOffset:=cellRaDateOffset)
-            ' отыскиваем колонку номеров строек
-            cellCstAgPnFinded = CellFind(xlS:=xlS, findStr:="Код стройки", findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
+            ' РѕС‚С‹СЃРєРёРІР°РµРј РєРѕР»РѕРЅРєСѓ РЅРѕРјРµСЂРѕРІ СЃС‚СЂРѕРµРє
+            cellCstAgPnFinded = CellFind(xlS:=xlS, findStr:="РљРѕРґ СЃС‚СЂРѕР№РєРё", findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
                 findedCell:=cellCstAgPn, startCellColumn:=cellRaNum.Column, findedOffset:=cellCstAgPnOffset)
-            ' отыскиваем колонку признака
-            cellSignFinded = CellFind(xlS:=xlS, findStr:="Признак", findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
+            ' РѕС‚С‹СЃРєРёРІР°РµРј РєРѕР»РѕРЅРєСѓ РїСЂРёР·РЅР°РєР°
+            cellSignFinded = CellFind(xlS:=xlS, findStr:="РџСЂРёР·РЅР°Рє", findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
                 findedCell:=cellSign, startCellColumn:=cellRaNum.Column, findedOffset:=cellSignOffset)
-            ' отыскиваем колонку "Всего"
-            cellTotalFinded = CellFind(xlS:=xlS, findStr:="Всего с НДС", findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
+            ' РѕС‚С‹СЃРєРёРІР°РµРј РєРѕР»РѕРЅРєСѓ "Р’СЃРµРіРѕ"
+            cellTotalFinded = CellFind(xlS:=xlS, findStr:="Р’СЃРµРіРѕ СЃ РќР”РЎ", findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
                 findedCell:=cellTotal, startCellColumn:=cellRaNum.Column, findedOffset:=cellTotalOffset)
-            ' отыскиваем колонку "СМР"
-            cellWorkFinded = CellFind(xlS:=xlS, findStr:="СМР", findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
+            ' РѕС‚С‹СЃРєРёРІР°РµРј РєРѕР»РѕРЅРєСѓ "РЎРњР "
+            cellWorkFinded = CellFind(xlS:=xlS, findStr:="РЎРњР ", findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
                 findedCell:=cellWork, startCellColumn:=cellRaNum.Column, findedOffset:=cellWorkOffset)
-            ' отыскиваем колонку "Оборудование"
-            cellEquipFinded = CellFind(xlS:=xlS, findStr:="Оборудование", findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
+            ' РѕС‚С‹СЃРєРёРІР°РµРј РєРѕР»РѕРЅРєСѓ "РћР±РѕСЂСѓРґРѕРІР°РЅРёРµ"
+            cellEquipFinded = CellFind(xlS:=xlS, findStr:="РћР±РѕСЂСѓРґРѕРІР°РЅРёРµ", findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
                 findedCell:=cellEquip, startCellColumn:=cellRaNum.Column, findedOffset:=cellEquipOffset)
-            ' отыскиваем колонку "Прочее"
-            cellOthersFinded = CellFind(xlS:=xlS, findStr:="Прочие", findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
+            ' РѕС‚С‹СЃРєРёРІР°РµРј РєРѕР»РѕРЅРєСѓ "РџСЂРѕС‡РµРµ"
+            cellOthersFinded = CellFind(xlS:=xlS, findStr:="РџСЂРѕС‡РёРµ", findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
                 findedCell:=cellOthers, startCellColumn:=cellRaNum.Column, findedOffset:=cellOthersOffset)
-            ' отыскиваем колонку "Поступило"
-            ' оказалось, что новая строка по Enter в ячейке - это символ "перевод строки", Chr(10)? vbLf
-            cellArrivedFinded = CellFind(xlS:=xlS, findStr:="Поступило " & vbLf & "(№ письма)", findAtXlLookAt:=xlWhole, _
+            ' РѕС‚С‹СЃРєРёРІР°РµРј РєРѕР»РѕРЅРєСѓ "РџРѕСЃС‚СѓРїРёР»Рѕ"
+            ' РѕРєР°Р·Р°Р»РѕСЃСЊ, С‡С‚Рѕ РЅРѕРІР°СЏ СЃС‚СЂРѕРєР° РїРѕ Enter РІ СЏС‡РµР№РєРµ - СЌС‚Рѕ СЃРёРјРІРѕР» "РїРµСЂРµРІРѕРґ СЃС‚СЂРѕРєРё", Chr(10)? vbLf
+            cellArrivedFinded = CellFind(xlS:=xlS, findStr:="РџРѕСЃС‚СѓРїРёР»Рѕ " & vbLf & "(в„– РїРёСЃСЊРјР°)", findAtXlLookAt:=xlWhole, _
                 findTextBox:=mobjParent.obgRa_aResult, _
                 findedCell:=cellArrived, startCellColumn:=cellRaNum.Column, findedOffset:=cellArrivedOffset)
-            ' отыскиваем колонку "Поступило, дата"
-            cellArrivedDateFinded = CellFind(xlS:=xlS, findStr:="Поступило (Дата письма)", findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
+            ' РѕС‚С‹СЃРєРёРІР°РµРј РєРѕР»РѕРЅРєСѓ "РџРѕСЃС‚СѓРїРёР»Рѕ, РґР°С‚Р°"
+            cellArrivedDateFinded = CellFind(xlS:=xlS, findStr:="РџРѕСЃС‚СѓРїРёР»Рѕ (Р”Р°С‚Р° РїРёСЃСЊРјР°)", findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
                 findedCell:=cellArrivedDate, startCellColumn:=cellRaNum.Column, findedOffset:=cellArrivedDateOffset)
-            ' отыскиваем колонку "Поступило, дата, факт"
-            cellArrivedDateFactFinded = CellFind(xlS:=xlS, findStr:="Поступило (Фактическая дата)", _
+            ' РѕС‚С‹СЃРєРёРІР°РµРј РєРѕР»РѕРЅРєСѓ "РџРѕСЃС‚СѓРїРёР»Рѕ, РґР°С‚Р°, С„Р°РєС‚"
+            cellArrivedDateFactFinded = CellFind(xlS:=xlS, findStr:="РџРѕСЃС‚СѓРїРёР»Рѕ (Р¤Р°РєС‚РёС‡РµСЃРєР°СЏ РґР°С‚Р°)", _
                 findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
                 findedCell:=cellArrivedDateFact, startCellColumn:=cellRaNum.Column, findedOffset:=cellArrivedDateFactOffset)
-            ' отыскиваем колонку "Направлен"
-            cellSentFinded = CellFind(xlS:=xlS, findStr:="Направлен в Бухгалтерию (№ СЗ)", findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
+            ' РѕС‚С‹СЃРєРёРІР°РµРј РєРѕР»РѕРЅРєСѓ "РќР°РїСЂР°РІР»РµРЅ"
+            cellSentFinded = CellFind(xlS:=xlS, findStr:="РќР°РїСЂР°РІР»РµРЅ РІ Р‘СѓС…РіР°Р»С‚РµСЂРёСЋ (в„– РЎР—)", findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
                 findedCell:=cellSent, startCellColumn:=cellRaNum.Column, findedOffset:=cellSentOffset)
-            ' отыскиваем колонку "Направлен, дата"
-            cellSentDateFinded = CellFind(xlS:=xlS, findStr:="Направлен в Бухгалтерию (дата СЗ)", findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
+            ' РѕС‚С‹СЃРєРёРІР°РµРј РєРѕР»РѕРЅРєСѓ "РќР°РїСЂР°РІР»РµРЅ, РґР°С‚Р°"
+            cellSentDateFinded = CellFind(xlS:=xlS, findStr:="РќР°РїСЂР°РІР»РµРЅ РІ Р‘СѓС…РіР°Р»С‚РµСЂРёСЋ (РґР°С‚Р° РЎР—)", findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
                 findedCell:=cellSentDate, startCellColumn:=cellRaNum.Column, findedOffset:=cellSentDateOffset)
-            ' отыскиваем колонку "Возвращен"
-            cellReturnedFinded = CellFind(xlS:=xlS, findStr:="Возвращен на доработку (№ письма) ", findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
+            ' РѕС‚С‹СЃРєРёРІР°РµРј РєРѕР»РѕРЅРєСѓ "Р’РѕР·РІСЂР°С‰РµРЅ"
+            cellReturnedFinded = CellFind(xlS:=xlS, findStr:="Р’РѕР·РІСЂР°С‰РµРЅ РЅР° РґРѕСЂР°Р±РѕС‚РєСѓ (в„– РїРёСЃСЊРјР°) ", findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
                 findedCell:=cellReturned, startCellColumn:=cellRaNum.Column, findedOffset:=cellReturnedOffset)
-            ' отыскиваем колонку "Возвращен"
-            cellReturnedDateFinded = CellFind(xlS:=xlS, findStr:="Возвращен на доработку (дата письма)", _
+            ' РѕС‚С‹СЃРєРёРІР°РµРј РєРѕР»РѕРЅРєСѓ "Р’РѕР·РІСЂР°С‰РµРЅ"
+            cellReturnedDateFinded = CellFind(xlS:=xlS, findStr:="Р’РѕР·РІСЂР°С‰РµРЅ РЅР° РґРѕСЂР°Р±РѕС‚РєСѓ (РґР°С‚Р° РїРёСЃСЊРјР°)", _
                 findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
                 findedCell:=cellReturnedDate, startCellColumn:=cellRaNum.Column, findedOffset:=cellReturnedDateOffset)
-            ' отыскиваем колонку "Возвращен, причина"
-            cellReturnedReasonFinded = CellFind(xlS:=xlS, findStr:="Причина возврата", _
+            ' РѕС‚С‹СЃРєРёРІР°РµРј РєРѕР»РѕРЅРєСѓ "Р’РѕР·РІСЂР°С‰РµРЅ, РїСЂРёС‡РёРЅР°"
+            cellReturnedReasonFinded = CellFind(xlS:=xlS, findStr:="РџСЂРёС‡РёРЅР° РІРѕР·РІСЂР°С‚Р°", _
                 findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
                 findedCell:=cellReturnedReason, startCellColumn:=cellRaNum.Column, findedOffset:=cellReturnedReasonOffset)
-            ' отыскиваем колонку "Отдел Управления"
-            cellUnitFinded = CellFind(xlS:=xlS, findStr:="Отдел Управления", _
+            ' РѕС‚С‹СЃРєРёРІР°РµРј РєРѕР»РѕРЅРєСѓ "РћС‚РґРµР» РЈРїСЂР°РІР»РµРЅРёСЏ"
+            cellUnitFinded = CellFind(xlS:=xlS, findStr:="РћС‚РґРµР» РЈРїСЂР°РІР»РµРЅРёСЏ", _
                 findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
                 findedCell:=cellUnit, startCellColumn:=cellRaNum.Column, findedOffset:=cellUnitOffset)
-            ' отыскиваем колонку "Кол-во листов ОА"
-            cellRaSheetsNumberFinded = CellFind(xlS:=xlS, findStr:="Кол-во листов ОА", _
+            ' РѕС‚С‹СЃРєРёРІР°РµРј РєРѕР»РѕРЅРєСѓ "РљРѕР»-РІРѕ Р»РёСЃС‚РѕРІ РћРђ"
+            cellRaSheetsNumberFinded = CellFind(xlS:=xlS, findStr:="РљРѕР»-РІРѕ Р»РёСЃС‚РѕРІ РћРђ", _
                 findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
                 findedCell:=cellRaSheetsNumber, startCellColumn:=cellRaNum.Column, findedOffset:=cellRaSheetsNumberOffset)
-            ' отыскиваем колонку "Кол-во листов ПУД"
-            cellTitleDocSheetsNumberFinded = CellFind(xlS:=xlS, findStr:="Кол-во листов ПУД", _
+            ' РѕС‚С‹СЃРєРёРІР°РµРј РєРѕР»РѕРЅРєСѓ "РљРѕР»-РІРѕ Р»РёСЃС‚РѕРІ РџРЈР”"
+            cellTitleDocSheetsNumberFinded = CellFind(xlS:=xlS, findStr:="РљРѕР»-РІРѕ Р»РёСЃС‚РѕРІ РџРЈР”", _
                 findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
                 findedCell:=cellTitleDocSheetsNumber, startCellColumn:=cellRaNum.Column, findedOffset:=cellTitleDocSheetsNumberOffset)
-            ' отыскиваем колонку "План кол-во"
-            cellPlanNumberFinded = CellFind(xlS:=xlS, findStr:="План кол-во", _
+            ' РѕС‚С‹СЃРєРёРІР°РµРј РєРѕР»РѕРЅРєСѓ "РџР»Р°РЅ РєРѕР»-РІРѕ"
+            cellPlanNumberFinded = CellFind(xlS:=xlS, findStr:="РџР»Р°РЅ РєРѕР»-РІРѕ", _
                 findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
                 findedCell:=cellPlanNumber, startCellColumn:=cellRaNum.Column, findedOffset:=cellPlanNumberOffset)
-            ' отыскиваем колонку "План дата"
-            cellPlanDateFinded = CellFind(xlS:=xlS, findStr:="План дата", _
+            ' РѕС‚С‹СЃРєРёРІР°РµРј РєРѕР»РѕРЅРєСѓ "РџР»Р°РЅ РґР°С‚Р°"
+            cellPlanDateFinded = CellFind(xlS:=xlS, findStr:="РџР»Р°РЅ РґР°С‚Р°", _
                 findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
                 findedCell:=cellPlanDate, startCellColumn:=cellRaNum.Column, findedOffset:=cellPlanDateOffset)
-            ' отыскиваем колонку "Признак проверки ОА"
-            cellRaSignOfTestFinded = CellFind(xlS:=xlS, findStr:="Признак проверки ОА", _
+            ' РѕС‚С‹СЃРєРёРІР°РµРј РєРѕР»РѕРЅРєСѓ "РџСЂРёР·РЅР°Рє РїСЂРѕРІРµСЂРєРё РћРђ"
+            cellRaSignOfTestFinded = CellFind(xlS:=xlS, findStr:="РџСЂРёР·РЅР°Рє РїСЂРѕРІРµСЂРєРё РћРђ", _
                 findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
                 findedCell:=cellRaSignOfTest, startCellColumn:=cellRaNum.Column, findedOffset:=cellRaSignOfTestOffset)
-            ' отыскиваем колонку "Сумма переданных ОА"
-            cellRaSendedSumFinded = CellFind(xlS:=xlS, findStr:="Сумма переданных ОА", _
+            ' РѕС‚С‹СЃРєРёРІР°РµРј РєРѕР»РѕРЅРєСѓ "РЎСѓРјРјР° РїРµСЂРµРґР°РЅРЅС‹С… РћРђ"
+            cellRaSendedSumFinded = CellFind(xlS:=xlS, findStr:="РЎСѓРјРјР° РїРµСЂРµРґР°РЅРЅС‹С… РћРђ", _
                 findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
                 findedCell:=cellRaSendedSum, startCellColumn:=cellRaNum.Column, findedOffset:=cellRaSendedSumOffset)
-            ' отыскиваем колонку "Cумма возвращенных ОА"
-            cellRaReturnedSumFinded = CellFind(xlS:=xlS, findStr:="Cумма возвращенных ОА", _
+            ' РѕС‚С‹СЃРєРёРІР°РµРј РєРѕР»РѕРЅРєСѓ "CСѓРјРјР° РІРѕР·РІСЂР°С‰РµРЅРЅС‹С… РћРђ"
+            cellRaReturnedSumFinded = CellFind(xlS:=xlS, findStr:="CСѓРјРјР° РІРѕР·РІСЂР°С‰РµРЅРЅС‹С… РћРђ", _
                 findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
                 findedCell:=cellRaReturnedSum, startCellColumn:=cellRaNum.Column, findedOffset:=cellRaReturnedSumOffset)
-            ' отыскиваем колонку "Агент"
-            cellSenderFinded = CellFind(xlS:=xlS, findStr:="Агент", _
+            ' РѕС‚С‹СЃРєРёРІР°РµРј РєРѕР»РѕРЅРєСѓ "РђРіРµРЅС‚"
+            cellSenderFinded = CellFind(xlS:=xlS, findStr:="РђРіРµРЅС‚", _
                 findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
                 findedCell:=cellSender, startCellColumn:=cellRaNum.Column, findedOffset:=cellSenderOffset)
-            ' отыскиваем колонку "Наименование стройки"
-            cellCstNameFinded = CellFind(xlS:=xlS, findStr:="Наименование стройки", _
+            ' РѕС‚С‹СЃРєРёРІР°РµРј РєРѕР»РѕРЅРєСѓ "РќР°РёРјРµРЅРѕРІР°РЅРёРµ СЃС‚СЂРѕР№РєРё"
+            cellCstNameFinded = CellFind(xlS:=xlS, findStr:="РќР°РёРјРµРЅРѕРІР°РЅРёРµ СЃС‚СЂРѕР№РєРё", _
                 findAtXlLookAt:=xlWhole, findTextBox:=mobjParent.obgRa_aResult, _
                 findedCell:=cellCstName, startCellColumn:=cellRaNum.Column, findedOffset:=cellCstNameOffset)
         End If
     
-        ' найдена ли ячейка номеров отчёта и смещения?
+        ' РЅР°Р№РґРµРЅР° Р»Рё СЏС‡РµР№РєР° РЅРѕРјРµСЂРѕРІ РѕС‚С‡С‘С‚Р° Рё СЃРјРµС‰РµРЅРёСЏ?
         If cellRaNumFinded And cellRaDateFinded And cellCstAgPnFinded And cellSignFinded And _
             cellTotalFinded And cellWorkFinded And cellEquipFinded And cellOthersFinded And _
             cellArrivedFinded And cellArrivedDateFinded And cellArrivedDateFactFinded And _
@@ -344,8 +344,8 @@ On Error GoTo ErrHandler
             cellPlanNumberFinded And cellPlanDateFinded And cellRaSignOfTestFinded And _
             cellRaSendedSumFinded And cellRaReturnedSumFinded And cellSenderFinded And cellCstNameFinded _
             Then
-            ' да, ячейка номеров отчёта и смещения найдены
-            ' определяем диапазон отчётов до нижней ячейки
+            ' РґР°, СЏС‡РµР№РєР° РЅРѕРјРµСЂРѕРІ РѕС‚С‡С‘С‚Р° Рё СЃРјРµС‰РµРЅРёСЏ РЅР°Р№РґРµРЅС‹
+            ' РѕРїСЂРµРґРµР»СЏРµРј РґРёР°РїР°Р·РѕРЅ РѕС‚С‡С‘С‚РѕРІ РґРѕ РЅРёР¶РЅРµР№ СЏС‡РµР№РєРё
             Set ra_RA = xlS.Range( _
                 xlS.Cells(cellRaNum.Offset(1, 0).Row, cellRaNum.Column), _
                 xlS.Cells( _
@@ -354,34 +354,34 @@ On Error GoTo ErrHandler
                     ) _
                 )
                 
-            ' имеется ли диапазон отчётов?
+            ' РёРјРµРµС‚СЃСЏ Р»Рё РґРёР°РїР°Р·РѕРЅ РѕС‚С‡С‘С‚РѕРІ?
             If Not ra_RA Is Nothing Then
-                ' да, диапазон отчётов имеется
-                ' проходим по отчётам
-                str = "<P>  <font color=""gray"">Найден диапазон</font> <font color=""blue"">*Отчёты обычные*</font>, колонка - " _
-                    & ra_RA.Column & ", первая строка - " & ra_RA.Row & ", " _
-                    & "нижняя строка - " & ra_RA.Row + ra_RA.Rows.count - 1 & ". Адрес: <font color=""blue"">" & ra_RA.Address & "</font>.</P>"
+                ' РґР°, РґРёР°РїР°Р·РѕРЅ РѕС‚С‡С‘С‚РѕРІ РёРјРµРµС‚СЃСЏ
+                ' РїСЂРѕС…РѕРґРёРј РїРѕ РѕС‚С‡С‘С‚Р°Рј
+                str = "<P>  <font color=""gray"">РќР°Р№РґРµРЅ РґРёР°РїР°Р·РѕРЅ</font> <font color=""blue"">*РћС‚С‡С‘С‚С‹ РѕР±С‹С‡РЅС‹Рµ*</font>, РєРѕР»РѕРЅРєР° - " _
+                    & ra_RA.Column & ", РїРµСЂРІР°СЏ СЃС‚СЂРѕРєР° - " & ra_RA.Row & ", " _
+                    & "РЅРёР¶РЅСЏСЏ СЃС‚СЂРѕРєР° - " & ra_RA.Row + ra_RA.Rows.count - 1 & ". РђРґСЂРµСЃ: <font color=""blue"">" & ra_RA.Address & "</font>.</P>"
                     
                 fff = str & mobjParent.obgRa_aResult.value: str = ""
                 mobjParent.obgRa_aResult.value = fff
                 
                 ' -------------------------------------------------------------------------------------------------------------------------
                 ' -------------------------------------------------------------------------------------------------------------------------
-                ' проходим по диапазону отчётов -------------------------------------------------------------------------------------------
+                ' РїСЂРѕС…РѕРґРёРј РїРѕ РґРёР°РїР°Р·РѕРЅСѓ РѕС‚С‡С‘С‚РѕРІ -------------------------------------------------------------------------------------------
                 With ra_RA
                 
-                    ' количество ячеек в диапазоне больше одной?
+                    ' РєРѕР»РёС‡РµСЃС‚РІРѕ СЏС‡РµРµРє РІ РґРёР°РїР°Р·РѕРЅРµ Р±РѕР»СЊС€Рµ РѕРґРЅРѕР№?
                     If .count > 1 Then
-                        ' да, количество ячеек в диапазоне больше одной ...................................................................
-                        ' ищем собственно отчёт
-                        ' Set c = .Find(what:="*-???????-*", LookAt:=xlPart) 07.02.2025 меняем формат из за ГИ Ф Надым-Пур-Таз
+                        ' РґР°, РєРѕР»РёС‡РµСЃС‚РІРѕ СЏС‡РµРµРє РІ РґРёР°РїР°Р·РѕРЅРµ Р±РѕР»СЊС€Рµ РѕРґРЅРѕР№ ...................................................................
+                        ' РёС‰РµРј СЃРѕР±СЃС‚РІРµРЅРЅРѕ РѕС‚С‡С‘С‚
+                        ' Set c = .Find(what:="*-???????-*", LookAt:=xlPart) 07.02.2025 РјРµРЅСЏРµРј С„РѕСЂРјР°С‚ РёР· Р·Р° Р“Р Р¤ РќР°РґС‹Рј-РџСѓСЂ-РўР°Р·
                         Set c = .Find(what:="*???????-*", LookAt:=xlPart)
-                        ' имеется ли имя соответствующее форме имени отчёта?
+                        ' РёРјРµРµС‚СЃСЏ Р»Рё РёРјСЏ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РµРµ С„РѕСЂРјРµ РёРјРµРЅРё РѕС‚С‡С‘С‚Р°?
                         If Not c Is Nothing Then
-                            ' да имя соответствующее форме имени отчёта имеется
-                            ' простой отчет нашелся в колонке имен отчётов?
+                            ' РґР° РёРјСЏ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РµРµ С„РѕСЂРјРµ РёРјРµРЅРё РѕС‚С‡С‘С‚Р° РёРјРµРµС‚СЃСЏ
+                            ' РїСЂРѕСЃС‚РѕР№ РѕС‚С‡РµС‚ РЅР°С€РµР»СЃСЏ РІ РєРѕР»РѕРЅРєРµ РёРјРµРЅ РѕС‚С‡С‘С‚РѕРІ?
                             If c.Column = cellRaNumColumn Then
-                                ' да, простой отчёт нашелся в колонке имен отчётов
+                                ' РґР°, РїСЂРѕСЃС‚РѕР№ РѕС‚С‡С‘С‚ РЅР°С€РµР»СЃСЏ РІ РєРѕР»РѕРЅРєРµ РёРјРµРЅ РѕС‚С‡С‘С‚РѕРІ
                                 adr = c.Address
                                 RaReadOfExcel _
                                     ra:=c.value, ra_date:=StrToDate(c.Offset(0, cellRaDateOffset).value), ra_Row:=c.Row, _
@@ -397,16 +397,16 @@ On Error GoTo ErrHandler
                                     returnedReason:=c.Offset(0, cellReturnedReasonOffset).value, ra_org_sender:=c.Offset(0, cellSenderOffset).value, _
                                     ra_type:=c.Offset(0, cellSignOffset).value
                             Else
-                                ' нет, простой отчёт нашелся не в колонке имен отчётов
-                                str = "<P>  В столбце ячейки номеров обычных отчётов <B><font color=""mediumVioletRed"">отчёты не найдены</font></B>. " _
-                                    & "Отчёт нашелся не в колонке имен отчётов</P>"
+                                ' РЅРµС‚, РїСЂРѕСЃС‚РѕР№ РѕС‚С‡С‘С‚ РЅР°С€РµР»СЃСЏ РЅРµ РІ РєРѕР»РѕРЅРєРµ РёРјРµРЅ РѕС‚С‡С‘С‚РѕРІ
+                                str = "<P>  Р’ СЃС‚РѕР»Р±С†Рµ СЏС‡РµР№РєРё РЅРѕРјРµСЂРѕРІ РѕР±С‹С‡РЅС‹С… РѕС‚С‡С‘С‚РѕРІ <B><font color=""mediumVioletRed"">РѕС‚С‡С‘С‚С‹ РЅРµ РЅР°Р№РґРµРЅС‹</font></B>. " _
+                                    & "РћС‚С‡С‘С‚ РЅР°С€РµР»СЃСЏ РЅРµ РІ РєРѕР»РѕРЅРєРµ РёРјРµРЅ РѕС‚С‡С‘С‚РѕРІ</P>"
                                 'fff = str & fff
                                 GoTo NotRA 'Exit Sub
                             End If
                         Else
-                            ' нет имя соответствующее форме имени отчёта отсутствует
-                            str = "<P>  <font color=""silver"">В столбце ячейки</font> номеров обычных отчётов " _
-                                & "<B><font color=""mediumVioletRed"">отчёты не найдены</font></B></P>"
+                            ' РЅРµС‚ РёРјСЏ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РµРµ С„РѕСЂРјРµ РёРјРµРЅРё РѕС‚С‡С‘С‚Р° РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚
+                            str = "<P>  <font color=""silver"">Р’ СЃС‚РѕР»Р±С†Рµ СЏС‡РµР№РєРё</font> РЅРѕРјРµСЂРѕРІ РѕР±С‹С‡РЅС‹С… РѕС‚С‡С‘С‚РѕРІ " _
+                                & "<B><font color=""mediumVioletRed"">РѕС‚С‡С‘С‚С‹ РЅРµ РЅР°Р№РґРµРЅС‹</font></B></P>"
                             'fff = str & fff
                             GoTo NotRA 'Exit Sub
                         End If
@@ -428,17 +428,17 @@ On Error GoTo ErrHandler
                                     ra_type:=c.Offset(0, cellSignOffset).value
                             End If
                         Loop Until c.Address = adr
-                        ' да, количество ячеек в диапазоне больше одной. Окончание ........................................................
+                        ' РґР°, РєРѕР»РёС‡РµСЃС‚РІРѕ СЏС‡РµРµРє РІ РґРёР°РїР°Р·РѕРЅРµ Р±РѕР»СЊС€Рµ РѕРґРЅРѕР№. РћРєРѕРЅС‡Р°РЅРёРµ ........................................................
                     Else
-                        ' нет, количество ячеек в диапазоне не больше одной ...............................................................
-                        ' ищем собственно отчёт
+                        ' РЅРµС‚, РєРѕР»РёС‡РµСЃС‚РІРѕ СЏС‡РµРµРє РІ РґРёР°РїР°Р·РѕРЅРµ РЅРµ Р±РѕР»СЊС€Рµ РѕРґРЅРѕР№ ...............................................................
+                        ' РёС‰РµРј СЃРѕР±СЃС‚РІРµРЅРЅРѕ РѕС‚С‡С‘С‚
                         Set c = .Find(what:="*-???????-*", LookAt:=xlPart)
-                        ' имеется ли имя соответствующее форме имени отчёта?
+                        ' РёРјРµРµС‚СЃСЏ Р»Рё РёРјСЏ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РµРµ С„РѕСЂРјРµ РёРјРµРЅРё РѕС‚С‡С‘С‚Р°?
                         If Not c Is Nothing Then
-                            ' да имя соответствующее форме имени отчёта имеется
-                            ' простой отчет нашелся в колонке имен отчётов?
+                            ' РґР° РёРјСЏ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РµРµ С„РѕСЂРјРµ РёРјРµРЅРё РѕС‚С‡С‘С‚Р° РёРјРµРµС‚СЃСЏ
+                            ' РїСЂРѕСЃС‚РѕР№ РѕС‚С‡РµС‚ РЅР°С€РµР»СЃСЏ РІ РєРѕР»РѕРЅРєРµ РёРјРµРЅ РѕС‚С‡С‘С‚РѕРІ?
                             If c.Column = cellRaNumColumn Then
-                            ' да, простой отчёт нашелся в колонке имен отчётов
+                            ' РґР°, РїСЂРѕСЃС‚РѕР№ РѕС‚С‡С‘С‚ РЅР°С€РµР»СЃСЏ РІ РєРѕР»РѕРЅРєРµ РёРјРµРЅ РѕС‚С‡С‘С‚РѕРІ
                             adr = c.Address
                                 RaReadOfExcel _
                                     ra:=c.value, ra_date:=StrToDate(c.Offset(0, cellRaDateOffset).value), ra_Row:=c.Row, _
@@ -454,122 +454,122 @@ On Error GoTo ErrHandler
                                     returnedReason:=c.Offset(0, cellReturnedReasonOffset).value, ra_org_sender:=c.Offset(0, cellSenderOffset).value, _
                                     ra_type:=c.Offset(0, cellSignOffset).value
                             Else
-                                ' нет, простой отчёт нашелся не в колонке имен отчётов
-                                str = "<P>  <font color=""silver"">В столбце ячейки номеров</font> обычных отчётов <B><font color=""mediumVioletRed"">отчёты не найдены</font></B>. Простой отчёт нашелся не в колонке имен отчётов</P>"
+                                ' РЅРµС‚, РїСЂРѕСЃС‚РѕР№ РѕС‚С‡С‘С‚ РЅР°С€РµР»СЃСЏ РЅРµ РІ РєРѕР»РѕРЅРєРµ РёРјРµРЅ РѕС‚С‡С‘С‚РѕРІ
+                                str = "<P>  <font color=""silver"">Р’ СЃС‚РѕР»Р±С†Рµ СЏС‡РµР№РєРё РЅРѕРјРµСЂРѕРІ</font> РѕР±С‹С‡РЅС‹С… РѕС‚С‡С‘С‚РѕРІ <B><font color=""mediumVioletRed"">РѕС‚С‡С‘С‚С‹ РЅРµ РЅР°Р№РґРµРЅС‹</font></B>. РџСЂРѕСЃС‚РѕР№ РѕС‚С‡С‘С‚ РЅР°С€РµР»СЃСЏ РЅРµ РІ РєРѕР»РѕРЅРєРµ РёРјРµРЅ РѕС‚С‡С‘С‚РѕРІ</P>"
                             End If
                             Else
-                            ' нет имя соответствующее форме имени отчёта отсутствует
-                            str = "<P>  <font color=""silver"">В столбце ячейки</font> номеров обычных отчётов <B><font color=""mediumVioletRed"">отчёты не найдены</font></B></P>"
+                            ' РЅРµС‚ РёРјСЏ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РµРµ С„РѕСЂРјРµ РёРјРµРЅРё РѕС‚С‡С‘С‚Р° РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚
+                            str = "<P>  <font color=""silver"">Р’ СЃС‚РѕР»Р±С†Рµ СЏС‡РµР№РєРё</font> РЅРѕРјРµСЂРѕРІ РѕР±С‹С‡РЅС‹С… РѕС‚С‡С‘С‚РѕРІ <B><font color=""mediumVioletRed"">РѕС‚С‡С‘С‚С‹ РЅРµ РЅР°Р№РґРµРЅС‹</font></B></P>"
                         End If
-                        ' нет, количество ячеек в диапазоне не больше одной. Окончание ....................................................
-                    End If ' здесь проверка на количество ячеек в диапазоне
+                        ' РЅРµС‚, РєРѕР»РёС‡РµСЃС‚РІРѕ СЏС‡РµРµРє РІ РґРёР°РїР°Р·РѕРЅРµ РЅРµ Р±РѕР»СЊС€Рµ РѕРґРЅРѕР№. РћРєРѕРЅС‡Р°РЅРёРµ ....................................................
+                    End If ' Р·РґРµСЃСЊ РїСЂРѕРІРµСЂРєР° РЅР° РєРѕР»РёС‡РµСЃС‚РІРѕ СЏС‡РµРµРє РІ РґРёР°РїР°Р·РѕРЅРµ
                     
-    ' метка для продолжения в случае отсутствия отчётов
+    ' РјРµС‚РєР° РґР»СЏ РїСЂРѕРґРѕР»Р¶РµРЅРёСЏ РІ СЃР»СѓС‡Р°Рµ РѕС‚СЃСѓС‚СЃС‚РІРёСЏ РѕС‚С‡С‘С‚РѕРІ
 NotRA:
                     
                 End With
-                ' проходим по диапазону отчётов. Окончание --------------------------------------------------------------------------------
+                ' РїСЂРѕС…РѕРґРёРј РїРѕ РґРёР°РїР°Р·РѕРЅСѓ РѕС‚С‡С‘С‚РѕРІ. РћРєРѕРЅС‡Р°РЅРёРµ --------------------------------------------------------------------------------
                 ' -------------------------------------------------------------------------------------------------------------------------
                 ' -------------------------------------------------------------------------------------------------------------------------
                 
                 fff = str & mobjParent.obgRa_aResult.value: str = ""
                 mobjParent.obgRa_aResult.value = fff
-            End If ' да, диапазон отчётов имеется
-        End If ' да, ячейка номеров отчёта и смещения найдены
+            End If ' РґР°, РґРёР°РїР°Р·РѕРЅ РѕС‚С‡С‘С‚РѕРІ РёРјРµРµС‚СЃСЏ
+        End If ' РґР°, СЏС‡РµР№РєР° РЅРѕРјРµСЂРѕРІ РѕС‚С‡С‘С‚Р° Рё СЃРјРµС‰РµРЅРёСЏ РЅР°Р№РґРµРЅС‹
     Else
-        ' нет, обновлять промежуточную таблицу по источнику данных не нужно
+        ' РЅРµС‚, РѕР±РЅРѕРІР»СЏС‚СЊ РїСЂРѕРјРµР¶СѓС‚РѕС‡РЅСѓСЋ С‚Р°Р±Р»РёС†Сѓ РїРѕ РёСЃС‚РѕС‡РЅРёРєСѓ РґР°РЅРЅС‹С… РЅРµ РЅСѓР¶РЅРѕ
     End If
     ' ===============================================================================================================================================
-    ' 1. Обновляем (или не обновляем) промежуточную таблицу по источнику данных. Окончание ==========================================================
+    ' 1. РћР±РЅРѕРІР»СЏРµРј (РёР»Рё РЅРµ РѕР±РЅРѕРІР»СЏРµРј) РїСЂРѕРјРµР¶СѓС‚РѕС‡РЅСѓСЋ С‚Р°Р±Р»РёС†Сѓ РїРѕ РёСЃС‚РѕС‡РЅРёРєСѓ РґР°РЅРЅС‹С…. РћРєРѕРЅС‡Р°РЅРёРµ ==========================================================
     ' ===============================================================================================================================================
     ' ===============================================================================================================================================
     
     
     
     ' ===============================================================================================================================================
-    ' Сверяем информацию по найденным отчётам агента с данными в БД
-    ' открываем набор записей всех отчётов ' --------------------------------------------------------------------------------------------------------
+    ' РЎРІРµСЂСЏРµРј РёРЅС„РѕСЂРјР°С†РёСЋ РїРѕ РЅР°Р№РґРµРЅРЅС‹Рј РѕС‚С‡С‘С‚Р°Рј Р°РіРµРЅС‚Р° СЃ РґР°РЅРЅС‹РјРё РІ Р‘Р”
+    ' РѕС‚РєСЂС‹РІР°РµРј РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РІСЃРµС… РѕС‚С‡С‘С‚РѕРІ ' --------------------------------------------------------------------------------------------------------
     Set rsRaAll = db.OpenRecordset("ra_ImpNewQuRa", dbOpenSnapshot)
     rsRaAll.MoveLast: rsRaAll.MoveFirst
-    mobjParent.obgRa_aResult.value = "<P>Всего найдено отчётов: <b>" & rsRaAll.RecordCount & "</b></P>" _
+    mobjParent.obgRa_aResult.value = "<P>Р’СЃРµРіРѕ РЅР°Р№РґРµРЅРѕ РѕС‚С‡С‘С‚РѕРІ: <b>" & rsRaAll.RecordCount & "</b></P>" _
         & mobjParent.obgRa_aResult.value
-    ' закрываем набор записей всех отчётов
+    ' Р·Р°РєСЂС‹РІР°РµРј РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РІСЃРµС… РѕС‚С‡С‘С‚РѕРІ
     rsRaAll.Close: Set rsRaAll = Nothing ' ----------------------------------------------------------------------------------------------------------
         
-    ' открываем набор записей отчётов отсутствующих в БД --------------------------------------------------------------------------------------------
+    ' РѕС‚РєСЂС‹РІР°РµРј РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РѕС‚С‡С‘С‚РѕРІ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёС… РІ Р‘Р” --------------------------------------------------------------------------------------------
     Set rsRaNew = db.OpenRecordset("select * from ra_ImpNewQuRa where ra_key is null", dbOpenSnapshot)
-    ' имеются ли отчёты отсутствующие в БД?
+    ' РёРјРµСЋС‚СЃСЏ Р»Рё РѕС‚С‡С‘С‚С‹ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёРµ РІ Р‘Р”?
     If rsRaNew.RecordCount > 0 Then
-        ' да, отчёты отсутствующие в БД имеются
+        ' РґР°, РѕС‚С‡С‘С‚С‹ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёРµ РІ Р‘Р” РёРјРµСЋС‚СЃСЏ
         rsRaNew.MoveLast: rsRaNew.MoveFirst
         mobjParent.obgRa_aResult.value = _
-            "<P><font color=""Crimson"">Найдено отчётов</font> отсутствующих в БД: <b>" & rsRaNew.RecordCount & "</b></P>" _
+            "<P><font color=""Crimson"">РќР°Р№РґРµРЅРѕ РѕС‚С‡С‘С‚РѕРІ</font> РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёС… РІ Р‘Р”: <b>" & rsRaNew.RecordCount & "</b></P>" _
             & mobjParent.obgRa_aResult.value
-        ' проходим по каждой записи отчёта отсутствующего в БД
+        ' РїСЂРѕС…РѕРґРёРј РїРѕ РєР°Р¶РґРѕР№ Р·Р°РїРёСЃРё РѕС‚С‡С‘С‚Р° РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РµРіРѕ РІ Р‘Р”
         iii = 0
         Do Until rsRaNew.EOF 'Or iii > 2
             str = "": iii = iii + 1
-            ' создаём отчёт агента по источнику
+            ' СЃРѕР·РґР°С‘Рј РѕС‚С‡С‘С‚ Р°РіРµРЅС‚Р° РїРѕ РёСЃС‚РѕС‡РЅРёРєСѓ
             AuditRaCreateNew rsRaNew, str, iii, db
             mobjParent.obgRa_aResult.value = str & mobjParent.obgRa_aResult.value
             rsRaNew.MoveNext
         Loop
     Else
-        ' нет, отчёты отсутствующие в БД отсутствуют
-        mobjParent.obgRa_aResult.value = "<P><font color=""SeaGreen"">Не найдены отчёты</font> <b>отсутствующие в БД</b>.</P>" _
+        ' РЅРµС‚, РѕС‚С‡С‘С‚С‹ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёРµ РІ Р‘Р” РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‚
+        mobjParent.obgRa_aResult.value = "<P><font color=""SeaGreen"">РќРµ РЅР°Р№РґРµРЅС‹ РѕС‚С‡С‘С‚С‹</font> <b>РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёРµ РІ Р‘Р”</b>.</P>" _
             & mobjParent.obgRa_aResult.value
-    End If ' имеются ли отчёты отсутствующие в БД?
-    ' закрываем набор записей отчётов отсутствующих в БД --------------------------------------------------------------------------------------------
+    End If ' РёРјРµСЋС‚СЃСЏ Р»Рё РѕС‚С‡С‘С‚С‹ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёРµ РІ Р‘Р”?
+    ' Р·Р°РєСЂС‹РІР°РµРј РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РѕС‚С‡С‘С‚РѕРІ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёС… РІ Р‘Р” --------------------------------------------------------------------------------------------
     rsRaNew.Close: Set rsRaNew = Nothing
     
-    ' открываем набор записей отчётов имеющих несоответствия в данных -------------------------------------------------------------------------------
+    ' РѕС‚РєСЂС‹РІР°РµРј РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РѕС‚С‡С‘С‚РѕРІ РёРјРµСЋС‰РёС… РЅРµСЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ РІ РґР°РЅРЅС‹С… -------------------------------------------------------------------------------
     Set rsRaErr = db.OpenRecordset("select * from ra_ImpNewQuRa where ra_key is not null and rs = false order by rainRow", dbOpenSnapshot)
-    ' имеются ли отчёты имеющие несоответствия в данных?
+    ' РёРјРµСЋС‚СЃСЏ Р»Рё РѕС‚С‡С‘С‚С‹ РёРјРµСЋС‰РёРµ РЅРµСЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ РІ РґР°РЅРЅС‹С…?
     If rsRaErr.RecordCount > 0 Then
-        ' да, отчёты имеющие несоответствия в данных имеются
+        ' РґР°, РѕС‚С‡С‘С‚С‹ РёРјРµСЋС‰РёРµ РЅРµСЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ РІ РґР°РЅРЅС‹С… РёРјРµСЋС‚СЃСЏ
         rsRaErr.MoveLast: rsRaErr.MoveFirst
         mobjParent.obgRa_aResult.value = _
-            "<P><font color=""Crimson"">Найдено отчётов</font> имеющих несоответствия в данных: <b>" & rsRaErr.RecordCount & "</b></P>" _
+            "<P><font color=""Crimson"">РќР°Р№РґРµРЅРѕ РѕС‚С‡С‘С‚РѕРІ</font> РёРјРµСЋС‰РёС… РЅРµСЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ РІ РґР°РЅРЅС‹С…: <b>" & rsRaErr.RecordCount & "</b></P>" _
             & mobjParent.obgRa_aResult.value
-        ' проходим по каждой записи отчёта имеющего несоответствия в данных
+        ' РїСЂРѕС…РѕРґРёРј РїРѕ РєР°Р¶РґРѕР№ Р·Р°РїРёСЃРё РѕС‚С‡С‘С‚Р° РёРјРµСЋС‰РµРіРѕ РЅРµСЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ РІ РґР°РЅРЅС‹С…
         iii = 0
         Do Until rsRaErr.EOF 'Or iii > 400
             str = "": iii = iii + 1
-            ' корректируем отчёт агента по источнику
+            ' РєРѕСЂСЂРµРєС‚РёСЂСѓРµРј РѕС‚С‡С‘С‚ Р°РіРµРЅС‚Р° РїРѕ РёСЃС‚РѕС‡РЅРёРєСѓ
             AuditRaEdit rsRaErr, str, iii, db
             mobjParent.obgRa_aResult.value = str & mobjParent.obgRa_aResult.value
             rsRaErr.MoveNext
         Loop
     Else
-        ' да, отчёты имеющие несоответствия в данных отсутствуют
-        mobjParent.obgRa_aResult.value = "<P><font color=""SeaGreen"">Не найдены отчёты</font> <b>имеющие несоответствия в данных</b>.</P>" _
+        ' РґР°, РѕС‚С‡С‘С‚С‹ РёРјРµСЋС‰РёРµ РЅРµСЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ РІ РґР°РЅРЅС‹С… РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‚
+        mobjParent.obgRa_aResult.value = "<P><font color=""SeaGreen"">РќРµ РЅР°Р№РґРµРЅС‹ РѕС‚С‡С‘С‚С‹</font> <b>РёРјРµСЋС‰РёРµ РЅРµСЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ РІ РґР°РЅРЅС‹С…</b>.</P>" _
             & mobjParent.obgRa_aResult.value
-    End If ' имеются ли отчёты имеющие несоответствия в данных? Окончание.
-    ' закрываем набор записей отчётов имеющих несоответствия в данных
+    End If ' РёРјРµСЋС‚СЃСЏ Р»Рё РѕС‚С‡С‘С‚С‹ РёРјРµСЋС‰РёРµ РЅРµСЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ РІ РґР°РЅРЅС‹С…? РћРєРѕРЅС‡Р°РЅРёРµ.
+    ' Р·Р°РєСЂС‹РІР°РµРј РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РѕС‚С‡С‘С‚РѕРІ РёРјРµСЋС‰РёС… РЅРµСЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ РІ РґР°РЅРЅС‹С…
     rsRaErr.Close: Set rsRaErr = Nothing ' ----------------------------------------------------------------------------------------------------------
     
-    ' открываем набор записей отчётов имеющихся в БД, но отсутствующих в источнике ------------------------------------------------------------------
+    ' РѕС‚РєСЂС‹РІР°РµРј РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РѕС‚С‡С‘С‚РѕРІ РёРјРµСЋС‰РёС…СЃСЏ РІ Р‘Р”, РЅРѕ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёС… РІ РёСЃС‚РѕС‡РЅРёРєРµ ------------------------------------------------------------------
     strSql = "SELECT p.rap_datePeriod, p.key, r.ra_key " _
         & "FROM (ags_ra_period AS p INNER JOIN ags_ra AS r ON p.key = r.ra_period) LEFT JOIN ra_ImpNewQuRa AS q ON r.ra_key = q.ra_key " _
         & "WHERE (((Year([p].[rap_datePeriod]))=" & CStr(mobjParent.year(db)) & ") AND ((q.rainRow) Is Null));"
     Set rsRaExr = db.OpenRecordset(strSql, dbOpenSnapshot)
-    ' имеются ли записи отчётов имеющихся в БД, но отсутствующих в источнике
+    ' РёРјРµСЋС‚СЃСЏ Р»Рё Р·Р°РїРёСЃРё РѕС‚С‡С‘С‚РѕРІ РёРјРµСЋС‰РёС…СЃСЏ РІ Р‘Р”, РЅРѕ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёС… РІ РёСЃС‚РѕС‡РЅРёРєРµ
     If rsRaExr.RecordCount > 0 Then
-        ' да, записи отчётов имеющихся в БД, но отсутствующих в источнике имеются
+        ' РґР°, Р·Р°РїРёСЃРё РѕС‚С‡С‘С‚РѕРІ РёРјРµСЋС‰РёС…СЃСЏ РІ Р‘Р”, РЅРѕ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёС… РІ РёСЃС‚РѕС‡РЅРёРєРµ РёРјРµСЋС‚СЃСЏ
         rsRaExr.MoveLast: rsRaExr.MoveFirst
         mobjParent.obgRa_aResult.value = _
-            "<P><font color=""Crimson"">Найдено отчётов</font> имеющихся в БД, но отсутствующих в источнике: <b>" & rsRaExr.RecordCount & "</b></P>" _
+            "<P><font color=""Crimson"">РќР°Р№РґРµРЅРѕ РѕС‚С‡С‘С‚РѕРІ</font> РёРјРµСЋС‰РёС…СЃСЏ РІ Р‘Р”, РЅРѕ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёС… РІ РёСЃС‚РѕС‡РЅРёРєРµ: <b>" & rsRaExr.RecordCount & "</b></P>" _
             & mobjParent.obgRa_aResult.value
-        ' проходим по каждой записи отчёта имеющего несоответствия в данных
+        ' РїСЂРѕС…РѕРґРёРј РїРѕ РєР°Р¶РґРѕР№ Р·Р°РїРёСЃРё РѕС‚С‡С‘С‚Р° РёРјРµСЋС‰РµРіРѕ РЅРµСЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ РІ РґР°РЅРЅС‹С…
         iii = 0
         Do Until rsRaExr.EOF 'Or iii > 400
             str = "": iii = iii + 1
-            ' отображаем отчёт агента по источнику
+            ' РѕС‚РѕР±СЂР°Р¶Р°РµРј РѕС‚С‡С‘С‚ Р°РіРµРЅС‚Р° РїРѕ РёСЃС‚РѕС‡РЅРёРєСѓ
             Set raRaExr = ClassFactory.raByKey(rsRaExr!ra_key, db)
             str = "<p>" & iii & ". <font color=""Crimson"">" & raRaExr.strRaName & "</font>"
             If mobjParent.blnAdt_AddRA Then
                 raRaExr.raDelete
-                str = str & ". <b>Удалён</b>"
+                str = str & ". <b>РЈРґР°Р»С‘РЅ</b>"
             End If
             str = str & ".</p>"
             Set raRaExr = Nothing
@@ -577,106 +577,106 @@ NotRA:
             mobjParent.obgRa_aResult.value = str & mobjParent.obgRa_aResult.value
             rsRaExr.MoveNext
         Loop
-    End If ' имеются ли записи отчётов имеющихся в БД, но отсутствующих в источнике
-    ' закрываем набор записей отчётов имеющихся в БД, но отсутствующих в источнике
+    End If ' РёРјРµСЋС‚СЃСЏ Р»Рё Р·Р°РїРёСЃРё РѕС‚С‡С‘С‚РѕРІ РёРјРµСЋС‰РёС…СЃСЏ РІ Р‘Р”, РЅРѕ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёС… РІ РёСЃС‚РѕС‡РЅРёРєРµ
+    ' Р·Р°РєСЂС‹РІР°РµРј РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РѕС‚С‡С‘С‚РѕРІ РёРјРµСЋС‰РёС…СЃСЏ РІ Р‘Р”, РЅРѕ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёС… РІ РёСЃС‚РѕС‡РЅРёРєРµ
     rsRaExr.Close: Set rsRaExr = Nothing ' ----------------------------------------------------------------------------------------------------------
-    ' Сверяем информацию по найденным отчётам агента с данными в БД. Окончание
+    ' РЎРІРµСЂСЏРµРј РёРЅС„РѕСЂРјР°С†РёСЋ РїРѕ РЅР°Р№РґРµРЅРЅС‹Рј РѕС‚С‡С‘С‚Р°Рј Р°РіРµРЅС‚Р° СЃ РґР°РЅРЅС‹РјРё РІ Р‘Р”. РћРєРѕРЅС‡Р°РЅРёРµ
     ' ===============================================================================================================================================
     
     ' ===============================================================================================================================================
-    ' Сверяем информацию по найденным изменениям отчётов агента с данными в БД
-    ' открываем набор записей всех изменений отчётов ' ----------------------------------------------------------------------------------------------
+    ' РЎРІРµСЂСЏРµРј РёРЅС„РѕСЂРјР°С†РёСЋ РїРѕ РЅР°Р№РґРµРЅРЅС‹Рј РёР·РјРµРЅРµРЅРёСЏРј РѕС‚С‡С‘С‚РѕРІ Р°РіРµРЅС‚Р° СЃ РґР°РЅРЅС‹РјРё РІ Р‘Р”
+    ' РѕС‚РєСЂС‹РІР°РµРј РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РІСЃРµС… РёР·РјРµРЅРµРЅРёР№ РѕС‚С‡С‘С‚РѕРІ ' ----------------------------------------------------------------------------------------------
     Set rsRaAll = db.OpenRecordset("ra_ImpNewQuRc", dbOpenSnapshot)
     rsRaAll.MoveLast: rsRaAll.MoveFirst
-    mobjParent.obgRa_aResult.value = "<P>Всего найдено изменений: <b>" & rsRaAll.RecordCount & "</b></P>" _
+    mobjParent.obgRa_aResult.value = "<P>Р’СЃРµРіРѕ РЅР°Р№РґРµРЅРѕ РёР·РјРµРЅРµРЅРёР№: <b>" & rsRaAll.RecordCount & "</b></P>" _
         & mobjParent.obgRa_aResult.value
-    ' закрываем набор записей всех изменений отчётов
+    ' Р·Р°РєСЂС‹РІР°РµРј РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РІСЃРµС… РёР·РјРµРЅРµРЅРёР№ РѕС‚С‡С‘С‚РѕРІ
     rsRaAll.Close: Set rsRaAll = Nothing ' ----------------------------------------------------------------------------------------------------------
         
-    ' открываем набор записей изменений отчётов отсутствующих в БД ----------------------------------------------------------------------------------
+    ' РѕС‚РєСЂС‹РІР°РµРј РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РёР·РјРµРЅРµРЅРёР№ РѕС‚С‡С‘С‚РѕРІ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёС… РІ Р‘Р” ----------------------------------------------------------------------------------
     Set rsRaNew = db.OpenRecordset("select * from ra_ImpNewQuRc where rac_key is null", dbOpenSnapshot)
-    ' имеются ли изменения отсутствующие в БД?
+    ' РёРјРµСЋС‚СЃСЏ Р»Рё РёР·РјРµРЅРµРЅРёСЏ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёРµ РІ Р‘Р”?
     If rsRaNew.RecordCount > 0 Then
-        ' да, изменения отсутствующие в БД имеются
+        ' РґР°, РёР·РјРµРЅРµРЅРёСЏ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёРµ РІ Р‘Р” РёРјРµСЋС‚СЃСЏ
         rsRaNew.MoveLast: rsRaNew.MoveFirst
         mobjParent.obgRa_aResult.value = _
-            "<P><font color=""Crimson"">Найдено изменений</font> отсутствующих в БД: <b>" & rsRaNew.RecordCount & "</b></P>" _
+            "<P><font color=""Crimson"">РќР°Р№РґРµРЅРѕ РёР·РјРµРЅРµРЅРёР№</font> РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёС… РІ Р‘Р”: <b>" & rsRaNew.RecordCount & "</b></P>" _
             & mobjParent.obgRa_aResult.value
-        ' проходим по каждой записи изменения отсутствующего в БД
+        ' РїСЂРѕС…РѕРґРёРј РїРѕ РєР°Р¶РґРѕР№ Р·Р°РїРёСЃРё РёР·РјРµРЅРµРЅРёСЏ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РµРіРѕ РІ Р‘Р”
         iii = 0
         Do Until rsRaNew.EOF 'Or iii > 2
             str = "": iii = iii + 1
-            ' создаём изменение отчёта агента по источнику
+            ' СЃРѕР·РґР°С‘Рј РёР·РјРµРЅРµРЅРёРµ РѕС‚С‡С‘С‚Р° Р°РіРµРЅС‚Р° РїРѕ РёСЃС‚РѕС‡РЅРёРєСѓ
             AuditRcCreateNew rsRaNew, str, iii, db
             mobjParent.obgRa_aResult.value = str & mobjParent.obgRa_aResult.value
             rsRaNew.MoveNext
         Loop
     Else
-        ' нет, изменения отсутствующие в БД отсутствуют
-        mobjParent.obgRa_aResult.value = "<P><font color=""SeaGreen"">Не найдены изменения</font> <b>отсутствующие в БД</b>.</P>" _
+        ' РЅРµС‚, РёР·РјРµРЅРµРЅРёСЏ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёРµ РІ Р‘Р” РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‚
+        mobjParent.obgRa_aResult.value = "<P><font color=""SeaGreen"">РќРµ РЅР°Р№РґРµРЅС‹ РёР·РјРµРЅРµРЅРёСЏ</font> <b>РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёРµ РІ Р‘Р”</b>.</P>" _
             & mobjParent.obgRa_aResult.value
-    End If ' имеются ли изменения отсутствующие в БД?
-    ' закрываем набор записей изменений отчётов отсутствующих в БД ----------------------------------------------------------------------------------
+    End If ' РёРјРµСЋС‚СЃСЏ Р»Рё РёР·РјРµРЅРµРЅРёСЏ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёРµ РІ Р‘Р”?
+    ' Р·Р°РєСЂС‹РІР°РµРј РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РёР·РјРµРЅРµРЅРёР№ РѕС‚С‡С‘С‚РѕРІ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёС… РІ Р‘Р” ----------------------------------------------------------------------------------
     rsRaNew.Close: Set rsRaNew = Nothing
     
-    ' открываем набор записей изменений отчётов имеющих несоответствия в данных ---------------------------------------------------------------------
+    ' РѕС‚РєСЂС‹РІР°РµРј РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РёР·РјРµРЅРµРЅРёР№ РѕС‚С‡С‘С‚РѕРІ РёРјРµСЋС‰РёС… РЅРµСЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ РІ РґР°РЅРЅС‹С… ---------------------------------------------------------------------
     Set rsRaErr = db.OpenRecordset("select * from ra_ImpNewQuRc where rac_key is not null and rs = false order by rainRow", dbOpenSnapshot)
-    ' имеются ли изменения имеющие несоответствия в данных?
+    ' РёРјРµСЋС‚СЃСЏ Р»Рё РёР·РјРµРЅРµРЅРёСЏ РёРјРµСЋС‰РёРµ РЅРµСЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ РІ РґР°РЅРЅС‹С…?
     If rsRaErr.RecordCount > 0 Then
-        ' да, изменения имеющие несоответствия в данных имеются
+        ' РґР°, РёР·РјРµРЅРµРЅРёСЏ РёРјРµСЋС‰РёРµ РЅРµСЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ РІ РґР°РЅРЅС‹С… РёРјРµСЋС‚СЃСЏ
         rsRaErr.MoveLast: rsRaErr.MoveFirst
         mobjParent.obgRa_aResult.value = _
-            "<P><font color=""Crimson"">Найдено изменений</font> имеющих несоответствия в данных: <b>" & rsRaErr.RecordCount & "</b></P>" _
+            "<P><font color=""Crimson"">РќР°Р№РґРµРЅРѕ РёР·РјРµРЅРµРЅРёР№</font> РёРјРµСЋС‰РёС… РЅРµСЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ РІ РґР°РЅРЅС‹С…: <b>" & rsRaErr.RecordCount & "</b></P>" _
             & mobjParent.obgRa_aResult.value
-        ' проходим по каждой записи изменения имеющего несоответствия в данных
+        ' РїСЂРѕС…РѕРґРёРј РїРѕ РєР°Р¶РґРѕР№ Р·Р°РїРёСЃРё РёР·РјРµРЅРµРЅРёСЏ РёРјРµСЋС‰РµРіРѕ РЅРµСЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ РІ РґР°РЅРЅС‹С…
         iii = 0
         Do Until rsRaErr.EOF 'Or iii > 2
             str = "": iii = iii + 1
-            ' корректируем изменение отчёта агента по источнику
+            ' РєРѕСЂСЂРµРєС‚РёСЂСѓРµРј РёР·РјРµРЅРµРЅРёРµ РѕС‚С‡С‘С‚Р° Р°РіРµРЅС‚Р° РїРѕ РёСЃС‚РѕС‡РЅРёРєСѓ
             AuditRcEdit rsRaErr, str, iii, db
             mobjParent.obgRa_aResult.value = str & mobjParent.obgRa_aResult.value
             rsRaErr.MoveNext
         Loop
     Else
-        ' нет, изменения имеющие несоответствия в данных отсутствуют
-        mobjParent.obgRa_aResult.value = "<P><font color=""SeaGreen"">Не найдены изменения</font> <b>имеющие несоответствия в данных</b>.</P>" _
+        ' РЅРµС‚, РёР·РјРµРЅРµРЅРёСЏ РёРјРµСЋС‰РёРµ РЅРµСЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ РІ РґР°РЅРЅС‹С… РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‚
+        mobjParent.obgRa_aResult.value = "<P><font color=""SeaGreen"">РќРµ РЅР°Р№РґРµРЅС‹ РёР·РјРµРЅРµРЅРёСЏ</font> <b>РёРјРµСЋС‰РёРµ РЅРµСЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ РІ РґР°РЅРЅС‹С…</b>.</P>" _
             & mobjParent.obgRa_aResult.value
-    End If ' имеются ли отчёты имеющие несоответствия в данных? Окончание.
-    ' закрываем набор записей изменений отчётов имеющих несоответствия в данных
+    End If ' РёРјРµСЋС‚СЃСЏ Р»Рё РѕС‚С‡С‘С‚С‹ РёРјРµСЋС‰РёРµ РЅРµСЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ РІ РґР°РЅРЅС‹С…? РћРєРѕРЅС‡Р°РЅРёРµ.
+    ' Р·Р°РєСЂС‹РІР°РµРј РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РёР·РјРµРЅРµРЅРёР№ РѕС‚С‡С‘С‚РѕРІ РёРјРµСЋС‰РёС… РЅРµСЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ РІ РґР°РЅРЅС‹С…
     rsRaErr.Close: Set rsRaErr = Nothing ' ----------------------------------------------------------------------------------------------------------
     
-    ' открываем набор записей изменений отчётов имеющихся в БД, но отсутствующих в источнике --------------------------------------------------------
+    ' РѕС‚РєСЂС‹РІР°РµРј РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РёР·РјРµРЅРµРЅРёР№ РѕС‚С‡С‘С‚РѕРІ РёРјРµСЋС‰РёС…СЃСЏ РІ Р‘Р”, РЅРѕ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёС… РІ РёСЃС‚РѕС‡РЅРёРєРµ --------------------------------------------------------
     strSql = "SELECT c.rac_key, q.rainRow " _
         & "FROM ags_ra_change AS c INNER JOIN ra_ImpNewQuRc AS q ON c.rac_key = q.rac_key " _
         & "WHERE (((q.rainRow) Is Null) AND ((Year([rac_datePeriod]))=" & CStr(mobjParent.year(db)) & "));"
     Set rsRaExr = db.OpenRecordset(strSql, dbOpenSnapshot)
-    ' имеются ли записи отчётов имеющихся в БД, но отсутствующих в источнике
+    ' РёРјРµСЋС‚СЃСЏ Р»Рё Р·Р°РїРёСЃРё РѕС‚С‡С‘С‚РѕРІ РёРјРµСЋС‰РёС…СЃСЏ РІ Р‘Р”, РЅРѕ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёС… РІ РёСЃС‚РѕС‡РЅРёРєРµ
     If rsRaExr.RecordCount > 0 Then
-        ' да, записи отчётов имеющихся в БД, но отсутствующих в источнике имеются
+        ' РґР°, Р·Р°РїРёСЃРё РѕС‚С‡С‘С‚РѕРІ РёРјРµСЋС‰РёС…СЃСЏ РІ Р‘Р”, РЅРѕ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёС… РІ РёСЃС‚РѕС‡РЅРёРєРµ РёРјРµСЋС‚СЃСЏ
         rsRaExr.MoveLast: rsRaExr.MoveFirst
         mobjParent.obgRa_aResult.value = _
-            "<P><font color=""Crimson"">Найдено изменений отчётов</font> имеющихся в БД, но отсутствующих в источнике: <b>" _
+            "<P><font color=""Crimson"">РќР°Р№РґРµРЅРѕ РёР·РјРµРЅРµРЅРёР№ РѕС‚С‡С‘С‚РѕРІ</font> РёРјРµСЋС‰РёС…СЃСЏ РІ Р‘Р”, РЅРѕ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёС… РІ РёСЃС‚РѕС‡РЅРёРєРµ: <b>" _
             & rsRaExr.RecordCount & "</b></P>" & mobjParent.obgRa_aResult.value
-        ' проходим по каждой записи отчёта имеющего несоответствия в данных
+        ' РїСЂРѕС…РѕРґРёРј РїРѕ РєР°Р¶РґРѕР№ Р·Р°РїРёСЃРё РѕС‚С‡С‘С‚Р° РёРјРµСЋС‰РµРіРѕ РЅРµСЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ РІ РґР°РЅРЅС‹С…
         iii = 0
         Do Until rsRaExr.EOF 'Or iii > 400
             str = "": iii = iii + 1
-            ' отображаем отчёт агента по источнику
+            ' РѕС‚РѕР±СЂР°Р¶Р°РµРј РѕС‚С‡С‘С‚ Р°РіРµРЅС‚Р° РїРѕ РёСЃС‚РѕС‡РЅРёРєСѓ
             Set rcRcExr = ClassFactory.rcByKey(rsRaExr!rac_key, db)
             str = "<p>" & iii & ". <font color=""Crimson"">" & rcRcExr.strRcName & "</font>"
             If mobjParent.blnAdt_AddRA Then
                 rcRcExr.rcDelete
-                str = str & ". <b>Удалёно</b>"
+                str = str & ". <b>РЈРґР°Р»С‘РЅРѕ</b>"
             End If
             str = str & ".</p>"
             Set rcRcExr = Nothing
             mobjParent.obgRa_aResult.value = str & mobjParent.obgRa_aResult.value
             rsRaExr.MoveNext
         Loop
-    End If ' имеются ли записи отчётов имеющихся в БД, но отсутствующих в источнике
-    ' закрываем набор записей изменений отчётов имеющихся в БД, но отсутствующих в источнике
+    End If ' РёРјРµСЋС‚СЃСЏ Р»Рё Р·Р°РїРёСЃРё РѕС‚С‡С‘С‚РѕРІ РёРјРµСЋС‰РёС…СЃСЏ РІ Р‘Р”, РЅРѕ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёС… РІ РёСЃС‚РѕС‡РЅРёРєРµ
+    ' Р·Р°РєСЂС‹РІР°РµРј РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РёР·РјРµРЅРµРЅРёР№ РѕС‚С‡С‘С‚РѕРІ РёРјРµСЋС‰РёС…СЃСЏ РІ Р‘Р”, РЅРѕ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёС… РІ РёСЃС‚РѕС‡РЅРёРєРµ
     rsRaExr.Close: Set rsRaExr = Nothing ' ----------------------------------------------------------------------------------------------------------
-    ' Сверяем информацию по найденным изменениям отчётов агента с данными в БД. Окончание
+    ' РЎРІРµСЂСЏРµРј РёРЅС„РѕСЂРјР°С†РёСЋ РїРѕ РЅР°Р№РґРµРЅРЅС‹Рј РёР·РјРµРЅРµРЅРёСЏРј РѕС‚С‡С‘С‚РѕРІ Р°РіРµРЅС‚Р° СЃ РґР°РЅРЅС‹РјРё РІ Р‘Р”. РћРєРѕРЅС‡Р°РЅРёРµ
     ' ===============================================================================================================================================
     
 
@@ -685,89 +685,89 @@ NormalExit:
 ErrHandler:
     MsgBox Err.Description & vbCrLf & "Error number: " & Err.Number & vbCrLf & cstrTitle, vbExclamation, cstrTitle: Resume NormalExit
 End Sub
-' работаем с листом Отчётов всех агентов. 05.07.2022. Окончание *************************************************************************************
+' СЂР°Р±РѕС‚Р°РµРј СЃ Р»РёСЃС‚РѕРј РћС‚С‡С‘С‚РѕРІ РІСЃРµС… Р°РіРµРЅС‚РѕРІ. 05.07.2022. РћРєРѕРЅС‡Р°РЅРёРµ *************************************************************************************
 
 
 
 ' ***************************************************************************************************************************************************
-' создаём изменение отчёта агента по источнику. 22.07.2022.
+' СЃРѕР·РґР°С‘Рј РёР·РјРµРЅРµРЅРёРµ РѕС‚С‡С‘С‚Р° Р°РіРµРЅС‚Р° РїРѕ РёСЃС‚РѕС‡РЅРёРєСѓ. 22.07.2022.
 Private Sub AuditRcCreateNew(ByRef rsRaNew As DAO.Recordset, ByRef str As String, ByRef iii As Integer, db As DAO.Database)
     '------------------------------------------------------------------------------------------------------------------------------------------------
     Dim rcRc As rc, rcsmRcSm As rcSm
     '------------------------------------------------------------------------------------------------------------------------------------------------
-    Const cstrTitle As String = "Процедура *Создаём изменение отчёта агента по источнику*"
+    Const cstrTitle As String = "РџСЂРѕС†РµРґСѓСЂР° *РЎРѕР·РґР°С‘Рј РёР·РјРµРЅРµРЅРёРµ РѕС‚С‡С‘С‚Р° Р°РіРµРЅС‚Р° РїРѕ РёСЃС‚РѕС‡РЅРёРєСѓ*"
     '------------------------------------------------------------------------------------------------------------------------------------------------
 On Error GoTo ErrHandler
 
-    ' открываем абзац
+    ' РѕС‚РєСЂС‹РІР°РµРј Р°Р±Р·Р°С†
     str = "<P>" & iii & ". " & rsRaNew!rainRow & ". <font color=""OliveDrab"">" & rsRaNew!rainRaNum & "</font>"
     
-    ' нужно ли обновлять базу данных?
+    ' РЅСѓР¶РЅРѕ Р»Рё РѕР±РЅРѕРІР»СЏС‚СЊ Р±Р°Р·Сѓ РґР°РЅРЅС‹С…?
     If mobjParent.blnAdt_AddRA Then
-        ' да, обновлять базу данных нужно
-        ' имеется ли ключ отчёта, к которому изменение?
+        ' РґР°, РѕР±РЅРѕРІР»СЏС‚СЊ Р±Р°Р·Сѓ РґР°РЅРЅС‹С… РЅСѓР¶РЅРѕ
+        ' РёРјРµРµС‚СЃСЏ Р»Рё РєР»СЋС‡ РѕС‚С‡С‘С‚Р°, Рє РєРѕС‚РѕСЂРѕРјСѓ РёР·РјРµРЅРµРЅРёРµ?
         If Not IsNull(rsRaNew!ra_key) Then
-            ' да, ключ отчёта, к которому изменение имеется
-            ' имеется ли ключ периода?
+            ' РґР°, РєР»СЋС‡ РѕС‚С‡С‘С‚Р°, Рє РєРѕС‚РѕСЂРѕРјСѓ РёР·РјРµРЅРµРЅРёРµ РёРјРµРµС‚СЃСЏ
+            ' РёРјРµРµС‚СЃСЏ Р»Рё РєР»СЋС‡ РїРµСЂРёРѕРґР°?
             If Not IsNull(rsRaNew!rcPeriod) And Not rsRaNew!rcPeriod = 0 Then
-                ' да, ключ периода имеется
-                ' имеется ли номер изменения?
+                ' РґР°, РєР»СЋС‡ РїРµСЂРёРѕРґР° РёРјРµРµС‚СЃСЏ
+                ' РёРјРµРµС‚СЃСЏ Р»Рё РЅРѕРјРµСЂ РёР·РјРµРЅРµРЅРёСЏ?
                 If Not IsNull(rsRaNew!num) And Not rsRaNew!num = 0 Then
-                    ' да, номер изменения имеется
-                    '  имеется ли ключ отправителя?
+                    ' РґР°, РЅРѕРјРµСЂ РёР·РјРµРЅРµРЅРёСЏ РёРјРµРµС‚СЃСЏ
+                    '  РёРјРµРµС‚СЃСЏ Р»Рё РєР»СЋС‡ РѕС‚РїСЂР°РІРёС‚РµР»СЏ?
                     If Not IsNull(rsRaNew!exSender) And Not rsRaNew!exSender = 0 Then
-                        ' да, ключ отправителя имеется
-                        ' создаём объект
+                        ' РґР°, РєР»СЋС‡ РѕС‚РїСЂР°РІРёС‚РµР»СЏ РёРјРµРµС‚СЃСЏ
+                        ' СЃРѕР·РґР°С‘Рј РѕР±СЉРµРєС‚
                         Set rcRc = ClassFactory.rcCreateNew(db, rsRaNew!ra_key, rsRaNew!num, rsRaNew!rcPeriod, rsRaNew!exSender, _
                             rsRaNew!exDate, rsRaNew!exArrv, rsRaNew!exArrvDate, rsRaNew!exArrvDateFact, _
                             rsRaNew!exRetn, rsRaNew!exRetnDate, rsRaNew!exRetnRsn, rsRaNew!exSent, rsRaNew!exSentDate, Null, Null)
-                            ' объект создан?
+                            ' РѕР±СЉРµРєС‚ СЃРѕР·РґР°РЅ?
                         If Not rcRc Is Nothing Then
-                            ' да, объект удалось создать
-                            str = str & ". Создано изменение отчёта, ключ: " & rcRc.lngRcKey
-                            ' имется ли сумма какого либо вида?
+                            ' РґР°, РѕР±СЉРµРєС‚ СѓРґР°Р»РѕСЃСЊ СЃРѕР·РґР°С‚СЊ
+                            str = str & ". РЎРѕР·РґР°РЅРѕ РёР·РјРµРЅРµРЅРёРµ РѕС‚С‡С‘С‚Р°, РєР»СЋС‡: " & rcRc.lngRcKey
+                            ' РёРјРµС‚СЃСЏ Р»Рё СЃСѓРјРјР° РєР°РєРѕРіРѕ Р»РёР±Рѕ РІРёРґР°?
                             If Not ( _
                                     IIf(IsNull(rsRaNew!exTtl), 0, rsRaNew!exTtl) + IIf(IsNull(rsRaNew!exWork), 0, rsRaNew!exWork) + _
                                     IIf(IsNull(rsRaNew!exEquip), 0, rsRaNew!exEquip) + IIf(IsNull(rsRaNew!exOthers), 0, rsRaNew!exOthers) _
                                     = 0) _
                                 Then
-                                ' создаём объект суммы
+                                ' СЃРѕР·РґР°С‘Рј РѕР±СЉРµРєС‚ СЃСѓРјРјС‹
                                 Set rcsmRcSm = rcRc.rcsmRcSmAdd(rsRaNew!exTtl, rsRaNew!exWork, rsRaNew!exEquip, rsRaNew!exOthers)
                                 If Not rcsmRcSm Is Nothing Then
-                                    str = str & ". Сумма: " _
-                                        & "всего: <font color=""SeaGreen"">" & FormatCurrency(rcsmRcSm.curRcSmTtl) & "</font>" _
-                                        & ", СМР: <font color=""SeaGreen"">" & FormatCurrency(rcsmRcSm.curRcSmWork) & "</font>" _
-                                        & ", Оборудование: <font color=""SeaGreen"">" & FormatCurrency(rcsmRcSm.curRcSmEquip) & "</font>" _
-                                        & ", Прочие: <font color=""SeaGreen"">" & FormatCurrency(rcsmRcSm.curRcSmOthers) & "</font>"
-                                    ' ликвидируем объект
+                                    str = str & ". РЎСѓРјРјР°: " _
+                                        & "РІСЃРµРіРѕ: <font color=""SeaGreen"">" & FormatCurrency(rcsmRcSm.curRcSmTtl) & "</font>" _
+                                        & ", РЎРњР : <font color=""SeaGreen"">" & FormatCurrency(rcsmRcSm.curRcSmWork) & "</font>" _
+                                        & ", РћР±РѕСЂСѓРґРѕРІР°РЅРёРµ: <font color=""SeaGreen"">" & FormatCurrency(rcsmRcSm.curRcSmEquip) & "</font>" _
+                                        & ", РџСЂРѕС‡РёРµ: <font color=""SeaGreen"">" & FormatCurrency(rcsmRcSm.curRcSmOthers) & "</font>"
+                                    ' Р»РёРєРІРёРґРёСЂСѓРµРј РѕР±СЉРµРєС‚
                                     Set rcsmRcSm = Nothing
                                 Else
-                                    str = str & ". <font color=""OrangeRed""><b>Сумма, хотя нужна, не создана!</b></font>"
+                                    str = str & ". <font color=""OrangeRed""><b>РЎСѓРјРјР°, С…РѕС‚СЏ РЅСѓР¶РЅР°, РЅРµ СЃРѕР·РґР°РЅР°!</b></font>"
                                 End If
                             Else
-                                str = str & ". Сумма не требуется."
-                            End If ' имется ли сумма какого либо вида?
-                            ' ликвидируем объект
+                                str = str & ". РЎСѓРјРјР° РЅРµ С‚СЂРµР±СѓРµС‚СЃСЏ."
+                            End If ' РёРјРµС‚СЃСЏ Р»Рё СЃСѓРјРјР° РєР°РєРѕРіРѕ Р»РёР±Рѕ РІРёРґР°?
+                            ' Р»РёРєРІРёРґРёСЂСѓРµРј РѕР±СЉРµРєС‚
                             Set rcRc = Nothing
                         Else
-                            ' нет, объект создать не удалось
-                            str = str & ". <font color=""OrangeRed""><b>Создать изменение отчёта не удалось!</b></font>"
-                        End If ' объект создан?
+                            ' РЅРµС‚, РѕР±СЉРµРєС‚ СЃРѕР·РґР°С‚СЊ РЅРµ СѓРґР°Р»РѕСЃСЊ
+                            str = str & ". <font color=""OrangeRed""><b>РЎРѕР·РґР°С‚СЊ РёР·РјРµРЅРµРЅРёРµ РѕС‚С‡С‘С‚Р° РЅРµ СѓРґР°Р»РѕСЃСЊ!</b></font>"
+                        End If ' РѕР±СЉРµРєС‚ СЃРѕР·РґР°РЅ?
                     Else
-                        str = str & ". <font color=""OrangeRed""><b>Нет отправителя!</b></font>"
-                    End If '  имеется ли ключ отправителя?
+                        str = str & ". <font color=""OrangeRed""><b>РќРµС‚ РѕС‚РїСЂР°РІРёС‚РµР»СЏ!</b></font>"
+                    End If '  РёРјРµРµС‚СЃСЏ Р»Рё РєР»СЋС‡ РѕС‚РїСЂР°РІРёС‚РµР»СЏ?
                 Else
-                    str = str & ". <font color=""OrangeRed""><b>Нет номера изменения!</b></font>"
-                End If ' имеется ли номер изменения?
+                    str = str & ". <font color=""OrangeRed""><b>РќРµС‚ РЅРѕРјРµСЂР° РёР·РјРµРЅРµРЅРёСЏ!</b></font>"
+                End If ' РёРјРµРµС‚СЃСЏ Р»Рё РЅРѕРјРµСЂ РёР·РјРµРЅРµРЅРёСЏ?
             Else
-                str = str & ". <font color=""OrangeRed""><b>Нет периода!</b></font>"
-            End If ' имеется ли ключ периода?
+                str = str & ". <font color=""OrangeRed""><b>РќРµС‚ РїРµСЂРёРѕРґР°!</b></font>"
+            End If ' РёРјРµРµС‚СЃСЏ Р»Рё РєР»СЋС‡ РїРµСЂРёРѕРґР°?
         Else
-            str = str & ". <font color=""OrangeRed""><b>Нет ключа отчёта!</b></font>"
-        End If ' имеется ли ключ отчёта, к которому изменение?
-    End If ' нужно ли обновлять базу данных?
+            str = str & ". <font color=""OrangeRed""><b>РќРµС‚ РєР»СЋС‡Р° РѕС‚С‡С‘С‚Р°!</b></font>"
+        End If ' РёРјРµРµС‚СЃСЏ Р»Рё РєР»СЋС‡ РѕС‚С‡С‘С‚Р°, Рє РєРѕС‚РѕСЂРѕРјСѓ РёР·РјРµРЅРµРЅРёРµ?
+    End If ' РЅСѓР¶РЅРѕ Р»Рё РѕР±РЅРѕРІР»СЏС‚СЊ Р±Р°Р·Сѓ РґР°РЅРЅС‹С…?
 
-    ' закрываем абзац
+    ' Р·Р°РєСЂС‹РІР°РµРј Р°Р±Р·Р°С†
     str = str & "</P>"
 
 NormalExit:
@@ -775,200 +775,200 @@ NormalExit:
 ErrHandler:
     MsgBox Err.Description & vbCrLf & "Error number: " & Err.Number & vbCrLf & cstrTitle, vbExclamation, cstrTitle: Resume NormalExit
 End Sub
-' создаём изменение отчёта агента по источнику. 22.07.2022. Окончание
+' СЃРѕР·РґР°С‘Рј РёР·РјРµРЅРµРЅРёРµ РѕС‚С‡С‘С‚Р° Р°РіРµРЅС‚Р° РїРѕ РёСЃС‚РѕС‡РЅРёРєСѓ. 22.07.2022. РћРєРѕРЅС‡Р°РЅРёРµ
 ' ***************************************************************************************************************************************************
 
 
 
 
 ' ***************************************************************************************************************************************************
-' корректируем изменение отчёта агента по источнику. 22.07.2022.
+' РєРѕСЂСЂРµРєС‚РёСЂСѓРµРј РёР·РјРµРЅРµРЅРёРµ РѕС‚С‡С‘С‚Р° Р°РіРµРЅС‚Р° РїРѕ РёСЃС‚РѕС‡РЅРёРєСѓ. 22.07.2022.
 Private Sub AuditRcEdit(ByRef rsRaErr As DAO.Recordset, ByRef str As String, ByRef iii As Integer, db As DAO.Database)
     '------------------------------------------------------------------------------------------------------------------------------------------------
     Dim rcRc As rc, rcsmRcSm As rcSm
     '------------------------------------------------------------------------------------------------------------------------------------------------
-    Const cstrTitle As String = "Процедура *Корректируем изменение отчёта агента по источнику*"
+    Const cstrTitle As String = "РџСЂРѕС†РµРґСѓСЂР° *РљРѕСЂСЂРµРєС‚РёСЂСѓРµРј РёР·РјРµРЅРµРЅРёРµ РѕС‚С‡С‘С‚Р° Р°РіРµРЅС‚Р° РїРѕ РёСЃС‚РѕС‡РЅРёРєСѓ*"
 '----------------------------------------------------------------------------------------------------------------------------------------------------
 On Error GoTo ErrHandler
 
-    ' создаём объект изменения отчёта агента агента
+    ' СЃРѕР·РґР°С‘Рј РѕР±СЉРµРєС‚ РёР·РјРµРЅРµРЅРёСЏ РѕС‚С‡С‘С‚Р° Р°РіРµРЅС‚Р° Р°РіРµРЅС‚Р°
     Set rcRc = ClassFactory.rcByKey(rsRaErr!rac_key, db)
-    ' имеется ли такое изменение?
+    ' РёРјРµРµС‚СЃСЏ Р»Рё С‚Р°РєРѕРµ РёР·РјРµРЅРµРЅРёРµ?
     If Not rcRc Is Nothing Then
-        ' да, такое изменение имеется
+        ' РґР°, С‚Р°РєРѕРµ РёР·РјРµРЅРµРЅРёРµ РёРјРµРµС‚СЃСЏ
                 
-        ' открываем абзац
+        ' РѕС‚РєСЂС‹РІР°РµРј Р°Р±Р·Р°С†
         str = "<P>" & iii & ". " & rsRaErr!rainRow & ". <font color=""OliveDrab"">" & rcRc.strRcName & "</font>"
         
-        ' письмо поступления не соответствует?
+        ' РїРёСЃСЊРјРѕ РїРѕСЃС‚СѓРїР»РµРЅРёСЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
         If rsRaErr!rsArrv = False Then
-            ' да, письмо поступления не соответствует
-            str = str & ". Письмо поступления, БД: <font color=""Crimson"">" & rcRc.strRaArrived _
-                & "</font>, источник: <font color=""Peru"">" & rsRaErr!exArrv & "</font>"
+            ' РґР°, РїРёСЃСЊРјРѕ РїРѕСЃС‚СѓРїР»РµРЅРёСЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚
+            str = str & ". РџРёСЃСЊРјРѕ РїРѕСЃС‚СѓРїР»РµРЅРёСЏ, Р‘Р”: <font color=""Crimson"">" & rcRc.strRaArrived _
+                & "</font>, РёСЃС‚РѕС‡РЅРёРє: <font color=""Peru"">" & rsRaErr!exArrv & "</font>"
             If mobjParent.blnAdt_AddRA Then
                 rcRc.strRaArrived = rsRaErr!exArrv
-                str = str & ". Обновлено, БД: <font color=""SeaGreen"">" & rcRc.strRaArrived & "</font>"
+                str = str & ". РћР±РЅРѕРІР»РµРЅРѕ, Р‘Р”: <font color=""SeaGreen"">" & rcRc.strRaArrived & "</font>"
             End If
         End If
 
-        ' дата письма поступления не соответствует?
+        ' РґР°С‚Р° РїРёСЃСЊРјР° РїРѕСЃС‚СѓРїР»РµРЅРёСЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
         If rsRaErr!rsArrvDate = False Then
-            ' да, дата письма поступления не соответствует
-            str = str & ". Дата поступления, БД: <font color=""Crimson"">" & rcRc.dateRaArrivedDate _
-                & "</font>, источник: <font color=""Peru"">" & rsRaErr!exArrvDate & "</font>"
+            ' РґР°, РґР°С‚Р° РїРёСЃСЊРјР° РїРѕСЃС‚СѓРїР»РµРЅРёСЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚
+            str = str & ". Р”Р°С‚Р° РїРѕСЃС‚СѓРїР»РµРЅРёСЏ, Р‘Р”: <font color=""Crimson"">" & rcRc.dateRaArrivedDate _
+                & "</font>, РёСЃС‚РѕС‡РЅРёРє: <font color=""Peru"">" & rsRaErr!exArrvDate & "</font>"
             If mobjParent.blnAdt_AddRA Then
                 rcRc.dateRaArrivedDate = rsRaErr!exArrvDate
-                str = str & ". Обновлено, БД: <font color=""SeaGreen"">" & rcRc.dateRaArrivedDate & "</font>"
+                str = str & ". РћР±РЅРѕРІР»РµРЅРѕ, Р‘Р”: <font color=""SeaGreen"">" & rcRc.dateRaArrivedDate & "</font>"
             End If
         End If
 
-        ' дата письма поступления фактическая не соответствует?
+        ' РґР°С‚Р° РїРёСЃСЊРјР° РїРѕСЃС‚СѓРїР»РµРЅРёСЏ С„Р°РєС‚РёС‡РµСЃРєР°СЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
         If rsRaErr!rsArrvDateFact = False Then
-            ' да, дата письма поступления фактическая не соответствует
-            str = str & ". Дата поступления фактическая, БД: <font color=""Crimson"">" & rcRc.dateRaArrivedDateFact _
-                & "</font>, источник: <font color=""Peru"">" & rsRaErr!exArrvDateFact & "</font>"
+            ' РґР°, РґР°С‚Р° РїРёСЃСЊРјР° РїРѕСЃС‚СѓРїР»РµРЅРёСЏ С„Р°РєС‚РёС‡РµСЃРєР°СЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚
+            str = str & ". Р”Р°С‚Р° РїРѕСЃС‚СѓРїР»РµРЅРёСЏ С„Р°РєС‚РёС‡РµСЃРєР°СЏ, Р‘Р”: <font color=""Crimson"">" & rcRc.dateRaArrivedDateFact _
+                & "</font>, РёСЃС‚РѕС‡РЅРёРє: <font color=""Peru"">" & rsRaErr!exArrvDateFact & "</font>"
             If mobjParent.blnAdt_AddRA Then
                 rcRc.dateRaArrivedDateFact = rsRaErr!exArrvDateFact
-                str = str & ". Обновлено, БД: <font color=""SeaGreen"">" & rcRc.dateRaArrivedDateFact & "</font>"
+                str = str & ". РћР±РЅРѕРІР»РµРЅРѕ, Р‘Р”: <font color=""SeaGreen"">" & rcRc.dateRaArrivedDateFact & "</font>"
             End If
         End If
 
-        ' письмо возвращения не соответствует?
+        ' РїРёСЃСЊРјРѕ РІРѕР·РІСЂР°С‰РµРЅРёСЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
         If rsRaErr!rsRetn = False Then
-            ' да, письмо возвращения не соответствует
-            str = str & ". Письмо возвращения, БД: <font color=""Crimson"">" & rcRc.strRaReturned _
-                & "</font>, источник: <font color=""Peru"">" & rsRaErr!exRetn & "</font>"
+            ' РґР°, РїРёСЃСЊРјРѕ РІРѕР·РІСЂР°С‰РµРЅРёСЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚
+            str = str & ". РџРёСЃСЊРјРѕ РІРѕР·РІСЂР°С‰РµРЅРёСЏ, Р‘Р”: <font color=""Crimson"">" & rcRc.strRaReturned _
+                & "</font>, РёСЃС‚РѕС‡РЅРёРє: <font color=""Peru"">" & rsRaErr!exRetn & "</font>"
             If mobjParent.blnAdt_AddRA Then
                 rcRc.strRaReturned = rsRaErr!exRetn
-                str = str & ". Обновлено, БД: <font color=""SeaGreen"">" & rcRc.strRaReturned & "</font>"
+                str = str & ". РћР±РЅРѕРІР»РµРЅРѕ, Р‘Р”: <font color=""SeaGreen"">" & rcRc.strRaReturned & "</font>"
             End If
         End If
 
-        ' дата письма возвращения не соответствует?
+        ' РґР°С‚Р° РїРёСЃСЊРјР° РІРѕР·РІСЂР°С‰РµРЅРёСЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
         If rsRaErr!rsRetnDate = False Then
-            ' да, дата письма возвращения не соответствует
-            str = str & ". Дата возвращения, БД: <font color=""Crimson"">" & rcRc.dateRaReturnedDate _
-                & "</font>, источник: <font color=""Peru"">" & rsRaErr!exRetnDate & "</font>"
+            ' РґР°, РґР°С‚Р° РїРёСЃСЊРјР° РІРѕР·РІСЂР°С‰РµРЅРёСЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚
+            str = str & ". Р”Р°С‚Р° РІРѕР·РІСЂР°С‰РµРЅРёСЏ, Р‘Р”: <font color=""Crimson"">" & rcRc.dateRaReturnedDate _
+                & "</font>, РёСЃС‚РѕС‡РЅРёРє: <font color=""Peru"">" & rsRaErr!exRetnDate & "</font>"
             If mobjParent.blnAdt_AddRA Then
                 rcRc.dateRaReturnedDate = rsRaErr!exRetnDate
-                str = str & ". Обновлено, БД: <font color=""SeaGreen"">" & rcRc.dateRaReturnedDate & "</font>"
+                str = str & ". РћР±РЅРѕРІР»РµРЅРѕ, Р‘Р”: <font color=""SeaGreen"">" & rcRc.dateRaReturnedDate & "</font>"
             End If
         End If
 
-        ' причина возвращения не соответствует?
+        ' РїСЂРёС‡РёРЅР° РІРѕР·РІСЂР°С‰РµРЅРёСЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
         If rsRaErr!rsRetnRsn = False Then
-            ' да, причина возвращения не соответствует
-            str = str & ". Причина возвращения, БД: <font color=""Crimson"">" & rcRc.strRaReturnedReason _
-                & "</font>, источник: <font color=""Peru"">" & rsRaErr!exRetnRsn & "</font>"
+            ' РґР°, РїСЂРёС‡РёРЅР° РІРѕР·РІСЂР°С‰РµРЅРёСЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚
+            str = str & ". РџСЂРёС‡РёРЅР° РІРѕР·РІСЂР°С‰РµРЅРёСЏ, Р‘Р”: <font color=""Crimson"">" & rcRc.strRaReturnedReason _
+                & "</font>, РёСЃС‚РѕС‡РЅРёРє: <font color=""Peru"">" & rsRaErr!exRetnRsn & "</font>"
             If mobjParent.blnAdt_AddRA Then
                 rcRc.strRaReturnedReason = rsRaErr!exRetnRsn
-                str = str & ". Обновлено, БД: <font color=""SeaGreen"">" & rcRc.strRaReturnedReason & "</font>"
+                str = str & ". РћР±РЅРѕРІР»РµРЅРѕ, Р‘Р”: <font color=""SeaGreen"">" & rcRc.strRaReturnedReason & "</font>"
             End If
         End If
 
-        ' письмо направления не соответствует?
+        ' РїРёСЃСЊРјРѕ РЅР°РїСЂР°РІР»РµРЅРёСЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
         If rsRaErr!rsSent = False Then
-            ' да, письмо направления не соответствует
-            str = str & ". Письмо направления, БД: <font color=""Crimson"">" & rcRc.strRaSent _
-                & "</font>, источник: <font color=""Peru"">" & rsRaErr!exSent & "</font>"
+            ' РґР°, РїРёСЃСЊРјРѕ РЅР°РїСЂР°РІР»РµРЅРёСЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚
+            str = str & ". РџРёСЃСЊРјРѕ РЅР°РїСЂР°РІР»РµРЅРёСЏ, Р‘Р”: <font color=""Crimson"">" & rcRc.strRaSent _
+                & "</font>, РёСЃС‚РѕС‡РЅРёРє: <font color=""Peru"">" & rsRaErr!exSent & "</font>"
             If mobjParent.blnAdt_AddRA Then
                 rcRc.strRaSent = rsRaErr!exSent
-                str = str & ". Обновлено, БД: <font color=""SeaGreen"">" & rcRc.strRaSent & "</font>"
+                str = str & ". РћР±РЅРѕРІР»РµРЅРѕ, Р‘Р”: <font color=""SeaGreen"">" & rcRc.strRaSent & "</font>"
             End If
         End If
 
-        ' дата письма направления не соответствует?
+        ' РґР°С‚Р° РїРёСЃСЊРјР° РЅР°РїСЂР°РІР»РµРЅРёСЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
         If rsRaErr!rsSentDate = False Then
-            ' да, дата письма направления не соответствует
-            str = str & ". Дата направления, БД: <font color=""Crimson"">" & rcRc.dateRaSentDate _
-                & "</font>, источник: <font color=""Peru"">" & rsRaErr!exSentDate & "</font>"
+            ' РґР°, РґР°С‚Р° РїРёСЃСЊРјР° РЅР°РїСЂР°РІР»РµРЅРёСЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚
+            str = str & ". Р”Р°С‚Р° РЅР°РїСЂР°РІР»РµРЅРёСЏ, Р‘Р”: <font color=""Crimson"">" & rcRc.dateRaSentDate _
+                & "</font>, РёСЃС‚РѕС‡РЅРёРє: <font color=""Peru"">" & rsRaErr!exSentDate & "</font>"
             If mobjParent.blnAdt_AddRA Then
                 rcRc.dateRaSentDate = rsRaErr!exSentDate
-                str = str & ". Обновлено, БД: <font color=""SeaGreen"">" & rcRc.dateRaSentDate & "</font>"
+                str = str & ". РћР±РЅРѕРІР»РµРЅРѕ, Р‘Р”: <font color=""SeaGreen"">" & rcRc.dateRaSentDate & "</font>"
             End If
         End If
 
-        ' организация отправитель не соответствует?
+        ' РѕСЂРіР°РЅРёР·Р°С†РёСЏ РѕС‚РїСЂР°РІРёС‚РµР»СЊ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
         If rsRaErr!rsSender = False Then
-            ' да, организация отправитель не соответствует
-            str = str & ". Отправитель, БД: <font color=""Crimson"">" & rcRc.lngRaSender _
-                & "</font>, источник: <font color=""Peru"">" & rsRaErr!exSender & "</font>"
+            ' РґР°, РѕСЂРіР°РЅРёР·Р°С†РёСЏ РѕС‚РїСЂР°РІРёС‚РµР»СЊ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚
+            str = str & ". РћС‚РїСЂР°РІРёС‚РµР»СЊ, Р‘Р”: <font color=""Crimson"">" & rcRc.lngRaSender _
+                & "</font>, РёСЃС‚РѕС‡РЅРёРє: <font color=""Peru"">" & rsRaErr!exSender & "</font>"
             If mobjParent.blnAdt_AddRA Then
                 rcRc.lngRaSender = rsRaErr!exSender
-                str = str & ". Обновлено, БД: <font color=""SeaGreen"">" & rcRc.lngRaSender & "</font>"
+                str = str & ". РћР±РЅРѕРІР»РµРЅРѕ, Р‘Р”: <font color=""SeaGreen"">" & rcRc.lngRaSender & "</font>"
             End If
         End If
 
-        ' дата изменения отчёта агента не соответствует?
+        ' РґР°С‚Р° РёР·РјРµРЅРµРЅРёСЏ РѕС‚С‡С‘С‚Р° Р°РіРµРЅС‚Р° РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
         If rsRaErr!rsDate = False Then
-            ' да, дата изменения отчёта агента не соответствует
-            str = str & ". Дата изменения, БД: <font color=""Crimson"">" & rcRc.dateRcDate _
-                & "</font>, источник: <font color=""Peru"">" & rsRaErr!exDate & "</font>"
+            ' РґР°, РґР°С‚Р° РёР·РјРµРЅРµРЅРёСЏ РѕС‚С‡С‘С‚Р° Р°РіРµРЅС‚Р° РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚
+            str = str & ". Р”Р°С‚Р° РёР·РјРµРЅРµРЅРёСЏ, Р‘Р”: <font color=""Crimson"">" & rcRc.dateRcDate _
+                & "</font>, РёСЃС‚РѕС‡РЅРёРє: <font color=""Peru"">" & rsRaErr!exDate & "</font>"
             If mobjParent.blnAdt_AddRA Then
                 rcRc.dateRcDate = rsRaErr!exDate
-                str = str & ". Обновлено, БД: <font color=""SeaGreen"">" & rcRc.dateRcDate & "</font>"
+                str = str & ". РћР±РЅРѕРІР»РµРЅРѕ, Р‘Р”: <font color=""SeaGreen"">" & rcRc.dateRcDate & "</font>"
             End If
         End If
 
-        ' суммы изменения отчёта не соответствует?
+        ' СЃСѓРјРјС‹ РёР·РјРµРЅРµРЅРёСЏ РѕС‚С‡С‘С‚Р° РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
         If rsRaErr!rsSum = False Then
-            ' да, суммы изменения отчёта не соответствует
-            ' имеется сумма у изменения отчёта?
-            If Not IsNull(rsRaErr!raсs_key) Then
-                ' да, сумма у измененияотчёта имеется
-                ' создаём объект
-                Set rcsmRcSm = ClassFactory.rcSmByKey(rsRaErr!raсs_key, db)
-                str = str & ". Суммы изменения"
-                ' *всего* не соответствует?
+            ' РґР°, СЃСѓРјРјС‹ РёР·РјРµРЅРµРЅРёСЏ РѕС‚С‡С‘С‚Р° РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚
+            ' РёРјРµРµС‚СЃСЏ СЃСѓРјРјР° Сѓ РёР·РјРµРЅРµРЅРёСЏ РѕС‚С‡С‘С‚Р°?
+            If Not IsNull(rsRaErr!raСЃs_key) Then
+                ' РґР°, СЃСѓРјРјР° Сѓ РёР·РјРµРЅРµРЅРёСЏРѕС‚С‡С‘С‚Р° РёРјРµРµС‚СЃСЏ
+                ' СЃРѕР·РґР°С‘Рј РѕР±СЉРµРєС‚
+                Set rcsmRcSm = ClassFactory.rcSmByKey(rsRaErr!raСЃs_key, db)
+                str = str & ". РЎСѓРјРјС‹ РёР·РјРµРЅРµРЅРёСЏ"
+                ' *РІСЃРµРіРѕ* РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
                 If rsRaErr!rsTtl = False Then
-                    str = str & ", всего, БД: <font color=""Crimson"">" & FormatCurrency(rcsmRcSm.curRcSmTtl) _
-                        & "</font>, источник: <font color=""Peru"">" & FormatCurrency(rsRaErr!exTtl) & "</font>"
+                    str = str & ", РІСЃРµРіРѕ, Р‘Р”: <font color=""Crimson"">" & FormatCurrency(rcsmRcSm.curRcSmTtl) _
+                        & "</font>, РёСЃС‚РѕС‡РЅРёРє: <font color=""Peru"">" & FormatCurrency(rsRaErr!exTtl) & "</font>"
                 End If
-                ' *СМР* не соответствует?
+                ' *РЎРњР * РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
                 If rsRaErr!rsWork = False Then
-                    str = str & ", СМР, БД: <font color=""Crimson"">" & FormatCurrency(rcsmRcSm.curRcSmWork) _
-                        & "</font>, источник: <font color=""Peru"">" & FormatCurrency(rsRaErr!exWork) & "</font>"
+                    str = str & ", РЎРњР , Р‘Р”: <font color=""Crimson"">" & FormatCurrency(rcsmRcSm.curRcSmWork) _
+                        & "</font>, РёСЃС‚РѕС‡РЅРёРє: <font color=""Peru"">" & FormatCurrency(rsRaErr!exWork) & "</font>"
                 End If
-                ' *Оборудование* не соответствует?
+                ' *РћР±РѕСЂСѓРґРѕРІР°РЅРёРµ* РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
                 If rsRaErr!rsEquip = False Then
-                    str = str & ", Оборудование, БД: <font color=""Crimson"">" & FormatCurrency(rcsmRcSm.curRcSmEquip) _
-                        & "</font>, источник: <font color=""Peru"">" & FormatCurrency(rsRaErr!exEquip) & "</font>"
+                    str = str & ", РћР±РѕСЂСѓРґРѕРІР°РЅРёРµ, Р‘Р”: <font color=""Crimson"">" & FormatCurrency(rcsmRcSm.curRcSmEquip) _
+                        & "</font>, РёСЃС‚РѕС‡РЅРёРє: <font color=""Peru"">" & FormatCurrency(rsRaErr!exEquip) & "</font>"
                 End If
-                ' *Прочие* не соответствует?
+                ' *РџСЂРѕС‡РёРµ* РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
                 If rsRaErr!rsOthers = False Then
-                    str = str & ", Прочие, БД: <font color=""Crimson"">" & FormatCurrency(rcsmRcSm.curRcSmOthers) _
-                        & "</font>, источник: <font color=""Peru"">" & FormatCurrency(rsRaErr!exOthers) & "</font>"
+                    str = str & ", РџСЂРѕС‡РёРµ, Р‘Р”: <font color=""Crimson"">" & FormatCurrency(rcsmRcSm.curRcSmOthers) _
+                        & "</font>, РёСЃС‚РѕС‡РЅРёРє: <font color=""Peru"">" & FormatCurrency(rsRaErr!exOthers) & "</font>"
                 End If
-                ' ликвидируем объект
+                ' Р»РёРєРІРёРґРёСЂСѓРµРј РѕР±СЉРµРєС‚
                 Set rcsmRcSm = Nothing
             Else
-                ' нет, сумма у изменения отчёта отсутствует
-                str = str & ". Суммы отчёта, БД: <font color=""Crimson"">нет сумм</font>, источник: " _
-                    & "всего: <font color=""Peru"">" & FormatCurrency(rsRaErr!exTtl) & "</font>" _
-                    & ", СМР: <font color=""Peru"">" & FormatCurrency(rsRaErr!exWork) & "</font>" _
-                    & ", Оборудование: <font color=""Peru"">" & FormatCurrency(rsRaErr!exEquip) & "</font>" _
-                    & ", Прочие: <font color=""Peru"">" & FormatCurrency(rsRaErr!exOthers) & "</font>"
+                ' РЅРµС‚, СЃСѓРјРјР° Сѓ РёР·РјРµРЅРµРЅРёСЏ РѕС‚С‡С‘С‚Р° РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚
+                str = str & ". РЎСѓРјРјС‹ РѕС‚С‡С‘С‚Р°, Р‘Р”: <font color=""Crimson"">РЅРµС‚ СЃСѓРјРј</font>, РёСЃС‚РѕС‡РЅРёРє: " _
+                    & "РІСЃРµРіРѕ: <font color=""Peru"">" & FormatCurrency(rsRaErr!exTtl) & "</font>" _
+                    & ", РЎРњР : <font color=""Peru"">" & FormatCurrency(rsRaErr!exWork) & "</font>" _
+                    & ", РћР±РѕСЂСѓРґРѕРІР°РЅРёРµ: <font color=""Peru"">" & FormatCurrency(rsRaErr!exEquip) & "</font>" _
+                    & ", РџСЂРѕС‡РёРµ: <font color=""Peru"">" & FormatCurrency(rsRaErr!exOthers) & "</font>"
             End If
-            ' нужно ли корректировать БД?
+            ' РЅСѓР¶РЅРѕ Р»Рё РєРѕСЂСЂРµРєС‚РёСЂРѕРІР°С‚СЊ Р‘Р”?
             If mobjParent.blnAdt_AddRA Then
-                ' создаём объект
+                ' СЃРѕР·РґР°С‘Рј РѕР±СЉРµРєС‚
                 Set rcsmRcSm = ClassFactory.rcSmCreateNew(rsRaErr!rac_key, db, rsRaErr!exTtl, rsRaErr!exWork, _
                     rsRaErr!exEquip, rsRaErr!exOthers)
-                str = str & ". Обновлено, БД: " _
-                    & "всего: <font color=""SeaGreen"">" & FormatCurrency(rcsmRcSm.curRcSmTtl) & "</font>" _
-                    & ", СМР: <font color=""SeaGreen"">" & FormatCurrency(rcsmRcSm.curRcSmWork) & "</font>" _
-                    & ", Оборудование: <font color=""SeaGreen"">" & FormatCurrency(rcsmRcSm.curRcSmEquip) & "</font>" _
-                    & ", Прочие: <font color=""SeaGreen"">" & FormatCurrency(rcsmRcSm.curRcSmOthers) & "</font>"
-                ' ликвидируем объект
+                str = str & ". РћР±РЅРѕРІР»РµРЅРѕ, Р‘Р”: " _
+                    & "РІСЃРµРіРѕ: <font color=""SeaGreen"">" & FormatCurrency(rcsmRcSm.curRcSmTtl) & "</font>" _
+                    & ", РЎРњР : <font color=""SeaGreen"">" & FormatCurrency(rcsmRcSm.curRcSmWork) & "</font>" _
+                    & ", РћР±РѕСЂСѓРґРѕРІР°РЅРёРµ: <font color=""SeaGreen"">" & FormatCurrency(rcsmRcSm.curRcSmEquip) & "</font>" _
+                    & ", РџСЂРѕС‡РёРµ: <font color=""SeaGreen"">" & FormatCurrency(rcsmRcSm.curRcSmOthers) & "</font>"
+                ' Р»РёРєРІРёРґРёСЂСѓРµРј РѕР±СЉРµРєС‚
                 Set rasmRaSm = Nothing
-            End If ' нужно ли корректировать БД?
-        End If ' суммы изменения отчёта не соответствует?
+            End If ' РЅСѓР¶РЅРѕ Р»Рё РєРѕСЂСЂРµРєС‚РёСЂРѕРІР°С‚СЊ Р‘Р”?
+        End If ' СЃСѓРјРјС‹ РёР·РјРµРЅРµРЅРёСЏ РѕС‚С‡С‘С‚Р° РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
         
-        ' закрываем абзац
+        ' Р·Р°РєСЂС‹РІР°РµРј Р°Р±Р·Р°С†
         str = str & "</P>"
         
-    End If ' имеется ли такой отчёт? Окончание.
-    ' ликвидируем объект отчёта агента
+    End If ' РёРјРµРµС‚СЃСЏ Р»Рё С‚Р°РєРѕР№ РѕС‚С‡С‘С‚? РћРєРѕРЅС‡Р°РЅРёРµ.
+    ' Р»РёРєРІРёРґРёСЂСѓРµРј РѕР±СЉРµРєС‚ РѕС‚С‡С‘С‚Р° Р°РіРµРЅС‚Р°
     Set rcRc = Nothing
 
 NormalExit:
@@ -976,87 +976,87 @@ NormalExit:
 ErrHandler:
     MsgBox Err.Description & vbCrLf & "Error number: " & Err.Number & vbCrLf & cstrTitle, vbExclamation, cstrTitle: Resume NormalExit
 End Sub
-' корректируем изменение отчёта агента по источнику. 22.07.2022. Окончание
+' РєРѕСЂСЂРµРєС‚РёСЂСѓРµРј РёР·РјРµРЅРµРЅРёРµ РѕС‚С‡С‘С‚Р° Р°РіРµРЅС‚Р° РїРѕ РёСЃС‚РѕС‡РЅРёРєСѓ. 22.07.2022. РћРєРѕРЅС‡Р°РЅРёРµ
 ' ***************************************************************************************************************************************************
 
 ' ***************************************************************************************************************************************************
-' создаём отчёт агента по источнику. 21.07.2022.
+' СЃРѕР·РґР°С‘Рј РѕС‚С‡С‘С‚ Р°РіРµРЅС‚Р° РїРѕ РёСЃС‚РѕС‡РЅРёРєСѓ. 21.07.2022.
 Private Sub AuditRaCreateNew(ByRef rsRaNew As DAO.Recordset, ByRef str As String, ByRef iii As Integer, db As DAO.Database)
     Dim raRa As ra, rasmRaSm As raSm
-    Const cstrTitle As String = "Процедура *Создаём отчёт агента по источнику*"
+    Const cstrTitle As String = "РџСЂРѕС†РµРґСѓСЂР° *РЎРѕР·РґР°С‘Рј РѕС‚С‡С‘С‚ Р°РіРµРЅС‚Р° РїРѕ РёСЃС‚РѕС‡РЅРёРєСѓ*"
     '------------------------------------------------------------------------------------------------------------------------------------------------
 On Error GoTo ErrHandler
 
-    ' открываем абзац
+    ' РѕС‚РєСЂС‹РІР°РµРј Р°Р±Р·Р°С†
     str = "<P>" & iii & ". " & rsRaNew!rainRow & ". <font color=""OliveDrab"">" & rsRaNew!rainRaNum & "</font>"
-    ' но не является ли найденный простой отчёт на самом деле изменением, затесавшимся в чужой раздел?
-    If Left(rsRaNew!rainRaNum, 3) = "Изм" Or Left(rsRaNew!rainRaNum, 3) = "изм" Or Left(rsRaNew!rainRaNum, 9) = "Изменение" Then
-        ' да, это именно изменение
-        str = str & ". <font color=""OrangeRed""><b>Но это изменение!</b></font>"
+    ' РЅРѕ РЅРµ СЏРІР»СЏРµС‚СЃСЏ Р»Рё РЅР°Р№РґРµРЅРЅС‹Р№ РїСЂРѕСЃС‚РѕР№ РѕС‚С‡С‘С‚ РЅР° СЃР°РјРѕРј РґРµР»Рµ РёР·РјРµРЅРµРЅРёРµРј, Р·Р°С‚РµСЃР°РІС€РёРјСЃСЏ РІ С‡СѓР¶РѕР№ СЂР°Р·РґРµР»?
+    If Left(rsRaNew!rainRaNum, 3) = "РР·Рј" Or Left(rsRaNew!rainRaNum, 3) = "РёР·Рј" Or Left(rsRaNew!rainRaNum, 9) = "РР·РјРµРЅРµРЅРёРµ" Then
+        ' РґР°, СЌС‚Рѕ РёРјРµРЅРЅРѕ РёР·РјРµРЅРµРЅРёРµ
+        str = str & ". <font color=""OrangeRed""><b>РќРѕ СЌС‚Рѕ РёР·РјРµРЅРµРЅРёРµ!</b></font>"
     Else
-        ' нет, это простой отчёт
-        ' нужно ли обновлять базу данных?
+        ' РЅРµС‚, СЌС‚Рѕ РїСЂРѕСЃС‚РѕР№ РѕС‚С‡С‘С‚
+        ' РЅСѓР¶РЅРѕ Р»Рё РѕР±РЅРѕРІР»СЏС‚СЊ Р±Р°Р·Сѓ РґР°РЅРЅС‹С…?
         If mobjParent.blnAdt_AddRA Then
-            ' да, обновлять базу данных нужно
+            ' РґР°, РѕР±РЅРѕРІР»СЏС‚СЊ Р±Р°Р·Сѓ РґР°РЅРЅС‹С… РЅСѓР¶РЅРѕ
             If Not IsNull(rsRaNew!rainRaNum) And Not rsRaNew!rainRaNum = "" Then
                 If Not IsNull(rsRaNew!periodKey) And Not rsRaNew!periodKey = 0 Then
                     If Not IsNull(rsRaNew!cstapKey) And Not rsRaNew!cstapKey = 0 Then
                         If Not IsNull(rsRaNew!cstapKey) And Not rsRaNew!ogKey = 0 Then
-                            If rsRaNew!rainSign = "ОА" Or rsRaNew!rainSign = "ОА прочие" Then
-                                ' создаём объект
+                            If rsRaNew!rainSign = "РћРђ" Or rsRaNew!rainSign = "РћРђ РїСЂРѕС‡РёРµ" Then
+                                ' СЃРѕР·РґР°С‘Рј РѕР±СЉРµРєС‚
                                 Set raRa = ClassFactory.raCreateNew(db, rsRaNew!rainRaNum, rsRaNew!rainSign, rsRaNew!periodKey, rsRaNew!cstapKey, _
                                     rsRaNew!ogKey, rsRaNew!exDate, Null, rsRaNew!exArrv, rsRaNew!exArrvDate, rsRaNew!exArrvDateFact, _
                                     rsRaNew!exRetn, rsRaNew!exRetnDate, rsRaNew!exRetnRsn, rsRaNew!exSent, rsRaNew!exSentDate, Null, Null)
-                                ' объект создан?
+                                ' РѕР±СЉРµРєС‚ СЃРѕР·РґР°РЅ?
                                 If Not raRa Is Nothing Then
-                                    ' да, объект удалось создать
-                                    str = str & ". Создан отчёт, ключ: " & raRa.lngRaKey
-                                    ' имется ли сумма какого либо вида?
+                                    ' РґР°, РѕР±СЉРµРєС‚ СѓРґР°Р»РѕСЃСЊ СЃРѕР·РґР°С‚СЊ
+                                    str = str & ". РЎРѕР·РґР°РЅ РѕС‚С‡С‘С‚, РєР»СЋС‡: " & raRa.lngRaKey
+                                    ' РёРјРµС‚СЃСЏ Р»Рё СЃСѓРјРјР° РєР°РєРѕРіРѕ Р»РёР±Рѕ РІРёРґР°?
                                     If Not ( _
                                             IIf(IsNull(rsRaNew!exTtl), 0, rsRaNew!exTtl) + IIf(IsNull(rsRaNew!exWork), 0, rsRaNew!exWork) + _
                                             IIf(IsNull(rsRaNew!exEquip), 0, rsRaNew!exEquip) + IIf(IsNull(rsRaNew!exOthers), 0, rsRaNew!exOthers) _
                                             = 0) _
                                         Then
-                                        ' создаём объект суммы
+                                        ' СЃРѕР·РґР°С‘Рј РѕР±СЉРµРєС‚ СЃСѓРјРјС‹
                                         Set rasmRaSm = raRa.rasmRaSmAdd(rsRaNew!exTtl, rsRaNew!exWork, rsRaNew!exEquip, rsRaNew!exOthers)
                                         If Not rasmRaSm Is Nothing Then
-                                            str = str & ". Сумма: " _
-                                                & "всего: <font color=""SeaGreen"">" & FormatCurrency(rasmRaSm.curRaSmTtl) & "</font>" _
-                                                & ", СМР: <font color=""SeaGreen"">" & FormatCurrency(rasmRaSm.curRaSmWork) & "</font>" _
-                                                & ", Оборудование: <font color=""SeaGreen"">" & FormatCurrency(rasmRaSm.curRaSmEquip) & "</font>" _
-                                                & ", Прочие: <font color=""SeaGreen"">" & FormatCurrency(rasmRaSm.curRaSmOthers) & "</font>"
-                                            ' ликвидируем объект
+                                            str = str & ". РЎСѓРјРјР°: " _
+                                                & "РІСЃРµРіРѕ: <font color=""SeaGreen"">" & FormatCurrency(rasmRaSm.curRaSmTtl) & "</font>" _
+                                                & ", РЎРњР : <font color=""SeaGreen"">" & FormatCurrency(rasmRaSm.curRaSmWork) & "</font>" _
+                                                & ", РћР±РѕСЂСѓРґРѕРІР°РЅРёРµ: <font color=""SeaGreen"">" & FormatCurrency(rasmRaSm.curRaSmEquip) & "</font>" _
+                                                & ", РџСЂРѕС‡РёРµ: <font color=""SeaGreen"">" & FormatCurrency(rasmRaSm.curRaSmOthers) & "</font>"
+                                            ' Р»РёРєРІРёРґРёСЂСѓРµРј РѕР±СЉРµРєС‚
                                             Set rasmRaSm = Nothing
                                         Else
-                                            str = str & ". <font color=""OrangeRed""><b>Сумма, хотя нужна, не создана!</b></font>"
+                                            str = str & ". <font color=""OrangeRed""><b>РЎСѓРјРјР°, С…РѕС‚СЏ РЅСѓР¶РЅР°, РЅРµ СЃРѕР·РґР°РЅР°!</b></font>"
                                         End If
                                     Else
-                                        str = str & ". Сумма не требуется."
-                                    End If ' имется ли сумма какого либо вида?
-                                    ' ликвидируем объект
+                                        str = str & ". РЎСѓРјРјР° РЅРµ С‚СЂРµР±СѓРµС‚СЃСЏ."
+                                    End If ' РёРјРµС‚СЃСЏ Р»Рё СЃСѓРјРјР° РєР°РєРѕРіРѕ Р»РёР±Рѕ РІРёРґР°?
+                                    ' Р»РёРєРІРёРґРёСЂСѓРµРј РѕР±СЉРµРєС‚
                                     Set raRa = Nothing
                                 Else
-                                    ' нет, объект создать не удалось
-                                    str = str & ". <font color=""OrangeRed""><b>Создать отчёт не удалось!</b></font>"
-                                End If ' объект создан?
+                                    ' РЅРµС‚, РѕР±СЉРµРєС‚ СЃРѕР·РґР°С‚СЊ РЅРµ СѓРґР°Р»РѕСЃСЊ
+                                    str = str & ". <font color=""OrangeRed""><b>РЎРѕР·РґР°С‚СЊ РѕС‚С‡С‘С‚ РЅРµ СѓРґР°Р»РѕСЃСЊ!</b></font>"
+                                End If ' РѕР±СЉРµРєС‚ СЃРѕР·РґР°РЅ?
                             Else
-                                str = str & ". <font color=""OrangeRed""><b>Неверный тип: </b></font>" & rsRaNew!rainSign
+                                str = str & ". <font color=""OrangeRed""><b>РќРµРІРµСЂРЅС‹Р№ С‚РёРї: </b></font>" & rsRaNew!rainSign
                             End If
                         Else
-                            str = str & ". <font color=""OrangeRed""><b>Нет отправителя!</b></font>"
+                            str = str & ". <font color=""OrangeRed""><b>РќРµС‚ РѕС‚РїСЂР°РІРёС‚РµР»СЏ!</b></font>"
                         End If
                     Else
-                        str = str & ". <font color=""OrangeRed""><b>Нет стройки!</b></font>"
+                        str = str & ". <font color=""OrangeRed""><b>РќРµС‚ СЃС‚СЂРѕР№РєРё!</b></font>"
                     End If
                 Else
-                    str = str & ". <font color=""OrangeRed""><b>Нет периода!</b></font>"
+                    str = str & ". <font color=""OrangeRed""><b>РќРµС‚ РїРµСЂРёРѕРґР°!</b></font>"
                 End If
             Else
-                str = str & ". <font color=""OrangeRed""><b>Нет номера отчёта!</b></font>"
+                str = str & ". <font color=""OrangeRed""><b>РќРµС‚ РЅРѕРјРµСЂР° РѕС‚С‡С‘С‚Р°!</b></font>"
             End If
-        End If ' нужно ли обновлять базу данных?
-    End If ' но не является ли найденный простой отчёт на самом деле изменением, затесавшимся в чужой раздел?
-    ' закрываем абзац
+        End If ' РЅСѓР¶РЅРѕ Р»Рё РѕР±РЅРѕРІР»СЏС‚СЊ Р±Р°Р·Сѓ РґР°РЅРЅС‹С…?
+    End If ' РЅРѕ РЅРµ СЏРІР»СЏРµС‚СЃСЏ Р»Рё РЅР°Р№РґРµРЅРЅС‹Р№ РїСЂРѕСЃС‚РѕР№ РѕС‚С‡С‘С‚ РЅР° СЃР°РјРѕРј РґРµР»Рµ РёР·РјРµРЅРµРЅРёРµРј, Р·Р°С‚РµСЃР°РІС€РёРјСЃСЏ РІ С‡СѓР¶РѕР№ СЂР°Р·РґРµР»?
+    ' Р·Р°РєСЂС‹РІР°РµРј Р°Р±Р·Р°С†
     str = str & "</P>"
 
 NormalExit:
@@ -1064,197 +1064,197 @@ NormalExit:
 ErrHandler:
     MsgBox Err.Description & vbCrLf & "Error number: " & Err.Number & vbCrLf & cstrTitle, vbExclamation, cstrTitle: Resume NormalExit
 End Sub
-' создаём отчёт агента по источнику. 21.07.2022. Окончание
+' СЃРѕР·РґР°С‘Рј РѕС‚С‡С‘С‚ Р°РіРµРЅС‚Р° РїРѕ РёСЃС‚РѕС‡РЅРёРєСѓ. 21.07.2022. РћРєРѕРЅС‡Р°РЅРёРµ
 ' ***************************************************************************************************************************************************
 
 
 
 ' ***************************************************************************************************************************************************
-' корректируем отчёт агента по источнику. 19.07.2022.
+' РєРѕСЂСЂРµРєС‚РёСЂСѓРµРј РѕС‚С‡С‘С‚ Р°РіРµРЅС‚Р° РїРѕ РёСЃС‚РѕС‡РЅРёРєСѓ. 19.07.2022.
 Private Sub AuditRaEdit(ByRef rsRaErr As DAO.Recordset, ByRef str As String, ByRef iii As Integer, db As DAO.Database)
     Dim raRa As ra, rasmRaSm As raSm
-    Const cstrTitle As String = "Процедура *Корректируем отчёт агента по источнику*"
+    Const cstrTitle As String = "РџСЂРѕС†РµРґСѓСЂР° *РљРѕСЂСЂРµРєС‚РёСЂСѓРµРј РѕС‚С‡С‘С‚ Р°РіРµРЅС‚Р° РїРѕ РёСЃС‚РѕС‡РЅРёРєСѓ*"
     '------------------------------------------------------------------------------------------------------------------------------------------------
 On Error GoTo ErrHandler
 
-    ' создаём объект отчёта агента
+    ' СЃРѕР·РґР°С‘Рј РѕР±СЉРµРєС‚ РѕС‚С‡С‘С‚Р° Р°РіРµРЅС‚Р°
     Set raRa = ClassFactory.raByKey(rsRaErr!ra_key, db)
-    ' имеется ли такой отчёт?
+    ' РёРјРµРµС‚СЃСЏ Р»Рё С‚Р°РєРѕР№ РѕС‚С‡С‘С‚?
     If Not raRa Is Nothing Then
-        ' да, такой отчёт имеется
+        ' РґР°, С‚Р°РєРѕР№ РѕС‚С‡С‘С‚ РёРјРµРµС‚СЃСЏ
                 
-        ' открываем абзац
+        ' РѕС‚РєСЂС‹РІР°РµРј Р°Р±Р·Р°С†
         str = "<P>" & iii & ". " & rsRaErr!rainRow & ". " & raRa.strRaNum
         
-        ' письмо поступления не соответствует?
+        ' РїРёСЃСЊРјРѕ РїРѕСЃС‚СѓРїР»РµРЅРёСЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
         If rsRaErr!rsArrv = False Then
-            ' да, письмо поступления не соответствует
-            str = str & ". Письмо поступления, БД: <font color=""Crimson"">" & raRa.strRaArrived _
-                & "</font>, источник: <font color=""Peru"">" & rsRaErr!exArrv & "</font>"
+            ' РґР°, РїРёСЃСЊРјРѕ РїРѕСЃС‚СѓРїР»РµРЅРёСЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚
+            str = str & ". РџРёСЃСЊРјРѕ РїРѕСЃС‚СѓРїР»РµРЅРёСЏ, Р‘Р”: <font color=""Crimson"">" & raRa.strRaArrived _
+                & "</font>, РёСЃС‚РѕС‡РЅРёРє: <font color=""Peru"">" & rsRaErr!exArrv & "</font>"
             If mobjParent.blnAdt_AddRA Then
                 raRa.strRaArrived = rsRaErr!exArrv
-                str = str & ". Обновлено, БД: <font color=""SeaGreen"">" & raRa.strRaArrived & "</font>"
+                str = str & ". РћР±РЅРѕРІР»РµРЅРѕ, Р‘Р”: <font color=""SeaGreen"">" & raRa.strRaArrived & "</font>"
             End If
         End If
     
-        ' дата письма поступления не соответствует?
+        ' РґР°С‚Р° РїРёСЃСЊРјР° РїРѕСЃС‚СѓРїР»РµРЅРёСЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
         If rsRaErr!rsArrvDate = False Then
-            ' да, дата письма поступления не соответствует
-            str = str & ". Дата поступления, БД: <font color=""Crimson"">" & raRa.dateRaArrivedDate _
-                & "</font>, источник: <font color=""Peru"">" & rsRaErr!exArrvDate & "</font>"
+            ' РґР°, РґР°С‚Р° РїРёСЃСЊРјР° РїРѕСЃС‚СѓРїР»РµРЅРёСЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚
+            str = str & ". Р”Р°С‚Р° РїРѕСЃС‚СѓРїР»РµРЅРёСЏ, Р‘Р”: <font color=""Crimson"">" & raRa.dateRaArrivedDate _
+                & "</font>, РёСЃС‚РѕС‡РЅРёРє: <font color=""Peru"">" & rsRaErr!exArrvDate & "</font>"
             If mobjParent.blnAdt_AddRA Then
                 raRa.dateRaArrivedDate = rsRaErr!exArrvDate
-                str = str & ". Обновлено, БД: <font color=""SeaGreen"">" & raRa.dateRaArrivedDate & "</font>"
+                str = str & ". РћР±РЅРѕРІР»РµРЅРѕ, Р‘Р”: <font color=""SeaGreen"">" & raRa.dateRaArrivedDate & "</font>"
             End If
         End If
     
-        ' дата письма поступления фактическая не соответствует?
+        ' РґР°С‚Р° РїРёСЃСЊРјР° РїРѕСЃС‚СѓРїР»РµРЅРёСЏ С„Р°РєС‚РёС‡РµСЃРєР°СЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
         If rsRaErr!rsArrvDateFact = False Then
-            ' да, дата письма поступления фактическая не соответствует
-            str = str & ". Дата поступления фактическая, БД: <font color=""Crimson"">" & raRa.dateRaArrivedDateFact _
-                & "</font>, источник: <font color=""Peru"">" & rsRaErr!exArrvDateFact & "</font>"
+            ' РґР°, РґР°С‚Р° РїРёСЃСЊРјР° РїРѕСЃС‚СѓРїР»РµРЅРёСЏ С„Р°РєС‚РёС‡РµСЃРєР°СЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚
+            str = str & ". Р”Р°С‚Р° РїРѕСЃС‚СѓРїР»РµРЅРёСЏ С„Р°РєС‚РёС‡РµСЃРєР°СЏ, Р‘Р”: <font color=""Crimson"">" & raRa.dateRaArrivedDateFact _
+                & "</font>, РёСЃС‚РѕС‡РЅРёРє: <font color=""Peru"">" & rsRaErr!exArrvDateFact & "</font>"
             If mobjParent.blnAdt_AddRA Then
                 raRa.dateRaArrivedDateFact = rsRaErr!exArrvDateFact
-                str = str & ". Обновлено, БД: <font color=""SeaGreen"">" & raRa.dateRaArrivedDateFact & "</font>"
+                str = str & ". РћР±РЅРѕРІР»РµРЅРѕ, Р‘Р”: <font color=""SeaGreen"">" & raRa.dateRaArrivedDateFact & "</font>"
             End If
         End If
     
-        ' письмо возвращения не соответствует?
+        ' РїРёСЃСЊРјРѕ РІРѕР·РІСЂР°С‰РµРЅРёСЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
         If rsRaErr!rsRetn = False Then
-            ' да, письмо возвращения не соответствует
-            str = str & ". Письмо возвращения, БД: <font color=""Crimson"">" & raRa.strRaReturned _
-                & "</font>, источник: <font color=""Peru"">" & rsRaErr!exRetn & "</font>"
+            ' РґР°, РїРёСЃСЊРјРѕ РІРѕР·РІСЂР°С‰РµРЅРёСЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚
+            str = str & ". РџРёСЃСЊРјРѕ РІРѕР·РІСЂР°С‰РµРЅРёСЏ, Р‘Р”: <font color=""Crimson"">" & raRa.strRaReturned _
+                & "</font>, РёСЃС‚РѕС‡РЅРёРє: <font color=""Peru"">" & rsRaErr!exRetn & "</font>"
             If mobjParent.blnAdt_AddRA Then
                 raRa.strRaReturned = rsRaErr!exRetn
-                str = str & ". Обновлено, БД: <font color=""SeaGreen"">" & raRa.strRaReturned & "</font>"
+                str = str & ". РћР±РЅРѕРІР»РµРЅРѕ, Р‘Р”: <font color=""SeaGreen"">" & raRa.strRaReturned & "</font>"
             End If
         End If
     
-        ' дата письма возвращения не соответствует?
+        ' РґР°С‚Р° РїРёСЃСЊРјР° РІРѕР·РІСЂР°С‰РµРЅРёСЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
         If rsRaErr!rsRetnDate = False Then
-            ' да, дата письма возвращения не соответствует
-            str = str & ". Дата возвращения, БД: <font color=""Crimson"">" & raRa.dateRaReturnedDate _
-                & "</font>, источник: <font color=""Peru"">" & rsRaErr!exRetnDate & "</font>"
+            ' РґР°, РґР°С‚Р° РїРёСЃСЊРјР° РІРѕР·РІСЂР°С‰РµРЅРёСЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚
+            str = str & ". Р”Р°С‚Р° РІРѕР·РІСЂР°С‰РµРЅРёСЏ, Р‘Р”: <font color=""Crimson"">" & raRa.dateRaReturnedDate _
+                & "</font>, РёСЃС‚РѕС‡РЅРёРє: <font color=""Peru"">" & rsRaErr!exRetnDate & "</font>"
             If mobjParent.blnAdt_AddRA Then
                 raRa.dateRaReturnedDate = rsRaErr!exRetnDate
-                str = str & ". Обновлено, БД: <font color=""SeaGreen"">" & raRa.dateRaReturnedDate & "</font>"
+                str = str & ". РћР±РЅРѕРІР»РµРЅРѕ, Р‘Р”: <font color=""SeaGreen"">" & raRa.dateRaReturnedDate & "</font>"
             End If
         End If
     
-        ' причина возвращения не соответствует?
+        ' РїСЂРёС‡РёРЅР° РІРѕР·РІСЂР°С‰РµРЅРёСЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
         If rsRaErr!rsRetnRsn = False Then
-            ' да, причина возвращения не соответствует
-            str = str & ". Причина возвращения, БД: <font color=""Crimson"">" & raRa.strRaReturnedReason _
-                & "</font>, источник: <font color=""Peru"">" & rsRaErr!exRetnRsn & "</font>"
+            ' РґР°, РїСЂРёС‡РёРЅР° РІРѕР·РІСЂР°С‰РµРЅРёСЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚
+            str = str & ". РџСЂРёС‡РёРЅР° РІРѕР·РІСЂР°С‰РµРЅРёСЏ, Р‘Р”: <font color=""Crimson"">" & raRa.strRaReturnedReason _
+                & "</font>, РёСЃС‚РѕС‡РЅРёРє: <font color=""Peru"">" & rsRaErr!exRetnRsn & "</font>"
             If mobjParent.blnAdt_AddRA Then
                 raRa.strRaReturnedReason = rsRaErr!exRetnRsn
-                str = str & ". Обновлено, БД: <font color=""SeaGreen"">" & raRa.strRaReturnedReason & "</font>"
+                str = str & ". РћР±РЅРѕРІР»РµРЅРѕ, Р‘Р”: <font color=""SeaGreen"">" & raRa.strRaReturnedReason & "</font>"
             End If
         End If
     
-        ' письмо направления не соответствует?
+        ' РїРёСЃСЊРјРѕ РЅР°РїСЂР°РІР»РµРЅРёСЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
         If rsRaErr!rsSent = False Then
-            ' да, письмо направления не соответствует
-            str = str & ". Письмо направления, БД: <font color=""Crimson"">" & raRa.strRaSent _
-                & "</font>, источник: <font color=""Peru"">" & rsRaErr!exSent & "</font>"
+            ' РґР°, РїРёСЃСЊРјРѕ РЅР°РїСЂР°РІР»РµРЅРёСЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚
+            str = str & ". РџРёСЃСЊРјРѕ РЅР°РїСЂР°РІР»РµРЅРёСЏ, Р‘Р”: <font color=""Crimson"">" & raRa.strRaSent _
+                & "</font>, РёСЃС‚РѕС‡РЅРёРє: <font color=""Peru"">" & rsRaErr!exSent & "</font>"
             If mobjParent.blnAdt_AddRA Then
                 raRa.strRaSent = rsRaErr!exSent
-                str = str & ". Обновлено, БД: <font color=""SeaGreen"">" & raRa.strRaSent & "</font>"
+                str = str & ". РћР±РЅРѕРІР»РµРЅРѕ, Р‘Р”: <font color=""SeaGreen"">" & raRa.strRaSent & "</font>"
             End If
         End If
     
-        ' дата письма направления не соответствует?
+        ' РґР°С‚Р° РїРёСЃСЊРјР° РЅР°РїСЂР°РІР»РµРЅРёСЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
         If rsRaErr!rsSentDate = False Then
-            ' да, дата письма направления не соответствует
-            str = str & ". Дата направления, БД: <font color=""Crimson"">" & raRa.dateRaSentDate _
-                & "</font>, источник: <font color=""Peru"">" & rsRaErr!exSentDate & "</font>"
+            ' РґР°, РґР°С‚Р° РїРёСЃСЊРјР° РЅР°РїСЂР°РІР»РµРЅРёСЏ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚
+            str = str & ". Р”Р°С‚Р° РЅР°РїСЂР°РІР»РµРЅРёСЏ, Р‘Р”: <font color=""Crimson"">" & raRa.dateRaSentDate _
+                & "</font>, РёСЃС‚РѕС‡РЅРёРє: <font color=""Peru"">" & rsRaErr!exSentDate & "</font>"
             If mobjParent.blnAdt_AddRA Then
                 raRa.dateRaSentDate = rsRaErr!exSentDate
-                str = str & ". Обновлено, БД: <font color=""SeaGreen"">" & raRa.dateRaSentDate & "</font>"
+                str = str & ". РћР±РЅРѕРІР»РµРЅРѕ, Р‘Р”: <font color=""SeaGreen"">" & raRa.dateRaSentDate & "</font>"
             End If
         End If
     
-        ' организация отправитель не соответствует?
+        ' РѕСЂРіР°РЅРёР·Р°С†РёСЏ РѕС‚РїСЂР°РІРёС‚РµР»СЊ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
         If rsRaErr!rsSender = False Then
-            ' да, организация отправитель не соответствует
-            str = str & ". Отправитель, БД: <font color=""Crimson"">" & raRa.lngRaSender _
-                & "</font>, источник: <font color=""Peru"">" & rsRaErr!exSender & "</font>"
+            ' РґР°, РѕСЂРіР°РЅРёР·Р°С†РёСЏ РѕС‚РїСЂР°РІРёС‚РµР»СЊ РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚
+            str = str & ". РћС‚РїСЂР°РІРёС‚РµР»СЊ, Р‘Р”: <font color=""Crimson"">" & raRa.lngRaSender _
+                & "</font>, РёСЃС‚РѕС‡РЅРёРє: <font color=""Peru"">" & rsRaErr!exSender & "</font>"
             If mobjParent.blnAdt_AddRA Then
                 raRa.lngRaSender = rsRaErr!exSender
-                str = str & ". Обновлено, БД: <font color=""SeaGreen"">" & raRa.lngRaSender & "</font>"
+                str = str & ". РћР±РЅРѕРІР»РµРЅРѕ, Р‘Р”: <font color=""SeaGreen"">" & raRa.lngRaSender & "</font>"
             End If
         End If
     
-        ' дата отчёта агента не соответствует?
+        ' РґР°С‚Р° РѕС‚С‡С‘С‚Р° Р°РіРµРЅС‚Р° РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
         If rsRaErr!rsDate = False Then
-            ' да, дата отчёта агента не соответствует
-            str = str & ". Дата отчёта, БД: <font color=""Crimson"">" & raRa.dateRaDate _
-                & "</font>, источник: <font color=""Peru"">" & rsRaErr!exDate & "</font>"
+            ' РґР°, РґР°С‚Р° РѕС‚С‡С‘С‚Р° Р°РіРµРЅС‚Р° РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚
+            str = str & ". Р”Р°С‚Р° РѕС‚С‡С‘С‚Р°, Р‘Р”: <font color=""Crimson"">" & raRa.dateRaDate _
+                & "</font>, РёСЃС‚РѕС‡РЅРёРє: <font color=""Peru"">" & rsRaErr!exDate & "</font>"
             If mobjParent.blnAdt_AddRA Then
                 raRa.dateRaDate = rsRaErr!exDate
-                str = str & ". Обновлено, БД: <font color=""SeaGreen"">" & raRa.dateRaDate & "</font>"
+                str = str & ". РћР±РЅРѕРІР»РµРЅРѕ, Р‘Р”: <font color=""SeaGreen"">" & raRa.dateRaDate & "</font>"
             End If
         End If
     
-        ' суммы отчёта не соответствует?
+        ' СЃСѓРјРјС‹ РѕС‚С‡С‘С‚Р° РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
         If rsRaErr!rsSum = False Then
-            ' да, суммы отчёта не соответствует
-            ' имеется сумма у отчёта?
+            ' РґР°, СЃСѓРјРјС‹ РѕС‚С‡С‘С‚Р° РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚
+            ' РёРјРµРµС‚СЃСЏ СЃСѓРјРјР° Сѓ РѕС‚С‡С‘С‚Р°?
             If Not IsNull(rsRaErr!ras_key) Then
-                ' да, сумма у отчёта имеется
-                ' создаём объект
+                ' РґР°, СЃСѓРјРјР° Сѓ РѕС‚С‡С‘С‚Р° РёРјРµРµС‚СЃСЏ
+                ' СЃРѕР·РґР°С‘Рј РѕР±СЉРµРєС‚
                 Set rasmRaSm = ClassFactory.raSmByKey(rsRaErr!ras_key, db)
-                str = str & ". Суммы отчёта"
-                ' *всего* не соответствует?
+                str = str & ". РЎСѓРјРјС‹ РѕС‚С‡С‘С‚Р°"
+                ' *РІСЃРµРіРѕ* РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
                 If rsRaErr!rsTtl = False Then
-                    str = str & ", всего, БД: <font color=""Crimson"">" & FormatCurrency(rasmRaSm.curRaSmTtl) _
-                        & "</font>, источник: <font color=""Peru"">" & FormatCurrency(rsRaErr!exTtl) & "</font>"
+                    str = str & ", РІСЃРµРіРѕ, Р‘Р”: <font color=""Crimson"">" & FormatCurrency(rasmRaSm.curRaSmTtl) _
+                        & "</font>, РёСЃС‚РѕС‡РЅРёРє: <font color=""Peru"">" & FormatCurrency(rsRaErr!exTtl) & "</font>"
                 End If
-                ' *СМР* не соответствует?
+                ' *РЎРњР * РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
                 If rsRaErr!rsWork = False Then
-                    str = str & ", СМР, БД: <font color=""Crimson"">" & FormatCurrency(rasmRaSm.curRaSmWork) _
-                        & "</font>, источник: <font color=""Peru"">" & FormatCurrency(rsRaErr!exWork) & "</font>"
+                    str = str & ", РЎРњР , Р‘Р”: <font color=""Crimson"">" & FormatCurrency(rasmRaSm.curRaSmWork) _
+                        & "</font>, РёСЃС‚РѕС‡РЅРёРє: <font color=""Peru"">" & FormatCurrency(rsRaErr!exWork) & "</font>"
                 End If
-                ' *Оборудование* не соответствует?
+                ' *РћР±РѕСЂСѓРґРѕРІР°РЅРёРµ* РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
                 If rsRaErr!rsEquip = False Then
-                    str = str & ", Оборудование, БД: <font color=""Crimson"">" & FormatCurrency(rasmRaSm.curRaSmEquip) _
-                        & "</font>, источник: <font color=""Peru"">" & FormatCurrency(rsRaErr!exEquip) & "</font>"
+                    str = str & ", РћР±РѕСЂСѓРґРѕРІР°РЅРёРµ, Р‘Р”: <font color=""Crimson"">" & FormatCurrency(rasmRaSm.curRaSmEquip) _
+                        & "</font>, РёСЃС‚РѕС‡РЅРёРє: <font color=""Peru"">" & FormatCurrency(rsRaErr!exEquip) & "</font>"
                 End If
-                ' *Прочие* не соответствует?
+                ' *РџСЂРѕС‡РёРµ* РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
                 If rsRaErr!rsOthers = False Then
-                    str = str & ", Прочие, БД: <font color=""Crimson"">" & FormatCurrency(rasmRaSm.curRaSmOthers) _
-                        & "</font>, источник: <font color=""Peru"">" & FormatCurrency(rsRaErr!exOthers) & "</font>"
+                    str = str & ", РџСЂРѕС‡РёРµ, Р‘Р”: <font color=""Crimson"">" & FormatCurrency(rasmRaSm.curRaSmOthers) _
+                        & "</font>, РёСЃС‚РѕС‡РЅРёРє: <font color=""Peru"">" & FormatCurrency(rsRaErr!exOthers) & "</font>"
                 End If
-                ' ликвидируем объект
+                ' Р»РёРєРІРёРґРёСЂСѓРµРј РѕР±СЉРµРєС‚
                 Set rasmRaSm = Nothing
             Else
-                ' нет, сумма у отчёта отсутствует
-                str = str & ". Суммы отчёта, БД: <font color=""Crimson"">нет сумм</font>, источник: " _
-                    & "всего: <font color=""Peru"">" & FormatCurrency(rsRaErr!exTtl) & "</font>" _
-                    & ", СМР: <font color=""Peru"">" & FormatCurrency(rsRaErr!exWork) & "</font>" _
-                    & ", Оборудование: <font color=""Peru"">" & FormatCurrency(rsRaErr!exEquip) & "</font>" _
-                    & ", Прочие: <font color=""Peru"">" & FormatCurrency(rsRaErr!exOthers) & "</font>"
+                ' РЅРµС‚, СЃСѓРјРјР° Сѓ РѕС‚С‡С‘С‚Р° РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚
+                str = str & ". РЎСѓРјРјС‹ РѕС‚С‡С‘С‚Р°, Р‘Р”: <font color=""Crimson"">РЅРµС‚ СЃСѓРјРј</font>, РёСЃС‚РѕС‡РЅРёРє: " _
+                    & "РІСЃРµРіРѕ: <font color=""Peru"">" & FormatCurrency(rsRaErr!exTtl) & "</font>" _
+                    & ", РЎРњР : <font color=""Peru"">" & FormatCurrency(rsRaErr!exWork) & "</font>" _
+                    & ", РћР±РѕСЂСѓРґРѕРІР°РЅРёРµ: <font color=""Peru"">" & FormatCurrency(rsRaErr!exEquip) & "</font>" _
+                    & ", РџСЂРѕС‡РёРµ: <font color=""Peru"">" & FormatCurrency(rsRaErr!exOthers) & "</font>"
             End If
-            ' нужно ли корректировать БД?
+            ' РЅСѓР¶РЅРѕ Р»Рё РєРѕСЂСЂРµРєС‚РёСЂРѕРІР°С‚СЊ Р‘Р”?
             If mobjParent.blnAdt_AddRA Then
-                ' создаём объект
+                ' СЃРѕР·РґР°С‘Рј РѕР±СЉРµРєС‚
                 Set rasmRaSm = ClassFactory.raSmCreateNew(rsRaErr!ra_key, db, rsRaErr!exTtl, rsRaErr!exWork, _
                     rsRaErr!exEquip, rsRaErr!exOthers)
-                str = str & ". Обновлено, БД: " _
-                    & "всего: <font color=""SeaGreen"">" & FormatCurrency(rasmRaSm.curRaSmTtl) & "</font>" _
-                    & ", СМР: <font color=""SeaGreen"">" & FormatCurrency(rasmRaSm.curRaSmWork) & "</font>" _
-                    & ", Оборудование: <font color=""SeaGreen"">" & FormatCurrency(rasmRaSm.curRaSmEquip) & "</font>" _
-                    & ", Прочие: <font color=""SeaGreen"">" & FormatCurrency(rasmRaSm.curRaSmOthers) & "</font>"
-                ' ликвидируем объект
+                str = str & ". РћР±РЅРѕРІР»РµРЅРѕ, Р‘Р”: " _
+                    & "РІСЃРµРіРѕ: <font color=""SeaGreen"">" & FormatCurrency(rasmRaSm.curRaSmTtl) & "</font>" _
+                    & ", РЎРњР : <font color=""SeaGreen"">" & FormatCurrency(rasmRaSm.curRaSmWork) & "</font>" _
+                    & ", РћР±РѕСЂСѓРґРѕРІР°РЅРёРµ: <font color=""SeaGreen"">" & FormatCurrency(rasmRaSm.curRaSmEquip) & "</font>" _
+                    & ", РџСЂРѕС‡РёРµ: <font color=""SeaGreen"">" & FormatCurrency(rasmRaSm.curRaSmOthers) & "</font>"
+                ' Р»РёРєРІРёРґРёСЂСѓРµРј РѕР±СЉРµРєС‚
                 Set rasmRaSm = Nothing
-            End If ' нужно ли корректировать БД?
-        End If ' суммы отчёта не соответствует?
+            End If ' РЅСѓР¶РЅРѕ Р»Рё РєРѕСЂСЂРµРєС‚РёСЂРѕРІР°С‚СЊ Р‘Р”?
+        End If ' СЃСѓРјРјС‹ РѕС‚С‡С‘С‚Р° РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚?
         
-        ' закрываем абзац
+        ' Р·Р°РєСЂС‹РІР°РµРј Р°Р±Р·Р°С†
         str = str & "</P>"
         
-    End If ' имеется ли такой отчёт? Окончание.
-    ' ликвидируем объект отчёта агента
+    End If ' РёРјРµРµС‚СЃСЏ Р»Рё С‚Р°РєРѕР№ РѕС‚С‡С‘С‚? РћРєРѕРЅС‡Р°РЅРёРµ.
+    ' Р»РёРєРІРёРґРёСЂСѓРµРј РѕР±СЉРµРєС‚ РѕС‚С‡С‘С‚Р° Р°РіРµРЅС‚Р°
     Set raRa = Nothing
 
 NormalExit:
@@ -1262,51 +1262,51 @@ NormalExit:
 ErrHandler:
     MsgBox Err.Description & vbCrLf & "Error number: " & Err.Number & vbCrLf & cstrTitle, vbExclamation, cstrTitle: Resume NormalExit
 End Sub
-' корректируем отчёт агента по источнику. 19.07.2022. Окончание
+' РєРѕСЂСЂРµРєС‚РёСЂСѓРµРј РѕС‚С‡С‘С‚ Р°РіРµРЅС‚Р° РїРѕ РёСЃС‚РѕС‡РЅРёРєСѓ. 19.07.2022. РћРєРѕРЅС‡Р°РЅРёРµ
 ' ***************************************************************************************************************************************************
 
 
-'' отыскиваем ячейку по содержимому. 08.07.2022 ******************************************************************************************************
+'' РѕС‚С‹СЃРєРёРІР°РµРј СЏС‡РµР№РєСѓ РїРѕ СЃРѕРґРµСЂР¶РёРјРѕРјСѓ. 08.07.2022 ******************************************************************************************************
 'Private Function CellFind( _
 '    ByRef xlS As Excel.Worksheet, ByVal findStr As String, ByVal findAtXlLookAt As XlLookAt, ByRef findTextBox As TextBox, _
 '    ByRef findedCell As Range, _
 '    Optional ByRef findedColumn As Integer = -1, Optional ByVal startCellColumn As Integer = -1, Optional ByRef findedOffset As Integer = 0 _
 '    ) As Boolean
-'    ' здесь:
-'    ' xlS - лист, с которым работаем, findTextBox - объект отображающий записи о ходе ревизии
+'    ' Р·РґРµСЃСЊ:
+'    ' xlS - Р»РёСЃС‚, СЃ РєРѕС‚РѕСЂС‹Рј СЂР°Р±РѕС‚Р°РµРј, findTextBox - РѕР±СЉРµРєС‚ РѕС‚РѕР±СЂР°Р¶Р°СЋС‰РёР№ Р·Р°РїРёСЃРё Рѕ С…РѕРґРµ СЂРµРІРёР·РёРё
 '    ' -------------------------------------------------------------------------------------------------------------------------------------
 '
 '    Dim c As Range
 '
 '    Const cstrTitle As String _
-'        = "Процедура *Отыскиваем ячейку по содержимому*"
+'        = "РџСЂРѕС†РµРґСѓСЂР° *РћС‚С‹СЃРєРёРІР°РµРј СЏС‡РµР№РєСѓ РїРѕ СЃРѕРґРµСЂР¶РёРјРѕРјСѓ*"
 '
 '    '**************************************************************************************************************************************
 '
 'On Error GoTo ErrHandler
 '
-'    ' отыскиваем колонку номеров отчётов
+'    ' РѕС‚С‹СЃРєРёРІР°РµРј РєРѕР»РѕРЅРєСѓ РЅРѕРјРµСЂРѕРІ РѕС‚С‡С‘С‚РѕРІ
 '    Set c = xlS.UsedRange.Find(What:=findStr, LookAt:=findAtXlLookAt)
 '    If Not c Is Nothing Then
-'        'присваиваем возвращаемой переменной ячейки найденную ячейку
+'        'РїСЂРёСЃРІР°РёРІР°РµРј РІРѕР·РІСЂР°С‰Р°РµРјРѕР№ РїРµСЂРµРјРµРЅРЅРѕР№ СЏС‡РµР№РєРё РЅР°Р№РґРµРЅРЅСѓСЋ СЏС‡РµР№РєСѓ
 '        Set findedCell = c:
 '
-'        ' присваиваем возвращаемой переменной номер колонки найденной ячейки
+'        ' РїСЂРёСЃРІР°РёРІР°РµРј РІРѕР·РІСЂР°С‰Р°РµРјРѕР№ РїРµСЂРµРјРµРЅРЅРѕР№ РЅРѕРјРµСЂ РєРѕР»РѕРЅРєРё РЅР°Р№РґРµРЅРЅРѕР№ СЏС‡РµР№РєРё
 '        If findedColumn <> -1 Then
 '            findedColumn = c.Column
 '        End If
 '
 '        If startCellColumn <> -1 Then
-'            'определяем смещение от начальной ячейки до найденой
+'            'РѕРїСЂРµРґРµР»СЏРµРј СЃРјРµС‰РµРЅРёРµ РѕС‚ РЅР°С‡Р°Р»СЊРЅРѕР№ СЏС‡РµР№РєРё РґРѕ РЅР°Р№РґРµРЅРѕР№
 '            findedOffset = c.Column - startCellColumn
 '        End If
 '
-'        findTextBox.value = "<P> <font color=""MediumSeaGreen"">Найдена</font> ячейка <b>" & findStr & "</b> колонка - " & c.Column & ", строка - " & c.Row & "." _
-'            & " Содержание: <font color=""blue"">" & c & "</font>.</P>" & findTextBox.value
+'        findTextBox.value = "<P> <font color=""MediumSeaGreen"">РќР°Р№РґРµРЅР°</font> СЏС‡РµР№РєР° <b>" & findStr & "</b> РєРѕР»РѕРЅРєР° - " & c.Column & ", СЃС‚СЂРѕРєР° - " & c.Row & "." _
+'            & " РЎРѕРґРµСЂР¶Р°РЅРёРµ: <font color=""blue"">" & c & "</font>.</P>" & findTextBox.value
 '        CellFind = True
 '    Else
 '        findTextBox.value = _
-'        "<P> <font color=""silver"">Ячейка</font> <b>" & findStr & "</b> <B><font color=""red"">не найдена</font></B></P>" & findTextBox.value
+'        "<P> <font color=""silver"">РЇС‡РµР№РєР°</font> <b>" & findStr & "</b> <B><font color=""red"">РЅРµ РЅР°Р№РґРµРЅР°</font></B></P>" & findTextBox.value
 '        CellFind = False
 '    End If
 '
@@ -1318,9 +1318,9 @@ End Sub
 '    Resume NormalExit
 '
 'End Function
-'' отыскиваем ячейку по содержимому. 08.07.2022. Окончание *******************************************************************************************
+'' РѕС‚С‹СЃРєРёРІР°РµРј СЏС‡РµР№РєСѓ РїРѕ СЃРѕРґРµСЂР¶РёРјРѕРјСѓ. 08.07.2022. РћРєРѕРЅС‡Р°РЅРёРµ *******************************************************************************************
 
-' считываем информацию об обнаруженном отчёте агента из Excel. 08.07.2022 ***************************************************************************
+' СЃС‡РёС‚С‹РІР°РµРј РёРЅС„РѕСЂРјР°С†РёСЋ РѕР± РѕР±РЅР°СЂСѓР¶РµРЅРЅРѕРј РѕС‚С‡С‘С‚Рµ Р°РіРµРЅС‚Р° РёР· Excel. 08.07.2022 ***************************************************************************
 Private Sub RaReadOfExcel(ra As String, ra_date As Variant, ra_Row As Integer, Constraction As String, ConstrName As String, _
     addRa As Boolean, str As String, db As DAO.Database, _
     total As Variant, work As Variant, equipment As Variant, others As Variant, _
@@ -1328,24 +1328,24 @@ Private Sub RaReadOfExcel(ra As String, ra_date As Variant, ra_Row As Integer, C
     returned As String, returnedDate As Variant, sent As String, sendDate As Variant, returnedReason As String, _
     ra_org_sender As String, ra_type As String)
     
-    ' 08.07.2022 убрал параметр period As Integer, он был четвёртый. Вообще процедура была ReportOfAgent
-    Dim rstRa_ImpNewAdd As DAO.Recordset 'набор записей для добавления записей в промежуточную табличку
-    Dim raRow As Integer ' уникальный номер строки из Excel в промежуточной табличке
-    Dim paragraph As String 'для формирования строчного абзаца
+    ' 08.07.2022 СѓР±СЂР°Р» РїР°СЂР°РјРµС‚СЂ period As Integer, РѕРЅ Р±С‹Р» С‡РµС‚РІС‘СЂС‚С‹Р№. Р’РѕРѕР±С‰Рµ РїСЂРѕС†РµРґСѓСЂР° Р±С‹Р»Р° ReportOfAgent
+    Dim rstRa_ImpNewAdd As DAO.Recordset 'РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РґР»СЏ РґРѕР±Р°РІР»РµРЅРёСЏ Р·Р°РїРёСЃРµР№ РІ РїСЂРѕРјРµР¶СѓС‚РѕС‡РЅСѓСЋ С‚Р°Р±Р»РёС‡РєСѓ
+    Dim raRow As Integer ' СѓРЅРёРєР°Р»СЊРЅС‹Р№ РЅРѕРјРµСЂ СЃС‚СЂРѕРєРё РёР· Excel РІ РїСЂРѕРјРµР¶СѓС‚РѕС‡РЅРѕР№ С‚Р°Р±Р»РёС‡РєРµ
+    Dim paragraph As String 'РґР»СЏ С„РѕСЂРјРёСЂРѕРІР°РЅРёСЏ СЃС‚СЂРѕС‡РЅРѕРіРѕ Р°Р±Р·Р°С†Р°
 
-    ' без пробелов в начале и окончании строки, также с однообразно замененными Null и пустой строкой
+    ' Р±РµР· РїСЂРѕР±РµР»РѕРІ РІ РЅР°С‡Р°Р»Рµ Рё РѕРєРѕРЅС‡Р°РЅРёРё СЃС‚СЂРѕРєРё, С‚Р°РєР¶Рµ СЃ РѕРґРЅРѕРѕР±СЂР°Р·РЅРѕ Р·Р°РјРµРЅРµРЅРЅС‹РјРё Null Рё РїСѓСЃС‚РѕР№ СЃС‚СЂРѕРєРѕР№
     Dim ra_ As String, ra_org_sender_ As String
     Dim arrived_ As String, returned_ As String, sent_ As String, note_ As String
     Dim Constraction_ As String, ConstrName_ As String
-    ' проверяемые из таблицы отчётов
+    ' РїСЂРѕРІРµСЂСЏРµРјС‹Рµ РёР· С‚Р°Р±Р»РёС†С‹ РѕС‚С‡С‘С‚РѕРІ
     Dim arrived_r As String, returned_r As String, sent_r As String, note_r As String
     
     Dim nnn As Integer
     Dim strErrMessage As String
 
     Const cstrTitle As String _
-        = "Класс *Ревизия отчётов агента. Проверка файла Отчётов всех агентов* " _
-        & "Процедура *считываем информацию об обнаруженном отчёте агента из Excel. 08.07.2022*"
+        = "РљР»Р°СЃСЃ *Р РµРІРёР·РёСЏ РѕС‚С‡С‘С‚РѕРІ Р°РіРµРЅС‚Р°. РџСЂРѕРІРµСЂРєР° С„Р°Р№Р»Р° РћС‚С‡С‘С‚РѕРІ РІСЃРµС… Р°РіРµРЅС‚РѕРІ* " _
+        & "РџСЂРѕС†РµРґСѓСЂР° *СЃС‡РёС‚С‹РІР°РµРј РёРЅС„РѕСЂРјР°С†РёСЋ РѕР± РѕР±РЅР°СЂСѓР¶РµРЅРЅРѕРј РѕС‚С‡С‘С‚Рµ Р°РіРµРЅС‚Р° РёР· Excel. 08.07.2022*"
         
     '**************************************************************************************************************************************
     
@@ -1353,22 +1353,22 @@ On Error GoTo ErrHandler
     
     raRow = 0
     
-    'очистим от пробелов в окончании и конце, также однообразно заменим Null и пустую строку ""
+    'РѕС‡РёСЃС‚РёРј РѕС‚ РїСЂРѕР±РµР»РѕРІ РІ РѕРєРѕРЅС‡Р°РЅРёРё Рё РєРѕРЅС†Рµ, С‚Р°РєР¶Рµ РѕРґРЅРѕРѕР±СЂР°Р·РЅРѕ Р·Р°РјРµРЅРёРј Null Рё РїСѓСЃС‚СѓСЋ СЃС‚СЂРѕРєСѓ ""
     ra_ = RTrim(LTrim(ra))
     
-    ' подчищаем строки
+    ' РїРѕРґС‡РёС‰Р°РµРј СЃС‚СЂРѕРєРё
     ra_org_sender_ = StringClean(ra_org_sender)
     Constraction_ = StringClean(Constraction)
     ConstrName_ = StringClean(ConstrName)
     arrived_ = StringClean(arrived): returned_ = StringClean(returned): sent_ = StringClean(sent)
     
-    paragraph = "<P>  <font color=""Silver"">Найден типа: </font>*" _
-        & ra_type & "*; <font color=""Silver"">имя</font>: " & ra_ & ". <font color=""Silver"">Стр</font>. - " & Constraction & "."
+    paragraph = "<P>  <font color=""Silver"">РќР°Р№РґРµРЅ С‚РёРїР°: </font>*" _
+        & ra_type & "*; <font color=""Silver"">РёРјСЏ</font>: " & ra_ & ". <font color=""Silver"">РЎС‚СЂ</font>. - " & Constraction & "."
         
-    ' нужно ли обновлять промежуточную таблицу по источнику данных?
+    ' РЅСѓР¶РЅРѕ Р»Рё РѕР±РЅРѕРІР»СЏС‚СЊ РїСЂРѕРјРµР¶СѓС‚РѕС‡РЅСѓСЋ С‚Р°Р±Р»РёС†Сѓ РїРѕ РёСЃС‚РѕС‡РЅРёРєСѓ РґР°РЅРЅС‹С…?
     If mblnAf_source Then
-        ' да, обновлять промежуточную таблицу по источнику данных нужно
-        ' открываем набор записей для добавления
+        ' РґР°, РѕР±РЅРѕРІР»СЏС‚СЊ РїСЂРѕРјРµР¶СѓС‚РѕС‡РЅСѓСЋ С‚Р°Р±Р»РёС†Сѓ РїРѕ РёСЃС‚РѕС‡РЅРёРєСѓ РґР°РЅРЅС‹С… РЅСѓР¶РЅРѕ
+        ' РѕС‚РєСЂС‹РІР°РµРј РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РґР»СЏ РґРѕР±Р°РІР»РµРЅРёСЏ
         Set rstRa_ImpNewAdd = db.OpenRecordset("ra_ImpNew", dbOpenDynaset, dbFailOnError + dbSeeChanges)
         With rstRa_ImpNewAdd
             .AddNew
@@ -1382,7 +1382,7 @@ On Error GoTo ErrHandler
                 End If
                 !rainTtl = NumericOrNull(total): !rainWork = NumericOrNull(work):
                 !rainEquip = NumericOrNull(equipment): !rainOthers = NumericOrNull(others)
-                ' поступило
+                ' РїРѕСЃС‚СѓРїРёР»Рѕ
                 !rainArrivedNum = arrived_
                 If arrivedDate <> 0 And Not IsNull(arrivedDate) Then
                     !rainArrivedDate = arrivedDate
@@ -1390,13 +1390,13 @@ On Error GoTo ErrHandler
                 If arrivedDateFact <> 0 And Not IsNull(arrivedDateFact) Then
                     !rainArrivedDateFact = arrivedDateFact
                 End If
-                ' возвращено
+                ' РІРѕР·РІСЂР°С‰РµРЅРѕ
                 !rainReturnedNum = returned_
                 If returnedDate <> 0 And Not IsNull(returnedDate) Then
                     !rainReturnedDate = returnedDate
                 End If
                 !rainReturnedReason = returnedReason
-                ' отправлено
+                ' РѕС‚РїСЂР°РІР»РµРЅРѕ
                 !rainSendNum = sent_
                 If sendDate <> 0 And Not IsNull(sendDate) Then
                     !rainSendDate = sendDate
@@ -1405,14 +1405,14 @@ On Error GoTo ErrHandler
             .Update
             .Bookmark = .LastModified
             raRow = !rainRow
-            paragraph = paragraph & " <font color=""orange"">ОА <b>" & ra_ & "</b> от " & ra_date & _
-            "</font>. Отчёт <font color=""DarkGreen"">внесен в промеж. тбл</font>. ID - " & raRow _
-                & " <font color=""silver"">(номер строки листа Excel)</font>."
+            paragraph = paragraph & " <font color=""orange"">РћРђ <b>" & ra_ & "</b> РѕС‚ " & ra_date & _
+            "</font>. РћС‚С‡С‘С‚ <font color=""DarkGreen"">РІРЅРµСЃРµРЅ РІ РїСЂРѕРјРµР¶. С‚Р±Р»</font>. ID - " & raRow _
+                & " <font color=""silver"">(РЅРѕРјРµСЂ СЃС‚СЂРѕРєРё Р»РёСЃС‚Р° Excel)</font>."
         End With
-        ' закрываем набор записей для добавления
+        ' Р·Р°РєСЂС‹РІР°РµРј РЅР°Р±РѕСЂ Р·Р°РїРёСЃРµР№ РґР»СЏ РґРѕР±Р°РІР»РµРЅРёСЏ
         rstRa_ImpNewAdd.Close: Set rstRa_ImpNewAdd = Nothing
     Else
-        ' нет, обновлять промежуточную таблицу по источнику данных не нужно
+        ' РЅРµС‚, РѕР±РЅРѕРІР»СЏС‚СЊ РїСЂРѕРјРµР¶СѓС‚РѕС‡РЅСѓСЋ С‚Р°Р±Р»РёС†Сѓ РїРѕ РёСЃС‚РѕС‡РЅРёРєСѓ РґР°РЅРЅС‹С… РЅРµ РЅСѓР¶РЅРѕ
     End If
     
     str = paragraph & str
@@ -1424,16 +1424,16 @@ NormalExit:
     Exit Sub
     
 ErrHandler:
-    strErrMessage = "Отчёт: " & ra_ & ", строка: " & ra_Row & "." & vbCrLf _
+    strErrMessage = "РћС‚С‡С‘С‚: " & ra_ & ", СЃС‚СЂРѕРєР°: " & ra_Row & "." & vbCrLf _
         & Err.Description & vbCrLf & "Error number: " & Err.Number & vbCrLf & cstrTitle
     MsgBox strErrMessage, vbExclamation, cstrTitle
     Resume NormalExit
 
 End Sub
-' считываем информацию об обнаруженном отчёте агента из Excel. 08.07.2022. Окончание ****************************************************************
+' СЃС‡РёС‚С‹РІР°РµРј РёРЅС„РѕСЂРјР°С†РёСЋ РѕР± РѕР±РЅР°СЂСѓР¶РµРЅРЅРѕРј РѕС‚С‡С‘С‚Рµ Р°РіРµРЅС‚Р° РёР· Excel. 08.07.2022. РћРєРѕРЅС‡Р°РЅРёРµ ****************************************************************
 
-' если не цифра то Null. 12.07.2022
-' убираем строки из цифровых полей
+' РµСЃР»Рё РЅРµ С†РёС„СЂР° С‚Рѕ Null. 12.07.2022
+' СѓР±РёСЂР°РµРј СЃС‚СЂРѕРєРё РёР· С†РёС„СЂРѕРІС‹С… РїРѕР»РµР№
 Private Function NumericOrNull(ByRef value As Variant) As Variant
     If IsNumeric(value) And Not IsNull(value) Then
         NumericOrNull = value
