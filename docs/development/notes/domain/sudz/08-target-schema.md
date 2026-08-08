@@ -1,7 +1,7 @@
 # СУДЗ — целевая физическая схема (DEV: `sudz`; прод: `ags`)
 
 **Дата создания:** 2026-08-07  
-**Последнее обновление:** 2026-08-08 (S52a: `yr_CmmGr_New`)  
+**Последнее обновление:** 2026-08-08 (S58: Progress · Загрузить)  
 **Статус:** DEV-контур MVP на `sudz`; лаборатория `test_sudz`; **прод — влитие в `ags`**  
 **План чата:** [chat-plan-26-0802-sudz.md](../../chats/chat-plan/chat-plan-26-0802-sudz.md)  
 **Контекст:** [04-3 проблемы/решения](./04-3_problems-solutions.md) · эскиз [assets/26-0807-sudz-target-sketch-dbtvar.png](./assets/26-0807-sudz-target-sketch-dbtvar.png) · [07-readiness](./07-readiness.md)  
@@ -811,3 +811,16 @@ base=`2025-01-24` (801), curr=`2026-01-30` (805); mery/cst — seed `20` (гру
 - Владелец: в целом Excel соответствует эталону; дальнейшие недочёты — по мере обнаружения.
 - Подпись `{q}. № док. (idNum)` → **`{q}. № задолженности в СФ`** (смысл `invDbt.idNum` / MS_Description).
 - Rslt сбор (Excel) по визуалу **принят**; прототип UI «как Excel» — позже.
+
+### S57 — 2026-08-08 (Rslt повтор: yr_CmmGr_New + Excel)
+
+- DDL `yr.yr_CmmGr_New`; группа **904**; seed из тестовых возвратов dbt **82** / **85**.
+- Файлы возвратов: `…return_dbt82_S57.xlsx`, `…return_dbt85_S57.xlsx`; итоговый повтор: `…povtor_S57.xlsx`.
+- REST `GET /api/v1/sudz/rslt-povtor.xlsx`; UI Progress — тип «Rslt повтор».
+- Версия: `0.1.0.164-SNAPSHOT`.
+
+### S58 — 2026-08-08 (Progress: операция = документ+действие)
+
+- Комбо **Операция** (`Rslt … · Выгрузить` / `Rslt повтор · Загрузить`); кнопка **Выполнить**.
+- `yr_CmmGr_New` + файл возврата — на Progress при загрузке; импорт → upsert в New.
+- Версия: `0.1.0.166-SNAPSHOT` (реализовано: GraphQL New, REST `POST /rslt-return`, UI Progress).

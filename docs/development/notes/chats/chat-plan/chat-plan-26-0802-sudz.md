@@ -3,9 +3,9 @@
 **Дата создания:** 2026-08-02  
 **Последнее обновление:** 2026-08-08  
 **Проект:** FEMSQ  
-**Версия плана:** 0.51.0 (S56: UAT Excel Rslt принят)  
+**Версия плана:** 0.53.0 (S58: Progress операции)  
 **Задача:** 0065–0070 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md)  
-**Статус плана:** ✅ документация MVP; **0067–0068 ✅**; **Rslt сбор Excel принят (S56)**; далее — Rslt повтор / D644 / свод  
+**Статус плана:** ✅ документация MVP; Rslt сбор/повтор; **S58** Progress · Выгрузить/Загрузить + yr_CmmGr_New; далее D644/свод  
 
 
 **Доменные доки:** [01-overview](../../domain/sudz/01-overview.md) · [02-glossary](../../domain/sudz/02-glossary.md) · [03-processes](../../domain/sudz/03-processes.md) · [04-data-model](../../domain/sudz/04-data-model.md) · [04-1 MS_Description](../../domain/sudz/04-1_ms-descriptions.md) · [04-3 проблемы](../../domain/sudz/04-3_problems-solutions.md) · [07-readiness (покрытие/готовность)](../../domain/sudz/07-readiness.md) · [08-target-schema (физ. схема + ER)](../../domain/sudz/08-target-schema.md)  
@@ -160,6 +160,8 @@
 | S54 | 2026-08-08 | Excel Rslt v2 (шапка row1–3 как эталон); `appendSudzYearProgress` + запись при Excel/прототипе; **полный путь папки выгрузки отложен**; прототип UI «как Excel» — после приёмки формата | [08 §S54](../../domain/sudz/08-target-schema.md); JAR 0.1.0.159 | ✅ |
 | S55 | 2026-08-08 | Excel Rslt v3: заливки/шрифты/границы/фильтр/freeze/SUBTOTAL по эталону `…26-0212…`; имя файла с датой-временем | [08 §S55](../../domain/sudz/08-target-schema.md); JAR 0.1.0.162 | ✅ |
 | S56 | 2026-08-08 | UAT: Excel Rslt **принят**; подпись `idNum` → «№ задолженности в СФ»; точечные правки — по мере замечаний | [08 §S56](../../domain/sudz/08-target-schema.md) | ✅ |
+| S57 | 2026-08-08 | Rslt повтор: `yr_CmmGr_New`+гр.904; возвраты Excel 82/85; REST/UI повтор; итоговый `…povtor_S57.xlsx` | [08 §S57](../../domain/sudz/08-target-schema.md); JAR 0.1.0.164 | ✅ |
+| S58 | 2026-08-08 | Progress: комбо **Операция** (док+действие), **Выполнить**, New+файл на загрузке | [02-9 Progress](../../UI/02-9_sudz-mvp-screens.md) | ✅ |
 
 ### 5.3. Объекты Access (формы / запросы / таблицы / отчёты)
 
@@ -333,4 +335,6 @@
 **S53 Rslt сбор:** 2026-08-08  
 **S54 Excel v2 + yr_Progress (путь папки отложен):** 2026-08-08  
 **S55 Excel стили эталона 26-0212:** 2026-08-08  
-**S56 UAT Excel Rslt принят (подпись idNum):** 2026-08-08
+**S56 UAT Excel Rslt принят (подпись idNum):** 2026-08-08  
+**S57 Rslt повтор (yr_CmmGr_New):** 2026-08-08  
+**S58 Progress операции Выгрузить/Загрузить:** 2026-08-08 — UI+REST импорт; JAR `0.1.0.166-SNAPSHOT`
