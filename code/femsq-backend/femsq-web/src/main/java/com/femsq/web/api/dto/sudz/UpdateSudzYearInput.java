@@ -8,12 +8,14 @@ package com.femsq.web.api.dto.sudz;
  * @param baseUplKey базовая выгрузка
  * @param yKey ключ {@code ags.yyyy}
  * @param cmmGrKey группа комментариев (nullable)
+ * @param cmmGrNewKey группа новых (nullable)
  */
 public record UpdateSudzYearInput(
         int yrKey,
         String variant,
         int baseUplKey,
         int yKey,
-        Integer cmmGrKey
+        Integer cmmGrKey,
+        Integer cmmGrNewKey
 ) {
 }

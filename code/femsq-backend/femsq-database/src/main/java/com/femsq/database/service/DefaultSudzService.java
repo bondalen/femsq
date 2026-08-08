@@ -7,6 +7,7 @@ import com.femsq.database.model.sudz.SudzDebtCollection;
 import com.femsq.database.model.sudz.SudzPmLink;
 import com.femsq.database.model.sudz.SudzPmUplLookup;
 import com.femsq.database.model.sudz.SudzRsltDebt;
+import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSvodResult;
 import com.femsq.database.model.sudz.SudzUplLookup;
 import com.femsq.database.model.sudz.SudzYear;
@@ -111,7 +112,14 @@ public class DefaultSudzService implements SudzService {
     }
 
     @Override
-    public SudzYearDetail updateYear(int yrKey, String variant, int baseUplKey, int yKey, Integer cmmGrKey) {
+    public SudzYearDetail updateYear(
+            int yrKey,
+            String variant,
+            int baseUplKey,
+            int yKey,
+            Integer cmmGrKey,
+            Integer cmmGrNewKey
+    ) {
         requireYear(yrKey);
         String variantNorm = requireNonBlank(variant, "variant");
         if (baseUplKey <= 0) {
@@ -123,9 +131,32 @@ public class DefaultSudzService implements SudzService {
         if (cmmGrKey != null && cmmGrKey <= 0) {
             throw new IllegalArgumentException("cmmGrKey должен быть положительным или null: " + cmmGrKey);
         }
+        if (cmmGrNewKey != null && cmmGrNewKey <= 0) {
+            throw new IllegalArgumentException("cmmGrNewKey должен быть положительным или null: " + cmmGrNewKey);
+        }
         log.log(Level.INFO, "updateYear yr={0}", yrKey);
-        sudzDao.updateYear(yrKey, variantNorm, baseUplKey, yKey, cmmGrKey);
+        sudzDao.updateYear(yrKey, variantNorm, baseUplKey, yKey, cmmGrKey, cmmGrNewKey);
         return getYearDetail(yrKey);
+    }
+
+    @Override
+    public SudzCmmGrLookup createCmmGr(String name, java.time.LocalDate date) {
+        String nameNorm = requireNonBlank(name, "name");
+        if (date == null) {
+            throw new IllegalArgumentException("Дата группы комментариев обязательна");
+        }
+        int key = sudzDao.createCmmGr(nameNorm, date);
+        return new SudzCmmGrLookup(key, nameNorm, date);
+    }
+
+    @Override
+    public int importRsltReturn(int yrKey, java.util.List<SudzRsltReturnRow> rows) {
+        requireYear(yrKey);
+        if (rows == null || rows.isEmpty()) {
+            throw new IllegalArgumentException("Нет строк для импорта возврата Rslt");
+        }
+        log.log(Level.INFO, "importRsltReturn yr={0}, rows={1}", new Object[]{yrKey, rows.size()});
+        return sudzDao.importRsltReturn(yrKey, rows);
     }
 
     @Override

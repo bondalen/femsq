@@ -70,6 +70,9 @@ extend type Mutation {
 
   """Дописать строку в yr_Progress (лог формирования документов)."""
   appendSudzYearProgress(yrKey: Int!, line: String!): String!
+
+  """Создать группу комментариев (для yr_CmmGr_New)."""
+  createSudzCmmGr(input: CreateSudzCmmGrInput!): SudzCmmGrLookup!
 }
 
 """Год-вариант СУДЗ (yr) с lookup-подписями."""
@@ -84,6 +87,10 @@ type SudzYear {
   baseUplDate: Date
   cmmGrName: String
   cmmGrDate: Date
+  """Рабочая группа новых (yr_CmmGr_New)."""
+  cmmGrNew: Int
+  cmmGrNewName: String
+  cmmGrNewDate: Date
   """Календарный год из ags.yyyy.yyyy."""
   yyyyValue: Int
   """HTML-лог хода (только чтение)."""
@@ -165,6 +172,13 @@ input UpdateSudzYearInput {
   baseUplKey: Int!
   yKey: Int!
   cmmGrKey: Int
+  cmmGrNewKey: Int
+}
+
+"""Вход создания группы комментариев."""
+input CreateSudzCmmGrInput {
+  name: String!
+  date: Date!
 }
 
 """Вход создания выгрузки ДЗ."""
@@ -188,6 +202,12 @@ type SudzRsltDebt {
   mery: String
   cstCode: String
   cstName: String
+  """Куратор из yr_CmmGr_New (cur_new)."""
+  curatorNew: String
+  """Мероприятия из yr_CmmGr_New (mery_new)."""
+  meryNew: String
+  """Код стройки из yr_CmmGr_New (cstAgPn_new)."""
+  cstCodeNew: String
   periods: [SudzRsltPeriod!]!
 }
 

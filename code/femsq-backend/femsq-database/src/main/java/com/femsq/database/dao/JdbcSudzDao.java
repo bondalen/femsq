@@ -10,6 +10,7 @@ import com.femsq.database.model.sudz.SudzPmLink;
 import com.femsq.database.model.sudz.SudzPmUplLookup;
 import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzRsltPeriod;
+import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSvodAccount;
 import com.femsq.database.model.sudz.SudzSvodResult;
 import com.femsq.database.model.sudz.SudzSvodTotal;
@@ -283,7 +284,14 @@ public class JdbcSudzDao implements SudzDao {
     }
 
     @Override
-    public void updateYear(int yrKey, String variant, int baseUplKey, int yKey, Integer cmmGrKey) {
+    public void updateYear(
+            int yrKey,
+            String variant,
+            int baseUplKey,
+            int yKey,
+            Integer cmmGrKey,
+            Integer cmmGrNewKey
+    ) {
         log.log(Level.INFO, "Updating sudz year yr={0}", yrKey);
         try (Connection connection = connectionFactory.createConnection()) {
             connection.setAutoCommit(false);
@@ -296,10 +304,13 @@ public class JdbcSudzDao implements SudzDao {
                 if (cmmGrKey != null) {
                     ensureCmmGrExists(connection, cmmGrKey);
                 }
+                if (cmmGrNewKey != null) {
+                    ensureCmmGrExists(connection, cmmGrNewKey);
+                }
 
                 // yr_Progress намеренно не обновляем
                 String sql = "UPDATE " + q("yr")
-                        + " SET yr_variant = ?, cn_inv_dbt_upl = ?, yyyy = ?, yr_CmmGr = ?"
+                        + " SET yr_variant = ?, cn_inv_dbt_upl = ?, yyyy = ?, yr_CmmGr = ?, yr_CmmGr_New = ?"
                         + " WHERE yr_key = ?";
                 try (PreparedStatement statement = connection.prepareStatement(sql)) {
                     statement.setString(1, variant);
@@ -310,7 +321,12 @@ public class JdbcSudzDao implements SudzDao {
                     } else {
                         statement.setInt(4, cmmGrKey);
                     }
-                    statement.setInt(5, yrKey);
+                    if (cmmGrNewKey == null) {
+                        statement.setNull(5, Types.INTEGER);
+                    } else {
+                        statement.setInt(5, cmmGrNewKey);
+                    }
+                    statement.setInt(6, yrKey);
                     int updated = statement.executeUpdate();
                     if (updated == 0) {
                         throw new IllegalArgumentException("Год-вариант СУДЗ не найден: yr=" + yrKey);
@@ -330,6 +346,85 @@ public class JdbcSudzDao implements SudzDao {
             throw exception;
         } catch (SQLException exception) {
             throw wrap("Не удалось обновить год-вариант СУДЗ yr=" + yrKey, exception);
+        }
+    }
+
+    @Override
+    public int createCmmGr(String name, LocalDate date) {
+        log.log(Level.INFO, "Creating cnInvCmmGr name={0}", name);
+        String sql = "INSERT INTO " + q("cnInvCmmGr")
+                + " (cnicgNmCs, cnicgDate, cnicgName) VALUES (?, ?, ?)";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            statement.setString(1, "S58");
+            statement.setDate(2, Date.valueOf(date));
+            statement.setString(3, name);
+            statement.executeUpdate();
+            try (ResultSet keys = statement.getGeneratedKeys()) {
+                if (!keys.next()) {
+                    throw new DaoException("Не получен cnicgKey после INSERT cnInvCmmGr");
+                }
+                return keys.getInt(1);
+            }
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось создать группу комментариев", exception);
+        }
+    }
+
+    @Override
+    public int importRsltReturn(int yrKey, List<SudzRsltReturnRow> rows) {
+        log.log(Level.INFO, "Import Rslt return yr={0}, rows={1}", new Object[]{yrKey, rows.size()});
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                SudzYear year = findYearOn(connection, yrKey)
+                        .orElseThrow(() -> new IllegalArgumentException("Год-вариант СУДЗ не найден: yr=" + yrKey));
+                Integer cmmGrNew = year.cmmGrNew();
+                if (cmmGrNew == null || cmmGrNew <= 0) {
+                    throw new IllegalArgumentException(
+                            "У года yr=" + yrKey + " не задана yr_CmmGr_New — укажите группу новых на Progress");
+                }
+                int imported = 0;
+                for (SudzRsltReturnRow row : rows) {
+                    if (row == null || row.dbtKey() <= 0) {
+                        continue;
+                    }
+                    boolean any = false;
+                    String curator = normalizeText(row.curatorNew());
+                    String mery = normalizeText(row.meryNew());
+                    String cst = normalizeText(row.cstCodeNew());
+                    if (curator != null) {
+                        upsertComment(connection, cmmGrNew, row.dbtKey(), CNIC_TYPE_CURATOR, curator);
+                        any = true;
+                    }
+                    if (mery != null) {
+                        upsertComment(connection, cmmGrNew, row.dbtKey(), CNIC_TYPE_MERY, mery);
+                        any = true;
+                    }
+                    if (cst != null) {
+                        upsertCst(connection, cmmGrNew, row.dbtKey(), cst);
+                        any = true;
+                    }
+                    if (any) {
+                        imported++;
+                    }
+                }
+                connection.commit();
+                return imported;
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось импортировать возврат Rslt yr=" + yrKey, exception);
         }
     }
 
@@ -571,7 +666,8 @@ public class JdbcSudzDao implements SudzDao {
                 + "       f.CstAgPnCode, f.CstAgPnName, f.AgOrg, "
                 + "       CAST(f.account_num AS nvarchar(32)) AS account_num, "
                 + "       cm.curator, cm.mery, "
-                + "       cy.cst_code, cy.cst_name "
+                + "       cy.cst_code, cy.cst_name, "
+                + "       cmn.curator_new, cmn.mery_new, cyn.cst_code_new "
                 + "FROM " + q("vw_Yr_DbtFact") + " f "
                 + "LEFT JOIN ( "
                 + "  SELECT cm.cnicInvAccnt AS dbtKey, "
@@ -594,6 +690,24 @@ public class JdbcSudzDao implements SudzDao {
                 + "  WHERE y.yr_key = ? "
                 + "  GROUP BY cs.ciccInvAccnt "
                 + ") cy ON cy.dbtKey = f.dbtKey "
+                + "LEFT JOIN ( "
+                + "  SELECT cm.cnicInvAccnt AS dbtKey, "
+                + "         MAX(CASE WHEN cm.cnicType = 8 THEN cm.cnicText END) AS curator_new, "
+                + "         MAX(CASE WHEN cm.cnicType = 1 THEN cm.cnicText END) AS mery_new "
+                + "  FROM " + q("yr") + " y "
+                + "  JOIN " + q("cnInvCmm") + " cm ON cm.cnicGroup = y.yr_CmmGr_New "
+                + "  WHERE y.yr_key = ? AND y.yr_CmmGr_New IS NOT NULL "
+                + "  GROUP BY cm.cnicInvAccnt "
+                + ") cmn ON cmn.dbtKey = f.dbtKey "
+                + "LEFT JOIN ( "
+                + "  SELECT cs.ciccInvAccnt AS dbtKey, "
+                + "         MAX(pn.cstapIpgPnN) AS cst_code_new "
+                + "  FROM " + q("yr") + " y "
+                + "  JOIN " + q("cnInvCmmCst") + " cs ON cs.ciccCmmGr = y.yr_CmmGr_New AND cs.ciccType = 2 "
+                + "  JOIN ags.cstAgPn pn ON pn.cstapKey = cs.ciccCstAgPn "
+                + "  WHERE y.yr_key = ? AND y.yr_CmmGr_New IS NOT NULL "
+                + "  GROUP BY cs.ciccInvAccnt "
+                + ") cyn ON cyn.dbtKey = f.dbtKey "
                 + "WHERE f.yr_key = ? "
                 + "  AND (? IS NULL OR f.upl_date <= ( "
                 + "        SELECT u.upl_date FROM " + q("cn_inv_dbt_upl") + " u WHERE u.upl_key = ? "
@@ -607,12 +721,14 @@ public class JdbcSudzDao implements SudzDao {
             statement.setInt(1, yrKey);
             statement.setInt(2, yrKey);
             statement.setInt(3, yrKey);
+            statement.setInt(4, yrKey);
+            statement.setInt(5, yrKey);
             if (asOfUpl == null) {
-                statement.setNull(4, Types.INTEGER);
-                statement.setNull(5, Types.INTEGER);
+                statement.setNull(6, Types.INTEGER);
+                statement.setNull(7, Types.INTEGER);
             } else {
-                statement.setInt(4, asOfUpl);
-                statement.setInt(5, asOfUpl);
+                statement.setInt(6, asOfUpl);
+                statement.setInt(7, asOfUpl);
             }
             try (ResultSet rs = statement.executeQuery()) {
                 Map<Integer, Builder> builders = new LinkedHashMap<>();
@@ -626,7 +742,10 @@ public class JdbcSudzDao implements SudzDao {
                                 rs.getString("curator"),
                                 rs.getString("mery"),
                                 rs.getString("cst_code"),
-                                rs.getString("cst_name")
+                                rs.getString("cst_name"),
+                                rs.getString("curator_new"),
+                                rs.getString("mery_new"),
+                                rs.getString("cst_code_new")
                         );
                         builders.put(dbtKey, builder);
                     }
@@ -793,13 +912,15 @@ public class JdbcSudzDao implements SudzDao {
     }
 
     private String yearSelectSql() {
-        return "SELECT y.yr_key, y.yr_variant, y.cn_inv_dbt_upl, y.yyyy, y.yr_CmmGr, y.yr_Progress, "
+        return "SELECT y.yr_key, y.yr_variant, y.cn_inv_dbt_upl, y.yyyy, y.yr_CmmGr, y.yr_CmmGr_New, y.yr_Progress, "
                 + "u.upl_name AS base_upl_name, u.upl_date AS base_upl_date, "
                 + "g.cnicgName AS cmm_gr_name, g.cnicgDate AS cmm_gr_date, "
+                + "gn.cnicgName AS cmm_gr_new_name, gn.cnicgDate AS cmm_gr_new_date, "
                 + "yy.yyyy AS yyyy_value "
                 + "FROM " + q("yr") + " y "
                 + "LEFT JOIN " + q("cn_inv_dbt_upl") + " u ON u.upl_key = y.cn_inv_dbt_upl "
                 + "LEFT JOIN " + q("cnInvCmmGr") + " g ON g.cnicgKey = y.yr_CmmGr "
+                + "LEFT JOIN " + q("cnInvCmmGr") + " gn ON gn.cnicgKey = y.yr_CmmGr_New "
                 + "LEFT JOIN ags.yyyy yy ON yy.yKey = y.yyyy";
     }
 
@@ -1190,6 +1311,9 @@ public class JdbcSudzDao implements SudzDao {
                 getLocalDate(rs, "base_upl_date"),
                 rs.getString("cmm_gr_name"),
                 getLocalDate(rs, "cmm_gr_date"),
+                getInteger(rs, "yr_CmmGr_New"),
+                rs.getString("cmm_gr_new_name"),
+                getLocalDate(rs, "cmm_gr_new_date"),
                 getInteger(rs, "yyyy_value"),
                 rs.getString("yr_Progress")
         );
@@ -1260,22 +1384,29 @@ public class JdbcSudzDao implements SudzDao {
         private final String mery;
         private final String cstCode;
         private final String cstName;
+        private final String curatorNew;
+        private final String meryNew;
+        private final String cstCodeNew;
         private final List<SudzRsltPeriod> periods = new ArrayList<>();
         private BigDecimal baseOverd;
 
         private Builder(int dbtKey, String accountNum, String curator, String mery,
-                        String cstCode, String cstName) {
+                        String cstCode, String cstName,
+                        String curatorNew, String meryNew, String cstCodeNew) {
             this.dbtKey = dbtKey;
             this.accountNum = accountNum;
             this.curator = curator;
             this.mery = mery;
             this.cstCode = cstCode;
             this.cstName = cstName;
+            this.curatorNew = curatorNew;
+            this.meryNew = meryNew;
+            this.cstCodeNew = cstCodeNew;
         }
 
         private SudzRsltDebt build() {
             return new SudzRsltDebt(dbtKey, accountNum, curator, mery, cstCode, cstName,
-                    List.copyOf(periods));
+                    curatorNew, meryNew, cstCodeNew, List.copyOf(periods));
         }
     }
 }

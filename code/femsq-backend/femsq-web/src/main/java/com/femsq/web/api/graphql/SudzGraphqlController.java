@@ -15,6 +15,7 @@ import com.femsq.database.model.sudz.SudzYearDetail;
 import com.femsq.database.model.sudz.SudzYearUpl;
 import com.femsq.database.model.sudz.SudzYyyyLookup;
 import com.femsq.database.service.SudzService;
+import com.femsq.web.api.dto.sudz.CreateSudzCmmGrInput;
 import com.femsq.web.api.dto.sudz.CreateSudzPmUplInput;
 import com.femsq.web.api.dto.sudz.CreateSudzUplInput;
 import com.femsq.web.api.dto.sudz.CreateSudzYearInput;
@@ -249,7 +250,8 @@ public class SudzGraphqlController {
                     input.variant(),
                     input.baseUplKey(),
                     input.yKey(),
-                    input.cmmGrKey()
+                    input.cmmGrKey(),
+                    input.cmmGrNewKey()
             );
         } catch (IllegalArgumentException exception) {
             throw badRequest(exception);
@@ -431,6 +433,25 @@ public class SudzGraphqlController {
     public String appendSudzYearProgress(@Argument int yrKey, @Argument String line) {
         try {
             return sudzService.appendYearProgress(yrKey, line);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Создаёт группу комментариев (для привязки к {@code yr_CmmGr_New}).
+     *
+     * @param input имя и дата
+     * @return lookup
+     */
+    @MutationMapping
+    public SudzCmmGrLookup createSudzCmmGr(@Argument CreateSudzCmmGrInput input) {
+        try {
+            return sudzService.createCmmGr(input.name(), input.date());
         } catch (IllegalArgumentException exception) {
             throw badRequest(exception);
         } catch (MissingConfigurationException exception) {

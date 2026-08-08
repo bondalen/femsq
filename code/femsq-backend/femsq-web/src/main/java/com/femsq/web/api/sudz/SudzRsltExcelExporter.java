@@ -75,13 +75,28 @@ public final class SudzRsltExcelExporter {
     }
 
     /**
-     * Собирает xlsx Rslt сбор.
+     * Собирает xlsx Rslt сбор ({@code *_new} пустые).
      *
      * @param debts долги со срезами (уже отфильтрованными по asOfUpl)
      * @return байты .xlsx
      * @throws IOException ошибка записи книги
      */
     public static byte[] exportRsltSborn(List<SudzRsltDebt> debts) throws IOException {
+        return exportRslt(debts, false);
+    }
+
+    /**
+     * Собирает xlsx Rslt повтор («старые» + {@code *_new} из {@code yr_CmmGr_New}).
+     *
+     * @param debts долги со срезами и полями {@code *New}
+     * @return байты .xlsx
+     * @throws IOException ошибка записи книги
+     */
+    public static byte[] exportRsltPovtor(List<SudzRsltDebt> debts) throws IOException {
+        return exportRslt(debts, true);
+    }
+
+    private static byte[] exportRslt(List<SudzRsltDebt> debts, boolean fillNew) throws IOException {
         List<SliceMeta> slices = collectSlices(debts);
         LocalDate newAsOf = slices.isEmpty()
                 ? LocalDate.now()
@@ -122,15 +137,13 @@ public final class SudzRsltExcelExporter {
 
             for (int r = 0; r < debts.size(); r++) {
                 Row row = sheet.createRow(3 + r);
-                writeDebtRow(row, debts.get(r), slices, columns, styles);
+                writeDebtRow(row, debts.get(r), slices, columns, styles, fillNew);
             }
 
             if (!columns.isEmpty()) {
-                // Как в эталоне 26-0212: автофильтр по строке подписей (row2), с колонки B.
                 int filterFrom = columns.size() > 1 ? 1 : 0;
                 sheet.setAutoFilter(new CellRangeAddress(1, 1, filterFrom, columns.size() - 1));
             }
-            // Боковик dbtKey+account_num + 3 строки шапки.
             sheet.createFreezePane(2, 3);
 
             applyColumnWidths(sheet, columns);
@@ -200,7 +213,8 @@ public final class SudzRsltExcelExporter {
             SudzRsltDebt debt,
             List<SliceMeta> slices,
             List<ColumnDef> columns,
-            Styles styles
+            Styles styles,
+            boolean fillNew
     ) {
         int c = 0;
         c = writeTyped(row, c, debt.dbtKey(), styles.data());
@@ -240,6 +254,11 @@ public final class SudzRsltExcelExporter {
         c = writeTyped(row, c, debt.mery(), styles.data());
         c = writeTyped(row, c, debt.cstCode(), styles.data());
         c = writeTyped(row, c, debt.cstName(), styles.data());
+        if (fillNew) {
+            c = writeTyped(row, c, debt.curatorNew(), styles.data());
+            c = writeTyped(row, c, debt.meryNew(), styles.data());
+            c = writeTyped(row, c, debt.cstCodeNew(), styles.data());
+        }
         while (c < columns.size()) {
             Cell cell = row.createCell(c++);
             cell.setCellStyle(styles.data());

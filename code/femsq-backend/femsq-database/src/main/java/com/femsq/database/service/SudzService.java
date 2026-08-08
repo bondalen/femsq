@@ -6,6 +6,7 @@ import com.femsq.database.model.sudz.SudzDebtCollection;
 import com.femsq.database.model.sudz.SudzPmLink;
 import com.femsq.database.model.sudz.SudzPmUplLookup;
 import com.femsq.database.model.sudz.SudzRsltDebt;
+import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSvodResult;
 import com.femsq.database.model.sudz.SudzUplLookup;
 import com.femsq.database.model.sudz.SudzYear;
@@ -96,7 +97,32 @@ public interface SudzService {
      * @param cmmGrKey группа (nullable)
      * @return актуальная карточка
      */
-    SudzYearDetail updateYear(int yrKey, String variant, int baseUplKey, int yKey, Integer cmmGrKey);
+    SudzYearDetail updateYear(
+            int yrKey,
+            String variant,
+            int baseUplKey,
+            int yKey,
+            Integer cmmGrKey,
+            Integer cmmGrNewKey
+    );
+
+    /**
+     * Создаёт группу комментариев.
+     *
+     * @param name имя
+     * @param date дата
+     * @return lookup новой группы
+     */
+    SudzCmmGrLookup createCmmGr(String name, java.time.LocalDate date);
+
+    /**
+     * Импорт возврата Rslt в {@code yr_CmmGr_New}.
+     *
+     * @param yrKey год
+     * @param rows строки *_new
+     * @return число долгов
+     */
+    int importRsltReturn(int yrKey, java.util.List<SudzRsltReturnRow> rows);
 
     /**
      * Дописывает строку в лог {@code yr_Progress}.

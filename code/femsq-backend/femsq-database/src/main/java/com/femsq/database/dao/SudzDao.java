@@ -6,6 +6,7 @@ import com.femsq.database.model.sudz.SudzDebtCollection;
 import com.femsq.database.model.sudz.SudzPmLink;
 import com.femsq.database.model.sudz.SudzPmUplLookup;
 import com.femsq.database.model.sudz.SudzRsltDebt;
+import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSvodResult;
 import com.femsq.database.model.sudz.SudzUplLookup;
 import com.femsq.database.model.sudz.SudzYear;
@@ -105,8 +106,34 @@ public interface SudzDao {
      * @param baseUplKey базовая выгрузка
      * @param yKey ключ {@code ags.yyyy}
      * @param cmmGrKey группа комментариев (nullable)
+     * @param cmmGrNewKey группа новых (nullable)
      */
-    void updateYear(int yrKey, String variant, int baseUplKey, int yKey, Integer cmmGrKey);
+    void updateYear(
+            int yrKey,
+            String variant,
+            int baseUplKey,
+            int yKey,
+            Integer cmmGrKey,
+            Integer cmmGrNewKey
+    );
+
+    /**
+     * Создаёт группу комментариев {@code cnInvCmmGr}.
+     *
+     * @param name имя группы
+     * @param date дата группы
+     * @return новый {@code cnicgKey}
+     */
+    int createCmmGr(String name, LocalDate date);
+
+    /**
+     * Импортирует строки возврата Rslt ({@code *_new}) в {@code yr_CmmGr_New}.
+     *
+     * @param yrKey год
+     * @param rows строки с dbtKey и новыми полями
+     * @return число обработанных долгов
+     */
+    int importRsltReturn(int yrKey, List<SudzRsltReturnRow> rows);
 
     /**
      * Дописывает строку в {@code yr_Progress} (лог формирования документов).
