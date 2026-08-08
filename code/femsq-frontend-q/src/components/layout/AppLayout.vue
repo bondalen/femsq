@@ -1,5 +1,5 @@
 <template>
-  <QLayout view="hHh lpR fFf">
+  <QLayout view="hHh Lpr fFf">
     <QHeader class="femsq-app-header" bordered>
       <TopBar
         :active-view="activeView"

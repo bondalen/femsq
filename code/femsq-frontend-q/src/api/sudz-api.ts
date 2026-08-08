@@ -7,6 +7,7 @@ import { gql } from '@apollo/client/core';
 import { apolloClient } from '@/plugins/apollo';
 import { RequestError } from './http';
 import type {
+  CreateSudzCmmGrInput,
   CreateSudzPmUplInput,
   CreateSudzUplInput,
   CreateSudzYearInput,
@@ -17,6 +18,7 @@ import type {
   SudzPmLink,
   SudzPmUplLookup,
   SudzRsltDebt,
+  SudzRsltReturnImportResult,
   SudzSvodResult,
   SudzUplLookup,
   SudzYear,
@@ -42,10 +44,13 @@ const YEAR_FIELDS = `
   baseUpl
   yyyy
   cmmGr
+  cmmGrNew
   baseUplName
   baseUplDate
   cmmGrName
   cmmGrDate
+  cmmGrNewName
+  cmmGrNewDate
   yyyyValue
   progress
 `;
@@ -145,6 +150,16 @@ const DELETE_YEAR = gql`
   }
 `;
 
+const CREATE_CMM_GR = gql`
+  mutation CreateSudzCmmGr($input: CreateSudzCmmGrInput!) {
+    createSudzCmmGr(input: $input) {
+      cmmGrKey
+      name
+      date
+    }
+  }
+`;
+
 const CREATE_UPL = gql`
   mutation CreateSudzUpl($input: CreateSudzUplInput!) {
     createSudzUpl(input: $input) {
@@ -215,6 +230,9 @@ const SUDZ_YR_DBT_CHANGES = gql`
       mery
       cstCode
       cstName
+      curatorNew
+      meryNew
+      cstCodeNew
       periods {
         uplKey
         uplDate
@@ -417,6 +435,20 @@ export async function deleteSudzYear(yrKey: number): Promise<boolean> {
   }
 }
 
+export async function createSudzCmmGr(input: CreateSudzCmmGrInput): Promise<SudzCmmGrLookup> {
+  try {
+    const result = await apolloClient.mutate<{ createSudzCmmGr: SudzCmmGrLookup }>({
+      mutation: CREATE_CMM_GR,
+      variables: { input }
+    });
+    const data = result.data?.createSudzCmmGr;
+    if (!data) throw new Error('Пустой ответ createSudzCmmGr');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'CreateSudzCmmGr');
+  }
+}
+
 export async function createSudzUpl(input: CreateSudzUplInput): Promise<SudzUplLookup> {
   try {
     const result = await apolloClient.mutate<{ createSudzUpl: SudzUplLookup }>({
@@ -511,15 +543,15 @@ export async function getSudzYrDbtChanges(yr: number, asOfUpl?: number | null): 
 }
 
 /**
- * Скачивание Excel Rslt (сбор). Осознанный REST Blob (как reports-api).
- *
- * @returns blob и имя из Content-Disposition (с датой-временем на сервере)
+ * Скачивание Excel Rslt (сбор или повтор). Осознанный REST Blob.
  */
-export async function downloadSudzRsltSbornExcel(
+export async function downloadSudzRsltExcel(
   yr: number,
-  asOfUpl: number
+  asOfUpl: number,
+  kind: 'sborn' | 'povtor' = 'sborn'
 ): Promise<{ blob: Blob; fileName: string }> {
-  const url = `/api/v1/sudz/rslt-sborn.xlsx?yr=${encodeURIComponent(String(yr))}&asOfUpl=${encodeURIComponent(String(asOfUpl))}`;
+  const path = kind === 'povtor' ? 'rslt-povtor.xlsx' : 'rslt-sborn.xlsx';
+  const url = `/api/v1/sudz/${path}?yr=${encodeURIComponent(String(yr))}&asOfUpl=${encodeURIComponent(String(asOfUpl))}`;
   const response = await fetch(url);
   if (!response.ok) {
     const text = await response.text();
@@ -537,11 +569,44 @@ export async function downloadSudzRsltSbornExcel(
     const p = (n: number) => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
   })();
-  const timed = `ags_Yr_DbtChangesRslt_${yr}_${asOfUpl}_${stamp}.xlsx`;
-  // Берём имя с сервера только если там уже есть время (иначе повтор в тот же день ломает FSA).
+  const mid = kind === 'povtor' ? '_povtor_' : '_';
+  const timed = `ags_Yr_DbtChangesRslt_${yr}_${asOfUpl}${mid}${stamp}.xlsx`;
   const fileName =
-    fromHeader && /_\d{4}-\d{2}-\d{2}_\d{6}\.xlsx$/i.test(fromHeader) ? fromHeader : timed;
+    fromHeader && (/_\d{4}-\d{2}-\d{2}_\d{6}\.xlsx$/i.test(fromHeader) || /_povtor_\d{4}-\d{2}-\d{2}_\d{6}\.xlsx$/i.test(fromHeader))
+      ? fromHeader
+      : timed;
   return { blob, fileName };
+}
+
+/** @deprecated используйте {@link downloadSudzRsltExcel} */
+export async function downloadSudzRsltSbornExcel(
+  yr: number,
+  asOfUpl: number
+): Promise<{ blob: Blob; fileName: string }> {
+  return downloadSudzRsltExcel(yr, asOfUpl, 'sborn');
+}
+
+/**
+ * Импорт Excel возврата Rslt → {@code yr_CmmGr_New}. Осознанный REST multipart.
+ */
+export async function uploadSudzRsltReturn(
+  yr: number,
+  file: File
+): Promise<SudzRsltReturnImportResult> {
+  const form = new FormData();
+  form.append('file', file);
+  const url = `/api/v1/sudz/rslt-return?yr=${encodeURIComponent(String(yr))}`;
+  const response = await fetch(url, { method: 'POST', body: form });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new RequestError(text || `Ошибка импорта возврата (${response.status})`, {
+      status: response.status,
+      statusText: response.statusText,
+      url: response.url,
+      body: text
+    });
+  }
+  return (await response.json()) as SudzRsltReturnImportResult;
 }
 
 /**

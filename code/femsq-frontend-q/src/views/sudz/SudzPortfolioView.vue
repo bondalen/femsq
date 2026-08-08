@@ -1,5 +1,7 @@
 <template>
-  <QPage class="sudz-yr-view q-pa-md column no-wrap" data-test="sudz-portfolio-view">
+  <QPage class="q-pa-none sudz-yr-page" data-test="sudz-portfolio-view">
+    <!-- absolute-full: область = viewport; широкая таблица не раздувает страницу -->
+    <div class="absolute-full q-pa-md column no-wrap sudz-yr-view">
     <div class="row items-center q-mb-sm q-gutter-sm">
       <div class="col">
         <div class="femsq-page-title">Портфель года</div>
@@ -11,7 +13,7 @@
 
     <QBanner v-if="store.error" class="bg-negative text-white q-mb-sm" rounded>{{ store.error }}</QBanner>
 
-    <div class="row col no-wrap q-col-gutter-md">
+    <div class="row col no-wrap sudz-yr-body">
       <!-- Master ~15% -->
       <div class="col-auto yr-master column" data-test="sudz-yr-master">
         <FemsqTable
@@ -30,9 +32,9 @@
       </div>
 
       <!-- Detail -->
-      <div class="col column no-wrap" data-test="sudz-yr-detail">
+      <div class="col column no-wrap yr-detail" data-test="sudz-yr-detail">
         <template v-if="store.selectedYear">
-          <QCard flat bordered class="q-mb-sm">
+          <QCard flat bordered class="q-mb-sm yr-header-card">
             <QCardSection>
               <div class="row q-col-gutter-sm items-end">
                 <div class="col-12 col-md-4">
@@ -104,7 +106,7 @@
             <QTab name="progress" label="Ход (Progress)" data-test="sudz-yr-tab-progress" />
           </QTabs>
 
-          <QTabPanels v-model="tab" class="col">
+          <QTabPanels v-model="tab" class="col yr-detail-panels">
             <QTabPanel name="upls" class="q-pa-none">
               <div class="row items-center q-mb-sm q-gutter-sm">
                 <QSelect
@@ -205,21 +207,21 @@
               </div>
             </QTabPanel>
 
-            <QTabPanel name="progress" class="q-pa-none column">
+            <QTabPanel name="progress" class="q-pa-none column progress-tab">
               <div class="row q-col-gutter-sm items-end q-mb-sm" data-test="sudz-progress-launcher">
-                <div class="col-12 col-md-3">
+                <div class="col-12 col-md-5">
                   <QSelect
-                    v-model="progress.docType"
-                    :options="docTypeOptions"
+                    v-model="progress.operation"
+                    :options="operationOptions"
                     emit-value
                     map-options
                     dense
                     outlined
-                    label="Тип документа"
-                    data-test="sudz-progress-doc-type"
+                    label="Операция"
+                    data-test="sudz-progress-operation"
                   />
                 </div>
-                <div class="col-12 col-md-3">
+                <div v-if="isExportOp" class="col-12 col-md-3">
                   <QSelect
                     v-model="progress.asOfUpl"
                     :options="yearUplOptions"
@@ -231,7 +233,28 @@
                     data-test="sudz-progress-as-of"
                   />
                 </div>
-                <div class="col-12 col-md-4">
+                <div v-if="isPovtorExport" class="col-12 col-md-4">
+                  <QInput
+                    :model-value="cmmGrNewReadOnlyLabel"
+                    dense
+                    outlined
+                    readonly
+                    label="Группа новых (yr_CmmGr_New)"
+                    hint="Источник колонок *_new (только чтение)"
+                    data-test="sudz-progress-cmm-new-ro"
+                  />
+                </div>
+                <div v-if="isExportOp && isRsltExport" class="col-12 col-md-3">
+                  <QOptionGroup
+                    v-model="progress.resultMode"
+                    :options="resultModeOptions"
+                    type="radio"
+                    dense
+                    inline
+                    data-test="sudz-progress-result-mode"
+                  />
+                </div>
+                <div v-if="isExportOp && progress.resultMode === 'excel'" class="col-12 col-md-4">
                   <QInput
                     :model-value="exportFolderLabel"
                     dense
@@ -258,22 +281,52 @@
                     </template>
                   </QInput>
                 </div>
-                <div class="col-12 col-md-3">
-                  <QOptionGroup
-                    v-model="progress.resultMode"
-                    :options="resultModeOptions"
-                    type="radio"
-                    dense
-                    inline
-                    data-test="sudz-progress-result-mode"
-                  />
-                </div>
+                <template v-if="isImportOp">
+                    <div class="col-12 col-md-5">
+                    <div class="row q-gutter-xs items-end no-wrap">
+                      <div class="col">
+                        <QSelect
+                          v-model="progress.cmmGrNewKey"
+                          :options="cmmOptions"
+                          emit-value
+                          map-options
+                          dense
+                          outlined
+                          clearable
+                          label="Группа новых (yr_CmmGr_New)"
+                          data-test="sudz-progress-cmm-new"
+                        />
+                      </div>
+                      <QBtn
+                        flat
+                        dense
+                        no-caps
+                        icon="add"
+                        label="Создать"
+                        class="q-mb-xs"
+                        data-test="sudz-progress-cmm-new-create"
+                        @click="openCreateCmmGr"
+                      />
+                    </div>
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <QFile
+                      v-model="progress.returnFile"
+                      dense
+                      outlined
+                      clearable
+                      accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                      label="Файл возврата (.xlsx)"
+                      data-test="sudz-progress-return-file"
+                    />
+                  </div>
+                </template>
                 <div class="col-auto">
                   <QBtn
                     color="primary"
                     unelevated
                     no-caps
-                    label="Сформировать"
+                    label="Выполнить"
                     :loading="progress.busy"
                     :disable="!canRunProgress"
                     data-test="sudz-progress-run"
@@ -281,7 +334,10 @@
                   />
                 </div>
               </div>
-              <div v-if="!directoryPickerSupported" class="text-caption text-grey-7 q-mb-sm">
+              <div
+                v-if="isExportOp && progress.resultMode === 'excel' && !directoryPickerSupported"
+                class="text-caption text-grey-7 q-mb-sm"
+              >
                 Выбор папки недоступен в этом браузере (нужен Chrome/Edge). Excel сохранится через
                 обычную загрузку браузера.
               </div>
@@ -290,9 +346,13 @@
               </QBanner>
               <QTabs v-model="progress.subTab" dense align="left" class="q-mb-sm">
                 <QTab name="log" label="Лог (yr_Progress)" />
-                <QTab name="proto" label="Прототип" data-test="sudz-progress-tab-proto" />
+                <QTab name="proto" label="Предпросмотр" data-test="sudz-progress-tab-proto" />
               </QTabs>
-              <QTabPanels v-model="progress.subTab" class="col">
+              <QTabPanels
+                v-model="progress.subTab"
+                :animated="false"
+                class="col progress-subpanels"
+              >
                 <QTabPanel name="log" class="q-pa-none">
                   <QInput
                     :model-value="store.selectedYear.progress ?? ''"
@@ -304,26 +364,107 @@
                     data-test="sudz-yr-progress"
                   />
                 </QTabPanel>
-                <QTabPanel name="proto" class="q-pa-none">
+                <QTabPanel name="proto" class="q-pa-none progress-proto-panel">
                   <div v-if="!progress.protoRows.length" class="text-grey-7 q-pa-sm">
-                    Сформируйте «Rslt сбор» в режиме прототипа.
+                    Выполните «Rslt … · Выгрузить» в режиме «Предпросмотр» — таблица как в Excel
+                    (срезы, фильтр; у сбора колонки *_new пустые).
                   </div>
-                  <div v-else class="text-caption q-mb-xs">
-                    Rslt сбор · yr {{ store.selectedYear.yrKey }} · до upl {{ progress.asOfUpl }} ·
-                    долгов: {{ progress.protoRows.length }}
-                  </div>
-                  <FemsqTable
-                    v-if="progress.protoRows.length"
-                    class="progress-proto-table"
-                    root-class="progress-proto-table"
-                    row-key="dbtKey"
-                    :rows="progress.protoRows"
-                    :columns="protoColumns"
-                    dense
-                    hide-bottom
-                    :rows-per-page-options="[0]"
-                    data-test="sudz-progress-proto-table"
-                  />
+                  <div v-else class="progress-proto-body">
+                      <div class="progress-proto-toolbar">
+                        <div class="progress-proto-caption text-caption">
+                          Предпросмотр Excel · {{ operationLabel }} · yr
+                          {{ store.selectedYear.yrKey }} · до upl {{ progress.asOfUpl }} · долгов:
+                          {{ filteredProtoRows.length }}/{{ progress.protoRows.length }} · срезов:
+                          {{ progress.protoSliceCount }}
+                          <span v-if="!progress.protoFillNew"> · *_new пустые (сбор)</span>
+                          · клик по ячейке — полный текст внизу
+                        </div>
+                        <QBtn
+                          dense
+                          unelevated
+                          no-caps
+                          color="primary"
+                          label="Выгрузить в Excel"
+                          :loading="progress.busy"
+                          data-test="sudz-progress-proto-to-excel"
+                          @click="onProtoToExcel"
+                        />
+                      </div>
+                      <QInput
+                        v-model="progress.protoFilter"
+                        dense
+                        clearable
+                        outlined
+                        debounce="200"
+                        class="progress-proto-filter"
+                        label="Фильтр по всем колонкам"
+                        data-test="sudz-progress-proto-filter"
+                      >
+                        <template #prepend>
+                          <QIcon name="search" />
+                        </template>
+                      </QInput>
+                      <div ref="protoScrollFrameEl" class="progress-proto-frame" data-test="sudz-progress-proto-scroll">
+                        <div class="progress-proto-scroll">
+                          <table class="progress-proto-native" data-test="sudz-progress-proto-table">
+                            <thead>
+                              <tr class="proto-header-row">
+                                <th
+                                  v-for="col in progress.protoColumns"
+                                  :key="col.name"
+                                  :title="col.label"
+                                  :class="
+                                    typeof col.headerClasses === 'string' ? col.headerClasses : undefined
+                                  "
+                                >
+                                  <div class="proto-header-label">{{ col.label }}</div>
+                                </th>
+                              </tr>
+                              <tr class="proto-filter-row">
+                                <th v-for="col in progress.protoColumns" :key="'f-' + col.name">
+                                  <input
+                                    v-model="progress.protoColumnFilters[col.name]"
+                                    type="search"
+                                    class="proto-col-filter"
+                                    :aria-label="'Фильтр: ' + col.label"
+                                    data-test="sudz-progress-proto-col-filter"
+                                    @click.stop
+                                    @keydown.stop
+                                  />
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr v-for="row in filteredProtoRows" :key="row.dbtKey">
+                                <td
+                                  v-for="col in progress.protoColumns"
+                                  :key="col.name"
+                                  :class="{
+                                    'proto-td--selected':
+                                      protoCell.dbtKey === row.dbtKey &&
+                                      protoCell.colName === col.name,
+                                    'proto-c--overd':
+                                      typeof col.classes === 'string' && col.classes.includes('overd')
+                                  }"
+                                  @click="onProtoCellSelect(row, col)"
+                                >
+                                  <div class="proto-cell-one-line">{{ formatProtoCell(row, col) }}</div>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                      <div class="proto-cell-detail" data-test="sudz-progress-proto-detail">
+                        <div class="text-caption text-grey-7 q-mb-xs">
+                          <template v-if="protoCell.dbtKey != null">
+                            dbtKey {{ protoCell.dbtKey }} · {{ protoCell.colLabel }}
+                          </template>
+                          <template v-else>Выберите ячейку таблицы</template>
+                        </div>
+                        <div class="proto-cell-detail__body">{{ protoCell.text || '—' }}</div>
+                      </div>
+                    </div>
                 </QTabPanel>
               </QTabPanels>
             </QTabPanel>
@@ -331,6 +472,7 @@
         </template>
         <div v-else class="text-grey-7 q-pa-md">Выберите год-вариант слева или создайте новый.</div>
       </div>
+    </div>
     </div>
 
     <!-- Create year dialog -->
@@ -411,11 +553,41 @@
         </QCardActions>
       </QCard>
     </QDialog>
+
+    <!-- Create CmmGr for yr_CmmGr_New -->
+    <QDialog v-model="cmmGrDialog.open" persistent>
+      <QCard style="min-width: 360px">
+        <QCardSection class="text-subtitle1">Новая группа комментариев</QCardSection>
+        <QCardSection class="q-gutter-sm">
+          <QInput v-model="cmmGrDialog.name" dense outlined label="Имя группы" data-test="sudz-cmmgr-name" />
+          <QInput
+            v-model="cmmGrDialog.date"
+            dense
+            outlined
+            type="date"
+            label="Дата"
+            data-test="sudz-cmmgr-date"
+          />
+        </QCardSection>
+        <QCardActions align="right">
+          <QBtn flat no-caps label="Отмена" v-close-popup />
+          <QBtn
+            color="primary"
+            unelevated
+            no-caps
+            label="Создать"
+            :loading="store.saving"
+            data-test="sudz-cmmgr-create"
+            @click="onCreateCmmGr"
+          />
+        </QCardActions>
+      </QCard>
+    </QDialog>
   </QPage>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
 import {
   QBanner,
   QBtn,
@@ -423,6 +595,8 @@ import {
   QCardActions,
   QCardSection,
   QDialog,
+  QFile,
+  QIcon,
   QInput,
   QOptionGroup,
   QPage,
@@ -436,15 +610,24 @@ import {
 } from 'quasar';
 import { FemsqTable, type FemsqTableColumn } from 'fequlib';
 
-import { appendSudzYearProgress, downloadSudzRsltSbornExcel, getSudzYrDbtChanges } from '@/api/sudz-api';
+import {
+  appendSudzYearProgress,
+  downloadSudzRsltExcel,
+  getSudzYrDbtChanges,
+  uploadSudzRsltReturn
+} from '@/api/sudz-api';
 import { useSudzPortfolioStore } from '@/stores/sudz-portfolio';
-import type { SudzRsltDebt, SudzYear } from '@/types/sudz';
+import type { SudzYear } from '@/types/sudz';
 import {
   getRememberedDirectoryName,
   pickExportDirectory,
   saveBlobToExportFolder,
   supportsDirectoryPicker
 } from '@/utils/export-folder';
+import {
+  buildSudzRsltPreview,
+  type SudzRsltPreviewRow
+} from '@/utils/sudz-rslt-preview';
 
 const store = useSudzPortfolioStore();
 const $q = useQuasar();
@@ -466,30 +649,78 @@ const exportFolderLabel = computed(() => {
     : 'Не выбрана — спросим при первой выгрузке Excel';
 });
 
-type DocType = 'rslt_sborn' | 'rslt_povtor' | 'd644' | 'svod';
+type ProgressOperation =
+  | 'rslt_sborn_export'
+  | 'rslt_povtor_export'
+  | 'rslt_povtor_import'
+  | 'd644_export'
+  | 'svod_export';
 type ResultMode = 'proto' | 'excel';
 
 const progress = reactive({
-  docType: 'rslt_sborn' as DocType,
+  operation: 'rslt_sborn_export' as ProgressOperation,
   asOfUpl: null as number | null,
   resultMode: 'proto' as ResultMode,
+  cmmGrNewKey: null as number | null,
+  returnFile: null as File | null,
   subTab: 'log' as 'log' | 'proto',
   busy: false,
   error: '' as string,
-  protoRows: [] as SudzRsltDebt[]
+  protoRows: [] as SudzRsltPreviewRow[],
+  protoColumns: [] as FemsqTableColumn<SudzRsltPreviewRow>[],
+  protoFilter: '',
+  /** Поколоночные фильтры (AND с глобальным). */
+  protoColumnFilters: {} as Record<string, string>,
+  protoFillNew: false,
+  protoSliceCount: 0
 });
 
-const docTypeOptions = [
-  { label: 'Rslt сбор', value: 'rslt_sborn' },
-  { label: 'Rslt повтор (скоро)', value: 'rslt_povtor', disable: true },
-  { label: 'D644 (скоро)', value: 'd644', disable: true },
-  { label: 'Свод (скоро)', value: 'svod', disable: true }
+/** Выбранная ячейка предпросмотра — полный текст в нижней панели. */
+const protoCell = reactive({
+  dbtKey: null as number | null,
+  colName: '',
+  colLabel: '',
+  text: ''
+});
+
+const protoScrollFrameEl = ref<HTMLElement | null>(null);
+
+const operationOptions = [
+  { label: 'Rslt сбор · Выгрузить', value: 'rslt_sborn_export' },
+  { label: 'Rslt повтор · Выгрузить', value: 'rslt_povtor_export' },
+  { label: 'Rslt повтор · Загрузить', value: 'rslt_povtor_import' },
+  { label: 'D644 · Выгрузить (скоро)', value: 'd644_export', disable: true },
+  { label: 'Свод · Выгрузить (скоро)', value: 'svod_export', disable: true }
 ];
 
 const resultModeOptions = [
-  { label: 'Прототип UI', value: 'proto' },
+  { label: 'Предпросмотр', value: 'proto' },
   { label: 'Excel', value: 'excel' }
 ];
+
+const isExportOp = computed(
+  () =>
+    progress.operation === 'rslt_sborn_export' ||
+    progress.operation === 'rslt_povtor_export' ||
+    progress.operation === 'd644_export' ||
+    progress.operation === 'svod_export'
+);
+const isImportOp = computed(() => progress.operation === 'rslt_povtor_import');
+const isPovtorExport = computed(() => progress.operation === 'rslt_povtor_export');
+const isRsltExport = computed(
+  () => progress.operation === 'rslt_sborn_export' || progress.operation === 'rslt_povtor_export'
+);
+const operationLabel = computed(
+  () => operationOptions.find((o) => o.value === progress.operation)?.label ?? progress.operation
+);
+
+const cmmGrNewReadOnlyLabel = computed(() => {
+  const year = store.selectedYear;
+  if (!year?.cmmGrNew) {
+    return 'не задана — сначала «Rslt повтор · Загрузить» / привязка New';
+  }
+  return `${year.cmmGrNew}: ${year.cmmGrNewName ?? '—'} (${year.cmmGrNewDate ?? '—'})`;
+});
 
 const yearUplOptions = computed(() =>
   (store.yearUpls ?? []).map((u) => ({
@@ -498,22 +729,18 @@ const yearUplOptions = computed(() =>
   }))
 );
 
-const canRunProgress = computed(
-  () =>
-    Boolean(store.selectedYear?.yrKey) &&
-    progress.docType === 'rslt_sborn' &&
-    progress.asOfUpl != null &&
-    !progress.busy
-);
-
-const protoColumns: FemsqTableColumn<SudzRsltDebt>[] = [
-  { name: 'dbtKey', label: 'dbtKey', field: 'dbtKey', align: 'right', sortable: true },
-  { name: 'accountNum', label: 'СГК', field: 'accountNum', align: 'left' },
-  { name: 'curator', label: 'Куратор', field: 'curator', align: 'left' },
-  { name: 'mery', label: 'Мероприятия', field: 'mery', align: 'left' },
-  { name: 'cstCode', label: 'Код стройки', field: 'cstCode', align: 'left' },
-  { name: 'cstName', label: 'Стройка', field: 'cstName', align: 'left' }
-];
+const canRunProgress = computed(() => {
+  if (!store.selectedYear?.yrKey || progress.busy) {
+    return false;
+  }
+  if (isImportOp.value) {
+    return progress.cmmGrNewKey != null && progress.returnFile != null;
+  }
+  if (isRsltExport.value) {
+    return progress.asOfUpl != null;
+  }
+  return false;
+});
 
 const form = reactive({
   variant: '',
@@ -543,6 +770,12 @@ const uplDialog = reactive({
 const pmDialog = reactive({
   open: false,
   dbtUplKey: null as number | null,
+  name: '',
+  date: ''
+});
+
+const cmmGrDialog = reactive({
+  open: false,
   name: '',
   date: ''
 });
@@ -588,14 +821,28 @@ const pmOptions = computed(() =>
 
 watch(
   () => store.selectedYear,
-  (year) => {
+  (year, prevYear) => {
     selectedYearRows.value = year ? [year] : [];
     form.variant = year?.yrVariant ?? '';
     form.baseUplKey = year?.baseUpl ?? null;
     form.yKey = year?.yyyy ?? null;
     form.cmmGrKey = year?.cmmGr ?? null;
-    progress.protoRows = [];
-    progress.error = '';
+    // Не сбрасывать New/файл при refresh того же года (после предпросмотра → append Progress).
+    const yearChanged = year?.yrKey !== prevYear?.yrKey;
+    if (yearChanged) {
+      progress.cmmGrNewKey = year?.cmmGrNew ?? null;
+      progress.protoRows = [];
+      progress.protoColumns = [];
+      progress.protoFilter = '';
+      progress.protoColumnFilters = {};
+      progress.protoSliceCount = 0;
+      progress.protoFillNew = false;
+      progress.error = '';
+      progress.returnFile = null;
+      clearProtoCell();
+    } else if (year != null && progress.cmmGrNewKey == null && year.cmmGrNew != null) {
+      progress.cmmGrNewKey = year.cmmGrNew;
+    }
   },
   { immediate: true }
 );
@@ -639,46 +886,242 @@ async function onPickExportFolder(): Promise<void> {
 }
 
 /**
- * Запуск лаунчера Progress: Rslt сбор → прототип или Excel.
+ * Открывает диалог создания группы для yr_CmmGr_New.
+ */
+function openCreateCmmGr(): void {
+  const today = new Date();
+  const p = (n: number) => String(n).padStart(2, '0');
+  cmmGrDialog.name = '';
+  cmmGrDialog.date = `${today.getFullYear()}-${p(today.getMonth() + 1)}-${p(today.getDate())}`;
+  cmmGrDialog.open = true;
+}
+
+/**
+ * Создаёт группу и привязывает к yr_CmmGr_New выбранного года.
+ */
+async function onCreateCmmGr(): Promise<void> {
+  if (!cmmGrDialog.name.trim() || !cmmGrDialog.date) {
+    $q.notify({ type: 'warning', message: 'Укажите имя и дату группы' });
+    return;
+  }
+  const created = await store.createCmmGr({
+    name: cmmGrDialog.name.trim(),
+    date: cmmGrDialog.date
+  });
+  if (!created) {
+    return;
+  }
+  progress.cmmGrNewKey = created.cmmGrKey;
+  cmmGrDialog.open = false;
+  const yr = store.selectedYear;
+  if (
+    yr != null &&
+    form.baseUplKey != null &&
+    form.yKey != null &&
+    form.variant.trim()
+  ) {
+    await store.saveYear({
+      yrKey: yr.yrKey,
+      variant: form.variant.trim(),
+      baseUplKey: form.baseUplKey,
+      yKey: form.yKey,
+      cmmGrKey: form.cmmGrKey,
+      cmmGrNewKey: created.cmmGrKey
+    });
+  }
+  $q.notify({ type: 'positive', message: `Группа ${created.cmmGrKey} создана`, timeout: 1500 });
+}
+
+/**
+ * Запуск лаунчера Progress: выгрузка или загрузка возврата.
  */
 async function onRunProgress(): Promise<void> {
   const yr = store.selectedYear?.yrKey;
-  if (yr == null || progress.asOfUpl == null || progress.docType !== 'rslt_sborn') {
+  if (yr == null || !canRunProgress.value) {
     return;
   }
   progress.busy = true;
   progress.error = '';
   try {
-    if (progress.resultMode === 'proto') {
-      progress.protoRows = await getSudzYrDbtChanges(yr, progress.asOfUpl);
-      progress.subTab = 'proto';
-      const line = `[${new Date().toISOString().slice(0, 19).replace('T', ' ')}] Rslt сбор · прототип | yr=${yr} | asOfUpl=${progress.asOfUpl} | долгов=${progress.protoRows.length} | ok`;
-      await appendSudzYearProgress(yr, line);
-      await store.selectYear(yr);
-      $q.notify({
-        type: 'positive',
-        message: `Прототип Rslt: ${progress.protoRows.length} долг(ов)`,
-        timeout: 1500
-      });
-    } else {
-      const { blob, fileName } = await downloadSudzRsltSbornExcel(yr, progress.asOfUpl);
-      const saved = await saveBlobToExportFolder(blob, fileName);
-      await store.selectYear(yr);
-      if (saved.method === 'directory') {
-        exportFolderName.value = saved.folderName;
-        $q.notify({
-          type: 'positive',
-          message: `Excel сохранён в «${saved.folderName}»`,
-          timeout: 2000
-        });
-      } else {
-        $q.notify({
-          type: 'positive',
-          message: 'Excel скачан через браузер (Загрузки / Сохранить как)',
-          timeout: 2000
-        });
+    if (isImportOp.value) {
+      await runImportReturn(yr);
+      return;
+    }
+    if (isRsltExport.value && progress.asOfUpl != null) {
+      await runRsltExport(yr, progress.asOfUpl, progress.operation === 'rslt_povtor_export');
+    }
+  } catch (error) {
+    progress.error = error instanceof Error ? error.message : String(error);
+  } finally {
+    progress.busy = false;
+  }
+}
+
+/**
+ * Импорт возврата: при необходимости сохраняет yr_CmmGr_New, затем POST Excel.
+ */
+async function runImportReturn(yr: number): Promise<void> {
+  if (progress.cmmGrNewKey == null || progress.returnFile == null) {
+    return;
+  }
+  if (
+    store.selectedYear?.cmmGrNew !== progress.cmmGrNewKey &&
+    form.baseUplKey != null &&
+    form.yKey != null &&
+    form.variant.trim()
+  ) {
+    const saved = await store.saveYear({
+      yrKey: yr,
+      variant: form.variant.trim(),
+      baseUplKey: form.baseUplKey,
+      yKey: form.yKey,
+      cmmGrKey: form.cmmGrKey,
+      cmmGrNewKey: progress.cmmGrNewKey
+    });
+    if (!saved) {
+      throw new Error(store.error ?? 'Не удалось сохранить yr_CmmGr_New');
+    }
+  }
+  const result = await uploadSudzRsltReturn(yr, progress.returnFile);
+  await store.selectYear(yr);
+  progress.subTab = 'log';
+  $q.notify({
+    type: 'positive',
+    message: `Загружено долгов: ${result.imported} (из ${result.parsed})`,
+    timeout: 2000
+  });
+}
+
+/**
+ * Выгрузка Rslt (предпросмотр или Excel).
+ */
+async function runRsltExport(yr: number, asOfUpl: number, isPovtor: boolean): Promise<void> {
+  const label = isPovtor ? 'Rslt повтор · Выгрузить' : 'Rslt сбор · Выгрузить';
+  if (progress.resultMode === 'proto') {
+    const debts = await getSudzYrDbtChanges(yr, asOfUpl);
+    const preview = buildSudzRsltPreview(debts, isPovtor);
+    progress.protoRows = preview.rows;
+    progress.protoColumns = preview.columns;
+    progress.protoFillNew = isPovtor;
+    progress.protoSliceCount = preview.sliceDates.length;
+    progress.protoFilter = '';
+    progress.protoColumnFilters = Object.fromEntries(preview.columns.map((c) => [c.name, '']));
+    clearProtoCell();
+    progress.subTab = 'proto';
+    await nextTick();
+    const scrollRoot = protoScrollFrameEl.value?.querySelector('.progress-proto-scroll');
+    if (scrollRoot instanceof HTMLElement) {
+      scrollRoot.scrollLeft = 0;
+      scrollRoot.scrollTop = 0;
+    }
+    const line = `[${new Date().toISOString().slice(0, 19).replace('T', ' ')}] ${label} · предпросмотр | yr=${yr} | asOfUpl=${asOfUpl} | долгов=${preview.rows.length} | срезов=${preview.sliceDates.length} | ok`;
+    await appendSudzYearProgress(yr, line);
+    await store.selectYear(yr);
+    $q.notify({
+      type: 'positive',
+      message: `Предпросмотр ${label}: ${preview.rows.length} долг(ов)`,
+      timeout: 1500
+    });
+    return;
+  }
+  const { blob, fileName } = await downloadSudzRsltExcel(yr, asOfUpl, isPovtor ? 'povtor' : 'sborn');
+  const saved = await saveBlobToExportFolder(blob, fileName);
+  await store.selectYear(yr);
+  if (saved.method === 'directory') {
+    exportFolderName.value = saved.folderName;
+    $q.notify({
+      type: 'positive',
+      message: `Excel сохранён в «${saved.folderName}»`,
+      timeout: 2000
+    });
+  } else {
+    $q.notify({
+      type: 'positive',
+      message: 'Excel скачан через браузер (Загрузки / Сохранить как)',
+      timeout: 2000
+    });
+  }
+}
+
+/**
+ * Текст ячейки предпросмотра (как в Excel-колонке).
+ */
+function formatProtoCell(
+  row: SudzRsltPreviewRow,
+  col: FemsqTableColumn<SudzRsltPreviewRow>
+): string {
+  const raw = row[col.name as keyof SudzRsltPreviewRow];
+  if (col.format) {
+    return col.format(raw, row);
+  }
+  return raw == null || raw === '' ? '' : String(raw);
+}
+
+/** Строки предпросмотра: глобальный фильтр AND поколоночные. */
+const filteredProtoRows = computed(() => {
+  const globalNeedle = progress.protoFilter.trim().toLowerCase();
+  const colNeedles = progress.protoColumns
+    .map((col) => ({
+      col,
+      needle: (progress.protoColumnFilters[col.name] ?? '').trim().toLowerCase()
+    }))
+    .filter((x) => x.needle.length > 0);
+
+  if (!globalNeedle && colNeedles.length === 0) {
+    return progress.protoRows;
+  }
+
+  return progress.protoRows.filter((row) => {
+    if (globalNeedle) {
+      const hitGlobal = progress.protoColumns.some((col) =>
+        formatProtoCell(row, col).toLowerCase().includes(globalNeedle)
+      );
+      if (!hitGlobal) {
+        return false;
       }
     }
+    for (const { col, needle } of colNeedles) {
+      if (!formatProtoCell(row, col).toLowerCase().includes(needle)) {
+        return false;
+      }
+    }
+    return true;
+  });
+});
+
+/**
+ * Выбор ячейки → полный текст в нижней панели.
+ */
+function onProtoCellSelect(
+  row: SudzRsltPreviewRow,
+  col: FemsqTableColumn<SudzRsltPreviewRow>
+): void {
+  protoCell.dbtKey = row.dbtKey;
+  protoCell.colName = col.name;
+  protoCell.colLabel = col.label;
+  protoCell.text = formatProtoCell(row, col);
+}
+
+function clearProtoCell(): void {
+  protoCell.dbtKey = null;
+  protoCell.colName = '';
+  protoCell.colLabel = '';
+  protoCell.text = '';
+}
+
+/**
+ * Из предпросмотра — сразу Excel с тем же срезом/операцией.
+ */
+async function onProtoToExcel(): Promise<void> {
+  const yr = store.selectedYear?.yrKey;
+  if (yr == null || progress.asOfUpl == null || !isRsltExport.value) {
+    return;
+  }
+  progress.busy = true;
+  progress.error = '';
+  try {
+    progress.resultMode = 'excel';
+    await runRsltExport(yr, progress.asOfUpl, progress.operation === 'rslt_povtor_export');
   } catch (error) {
     progress.error = error instanceof Error ? error.message : String(error);
   } finally {
@@ -718,7 +1161,8 @@ async function onSaveYear(): Promise<void> {
     variant: form.variant.trim(),
     baseUplKey: form.baseUplKey,
     yKey: form.yKey,
-    cmmGrKey: form.cmmGrKey
+    cmmGrKey: form.cmmGrKey,
+    cmmGrNewKey: progress.cmmGrNewKey ?? store.selectedYear?.cmmGrNew ?? null
   });
   if (ok) $q.notify({ type: 'positive', message: 'Год сохранён', timeout: 1200 });
 }
@@ -831,14 +1275,60 @@ function onUnlinkPm(gPKey: number): void {
 </script>
 
 <style scoped>
+.sudz-yr-page {
+  overflow: hidden;
+}
+
 .sudz-yr-view {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
   min-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.sudz-yr-body {
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+  gap: 12px;
+}
+
+.yr-header-card {
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.yr-detail {
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.yr-detail-panels {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.yr-detail-panels :deep(> .q-panel) {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  max-width: 100%;
 }
 
 .yr-master {
   width: 15%;
   min-width: 160px;
   max-width: 240px;
+  flex-shrink: 0;
 }
 
 .yr-list-table {
@@ -870,5 +1360,254 @@ function onUnlinkPm(gPKey: number): void {
 .tree-row--l2 td {
   background: rgba(0, 0, 0, 0.02);
   padding-left: 12px;
+}
+
+.progress-tab {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.progress-subpanels {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.progress-subpanels :deep(> .q-panel) {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.progress-proto-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.progress-proto-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+  gap: 6px;
+}
+
+.progress-proto-toolbar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.progress-proto-caption {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.progress-proto-filter {
+  flex: 0 0 auto;
+  width: 100%;
+}
+
+/*
+ * Рамка занимает оставшееся место МЕЖДУ фильтром и панелью ячейки.
+ * Скролл — абсолютный inset, таблица не раздувает layout.
+ */
+.progress-proto-frame {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 120px;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--femsq-border, rgba(255, 255, 255, 0.35));
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.progress-proto-scroll {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+/*
+ * sticky + border-collapse:collapse ломает выравнивание th/td при scroll.
+ * separate + одинаковый max-width у th и td — колонки совпадают.
+ * Две sticky-строки thead: заголовок (top:0) + фильтры (top: высота шапки).
+ */
+.progress-proto-native {
+  --proto-header-h: 3.75rem;
+  --proto-filter-h: 2rem;
+  border-collapse: separate;
+  border-spacing: 0;
+  width: max-content;
+}
+
+.progress-proto-native th,
+.progress-proto-native td {
+  box-sizing: border-box;
+  font-size: 12px;
+  vertical-align: middle;
+  max-width: 220px;
+  min-width: 88px;
+  padding: 4px 8px;
+  overflow: hidden;
+  border-right: 1px solid rgba(128, 128, 128, 0.35);
+  border-bottom: 1px solid rgba(128, 128, 128, 0.35);
+}
+
+.progress-proto-native th:first-child,
+.progress-proto-native td:first-child {
+  border-left: 1px solid rgba(128, 128, 128, 0.35);
+}
+
+.progress-proto-native thead .proto-header-row th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  height: var(--proto-header-h);
+  max-height: var(--proto-header-h);
+  font-weight: 600;
+  vertical-align: bottom;
+  white-space: normal;
+  border-top: 1px solid rgba(128, 128, 128, 0.35);
+  background: #2a2a2a;
+}
+
+.progress-proto-native thead .proto-filter-row th {
+  position: sticky;
+  top: var(--proto-header-h);
+  z-index: 2;
+  height: var(--proto-filter-h);
+  max-height: var(--proto-filter-h);
+  padding: 2px 4px;
+  font-weight: 400;
+  vertical-align: middle;
+  /* нейтральный фон (без band-цветов), иначе sticky «просвечивает» */
+  background: #242424 !important;
+  color: inherit !important;
+}
+
+.proto-header-label {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.2;
+  max-height: 3.6em;
+}
+
+.proto-col-filter {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 1.5rem;
+  margin: 0;
+  padding: 0 4px;
+  border: 1px solid rgba(128, 128, 128, 0.45);
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  font-size: 11px;
+  outline: none;
+}
+
+.proto-col-filter:focus {
+  border-color: var(--q-primary);
+}
+
+.progress-proto-native td {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.proto-cell-one-line {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.progress-proto-native .proto-td--selected {
+  outline: 2px solid var(--q-primary);
+  outline-offset: -2px;
+}
+
+.proto-cell-detail {
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--femsq-border, rgba(255, 255, 255, 0.2));
+  border-radius: 4px;
+  padding: 6px 8px;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.proto-cell-detail__body {
+  height: 4.5em;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.progress-proto-native .proto-h--overd,
+.progress-proto-native .proto-c--overd {
+  background: #ffff99 !important;
+  color: #222;
+}
+
+.progress-proto-native .proto-h--new {
+  background: #f2dcdb !important;
+  color: #222;
+}
+
+.progress-proto-native .proto-h--curator {
+  background: #d7e4bd !important;
+  color: #222;
+}
+
+.progress-proto-native .proto-h--inv {
+  background: #e8b4b3 !important;
+  color: #222;
+}
+
+.progress-proto-native .proto-h--base,
+.progress-proto-native .proto-h--key {
+  background: #fdeada !important;
+  color: #222;
+}
+
+.progress-proto-native .proto-h--quarter {
+  background: #f5f5f0 !important;
+  color: #222;
 }
 </style>

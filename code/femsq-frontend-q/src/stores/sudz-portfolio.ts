@@ -8,6 +8,7 @@ import { defineStore } from 'pinia';
 import {
   addSudzPmLink,
   addSudzYearUpl,
+  createSudzCmmGr,
   createSudzPmUpl,
   createSudzUpl,
   createSudzYear,
@@ -23,6 +24,7 @@ import {
   updateSudzYear
 } from '@/api/sudz-api';
 import type {
+  CreateSudzCmmGrInput,
   CreateSudzPmUplInput,
   CreateSudzUplInput,
   CreateSudzYearInput,
@@ -253,6 +255,21 @@ export const useSudzPortfolioStore = defineStore('sudz-portfolio', () => {
     }
   }
 
+  async function createCmmGr(input: CreateSudzCmmGrInput): Promise<SudzCmmGrLookup | null> {
+    saving.value = true;
+    error.value = null;
+    try {
+      const created = await createSudzCmmGr(input);
+      cmmGrLookups.value = await getSudzCmmGrLookups();
+      return created;
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Не удалось создать группу комментариев';
+      return null;
+    } finally {
+      saving.value = false;
+    }
+  }
+
   async function unlinkPm(gPKey: number): Promise<boolean> {
     if (selectedYrKey.value == null) return false;
     saving.value = true;
@@ -289,6 +306,7 @@ export const useSudzPortfolioStore = defineStore('sudz-portfolio', () => {
     saveYear,
     createYear,
     removeYear,
+    createCmmGr,
     addUpl,
     createAndAddUpl,
     removeUpl,

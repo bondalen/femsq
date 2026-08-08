@@ -16,6 +16,9 @@ query SudzYrDbtChanges($yr: Int!, $asOfUpl: Int) {
     mery
     cstCode
     cstName
+    curatorNew
+    meryNew
+    cstCodeNew
     periods {
       uplKey
       uplDate

@@ -8,10 +8,13 @@ export interface SudzYear {
   baseUpl: number | null;
   yyyy: number | null;
   cmmGr: number | null;
+  cmmGrNew?: number | null;
   baseUplName?: string | null;
   baseUplDate?: string | null;
   cmmGrName?: string | null;
   cmmGrDate?: string | null;
+  cmmGrNewName?: string | null;
+  cmmGrNewDate?: string | null;
   yyyyValue?: number | null;
   progress?: string | null;
 }
@@ -81,6 +84,20 @@ export interface UpdateSudzYearInput {
   baseUplKey: number;
   yKey: number;
   cmmGrKey?: number | null;
+  cmmGrNewKey?: number | null;
+}
+
+export interface CreateSudzCmmGrInput {
+  name: string;
+  date: string;
+}
+
+/** Результат REST-импорта возврата Rslt. */
+export interface SudzRsltReturnImportResult {
+  yr: number;
+  imported: number;
+  parsed: number;
+  fileName: string;
 }
 
 export interface CreateSudzUplInput {
@@ -121,6 +138,9 @@ export interface SudzRsltDebt {
   mery: string | null;
   cstCode: string | null;
   cstName: string | null;
+  curatorNew?: string | null;
+  meryNew?: string | null;
+  cstCodeNew?: string | null;
   periods: SudzRsltPeriod[];
 }
 
