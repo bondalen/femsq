@@ -1,12 +1,15 @@
 # План: аналог «системы управления дебиторской задолженностью» (СУДЗ) из MS Access
 
 **Дата создания:** 2026-08-02  
-**Последнее обновление:** 2026-08-07  
+**Последнее обновление:** 2026-08-08  
 **Проект:** FEMSQ  
-**Версия плана:** 0.34.0 (S41: мини-витрина `Yr_DbtChanges_mini` на `test_sudz`)  
-**Задача:** *(будет заведена в `project-development.json` после первичной инвентаризации)*  
-**Статус плана:** 🔄 сбор информации и проектирование документации  
-**Доменные доки:** [01-overview](../../domain/sudz/01-overview.md) · [02-glossary](../../domain/sudz/02-glossary.md) · [03-processes](../../domain/sudz/03-processes.md) · [04-data-model](../../domain/sudz/04-data-model.md) · [04-1 MS_Description](../../domain/sudz/04-1_ms-descriptions.md) · [04-3 проблемы](../../domain/sudz/04-3_problems-solutions.md) · [07-readiness (покрытие/готовность)](../../domain/sudz/07-readiness.md) · [08-target-schema (физ. схема + ER)](../../domain/sudz/08-target-schema.md)   · [08-target-schema (физ. схема + ER)](../../domain/sudz/08-target-schema.md)  
+**Версия плана:** 0.51.0 (S56: UAT Excel Rslt принят)  
+**Задача:** 0065–0070 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md)  
+**Статус плана:** ✅ документация MVP; **0067–0068 ✅**; **Rslt сбор Excel принят (S56)**; далее — Rslt повтор / D644 / свод  
+
+
+**Доменные доки:** [01-overview](../../domain/sudz/01-overview.md) · [02-glossary](../../domain/sudz/02-glossary.md) · [03-processes](../../domain/sudz/03-processes.md) · [04-data-model](../../domain/sudz/04-data-model.md) · [04-1 MS_Description](../../domain/sudz/04-1_ms-descriptions.md) · [04-3 проблемы](../../domain/sudz/04-3_problems-solutions.md) · [07-readiness (покрытие/готовность)](../../domain/sudz/07-readiness.md) · [08-target-schema (физ. схема + ER)](../../domain/sudz/08-target-schema.md)  
+**UI-эскизы:** [02-9_sudz-mvp-screens.md](../../UI/02-9_sudz-mvp-screens.md)  
 **IA (целевое меню):** [02-4_app-forms-ia.md](../../UI/02-4_app-forms-ia.md)  
 **Метод съёма Access:** [MS-ACCESS-OBJECTS-CAPTURE.md](../../../../project/proposals/vba-analysis/MS-ACCESS-OBJECTS-CAPTURE.md)
 
@@ -140,6 +143,23 @@
 | S35–S39 | 2026-08-07 | Ядро `Dbt`…`DbtValue` + триггеры; sandbox-upl 901–903; seed долгов 82/85 за IV.25–II.26 | [08-target-schema](../../domain/sudz/08-target-schema.md); sql `01`–`09` | ✅ |
 | S40 | 2026-08-07 | Зеркала `cnInvCmm*`/`cnInvGr`/`yr`/`yr_upl_p` с FK на `Dbt`; условные группы IV.25–II.26; `yr` 2026 (база 901, `yr_CmmGr`→903); seed комментариев 82/85 + пример «углубленно в сентябре» | [08 §3.4](../../domain/sudz/08-target-schema.md); sql `10`–`11` | ✅ |
 | S41 | 2026-08-07 | Мини-витрина Rslt: `vw_Yr_DbtFact` + `vw_Yr_DbtChanges_mini_2026` + `Yr_DbtChanges_mini(@yr)`; JOIN комментариев по `dbtKey` | [08 §3.5](../../domain/sudz/08-target-schema.md); sql `12` | ✅ |
+| S42 | 2026-08-07 | Gaps; S42a–b контракт; склейка СГК; **S42c** `DbtUplCstAg`+Cst/Ag; **S42d** погашено; **S42e** кураторы | [08 §3.6](../../domain/sudz/08-target-schema.md#36-сверка-мини-rslt--excel-долги-8285--s42); sql `13`–`15` | ✅ |
+| S43 | 2026-08-07 | Date-major порядок колонок; обёртка `test_sudz.Yr_DbtChanges`; ядро Rslt-контракта на песочнице | [08 §3.6.5](../../domain/sudz/08-target-schema.md); sql `16` | ✅ |
+| S45 | 2026-08-07 | Регрессия на `ags_Yr_DbtChangesRslt_26-0212` (5 `upl_date`); seed `yr=900`; паритет 82/85 (стр. 129/134); `NULLIF` для погашено | [08 §3.6.6](../../domain/sudz/08-target-schema.md#366-регрессия-s45--ags_yr_dbtchangesrslt_26-0212-5-срезов); sql `17` | ✅ |
+| S44 | 2026-08-07 | D644: агент из `cstAgPn` по «Код стройки»; doc = base `invNumEnum`; полные mery; `Yr_DbtChangesD644`; smoke 82/85 ↔ D644_26-05 | [08 §3.6.4](../../domain/sudz/08-target-schema.md); sql `18`–`19` | ✅ |
+| S46 | 2026-08-07 | Регрессия D644 @900 ↔ D644_26-03; `Yr_DbtChangesD644Svod` (форма свода; числа — subset 82/85) | [08 §3.6.7](../../domain/sudz/08-target-schema.md); sql `20`–`21` | ✅ |
+| S47 | 2026-08-07 | Приёмка витрины; эскизы экранов A/B; backlog 0065–0070 (дерево 02.03) | [02-9](../../UI/02-9_sudz-mvp-screens.md); tasks 0065–0070 | ✅ |
+| S48 | 2026-08-07 | Cutover DEV: схема **`sudz`**; пакет target-schema; smoke 82/85; 0066 ✅ | [08 §3.6.9](../../domain/sudz/08-target-schema.md); sql `26-0807-sudz-target-schema` | ✅ |
+| S48a | 2026-08-07 | Прод: объекты СУДЗ в **`ags`** (не отдельная схема); DEV остаётся `sudz` | [08](../../domain/sudz/08-target-schema.md); `MSSQL2012/README` | ✅ |
+| S49 | 2026-08-07 | GraphQL read: `sudzYears` / `sudzYrDbtChanges` / `sudzD644` / `sudzD644Svod`; Apollo `sudz-api`; smoke IT 82/85; 0067 ✅ | `sudz-schema.graphqls`; `SudzGraphqlController`; `src/api/sudz-api.ts` | ✅ |
+| S50 | 2026-08-07 | UI Портфель (экран A): FemsqTable+detail; mutation `updateSudzDebtCollection`; TopBar «СУДЗ»; UAT mery→D644; 0068 ✅ | `SudzPortfolioView.vue`; store `sudz-portfolio` | ✅ |
+| S51 | 2026-08-07 | Пересмотр: «Портфель года» = форма **`yr`** (CRUD, upl/pm); бывший Rslt → «Долги / мероприятия»; схема `femsq.sudz.schema`; зеркала `cn_inv_pm_upl`/`g_p` | [02-9 §1a](../../UI/02-9_sudz-mvp-screens.md); sql `22_…_S51` | ✅ |
+| S52 | 2026-08-08 | Progress-лаунчер документов; Rslt сбор/повтор; срез `asOfUpl`/`curr_upl`; scope 0070 | [02-9 §1a Progress](../../UI/02-9_sudz-mvp-screens.md); [03 §1.1.2](../../domain/sudz/03-processes.md) | ✅ |
+| S52a | 2026-08-08 | **`yr_CmmGr_New`**; только Rslt повтор использует New+CmmGr; внесение в 1.1.2.2; веха **1.1.3**; S25 убран из 03 → 04 | [03](../../domain/sudz/03-processes.md); [08](../../domain/sudz/08-target-schema.md); 0070 | ✅ |
+| S53 | 2026-08-08 | Rslt сбор: `asOfUpl` в GraphQL; Excel REST; лаунчер Progress (прототип+Excel) | [02-9](../../UI/02-9_sudz-mvp-screens.md); JAR 0.1.0.158 | ✅ |
+| S54 | 2026-08-08 | Excel Rslt v2 (шапка row1–3 как эталон); `appendSudzYearProgress` + запись при Excel/прототипе; **полный путь папки выгрузки отложен**; прототип UI «как Excel» — после приёмки формата | [08 §S54](../../domain/sudz/08-target-schema.md); JAR 0.1.0.159 | ✅ |
+| S55 | 2026-08-08 | Excel Rslt v3: заливки/шрифты/границы/фильтр/freeze/SUBTOTAL по эталону `…26-0212…`; имя файла с датой-временем | [08 §S55](../../domain/sudz/08-target-schema.md); JAR 0.1.0.162 | ✅ |
+| S56 | 2026-08-08 | UAT: Excel Rslt **принят**; подпись `idNum` → «№ задолженности в СФ»; точечные правки — по мере замечаний | [08 §S56](../../domain/sudz/08-target-schema.md) | ✅ |
 
 ### 5.3. Объекты Access (формы / запросы / таблицы / отчёты)
 
@@ -209,8 +229,8 @@
 - [x] Описан **основной процесс** P1 квартального цикла *(03-processes; детали Access UI — позже)*.
 - [x] **Карта данных:** перечень сущностей Access ↔ таблицы `ags`; gaps явно помечены *(04-data-model + карта миграции 04-3 §6.6/§7.6; целевая модель `Dbt`/`invDbtDbt`/`DbtValue` закрыта полностью — S30)*.
 - [x] **IA:** решение, куда в меню кладётся СУДЗ *(домен `sudz`, отдельный верхний пункт TopBar «СУДЗ» — S27)*.
-- [ ] **Эскиз** 1–2 ключевых экранов согласован с пользователем.
-- [ ] **Backlog** MVP сформулирован и готов к выносу в задачу разработки.
+- [x] **Эскиз** 1–2 ключевых экранов согласован с пользователем *(02-9_sudz-mvp-screens.md; решение S47)*.
+- [x] **Backlog** MVP сформулирован и готов к выносу в задачу разработки *(0065–0070, дерево 02.03)*.
 
 Детальная, по-областям разбивка (что именно закрыто каждым сегментом, что нет) — в реестре покрытия [07-readiness.md](../../domain/sudz/07-readiness.md); он — рабочий инструмент для поиска пропущенных сегментов и обоснования финального перехода к разработке.
 
@@ -305,4 +325,12 @@
 **S26 `ags_Yr_DbtChanges` найдена как SQL Server-процедура; область D закрыта:** 2026-08-06  
 **S27 G1/G2/I1 решены владельцем; форма-«ядро» 1.1.1.1 найдена:** 2026-08-06  
 **S28 изучены материалы по `btnCidufLoad_Click`; найден `InvDouble`-паттерн:** 2026-08-06  
-**S29 полный `btnCidufLoad_Click()` найден и разобран; М1/М9 закрыты:** 2026-08-06
+**S29 полный `btnCidufLoad_Click()` найден и разобран; М1/М9 закрыты:** 2026-08-06  
+**S41 мини-витрина Rslt:** 2026-08-07  
+**S42 gaps мини ↔ Excel → план Rslt/D644:** 2026-08-07  
+**S42a контракт шапки Rslt (владелец):** 2026-08-07  
+**S52 / S52a Progress + yr_CmmGr_New:** 2026-08-08  
+**S53 Rslt сбор:** 2026-08-08  
+**S54 Excel v2 + yr_Progress (путь папки отложен):** 2026-08-08  
+**S55 Excel стили эталона 26-0212:** 2026-08-08  
+**S56 UAT Excel Rslt принят (подпись idNum):** 2026-08-08

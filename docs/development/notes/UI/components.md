@@ -8,6 +8,7 @@
 - [Экран организаций](./02-1-3_organizations-screen.md) — таблица организаций, карточка и список агентов.
 - [Сценарий «подключение → просмотр организаций»](./02-1-4_connection-to-organizations-flow.md) — поток действий пользователя и обработки ошибок.
 - [IA верхней строки и реестр экранов](./02-4_app-forms-ia.md) — целевое меню, Design chrome, карта Access↔Java.
+- [СУДЗ — эскизы экранов MVP](./02-9_sudz-mvp-screens.md) — портфель Rslt + исходящие документы.
 - [Форма Access `cst`, вкладка «агенты»](./02-5_cst-form-agents-tab.md) — разбор скринов; иерархия cst→cstAg→cstAgPn→cstAgPnBranch; достаточность для MVP Java.
 - [Форма `cst`, вкладка «отчёты»](./02-6_cst-form-reports-tab.md) — список + карточка `ra`, CRUD.
 - [Форма `cst`, вкладка «отчёты, аренда»](./02-7_cst-form-rent-reports-tab.md) — список + карточка `ralpRa`/`ralpRaAu`, CRUD.

@@ -3,7 +3,7 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-08-04"
+      "lastUpdated": "2026-08-08"
     },
     "sessions": [
       {
@@ -8115,6 +8115,448 @@
                     "references": [
                       "docs/development/notes/chats/chat-resume/chat-resume-26-0720-agfee-type6.md",
                       "docs/development/notes/chats/chat-plan/chat-plan-26-0720-agfee-type6.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "СУДЗ: витрина→эскизы→backlog; cutover sudz 0066 (completed, high). № chat-2026-08-07-001",
+          "chat-attributes": {
+            "id": "chat-2026-08-07-001",
+            "created": "2026-08-07",
+            "lastUpdated": "2026-08-08",
+            "owner": "Александр",
+            "status": "active",
+            "priority": "high",
+            "tags": [
+              "sudz",
+              "mvp",
+              "ui-sketch",
+              "backlog",
+              "test_sudz",
+              "graphql",
+              "nb-win"
+            ],
+            "links": {
+              "projectDocsRefs": [
+                "module:backend.web",
+                "module:frontend"
+              ],
+              "developmentTasks": [
+                "0065",
+                "0066",
+                "0067",
+                "0068",
+                "0069",
+                "0070"
+              ],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+              "uiNote": "docs/development/notes/UI/02-9_sudz-mvp-screens.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "S47: приёмка витрины, эскизы G4, backlog 02.03 (success). № log-2026-08-07-001",
+                "log-attributes": {
+                  "id": "log-2026-08-07-001",
+                  "timestamp": "2026-08-07T17:05:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0065",
+                      "0066",
+                      "0067",
+                      "0068",
+                      "0069",
+                      "0070"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Закрыты п.1–3 рекомендаций после S46: приёмка витрины, эскизы, backlog",
+                    "details": "02-9_sudz-mvp-screens.md (экраны A/B); IA TopBar СУДЗ; 08 §3.6.8; 07 G4 ✅; plan v0.41; задачи 0065 completed + 0066–0070 pending, дерево features 02.03.",
+                    "outcome": "Критерии §6 плана (эскиз+backlog) закрыты. Следующая реализация: 0066 DDL/cutover → 0067 GraphQL read.",
+                    "references": [
+                      "docs/development/notes/UI/02-9_sudz-mvp-screens.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+                      "docs/development/project-development.json"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S48/0066: схема sudz + smoke D644 (success). № log-2026-08-07-002",
+                "log-attributes": {
+                  "id": "log-2026-08-07-002",
+                  "timestamp": "2026-08-07T17:30:00+03:00",
+                  "level": "success",
+                  "effort": "45m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0066"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Cutover DEV: создана/наполнена схема sudz; 0066 закрыта",
+                    "details": "Решение: отдельная схема sudz (не ags). Пакет 26-0807-sudz-target-schema (клон test_sudz→sudz) + apply-dev.sh. Smoke Yr_DbtChangesD644 @901/902 и @900/805 — долги 82/85. test_sudz сохранена. MSSQL2012/ — README-заготовка.",
+                    "outcome": "Следующая задача 0067 GraphQL read на sudz.*",
+                    "references": [
+                      "docs/development/notes/sql/26-0807-sudz-target-schema/",
+                      "docs/development/notes/domain/sudz/08-target-schema.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S48a: прод СУДЗ в ags (info). № log-2026-08-07-003",
+                "log-attributes": {
+                  "id": "log-2026-08-07-003",
+                  "timestamp": "2026-08-07T17:20:00+03:00",
+                  "level": "info",
+                  "effort": "10m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0066"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксировано: на проде объекты СУДЗ в схеме ags",
+                    "details": "DEV остаётся sudz; прод-пакет MSSQL2012 = sudz→ags + синтаксис 2012. Обновлены 08, README target-schema, план v0.42.1.",
+                    "outcome": "Размещение на проде определено; путь cutover ясен",
+                    "references": [
+                      "docs/development/notes/domain/sudz/08-target-schema.md",
+                      "docs/development/notes/sql/26-0807-sudz-target-schema/MSSQL2012/README.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S49/0067: GraphQL read Rslt/D644/Svod (success). № log-2026-08-07-004",
+                "log-attributes": {
+                  "id": "log-2026-08-07-004",
+                  "timestamp": "2026-08-07T17:35:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0067"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Реализован read-only GraphQL API СУДЗ; 0067 закрыта",
+                    "details": "Backend: sudz-schema.graphqls, SudzGraphqlController, JdbcSudzDao (схема sudz hardcoded), DefaultSudzService. Rslt — vw_Yr_DbtFact+cnInvCmm; D644/Svod — CallableStatement. Frontend: sudz.graphql + sudz-api.ts (Apollo). Smoke: SudzDaoSmokeIT — 82/85, invoice 7947/А19, bad yr → IllegalArgumentException.",
+                    "outcome": "Следующая: 0068 UI Портфель; затем 0070 Excel / 0069 upload",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/resources/graphql/sudz-schema.graphqls",
+                      "code/femsq-frontend-q/src/api/sudz-api.ts",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S50/0068: UI Портфель + сбор mery (success). № log-2026-08-07-005",
+                "log-attributes": {
+                  "id": "log-2026-08-07-005",
+                  "timestamp": "2026-08-07T17:45:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0068"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Экран A Портфель года + запись сбора; 0068 закрыта",
+                    "details": "Mutation updateSudzDebtCollection → cnInvCmm type 1/8 + cnInvCmmCst type 2 в yr_CmmGr. UI: SudzPortfolioView (FemsqTable+detail), TopBar СУДЗ→Портфель. Smoke: mery marker виден в D644 comment644 (SudzDaoSmokeIT).",
+                    "outcome": "Следующая: 0070 исходящие Excel или 0069 загрузка свода",
+                    "references": [
+                      "code/femsq-frontend-q/src/views/sudz/SudzPortfolioView.vue",
+                      "code/femsq-backend/femsq-web/src/main/resources/graphql/sudz-schema.graphqls"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S51: Портфель года = yr CRUD (success). № log-2026-08-07-006",
+                "log-attributes": {
+                  "id": "log-2026-08-07-006",
+                  "timestamp": "2026-08-07T18:35:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0068"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Перестроен экран Портфель года на yr; Rslt переименован",
+                    "details": "Решения владельца: 1А replace; CRUD; lookups; Progress RO; femsq.sudz.schema. Зеркала pm/g_p в sudz. GraphQL year/upl/pm CRUD. UI SudzPortfolioView + SudzDebtsView. Документы 02-9 §1a, 02-4, plan v0.45.",
+                    "outcome": "Бизнес-контур года доступен в UI; для проверки нужен перезапуск JAR",
+                    "references": [
+                      "docs/development/notes/UI/02-9_sudz-mvp-screens.md",
+                      "docs/development/notes/sql/26-0807-sudz-target-schema/22_CREATE_cn_inv_pm_upl_g_p_S51.sql",
+                      "code/femsq-frontend-q/src/views/sudz/SudzPortfolioView.vue"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S52: документация Progress-лаунчер / yr_CmmGr новых (success). № log-2026-08-08-001",
+                "log-attributes": {
+                  "id": "log-2026-08-08-001",
+                  "timestamp": "2026-08-08T10:45:00+03:00",
+                  "level": "success",
+                  "effort": "45m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0070"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксированы уточнения владельца по Rslt и scope 0070",
+                    "details": "1.1.2.1/1.1.2.2 в 03-processes; Progress-лаунчер в 02-9; критерии 0070 расширены. plan v0.46. Позже уточнено S52a (yr_CmmGr_New).",
+                    "outcome": "Следующая: уточнение указателей (S52a) / Rslt сбор",
+                    "references": [
+                      "docs/development/notes/domain/sudz/03-processes.md",
+                      "docs/development/notes/UI/02-9_sudz-mvp-screens.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S52a: yr_CmmGr_New + веха 1.1.3 + сжатие S25 в 03 (success). № log-2026-08-08-002",
+                "log-attributes": {
+                  "id": "log-2026-08-08-002",
+                  "timestamp": "2026-08-08T12:00:00+03:00",
+                  "level": "success",
+                  "effort": "30m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0070"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Документированы yr_CmmGr_New и перестройка 1.1.2–1.1.3",
+                    "details": "Только Rslt повтор читает New+CmmGr; остальные документы — yr_CmmGr. Внесение/контроль в 1.1.2.2; 1.1.3 = веха. Длинный S25 убран из 03 → ссылка на 04. plan v0.47.",
+                    "outcome": "Следующая реализация: Rslt сбор (без New); DDL New к Rslt повтор",
+                    "references": [
+                      "docs/development/notes/domain/sudz/03-processes.md",
+                      "docs/development/notes/UI/02-9_sudz-mvp-screens.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S53: Rslt сбор Progress + Excel (success). № log-2026-08-08-003",
+                "log-attributes": {
+                  "id": "log-2026-08-08-003",
+                  "timestamp": "2026-08-08T12:30:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0070"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Реализован Rslt сбор (первый срез 0070)",
+                    "details": "GraphQL asOfUpl; REST /api/v1/sudz/rslt-sborn.xlsx; Progress-лаунчер прототип+Excel; пустые *_new. Smoke 3/3. JAR 0.1.0.158.",
+                    "outcome": "Далее: Rslt повтор (+ DDL yr_CmmGr_New) или UAT Rslt сбор",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/rest/SudzExportRestController.java",
+                      "code/femsq-frontend-q/src/views/sudz/SudzPortfolioView.vue"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S54: Excel Rslt v2 + yr_Progress (success). № log-2026-08-08-004",
+                "log-attributes": {
+                  "id": "log-2026-08-08-004",
+                  "timestamp": "2026-08-08T13:10:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0070"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Уточнение владельца и реализация S54",
+                    "details": "Полный путь папки выгрузки отложен (не актуально). appendSudzYearProgress + запись при Excel REST и прототипе. Excel Rslt v2: row1 суммы, row2 подписи кварталов, row3 техн. имена; боковик dbtKey+account_num; пустые *_new. Smoke Excel+Progress ok. JAR 0.1.0.159. Прототип UI «как Excel» — после приёмки формата.",
+                    "outcome": "UAT Excel vs эталоны 26-0505 / 26-0212; далее Rslt повтор (+ DDL yr_CmmGr_New)",
+                    "references": [
+                      "docs/development/notes/domain/sudz/08-target-schema.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/SudzRsltExcelExporter.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S55: Excel Rslt стили эталона 26-0212 (success). № log-2026-08-08-005",
+                "log-attributes": {
+                  "id": "log-2026-08-08-005",
+                  "timestamp": "2026-08-08T13:28:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0070"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Визуальный паритет Excel Rslt с эталоном 26-0212",
+                    "details": "Заливки RGB (боковик/кварталы/Overd/куратор/new/tech), Calibri 8/9, границы, wrap, row2=96, SUBTOTAL, автофильтр B2, freeze C4. JAR 0.1.0.162.",
+                    "outcome": "UAT визуала владельцем",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/SudzRsltExcelExporter.java",
+                      "docs/development/notes/domain/sudz/08-target-schema.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S56: UAT Excel Rslt принят + подпись idNum (success). № log-2026-08-08-006",
+                "log-attributes": {
+                  "id": "log-2026-08-08-006",
+                  "timestamp": "2026-08-08T16:44:00+03:00",
+                  "level": "success",
+                  "effort": "0.25h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0070"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Приёмка Rslt Excel; правка подписи idNum",
+                    "details": "Владелец: Excel в целом соответствует эталону. Подпись «№ док. (idNum)» → «№ задолженности в СФ». JAR 0.1.0.163. Дальнейшие недочёты — по мере обнаружения.",
+                    "outcome": "Rslt сбор Excel принят; далее Rslt повтор / D644 / свод",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+                      "docs/development/notes/domain/sudz/08-target-schema.md"
                     ]
                   }
                 ]

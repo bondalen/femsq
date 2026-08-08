@@ -3,12 +3,12 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2026-08-04T16:16:00+03:00",
+      "lastUpdated": "2026-08-07T17:30:00+03:00",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0065",
+      "nextTaskId": "0071",
       "items": {
         "0064": {
           "task": {
@@ -2365,6 +2365,219 @@
               "lastUpdated": "2026-07-08"
             }
           }
+        },
+        "0065": {
+          "task": {
+            "displayName": "✅ СУДЗ: приёмка витрины, эскизы экранов, backlog MVP (completed, high). № 0065",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Зафиксирована приёмка контракта Yr_DbtChanges / D644 / D644Svod для MVP (оговорки: значения vs имена дат seed; свод — форма+формулы)",
+                "Эскизы экранов A (Портфель Rslt) и B (Исходящие) в 02-9_sudz-mvp-screens.md",
+                "IA TopBar «СУДЗ» дополнена пунктами; G4 в 07-readiness закрыт",
+                "Backlog 0066–0070 заведён в project-development.json + дерево 02.03",
+                "Критерии §6 плана chat-plan-26-0802: эскиз и backlog отмечены"
+              ],
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.web",
+                  "module:frontend"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+                "uiNote": "docs/development/notes/UI/02-9_sudz-mvp-screens.md",
+                "domainSchema": "docs/development/notes/domain/sudz/08-target-schema.md",
+                "dependsOnTasks": []
+              },
+              "created": "2026-08-07",
+              "lastUpdated": "2026-08-07",
+              "description": "Документационный выход из фазы проектирования СУДЗ (S47): витрина test_sudz принята; UI-эскизы G4; задачи реализации нарезаны."
+            }
+          }
+        },
+        "0066": {
+          "task": {
+            "displayName": "✅ СУДЗ: целевой DDL и cutover → схема sudz (completed, high). № 0066",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Утверждена целевая схема размещения (ags vs отдельная) владельцем",
+                "Пакет MSSQL2012/ (или согласованный) создаёт Dbt…DbtValue, зеркала cmm/yr, витринные proc на DEV",
+                "Seed/smoke 82/85 (или актуальные golden) проходят на целевой схеме",
+                "Документация 08-target-schema обновлена под cutover"
+              ],
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.web",
+                  "module:frontend"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+                "uiNote": "docs/development/notes/UI/02-9_sudz-mvp-screens.md",
+                "domainSchema": "docs/development/notes/domain/sudz/08-target-schema.md",
+                "dependsOnTasks": [
+                  "0065"
+                ],
+                "sqlPackage": "docs/development/notes/sql/26-0807-sudz-target-schema/"
+              },
+              "created": "2026-08-07",
+              "lastUpdated": "2026-08-07",
+              "description": "S48: целевая схема DEV = sudz (не ags); лаборатория test_sudz сохранена. Пакет 26-0807-sudz-target-schema применён на femsq-mssql; smoke D644 901/902 и 900/805. MSSQL2012/ — заготовка под прод. Следующая: 0067 GraphQL на sudz.*"
+            }
+          }
+        },
+        "0067": {
+          "task": {
+            "displayName": "✅ СУДЗ: GraphQL read Rslt / D644 / Svod (completed, high). № 0067",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Схема .graphqls + @QueryMapping для портфеля года, D644, свода (параметры yr, currUpl)",
+                "Apollo-операции во frontend src/graphql/ + src/api/* без apiGet для домена",
+                "Smoke: запросы на DEV возвращают строки 82/85 согласованно с proc",
+                "Ошибки yr/currUpl — понятные GraphQL errors"
+              ],
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.web",
+                  "module:frontend"
+                ],
+                "journalRefs": [
+                  "chat-2026-08-07-001"
+                ],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+                "uiNote": "docs/development/notes/UI/02-9_sudz-mvp-screens.md",
+                "domainSchema": "docs/development/notes/domain/sudz/08-target-schema.md",
+                "dependsOnTasks": [
+                  "0066"
+                ],
+                "backendSchema": "code/femsq-backend/femsq-web/src/main/resources/graphql/sudz-schema.graphqls",
+                "frontendApi": "code/femsq-frontend-q/src/api/sudz-api.ts"
+              },
+              "created": "2026-08-07",
+              "lastUpdated": "2026-08-07",
+              "description": "Read-only GraphQL поверх sudz.*: Rslt из vw_Yr_DbtFact+комментарии; D644/Svod через CallableStatement. Smoke: SudzDaoSmokeIT (82/85, yr=901/currUpl=902)."
+            }
+          }
+        },
+        "0068": {
+          "task": {
+            "displayName": "✅ СУДЗ: UI Портфель Rslt + сбор мероприятий (completed, high). № 0068",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Экраны по эскизу 02-9 экран A в Quasar (FemsqTable + detail)",
+                "Чтение через Apollo (0067); запись куратора/мероприятий/кода стройки в yr_CmmGr",
+                "Пункт TopBar «СУДЗ → Портфель года»",
+                "UAT: правка mery на golden-долге видна в последующем D644-превью"
+              ],
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.web",
+                  "module:frontend"
+                ],
+                "journalRefs": [
+                  "chat-2026-08-07-001"
+                ],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+                "uiNote": "docs/development/notes/UI/02-9_sudz-mvp-screens.md",
+                "domainSchema": "docs/development/notes/domain/sudz/08-target-schema.md",
+                "dependsOnTasks": [
+                  "0067",
+                  "0065"
+                ],
+                "frontendView": "code/femsq-frontend-q/src/views/sudz/SudzPortfolioView.vue",
+                "frontendApi": "code/femsq-frontend-q/src/api/sudz-api.ts"
+              },
+              "created": "2026-08-07",
+              "lastUpdated": "2026-08-07",
+              "description": "Экран A: FemsqTable + detail; mutation updateSudzDebtCollection; TopBar СУДЗ; UAT mery→D644 в SudzDaoSmokeIT."
+            }
+          }
+        },
+        "0069": {
+          "task": {
+            "displayName": "СУДЗ: загрузка общего свода → Dbt / DbtValue (pending, high). № 0069",
+            "task-attributes": {
+              "status": "pending",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Порт ключевой логики match btnCidufLoad (или согласованный упрощённый cutover) в backend",
+                "Создание/обновление Dbt, invDbt*, DbtValue, sandbox/целевых upl",
+                "UI «Загрузка свода» (список upl + статус); неоднозначности — очередь/экран разбора",
+                "Регрессия: после загрузки YE/Q среза Rslt строится без ручного SQL-seed"
+              ],
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.web",
+                  "module:frontend"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+                "uiNote": "docs/development/notes/UI/02-9_sudz-mvp-screens.md",
+                "domainSchema": "docs/development/notes/domain/sudz/08-target-schema.md",
+                "dependsOnTasks": [
+                  "0066"
+                ]
+              },
+              "created": "2026-08-07",
+              "lastUpdated": "2026-08-07",
+              "description": "Шаг 1.1.1.1 живого цикла. Самый рискованный кусок MVP; опирается на 04-data-model §2.7."
+            }
+          }
+        },
+        "0070": {
+          "task": {
+            "displayName": "СУДЗ: Progress-лаунчер Rslt/D644/свод + Excel (pending, medium). № 0070",
+            "task-attributes": {
+              "status": "pending",
+              "priority": "medium",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Вкладка Progress на Портфель yr: тип документа (Rslt сбор | Rslt повтор | D644 | Свод), общий комбо среза из yr_upl_p, прототип UI ↔ Excel, Сформировать; подвкладки лог yr_Progress | прототип",
+                "Rslt сбор (1.1.1.3): @yr + @as_of_upl; «старые» из yr_CmmGr; *_new пустые; yr_CmmGr_New не используется; прототип + Excel Blob/REST как reports-api",
+                "DDL/CRUD: nullable yr.yr_CmmGr_New (FK cnInvCmmGr) на шапке Портфеля; к Rslt повтор",
+                "Rslt повтор (1.1.2.2): «старые» из yr_CmmGr, *_new из yr_CmmGr_New; без комбо подгрупп специалистов",
+                "D644/свод: только yr_CmmGr + curr_upl; шапка письма в Excel; паритет 82/85 с Приложением на DEV",
+                "Свод: форма 12 счетов + ВСЕГО; полные суммы — после портфеля в БД",
+                "Импорт возвращённых Rslt и операция вехи 1.1.3 (New→CmmGr) — вне первого среза / отдельным этапом"
+              ],
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.web",
+                  "module:frontend"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+                "uiNote": "docs/development/notes/UI/02-9_sudz-mvp-screens.md",
+                "domainProcess": "docs/development/notes/domain/sudz/03-processes.md",
+                "domainSchema": "docs/development/notes/domain/sudz/08-target-schema.md",
+                "dependsOnTasks": [
+                  "0067",
+                  "0065",
+                  "0068"
+                ]
+              },
+              "created": "2026-08-07",
+              "lastUpdated": "2026-08-08",
+              "description": "S52–S54: Progress-лаунчер; Rslt сбор (GraphQL asOfUpl, Excel REST, JAR 159 v2 шапка); yr_Progress append. Полный путь папки выгрузки отложен. yr_CmmGr_New — к Rslt повтор. Веха 1.1.3. Порядок: Rslt сбор (UAT) → Rslt повтор → D644/свод."
+            }
+          }
         }
       }
     },
@@ -3078,6 +3291,91 @@
                           "taskId": "0063",
                           "positionInParent": 10,
                           "comment": "GitHub docs-registry + fequlib; docs/; окна Cursor; 0058 разблокирована"
+                        },
+                        "task-items": []
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "task-item": {
+                  "displayName": "СУДЗ — дебиторская задолженность (группировочный). № 02.03",
+                  "item-attributes": {
+                    "structureId": "02.03",
+                    "taskId": null,
+                    "positionInParent": 3,
+                    "comment": "MVP живой квартальный цикл P1; план chat-plan-26-0802-sudz"
+                  },
+                  "task-items": [
+                    {
+                      "task-item": {
+                        "displayName": "✅ Приёмка витрины + эскизы + backlog (completed, high). № 02.03.01 → 0065",
+                        "item-attributes": {
+                          "structureId": "02.03.01",
+                          "taskId": "0065",
+                          "positionInParent": 1,
+                          "comment": "S47; 02-9_sudz-mvp-screens.md"
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "✅ Целевой DDL / cutover → sudz (completed, high). № 02.03.02 → 0066",
+                        "item-attributes": {
+                          "structureId": "02.03.02",
+                          "taskId": "0066",
+                          "positionInParent": 2,
+                          "comment": "S48; schema sudz; test_sudz lab retained"
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "✅ GraphQL read Rslt/D644/Svod (completed, high). № 02.03.03 → 0067",
+                        "item-attributes": {
+                          "structureId": "02.03.03",
+                          "taskId": "0067",
+                          "positionInParent": 3,
+                          "comment": "S49; sudz-schema + Apollo sudz-api; smoke IT 82/85"
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "✅ UI Портфель Rslt + мероприятия (completed, high). № 02.03.04 → 0068",
+                        "item-attributes": {
+                          "structureId": "02.03.04",
+                          "taskId": "0068",
+                          "positionInParent": 4,
+                          "comment": "S50; SudzPortfolioView; mutation updateSudzDebtCollection"
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "Загрузка общего свода → Dbt (pending, high). № 02.03.05 → 0069",
+                        "item-attributes": {
+                          "structureId": "02.03.05",
+                          "taskId": "0069",
+                          "positionInParent": 5,
+                          "comment": "1.1.1.1; зависит от 0066"
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "Progress-лаунчер Rslt/D644/свод + Excel (pending, medium). № 02.03.06 → 0070",
+                        "item-attributes": {
+                          "structureId": "02.03.06",
+                          "taskId": "0070",
+                          "positionInParent": 6,
+                          "comment": "Эскиз B; зависит от 0067"
                         },
                         "task-items": []
                       }

@@ -1,12 +1,12 @@
 # Информационная архитектура: верхняя строка меню и реестр экранов FEMSQ
 
 **Дата создания:** 2026-07-22  
-**Последнее обновление:** 2026-08-06 (добавлен пункт «СУДЗ» — решение S27 чата [chat-plan-26-0802-sudz.md](../chats/chat-plan/chat-plan-26-0802-sudz.md))  
+**Последнее обновление:** 2026-08-08 (S52: Progress-лаунчер на Портфель yr)  
 **Автор:** Александр (зафиксировано по предложению чата 2026-07-22)  
-**Статус:** базовая редакция + Design chrome; экраны Стройки MVP ✅  
-**План работ:** [chat-plan-26-0722-forms-ia-cst.md](../chats/chat-plan/chat-plan-26-0722-forms-ia-cst.md)  
+**Статус:** базовая редакция + Design chrome; экраны Стройки MVP ✅; эскизы СУДЗ MVP ✅ (G4)  
+**План работ:** [chat-plan-26-0722-forms-ia-cst.md](../chats/chat-plan/chat-plan-26-0722-forms-ia-cst.md) · СУДЗ: [chat-plan-26-0802-sudz.md](../chats/chat-plan/chat-plan-26-0802-sudz.md)  
 **Резюме:** [chat-resume-26-0722-forms-ia-cst.md](../chats/chat-resume/chat-resume-26-0722-forms-ia-cst.md)  
-**Задачи:** 0057 (completed), 0058 (completed)  
+**Задачи:** 0057 (completed), 0058 (completed), 0065–0070 (СУДЗ)  
 **Темы:** [frontend-themes.md](../../frontend-themes.md)
 
 ---
@@ -57,8 +57,11 @@ FEMSQ
 │     ├── Цепочки ИП                          [есть]
 │     └── … (позже)
 ├── Договоры                                  [заготовка]
-├── СУДЗ                                      [домен sudz — MVP, решено S27]
-│     └── … (вложенные пункты — по мере экранов: загрузка свода, Rslt-оборот, итоговые документы)
+├── СУДЗ                                      [домен sudz — MVP]
+│     ├── Портфель года                       [yr — эскиз 02-9 §1a; Progress = лаунчер Rslt/D644]
+│     ├── Долги / мероприятия                 [эскиз 02-9 §2]
+│     ├── Исходящие документы                 [опционально; ядро на Progress — 02-9 §3]
+│     └── Загрузка свода                      [позже, 0069]
 ├── Ревизии                                   [есть]
 ├── Отчёты                                    [есть]
 └── Сервис
@@ -117,7 +120,7 @@ FEMSQ
 | Инвестиции → Цепочки | `ipgCh`, `ipgChMin` | есть |
 | Инвестиции → прочее | `ipg*`, `stNet*`, … | нет |
 | Договоры | `cn*`, `inv*`, `CnInv*` | нет |
-| СУДЗ | `CnInvDbtUpl*` (загрузка), `cnInvAccnt`/`cnInvCmm*`/`yr*` (мероприятия), `ags.Yr_DbtChanges` (Rslt) | план (MVP, [домен sudz](../domain/sudz/01-overview.md)) |
+| СУДЗ | `CnInvDbtUpl*` (загрузка), `cnInvAccnt`/`cnInvCmm*`/`yr*` (мероприятия), `ags.Yr_DbtChanges` (Rslt) | эскизы MVP [02-9](./02-9_sudz-mvp-screens.md); задачи 0065–0070 |
 | Ревизии | `ra_a` | есть |
 | Отчёты | `Report_*` | каталог есть |
 | Сервис / Test Grid | — | есть |

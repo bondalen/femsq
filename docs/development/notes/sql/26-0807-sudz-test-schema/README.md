@@ -31,6 +31,15 @@
 | `09_SEED_dbt_82_85_Q4Q1Q2.sql` | seed долгов 82/85 за IV.25–II.26 | применён на DEV 2026-08-07 |
 | `10_CREATE_TABLE_cnInvCmm_mirrors.sql` | зеркала `cnInvCmm*`/`cnInvGr`/`yr` (FK → `Dbt`) | применён на DEV 2026-08-07 |
 | `11_SEED_cmm_yr_2026.sql` | yr 2026 + группы IV.25–II.26 + комментарии 82/85 | применён на DEV 2026-08-07 |
-| `12_CREATE_Yr_DbtChanges_mini.sql` | `vw_Yr_DbtFact`, `vw_Yr_DbtChanges_mini_2026`, proc `Yr_DbtChanges_mini` | применён на DEV 2026-08-07 |
+| `12_CREATE_Yr_DbtChanges_mini.sql` | `vw_Yr_DbtFact`, `vw_Yr_DbtChanges_mini_2026`, proc `Yr_DbtChanges_mini` (S41) | применён; **замещён** `13` |
+| `13_CREATE_Yr_DbtChanges_mini_S42b.sql` | S42b: контракт шапки | применён |
+| `14_SEED_cst_ag_82_85.sql` | S42c/e: `DbtUplCstAg` + cst/ag/кураторы 82/85 | применён |
+| `15_CREATE_Yr_DbtChanges_mini_S42cd.sql` | S42c/d: Cst/Ag/погашено в fact/VIEW/proc | применён |
+| `16_CREATE_Yr_DbtChanges_S43.sql` | S43: date-major + `Yr_DbtChanges` обёртка | применён |
+| `17_SEED_yr_2025_5slices_S45.sql` | S45: yr 900 + upl 801–805 + факты 82/85 под Rslt_26-0212 | применён |
+| `18_SEED_mery_D644_82_85_S44.sql` | S44: полные тексты мероприятий 82/85 из D644_26-05 → `cnInvCmm` gr=903 | применён |
+| `19_CREATE_Yr_DbtChangesD644_S44.sql` | S44: `test_sudz.Yr_DbtChangesD644(@yr, @curr_upl)` ~18 кол. | применён |
+| `20_SEED_mery_D644_26-03_82_85_S46.sql` | S46: mery + `cnInvCmmCst` gr=805 из D644_26-03 | применён |
+| `21_CREATE_Yr_DbtChangesD644Svod_S46.sql` | S46: `Yr_DbtChangesD644Svod` — годовой свод по счетам | применён |
 
-**Ядро + комментарии/год + мини-витрина Rslt.** Проверка: `SELECT * FROM test_sudz.vw_Yr_DbtChanges_mini_2026` или `EXEC test_sudz.Yr_DbtChanges_mini @yr=901`.
+**Проверка:** `EXEC test_sudz.Yr_DbtChanges @yr=901;` (3 среза 2026) · `EXEC test_sudz.Yr_DbtChanges @yr=900;` (5 срезов 2025 / S45).
