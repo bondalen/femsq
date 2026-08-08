@@ -87,6 +87,50 @@
         dense
         no-caps
         class="femsq-nav-item femsq-nav-item--btn"
+        :class="{
+          'femsq-nav-item--active':
+            activeView === 'sudz-portfolio' || activeView === 'sudz-debts'
+        }"
+        :disable="!sudzEnabled"
+        label="СУДЗ"
+        icon-right="expand_more"
+        data-test="nav-sudz"
+      >
+        <QMenu anchor="bottom right" self="top right">
+          <QList dense style="min-width: 200px" role="menu">
+            <QItem
+              clickable
+              v-close-popup
+              :active="activeView === 'sudz-portfolio'"
+              data-test="nav-sudz-portfolio"
+              @click="handleNavigate('sudz-portfolio')"
+            >
+              <QItemSection>Портфель года</QItemSection>
+            </QItem>
+            <QItem
+              clickable
+              v-close-popup
+              :active="activeView === 'sudz-debts'"
+              data-test="nav-sudz-debts"
+              @click="handleNavigate('sudz-debts')"
+            >
+              <QItemSection>Долги / мероприятия</QItemSection>
+            </QItem>
+            <QItem clickable disable>
+              <QItemSection>Исходящие документы</QItemSection>
+            </QItem>
+            <QItem clickable disable>
+              <QItemSection>Загрузка свода</QItemSection>
+            </QItem>
+          </QList>
+        </QMenu>
+      </QBtn>
+
+      <QBtn
+        flat
+        dense
+        no-caps
+        class="femsq-nav-item femsq-nav-item--btn"
         :class="{ 'femsq-nav-item--active': activeView === 'test-grid' }"
         label="Сервис"
         icon-right="expand_more"
@@ -164,6 +208,22 @@
           <QItem clickable v-close-popup @click="handleNavigate('audits')">
             <QItemSection>Ревизии</QItemSection>
           </QItem>
+          <QItem
+            clickable
+            v-close-popup
+            :disable="!sudzEnabled"
+            @click="handleNavigate('sudz-portfolio')"
+          >
+            <QItemSection>СУДЗ · Портфель года</QItemSection>
+          </QItem>
+          <QItem
+            clickable
+            v-close-popup
+            :disable="!sudzEnabled"
+            @click="handleNavigate('sudz-debts')"
+          >
+            <QItemSection>СУДЗ · Долги / мероприятия</QItemSection>
+          </QItem>
           <QItem clickable v-close-popup @click="handleNavigate('test-grid')">
             <QItemSection>Сервис · Test Grid</QItemSection>
           </QItem>
@@ -185,6 +245,7 @@ interface Props {
   constructionSitesEnabled: boolean;
   investmentChainsEnabled: boolean;
   reportsEnabled: boolean;
+  sudzEnabled: boolean;
 }
 
 defineProps<Props>();

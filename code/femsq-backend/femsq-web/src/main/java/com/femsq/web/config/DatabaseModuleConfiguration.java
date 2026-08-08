@@ -66,6 +66,8 @@ import com.femsq.database.dao.RaFtStDao;
 import com.femsq.database.dao.RaColMapDao;
 import com.femsq.database.dao.RaSheetConfDao;
 import com.femsq.database.dao.StNetworkDao;
+import com.femsq.database.dao.SudzDao;
+import com.femsq.database.dao.JdbcSudzDao;
 import com.femsq.database.service.DefaultIpgChainRelationService;
 import com.femsq.database.service.DefaultIpgChainService;
 import com.femsq.database.service.DefaultInvestmentPlanGroupService;
@@ -104,6 +106,8 @@ import com.femsq.database.service.DefaultRaDirService;
 import com.femsq.database.service.DefaultRaExecutionService;
 import com.femsq.database.service.DefaultRaFService;
 import com.femsq.database.service.DefaultRaFtService;
+import com.femsq.database.service.DefaultSudzService;
+import com.femsq.database.service.SudzService;
 import com.femsq.database.service.DefaultRaFtSService;
 import com.femsq.database.service.DefaultRaFtSnService;
 import com.femsq.database.service.DefaultRaFtStService;
@@ -128,6 +132,7 @@ import com.femsq.database.service.RaFtStService;
 import com.femsq.database.service.RaColMapService;
 import com.femsq.database.service.RaSheetConfService;
 import com.femsq.database.service.StNetworkService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -569,5 +574,18 @@ public class DatabaseModuleConfiguration {
     @Bean
     public RaFtService raFtService(RaFtDao raFtDao) {
         return new DefaultRaFtService(raFtDao);
+    }
+
+    @Bean
+    public SudzDao sudzDao(
+            ConnectionFactory connectionFactory,
+            @Value("${femsq.sudz.schema:sudz}") String sudzSchema
+    ) {
+        return new JdbcSudzDao(connectionFactory, sudzSchema);
+    }
+
+    @Bean
+    public SudzService sudzService(SudzDao sudzDao) {
+        return new DefaultSudzService(sudzDao);
     }
 }

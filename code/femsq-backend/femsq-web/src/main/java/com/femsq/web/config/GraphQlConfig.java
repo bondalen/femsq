@@ -55,7 +55,8 @@ public class GraphQlConfig {
         return builder -> builder.schemaResources(
             new ClassPathResource("graphql/ra-schema.graphqls"),
             new ClassPathResource("graphql/og-schema.graphqls"),
-            new ClassPathResource("graphql/cst-schema.graphqls")
+            new ClassPathResource("graphql/cst-schema.graphqls"),
+            new ClassPathResource("graphql/sudz-schema.graphqls")
         );
     }
 }

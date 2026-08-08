@@ -10,6 +10,8 @@ export type ActiveView =
   | 'investment-chains'
   | 'reports'
   | 'audits'
+  | 'sudz-portfolio'
+  | 'sudz-debts'
   | 'test-grid';
 export type AuthMode = 'sql' | 'windows' | 'token';
 
@@ -56,6 +58,7 @@ export const useConnectionStore = defineStore('connection', () => {
   const organizationsEnabled = computed(() => status.value === 'connected');
   const constructionSitesEnabled = computed(() => status.value === 'connected');
   const investmentChainsEnabled = computed(() => status.value === 'connected');
+  const sudzEnabled = computed(() => status.value === 'connected');
   const reportsEnabled = computed(() => true);
 
   const statusTone = computed(() => {
@@ -141,6 +144,7 @@ export const useConnectionStore = defineStore('connection', () => {
     organizationsEnabled,
     constructionSitesEnabled,
     investmentChainsEnabled,
+    sudzEnabled,
     reportsEnabled,
     statusTone,
     setStatus,

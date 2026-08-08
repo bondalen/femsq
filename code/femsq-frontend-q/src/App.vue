@@ -12,6 +12,7 @@
     :construction-sites-enabled="connection.constructionSitesEnabled"
     :investment-chains-enabled="connection.investmentChainsEnabled"
     :reports-enabled="connection.reportsEnabled"
+    :sudz-enabled="connection.sudzEnabled"
     @open-connection="handleOpenConnection"
     @navigate="handleNavigate"
     @disconnect="handleDisconnect"
@@ -22,6 +23,8 @@
     <InvestmentChainsView v-else-if="connection.activeView === 'investment-chains'" />
     <ReportsCatalog v-else-if="connection.activeView === 'reports'" />
     <AuditsView v-else-if="connection.activeView === 'audits'" />
+    <SudzPortfolioView v-else-if="connection.activeView === 'sudz-portfolio'" />
+    <SudzDebtsView v-else-if="connection.activeView === 'sudz-debts'" />
     <TestGridView v-else-if="connection.activeView === 'test-grid'" />
 
     <QPage v-else class="column items-center q-pa-lg">
@@ -82,6 +85,8 @@ import ConnectionModal from '@/components/setup/ConnectionModal.vue';
 import OrganizationsView from '@/views/organizations/OrganizationsView.vue';
 import ConstructionSitesView from '@/views/construction-sites/ConstructionSitesView.vue';
 import ConstructionSitesByCodeView from '@/views/construction-sites/ConstructionSitesByCodeView.vue';
+import SudzPortfolioView from '@/views/sudz/SudzPortfolioView.vue';
+import SudzDebtsView from '@/views/sudz/SudzDebtsView.vue';
 import InvestmentChainsView from '@/views/investment-chains/InvestmentChainsView.vue';
 import ReportsCatalog from '@/modules/reports/views/ReportsCatalog.vue';
 import AuditsView from '@/views/audits/AuditsView.vue';

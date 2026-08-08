@@ -1,0 +1,284 @@
+# GraphQL API витрин СУДЗ (0067 read / 0068 write / портфель года CRUD).
+# Источник: схема sudz на DEV (S48); на prod объекты будут в ags (S48a).
+
+extend type Query {
+  """Список год-вариантов СУДЗ с lookup-подписями."""
+  sudzYears: [SudzYear!]!
+
+  """Карточка год-варианта: шапка + выгрузки + pm-связи. Ошибка, если yr не найден."""
+  sudzYear(yrKey: Int!): SudzYearDetail!
+
+  """Lookup выгрузок ДЗ (upl_name + upl_date + uplStatusOnDate)."""
+  sudzUplLookups: [SudzUplLookup!]!
+
+  """Lookup групп комментариев (cnicgName + cnicgDate)."""
+  sudzCmmGrLookups: [SudzCmmGrLookup!]!
+
+  """Lookup календарных лет из ags.yyyy (yKey / yyyy)."""
+  sudzYyyyLookups: [SudzYyyyLookup!]!
+
+  """Lookup выгрузок платежей (cn_inv_pm_name + date)."""
+  sudzPmUplLookups: [SudzPmUplLookup!]!
+
+  """
+  Портфель года в структуре Rslt (зерно dbtKey, срезы по дате выгрузки).
+  asOfUpl — опционально: только срезы с upl_date ≤ даты выбранной выгрузки (Rslt сбор).
+  Ошибка, если yr не найден.
+  """
+  sudzYrDbtChanges(yr: Int!, asOfUpl: Int): [SudzRsltDebt!]!
+
+  """
+  Итоговый документ D644 (база года vs текущая выгрузка).
+  Ошибка, если yr не найден или currUpl некорректен на стороне БД.
+  """
+  sudzD644(yr: Int!, currUpl: Int!): [SudzD644Row!]!
+
+  """Годовой свод по счетам ГК + строка ВСЕГО."""
+  sudzD644Svod(yr: Int!, currUpl: Int!): SudzSvodResult!
+}
+
+extend type Mutation {
+  """Создать год-вариант (существующая база upl ИЛИ inline-создание выгрузки)."""
+  createSudzYear(input: CreateSudzYearInput!): SudzYearDetail!
+
+  """Обновить год-вариант (yr_Progress не изменяется)."""
+  updateSudzYear(input: UpdateSudzYearInput!): SudzYearDetail!
+
+  """Удалить год-вариант (сначала yr_upl_p, затем yr)."""
+  deleteSudzYear(yrKey: Int!): Boolean!
+
+  """Создать выгрузку ДЗ."""
+  createSudzUpl(input: CreateSudzUplInput!): SudzUplLookup!
+
+  """Добавить выгрузку в год (yr_upl_p)."""
+  addSudzYearUpl(yrKey: Int!, uplKey: Int!): SudzYearUpl!
+
+  """Удалить выгрузку из года."""
+  removeSudzYearUpl(yrUplPKey: Int!): Boolean!
+
+  """Создать выгрузку платежей."""
+  createSudzPmUpl(input: CreateSudzPmUplInput!): SudzPmUplLookup!
+
+  """Связать выгрузку ДЗ с выгрузкой платежей."""
+  addSudzPmLink(dbtUplKey: Int!, pmKey: Int!): SudzPmLink!
+
+  """Удалить связь выгрузки ДЗ с платежами."""
+  removeSudzPmLink(gPKey: Int!): Boolean!
+
+  """Сохранить куратора / мероприятия / код стройки в yr.yr_CmmGr."""
+  updateSudzDebtCollection(input: SudzDebtCollectionInput!): SudzDebtCollectionResult!
+
+  """Дописать строку в yr_Progress (лог формирования документов)."""
+  appendSudzYearProgress(yrKey: Int!, line: String!): String!
+}
+
+"""Год-вариант СУДЗ (yr) с lookup-подписями."""
+type SudzYear {
+  yrKey: Int!
+  yrVariant: String
+  baseUpl: Int
+  """Ключ ags.yyyy.yKey."""
+  yyyy: Int
+  cmmGr: Int
+  baseUplName: String
+  baseUplDate: Date
+  cmmGrName: String
+  cmmGrDate: Date
+  """Календарный год из ags.yyyy.yyyy."""
+  yyyyValue: Int
+  """HTML-лог хода (только чтение)."""
+  progress: String
+}
+
+"""Карточка года с выгрузками."""
+type SudzYearDetail {
+  year: SudzYear!
+  upls: [SudzYearUpl!]!
+}
+
+"""Выгрузка в составе года (yr_upl_p)."""
+type SudzYearUpl {
+  yrUplPKey: Int!
+  yrKey: Int!
+  uplKey: Int!
+  uplName: String
+  uplDate: Date
+  uplStatusOnDate: Date
+  pmLinks: [SudzPmLink!]!
+}
+
+"""Связь выгрузки ДЗ с выгрузкой платежей (cn_inv_dbt_upl_g_p)."""
+type SudzPmLink {
+  gPKey: Int!
+  dbtUpl: Int!
+  pmKey: Int!
+  pmName: String
+  pmDate: Date
+  dbtUplName: String
+  dbtUplDate: Date
+}
+
+"""Lookup выгрузки ДЗ."""
+type SudzUplLookup {
+  uplKey: Int!
+  uplName: String
+  uplDate: Date
+  uplStatusOnDate: Date
+}
+
+"""Lookup группы комментариев."""
+type SudzCmmGrLookup {
+  cmmGrKey: Int!
+  name: String
+  date: Date
+}
+
+"""Lookup календарного года (ags.yyyy)."""
+type SudzYyyyLookup {
+  yKey: Int!
+  yyyy: Int!
+}
+
+"""Lookup выгрузки платежей."""
+type SudzPmUplLookup {
+  pmKey: Int!
+  name: String
+  date: Date
+}
+
+"""Вход создания год-варианта."""
+input CreateSudzYearInput {
+  variant: String!
+  yKey: Int!
+  cmmGrKey: Int
+  """Существующая базовая выгрузка (взаимоисключающе с newUpl*)."""
+  baseUplKey: Int
+  newUplName: String
+  newUplDate: Date
+  newUplStatusOnDate: Date
+}
+
+"""Вход обновления год-варианта."""
+input UpdateSudzYearInput {
+  yrKey: Int!
+  variant: String!
+  baseUplKey: Int!
+  yKey: Int!
+  cmmGrKey: Int
+}
+
+"""Вход создания выгрузки ДЗ."""
+input CreateSudzUplInput {
+  name: String!
+  uplDate: Date
+  statusOnDate: Date!
+}
+
+"""Вход создания выгрузки платежей."""
+input CreateSudzPmUplInput {
+  name: String
+  date: Date!
+}
+
+"""Долг портфеля (витрина Rslt)."""
+type SudzRsltDebt {
+  dbtKey: Int!
+  accountNum: String
+  curator: String
+  mery: String
+  cstCode: String
+  cstName: String
+  periods: [SudzRsltPeriod!]!
+}
+
+"""Срез долга на дату выгрузки."""
+type SudzRsltPeriod {
+  uplKey: Int!
+  uplDate: Date
+  asOf: Date
+  invNumEnum: String
+  idNum: Int
+  cnNumEnum: String
+  csoCnDate: Date
+  orgIdValueL: Float
+  itn: String
+  ctptOrg: String
+  maturity: Date
+  ttl: Float
+  overd: Float
+  cstAgPnCode: String
+  cstAgPnName: String
+  agOrg: String
+  pogasheno: Float
+}
+
+"""Строка итогового документа D644."""
+type SudzD644Row {
+  dbtKey: Int!
+  accountNum: Int
+  agent: String
+  orgId: Float
+  itn: String
+  counterpart: String
+  contract: String
+  contractDate: Date
+  invoice: String
+  dateStart: Date
+  maturityBase: Date
+  ttlBase: Float
+  overdBase: Float
+  maturityCurr: Date
+  overdCurr: Float
+  repaid: Float
+  cstCode: String
+  cstName: String
+  comment644: String
+  baseUplDate: Date
+  currUplDate: Date
+  baseUpl: Int
+  currUpl: Int
+}
+
+"""Результат годового свода."""
+type SudzSvodResult {
+  accounts: [SudzSvodAccount!]!
+  total: SudzSvodTotal
+}
+
+"""Строка свода по счёту ГК."""
+type SudzSvodAccount {
+  accountNum: Int!
+  accountName: String
+  overdBase: Float
+  repaid: Float
+  overdCurr: Float
+  repaidPct: Float
+}
+
+"""Итог ВСЕГО."""
+type SudzSvodTotal {
+  overdBase: Float
+  repaid: Float
+  overdCurr: Float
+  repaidPct: Float
+}
+
+"""Вход сохранения сбора по долгу."""
+input SudzDebtCollectionInput {
+  yr: Int!
+  dbtKey: Int!
+  curator: String
+  mery: String
+  """Код стройки (cstAgPn.cstapIpgPnN). Пусто — снять привязку."""
+  cstCode: String
+}
+
+"""Результат сохранения сбора."""
+type SudzDebtCollectionResult {
+  dbtKey: Int!
+  curator: String
+  mery: String
+  cstCode: String
+  cstName: String
+  cmmGr: Int!
+}

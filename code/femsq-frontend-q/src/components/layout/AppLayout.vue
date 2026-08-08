@@ -7,6 +7,7 @@
         :construction-sites-enabled="constructionSitesEnabled"
         :investment-chains-enabled="investmentChainsEnabled"
         :reports-enabled="reportsEnabled"
+        :sudz-enabled="sudzEnabled"
         @navigate="emit('navigate', $event)"
       />
     </QHeader>
@@ -49,6 +50,7 @@ interface Props {
   constructionSitesEnabled: boolean;
   investmentChainsEnabled: boolean;
   reportsEnabled: boolean;
+  sudzEnabled: boolean;
 }
 
 defineProps<Props>();

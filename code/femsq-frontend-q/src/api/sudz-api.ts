@@ -1,0 +1,627 @@
+/**
+ * Apollo API клиент СУДЗ (read/write).
+ */
+
+import { gql } from '@apollo/client/core';
+
+import { apolloClient } from '@/plugins/apollo';
+import { RequestError } from './http';
+import type {
+  CreateSudzPmUplInput,
+  CreateSudzUplInput,
+  CreateSudzYearInput,
+  SudzCmmGrLookup,
+  SudzD644Row,
+  SudzDebtCollectionInput,
+  SudzDebtCollectionResult,
+  SudzPmLink,
+  SudzPmUplLookup,
+  SudzRsltDebt,
+  SudzSvodResult,
+  SudzUplLookup,
+  SudzYear,
+  SudzYearDetail,
+  SudzYearUpl,
+  SudzYyyyLookup,
+  UpdateSudzYearInput
+} from '@/types/sudz';
+
+function wrapApolloError(error: unknown, operation: string): RequestError {
+  const message = error instanceof Error ? error.message : `Ошибка GraphQL операции ${operation}`;
+  return new RequestError(message, {
+    status: 0,
+    statusText: 'GraphQL',
+    url: '/graphql',
+    body: { operation }
+  });
+}
+
+const YEAR_FIELDS = `
+  yrKey
+  yrVariant
+  baseUpl
+  yyyy
+  cmmGr
+  baseUplName
+  baseUplDate
+  cmmGrName
+  cmmGrDate
+  yyyyValue
+  progress
+`;
+
+const YEAR_DETAIL_FIELDS = `
+  year { ${YEAR_FIELDS} }
+  upls {
+    yrUplPKey
+    yrKey
+    uplKey
+    uplName
+    uplDate
+    uplStatusOnDate
+    pmLinks {
+      gPKey
+      dbtUpl
+      pmKey
+      pmName
+      pmDate
+      dbtUplName
+      dbtUplDate
+    }
+  }
+`;
+
+const SUDZ_YEARS = gql`
+  query SudzYears {
+    sudzYears {
+      ${YEAR_FIELDS}
+    }
+  }
+`;
+
+const SUDZ_YEAR = gql`
+  query SudzYear($yrKey: Int!) {
+    sudzYear(yrKey: $yrKey) {
+      ${YEAR_DETAIL_FIELDS}
+    }
+  }
+`;
+
+const SUDZ_UPL_LOOKUPS = gql`
+  query SudzUplLookups {
+    sudzUplLookups {
+      uplKey
+      uplName
+      uplDate
+      uplStatusOnDate
+    }
+  }
+`;
+
+const SUDZ_CMM_GR_LOOKUPS = gql`
+  query SudzCmmGrLookups {
+    sudzCmmGrLookups {
+      cmmGrKey
+      name
+      date
+    }
+  }
+`;
+
+const SUDZ_YYYY_LOOKUPS = gql`
+  query SudzYyyyLookups {
+    sudzYyyyLookups {
+      yKey
+      yyyy
+    }
+  }
+`;
+
+const SUDZ_PM_LOOKUPS = gql`
+  query SudzPmUplLookups {
+    sudzPmUplLookups {
+      pmKey
+      name
+      date
+    }
+  }
+`;
+
+const CREATE_YEAR = gql`
+  mutation CreateSudzYear($input: CreateSudzYearInput!) {
+    createSudzYear(input: $input) { ${YEAR_DETAIL_FIELDS} }
+  }
+`;
+
+const UPDATE_YEAR = gql`
+  mutation UpdateSudzYear($input: UpdateSudzYearInput!) {
+    updateSudzYear(input: $input) { ${YEAR_DETAIL_FIELDS} }
+  }
+`;
+
+const DELETE_YEAR = gql`
+  mutation DeleteSudzYear($yrKey: Int!) {
+    deleteSudzYear(yrKey: $yrKey)
+  }
+`;
+
+const CREATE_UPL = gql`
+  mutation CreateSudzUpl($input: CreateSudzUplInput!) {
+    createSudzUpl(input: $input) {
+      uplKey
+      uplName
+      uplDate
+      uplStatusOnDate
+    }
+  }
+`;
+
+const ADD_YEAR_UPL = gql`
+  mutation AddSudzYearUpl($yrKey: Int!, $uplKey: Int!) {
+    addSudzYearUpl(yrKey: $yrKey, uplKey: $uplKey) {
+      yrUplPKey
+      yrKey
+      uplKey
+      uplName
+      uplDate
+      uplStatusOnDate
+      pmLinks { gPKey }
+    }
+  }
+`;
+
+const REMOVE_YEAR_UPL = gql`
+  mutation RemoveSudzYearUpl($yrUplPKey: Int!) {
+    removeSudzYearUpl(yrUplPKey: $yrUplPKey)
+  }
+`;
+
+const CREATE_PM = gql`
+  mutation CreateSudzPmUpl($input: CreateSudzPmUplInput!) {
+    createSudzPmUpl(input: $input) {
+      pmKey
+      name
+      date
+    }
+  }
+`;
+
+const ADD_PM_LINK = gql`
+  mutation AddSudzPmLink($dbtUplKey: Int!, $pmKey: Int!) {
+    addSudzPmLink(dbtUplKey: $dbtUplKey, pmKey: $pmKey) {
+      gPKey
+      dbtUpl
+      pmKey
+      pmName
+      pmDate
+      dbtUplName
+      dbtUplDate
+    }
+  }
+`;
+
+const REMOVE_PM_LINK = gql`
+  mutation RemoveSudzPmLink($gPKey: Int!) {
+    removeSudzPmLink(gPKey: $gPKey)
+  }
+`;
+
+const SUDZ_YR_DBT_CHANGES = gql`
+  query SudzYrDbtChanges($yr: Int!, $asOfUpl: Int) {
+    sudzYrDbtChanges(yr: $yr, asOfUpl: $asOfUpl) {
+      dbtKey
+      accountNum
+      curator
+      mery
+      cstCode
+      cstName
+      periods {
+        uplKey
+        uplDate
+        asOf
+        invNumEnum
+        idNum
+        cnNumEnum
+        csoCnDate
+        orgIdValueL
+        itn
+        ctptOrg
+        maturity
+        ttl
+        overd
+        cstAgPnCode
+        cstAgPnName
+        agOrg
+        pogasheno
+      }
+    }
+  }
+`;
+
+const SUDZ_D644 = gql`
+  query SudzD644($yr: Int!, $currUpl: Int!) {
+    sudzD644(yr: $yr, currUpl: $currUpl) {
+      dbtKey
+      accountNum
+      agent
+      orgId
+      itn
+      counterpart
+      contract
+      contractDate
+      invoice
+      dateStart
+      maturityBase
+      ttlBase
+      overdBase
+      maturityCurr
+      overdCurr
+      repaid
+      cstCode
+      cstName
+      comment644
+      baseUplDate
+      currUplDate
+      baseUpl
+      currUpl
+    }
+  }
+`;
+
+const SUDZ_D644_SVOD = gql`
+  query SudzD644Svod($yr: Int!, $currUpl: Int!) {
+    sudzD644Svod(yr: $yr, currUpl: $currUpl) {
+      accounts {
+        accountNum
+        accountName
+        overdBase
+        repaid
+        overdCurr
+        repaidPct
+      }
+      total {
+        overdBase
+        repaid
+        overdCurr
+        repaidPct
+      }
+    }
+  }
+`;
+
+const UPDATE_SUDZ_DEBT_COLLECTION = gql`
+  mutation UpdateSudzDebtCollection($input: SudzDebtCollectionInput!) {
+    updateSudzDebtCollection(input: $input) {
+      dbtKey
+      curator
+      mery
+      cstCode
+      cstName
+      cmmGr
+    }
+  }
+`;
+
+/** Список год-вариантов. */
+export async function getSudzYears(): Promise<SudzYear[]> {
+  try {
+    const result = await apolloClient.query<{ sudzYears: SudzYear[] }>({
+      query: SUDZ_YEARS,
+      fetchPolicy: 'network-only'
+    });
+    return result.data.sudzYears;
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzYears');
+  }
+}
+
+/** Карточка года. */
+export async function getSudzYear(yrKey: number): Promise<SudzYearDetail> {
+  try {
+    const result = await apolloClient.query<{ sudzYear: SudzYearDetail }>({
+      query: SUDZ_YEAR,
+      variables: { yrKey },
+      fetchPolicy: 'network-only'
+    });
+    return result.data.sudzYear;
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzYear');
+  }
+}
+
+export async function getSudzUplLookups(): Promise<SudzUplLookup[]> {
+  try {
+    const result = await apolloClient.query<{ sudzUplLookups: SudzUplLookup[] }>({
+      query: SUDZ_UPL_LOOKUPS,
+      fetchPolicy: 'network-only'
+    });
+    return result.data.sudzUplLookups;
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzUplLookups');
+  }
+}
+
+export async function getSudzCmmGrLookups(): Promise<SudzCmmGrLookup[]> {
+  try {
+    const result = await apolloClient.query<{ sudzCmmGrLookups: SudzCmmGrLookup[] }>({
+      query: SUDZ_CMM_GR_LOOKUPS,
+      fetchPolicy: 'network-only'
+    });
+    return result.data.sudzCmmGrLookups;
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzCmmGrLookups');
+  }
+}
+
+export async function getSudzYyyyLookups(): Promise<SudzYyyyLookup[]> {
+  try {
+    const result = await apolloClient.query<{ sudzYyyyLookups: SudzYyyyLookup[] }>({
+      query: SUDZ_YYYY_LOOKUPS,
+      fetchPolicy: 'network-only'
+    });
+    return result.data.sudzYyyyLookups;
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzYyyyLookups');
+  }
+}
+
+export async function getSudzPmUplLookups(): Promise<SudzPmUplLookup[]> {
+  try {
+    const result = await apolloClient.query<{ sudzPmUplLookups: SudzPmUplLookup[] }>({
+      query: SUDZ_PM_LOOKUPS,
+      fetchPolicy: 'network-only'
+    });
+    return result.data.sudzPmUplLookups;
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzPmUplLookups');
+  }
+}
+
+export async function createSudzYear(input: CreateSudzYearInput): Promise<SudzYearDetail> {
+  try {
+    const result = await apolloClient.mutate<{ createSudzYear: SudzYearDetail }>({
+      mutation: CREATE_YEAR,
+      variables: { input }
+    });
+    const data = result.data?.createSudzYear;
+    if (!data) throw new Error('Пустой ответ createSudzYear');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'CreateSudzYear');
+  }
+}
+
+export async function updateSudzYear(input: UpdateSudzYearInput): Promise<SudzYearDetail> {
+  try {
+    const result = await apolloClient.mutate<{ updateSudzYear: SudzYearDetail }>({
+      mutation: UPDATE_YEAR,
+      variables: { input }
+    });
+    const data = result.data?.updateSudzYear;
+    if (!data) throw new Error('Пустой ответ updateSudzYear');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'UpdateSudzYear');
+  }
+}
+
+export async function deleteSudzYear(yrKey: number): Promise<boolean> {
+  try {
+    const result = await apolloClient.mutate<{ deleteSudzYear: boolean }>({
+      mutation: DELETE_YEAR,
+      variables: { yrKey }
+    });
+    return Boolean(result.data?.deleteSudzYear);
+  } catch (error) {
+    throw wrapApolloError(error, 'DeleteSudzYear');
+  }
+}
+
+export async function createSudzUpl(input: CreateSudzUplInput): Promise<SudzUplLookup> {
+  try {
+    const result = await apolloClient.mutate<{ createSudzUpl: SudzUplLookup }>({
+      mutation: CREATE_UPL,
+      variables: { input }
+    });
+    const data = result.data?.createSudzUpl;
+    if (!data) throw new Error('Пустой ответ createSudzUpl');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'CreateSudzUpl');
+  }
+}
+
+export async function addSudzYearUpl(yrKey: number, uplKey: number): Promise<SudzYearUpl> {
+  try {
+    const result = await apolloClient.mutate<{ addSudzYearUpl: SudzYearUpl }>({
+      mutation: ADD_YEAR_UPL,
+      variables: { yrKey, uplKey }
+    });
+    const data = result.data?.addSudzYearUpl;
+    if (!data) throw new Error('Пустой ответ addSudzYearUpl');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'AddSudzYearUpl');
+  }
+}
+
+export async function removeSudzYearUpl(yrUplPKey: number): Promise<boolean> {
+  try {
+    const result = await apolloClient.mutate<{ removeSudzYearUpl: boolean }>({
+      mutation: REMOVE_YEAR_UPL,
+      variables: { yrUplPKey }
+    });
+    return Boolean(result.data?.removeSudzYearUpl);
+  } catch (error) {
+    throw wrapApolloError(error, 'RemoveSudzYearUpl');
+  }
+}
+
+export async function createSudzPmUpl(input: CreateSudzPmUplInput): Promise<SudzPmUplLookup> {
+  try {
+    const result = await apolloClient.mutate<{ createSudzPmUpl: SudzPmUplLookup }>({
+      mutation: CREATE_PM,
+      variables: { input }
+    });
+    const data = result.data?.createSudzPmUpl;
+    if (!data) throw new Error('Пустой ответ createSudzPmUpl');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'CreateSudzPmUpl');
+  }
+}
+
+export async function addSudzPmLink(dbtUplKey: number, pmKey: number): Promise<SudzPmLink> {
+  try {
+    const result = await apolloClient.mutate<{ addSudzPmLink: SudzPmLink }>({
+      mutation: ADD_PM_LINK,
+      variables: { dbtUplKey, pmKey }
+    });
+    const data = result.data?.addSudzPmLink;
+    if (!data) throw new Error('Пустой ответ addSudzPmLink');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'AddSudzPmLink');
+  }
+}
+
+export async function removeSudzPmLink(gPKey: number): Promise<boolean> {
+  try {
+    const result = await apolloClient.mutate<{ removeSudzPmLink: boolean }>({
+      mutation: REMOVE_PM_LINK,
+      variables: { gPKey }
+    });
+    return Boolean(result.data?.removeSudzPmLink);
+  } catch (error) {
+    throw wrapApolloError(error, 'RemoveSudzPmLink');
+  }
+}
+
+export async function getSudzYrDbtChanges(yr: number, asOfUpl?: number | null): Promise<SudzRsltDebt[]> {
+  try {
+    const result = await apolloClient.query<{ sudzYrDbtChanges: SudzRsltDebt[] }>({
+      query: SUDZ_YR_DBT_CHANGES,
+      variables: { yr, asOfUpl: asOfUpl ?? null },
+      fetchPolicy: 'network-only'
+    });
+    return result.data.sudzYrDbtChanges;
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzYrDbtChanges');
+  }
+}
+
+/**
+ * Скачивание Excel Rslt (сбор). Осознанный REST Blob (как reports-api).
+ *
+ * @returns blob и имя из Content-Disposition (с датой-временем на сервере)
+ */
+export async function downloadSudzRsltSbornExcel(
+  yr: number,
+  asOfUpl: number
+): Promise<{ blob: Blob; fileName: string }> {
+  const url = `/api/v1/sudz/rslt-sborn.xlsx?yr=${encodeURIComponent(String(yr))}&asOfUpl=${encodeURIComponent(String(asOfUpl))}`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    const text = await response.text();
+    throw new RequestError(text || `Ошибка выгрузки Rslt (${response.status})`, {
+      status: response.status,
+      statusText: response.statusText,
+      url: response.url,
+      body: text
+    });
+  }
+  const blob = await response.blob();
+  const fromHeader = parseContentDispositionFileName(response.headers.get('Content-Disposition'));
+  const stamp = (() => {
+    const d = new Date();
+    const p = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+  })();
+  const timed = `ags_Yr_DbtChangesRslt_${yr}_${asOfUpl}_${stamp}.xlsx`;
+  // Берём имя с сервера только если там уже есть время (иначе повтор в тот же день ломает FSA).
+  const fileName =
+    fromHeader && /_\d{4}-\d{2}-\d{2}_\d{6}\.xlsx$/i.test(fromHeader) ? fromHeader : timed;
+  return { blob, fileName };
+}
+
+/**
+ * Извлекает filename из Content-Disposition.
+ */
+function parseContentDispositionFileName(header: string | null): string | null {
+  if (!header) {
+    return null;
+  }
+  const utf = /filename\*=UTF-8''([^;]+)/i.exec(header);
+  if (utf?.[1]) {
+    try {
+      return decodeURIComponent(utf[1].trim());
+    } catch {
+      return utf[1].trim();
+    }
+  }
+  const plain = /filename="([^"]+)"/i.exec(header) ?? /filename=([^;]+)/i.exec(header);
+  return plain?.[1]?.trim() ?? null;
+}
+
+const APPEND_PROGRESS = gql`
+  mutation AppendSudzYearProgress($yrKey: Int!, $line: String!) {
+    appendSudzYearProgress(yrKey: $yrKey, line: $line)
+  }
+`;
+
+/**
+ * Дописывает строку в yr_Progress.
+ */
+export async function appendSudzYearProgress(yrKey: number, line: string): Promise<string> {
+  try {
+    const result = await apolloClient.mutate<{ appendSudzYearProgress: string }>({
+      mutation: APPEND_PROGRESS,
+      variables: { yrKey, line }
+    });
+    return result.data?.appendSudzYearProgress ?? '';
+  } catch (error) {
+    throw wrapApolloError(error, 'AppendSudzYearProgress');
+  }
+}
+
+export async function getSudzD644(yr: number, currUpl: number): Promise<SudzD644Row[]> {
+  try {
+    const result = await apolloClient.query<{ sudzD644: SudzD644Row[] }>({
+      query: SUDZ_D644,
+      variables: { yr, currUpl },
+      fetchPolicy: 'network-only'
+    });
+    return result.data.sudzD644;
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzD644');
+  }
+}
+
+export async function getSudzD644Svod(yr: number, currUpl: number): Promise<SudzSvodResult> {
+  try {
+    const result = await apolloClient.query<{ sudzD644Svod: SudzSvodResult }>({
+      query: SUDZ_D644_SVOD,
+      variables: { yr, currUpl },
+      fetchPolicy: 'network-only'
+    });
+    return result.data.sudzD644Svod;
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzD644Svod');
+  }
+}
+
+export async function updateSudzDebtCollection(
+  input: SudzDebtCollectionInput
+): Promise<SudzDebtCollectionResult> {
+  try {
+    const result = await apolloClient.mutate<{ updateSudzDebtCollection: SudzDebtCollectionResult }>({
+      mutation: UPDATE_SUDZ_DEBT_COLLECTION,
+      variables: { input }
+    });
+    const data = result.data?.updateSudzDebtCollection;
+    if (!data) throw new Error('Пустой ответ updateSudzDebtCollection');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'UpdateSudzDebtCollection');
+  }
+}

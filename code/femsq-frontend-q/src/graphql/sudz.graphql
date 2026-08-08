@@ -1,0 +1,97 @@
+query SudzYears {
+  sudzYears {
+    yrKey
+    yrVariant
+    baseUpl
+    yyyy
+    cmmGr
+  }
+}
+
+query SudzYrDbtChanges($yr: Int!, $asOfUpl: Int) {
+  sudzYrDbtChanges(yr: $yr, asOfUpl: $asOfUpl) {
+    dbtKey
+    accountNum
+    curator
+    mery
+    cstCode
+    cstName
+    periods {
+      uplKey
+      uplDate
+      asOf
+      invNumEnum
+      idNum
+      cnNumEnum
+      csoCnDate
+      orgIdValueL
+      itn
+      ctptOrg
+      maturity
+      ttl
+      overd
+      cstAgPnCode
+      cstAgPnName
+      agOrg
+      pogasheno
+    }
+  }
+}
+
+query SudzD644($yr: Int!, $currUpl: Int!) {
+  sudzD644(yr: $yr, currUpl: $currUpl) {
+    dbtKey
+    accountNum
+    agent
+    orgId
+    itn
+    counterpart
+    contract
+    contractDate
+    invoice
+    dateStart
+    maturityBase
+    ttlBase
+    overdBase
+    maturityCurr
+    overdCurr
+    repaid
+    cstCode
+    cstName
+    comment644
+    baseUplDate
+    currUplDate
+    baseUpl
+    currUpl
+  }
+}
+
+query SudzD644Svod($yr: Int!, $currUpl: Int!) {
+  sudzD644Svod(yr: $yr, currUpl: $currUpl) {
+    accounts {
+      accountNum
+      accountName
+      overdBase
+      repaid
+      overdCurr
+      repaidPct
+    }
+    total {
+      overdBase
+      repaid
+      overdCurr
+      repaidPct
+    }
+  }
+}
+
+mutation UpdateSudzDebtCollection($input: SudzDebtCollectionInput!) {
+  updateSudzDebtCollection(input: $input) {
+    dbtKey
+    curator
+    mery
+    cstCode
+    cstName
+    cmmGr
+  }
+}
