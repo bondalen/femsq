@@ -8125,13 +8125,13 @@
       },
       {
         "chat": {
-          "displayName": "СУДЗ: 0065–0070 Progress / D644 (active, high). № chat-2026-08-07-001",
+          "displayName": "✅ СУДЗ: 0065–0070 Progress / D644 (completed, high). № chat-2026-08-07-001",
           "chat-attributes": {
             "id": "chat-2026-08-07-001",
             "created": "2026-08-07",
             "lastUpdated": "2026-08-09",
             "owner": "Александр",
-            "status": "active",
+            "status": "completed",
             "priority": "high",
             "tags": [
               "sudz",
@@ -8630,6 +8630,41 @@
                       "code/femsq-frontend-q/src/views/sudz/SudzPortfolioView.vue",
                       "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java",
                       "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/rest/SudzExportRestController.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S60: закрытие 0070 — веха 1.1.3 без New→CmmGr (success). № log-2026-08-09-003",
+                "log-attributes": {
+                  "id": "log-2026-08-09-003",
+                  "timestamp": "2026-08-09T21:26:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0070"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Решение владельца S60: закрыть 0070",
+                    "details": "Веха 1.1.3 = прекращение правок комментариев оператором; отдельной операции New→yr_CmmGr нет. Полный путь папки выгрузки — до отдельного решения. Обновлены 03 §1.1.3, 02-9, chat-plan v0.56, project-development 0070 completed.",
+                    "outcome": "0070 ✅; следующий крупный кусок — 0069.",
+                    "references": [
+                      "docs/development/notes/domain/sudz/03-processes.md",
+                      "docs/development/notes/UI/02-9_sudz-mvp-screens.md",
+                      "docs/development/project-development.json"
                     ]
                   }
                 ]
