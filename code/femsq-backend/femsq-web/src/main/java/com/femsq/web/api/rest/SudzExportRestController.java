@@ -38,6 +38,22 @@ public class SudzExportRestController {
 
     private static final Logger log = Logger.getLogger(SudzExportRestController.class.getName());
 
+    /** Метка времени в {@code yr_Progress}: локальное время, без {@code T}. */
+    private static final DateTimeFormatter PROGRESS_TS =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    private static final DateTimeFormatter FILE_STAMP =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss");
+
+    /**
+     * Текущая метка для строки лога Progress.
+     *
+     * @return {@code yyyy-MM-dd HH:mm:ss}
+     */
+    private static String progressTimestamp() {
+        return LocalDateTime.now().format(PROGRESS_TS);
+    }
+
     private final SudzService sudzService;
 
     /**
@@ -63,11 +79,11 @@ public class SudzExportRestController {
             List<SudzRsltDebt> debts = sudzService.getYrDbtChanges(yr, asOfUpl);
             byte[] body = SudzRsltExcelExporter.exportRsltSborn(debts);
             // Дата-время в имени: повторное «Сформировать» не перезаписывает тот же файл (FSA).
-            String stamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss"));
+            String stamp = LocalDateTime.now().format(FILE_STAMP);
             String fileName = "ags_Yr_DbtChangesRslt_" + yr + "_" + asOfUpl + "_" + stamp + ".xlsx";
             String line = String.format(
                     "[%s] Rslt сбор · Excel | yr=%d | asOfUpl=%d | долгов=%d | файл=%s | ok",
-                    LocalDateTime.now().withNano(0),
+                    progressTimestamp(),
                     yr,
                     asOfUpl,
                     debts.size(),
@@ -112,11 +128,11 @@ public class SudzExportRestController {
         try {
             List<SudzRsltDebt> debts = sudzService.getYrDbtChanges(yr, asOfUpl);
             byte[] body = SudzRsltExcelExporter.exportRsltPovtor(debts);
-            String stamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss"));
+            String stamp = LocalDateTime.now().format(FILE_STAMP);
             String fileName = "ags_Yr_DbtChangesRslt_" + yr + "_" + asOfUpl + "_povtor_" + stamp + ".xlsx";
             String line = String.format(
                     "[%s] Rslt повтор · Excel | yr=%d | asOfUpl=%d | долгов=%d | файл=%s | ok",
-                    LocalDateTime.now().withNano(0),
+                    progressTimestamp(),
                     yr,
                     asOfUpl,
                     debts.size(),
@@ -161,11 +177,11 @@ public class SudzExportRestController {
         try {
             List<SudzD644Row> rows = sudzService.getD644(yr, currUpl);
             byte[] body = SudzD644ExcelExporter.exportD644(rows);
-            String stamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss"));
+            String stamp = LocalDateTime.now().format(FILE_STAMP);
             String fileName = "ags_Yr_DbtChangesRsltD644_" + yr + "_" + currUpl + "_" + stamp + ".xlsx";
             String line = String.format(
                     "[%s] D644 · Excel | yr=%d | currUpl=%d | строк=%d | файл=%s | ok",
-                    LocalDateTime.now().withNano(0),
+                    progressTimestamp(),
                     yr,
                     currUpl,
                     rows.size(),
@@ -210,12 +226,12 @@ public class SudzExportRestController {
         try {
             SudzSvodResult svod = sudzService.getD644Svod(yr, currUpl);
             byte[] body = SudzD644ExcelExporter.exportSvod(svod);
-            String stamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss"));
+            String stamp = LocalDateTime.now().format(FILE_STAMP);
             String fileName = "ags_Yr_DbtChangesD644Svod_" + yr + "_" + currUpl + "_" + stamp + ".xlsx";
             int accounts = svod.accounts() != null ? svod.accounts().size() : 0;
             String line = String.format(
                     "[%s] Свод · Excel | yr=%d | currUpl=%d | счетов=%d | файл=%s | ok",
-                    LocalDateTime.now().withNano(0),
+                    progressTimestamp(),
                     yr,
                     currUpl,
                     accounts,
@@ -272,7 +288,7 @@ public class SudzExportRestController {
             String fileName = file.getOriginalFilename() != null ? file.getOriginalFilename() : "return.xlsx";
             String line = String.format(
                     "[%s] Rslt повтор · Загрузить | yr=%d | долгов=%d | файл=%s | ok",
-                    LocalDateTime.now().withNano(0),
+                    progressTimestamp(),
                     yr,
                     imported,
                     fileName

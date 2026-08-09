@@ -8598,6 +8598,42 @@
                   }
                 ]
               }
+            },
+            {
+              "log": {
+                "displayName": "S59c + Progress UX: Свод proto, лог, метки времени (success). № log-2026-08-09-002",
+                "log-attributes": {
+                  "id": "log-2026-08-09-002",
+                  "timestamp": "2026-08-09T21:17:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0070"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "S59c и доводка Progress после UAT D644/Свод",
+                    "details": "Свод: предпросмотр/Excel + sudz-svod-preview (фикс % без ×100). Лог: layout без QTabPanels, новые сверху до 100 строк, единый локальный timestamp. JAR 0.1.0.173-SNAPSHOT.",
+                    "outcome": "UAT ок; синхронизация с GitHub.",
+                    "references": [
+                      "code/femsq-frontend-q/src/utils/sudz-svod-preview.ts",
+                      "code/femsq-frontend-q/src/views/sudz/SudzPortfolioView.vue",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/rest/SudzExportRestController.java"
+                    ]
+                  }
+                ]
+              }
             }
           ]
         }

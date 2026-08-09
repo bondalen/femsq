@@ -136,7 +136,8 @@ public interface SudzDao {
     int importRsltReturn(int yrKey, List<SudzRsltReturnRow> rows);
 
     /**
-     * Дописывает строку в {@code yr_Progress} (лог формирования документов).
+     * Дописывает строку в начало {@code yr_Progress} (лог формирования документов).
+     * Хранит не более ~100 строк; более старые отбрасываются.
      *
      * @param yrKey ключ года
      * @param line одна строка лога (без обязательного перевода строки в конце)

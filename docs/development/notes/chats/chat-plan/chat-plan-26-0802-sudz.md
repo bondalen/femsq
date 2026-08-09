@@ -3,9 +3,9 @@
 **Дата создания:** 2026-08-02  
 **Последнее обновление:** 2026-08-09  
 **Проект:** FEMSQ  
-**Версия плана:** 0.55.0 (S59b: приёмка D644 / Свод)  
+**Версия плана:** 0.55.1 (S59c: Свод proto/Excel)  
 **Задача:** 0065–0070 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md)  
-**Статус плана:** ✅ документация MVP; Rslt сбор/повтор; S58 Progress; **S59/S59b** D644/Свод · Выгрузить принят; далее веха 1.1.3 / 0069 / доработка 0070
+**Статус плана:** ✅ документация MVP; Rslt сбор/повтор; S58 Progress; **S59/S59b** D644/Свод принят; **S59c** Свод proto/Excel; далее веха 1.1.3 / 0069 / доработка 0070
 
 
 **Доменные доки:** [01-overview](../../domain/sudz/01-overview.md) · [02-glossary](../../domain/sudz/02-glossary.md) · [03-processes](../../domain/sudz/03-processes.md) · [04-data-model](../../domain/sudz/04-data-model.md) · [04-1 MS_Description](../../domain/sudz/04-1_ms-descriptions.md) · [04-3 проблемы](../../domain/sudz/04-3_problems-solutions.md) · [07-readiness (покрытие/готовность)](../../domain/sudz/07-readiness.md) · [08-target-schema (физ. схема + ER)](../../domain/sudz/08-target-schema.md)  
@@ -164,6 +164,7 @@
 | S58 | 2026-08-08 | Progress: комбо **Операция** (док+действие), **Выполнить**, New+файл на загрузке | [02-9 Progress](../../UI/02-9_sudz-mvp-screens.md) | ✅ |
 | S59 | 2026-08-09 | D644 / Свод · Выгрузить: Excel REST + Progress | [08 §S59](../../domain/sudz/08-target-schema.md); [02-9](../../UI/02-9_sudz-mvp-screens.md) | ✅ |
 | S59b | 2026-08-09 | Приёмка владельцем среза D644/Свод (UAT «приемлемо»; высота R по комментарию) | [08 §S59](../../domain/sudz/08-target-schema.md); [02-9 §5](../../UI/02-9_sudz-mvp-screens.md) | ✅ |
+| S59c | 2026-08-09 | Свод: переключатели Предпросмотр/Excel + native preview | [02-9](../../UI/02-9_sudz-mvp-screens.md); `sudz-svod-preview.ts` | ✅ |
 
 ### 5.3. Объекты Access (формы / запросы / таблицы / отчёты)
 
@@ -341,4 +342,5 @@
 **S57 Rslt повтор (yr_CmmGr_New):** 2026-08-08  
 **S58 Progress операции Выгрузить/Загрузить:** 2026-08-08 — UI+REST импорт; JAR `0.1.0.166-SNAPSHOT`
 **S59 D644 / Свод · Выгрузить:** 2026-08-09 — Excel REST + Progress; UAT S59a; JAR → `0.1.0.171-SNAPSHOT`  
-**S59b приёмка владельцем:** 2026-08-09 — срез D644/Свод принят; 0070 остаётся pending (веха 1.1.3, путь папки)
+**S59b приёмка владельцем:** 2026-08-09 — срез D644/Свод принят; 0070 остаётся pending (веха 1.1.3, путь папки)  
+**S59c Свод proto/Excel:** 2026-08-09 — переключатели как у D644; `sudz-svod-preview.ts`

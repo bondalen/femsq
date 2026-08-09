@@ -53,6 +53,9 @@ public class JdbcSudzDao implements SudzDao {
     /** Тип привязки стройки в cnInvCmmCst. */
     private static final int CICC_TYPE_CST = 2;
 
+    /** Максимум строк в {@code yr_Progress} (новые сверху, старые отбрасываются). */
+    private static final int MAX_YEAR_PROGRESS_LINES = 100;
+
     private final ConnectionFactory connectionFactory;
     private final String schema;
 
@@ -431,33 +434,29 @@ public class JdbcSudzDao implements SudzDao {
     @Override
     public String appendYearProgress(int yrKey, String line) {
         log.log(Level.INFO, "Appending yr_Progress yr={0}", yrKey);
-        String sql = "UPDATE " + q("yr")
-                + " SET yr_Progress = CASE"
-                + "   WHEN yr_Progress IS NULL OR LTRIM(RTRIM(yr_Progress)) = N'' THEN ?"
-                + "   ELSE yr_Progress + CHAR(13) + CHAR(10) + ?"
-                + " END"
-                + " WHERE yr_key = ?";
         String readSql = "SELECT yr_Progress FROM " + q("yr") + " WHERE yr_key = ?";
+        String updateSql = "UPDATE " + q("yr") + " SET yr_Progress = ? WHERE yr_key = ?";
         try (Connection connection = connectionFactory.createConnection()) {
             if (findYearOn(connection, yrKey).isEmpty()) {
                 throw new IllegalArgumentException("Год-вариант СУДЗ не найден: yr=" + yrKey);
             }
-            try (PreparedStatement statement = connection.prepareStatement(sql)) {
-                statement.setString(1, line);
-                statement.setString(2, line);
-                statement.setInt(3, yrKey);
-                statement.executeUpdate();
-            }
+            String current;
             try (PreparedStatement statement = connection.prepareStatement(readSql)) {
                 statement.setInt(1, yrKey);
                 try (ResultSet rs = statement.executeQuery()) {
                     if (!rs.next()) {
                         throw new IllegalArgumentException("Год-вариант СУДЗ не найден: yr=" + yrKey);
                     }
-                    String progress = rs.getString(1);
-                    return progress == null ? "" : progress;
+                    current = rs.getString(1);
                 }
             }
+            String merged = mergeYearProgress(current, line, MAX_YEAR_PROGRESS_LINES);
+            try (PreparedStatement statement = connection.prepareStatement(updateSql)) {
+                statement.setString(1, merged);
+                statement.setInt(2, yrKey);
+                statement.executeUpdate();
+            }
+            return merged;
         } catch (IllegalArgumentException exception) {
             throw exception;
         } catch (MissingConfigurationException exception) {
@@ -465,6 +464,34 @@ public class JdbcSudzDao implements SudzDao {
         } catch (SQLException exception) {
             throw wrap("Не удалось дописать yr_Progress yr=" + yrKey, exception);
         }
+    }
+
+    /**
+     * Новая строка в начало лога; не больше {@code maxLines} строк.
+     *
+     * @param current текущий {@code yr_Progress} (может быть {@code null})
+     * @param line новая строка
+     * @param maxLines лимит строк
+     * @return текст для записи
+     */
+    static String mergeYearProgress(String current, String line, int maxLines) {
+        String incoming = line == null ? "" : line.trim();
+        if (incoming.isEmpty()) {
+            return current == null ? "" : current;
+        }
+        List<String> lines = new ArrayList<>();
+        lines.add(incoming);
+        if (current != null && !current.isBlank()) {
+            for (String existing : current.split("\\R", -1)) {
+                if (existing != null && !existing.isBlank()) {
+                    lines.add(existing);
+                }
+            }
+        }
+        if (lines.size() > maxLines) {
+            lines.subList(maxLines, lines.size()).clear();
+        }
+        return String.join("\r\n", lines);
     }
 
     @Override

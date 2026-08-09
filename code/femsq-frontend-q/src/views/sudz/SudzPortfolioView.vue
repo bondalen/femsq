@@ -106,7 +106,7 @@
             <QTab name="progress" label="Ход (Progress)" data-test="sudz-yr-tab-progress" />
           </QTabs>
 
-          <QTabPanels v-model="tab" class="col yr-detail-panels">
+          <QTabPanels v-model="tab" :animated="false" class="yr-detail-panels">
             <QTabPanel name="upls" class="q-pa-none">
               <div class="row items-center q-mb-sm q-gutter-sm">
                 <QSelect
@@ -244,7 +244,7 @@
                     data-test="sudz-progress-cmm-new-ro"
                   />
                 </div>
-                <div v-if="isExportOp && (isRsltExport || isD644Export)" class="col-12 col-md-3">
+                <div v-if="isExportOp" class="col-12 col-md-3">
                   <QOptionGroup
                     v-model="progress.resultMode"
                     :options="resultModeOptions"
@@ -255,11 +255,7 @@
                   />
                 </div>
                 <div
-                  v-if="
-                    isExportOp &&
-                    (progress.resultMode === 'excel' || isSvodExport) &&
-                    !isImportOp
-                  "
+                  v-if="isExportOp && progress.resultMode === 'excel' && !isImportOp"
                   class="col-12 col-md-4"
                 >
                   <QInput
@@ -344,7 +340,7 @@
               <div
                 v-if="
                   isExportOp &&
-                  (progress.resultMode === 'excel' || isSvodExport) &&
+                  progress.resultMode === 'excel' &&
                   !directoryPickerSupported
                 "
                 class="text-caption text-grey-7 q-mb-sm"
@@ -359,25 +355,25 @@
                 <QTab name="log" label="Лог (yr_Progress)" />
                 <QTab name="proto" label="Предпросмотр" data-test="sudz-progress-tab-proto" />
               </QTabs>
-              <QTabPanels
-                v-model="progress.subTab"
-                :animated="false"
-                class="col progress-subpanels"
-              >
-                <QTabPanel name="log" class="q-pa-none">
-                  <QInput
-                    :model-value="store.selectedYear.progress ?? ''"
-                    type="textarea"
-                    autogrow
-                    outlined
-                    readonly
-                    label="yr_Progress (только чтение)"
-                    data-test="sudz-yr-progress"
-                  />
-                </QTabPanel>
-                <QTabPanel name="proto" class="q-pa-none progress-proto-panel">
+              <!-- Без QTabPanels: .q-panel.scroll раздувает ширину после proto-таблицы и «сдвигает» лог. -->
+              <div class="progress-subpanels">
+                <div
+                  v-if="progress.subTab === 'log'"
+                  class="progress-log-panel"
+                >
+                  <div class="text-caption text-grey-7 q-mb-xs">
+                    yr_Progress (только чтение) · новые сверху · до 100 строк
+                  </div>
+                  <pre class="progress-log-pre" data-test="sudz-yr-progress">{{
+                    store.selectedYear.progress ?? ''
+                  }}</pre>
+                </div>
+                <div
+                  v-else
+                  class="progress-proto-panel"
+                >
                   <div v-if="!progress.protoRows.length" class="text-grey-7 q-pa-sm">
-                    Выполните «Rslt … · Выгрузить» или «D644 · Выгрузить» в режиме «Предпросмотр» —
+                    Выполните «Rslt … / D644 / Свод · Выгрузить» в режиме «Предпросмотр» —
                     таблица как в Excel (фильтр; у Rslt сбора колонки *_new пустые).
                   </div>
                   <div v-else class="progress-proto-body">
@@ -476,8 +472,8 @@
                         <div class="proto-cell-detail__body">{{ protoCell.text || '—' }}</div>
                       </div>
                     </div>
-                </QTabPanel>
-              </QTabPanels>
+                </div>
+              </div>
             </QTabPanel>
           </QTabPanels>
         </template>
@@ -627,6 +623,7 @@ import {
   downloadSudzD644SvodExcel,
   downloadSudzRsltExcel,
   getSudzD644,
+  getSudzD644Svod,
   getSudzYrDbtChanges,
   uploadSudzRsltReturn
 } from '@/api/sudz-api';
@@ -643,6 +640,7 @@ import {
   buildSudzRsltPreview,
   type SudzRsltPreviewRow
 } from '@/utils/sudz-rslt-preview';
+import { buildSudzSvodPreview } from '@/utils/sudz-svod-preview';
 
 const store = useSudzPortfolioStore();
 const $q = useQuasar();
@@ -699,6 +697,15 @@ const protoCell = reactive({
 });
 
 const protoScrollFrameEl = ref<HTMLElement | null>(null);
+
+/**
+ * Метка времени для yr_Progress: локальное время, формат как у backend Excel.
+ */
+function progressTimestamp(): string {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
 
 const operationOptions = [
   { label: 'Rslt сбор · Выгрузить', value: 'rslt_sborn_export' },
@@ -835,16 +842,6 @@ const pmOptions = computed(() =>
     label: `${p.pmKey}: ${p.name ?? '—'} (${p.date ?? '—'})`,
     value: p.pmKey
   }))
-);
-
-watch(
-  () => progress.operation,
-  (op) => {
-    // Свод — только Excel; D644/Rslt сохраняют выбор предпросмотр/Excel
-    if (op === 'svod_export') {
-      progress.resultMode = 'excel';
-    }
-  }
 );
 
 watch(
@@ -1025,11 +1022,41 @@ async function runImportReturn(yr: number): Promise<void> {
 }
 
 /**
- * Выгрузка D644 или годового свода (D644: proto/Excel; свод: только Excel).
+ * Выгрузка D644 или годового свода (предпросмотр или Excel).
  */
 async function runD644OrSvodExport(yr: number, currUpl: number): Promise<void> {
   const isSvod = progress.operation === 'svod_export';
-  if (!isSvod && progress.resultMode === 'proto') {
+  const label = isSvod ? 'Свод · Выгрузить' : 'D644 · Выгрузить';
+
+  if (progress.resultMode === 'proto') {
+    if (isSvod) {
+      const svod = await getSudzD644Svod(yr, currUpl);
+      const preview = buildSudzSvodPreview(svod);
+      progress.protoRows = preview.rows as unknown as SudzRsltPreviewRow[];
+      progress.protoColumns = preview.columns as unknown as FemsqTableColumn<SudzRsltPreviewRow>[];
+      progress.protoFillNew = false;
+      progress.protoSliceCount = 0;
+      progress.protoFilter = '';
+      progress.protoColumnFilters = Object.fromEntries(preview.columns.map((c) => [c.name, '']));
+      clearProtoCell();
+      progress.subTab = 'proto';
+      await nextTick();
+      const scrollRoot = protoScrollFrameEl.value?.querySelector('.progress-proto-scroll');
+      if (scrollRoot instanceof HTMLElement) {
+        scrollRoot.scrollLeft = 0;
+        scrollRoot.scrollTop = 0;
+      }
+      const line = `[${progressTimestamp()}] Свод · предпросмотр | yr=${yr} | currUpl=${currUpl} | счетов=${preview.rows.length} | ok`;
+      await appendSudzYearProgress(yr, line);
+      await store.selectYear(yr);
+      $q.notify({
+        type: 'positive',
+        message: `Предпросмотр Свод: ${preview.rows.length} строк(и)`,
+        timeout: 1500
+      });
+      return;
+    }
+
     const rows = await getSudzD644(yr, currUpl);
     const preview = buildSudzD644Preview(rows);
     progress.protoRows = preview.rows as unknown as SudzRsltPreviewRow[];
@@ -1046,7 +1073,7 @@ async function runD644OrSvodExport(yr: number, currUpl: number): Promise<void> {
       scrollRoot.scrollLeft = 0;
       scrollRoot.scrollTop = 0;
     }
-    const line = `[${new Date().toISOString().slice(0, 19).replace('T', ' ')}] D644 · предпросмотр | yr=${yr} | currUpl=${currUpl} | строк=${rows.length} | ok`;
+    const line = `[${progressTimestamp()}] D644 · предпросмотр | yr=${yr} | currUpl=${currUpl} | строк=${rows.length} | ok`;
     await appendSudzYearProgress(yr, line);
     await store.selectYear(yr);
     $q.notify({
@@ -1057,7 +1084,6 @@ async function runD644OrSvodExport(yr: number, currUpl: number): Promise<void> {
     return;
   }
 
-  const label = isSvod ? 'Свод · Выгрузить' : 'D644 · Выгрузить';
   const { blob, fileName } = isSvod
     ? await downloadSudzD644SvodExcel(yr, currUpl)
     : await downloadSudzD644Excel(yr, currUpl);
@@ -1102,7 +1128,7 @@ async function runRsltExport(yr: number, asOfUpl: number, isPovtor: boolean): Pr
       scrollRoot.scrollLeft = 0;
       scrollRoot.scrollTop = 0;
     }
-    const line = `[${new Date().toISOString().slice(0, 19).replace('T', ' ')}] ${label} · предпросмотр | yr=${yr} | asOfUpl=${asOfUpl} | долгов=${preview.rows.length} | срезов=${preview.sliceDates.length} | ok`;
+    const line = `[${progressTimestamp()}] ${label} · предпросмотр | yr=${yr} | asOfUpl=${asOfUpl} | долгов=${preview.rows.length} | срезов=${preview.sliceDates.length} | ok`;
     await appendSudzYearProgress(yr, line);
     await store.selectYear(yr);
     $q.notify({
@@ -1205,7 +1231,7 @@ async function onProtoToExcel(): Promise<void> {
   if (yr == null || progress.asOfUpl == null) {
     return;
   }
-  if (!isRsltExport.value && !isD644Export.value) {
+  if (!isRsltExport.value && !isD644OrSvodExport.value) {
     return;
   }
   progress.busy = true;
@@ -1407,16 +1433,34 @@ function onUnlinkPm(gPKey: number): void {
 }
 
 .yr-detail-panels {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
 }
 
-.yr-detail-panels :deep(> .q-panel) {
+/* Quasar вешает .scroll на обёртку панели — горизонтальный скролл ломает лог после proto. */
+.yr-detail-panels :deep(.q-panel) {
+  box-sizing: border-box;
+  width: 100% !important;
+  max-width: 100%;
   min-width: 0;
   min-height: 0;
   height: 100%;
+  overflow: hidden !important;
+}
+
+.yr-detail-panels :deep(.q-tab-panel) {
+  box-sizing: border-box;
+  width: 100%;
   max-width: 100%;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  padding: 0;
 }
 
 .yr-master {
@@ -1460,6 +1504,8 @@ function onUnlinkPm(gPKey: number): void {
 .progress-tab {
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
   min-width: 0;
   min-height: 0;
   height: 100%;
@@ -1468,27 +1514,58 @@ function onUnlinkPm(gPKey: number): void {
 }
 
 .progress-subpanels {
+  position: relative;
   flex: 1 1 auto;
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
 }
 
-.progress-subpanels :deep(> .q-panel) {
+.progress-log-panel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  width: auto;
+  max-width: none;
+  min-width: 0;
+  height: auto;
+  overflow: hidden;
+}
+
+.progress-log-pre {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
   min-height: 0;
-  height: 100%;
-  max-width: 100%;
-  overflow: hidden;
+  margin: 0;
+  padding: 8px 12px;
+  box-sizing: border-box;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  border: 1px solid var(--femsq-border, rgba(255, 255, 255, 0.35));
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.12);
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 .progress-proto-panel {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  height: 100%;
-  width: 100%;
+  width: auto;
+  height: auto;
+  max-width: none;
   overflow: hidden;
 }
 
