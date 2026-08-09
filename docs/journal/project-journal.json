@@ -3,7 +3,7 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-08-08"
+      "lastUpdated": "2026-08-09"
     },
     "sessions": [
       {
@@ -8125,11 +8125,11 @@
       },
       {
         "chat": {
-          "displayName": "СУДЗ: витрина→эскизы→backlog; cutover sudz 0066 (completed, high). № chat-2026-08-07-001",
+          "displayName": "СУДЗ: 0065–0070 Progress / D644 (active, high). № chat-2026-08-07-001",
           "chat-attributes": {
             "id": "chat-2026-08-07-001",
             "created": "2026-08-07",
-            "lastUpdated": "2026-08-08",
+            "lastUpdated": "2026-08-09",
             "owner": "Александр",
             "status": "active",
             "priority": "high",
@@ -8557,6 +8557,43 @@
                     "references": [
                       "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
                       "docs/development/notes/domain/sudz/08-target-schema.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S59/S59b: D644 / Свод · Выгрузить принят (success). № log-2026-08-09-001",
+                "log-attributes": {
+                  "id": "log-2026-08-09-001",
+                  "timestamp": "2026-08-09T13:05:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0070"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Реализован и принят срез D644 / Свод · Выгрузить (S59/S59b)",
+                    "details": "REST d644.xlsx / d644-svod.xlsx; SudzD644ExcelExporter (эталон Приложение 1: 18 кол., шапка, SUM, адаптивная высота комментария); Progress операции + предпросмотр D644. UAT владельца «пока приемлемо». JAR 0.1.0.171-SNAPSHOT. План v0.55.0. 0070 остаётся pending: веха 1.1.3, полный путь папки.",
+                    "outcome": "Срез D644/Свод закрыт; критерии D644/свода в 0070 отмечены принятыми; дальше — 1.1.3 / 0069.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/SudzD644ExcelExporter.java",
+                      "code/femsq-frontend-q/src/utils/sudz-d644-preview.ts",
+                      "docs/development/notes/UI/02-9_sudz-mvp-screens.md",
+                      "docs/development/notes/domain/sudz/08-target-schema.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
                     ]
                   }
                 ]

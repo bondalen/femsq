@@ -244,7 +244,7 @@
                     data-test="sudz-progress-cmm-new-ro"
                   />
                 </div>
-                <div v-if="isExportOp && isRsltExport" class="col-12 col-md-3">
+                <div v-if="isExportOp && (isRsltExport || isD644Export)" class="col-12 col-md-3">
                   <QOptionGroup
                     v-model="progress.resultMode"
                     :options="resultModeOptions"
@@ -254,7 +254,14 @@
                     data-test="sudz-progress-result-mode"
                   />
                 </div>
-                <div v-if="isExportOp && progress.resultMode === 'excel'" class="col-12 col-md-4">
+                <div
+                  v-if="
+                    isExportOp &&
+                    (progress.resultMode === 'excel' || isSvodExport) &&
+                    !isImportOp
+                  "
+                  class="col-12 col-md-4"
+                >
                   <QInput
                     :model-value="exportFolderLabel"
                     dense
@@ -335,7 +342,11 @@
                 </div>
               </div>
               <div
-                v-if="isExportOp && progress.resultMode === 'excel' && !directoryPickerSupported"
+                v-if="
+                  isExportOp &&
+                  (progress.resultMode === 'excel' || isSvodExport) &&
+                  !directoryPickerSupported
+                "
                 class="text-caption text-grey-7 q-mb-sm"
               >
                 Выбор папки недоступен в этом браузере (нужен Chrome/Edge). Excel сохранится через
@@ -366,8 +377,8 @@
                 </QTabPanel>
                 <QTabPanel name="proto" class="q-pa-none progress-proto-panel">
                   <div v-if="!progress.protoRows.length" class="text-grey-7 q-pa-sm">
-                    Выполните «Rslt … · Выгрузить» в режиме «Предпросмотр» — таблица как в Excel
-                    (срезы, фильтр; у сбора колонки *_new пустые).
+                    Выполните «Rslt … · Выгрузить» или «D644 · Выгрузить» в режиме «Предпросмотр» —
+                    таблица как в Excel (фильтр; у Rslt сбора колонки *_new пустые).
                   </div>
                   <div v-else class="progress-proto-body">
                       <div class="progress-proto-toolbar">
@@ -612,7 +623,10 @@ import { FemsqTable, type FemsqTableColumn } from 'fequlib';
 
 import {
   appendSudzYearProgress,
+  downloadSudzD644Excel,
+  downloadSudzD644SvodExcel,
   downloadSudzRsltExcel,
+  getSudzD644,
   getSudzYrDbtChanges,
   uploadSudzRsltReturn
 } from '@/api/sudz-api';
@@ -624,6 +638,7 @@ import {
   saveBlobToExportFolder,
   supportsDirectoryPicker
 } from '@/utils/export-folder';
+import { buildSudzD644Preview } from '@/utils/sudz-d644-preview';
 import {
   buildSudzRsltPreview,
   type SudzRsltPreviewRow
@@ -689,8 +704,8 @@ const operationOptions = [
   { label: 'Rslt сбор · Выгрузить', value: 'rslt_sborn_export' },
   { label: 'Rslt повтор · Выгрузить', value: 'rslt_povtor_export' },
   { label: 'Rslt повтор · Загрузить', value: 'rslt_povtor_import' },
-  { label: 'D644 · Выгрузить (скоро)', value: 'd644_export', disable: true },
-  { label: 'Свод · Выгрузить (скоро)', value: 'svod_export', disable: true }
+  { label: 'D644 · Выгрузить', value: 'd644_export' },
+  { label: 'Свод · Выгрузить', value: 'svod_export' }
 ];
 
 const resultModeOptions = [
@@ -710,6 +725,9 @@ const isPovtorExport = computed(() => progress.operation === 'rslt_povtor_export
 const isRsltExport = computed(
   () => progress.operation === 'rslt_sborn_export' || progress.operation === 'rslt_povtor_export'
 );
+const isD644Export = computed(() => progress.operation === 'd644_export');
+const isSvodExport = computed(() => progress.operation === 'svod_export');
+const isD644OrSvodExport = computed(() => isD644Export.value || isSvodExport.value);
 const operationLabel = computed(
   () => operationOptions.find((o) => o.value === progress.operation)?.label ?? progress.operation
 );
@@ -736,7 +754,7 @@ const canRunProgress = computed(() => {
   if (isImportOp.value) {
     return progress.cmmGrNewKey != null && progress.returnFile != null;
   }
-  if (isRsltExport.value) {
+  if (isRsltExport.value || isD644OrSvodExport.value) {
     return progress.asOfUpl != null;
   }
   return false;
@@ -817,6 +835,16 @@ const pmOptions = computed(() =>
     label: `${p.pmKey}: ${p.name ?? '—'} (${p.date ?? '—'})`,
     value: p.pmKey
   }))
+);
+
+watch(
+  () => progress.operation,
+  (op) => {
+    // Свод — только Excel; D644/Rslt сохраняют выбор предпросмотр/Excel
+    if (op === 'svod_export') {
+      progress.resultMode = 'excel';
+    }
+  }
 );
 
 watch(
@@ -949,6 +977,10 @@ async function onRunProgress(): Promise<void> {
     }
     if (isRsltExport.value && progress.asOfUpl != null) {
       await runRsltExport(yr, progress.asOfUpl, progress.operation === 'rslt_povtor_export');
+      return;
+    }
+    if (isD644OrSvodExport.value && progress.asOfUpl != null) {
+      await runD644OrSvodExport(yr, progress.asOfUpl);
     }
   } catch (error) {
     progress.error = error instanceof Error ? error.message : String(error);
@@ -990,6 +1022,62 @@ async function runImportReturn(yr: number): Promise<void> {
     message: `Загружено долгов: ${result.imported} (из ${result.parsed})`,
     timeout: 2000
   });
+}
+
+/**
+ * Выгрузка D644 или годового свода (D644: proto/Excel; свод: только Excel).
+ */
+async function runD644OrSvodExport(yr: number, currUpl: number): Promise<void> {
+  const isSvod = progress.operation === 'svod_export';
+  if (!isSvod && progress.resultMode === 'proto') {
+    const rows = await getSudzD644(yr, currUpl);
+    const preview = buildSudzD644Preview(rows);
+    progress.protoRows = preview.rows as unknown as SudzRsltPreviewRow[];
+    progress.protoColumns = preview.columns as unknown as FemsqTableColumn<SudzRsltPreviewRow>[];
+    progress.protoFillNew = false;
+    progress.protoSliceCount = 0;
+    progress.protoFilter = '';
+    progress.protoColumnFilters = Object.fromEntries(preview.columns.map((c) => [c.name, '']));
+    clearProtoCell();
+    progress.subTab = 'proto';
+    await nextTick();
+    const scrollRoot = protoScrollFrameEl.value?.querySelector('.progress-proto-scroll');
+    if (scrollRoot instanceof HTMLElement) {
+      scrollRoot.scrollLeft = 0;
+      scrollRoot.scrollTop = 0;
+    }
+    const line = `[${new Date().toISOString().slice(0, 19).replace('T', ' ')}] D644 · предпросмотр | yr=${yr} | currUpl=${currUpl} | строк=${rows.length} | ok`;
+    await appendSudzYearProgress(yr, line);
+    await store.selectYear(yr);
+    $q.notify({
+      type: 'positive',
+      message: `Предпросмотр D644: ${rows.length} строк(и)`,
+      timeout: 1500
+    });
+    return;
+  }
+
+  const label = isSvod ? 'Свод · Выгрузить' : 'D644 · Выгрузить';
+  const { blob, fileName } = isSvod
+    ? await downloadSudzD644SvodExcel(yr, currUpl)
+    : await downloadSudzD644Excel(yr, currUpl);
+  const saved = await saveBlobToExportFolder(blob, fileName);
+  await store.selectYear(yr);
+  progress.subTab = 'log';
+  if (saved.method === 'directory') {
+    exportFolderName.value = saved.folderName;
+    $q.notify({
+      type: 'positive',
+      message: `${label}: сохранён в «${saved.folderName}»`,
+      timeout: 2000
+    });
+  } else {
+    $q.notify({
+      type: 'positive',
+      message: `${label}: скачан через браузер`,
+      timeout: 2000
+    });
+  }
 }
 
 /**
@@ -1114,14 +1202,21 @@ function clearProtoCell(): void {
  */
 async function onProtoToExcel(): Promise<void> {
   const yr = store.selectedYear?.yrKey;
-  if (yr == null || progress.asOfUpl == null || !isRsltExport.value) {
+  if (yr == null || progress.asOfUpl == null) {
+    return;
+  }
+  if (!isRsltExport.value && !isD644Export.value) {
     return;
   }
   progress.busy = true;
   progress.error = '';
   try {
     progress.resultMode = 'excel';
-    await runRsltExport(yr, progress.asOfUpl, progress.operation === 'rslt_povtor_export');
+    if (isRsltExport.value) {
+      await runRsltExport(yr, progress.asOfUpl, progress.operation === 'rslt_povtor_export');
+    } else {
+      await runD644OrSvodExport(yr, progress.asOfUpl);
+    }
   } catch (error) {
     progress.error = error instanceof Error ? error.message : String(error);
   } finally {

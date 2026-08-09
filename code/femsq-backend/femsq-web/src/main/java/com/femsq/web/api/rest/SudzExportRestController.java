@@ -2,9 +2,12 @@ package com.femsq.web.api.rest;
 
 import com.femsq.database.config.DatabaseConfigurationService.MissingConfigurationException;
 import com.femsq.database.exception.DaoException;
+import com.femsq.database.model.sudz.SudzD644Row;
 import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
+import com.femsq.database.model.sudz.SudzSvodResult;
 import com.femsq.database.service.SudzService;
+import com.femsq.web.api.sudz.SudzD644ExcelExporter;
 import com.femsq.web.api.sudz.SudzRsltExcelExporter;
 import com.femsq.web.api.sudz.SudzRsltReturnImporter;
 import java.io.IOException;
@@ -137,6 +140,105 @@ public class SudzExportRestController {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage(), exception);
         } catch (DaoException exception) {
             log.log(Level.WARNING, "Rslt повтор Excel DAO error: {0}", exception.getMessage());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage(), exception);
+        } catch (IOException exception) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Ошибка генерации Excel", exception);
+        }
+    }
+
+    /**
+     * Итоговый документ D644 (построчно, {@code yr_CmmGr}).
+     *
+     * @param yr ключ год-варианта
+     * @param currUpl текущий срез
+     * @return файл xlsx
+     */
+    @GetMapping(value = "/d644.xlsx", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    public ResponseEntity<byte[]> exportD644(
+            @RequestParam int yr,
+            @RequestParam int currUpl
+    ) {
+        try {
+            List<SudzD644Row> rows = sudzService.getD644(yr, currUpl);
+            byte[] body = SudzD644ExcelExporter.exportD644(rows);
+            String stamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss"));
+            String fileName = "ags_Yr_DbtChangesRsltD644_" + yr + "_" + currUpl + "_" + stamp + ".xlsx";
+            String line = String.format(
+                    "[%s] D644 · Excel | yr=%d | currUpl=%d | строк=%d | файл=%s | ok",
+                    LocalDateTime.now().withNano(0),
+                    yr,
+                    currUpl,
+                    rows.size(),
+                    fileName
+            );
+            try {
+                sudzService.appendYearProgress(yr, line);
+            } catch (RuntimeException progressError) {
+                log.log(Level.WARNING, "Не удалось дописать yr_Progress: {0}", progressError.getMessage());
+            }
+            log.log(Level.INFO, "D644 Excel yr={0}, currUpl={1}, rows={2}, bytes={3}",
+                    new Object[]{yr, currUpl, rows.size(), body.length});
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                    .contentType(MediaType.parseMediaType(
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .body(body);
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage(), exception);
+        } catch (MissingConfigurationException exception) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage(), exception);
+        } catch (DaoException exception) {
+            log.log(Level.WARNING, "D644 Excel DAO error: {0}", exception.getMessage());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage(), exception);
+        } catch (IOException exception) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Ошибка генерации Excel", exception);
+        }
+    }
+
+    /**
+     * Годовой свод по субсчетам Д644.
+     *
+     * @param yr ключ год-варианта
+     * @param currUpl текущий срез
+     * @return файл xlsx
+     */
+    @GetMapping(value = "/d644-svod.xlsx", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    public ResponseEntity<byte[]> exportD644Svod(
+            @RequestParam int yr,
+            @RequestParam int currUpl
+    ) {
+        try {
+            SudzSvodResult svod = sudzService.getD644Svod(yr, currUpl);
+            byte[] body = SudzD644ExcelExporter.exportSvod(svod);
+            String stamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss"));
+            String fileName = "ags_Yr_DbtChangesD644Svod_" + yr + "_" + currUpl + "_" + stamp + ".xlsx";
+            int accounts = svod.accounts() != null ? svod.accounts().size() : 0;
+            String line = String.format(
+                    "[%s] Свод · Excel | yr=%d | currUpl=%d | счетов=%d | файл=%s | ok",
+                    LocalDateTime.now().withNano(0),
+                    yr,
+                    currUpl,
+                    accounts,
+                    fileName
+            );
+            try {
+                sudzService.appendYearProgress(yr, line);
+            } catch (RuntimeException progressError) {
+                log.log(Level.WARNING, "Не удалось дописать yr_Progress: {0}", progressError.getMessage());
+            }
+            log.log(Level.INFO, "D644Svod Excel yr={0}, currUpl={1}, accounts={2}, bytes={3}",
+                    new Object[]{yr, currUpl, accounts, body.length});
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                    .contentType(MediaType.parseMediaType(
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .body(body);
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage(), exception);
+        } catch (MissingConfigurationException exception) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage(), exception);
+        } catch (DaoException exception) {
+            log.log(Level.WARNING, "D644Svod Excel DAO error: {0}", exception.getMessage());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage(), exception);
         } catch (IOException exception) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Ошибка генерации Excel", exception);

@@ -1,11 +1,11 @@
 # План: аналог «системы управления дебиторской задолженностью» (СУДЗ) из MS Access
 
 **Дата создания:** 2026-08-02  
-**Последнее обновление:** 2026-08-08  
+**Последнее обновление:** 2026-08-09  
 **Проект:** FEMSQ  
-**Версия плана:** 0.53.0 (S58: Progress операции)  
+**Версия плана:** 0.55.0 (S59b: приёмка D644 / Свод)  
 **Задача:** 0065–0070 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md)  
-**Статус плана:** ✅ документация MVP; Rslt сбор/повтор; **S58** Progress · Выгрузить/Загрузить + yr_CmmGr_New; далее D644/свод  
+**Статус плана:** ✅ документация MVP; Rslt сбор/повтор; S58 Progress; **S59/S59b** D644/Свод · Выгрузить принят; далее веха 1.1.3 / 0069 / доработка 0070
 
 
 **Доменные доки:** [01-overview](../../domain/sudz/01-overview.md) · [02-glossary](../../domain/sudz/02-glossary.md) · [03-processes](../../domain/sudz/03-processes.md) · [04-data-model](../../domain/sudz/04-data-model.md) · [04-1 MS_Description](../../domain/sudz/04-1_ms-descriptions.md) · [04-3 проблемы](../../domain/sudz/04-3_problems-solutions.md) · [07-readiness (покрытие/готовность)](../../domain/sudz/07-readiness.md) · [08-target-schema (физ. схема + ER)](../../domain/sudz/08-target-schema.md)  
@@ -162,6 +162,8 @@
 | S56 | 2026-08-08 | UAT: Excel Rslt **принят**; подпись `idNum` → «№ задолженности в СФ»; точечные правки — по мере замечаний | [08 §S56](../../domain/sudz/08-target-schema.md) | ✅ |
 | S57 | 2026-08-08 | Rslt повтор: `yr_CmmGr_New`+гр.904; возвраты Excel 82/85; REST/UI повтор; итоговый `…povtor_S57.xlsx` | [08 §S57](../../domain/sudz/08-target-schema.md); JAR 0.1.0.164 | ✅ |
 | S58 | 2026-08-08 | Progress: комбо **Операция** (док+действие), **Выполнить**, New+файл на загрузке | [02-9 Progress](../../UI/02-9_sudz-mvp-screens.md) | ✅ |
+| S59 | 2026-08-09 | D644 / Свод · Выгрузить: Excel REST + Progress | [08 §S59](../../domain/sudz/08-target-schema.md); [02-9](../../UI/02-9_sudz-mvp-screens.md) | ✅ |
+| S59b | 2026-08-09 | Приёмка владельцем среза D644/Свод (UAT «приемлемо»; высота R по комментарию) | [08 §S59](../../domain/sudz/08-target-schema.md); [02-9 §5](../../UI/02-9_sudz-mvp-screens.md) | ✅ |
 
 ### 5.3. Объекты Access (формы / запросы / таблицы / отчёты)
 
@@ -338,3 +340,5 @@
 **S56 UAT Excel Rslt принят (подпись idNum):** 2026-08-08  
 **S57 Rslt повтор (yr_CmmGr_New):** 2026-08-08  
 **S58 Progress операции Выгрузить/Загрузить:** 2026-08-08 — UI+REST импорт; JAR `0.1.0.166-SNAPSHOT`
+**S59 D644 / Свод · Выгрузить:** 2026-08-09 — Excel REST + Progress; UAT S59a; JAR → `0.1.0.171-SNAPSHOT`  
+**S59b приёмка владельцем:** 2026-08-09 — срез D644/Свод принят; 0070 остаётся pending (веха 1.1.3, путь папки)

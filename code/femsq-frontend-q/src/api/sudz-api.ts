@@ -587,6 +587,58 @@ export async function downloadSudzRsltSbornExcel(
 }
 
 /**
+ * Скачивание Excel D644 (построчный итоговый документ).
+ */
+export async function downloadSudzD644Excel(
+  yr: number,
+  currUpl: number
+): Promise<{ blob: Blob; fileName: string }> {
+  const url = `/api/v1/sudz/d644.xlsx?yr=${encodeURIComponent(String(yr))}&currUpl=${encodeURIComponent(String(currUpl))}`;
+  return downloadSudzExcelBlob(url, `ags_Yr_DbtChangesRsltD644_${yr}_${currUpl}`);
+}
+
+/**
+ * Скачивание Excel годового свода по субсчетам Д644.
+ */
+export async function downloadSudzD644SvodExcel(
+  yr: number,
+  currUpl: number
+): Promise<{ blob: Blob; fileName: string }> {
+  const url = `/api/v1/sudz/d644-svod.xlsx?yr=${encodeURIComponent(String(yr))}&currUpl=${encodeURIComponent(String(currUpl))}`;
+  return downloadSudzExcelBlob(url, `ags_Yr_DbtChangesD644Svod_${yr}_${currUpl}`);
+}
+
+/**
+ * Общая загрузка Blob Excel СУДЗ по URL.
+ */
+async function downloadSudzExcelBlob(
+  url: string,
+  namePrefix: string
+): Promise<{ blob: Blob; fileName: string }> {
+  const response = await fetch(url);
+  if (!response.ok) {
+    const text = await response.text();
+    throw new RequestError(text || `Ошибка выгрузки Excel (${response.status})`, {
+      status: response.status,
+      statusText: response.statusText,
+      url: response.url,
+      body: text
+    });
+  }
+  const blob = await response.blob();
+  const fromHeader = parseContentDispositionFileName(response.headers.get('Content-Disposition'));
+  const stamp = (() => {
+    const d = new Date();
+    const p = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+  })();
+  const timed = `${namePrefix}_${stamp}.xlsx`;
+  const fileName =
+    fromHeader && /_\d{4}-\d{2}-\d{2}_\d{6}\.xlsx$/i.test(fromHeader) ? fromHeader : timed;
+  return { blob, fileName };
+}
+
+/**
  * Импорт Excel возврата Rslt → {@code yr_CmmGr_New}. Осознанный REST multipart.
  */
 export async function uploadSudzRsltReturn(
