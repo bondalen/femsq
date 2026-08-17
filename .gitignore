@@ -42,6 +42,8 @@ dist/
 # DBHub локальная установка (в проекте)
 .cursor/dbhub/node_modules/
 .cursor/dbhub/package-lock.json
+# Ошибочный/дублирующий путь установки под code/
+code/.cursor/
 
 # Environment
 .env
