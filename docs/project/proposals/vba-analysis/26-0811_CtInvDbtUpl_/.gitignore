@@ -1,0 +1,2 @@
+# Не коммитить полные CSV с RTF/Memo-логами загрузки (~десятки MB).
+*.csv.FULL_WITH_LOGS_DO_NOT_COMMIT

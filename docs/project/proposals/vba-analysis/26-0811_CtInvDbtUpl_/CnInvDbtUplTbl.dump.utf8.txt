@@ -1,0 +1,472 @@
+﻿========================================
+TABLE: CnInvDbtUplTbl
+SourceTableName: 
+Connect: (local table)
+Attributes (TableDef): 0
+DateCreated: 11.01.2022 12:06:55
+LastUpdated: 27.01.2025 15:31:21
+RecordCount (SELECT COUNT): 1548
+--- TableDef.Properties ---
+  Name = CnInvDbtUplTbl  (Property.Type=12)
+  Updatable = True  (Property.Type=1)
+  DateCreated = 11.01.2022 12:06:55  (Property.Type=8)
+  LastUpdated = 27.01.2025 15:31:21  (Property.Type=8)
+  Connect = (empty string)  (Property.Type=12)
+  Attributes = 0  (Property.Type=4)
+  SourceTableName = (empty string)  (Property.Type=12)
+  RecordCount = 1548  (Property.Type=4)
+  ValidationRule = (empty string)  (Property.Type=12)
+  ValidationText = (empty string)  (Property.Type=12)
+  FCMinReadVer = 14.0.0000.0000  (Property.Type=10)
+  FCMinWriteVer = 14.0.0000.0000  (Property.Type=10)
+  FCMinDesignVer = 14.0.0000.0000  (Property.Type=10)
+  PublishToWeb = 1  (Property.Type=2)
+  Orientation = 0  (Property.Type=2)
+  OrderByOn = True  (Property.Type=1)
+  NameMap = <binary/skipped>  (Property.Type=11)
+  DefaultView = 2  (Property.Type=2)
+  DisplayViewsOnSharePointSite = 1  (Property.Type=2)
+  TotalsRow = False  (Property.Type=1)
+  FilterOnLoad = False  (Property.Type=1)
+  OrderByOnLoad = True  (Property.Type=1)
+  HideNewField = False  (Property.Type=1)
+  BackTint = 100  (Property.Type=6)
+  BackShade = 100  (Property.Type=6)
+  ThemeFontIndex = -1  (Property.Type=4)
+  AlternateBackThemeColorIndex = 1  (Property.Type=4)
+  AlternateBackTint = 100  (Property.Type=6)
+  AlternateBackShade = 95  (Property.Type=6)
+  ReadOnlyWhenDisconnected = False  (Property.Type=1)
+  DatasheetGridlinesThemeColorIndex = 3  (Property.Type=4)
+  DatasheetForeThemeColorIndex = 0  (Property.Type=4)
+  DatasheetFontName = Calibri  (Property.Type=10)
+  DatasheetFontHeight = 9  (Property.Type=3)
+  DatasheetFontWeight = 400  (Property.Type=3)
+  DatasheetFontItalic = False  (Property.Type=1)
+  DatasheetFontUnderline = False  (Property.Type=1)
+  TabularCharSet = 204  (Property.Type=2)
+  TabularFamily = 34  (Property.Type=2)
+  DatasheetForeColor = 0  (Property.Type=4)
+  DatasheetForeColor12 = 0  (Property.Type=4)
+  GUID = <binary/skipped>  (Property.Type=9)
+  OrderBy = [CnInvDbtUplTbl].[cidutCnName]  (Property.Type=12)
+  Filter = ([CnInvDbtUplTbl].[cidutCnInv]="А19-16352/2021")  (Property.Type=12)
+--- FIELDS ---
+FIELD: FindDbtNum
+  OrdinalPosition: 0
+  Type: 3 (dbInteger)
+  Size: 2
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 0
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=3)
+    Scale = 0  (Property.Type=3)
+    Description = № найденной задолженности  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    Caption = № найденной задолженности  (Property.Type=12)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: cidutAccount
+  OrdinalPosition: 1
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    Description = Счет Главной книги  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    DisplayControl = 111  (Property.Type=3)
+    Caption = Счет Главной книги  (Property.Type=12)
+    RowSourceType = Table/Query  (Property.Type=10)
+    RowSource = SELECT ags_accnt.account_key, ags_accnt.account_num FROM ags_accnt ORDER BY ags_accnt.account_num;   (Property.Type=12)
+    BoundColumn = 1  (Property.Type=3)
+    ColumnCount = 2  (Property.Type=3)
+    ColumnHeads = False  (Property.Type=1)
+    ColumnWidths = 0;2835  (Property.Type=10)
+    ListRows = 16  (Property.Type=3)
+    ListWidth = 0twip  (Property.Type=10)
+    LimitToList = True  (Property.Type=1)
+    AllowMultipleValues = False  (Property.Type=1)
+    AllowValueListEdits = False  (Property.Type=1)
+    ShowOnlyRowSourceValues = False  (Property.Type=1)
+
+FIELD: cidutCntrPrtNum
+  OrdinalPosition: 2
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    Description = № контрагента  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    DisplayControl = 109  (Property.Type=3)
+    Caption = № контрагента  (Property.Type=12)
+
+FIELD: cidutCntrPrtName
+  OrdinalPosition: 3
+  Type: 10 (dbText)
+  Size: 255
+  Required: False
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    Description = Контрагент  (Property.Type=10)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = True  (Property.Type=1)
+    Caption = Контрагент  (Property.Type=12)
+
+FIELD: cidutCntrPrtITN
+  OrdinalPosition: 4
+  Type: 10 (dbText)
+  Size: 255
+  Required: False
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    Description = ИНН  (Property.Type=10)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = True  (Property.Type=1)
+    Caption = ИНН  (Property.Type=12)
+
+FIELD: cidutCnName
+  OrdinalPosition: 5
+  Type: 10 (dbText)
+  Size: 255
+  Required: False
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    Description = Договор  (Property.Type=10)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = True  (Property.Type=1)
+    Caption = Договор  (Property.Type=12)
+
+FIELD: cidutCnDate
+  OrdinalPosition: 6
+  Type: 8 (dbDate)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=8)
+    Scale = 0  (Property.Type=8)
+    Description = Дата договора  (Property.Type=10)
+    Caption = Дата договора  (Property.Type=12)
+
+FIELD: cidutCnInv
+  OrdinalPosition: 7
+  Type: 10 (dbText)
+  Size: 255
+  Required: False
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    Description = Документ основания (счет-фактура)  (Property.Type=10)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = True  (Property.Type=1)
+    Caption = счет-фактура  (Property.Type=12)
+
+FIELD: cidutCnInvName
+  OrdinalPosition: 8
+  Type: 10 (dbText)
+  Size: 255
+  Required: False
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    Description = Имя задолженности по документу-основанию (счёту-фактуре)  (Property.Type=10)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = True  (Property.Type=1)
+
+FIELD: cidutFormtnDate
+  OrdinalPosition: 9
+  Type: 8 (dbDate)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=8)
+    Scale = 0  (Property.Type=8)
+    Description = Дата образования  (Property.Type=10)
+    Caption = Дата образования  (Property.Type=12)
+
+FIELD: cidutMatrtyDate
+  OrdinalPosition: 10
+  Type: 8 (dbDate)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=8)
+    Scale = 0  (Property.Type=8)
+    Description = Срок погашения  (Property.Type=10)
+    Caption = Срок погашения  (Property.Type=12)
+
+FIELD: cidutDebt
+  OrdinalPosition: 11
+  Type: 5 (dbCurrency)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=5)
+    Scale = 0  (Property.Type=5)
+    Description = Всего сумма задолженности в рублях  (Property.Type=10)
+    Format = #,##0.00 ₽;-#,##0.00 ₽  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    Caption = Всего задолженности  (Property.Type=12)
+
+FIELD: cidutDebtOverdue
+  OrdinalPosition: 12
+  Type: 5 (dbCurrency)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=5)
+    Scale = 0  (Property.Type=5)
+    Description = Просроченная задолженность в рублях  (Property.Type=10)
+    Format = #,##0.00 ₽;-#,##0.00 ₽  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    Caption = Просроченная задолженность  (Property.Type=12)
+
+FIELD: cidutDoc
+  OrdinalPosition: 13
+  Type: 10 (dbText)
+  Size: 255
+  Required: False
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    Description = Документ основания (присвоение ГК)  (Property.Type=10)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = True  (Property.Type=1)
+    Caption = Документ основания  (Property.Type=12)
+
+FIELD: cidutLink
+  OrdinalPosition: 14
+  Type: 10 (dbText)
+  Size: 255
+  Required: False
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    Description = Ссылка  (Property.Type=10)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = True  (Property.Type=1)
+    Caption = Ссылка  (Property.Type=12)
+
+FIELD: cidutSheet
+  OrdinalPosition: 15
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    Description = проверяемый лист  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    Caption = лист  (Property.Type=12)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: cidutSheetNum
+  OrdinalPosition: 16
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    Description = номер на листе  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    Caption = № на листе  (Property.Type=12)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: cidutUnloadKey
+  OrdinalPosition: 17
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    Description = выгрузка задолженностей  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    Caption = выгрузка  (Property.Type=12)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: cidutCnDateNull
+  OrdinalPosition: 18
+  Type: 8 (dbDate)
+  Size: 8
+  Required: False
+  Attributes: 2
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=8)
+    Scale = 0  (Property.Type=8)
+    Description = Вместо null ставим 01.01.1900  (Property.Type=10)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: cidutCnNameNull
+  OrdinalPosition: 19
+  Type: 10 (dbText)
+  Size: 243
+  Required: False
+  Attributes: 2
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    Description = Вместо null или пусто ставим "NullИлиПусто"  (Property.Type=10)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: cidutCnInvNull
+  OrdinalPosition: 20
+  Type: 10 (dbText)
+  Size: 243
+  Required: False
+  Attributes: 2
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    Description = Вместо null или пусто ставим "NullИлиПусто"  (Property.Type=10)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: cidutCnInvNameNull
+  OrdinalPosition: 21
+  Type: 10 (dbText)
+  Size: 243
+  Required: False
+  Attributes: 2
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    DisplayControl = 109  (Property.Type=3)
+
+--- INDEXES ---
+--- RELATIONS (this table as Table or ForeignTable) ---
+========================================
+END OF DUMP

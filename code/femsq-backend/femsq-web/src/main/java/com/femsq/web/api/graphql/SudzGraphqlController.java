@@ -3,11 +3,17 @@ package com.femsq.web.api.graphql;
 import com.femsq.database.config.DatabaseConfigurationService.MissingConfigurationException;
 import com.femsq.database.exception.DaoException;
 import com.femsq.database.model.sudz.SudzCmmGrLookup;
+import com.femsq.database.model.sudz.SudzCnInvUplSfDouble;
 import com.femsq.database.model.sudz.SudzD644Row;
+import com.femsq.database.model.sudz.SudzDbtUplFile;
+import com.femsq.database.model.sudz.SudzDbtUplFunnelResult;
+import com.femsq.database.model.sudz.SudzDbtUplLauncher;
 import com.femsq.database.model.sudz.SudzDebtCollection;
 import com.femsq.database.model.sudz.SudzPmLink;
 import com.femsq.database.model.sudz.SudzPmUplLookup;
 import com.femsq.database.model.sudz.SudzRsltDebt;
+import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
+import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
 import com.femsq.database.model.sudz.SudzSvodResult;
 import com.femsq.database.model.sudz.SudzUplLookup;
 import com.femsq.database.model.sudz.SudzYear;
@@ -19,8 +25,11 @@ import com.femsq.web.api.dto.sudz.CreateSudzCmmGrInput;
 import com.femsq.web.api.dto.sudz.CreateSudzPmUplInput;
 import com.femsq.web.api.dto.sudz.CreateSudzUplInput;
 import com.femsq.web.api.dto.sudz.CreateSudzYearInput;
+import com.femsq.web.api.dto.sudz.RunSudzDbtUplFunnelInput;
 import com.femsq.web.api.dto.sudz.SudzDebtCollectionInput;
+import com.femsq.web.api.dto.sudz.UpdateSudzDbtUplFileInput;
 import com.femsq.web.api.dto.sudz.UpdateSudzYearInput;
+import com.femsq.web.api.sudz.SudzDbtUplFunnelRunner;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -40,12 +49,18 @@ public class SudzGraphqlController {
     private static final Logger log = Logger.getLogger(SudzGraphqlController.class.getName());
 
     private final SudzService sudzService;
+    private final SudzDbtUplFunnelRunner dbtUplFunnelRunner;
 
     /**
      * @param sudzService сервис СУДЗ
+     * @param dbtUplFunnelRunner оркестратор воронки excelToTbl+…
      */
-    public SudzGraphqlController(SudzService sudzService) {
+    public SudzGraphqlController(
+            SudzService sudzService,
+            SudzDbtUplFunnelRunner dbtUplFunnelRunner
+    ) {
         this.sudzService = sudzService;
+        this.dbtUplFunnelRunner = dbtUplFunnelRunner;
     }
 
     /**
@@ -452,6 +467,139 @@ public class SudzGraphqlController {
     public SudzCmmGrLookup createSudzCmmGr(@Argument CreateSudzCmmGrInput input) {
         try {
             return sudzService.createCmmGr(input.name(), input.date());
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Лаунчер загрузки свода для выбранной выгрузки.
+     *
+     * @param uplKey ключ выгрузки
+     * @return карточка лаунчера
+     */
+    @QueryMapping
+    public SudzDbtUplLauncher sudzDbtUplLauncher(@Argument int uplKey) {
+        try {
+            return sudzService.getDbtUplLauncher(uplKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Excel-кандидат КСДСФ.
+     *
+     * @param ciusKey ключ очереди
+     * @return карточка или null
+     */
+    @QueryMapping
+    public SudzSfDoubleExcelCandidate sudzSfDoubleExcelCandidate(@Argument int ciusKey) {
+        try {
+            return sudzService.findSfDoubleExcelCandidate(ciusKey).orElse(null);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Доменные СФ с совпадающим номером.
+     *
+     * @param invNum номер СФ
+     * @return список
+     */
+    @QueryMapping
+    public List<SudzSfDoubleDomainMatch> sudzSfDoubleDomainMatches(@Argument String invNum) {
+        try {
+            return sudzService.findSfDoubleDomainMatches(invNum);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Создать СФ из очереди КСДСФ.
+     *
+     * @param ciusKey ключ open
+     * @return обновлённая строка
+     */
+    @MutationMapping
+    public SudzCnInvUplSfDouble createSudzSfFromDouble(@Argument int ciusKey) {
+        try {
+            return sudzService.createSfFromDouble(ciusKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Upsert шапки лаунчера {@code CnInvDbtUplFile}.
+     *
+     * @param input поля
+     * @return актуальная шапка
+     */
+    @MutationMapping
+    public SudzDbtUplFile updateSudzDbtUplFile(@Argument UpdateSudzDbtUplFileInput input) {
+        try {
+            return sudzService.updateDbtUplFile(input.uplKey(), input.path(), input.flLoad(), input.flTbl());
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Stub-прогон воронки загрузки свода (панель шагов S61f).
+     *
+     * @param input uplKey, steps, flLoad
+     * @return результат с логом
+     */
+    @MutationMapping
+    public SudzDbtUplFunnelResult runSudzDbtUplFunnel(@Argument RunSudzDbtUplFunnelInput input) {
+        try {
+            return dbtUplFunnelRunner.run(input.uplKey(), input.steps(), input.flLoad());
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Откат договоров, созданных шагом CnNotLoad с данным {@code cnMark}.
+     *
+     * @param cnMark метка из лога воронки
+     * @return число удалённых строк {@code ags.cn}
+     */
+    @MutationMapping
+    public int rollbackSudzCnNotLoad(@Argument int cnMark) {
+        try {
+            return sudzService.rollbackCnNotLoadByMark(cnMark);
         } catch (IllegalArgumentException exception) {
             throw badRequest(exception);
         } catch (MissingConfigurationException exception) {

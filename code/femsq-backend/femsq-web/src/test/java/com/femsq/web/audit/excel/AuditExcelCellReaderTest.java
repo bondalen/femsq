@@ -101,6 +101,24 @@ class AuditExcelCellReaderTest {
         assertEquals("480/310326", reader.readReportNumber(cell));
     }
 
+    @Test
+    void readString_largeWholeNumeric_notScientific() {
+        Cell cell = numericDouble(211000089635d);
+        cell.getCellStyle().setDataFormat(
+                workbook.createDataFormat().getFormat("0.00E+00")
+        );
+
+        assertEquals("211000089635", reader.readString(cell));
+        assertFalse(reader.readString(cell).toUpperCase().contains("E"));
+    }
+
+    @Test
+    void readReportNumber_largeWholeNumeric_plainDigits() {
+        Cell cell = numericDouble(211000089635d);
+
+        assertEquals("211000089635", reader.readReportNumber(cell));
+    }
+
     private Cell stringCell(String value) {
         var sheet = workbook.createSheet();
         var row = sheet.createRow(0);
@@ -110,6 +128,14 @@ class AuditExcelCellReaderTest {
     }
 
     private Cell numericCell(int value) {
+        var sheet = workbook.createSheet();
+        var row = sheet.createRow(0);
+        var cell = row.createCell(0);
+        cell.setCellValue(value);
+        return cell;
+    }
+
+    private Cell numericDouble(double value) {
         var sheet = workbook.createSheet();
         var row = sheet.createRow(0);
         var cell = row.createCell(0);

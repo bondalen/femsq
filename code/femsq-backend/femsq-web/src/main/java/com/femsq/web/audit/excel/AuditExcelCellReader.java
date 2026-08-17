@@ -40,6 +40,7 @@ public class AuditExcelCellReader {
 
     /**
      * Возвращает строковое представление ячейки (trim) или null.
+     * Целые NUMERIC без даты — как десятичная запись без scientific ({@code 211000089635}, не {@code 2.11E+11}).
      */
     public String readString(Cell cell) {
         if (cell == null) {
@@ -54,7 +55,7 @@ public class AuditExcelCellReader {
                 return null;
             }
             case BOOLEAN -> raw = Boolean.toString(cell.getBooleanCellValue());
-            case NUMERIC -> raw = dataFormatter.formatCellValue(cell);
+            case NUMERIC -> raw = formatNumericAsPlainString(cell);
             case STRING -> raw = cell.getStringCellValue();
             default -> raw = dataFormatter.formatCellValue(cell);
         }
@@ -63,6 +64,40 @@ public class AuditExcelCellReader {
         }
         String trimmed = raw.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    /**
+     * Строка из numeric-ячейки: целые — plain digits; иначе DataFormatter, с запасным plain при scientific.
+     *
+     * @param cell ячейка NUMERIC (или formula→numeric)
+     * @return текст
+     */
+    private String formatNumericAsPlainString(Cell cell) {
+        if (DateUtil.isCellDateFormatted(cell)) {
+            return dataFormatter.formatCellValue(cell);
+        }
+        double value = cell.getNumericCellValue();
+        if (Double.isNaN(value) || Double.isInfinite(value)) {
+            return dataFormatter.formatCellValue(cell);
+        }
+        if (Math.abs(value - Math.rint(value)) < 1e-9) {
+            return BigDecimal.valueOf(value).toBigInteger().toString();
+        }
+        String formatted = dataFormatter.formatCellValue(cell);
+        if (formatted != null && looksScientific(formatted)) {
+            return BigDecimal.valueOf(value).stripTrailingZeros().toPlainString();
+        }
+        return formatted;
+    }
+
+    private static boolean looksScientific(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (c == 'E' || c == 'e') {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

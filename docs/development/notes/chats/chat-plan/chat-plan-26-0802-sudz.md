@@ -1,11 +1,11 @@
 # План: аналог «системы управления дебиторской задолженностью» (СУДЗ) из MS Access
 
 **Дата создания:** 2026-08-02  
-**Последнее обновление:** 2026-08-09  
+**Последнее обновление:** 2026-08-16  
 **Проект:** FEMSQ  
-**Версия плана:** 0.56.0 (S60: 0070 закрыт)  
-**Задача:** 0065–0070 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md)  
-**Статус плана:** ✅ документация MVP; Rslt; Progress; D644/Свод; **0070 completed (S60)**; далее **0069** / полный портфель для свода / полный путь папки (отдельно)
+**Версия плана:** 0.79.1 (S68: КСДСФ реализовано)  
+**Задача:** 0065–0071 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md); **активно: 0069** + **S68 КСДСФ** + блокер **0071 Договоры**  
+**Статус плана:** ✅ 0070; **0069** CnCtptExistInvNotLoad dry ✅; **S68** CREATE+наполнение+экран (JAR **0.1.0.198**) 🔶 UAT; **0071** 🔶 UAT
 
 
 **Доменные доки:** [01-overview](../../domain/sudz/01-overview.md) · [02-glossary](../../domain/sudz/02-glossary.md) · [03-processes](../../domain/sudz/03-processes.md) · [04-data-model](../../domain/sudz/04-data-model.md) · [04-1 MS_Description](../../domain/sudz/04-1_ms-descriptions.md) · [04-3 проблемы](../../domain/sudz/04-3_problems-solutions.md) · [07-readiness (покрытие/готовность)](../../domain/sudz/07-readiness.md) · [08-target-schema (физ. схема + ER)](../../domain/sudz/08-target-schema.md)  
@@ -166,6 +166,33 @@
 | S59b | 2026-08-09 | Приёмка владельцем среза D644/Свод (UAT «приемлемо»; высота R по комментарию) | [08 §S59](../../domain/sudz/08-target-schema.md); [02-9 §5](../../UI/02-9_sudz-mvp-screens.md) | ✅ |
 | S59c | 2026-08-09 | Свод: переключатели Предпросмотр/Excel + native preview | [02-9](../../UI/02-9_sudz-mvp-screens.md); `sudz-svod-preview.ts` | ✅ |
 | S60 | 2026-08-09 | Веха 1.1.3 = прекращение правок (без New→CmmGr); путь папки отложен; **0070 ✅** | [03 §1.1.3](../../domain/sudz/03-processes.md); [02-9 §5](../../UI/02-9_sudz-mvp-screens.md) | ✅ |
+| S61 | 2026-08-11 | **0069:** старт — эскиз лаунчера; затем воронка; не смешивать с 1.1.1.2 | [§5.6](#56-0069-загрузка-общего-свода--порядок-s61--s61c) | ✅ |
+| S61c | 2026-08-11 | **0069:** UI после staging на SQL | [§5.6](#56-0069-загрузка-общего-свода--порядок-s61--s61c) | ✅ этап1–5: TableDef+DDL `sudz`+seed File/Sh |
+| S61d | 2026-08-13 | **0069 / 1.1.1.2 prep:** `CnInvPmtUpl*` → `sudz` (File/Tbl/TblCnInv; без Tbl_1); seed File=30 | [26_/27_](../../sql/26-0812-sudz-dbt-upl-staging/); [съём](../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/) | ✅ |
+| S61e | 2026-08-13 | **0069 этап 6:** экран C «Загрузка свода» — GraphQL лаунчер + UI; «загрузка» stub | [02-9 §4a](../../UI/02-9_sudz-mvp-screens.md); `SudzDbtUplView` | ✅ |
+| S61f | 2026-08-13 | **0069 этап 7 (метод):** панель шагов воронки с чекбоксами (Access: раскомментирование Sub); код не начат | [§5.6 этап 7](#56-0069-загрузка-общего-свода--порядок-s61--s61c); [02-9 §4a](../../UI/02-9_sudz-mvp-screens.md); [04 §2.7](../../domain/sudz/04-data-model.md#27-полный-алгоритм-btncidufload_click--цепочка-сопоставления-подтверждено-s29) | 🔶 док |
+| S61g | 2026-08-13 | **0069:** UI панель шагов + stub-оркестратор `runSudzDbtUplFunnel` | `SudzDbtUplView`; GraphQL mutation | ✅ |
+| S61h | 2026-08-13 | **0069:** шаг `excelToTbl` — REST staging + POI → `CnInvDbtUplTbl` (UAT: 1764 строк, файл 31.12.2025) | `SudzDbtUplExcelToTblImporter`; `/api/v1/sudz/dbt-upl/excel` | ✅ |
+| S61i | 2026-08-14 | **0069:** путь Excel = `cidufPath` как в Проводнике; скрепка/REST staging сняты; Java читает из БД (`D:\`→`/mnt/d/`) | `SudzDbtUplExcelPathResolver`; `SudzDbtUplView` | ✅ |
+| S61j | 2026-08-14 | **0069:** UAT excelToTbl 1764 ок; лог прогона заменяет старый; чекбокс excelToTbl снят (остался «обнов. по исх?»); пути Проводника — канон проекта | `SudzDbtUplFunnelRunner`; `development.file_paths` | ✅ |
+| S61k | 2026-08-14 | **0069:** шаг `orgNotInBuirg` — лог новых орг. без type=1; без записи в домен; `cidufFlLoad` не влияет | `JdbcSudzDao.findDbtUplOrgNotInBuirg`; `SudzDbtUplOrgNotInBuirgLog` | ✅ |
+| S61l | 2026-08-14 | **0069:** шаг `CnNotLoad` — лог новых договоров; SQL-цепочка `ciduCnNotLoad`…; `*Null` как Access calculated; без `flLoad` | `findDbtUplCnNotLoad`; `SudzDbtUplCnNotLoadLog`; `access-queries/cidu*.access.sql` | ✅ |
+| S61l+ | 2026-08-14 | **0069:** `CnNotLoad` apply при `flLoad` + откат по `cnMark` (`strMark`); транзакция INSERT | `applyDbtUplCnNotLoad`; `rollbackSudzCnNotLoad` | ✅ |
+| S61m | 2026-08-14 | **0069:** целые NUMERIC Excel → plain digits (не `2.11E+11`); откат 8142118 + excelToTbl + apply → **cnMark 8142135** | `AuditExcelCellReader`; UAT upl **910** | ✅ |
+| S61n | 2026-08-14 | **0069:** `CnExistCtptNotLoad` только лог; SQL = `ciduCnExistCtptNot` (номер есть, пара №+дата+исполнитель нет); `flLoad` не влияет | `findDbtUplCnExistCtptNotLoad`; `ciduCnExistCtptNot.access.sql` | ✅ |
+| S62 | 2026-08-15 | **Блокер воронки:** эталон Access **`cnNum`** (стороны + пакет 2: СФ/`cnInv`/`AccntSmpl`); UI **0071** не начат | [02-10](../../UI/02-10_contracts-cnNum-access.md); [assets/26-0815-cnNum](../../UI/assets/26-0815-cnNum/README.md) | 🔶 док |
+| S62c | 2026-08-15 | Пакеты 3–4: Accnt/dbt, lookups (`ciNumCs`, `cnnType`, `accnt`, `cn_s_orgCs`, upl), PM (`cn_inv_pm_dbt_upl`), PrDoc/PrDocP; явная связка **Access≠целевой dbtvar**; runtime PrDoc пуст (ошибка Access) | [02-10](../../UI/02-10_contracts-cnNum-access.md); assets `41`–`74` | 🔶 док |
+| S63 | 2026-08-15 | Ошибка эскиза dbtvar: pm→`cn_s_org_smpl` без СГК. **Решение владельца: вариант 1** (pm/PrDoc → `cnInvAccntSmpl`; не трогать живое; без моста Dbt↔Smpl; освоение лимитов — после СУДЗ) | [04-3 §9](../../domain/sudz/04-3_problems-solutions.md); assets `26-0815-sudz-target-sketch-pm-accnt-fix.png` | ✅ |
+| S64 | 2026-08-15 | **0071 шаг 1:** master `cnNum` + detail `cn`/nested `cnNum`; FemsqTable **client** (быстрый путь СУДЗ); server-side filter — позже на **`cn_inv_pm`** | [02-10](../../UI/02-10_contracts-cnNum-access.md); GraphQL `cn-schema` | ✅ |
+| S65 | 2026-08-15 | **0071 шаг 2:** стороны `cn_s`→smpl→org, полный CRUD (паттерн агентов cst); `cnSides` + mutations; JAR **0.1.0.187** | `ContractPartiesPanel`; [02-10](../../UI/02-10_contracts-cnNum-access.md) | 🔶 UAT |
+| S65b | 2026-08-15 | UAT 910 БУРГЕОКОМ: org есть, smpl нет; Excel/Tbl `Б/Н` без даты; UI даты ДД.ММ.ГГГГ | `flexible-date.ts` | ✅ |
+| S65c | 2026-08-15 | «+ Договор»: обязателен только `cnnType`; номер/дата/исполнитель опциональны; коллизии — на операторе | `createCnContract`; JAR **0.1.0.191** | 🔶 UAT |
+| S65d | 2026-08-15 | Create: дата → только `csoCnDate`, `cn_date`=NULL; UI правка `cn_date` (`updateCn`) | JAR **0.1.0.192** | 🔶 UAT |
+| S65e | 2026-08-15 | `clearInvDouble` убран из чекбоксов; prelude внутри `CnCtptExistInvNotLoad` (как Access вызов перед Sub) | реестр FE+BE | ✅ |
+| S66 | 2026-08-15 | **0069:** `CnCtptExistInvNotLoad` — clear InvDouble + буфер TblCnInv + лог; apply inv/invNum/cnInv при flLoad | JAR **0.1.0.194**; access-queries `ciduCnExistInvNot*` | 🔶 UAT |
+| S67 | 2026-08-16 | UAT 910 dry: **128** дог. / **705** СФ ✅, но rebuild **~3m14s** (CTE). Перепись на `#temp`+индексы; лог СФ усечён (8+…) | JAR **0.1.0.196** | ✅ via S67a |
+| S67a | 2026-08-16 | `#temp` без COLLATE → conflict Latin1 vs Cyrillic на JOIN `cnnNumNull`. Колонки `#cidu*` → `Cyrillic_General_CI_AS` | JAR **0.1.0.197** | ✅ UAT: sqlMs=241, 128/705 |
+| S68 | 2026-08-16 | **КСДСФ:** `CnInvUplSfDouble` на DEV; наполнение 1:1 Excel; bulk без очереди; экран + кнопка; create mutation | JAR **0.1.0.198**; [DDL](../../../sql/26-0816-sudz-sf-num-collision/) | 🔶 UAT |
 
 ### 5.3. Объекты Access (формы / запросы / таблицы / отчёты)
 
@@ -175,8 +202,9 @@
 | Query (семейство) | `ags_Yr_DbtChangesRsltD644_*` | Итоговый документ (приложение к письму 644) | сохранённый Rslt + `ags_cstAgPn` + `ags_cn_inv_dbt` | тот же docx; образцы Приложений |
 | *(пары)* | см. таблицу S21 | каждый D644 читает конкретный Rslt (`… AS r`) | соответствие имён и файлов на шаре | [03 §1.2.5](../../domain/sudz/03-processes.md) |
 | Form | `CnInvDbtUpl_2` | Главная форма загрузки общего свода (список выгрузок) | ↔ `cn_inv_dbt_upl` | [04-data-model §2.7](../../domain/sudz/04-data-model.md#27-полный-алгоритм-btncidufload_click--цепочка-сопоставления-подтверждено-s29) |
-| Form | `CnInvDbtUpl>File_f` | Карточка выгрузки, кнопка `btnCidufLoad` — весь алгоритм сопоставления/вставки (S29) | пишет в `ags_cn`/`ags_cnNum`/`ags_cn_s*`/`ags_inv*`/`ags_cnInv`/`cnInvAccntSmpl`/`cnInvAccnt`/`cn_inv_dbt` | там же |
+| Form | `cnNum` (+ `cn`, `cn>s`, `cn>s>orgSmpl`, `cn>s>org`) | Карточка/навигация договоров: номер → cn → стороны → org | `ags.cnNum` / `cn` / `cn_s` / `cn_s_org_smpl` / `cn_s_org` | [02-10](../../UI/02-10_contracts-cnNum-access.md); [скрины](../../UI/assets/26-0815-cnNum/README.md) |
 | Form | `CnInvDbtUpl>File_f>InvDouble` (+ `InvDouble_f`, `cns`) | Ручной разбор неоднозначных СФ/договоров; кнопка `btnInvAdd_Click` создаёт СФ+связь вручную | подтверждено как факт (S29) | там же |
+| Form | `CnInvPmtUpl>File_f` / `…>InvDouble` (+ `invNum`→`cnInv`) | Платежи: вкладка «повторяющиеся СФ»; RS = `TblCnInv` WHERE count NOT NULL; `btnInvCreate` = inv+cnInv | нет отдельной FileInvDouble | S68; VBA `btnInvCreate_Click` |
 
 ### 5.4. Сценарии бизнеса
 
@@ -345,4 +373,152 @@
 **S59 D644 / Свод · Выгрузить:** 2026-08-09 — Excel REST + Progress; UAT S59a; JAR → `0.1.0.171-SNAPSHOT`  
 **S59b приёмка владельцем:** 2026-08-09 — срез D644/Свод принят  
 **S59c Свод proto/Excel:** 2026-08-09 — переключатели как у D644; `sudz-svod-preview.ts`  
-**S60 закрытие 0070:** 2026-08-09 — 1.1.3 без операции New→CmmGr; полный путь папки — отдельно; Progress MVP ✅
+**S60 закрытие 0070:** 2026-08-09 — 1.1.3 без операции New→CmmGr; полный путь папки — отдельно; Progress MVP ✅  
+**S61 старт 0069:** 2026-08-11 — эскиз лаунчера  
+**S61c:** 2026-08-11 — UI после переноса Access-local→SQL; см. §5.6 этапы 0–7
+
+---
+
+### 5.6. 0069 — загрузка общего свода → порядок (S61 → S61c)
+
+**Задача:** [0069](../../../project-development.json) · шаг процесса [03 §1.1.1.1](../../domain/sudz/03-processes.md) · алгоритм Access [04 §2.7](../../domain/sudz/04-data-model.md#27-полный-алгоритм-btncidufload_click--цепочка-сопоставления-подтверждено-s29) · IA [02-9](../../UI/02-9_sudz-mvp-screens.md) / [02-4](../../UI/02-4_app-forms-ia.md).
+
+**Решение владельца (2026-08-11, S61):** новый чат Cursor, тот же chat-plan; сначала лаунчер, потом воронка.
+
+**Уточнение владельца (2026-08-11, S61c):** UI **после** переноса Access-local буферов на SQL. Причина: `CnInvDbtUplFile*` / `Tbl*` на сервере **нет** (DBHub); экран без них = тупик для воронки. Эскиз wireframe (02-9 §4a) остаётся ориентиром, код UI — после DDL/решения по staging.
+
+#### Порядок работ (S61c) — согласованное предложение
+
+| # | Этап | Содержание | Результат / критерий |
+|---|------|------------|----------------------|
+| **0** | Эскиз UI (сделано) | Wireframe + скрины Access; разделение SQL vs Access-local | [02-9 §4a](../../UI/02-9_sudz-mvp-screens.md); [assets](../../UI/assets/26-0811-cn-inv-dbt-upl/README.md) |
+| **1** | Съём структуры Access-local | Полный TableDef (поля, типы, PK/индексы, Description) для контура ДЗ | Дампы UTF-8 в `docs/…` (метод [MS-ACCESS-OBJECTS-CAPTURE](../../../../project/proposals/vba-analysis/MS-ACCESS-OBJECTS-CAPTURE.md)) |
+| **2** | Связи и формы | Карта: File↔FileSh↔Tbl↔TblCnInv↔InvDouble↔`cidufUpload`→`cn_inv_dbt_upl`; привязка к `CnInvDbtUpl_2` / `File_f` / InvDouble; что эфемерно (очистка на load) vs долговечно | Раздел в 04-data-model + ER-набросок |
+| **3** | Границы переноса | В scope 0069: File, FileSh, Tbl, TblCnInv, FileInvDouble. Вне: `CnInvPmtUpl*`, `*Old`, `cipu*`, `ags_Yr_DbtTbl`, `cn_PrDocImp` (пока) | Решение владельца |
+| **4** | Целевая схема на сервере | Куда: **`sudz`** (DEV) зеркало имён vs новые имена; FK на `cn_inv_dbt_upl`; тип лога (nvarchar(max)/HTML); путь — имя файла vs полный UNC (S60) | ADR/запись в 08-target-schema + DDL-черновик |
+| **5** | DDL + apply на DEV | Скрипты (корень = SQL2022; `MSSQL2012/` если когда-либо на prod); seed пустой / минимальный | ✅ Dbt+Pmt staging |
+| **6** | GraphQL + экран C | Список upl + карточка File + подвкладки (каркасы с реальными таблицами); кнопка «загрузка» ещё stub | ✅ 2026-08-13 |
+| **7** | Воронка `btnCidufLoad` | Шаги с UI-чекбоксами (S61f); оркестратор + отдельный метод на шаг; см. ниже | Критерии 0069 |
+
+**Минимум дампа этапа 1 (обязательно):**
+
+1. `CnInvDbtUplFile`  
+2. `CnInvDbtUplFileSh`  
+3. `CnInvDbtUplTbl`  
+4. `CnInvDbtUplTblCnInv`  
+5. `CnInvDbtUplFileInvDouble`  
+
+Желательно (для полноты связей): Relationships Access (скрин/экспорт) + 1–2 строки-образца из File/FileSh по upl_key=26.  
+Вне этапа 1: платёжные `CnInvPmtUpl*` — только если всплывут зависимости в коде File_f.
+
+**Метод съёма:** `DumpTableDef_Extended "ИмяТаблицы", …, "C:\temp\….txt"` → UTF-8 в репозиторий (см. capture-док).
+
+**Не путать с A0 «Выгрузки»:** там уже SQL `yr_upl_p`; здесь — операционный буфер загрузки свода.
+
+**Вне первого среза 0069:** шаг **1.1.1.2** (`export_*`); контент вкладок «счета/долги/pm» (можно read-only с уже существующих SQL позже).
+
+#### Шаг «воронка» (бывш. шаг 2; теперь этап 7)
+
+**Решение владельца (2026-08-13, S61f):** не гнать всю цепочку сразу. В Access практика — комментировать последующие `Sub` и включать по одной после приёмки предыдущей. В FEMSQ — **визуальная панель шагов с чекбоксами**; разработка и UAT **каждого шага отдельно**.
+
+**S61g (2026-08-13):** UI панель + mutation `runSudzDbtUplFunnel` (stub: пишет HTML в `cidufLoadingProgress`, домен не трогает).
+
+**S61h (2026-08-13):** реальный `excelToTbl` — сначала браузерный upload → staging; парсер VBA/`AccountSheetTest`→`ReceivablesTest` → `REPLACE` `sudz.CnInvDbtUplTbl`. DEV UAT: **1764** строк (файл 31.12.2025).
+
+**S61i (2026-08-14):** скрепка и REST staging сняты. Пользователь вставляет путь **как в Проводнике** в редактируемое поле → `updateSudzDbtUplFile.path` → `cidufPath`. `excelToTbl` читает это поле; JVM на WSL переводит `D:\…` → `/mnt/d/…` (и bind `/mnt/nb-win-share` для шары nb-win). В БД путь не переписывается.
+
+**S61j (2026-08-14):** UAT upl=910 — **1764** строк (606012:1125, 606022:327, 761010:9, 762210:58, 767501:7, 767502:238). Новый прогон **очищает** `cidufLoadingProgress`. Чекбокс «Обновлять промежуточную таблицу…» снят: Excel→Tbl включает только переключатель **«обнов. по исх?»** (`cidufFlTbl`), как в Access. Канон путей проекта: `project-docs.json` → `development.file_paths`.
+
+**S61k (2026-08-14):** шаг `orgNotInBuirg` реален: DISTINCT из `CnInvDbtUplTbl` (фильтр `cidutUnloadKey`) LEFT JOIN `ags.org_id` type=1; нет кода БУиРГ → лог «Новая: N. имя. БУиРГ. ИНН»; при совпадении ИНН type=2 — «Уже имеется организация». Несколько type=2 на один ИНН дают несколько строк (как Access). **Домен не пишется**; `cidufFlLoad` не влияет. UAT upl=**910** (превью SQL: 9 строк лога / 4 кода БУиРГ; Россети — 6 совпадений ИНН). **upl 26 не трогать.** Далее — `CnNotLoad`.
+
+**S61l (2026-08-14):** шаг `CnNotLoad` реален (только лог). Цепочка Access QueryDef снята в `access-queries/ciduCnNotLoad*.access.sql`. T-SQL считает `cidutCnNameNull` / `cidutCnDateNull` как **вычисляемые** поля Access (`NullИлиПусто` / `1900-01-01`), физические столбцы `sudz` не используются. Anti-join: номер + БУиРГ + дата vs `ciduCnCtptList`; затем номер отсутствует в `ags.cnNum`. Превью/UAT upl=**910**: ~65 строк.
+
+**S61l+ (2026-08-14):** apply при `cidufFlLoad` / `flLoad=true`: INSERT `cn`→`cnNum`→`cn_s`(type=2)→`cn_s_org_smpl`→`cn_s_org` только если `countCnName=1`; общий `cnMark=strMark(Now())`; лог печатает mark и ключи. Откат: GraphQL `rollbackSudzCnNotLoad(cnMark)` (DELETE org→smpl→s→num→cn). Транзакция на весь apply. **upl 26 не трогать.** Далее — `CnExistCtptNotLoad`.
+
+**S61m (2026-08-14):** `DataFormatter` давал scientific для длинных целых NUMERIC (Ростелеком `211000089635` → `2.11E+11`). `AuditExcelCellReader.readString` пишет plain digits. UAT 910: откат **8142118** → перезаливка Tbl 1764 → apply **cnMark=8142135** (65 шт.); в домене `cnnNum=211000089635`. UI: «Обновлять» = `cidufFlLoad` (persist); чекбоксы шагов — сессия. JAR **0.1.0.184**. Далее — `CnExistCtptNotLoad`.
+
+**S61n (2026-08-14):** шаг `CnExistCtptNotLoad` реален (только лог). Access: QueryDef `ciduCnExistCtptNot` / `SqlCnExistCtptNotLoad`; несмотря на «либо добавляем», VBA **не пишет** в домен (`cidufFlLoad` не используется). Семантика: те же CTE, что `CnNotLoad`, но `HAVING COUNT(cn) > 0` (номер уже в БД, нет пары №+дата+БУиРГ). Артефакт: `access-queries/ciduCnExistCtptNot.access.sql`. UAT upl=**910**: **5** строк (в т.ч. БУРГЕОКОМ «Б/Н», Россети Волга `2540-000097`). JAR **0.1.0.185**. Далее — ручной контур сторон (**S62** / **0071**), затем `clearInvDouble` / `CnCtptExistInvNotLoad`.
+
+**S62 (2026-08-15):** владелец подтвердил: пакетный apply исполнителя к существующему договору в Access не делался — нужен UI. Присланы Design/SQL скрины формы **`cnNum`** и вложенных `cn` → `cn>s` → `orgSmpl` → `org`. Сохранены в [assets/26-0815-cnNum](../../UI/assets/26-0815-cnNum/README.md); сводка — [02-10](../../UI/02-10_contracts-cnNum-access.md). Заведена задача **0071**. **Код экрана не начинать**, пока не согласован подход (следующий пост). TopBar «Договоры» — из заготовки в запланированный экран ([02-4](../../UI/02-4_app-forms-ia.md)).
+
+**S62b (2026-08-15):** второй пакет скринов — **runtime** (`cnNum` список, стороны, `cnMark`) и ветка **счёта-фактуры**: `ciNumCs` → `inv`/`invNum` → `cnInv` → `cnInvAccntSmpl` → runtime-стек `cn_inv_dbt`/комментарии. Файлы `20`–`40` в том же каталоге assets. Для **0071 MVP** достаточно сторон; СФ — эталон следующих шагов воронки (сплющить вкладки в web).
+
+**S62c (2026-08-15):** пакеты 3–4 — Accnt_f/dbt_t, lookups, вкладки **платежи** (`ags_cn_inv_pm_dbt_upl`) и **первичные документы** (`ags_cn_PrDoc`/`PrDocP`). Владелец: UI FEMSQ — по [dbtvar](../../domain/sudz/assets/26-0807-sudz-target-sketch-dbtvar.png), Access — справочник живой формы. Runtime наполненного PrDoc не снят (ошибка Access); Design/SQL достаточно для описания.
+
+**S63 (2026-08-15):** вскрыта ошибка эскиза dbtvar (`cn_inv_pm`→`cn_s_org_smpl` без пути к `accnt`; ломает и PrDoc/освоение лимитов). Живая `ags` уже: `ciaCnInvAccntSmpl` NOT NULL на всех 479 268 pm; PrDoc тоже на Smpl. **Владелец утвердил вариант 1:** pm/PrDoc → `cnInvAccntSmpl`; живое не трогать; явный мост Dbt↔Smpl не нужен (навигация через invDbt*→cn_s_org→…→Smpl→pm для строек); PrDoc в СУДЗ не используется; освоение лимитов — после СУДЗ, ничего не ломать. Smpl искусственен онтологически, но sunset только «когда‑нибудь». Разбор: [04-3 §9](../../domain/sudz/04-3_problems-solutions.md).
+
+**S64 (2026-08-15):** для экрана Договоры выбран **самый быстрый путь СУДЗ** — FemsqTable **client** (~2.4k `cnNum`); серверная фильтрация fequlib отложена, целевой кейс — **`cn_inv_pm`**. Реализация шага 1: TopBar «Договоры», GraphQL `cnNums`/`cn`/`cnNumsByCn`, UI master–detail.
+
+**S65 (2026-08-15):** шаг 2 — стороны как дерево агентов cst (не fequlib): `cn_s`→smpl→org, **полный CRUD**; GraphQL `cnSides` + mutations; lookup `org_id` БУиРГ; роли заказчик/исполнитель всегда видны. JAR **0.1.0.187**. UAT: договор со сторонами (напр. `cn_key=356`) и кейс `CnExistCtptNotLoad` (upl 910).
+
+**S65b (2026-08-15):** разбор UAT 910 «БУРГЕОКОМ / Б/Н / дата отсутствует»: org **уже в** `org_id` (641/642, og 579); в `cn_s_org_smpl` **0** связей — искать «договор БУРГЕОКОМ» бессмысленно; нужно **добавить smpl** под любой существующий `cnnNum=Б/Н` + org с пустым `csoCnDate`. Excel лист `762210` R43: Договор=`Б/Н`, дата договора пустая, долг 7454; Tbl upl910 `findDbtNum=1507` совпадает. Даты в UI org — всеядный парсер ДД.ММ.ГГГГ.
+
+**S65c (2026-08-15):** развилка CnExistCtptNotLoad: (1) новый договор vs (2) перемена сторон на старом. Авторазбор коллизий номера (**Б/Н** и т.п.) **не делаем** — ответственность оператора. UI: **«+ Договор»** = create `cn`+`cnNum`+исполнитель (вар.1); «+ smpl» = вар.2. Предупреждение при duplicate `cnnNum`. JAR **0.1.0.188**.
+
+**S65d (2026-08-15):** как Access CnNotLoad — дата из свода в **`csoCnDate`**, при create **`cn_date` всегда NULL**. Mutation `updateCn` + кнопка на карточке для ручной правки `cn_date`/`cn_note`/`cnMark`. JAR **0.1.0.192**.
+
+**S65e (2026-08-15):** чекбокс «Очищаем таблицу двоящих счётов-фактур» снят с панели. В Access это вызов `TableRecordsClear` сразу перед `CnCtptExistInvNotLoad` — для оператора не этап. В FEMSQ prelude внутри шага `CnCtptExistInvNotLoad`.
+
+**S66 (2026-08-15):** шаг `CnCtptExistInvNotLoad` реален. QueryDef-цепочка: `ciduCnExistInvNot` ← `ciduCnCtptExistList` / `agsCnInvNumsVariants` / `agsInvNumCount`. Буфер `CnInvDbtUplTblCnInv`; лог как Access; InvDouble при `inNumCount`; apply `inv`→`invNum`→`cnInv` при flLoad. JAR **0.1.0.194**.
+
+**S67 (2026-08-16):** UAT upl=**910** dry (`flLoad=false`): **128** договоров, **705** отсутствующих СФ — счётчики верны; время **>3 мин** из‑за одного CTE на `rebuildDbtUplCnCtptExistInvNot`. Перепись на поэтапные `#temp` + индексы; HTML-лог — первые 8 СФ на договор. JAR **0.1.0.196**.
+
+**S67a (2026-08-16):** после `#temp` — `collation conflict` Latin1 (tempdb) vs `Cyrillic_General_CI_AS` (ags/sudz) на `fillMatched`. Колонки nvarchar в `#ciduNorm`/`#ciduMatched`/`#ciduPairs` с явным `COLLATE Cyrillic_General_CI_AS`. JAR **0.1.0.197**. UAT 10:11: **sqlMs=241 / totalMs=265**, rows=705, contracts=128; InvDouble=12 (все `inNumCount=1`, как Access `Not IsNull`); dry `flLoad=false`.
+
+**S68 (2026-08-16): модуль КСДСФ + общая очередь**
+
+Проблема Access (не решена системно): номер СФ уже в `ags`, а в Excel — «новый» для другого договора. СФ иногда **переезжают** между договорами. Решение «создать новый» vs «перепривязать существующий» — только оператор; система даёт максимум фактов.
+
+**Решения владельца:**
+
+1. Несколько строк Excel с одним двоящим № → **отдельная строка очереди на каждую** (разный Excel 1/3 и «суммы»; одинаковый домен/СФ по номеру).
+2. Bulk `flLoad` на `CnCtptExistInvNotLoad` **исключает** очередь — разбор вручную.
+3. Перепривязка v1 **не** делается (оператор сам в «Договоры»).
+4. Статус разбора (`open` / `created` / `deferred`) до следующего полного прогона загрузки выгрузки.
+5. Вкладка «Повторяющиеся СФ» **без** встраивания КСДСФ: только грид + кнопка на **отдельный экран**.
+6. Модуль переиспользуется для **долгов и платежей** через общую таблицу очереди.
+
+**Access pmt (снято):** `CnInvPmtUpl>File_f>InvDouble` RS =
+
+`TblCnInv AS d LEFT JOIN (cnInv⋈invNum) … WHERE ciputciCnInvNumCount Is Not Null`;  
+nested `invNum` (`ciputciCnInv`↔`inNumNull`) → `cnInv` (`inInv`↔`ciInv`);  
+`btnInvCreate` → `invCreateNewNumDate` + `cnInvCreateNewInvCn` + Requery.
+
+**DDL (проект → DEV):** [`docs/development/notes/sql/26-0816-sudz-sf-num-collision/`](../../../sql/26-0816-sudz-sf-num-collision/) — `sudz.CnInvUplSfDouble` (`cius*`), XOR FK `ciusCidut` / `ciusCiput`, статусы, индексы. **CREATE применён на femsq-mssql (2026-08-16).** Legacy `CnInvDbtUplFileInvDouble` пока пишется параллельно.
+
+**Реализовано (JAR 0.1.0.198):** наполнение очереди при rebuild (1 Excel-строка ↔ 1 queue); bulk apply только `inNumCount IS NULL`; launcher.`sfDoubles`; экран `sudz-sf-double` (кнопка на вкладке doubles); Excel-карточка + домен/СФ; mutation `createSudzSfFromDouble`; вкладка «суммы» — заглушка.
+
+**Фазы далее:** UAT наполнения/create; вкладка «суммы»; адаптер pmt; перепривязка — позже.
+
+**Практика Access (источник):** [`Form_CnInvDbtUpl_gt_File_f.cls`](../../../../project/proposals/vba-analysis/VBA-Code-Export/Form-Modules/Form_CnInvDbtUpl_gt_File_f.cls) ≈ стр. 140–247: после Excel→Tbl идёт **инлайн**-блок «отсутствующие контрагенты» (не выделен в `Sub`), затем именованные `CnNotLoad` … `CnCtptInvAccDbtExist`; `CnCtptInvAccExistDbl` закомментирован с 03.02.2023.
+
+**Реестр stepId (оркестратор сверху вниз; чекбокс = вызывать ли шаг):**
+
+| stepId | Access / VBA | Примечание |
+|--------|--------------|------------|
+| `excelToTbl` | `cidufFlTbl` → `AccountSheetTest` / `ReceivablesTest` | **не чекбокс**; переключатель «обнов. по исх?» |
+| `orgNotInBuirg` | **инлайн** 140–207 | именованный шаг; **S61k** только лог |
+| `CnNotLoad` | `CnNotLoad` | **S61l** лог; **S61l+** apply при `flLoad` + `rollbackSudzCnNotLoad(cnMark)` |
+| `CnExistCtptNotLoad` | `CnExistCtptNotLoad` | **S61n** только лог; разбор вручную → экран **Договоры** (**S62** / **0071**) |
+| `CnCtptExistInvNotLoad` | clear InvDouble + `CnCtptExistInvNotLoad` | **S66** лог+apply; **S68:** bulk без очереди SfDouble; разбор → КСДСФ |
+| `CnCtptInvExistAccSmplNotLoad` | `CnCtptInvExistAccSmplNotLoad` | stub |
+| `CnCtptInvExistAccSmplNotLoad` | … | |
+| `invDbtDouble` | `invDbtDouble` | диагностика |
+| `CnCtptInvExistAccNotLoad` | … | |
+| `ciduTblCnCtptInvAccNameCountOneNot` | … | |
+| `CnCtptInvAccExistDbl` | отключён 03.02.2023 | UI: disabled / не вызывать |
+| `CnCtptInvAccExistDbtNotLoad` | … | |
+| `CnCtptInvAccDbtExist` | финал, только показ | |
+
+**Правила UI/API (S61f):**
+
+1. Порядок **жёсткий** (префикс цепочки): нельзя выполнить поздний шаг, пропустив ранний (без отдельного «force» — в v1 не давать).
+2. Два измерения: ☐ выполнить шаг; ☐ писать в БД (`cidufFlLoad` глобально и/или per-step).
+3. Пресеты: «только org», «до договоров dry-run», «полная dry-run», «полная + apply».
+4. Backend: один оркестратор + **отдельный метод на шаг** (зеркало `Private Sub`); mutation с `runSteps[]` + `flLoad`.
+5. Перед apply в домен: решение **куда пишем** (`ags` / `sudz` / целевой `Dbt` — разрыв S5).
+
+Итерации разработки: UI панели → stub-оркестратор → **excelToTbl** ✅ → **orgNotInBuirg** ✅ → **CnNotLoad** ✅ → **CnExistCtptNotLoad** ✅ → **Договоры (0071)** 🔶 → **`CnCtptExistInvNotLoad`** ✅ dry → **S68 КСДСФ / `CnInvUplSfDouble`** 🔶 → … → регрессия Rslt.  
+**Критерии 0069** (из `project-development`): порт/адаптация match; Dbt/DbtValue + upl; UI + очередь; регрессия Rslt без ручного seed.  
+**Добавлено S61c:** staging на SQL до UI. **S61f:** панель шагов вместо «всё сразу».
+

@@ -2,12 +2,27 @@ package com.femsq.database.service;
 
 import com.femsq.database.dao.SudzDao;
 import com.femsq.database.model.sudz.SudzCmmGrLookup;
+import com.femsq.database.model.sudz.SudzCnInvUplSfDouble;
 import com.femsq.database.model.sudz.SudzD644Row;
+import com.femsq.database.model.sudz.SudzAccessStrMark;
+import com.femsq.database.model.sudz.SudzDbtUplCnCtptExistInvApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplCnCtptExistInvResult;
+import com.femsq.database.model.sudz.SudzDbtUplCnExistCtptNotLoad;
+import com.femsq.database.model.sudz.SudzDbtUplCnNotLoad;
+import com.femsq.database.model.sudz.SudzDbtUplCnNotLoadApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplFile;
+import com.femsq.database.model.sudz.SudzDbtUplFunnelResult;
+import com.femsq.database.model.sudz.SudzDbtUplFunnelSteps;
+import com.femsq.database.model.sudz.SudzDbtUplLauncher;
+import com.femsq.database.model.sudz.SudzDbtUplOrgNotInBuirg;
+import com.femsq.database.model.sudz.SudzDbtUplTblRow;
 import com.femsq.database.model.sudz.SudzDebtCollection;
 import com.femsq.database.model.sudz.SudzPmLink;
 import com.femsq.database.model.sudz.SudzPmUplLookup;
 import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
+import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
+import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
 import com.femsq.database.model.sudz.SudzSvodResult;
 import com.femsq.database.model.sudz.SudzUplLookup;
 import com.femsq.database.model.sudz.SudzYear;
@@ -15,8 +30,11 @@ import com.femsq.database.model.sudz.SudzYearDetail;
 import com.femsq.database.model.sudz.SudzYearUpl;
 import com.femsq.database.model.sudz.SudzYyyyLookup;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -289,6 +307,195 @@ public class DefaultSudzService implements SudzService {
         }
         log.log(Level.INFO, "updateDebtCollection yr={0}, dbtKey={1}", new Object[]{yrKey, dbtKey});
         return sudzDao.saveDebtCollection(yrKey, dbtKey, curator, mery, cstCode);
+    }
+
+    @Override
+    public SudzDbtUplLauncher getDbtUplLauncher(int uplKey) {
+        if (uplKey <= 0) {
+            throw new IllegalArgumentException("uplKey должен быть положительным: " + uplKey);
+        }
+        return sudzDao.findDbtUplLauncher(uplKey)
+                .orElseThrow(() -> new IllegalArgumentException("Выгрузка ДЗ не найдена: uplKey=" + uplKey));
+    }
+
+    @Override
+    public SudzDbtUplFile updateDbtUplFile(int uplKey, String path, Boolean flLoad, Boolean flTbl) {
+        if (uplKey <= 0) {
+            throw new IllegalArgumentException("uplKey должен быть положительным: " + uplKey);
+        }
+        log.log(Level.INFO, "updateDbtUplFile uplKey={0}", uplKey);
+        return sudzDao.upsertDbtUplFile(uplKey, path, flLoad, flTbl);
+    }
+
+    @Override
+    public SudzDbtUplFunnelResult runDbtUplFunnelStub(int uplKey, List<String> steps, boolean flLoad) {
+        if (uplKey <= 0) {
+            throw new IllegalArgumentException("uplKey должен быть положительным: " + uplKey);
+        }
+        List<String> ordered = new ArrayList<>();
+        for (String stepId : steps) {
+            if (stepId != null && !SudzDbtUplFunnelSteps.EXCEL_TO_TBL.equals(stepId)) {
+                ordered.add(stepId);
+            }
+        }
+        ordered = List.copyOf(ordered);
+        SudzDbtUplFunnelSteps.requirePrefixOfEnabled(ordered);
+        log.log(Level.INFO, "runDbtUplFunnelStub uplKey={0}, steps={1}, flLoad={2}",
+                new Object[]{uplKey, ordered, flLoad});
+
+        StringBuilder stub = new StringBuilder();
+        stub.append("<p><b><font color=\"DarkGoldenrod\">STUB</font></b> воронка upl_key=")
+                .append(uplKey)
+                .append(", flLoad=")
+                .append(flLoad ? "true" : "false")
+                .append(", шагов=")
+                .append(ordered.size())
+                .append(". Доменные таблицы не изменялись.</p>");
+        for (String stepId : ordered) {
+            String title = SudzDbtUplFunnelSteps.ALL.stream()
+                    .filter(s -> s.id().equals(stepId))
+                    .map(SudzDbtUplFunnelSteps.StepDef::titleRu)
+                    .findFirst()
+                    .orElse(stepId);
+            stub.append("<p><font color=\"CadetBlue\">STUB</font> <b>")
+                    .append(escapeHtml(stepId))
+                    .append("</b> — ")
+                    .append(escapeHtml(title))
+                    .append(": шаг принят оркестратором, реализация позже.</p>");
+        }
+        stub.append("<p><font color=\"blue\">STUB завершён</font></p>");
+
+        sudzDao.setDbtUplFileProgress(uplKey, stub.toString());
+        SudzDbtUplLauncher after = getDbtUplLauncher(uplKey);
+        return new SudzDbtUplFunnelResult(after, ordered, true);
+    }
+
+    @Override
+    public SudzDbtUplFile setDbtUplFileProgress(int uplKey, String progressHtml) {
+        if (uplKey <= 0) {
+            throw new IllegalArgumentException("uplKey должен быть положительным: " + uplKey);
+        }
+        return sudzDao.setDbtUplFileProgress(uplKey, progressHtml);
+    }
+
+    @Override
+    public int replaceDbtUplTbl(int unloadKey, List<SudzDbtUplTblRow> rows) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        Objects.requireNonNull(rows, "rows");
+        log.log(Level.INFO, "replaceDbtUplTbl unloadKey={0}, rows={1}",
+                new Object[]{unloadKey, rows.size()});
+        return sudzDao.replaceDbtUplTbl(unloadKey, rows);
+    }
+
+    @Override
+    public int countDbtUplTbl(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.countDbtUplTbl(unloadKey);
+    }
+
+    @Override
+    public List<SudzDbtUplOrgNotInBuirg> listDbtUplOrgNotInBuirg(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.findDbtUplOrgNotInBuirg(unloadKey);
+    }
+
+    @Override
+    public List<SudzDbtUplCnNotLoad> listDbtUplCnNotLoad(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.findDbtUplCnNotLoad(unloadKey);
+    }
+
+    @Override
+    public List<SudzDbtUplCnExistCtptNotLoad> listDbtUplCnExistCtptNotLoad(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.findDbtUplCnExistCtptNotLoad(unloadKey);
+    }
+
+    @Override
+    public SudzDbtUplCnNotLoadApplyResult applyDbtUplCnNotLoad(List<SudzDbtUplCnNotLoad> rows) {
+        Objects.requireNonNull(rows, "rows");
+        int cnMark = SudzAccessStrMark.now();
+        String note = "Добавлено " + LocalDateTime.now();
+        return sudzDao.applyDbtUplCnNotLoad(rows, cnMark, note);
+    }
+
+    @Override
+    public int rollbackCnNotLoadByMark(int cnMark) {
+        if (cnMark <= 0) {
+            throw new IllegalArgumentException("cnMark должен быть положительным: " + cnMark);
+        }
+        return sudzDao.rollbackCnNotLoadByMark(cnMark);
+    }
+
+    @Override
+    public int clearDbtUplInvDouble() {
+        return sudzDao.clearDbtUplInvDouble();
+    }
+
+    @Override
+    public SudzDbtUplCnCtptExistInvResult rebuildDbtUplCnCtptExistInvNot(int unloadKey, Integer fileKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.rebuildDbtUplCnCtptExistInvNot(unloadKey, fileKey);
+    }
+
+    @Override
+    public SudzDbtUplCnCtptExistInvApplyResult applyDbtUplCnCtptExistInvNotLoad(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.applyDbtUplCnCtptExistInvNotLoad(unloadKey);
+    }
+
+    @Override
+    public List<SudzCnInvUplSfDouble> findSfDoublesByUnload(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.findSfDoublesByUnload(unloadKey);
+    }
+
+    @Override
+    public Optional<SudzSfDoubleExcelCandidate> findSfDoubleExcelCandidate(int ciusKey) {
+        if (ciusKey <= 0) {
+            throw new IllegalArgumentException("ciusKey должен быть положительным: " + ciusKey);
+        }
+        return sudzDao.findSfDoubleExcelCandidate(ciusKey);
+    }
+
+    @Override
+    public List<SudzSfDoubleDomainMatch> findSfDoubleDomainMatches(String invNum) {
+        return sudzDao.findSfDoubleDomainMatches(invNum);
+    }
+
+    @Override
+    public SudzCnInvUplSfDouble createSfFromDouble(int ciusKey) {
+        if (ciusKey <= 0) {
+            throw new IllegalArgumentException("ciusKey должен быть положительным: " + ciusKey);
+        }
+        return sudzDao.createSfFromDouble(ciusKey);
+    }
+
+    private static String escapeHtml(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;");
     }
 
     private void requireYear(int yrKey) {

@@ -12,6 +12,9 @@ export type ActiveView =
   | 'audits'
   | 'sudz-portfolio'
   | 'sudz-debts'
+  | 'sudz-dbt-upl'
+  | 'sudz-sf-double'
+  | 'contracts'
   | 'test-grid';
 export type AuthMode = 'sql' | 'windows' | 'token';
 
@@ -59,6 +62,7 @@ export const useConnectionStore = defineStore('connection', () => {
   const constructionSitesEnabled = computed(() => status.value === 'connected');
   const investmentChainsEnabled = computed(() => status.value === 'connected');
   const sudzEnabled = computed(() => status.value === 'connected');
+  const contractsEnabled = computed(() => status.value === 'connected');
   const reportsEnabled = computed(() => true);
 
   const statusTone = computed(() => {
@@ -145,6 +149,7 @@ export const useConnectionStore = defineStore('connection', () => {
     constructionSitesEnabled,
     investmentChainsEnabled,
     sudzEnabled,
+    contractsEnabled,
     reportsEnabled,
     statusTone,
     setStatus,

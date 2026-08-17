@@ -13,6 +13,7 @@
     :investment-chains-enabled="connection.investmentChainsEnabled"
     :reports-enabled="connection.reportsEnabled"
     :sudz-enabled="connection.sudzEnabled"
+    :contracts-enabled="connection.contractsEnabled"
     @open-connection="handleOpenConnection"
     @navigate="handleNavigate"
     @disconnect="handleDisconnect"
@@ -25,6 +26,9 @@
     <AuditsView v-else-if="connection.activeView === 'audits'" />
     <SudzPortfolioView v-else-if="connection.activeView === 'sudz-portfolio'" />
     <SudzDebtsView v-else-if="connection.activeView === 'sudz-debts'" />
+    <SudzDbtUplView v-else-if="connection.activeView === 'sudz-dbt-upl'" />
+    <SudzSfDoubleView v-else-if="connection.activeView === 'sudz-sf-double'" />
+    <ContractsView v-else-if="connection.activeView === 'contracts'" />
     <TestGridView v-else-if="connection.activeView === 'test-grid'" />
 
     <QPage v-else class="column items-center q-pa-lg">
@@ -87,6 +91,9 @@ import ConstructionSitesView from '@/views/construction-sites/ConstructionSitesV
 import ConstructionSitesByCodeView from '@/views/construction-sites/ConstructionSitesByCodeView.vue';
 import SudzPortfolioView from '@/views/sudz/SudzPortfolioView.vue';
 import SudzDebtsView from '@/views/sudz/SudzDebtsView.vue';
+import SudzDbtUplView from '@/views/sudz/SudzDbtUplView.vue';
+import SudzSfDoubleView from '@/views/sudz/SudzSfDoubleView.vue';
+import ContractsView from '@/views/contracts/ContractsView.vue';
 import InvestmentChainsView from '@/views/investment-chains/InvestmentChainsView.vue';
 import ReportsCatalog from '@/modules/reports/views/ReportsCatalog.vue';
 import AuditsView from '@/views/audits/AuditsView.vue';

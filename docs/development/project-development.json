@@ -8,7 +8,7 @@
     },
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0071",
+      "nextTaskId": "0072",
       "items": {
         "0064": {
           "task": {
@@ -2516,6 +2516,7 @@
               "owner": "Александр",
               "completionCriteria": [
                 "Порт ключевой логики match btnCidufLoad (или согласованный упрощённый cutover) в backend",
+                "UI панели шагов воронки (S61f): чекбоксы stepId + префикс цепочки + flLoad; оркестратор вызывает шаги по одному",
                 "Создание/обновление Dbt, invDbt*, DbtValue, sandbox/целевых upl",
                 "UI «Загрузка свода» (список upl + статус); неоднозначности — очередь/экран разбора",
                 "Регрессия: после загрузки YE/Q среза Rslt строится без ручного SQL-seed"
@@ -2535,8 +2536,8 @@
                 ]
               },
               "created": "2026-08-07",
-              "lastUpdated": "2026-08-07",
-              "description": "Шаг 1.1.1.1 живого цикла. Самый рискованный кусок MVP; опирается на 04-data-model §2.7."
+              "lastUpdated": "2026-08-15",
+              "description": "Шаг 1.1.1.1. excelToTbl/orgNotInBuirg/CnNotLoad/CnExistCtptNotLoad ✅. Блокер сторон снят (0071 UAT). Далее CnCtptExistInvNotLoad (внутри clear InvDouble, без чекбокса — S65e). Опора: 04 §2.7, chat-plan §5.6."
             }
           }
         },
@@ -2579,6 +2580,41 @@
               "created": "2026-08-07",
               "lastUpdated": "2026-08-09",
               "description": "S52–S60: Progress MVP закрыт. Rslt сбор/повтор/импорт; D644/Свод; лог yr_Progress. S60: 1.1.3 без New→CmmGr; полный путь папки — отдельно. JAR 0.1.0.173-SNAPSHOT."
+            }
+          }
+        },
+        "0071": {
+          "task": {
+            "displayName": "Договоры: экран cnNum / стороны cn_s* (in_progress, high). № 0071",
+            "task-attributes": {
+              "status": "in_progress",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Шаг 1: TopBar «Договоры» — master cnNum (FemsqTable client) + detail cn + nested cnNum",
+                "GraphQL cnNums / cn / cnNumsByCn (read)",
+                "Позже: стороны cn_s* + правка исполнителя для CnExistCtptNotLoad",
+                "UAT: закрыть ≥1 строку из лога CnExistCtptNotLoad upl 910 вручную через экран"
+              ],
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.web",
+                  "module:frontend"
+                ],
+                "journalRefs": [
+                  "chat:chat-2026-08-11-001"
+                ],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+                "uiNote": "docs/development/notes/UI/02-10_contracts-cnNum-access.md",
+                "uiAssets": "docs/development/notes/UI/assets/26-0815-cnNum/README.md",
+                "dependsOnTasks": [
+                  "0069"
+                ]
+              },
+              "created": "2026-08-15",
+              "lastUpdated": "2026-08-15",
+              "description": "S64: шаг 1 in progress (client FemsqTable). Server-side filter — на cn_inv_pm, не блокер. Стороны — следующий шаг."
             }
           }
         }
@@ -3379,6 +3415,18 @@
                           "taskId": "0070",
                           "positionInParent": 6,
                           "comment": "Эскиз B; зависит от 0067"
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "Договоры: экран cnNum / стороны (pending, high). № 02.03.07 → 0071",
+                        "item-attributes": {
+                          "structureId": "02.03.07",
+                          "taskId": "0071",
+                          "positionInParent": 7,
+                          "comment": "S62; блокер CnExistCtptNotLoad; эталон UI/assets/26-0815-cnNum"
                         },
                         "task-items": []
                       }

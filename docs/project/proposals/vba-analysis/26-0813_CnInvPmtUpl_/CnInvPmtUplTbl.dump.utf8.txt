@@ -1,0 +1,588 @@
+﻿========================================
+TABLE: CnInvPmtUplTbl
+SourceTableName: 
+Connect: (local table)
+Attributes (TableDef): 0
+DateCreated: 11.01.2022 12:06:55
+LastUpdated: 26.10.2023 14:31:21
+RecordCount (SELECT COUNT): 7736
+--- TableDef.Properties ---
+  Name = CnInvPmtUplTbl  (Property.Type=12)
+  Updatable = True  (Property.Type=1)
+  DateCreated = 11.01.2022 12:06:55  (Property.Type=8)
+  LastUpdated = 26.10.2023 14:31:21  (Property.Type=8)
+  Connect = (empty string)  (Property.Type=12)
+  Attributes = 0  (Property.Type=4)
+  SourceTableName = (empty string)  (Property.Type=12)
+  RecordCount = 7736  (Property.Type=4)
+  ValidationRule = (empty string)  (Property.Type=12)
+  ValidationText = (empty string)  (Property.Type=12)
+  PublishToWeb = 1  (Property.Type=2)
+  Orientation = 0  (Property.Type=2)
+  OrderByOn = False  (Property.Type=1)
+  NameMap = <binary/skipped>  (Property.Type=11)
+  DefaultView = 2  (Property.Type=2)
+  DisplayViewsOnSharePointSite = 1  (Property.Type=2)
+  TotalsRow = False  (Property.Type=1)
+  FilterOnLoad = False  (Property.Type=1)
+  OrderByOnLoad = True  (Property.Type=1)
+  HideNewField = False  (Property.Type=1)
+  BackTint = 100  (Property.Type=6)
+  BackShade = 100  (Property.Type=6)
+  ThemeFontIndex = -1  (Property.Type=4)
+  AlternateBackThemeColorIndex = 1  (Property.Type=4)
+  AlternateBackTint = 100  (Property.Type=6)
+  AlternateBackShade = 95  (Property.Type=6)
+  ReadOnlyWhenDisconnected = False  (Property.Type=1)
+  DatasheetGridlinesThemeColorIndex = 3  (Property.Type=4)
+  DatasheetForeThemeColorIndex = 0  (Property.Type=4)
+  DatasheetFontName = Calibri  (Property.Type=10)
+  DatasheetFontHeight = 9  (Property.Type=3)
+  DatasheetFontWeight = 400  (Property.Type=3)
+  DatasheetFontItalic = False  (Property.Type=1)
+  DatasheetFontUnderline = False  (Property.Type=1)
+  TabularCharSet = 204  (Property.Type=2)
+  TabularFamily = 34  (Property.Type=2)
+  DatasheetForeColor = 0  (Property.Type=4)
+  DatasheetForeColor12 = 0  (Property.Type=4)
+  GUID = <binary/skipped>  (Property.Type=9)
+  Filter = ([CnInvPmtUplTbl].[ciputCnInv]="0215/00403")  (Property.Type=12)
+--- FIELDS ---
+FIELD: ciputBE
+  OrdinalPosition: 0
+  Type: 10 (dbText)
+  Size: 50
+  Required: False
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    Description = БЕ  (Property.Type=10)
+    Caption = БЕ  (Property.Type=12)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = True  (Property.Type=1)
+
+FIELD: ciputAccount
+  OrdinalPosition: 1
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    Description = Счет Главной книги  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    DisplayControl = 111  (Property.Type=3)
+    Caption = Счет Главной книги  (Property.Type=12)
+    RowSourceType = Table/Query  (Property.Type=10)
+    RowSource = SELECT ags_accnt.account_key, ags_accnt.account_num FROM ags_accnt ORDER BY ags_accnt.account_num;   (Property.Type=12)
+    BoundColumn = 1  (Property.Type=3)
+    ColumnCount = 2  (Property.Type=3)
+    ColumnHeads = False  (Property.Type=1)
+    ColumnWidths = 0;2835  (Property.Type=10)
+    ListRows = 16  (Property.Type=3)
+    ListWidth = 0twip  (Property.Type=10)
+    LimitToList = True  (Property.Type=1)
+    AllowMultipleValues = False  (Property.Type=1)
+    AllowValueListEdits = False  (Property.Type=1)
+    ShowOnlyRowSourceValues = False  (Property.Type=1)
+
+FIELD: ciputCntrPrtNum
+  OrdinalPosition: 2
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    Description = Кредитор  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    DisplayControl = 109  (Property.Type=3)
+    Caption = Кредитор  (Property.Type=12)
+
+FIELD: ciputCntrPrtName
+  OrdinalPosition: 3
+  Type: 10 (dbText)
+  Size: 255
+  Required: False
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    Description = Наименование кредитора  (Property.Type=10)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = True  (Property.Type=1)
+    Caption = Наименование кредитора  (Property.Type=12)
+
+FIELD: ciputCAC
+  OrdinalPosition: 4
+  Type: 10 (dbText)
+  Size: 50
+  Required: False
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    Description = Код стройки  (Property.Type=10)
+    Caption = Код стройки  (Property.Type=12)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = True  (Property.Type=1)
+
+FIELD: ciputAgentNum
+  OrdinalPosition: 5
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    Description = Агент  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    Caption = Агент  (Property.Type=12)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: ciputAgentName
+  OrdinalPosition: 6
+  Type: 10 (dbText)
+  Size: 255
+  Required: False
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    Description = агент, имя  (Property.Type=10)
+    Caption = агент, имя  (Property.Type=12)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = True  (Property.Type=1)
+
+FIELD: ciputCnName
+  OrdinalPosition: 7
+  Type: 10 (dbText)
+  Size: 255
+  Required: False
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    Description = Договор  (Property.Type=10)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = True  (Property.Type=1)
+    Caption = Договор  (Property.Type=12)
+
+FIELD: ciputLink
+  OrdinalPosition: 8
+  Type: 10 (dbText)
+  Size: 255
+  Required: False
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    Description = Ссылка  (Property.Type=10)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = True  (Property.Type=1)
+    Caption = Ссылка  (Property.Type=12)
+
+FIELD: ciputCnInv
+  OrdinalPosition: 9
+  Type: 10 (dbText)
+  Size: 255
+  Required: False
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    Description = Присвоение  (Property.Type=10)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = True  (Property.Type=1)
+    Caption = Присвоение  (Property.Type=12)
+
+FIELD: ciputEntryDate
+  OrdinalPosition: 10
+  Type: 8 (dbDate)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=8)
+    Scale = 0  (Property.Type=8)
+    Description = Д/проводки  (Property.Type=10)
+    Caption = Д/проводки  (Property.Type=12)
+
+FIELD: ciputDocDate
+  OrdinalPosition: 11
+  Type: 8 (dbDate)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=8)
+    Scale = 0  (Property.Type=8)
+    Description = Д/документ  (Property.Type=10)
+    Caption = Д/документ  (Property.Type=12)
+
+FIELD: ciputDueDate
+  OrdinalPosition: 12
+  Type: 8 (dbDate)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=8)
+    Scale = 0  (Property.Type=8)
+    Description = Срок оплаты  (Property.Type=10)
+    Caption = Срок оплаты  (Property.Type=12)
+
+FIELD: ciputDbtBlns
+  OrdinalPosition: 13
+  Type: 5 (dbCurrency)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=5)
+    Scale = 0  (Property.Type=5)
+    Description = Сальдо конечное Дт  (Property.Type=10)
+    Format = #,##0.00 ₽;-#,##0.00 ₽  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    Caption = Сальдо конечное Дт  (Property.Type=12)
+
+FIELD: ciputDbtBlnsOverd
+  OrdinalPosition: 14
+  Type: 5 (dbCurrency)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 0
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=5)
+    Scale = 0  (Property.Type=5)
+    Description = Сальдо кон.Дт просроченное  (Property.Type=10)
+    Format = #,##0.00 ₽;-#,##0.00 ₽  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    Caption = Сальдо кон.Дт просроченное  (Property.Type=12)
+
+FIELD: ciputDbtBlnsOverdNot
+  OrdinalPosition: 15
+  Type: 5 (dbCurrency)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=5)
+    Scale = 0  (Property.Type=5)
+    Description = Сальдо кон.Дт непросроченн.  (Property.Type=10)
+    Format = #,##0.00 ₽;-#,##0.00 ₽  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    Caption = Сальдо кон.Дт непросроченн.  (Property.Type=12)
+
+FIELD: ciputCdtBlns
+  OrdinalPosition: 16
+  Type: 5 (dbCurrency)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=5)
+    Scale = 0  (Property.Type=5)
+    Description = Сальдо конечное по Кт  (Property.Type=10)
+    Format = #,##0.00 ₽;-#,##0.00 ₽  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    Caption = Сальдо конечное по Кт  (Property.Type=12)
+
+FIELD: ciputCdtBlnsOverd
+  OrdinalPosition: 17
+  Type: 5 (dbCurrency)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=5)
+    Scale = 0  (Property.Type=5)
+    Description = Сальдо кон.Кт просроченное  (Property.Type=10)
+    Format = #,##0.00 ₽;-#,##0.00 ₽  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    Caption = Сальдо кон.Кт просроченное  (Property.Type=12)
+
+FIELD: ciputCdtBlnsOverdNot
+  OrdinalPosition: 18
+  Type: 5 (dbCurrency)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=5)
+    Scale = 0  (Property.Type=5)
+    Description = Сальдо кон.Кт непросроченн.  (Property.Type=10)
+    Format = #,##0.00 ₽;-#,##0.00 ₽  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    Caption = Сальдо кон.Кт непросроченн.  (Property.Type=12)
+
+FIELD: ciputBlns
+  OrdinalPosition: 19
+  Type: 5 (dbCurrency)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=5)
+    Scale = 0  (Property.Type=5)
+    Description = Сальдо конечное  (Property.Type=10)
+    Format = #,##0.00 ₽;-#,##0.00 ₽  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    Caption = Сальдо конечное  (Property.Type=12)
+
+FIELD: ciputCnInvDocCode
+  OrdinalPosition: 20
+  Type: 20 (Type_20)
+  Size: 16
+  Required: False
+  Attributes: 2
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 18
+  --- Field.Properties (extra only; compact) ---
+    Precision = 18  (Property.Type=20)
+    Scale = 0  (Property.Type=20)
+    Description = № докум.  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    Caption = № докум.  (Property.Type=12)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: ciputAlligmentDate
+  OrdinalPosition: 21
+  Type: 8 (dbDate)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=8)
+    Scale = 0  (Property.Type=8)
+    Description = Д/выравн.  (Property.Type=10)
+    Caption = Д/выравн.  (Property.Type=12)
+
+FIELD: ciputBaseDate
+  OrdinalPosition: 22
+  Type: 8 (dbDate)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=8)
+    Scale = 0  (Property.Type=8)
+    Description = БазДата  (Property.Type=10)
+    Caption = БазДата  (Property.Type=12)
+
+FIELD: ciputCnInvDocSum
+  OrdinalPosition: 23
+  Type: 5 (dbCurrency)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=5)
+    Scale = 0  (Property.Type=5)
+    Description = Сумма документа  (Property.Type=10)
+    Format = #,##0.00 ₽;-#,##0.00 ₽  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    Caption = Сумма документа  (Property.Type=12)
+
+FIELD: ciputStornoReason
+  OrdinalPosition: 24
+  Type: 10 (dbText)
+  Size: 255
+  Required: False
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    Description = ПричСторн  (Property.Type=10)
+    Caption = ПричСторн  (Property.Type=12)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = True  (Property.Type=1)
+
+FIELD: ciputStornoDocCode
+  OrdinalPosition: 25
+  Type: 20 (Type_20)
+  Size: 16
+  Required: False
+  Attributes: 2
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 18
+  --- Field.Properties (extra only; compact) ---
+    Precision = 18  (Property.Type=20)
+    Scale = 0  (Property.Type=20)
+    Description = ДокСторно  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    Caption = ДокСторно  (Property.Type=12)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: ciputSheetNum
+  OrdinalPosition: 26
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    Description = номер на листе  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    Caption = № на листе  (Property.Type=12)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: ciputUnloadKey
+  OrdinalPosition: 27
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    Description = выгрузка задолженностей  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    Caption = выгрузка  (Property.Type=12)
+    DisplayControl = 109  (Property.Type=3)
+
+--- INDEXES ---
+--- RELATIONS (this table as Table or ForeignTable) ---
+========================================
+END OF DUMP

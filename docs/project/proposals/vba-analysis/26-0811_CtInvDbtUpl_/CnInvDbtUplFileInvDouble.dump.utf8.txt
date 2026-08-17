@@ -1,0 +1,196 @@
+﻿========================================
+TABLE: CnInvDbtUplFileInvDouble
+SourceTableName: 
+Connect: (local table)
+Attributes (TableDef): 0
+DateCreated: 25.10.2022 9:23:26
+LastUpdated: 25.10.2022 9:32:31
+RecordCount (SELECT COUNT): 0
+--- TableDef.Properties ---
+  Name = CnInvDbtUplFileInvDouble  (Property.Type=12)
+  Updatable = True  (Property.Type=1)
+  DateCreated = 25.10.2022 9:23:26  (Property.Type=8)
+  LastUpdated = 25.10.2022 9:32:31  (Property.Type=8)
+  Connect = (empty string)  (Property.Type=12)
+  Attributes = 0  (Property.Type=4)
+  SourceTableName = (empty string)  (Property.Type=12)
+  RecordCount = 0  (Property.Type=4)
+  ValidationRule = (empty string)  (Property.Type=12)
+  ValidationText = (empty string)  (Property.Type=12)
+  PublishToWeb = 1  (Property.Type=2)
+  Orientation = 0  (Property.Type=2)
+  OrderByOn = False  (Property.Type=1)
+  NameMap = <binary/skipped>  (Property.Type=11)
+  DefaultView = 2  (Property.Type=2)
+  GUID = <binary/skipped>  (Property.Type=9)
+  DisplayViewsOnSharePointSite = 1  (Property.Type=2)
+  TotalsRow = False  (Property.Type=1)
+  FilterOnLoad = False  (Property.Type=1)
+  OrderByOnLoad = True  (Property.Type=1)
+  HideNewField = False  (Property.Type=1)
+  BackTint = 100  (Property.Type=6)
+  BackShade = 100  (Property.Type=6)
+  ThemeFontIndex = 1  (Property.Type=4)
+  AlternateBackThemeColorIndex = 1  (Property.Type=4)
+  AlternateBackTint = 100  (Property.Type=6)
+  AlternateBackShade = 95  (Property.Type=6)
+  ReadOnlyWhenDisconnected = False  (Property.Type=1)
+  DatasheetGridlinesThemeColorIndex = 3  (Property.Type=4)
+  DatasheetForeThemeColorIndex = 0  (Property.Type=4)
+--- FIELDS ---
+FIELD: cidufiKey
+  OrdinalPosition: 0
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 17
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    Description = ключ повторяющегося счёта-фактуры  (Property.Type=10)
+
+FIELD: cidufiCiduf
+  OrdinalPosition: 1
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    Description = ключ файла выгрузки  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: cidufiCnNnn
+  OrdinalPosition: 2
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    Description = порядковый номер договора  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: cidufiCnNum
+  OrdinalPosition: 3
+  Type: 10 (dbText)
+  Size: 255
+  Required: False
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    Description = номер договора  (Property.Type=10)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = True  (Property.Type=1)
+
+FIELD: cidufiCnKey
+  OrdinalPosition: 4
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    Description = ключ договора  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: cidufiInvNnn
+  OrdinalPosition: 5
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    Description = порядковый номер счёта-фактуры у договора  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: cidufiInvNum
+  OrdinalPosition: 6
+  Type: 10 (dbText)
+  Size: 255
+  Required: False
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    Description = номер счёта-фактуры  (Property.Type=10)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = True  (Property.Type=1)
+
+FIELD: cidufiInvNumCount
+  OrdinalPosition: 7
+  Type: 10 (dbText)
+  Size: 255
+  Required: False
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    Description = сколько раз встречался ранее  (Property.Type=10)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = True  (Property.Type=1)
+
+--- INDEXES ---
+INDEX: PrimaryKey
+  Primary: True
+  Unique: True
+  Required: True
+  IgnoreNulls: False
+  Foreign: False
+  Clustered: False
+  Fields:
+    cidufiKey
+
+--- RELATIONS (this table as Table or ForeignTable) ---
+========================================
+END OF DUMP

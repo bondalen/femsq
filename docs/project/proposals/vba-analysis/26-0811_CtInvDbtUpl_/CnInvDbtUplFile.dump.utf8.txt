@@ -1,0 +1,180 @@
+﻿========================================
+TABLE: CnInvDbtUplFile
+SourceTableName: 
+Connect: (local table)
+Attributes (TableDef): 0
+DateCreated: 11.01.2022 12:06:54
+LastUpdated: 23.07.2026 18:32:04
+RecordCount (SELECT COUNT): 19
+--- TableDef.Properties ---
+  Name = CnInvDbtUplFile  (Property.Type=12)
+  Updatable = True  (Property.Type=1)
+  DateCreated = 11.01.2022 12:06:54  (Property.Type=8)
+  LastUpdated = 23.07.2026 18:32:04  (Property.Type=8)
+  Connect = (empty string)  (Property.Type=12)
+  Attributes = 0  (Property.Type=4)
+  SourceTableName = (empty string)  (Property.Type=12)
+  RecordCount = 19  (Property.Type=4)
+  ValidationRule = (empty string)  (Property.Type=12)
+  ValidationText = (empty string)  (Property.Type=12)
+  PublishToWeb = 1  (Property.Type=2)
+  Orientation = 0  (Property.Type=2)
+  OrderByOn = False  (Property.Type=1)
+  NameMap = <binary/skipped>  (Property.Type=11)
+  DefaultView = 2  (Property.Type=2)
+  DisplayViewsOnSharePointSite = 1  (Property.Type=2)
+  TotalsRow = False  (Property.Type=1)
+  FilterOnLoad = False  (Property.Type=1)
+  OrderByOnLoad = True  (Property.Type=1)
+  HideNewField = False  (Property.Type=1)
+  BackTint = 100  (Property.Type=6)
+  BackShade = 100  (Property.Type=6)
+  ThemeFontIndex = 1  (Property.Type=4)
+  AlternateBackThemeColorIndex = 1  (Property.Type=4)
+  AlternateBackTint = 100  (Property.Type=6)
+  AlternateBackShade = 95  (Property.Type=6)
+  ReadOnlyWhenDisconnected = False  (Property.Type=1)
+  DatasheetGridlinesThemeColorIndex = 3  (Property.Type=4)
+  DatasheetForeThemeColorIndex = 0  (Property.Type=4)
+  GUID = <binary/skipped>  (Property.Type=9)
+--- FIELDS ---
+FIELD: cidufKey
+  OrdinalPosition: 0
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 17
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    Description = ключ файла выгрузки  (Property.Type=10)
+
+FIELD: cidufUpload
+  OrdinalPosition: 1
+  Type: 4 (dbLong)
+  Size: 4
+  Required: True
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    Description = выгрузка  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    Caption = выгрузка  (Property.Type=12)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: cidufPath
+  OrdinalPosition: 2
+  Type: 10 (dbText)
+  Size: 255
+  Required: True
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = True  (Property.Type=1)
+    Caption = путь файла  (Property.Type=12)
+    Description = путь файла  (Property.Type=10)
+
+FIELD: cidufFlLoad
+  OrdinalPosition: 3
+  Type: 1 (dbBoolean)
+  Size: 1
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: No
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=1)
+    Scale = 0  (Property.Type=1)
+    Description = нужно ли обновлять БД?  (Property.Type=10)
+    Format = Yes/No  (Property.Type=10)
+    Caption = обновлять?  (Property.Type=12)
+    DisplayControl = 106  (Property.Type=3)
+
+FIELD: cidufLoadingProgress
+  OrdinalPosition: 4
+  Type: 12 (dbMemo)
+  Size: 0
+  Required: False
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=12)
+    Scale = 0  (Property.Type=12)
+    Description = ход загрузки  (Property.Type=10)
+    Caption = ход загрузки  (Property.Type=12)
+    UnicodeCompression = True  (Property.Type=1)
+    TextFormat = 1  (Property.Type=2)
+
+FIELD: cidufFlTbl
+  OrdinalPosition: 5
+  Type: 1 (dbBoolean)
+  Size: 1
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: No
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=1)
+    Scale = 0  (Property.Type=1)
+    Description = нужно ли обновлять промежуточную таблицу по исходным двнным  (Property.Type=10)
+    Format = Yes/No  (Property.Type=10)
+    Caption = обнов. по исх?  (Property.Type=12)
+    DisplayControl = 106  (Property.Type=3)
+
+--- INDEXES ---
+INDEX: cidufUpload
+  Primary: False
+  Unique: True
+  Required: False
+  IgnoreNulls: False
+  Foreign: False
+  Clustered: False
+  Fields:
+    cidufUpload
+
+INDEX: PrimaryKey
+  Primary: True
+  Unique: True
+  Required: True
+  IgnoreNulls: False
+  Foreign: False
+  Clustered: False
+  Fields:
+    cidufKey
+
+--- RELATIONS (this table as Table or ForeignTable) ---
+RELATION: {BAEA06F3-C4A2-4D60-88E6-598685EA6C50}
+  Table: CnInvDbtUplFile  ->  ForeignTable: CnInvDbtUplFileSh
+  Attributes: 4352
+  Field: cidufKey  ->  ForeignName: cidufsFile
+
+========================================
+END OF DUMP

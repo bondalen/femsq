@@ -106,6 +106,118 @@ export interface CreateSudzUplInput {
   statusOnDate: string;
 }
 
+/** Шапка лаунчера CnInvDbtUplFile. */
+export interface SudzDbtUplFile {
+  cidufKey: number;
+  cidufUpload: number;
+  cidufPath: string;
+  cidufFlLoad: boolean;
+  cidufFlTbl: boolean;
+  cidufLoadingProgress: string | null;
+}
+
+/** Лист CnInvDbtUplFileSh. */
+export interface SudzDbtUplFileSh {
+  cidufsKey: number;
+  cidufsFile: number;
+  cidufsSheet: string;
+  cidufsAccount: number;
+  cidufsTest: boolean;
+}
+
+/** Очередь InvDouble (legacy). */
+export interface SudzDbtUplInvDouble {
+  cidufiKey: number;
+  cidufiCiduf: number | null;
+  cidufiCnNnn: number | null;
+  cidufiCnNum: string | null;
+  cidufiCnKey: number | null;
+  cidufiInvNnn: number | null;
+  cidufiInvNum: string | null;
+  cidufiInvNumCount: string | null;
+}
+
+/** Общая очередь КСДСФ. */
+export interface SudzCnInvUplSfDouble {
+  ciusKey: number;
+  ciusCidut: number | null;
+  ciusCiput: number | null;
+  ciusDbtFile: number | null;
+  ciusPmtFile: number | null;
+  ciusUnloadKey: number | null;
+  ciusDbtTblCnInvRow: number | null;
+  ciusPmtTblCnInvRow: number | null;
+  ciusCnKey: number | null;
+  ciusCnNum: string | null;
+  ciusInvNum: string | null;
+  ciusInvNumCount: number | null;
+  ciusStatus: string;
+  ciusStatusAt: string | null;
+  ciusCreatedInvKey: number | null;
+}
+
+/** Excel-кандидат КСДСФ. */
+export interface SudzSfDoubleExcelCandidate {
+  cidutKey: number;
+  findDbtNum: number | null;
+  cidutAccount: number | null;
+  cidutCntrPrtNum: number | null;
+  cidutCntrPrtName: string | null;
+  cidutCntrPrtITN: string | null;
+  cidutCnName: string | null;
+  cidutCnDate: string | null;
+  cidutCnInv: string | null;
+  cidutCnInvName: string | null;
+  cidutFormtnDate: string | null;
+  cidutMatrtyDate: string | null;
+  cidutDebt: number | null;
+  cidutDebtOverdue: number | null;
+  cidutDoc: string | null;
+  cidutLink: string | null;
+  cidutSheet: number | null;
+  cidutSheetNum: number | null;
+  cidutUnloadKey: number | null;
+}
+
+/** Доменный СФ с совпадающим номером. */
+export interface SudzSfDoubleDomainMatch {
+  invKey: number;
+  invNum: string | null;
+  invNumKey: number | null;
+  invEntered: string | null;
+  ciKey: number | null;
+  cnKey: number | null;
+  cnNum: string | null;
+}
+
+/** Карточка лаунчера экрана C. */
+export interface SudzDbtUplLauncher {
+  upl: SudzUplLookup;
+  file: SudzDbtUplFile | null;
+  sheets: SudzDbtUplFileSh[];
+  invDoubles: SudzDbtUplInvDouble[];
+  sfDoubles: SudzCnInvUplSfDouble[];
+}
+
+export interface UpdateSudzDbtUplFileInput {
+  uplKey: number;
+  path?: string | null;
+  flLoad?: boolean | null;
+  flTbl?: boolean | null;
+}
+
+export interface RunSudzDbtUplFunnelInput {
+  uplKey: number;
+  steps: string[];
+  flLoad: boolean;
+}
+
+export interface SudzDbtUplFunnelResult {
+  launcher: SudzDbtUplLauncher;
+  ranSteps: string[];
+  stub: boolean;
+}
+
 export interface CreateSudzPmUplInput {
   name?: string | null;
   date: string;

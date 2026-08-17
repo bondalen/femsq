@@ -35,6 +35,16 @@ extend type Query {
 
   """Годовой свод по счетам ГК + строка ВСЕГО."""
   sudzD644Svod(yr: Int!, currUpl: Int!): SudzSvodResult!
+
+  """
+  Лаунчер загрузки свода (0069 / экран C): реестр upl + CnInvDbtUplFile/FileSh/InvDouble.
+  Ошибка, если выгрузка не найдена.
+  """
+  sudzDbtUplLauncher(uplKey: Int!): SudzDbtUplLauncher!
+  """Excel-кандидат КСДСФ по ключу очереди."""
+  sudzSfDoubleExcelCandidate(ciusKey: Int!): SudzSfDoubleExcelCandidate
+  """Доменные СФ с совпадающим номером."""
+  sudzSfDoubleDomainMatches(invNum: String!): [SudzSfDoubleDomainMatch!]!
 }
 
 extend type Mutation {
@@ -73,6 +83,18 @@ extend type Mutation {
 
   """Создать группу комментариев (для yr_CmmGr_New)."""
   createSudzCmmGr(input: CreateSudzCmmGrInput!): SudzCmmGrLookup!
+
+  """Upsert шапки лаунчера загрузки свода (CnInvDbtUplFile) по uplKey."""
+  updateSudzDbtUplFile(input: UpdateSudzDbtUplFileInput!): SudzDbtUplFile!
+
+  """
+  Stub-прогон воронки (S61f): шаги-префикс + flLoad; пишет HTML в лог; домен не меняет.
+  """
+  runSudzDbtUplFunnel(input: RunSudzDbtUplFunnelInput!): SudzDbtUplFunnelResult!
+  """Откат apply CnNotLoad по cnMark (удаляет cn → cnNum → cn_s → …)."""
+  rollbackSudzCnNotLoad(cnMark: Int!): Int!
+  """Создать новый СФ из строки очереди КСДСФ (статус open → created)."""
+  createSudzSfFromDouble(ciusKey: Int!): SudzCnInvUplSfDouble!
 }
 
 """Год-вариант СУДЗ (yr) с lookup-подписями."""
@@ -301,4 +323,126 @@ type SudzDebtCollectionResult {
   cstCode: String
   cstName: String
   cmmGr: Int!
+}
+
+"""Карточка лаунчера загрузки свода (экран C / 0069)."""
+type SudzDbtUplLauncher {
+  upl: SudzUplLookup!
+  """Null, если строки CnInvDbtUplFile ещё нет."""
+  file: SudzDbtUplFile
+  sheets: [SudzDbtUplFileSh!]!
+  invDoubles: [SudzDbtUplInvDouble!]!
+  """Очередь КСДСФ (CnInvUplSfDouble) по uplKey."""
+  sfDoubles: [SudzCnInvUplSfDouble!]!
+}
+
+"""Шапка лаунчера (CnInvDbtUplFile)."""
+type SudzDbtUplFile {
+  cidufKey: Int!
+  cidufUpload: Int!
+  cidufPath: String!
+  cidufFlLoad: Boolean!
+  cidufFlTbl: Boolean!
+  cidufLoadingProgress: String
+}
+
+"""Лист файла (CnInvDbtUplFileSh)."""
+type SudzDbtUplFileSh {
+  cidufsKey: Int!
+  cidufsFile: Int!
+  cidufsSheet: String!
+  cidufsAccount: Int!
+  cidufsTest: Boolean!
+}
+
+"""Очередь неоднозначных СФ (CnInvDbtUplFileInvDouble)."""
+type SudzDbtUplInvDouble {
+  cidufiKey: Int!
+  cidufiCiduf: Int
+  cidufiCnNnn: Int
+  cidufiCnNum: String
+  cidufiCnKey: Int
+  cidufiInvNnn: Int
+  cidufiInvNum: String
+  cidufiInvNumCount: String
+}
+
+"""Общая очередь КСДСФ (CnInvUplSfDouble)."""
+type SudzCnInvUplSfDouble {
+  ciusKey: Int!
+  ciusCidut: Int
+  ciusCiput: Int
+  ciusDbtFile: Int
+  ciusPmtFile: Int
+  ciusUnloadKey: Int
+  ciusDbtTblCnInvRow: Int
+  ciusPmtTblCnInvRow: Int
+  ciusCnKey: Int
+  ciusCnNum: String
+  ciusInvNum: String
+  ciusInvNumCount: Int
+  ciusStatus: String!
+  ciusStatusAt: DateTime
+  ciusCreatedInvKey: Int
+}
+
+"""Excel-кандидат (строка CnInvDbtUplTbl)."""
+type SudzSfDoubleExcelCandidate {
+  cidutKey: Int!
+  findDbtNum: Int
+  cidutAccount: Int
+  cidutCntrPrtNum: Int
+  cidutCntrPrtName: String
+  cidutCntrPrtITN: String
+  cidutCnName: String
+  cidutCnDate: Date
+  cidutCnInv: String
+  cidutCnInvName: String
+  cidutFormtnDate: Date
+  cidutMatrtyDate: Date
+  cidutDebt: Float
+  cidutDebtOverdue: Float
+  cidutDoc: String
+  cidutLink: String
+  cidutSheet: Int
+  cidutSheetNum: Int
+  cidutUnloadKey: Int
+}
+
+"""Существующий СФ в домене с тем же номером."""
+type SudzSfDoubleDomainMatch {
+  invKey: Int!
+  invNum: String
+  invNumKey: Int
+  invEntered: DateTime
+  ciKey: Int
+  cnKey: Int
+  cnNum: String
+}
+
+"""Вход upsert шапки лаунчера."""
+input UpdateSudzDbtUplFileInput {
+  uplKey: Int!
+  """Null — не менять путь (при insert — пустая строка)."""
+  path: String
+  """Null — не менять (при insert — false)."""
+  flLoad: Boolean
+  """Null — не менять (при insert — false)."""
+  flTbl: Boolean
+}
+
+"""Вход stub/реального прогона воронки."""
+input RunSudzDbtUplFunnelInput {
+  uplKey: Int!
+  """Префикс цепочки stepId (S61f)."""
+  steps: [String!]!
+  flLoad: Boolean!
+}
+
+"""Результат прогона воронки."""
+type SudzDbtUplFunnelResult {
+  launcher: SudzDbtUplLauncher!
+  ranSteps: [String!]!
+  """true — тело шагов ещё заглушка."""
+  stub: Boolean!
 }

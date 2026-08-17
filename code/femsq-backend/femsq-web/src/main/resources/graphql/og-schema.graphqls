@@ -8,6 +8,10 @@ scalar UUID
 type Query {
   organizations: [Organization!]!
   organization(id: Int!): Organization
+  """Идентификаторы org_id (БУиРГ type=1, ИНН type=2) организации."""
+  organizationIds(organizationId: Int!): [OrganizationId!]!
+  """Варианты наименований ags.ogNmF."""
+  organizationNameVariants(organizationId: Int!): [OrganizationNameVariant!]!
   agents: [Agent!]!
   agent(id: Int!): Agent
   organizationAgents(organizationId: Int!): [Agent!]!
@@ -21,6 +25,14 @@ type Query {
 
 type Mutation {
   createOrganization(input: OgCreateRequest!): Organization!
+  """Создать og + опционально org_id type=1 (БУиРГ) и/или type=2 (ИНН). ИНН только в org_id."""
+  createOrganizationWithIds(input: CreateOrganizationWithIdsInput!): Organization!
+  """Привязать БУиРГ и/или ИНН(+КПП) к существующей организации."""
+  attachOrganizationIds(input: AttachOrganizationIdsInput!): [OrganizationId!]!
+  updateOrganizationId(input: UpdateOrganizationIdInput!): OrganizationId!
+  createOrganizationNameVariant(input: CreateOgNmFInput!): OrganizationNameVariant!
+  updateOrganizationNameVariant(input: UpdateOgNmFInput!): OrganizationNameVariant!
+  deleteOrganizationNameVariant(onfKey: Int!): Boolean!
   updateOrganization(id: Int!, input: OgUpdateRequest!): Organization!
   deleteOrganization(id: Int!): Boolean!
   createAgent(input: OgAgCreateRequest!): Agent!
@@ -42,6 +54,16 @@ type Organization {
   registrationTaxType: String!
 }
 
+"""Строка ags.org_id."""
+type OrganizationId {
+  orgIdKey: Int!
+  org: Int!
+  orgIdType: Int!
+  orgIdValueL: Int
+  orgIdValueT: String
+  orgIdValueTExt: String
+}
+
 type Agent {
   ogAgKey: Int
   code: String!
@@ -60,6 +82,64 @@ input OgCreateRequest {
   okpo: Float
   oe: Int
   registrationTaxType: String!
+}
+
+"""Создание og + org_id. ИНН — только в org_id type=2."""
+input CreateOrganizationWithIdsInput {
+  ogName: String!
+  ogOfficialName: String!
+  ogFullName: String
+  ogDescription: String
+  registrationTaxType: String!
+  buirg: Int
+  itn: String
+  """КПП в org_id_value_t_ext."""
+  itnExt: String
+}
+
+"""Привязка идентификаторов к существующей og."""
+input AttachOrganizationIdsInput {
+  ogKey: Int!
+  buirg: Int
+  itn: String
+  """КПП / расширение текстового ключа (org_id_value_t_ext)."""
+  itnExt: String
+}
+
+input UpdateOrganizationIdInput {
+  orgIdKey: Int!
+  org: Int!
+  orgIdType: Int!
+  orgIdValueL: Int
+  orgIdValueT: String
+  orgIdValueTExt: String
+}
+
+"""Вариант наименования ags.ogNmF («разные имена для ловли»)."""
+type OrganizationNameVariant {
+  onfKey: Int!
+  onfOg: Int!
+  onfName: String!
+  onfNameExt: String
+  onfStart: Date
+  onfEnd: Date
+}
+
+input CreateOgNmFInput {
+  onfOg: Int!
+  onfName: String!
+  onfNameExt: String
+  onfStart: Date
+  onfEnd: Date
+}
+
+input UpdateOgNmFInput {
+  onfKey: Int!
+  onfOg: Int!
+  onfName: String!
+  onfNameExt: String
+  onfStart: Date
+  onfEnd: Date
 }
 
 input OgUpdateRequest {

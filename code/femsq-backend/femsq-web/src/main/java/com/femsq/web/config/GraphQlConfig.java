@@ -56,6 +56,7 @@ public class GraphQlConfig {
             new ClassPathResource("graphql/ra-schema.graphqls"),
             new ClassPathResource("graphql/og-schema.graphqls"),
             new ClassPathResource("graphql/cst-schema.graphqls"),
+            new ClassPathResource("graphql/cn-schema.graphqls"),
             new ClassPathResource("graphql/sudz-schema.graphqls")
         );
     }

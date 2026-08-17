@@ -8,6 +8,7 @@
         :investment-chains-enabled="investmentChainsEnabled"
         :reports-enabled="reportsEnabled"
         :sudz-enabled="sudzEnabled"
+        :contracts-enabled="contractsEnabled"
         @navigate="emit('navigate', $event)"
       />
     </QHeader>
@@ -51,6 +52,7 @@ interface Props {
   investmentChainsEnabled: boolean;
   reportsEnabled: boolean;
   sudzEnabled: boolean;
+  contractsEnabled: boolean;
 }
 
 defineProps<Props>();

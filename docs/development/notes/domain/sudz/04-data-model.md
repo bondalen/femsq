@@ -1,8 +1,8 @@
 # СУДЗ — модель данных (FishEye.ags)
 
 **Дата создания:** 2026-08-03  
-**Последнее обновление:** 2026-08-06 (S29: полный текст `btnCidufLoad_Click()` найден и разобран — весь алгоритм сопоставления подтверждён)  
-**Статус:** рабочий черновик для накопления сведений (сегменты S4–S14, S25–S29)  
+**Последнее обновление:** 2026-08-14 (S61k: orgNotInBuirg — лог без записи)
+**Статус:** рабочий черновик для накопления сведений (сегменты S4–S14, S25–S29, S61f)  
 **План чата:** [chat-plan-26-0802-sudz.md](../../chats/chat-plan/chat-plan-26-0802-sudz.md)  
 **ER-снимок (Access, текущее состояние):** [assets/26-0803-sudz-er-segment.png](./assets/26-0803-sudz-er-segment.png)  
 **Эскиз целевой модели (S16, актуальный):** [assets/26-0803-sudz-target-sketch-dbt.png](./assets/26-0803-sudz-target-sketch-dbt.png) — разбор в [04-3 §7](./04-3_problems-solutions.md#7-ревизия-целевой-модели-по-эскизу-владельца-dbt--invdbtdbt--dbtvalue-s14) 
@@ -179,22 +179,26 @@
 - На присланном ER может отображаться рядом с upl; **вне явного фокуса снимка** как отдельная сущность — уточнить.
 - Статус: **неясно / оборот**
 
-#### `CnInvDbtUplFileSh` / `CnInvDbtUplTbl` / `CnInvDbtUplTblCnInv` / `CnInvDbtUplFileInvDouble` — буфер загрузки свода (**подтверждено S27, полностью разобрано S29**)
+#### `CnInvDbtUplFile` / `FileSh` / `Tbl` / `TblCnInv` / `FileInvDouble` — буфер загрузки свода (**Access-local; подтверждено S27/S29; DBHub 2026-08-11**)
 
-Найдено в полностью экспортированном модуле `Form_CnInvDbtUpl>File_f` (`btnCidufLoad_Click()`, [VBA-Code-Export](../../../project/proposals/vba-analysis/VBA-Code-Export/Form-Modules/Form_CnInvDbtUpl_gt_File_f.cls) — файл был в CP1251, перекодирован в UTF‑8 без потерь при разборе, см. журнал S29). Все четыре таблицы открываются через `CurrentDb` — **локальные таблицы Access** конкретного accdb-клиента (не схема `ags`, не проверялись через DBHub).
+Найдено в модуле `Form_CnInvDbtUpl>File_f` (`btnCidufLoad_Click()`, [VBA-Code-Export](../../../project/proposals/vba-analysis/VBA-Code-Export/Form-Modules/Form_CnInvDbtUpl_gt_File_f.cls)) и на ER/nav Access (скрины [26-0811](../../UI/assets/26-0811-cn-inv-dbt-upl/README.md)). Все открываются через `CurrentDb` — **локальные таблицы Access** (не linked SQL).
 
-- **`CnInvDbtUplFileSh`** — перечень листов конкретного файла выгрузки (`cidufsFile = cidufKey`, флаг `cidufsTest` — включён ли лист в обработку, `cidufsAccount`/`cidufsKey` — счёт ГК и ключ листа).
+**Проверка FishEye (DBHub, 2026-08-11):** ни одной из `CnInvDbtUplFile*` / `CnInvDbtUplTbl*` / `CnInvPmtUpl*` на SQL Server **нет**. На сервере для этого контура есть только `ags.cn_inv_dbt_upl` (+ `cn_inv_dbt`, `cn_inv_dbt_upl_g_p`, `cn_inv_pm_upl`) и VIEW `ags.cn_inv_dbt_double` (другая семантика, не буфер InvDouble).
+
+**`CnInvDbtUplFile`** (шапка лаунчера): PK `cidufKey`; `cidufUpload` → `upl_key`; `cidufPath`; `cidufFlLoad`; `cidufFlTbl`; `cidufLoadingProgress` (RTF).
+
+- **`CnInvDbtUplFileSh`** — перечень листов (`cidufsKey`; `cidufsFile`→File; `cidufsSheet`/`cidufsAccount`; `cidufsTest`=«проверять?»); 1:N к File на ER.
 - **`CnInvDbtUplTbl`** — «найденные задолженности» построчно из Excel (заполняется `AccountSheetTest`/`ReceivablesTest`, до записи в `ags`). Подтверждённые поля: `FindDbtNum`, `cidutAccount` (счёт ГК), `cidutCntrPrtNum`/`Name`/`ITN` (контрагент/БУиРГ-код/ИНН), `cidutCnName`/`cidutCnDate` (договор), `cidutCnInv` (текст документа-основания = «счёт-фактура»), `cidutFormtnDate`/`cidutMatrtyDate` (даты образования/погашения), `cidutDebt`/`cidutDebtOverdue` (суммы), `cidutDoc` (документ присвоения ГК), `cidutLink` (ссылка), `cidutSheet`/`cidutSheetNum` (лист/строка), `cidutUnloadKey` (пакет).
 - **`CnInvDbtUplTblCnInv`** — промежуточная таблица новых счетов-фактур для уже существующих договоров (наполняется сохранённым запросом `SqlCnCtptExistInvNot()` перед вставкой в `ags_inv`/`ags_invNum`/`ags_cnInv`).
 - **`CnInvDbtUplFileInvDouble`** — таблица «двоящих счетов-фактур», очищается в начале каждой загрузки (`dbAccess.TableRecordsClear`) — источник данных подформы `CnInvDbtUpl>File_f>InvDouble` для **ручного** разбора повторов (см. ниже).
 - Полный алгоритм сопоставления/вставки, использующий эти таблицы: [§2.7](#27-полный-алгоритм-btncidufload_click--цепочка-сопоставления-подтверждено-s29).
-- Статус: **буфер загрузки — структура и роль полностью подтверждены (S29)**, физически вне `ags`.
+- Статус: **буфер загрузки — Access-only (S29 + DBHub 2026-08-11)**; для FEMSQ нужны staging/`sudz` аналоги или session-state, не чтение из SQL.
 
 #### `cn_inv_dbt_double`
 
 - Похоже на диагностику дублей при загрузке (`dCount`, `ciaName`, …).
 - **Вне снимка ER**; статус: **служебное**
-- **Гипотеза о существовании UI подтверждена как факт (S29), точное совпадение с этой таблицей — остаётся открытым нюансом.** Модуль `Form_CnInvDbtUpl>File_f_gt_InvDouble.cls` найден и разобран: подформа `CnInvDbtUpl>File_f>InvDouble` действительно существует для долгов (не только для платежей), фильтрует вложенные грид-подформы `InvDouble_f` (по `[inNum]`) и `cns` (по `[cn_key]`), а кнопка `btnInvAdd_Click()` даёт оператору вручную создать новую СФ (`ClassFactory.invCreateNewNumDate`) и связать её с найденным договором (`ClassFactory.cnInvCreateNewInvCn`). Однако сам код `btnCidufLoad_Click()` для наполнения именно *этой* SQL Server-таблицы (`cn_inv_dbt_double`, схема `ags`) явно не найден — обработчик работает с Access-локальной `CnInvDbtUplFileInvDouble` (см. выше). Возможно это две разные, не идентичные диагностики (одна — старая/SQL-серверная, другая — текущая Access-локальная для этой конкретной формы); отдельно не проверялось через DBHub.
+- **UI InvDouble ↔ Access-local `CnInvDbtUplFileInvDouble` (S29).** `ags.cn_inv_dbt_double` — **VIEW** на сервере (долги с >1 суммой в одной выгрузке); **не** тот же объект, что локальный буфер ручного разбора. Наполнение VIEW из `btnCidufLoad` не найдено; локальный буфер очищается/ведётся в Access.
 
 #### `cn_inv_pm` — остатки / позиции PM (очень крупная)
 
@@ -403,12 +407,16 @@
 
 #### Этап 2 — воронка сопоставления/вставки (последовательные подпроцедуры, вызываются в этом порядке)
 
+**Перед именованными Sub** в `btnCidufLoad_Click` (≈140–207) идёт **инлайн**-блок «отсутствующие контрагенты» (только лог, без `cidufFlLoad`) — в Access не выделен в процедуру. В FEMSQ (S61f) он получает stepId `orgNotInBuirg`.
+
+**Метод переноса в FEMSQ (S61f, 2026-08-13):** владелец подтвердил практику Access — включать шаги по одному (комментирование последующих Sub). В UI — **панель чекбоксов stepId** + жёсткий порядок (префикс цепочки) + `cidufFlLoad`. Реестр и правила: [chat-plan §5.6 этап 7](../../chats/chat-plan/chat-plan-26-0802-sudz.md#56-0069-загрузка-общего-свода--порядок-s61--s61c); эскиз панели: [02-9 §4a](../../UI/02-9_sudz-mvp-screens.md). **S61k:** `orgNotInBuirg` реализован (только лог).
+
 Общий паттерн каждого шага: **(а)** сохранённый Access-запрос строит diff «есть в своде, но нет соответствия в `ags` на этом уровне»; **(б)** результат печатается в лог формы (`cidufLoadingProgress`, HTML); **(в)** если включена галочка `cidufFlLoad` **и** diff не пуст — либо выполняется вставляющий сохранённый запрос, либо (для верхних уровней) новые записи создаются построчно через DAO. Если авто-вставка невозможна из-за неоднозначности — строка просто остаётся в логе для оператора.
 
 | # | Процедура | Уровень | Действие при `cidufFlLoad=True` |
 |---|---|---|---|
 | 1 | `CnNotLoad` | Договор не найден (нет match по № + дате + исполнителю) | **Авто-создаёт**, но **только если новый № договора не повторяется среди других новых строк** (`countCnName=1`): `ags_cn` → `ags_cnNum` (`cnnType=1`) → `ags_cn_s` (**`cn_s_type=2`=исполнитель**) → `ags_cn_s_org_smpl` → `ags_cn_s_org`. При повторе — только показ, вручную. |
-| 2 | `CnExistCtptNotLoad` | Договор есть, но исполнитель в БД не совпадает с исполнителем из свода | Только показ — авто-исправление стороны не предусмотрено. |
+| 2 | `CnExistCtptNotLoad` | Договор есть, но исполнитель в БД не совпадает с исполнителем из свода | Только показ — авто-исправление стороны не предусмотрено. **FEMSQ (S62):** ручной разбор на экране «Договоры» (эталон Access `cnNum`) — [02-10](../../UI/02-10_contracts-cnNum-access.md); задача **0071**. |
 | — | (очистка `CnInvDbtUplFileInvDouble` через `dbAccess.TableRecordsClear`) | — | подготовка грида ручного разбора (см. §2.2, `cn_inv_dbt_double`) |
 | 3 | `CnCtptExistInvNotLoad` | Договор есть, СФ (документ) в БД нет | **Авто-создаёт**: `ags_inv` → `ags_invNum` → `ags_cnInv` (построчно, DAO). |
 | 4 | `CnCtptInvExistAccSmplNotLoad` | СФ есть, «простой» карточки (`cnInvAccntSmpl`) нет | **Авто-вставка** сохранённым запросом `ciduCnCtptInvAccSmplNotIns`. |

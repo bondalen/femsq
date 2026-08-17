@@ -14,11 +14,23 @@ import com.femsq.database.dao.JdbcIpgChainDao;
 import com.femsq.database.dao.JdbcIpgChainRelationDao;
 import com.femsq.database.dao.JdbcInvestmentPlanGroupDao;
 import com.femsq.database.dao.JdbcInvestmentProgramDao;
+import com.femsq.database.dao.CnContractDao;
+import com.femsq.database.dao.CnDao;
+import com.femsq.database.dao.CnNumDao;
+import com.femsq.database.dao.CnSDao;
+import com.femsq.database.dao.CnSOrgDao;
+import com.femsq.database.dao.CnSOrgSmplDao;
 import com.femsq.database.dao.CstAgDao;
 import com.femsq.database.dao.CstAgPnBranchDao;
 import com.femsq.database.dao.CstAgPnDao;
 import com.femsq.database.dao.CstDao;
 import com.femsq.database.dao.CstRaListDao;
+import com.femsq.database.dao.JdbcCnContractDao;
+import com.femsq.database.dao.JdbcCnDao;
+import com.femsq.database.dao.JdbcCnNumDao;
+import com.femsq.database.dao.JdbcCnSDao;
+import com.femsq.database.dao.JdbcCnSOrgDao;
+import com.femsq.database.dao.JdbcCnSOrgSmplDao;
 import com.femsq.database.dao.JdbcCstAgDao;
 import com.femsq.database.dao.JdbcCstAgPnBranchDao;
 import com.femsq.database.dao.JdbcCstAgPnDao;
@@ -39,6 +51,8 @@ import com.femsq.database.dao.RalpRaCstListDao;
 import com.femsq.database.dao.RalpRaDao;
 import com.femsq.database.dao.JdbcOgAgDao;
 import com.femsq.database.dao.JdbcOgDao;
+import com.femsq.database.dao.JdbcOgNmFDao;
+import com.femsq.database.dao.JdbcOrgIdDao;
 import com.femsq.database.dao.OgAgCsDao;
 import com.femsq.database.dao.JdbcRaADao;
 import com.femsq.database.dao.JdbcRaAtDao;
@@ -54,6 +68,8 @@ import com.femsq.database.dao.JdbcRaSheetConfDao;
 import com.femsq.database.dao.JdbcStNetworkDao;
 import com.femsq.database.dao.OgAgDao;
 import com.femsq.database.dao.OgDao;
+import com.femsq.database.dao.OgNmFDao;
+import com.femsq.database.dao.OrgIdDao;
 import com.femsq.database.dao.RaADao;
 import com.femsq.database.dao.RaAtDao;
 import com.femsq.database.dao.RaDirDao;
@@ -72,11 +88,23 @@ import com.femsq.database.service.DefaultIpgChainRelationService;
 import com.femsq.database.service.DefaultIpgChainService;
 import com.femsq.database.service.DefaultInvestmentPlanGroupService;
 import com.femsq.database.service.DefaultInvestmentProgramService;
+import com.femsq.database.service.CnContractService;
+import com.femsq.database.service.CnNumService;
+import com.femsq.database.service.CnSOrgService;
+import com.femsq.database.service.CnSOrgSmplService;
+import com.femsq.database.service.CnSService;
+import com.femsq.database.service.CnService;
 import com.femsq.database.service.CstAgPnBranchService;
 import com.femsq.database.service.CstAgPnService;
 import com.femsq.database.service.CstAgService;
 import com.femsq.database.service.CstRaListService;
 import com.femsq.database.service.CstService;
+import com.femsq.database.service.DefaultCnContractService;
+import com.femsq.database.service.DefaultCnNumService;
+import com.femsq.database.service.DefaultCnSOrgService;
+import com.femsq.database.service.DefaultCnSOrgSmplService;
+import com.femsq.database.service.DefaultCnSService;
+import com.femsq.database.service.DefaultCnService;
 import com.femsq.database.service.DefaultCstAgPnBranchService;
 import com.femsq.database.service.DefaultCstAgPnService;
 import com.femsq.database.service.DefaultCstAgService;
@@ -84,7 +112,9 @@ import com.femsq.database.service.DefaultCstRaListService;
 import com.femsq.database.service.DefaultCstService;
 import com.femsq.database.service.DefaultOgAgCsService;
 import com.femsq.database.service.DefaultOgAgService;
+import com.femsq.database.service.DefaultOgNmFService;
 import com.femsq.database.service.DefaultOgService;
+import com.femsq.database.service.DefaultOrgIdService;
 import com.femsq.database.service.DefaultRaPeriodService;
 import com.femsq.database.service.DefaultRaReportService;
 import com.femsq.database.service.DefaultRaSummService;
@@ -93,6 +123,10 @@ import com.femsq.database.service.DefaultRalpRaAuStatusService;
 import com.femsq.database.service.DefaultRalpRaCstListService;
 import com.femsq.database.service.DefaultRalpRaService;
 import com.femsq.database.service.OgAgCsService;
+import com.femsq.database.service.OgAgService;
+import com.femsq.database.service.OgNmFService;
+import com.femsq.database.service.OgService;
+import com.femsq.database.service.OrgIdService;
 import com.femsq.database.service.RaPeriodService;
 import com.femsq.database.service.RaReportService;
 import com.femsq.database.service.RaSummService;
@@ -118,8 +152,6 @@ import com.femsq.database.service.IpgChainRelationService;
 import com.femsq.database.service.IpgChainService;
 import com.femsq.database.service.InvestmentPlanGroupService;
 import com.femsq.database.service.InvestmentProgramService;
-import com.femsq.database.service.OgAgService;
-import com.femsq.database.service.OgService;
 import com.femsq.database.service.RaAService;
 import com.femsq.database.service.RaAtService;
 import com.femsq.database.service.RaDirService;
@@ -236,6 +268,30 @@ public class DatabaseModuleConfiguration {
     }
 
     /**
+     * DAO {@code org_id} (БУиРГ / ИНН).
+     *
+     * @param connectionFactory фабрика
+     * @param configurationService схема
+     * @return DAO
+     */
+    @Bean
+    public OrgIdDao orgIdDao(ConnectionFactory connectionFactory, DatabaseConfigurationService configurationService) {
+        return new JdbcOrgIdDao(connectionFactory, configurationService);
+    }
+
+    /**
+     * DAO {@code ogNmF} (варианты наименований).
+     *
+     * @param connectionFactory фабрика
+     * @param configurationService схема
+     * @return DAO
+     */
+    @Bean
+    public OgNmFDao ogNmFDao(ConnectionFactory connectionFactory, DatabaseConfigurationService configurationService) {
+        return new JdbcOgNmFDao(connectionFactory, configurationService);
+    }
+
+    /**
      * Регистрирует DAO для таблицы {@code ogAg} (схема определяется из конфигурации).
      *
      * @param connectionFactory       фабрика подключений
@@ -259,6 +315,30 @@ public class DatabaseModuleConfiguration {
     }
 
     /**
+     * Сервис идентификаторов организаций ({@code org_id}).
+     *
+     * @param orgIdDao DAO
+     * @param ogService карточки og
+     * @return сервис
+     */
+    @Bean
+    public OrgIdService orgIdService(OrgIdDao orgIdDao, OgService ogService) {
+        return new DefaultOrgIdService(orgIdDao, ogService);
+    }
+
+    /**
+     * Сервис вариантов наименований ({@code ogNmF}).
+     *
+     * @param ogNmFDao DAO
+     * @param ogService карточки og
+     * @return сервис
+     */
+    @Bean
+    public OgNmFService ogNmFService(OgNmFDao ogNmFDao, OgService ogService) {
+        return new DefaultOgNmFService(ogNmFDao, ogService);
+    }
+
+    /**
      * Создает сервисный слой агентских организаций.
      *
      * @param ogAgDao DAO агентских организаций
@@ -276,6 +356,84 @@ public class DatabaseModuleConfiguration {
     @Bean
     public CstDao cstDao(ConnectionFactory connectionFactory, DatabaseConfigurationService configurationService) {
         return new JdbcCstDao(connectionFactory, configurationService);
+    }
+
+    /**
+     * DAO номеров договоров {@code cnNum}.
+     */
+    @Bean
+    public CnNumDao cnNumDao(ConnectionFactory connectionFactory, DatabaseConfigurationService configurationService) {
+        return new JdbcCnNumDao(connectionFactory, configurationService);
+    }
+
+    /**
+     * DAO договоров {@code cn}.
+     */
+    @Bean
+    public CnDao cnDao(ConnectionFactory connectionFactory, DatabaseConfigurationService configurationService) {
+        return new JdbcCnDao(connectionFactory, configurationService);
+    }
+
+    @Bean
+    public CnNumService cnNumService(CnNumDao cnNumDao) {
+        return new DefaultCnNumService(cnNumDao);
+    }
+
+    @Bean
+    public CnService cnService(CnDao cnDao) {
+        return new DefaultCnService(cnDao);
+    }
+
+    /**
+     * DAO составного создания договора с исполнителем.
+     */
+    @Bean
+    public CnContractDao cnContractDao(ConnectionFactory connectionFactory, DatabaseConfigurationService configurationService) {
+        return new JdbcCnContractDao(connectionFactory, configurationService);
+    }
+
+    @Bean
+    public CnContractService cnContractService(CnContractDao cnContractDao) {
+        return new DefaultCnContractService(cnContractDao);
+    }
+
+    /**
+     * DAO сторон договора {@code cn_s}.
+     */
+    @Bean
+    public CnSDao cnSDao(ConnectionFactory connectionFactory, DatabaseConfigurationService configurationService) {
+        return new JdbcCnSDao(connectionFactory, configurationService);
+    }
+
+    /**
+     * DAO {@code cn_s_org_smpl}.
+     */
+    @Bean
+    public CnSOrgSmplDao cnSOrgSmplDao(ConnectionFactory connectionFactory, DatabaseConfigurationService configurationService) {
+        return new JdbcCnSOrgSmplDao(connectionFactory, configurationService);
+    }
+
+    /**
+     * DAO {@code cn_s_org}.
+     */
+    @Bean
+    public CnSOrgDao cnSOrgDao(ConnectionFactory connectionFactory, DatabaseConfigurationService configurationService) {
+        return new JdbcCnSOrgDao(connectionFactory, configurationService);
+    }
+
+    @Bean
+    public CnSService cnSService(CnSDao cnSDao, CnSOrgSmplDao cnSOrgSmplDao, CnSOrgDao cnSOrgDao, CnDao cnDao) {
+        return new DefaultCnSService(cnSDao, cnSOrgSmplDao, cnSOrgDao, cnDao);
+    }
+
+    @Bean
+    public CnSOrgSmplService cnSOrgSmplService(CnSOrgSmplDao cnSOrgSmplDao, CnSOrgDao cnSOrgDao, CnSDao cnSDao) {
+        return new DefaultCnSOrgSmplService(cnSOrgSmplDao, cnSOrgDao, cnSDao);
+    }
+
+    @Bean
+    public CnSOrgService cnSOrgService(CnSOrgDao cnSOrgDao, CnSOrgSmplDao cnSOrgSmplDao) {
+        return new DefaultCnSOrgService(cnSOrgDao, cnSOrgSmplDao);
     }
 
     /**

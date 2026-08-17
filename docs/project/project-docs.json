@@ -6,7 +6,7 @@
       "description": "Cистема работы с контрагентами и объектами при капитальном строительстве на основе БД MS SQL Server FEMSQ (Fish Eye MS SQL Server)",
       "author": "Александр",
       "created": "2025-10-08",
-      "lastUpdated": "2026-07-22",
+      "lastUpdated": "2026-08-14",
       "status": "in_progress",
       "repository": "https://github.com/bondalen/femsq.git",
       "license": "MIT",
@@ -498,6 +498,15 @@
       ]
     },
     "development": {
+      "file_paths": {
+        "rule": "В БД и UI путь хранится и показывается как в Проводнике пользователя. JVM при открытии файла переводит его в путь своей ОС; перевод в БД не пишется.",
+        "windows_example": "D:\\wire-guard-share-nb-win\\femsq\\excel\\2025-12\\debit\\файл.xlsx",
+        "wsl_runtime": "D:\\... → /mnt/d/... (плюс bind /mnt/nb-win-share для шары nb-win)",
+        "resolver": "com.femsq.web.api.sudz.SudzDbtUplExcelPathResolver",
+        "operator_responsibility": "Пользователь обеспечивает существование пути на машине процесса Java.",
+        "accepted": "2026-08-14",
+        "notes": "Linux-монтирование шары (/mnt/nb-win-share) остаётся для доступа к файлам с Fedora; это не форма хранения в БД."
+      },
       "environments": {
         "description": "Машины и серверы БД. Используется при проверке окружения (.cursorrules) и при выборе набора SQL-скриптов для деплоя.",
         "check_order": [
@@ -548,7 +557,7 @@
               "mount_script_wsl": "code/scripts/mount-nb-win-share-wsl.sh",
               "mount_method": "bind",
               "wsl_source": "/mnt/d/wire-guard-share-nb-win",
-              "notes": "После git pull в WSL: ./code/scripts/mount-nb-win-share-wsl.sh. Пути ra_dir/af_name в БД — через /mnt/nb-win-share/..."
+              "notes": "После git pull в WSL: ./code/scripts/mount-nb-win-share-wsl.sh. Пути в БД и UI — как в Проводнике (D:\\\\...); JVM резолвит D:\\\\ → /mnt/d/ (и bind /mnt/nb-win-share). См. development.file_paths."
             }
           },
           "alex-fedora": {
@@ -598,7 +607,7 @@
               "credentials_template": "docs/development/examples/smbcredentials.example",
               "mount_script": "code/scripts/mount-nb-win-share.sh",
               "mount_method": "cifs",
-              "notes": "После git pull: mount-nb-win-share.sh (WireGuard). Локальный docs/excel/ не используется."
+              "notes": "После git pull: mount-nb-win-share.sh (WireGuard). Пути в БД/UI — как в Проводнике оператора; на Fedora для Java это обычно /mnt/nb-win-share/.... См. development.file_paths."
             },
             "notes": "Cursor и DBeaver на Fedora; после git pull — mount-nb-win-share.sh, setup-cursor-mcp.sh, setup-dbhub.sh"
           },

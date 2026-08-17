@@ -3,7 +3,7 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-08-09"
+      "lastUpdated": "2026-08-14"
     },
     "sessions": [
       {
@@ -8665,6 +8665,736 @@
                       "docs/development/notes/domain/sudz/03-processes.md",
                       "docs/development/notes/UI/02-9_sudz-mvp-screens.md",
                       "docs/development/project-development.json"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "🔶 0069 Загрузка выгрузки. UI (in_progress, high). № chat-2026-08-11-001",
+          "chat-attributes": {
+            "id": "chat-2026-08-11-001",
+            "created": "2026-08-11",
+            "lastUpdated": "2026-08-14",
+            "owner": "Александр",
+            "status": "in_progress",
+            "priority": "high",
+            "tags": [
+              "sudz",
+              "0069",
+              "ui",
+              "cn_inv_dbt_upl",
+              "access",
+              "wireframe",
+              "funnel-steps"
+            ],
+            "links": {
+              "projectDocsRefs": [
+                "module:frontend",
+                "module:backend.web"
+              ],
+              "developmentTasks": [
+                "0069"
+              ],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#56-0069-загрузка-общего-свода--порядок-s61",
+              "uiNote": "docs/development/notes/UI/02-9_sudz-mvp-screens.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "S61: эскиз C + скрины Access CnInvDbtUpl (success). № log-2026-08-11-001",
+                "log-attributes": {
+                  "id": "log-2026-08-11-001",
+                  "timestamp": "2026-08-11T09:50:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0069"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Старт 0069 UI: проверка окружения, эскиз экрана C, каталог скринов Access",
+                    "details": "Машина nb-win; DBHub OK; femsq-mssql Up. Эскиз «Загрузка свода» в 02-9 §4a. Сохранены 14 скринов CnInvDbtUpl_2/File_f (runtime+design) в docs/development/notes/UI/assets/26-0811-cn-inv-dbt-upl/. Уточнены предложения: layout список сверху как Access; подвкладки ход/листы/InvDouble; внешние вкладки счетов/долгов — вне первого UAT.",
+                    "outcome": "Ожидается приёмка уточнённого эскиза владельцем; код воронки не трогался.",
+                    "references": [
+                      "docs/development/notes/UI/02-9_sudz-mvp-screens.md",
+                      "docs/development/notes/UI/assets/26-0811-cn-inv-dbt-upl/README.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S61b: Access-local File* vs SQL (success). № log-2026-08-11-002",
+                "log-attributes": {
+                  "id": "log-2026-08-11-002",
+                  "timestamp": "2026-08-11T11:15:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0069"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Проверка таблиц лаунчера на SQL Server + уточнение эскиза",
+                    "details": "Nav/ER Access: CnInvDbtUplFile(+Sh/Tbl/InvDouble) — local. DBHub: на FishEye есть cn_inv_dbt_upl/pm_upl/dbt/g_p; File* и Tbl* отсутствуют; cn_inv_dbt_double = VIEW ≠ InvDouble. v1: SQL только список upl; path/флаги/лог/листы — UI-state до staging.",
+                    "outcome": "04-data-model, 02-9 §4a, assets README обновлены.",
+                    "references": [
+                      "docs/development/notes/UI/assets/26-0811-cn-inv-dbt-upl/README.md",
+                      "docs/development/notes/domain/sudz/04-data-model.md",
+                      "docs/development/notes/UI/02-9_sudz-mvp-screens.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S61c: порядок 0069 — staging SQL до UI (success). № log-2026-08-11-003",
+                "log-attributes": {
+                  "id": "log-2026-08-11-003",
+                  "timestamp": "2026-08-11T11:25:00+03:00",
+                  "level": "success",
+                  "effort": "0.3h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0069"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Согласован порядок: изучить Access-local → перенос на SQL → UI → воронка",
+                    "details": "Владелец отклонил UI без серверных аналогов File/Sh/Tbl/InvDouble. §5.6 переписан (этапы 0–7); минимум дампа TableDef из 5 таблиц; метод DumpTableDef_Extended.",
+                    "outcome": "Следующий шаг — съём структур Access (этап 1).",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S61c этап1: TableDef File/Sh/Tbl/CnInv/InvDouble (success). № log-2026-08-12-001",
+                "log-attributes": {
+                  "id": "log-2026-08-12-001",
+                  "timestamp": "2026-08-12T21:05:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0069"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Снят TableDef (+данные где есть) пяти Access-local таблиц лаунчера свода",
+                    "details": "File 19, FileSh 114, Tbl 1548 (upl=26), TblCnInv 0, FileInvDouble 0. Каталог 26-0811_CtInvDbtUpl_/. Этап 1 §5.6 закрыт.",
+                    "outcome": "Далее: карта связей + DDL sudz (этапы 2–5), UI после.",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/26-0811_CtInvDbtUpl_/README.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S61c: DDL sudz staging + seed File/Sh (success). № log-2026-08-12-002",
+                "log-attributes": {
+                  "id": "log-2026-08-12-002",
+                  "timestamp": "2026-08-12T21:30:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0069"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Применены решения владельца + DDL/seed на DEV",
+                    "details": "Имена Access-like; без FK Upload→upl; cidutKey IDENTITY; seed 19 File + 114 FileSh. Скрипты 24_/25_ в 26-0812-sudz-dbt-upl-staging. VERIFY counts OK.",
+                    "outcome": "Следующее: GraphQL + экран C (этап 6).",
+                    "references": [
+                      "docs/development/notes/sql/26-0812-sudz-dbt-upl-staging/README.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S61d: старт переноса CnInvPmtUpl* (success). № log-2026-08-13-001",
+                "log-attributes": {
+                  "id": "log-2026-08-13-001",
+                  "timestamp": "2026-08-13T06:30:00+03:00",
+                  "level": "success",
+                  "effort": "0.2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0069"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Решение владельца B: съём/DDL CnInvPmtUpl* сейчас",
+                    "details": "Не откладывать 1.1.1.2 staging. Каталог 26-0813_CnInvPmtUpl_. Порядок как у Dbt: TableDef по одной → DDL sudz → seed.",
+                    "outcome": "Указание 1: дамп CnInvPmtUplFile.",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S61f: метод воронки — панель шагов (success). № log-2026-08-13-002",
+                "log-attributes": {
+                  "id": "log-2026-08-13-002",
+                  "timestamp": "2026-08-13T08:08:00+03:00",
+                  "level": "success",
+                  "effort": "0.4h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0069"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксировать S61f: чекбоксы stepId вместо «всё сразу» / комментирования VBA",
+                    "details": "Владелец: в Access шаги воронки (cls ≈140–247) включались по одному. FEMSQ — панель процедур+чекбоксы; жёсткий префикс цепочки; orgNotInBuirg для инлайн-блока; ExistDbl disabled. Код не менялся.",
+                    "outcome": "Обновлены chat-plan §5.6 (v0.59), 02-9 §4a, 04 §2.7, задача 0069, журнал.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+                      "docs/development/notes/UI/02-9_sudz-mvp-screens.md",
+                      "docs/development/notes/domain/sudz/04-data-model.md",
+                      "docs/project/proposals/vba-analysis/VBA-Code-Export/Form-Modules/Form_CnInvDbtUpl_gt_File_f.cls"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S61i: cidufPath из Проводника, без скрепки (success). № log-2026-08-14-001",
+                "log-attributes": {
+                  "id": "log-2026-08-14-001",
+                  "timestamp": "2026-08-14T17:20:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0069"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Путь Excel — только cidufPath; скрепка и REST staging сняты",
+                    "details": "Поле «Файл» редактируемое, путь как в Проводнике пишется в БД (GraphQL updateSudzDbtUplFile). excelToTbl читает cidufPath; SudzDbtUplExcelPathResolver переводит D:\\ в /mnt/d/ (и bind /mnt/nb-win-share) без записи перевода в БД. Удалены POST /api/v1/sudz/dbt-upl/excel, SudzDbtUplExcelStaging, excelStaged.",
+                    "outcome": "Один источник пути — поле БД. Java открывает файл с машины процесса.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/SudzDbtUplExcelPathResolver.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/SudzDbtUplFunnelRunner.java",
+                      "code/femsq-frontend-q/src/views/sudz/SudzDbtUplView.vue",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+                      "docs/development/notes/UI/02-9_sudz-mvp-screens.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S61j: UAT 1764, сброс лога, без чекбокса excelToTbl (success). № log-2026-08-14-002",
+                "log-attributes": {
+                  "id": "log-2026-08-14-002",
+                  "timestamp": "2026-08-14T17:45:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0069"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Канон путей Проводника; проверка Tbl 910; лог заменяется; excelToTbl только с cidufFlTbl",
+                    "details": "UAT upl=910: cidufPath=D:\\...xlsx, Tbl=1764 (листы 606012/022/761010/762210/767501/767502 как эталон). Канон в project-docs development.file_paths и remote-development-nb-win.md. FunnelRunner пишет cidufLoadingProgress заново. Чекбокс excelToTbl убран из панели.",
+                    "outcome": "Документация путей обновлена; UI без дубля с «обнов. по исх?».",
+                    "references": [
+                      "docs/project/project-docs.json",
+                      "docs/development/remote-development-nb-win.md",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/SudzDbtUplFunnelRunner.java",
+                      "code/femsq-frontend-q/src/sudz/dbt-upl-funnel-steps.ts"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S61k: orgNotInBuirg только лог, без домена (success). № log-2026-08-14-003",
+                "log-attributes": {
+                  "id": "log-2026-08-14-003",
+                  "timestamp": "2026-08-14T18:05:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0069"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Реализован шаг orgNotInBuirg: SQL как Access, только HTML-лог",
+                    "details": "Tbl по unloadKey LEFT JOIN ags.org_id type=1; нет БУиРГ → лог «Новая»; type=2 по ИНН → «Уже имеется». cidufFlLoad не влияет, ags/sudz не пишутся. Превью DEV upl=910: 9 строк лога (4 кода; Россети — несколько type=2). upl 26 не менялся.",
+                    "outcome": "Панель: excelToTbl + orgNotInBuirg реальны; далее CnNotLoad (stub).",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/SudzDbtUplOrgNotInBuirgLog.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/SudzDbtUplFunnelRunner.java",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Организации: create og + org_id type1/2, densify UI (success). № log-2026-08-14-004",
+                "log-attributes": {
+                  "id": "log-2026-08-14-004",
+                  "timestamp": "2026-08-14T19:10:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0069"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Минимальный срез: создание og и привязка org_id с экрана Организации",
+                    "details": "GraphQL createOrganizationWithIds / attachOrganizationIds / organizationIds. ИНН только в org_id type=2. UI: диалог Создать + форма привязки на карточке. Уплотнены вертикальные интервалы (dense). Поддержка сценария после лога orgNotInBuirg.",
+                    "outcome": "Можно завести новую организацию с БУиРГ/ИНН или дописать коды к существующей.",
+                    "references": [
+                      "code/femsq-frontend-q/src/views/organizations/OrganizationsView.vue",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/service/DefaultOrgIdService.java",
+                      "docs/development/notes/UI/02-1-3_organizations-screen.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Организации: master-detail + ogNmF + КПП (success). № log-2026-08-14-005",
+                "log-attributes": {
+                  "id": "log-2026-08-14-005",
+                  "timestamp": "2026-08-14T19:45:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0069"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Экран Организации как Access: master-detail, 3 вкладки",
+                    "details": "Вкладки идентификаторы (org_id + КПП в t_ext), общее, разные имена (ags.ogNmF). Layout список сверху / детали снизу.",
+                    "outcome": "Можно вести филиалы с ИНН+КПП и варианты имён для ловли.",
+                    "references": [
+                      "code/femsq-frontend-q/src/views/organizations/OrganizationsView.vue",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcOgNmFDao.java",
+                      "docs/development/notes/UI/02-1-3_organizations-screen.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Организации: фокус поиска + правка КПП (success). № log-2026-08-14-006",
+                "log-attributes": {
+                  "id": "log-2026-08-14-006",
+                  "timestamp": "2026-08-14T20:25:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0069"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "UAT: поиск терял фокус; нельзя дописать КПП к существующему ИНН",
+                    "details": "Убран disable поиска при loading; inline-правка org_id_value_t_ext; attachItn апгрейдит пустой КПП; JAR 0.1.0.181",
+                    "outcome": "Фокус в поиске стабилен; КПП у головной правится в ячейке или через Добавить ИНН+КПП",
+                    "references": [
+                      "code/femsq-frontend-q/src/views/organizations/OrganizationsView.vue",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/service/DefaultOrgIdService.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S61l: CnNotLoad только лог, без домена (success). № log-2026-08-14-007",
+                "log-attributes": {
+                  "id": "log-2026-08-14-007",
+                  "timestamp": "2026-08-14T21:00:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0069"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Реализован шаг воронки CnNotLoad (лог)",
+                    "details": "Цепочка ciduCnNotLoad снята; T-SQL с *Null как Access calculated; flLoad apply отложен. Превью upl=910 ≈65 строк.",
+                    "outcome": "Чекбокс CnNotLoad пишет HTML-лог новых договоров без записи в ags.cn*",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/SudzDbtUplCnNotLoadLog.java",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java",
+                      "docs/project/proposals/vba-analysis/access-queries/ciduCnNotLoad.access.sql"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S61l+: CnNotLoad apply + rollback cnMark (success). № log-2026-08-14-008",
+                "log-attributes": {
+                  "id": "log-2026-08-14-008",
+                  "timestamp": "2026-08-14T21:30:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0069"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Apply CnNotLoad с откатом по cnMark",
+                    "details": "flLoad→INSERT цепочки cn*; strMark; rollbackSudzCnNotLoad; транзакция apply",
+                    "outcome": "Можно вносить договоры и откатить по метке из лога",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/model/sudz/SudzAccessStrMark.java",
+                      "code/femsq-backend/femsq-web/src/main/resources/graphql/sudz-schema.graphqls"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S61m: Excel plain digits + откат/повтор apply 910 (success). № log-2026-08-14-009",
+                "log-attributes": {
+                  "id": "log-2026-08-14-009",
+                  "timestamp": "2026-08-14T21:36:00+03:00",
+                  "level": "success",
+                  "effort": "45m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0069"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+                    "extendedDescriptions": [
+                      "docs/journal/logs/log-2026-08-14-009.md"
+                    ]
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Фикс scientific в номерах договоров + перезаливка 910",
+                    "details": "AuditExcelCellReader: целые NUMERIC→plain; rollback 8142118; excelToTbl+CnNotLoad → cnMark 8142135; Ростелеком 211000089635",
+                    "outcome": "В Tbl и ags.cnNum нет 2.11E+11; JAR 0.1.0.184; File flLoad=true flTbl=false",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/excel/AuditExcelCellReader.java",
+                      "docs/journal/logs/log-2026-08-14-009.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S61n: CnExistCtptNotLoad только лог (success). № log-2026-08-14-010",
+                "log-attributes": {
+                  "id": "log-2026-08-14-010",
+                  "timestamp": "2026-08-14T21:55:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0069"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+                    "extendedDescriptions": [
+                      "docs/journal/logs/log-2026-08-14-010.md"
+                    ]
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "CnExistCtptNotLoad: лог по ciduCnExistCtptNot",
+                    "details": "Запрос Access снят; T-SQL HAVING COUNT>0; flLoad не влияет; UAT 910 → 5 строк",
+                    "outcome": "Шаг реален без записи в домен; JAR 0.1.0.185",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/access-queries/ciduCnExistCtptNot.access.sql",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S62: эталон cnNum / задача Договоры 0071 (success). № log-2026-08-15-001",
+                "log-attributes": {
+                  "id": "log-2026-08-15-001",
+                  "timestamp": "2026-08-15T09:25:00+03:00",
+                  "level": "success",
+                  "effort": "30m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0071",
+                      "0069"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+                    "extendedDescriptions": [
+                      "docs/journal/logs/log-2026-08-15-001.md"
+                    ]
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Сохранён эталон Access Договоры; код не начат",
+                    "details": "14 скринов cnNum→cn→cn_s→orgSmpl→org; 02-10; задача 0071; блокер воронки после CnExistCtptNotLoad",
+                    "outcome": "Документация готова к обсуждению подхода в следующем посте",
+                    "references": [
+                      "docs/development/notes/UI/assets/26-0815-cnNum/README.md",
+                      "docs/development/notes/UI/02-10_contracts-cnNum-access.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S62c: полный эталон cnNum (PM/PrDoc/lookups) + Access≠dbtvar (success). № log-2026-08-15-002",
+                "log-attributes": {
+                  "id": "log-2026-08-15-002",
+                  "timestamp": "2026-08-15T10:55:00+03:00",
+                  "level": "success",
+                  "effort": "25m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:sudz"
+                    ],
+                    "developmentTasks": [
+                      "0071",
+                      "0069"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+                    "extendedDescriptions": [
+                      "docs/journal/logs/log-2026-08-15-002.md"
+                    ]
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Дописан эталон Access cnNum пакеты 3–4",
+                    "details": "Accnt/dbt, lookups, PM (cn_inv_pm_dbt_upl), PrDoc/PrDocP; таблица Access↔dbtvar; runtime PrDoc пуст (ошибка Access)",
+                    "outcome": "Описание живой формы почти полное; UI FEMSQ — по целевой модели, код не начат",
+                    "references": [
+                      "docs/development/notes/UI/assets/26-0815-cnNum/README.md",
+                      "docs/development/notes/UI/02-10_contracts-cnNum-access.md",
+                      "docs/development/notes/domain/sudz/assets/26-0807-sudz-target-sketch-dbtvar.png"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S63: вариант 1 утверждён — pm/PrDoc на Smpl (success). № log-2026-08-15-003",
+                "log-attributes": {
+                  "id": "log-2026-08-15-003",
+                  "timestamp": "2026-08-15T14:10:00+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:sudz"
+                    ],
+                    "developmentTasks": [
+                      "0069",
+                      "0071"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+                    "extendedDescriptions": [
+                      "docs/journal/logs/log-2026-08-15-003.md"
+                    ]
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксировано решение по эскизу pm↔accnt",
+                    "details": "Вариант 1: cnInvAccntSmpl якорь PM/PrDoc; не трогать живое; без моста Dbt↔Smpl; освоение лимитов после СУДЗ",
+                    "outcome": "Блокер модели снят; можно продолжать СУДЗ/0071 с корректным эскизом",
+                    "references": [
+                      "docs/development/notes/domain/sudz/04-3_problems-solutions.md",
+                      "docs/development/notes/domain/sudz/08-target-schema.md"
                     ]
                   }
                 ]

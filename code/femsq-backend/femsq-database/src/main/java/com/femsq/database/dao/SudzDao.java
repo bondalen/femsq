@@ -1,12 +1,24 @@
 package com.femsq.database.dao;
 
 import com.femsq.database.model.sudz.SudzCmmGrLookup;
+import com.femsq.database.model.sudz.SudzCnInvUplSfDouble;
 import com.femsq.database.model.sudz.SudzD644Row;
+import com.femsq.database.model.sudz.SudzDbtUplCnCtptExistInvApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplCnCtptExistInvResult;
+import com.femsq.database.model.sudz.SudzDbtUplCnExistCtptNotLoad;
+import com.femsq.database.model.sudz.SudzDbtUplCnNotLoad;
+import com.femsq.database.model.sudz.SudzDbtUplCnNotLoadApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplFile;
+import com.femsq.database.model.sudz.SudzDbtUplLauncher;
+import com.femsq.database.model.sudz.SudzDbtUplOrgNotInBuirg;
+import com.femsq.database.model.sudz.SudzDbtUplTblRow;
 import com.femsq.database.model.sudz.SudzDebtCollection;
 import com.femsq.database.model.sudz.SudzPmLink;
 import com.femsq.database.model.sudz.SudzPmUplLookup;
 import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
+import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
+import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
 import com.femsq.database.model.sudz.SudzSvodResult;
 import com.femsq.database.model.sudz.SudzUplLookup;
 import com.femsq.database.model.sudz.SudzYear;
@@ -247,4 +259,160 @@ public interface SudzDao {
             String mery,
             String cstCode
     );
+
+    /**
+     * Лаунчер загрузки свода для выгрузки: File + FileSh + InvDouble.
+     *
+     * @param uplKey ключ {@code cn_inv_dbt_upl}
+     * @return карточка или empty, если upl не найден
+     */
+    Optional<SudzDbtUplLauncher> findDbtUplLauncher(int uplKey);
+
+    /**
+     * Upsert шапки {@code CnInvDbtUplFile} по {@code cidufUpload}.
+     *
+     * @param uplKey ключ выгрузки
+     * @param path путь/имя; null — оставить / при insert пустая строка
+     * @param flLoad флаг; null — оставить / при insert false
+     * @param flTbl флаг; null — оставить / при insert false
+     * @return актуальная шапка
+     */
+    SudzDbtUplFile upsertDbtUplFile(int uplKey, String path, Boolean flLoad, Boolean flTbl);
+
+    /**
+     * Записывает HTML-лог хода в шапку File (создаёт File при отсутствии).
+     *
+     * @param uplKey ключ выгрузки
+     * @param progressHtml полный HTML лога
+     * @return актуальная шапка
+     */
+    SudzDbtUplFile setDbtUplFileProgress(int uplKey, String progressHtml);
+
+    /**
+     * Заменяет буфер {@code CnInvDbtUplTbl} для выгрузки (DELETE по unload + INSERT).
+     *
+     * @param unloadKey {@code upl_key} / {@code cidutUnloadKey}
+     * @param rows строки из Excel
+     * @return число вставленных строк
+     */
+    int replaceDbtUplTbl(int unloadKey, List<SudzDbtUplTblRow> rows);
+
+    /**
+     * Число строк буфера Tbl для выгрузки.
+     *
+     * @param unloadKey {@code upl_key}
+     * @return COUNT(*)
+     */
+    int countDbtUplTbl(int unloadKey);
+
+    /**
+     * Организации свода без кода БУиРГ в {@code ags.org_id} (type=1).
+     * Совпадение ИНН (type=2) даёт {@code existingOgNm}; несколько type=2 — несколько строк (как Access).
+     *
+     * @param unloadKey {@code upl_key} / {@code cidutUnloadKey}
+     * @return строки для лога {@code orgNotInBuirg}
+     */
+    List<SudzDbtUplOrgNotInBuirg> findDbtUplOrgNotInBuirg(int unloadKey);
+
+    /**
+     * Договоры свода без пары в БД (цепочка Access {@code ciduCnNotLoad}).
+     * Нормализация {@code *Null} — как вычисляемые поля Access (не столбцы Tbl).
+     *
+     * @param unloadKey {@code upl_key} / {@code cidutUnloadKey}
+     * @return строки для лога {@code CnNotLoad}
+     */
+    List<SudzDbtUplCnNotLoad> findDbtUplCnNotLoad(int unloadKey);
+
+    /**
+     * Договоры свода: номер есть в БД, но нет пары номер+дата+исполнитель
+     * ({@code ciduCnExistCtptNot} / {@code HAVING Count &gt; 0}).
+     *
+     * @param unloadKey {@code upl_key} / {@code cidutUnloadKey}
+     * @return строки для лога {@code CnExistCtptNotLoad}
+     */
+    List<SudzDbtUplCnExistCtptNotLoad> findDbtUplCnExistCtptNotLoad(int unloadKey);
+
+    /**
+     * INSERT договоров шага {@code CnNotLoad} (только строки с {@code countCnName = 1}).
+     * Одна транзакция; все новые {@code cn} получают один {@code cnMark}.
+     *
+     * @param rows строки лога (порядок = индекс 1..n)
+     * @param cnMark метка отката
+     * @param note текст примечания
+     * @return итог apply
+     */
+    SudzDbtUplCnNotLoadApplyResult applyDbtUplCnNotLoad(
+            List<SudzDbtUplCnNotLoad> rows,
+            int cnMark,
+            String note
+    );
+
+    /**
+     * Откат apply {@code CnNotLoad} по {@code ags.cn.cnMark}.
+     * Порядок: {@code cn_s_org} → {@code cn_s_org_smpl} → {@code cn_s} → {@code cnNum} → {@code cn}.
+     *
+     * @param cnMark метка
+     * @return число удалённых строк {@code ags.cn}
+     */
+    int rollbackCnNotLoadByMark(int cnMark);
+
+    /**
+     * Очистка очереди двоящих СФ ({@code CnInvDbtUplFileInvDouble}) — prelude Access
+     * перед {@code CnCtptExistInvNotLoad}.
+     *
+     * @return число удалённых строк
+     */
+    int clearDbtUplInvDouble();
+
+    /**
+     * Пересобирает буфер {@code CnInvDbtUplTblCnInv} (новые СФ для существующих договоров)
+     * и возвращает данные для лога. При {@code fileKey != null} наполняет InvDouble
+     * для СФ с ненулевым {@code inNumCount} (как {@code CnInvConcat}).
+     *
+     * @param unloadKey {@code upl_key}
+     * @param fileKey ключ File для InvDouble; null — не писать очередь
+     * @return буфер + договоры
+     */
+    SudzDbtUplCnCtptExistInvResult rebuildDbtUplCnCtptExistInvNot(int unloadKey, Integer fileKey);
+
+    /**
+     * INSERT {@code inv} → {@code invNum} → {@code cnInv} по буферу TblCnInv
+     * только для строк без {@code inNumCount} (очередь SfDouble — вручную, S68).
+     *
+     * @param unloadKey ключ (для лога; буфер уже собран)
+     * @return число внесённых СФ
+     */
+    SudzDbtUplCnCtptExistInvApplyResult applyDbtUplCnCtptExistInvNotLoad(int unloadKey);
+
+    /**
+     * Очередь КСДСФ по выгрузке долгов.
+     *
+     * @param unloadKey {@code upl_key}
+     * @return строки {@code CnInvUplSfDouble}
+     */
+    List<SudzCnInvUplSfDouble> findSfDoublesByUnload(int unloadKey);
+
+    /**
+     * Excel-кандидат (строка Tbl) для строки очереди.
+     *
+     * @param ciusKey ключ очереди
+     * @return карточка или empty
+     */
+    Optional<SudzSfDoubleExcelCandidate> findSfDoubleExcelCandidate(int ciusKey);
+
+    /**
+     * Доменные СФ с тем же номером.
+     *
+     * @param invNum номер СФ
+     * @return совпадения (inv + cnInv)
+     */
+    List<SudzSfDoubleDomainMatch> findSfDoubleDomainMatches(String invNum);
+
+    /**
+     * Создать новый СФ по строке очереди (Access {@code btnInvAdd} / {@code btnInvCreate}).
+     *
+     * @param ciusKey ключ очереди со статусом open
+     * @return обновлённая строка
+     */
+    SudzCnInvUplSfDouble createSfFromDouble(int ciusKey);
 }

@@ -153,6 +153,283 @@ export interface AgentDto {
   legacyOid?: string | null;
 }
 
+/** Строка ags.org_id (type 1 = БУиРГ, type 2 = ИНН). */
+export interface OrganizationIdDto {
+  orgIdKey: number;
+  org: number;
+  orgIdType: number;
+  orgIdValueL: number | null;
+  orgIdValueT: string | null;
+  orgIdValueTExt: string | null;
+}
+
+export interface CreateOrganizationWithIdsInput {
+  ogName: string;
+  ogOfficialName: string;
+  ogFullName?: string | null;
+  ogDescription?: string | null;
+  registrationTaxType: string;
+  buirg?: number | null;
+  itn?: string | null;
+  itnExt?: string | null;
+}
+
+export interface AttachOrganizationIdsInput {
+  ogKey: number;
+  buirg?: number | null;
+  itn?: string | null;
+  itnExt?: string | null;
+}
+
+export interface UpdateOrganizationIdInput {
+  orgIdKey: number;
+  org: number;
+  orgIdType: number;
+  orgIdValueL?: number | null;
+  orgIdValueT?: string | null;
+  orgIdValueTExt?: string | null;
+}
+
+/** Строка ags.ogNmF. */
+export interface OrganizationNameVariantDto {
+  onfKey: number;
+  onfOg: number;
+  onfName: string;
+  onfNameExt: string | null;
+  onfStart: string | null;
+  onfEnd: string | null;
+}
+
+export interface CreateOgNmFInput {
+  onfOg: number;
+  onfName: string;
+  onfNameExt?: string | null;
+  onfStart?: string | null;
+  onfEnd?: string | null;
+}
+
+const CREATE_ORGANIZATION_WITH_IDS = gql`
+  mutation CreateOrganizationWithIds($input: CreateOrganizationWithIdsInput!) {
+    createOrganizationWithIds(input: $input) {
+      ogKey
+      ogName
+      ogOfficialName
+      ogFullName
+      ogDescription
+      inn
+      kpp
+      ogrn
+      okpo
+      oe
+      registrationTaxType
+    }
+  }
+`;
+
+const ATTACH_ORGANIZATION_IDS = gql`
+  mutation AttachOrganizationIds($input: AttachOrganizationIdsInput!) {
+    attachOrganizationIds(input: $input) {
+      orgIdKey
+      org
+      orgIdType
+      orgIdValueL
+      orgIdValueT
+      orgIdValueTExt
+    }
+  }
+`;
+
+const UPDATE_ORGANIZATION_ID = gql`
+  mutation UpdateOrganizationId($input: UpdateOrganizationIdInput!) {
+    updateOrganizationId(input: $input) {
+      orgIdKey
+      org
+      orgIdType
+      orgIdValueL
+      orgIdValueT
+      orgIdValueTExt
+    }
+  }
+`;
+
+const GET_ORGANIZATION_IDS = gql`
+  query GetOrganizationIds($organizationId: Int!) {
+    organizationIds(organizationId: $organizationId) {
+      orgIdKey
+      org
+      orgIdType
+      orgIdValueL
+      orgIdValueT
+      orgIdValueTExt
+    }
+  }
+`;
+
+const GET_ORGANIZATION_NAME_VARIANTS = gql`
+  query GetOrganizationNameVariants($organizationId: Int!) {
+    organizationNameVariants(organizationId: $organizationId) {
+      onfKey
+      onfOg
+      onfName
+      onfNameExt
+      onfStart
+      onfEnd
+    }
+  }
+`;
+
+const CREATE_NAME_VARIANT = gql`
+  mutation CreateOrganizationNameVariant($input: CreateOgNmFInput!) {
+    createOrganizationNameVariant(input: $input) {
+      onfKey
+      onfOg
+      onfName
+      onfNameExt
+      onfStart
+      onfEnd
+    }
+  }
+`;
+
+const DELETE_NAME_VARIANT = gql`
+  mutation DeleteOrganizationNameVariant($onfKey: Int!) {
+    deleteOrganizationNameVariant(onfKey: $onfKey)
+  }
+`;
+
+/**
+ * Идентификаторы org_id организации.
+ */
+export async function getOrganizationIds(organizationId: number): Promise<OrganizationIdDto[]> {
+  try {
+    const result = await apolloClient.query<{ organizationIds: OrganizationIdDto[] }>({
+      query: GET_ORGANIZATION_IDS,
+      variables: { organizationId },
+      fetchPolicy: 'network-only'
+    });
+    return result.data.organizationIds ?? [];
+  } catch (error) {
+    throw wrapApolloError(error, 'GetOrganizationIds');
+  }
+}
+
+/**
+ * Варианты наименований ogNmF.
+ */
+export async function getOrganizationNameVariants(
+  organizationId: number
+): Promise<OrganizationNameVariantDto[]> {
+  try {
+    const result = await apolloClient.query<{
+      organizationNameVariants: OrganizationNameVariantDto[];
+    }>({
+      query: GET_ORGANIZATION_NAME_VARIANTS,
+      variables: { organizationId },
+      fetchPolicy: 'network-only'
+    });
+    return result.data.organizationNameVariants ?? [];
+  } catch (error) {
+    throw wrapApolloError(error, 'GetOrganizationNameVariants');
+  }
+}
+
+/**
+ * Добавить вариант имени.
+ */
+export async function createOrganizationNameVariant(
+  input: CreateOgNmFInput
+): Promise<OrganizationNameVariantDto> {
+  try {
+    const result = await apolloClient.mutate<{
+      createOrganizationNameVariant: OrganizationNameVariantDto;
+    }>({
+      mutation: CREATE_NAME_VARIANT,
+      variables: { input }
+    });
+    const data = result.data?.createOrganizationNameVariant;
+    if (!data) {
+      throw new Error('Пустой ответ createOrganizationNameVariant');
+    }
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'CreateOrganizationNameVariant');
+  }
+}
+
+/**
+ * Удалить вариант имени.
+ */
+export async function deleteOrganizationNameVariant(onfKey: number): Promise<boolean> {
+  try {
+    const result = await apolloClient.mutate<{ deleteOrganizationNameVariant: boolean }>({
+      mutation: DELETE_NAME_VARIANT,
+      variables: { onfKey }
+    });
+    return result.data?.deleteOrganizationNameVariant ?? false;
+  } catch (error) {
+    throw wrapApolloError(error, 'DeleteOrganizationNameVariant');
+  }
+}
+
+/**
+ * Создать организацию и опционально привязать БУиРГ/ИНН (org_id).
+ */
+export async function createOrganizationWithIds(
+  input: CreateOrganizationWithIdsInput
+): Promise<OrganizationDto> {
+  try {
+    const result = await apolloClient.mutate<{ createOrganizationWithIds: OrganizationDto }>({
+      mutation: CREATE_ORGANIZATION_WITH_IDS,
+      variables: { input }
+    });
+    const data = result.data?.createOrganizationWithIds;
+    if (!data) {
+      throw new Error('Пустой ответ createOrganizationWithIds');
+    }
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'CreateOrganizationWithIds');
+  }
+}
+
+/**
+ * Привязать БУиРГ и/или ИНН к существующей организации.
+ */
+export async function attachOrganizationIds(
+  input: AttachOrganizationIdsInput
+): Promise<OrganizationIdDto[]> {
+  try {
+    const result = await apolloClient.mutate<{ attachOrganizationIds: OrganizationIdDto[] }>({
+      mutation: ATTACH_ORGANIZATION_IDS,
+      variables: { input }
+    });
+    return result.data?.attachOrganizationIds ?? [];
+  } catch (error) {
+    throw wrapApolloError(error, 'AttachOrganizationIds');
+  }
+}
+
+/**
+ * Обновить строку org_id (в т.ч. КПП в org_id_value_t_ext).
+ */
+export async function updateOrganizationId(
+  input: UpdateOrganizationIdInput
+): Promise<OrganizationIdDto> {
+  try {
+    const result = await apolloClient.mutate<{ updateOrganizationId: OrganizationIdDto }>({
+      mutation: UPDATE_ORGANIZATION_ID,
+      variables: { input }
+    });
+    const data = result.data?.updateOrganizationId;
+    if (!data) {
+      throw new Error('Пустой ответ updateOrganizationId');
+    }
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'UpdateOrganizationId');
+  }
+}
+
 /**
  * Получить список контактных лиц (агентов) организации.
  */

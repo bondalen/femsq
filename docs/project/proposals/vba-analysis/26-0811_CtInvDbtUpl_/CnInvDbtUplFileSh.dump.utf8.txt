@@ -1,0 +1,182 @@
+﻿========================================
+TABLE: CnInvDbtUplFileSh
+SourceTableName: 
+Connect: (local table)
+Attributes (TableDef): 0
+DateCreated: 11.01.2022 12:06:55
+LastUpdated: 23.07.2026 18:32:04
+RecordCount (SELECT COUNT): 114
+--- TableDef.Properties ---
+  Name = CnInvDbtUplFileSh  (Property.Type=12)
+  Updatable = True  (Property.Type=1)
+  DateCreated = 11.01.2022 12:06:55  (Property.Type=8)
+  LastUpdated = 23.07.2026 18:32:04  (Property.Type=8)
+  Connect = (empty string)  (Property.Type=12)
+  Attributes = 0  (Property.Type=4)
+  SourceTableName = (empty string)  (Property.Type=12)
+  RecordCount = 114  (Property.Type=4)
+  ValidationRule = (empty string)  (Property.Type=12)
+  ValidationText = (empty string)  (Property.Type=12)
+  PublishToWeb = 1  (Property.Type=2)
+  Orientation = 0  (Property.Type=2)
+  OrderByOn = False  (Property.Type=1)
+  NameMap = <binary/skipped>  (Property.Type=11)
+  DefaultView = 2  (Property.Type=2)
+  DisplayViewsOnSharePointSite = 1  (Property.Type=2)
+  TotalsRow = False  (Property.Type=1)
+  FilterOnLoad = False  (Property.Type=1)
+  OrderByOnLoad = True  (Property.Type=1)
+  HideNewField = False  (Property.Type=1)
+  BackTint = 100  (Property.Type=6)
+  BackShade = 100  (Property.Type=6)
+  ThemeFontIndex = -1  (Property.Type=4)
+  AlternateBackThemeColorIndex = 1  (Property.Type=4)
+  AlternateBackTint = 100  (Property.Type=6)
+  AlternateBackShade = 95  (Property.Type=6)
+  ReadOnlyWhenDisconnected = False  (Property.Type=1)
+  DatasheetGridlinesThemeColorIndex = 3  (Property.Type=4)
+  DatasheetForeThemeColorIndex = 0  (Property.Type=4)
+  Description = листы файла  (Property.Type=10)
+  DatasheetFontName = Calibri  (Property.Type=10)
+  DatasheetFontHeight = 9  (Property.Type=3)
+  DatasheetFontWeight = 400  (Property.Type=3)
+  DatasheetFontItalic = False  (Property.Type=1)
+  DatasheetFontUnderline = False  (Property.Type=1)
+  TabularCharSet = 204  (Property.Type=2)
+  TabularFamily = 34  (Property.Type=2)
+  DatasheetForeColor = 0  (Property.Type=4)
+  DatasheetForeColor12 = 0  (Property.Type=4)
+  GUID = <binary/skipped>  (Property.Type=9)
+--- FIELDS ---
+FIELD: cidufsKey
+  OrdinalPosition: 0
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 17
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+
+FIELD: cidufsFile
+  OrdinalPosition: 1
+  Type: 4 (dbLong)
+  Size: 4
+  Required: True
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    Description = файл  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    Caption = файл  (Property.Type=12)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: cidufsSheet
+  OrdinalPosition: 2
+  Type: 10 (dbText)
+  Size: 255
+  Required: True
+  Attributes: 2
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    Description = лист  (Property.Type=10)
+    Caption = лист  (Property.Type=12)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = True  (Property.Type=1)
+
+FIELD: cidufsAccount
+  OrdinalPosition: 3
+  Type: 4 (dbLong)
+  Size: 4
+  Required: True
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    Description = счёт  (Property.Type=10)
+    DecimalPlaces = 255  (Property.Type=2)
+    Caption = счёт  (Property.Type=12)
+    DisplayControl = 111  (Property.Type=3)
+    RowSourceType = Table/Query  (Property.Type=10)
+    RowSource = SELECT ags_accnt.account_key, [ags_accnt]![account_num] & " " & [ags_accnt]![account_name] AS name FROM ags_accnt ORDER BY [ags_accnt]![account_num] & " " & [ags_accnt]![account_name];   (Property.Type=12)
+    BoundColumn = 1  (Property.Type=3)
+    ColumnCount = 2  (Property.Type=3)
+    ColumnHeads = False  (Property.Type=1)
+    ColumnWidths = 0;8505  (Property.Type=10)
+    ListRows = 16  (Property.Type=3)
+    ListWidth = 8505twip  (Property.Type=10)
+    LimitToList = True  (Property.Type=1)
+    AllowMultipleValues = False  (Property.Type=1)
+    AllowValueListEdits = True  (Property.Type=1)
+    ShowOnlyRowSourceValues = False  (Property.Type=1)
+
+FIELD: cidufsTest
+  OrdinalPosition: 4
+  Type: 1 (dbBoolean)
+  Size: 1
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: No
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=1)
+    Scale = 0  (Property.Type=1)
+    Description = проверять?  (Property.Type=10)
+    Format = Yes/No  (Property.Type=10)
+    Caption = проверять?  (Property.Type=12)
+    DisplayControl = 106  (Property.Type=3)
+
+--- INDEXES ---
+INDEX: {BAEA06F3-C4A2-4D60-88E6-598685EA6C50}
+  Primary: False
+  Unique: False
+  Required: False
+  IgnoreNulls: False
+  Foreign: True
+  Clustered: False
+  Fields:
+    cidufsFile
+
+INDEX: PrimaryKey
+  Primary: True
+  Unique: True
+  Required: True
+  IgnoreNulls: False
+  Foreign: False
+  Clustered: False
+  Fields:
+    cidufsKey
+
+--- RELATIONS (this table as Table or ForeignTable) ---
+RELATION: {BAEA06F3-C4A2-4D60-88E6-598685EA6C50}
+  Table: CnInvDbtUplFile  ->  ForeignTable: CnInvDbtUplFileSh
+  Attributes: 4352
+  Field: cidufKey  ->  ForeignName: cidufsFile
+
+========================================
+END OF DUMP

@@ -4,8 +4,21 @@ import { defineStore } from 'pinia';
 import { RequestError } from '@/api/http';
 import type { OrganizationDto as ApiOrganizationDto } from '@/types/files';
 import {
+  attachOrganizationIds,
+  createOrganizationNameVariant,
+  createOrganizationWithIds,
+  deleteOrganizationNameVariant,
   getAgentsByOrganization,
-  getOrganizationsPage
+  getOrganizationIds,
+  getOrganizationNameVariants,
+  getOrganizationsPage,
+  updateOrganizationId,
+  type AttachOrganizationIdsInput,
+  type CreateOgNmFInput,
+  type CreateOrganizationWithIdsInput,
+  type OrganizationIdDto,
+  type OrganizationNameVariantDto,
+  type UpdateOrganizationIdInput
 } from '@/api/organizations-api';
 
 export interface AgentDto {
@@ -78,6 +91,13 @@ export const useOrganizationsStore = defineStore('organizations', () => {
   const organizations = ref<Organization[]>([]);
   const selectedOrganizationKey = ref<number | null>(null);
   const agents = ref<Agent[]>([]);
+  const orgIds = ref<OrganizationIdDto[]>([]);
+  const orgIdsLoading = ref(false);
+  const orgIdsError = ref<string | null>(null);
+  const nameVariants = ref<OrganizationNameVariantDto[]>([]);
+  const nameVariantsLoading = ref(false);
+  const nameVariantsError = ref<string | null>(null);
+  const saving = ref(false);
 
   const loading = ref(false);
   const agentsLoading = ref(false);
@@ -106,10 +126,11 @@ export const useOrganizationsStore = defineStore('organizations', () => {
 
   const hasOrganizations = computed(() => organizations.value.length > 0);
 
+  /** Поколение запроса списка — отбрасываем устаревшие ответы при быстром вводе в поиск. */
+  let organizationsFetchSeq = 0;
+
   async function fetchOrganizations(options: { keepSelection?: boolean } = {}): Promise<void> {
-    if (loading.value) {
-      return;
-    }
+    const seq = ++organizationsFetchSeq;
     loading.value = true;
     error.value = null;
 
@@ -128,6 +149,9 @@ export const useOrganizationsStore = defineStore('organizations', () => {
 
       console.info('[organizations-store] Fetching organizations (GraphQL) with query:', query);
       const page = await getOrganizationsPage(query);
+      if (seq !== organizationsFetchSeq) {
+        return;
+      }
       console.info('[organizations-store] Page meta:', {
         totalElements: page.totalElements,
         totalPages: page.totalPages,
@@ -161,11 +185,20 @@ export const useOrganizationsStore = defineStore('organizations', () => {
       selectedOrganizationKey.value = nextSelection;
 
       if (nextSelection !== null) {
-        await fetchAgentsFor(nextSelection, { force: true });
+        await Promise.all([
+          fetchAgentsFor(nextSelection, { force: true }),
+          fetchOrgIdsFor(nextSelection),
+          fetchNameVariantsFor(nextSelection)
+        ]);
       } else {
         agents.value = [];
+        orgIds.value = [];
+        nameVariants.value = [];
       }
     } catch (err) {
+      if (seq !== organizationsFetchSeq) {
+        return;
+      }
       console.error('[organizations-store] Error in fetchOrganizations:', err);
       const message = err instanceof RequestError 
         ? err.message 
@@ -176,11 +209,15 @@ export const useOrganizationsStore = defineStore('organizations', () => {
       organizations.value = [];
       selectedOrganizationKey.value = null;
       agents.value = [];
+      orgIds.value = [];
+      nameVariants.value = [];
       pagination.totalElements = 0;
       pagination.totalPages = 0;
       throw err; // Пробрасываем ошибку для логирования в компонентах
     } finally {
-      loading.value = false;
+      if (seq === organizationsFetchSeq) {
+        loading.value = false;
+      }
     }
   }
 
@@ -217,12 +254,168 @@ export const useOrganizationsStore = defineStore('organizations', () => {
     }
   }
 
-  async function selectOrganization(ogKey: number): Promise<void> {
-    if (selectedOrganizationKey.value === ogKey && agents.value.length > 0 && !agentsError.value) {
-      return;
+  async function fetchOrgIdsFor(ogKey: number): Promise<void> {
+    orgIdsLoading.value = true;
+    orgIdsError.value = null;
+    try {
+      const rows = await getOrganizationIds(ogKey);
+      if (selectedOrganizationKey.value !== ogKey) {
+        return;
+      }
+      orgIds.value = rows;
+    } catch (err) {
+      orgIdsError.value =
+        err instanceof RequestError ? err.message : 'Не удалось загрузить идентификаторы org_id';
+      orgIds.value = [];
+    } finally {
+      orgIdsLoading.value = false;
     }
+  }
+
+  async function fetchNameVariantsFor(ogKey: number): Promise<void> {
+    nameVariantsLoading.value = true;
+    nameVariantsError.value = null;
+    try {
+      const rows = await getOrganizationNameVariants(ogKey);
+      if (selectedOrganizationKey.value !== ogKey) {
+        return;
+      }
+      nameVariants.value = rows;
+    } catch (err) {
+      nameVariantsError.value =
+        err instanceof RequestError ? err.message : 'Не удалось загрузить варианты имён (ogNmF)';
+      nameVariants.value = [];
+    } finally {
+      nameVariantsLoading.value = false;
+    }
+  }
+
+  async function selectOrganization(ogKey: number): Promise<void> {
     selectedOrganizationKey.value = ogKey;
-    await fetchAgentsFor(ogKey, { force: true });
+    await Promise.all([
+      fetchAgentsFor(ogKey, { force: true }),
+      fetchOrgIdsFor(ogKey),
+      fetchNameVariantsFor(ogKey)
+    ]);
+  }
+
+  /**
+   * Создаёт организацию (+ опционально БУиРГ/ИНН в org_id) и выбирает её в списке.
+   */
+  async function createWithIds(input: CreateOrganizationWithIdsInput): Promise<Organization | null> {
+    saving.value = true;
+    error.value = null;
+    try {
+      const created = await createOrganizationWithIds(input);
+      filters.ogName = created.ogName ?? input.ogName;
+      pagination.page = DEFAULT_PAGE;
+      await fetchOrganizations({ keepSelection: false });
+      if (created.ogKey != null) {
+        await selectOrganization(created.ogKey);
+        const mapped = organizations.value.find((item) => item.ogKey === created.ogKey);
+        return mapped ?? mapOrganization(created);
+      }
+      return mapOrganization(created);
+    } catch (err) {
+      error.value = err instanceof RequestError ? err.message : 'Не удалось создать организацию';
+      return null;
+    } finally {
+      saving.value = false;
+    }
+  }
+
+  /**
+   * Привязывает БУиРГ/ИНН к выбранной организации.
+   */
+  async function attachIds(input: Omit<AttachOrganizationIdsInput, 'ogKey'> & { ogKey?: number }): Promise<boolean> {
+    const ogKey = input.ogKey ?? selectedOrganizationKey.value;
+    if (ogKey == null) {
+      orgIdsError.value = 'Выберите организацию';
+      return false;
+    }
+    saving.value = true;
+    orgIdsError.value = null;
+    try {
+      await attachOrganizationIds({
+        ogKey,
+        buirg: input.buirg ?? null,
+        itn: input.itn ?? null,
+        itnExt: input.itnExt ?? null
+      });
+      await fetchOrgIdsFor(ogKey);
+      return true;
+    } catch (err) {
+      orgIdsError.value =
+        err instanceof RequestError ? err.message : 'Не удалось привязать идентификаторы';
+      return false;
+    } finally {
+      saving.value = false;
+    }
+  }
+
+  /**
+   * Обновляет строку org_id (например дописывает КПП в org_id_value_t_ext).
+   */
+  async function updateId(input: UpdateOrganizationIdInput): Promise<boolean> {
+    saving.value = true;
+    orgIdsError.value = null;
+    try {
+      await updateOrganizationId(input);
+      await fetchOrgIdsFor(input.org);
+      return true;
+    } catch (err) {
+      orgIdsError.value =
+        err instanceof RequestError ? err.message : 'Не удалось обновить идентификатор';
+      return false;
+    } finally {
+      saving.value = false;
+    }
+  }
+
+  async function addNameVariant(input: Omit<CreateOgNmFInput, 'onfOg'> & { onfOg?: number }): Promise<boolean> {
+    const ogKey = input.onfOg ?? selectedOrganizationKey.value;
+    if (ogKey == null) {
+      nameVariantsError.value = 'Выберите организацию';
+      return false;
+    }
+    saving.value = true;
+    nameVariantsError.value = null;
+    try {
+      await createOrganizationNameVariant({
+        onfOg: ogKey,
+        onfName: input.onfName,
+        onfNameExt: input.onfNameExt ?? null,
+        onfStart: input.onfStart ?? null,
+        onfEnd: input.onfEnd ?? null
+      });
+      await fetchNameVariantsFor(ogKey);
+      return true;
+    } catch (err) {
+      nameVariantsError.value =
+        err instanceof RequestError ? err.message : 'Не удалось добавить вариант имени';
+      return false;
+    } finally {
+      saving.value = false;
+    }
+  }
+
+  async function removeNameVariant(onfKey: number): Promise<boolean> {
+    const ogKey = selectedOrganizationKey.value;
+    saving.value = true;
+    nameVariantsError.value = null;
+    try {
+      await deleteOrganizationNameVariant(onfKey);
+      if (ogKey != null) {
+        await fetchNameVariantsFor(ogKey);
+      }
+      return true;
+    } catch (err) {
+      nameVariantsError.value =
+        err instanceof RequestError ? err.message : 'Не удалось удалить вариант имени';
+      return false;
+    } finally {
+      saving.value = false;
+    }
   }
 
   async function setPage(page: number): Promise<void> {
@@ -270,10 +463,17 @@ export const useOrganizationsStore = defineStore('organizations', () => {
     organizations.value = [];
     selectedOrganizationKey.value = null;
     agents.value = [];
+    orgIds.value = [];
+    nameVariants.value = [];
     loading.value = false;
     agentsLoading.value = false;
+    orgIdsLoading.value = false;
+    nameVariantsLoading.value = false;
+    saving.value = false;
     error.value = null;
     agentsError.value = null;
+    orgIdsError.value = null;
+    nameVariantsError.value = null;
     lastUpdatedAt.value = '';
     pagination.page = DEFAULT_PAGE;
     pagination.size = DEFAULT_PAGE_SIZE;
@@ -288,17 +488,31 @@ export const useOrganizationsStore = defineStore('organizations', () => {
     selectedOrganizationKey,
     selectedOrganization,
     agents,
+    orgIds,
+    nameVariants,
     loading,
     agentsLoading,
+    orgIdsLoading,
+    nameVariantsLoading,
+    saving,
     error,
     agentsError,
+    orgIdsError,
+    nameVariantsError,
     lastUpdatedAt,
     pagination,
     filters,
     hasOrganizations,
     fetchOrganizations,
-    fetchAgentsFor,
     selectOrganization,
+    createWithIds,
+    attachIds,
+    updateId,
+    addNameVariant,
+    removeNameVariant,
+    fetchOrgIdsFor,
+    fetchNameVariantsFor,
+    fetchAgentsFor,
     setPage,
     setPageSize,
     setSort,

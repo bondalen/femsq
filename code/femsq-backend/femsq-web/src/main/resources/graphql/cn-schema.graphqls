@@ -1,0 +1,153 @@
+extend type Query {
+  """Все номера договоров (master-список экрана Договоры)."""
+  cnNums: [CnNum!]!
+  """Номера, привязанные к договору."""
+  cnNumsByCn(cnKey: Int!): [CnNum!]!
+  """Карточка договора."""
+  cn(cnKey: Int!): Cn
+  """Дерево сторон договора: cn_s → smpl → org."""
+  cnSides(cnKey: Int!): [CnSide!]!
+  """Lookup org_id (БУиРГ) для csosOrgId."""
+  cnSOrgIdLookups: [CnSOrgIdLookup!]!
+  """Справочник типов номера договора."""
+  cnNumTypes: [CnNumTypeLookup!]!
+  """Сколько уже есть номеров с тем же текстом (коллизия — решение оператора)."""
+  cnNumDuplicateCount(cnnNum: String!): Int!
+}
+
+extend type Mutation {
+  """Новый договор: cn + cnNum + исполнитель (smpl/org). Не путать с +smpl к существующему."""
+  createCnContract(input: CnContractCreateRequest!): CnContractCreated!
+  """Правка карточки cn (в т.ч. cn_date) — отдельно от csoCnDate сторон."""
+  updateCn(id: Int!, input: CnUpdateRequest!): Cn!
+
+  createCnSide(input: CnSideCreateRequest!): CnSide!
+  updateCnSide(id: Int!, input: CnSideUpdateRequest!): CnSide!
+  deleteCnSide(id: Int!): Boolean!
+
+  createCnSOrgSmpl(input: CnSOrgSmplCreateRequest!): CnSOrgSmpl!
+  updateCnSOrgSmpl(id: Int!, input: CnSOrgSmplUpdateRequest!): CnSOrgSmpl!
+  deleteCnSOrgSmpl(id: Int!): Boolean!
+
+  createCnSOrg(input: CnSOrgCreateRequest!): CnSOrg!
+  updateCnSOrg(id: Int!, input: CnSOrgUpdateRequest!): CnSOrg!
+  deleteCnSOrg(id: Int!): Boolean!
+}
+
+type CnNum {
+  cnnKey: Int!
+  cnnNum: String
+  cnnCn: Int!
+  cnnType: Int
+  cnnTypeName: String
+  cnnNote: String
+}
+
+type Cn {
+  cnKey: Int!
+  cnNumber: String
+  cnDate: Date
+  cnNote: String
+  cnMark: Int
+}
+
+type CnSide {
+  cnSKey: Int!
+  cnKey: Int!
+  cnSType: Int!
+  cnSTypeName: String
+  smpls: [CnSOrgSmpl!]!
+}
+
+type CnSOrgSmpl {
+  csosKey: Int!
+  csosCnS: Int!
+  csosOrgId: Int!
+  orgLabel: String
+  csosTimeOfEntry: String
+  orgs: [CnSOrg!]!
+}
+
+type CnSOrg {
+  cnSOrgKey: Int!
+  csoCnSOrgSmpl: Int!
+  dateBeg: Date
+  dateEnd: Date
+  csoAsbuId: String
+  csoCnDate: Date
+  csoTimeOfEntry: String
+}
+
+type CnSOrgIdLookup {
+  orgIdKey: Int!
+  buirg: Int
+  label: String!
+}
+
+type CnNumTypeLookup {
+  cnntKey: Int!
+  cnntName: String
+}
+
+type CnContractCreated {
+  cnKey: Int!
+  cnnKey: Int!
+  cnSKey: Int
+  csosKey: Int
+  cnSOrgKey: Int
+}
+
+input CnContractCreateRequest {
+  """Номер; пусто/null → NULL в БД (допустимо)."""
+  cnnNum: String
+  """Дата из свода → cn_s_org.csoCnDate. cn.cn_date при создании всегда NULL."""
+  csoCnDate: Date
+  """Обязателен: cnNum.cnnType NOT NULL."""
+  cnnType: Int!
+  """Исполнитель; если нет — создаются только cn + cnNum."""
+  csosOrgId: Int
+  note: String
+}
+
+input CnUpdateRequest {
+  """Справочная дата карточки cn; не путать с csoCnDate."""
+  cnDate: Date
+  cnNote: String
+  cnMark: Int
+}
+
+input CnSideCreateRequest {
+  cnKey: Int!
+  cnSType: Int!
+}
+
+input CnSideUpdateRequest {
+  cnKey: Int!
+  cnSType: Int!
+}
+
+input CnSOrgSmplCreateRequest {
+  csosCnS: Int!
+  csosOrgId: Int!
+}
+
+input CnSOrgSmplUpdateRequest {
+  csosCnS: Int!
+  csosOrgId: Int!
+}
+
+input CnSOrgCreateRequest {
+  csoCnSOrgSmpl: Int!
+  dateBeg: Date
+  dateEnd: Date
+  csoAsbuId: String
+  csoCnDate: Date
+}
+
+input CnSOrgUpdateRequest {
+  csoCnSOrgSmpl: Int!
+  dateBeg: Date
+  dateEnd: Date
+  csoAsbuId: String
+  csoCnDate: Date
+}

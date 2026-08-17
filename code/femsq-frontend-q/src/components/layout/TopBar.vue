@@ -55,6 +55,16 @@
       <button
         type="button"
         class="femsq-nav-item"
+        :class="{ 'femsq-nav-item--active': activeView === 'contracts' }"
+        :disabled="!contractsEnabled"
+        data-test="nav-contracts"
+        @click="handleNavigate('contracts')"
+      >
+        Договоры
+      </button>
+      <button
+        type="button"
+        class="femsq-nav-item"
         :class="{ 'femsq-nav-item--active': activeView === 'reports' }"
         :disabled="!reportsEnabled"
         data-test="nav-reports"
@@ -89,7 +99,9 @@
         class="femsq-nav-item femsq-nav-item--btn"
         :class="{
           'femsq-nav-item--active':
-            activeView === 'sudz-portfolio' || activeView === 'sudz-debts'
+            activeView === 'sudz-portfolio' ||
+            activeView === 'sudz-debts' ||
+            activeView === 'sudz-dbt-upl'
         }"
         :disable="!sudzEnabled"
         label="СУДЗ"
@@ -119,7 +131,13 @@
             <QItem clickable disable>
               <QItemSection>Исходящие документы</QItemSection>
             </QItem>
-            <QItem clickable disable>
+            <QItem
+              clickable
+              v-close-popup
+              :active="activeView === 'sudz-dbt-upl'"
+              data-test="nav-sudz-dbt-upl"
+              @click="handleNavigate('sudz-dbt-upl')"
+            >
               <QItemSection>Загрузка свода</QItemSection>
             </QItem>
           </QList>
@@ -192,6 +210,14 @@
           <QItem
             clickable
             v-close-popup
+            :disable="!contractsEnabled"
+            @click="handleNavigate('contracts')"
+          >
+            <QItemSection>Договоры</QItemSection>
+          </QItem>
+          <QItem
+            clickable
+            v-close-popup
             :disable="!reportsEnabled"
             @click="handleNavigate('reports')"
           >
@@ -224,6 +250,14 @@
           >
             <QItemSection>СУДЗ · Долги / мероприятия</QItemSection>
           </QItem>
+          <QItem
+            clickable
+            v-close-popup
+            :disable="!sudzEnabled"
+            @click="handleNavigate('sudz-dbt-upl')"
+          >
+            <QItemSection>СУДЗ · Загрузка свода</QItemSection>
+          </QItem>
           <QItem clickable v-close-popup @click="handleNavigate('test-grid')">
             <QItemSection>Сервис · Test Grid</QItemSection>
           </QItem>
@@ -246,6 +280,7 @@ interface Props {
   investmentChainsEnabled: boolean;
   reportsEnabled: boolean;
   sudzEnabled: boolean;
+  contractsEnabled: boolean;
 }
 
 defineProps<Props>();
