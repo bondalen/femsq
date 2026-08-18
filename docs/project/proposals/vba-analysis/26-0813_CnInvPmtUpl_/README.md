@@ -15,7 +15,11 @@
 Отличие от Dbt: у pm **нет** отдельной `FileSh` — лист в поле `cipufSheet` на File.
 
 **Прогресс:** ✅ File (30); ✅ Tbl (7736); ✅ TblCnInv (0); ✅ Tbl_1 = дубль, **не в SQL**.  
-**DDL:** [26_/27_](../../development/notes/sql/26-0812-sudz-dbt-upl-staging/) — ✅ DEV: File=30; Tbl/TblCnInv=0.
+**DDL:** [26_/27_](../../../../development/notes/sql/26-0812-sudz-dbt-upl-staging/) — ✅ DEV: File=30; Tbl/TblCnInv=0.
+
+**Паспорт формы (S69):** [02-11_cn-inv-pmt-upl-access.md](../../../../development/notes/UI/02-11_cn-inv-pmt-upl-access.md) — UI/VBA/запросы; не переснимать эти 4 таблицы вслепую. QueryDef `cipu*` + helper `agsCnCtpt*` сняты. Буфер шага 12: [`cipuCn_CtptCnOneInvOneAcDcExtPmTbl.table.md`](./cipuCn_CtptCnOneInvOneAcDcExtPmTbl.table.md). Apply: INSERT **`ags_cn_inv_pm`**.
+
+**Дыра съёма:** `.cls` родителя / Sum_t / InvDouble / invNum / CstNew; полный RS File_f; Excel Offset. Архив `…ExtPmTblOld` не снимать.
 
 
 

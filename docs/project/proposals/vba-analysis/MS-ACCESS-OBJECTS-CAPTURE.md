@@ -49,6 +49,11 @@
 - Имя таблицы и путь к файлу — **строки в кавычках** (иначе Err 424).
 - Пример:  
   `DumpTableDef_Extended "ra_ImpNew", True, False, True, "C:\temp\ra_ImpNew_dump.txt"`
+- Если Compile error **Ambiguous name detected: DumpTableDef_Extended** — в `.accdb` две копии (типично `modDumpTableDefRaImpNew` + `Module1` / `Module_26-*`). Квалифицировать:
+
+  `modDumpTableDefRaImpNew.DumpTableDef_Extended "ИмяТаблицы", True, False, True, "C:\temp\….txt"`
+
+  Дубликат не удалять без нужды (может быть рабочая копия с правками).
 
 ### 2.3. Опционально в git
 

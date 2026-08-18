@@ -3,9 +3,405 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-08-14"
+      "lastUpdated": "2026-08-18"
     },
     "sessions": [
+      {
+        "chat": {
+          "displayName": "Паспорт Access CnInvPmtUpl / 1.1.1.2 (active, high). № chat-2026-08-17-001",
+          "chat-attributes": {
+            "id": "chat-2026-08-17-001",
+            "created": "2026-08-17",
+            "lastUpdated": "2026-08-18",
+            "owner": "Александр",
+            "status": "active",
+            "priority": "high",
+            "tags": [
+              "sudz",
+              "access",
+              "CnInvPmtUpl",
+              "1.1.1.2",
+              "documentation"
+            ],
+            "links": {
+              "projectDocsRefs": [
+                "module:backend.web"
+              ],
+              "developmentTasks": [
+                "0065"
+              ],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#57-1112--паспорт-access-cninvpmtupl-s69-не-0069",
+              "uiNote": "docs/development/notes/UI/02-11_cn-inv-pmt-upl-access.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Каркас паспорта CnInvPmtUpl + чеклист съёма (info). № log-2026-08-17-001",
+                "log-attributes": {
+                  "id": "log-2026-08-17-001",
+                  "timestamp": "2026-08-17T21:28:00+03:00",
+                  "level": "info",
+                  "effort": "1h",
+                  "status": "in-progress",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0065"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Инвентаризация VBA/таблиц CnInvPmtUpl; каркас 02-11; чеклист съёма Access",
+                    "details": "Машина nb-win; DBHub OK; femsq-mssql Up. Отдельный чат от 0069/S68. Есть File_f.cls + внутренний cnInv.cls; табличный съём 26-0813 полный (File/Tbl/TblCnInv/Tbl_1). Дыры: Nav, родитель, InvDouble/invNum/CstNew .cls, QueryDef cipu*, таблица cipuCn_CtptCnOneInvOneAcDcExtPmTbl. Алгоритм btnUpload разложен по экспорту (Excel Offset + 13 шагов cipu) без выдумывания SQL запросов.",
+                    "outcome": "Документы: 02-11, assets README, 03 §1.1.1.2, 04 §2.9, chat-plan S69/§5.7. Java-воронка pmt не начата. Следующий сегмент: Nav Pane CnInvPmtUpl* и cipu*.",
+                    "references": [
+                      "docs/development/notes/UI/02-11_cn-inv-pmt-upl-access.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+                      "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/README.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "QueryDef cipuCacNot снят (success). № log-2026-08-17-002",
+                "log-attributes": {
+                  "id": "log-2026-08-17-002",
+                  "timestamp": "2026-08-17T23:00:00+03:00",
+                  "level": "success",
+                  "effort": "0.25h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0065"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Съём SQL QueryDef cipuCacNot (шаг 2 btnUpload, источник CstNew)",
+                    "details": "SELECT cacOrNull FROM CnInvPmtUplTblNull WHERE cacOrNull Is Not Null GROUP BY cacOrNull, cstapCsta HAVING cstapCsta Is Null. Анти-join к ags_cstAgPn (поле уже из LEFT JOIN в TblNull). VBA только лог. Access: HAVING по полю из GROUP BY законен без SELECT этого поля.",
+                    "outcome": "Файл cipuCacNot.access.sql + скрин 22. Следующий съём: SQL шага 1 cipuCtpt_All_OIdNot / Nav OldNot.",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipuCacNot.access.sql",
+                      "docs/development/notes/UI/02-11_cn-inv-pmt-upl-access.md",
+                      "docs/development/notes/UI/assets/26-0817-cn-inv-pmt-upl/22-sql-cipuCacNot.png"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "QueryDef cipuCtpt_All_OIdNot снят (success). № log-2026-08-17-003",
+                "log-attributes": {
+                  "id": "log-2026-08-17-003",
+                  "timestamp": "2026-08-17T23:08:00+03:00",
+                  "level": "success",
+                  "effort": "0.25h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0065"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Съём SQL QueryDef cipuCtpt_All_OIdNot (шаг 1 btnUpload)",
+                    "details": "SELECT CntrPrtNum, CntrPrtName, org_id_key FROM cipuCtpt_All_OId WHERE org_id_key is null. Имя объекта = OId (org_id), не архивный Old; раннее чтение Nav OldNot — путаница I/l. VBA OpenRecordset этого QueryDef, только лог. Родитель cipuCtpt_All_OId ещё не снят.",
+                    "outcome": "Файл cipuCtpt_All_OIdNot.access.sql + скрин 23. Следующий съём: SQL cipuCtpt_All_OId.",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipuCtpt_All_OIdNot.access.sql",
+                      "docs/development/notes/UI/02-11_cn-inv-pmt-upl-access.md",
+                      "docs/development/notes/UI/assets/26-0817-cn-inv-pmt-upl/23-sql-cipuCtpt_All_OIdNot.png"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "QueryDef cipuCtpt_All_OId снят (success). № log-2026-08-17-004",
+                "log-attributes": {
+                  "id": "log-2026-08-17-004",
+                  "timestamp": "2026-08-17T23:12:00+03:00",
+                  "level": "success",
+                  "effort": "0.25h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0065"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Съём SQL QueryDef cipuCtpt_All_OId (родитель шага 1 btnUpload)",
+                    "details": "cipuCtpt_All INNER JOIN agsOrgIdBUiRG ON CntrPrtNum = org_id_value_l. agsOrgIdBUiRG — объект Access, в FishEye нет. Nav-фильтр показывает OId и OidNot как два разных QueryDef. Наблюдение: INNER JOIN + OIdNot IS NULL при org_id_key NOT NULL в ags.org_id; аналог dbt ciduCtptNot = LEFT JOIN. Не утверждать пустоту лога до съёма agsOrgIdBUiRG.",
+                    "outcome": "Файл cipuCtpt_All_OId.access.sql + скрин 24. Следующий съём: cipuCtpt_All, затем agsOrgIdBUiRG.",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipuCtpt_All_OId.access.sql",
+                      "docs/development/notes/UI/02-11_cn-inv-pmt-upl-access.md",
+                      "docs/development/notes/UI/assets/26-0817-cn-inv-pmt-upl/24-sql-cipuCtpt_All_OId.png"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "QueryDef cipuCtpt_All снят (success). № log-2026-08-17-005",
+                "log-attributes": {
+                  "id": "log-2026-08-17-005",
+                  "timestamp": "2026-08-17T23:17:00+03:00",
+                  "level": "success",
+                  "effort": "0.25h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0065"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Съём SQL QueryDef cipuCtpt_All (набор контрагентов шага 1)",
+                    "details": "UNION уникальных пар из CnInvPmtUplTbl: ciputCntrPrtNum/Name ∪ ciputAgentNum/Name, оба NOT NULL. Шаг 1 смотрит и контрагентов, и агентов. Nav-фильтр cipuCtpt_All: All, All_Old (legacy), All_OidNot — Old ≠ OId.",
+                    "outcome": "Файл cipuCtpt_All.access.sql + скрин 25. Следующий съём: agsOrgIdBUiRG.",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipuCtpt_All.access.sql",
+                      "docs/development/notes/UI/02-11_cn-inv-pmt-upl-access.md",
+                      "docs/development/notes/UI/assets/26-0817-cn-inv-pmt-upl/25-sql-cipuCtpt_All.png"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "QueryDef agsOrgIdBUiRG снят; лог шага 1 пуст (success). № log-2026-08-17-006",
+                "log-attributes": {
+                  "id": "log-2026-08-17-006",
+                  "timestamp": "2026-08-17T23:20:00+03:00",
+                  "level": "success",
+                  "effort": "0.25h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0065"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Съём SQL QueryDef agsOrgIdBUiRG; закрыт вопрос 8 паспорта",
+                    "details": "SELECT org_id_value_l, org_id_key FROM ags_org_id WHERE org_id_type=1. Linked ags_org_id = ags.org_id. INNER JOIN в cipuCtpt_All_OId + NOT NULL org_id_key → cipuCtpt_All_OIdNot структурно пуст. Аналог dbt ciduCtptNot = LEFT JOIN.",
+                    "outcome": "Файл agsOrgIdBUiRG.access.sql. Цепочка шага 1 закрыта. Следующий съём: cipuCn_CtptCnNot.",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/agsOrgIdBUiRG.access.sql",
+                      "docs/development/notes/UI/02-11_cn-inv-pmt-upl-access.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "QueryDef cipuCn_CtptCnNot снят (success). № log-2026-08-17-007",
+                "log-attributes": {
+                  "id": "log-2026-08-17-007",
+                  "timestamp": "2026-08-17T23:25:00+03:00",
+                  "level": "success",
+                  "effort": "0.25h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0065"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Съём SQL QueryDef cipuCn_CtptCnNot (шаг 3 btnUpload)",
+                    "details": "LEFT JOIN cipuCn_Ctpt ↔ agsCnCtptExequtorSmplBuirg ON БУиРГ + № договора (NullИлиПусто), HAVING Count(cn_key)=0. VBA SqlCipuCn_CtptCnNot оборачивает QueryDef и считает схожий № в ags_cn/cnNum. agsCnCtptExequtorSmplBuirg — объект Access, не отождествлять с ags.cn_s_orgExeBuirg до съёма. Nav: Not / NotOld / NotOld2.",
+                    "outcome": "Файл cipuCn_CtptCnNot.access.sql + скрин 26. Следующий съём: cipuCn_Ctpt, затем agsCnCtptExequtorSmplBuirg.",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipuCn_CtptCnNot.access.sql",
+                      "docs/development/notes/UI/02-11_cn-inv-pmt-upl-access.md",
+                      "docs/development/notes/UI/assets/26-0817-cn-inv-pmt-upl/26-sql-cipuCn_CtptCnNot.png"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "QueryDef cipuCn_Ctpt снят; ExtPmTbl = VBA (success). № log-2026-08-17-008",
+                "log-attributes": {
+                  "id": "log-2026-08-17-008",
+                  "timestamp": "2026-08-17T23:29:00+03:00",
+                  "level": "success",
+                  "effort": "0.25h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0065"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Съём SQL QueryDef cipuCn_Ctpt (вход шага 3); уточнено имя буфера ExtPmTbl",
+                    "details": "CnInvPmtUplTbl LEFT JOIN cipuCtpt_All_OIdNot WHERE b.CntrPrtNum Is Null, LEFT JOIN agsOrgIdBUiRG. Задумано отсечь контрагентов без БУиРГ; пустой OIdNot → анти-join никого не отсекает. Только ciputCntrPrt*, не агенты. Nav: таблицы cipuCn_CtptCnOneInvOneAcDcExtPmTbl (+Old) — совпадает с VBA, не ExtPmtTbl.",
+                    "outcome": "Файл cipuCn_Ctpt.access.sql + скрин 27. Следующий съём: agsCnCtptExequtorSmplBuirg.",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipuCn_Ctpt.access.sql",
+                      "docs/development/notes/UI/02-11_cn-inv-pmt-upl-access.md",
+                      "docs/development/notes/UI/assets/26-0817-cn-inv-pmt-upl/27-sql-cipuCn_Ctpt.png"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Дамп 40 QueryDef cipu*; INSERT ags_cn_inv_pm (success). № log-2026-08-17-009",
+                "log-attributes": {
+                  "id": "log-2026-08-17-009",
+                  "timestamp": "2026-08-17T23:50:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0065"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Разобрать дамп DumpCipuQueryDefs (cipu-sql/) в паспорт 1.1.1.2",
+                    "details": "40 QueryDef UTF-8 без mojibake. APPEND: cipuInsPmNotIns→ags_cn_inv_pm; cipuDocNotIns→ags_cn_inv_doc; …AcNotIns→ags_cnInvAccntSmpl; …NotIns/TwoIns→TblCnInv; …ExtPmIns→буфер ExtPmTbl. agsCnCtptExequtorSmplBuirg — локальный QueryDef (cn_s type=2 + cn_s_org_smpl), не VIEW ags.cn_s_orgExeBuirg. Не в дампе: agsCnCtptAgentSmplBuirg*, agsCnCtptExequtorSmplBuirgOne (имена уже в extra модуля). agsInvNumCount уже есть в access-queries.",
+                    "outcome": "Сырьё cipu-sql/ + {Имя}.access.sql. Документы 02-11 / 03 / 04 / chat-plan §5.7 обновлены. Следующий съём: повтор DumpCipuQueryDefs, затем DumpTableDef …ExtPmTbl.",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipu-sql/",
+                      "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/DumpCipuQueryDefs.bas",
+                      "docs/development/notes/UI/02-11_cn-inv-pmt-upl-access.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Helper QueryDef agsCnCtpt*SmplBuirg* сняты (success). № log-2026-08-18-001",
+                "log-attributes": {
+                  "id": "log-2026-08-18-001",
+                  "timestamp": "2026-08-18T00:00:00+03:00",
+                  "level": "success",
+                  "effort": "0.25h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0065"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Разобрать повторный дамп extra: агент/исполнитель SmplBuirg и *One",
+                    "details": "agsCnCtptAgentSmplBuirg: cn_s_type=1, номер=cnnNum. agsCnCtptExequtorSmplBuirg: type=2, номер=cnnNumNull (уже был). *One: ровно один csosKey на пару (cn_key, org_id_value_l). agsInvNumCount совпал с access-queries (2026-08-15). Живой контур QueryDef паспорта pmt закрыт.",
+                    "outcome": "Три новых .access.sql в 26-0813. Следующий съём: DumpTableDef cipuCn_CtptCnOneInvOneAcDcExtPmTbl.",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/agsCnCtptAgentSmplBuirg.access.sql",
+                      "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/agsCnCtptAgentSmplBuirgOne.access.sql",
+                      "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/agsCnCtptExequtorSmplBuirgOne.access.sql",
+                      "docs/development/notes/UI/02-11_cn-inv-pmt-upl-access.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "DumpTableDef буфера …ExtPmTbl (success). № log-2026-08-18-002",
+                "log-attributes": {
+                  "id": "log-2026-08-18-002",
+                  "timestamp": "2026-08-18T07:01:00+03:00",
+                  "level": "success",
+                  "effort": "0.25h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0065"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Разобрать DumpTableDef cipuCn_CtptCnOneInvOneAcDcExtPmTbl",
+                    "details": "Локальная, 40 полей, без PK/индексов/Relations, 7736 строк. Type 20 у DocCode/Storno = dbDecimal Prec.18 Scale 0 (не GUID). csosKey=исполнитель, AgCsosKey=агент (INSERT в ags_cn_inv_pm берёт агента). Сопоставление с БД: ciasKey+cn_inv_doc_key+ciputUnloadKey+ciputSheetNum.",
+                    "outcome": "Файл .table.md. Следующий съём: Excel Offset (заголовки export_*) или недостающие .cls.",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipuCn_CtptCnOneInvOneAcDcExtPmTbl.table.md",
+                      "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipuCn_CtptCnOneInvOneAcDcExtPmTbl_dump.txt",
+                      "docs/development/notes/UI/02-11_cn-inv-pmt-upl-access.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
       {
         "chat": {
           "displayName": "✅ 0054.9 / chat-plan-26-0707: prod apply type=3 RALP (completed, critical). № chat-2026-08-04-001",

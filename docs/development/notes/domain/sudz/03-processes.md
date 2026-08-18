@@ -1,8 +1,8 @@
 # СУДЗ — процессы
 
 **Дата создания:** 2026-08-03  
-**Последнее обновление:** 2026-08-09 (S60: веха 1.1.3 = решение оператора; без New→CmmGr)  
-**Статус:** черновик (сегменты S2–S3, S20–S29, S52/S52a, S60)  
+**Последнее обновление:** 2026-08-18 (S69: буфер `…ExtPmTbl` снят)  
+**Статус:** черновик (сегменты S2–S3, S20–S29, S52/S52a, S60, S69)  
 **План чата:** [chat-plan-26-0802-sudz.md](../../chats/chat-plan/chat-plan-26-0802-sudz.md)
 
 ---
@@ -93,6 +93,12 @@ Q1 / Q2 / Q3 / Q4 года Y:
 Общий свод **не содержит** привязки задолженности к стройке (`cst`, `cstAgPn`).
 
 Специалисты могут вести работу **только** в привязке к таким объектам, поэтому дополнительно в **FishEye.ags** через MS Access загружаются файлы вида `export_{счётГК}_*` — они позволяют **привязать задолженность** к стройке / САК.
+
+**Форма Access (съём начат, S69 — паспорт, не Java):** главная **`CnInvPmtUpl`** (RecordSource `ags_cn_inv_pm_upl`, сортировка `cn_inv_pm_date DESC`; `_2` нет). Вкладки родителя: загрузка | счета, сумма | прочее. Карточка файла — `CnInvPmtUpl>File_f` (SELECT из `CnInvPmtUplFile`; Link `cn_inv_pm_key`↔`cipufUpload`; лист в поле **`cipufSheet`**, отдельной `FileSh` нет). Кнопка **«загрузка»** (`btnUpload`): COM Excel → буфер `CnInvPmtUplTbl` (якорь «№ докум.» + Offset) → воронка `cipu*`. Ручной разбор повторов СФ — `InvDouble` над `TblCnInv`. Вкладка «счета, сумма» — подформа `CnInvPmtUpl>Sum_t` (Link `cn_inv_pm_key`↔`cn_inv_pm_upl`; RecordSource = SELECT из `ags_q_cn_inv_pm_upl_sum` / VIEW `ags.q_cn_inv_pm_upl_sum`).
+
+Паспорт UI/VBA/таблиц/запросов: [02-11_cn-inv-pmt-upl-access.md](../../UI/02-11_cn-inv-pmt-upl-access.md). Порядок шагов VBA: [04-data-model §2.9](./04-data-model.md#29-алгоритм-btnupload_click--cninvpmtupl-процесс-1112-каркас-s69). Резолв стройки за период по уже загруженным PM: `ags.fnCiasDbtUplCst` (через мост `cn_inv_dbt_upl_g_p`) — [04 §2.6](./04-data-model.md).
+
+**Не закрыто съёмом:** экспорт недостающих `.cls`; полный RS File_f; Excel Offset. QueryDef `cipu*` / helper `agsCnCtpt*` / буфер `…ExtPmTbl` сняты. Java-воронка pmt **не** начинается, пока паспорт не закрыт. Apply финала: INSERT **`ags.cn_inv_pm`**.
 
 ####### 1.1.1.3. Выгрузка `ags_Yr_DbtChangesRslt`
 

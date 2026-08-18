@@ -1,0 +1,7 @@
+﻿-- Access QueryDef: cipuInsPmNotIns
+-- Type: APPEND (64)
+-- dumped: 2026-08-17 23:44
+
+INSERT INTO ags_cn_inv_pm ( csoCn_s_org_smpl, cn_inv_doc, constract_code, cn_inv_pm_due, dbt_blns, dbt_blns_overd, dbt_blns_not_overd, cdt_blns, cdt_blns_overd, cdt_blns_not_overd, blns, alignment_date, base_date, storno_reason, storno_doc, cn_inv_pm_upl, [number], mark, cnipCstAgPn, cn_inv_doc_date, cn_inv_doc_date_entry, cn_inv_doc_sum, cn_inv_doc_link, ciaCnInvAccntSmpl, cipTimeOfEntry )
+SELECT cipuInsPmNot.AgCsosKey, cipuInsPmNot.cn_inv_doc_key, cipuInsPmNot.cacOrNull, cipuInsPmNot.ciputDueDate, cipuInsPmNot.ciputDbtBlns, cipuInsPmNot.ciputDbtBlnsOverd, cipuInsPmNot.ciputDbtBlnsOverdNot, cipuInsPmNot.ciputCdtBlns, cipuInsPmNot.ciputCdtBlnsOverd, cipuInsPmNot.ciputCdtBlnsOverdNot, cipuInsPmNot.ciputBlns, cipuInsPmNot.ciputAlligmentDate, cipuInsPmNot.ciputBaseDate, cipuInsPmNot.ciputStornoReason, cipuInsPmNot.ciputStornoDocCode, cipuInsPmNot.ciputUnloadKey, cipuInsPmNot.ciputSheetNum, CLng(CStr(Month(Now())) & IIf(Len(CStr(Day(Now())))=1,"0" & CStr(Day(Now())),CStr(Day(Now()))) & IIf(Len(CStr(Hour(Now())))=1,"0" & CStr(Hour(Now())),CStr(Hour(Now()))) & IIf(Len(CStr(Minute(Now())))=1,"0" & CStr(Minute(Now())),CStr(Minute(Now())))) AS mark, cipuInsPmNot.cstapKey, cipuInsPmNot.ciputDocDate, cipuInsPmNot.ciputEntryDate, cipuInsPmNot.ciputCnInvDocSum, cipuInsPmNot.ciputLink, cipuInsPmNot.ciasKey, Now() AS dt
+FROM cipuInsPmNot;

@@ -1,11 +1,12 @@
 # План: аналог «системы управления дебиторской задолженностью» (СУДЗ) из MS Access
 
 **Дата создания:** 2026-08-02  
-**Последнее обновление:** 2026-08-16  
+**Последнее обновление:** 2026-08-18  
 **Проект:** FEMSQ  
-**Версия плана:** 0.79.1 (S68: КСДСФ реализовано)  
-**Задача:** 0065–0071 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md); **активно: 0069** + **S68 КСДСФ** + блокер **0071 Договоры**  
-**Статус плана:** ✅ 0070; **0069** CnCtptExistInvNotLoad dry ✅; **S68** CREATE+наполнение+экран (JAR **0.1.0.198**) 🔶 UAT; **0071** 🔶 UAT
+**Версия плана:** 0.83.0 (S69: DumpTableDef буфера `…ExtPmTbl`)  
+**Задача:** 0065–0071 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md); **активно: 0069** + **S68 КСДСФ** + блокер **0071 Договоры**; **параллельно S69** паспорт платежей (без Java)  
+**Статус плана:** ✅ 0070; **0069** CnCtptExistInvNotLoad dry ✅; **S68** CREATE+наполнение+экран (JAR **0.1.0.198**) 🔶 UAT; **0071** 🔶 UAT; **S69** паспорт pmt: QueryDef+буфер сняты  
+**Паспорт pmt:** [02-11_cn-inv-pmt-upl-access.md](../../UI/02-11_cn-inv-pmt-upl-access.md) · §5.7
 
 
 **Доменные доки:** [01-overview](../../domain/sudz/01-overview.md) · [02-glossary](../../domain/sudz/02-glossary.md) · [03-processes](../../domain/sudz/03-processes.md) · [04-data-model](../../domain/sudz/04-data-model.md) · [04-1 MS_Description](../../domain/sudz/04-1_ms-descriptions.md) · [04-3 проблемы](../../domain/sudz/04-3_problems-solutions.md) · [07-readiness (покрытие/готовность)](../../domain/sudz/07-readiness.md) · [08-target-schema (физ. схема + ER)](../../domain/sudz/08-target-schema.md)  
@@ -193,6 +194,7 @@
 | S67 | 2026-08-16 | UAT 910 dry: **128** дог. / **705** СФ ✅, но rebuild **~3m14s** (CTE). Перепись на `#temp`+индексы; лог СФ усечён (8+…) | JAR **0.1.0.196** | ✅ via S67a |
 | S67a | 2026-08-16 | `#temp` без COLLATE → conflict Latin1 vs Cyrillic на JOIN `cnnNumNull`. Колонки `#cidu*` → `Cyrillic_General_CI_AS` | JAR **0.1.0.197** | ✅ UAT: sqlMs=241, 128/705 |
 | S68 | 2026-08-16 | **КСДСФ:** `CnInvUplSfDouble` на DEV; наполнение 1:1 Excel; bulk без очереди; экран + кнопка; create mutation | JAR **0.1.0.198**; [DDL](../../../sql/26-0816-sudz-sf-num-collision/) | 🔶 UAT |
+| S69 | 2026-08-17 | **1.1.1.2 / паспорт `CnInvPmtUpl*`:** отдельный чат (не 0069, не Java). QueryDef `cipu*` + helper `agsCnCtpt*` + буфер `…ExtPmTbl` сняты. INSERT: `ags_cn_inv_pm`. Осталось: `.cls`, RS File_f, Excel Offset | [02-11](../../UI/02-11_cn-inv-pmt-upl-access.md); [03 §1.1.1.2](../../domain/sudz/03-processes.md); §5.7; [съём](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/) | 🔄 |
 
 ### 5.3. Объекты Access (формы / запросы / таблицы / отчёты)
 
@@ -204,7 +206,7 @@
 | Form | `CnInvDbtUpl_2` | Главная форма загрузки общего свода (список выгрузок) | ↔ `cn_inv_dbt_upl` | [04-data-model §2.7](../../domain/sudz/04-data-model.md#27-полный-алгоритм-btncidufload_click--цепочка-сопоставления-подтверждено-s29) |
 | Form | `cnNum` (+ `cn`, `cn>s`, `cn>s>orgSmpl`, `cn>s>org`) | Карточка/навигация договоров: номер → cn → стороны → org | `ags.cnNum` / `cn` / `cn_s` / `cn_s_org_smpl` / `cn_s_org` | [02-10](../../UI/02-10_contracts-cnNum-access.md); [скрины](../../UI/assets/26-0815-cnNum/README.md) |
 | Form | `CnInvDbtUpl>File_f>InvDouble` (+ `InvDouble_f`, `cns`) | Ручной разбор неоднозначных СФ/договоров; кнопка `btnInvAdd_Click` создаёт СФ+связь вручную | подтверждено как факт (S29) | там же |
-| Form | `CnInvPmtUpl>File_f` / `…>InvDouble` (+ `invNum`→`cnInv`) | Платежи: вкладка «повторяющиеся СФ»; RS = `TblCnInv` WHERE count NOT NULL; `btnInvCreate` = inv+cnInv | нет отдельной FileInvDouble | S68; VBA `btnInvCreate_Click` |
+| Form | `CnInvPmtUpl>File_f` / `…>InvDouble` (+ `invNum`→`cnInv`) | Платежи 1.1.1.2: `btnUpload`; вкладки ход / повторы СФ / стройки новые / прочее; RS File = `CnInvPmtUplFile`; InvDouble = `TblCnInv` WHERE count NOT NULL; `btnInvCreate` = inv+cnInv | нет FileSh / FileInvDouble; лист = `cipufSheet` | [02-11](../../UI/02-11_cn-inv-pmt-upl-access.md); S68/S69; VBA `btnUpload_Click` |
 
 ### 5.4. Сценарии бизнеса
 
@@ -276,7 +278,7 @@
 |----|--------|--------|
 | В1 | Официальное имя домена в FEMSQ: «СУДЗ», «Дебиторка», «Долги», иное? | ✅ **закрыт (S27):** домен `sudz`, отображаемое имя «СУДЗ» |
 | В2 | СУДЗ — отдельный пункт TopBar или раздел внутри «Договоры» / «Инвестиции»? | ✅ **закрыт (S27):** отдельный верхний пункт TopBar, голова возможной группы — [02-4_app-forms-ia.md](../../UI/02-4_app-forms-ia.md) |
-| В3 | Какие формы Access считаются «ядром» СУДЗ, а какие — вспомогательным импортом (`CnInvDbtUpl`)? | 🔶 **шаг 1.1.1.1 закрыт полностью (S27/S29):** ядро — `CnInvDbtUpl_2` (главная) / `CnInvDbtUpl>File_f` (вложенная, кнопка `btnCidufLoad`) / `…>File_f>InvDouble` (ручной разбор); весь алгоритм `btnCidufLoad_Click()` разобран — [04-data-model §2.7](../../domain/sudz/04-data-model.md#27-полный-алгоритм-btncidufload_click--цепочка-сопоставления-подтверждено-s29); формы остальных шагов (1.1.1.2–1.2.*) ещё не сняты |
+| В3 | Какие формы Access считаются «ядром» СУДЗ, а какие — вспомогательным импортом (`CnInvDbtUpl`)? | 🔶 **1.1.1.1 закрыт (S27/S29):** ядро dbt — `CnInvDbtUpl_2` / `File_f` / `btnCidufLoad` / InvDouble — [04 §2.7](../../domain/sudz/04-data-model.md#27-полный-алгоритм-btncidufload_click--цепочка-сопоставления-подтверждено-s29). **1.1.1.2 паспорт начат (S69):** ядро pmt — `CnInvPmtUpl>File_f` / `btnUpload` — [02-11](../../UI/02-11_cn-inv-pmt-upl-access.md); Nav снят, цепочка шага 1 / `cipuCacNot` сняты. Шаги 1.1.2/1.2.* — формы ещё нет |
 | В4 | Живой Access-файл СУДЗ: путь на nb-win / в ВМ, отличие от `ra_audits.accdb`? | ☐ открыт |
 | В5 | Какие таблицы `ags` — «истина» домена, а какие — staging / архив импорта? | ☐ частично: факт загрузки = `cn_inv_dbt*`; канон сущности долга — ещё нет (S5, М8) |
 | В6 | Общие своды `Дт Задолженность…` — вход / выход / внешний источник? | ✅ **закрыт (S2):** вход из бухгалтерской системы |
@@ -521,4 +523,37 @@ nested `invNum` (`ciputciCnInv`↔`inNumNull`) → `cnInv` (`inInv`↔`ciInv`);
 Итерации разработки: UI панели → stub-оркестратор → **excelToTbl** ✅ → **orgNotInBuirg** ✅ → **CnNotLoad** ✅ → **CnExistCtptNotLoad** ✅ → **Договоры (0071)** 🔶 → **`CnCtptExistInvNotLoad`** ✅ dry → **S68 КСДСФ / `CnInvUplSfDouble`** 🔶 → … → регрессия Rslt.  
 **Критерии 0069** (из `project-development`): порт/адаптация match; Dbt/DbtValue + upl; UI + очередь; регрессия Rslt без ручного seed.  
 **Добавлено S61c:** staging на SQL до UI. **S61f:** панель шагов вместо «всё сразу».
+
+### 5.7. 1.1.1.2 — паспорт Access `CnInvPmtUpl*` (S69; не 0069)
+
+**Чат:** отдельный от воронки долгов и от реализации КСДСФ. Цель — съём UI/VBA/таблиц/запросов; Java-воронка pmt **не** начинается, пока паспорт не закрыт. КСДСФ — только ссылка (адаптер pmt позже).
+
+**Документ формы:** [02-11_cn-inv-pmt-upl-access.md](../../UI/02-11_cn-inv-pmt-upl-access.md)  
+**Алгоритм кнопки:** [04-data-model §2.9](../../domain/sudz/04-data-model.md#29-алгоритм-btnupload_click--cninvpmtupl-процесс-1112-каркас-s69)  
+**Процесс:** [03 §1.1.1.2](../../domain/sudz/03-processes.md)  
+**Съём таблиц:** [26-0813_CnInvPmtUpl_/](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/)
+
+**Nav `CnInvPmtUpl` (2026-08-17):** 4 таблицы (как 26-0813); запросы `CnInvPmtUplTbl_CstNew`, `CnInvPmtUplTblNull`; формы: **`CnInvPmtUpl`** (родитель, `_2` нет) → `File_f` → `CstNew` | `InvDouble` → `invNum` → `cnInv`. Скрин: [00-nav](../../UI/assets/26-0817-cn-inv-pmt-upl/00-nav-CnInvPmtUpl.png).
+
+**QueryDef `cipuCacNot` (2026-08-17):** DISTINCT `cacOrNull` из `CnInvPmtUplTblNull`, WHERE не Null, HAVING `cstapCsta` Is Null (анти-join к `ags_cstAgPn`). VBA — только лог. SQL: [cipuCacNot.access.sql](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipuCacNot.access.sql).
+
+**QueryDef `cipuCtpt_All_OIdNot` (2026-08-17):** `FROM cipuCtpt_All_OId WHERE org_id_key is null`. Имя = **OId** (org_id), не архивный **Old**. SQL: [cipuCtpt_All_OIdNot.access.sql](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipuCtpt_All_OIdNot.access.sql).
+
+**QueryDef `cipuCtpt_All_OId` (2026-08-17):** `cipuCtpt_All INNER JOIN agsOrgIdBUiRG ON CntrPrtNum = org_id_value_l`. `agsOrgIdBUiRG` — объект Access, в FishEye нет. SQL: [cipuCtpt_All_OId.access.sql](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipuCtpt_All_OId.access.sql).
+
+**QueryDef `cipuCtpt_All` (2026-08-17):** UNION уникальных пар из `CnInvPmtUplTbl`: контрагент `ciputCntrPrt*` ∪ агент `ciputAgent*`, оба NOT NULL. Nav: `All` / `All_Old` (legacy) / `All_OidNot` — Old ≠ OId. SQL: [cipuCtpt_All.access.sql](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipuCtpt_All.access.sql).
+
+**QueryDef `agsOrgIdBUiRG` (2026-08-17):** `SELECT org_id_value_l, org_id_key FROM ags_org_id WHERE org_id_type=1`. Лог шага 1 структурно пуст (INNER JOIN + key NOT NULL). SQL: [agsOrgIdBUiRG.access.sql](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/agsOrgIdBUiRG.access.sql).
+
+**QueryDef `cipuCn_CtptCnNot` (2026-08-17):** LEFT JOIN `agsCnCtptExequtorSmplBuirg` ON БУиРГ + № договора, HAVING Count(cn_key)=0. VBA оборачивает QueryDef (`countCn` по `ags_cn`/`cnNum`). SQL: [cipuCn_CtptCnNot.access.sql](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipuCn_CtptCnNot.access.sql).
+
+**QueryDef `cipuCn_Ctpt` (2026-08-17):** `CnInvPmtUplTbl` LEFT JOIN `cipuCtpt_All_OIdNot` (IS NULL) LEFT JOIN `agsOrgIdBUiRG`. Пустой `OIdNot` → анти-join никого не отсекает. SQL: [cipuCn_Ctpt.access.sql](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipuCn_Ctpt.access.sql). Nav: буфер **`…ExtPmTbl`** = VBA.
+
+**Дамп QueryDef (2026-08-17 23:44):** 40 файлов [`cipu-sql/`](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipu-sql/) → `{Имя}.access.sql`. Кириллица целая. INSERT-цели: `ags_cn_inv_pm` / `ags_cn_inv_doc` / `ags_cnInvAccntSmpl`. `agsCnCtptExequtorSmplBuirg` снят (локальный QueryDef, не VIEW `ags.cn_s_orgExeBuirg`). `agsInvNumCount` уже есть в `access-queries/`.
+
+**Helper `agsCnCtpt*` (2026-08-17 23:58):** агент `cn_s_type=1` + **`cnnNum`**; исполнитель `cn_s_type=2` + **`cnnNumNull`**. `*One` = ровно один `csosKey` на пару (договор, БУиРГ). SQL: [agsCnCtptAgentSmplBuirg.access.sql](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/agsCnCtptAgentSmplBuirg.access.sql), […One](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/agsCnCtptAgentSmplBuirgOne.access.sql), [Exequtor…One](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/agsCnCtptExequtorSmplBuirgOne.access.sql). `agsInvNumCount` совпал с [access-queries](../../../../project/proposals/vba-analysis/access-queries/agsInvNumCount.access.sql).
+
+**Буфер `…ExtPmTbl` (2026-08-18):** локальная, 40 полей, без PK/индексов, 7736 строк. Type 20 у DocCode = **dbDecimal** (Prec. 18), не GUID. [`.table.md`](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipuCn_CtptCnOneInvOneAcDcExtPmTbl.table.md).
+
+**Следующий съём:** скрин заголовков Excel `export_*` (строка с «№ докум.») для карты Offset. Параллельно: экспорт `.cls` родителя / `Sum_t` / `InvDouble` / `invNum` / `CstNew`; полный RS File_f (в Design обрезан).
 

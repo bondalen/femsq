@@ -1,0 +1,8 @@
+﻿-- Access QueryDef: cipuInsPmNot
+-- Type: SELECT (0)
+-- dumped: 2026-08-17 23:44
+
+SELECT i.cn_inv_pm_key, t.ciKey, t.ciputAccount, t.account_key, t.ciasKey, t.CntrPrtNum, t.CntrPrtName, t.CnName, t.cn_key, t.csosKey, t.ciputCnInv, t.ciputCnInvDocCode, t.cn_inv_doc_key, t.CountCiputSheetNum, t.ciputBE, t.ciputCAC, t.cacOrNull, t.ciputAgentNum, t.ciputAgentName, t.ciputLink, t.ciputEntryDate, t.ciputDocDate, t.ciputDueDate, t.ciputDbtBlns, t.ciputDbtBlnsOverd, t.ciputDbtBlnsOverdNot, t.ciputCdtBlns, t.ciputCdtBlnsOverd, t.ciputCdtBlnsOverdNot, t.ciputBlns, t.ciputAlligmentDate, t.ciputBaseDate, t.ciputCnInvDocSum, t.ciputStornoReason, t.ciputStornoDocCode, t.ciputSheetNum, t.ciputUnloadKey, t.cstapKey, t.cstapCsta, t.cstaAg, t.AgCsosKey
+FROM cipuCn_CtptCnOneInvOneAcDcExtPmTbl AS t LEFT JOIN ags_cn_inv_pm AS i ON (t.ciasKey = i.ciaCnInvAccntSmpl) AND (t.cn_inv_doc_key = i.cn_inv_doc) AND (t.ciputUnloadKey = i.cn_inv_pm_upl) AND (t.ciputSheetNum = i.number)
+GROUP BY i.cn_inv_pm_key, t.ciKey, t.ciputAccount, t.account_key, t.ciasKey, t.CntrPrtNum, t.CntrPrtName, t.CnName, t.cn_key, t.csosKey, t.ciputCnInv, t.ciputCnInvDocCode, t.cn_inv_doc_key, t.CountCiputSheetNum, t.ciputBE, t.ciputCAC, t.cacOrNull, t.ciputAgentNum, t.ciputAgentName, t.ciputLink, t.ciputEntryDate, t.ciputDocDate, t.ciputDueDate, t.ciputDbtBlns, t.ciputDbtBlnsOverd, t.ciputDbtBlnsOverdNot, t.ciputCdtBlns, t.ciputCdtBlnsOverd, t.ciputCdtBlnsOverdNot, t.ciputBlns, t.ciputAlligmentDate, t.ciputBaseDate, t.ciputCnInvDocSum, t.ciputStornoReason, t.ciputStornoDocCode, t.ciputSheetNum, t.ciputUnloadKey, t.cstapKey, t.cstapCsta, t.cstaAg, t.AgCsosKey
+HAVING (((i.cn_inv_pm_key) Is Null));

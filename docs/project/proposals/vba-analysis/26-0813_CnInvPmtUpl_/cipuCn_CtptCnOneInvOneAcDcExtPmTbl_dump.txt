@@ -1,0 +1,705 @@
+﻿========================================
+TABLE: cipuCn_CtptCnOneInvOneAcDcExtPmTbl
+SourceTableName: 
+Connect: (local table)
+Attributes (TableDef): 0
+DateCreated: 11.01.2022 12:06:54
+LastUpdated: 11.01.2022 12:07:11
+RecordCount (SELECT COUNT): 7736
+--- TableDef.Properties ---
+  Name = cipuCn_CtptCnOneInvOneAcDcExtPmTbl  (Property.Type=12)
+  Updatable = True  (Property.Type=1)
+  DateCreated = 11.01.2022 12:06:54  (Property.Type=8)
+  LastUpdated = 11.01.2022 12:07:11  (Property.Type=8)
+  Connect = (empty string)  (Property.Type=12)
+  Attributes = 0  (Property.Type=4)
+  SourceTableName = (empty string)  (Property.Type=12)
+  RecordCount = 7736  (Property.Type=4)
+  ValidationRule = (empty string)  (Property.Type=12)
+  ValidationText = (empty string)  (Property.Type=12)
+  GUID = <binary/skipped>  (Property.Type=9)
+  Orientation = 0  (Property.Type=2)
+  OrderByOn = False  (Property.Type=1)
+  NameMap = <binary/skipped>  (Property.Type=11)
+  DefaultView = 2  (Property.Type=2)
+  DisplayViewsOnSharePointSite = 1  (Property.Type=2)
+  TotalsRow = False  (Property.Type=1)
+  FilterOnLoad = False  (Property.Type=1)
+  OrderByOnLoad = True  (Property.Type=1)
+  HideNewField = False  (Property.Type=1)
+  BackTint = 100  (Property.Type=6)
+  BackShade = 100  (Property.Type=6)
+  ThemeFontIndex = -1  (Property.Type=4)
+  AlternateBackThemeColorIndex = -1  (Property.Type=4)
+  AlternateBackTint = 100  (Property.Type=6)
+  AlternateBackShade = 100  (Property.Type=6)
+  ReadOnlyWhenDisconnected = False  (Property.Type=1)
+  DatasheetGridlinesThemeColorIndex = -1  (Property.Type=4)
+  DatasheetForeThemeColorIndex = -1  (Property.Type=4)
+--- FIELDS ---
+FIELD: ciKey
+  OrdinalPosition: 0
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 2
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    DecimalPlaces = 255  (Property.Type=2)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: ciputAccount
+  OrdinalPosition: 1
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    DecimalPlaces = 255  (Property.Type=2)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: account_key
+  OrdinalPosition: 2
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 2
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    DecimalPlaces = 255  (Property.Type=2)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: csosKey
+  OrdinalPosition: 3
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 2
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    DecimalPlaces = 255  (Property.Type=2)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: CntrPrtNum
+  OrdinalPosition: 4
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    DecimalPlaces = 255  (Property.Type=2)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: CntrPrtName
+  OrdinalPosition: 5
+  Type: 10 (dbText)
+  Size: 255
+  Required: False
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = True  (Property.Type=1)
+
+FIELD: CnName
+  OrdinalPosition: 6
+  Type: 10 (dbText)
+  Size: 255
+  Required: False
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = False  (Property.Type=1)
+
+FIELD: cn_key
+  OrdinalPosition: 7
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 2
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    DecimalPlaces = 255  (Property.Type=2)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: ciasKey
+  OrdinalPosition: 8
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 2
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    DecimalPlaces = 255  (Property.Type=2)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: ciputCnInv
+  OrdinalPosition: 9
+  Type: 10 (dbText)
+  Size: 255
+  Required: False
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = False  (Property.Type=1)
+
+FIELD: ciputCnInvDocCode
+  OrdinalPosition: 10
+  Type: 20 (Type_20)
+  Size: 16
+  Required: False
+  Attributes: 2
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 18
+  --- Field.Properties (extra only; compact) ---
+    Precision = 18  (Property.Type=20)
+    Scale = 0  (Property.Type=20)
+    DecimalPlaces = 255  (Property.Type=2)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: cn_inv_doc_key
+  OrdinalPosition: 11
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 2
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    DecimalPlaces = 255  (Property.Type=2)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: CountCiputSheetNum
+  OrdinalPosition: 12
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 2
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    DecimalPlaces = 255  (Property.Type=2)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: ciputBE
+  OrdinalPosition: 13
+  Type: 10 (dbText)
+  Size: 50
+  Required: False
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = True  (Property.Type=1)
+
+FIELD: ciputCAC
+  OrdinalPosition: 14
+  Type: 10 (dbText)
+  Size: 50
+  Required: False
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = True  (Property.Type=1)
+
+FIELD: cacOrNull
+  OrdinalPosition: 15
+  Type: 10 (dbText)
+  Size: 255
+  Required: False
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = False  (Property.Type=1)
+
+FIELD: ciputAgentNum
+  OrdinalPosition: 16
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 2
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    DecimalPlaces = 255  (Property.Type=2)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: ciputAgentName
+  OrdinalPosition: 17
+  Type: 10 (dbText)
+  Size: 255
+  Required: False
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = True  (Property.Type=1)
+
+FIELD: ciputLink
+  OrdinalPosition: 18
+  Type: 10 (dbText)
+  Size: 255
+  Required: False
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = True  (Property.Type=1)
+
+FIELD: ciputEntryDate
+  OrdinalPosition: 19
+  Type: 8 (dbDate)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=8)
+    Scale = 0  (Property.Type=8)
+
+FIELD: ciputDocDate
+  OrdinalPosition: 20
+  Type: 8 (dbDate)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=8)
+    Scale = 0  (Property.Type=8)
+
+FIELD: ciputDueDate
+  OrdinalPosition: 21
+  Type: 8 (dbDate)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=8)
+    Scale = 0  (Property.Type=8)
+
+FIELD: ciputDbtBlns
+  OrdinalPosition: 22
+  Type: 5 (dbCurrency)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=5)
+    Scale = 0  (Property.Type=5)
+    DecimalPlaces = 255  (Property.Type=2)
+
+FIELD: ciputDbtBlnsOverd
+  OrdinalPosition: 23
+  Type: 5 (dbCurrency)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=5)
+    Scale = 0  (Property.Type=5)
+    DecimalPlaces = 255  (Property.Type=2)
+
+FIELD: ciputDbtBlnsOverdNot
+  OrdinalPosition: 24
+  Type: 5 (dbCurrency)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=5)
+    Scale = 0  (Property.Type=5)
+    DecimalPlaces = 255  (Property.Type=2)
+
+FIELD: ciputCdtBlns
+  OrdinalPosition: 25
+  Type: 5 (dbCurrency)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=5)
+    Scale = 0  (Property.Type=5)
+    DecimalPlaces = 255  (Property.Type=2)
+
+FIELD: ciputCdtBlnsOverd
+  OrdinalPosition: 26
+  Type: 5 (dbCurrency)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=5)
+    Scale = 0  (Property.Type=5)
+    DecimalPlaces = 255  (Property.Type=2)
+
+FIELD: ciputCdtBlnsOverdNot
+  OrdinalPosition: 27
+  Type: 5 (dbCurrency)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=5)
+    Scale = 0  (Property.Type=5)
+    DecimalPlaces = 255  (Property.Type=2)
+
+FIELD: ciputBlns
+  OrdinalPosition: 28
+  Type: 5 (dbCurrency)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=5)
+    Scale = 0  (Property.Type=5)
+    DecimalPlaces = 255  (Property.Type=2)
+
+FIELD: ciputAlligmentDate
+  OrdinalPosition: 29
+  Type: 8 (dbDate)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=8)
+    Scale = 0  (Property.Type=8)
+
+FIELD: ciputBaseDate
+  OrdinalPosition: 30
+  Type: 8 (dbDate)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=8)
+    Scale = 0  (Property.Type=8)
+
+FIELD: ciputCnInvDocSum
+  OrdinalPosition: 31
+  Type: 5 (dbCurrency)
+  Size: 8
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=5)
+    Scale = 0  (Property.Type=5)
+    DecimalPlaces = 255  (Property.Type=2)
+
+FIELD: ciputStornoReason
+  OrdinalPosition: 32
+  Type: 10 (dbText)
+  Size: 255
+  Required: False
+  Attributes: 2
+  AllowZeroLength: True
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=10)
+    Scale = 0  (Property.Type=10)
+    DisplayControl = 109  (Property.Type=3)
+    UnicodeCompression = True  (Property.Type=1)
+
+FIELD: ciputStornoDocCode
+  OrdinalPosition: 33
+  Type: 20 (Type_20)
+  Size: 16
+  Required: False
+  Attributes: 2
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 18
+  --- Field.Properties (extra only; compact) ---
+    Precision = 18  (Property.Type=20)
+    Scale = 0  (Property.Type=20)
+    DecimalPlaces = 255  (Property.Type=2)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: ciputSheetNum
+  OrdinalPosition: 34
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    DecimalPlaces = 255  (Property.Type=2)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: ciputUnloadKey
+  OrdinalPosition: 35
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    DecimalPlaces = 255  (Property.Type=2)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: cstapKey
+  OrdinalPosition: 36
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 2
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    DecimalPlaces = 255  (Property.Type=2)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: cstapCsta
+  OrdinalPosition: 37
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    DecimalPlaces = 255  (Property.Type=2)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: cstaAg
+  OrdinalPosition: 38
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 1
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    DecimalPlaces = 255  (Property.Type=2)
+    DisplayControl = 109  (Property.Type=3)
+
+FIELD: AgCsosKey
+  OrdinalPosition: 39
+  Type: 4 (dbLong)
+  Size: 4
+  Required: False
+  Attributes: 2
+  AllowZeroLength: False
+  DefaultValue: 
+  ValidationRule: 
+  ValidationText: 
+  CollatingOrder: 1033
+  --- Field.Properties (extra only; compact) ---
+    Precision = 1033  (Property.Type=4)
+    Scale = 0  (Property.Type=4)
+    DecimalPlaces = 255  (Property.Type=2)
+    DisplayControl = 109  (Property.Type=3)
+
+--- INDEXES ---
+--- RELATIONS (this table as Table or ForeignTable) ---
+========================================
+END OF DUMP

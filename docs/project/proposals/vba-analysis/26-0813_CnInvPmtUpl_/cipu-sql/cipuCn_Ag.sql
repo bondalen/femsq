@@ -1,0 +1,7 @@
+﻿-- Access QueryDef: cipuCn_Ag
+-- Type: SELECT (0)
+-- dumped: 2026-08-17 23:44
+
+SELECT r.cn_key, r.CnName, IIf(IsNull(r.ciputAgentNum),9999999,r.ciputAgentNum) AS ciputAgentNum, r.ciputAgentName, Count(r.csosKey) AS CountCsosKey
+FROM (SELECT t.cn_key, t.CnName, IIf(IsNull(t.ciputAgentNum),9999999,t.ciputAgentNum) AS ciputAgentNum, t.ciputAgentName, b.csosKey FROM (SELECT r.cn_key, r.CnName, r.ciputAgentNum, r.ciputAgentName FROM (SELECT a.AgNum, a.AgName, a.CnName, a.org_id_key, a.csosKey, a.CountCnKey, a.cn_key, b.ciputAgentNum, b.ciputAgentName FROM (SELECT z.AgNum, z.AgName, z.CnName, z.org_id_key, z.csosKey, z.CountCnKey, x.cn_key FROM cipuCn_AgntCnOne AS z LEFT JOIN agsCnCtptAgentSmplBuirg AS x ON (z.CnName = x.cn_number) AND (z.AgNum = x.org_id_value_l))  AS a LEFT JOIN (SELECT m.ciputCnName, m.ciputAgentNum, m.ciputAgentName FROM CnInvPmtUplTblNull AS m GROUP BY m.ciputCnName, m.ciputAgentNum, m.ciputAgentName HAVING (((m.ciputAgentNum) Is Not Null)))  AS b ON (a.AgNum=b.ciputAgentNum) AND (a.CnName = b.ciputCnName) GROUP BY a.AgNum, a.AgName, a.CnName, a.org_id_key, a.csosKey, a.CountCnKey, a.cn_key, b.ciputAgentNum, b.ciputAgentName)  AS r GROUP BY r.cn_key, r.ciputAgentNum, r.ciputAgentName, r.CnName)  AS t LEFT JOIN agsCnCtptAgentSmplBuirgOne AS b ON (t.ciputAgentNum = b.org_id_value_l) AND (t.cn_key = b.cn_key) GROUP BY t.cn_key, t.CnName, IIf(IsNull(t.ciputAgentNum),9999999,t.ciputAgentNum), t.ciputAgentName, b.csosKey)  AS r
+GROUP BY r.cn_key, r.CnName, IIf(IsNull(r.ciputAgentNum),9999999,r.ciputAgentNum), r.ciputAgentName;
