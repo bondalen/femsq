@@ -16,7 +16,9 @@
 | `11-design-main-link-file-f.png` | Design | subform File_f: Link `cn_inv_pm_key`↔`cipufUpload` |
 | `12-design-main-tab-sum-t.png` | Design | вкладка «счета, сумма»: `Sum_t`; Link `cn_inv_pm_key`↔`cn_inv_pm_upl` |
 | `13-design-main-tab-other.png` | Design | вкладка родителя «прочее»: пустой контейнер |
-| `14-design-file-f-recordsource.png` | Design | File_f: шапка + кнопка «загрузка»; RS SELECT `CnInvPmtUplFile…` |
+| `14-design-file-f-recordsource.png` | Design | File_f: шапка + кнопка «загрузка»; RS SELECT `CnInvPmtUplFile…` (строка обрезана) |
+| `14b-design-file-f-recordsource-full.png` | Design | File_f: полный RS в окне свойств; вкладка «ход загрузки» |
+| `14c-sql-file-f-recordsource.png` | SQL | SELECT 7 полей FROM `CnInvPmtUplFile` |
 | `15-design-sum-t-recordsource.png` | Design | `Sum_t`: RS SELECT из `ags_q_cn_inv_pm_upl_sum` |
 | `15b-sql-sum-t-recordsource.png` | SQL | полный SELECT 9 полей FROM `ags_q_cn_inv_pm_upl_sum` |
 | `16-design-file-f-tab-invdouble.png` | Design | File_f вкладка «повторяющиеся СФ»; control InvDouble; Link пустой |
@@ -41,3 +43,6 @@
 | `25-sql-cipuCtpt_All.png` | SQL | QueryDef `cipuCtpt_All`: UNION контрагент+агент из `CnInvPmtUplTbl`; Nav: `All`, `All_Old`, `All_OidNot` |
 | `26-sql-cipuCn_CtptCnNot.png` | SQL | QueryDef `cipuCn_CtptCnNot`: LEFT JOIN `agsCnCtptExequtorSmplBuirg`, HAVING Count=0; Nav: Not / NotOld / NotOld2 |
 | `27-sql-cipuCn_Ctpt.png` | SQL | QueryDef `cipuCn_Ctpt`: Tbl LEFT JOIN `OIdNot` IS NULL + `agsOrgIdBUiRG`; Nav: таблицы `…ExtPmTbl` |
+| `28-vbe-class-objects-cninvpmt.png` | VBE | Class Objects: pmt только `Form_CnInvPmtUpl>File_f` и `…>cnInv` |
+| `28b-vbe-class-objects-rest.png` | VBE | хвост дерева (invNum общая форма, отчёты) |
+| `29-runtime-invdouble-empty.png` | Runtime | вкладка «повторяющиеся счета-фактуры»: грид InvDouble **0 строк**; выбран `export_606012_25-0721` (30.06.2025) |

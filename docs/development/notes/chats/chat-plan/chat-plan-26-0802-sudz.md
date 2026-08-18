@@ -3,10 +3,11 @@
 **Дата создания:** 2026-08-02  
 **Последнее обновление:** 2026-08-18  
 **Проект:** FEMSQ  
-**Версия плана:** 0.85.0 (S68t: walker ≠ FemsqTree; T4b/T9)  
-**Задача:** 0065–0071 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md); **активно: 0069** + **S68 КСДСФ** + **S68t дерево (T5)** + блокер **0071 Договоры**; **параллельно S69** паспорт платежей (без Java)  
-**Статус плана:** ✅ 0070; **0069** CnCtptExistInvNotLoad dry ✅; **S68** CREATE+наполнение+экран (JAR **0.1.0.200**) 🔶 UAT; **S68t** срез 1 ✅, T4b ✅; **0071** 🔶 UAT; **S69** паспорт pmt: QueryDef+буфер сняты  
-**Паспорт pmt:** [02-11_cn-inv-pmt-upl-access.md](../../UI/02-11_cn-inv-pmt-upl-access.md) · §5.7
+**Версия плана:** 0.87.0 (S69: паспорт Access pmt закрыт)  
+**Задача:** 0065–0071 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md); **активно: 0069** + **S68 КСДСФ** + **S68t дерево (T5)** + блокер **0071 Договоры**; **S69** паспорт платежей Access ✅ (Java — отдельный чат)  
+**Статус плана:** ✅ 0070; **0069** CnCtptExistInvNotLoad dry ✅; **S68** CREATE+наполнение+экран (JAR **0.1.0.200**) 🔶 UAT; **S68t** срез 1 ✅, T4b ✅; **0071** 🔶 UAT; **S69** паспорт Access `CnInvPmtUpl*` ✅  
+**Паспорт pmt:** [02-11_cn-inv-pmt-upl-access.md](../../UI/02-11_cn-inv-pmt-upl-access.md) · §5.7  
+**Резюме pmt (S69):** [chat-resume-26-0817-cn-inv-pmt-upl.md](../chat-resume/chat-resume-26-0817-cn-inv-pmt-upl.md)
 
 
 **Доменные доки:** [01-overview](../../domain/sudz/01-overview.md) · [02-glossary](../../domain/sudz/02-glossary.md) · [03-processes](../../domain/sudz/03-processes.md) · [04-data-model](../../domain/sudz/04-data-model.md) · [04-1 MS_Description](../../domain/sudz/04-1_ms-descriptions.md) · [04-3 проблемы](../../domain/sudz/04-3_problems-solutions.md) · [07-readiness (покрытие/готовность)](../../domain/sudz/07-readiness.md) · [08-target-schema (физ. схема + ER)](../../domain/sudz/08-target-schema.md)  
@@ -196,7 +197,7 @@
 | S67a | 2026-08-16 | `#temp` без COLLATE → conflict Latin1 vs Cyrillic на JOIN `cnnNumNull`. Колонки `#cidu*` → `Cyrillic_General_CI_AS` | JAR **0.1.0.197** | ✅ UAT: sqlMs=241, 128/705 |
 | S68 | 2026-08-16 | **КСДСФ:** `CnInvUplSfDouble` на DEV; наполнение 1:1 Excel; bulk без очереди; экран + кнопка; create mutation | JAR **0.1.0.198**; [DDL](../../../sql/26-0816-sudz-sf-num-collision/) | 🔶 UAT |
 | S68t | 2026-08-18 | **Walker ≠ FemsqTree:** JSON + каталог + `relationExpand` + обёртка. Срез 1 на КСДСФ. **T4b** ✅ inject fetch + `to`. Далее срез 2 / T5 | [02-12](../../UI/02-12_femsq-tree/relation-tree.md); ADR [009](../../../../project/decisions/009-femsq-walk-tree.md); §5.6 S68t | 🔶 T5 |
-| S69 | 2026-08-17 | **1.1.1.2 / паспорт `CnInvPmtUpl*`:** отдельный чат (не 0069, не Java). QueryDef `cipu*` + helper `agsCnCtpt*` + буфер `…ExtPmTbl` сняты. INSERT: `ags_cn_inv_pm`. Осталось: `.cls`, RS File_f, Excel Offset | [02-11](../../UI/02-11_cn-inv-pmt-upl-access.md); [03 §1.1.1.2](../../domain/sudz/03-processes.md); §5.7; [съём](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/) | 🔄 |
+| S69 | 2026-08-17 | **1.1.1.2 / паспорт `CnInvPmtUpl*`:** съём Access закрыт. Шаг 8 (`TwoLoad`) — только показ; запись/перепривязка двоящих СФ — вручную оператором. Runtime InvDouble: **0 строк**. INSERT финала: `ags_cn_inv_pm`. Java pmt — не этот чат | [02-11](../../UI/02-11_cn-inv-pmt-upl-access.md); [03 §1.1.1.2](../../domain/sudz/03-processes.md); §5.7; [съём](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/) | ✅ |
 
 ### 5.3. Объекты Access (формы / запросы / таблицы / отчёты)
 
@@ -280,7 +281,7 @@
 |----|--------|--------|
 | В1 | Официальное имя домена в FEMSQ: «СУДЗ», «Дебиторка», «Долги», иное? | ✅ **закрыт (S27):** домен `sudz`, отображаемое имя «СУДЗ» |
 | В2 | СУДЗ — отдельный пункт TopBar или раздел внутри «Договоры» / «Инвестиции»? | ✅ **закрыт (S27):** отдельный верхний пункт TopBar, голова возможной группы — [02-4_app-forms-ia.md](../../UI/02-4_app-forms-ia.md) |
-| В3 | Какие формы Access считаются «ядром» СУДЗ, а какие — вспомогательным импортом (`CnInvDbtUpl`)? | 🔶 **1.1.1.1 закрыт (S27/S29):** ядро dbt — `CnInvDbtUpl_2` / `File_f` / `btnCidufLoad` / InvDouble — [04 §2.7](../../domain/sudz/04-data-model.md#27-полный-алгоритм-btncidufload_click--цепочка-сопоставления-подтверждено-s29). **1.1.1.2 паспорт начат (S69):** ядро pmt — `CnInvPmtUpl>File_f` / `btnUpload` — [02-11](../../UI/02-11_cn-inv-pmt-upl-access.md); Nav снят, цепочка шага 1 / `cipuCacNot` сняты. Шаги 1.1.2/1.2.* — формы ещё нет |
+| В3 | Какие формы Access считаются «ядром» СУДЗ, а какие — вспомогательным импортом (`CnInvDbtUpl`)? | 🔶 **1.1.1.1 закрыт (S27/S29):** ядро dbt — `CnInvDbtUpl_2` / `File_f` / `btnCidufLoad` / InvDouble — [04 §2.7](../../domain/sudz/04-data-model.md#27-полный-алгоритм-btncidufload_click--цепочка-сопоставления-подтверждено-s29). **1.1.1.2 паспорт Access закрыт (S69):** ядро pmt — `CnInvPmtUpl>File_f` / `btnUpload` — [02-11](../../UI/02-11_cn-inv-pmt-upl-access.md); шаг 8 только показ. Шаги 1.1.2/1.2.* — формы ещё нет |
 | В4 | Живой Access-файл СУДЗ: путь на nb-win / в ВМ, отличие от `ra_audits.accdb`? | ☐ открыт |
 | В5 | Какие таблицы `ags` — «истина» домена, а какие — staging / архив импорта? | ☐ частично: факт загрузки = `cn_inv_dbt*`; канон сущности долга — ещё нет (S5, М8) |
 | В6 | Общие своды `Дт Задолженность…` — вход / выход / внешний источник? | ✅ **закрыт (S2):** вход из бухгалтерской системы |
@@ -576,9 +577,10 @@ nested `invNum` (`ciputciCnInv`↔`inNumNull`) → `cnInv` (`inInv`↔`ciInv`);
 
 ### 5.7. 1.1.1.2 — паспорт Access `CnInvPmtUpl*` (S69; не 0069)
 
-**Чат:** отдельный от воронки долгов и от реализации КСДСФ. Цель — съём UI/VBA/таблиц/запросов; Java-воронка pmt **не** начинается, пока паспорт не закрыт. КСДСФ — только ссылка (адаптер pmt позже).
+**Чат:** отдельный от воронки долгов и от реализации КСДСФ. **Паспорт Access закрыт (2026-08-18).** Java-воронка pmt — отдельный чат. КСДСФ — только ссылка (адаптер pmt позже).
 
 **Документ формы:** [02-11_cn-inv-pmt-upl-access.md](../../UI/02-11_cn-inv-pmt-upl-access.md)  
+**Резюме чата:** [chat-resume-26-0817-cn-inv-pmt-upl.md](../chat-resume/chat-resume-26-0817-cn-inv-pmt-upl.md)  
 **Алгоритм кнопки:** [04-data-model §2.9](../../domain/sudz/04-data-model.md#29-алгоритм-btnupload_click--cninvpmtupl-процесс-1112-каркас-s69)  
 **Процесс:** [03 §1.1.1.2](../../domain/sudz/03-processes.md)  
 **Съём таблиц:** [26-0813_CnInvPmtUpl_/](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/)
@@ -605,5 +607,11 @@ nested `invNum` (`ciputciCnInv`↔`inNumNull`) → `cnInv` (`inInv`↔`ciInv`);
 
 **Буфер `…ExtPmTbl` (2026-08-18):** локальная, 40 полей, без PK/индексов, 7736 строк. Type 20 у DocCode = **dbDecimal** (Prec. 18), не GUID. [`.table.md`](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipuCn_CtptCnOneInvOneAcDcExtPmTbl.table.md).
 
-**Следующий съём:** скрин заголовков Excel `export_*` (строка с «№ докум.») для карты Offset. Параллельно: экспорт `.cls` родителя / `Sum_t` / `InvDouble` / `invNum` / `CstNew`; полный RS File_f (в Design обрезан).
+**Карта Offset `export_*` (2026-08-18):** пять файлов `2026_03/debit` (`export_{счётГК}_26-0422.XLSX`), лист `Sheet1`, якорь **U1** «№ докум.», колонки A–Z, заголовки идентичны. [export_offset-map.md](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/export_offset-map.md).
+
+**Runtime InvDouble (2026-08-18):** вкладка «повторяющиеся счета-фактуры», выбран `export_606012_25-0721` (30.06.2025) — грид **0 строк**. Скрин: [29](../../UI/assets/26-0817-cn-inv-pmt-upl/29-runtime-invdouble-empty.png). Link к File пустой: это текущий буфер `TblCnInv`, не строки выбранной выгрузки.
+
+**Шаг 8 (владелец, 2026-08-18):** `cipuCn_CtptCnOneInvTwoLoad` — **намеренно без apply**. Двоящие СФ (номер уже >1 в БД): создать новую запись или перепривязать существующую может только оператор вручную после решения. Автозапись в загрузке закрыта. Согласуется с S68 п.3 (перепривязка не в bulk). Java-воронка pmt **не** начинается в этом чате.
+
+**Паспорт Access закрыт.** Дальше — по решению владельца: Java 1.1.1.2 или другой сегмент.
 

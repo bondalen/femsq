@@ -1,14 +1,15 @@
 # Платежи — эталон Access `CnInvPmtUpl*` (процесс 1.1.1.2)
 
 **Дата создания:** 2026-08-17  
-**Последнее обновление:** 2026-08-18 (DumpTableDef буфера `…ExtPmTbl`)  
-**Статус:** 🔶 паспорт; QueryDef и буфер шага 12 **сняты**. Осталось: `.cls` (родитель / Sum_t / InvDouble / invNum / CstNew), полный RS File_f, Excel Offset. **UI FEMSQ для pmt не проектируем**, пока паспорт не закрыт  
+**Последнее обновление:** 2026-08-18 (шаг 8: apply намеренно закрыт)  
+**Статус:** ✅ паспорт Access закрыт. Шаг 8 (`cipuCn_CtptCnOneInvTwoLoad`) — только показ; запись/перепривязка двоящих СФ — вручную оператором. Java-воронка pmt — отдельный чат, не этот.  
 **Скрины Design/SQL/Runtime:** [assets/26-0817-cn-inv-pmt-upl/README.md](./assets/26-0817-cn-inv-pmt-upl/README.md)  
 **Съём таблиц:** [26-0813_CnInvPmtUpl_/](../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/)  
 **Метод съёма:** [MS-ACCESS-OBJECTS-CAPTURE.md](../../../project/proposals/vba-analysis/MS-ACCESS-OBJECTS-CAPTURE.md)  
 **Процесс:** [03-processes §1.1.1.2](../domain/sudz/03-processes.md)  
 **Алгоритм VBA:** [04-data-model §2.9](../domain/sudz/04-data-model.md#29-алгоритм-btnupload_click--cninvpmtupl-процесс-1112-каркас-s69)  
 **План СУДЗ (инвентарь, не 0069):** [chat-plan-26-0802-sudz.md](../chats/chat-plan/chat-plan-26-0802-sudz.md) §5.3 / §5.7  
+**Резюме чата:** [chat-resume-26-0817-cn-inv-pmt-upl.md](../chats/chat-resume/chat-resume-26-0817-cn-inv-pmt-upl.md)  
 **Соседние чаты (не смешивать):** воронка долгов `CnInvDbtUpl` / 0069; КСДСФ (S68) — только ссылка на переиспользование очереди
 
 ---
@@ -17,7 +18,7 @@
 
 Шаг **1.1.1.2** грузит `export_{счётГК}_*` в FishEye.ags через семейство форм **`CnInvPmtUpl*`**. Общий свод (1.1.1.1) **не содержит** привязки к стройке / САК; специалисты работают только с объектами — поэтому после свода нужна эта выгрузка.
 
-Этот документ — **карта Access** (UI, VBA, таблицы, запросы). Реализация Java-воронки платежей **вне scope**, пока паспорт закрыт. Эскиз FEMSQ для pmt — отдельное решение после полноты съёма.
+Этот документ — **карта Access** (UI, VBA, таблицы, запросы). Съём закрыт 2026-08-18. Java-воронка платежей и эскиз FEMSQ — отдельное решение, не этот чат.
 
 **Не додумываем** RecordSource / Link Master/Child / SQL сохранённых запросов: ждём скрин конструктора или UTF-8-дамп QueryDef.
 
@@ -41,13 +42,15 @@
 
 | Модуль | Объект Access | Строк (прибл.) | Статус |
 |--------|---------------|----------------|--------|
-| `Form_CnInvPmtUpl_gt_File_f.cls` | `CnInvPmtUpl>File_f` | ~1811 | ✅ есть: `btnUpload`, `btnInvCreate`, `btnCstNewCreate`, `btnTestWord`, воронка `cipu*` |
-| `Form_CnInvPmtUpl_gt_File_f_gt_InvDouble_gt_invNum_gt_cnInv.cls` | `…>InvDouble>invNum>cnInv` | ~20 | ✅ есть: `cnName_DblClick` → `OpenForm "invNum"` |
-| родитель `CnInvPmtUpl` | главная | — | ❌ нет `.cls`; **`_2` нет**; RS = `ags_cn_inv_pm_upl` |
-| `CnInvPmtUpl>Sum_t` | вкладка родителя «счета, сумма» | — | ❌ нет `.cls`; **не было в кадре Nav** `CnInvPmtUpl*` |
-| `…>File_f>InvDouble` | грид повторов СФ | — | ❌ нет `.cls` |
-| `…>InvDouble>invNum` | nested | — | ❌ нет `.cls` |
-| `…>File_f>CstNew` | вкладка «стройки новые» | — | ❌ нет `.cls` |
+| `Form_CnInvPmtUpl_gt_File_f.cls` | `CnInvPmtUpl>File_f` | ~1811 | ✅ в VBE и в `VBA-Code-Export` |
+| `Form_CnInvPmtUpl_gt_File_f_gt_InvDouble_gt_invNum_gt_cnInv.cls` | `…>InvDouble>invNum>cnInv` | ~20 | ✅ в VBE и в `VBA-Code-Export`; `OpenForm "invNum"` |
+| родитель `CnInvPmtUpl` | главная | — | **нет модуля** (нет в VBE Class Objects; `_2` нет) |
+| `CnInvPmtUpl>Sum_t` | «счета, сумма» | — | **нет модуля** |
+| `…>File_f>InvDouble` | грид повторов СФ | — | **нет модуля** |
+| `…>InvDouble>invNum` | nested | — | **нет модуля** (отдельно есть общая форма `Form_invNum`) |
+| `…>File_f>CstNew` | «стройки новые» | — | **нет модуля** |
+
+VBE 2026-08-18 ([28](./assets/26-0817-cn-inv-pmt-upl/28-vbe-class-objects-cninvpmt.png)): после `Form_CnInvDbtUpl>File_f` сразу `Form_CnInvPmtUpl>File_f` и `…>cnInv`. Экспортировать нечего.
 
 `SqlLong.bas`: функция `SqlCipuCn_CtptCnNot()` — SQL «отсутствующие договоры» клеится в VBA (читает QueryDef **`cipuCn_CtptCnNot`**). Текст функции в репозитории есть; QueryDef снят: [`cipuCn_CtptCnNot.access.sql`](../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipuCn_CtptCnNot.access.sql).
 
@@ -75,7 +78,7 @@
 
 ### 2.4. Точечно снято ранее (S68, не полный паспорт)
 
-- `File_f` RecordSource = SELECT полей `CnInvPmtUplFile` (подтверждено Design 2026-08-17; на скрине строка обрезана после `cipufPa…`).
+- `File_f` RecordSource = все 7 полей `CnInvPmtUplFile` ([SQL](../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/CnInvPmtUpl_File_f.recordsource.access.sql); [14c](./assets/26-0817-cn-inv-pmt-upl/14c-sql-file-f-recordsource.png)). Add/Del/Edit = Да.
 - Вкладки File_f (design): ход загрузки | повторяющиеся счета-фактуры | стройки новые | прочее.
 - InvDouble RecordSource = `TblCnInv` LEFT JOIN (`cnInv`⋈`invNum`) WHERE `ciputciCnInvNumCount` Is Not Null; `nnn`=«есть», если `ciCn` не Null — **подтверждено Design 2026-08-17**.
 - Link InvDouble↔File: пустые Master/Child — **подтверждено**.
@@ -101,7 +104,7 @@ CnInvPmtUpl                            ← RS = ags_cn_inv_pm_upl; Order By cn_i
     ├── загрузка
     │   └── File_f                     ← Source = CnInvPmtUpl>File_f
     │       Link Master/Child: cn_inv_pm_key ↔ cipufUpload
-    │       RS File_f: SELECT … FROM CnInvPmtUplFile (строка обрезана)
+    │       RS File_f: SELECT 7 полей FROM CnInvPmtUplFile
     │       ├── ход загрузки           → cipufLoadingProgress
     │       ├── повторяющиеся СФ
     │       │   └── InvDouble          ← Link к File_f пустой
@@ -134,10 +137,10 @@ CnInvPmtUpl                            ← RS = ags_cn_inv_pm_upl; Order By cn_i
 |------|----------|------------------------------|-------------------|---------|
 | родитель `CnInvPmtUpl` | `cn_inv_pm_date`, `cn_inv_pm_name`, `cn_inv_pm_key` | **`ags_cn_inv_pm_upl`**; Order By `cn_inv_pm_date DESC`; Add/Del/Edit = Да | — | `.cls` нет |
 | вкладка «загрузка» | subform `File_f` | объект `CnInvPmtUpl>File_f` | **`cn_inv_pm_key` ↔ `cipufUpload`** | — |
-| шапка File_f | `cipufSheet` («лист:»), `cipufPath`, ☑ «обновлять?», ☑ «обнов. по исх?», кнопка **«загрузка»**; служебные `cipufKey`, `cipufUpload` | SELECT полей `CnInvPmtUplFile` (обрезка на скрине) | см. выше | `btnUpload_Click` |
+| шапка File_f | `cipufSheet` («лист:»), `cipufPath`, ☑ «обновлять?», ☑ «обнов. по исх?», кнопка **«загрузка»**; служебные `cipufKey`, `cipufUpload` | [SELECT 7 полей `CnInvPmtUplFile`](../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/CnInvPmtUpl_File_f.recordsource.access.sql) | см. выше | `btnUpload_Click` |
 | File_f «ход загрузки» | `cipufLoadingProgress` | то же File | — | лог VBA |
 | File_f «повторяющиеся СФ» | кнопка «создать новый счёт-фактуру»; подсказка про двойной клик на договор; subform InvDouble | объект `…>InvDouble`; [SQL](../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/CnInvPmtUpl_InvDouble.recordsource.access.sql) | **пустые** (подтверждено Design) | `btnInvCreate_Click` на File_f |
-| InvDouble (форма) | поля `ciputci*` + `nnn` | `TblCnInv AS d` LEFT JOIN `(cnInv⋈invNum)` ON номер+`cn_key`; WHERE `ciputciCnInvNumCount` Is Not Null; `nnn`=«есть» если не `IsNull(ciCn)` | — | Add/Del/Edit = Да |
+| InvDouble (форма) | поля `ciputci*` + `nnn` | `TblCnInv AS d` LEFT JOIN `(cnInv⋈invNum)` ON номер+`cn_key`; WHERE `ciputciCnInvNumCount` Is Not Null; `nnn`=«есть» если не `IsNull(ciCn)` | — | Add/Del/Edit = Да. Runtime 2026-08-18: **0 строк** ([29](./assets/26-0817-cn-inv-pmt-upl/29-runtime-invdouble-empty.png)); выбран `export_606012_25-0721` (30.06.2025). Link к File пустой — грид = текущий буфер `TblCnInv`, не выбранная выгрузка |
 | nested `invNum` | `inKey`, `inNum`, `inNote`, `inInv`, `inTimeOfEntry`, `inNumNull` | SELECT из **`ags_invNum`** ([SQL](../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/CnInvPmtUpl_invNum.recordsource.access.sql)) | **Основные `ciputciCnInv` / Подчинённые `inNumNull`** | `.cls` нет |
 | nested `cnInv` | `cnName`, `ciKey`, `ciCn`, `ciNote`, `ciMark`, `ciInv`, `ciTimeOfEntry` | `ags_cnInv` INNER JOIN `ags_cn` ([SQL](../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/CnInvPmtUpl_cnInv.recordsource.access.sql)) | **Основные `inInv` / Подчинённые `ciInv`** | `cnName_DblClick` |
 | File_f «стройки новые» | кнопки «проверить по слову», «создать новую стройку»; subform CstNew | объект `…>CstNew`; QueryDef **`CnInvPmtUplTbl_CstNew`** ([SQL](../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/CnInvPmtUplTbl_CstNew.access.sql)); форма — SELECT 5 полей с алиасами `Выражение*` | **пустые** | `btnTestWord_Click` / `btnCstNewCreate_Click` |
@@ -210,7 +213,7 @@ CnInvPmtUpl                            ← RS = ags_cn_inv_pm_upl; Order By cn_i
 
 Якорь колонки: `UsedRange.Find(what:="№ докум.", LookAt:=xlWhole)`. Дальше — **не** поиск заголовков (в отличие от долгов), а **фиксированные Offset** от ячейки «№ докум.»: −20…−1 слева, сама ячейка = `ciputCnInvDocCode`, +1…+5 справа. Непустые ячейки якоря → `PaymentUnloadTest` → `AddNew` в `CnInvPmtUplTbl` (`DELETE *` перед циклом). `ciputUnloadKey` = `cipufUpload`.
 
-**Следствие для съёма:** нужен скрин **строки заголовков** живого `export_*` (и/или runtime листа), чтобы подписать Offset именами колонок. По VBA имена Excel-заголовков кроме «№ докум.» **не** восстанавливаются.
+**Карта Offset (2026-08-18):** пять файлов `export_{счётГК}_26-0422.XLSX` в `D:\wire-guard-share-nb-win\femsq\excel\2026_03\debit` — лист `Sheet1`, якорь **U1**, колонки **A–Z**, заголовки **совпадают** между счетами. Полная таблица: [`export_offset-map.md`](../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/export_offset-map.md). F и G оба подписаны «Агент» (номер / имя). Другие годы не сверялись. Закомментированные Offset в VBA — другая раскладка; живой код = эта A–Z.
 
 ### 6.2. Воронка (всегда, даже если Excel не перечитывали)
 
@@ -223,7 +226,7 @@ CnInvPmtUpl                            ← RS = ags_cn_inv_pm_upl; Order By cn_i
 5. `cipuCn_AgNotLoad` — агент/заказчик (`cn_s_type=1`); при flLoad DAO в `ags_cn_s` / `ags_cn_s_org`  
 6. `cipuCn_AgTwo` — лог  
 7. `cipuCn_CtptCnOneInvNotLoad` — новые СФ → `TblCnInv` (APPEND); при flLoad DAO: inv→invNum→cnInv  
-8. `cipuCn_CtptCnOneInvTwoLoad` — СФ уже >1 в БД; **блок apply в коде закомментирован** (повторный показ)  
+8. `cipuCn_CtptCnOneInvTwoLoad` — СФ уже >1 в БД; **apply намеренно закрыт** (владелец, 2026-08-18): только лог/буфер `TblCnInv`. Запись новой СФ или перепривязка существующей — вручную оператором, не `flLoad`  
 9. `cipuCn_CtptCnOneInvOneAcNotLoad` — нет пары СФ+счёт; при flLoad INSERT `ags_cnInvAccntSmpl`  
 10. `cipuDocNotLoad` — нет платёжного документа; при flLoad INSERT `ags_cn_inv_doc`  
 11. `cipuCn_CtptCnOneInvOneAcDcNot` — лог-счётчик  
@@ -267,8 +270,8 @@ CnInvPmtUpl                            ← RS = ags_cn_inv_pm_upl; Order By cn_i
 - [x] Link File_f: `cn_inv_pm_key` ↔ `cipufUpload` ([11](./assets/26-0817-cn-inv-pmt-upl/11-design-main-link-file-f.png)).
 - [x] Вкладка «счета, сумма»: `Sum_t`, Link `cn_inv_pm_key` ↔ `cn_inv_pm_upl`; RS = `ags_q_cn_inv_pm_upl_sum` ([12](./assets/26-0817-cn-inv-pmt-upl/12-design-main-tab-sum-t.png), [15](./assets/26-0817-cn-inv-pmt-upl/15-design-sum-t-recordsource.png)).
 - [x] Родитель «прочее»: пустой контейнер ([13](./assets/26-0817-cn-inv-pmt-upl/13-design-main-tab-other.png)).
-- [x] Шапка File_f + кнопка «загрузка» + RS SELECT `CnInvPmtUplFile…` ([14](./assets/26-0817-cn-inv-pmt-upl/14-design-file-f-recordsource.png)).
-- [ ] File_f «ход загрузки»: Text Format `cipufLoadingProgress` (RTF?).
+- [x] Шапка File_f + кнопка «загрузка» + полный RS ([14](./assets/26-0817-cn-inv-pmt-upl/14-design-file-f-recordsource.png), [14b](./assets/26-0817-cn-inv-pmt-upl/14b-design-file-f-recordsource-full.png), [14c](./assets/26-0817-cn-inv-pmt-upl/14c-sql-file-f-recordsource.png)).
+- [x] File_f «ход загрузки»: `cipufLoadingProgress` — Memo, **TextFormat=1 (RTF)** в TableDef File; форма пишет тот же столбец ([14b](./assets/26-0817-cn-inv-pmt-upl/14b-design-file-f-recordsource-full.png)).
 - [x] File_f «повторяющиеся СФ»: InvDouble + кнопка + RS/Link пустой ([16](./assets/26-0817-cn-inv-pmt-upl/16-design-file-f-tab-invdouble.png), [16c](./assets/26-0817-cn-inv-pmt-upl/16c-sql-invdouble-recordsource.png)).
 - [x] File_f «стройки новые»: CstNew + кнопки; Link пустой; RS обёртка QueryDef ([19](./assets/26-0817-cn-inv-pmt-upl/19-design-file-f-tab-cstnew.png)).
 - [x] File_f «прочее»: только `cipufKey` / `cipufUpload` ([20](./assets/26-0817-cn-inv-pmt-upl/20-design-file-f-tab-other.png)).
@@ -279,18 +282,15 @@ CnInvPmtUpl                            ← RS = ags_cn_inv_pm_upl; Order By cn_i
 - [x] Design + RecordSource `…>InvDouble` — совпало с S68 ([16c](./assets/26-0817-cn-inv-pmt-upl/16c-sql-invdouble-recordsource.png)).
 - [x] Design + RecordSource + Link `…>invNum` и `…>cnInv`.
 - [x] Design + RecordSource CstNew (обёртка QueryDef; сам QueryDef — отдельно).
-- [ ] Runtime: грид InvDouble с данными (если буфер не пуст) **или** явное «0 строк».
+- [x] Runtime InvDouble: **0 строк** (2026-08-18, выбран `export_606012_25-0721`; [29](./assets/26-0817-cn-inv-pmt-upl/29-runtime-invdouble-empty.png)). Буфер `TblCnInv` без строк с `ciputciCnInvNumCount` Is Not Null.
 
-### Волна 4 — недостающие `.cls`
+### Волна 4 — модули форм (VBE = репозиторий)
 
-Экспорт модулей форм (UTF-8), класть в `VBA-Code-Export/Form-Modules/` с тем же `gt_`-именованием:
+`ExportAllModules` и VBE Class Objects (2026-08-18, [28](./assets/26-0817-cn-inv-pmt-upl/28-vbe-class-objects-cninvpmt.png)):
 
-- [ ] `Form_CnInvPmtUpl.cls` (родитель);
-- [ ] `Form_CnInvPmtUpl_gt_Sum_t.cls` (если модуль есть);
-- [ ] `Form_CnInvPmtUpl_gt_File_f_gt_InvDouble.cls`;
-- [ ] `…_gt_InvDouble_gt_invNum.cls`;
-- [ ] `Form_CnInvPmtUpl_gt_File_f_gt_CstNew.cls`;
-- [ ] модули вкладки «прочее».
+- [x] `Form_CnInvPmtUpl>File_f` — уже в `VBA-Code-Export`.
+- [x] `Form_CnInvPmtUpl>File_f>InvDouble>invNum>cnInv` — уже в `VBA-Code-Export`.
+- [x] Родитель / `Sum_t` / `InvDouble` / nested `invNum` / `CstNew` — **в VBE нет** (HasModule = Нет). Файлов не будет.
 
 ### Волна 5 — таблицы и запросы
 
@@ -304,7 +304,7 @@ CnInvPmtUpl                            ← RS = ags_cn_inv_pm_upl; Order By cn_i
 - [x] Дамп живого контура `cipu*` (40 QueryDef, 2026-08-17) → [`cipu-sql/`](../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipu-sql/) и `{Имя}.access.sql`. Кириллица в дампе целая. Модуль: [`DumpCipuQueryDefs.bas`](../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/DumpCipuQueryDefs.bas).
 - [x] Helper QueryDef: `agsCnCtptAgentSmplBuirg`, `agsCnCtptAgentSmplBuirgOne`, `agsCnCtptExequtorSmplBuirgOne` (дамп 23:58). `agsInvNumCount` = уже снятый в `access-queries/`.
 - [x] DumpTableDef UTF-8: `cipuCn_CtptCnOneInvOneAcDcExtPmTbl` → [`.table.md`](../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipuCn_CtptCnOneInvOneAcDcExtPmTbl.table.md) ([dump](../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipuCn_CtptCnOneInvOneAcDcExtPmTbl_dump.txt)).
-- [ ] Скрин заголовков Excel `export_*` (строка с «№ докум.») для карты Offset.
+- [x] Карта Offset Excel `export_*` (якорь «№ докум.» = U1) → [`export_offset-map.md`](../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/export_offset-map.md). Пять файлов `2026_03/debit`, заголовки идентичны.
 
 ### Не снимать повторно (уже есть)
 
@@ -316,10 +316,10 @@ CnInvPmtUpl                            ← RS = ags_cn_inv_pm_upl; Order By cn_i
 
 1. ~~Есть ли родитель / RS / Link File_f?~~ **`CnInvPmtUpl`** ← `ags_cn_inv_pm_upl`; Link File_f `cn_inv_pm_key`↔`cipufUpload`. `_2` нет.
 2. ~~Полный список объектов `cipu*` на Nav~~ **снят**. ~~`ExtPmtTbl` vs `ExtPmTbl`~~ — на Nav (фильтр `cipuCn_Ctpt`, 2026-08-17) **`…ExtPmTbl`**, как в VBA. ~~`OldNot` vs `OIdNot`~~ — **`cipuCtpt_All_OIdNot`**.
-3. ~~QueryDef живого контура `cipu*` / helper `agsCnCtpt*` / буфер `…ExtPmTbl`~~ **сняты**. Осталось: полный RS File_f; `.cls` без экспорта; Excel Offset.
+3. ~~QueryDef / helper / буфер / Offset / RS File_f / `.cls` / runtime InvDouble~~ **сняты.** В VBE у pmt только `File_f` и `cnInv`. Runtime грид InvDouble: **0 строк** ([29](./assets/26-0817-cn-inv-pmt-upl/29-runtime-invdouble-empty.png)).
 4. ~~Куда INSERT `cipuInsPmNotIns` / `cipuDocNotIns` / `…AcNotIns`~~ **снято:** `ags_cn_inv_pm` / `ags_cn_inv_doc` / `ags_cnInvAccntSmpl`.
-5. Почему `cipuCn_CtptCnOneInvTwoLoad` не пишет в БД (закомментированный apply) — намеренно?
-6. Соответствие колонок Excel Offset ↔ заголовки `export_*` (меняются ли между периодами?).
+5. ~~Почему `cipuCn_CtptCnOneInvTwoLoad` не пишет в БД~~ **намеренно (владелец, 2026-08-18).** Двоящий № СФ уже в БД: **создать новую** или **перепривязать** существующую — тонкое решение, только оператор вручную после размышления. Авто-apply в загрузке закрыт. Java на этом шаге не пишет и не перепривязывает. Ручной контур: InvDouble / `btnInvCreate` (создать) и формы договоров (перепривязка), не воронка `flLoad`.
+6. ~~Offset ↔ заголовки `export_*`~~ **снято для среза 26-0422** (пять счетов ГК, лист Sheet1, U1, A–Z идентичны): [`export_offset-map.md`](../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/export_offset-map.md). Другие годы не открывались.
 7. ~~Почему на гриде Sum_t поля `dbt_blns*`?~~ Колонки **`ags.cn_inv_pm`**, агрегат VIEW `ags.q_cn_inv_pm_upl_sum` (rollup по выгрузке+счёту ГК); аналог dbt `ags_q_cn_inv_dbt_upl_sum`.
 8. ~~`cipuCtpt_All_OId` INNER JOIN + `OIdNot` IS NULL~~ **снято:** `agsOrgIdBUiRG` = `ags_org_id` WHERE `org_id_type=1`; `org_id_key` NOT NULL. После INNER JOIN строк с null-ключом нет — лог шага 1 («новые организации») структурно пуст. У долгов тот же смысл — **LEFT JOIN** (`ciduCtptNot`). **Следствие:** `cipuCn_Ctpt` отсекает тех, кто в `OIdNot`; пустой `OIdNot` → анти-join никого не отсекает, в шаг 3 попадают все контрагенты Excel (в т.ч. без БУиРГ, тогда `org_id_key` Null).
 9. ~~`agsCnCtptExequtorSmplBuirg` / Agent / `*One`~~ **снято.** Исполнитель: `cn_s_type=2`, номер = **`cnnNumNull`**. Агент: `cn_s_type=1`, номер = **`cnnNum`**. `*One` = ровно один `csosKey` на пару (договор, БУиРГ). Не VIEW `ags.cn_s_orgExeBuirg` (там полная `cn_s_org`).
@@ -335,3 +335,4 @@ CnInvPmtUpl                            ← RS = ags_cn_inv_pm_upl; Order By cn_i
 | VBA File_f | `docs/project/proposals/vba-analysis/VBA-Code-Export/Form-Modules/Form_CnInvPmtUpl_gt_File_f.cls` |
 | Аналог долгов (скрины) | [assets/26-0811-cn-inv-dbt-upl/](./assets/26-0811-cn-inv-dbt-upl/README.md) |
 | КСДСФ (ссылка) | [sql/26-0816-sudz-sf-num-collision/](../sql/26-0816-sudz-sf-num-collision/) — адаптер pmt **не** эта тема |
+| Резюме чата | [chat-resume-26-0817-cn-inv-pmt-upl.md](../chats/chat-resume/chat-resume-26-0817-cn-inv-pmt-upl.md) |

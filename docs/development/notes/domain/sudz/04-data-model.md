@@ -1,7 +1,7 @@
 # СУДЗ — модель данных (FishEye.ags)
 
 **Дата создания:** 2026-08-03  
-**Последнее обновление:** 2026-08-18 (S69: DumpTableDef `…ExtPmTbl`)
+**Последнее обновление:** 2026-08-18 (S69: паспорт Access pmt закрыт)
 **Статус:** рабочий черновик для накопления сведений (сегменты S4–S14, S25–S29, S61f, S69)  
 **План чата:** [chat-plan-26-0802-sudz.md](../../chats/chat-plan/chat-plan-26-0802-sudz.md)  
 **ER-снимок (Access, текущее состояние):** [assets/26-0803-sudz-er-segment.png](./assets/26-0803-sudz-er-segment.png)  
@@ -491,7 +491,7 @@ CiaNm (ciaKey + ciaName)
 
 **Не путать с §2.7** (`btnCidufLoad` / долги / 0069). Здесь — загрузка `export_*` формой `CnInvPmtUpl>File_f`. Паспорт UI: [02-11](../../UI/02-11_cn-inv-pmt-upl-access.md). SQL живого контура `cipu*` снят (дамп 2026-08-17). Финальный INSERT: **`ags_cn_inv_pm`**.
 
-**Этап 1 — Excel → `CnInvPmtUplTbl`** (если `cipufFlTbl` и задан `cipufSheet`): COM Excel, лист по имени поля File (не `FileSh`). Якорь: `Find("№ докум.", xlWhole)`. Строки с непустым якорем пишутся через `PaymentUnloadTest` **фиксированными Offset** от якоря (не `Find` по каждому заголовку — в отличие от §2.7). Перед циклом `DELETE * FROM CnInvPmtUplTbl`. `ciputUnloadKey` = `cipufUpload` (= ключ пакета `cn_inv_pm_upl`).
+**Этап 1 — Excel → `CnInvPmtUplTbl`** (если `cipufFlTbl` и задан `cipufSheet`): COM Excel, лист по имени поля File (не `FileSh`). Якорь: `Find("№ докум.", xlWhole)`. Строки с непустым якорем пишутся через `PaymentUnloadTest` **фиксированными Offset** от якоря (не `Find` по каждому заголовку — в отличие от §2.7). Перед циклом `DELETE * FROM CnInvPmtUplTbl`. `ciputUnloadKey` = `cipufUpload` (= ключ пакета `cn_inv_pm_upl`). Карта Offset для `export_*_26-0422` (U1, A–Z): [`export_offset-map.md`](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/export_offset-map.md).
 
 **Этап 2 — воронка** (вызывается всегда, если есть `cipufUpload`):
 
@@ -504,14 +504,14 @@ CiaNm (ciaKey + ciaName)
 | 5 | `cipuCn_AgNotLoad` | нет агента/заказчика (`cn_s_type=1`); [`cipuCn_AgNot`](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipuCn_AgNot.access.sql) ← `cipuCn_Ag` ⋈ [`agsCnCtptAgentSmplBuirg`](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/agsCnCtptAgentSmplBuirg.access.sql) (`cnnNum`, не Null) | DAO в `ags_cn_s` / `ags_cn_s_org` |
 | 6 | `cipuCn_AgTwo` | агент более одного раза | только лог |
 | 7 | `cipuCn_CtptCnOneInvNotLoad` | новые СФ → `TblCnInv` ([`…NotIns`](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipuCn_CtptCnOneInvNotIns.access.sql)) | DAO: `ags_inv` → `ags_invNum` → `ags_cnInv` |
-| 8 | `cipuCn_CtptCnOneInvTwoLoad` | СФ уже >1 в БД (`…TwoIns` → `TblCnInv`) | **apply закомментирован**; повторный показ |
+| 8 | `cipuCn_CtptCnOneInvTwoLoad` | СФ уже >1 в БД (`…TwoIns` → `TblCnInv`) | **только показ** (владелец, 2026-08-18): создать новую СФ или перепривязать существующую — вручную оператором; авто-apply закрыт |
 | 9 | `cipuCn_CtptCnOneInvOneAcNotLoad` | нет пары СФ + счёт ГК | INSERT **`ags_cnInvAccntSmpl`** ([`…AcNotIns`](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipuCn_CtptCnOneInvOneAcNotIns.access.sql)) |
 | 10 | `cipuDocNotLoad` | нет платёжного документа | INSERT **`ags_cn_inv_doc`** (`cn_inv_doc_kod`) |
 | 11 | `cipuCn_CtptCnOneInvOneAcDcNot` | счётчик СФ без документа | только лог |
 | 12 | `cipuInsPmNotLoad` | платежи готовы, в БД нет; буфер [`…ExtPmTbl`](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipuCn_CtptCnOneInvOneAcDcExtPmTbl.table.md) (40 полей, без PK) | INSERT **`ags_cn_inv_pm`** ([`cipuInsPmNotIns.access.sql`](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipuInsPmNotIns.access.sql)) |
 | 13 | `cipuInsPmExt` | те же, уже в БД: построчный diff (`MainTest`); `cipuInsPmExtFalse` = расхождения | только лог |
 
-**Буфер InvDouble:** отдельной FileInvDouble нет; грид = `TblCnInv` WHERE `ciputciCnInvNumCount` Is Not Null (S68). Кнопка `btnInvCreate` — тот же ClassFactory, что у долгов (`invCreateNewNumDate` + `cnInvCreateNewInvCn`).
+**Буфер InvDouble:** отдельной FileInvDouble нет; грид = `TblCnInv` WHERE `ciputciCnInvNumCount` Is Not Null (S68). Link к File_f пустой. Runtime 2026-08-18: **0 строк** (выбран `export_606012_25-0721`). Кнопка `btnInvCreate` — тот же ClassFactory, что у долгов (`invCreateNewNumDate` + `cnInvCreateNewInvCn`).
 
 **Staging на SQL Server (S61d, не воронка):** `sudz.CnInvPmtUplFile` / `Tbl` / `TblCnInv`. Таблица `cipuCn_CtptCnOneInvOneAcDcExtPmTbl` на SQL **не** переносилась (эфемерный Access-буфер; структура снята 2026-08-18).
 
@@ -730,7 +730,7 @@ CiaNm (ciaKey + ciaName)
 
 - Отдельный чат паспорта **`CnInvPmtUpl*`** (процесс 1.1.1.2), не 0069 и не реализация КСДСФ.
 - Каркас: [02-11](../../UI/02-11_cn-inv-pmt-upl-access.md); алгоритм кнопки — §2.9 (имена шагов из экспорта `File_f`, SQL запросов не выдуман).
-- Дыры съёма: полный RS File_f; `.cls` InvDouble/invNum/CstNew/родитель/Sum_t; Excel Offset. QueryDef `cipu*` + helper + буфер `…ExtPmTbl` сняты.
+- Паспорт Access закрыт (2026-08-18). Шаг 8: apply намеренно выключен — двоящие СФ только вручную (создать или перепривязать). Runtime InvDouble: **0 строк**. VBA pmt в VBE = `File_f` + `cnInv`. QueryDef / helper / буфер / Offset / RS File_f сняты.
 
 ---
 

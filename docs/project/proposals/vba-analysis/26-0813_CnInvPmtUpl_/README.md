@@ -19,7 +19,7 @@
 
 **Паспорт формы (S69):** [02-11_cn-inv-pmt-upl-access.md](../../../../development/notes/UI/02-11_cn-inv-pmt-upl-access.md) — UI/VBA/запросы; не переснимать эти 4 таблицы вслепую. QueryDef `cipu*` + helper `agsCnCtpt*` сняты. Буфер шага 12: [`cipuCn_CtptCnOneInvOneAcDcExtPmTbl.table.md`](./cipuCn_CtptCnOneInvOneAcDcExtPmTbl.table.md). Apply: INSERT **`ags_cn_inv_pm`**.
 
-**Дыра съёма:** `.cls` родителя / Sum_t / InvDouble / invNum / CstNew; полный RS File_f; Excel Offset. Архив `…ExtPmTblOld` не снимать.
+**Дыра съёма:** нет. VBA pmt в VBE = `File_f` + `cnInv` (уже в `VBA-Code-Export`). Архив `…ExtPmTblOld` не снимать.
 
 
 

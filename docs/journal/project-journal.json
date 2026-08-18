@@ -8,13 +8,13 @@
     "sessions": [
       {
         "chat": {
-          "displayName": "Паспорт Access CnInvPmtUpl / 1.1.1.2 (active, high). № chat-2026-08-17-001",
+          "displayName": "Паспорт Access CnInvPmtUpl / 1.1.1.2 (completed, high). № chat-2026-08-17-001",
           "chat-attributes": {
             "id": "chat-2026-08-17-001",
             "created": "2026-08-17",
             "lastUpdated": "2026-08-18",
             "owner": "Александр",
-            "status": "active",
+            "status": "completed",
             "priority": "high",
             "tags": [
               "sudz",
@@ -32,7 +32,8 @@
               ],
               "aiRuleRefs": [],
               "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#57-1112--паспорт-access-cninvpmtupl-s69-не-0069",
-              "uiNote": "docs/development/notes/UI/02-11_cn-inv-pmt-upl-access.md"
+              "uiNote": "docs/development/notes/UI/02-11_cn-inv-pmt-upl-access.md",
+              "chatResume": "docs/development/notes/chats/chat-resume/chat-resume-26-0817-cn-inv-pmt-upl.md"
             }
           },
           "entries": [
@@ -394,6 +395,198 @@
                       "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipuCn_CtptCnOneInvOneAcDcExtPmTbl.table.md",
                       "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/cipuCn_CtptCnOneInvOneAcDcExtPmTbl_dump.txt",
                       "docs/development/notes/UI/02-11_cn-inv-pmt-upl-access.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Карта Offset export_* (№ докум. = U1) (success). № log-2026-08-18-003",
+                "log-attributes": {
+                  "id": "log-2026-08-18-003",
+                  "timestamp": "2026-08-18T20:37:00+03:00",
+                  "level": "success",
+                  "effort": "0.25h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0065"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Прочитать заголовки export_* в 2026_03/debit и сопоставить с VBA Offset",
+                    "details": "Пять файлов export_{счётГК}_26-0422.XLSX, лист Sheet1, якорь № докум. в U1, колонки A–Z без merge. Заголовки идентичны между счетами. F и G оба «Агент» (номер/имя). Живой Offset −20…+5 совпадает с этой раскладкой; закомментированный блок VBA — другая.",
+                    "outcome": "Файл export_offset-map.md. Следующий съём: недостающие .cls и полный RS File_f.",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/export_offset-map.md",
+                      "docs/development/notes/UI/02-11_cn-inv-pmt-upl-access.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Полный RecordSource File_f (success). № log-2026-08-18-004",
+                "log-attributes": {
+                  "id": "log-2026-08-18-004",
+                  "timestamp": "2026-08-18T20:47:00+03:00",
+                  "level": "success",
+                  "effort": "0.15h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0065"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Снять полный RecordSource CnInvPmtUpl>File_f",
+                    "details": "SELECT всех 7 полей CnInvPmtUplFile (Key, Upload, Path, FlLoad, LoadingProgress, FlTbl, Sheet). Add/Del/Edit=Да. cipufLoadingProgress — Memo TextFormat=1 (RTF) по TableDef File.",
+                    "outcome": "CnInvPmtUpl_File_f.recordsource.access.sql + скрины 14b/14c. Следующий съём: недостающие .cls.",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/CnInvPmtUpl_File_f.recordsource.access.sql",
+                      "docs/development/notes/UI/assets/26-0817-cn-inv-pmt-upl/14c-sql-file-f-recordsource.png"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "VBE: модули pmt только File_f и cnInv (success). № log-2026-08-18-005",
+                "log-attributes": {
+                  "id": "log-2026-08-18-005",
+                  "timestamp": "2026-08-18T20:58:00+03:00",
+                  "level": "success",
+                  "effort": "0.1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0065"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Сверить Class Objects VBE с VBA-Code-Export для CnInvPmtUpl*",
+                    "details": "В дереве после Form_CnInvDbtUpl>File_f сразу Form_CnInvPmtUpl>File_f и …>InvDouble>invNum>cnInv. Родителя, Sum_t, InvDouble, nested invNum, CstNew в VBE нет (HasModule=Нет). Совпадает с репозиторием: экспортировать нечего.",
+                    "outcome": "Волна .cls закрыта. По желанию: runtime InvDouble; вопрос про apply шага 8.",
+                    "references": [
+                      "docs/development/notes/UI/assets/26-0817-cn-inv-pmt-upl/28-vbe-class-objects-cninvpmt.png",
+                      "docs/development/notes/UI/02-11_cn-inv-pmt-upl-access.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Runtime InvDouble: 0 строк (success). № log-2026-08-18-006",
+                "log-attributes": {
+                  "id": "log-2026-08-18-006",
+                  "timestamp": "2026-08-18T21:37:00+03:00",
+                  "level": "success",
+                  "effort": "0.1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0065"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Снять runtime грид CnInvPmtUpl>File_f>InvDouble",
+                    "details": "Вкладка «повторяющиеся счета-фактуры», выбран export_606012_25-0721 (30.06.2025). Колонки ciputci* + nnn; строк нет. Link к File_f пустой — грид = буфер TblCnInv (WHERE ciputciCnInvNumCount Is Not Null), не выбранная выгрузка.",
+                    "outcome": "Волна 3 закрыта. Остался вопрос 5: закомментированный apply шага 8 (cipuCn_CtptCnOneInvTwoLoad) намеренно?",
+                    "references": [
+                      "docs/development/notes/UI/assets/26-0817-cn-inv-pmt-upl/29-runtime-invdouble-empty.png",
+                      "docs/development/notes/UI/02-11_cn-inv-pmt-upl-access.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S69: шаг 8 TwoLoad — apply намеренно закрыт (success). № log-2026-08-18-007",
+                "log-attributes": {
+                  "id": "log-2026-08-18-007",
+                  "timestamp": "2026-08-18T21:43:00+03:00",
+                  "level": "success",
+                  "effort": "0.2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0065"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Закрыть вопрос 5 паспорта CnInvPmtUpl по решению владельца",
+                    "details": "cipuCn_CtptCnOneInvTwoLoad: запись новой СФ или перепривязка двоящего номера — только оператор вручную после решения. Авто-apply в загрузке намеренно закрыт (закомментированный блок VBA не включать). Согласуется с S68 п.3. Java на этом шаге не пишет.",
+                    "outcome": "Паспорт Access 1.1.1.2 закрыт. Java-воронка pmt — отдельный чат, не этот.",
+                    "references": [
+                      "docs/development/notes/UI/02-11_cn-inv-pmt-upl-access.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+                      "docs/development/notes/domain/sudz/04-data-model.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Резюме чата паспорта CnInvPmtUpl (success). № log-2026-08-18-008",
+                "log-attributes": {
+                  "id": "log-2026-08-18-008",
+                  "timestamp": "2026-08-18T21:53:00+03:00",
+                  "level": "success",
+                  "effort": "0.2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0065"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Создать chat-resume паспорта Access 1.1.1.2",
+                    "details": "Файл chat-resume-26-0817-cn-inv-pmt-upl.md по образцу 26-0722/26-0720. Не путать с будущим резюме всего плана 26-0802-sudz (0069/S68 ещё активны). Ссылки из 02-11 и §5.7.",
+                    "outcome": "Объём чата chat-2026-08-17-001 исчерпан; синхронизация с GitHub.",
+                    "references": [
+                      "docs/development/notes/chats/chat-resume/chat-resume-26-0817-cn-inv-pmt-upl.md"
                     ]
                   }
                 ]
