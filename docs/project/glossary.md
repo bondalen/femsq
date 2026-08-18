@@ -1,8 +1,8 @@
 # Словарь терминов проекта FEMSQ
 
-**Версия:** 1.7.0  
+**Версия:** 1.8.0  
 **Дата создания:** 2026-06-23  
-**Последнее обновление:** 2026-07-06  
+**Последнее обновление:** 2026-08-18  
 **Автор:** Александр  
 
 ## Назначение
@@ -176,6 +176,18 @@ Synonym для старых имён **не создавать**.
 ---
 
 ## О
+
+### Обходник связей (walker / `FemsqWalkTree`)
+
+Компонент над `FemsqTree`: по JSON экземпляра дерева лениво раскрывает рёбра (`1:N` — папка, `N:1` — запись) и рисует карточку выбранного узла. Не renderer и не экран СУДЗ.
+
+**Сейчас в FEMSQ:** `RelationTree.vue` + `relation-tree.ts`. **Целевое имя в feQuLib:** `FemsqWalkTree` (после T7 / второго продукта). Fetch (`fetchNode` / `fetchExpand`) и каталог SQL — у хоста. Поле JSON `to` обязательно с T4b.
+
+**Не путать с:** `FemsqTree` (только `nodes`/слоты); `FemsqTable` (плоский грид).
+
+**См. также:** [Решение 009](decisions/009-femsq-walk-tree.md), [02-12 relation-tree](../development/notes/UI/02-12_femsq-tree/relation-tree.md).
+
+**Последнее обновление статьи:** 2026-08-18.
 
 ### Освоение лимита
 
@@ -364,6 +376,16 @@ CHECK-ограничения `CK_ipgUtPlPnLm*_gt0` (`lim > 0`); включени
 ---
 
 ## Ф
+
+### FemsqTree
+
+Renderer вложенного дерева в пакете `fequlib`: `nodes`, слоты header/detail, `selectedKey` ≠ `expandedKeys`, lazy `@load`. Не знает JSON экземпляра, рёбер БД и GraphQL. Контракт v1 — задача feQuLib **0016**.
+
+**Не путать с:** обходником связей (`RelationTree` / `FemsqWalkTree`); `FemsqTable`.
+
+**См. также:** обходник связей, [Решение 008](decisions/008-fequlib-and-docs-registry.md), [Решение 009](decisions/009-femsq-walk-tree.md).
+
+**Последнее обновление статьи:** 2026-08-18.
 
 ### Фантомный уровень филиала (GROUPING SETS)
 

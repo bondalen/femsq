@@ -33,7 +33,7 @@ public record SudzCnInvUplSfDouble(
         String ciusInvNum,
         Integer ciusInvNumCount,
         String ciusStatus,
-        java.time.LocalDateTime ciusStatusAt,
+        java.time.OffsetDateTime ciusStatusAt,
         Integer ciusCreatedInvKey
 ) {
 }

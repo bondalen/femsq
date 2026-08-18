@@ -8,6 +8,7 @@
 **IA:** [02-4_app-forms-ia.md](./02-4_app-forms-ia.md) — пункт TopBar «Договоры»  
 **Связь с СУДЗ:** воронка 0069, шаг `CnExistCtptNotLoad` (только лог) → ручная правка стороны договора  
 **План чата:** [chat-plan-26-0802-sudz.md](../chats/chat-plan/chat-plan-26-0802-sudz.md) **S62**  
+**Дерево СФ (вкладка, ещё не в UI):** [contracts-inv.tree.md](./02-12_femsq-tree/contracts-inv.tree.md)  
 **Задача:** [0071](../../project-development.json)
 
 ---

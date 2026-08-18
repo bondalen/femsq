@@ -1,0 +1,18 @@
+# Обход связей по каталогу рёбер (S68t). Backend не знает экранов.
+
+extend type Query {
+  """Строка таблицы из whitelist. Неизвестная таблица — ошибка."""
+  relationNode(table: String!, id: Int!): RelationRow
+  """Раскрытие ребра из whitelist. Неизвестное ребро — ошибка."""
+  relationExpand(edge: String!, fromId: Int!): [RelationRow!]!
+}
+
+type RelationRow {
+  key: Int!
+  fields: [RelationField!]!
+}
+
+type RelationField {
+  name: String!
+  value: String
+}

@@ -1,7 +1,7 @@
 Решение 008: Внешние проекты — feQuLib и реестр документации проектов (Postgres)
 
 Дата: 2026-07-25  
-Последнее обновление: 2026-07-29  
+Последнее обновление: 2026-08-18  
 Статус: ✅ Принято; MVP выполнен (0061/0060); projectize выполнен (0063); визуальный контракт хост↔lib зафиксирован (2026-07-29)  
 Участники: Александр
 
@@ -59,6 +59,10 @@ FEMSQ потребляет `fequlib` через `file:../../../feQuLib` (пок�
     DevExpress-скрины в fequlib — эталон **плотности/паттернов**, не пиксель-копия и не палитра FEMSQ.
     Задача fequlib **0011** (registry); бриф: `docs/design/FemsqTable-visual-target.md` в fequlib; FEMSQ: `02-8`, план 26-0725 §8, `frontend-themes.md`.
 
+### Дерево: renderer и walker (2026-08-18)
+
+`FemsqTree` — только отрисовка. Обход JSON/рёбер — отдельный компонент (`RelationTree` → `FemsqWalkTree`). Не встраивать walker в `FemsqTree`. Подготовка контракта в FEMSQ (inject fetch) до выноса в lib. Подробно: [Решение 009](./009-femsq-walk-tree.md).
+
 Последствия
 
 Положительные:
@@ -82,3 +86,4 @@ FEMSQ потребляет `fequlib` через `file:../../../feQuLib` (пок�
     docs/development/frontend-themes.md — хост-токены и место для `--fequlib-table-*`
     fequlib: docs/design/FemsqTable-visual-target.md, chat-plan-26-0729-femsq-table-visual.md
     Задачи 0059, 0060, 0061, 0062, 0063 в project-development.json; fequlib 0011 в docs-registry
+    [Решение 009](./009-femsq-walk-tree.md) — обходник связей как sibling `FemsqTree`

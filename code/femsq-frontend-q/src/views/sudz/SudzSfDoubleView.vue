@@ -106,39 +106,51 @@
                       />
                     </template>
                     <template #after>
-                      <div class="q-pa-sm overflow-auto">
+                      <div class="q-pa-sm overflow-auto column fill-pane no-wrap">
                         <div v-if="!selectedDomain[0]" class="text-grey-6">
                           Выберите СФ в списке совпадений.
                         </div>
-                        <QMarkupTable v-else dense flat bordered>
-                          <tbody>
-                            <tr>
-                              <td class="text-grey-6">invKey</td>
-                              <td>{{ selectedDomain[0].invKey }}</td>
-                            </tr>
-                            <tr>
-                              <td class="text-grey-6">номер</td>
-                              <td>{{ selectedDomain[0].invNum ?? '—' }}</td>
-                            </tr>
-                            <tr>
-                              <td class="text-grey-6">ввод</td>
-                              <td>{{ selectedDomain[0].invEntered ?? '—' }}</td>
-                            </tr>
-                            <tr>
-                              <td class="text-grey-6">ciKey</td>
-                              <td>{{ selectedDomain[0].ciKey ?? '—' }}</td>
-                            </tr>
-                            <tr>
-                              <td class="text-grey-6">договор</td>
-                              <td>
-                                {{ selectedDomain[0].cnNum ?? '—' }}
-                                <span v-if="selectedDomain[0].cnKey">
-                                  (cn={{ selectedDomain[0].cnKey }})
-                                </span>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </QMarkupTable>
+                        <RelationTree
+                          v-else-if="useRelationWalker"
+                          class="col"
+                          :spec="relationSpec"
+                          :root-id="selectedDomain[0].invNumKey"
+                          :fetch-node="fetchRelationNode"
+                          :fetch-expand="fetchRelationExpand"
+                          data-test="sf-double-tree"
+                          root-class="sudz-sf-double-tree"
+                        />
+                        <FemsqTree
+                          v-else
+                          class="col"
+                          :nodes="treeNodes"
+                          node-key="id"
+                          v-model:expanded-keys="treeExpandedKeys"
+                          v-model:selected-key="treeSelectedKey"
+                          :expand-on-click="false"
+                          data-test="sf-double-tree"
+                          root-class="sudz-sf-double-tree"
+                        >
+                          <template #header="{ node }">
+                            <span class="sudz-sf-tree-title">{{ node.title }}</span>
+                            <span v-if="node.subtitle" class="sudz-sf-tree-sub"> · {{ node.subtitle }}</span>
+                            <span v-if="node.current" class="sudz-sf-tree-sub"> · выбран</span>
+                          </template>
+                          <template #detail="{ node }">
+                            <QMarkupTable dense flat bordered>
+                              <tbody>
+                                <tr v-for="field in node.fields" :key="field.label">
+                                  <td class="text-grey-6" style="width: 40%">{{ field.label }}</td>
+                                  <td>{{ field.value }}</td>
+                                </tr>
+                              </tbody>
+                            </QMarkupTable>
+                            <div v-if="node.note" class="text-caption text-grey-6 q-mt-xs">
+                              {{ node.note }}
+                            </div>
+                          </template>
+                          <template #empty>пока нет дочерних узлов</template>
+                        </FemsqTree>
                       </div>
                     </template>
                   </QSplitter>
@@ -161,12 +173,16 @@
  */
 import { computed, ref, watch } from 'vue';
 
-import { FemsqTable, type FemsqTableColumn } from 'fequlib';
+import { FemsqTable, FemsqTree, type FemsqTableColumn, type FemsqTreeKey } from 'fequlib';
+import RelationTree from '@/components/relation/RelationTree.vue';
 import {
   createSudzSfFromDouble,
   getSudzSfDoubleDomainMatches,
-  getSudzSfDoubleExcelCandidate
+  getSudzSfDoubleExcelCandidate,
+  getSudzSfDoubleTreeDebt
 } from '@/api/sudz-api';
+import { fetchRelationExpand, fetchRelationNode } from '@/api/relation-api';
+import { fetchCn, fetchCnNumsByCn, fetchCnSides } from '@/api/contracts-api';
 import { useConnectionStore } from '@/stores/connection';
 import { useSudzDbtUplStore } from '@/stores/sudz-dbt-upl';
 import type {
@@ -174,6 +190,14 @@ import type {
   SudzSfDoubleDomainMatch,
   SudzSfDoubleExcelCandidate
 } from '@/types/sudz';
+import slice1Spec from '@/trees/ksdsf-inv-num.slice1.tree.json';
+import type { RelationTreeSpec } from '@/trees/relation-tree';
+import {
+  buildSudzSfDoubleTree,
+  EMPTY_TREE_EXTRAS,
+  type SudzSfDoubleTreeExtras,
+  type SudzSfDoubleTreeNode
+} from '@/utils/sudz-sf-double-tree';
 import {
   QBtn,
   QMarkupTable,
@@ -187,6 +211,10 @@ import {
 } from 'quasar';
 
 type DomainRow = SudzSfDoubleDomainMatch & { rowKey: string };
+
+/** Срез 1: обходник JSON. false — прежний ручной builder. */
+const useRelationWalker = true;
+const relationSpec = slice1Spec as RelationTreeSpec;
 
 const connection = useConnectionStore();
 const store = useSudzDbtUplStore();
@@ -204,6 +232,9 @@ const selectedRows = ref<SudzCnInvUplSfDouble[]>([]);
 const excel = ref<SudzSfDoubleExcelCandidate | null>(null);
 const domainMatches = ref<DomainRow[]>([]);
 const selectedDomain = ref<DomainRow[]>([]);
+const treeNodes = ref<SudzSfDoubleTreeNode[]>([]);
+const treeExpandedKeys = ref<FemsqTreeKey[]>([]);
+const treeSelectedKey = ref<FemsqTreeKey | null>(null);
 
 const uplKey = computed(() => store.selectedUplKey);
 const rows = computed(() => store.sfDoubles);
@@ -275,6 +306,71 @@ watch(
   { immediate: true }
 );
 
+watch(
+  () => selectedDomain.value[0] ?? null,
+  async (row) => {
+    if (useRelationWalker) {
+      return;
+    }
+    if (!row) {
+      treeNodes.value = [];
+      treeExpandedKeys.value = [];
+      treeSelectedKey.value = null;
+      return;
+    }
+    try {
+      const extras = await loadTreeExtras(row, domainMatches.value);
+      const built = buildSudzSfDoubleTree(row, domainMatches.value, extras);
+      treeNodes.value = built.nodes;
+      treeExpandedKeys.value = built.expandedKeys;
+      treeSelectedKey.value = built.selectedKey;
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : String(e);
+      const built = buildSudzSfDoubleTree(row, domainMatches.value, EMPTY_TREE_EXTRAS);
+      treeNodes.value = built.nodes;
+      treeExpandedKeys.value = built.expandedKeys;
+      treeSelectedKey.value = built.selectedKey;
+    }
+  },
+  { immediate: true }
+);
+
+/**
+ * Догружает договор, стороны, СГК и invDbt для выбранного СФ.
+ *
+ * @param selected выбранное совпадение
+ * @param matches все совпадения номера
+ * @return extras для builder
+ */
+async function loadTreeExtras(
+  selected: DomainRow,
+  matches: DomainRow[]
+): Promise<SudzSfDoubleTreeExtras> {
+  const cnKeys = [
+    ...new Set(
+      matches
+        .filter((row) => row.invKey === selected.invKey && row.cnKey != null)
+        .map((row) => row.cnKey as number)
+    )
+  ];
+  const [debt, ...contractPacks] = await Promise.all([
+    getSudzSfDoubleTreeDebt(selected.invKey),
+    ...cnKeys.map(async (cnKey) => {
+      const [cn, nums, sides] = await Promise.all([
+        fetchCn(cnKey),
+        fetchCnNumsByCn(cnKey),
+        fetchCnSides(cnKey)
+      ]);
+      return { cnKey, cn, nums, sides };
+    })
+  ]);
+  const contracts: SudzSfDoubleTreeExtras['contracts'] = {};
+  for (const pack of contractPacks) {
+    contracts[pack.cnKey] = { cn: pack.cn, nums: pack.nums, sides: pack.sides };
+  }
+  return { contracts, smpls: debt.smpls ?? [], invDbts: debt.invDbts ?? [] };
+}
+
 /**
  * Возврат на экран загрузки свода.
  */
@@ -320,5 +416,15 @@ async function onCreate(): Promise<void> {
   height: 100%;
   min-height: 0;
   overflow: hidden;
+}
+.sudz-sf-tree-title {
+  font-size: var(--femsq-content-body-size);
+}
+.sudz-sf-tree-sub {
+  color: var(--femsq-text-muted);
+  font-size: var(--femsq-content-caption-size);
+}
+.sudz-sf-double-tree {
+  min-height: 0;
 }
 </style>

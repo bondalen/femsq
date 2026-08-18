@@ -1,6 +1,6 @@
 **Дата:** 2025-11-11  
 **Автор:** Александр  
-**Последнее обновление:** 2026-07-22
+**Последнее обновление:** 2026-08-18
 
 ## Компоненты пользовательского интерфейса
 - [Постоянный layout приложения](./02-1-1_app-layout.md) — верхняя панель, основная область и строка состояния с описанием состояний каркаса.
@@ -12,4 +12,5 @@
 - [Форма Access `cst`, вкладка «агенты»](./02-5_cst-form-agents-tab.md) — разбор скринов; иерархия cst→cstAg→cstAgPn→cstAgPnBranch; достаточность для MVP Java.
 - [Форма `cst`, вкладка «отчёты»](./02-6_cst-form-reports-tab.md) — список + карточка `ra`, CRUD.
 - [Форма `cst`, вкладка «отчёты, аренда»](./02-7_cst-form-rent-reports-tab.md) — список + карточка `ralpRa`/`ralpRaAu`, CRUD.
-- [Компонент `FemsqTable`](./02-8_femsq-table-component.md) — единый контракт фильтрации/сортировки гридов; roadmap A–G, границы с будущим TreeList.
+- [Компонент `FemsqTable`](./02-8_femsq-table-component.md) — единый контракт фильтрации/сортировки гридов; roadmap A–G.
+- [`FemsqTree`](./02-12_femsq-tree/relation-tree.md) — renderer в feQuLib. Обходник связей (`RelationTree` → кандидат `FemsqWalkTree`) — отдельный слой, не режим `FemsqTable`; ADR [009](../../../project/decisions/009-femsq-walk-tree.md); конспекты КСДСФ и Договоров/СФ.

@@ -25,7 +25,7 @@ public class GraphQlConfig {
 
     /**
      * Регистрирует поддержку DateTime-скаляра для схемы GraphQL.
-     * Сериализует {@link java.time.LocalDateTime} в ISO-8601 и десериализует обратно.
+     * ExtendedScalars.DateTime сериализует {@link java.time.OffsetDateTime} (не LocalDateTime).
      *
      * @return конфигуратор RuntimeWiring
      */
@@ -57,7 +57,8 @@ public class GraphQlConfig {
             new ClassPathResource("graphql/og-schema.graphqls"),
             new ClassPathResource("graphql/cst-schema.graphqls"),
             new ClassPathResource("graphql/cn-schema.graphqls"),
-            new ClassPathResource("graphql/sudz-schema.graphqls")
+            new ClassPathResource("graphql/sudz-schema.graphqls"),
+            new ClassPathResource("graphql/relation-schema.graphqls")
         );
     }
 }

@@ -1,0 +1,207 @@
+{
+  "id": "ksdsf-inv-num",
+  "version": 0,
+  "root": {
+    "table": "invNum",
+    "pk": "inKey"
+  },
+  "title": [
+    "inKey",
+    "inNum",
+    "inInv"
+  ],
+  "detail": "*",
+  "children": [
+    {
+      "edge": "invNum.inv",
+      "to": "inv",
+      "card": "N:1",
+      "title": [
+        "iKey",
+        "iTimeOfEntry"
+      ],
+      "detail": "*",
+      "children": [
+        {
+          "edge": "inv.cnInv",
+          "to": "cnInv",
+          "card": "1:N",
+          "folder": "СФ, связи с договорами",
+          "title": [
+            "ciKey",
+            "ciCn"
+          ],
+          "detail": "*",
+          "children": [
+            {
+              "edge": "cnInv.cn",
+              "to": "cn",
+              "card": "N:1",
+              "title": [
+                "cn_key",
+                "cnMark",
+                "cn_date"
+              ],
+              "detail": "*",
+              "children": [
+                {
+                  "edge": "cn.cnNum",
+                  "to": "cnNum",
+                  "card": "1:N",
+                  "folder": "Договор, номера",
+                  "title": [
+                    "cnnKey",
+                    "cnnNum",
+                    "cnnType"
+                  ],
+                  "detail": "*",
+                  "children": []
+                },
+                {
+                  "edge": "cn.cn_s",
+                  "to": "cn_s",
+                  "card": "1:N",
+                  "folder": "Договор. Стороны",
+                  "title": [
+                    "cn_s_key",
+                    "cn_s_type"
+                  ],
+                  "detail": "*",
+                  "children": [
+                    {
+                      "edge": "cn_s.smpl",
+                      "to": "smpl",
+                      "card": "1:N",
+                      "folder": "Организации",
+                      "title": [
+                        "csosKey",
+                        "csosOrgId"
+                      ],
+                      "detail": "*",
+                      "children": [
+                        {
+                          "edge": "smpl.org",
+                          "to": "org",
+                          "card": "1:N",
+                          "folder": "cn_s_org",
+                          "title": [
+                            "cn_s_org_key",
+                            "csoCnDate"
+                          ],
+                          "detail": "*",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "edge": "cnInv.cias",
+              "to": "cias",
+              "card": "1:N",
+              "folder": "СФ, СГК простой",
+              "title": [
+                "ciasKey",
+                "ciasCnInv",
+                "ciasAccnt"
+              ],
+              "detail": "*",
+              "children": [
+                {
+                  "edge": "cias.cia",
+                  "to": "cia",
+                  "card": "1:N",
+                  "folder": "cnInvAccnt",
+                  "title": [
+                    "ciaKey"
+                  ],
+                  "detail": "*",
+                  "children": [
+                    {
+                      "edge": "cia.cid",
+                      "to": "cid",
+                      "card": "1:N",
+                      "folder": "cn_inv_dbt",
+                      "title": [
+                        "cn_inv_dbt_key",
+                        "number",
+                        "dbt_ttl"
+                      ],
+                      "detail": "*",
+                      "children": [
+                        {
+                          "edge": "cid.upl",
+                          "to": "upl",
+                          "card": "N:1",
+                          "title": [
+                            "upl_key",
+                            "uplStatusOnDate",
+                            "upl_name"
+                          ],
+                          "detail": "*",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "inv.invDbt",
+          "to": "invDbt",
+          "card": "1:N",
+          "folder": "СФ, задолженности",
+          "title": [
+            "idKey",
+            "idNum"
+          ],
+          "detail": "*",
+          "children": [
+            {
+              "edge": "invDbt.idd",
+              "to": "idd",
+              "card": "1:N",
+              "folder": "invDbtDbt",
+              "title": [
+                "iddKey",
+                "iddDbt"
+              ],
+              "detail": "*",
+              "children": [
+                {
+                  "edge": "idd.dbt",
+                  "to": "dbt",
+                  "card": "N:1",
+                  "title": [
+                    "dbtKey"
+                  ],
+                  "detail": "*",
+                  "children": [
+                    {
+                      "edge": "dbt.dv",
+                      "to": "dv",
+                      "card": "1:N",
+                      "folder": "DbtValue",
+                      "title": [
+                        "dvKey",
+                        "dvTtl",
+                        "dvUpl"
+                      ],
+                      "detail": "*",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

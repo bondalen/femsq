@@ -28,6 +28,7 @@ import com.femsq.database.model.sudz.SudzRsltPeriod;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
 import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
+import com.femsq.database.model.sudz.SudzSfDoubleTreeDebt;
 import com.femsq.database.model.sudz.SudzSvodAccount;
 import com.femsq.database.model.sudz.SudzSvodResult;
 import com.femsq.database.model.sudz.SudzSvodTotal;
@@ -48,6 +49,8 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -2120,7 +2123,7 @@ public class JdbcSudzDao implements SudzDao {
                 rs.getNString("ciusInvNum"),
                 getInteger(rs, "ciusInvNumCount"),
                 rs.getString("ciusStatus"),
-                statusAt == null ? null : statusAt.toLocalDateTime(),
+                toOffsetDateTime(statusAt),
                 getInteger(rs, "ciusCreatedInvKey")
         );
     }
@@ -2209,7 +2212,7 @@ public class JdbcSudzDao implements SudzDao {
                             rs.getInt("iKey"),
                             rs.getNString("inNum"),
                             getInteger(rs, "inKey"),
-                            entered == null ? null : entered.toLocalDateTime(),
+                            toOffsetDateTime(entered),
                             getInteger(rs, "ciKey"),
                             getInteger(rs, "ciCn"),
                             rs.getNString("cnNum")
@@ -2222,6 +2225,235 @@ public class JdbcSudzDao implements SudzDao {
         } catch (SQLException exception) {
             throw wrap("Не удалось найти доменные СФ по номеру", exception);
         }
+    }
+
+    @Override
+    public SudzSfDoubleTreeDebt findSfDoubleTreeDebt(int invKey) {
+        log.log(Level.INFO, "Loading KSDSF tree debt for inv={0}", invKey);
+        try (Connection connection = connectionFactory.createConnection()) {
+            List<SudzSfDoubleTreeDebt.AccntSmpl> smpls = loadSfDoubleSgk(connection, invKey);
+            List<SudzSfDoubleTreeDebt.InvDbt> invDbts = loadSfDoubleInvDbt(connection, invKey);
+            return new SudzSfDoubleTreeDebt(smpls, invDbts);
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось загрузить дерево СГК/ДЗ для СФ " + invKey, exception);
+        }
+    }
+
+    /**
+     * СГК простой: {@code cnInvAccntSmpl → cnInvAccnt → cn_inv_dbt}.
+     *
+     * @param connection JDBC
+     * @param invKey СФ
+     * @return smpl-узлы
+     */
+    private List<SudzSfDoubleTreeDebt.AccntSmpl> loadSfDoubleSgk(Connection connection, int invKey)
+            throws SQLException {
+        String sql = ""
+                + "SELECT s.ciasKey, s.ciasCnInv, s.ciasAccnt, a.account_num, s.ciasCn_s_org_smpl,"
+                + " s.ciasNote, s.ciasTimeOfEntry,"
+                + " cia.ciaKey, cia.ciaCn_s_org, cia.ciaName, cia.ciaNote, cia.ciaTimeOfEntry,"
+                + " d.cn_inv_dbt_key, d.cn_inv_date_start, d.cn_inv_date_maturity, d.debt_type,"
+                + " d.dbt_ttl, d.dbt_overd, d.doc_base, d.link, d.cn_inv_dbt_upl, d.number, d.mark,"
+                + " d.cidTimeOfEntry"
+                + " FROM ags.cnInv AS ci"
+                + " INNER JOIN ags.cnInvAccntSmpl AS s ON s.ciasCnInv = ci.ciKey"
+                + " LEFT JOIN ags.accnt AS a ON a.account_key = s.ciasAccnt"
+                + " LEFT JOIN ags.cnInvAccnt AS cia ON cia.ciaCnInvAccntSmpl = s.ciasKey"
+                + " LEFT JOIN ags.cn_inv_dbt AS d ON d.cidCnInvAccntCtpt = cia.ciaKey"
+                + " WHERE ci.ciInv = ?"
+                + " ORDER BY s.ciasKey, cia.ciaKey, d.cn_inv_dbt_key";
+        Map<Integer, SgkSmplBuf> smpls = new LinkedHashMap<>();
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, invKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    int ciasKey = rs.getInt("ciasKey");
+                    SgkSmplBuf smpl = smpls.get(ciasKey);
+                    if (smpl == null) {
+                        smpl = new SgkSmplBuf(
+                                ciasKey,
+                                rs.getInt("ciasCnInv"),
+                                getInteger(rs, "ciasAccnt"),
+                                getInteger(rs, "account_num"),
+                                getInteger(rs, "ciasCn_s_org_smpl"),
+                                rs.getNString("ciasNote"),
+                                toOffsetDateTime(rs.getTimestamp("ciasTimeOfEntry"))
+                        );
+                        smpls.put(ciasKey, smpl);
+                    }
+                    Integer ciaKey = getInteger(rs, "ciaKey");
+                    if (ciaKey == null) {
+                        continue;
+                    }
+                    SgkAccntBuf accnt = smpl.accounts.get(ciaKey);
+                    if (accnt == null) {
+                        accnt = new SgkAccntBuf(
+                                ciaKey,
+                                getInteger(rs, "ciaCn_s_org"),
+                                rs.getNString("ciaName"),
+                                rs.getNString("ciaNote"),
+                                ciasKey,
+                                toOffsetDateTime(rs.getTimestamp("ciaTimeOfEntry"))
+                        );
+                        smpl.accounts.put(ciaKey, accnt);
+                    }
+                    Integer dbtKey = getInteger(rs, "cn_inv_dbt_key");
+                    if (dbtKey == null || accnt.debts.containsKey(dbtKey)) {
+                        continue;
+                    }
+                    accnt.debts.put(dbtKey, new SudzSfDoubleTreeDebt.CnInvDbt(
+                            dbtKey,
+                            getLocalDate(rs, "cn_inv_date_start"),
+                            getLocalDate(rs, "cn_inv_date_maturity"),
+                            rs.getString("debt_type"),
+                            toDouble(getBigDecimal(rs, "dbt_ttl")),
+                            toDouble(getBigDecimal(rs, "dbt_overd")),
+                            rs.getNString("doc_base"),
+                            rs.getNString("link"),
+                            getInteger(rs, "cn_inv_dbt_upl"),
+                            getInteger(rs, "number"),
+                            getInteger(rs, "mark"),
+                            toOffsetDateTime(rs.getTimestamp("cidTimeOfEntry"))
+                    ));
+                }
+            }
+        }
+        List<SudzSfDoubleTreeDebt.AccntSmpl> result = new ArrayList<>();
+        for (SgkSmplBuf smpl : smpls.values()) {
+            List<SudzSfDoubleTreeDebt.CnInvAccnt> accounts = new ArrayList<>();
+            for (SgkAccntBuf accnt : smpl.accounts.values()) {
+                accounts.add(new SudzSfDoubleTreeDebt.CnInvAccnt(
+                        accnt.ciaKey,
+                        accnt.ciaCnSOrg,
+                        accnt.ciaName,
+                        accnt.ciaNote,
+                        accnt.ciaCnInvAccntSmpl,
+                        accnt.ciaTimeOfEntry,
+                        List.copyOf(accnt.debts.values())
+                ));
+            }
+            result.add(new SudzSfDoubleTreeDebt.AccntSmpl(
+                    smpl.ciasKey,
+                    smpl.ciasCnInv,
+                    smpl.ciasAccnt,
+                    smpl.accountNum,
+                    smpl.ciasCnSOrgSmpl,
+                    smpl.ciasNote,
+                    smpl.ciasTimeOfEntry,
+                    List.copyOf(accounts)
+            ));
+        }
+        return List.copyOf(result);
+    }
+
+    /**
+     * Новая ДЗ: {@code invDbt → invDbtDbt → Dbt → DbtValue}.
+     *
+     * @param connection JDBC
+     * @param invKey СФ
+     * @return узлы invDbt
+     */
+    private List<SudzSfDoubleTreeDebt.InvDbt> loadSfDoubleInvDbt(Connection connection, int invKey)
+            throws SQLException {
+        String sql = ""
+                + "SELECT ib.idKey, ib.idInv, ib.idNum, ib.idNote, ib.idTimeOfEntry,"
+                + " idd.iddKey, idd.iddInv, idd.iddDbt, idd.iddInvDbt, idd.iddTimeOfEntry,"
+                + " db.dbtKey, db.dbtNote,"
+                + " dv.dvKey, dv.dvUpl, dv.dvTtl, dv.dvOverd, dv.dvDateStart, dv.dvDateMaturity, dv.dvDocBase"
+                + " FROM " + q("invDbt") + " AS ib"
+                + " LEFT JOIN " + q("invDbtDbt") + " AS idd ON idd.iddInvDbt = ib.idKey"
+                + " LEFT JOIN " + q("Dbt") + " AS db ON db.dbtKey = idd.iddDbt"
+                + " LEFT JOIN " + q("DbtValue") + " AS dv ON dv.dvDbt = db.dbtKey"
+                + " WHERE ib.idInv = ?"
+                + " ORDER BY ib.idKey, idd.iddKey, dv.dvKey";
+        Map<Integer, InvDbtBuf> invDbts = new LinkedHashMap<>();
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, invKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    int idKey = rs.getInt("idKey");
+                    InvDbtBuf invDbt = invDbts.get(idKey);
+                    if (invDbt == null) {
+                        invDbt = new InvDbtBuf(
+                                idKey,
+                                rs.getInt("idInv"),
+                                getInteger(rs, "idNum"),
+                                rs.getNString("idNote"),
+                                toOffsetDateTime(rs.getTimestamp("idTimeOfEntry"))
+                        );
+                        invDbts.put(idKey, invDbt);
+                    }
+                    Integer iddKey = getInteger(rs, "iddKey");
+                    if (iddKey == null) {
+                        continue;
+                    }
+                    InvDbtDbtBuf link = invDbt.links.get(iddKey);
+                    if (link == null) {
+                        link = new InvDbtDbtBuf(
+                                iddKey,
+                                getInteger(rs, "iddInv"),
+                                getInteger(rs, "iddDbt"),
+                                getInteger(rs, "iddInvDbt"),
+                                toOffsetDateTime(rs.getTimestamp("iddTimeOfEntry")),
+                                getInteger(rs, "dbtKey"),
+                                rs.getNString("dbtNote")
+                        );
+                        invDbt.links.put(iddKey, link);
+                    }
+                    Integer dvKey = getInteger(rs, "dvKey");
+                    if (dvKey == null || link.dbtKey == null) {
+                        continue;
+                    }
+                    boolean exists = false;
+                    for (SudzSfDoubleTreeDebt.DbtValue value : link.values) {
+                        if (value.dvKey() == dvKey) {
+                            exists = true;
+                            break;
+                        }
+                    }
+                    if (exists) {
+                        continue;
+                    }
+                    link.values.add(new SudzSfDoubleTreeDebt.DbtValue(
+                            dvKey,
+                            getInteger(rs, "dvUpl"),
+                            toDouble(getBigDecimal(rs, "dvTtl")),
+                            toDouble(getBigDecimal(rs, "dvOverd")),
+                            getLocalDate(rs, "dvDateStart"),
+                            getLocalDate(rs, "dvDateMaturity"),
+                            rs.getNString("dvDocBase")
+                    ));
+                }
+            }
+        }
+        List<SudzSfDoubleTreeDebt.InvDbt> result = new ArrayList<>();
+        for (InvDbtBuf invDbt : invDbts.values()) {
+            List<SudzSfDoubleTreeDebt.InvDbtDbt> links = new ArrayList<>();
+            for (InvDbtDbtBuf link : invDbt.links.values()) {
+                SudzSfDoubleTreeDebt.Dbt dbt = link.dbtKey == null
+                        ? null
+                        : new SudzSfDoubleTreeDebt.Dbt(link.dbtKey, link.dbtNote, List.copyOf(link.values));
+                links.add(new SudzSfDoubleTreeDebt.InvDbtDbt(
+                        link.iddKey,
+                        link.iddInv,
+                        link.iddDbt,
+                        link.iddInvDbt,
+                        link.iddTimeOfEntry,
+                        dbt
+                ));
+            }
+            result.add(new SudzSfDoubleTreeDebt.InvDbt(
+                    invDbt.idKey,
+                    invDbt.idInv,
+                    invDbt.idNum,
+                    invDbt.idNote,
+                    invDbt.idTimeOfEntry,
+                    List.copyOf(links)
+            ));
+        }
+        return List.copyOf(result);
     }
 
     @Override
@@ -2319,6 +2551,20 @@ public class JdbcSudzDao implements SudzDao {
 
     private static java.time.LocalDate toLocalDate(Timestamp ts) {
         return ts == null ? null : ts.toLocalDateTime().toLocalDate();
+    }
+
+    /**
+     * GraphQL {@code DateTime} сериализует {@link OffsetDateTime}; SQL {@code datetime} без зоны
+     * трактуем как системное локальное время.
+     *
+     * @param ts метка из JDBC
+     * @return OffsetDateTime или {@code null}
+     */
+    private static OffsetDateTime toOffsetDateTime(Timestamp ts) {
+        if (ts == null) {
+            return null;
+        }
+        return ts.toLocalDateTime().atZone(ZoneId.systemDefault()).toOffsetDateTime();
     }
 
     private List<SudzDbtUplInvDouble> loadDbtUplInvDoubles(Connection connection, int fileKey)
@@ -2855,6 +3101,91 @@ public class JdbcSudzDao implements SudzDao {
         private SudzRsltDebt build() {
             return new SudzRsltDebt(dbtKey, accountNum, curator, mery, cstCode, cstName,
                     curatorNew, meryNew, cstCodeNew, List.copyOf(periods));
+        }
+    }
+
+    private static Double toDouble(BigDecimal value) {
+        return value == null ? null : value.doubleValue();
+    }
+
+    private static final class SgkSmplBuf {
+        private final int ciasKey;
+        private final int ciasCnInv;
+        private final Integer ciasAccnt;
+        private final Integer accountNum;
+        private final Integer ciasCnSOrgSmpl;
+        private final String ciasNote;
+        private final OffsetDateTime ciasTimeOfEntry;
+        private final Map<Integer, SgkAccntBuf> accounts = new LinkedHashMap<>();
+
+        private SgkSmplBuf(int ciasKey, int ciasCnInv, Integer ciasAccnt, Integer accountNum,
+                           Integer ciasCnSOrgSmpl, String ciasNote, OffsetDateTime ciasTimeOfEntry) {
+            this.ciasKey = ciasKey;
+            this.ciasCnInv = ciasCnInv;
+            this.ciasAccnt = ciasAccnt;
+            this.accountNum = accountNum;
+            this.ciasCnSOrgSmpl = ciasCnSOrgSmpl;
+            this.ciasNote = ciasNote;
+            this.ciasTimeOfEntry = ciasTimeOfEntry;
+        }
+    }
+
+    private static final class SgkAccntBuf {
+        private final int ciaKey;
+        private final Integer ciaCnSOrg;
+        private final String ciaName;
+        private final String ciaNote;
+        private final int ciaCnInvAccntSmpl;
+        private final OffsetDateTime ciaTimeOfEntry;
+        private final Map<Integer, SudzSfDoubleTreeDebt.CnInvDbt> debts = new LinkedHashMap<>();
+
+        private SgkAccntBuf(int ciaKey, Integer ciaCnSOrg, String ciaName, String ciaNote,
+                            int ciaCnInvAccntSmpl, OffsetDateTime ciaTimeOfEntry) {
+            this.ciaKey = ciaKey;
+            this.ciaCnSOrg = ciaCnSOrg;
+            this.ciaName = ciaName;
+            this.ciaNote = ciaNote;
+            this.ciaCnInvAccntSmpl = ciaCnInvAccntSmpl;
+            this.ciaTimeOfEntry = ciaTimeOfEntry;
+        }
+    }
+
+    private static final class InvDbtBuf {
+        private final int idKey;
+        private final int idInv;
+        private final Integer idNum;
+        private final String idNote;
+        private final OffsetDateTime idTimeOfEntry;
+        private final Map<Integer, InvDbtDbtBuf> links = new LinkedHashMap<>();
+
+        private InvDbtBuf(int idKey, int idInv, Integer idNum, String idNote, OffsetDateTime idTimeOfEntry) {
+            this.idKey = idKey;
+            this.idInv = idInv;
+            this.idNum = idNum;
+            this.idNote = idNote;
+            this.idTimeOfEntry = idTimeOfEntry;
+        }
+    }
+
+    private static final class InvDbtDbtBuf {
+        private final int iddKey;
+        private final Integer iddInv;
+        private final Integer iddDbt;
+        private final Integer iddInvDbt;
+        private final OffsetDateTime iddTimeOfEntry;
+        private final Integer dbtKey;
+        private final String dbtNote;
+        private final List<SudzSfDoubleTreeDebt.DbtValue> values = new ArrayList<>();
+
+        private InvDbtDbtBuf(int iddKey, Integer iddInv, Integer iddDbt, Integer iddInvDbt,
+                             OffsetDateTime iddTimeOfEntry, Integer dbtKey, String dbtNote) {
+            this.iddKey = iddKey;
+            this.iddInv = iddInv;
+            this.iddDbt = iddDbt;
+            this.iddInvDbt = iddInvDbt;
+            this.iddTimeOfEntry = iddTimeOfEntry;
+            this.dbtKey = dbtKey;
+            this.dbtNote = dbtNote;
         }
     }
 }

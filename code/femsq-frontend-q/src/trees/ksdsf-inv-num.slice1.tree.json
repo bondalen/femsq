@@ -1,0 +1,53 @@
+{
+  "id": "ksdsf-inv-num-slice1",
+  "version": 0,
+  "root": {
+    "table": "invNum",
+    "pk": "inKey"
+  },
+  "title": [
+    "inKey",
+    "inNum",
+    "inInv"
+  ],
+  "detail": "*",
+  "children": [
+    {
+      "edge": "invNum.inv",
+      "to": "inv",
+      "card": "N:1",
+      "title": [
+        "iKey",
+        "iTimeOfEntry"
+      ],
+      "detail": "*",
+      "children": [
+        {
+          "edge": "inv.cnInv",
+          "to": "cnInv",
+          "card": "1:N",
+          "folder": "СФ, связи с договорами",
+          "title": [
+            "ciKey",
+            "ciCn"
+          ],
+          "detail": "*",
+          "children": [
+            {
+              "edge": "cnInv.cn",
+              "to": "cn",
+              "card": "N:1",
+              "title": [
+                "cn_key",
+                "cnMark",
+                "cn_date"
+              ],
+              "detail": "*",
+              "children": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -9075,7 +9075,7 @@
           "chat-attributes": {
             "id": "chat-2026-08-11-001",
             "created": "2026-08-11",
-            "lastUpdated": "2026-08-14",
+            "lastUpdated": "2026-08-18",
             "owner": "Александр",
             "status": "in_progress",
             "priority": "high",
@@ -9791,6 +9791,77 @@
                     "references": [
                       "docs/development/notes/domain/sudz/04-3_problems-solutions.md",
                       "docs/development/notes/domain/sudz/08-target-schema.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S68t: walker ≠ FemsqTree, Решение 009 + T4b (success). № log-2026-08-18-003",
+                "log-attributes": {
+                  "id": "log-2026-08-18-003",
+                  "timestamp": "2026-08-18T17:40:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "class:frontend.quasar.RelationTree"
+                    ],
+                    "developmentTasks": [
+                      "0069",
+                      "0071"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+                    "adr": "docs/project/decisions/009-femsq-walk-tree.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксированы слои renderer / walker / хост и обязательный T4b",
+                    "details": "Срез 1 на JAR 200 работает. RelationTree — кандидат FemsqWalkTree, не расширение FemsqTree. T4b (inject fetch + JSON to) до полного КСДСФ и T7. T9 — вынос в feQuLib после T7 или второго продукта. T8 остаётся стоп-краном renderer.",
+                    "outcome": "План 0.85.0; ADR 009; 02-12; glossary; критерий T4b в задаче 0069. Код T4b не начат.",
+                    "references": [
+                      "docs/project/decisions/009-femsq-walk-tree.md",
+                      "docs/development/notes/UI/02-12_femsq-tree/relation-tree.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S68t T4b: walker отвязан от хоста (success). № log-2026-08-18-004",
+                "log-attributes": {
+                  "id": "log-2026-08-18-004",
+                  "timestamp": "2026-08-18T17:52:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "class:frontend.quasar.RelationTree"
+                    ],
+                    "developmentTasks": [
+                      "0069"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "T4b: fetch пропсами, поле to в JSON, walker без каталога",
+                    "details": "RelationTree принимает fetchNode/fetchExpand. relation-tree.ts не импортирует relation-api и RELATION_EDGES. JSON КСДСФ/Договоров/slice1 с to. Хост SudzSfDoubleView передаёт Apollo. 7 unit-тестов зелёные.",
+                    "outcome": "Контракт walker готов ко второму экрану и к выносу FemsqWalkTree. Далее срез 2 / T5 (полный JSON КСДСФ).",
+                    "references": [
+                      "code/femsq-frontend-q/src/components/relation/RelationTree.vue",
+                      "code/femsq-frontend-q/src/trees/relation-tree.ts",
+                      "code/femsq-frontend-q/tests/unit/relation-tree.spec.ts"
                     ]
                   }
                 ]

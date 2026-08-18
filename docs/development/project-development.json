@@ -3,7 +3,7 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2026-08-09T21:26:00+03:00",
+      "lastUpdated": "2026-08-18T17:40:00+03:00",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     "tasks": {
@@ -2519,14 +2519,18 @@
                 "UI панели шагов воронки (S61f): чекбоксы stepId + префикс цепочки + flLoad; оркестратор вызывает шаги по одному",
                 "Создание/обновление Dbt, invDbt*, DbtValue, sandbox/целевых upl",
                 "UI «Загрузка свода» (список upl + статус); неоднозначности — очередь/экран разбора",
-                "Регрессия: после загрузки YE/Q среза Rslt строится без ручного SQL-seed"
+                "Регрессия: после загрузки YE/Q среза Rslt строится без ручного SQL-seed",
+                "S68t T4b: RelationTree принимает fetch снаружи; JSON детей с полем to; без RELATION_EDGES в чистых функциях (Решение 009; до T7)"
               ],
               "links": {
                 "projectDocsRefs": [
                   "module:backend.web",
                   "module:frontend"
                 ],
-                "journalRefs": [],
+                "journalRefs": [
+                  "chat:chat-2026-08-11-001",
+                  "log:log-2026-08-18-003"
+                ],
                 "aiRuleRefs": [],
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
                 "uiNote": "docs/development/notes/UI/02-9_sudz-mvp-screens.md",
@@ -2536,8 +2540,8 @@
                 ]
               },
               "created": "2026-08-07",
-              "lastUpdated": "2026-08-15",
-              "description": "Шаг 1.1.1.1. excelToTbl/orgNotInBuirg/CnNotLoad/CnExistCtptNotLoad ✅. Блокер сторон снят (0071 UAT). Далее CnCtptExistInvNotLoad (внутри clear InvDouble, без чекбокса — S65e). Опора: 04 §2.7, chat-plan §5.6."
+              "lastUpdated": "2026-08-18",
+              "description": "Шаг 1.1.1.1. excelToTbl/orgNotInBuirg/CnNotLoad/CnExistCtptNotLoad ✅. Блокер сторон снят (0071 UAT). CnCtptExistInvNotLoad dry ✅. S68 КСДСФ 🔶. S68t: срез 1 + T4b ✅; далее T5 полный JSON КСДСФ. Walker ≠ FemsqTree, Решение 009. Опора: 04 §2.7, chat-plan §5.6."
             }
           }
         },
@@ -2613,8 +2617,8 @@
                 ]
               },
               "created": "2026-08-15",
-              "lastUpdated": "2026-08-15",
-              "description": "S64: шаг 1 in progress (client FemsqTable). Server-side filter — на cn_inv_pm, не блокер. Стороны — следующий шаг."
+              "lastUpdated": "2026-08-18",
+              "description": "S64–S65 стороны ✅. T7 дерево СФ вкладки — та же обёртка walker после T4b (Решение 009), JSON contracts-inv. Вкладка «Общее» не переписывается."
             }
           }
         }
@@ -3402,7 +3406,7 @@
                           "structureId": "02.03.05",
                           "taskId": "0069",
                           "positionInParent": 5,
-                          "comment": "1.1.1.1; зависит от 0066"
+                          "comment": "1.1.1.1; S68t T4b walker до полного дерева/T7; Решение 009"
                         },
                         "task-items": []
                       }
@@ -3426,7 +3430,7 @@
                           "structureId": "02.03.07",
                           "taskId": "0071",
                           "positionInParent": 7,
-                          "comment": "S62; блокер CnExistCtptNotLoad; эталон UI/assets/26-0815-cnNum"
+                          "comment": "S62; T7 дерево СФ после T4b; эталон UI/assets/26-0815-cnNum"
                         },
                         "task-items": []
                       }

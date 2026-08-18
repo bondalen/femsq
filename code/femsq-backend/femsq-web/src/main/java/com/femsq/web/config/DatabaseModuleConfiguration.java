@@ -82,7 +82,9 @@ import com.femsq.database.dao.RaFtStDao;
 import com.femsq.database.dao.RaColMapDao;
 import com.femsq.database.dao.RaSheetConfDao;
 import com.femsq.database.dao.StNetworkDao;
+import com.femsq.database.dao.RelationDao;
 import com.femsq.database.dao.SudzDao;
+import com.femsq.database.dao.JdbcRelationDao;
 import com.femsq.database.dao.JdbcSudzDao;
 import com.femsq.database.service.DefaultIpgChainRelationService;
 import com.femsq.database.service.DefaultIpgChainService;
@@ -140,7 +142,9 @@ import com.femsq.database.service.DefaultRaDirService;
 import com.femsq.database.service.DefaultRaExecutionService;
 import com.femsq.database.service.DefaultRaFService;
 import com.femsq.database.service.DefaultRaFtService;
+import com.femsq.database.service.DefaultRelationService;
 import com.femsq.database.service.DefaultSudzService;
+import com.femsq.database.service.RelationService;
 import com.femsq.database.service.SudzService;
 import com.femsq.database.service.DefaultRaFtSService;
 import com.femsq.database.service.DefaultRaFtSnService;
@@ -745,5 +749,31 @@ public class DatabaseModuleConfiguration {
     @Bean
     public SudzService sudzService(SudzDao sudzDao) {
         return new DefaultSudzService(sudzDao);
+    }
+
+    /**
+     * DAO обхода связей (whitelist рёбер).
+     *
+     * @param connectionFactory подключение
+     * @param configurationService схема ags
+     * @return DAO
+     */
+    @Bean
+    public RelationDao relationDao(
+            ConnectionFactory connectionFactory,
+            DatabaseConfigurationService configurationService
+    ) {
+        return new JdbcRelationDao(connectionFactory, configurationService);
+    }
+
+    /**
+     * Сервис обхода связей.
+     *
+     * @param relationDao DAO
+     * @return сервис
+     */
+    @Bean
+    public RelationService relationService(RelationDao relationDao) {
+        return new DefaultRelationService(relationDao);
     }
 }

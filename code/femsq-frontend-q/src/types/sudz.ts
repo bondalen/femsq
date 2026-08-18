@@ -190,6 +190,89 @@ export interface SudzSfDoubleDomainMatch {
   cnNum: string | null;
 }
 
+/** {@code ags.cn_inv_dbt} в дереве КСДСФ. */
+export interface SudzSfDoubleCnInvDbt {
+  cnInvDbtKey: number;
+  dateStart: string | null;
+  dateMaturity: string | null;
+  debtType: string | null;
+  dbtTtl: number | null;
+  dbtOverd: number | null;
+  docBase: string | null;
+  link: string | null;
+  uplKey: number | null;
+  number: number | null;
+  mark: number | null;
+  cidTimeOfEntry: string | null;
+}
+
+/** {@code ags.cnInvAccnt}. */
+export interface SudzSfDoubleCnInvAccnt {
+  ciaKey: number;
+  ciaCnSOrg: number | null;
+  ciaName: string | null;
+  ciaNote: string | null;
+  ciaCnInvAccntSmpl: number;
+  ciaTimeOfEntry: string | null;
+  debts: SudzSfDoubleCnInvDbt[];
+}
+
+/** {@code ags.cnInvAccntSmpl}. */
+export interface SudzSfDoubleAccntSmpl {
+  ciasKey: number;
+  ciasCnInv: number;
+  ciasAccnt: number | null;
+  accountNum: number | null;
+  ciasCnSOrgSmpl: number | null;
+  ciasNote: string | null;
+  ciasTimeOfEntry: string | null;
+  accounts: SudzSfDoubleCnInvAccnt[];
+}
+
+/** {@code sudz.DbtValue}. */
+export interface SudzSfDoubleDbtValue {
+  dvKey: number;
+  dvUpl: number | null;
+  dvTtl: number | null;
+  dvOverd: number | null;
+  dvDateStart: string | null;
+  dvDateMaturity: string | null;
+  dvDocBase: string | null;
+}
+
+/** {@code sudz.Dbt}. */
+export interface SudzSfDoubleDbt {
+  dbtKey: number;
+  dbtNote: string | null;
+  values: SudzSfDoubleDbtValue[];
+}
+
+/** {@code sudz.invDbtDbt}. */
+export interface SudzSfDoubleInvDbtDbt {
+  iddKey: number;
+  iddInv: number | null;
+  iddDbt: number | null;
+  iddInvDbt: number | null;
+  iddTimeOfEntry: string | null;
+  dbt: SudzSfDoubleDbt | null;
+}
+
+/** {@code sudz.invDbt}. */
+export interface SudzSfDoubleInvDbt {
+  idKey: number;
+  idInv: number;
+  idNum: number | null;
+  idNote: string | null;
+  idTimeOfEntry: string | null;
+  links: SudzSfDoubleInvDbtDbt[];
+}
+
+/** СГК + новая ДЗ для дерева КСДСФ. */
+export interface SudzSfDoubleTreeDebt {
+  smpls: SudzSfDoubleAccntSmpl[];
+  invDbts: SudzSfDoubleInvDbt[];
+}
+
 /** Карточка лаунчера экрана C. */
 export interface SudzDbtUplLauncher {
   upl: SudzUplLookup;

@@ -1,6 +1,6 @@
 package com.femsq.database.model.sudz;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /**
  * Существующий СФ в домене с номером, совпадающим с кандидатом КСДСФ.
@@ -17,7 +17,7 @@ public record SudzSfDoubleDomainMatch(
         int invKey,
         String invNum,
         Integer invNumKey,
-        LocalDateTime invEntered,
+        OffsetDateTime invEntered,
         Integer ciKey,
         Integer cnKey,
         String cnNum

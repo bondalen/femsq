@@ -6,6 +6,7 @@
 **Домен:** [01-overview](../domain/sudz/01-overview.md) · процесс [03-processes](../domain/sudz/03-processes.md) · витрина [08-target-schema §3.6](../domain/sudz/08-target-schema.md) · алгоритм Access [04 §2.7](../domain/sudz/04-data-model.md#27-полный-алгоритм-btncidufload_click--цепочка-сопоставления-подтверждено-s29)  
 **IA:** [02-4_app-forms-ia.md](./02-4_app-forms-ia.md)  
 **План:** [chat-plan-26-0802-sudz.md](../chats/chat-plan/chat-plan-26-0802-sudz.md) §5.6  
+**Дерево КСДСФ:** [ksdsf-inv-num.tree.md](./02-12_femsq-tree/ksdsf-inv-num.tree.md) · правила [relation-tree.md](./02-12_femsq-tree/relation-tree.md)  
 **Задачи:** 0065–0070 (СУДЗ); **активно: 0069**  
 **Access pmt (1.1.1.2, не эскиз FEMSQ):** [02-11_cn-inv-pmt-upl-access.md](./02-11_cn-inv-pmt-upl-access.md)
 

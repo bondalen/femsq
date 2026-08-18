@@ -20,6 +20,7 @@ import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
 import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
+import com.femsq.database.model.sudz.SudzSfDoubleTreeDebt;
 import com.femsq.database.model.sudz.SudzSvodResult;
 import com.femsq.database.model.sudz.SudzUplLookup;
 import com.femsq.database.model.sudz.SudzYear;
@@ -402,6 +403,14 @@ public interface SudzService {
      * @return совпадения
      */
     List<SudzSfDoubleDomainMatch> findSfDoubleDomainMatches(String invNum);
+
+    /**
+     * СГК простой и новая ДЗ для дерева КСДСФ.
+     *
+     * @param invKey {@code inv.iKey}
+     * @return вложенные карточки
+     */
+    SudzSfDoubleTreeDebt findSfDoubleTreeDebt(int invKey);
 
     /**
      * Создать новый СФ из строки очереди КСДСФ.

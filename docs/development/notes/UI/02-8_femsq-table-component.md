@@ -5,7 +5,8 @@
 **Задача:** [0059](../../project-development.json) · [0060](../../project-development.json) · [0063](../../project-development.json)  
 **План:** [chat-plan-26-0725-femsq-table.md](../chats/chat-plan/chat-plan-26-0725-femsq-table.md) §7–§8  
 **Пакет:** `fequlib` — https://github.com/bondalen/fequlib · локально `file:../../../feQuLib`  
-**Импорт:** `import { FemsqTable, actionsColumn } from 'fequlib'`
+**Импорт:** `import { FemsqTable, actionsColumn } from 'fequlib'`  
+**Дерево:** отдельный компонент `FemsqTree` (renderer) + обходник JSON — [02-12](./02-12_femsq-tree/relation-tree.md), не режим таблицы
 
 ## Зачем
 
@@ -45,7 +46,7 @@
 ## Границы компонента
 
 - **Group By (фаза D)** — группировка **плоских** строк по колонке. Не путать с иерархией.
-- **Иерархия** (дерево агентов) — **не `FemsqTable`** (будущий TreeList).
+- **Иерархия** — **не `FemsqTable`**. Renderer: `FemsqTree` в fequlib. Обходник JSON/рёбер (`RelationTree`, кандидат `FemsqWalkTree`) — отдельный слой в FEMSQ, не внутри `FemsqTree`: [02-12](./02-12_femsq-tree/relation-tree.md), [Решение 009](../../../project/decisions/009-femsq-walk-tree.md).
 - **Filter Editor (F)** — не реализован.
 - **Тема продукта** — не в fequlib (см. распределение дизайна выше).
 

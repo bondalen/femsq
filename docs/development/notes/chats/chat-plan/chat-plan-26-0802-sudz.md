@@ -3,14 +3,15 @@
 **Дата создания:** 2026-08-02  
 **Последнее обновление:** 2026-08-18  
 **Проект:** FEMSQ  
-**Версия плана:** 0.83.0 (S69: DumpTableDef буфера `…ExtPmTbl`)  
-**Задача:** 0065–0071 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md); **активно: 0069** + **S68 КСДСФ** + блокер **0071 Договоры**; **параллельно S69** паспорт платежей (без Java)  
-**Статус плана:** ✅ 0070; **0069** CnCtptExistInvNotLoad dry ✅; **S68** CREATE+наполнение+экран (JAR **0.1.0.198**) 🔶 UAT; **0071** 🔶 UAT; **S69** паспорт pmt: QueryDef+буфер сняты  
+**Версия плана:** 0.85.0 (S68t: walker ≠ FemsqTree; T4b/T9)  
+**Задача:** 0065–0071 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md); **активно: 0069** + **S68 КСДСФ** + **S68t дерево (T5)** + блокер **0071 Договоры**; **параллельно S69** паспорт платежей (без Java)  
+**Статус плана:** ✅ 0070; **0069** CnCtptExistInvNotLoad dry ✅; **S68** CREATE+наполнение+экран (JAR **0.1.0.200**) 🔶 UAT; **S68t** срез 1 ✅, T4b ✅; **0071** 🔶 UAT; **S69** паспорт pmt: QueryDef+буфер сняты  
 **Паспорт pmt:** [02-11_cn-inv-pmt-upl-access.md](../../UI/02-11_cn-inv-pmt-upl-access.md) · §5.7
 
 
 **Доменные доки:** [01-overview](../../domain/sudz/01-overview.md) · [02-glossary](../../domain/sudz/02-glossary.md) · [03-processes](../../domain/sudz/03-processes.md) · [04-data-model](../../domain/sudz/04-data-model.md) · [04-1 MS_Description](../../domain/sudz/04-1_ms-descriptions.md) · [04-3 проблемы](../../domain/sudz/04-3_problems-solutions.md) · [07-readiness (покрытие/готовность)](../../domain/sudz/07-readiness.md) · [08-target-schema (физ. схема + ER)](../../domain/sudz/08-target-schema.md)  
 **UI-эскизы:** [02-9_sudz-mvp-screens.md](../../UI/02-9_sudz-mvp-screens.md)  
+**Дерево:** [02-12 relation-tree](../../UI/02-12_femsq-tree/relation-tree.md) · [КСДСФ](../../UI/02-12_femsq-tree/ksdsf-inv-num.tree.md) · [Договоры/СФ](../../UI/02-12_femsq-tree/contracts-inv.tree.md) · ADR [009](../../../../project/decisions/009-femsq-walk-tree.md)  
 **IA (целевое меню):** [02-4_app-forms-ia.md](../../UI/02-4_app-forms-ia.md)  
 **Метод съёма Access:** [MS-ACCESS-OBJECTS-CAPTURE.md](../../../../project/proposals/vba-analysis/MS-ACCESS-OBJECTS-CAPTURE.md)
 
@@ -194,6 +195,7 @@
 | S67 | 2026-08-16 | UAT 910 dry: **128** дог. / **705** СФ ✅, но rebuild **~3m14s** (CTE). Перепись на `#temp`+индексы; лог СФ усечён (8+…) | JAR **0.1.0.196** | ✅ via S67a |
 | S67a | 2026-08-16 | `#temp` без COLLATE → conflict Latin1 vs Cyrillic на JOIN `cnnNumNull`. Колонки `#cidu*` → `Cyrillic_General_CI_AS` | JAR **0.1.0.197** | ✅ UAT: sqlMs=241, 128/705 |
 | S68 | 2026-08-16 | **КСДСФ:** `CnInvUplSfDouble` на DEV; наполнение 1:1 Excel; bulk без очереди; экран + кнопка; create mutation | JAR **0.1.0.198**; [DDL](../../../sql/26-0816-sudz-sf-num-collision/) | 🔶 UAT |
+| S68t | 2026-08-18 | **Walker ≠ FemsqTree:** JSON + каталог + `relationExpand` + обёртка. Срез 1 на КСДСФ. **T4b** ✅ inject fetch + `to`. Далее срез 2 / T5 | [02-12](../../UI/02-12_femsq-tree/relation-tree.md); ADR [009](../../../../project/decisions/009-femsq-walk-tree.md); §5.6 S68t | 🔶 T5 |
 | S69 | 2026-08-17 | **1.1.1.2 / паспорт `CnInvPmtUpl*`:** отдельный чат (не 0069, не Java). QueryDef `cipu*` + helper `agsCnCtpt*` + буфер `…ExtPmTbl` сняты. INSERT: `ags_cn_inv_pm`. Осталось: `.cls`, RS File_f, Excel Offset | [02-11](../../UI/02-11_cn-inv-pmt-upl-access.md); [03 §1.1.1.2](../../domain/sudz/03-processes.md); §5.7; [съём](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/) | 🔄 |
 
 ### 5.3. Объекты Access (формы / запросы / таблицы / отчёты)
@@ -490,7 +492,55 @@ nested `invNum` (`ciputciCnInv`↔`inNumNull`) → `cnInv` (`inInv`↔`ciInv`);
 
 **Реализовано (JAR 0.1.0.198):** наполнение очереди при rebuild (1 Excel-строка ↔ 1 queue); bulk apply только `inNumCount IS NULL`; launcher.`sfDoubles`; экран `sudz-sf-double` (кнопка на вкладке doubles); Excel-карточка + домен/СФ; mutation `createSudzSfFromDouble`; вкладка «суммы» — заглушка.
 
-**Фазы далее:** UAT наполнения/create; вкладка «суммы»; адаптер pmt; перепривязка — позже.
+**Целевая структура правого нижнего блока (tree) для S68 / `sudz-sf-double`:**
+
+Конспекты и правила — [02-12](../../UI/02-12_femsq-tree/relation-tree.md). Исторический H1: [`sudz-sf-double-tree.md`](../../UI/02-12_femsq-tree/sudz-sf-double-tree.md). Актуальная карта КСДСФ: [`ksdsf-inv-num.tree.md`](../../UI/02-12_femsq-tree/ksdsf-inv-num.tree.md). Договоры/СФ: [`contracts-inv.tree.md`](../../UI/02-12_femsq-tree/contracts-inv.tree.md). Поля шапки/детали — в конспектах, здесь не дублировать.
+
+**H1 (2026-08-18):** нижняя карточка заменена на `FemsqTree` из fequlib. Ручной builder `sudz-sf-double-tree.ts`: каркас из `sudzSfDoubleDomainMatches`; стороны — `cnSides`; СГК/`cn_inv_dbt`/`invDbt` — `sudzSfDoubleTreeDebt`. Корень пока `inv`, не `invNum`; `cn_inv_dbt_upl` нет; `lazy`/`@load` не включены. UAT-якорь: СФ `832930` / `inv=85069` / `cn=2265`.
+
+##### S68t (2026-08-18): дерево связей — walker над FemsqTree
+
+**Граница.** `FemsqTree` v1 (fequlib **0016**) закрыт: renderer, слоты, `selectedKey` ≠ `expandedKeys`, lazy `@load`. Обход связей — **другой** компонент (`RelationTree`), который использует `FemsqTree`. Не класть JSON/fetch внутрь renderer. Решение: [009](../../../../project/decisions/009-femsq-walk-tree.md). До **T4b** обёртка ещё импортирует Apollo FEMSQ — это долг среза 1, не целевой контракт.
+
+**Мероприятия**
+
+| ID | Что | Где | Критерий |
+|----|-----|-----|----------|
+| **T0** | Заморозить конспекты 02-12; колонки рёбер сверить с живой `ags`/`sudz` (DBHub) | [relation-tree.md](../../UI/02-12_femsq-tree/relation-tree.md) §3 | ✅ 2026-08-18; PK/FK сверены; в каталог добавлены `invDbt.idd` / `idd.dbt` / `dbt.dv` |
+| **T1** | Два **независимых** JSON по конспектам | [`src/trees/`](../../../../code/femsq-frontend-q/src/trees/) | 🔶 полный JSON на ревью; срез 1 — `ksdsf-inv-num.slice1.tree.json` |
+| **T2** | Каталог рёбер (whitelist имён) | Java `RelationEdgeCatalog` + FE `relation-edges.ts` | ✅ срез 1: `invNum.inv`, `inv.cnInv`, `cnInv.cn`; чужое имя → ошибка |
+| **T3** | GraphQL `relationExpand(edge, fromId)` | `relation-schema.graphqls`; плюс `relationNode(table, id)` для корня | ✅ playground: три ребра; неизвестный edge → 400 |
+| **T4** | Обёртка над `FemsqTree` | `RelationTree.vue`; КСДСФ флаг `useRelationWalker` | ✅ lazy `@load`; rebuild по токену `invNum:{inKey}`; JAR **0.1.0.200** |
+| **T4b** | Отвязать walker от хоста | `RelationTree` + `relation-tree.ts` + JSON | ✅ `fetchNode`/`fetchExpand` пропсами; `to` у детей JSON; без `RELATION_EDGES` в walker; 7 unit-тестов |
+| **T5** | КСДСФ: корень `invNum` выбранной строки списка; выкинуть ручной builder | `SudzSfDoubleView` | верхний список без изменений; в дереве нет папки «номера СФ»; есть `cn_inv_dbt_upl`; нет `buildSudzSfDoubleTree` |
+| **T6** | UAT дерева КСДСФ | очередь upl **910**, якорь `832930` | сумма/срок/исполнитель vs Excel; доменный `cnnNum` = «1»; узел выгрузки (`upl=28`) виден |
+| **T7** | Договоры: вкладка «Счета-фактуры» | 0071 / `ContractsView` | слева `cnInv`; справа **та же** обёртка (уже после T4b) + JSON Договоров; корень `inv`/`ciInv` |
+| **T8** | feQuLib только при дыре контракта **FemsqTree** v1 | отдельный чат fequlib | иначе **0016** не трогать; не путать с T9 |
+| **T9** | Вынести walker в feQuLib как `FemsqWalkTree` | отдельный чат fequlib | после **T7** или когда второй продукт берёт дерево; хост FEMSQ = spec + fetch; Java-каталог не выносить |
+
+**Предложение по исполнению — вертикальные срезы, не «сначала весь каталог».**
+
+1. **Срез 0 (док, до кода).** T0 → T1. JSON пишем по md и останавливаемся на ревью. Пока JSON не подписан — SQL/`relationExpand` не начинать. Колонки рёбер — один проход DBHub, не по памяти H1.
+2. **Срез 1 (механизм).** T2 + T3 на **трёх** рёбрах (`invNum.inv`, `inv.cnInv`, `cnInv.cn`) + T4 + урезанный JSON КСДСФ только с этими детьми. На экране доказать: lazy `@load`, смена строки списка пересобирает дерево, та же строка — нет. Ручной builder пока можно оставить за флагом. ✅ 2026-08-18 (JAR 200).
+3. **Срез 1.5 (контракт walker).** **T4b** сразу после среза 1, **до** полного JSON и **до T7**. Иначе второй экран и полный каталог нарастут вокруг импорта Apollo. ✅ 2026-08-18.
+4. **Срез 2 (полнота КСДСФ).** Дописать в каталог/JSON остальные рёбра конспекта (`cnNum`, `cn_s`…`org`, СГК до `cid.upl`, `inv.invDbt`) **с полем `to`**. T5: удалить `sudz-sf-double-tree.ts` и `sudzSfDoubleTreeDebt` как экранный API (общий `relationExpand` его заменяет).
+5. **Срез 3 (приёмка).** T6 на якоре 832930. Расхождения Excel↔домен **не** чинить кодом дерева — дерево показывает БД; разбор очереди (create vs перепривязка) остаётся операторским, как S68 п.3.
+6. **Срез 4 (второй потребитель).** T7 только после зелёного T6 **и T4b**. Иначе два экрана одновременно ломают обёртку. Вкладка «Общее» (S64/S65) не переписывается. Макет вкладок Договоров — в 0071, не в обходнике.
+7. **Стоп-кран T8.** Дыра lib renderer (например `@load` не стреляет, слот detail не на selected) → обмен с fequlib, не патч внутри FEMSQ. Нет дыры — `FemsqTree` не трогаем.
+8. **T9 не в срезах S68t.** Вынос `FemsqWalkTree` — после T7 / второго продукта, отдельный чат.
+
+**Почему так, а не иначе**
+
+- Расширять `FemsqTree` нечего: не хватает обхода связей, не renderer. Walker — библиотечный кандидат, не режим таблицы и не экран СУДЗ.
+- Писать полный каталог до первого экрана — риск недель без картинки. Три ребра на КСДСФ дают ту же обёртку, что потом съест T7.
+- Общий JSON / `$ref` между экранами **запрещён** (02-12 §6): дешевле копировать ветку `cn`/`cn_s`, чем связать КСДСФ с Договорами.
+- Eager H1 (`cnSides` + `sudzSfDoubleTreeDebt` одним махом) на полный конспект не масштабируется; lazy — контракт v1, его и включать.
+- T7 не параллелить с T5: один wrapper, два JSON — сначала один живой потребитель. T7 не начинать до T4b.
+- Backend Java-каталог не обобщать, пока нет второго Spring-хоста.
+
+**Вне этого среза (не смешивать с T0–T7):** UAT create/наполнения очереди; вкладка «суммы»; адаптер pmt; перепривязка СФ; CRUD-формы по ключу `"form"` в JSON; `FemsqTreeList` для сторон договора; **T9** (`FemsqWalkTree`).
+
+**Фазы S68 далее (не дерево):** UAT наполнения/create; вкладка «суммы»; адаптер pmt; перепривязка — позже.
 
 **Практика Access (источник):** [`Form_CnInvDbtUpl_gt_File_f.cls`](../../../../project/proposals/vba-analysis/VBA-Code-Export/Form-Modules/Form_CnInvDbtUpl_gt_File_f.cls) ≈ стр. 140–247: после Excel→Tbl идёт **инлайн**-блок «отсутствующие контрагенты» (не выделен в `Sub`), затем именованные `CnNotLoad` … `CnCtptInvAccDbtExist`; `CnCtptInvAccExistDbl` закомментирован с 03.02.2023.
 
@@ -520,7 +570,7 @@ nested `invNum` (`ciputciCnInv`↔`inNumNull`) → `cnInv` (`inInv`↔`ciInv`);
 4. Backend: один оркестратор + **отдельный метод на шаг** (зеркало `Private Sub`); mutation с `runSteps[]` + `flLoad`.
 5. Перед apply в домен: решение **куда пишем** (`ags` / `sudz` / целевой `Dbt` — разрыв S5).
 
-Итерации разработки: UI панели → stub-оркестратор → **excelToTbl** ✅ → **orgNotInBuirg** ✅ → **CnNotLoad** ✅ → **CnExistCtptNotLoad** ✅ → **Договоры (0071)** 🔶 → **`CnCtptExistInvNotLoad`** ✅ dry → **S68 КСДСФ / `CnInvUplSfDouble`** 🔶 → … → регрессия Rslt.  
+Итерации разработки: UI панели → stub-оркестратор → **excelToTbl** ✅ → **orgNotInBuirg** ✅ → **CnNotLoad** ✅ → **CnExistCtptNotLoad** ✅ → **Договоры (0071)** 🔶 → **`CnCtptExistInvNotLoad`** ✅ dry → **S68 КСДСФ / `CnInvUplSfDouble`** 🔶 → **S68t дерево** 🔶 → … → регрессия Rslt.  
 **Критерии 0069** (из `project-development`): порт/адаптация match; Dbt/DbtValue + upl; UI + очередь; регрессия Rslt без ручного seed.  
 **Добавлено S61c:** staging на SQL до UI. **S61f:** панель шагов вместо «всё сразу».
 
