@@ -27,6 +27,8 @@ export interface BuildCnInvLinkFormOptions {
   invPickerSpec: RelationTreeSpec;
   pickerColumns: FemsqTableColumn<RelationPickerCandidateRow>[];
   invSearchValue?: string;
+  invSearchLoading?: boolean;
+  invSearchStatus?: string;
 }
 
 /**
@@ -43,7 +45,9 @@ export function buildCnInvLinkForm(options: BuildCnInvLinkFormOptions): Relation
     cnPickerSpec,
     invPickerSpec,
     pickerColumns,
-    invSearchValue
+    invSearchValue,
+    invSearchLoading,
+    invSearchStatus
   } = options;
   const relationTypeColumns: FemsqTableColumn<RelationPickerCandidateRow>[] = [
     { name: 'label', label: 'Тип связи', field: 'label', align: 'left' }
@@ -129,6 +133,8 @@ export function buildCnInvLinkForm(options: BuildCnInvLinkFormOptions): Relation
         searchPlaceholder: invLocked ? undefined : 'Номер СФ',
         searchHint: invLocked ? undefined : 'Введите точный номер и нажмите «Найти».',
         searchDebounceMs: invLocked ? undefined : 450,
+        searchLoading: invLocked ? undefined : invSearchLoading ?? false,
+        searchStatus: invLocked ? undefined : invSearchStatus,
         rows: invLocked && currentInvRow ? [currentInvRow] : invCandidates,
         columns: pickerColumns,
         selected: currentInvRow ? [currentInvRow] : [],

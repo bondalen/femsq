@@ -26,6 +26,14 @@ export interface CnInvDto {
   ciTimeOfEntry: string | null;
 }
 
+export interface ContractInvLookupRow {
+  rowKey: string;
+  invKey: number | null;
+  invNum: string | null;
+  cnKey: number | null;
+  cnNum: string | null;
+}
+
 export interface CnSOrgDto {
   cnSOrgKey: number;
   csoCnSOrgSmpl: number;

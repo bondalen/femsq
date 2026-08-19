@@ -26,10 +26,12 @@ import {
   updateCnSOrgSmpl
 } from '@/api/contracts-api';
 import { RequestError } from '@/api/http';
+import { getSudzSfDoubleDomainMatches } from '@/api/sudz-api';
 import type {
   CnContractCreateRequest,
   CnContractCreatedDto,
   CnDto,
+  ContractInvLookupRow,
   CnNumDto,
   CnNumTypeLookupDto,
   CnSideCreateRequest,
@@ -63,9 +65,17 @@ export const useContractsStore = defineStore('contracts', () => {
   const loadingSides = ref(false);
   const saving = ref(false);
   const error = ref<string | null>(null);
+  const cnInvLookupQuery = ref('');
+  const cnInvLookupRows = ref<ContractInvLookupRow[]>([]);
+  const cnInvLookupLoading = ref(false);
+  const cnInvLookupStatus = ref('Введите номер СФ для поиска.');
+  const cnInvLookupSelectedRowKey = ref<string | null>(null);
 
   const selectedCnNum = computed(
     () => cnNums.value.find((row) => row.cnnKey === selectedCnnKey.value) ?? null
+  );
+  const selectedCnInvLookup = computed(
+    () => cnInvLookupRows.value.find((row) => row.rowKey === cnInvLookupSelectedRowKey.value) ?? null
   );
 
   /**
@@ -190,6 +200,48 @@ export const useContractsStore = defineStore('contracts', () => {
    */
   async function duplicateCount(cnnNum: string): Promise<number> {
     return fetchCnNumDuplicateCount(cnnNum);
+  }
+
+  /**
+   * Ищет существующие СФ по точному номеру для ручной привязки cnInv.
+   */
+  async function searchCnInvLookup(query: string): Promise<void> {
+    cnInvLookupQuery.value = query;
+    const invNum = query.trim();
+    if (!invNum) {
+      cnInvLookupRows.value = [];
+      cnInvLookupSelectedRowKey.value = null;
+      cnInvLookupStatus.value = 'Введите номер СФ для поиска.';
+      return;
+    }
+    cnInvLookupLoading.value = true;
+    cnInvLookupStatus.value = `Поиск СФ «${invNum}»...`;
+    try {
+      const matches = await getSudzSfDoubleDomainMatches(invNum);
+      cnInvLookupRows.value = matches.map((row, index) => ({
+        rowKey: `${row.invKey}-${index}`,
+        invKey: row.invKey,
+        invNum: row.invNum,
+        cnKey: row.cnKey,
+        cnNum: row.cnNum
+      }));
+      cnInvLookupSelectedRowKey.value = cnInvLookupRows.value[0]?.rowKey ?? null;
+      cnInvLookupStatus.value =
+        cnInvLookupRows.value.length > 0
+          ? `Найдено строк: ${cnInvLookupRows.value.length}`
+          : `СФ с номером «${invNum}» не найдены.`;
+    } catch (err) {
+      cnInvLookupRows.value = [];
+      cnInvLookupSelectedRowKey.value = null;
+      cnInvLookupStatus.value = err instanceof RequestError ? err.message : 'Ошибка поиска СФ';
+      throw err;
+    } finally {
+      cnInvLookupLoading.value = false;
+    }
+  }
+
+  function selectCnInvLookup(rowKey: string | null): void {
+    cnInvLookupSelectedRowKey.value = rowKey;
   }
 
   /**
@@ -386,12 +438,20 @@ export const useContractsStore = defineStore('contracts', () => {
     loadingSides,
     saving,
     error,
+    cnInvLookupQuery,
+    cnInvLookupRows,
+    cnInvLookupLoading,
+    cnInvLookupStatus,
+    cnInvLookupSelectedRowKey,
+    selectedCnInvLookup,
     loadCnNums,
     selectCnNum,
     loadSides,
     ensureOrgIdLookups,
     ensureNumTypes,
     duplicateCount,
+    searchCnInvLookup,
+    selectCnInvLookup,
     createContract,
     saveCn,
     isSideExpanded,

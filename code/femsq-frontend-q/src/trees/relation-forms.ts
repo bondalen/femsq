@@ -48,6 +48,8 @@ export interface RelationPickerState {
   searchPlaceholder?: string;
   searchHint?: string;
   searchDebounceMs?: number;
+  searchLoading?: boolean;
+  searchStatus?: string;
   rows: RelationPickerRow[];
   columns: FemsqTableColumn<RelationPickerRow>[];
   selected: RelationPickerRow[];

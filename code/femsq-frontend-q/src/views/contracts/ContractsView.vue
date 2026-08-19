@@ -275,7 +275,6 @@ import { FemsqTable, type FemsqTableColumn } from 'fequlib';
 
 import { createCnInv } from '@/api/contracts-api';
 import { fetchRelationExpand, fetchRelationNode } from '@/api/relation-api';
-import { getSudzSfDoubleDomainMatches } from '@/api/sudz-api';
 import RecordModal from '@/components/relation/RecordModal.vue';
 import RelationTree from '@/components/relation/RelationTree.vue';
 import * as cnPickerSpecJson from '@/trees/cn-picker.tree.json';
@@ -303,9 +302,6 @@ const orgIdFilter = ref('');
 const relationTreeKey = ref(0);
 const relationAction = ref<RelationTreeActionContext | null>(null);
 const linkModalOpen = ref(false);
-const invSearch = ref('');
-const invCandidates = ref<RelationPickerCandidateRow[]>([]);
-const selectedInvCandidate = ref<RelationPickerCandidateRow | null>(null);
 
 const createDialog = reactive({
   open: false,
@@ -432,13 +428,15 @@ const linkForm = computed<RelationFormState | null>(() => {
     context: action,
     domain: null,
     cnCandidates: [cnCandidate],
-    invCandidates: invCandidates.value,
+    invCandidates: store.cnInvLookupRows as RelationPickerCandidateRow[],
     selectedCnCandidate: cnCandidate,
-    selectedInvCandidate: selectedInvCandidate.value,
+    selectedInvCandidate: store.selectedCnInvLookup as RelationPickerCandidateRow | null,
     cnPickerSpec: cnRelationSpec,
     invPickerSpec: contractsInvSpec,
     pickerColumns,
-    invSearchValue: invSearch.value
+    invSearchValue: store.cnInvLookupQuery,
+    invSearchLoading: store.cnInvLookupLoading,
+    invSearchStatus: store.cnInvLookupStatus
   });
 });
 
@@ -465,33 +463,15 @@ function onPickerSelect(pickerId: string, rowKey: string | null): void {
   if (pickerId !== 'inv') {
     return;
   }
-  selectedInvCandidate.value = invCandidates.value.find((row) => row.rowKey === rowKey) ?? null;
+  store.selectCnInvLookup(rowKey);
 }
 
 async function onPickerSearch(pickerId: string, value: string): Promise<void> {
   if (pickerId !== 'inv') {
     return;
   }
-  invSearch.value = value;
-  const invNum = value.trim();
-  if (!invNum) {
-    invCandidates.value = [];
-    selectedInvCandidate.value = null;
-    return;
-  }
   try {
-    const matches = await getSudzSfDoubleDomainMatches(invNum);
-    invCandidates.value = matches.map((row, index) => ({
-      rowKey: `${row.invKey}-${index}`,
-      invKey: row.invKey,
-      invNum: row.invNum,
-      cnKey: row.cnKey,
-      cnNum: row.cnNum
-    }));
-    selectedInvCandidate.value = invCandidates.value[0] ?? null;
-    if (invCandidates.value.length === 0) {
-      $q.notify({ type: 'warning', message: `СФ с номером «${invNum}» в домене не найдены.` });
-    }
+    await store.searchCnInvLookup(value);
   } catch (error) {
     $q.notify({
       type: 'negative',
@@ -502,7 +482,7 @@ async function onPickerSearch(pickerId: string, value: string): Promise<void> {
 
 async function onLinkSave(): Promise<void> {
   const cnKey = selectedCnCandidate.value?.cnKey;
-  const invKey = selectedInvCandidate.value?.invKey;
+  const invKey = store.selectedCnInvLookup?.invKey;
   if (cnKey == null || invKey == null) {
     $q.notify({ type: 'warning', message: 'Выберите СФ для привязки к договору.' });
     return;

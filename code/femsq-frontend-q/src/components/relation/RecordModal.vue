@@ -48,6 +48,7 @@
                     :model-value="pickerSearch[picker.id] ?? ''"
                     :label="picker.searchPlaceholder"
                     :hint="picker.searchHint"
+                    :loading="picker.searchLoading"
                     dense
                     outlined
                     @update:model-value="setPickerSearch(picker, $event)"
@@ -55,8 +56,18 @@
                   />
                 </div>
                 <div class="shrink-0">
-                  <QBtn color="primary" unelevated no-caps label="Найти" @click="emitSearch(picker)" />
+                  <QBtn
+                    color="primary"
+                    unelevated
+                    no-caps
+                    label="Найти"
+                    :loading="picker.searchLoading"
+                    @click="emitSearch(picker)"
+                  />
                 </div>
+              </div>
+              <div v-if="picker.searchStatus" class="q-px-sm q-pb-sm text-caption text-grey-7">
+                {{ picker.searchStatus }}
               </div>
               <FemsqTable
                 class="fit"
@@ -79,6 +90,7 @@
                         :model-value="pickerSearch[picker.id] ?? ''"
                         :label="picker.searchPlaceholder"
                         :hint="picker.searchHint"
+                        :loading="picker.searchLoading"
                         dense
                         outlined
                         @update:model-value="setPickerSearch(picker, $event)"
@@ -86,8 +98,18 @@
                       />
                     </div>
                     <div class="shrink-0">
-                      <QBtn color="primary" unelevated no-caps label="Найти" @click="emitSearch(picker)" />
+                      <QBtn
+                        color="primary"
+                        unelevated
+                        no-caps
+                        label="Найти"
+                        :loading="picker.searchLoading"
+                        @click="emitSearch(picker)"
+                      />
                     </div>
+                  </div>
+                  <div v-if="picker.searchStatus" class="q-px-sm q-pb-sm text-caption text-grey-7">
+                    {{ picker.searchStatus }}
                   </div>
                   <FemsqTable
                     class="col"
