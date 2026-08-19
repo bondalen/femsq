@@ -20,6 +20,8 @@ extend type Mutation {
   createCnContract(input: CnContractCreateRequest!): CnContractCreated!
   """Правка карточки cn (в т.ч. cn_date) — отдельно от csoCnDate сторон."""
   updateCn(id: Int!, input: CnUpdateRequest!): Cn!
+  """Создать связь существующих договора и СФ в ags.cnInv."""
+  createCnInv(input: CnInvCreateRequest!): CnInv!
 
   createCnSide(input: CnSideCreateRequest!): CnSide!
   updateCnSide(id: Int!, input: CnSideUpdateRequest!): CnSide!
@@ -49,6 +51,13 @@ type Cn {
   cnDate: Date
   cnNote: String
   cnMark: Int
+}
+
+type CnInv {
+  ciKey: Int
+  ciInv: Int
+  ciCn: Int
+  ciTimeOfEntry: DateTime
 }
 
 type CnSide {
@@ -114,6 +123,11 @@ input CnUpdateRequest {
   cnDate: Date
   cnNote: String
   cnMark: Int
+}
+
+input CnInvCreateRequest {
+  ciInv: Int!
+  ciCn: Int!
 }
 
 input CnSideCreateRequest {

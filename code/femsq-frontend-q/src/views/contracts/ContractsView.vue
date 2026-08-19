@@ -78,6 +78,10 @@
                 @click="openEditCnDialog"
               />
             </div>
+            <QTabs v-model="detailTab" dense class="shrink-0 q-mb-xs" active-color="primary">
+              <QTab name="parties" label="Стороны" no-caps />
+              <QTab name="sf" label="Счета-фактуры" no-caps />
+            </QTabs>
             <QSplitter
               v-model="detailSplit"
               horizontal
@@ -101,7 +105,29 @@
                 />
               </template>
               <template #after>
-                <ContractPartiesPanel />
+                <QTabPanels v-model="detailTab" animated class="fit">
+                  <QTabPanel name="parties" class="q-pa-none fit">
+                    <ContractPartiesPanel />
+                  </QTabPanel>
+                  <QTabPanel name="sf" class="q-pa-xs fit">
+                    <div class="column fill-pane no-wrap">
+                      <div class="text-caption text-grey-7 q-pb-sm">
+                        Дерево договора и его связей; action на папке `cn.cnInv` открывает ту же `RecordModal`.
+                      </div>
+                      <RelationTree
+                        v-if="store.selectedCn"
+                        :key="relationTreeKey"
+                        class="col"
+                        :spec="cnRelationSpec"
+                        :root-id="store.selectedCn.cnKey"
+                        :fetch-node="fetchRelationNode"
+                        :fetch-expand="fetchRelationExpand"
+                        @action="onRelationAction"
+                        root-class="contracts-relation-tree"
+                      />
+                    </div>
+                  </QTabPanel>
+                </QTabPanels>
               </template>
             </QSplitter>
           </template>
@@ -213,6 +239,15 @@
         </QCardActions>
       </QCard>
     </QDialog>
+    <RecordModal
+      v-if="linkForm"
+      v-model="linkModalOpen"
+      :form="linkForm"
+      :fetch-node="fetchRelationNode"
+      :fetch-expand="fetchRelationExpand"
+      @picker-select="onPickerSelect"
+      @save="onLinkSave"
+    />
   </QPage>
 </template>
 
@@ -229,10 +264,24 @@ import {
   QPage,
   QSelect,
   QSplitter,
+  QTab,
+  QTabPanel,
+  QTabPanels,
+  QTabs,
   useQuasar
 } from 'quasar';
 import { FemsqTable, type FemsqTableColumn } from 'fequlib';
 
+import { createCnInv } from '@/api/contracts-api';
+import { fetchRelationExpand, fetchRelationNode } from '@/api/relation-api';
+import { getSudzSfDoubleDomainMatches } from '@/api/sudz-api';
+import RecordModal from '@/components/relation/RecordModal.vue';
+import RelationTree from '@/components/relation/RelationTree.vue';
+import * as cnPickerSpecJson from '@/trees/cn-picker.tree.json';
+import * as contractsInvSpecJson from '@/trees/contracts-inv.tree.json';
+import { buildCnInvLinkForm, type RelationPickerCandidateRow } from '@/trees/relation-form-registry';
+import type { RelationFormState } from '@/trees/relation-forms';
+import type { RelationTreeActionContext, RelationTreeSpec } from '@/trees/relation-tree';
 import ContractPartiesPanel from '@/views/contracts/ContractPartiesPanel.vue';
 import { useContractsStore } from '@/stores/contracts';
 import type { CnNumDto } from '@/types/contracts';
@@ -240,13 +289,21 @@ import { parseFlexibleDate } from '@/utils/flexible-date';
 
 const store = useContractsStore();
 const $q = useQuasar();
+const cnRelationSpec = cnPickerSpecJson as RelationTreeSpec;
+const contractsInvSpec = contractsInvSpecJson as RelationTreeSpec;
 /** Доля ширины левой панели (список cnNum), как Access. */
 const masterSplit = ref(36);
 /** Доля высоты блока номеров над сторонами. */
 const detailSplit = ref(32);
+const detailTab = ref<'parties' | 'sf'>('parties');
 const cnNumPagination = ref({ page: 1, rowsPerPage: 25 });
 const nestedPagination = ref({ page: 1, rowsPerPage: 10 });
 const orgIdFilter = ref('');
+const relationTreeKey = ref(0);
+const relationAction = ref<RelationTreeActionContext | null>(null);
+const linkModalOpen = ref(false);
+const invCandidates = ref<RelationPickerCandidateRow[]>([]);
+const selectedInvCandidate = ref<RelationPickerCandidateRow | null>(null);
 
 const createDialog = reactive({
   open: false,
@@ -301,6 +358,13 @@ const detailColumns: FemsqTableColumn<CnNumDto>[] = [
   }
 ];
 
+const pickerColumns: FemsqTableColumn<RelationPickerCandidateRow>[] = [
+  { name: 'cnKey', label: 'cn', field: 'cnKey', align: 'right' },
+  { name: 'cnNum', label: 'договор', field: 'cnNum', align: 'left' },
+  { name: 'invKey', label: 'inv', field: 'invKey', align: 'right' },
+  { name: 'invNum', label: 'СФ', field: 'invNum', align: 'left' }
+];
+
 const numTypeOptions = computed(() =>
   store.numTypes.map((row) => ({
     label: row.cnntName || String(row.cnntKey),
@@ -342,12 +406,121 @@ const nestedSelectedRows = computed({
   }
 });
 
+const selectedCnCandidate = computed<RelationPickerCandidateRow | null>(() => {
+  const cn = store.selectedCn;
+  if (!cn) {
+    return null;
+  }
+  return {
+    rowKey: String(cn.cnKey),
+    cnKey: cn.cnKey,
+    cnNum: store.selectedCnNum?.cnnNum ?? cn.cnNumber,
+    invKey: null,
+    invNum: null
+  };
+});
+
+const linkForm = computed<RelationFormState | null>(() => {
+  const action = relationAction.value;
+  const cnCandidate = selectedCnCandidate.value;
+  if (!linkModalOpen.value || action == null || cnCandidate == null) {
+    return null;
+  }
+  return buildCnInvLinkForm({
+    context: action,
+    domain: null,
+    cnCandidates: [cnCandidate],
+    invCandidates: invCandidates.value,
+    selectedCnCandidate: cnCandidate,
+    selectedInvCandidate: selectedInvCandidate.value,
+    cnPickerSpec: cnRelationSpec,
+    invPickerSpec: contractsInvSpec,
+    pickerColumns
+  });
+});
+
 function onCnNumRowClick(_evt: Event, row: CnNumDto): void {
   void store.selectCnNum(row.cnnKey);
 }
 
 function onNestedCnNumClick(_evt: Event, row: CnNumDto): void {
   void store.selectCnNum(row.cnnKey);
+}
+
+/**
+ * Contract-side action открывает тот же flow `cnInv.link`, но сначала запрашивает номер СФ.
+ */
+async function onRelationAction(context: RelationTreeActionContext): Promise<void> {
+  if (context.actionId !== 'cnInv.link.create' || context.node.edge !== 'cn.cnInv') {
+    return;
+  }
+  const result = await promptInvoiceNumber();
+  if (result == null) {
+    return;
+  }
+  const invNum = result.trim();
+  if (!invNum) {
+    $q.notify({ type: 'warning', message: 'Введите номер СФ.' });
+    return;
+  }
+  const matches = await getSudzSfDoubleDomainMatches(invNum);
+  invCandidates.value = matches.map((row, index) => ({
+    rowKey: `${row.invKey}-${index}`,
+    invKey: row.invKey,
+    invNum: row.invNum,
+    cnKey: row.cnKey,
+    cnNum: row.cnNum
+  }));
+  if (invCandidates.value.length === 0) {
+    $q.notify({ type: 'warning', message: `СФ с номером «${invNum}» в домене не найдены.` });
+    return;
+  }
+  relationAction.value = context;
+  selectedInvCandidate.value = invCandidates.value[0];
+  linkModalOpen.value = true;
+}
+
+function onPickerSelect(pickerId: string, rowKey: string | null): void {
+  if (pickerId !== 'inv') {
+    return;
+  }
+  selectedInvCandidate.value = invCandidates.value.find((row) => row.rowKey === rowKey) ?? null;
+}
+
+async function onLinkSave(): Promise<void> {
+  const cnKey = selectedCnCandidate.value?.cnKey;
+  const invKey = selectedInvCandidate.value?.invKey;
+  if (cnKey == null || invKey == null) {
+    $q.notify({ type: 'warning', message: 'Выберите СФ для привязки к договору.' });
+    return;
+  }
+  try {
+    await createCnInv({ ciInv: invKey, ciCn: cnKey });
+    linkModalOpen.value = false;
+    relationAction.value = null;
+    relationTreeKey.value += 1;
+    $q.notify({ type: 'positive', message: 'Связь cnInv сохранена' });
+  } catch {
+    /* contracts-api already wraps message */
+  }
+}
+
+function promptInvoiceNumber(): Promise<string | null> {
+  return new Promise((resolve) => {
+    $q.dialog({
+      title: 'Найти СФ',
+      message: 'Введите точный номер существующего счёта-фактуры для привязки к договору.',
+      prompt: {
+        model: '',
+        type: 'text'
+      },
+      cancel: true,
+      persistent: true
+    })
+      .onOk((value) => resolve(typeof value === 'string' ? value : ''))
+      .onCancel(() => resolve(null))
+      .onDismiss(() => resolve(null));
+  });
 }
 
 function filterOrgIds(val: string, update: (fn: () => void) => void): void {

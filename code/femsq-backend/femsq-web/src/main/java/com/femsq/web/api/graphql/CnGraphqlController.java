@@ -3,10 +3,12 @@ package com.femsq.web.api.graphql;
 import com.femsq.database.config.DatabaseConfigurationService.MissingConfigurationException;
 import com.femsq.database.exception.DaoException;
 import com.femsq.database.model.CnContractCreate;
+import com.femsq.database.model.CnInv;
 import com.femsq.database.model.CnS;
 import com.femsq.database.model.CnSOrg;
 import com.femsq.database.model.CnSOrgSmpl;
 import com.femsq.database.service.CnContractService;
+import com.femsq.database.service.CnInvService;
 import com.femsq.database.service.CnNumService;
 import com.femsq.database.service.CnSOrgService;
 import com.femsq.database.service.CnSOrgSmplService;
@@ -15,6 +17,8 @@ import com.femsq.database.service.CnService;
 import com.femsq.web.api.dto.CnContractCreateRequest;
 import com.femsq.web.api.dto.CnContractCreatedDto;
 import com.femsq.web.api.dto.CnDto;
+import com.femsq.web.api.dto.CnInvCreateRequest;
+import com.femsq.web.api.dto.CnInvDto;
 import com.femsq.web.api.dto.CnNumDto;
 import com.femsq.web.api.dto.CnNumTypeLookupDto;
 import com.femsq.web.api.dto.CnUpdateRequest;
@@ -50,6 +54,7 @@ public class CnGraphqlController {
     private final CnNumService cnNumService;
     private final CnService cnService;
     private final CnContractService cnContractService;
+    private final CnInvService cnInvService;
     private final CnSService cnSService;
     private final CnSOrgSmplService cnSOrgSmplService;
     private final CnSOrgService cnSOrgService;
@@ -60,6 +65,7 @@ public class CnGraphqlController {
             CnNumService cnNumService,
             CnService cnService,
             CnContractService cnContractService,
+            CnInvService cnInvService,
             CnSService cnSService,
             CnSOrgSmplService cnSOrgSmplService,
             CnSOrgService cnSOrgService,
@@ -69,6 +75,7 @@ public class CnGraphqlController {
         this.cnNumService = cnNumService;
         this.cnService = cnService;
         this.cnContractService = cnContractService;
+        this.cnInvService = cnInvService;
         this.cnSService = cnSService;
         this.cnSOrgSmplService = cnSOrgSmplService;
         this.cnSOrgService = cnSOrgService;
@@ -164,6 +171,12 @@ public class CnGraphqlController {
     }
 
     @MutationMapping
+    public CnInvDto createCnInv(@Argument("input") CnInvCreateRequest input) {
+        log.info("GraphQL mutation createCnInv");
+        return mutate(() -> toCnInvDto(cnInvService.create(input.ciInv(), input.ciCn())));
+    }
+
+    @MutationMapping
     public CnSideDto createCnSide(@Argument("input") CnSideCreateRequest input) {
         log.info("GraphQL mutation createCnSide");
         return mutate(() -> {
@@ -249,6 +262,10 @@ public class CnGraphqlController {
 
     private static ResponseStatusException unavailable(MissingConfigurationException exception) {
         return new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage(), exception);
+    }
+
+    private static CnInvDto toCnInvDto(CnInv row) {
+        return new CnInvDto(row.ciKey(), row.ciInv(), row.ciCn(), row.ciTimeOfEntry());
     }
 
     @FunctionalInterface

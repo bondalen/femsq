@@ -18,9 +18,11 @@ export type RelationPickerCandidateRow = RelationPickerRow & {
 
 export interface BuildCnInvLinkFormOptions {
   context: RelationTreeActionContext;
-  domain: SudzSfDoubleDomainMatch;
+  domain?: SudzSfDoubleDomainMatch | null;
   cnCandidates: RelationPickerCandidateRow[];
+  invCandidates: RelationPickerCandidateRow[];
   selectedCnCandidate: RelationPickerCandidateRow | null;
+  selectedInvCandidate: RelationPickerCandidateRow | null;
   cnPickerSpec: RelationTreeSpec;
   invPickerSpec: RelationTreeSpec;
   pickerColumns: FemsqTableColumn<RelationPickerCandidateRow>[];
@@ -30,18 +32,35 @@ export interface BuildCnInvLinkFormOptions {
  * Строит форму первой связи `cnInv.link`.
  */
 export function buildCnInvLinkForm(options: BuildCnInvLinkFormOptions): RelationFormState {
-  const { context, domain, cnCandidates, selectedCnCandidate, cnPickerSpec, invPickerSpec, pickerColumns } =
-    options;
+  const {
+    context,
+    domain,
+    cnCandidates,
+    invCandidates,
+    selectedCnCandidate,
+    selectedInvCandidate,
+    cnPickerSpec,
+    invPickerSpec,
+    pickerColumns
+  } = options;
   const relationTypeColumns: FemsqTableColumn<RelationPickerCandidateRow>[] = [
     { name: 'label', label: 'Тип связи', field: 'label', align: 'left' }
   ];
-  const currentInvRow: RelationPickerCandidateRow = {
-    rowKey: String(domain.invKey),
-    invKey: domain.invKey,
-    invNum: domain.invNum,
-    cnKey: domain.cnKey,
-    cnNum: domain.cnNum
-  };
+  const edge = context.node.edge;
+  const invLocked = edge === 'inv.cnInv';
+  const cnLocked = edge === 'cn.cnInv';
+  const currentInvRow =
+    selectedInvCandidate ??
+    (domain
+      ? {
+          rowKey: String(domain.invKey),
+          invKey: domain.invKey,
+          invNum: domain.invNum,
+          cnKey: domain.cnKey,
+          cnNum: domain.cnNum
+        }
+      : null);
+  const currentCnRow = selectedCnCandidate;
   return {
     id: 'cnInv.link',
     title: 'Связать СФ с договором',
@@ -51,22 +70,28 @@ export function buildCnInvLinkForm(options: BuildCnInvLinkFormOptions): Relation
         name: 'invId',
         label: 'СФ (inv)',
         kind: 'readonly-fixed',
-        locked: true,
+        locked: invLocked,
         required: true,
-        value: context.node.fromId,
-        displayValue: domain.invNum
-          ? `${domain.invNum} [inv=${context.node.fromId ?? '—'}]`
-          : String(context.node.fromId ?? '—')
+        value: invLocked ? context.node.fromId : currentInvRow?.invKey ?? null,
+        displayValue:
+          invLocked && domain?.invNum
+            ? `${domain.invNum} [inv=${context.node.fromId ?? '—'}]`
+            : currentInvRow?.invNum != null
+              ? `${currentInvRow.invNum} [inv=${currentInvRow.invKey ?? '—'}]`
+              : null
       },
       {
         name: 'cnId',
         label: 'Договор (cn)',
         kind: 'fk-single',
         required: true,
-        value: selectedCnCandidate?.cnKey ?? null,
+        locked: cnLocked,
+        value: cnLocked ? context.node.fromId : currentCnRow?.cnKey ?? null,
         displayValue:
-          selectedCnCandidate?.cnNum != null
-            ? `${selectedCnCandidate.cnNum} [cn=${selectedCnCandidate.cnKey ?? '—'}]`
+          cnLocked && currentCnRow?.cnNum != null
+            ? `${currentCnRow.cnNum} [cn=${context.node.fromId ?? '—'}]`
+            : currentCnRow?.cnNum != null
+              ? `${currentCnRow.cnNum} [cn=${currentCnRow.cnKey ?? '—'}]`
             : null
       },
       {
@@ -84,11 +109,12 @@ export function buildCnInvLinkForm(options: BuildCnInvLinkFormOptions): Relation
         tabLabel: 'Договор',
         valueField: 'cnKey',
         displayField: 'cnNum',
-        rows: cnCandidates,
+        disabled: cnLocked,
+        rows: cnLocked && currentCnRow ? [currentCnRow] : cnCandidates,
         columns: pickerColumns,
-        selected: selectedCnCandidate ? [selectedCnCandidate] : [],
+        selected: currentCnRow ? [currentCnRow] : [],
         treeSpec: cnPickerSpec,
-        treeRootId: selectedCnCandidate?.cnKey ?? null
+        treeRootId: currentCnRow?.cnKey ?? null
       },
       {
         id: 'inv',
@@ -96,12 +122,12 @@ export function buildCnInvLinkForm(options: BuildCnInvLinkFormOptions): Relation
         tabLabel: 'СФ',
         valueField: 'invKey',
         displayField: 'invNum',
-        disabled: true,
-        rows: [currentInvRow],
+        disabled: invLocked,
+        rows: invLocked && currentInvRow ? [currentInvRow] : invCandidates,
         columns: pickerColumns,
-        selected: [currentInvRow],
+        selected: currentInvRow ? [currentInvRow] : [],
         treeSpec: invPickerSpec,
-        treeRootId: context.node.fromId
+        treeRootId: invLocked ? context.node.fromId : currentInvRow?.invKey ?? null
       },
       {
         id: 'relationType',

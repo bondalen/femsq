@@ -298,7 +298,9 @@ const linkForm = computed<RelationFormState | null>(() => {
     context: action,
     domain,
     cnCandidates: cnPickerRows.value,
+    invCandidates: domain ? [domain] : [],
     selectedCnCandidate: selectedCnCandidate.value,
+    selectedInvCandidate: domain,
     cnPickerSpec,
     invPickerSpec: contractsInvSpec,
     pickerColumns

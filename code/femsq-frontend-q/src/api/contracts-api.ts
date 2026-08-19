@@ -10,6 +10,8 @@ import type {
   CnContractCreateRequest,
   CnContractCreatedDto,
   CnDto,
+  CnInvCreateRequest,
+  CnInvDto,
   CnNumDto,
   CnNumTypeLookupDto,
   CnSideCreateRequest,
@@ -135,6 +137,17 @@ const UPDATE_CN = gql`
       cnDate
       cnNote
       cnMark
+    }
+  }
+`;
+
+const CREATE_CN_INV = gql`
+  mutation CreateCnInv($input: CnInvCreateRequest!) {
+    createCnInv(input: $input) {
+      ciKey
+      ciInv
+      ciCn
+      ciTimeOfEntry
     }
   }
 `;
@@ -393,6 +406,24 @@ export async function updateCn(id: number, input: CnUpdateRequest): Promise<CnDt
     return result.data.updateCn;
   } catch (error) {
     throw toRequestError(error, 'Не удалось обновить договор');
+  }
+}
+
+/**
+ * Создаёт связь существующих договора и СФ.
+ */
+export async function createCnInv(input: CnInvCreateRequest): Promise<CnInvDto> {
+  try {
+    const result = await apolloClient.mutate<{ createCnInv: CnInvDto }>({
+      mutation: CREATE_CN_INV,
+      variables: { input }
+    });
+    if (!result.data?.createCnInv) {
+      throw new RequestError('Пустой ответ createCnInv', 0);
+    }
+    return result.data.createCnInv;
+  } catch (error) {
+    throw toRequestError(error, 'Не удалось создать связь cnInv');
   }
 }
 

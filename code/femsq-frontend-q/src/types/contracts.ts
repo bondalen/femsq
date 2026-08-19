@@ -19,6 +19,13 @@ export interface CnDto {
   cnMark: number | null;
 }
 
+export interface CnInvDto {
+  ciKey: number | null;
+  ciInv: number | null;
+  ciCn: number | null;
+  ciTimeOfEntry: string | null;
+}
+
 export interface CnSOrgDto {
   cnSOrgKey: number;
   csoCnSOrgSmpl: number;
@@ -106,6 +113,11 @@ export interface CnUpdateRequest {
   cnDate?: string | null;
   cnNote?: string | null;
   cnMark?: number | null;
+}
+
+export interface CnInvCreateRequest {
+  ciInv: number;
+  ciCn: number;
 }
 
 export interface CnContractCreatedDto {

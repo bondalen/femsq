@@ -91,6 +91,7 @@ import com.femsq.database.service.DefaultIpgChainService;
 import com.femsq.database.service.DefaultInvestmentPlanGroupService;
 import com.femsq.database.service.DefaultInvestmentProgramService;
 import com.femsq.database.service.CnContractService;
+import com.femsq.database.service.CnInvService;
 import com.femsq.database.service.CnNumService;
 import com.femsq.database.service.CnSOrgService;
 import com.femsq.database.service.CnSOrgSmplService;
@@ -102,6 +103,7 @@ import com.femsq.database.service.CstAgService;
 import com.femsq.database.service.CstRaListService;
 import com.femsq.database.service.CstService;
 import com.femsq.database.service.DefaultCnContractService;
+import com.femsq.database.service.DefaultCnInvService;
 import com.femsq.database.service.DefaultCnNumService;
 import com.femsq.database.service.DefaultCnSOrgService;
 import com.femsq.database.service.DefaultCnSOrgSmplService;
@@ -386,6 +388,14 @@ public class DatabaseModuleConfiguration {
     @Bean
     public CnService cnService(CnDao cnDao) {
         return new DefaultCnService(cnDao);
+    }
+
+    @Bean
+    public CnInvService cnInvService(
+            ConnectionFactory connectionFactory,
+            DatabaseConfigurationService configurationService
+    ) {
+        return new DefaultCnInvService(connectionFactory, configurationService);
     }
 
     /**
