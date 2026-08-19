@@ -50,6 +50,24 @@ const ROLE_CATALOG: { cnSType: number; cnSTypeName: string }[] = [
   { cnSType: 2, cnSTypeName: 'исполнитель' }
 ];
 
+interface ContractInvLookupState {
+  query: string;
+  rows: ContractInvLookupRow[];
+  loading: boolean;
+  status: string;
+  selectedRowKey: string | null;
+}
+
+function createEmptyCnInvLookupState(): ContractInvLookupState {
+  return {
+    query: '',
+    rows: [],
+    loading: false,
+    status: 'Введите номер СФ для поиска.',
+    selectedRowKey: null
+  };
+}
+
 export const useContractsStore = defineStore('contracts', () => {
   const cnNums = ref<CnNumDto[]>([]);
   const selectedCnnKey = ref<number | null>(null);
@@ -65,17 +83,26 @@ export const useContractsStore = defineStore('contracts', () => {
   const loadingSides = ref(false);
   const saving = ref(false);
   const error = ref<string | null>(null);
-  const cnInvLookupQuery = ref('');
-  const cnInvLookupRows = ref<ContractInvLookupRow[]>([]);
-  const cnInvLookupLoading = ref(false);
-  const cnInvLookupStatus = ref('Введите номер СФ для поиска.');
-  const cnInvLookupSelectedRowKey = ref<string | null>(null);
+  const cnInvLookupByCn = ref<Record<string, ContractInvLookupState>>({});
 
   const selectedCnNum = computed(
     () => cnNums.value.find((row) => row.cnnKey === selectedCnnKey.value) ?? null
   );
+  const activeCnLookupKey = computed(() => String(selectedCn.value?.cnKey ?? '0'));
+  const currentCnInvLookup = computed(() => {
+    const key = activeCnLookupKey.value;
+    if (!cnInvLookupByCn.value[key]) {
+      cnInvLookupByCn.value[key] = createEmptyCnInvLookupState();
+    }
+    return cnInvLookupByCn.value[key];
+  });
+  const cnInvLookupQuery = computed(() => currentCnInvLookup.value.query);
+  const cnInvLookupRows = computed(() => currentCnInvLookup.value.rows);
+  const cnInvLookupLoading = computed(() => currentCnInvLookup.value.loading);
+  const cnInvLookupStatus = computed(() => currentCnInvLookup.value.status);
+  const cnInvLookupSelectedRowKey = computed(() => currentCnInvLookup.value.selectedRowKey);
   const selectedCnInvLookup = computed(
-    () => cnInvLookupRows.value.find((row) => row.rowKey === cnInvLookupSelectedRowKey.value) ?? null
+    () => currentCnInvLookup.value.rows.find((row) => row.rowKey === currentCnInvLookup.value.selectedRowKey) ?? null
   );
 
   /**
@@ -206,42 +233,52 @@ export const useContractsStore = defineStore('contracts', () => {
    * Ищет существующие СФ по точному номеру для ручной привязки cnInv.
    */
   async function searchCnInvLookup(query: string): Promise<void> {
-    cnInvLookupQuery.value = query;
+    const lookup = currentCnInvLookup.value;
+    lookup.query = query;
     const invNum = query.trim();
     if (!invNum) {
-      cnInvLookupRows.value = [];
-      cnInvLookupSelectedRowKey.value = null;
-      cnInvLookupStatus.value = 'Введите номер СФ для поиска.';
+      lookup.rows = [];
+      lookup.selectedRowKey = null;
+      lookup.status = 'Введите номер СФ для поиска.';
       return;
     }
-    cnInvLookupLoading.value = true;
-    cnInvLookupStatus.value = `Поиск СФ «${invNum}»...`;
+    lookup.loading = true;
+    lookup.status = `Поиск СФ «${invNum}»...`;
     try {
       const matches = await getSudzSfDoubleDomainMatches(invNum);
-      cnInvLookupRows.value = matches.map((row, index) => ({
+      lookup.rows = matches.map((row, index) => ({
         rowKey: `${row.invKey}-${index}`,
         invKey: row.invKey,
         invNum: row.invNum,
         cnKey: row.cnKey,
         cnNum: row.cnNum
       }));
-      cnInvLookupSelectedRowKey.value = cnInvLookupRows.value[0]?.rowKey ?? null;
-      cnInvLookupStatus.value =
-        cnInvLookupRows.value.length > 0
-          ? `Найдено строк: ${cnInvLookupRows.value.length}`
+      lookup.selectedRowKey = lookup.rows[0]?.rowKey ?? null;
+      lookup.status =
+        lookup.rows.length > 0
+          ? `Найдено строк: ${lookup.rows.length}`
           : `СФ с номером «${invNum}» не найдены.`;
     } catch (err) {
-      cnInvLookupRows.value = [];
-      cnInvLookupSelectedRowKey.value = null;
-      cnInvLookupStatus.value = err instanceof RequestError ? err.message : 'Ошибка поиска СФ';
+      lookup.rows = [];
+      lookup.selectedRowKey = null;
+      lookup.status = err instanceof RequestError ? err.message : 'Ошибка поиска СФ';
       throw err;
     } finally {
-      cnInvLookupLoading.value = false;
+      lookup.loading = false;
     }
   }
 
   function selectCnInvLookup(rowKey: string | null): void {
-    cnInvLookupSelectedRowKey.value = rowKey;
+    currentCnInvLookup.value.selectedRowKey = rowKey;
+  }
+
+  function clearCnInvLookup(): void {
+    const lookup = currentCnInvLookup.value;
+    lookup.query = '';
+    lookup.rows = [];
+    lookup.loading = false;
+    lookup.status = 'Введите номер СФ для поиска.';
+    lookup.selectedRowKey = null;
   }
 
   /**
@@ -452,6 +489,7 @@ export const useContractsStore = defineStore('contracts', () => {
     duplicateCount,
     searchCnInvLookup,
     selectCnInvLookup,
+    clearCnInvLookup,
     createContract,
     saveCn,
     isSideExpanded,

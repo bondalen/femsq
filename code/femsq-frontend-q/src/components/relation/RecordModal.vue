@@ -65,6 +65,9 @@
                     @click="emitSearch(picker)"
                   />
                 </div>
+                <div class="shrink-0">
+                  <QBtn flat no-caps label="Очистить" @click="clearSearch(picker)" />
+                </div>
               </div>
               <div v-if="picker.searchStatus" class="q-px-sm q-pb-sm text-caption text-grey-7">
                 {{ picker.searchStatus }}
@@ -106,6 +109,9 @@
                         :loading="picker.searchLoading"
                         @click="emitSearch(picker)"
                       />
+                    </div>
+                    <div class="shrink-0">
+                      <QBtn flat no-caps label="Очистить" @click="clearSearch(picker)" />
                     </div>
                   </div>
                   <div v-if="picker.searchStatus" class="q-px-sm q-pb-sm text-caption text-grey-7">
@@ -244,6 +250,19 @@ function setPickerSearch(picker: RelationPickerState, value: string | number | n
 
 function emitSearch(picker: RelationPickerState): void {
   emit('picker-search', picker.id, pickerSearch.value[picker.id] ?? '');
+}
+
+function clearSearch(picker: RelationPickerState): void {
+  const prev = searchTimers.get(picker.id);
+  if (prev) {
+    clearTimeout(prev);
+    searchTimers.delete(picker.id);
+  }
+  pickerSearch.value = {
+    ...pickerSearch.value,
+    [picker.id]: ''
+  };
+  emit('picker-search', picker.id, '');
 }
 </script>
 
