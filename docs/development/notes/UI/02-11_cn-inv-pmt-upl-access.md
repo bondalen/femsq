@@ -1,14 +1,16 @@
 # Платежи — эталон Access `CnInvPmtUpl*` (процесс 1.1.1.2)
 
 **Дата создания:** 2026-08-17  
-**Последнее обновление:** 2026-08-18 (шаг 8: apply намеренно закрыт)  
-**Статус:** ✅ паспорт Access закрыт. Шаг 8 (`cipuCn_CtptCnOneInvTwoLoad`) — только показ; запись/перепривязка двоящих СФ — вручную оператором. Java-воронка pmt — отдельный чат, не этот.  
+**Последнее обновление:** 2026-08-19 (S70: visual v1 экрана D принят / 0072)  
+**Статус:** ✅ паспорт Access закрыт. Шаг 8 (`cipuCn_CtptCnOneInvTwoLoad`) — только показ; запись/перепривязка двоящих СФ — вручную оператором. Java UI — [chat-plan-26-0819-cn-inv-pmt-upl.md](../chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md) (задача **0072**, visual v1 ✅ UAT).  
+**Резюме FEMSQ UI:** [chat-resume-26-0819-cn-inv-pmt-upl.md](../chats/chat-resume/chat-resume-26-0819-cn-inv-pmt-upl.md)  
 **Скрины Design/SQL/Runtime:** [assets/26-0817-cn-inv-pmt-upl/README.md](./assets/26-0817-cn-inv-pmt-upl/README.md)  
 **Съём таблиц:** [26-0813_CnInvPmtUpl_/](../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/)  
 **Метод съёма:** [MS-ACCESS-OBJECTS-CAPTURE.md](../../../project/proposals/vba-analysis/MS-ACCESS-OBJECTS-CAPTURE.md)  
 **Процесс:** [03-processes §1.1.1.2](../domain/sudz/03-processes.md)  
 **Алгоритм VBA:** [04-data-model §2.9](../domain/sudz/04-data-model.md#29-алгоритм-btnupload_click--cninvpmtupl-процесс-1112-каркас-s69)  
-**План СУДЗ (инвентарь, не 0069):** [chat-plan-26-0802-sudz.md](../chats/chat-plan/chat-plan-26-0802-sudz.md) §5.3 / §5.7  
+**План СУДЗ (инвентарь, не 0069):** [chat-plan-26-0802-sudz.md](../chats/chat-plan/chat-plan-26-0802-sudz.md) §5.3 / §5.7 / §5.8  
+**План UI FEMSQ:** [chat-plan-26-0819-cn-inv-pmt-upl.md](../chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md) (0072)  
 **Резюме чата:** [chat-resume-26-0817-cn-inv-pmt-upl.md](../chats/chat-resume/chat-resume-26-0817-cn-inv-pmt-upl.md)  
 **Соседние чаты (не смешивать):** воронка долгов `CnInvDbtUpl` / 0069; КСДСФ (S68) — только ссылка на переиспользование очереди
 

@@ -101,7 +101,8 @@
           'femsq-nav-item--active':
             activeView === 'sudz-portfolio' ||
             activeView === 'sudz-debts' ||
-            activeView === 'sudz-dbt-upl'
+            activeView === 'sudz-dbt-upl' ||
+            activeView === 'sudz-pmt-upl'
         }"
         :disable="!sudzEnabled"
         label="СУДЗ"
@@ -139,6 +140,15 @@
               @click="handleNavigate('sudz-dbt-upl')"
             >
               <QItemSection>Загрузка свода</QItemSection>
+            </QItem>
+            <QItem
+              clickable
+              v-close-popup
+              :active="activeView === 'sudz-pmt-upl'"
+              data-test="nav-sudz-pmt-upl"
+              @click="handleNavigate('sudz-pmt-upl')"
+            >
+              <QItemSection>Загрузка платежей</QItemSection>
             </QItem>
           </QList>
         </QMenu>
@@ -257,6 +267,15 @@
             @click="handleNavigate('sudz-dbt-upl')"
           >
             <QItemSection>СУДЗ · Загрузка свода</QItemSection>
+          </QItem>
+          <QItem
+            clickable
+            v-close-popup
+            :disable="!sudzEnabled"
+            data-test="nav-sudz-pmt-upl-xs"
+            @click="handleNavigate('sudz-pmt-upl')"
+          >
+            <QItemSection>СУДЗ · Загрузка платежей</QItemSection>
           </QItem>
           <QItem clickable v-close-popup @click="handleNavigate('test-grid')">
             <QItemSection>Сервис · Test Grid</QItemSection>

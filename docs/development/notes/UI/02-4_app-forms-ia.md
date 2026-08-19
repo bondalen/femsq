@@ -1,12 +1,13 @@
 # Информационная архитектура: верхняя строка меню и реестр экранов FEMSQ
 
 **Дата создания:** 2026-07-22  
-**Последнее обновление:** 2026-08-13 (S61f: воронка — панель шагов в эскизе экрана C)
+**Последнее обновление:** 2026-08-19 (S70: TopBar «Загрузка платежей», экран D / 0072)
 **Автор:** Александр (зафиксировано по предложению чата 2026-07-22)  
-**Статус:** базовая редакция + Design chrome; экраны Стройки MVP ✅; эскизы СУДЗ MVP ✅ (G4); экран C 0069 — эскиз  
-**План работ:** [chat-plan-26-0722-forms-ia-cst.md](../chats/chat-plan/chat-plan-26-0722-forms-ia-cst.md) · СУДЗ: [chat-plan-26-0802-sudz.md](../chats/chat-plan/chat-plan-26-0802-sudz.md)  
+**Статус:** базовая редакция + Design chrome; экраны Стройки MVP ✅; эскизы СУДЗ MVP ✅ (G4); экран C 0069 — эскиз; экран D 0072 — visual v1 ✅ (UAT 2026-08-19)  
+**План работ:** [chat-plan-26-0722-forms-ia-cst.md](../chats/chat-plan/chat-plan-26-0722-forms-ia-cst.md) · СУДЗ: [chat-plan-26-0802-sudz.md](../chats/chat-plan/chat-plan-26-0802-sudz.md) · платежи UI: [chat-plan-26-0819-cn-inv-pmt-upl.md](../chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md)  
 **Резюме:** [chat-resume-26-0722-forms-ia-cst.md](../chats/chat-resume/chat-resume-26-0722-forms-ia-cst.md)  
-**Задачи:** 0057 (completed), 0058 (completed), 0065–0070 (СУДЗ)  
+**Резюме платежей (экран D):** [chat-resume-26-0819-cn-inv-pmt-upl.md](../chats/chat-resume/chat-resume-26-0819-cn-inv-pmt-upl.md)  
+**Задачи:** 0057 (completed), 0058 (completed), 0065–0072 (СУДЗ)  
 **Темы:** [frontend-themes.md](../../frontend-themes.md)
 
 ---
@@ -61,7 +62,8 @@ FEMSQ
 │     ├── Портфель года                       [yr — эскиз 02-9 §1a; Progress = лаунчер Rslt/D644]
 │     ├── Долги / мероприятия                 [эскиз 02-9 §2]
 │     ├── Исходящие документы                 [опционально; ядро на Progress — 02-9 §3]
-│     └── Загрузка свода                      [экран C; 0069 / S61e]
+│     ├── Загрузка свода                      [экран C; 0069 / S61e]
+│     └── Загрузка платежей                   [экран D; 0072 / S70]
 ├── Ревизии                                   [есть]
 ├── Отчёты                                    [есть]
 └── Сервис
@@ -120,7 +122,7 @@ FEMSQ
 | Инвестиции → Цепочки | `ipgCh`, `ipgChMin` | есть |
 | Инвестиции → прочее | `ipg*`, `stNet*`, … | нет |
 | Договоры | `cn*`, `cnNum`, `cn_s*`, `inv*` | эталон Access: [02-10](./02-10_contracts-cnNum-access.md) + [assets/26-0815-cnNum](./assets/26-0815-cnNum/README.md); FEMSQ UI — задача **0071** (блокер воронки `CnExistCtptNotLoad`) |
-| СУДЗ | `CnInvDbtUpl*` (загрузка), `cnInvAccnt`/`cnInvCmm*`/`yr*` (мероприятия), `ags.Yr_DbtChanges` (Rslt) | эскизы MVP [02-9](./02-9_sudz-mvp-screens.md); задачи 0065–0070 |
+| СУДЗ | `CnInvDbtUpl*` (свод), `CnInvPmtUpl*` (платежи), `cnInvAccnt`/`cnInvCmm*`/`yr*` (мероприятия), `ags.Yr_DbtChanges` (Rslt) | эскизы MVP [02-9](./02-9_sudz-mvp-screens.md); задачи 0065–0072 |
 | Ревизии | `ra_a` | есть |
 | Отчёты | `Report_*` | каталог есть |
 | Сервис / Test Grid | — | есть |

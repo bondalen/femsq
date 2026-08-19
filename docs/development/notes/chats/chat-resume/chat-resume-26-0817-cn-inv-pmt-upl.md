@@ -1,8 +1,8 @@
 # Резюме чата 26-0817: паспорт Access `CnInvPmtUpl*` (процесс 1.1.1.2)
 
 **Дата:** 2026-08-17 – 2026-08-18  
-**Последнее обновление:** 2026-08-18  
-**Тема:** Съём эталона MS Access для загрузки `export_{счётГК}_*` — формы `CnInvPmtUpl*`, VBA `btnUpload`, локальные таблицы, QueryDef `cipu*` / `agsCnCtpt*`. Java-воронка платежей **не** входила в объём.  
+**Последнее обновление:** 2026-08-19  
+**Тема:** Съём эталона MS Access для загрузки `export_{счётГК}_*` — формы `CnInvPmtUpl*`, VBA `btnUpload`, локальные таблицы, QueryDef `cipu*` / `agsCnCtpt*`. Java-воронка платежей **не** входила в объём. Эскиз FEMSQ UI (J2) закрыт 2026-08-19 планом [chat-plan-26-0819](../chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md) / задачей **0072**.  
 **Задачи:** инвентарь СУДЗ [0065](../../../project-development.json) (док); реализация pmt **не** открывалась  
 **Журнал:** `chat-2026-08-17-001` (completed)  
 **Машина:** nb-win (WSL2); DBHub OK; `femsq-mssql` Up; Excel-шара `D:\wire-guard-share-nb-win\femsq\excel\…`
@@ -12,7 +12,8 @@
 ## Связанные документы
 
 - [02-11_cn-inv-pmt-upl-access.md](../../UI/02-11_cn-inv-pmt-upl-access.md) — паспорт формы (закрыт)
-- [chat-plan-26-0802-sudz.md](../chat-plan/chat-plan-26-0802-sudz.md) §5.7 — инвентарь S69
+- [chat-plan-26-0802-sudz.md](../chat-plan/chat-plan-26-0802-sudz.md) §5.7 — инвентарь S69; §5.8 — указатель на UI
+- [chat-plan-26-0819-cn-inv-pmt-upl.md](../chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md) — FEMSQ экран D / 0072
 - [03-processes §1.1.1.2](../../domain/sudz/03-processes.md)
 - [04-data-model §2.9](../../domain/sudz/04-data-model.md#29-алгоритм-btnupload_click--cninvpmtupl-процесс-1112-каркас-s69) — 13 шагов `cipu*`
 - Съём: [26-0813_CnInvPmtUpl_/](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/)
@@ -64,8 +65,8 @@
 
 | # | Тема |
 |---|------|
-| J1 | Java-воронка 1.1.1.2 (`btnUpload` / `cipu*`) — отдельный чат |
-| J2 | Эскиз FEMSQ UI для платежей |
+| J1 | Java-воронка 1.1.1.2 (`btnUpload` / `cipu*`) — после лаунчера File (не сразу после visual v1) |
+| J2 | Эскиз + visual v1 FEMSQ UI для платежей — ✅ 2026-08-19 UAT: [resume 26-0819](./chat-resume-26-0819-cn-inv-pmt-upl.md), [02-9 §4b](../../UI/02-9_sudz-mvp-screens.md#4b-экран-d--загрузка-платежей-cn_inv_pm_upl--лаунчер-file_f), план [26-0819](../chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md) |
 | J3 | Адаптер КСДСФ под pmt |
 | J4 | Offset других годов, кроме среза `26-0422` |
 | J5 | Коммит Excel `export_*.xlsx` в git — не делать |

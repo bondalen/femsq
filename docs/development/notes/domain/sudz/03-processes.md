@@ -1,7 +1,7 @@
 # СУДЗ — процессы
 
 **Дата создания:** 2026-08-03  
-**Последнее обновление:** 2026-08-18 (S69: паспорт Access pmt закрыт)  
+**Последнее обновление:** 2026-08-19 (S70: план экрана D / 0072)  
 **Статус:** черновик (сегменты S2–S3, S20–S29, S52/S52a, S60, S69)  
 **План чата:** [chat-plan-26-0802-sudz.md](../../chats/chat-plan/chat-plan-26-0802-sudz.md)
 
@@ -98,7 +98,7 @@ Q1 / Q2 / Q3 / Q4 года Y:
 
 Паспорт UI/VBA/таблиц/запросов: [02-11_cn-inv-pmt-upl-access.md](../../UI/02-11_cn-inv-pmt-upl-access.md). Порядок шагов VBA: [04-data-model §2.9](./04-data-model.md#29-алгоритм-btnupload_click--cninvpmtupl-процесс-1112-каркас-s69). Резолв стройки за период по уже загруженным PM: `ags.fnCiasDbtUplCst` (через мост `cn_inv_dbt_upl_g_p`) — [04 §2.6](./04-data-model.md).
 
-**Съём Access закрыт (2026-08-18).** Шаг 8 `cipuCn_CtptCnOneInvTwoLoad` — только показ: запись или перепривязка двоящих СФ — вручную оператором (авто-apply намеренно закрыт). Runtime InvDouble: **0 строк** (`export_606012_25-0721`). Apply финала загрузки: INSERT **`ags.cn_inv_pm`**. Java-воронка pmt — отдельный чат.
+**Съём Access закрыт (2026-08-18).** Шаг 8 `cipuCn_CtptCnOneInvTwoLoad` — только показ: запись или перепривязка двоящих СФ — вручную оператором (авто-apply намеренно закрыт). Runtime InvDouble: **0 строк** (`export_606012_25-0721`). Apply финала загрузки: INSERT **`ags.cn_inv_pm`**. FEMSQ UI: экран D, задача **0072** visual v1 ✅ (UAT 2026-08-19), [resume 26-0819](../../chats/chat-resume/chat-resume-26-0819-cn-inv-pmt-upl.md); воронка позже.
 
 ####### 1.1.1.3. Выгрузка `ags_Yr_DbtChangesRslt`
 

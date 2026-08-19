@@ -3,9 +3,145 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-08-18"
+      "lastUpdated": "2026-08-19"
     },
     "sessions": [
+      {
+        "chat": {
+          "displayName": "СУДЗ: экран загрузки платежей visual v1 (completed, high). № chat-2026-08-19-001",
+          "chat-attributes": {
+            "id": "chat-2026-08-19-001",
+            "created": "2026-08-19",
+            "lastUpdated": "2026-08-19",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "high",
+            "tags": [
+              "sudz",
+              "CnInvPmtUpl",
+              "1.1.1.2",
+              "0072",
+              "ui"
+            ],
+            "links": {
+              "projectDocsRefs": [
+                "module:frontend",
+                "module:backend.web"
+              ],
+              "developmentTasks": [
+                "0072"
+              ],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md",
+              "chatResume": "docs/development/notes/chats/chat-resume/chat-resume-26-0819-cn-inv-pmt-upl.md",
+              "domainPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+              "uiNote": "docs/development/notes/UI/02-9_sudz-mvp-screens.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Резюме чата + UAT visual v1 экрана D (success). № log-2026-08-19-003",
+                "log-attributes": {
+                  "id": "log-2026-08-19-003",
+                  "timestamp": "2026-08-19T22:50:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0072"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксировать UAT владельца и резюме чата 26-0819",
+                    "details": "Владелец: экран D в целом соответствует плану. Создан chat-resume-26-0819. План 26-0819 v0.3.0: этап 1a UAT ✅; этап 2 сужен до лаунчера File; воронка cipu* — 2b. Следующий чат — F1 File, не 0802.",
+                    "outcome": "0072 закрыта с приёмкой. Документы синхронизированы.",
+                    "references": [
+                      "docs/development/notes/chats/chat-resume/chat-resume-26-0819-cn-inv-pmt-upl.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Visual v1 экрана D «Загрузка платежей» (success). № log-2026-08-19-002",
+                "log-attributes": {
+                  "id": "log-2026-08-19-002",
+                  "timestamp": "2026-08-19T21:55:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0072"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Реализовать visual v1 экрана D по плану 26-0819 / критериям §6",
+                    "details": "TopBar СУДЗ → Загрузка платежей (sudz-pmt-upl). SudzPmtUplView + store: список sudzPmUplLookups, вкладка «загрузка» (путь, cipufSheet, флаги, stub «загрузка», 13 чекбоксов cipu* префикс без пресетов; шаг 6 — агент более одного раза). Нижние вкладки: ход (пусто) / повторяющиеся СФ / стройки новые. «счета, сумма» disabled. Экран C: вкладка «выгрузки платежей» не тронута. Воронка, Excel, File/лог GraphQL, g_p, КСДСФ — вне v1.",
+                    "outcome": "Задача 0072 закрыта по visual v1. Домен платежей и Excel не пишутся (кроме опционального createSudzPmUpl каталога).",
+                    "references": [
+                      "code/femsq-frontend-q/src/views/sudz/SudzPmtUplView.vue",
+                      "code/femsq-frontend-q/src/stores/sudz-pmt-upl.ts",
+                      "code/femsq-frontend-q/src/sudz/pmt-upl-funnel-steps.ts",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "План 0072 / эскиз экрана D, код не начат (success). № log-2026-08-19-001",
+                "log-attributes": {
+                  "id": "log-2026-08-19-001",
+                  "timestamp": "2026-08-19T21:40:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0072"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксировать visual v1 экрана загрузки платежей отдельным планом и задачей 0072",
+                    "details": "Согласовано: analog SudzDbtUplView без пресетов; лог на вкладке; нижние вкладки ход/повторы СФ/стройки новые; список все cn_inv_pm_upl; вкладка g_p на экране свода — другой контур (1 дбт→N pmt). Созданы chat-plan-26-0819, задача 0072 (02.03.08), эскиз 02-9 §4b, пункт TopBar в 02-4, сегмент S70/§5.8 в 0802. Код экрана не начат — следующий чат по плану 26-0819.",
+                    "outcome": "Документы готовы к реализации visual v1. Воронка cipu* вне 0072.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md",
+                      "docs/development/notes/UI/02-9_sudz-mvp-screens.md",
+                      "docs/development/notes/UI/02-4_app-forms-ia.md",
+                      "docs/development/project-development.json"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
       {
         "chat": {
           "displayName": "Паспорт Access CnInvPmtUpl / 1.1.1.2 (completed, high). № chat-2026-08-17-001",

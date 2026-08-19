@@ -13,6 +13,7 @@ export type ActiveView =
   | 'sudz-portfolio'
   | 'sudz-debts'
   | 'sudz-dbt-upl'
+  | 'sudz-pmt-upl'
   | 'sudz-sf-double'
   | 'contracts'
   | 'test-grid';

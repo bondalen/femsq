@@ -3,10 +3,12 @@
 **Дата создания:** 2026-08-02  
 **Последнее обновление:** 2026-08-19  
 **Проект:** FEMSQ  
-**Версия плана:** 0.90.0 (S68t: actions/forms под RelationTree)  
-**Задача:** 0065–0071 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md); **активно: 0069** + **S68 КСДСФ** + **S68t дерево (T6 UAT)** + блокер **0071 Договоры**; **S69** паспорт платежей Access ✅ (Java — отдельный чат)  
-**Статус плана:** ✅ 0070; **0069** CnCtptExistInvNotLoad dry ✅; **S68** CREATE+наполнение+экран (JAR **0.1.0.202**) 🔶 UAT; **S68t** T1 ✅, T4b ✅, **T5** ✅ → **T6/T6a**; **0071** 🔶 UAT; **S69** паспорт Access `CnInvPmtUpl*` ✅  
+**Версия плана:** 0.91.1 (S70: visual v1 экрана платежей 0072)  
+**Задача:** 0065–0072 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md); **активно: 0069** + **S68 КСДСФ** + **S68t дерево (T6 UAT)** + блокер **0071 Договоры**; **S69** паспорт Access pmt ✅; **S70** экран D / [0072](../../../project-development.json) visual v1 ✅  
+**Статус плана:** ✅ 0070; **0069** CnCtptExistInvNotLoad dry ✅; **S68** CREATE+наполнение+экран (JAR **0.1.0.202**) 🔶 UAT; **S68t** T1 ✅, T4b ✅, **T5** ✅ → **T6/T6a**; **0071** 🔶 UAT; **S69** паспорт Access `CnInvPmtUpl*` ✅; **S70** visual v1 ✅  
 **Паспорт pmt:** [02-11_cn-inv-pmt-upl-access.md](../../UI/02-11_cn-inv-pmt-upl-access.md) · §5.7  
+**План UI pmt:** [chat-plan-26-0819-cn-inv-pmt-upl.md](./chat-plan-26-0819-cn-inv-pmt-upl.md) · §5.8  
+**Резюме UI pmt (S70):** [chat-resume-26-0819-cn-inv-pmt-upl.md](../chat-resume/chat-resume-26-0819-cn-inv-pmt-upl.md)  
 **Резюме pmt (S69):** [chat-resume-26-0817-cn-inv-pmt-upl.md](../chat-resume/chat-resume-26-0817-cn-inv-pmt-upl.md)
 
 
@@ -198,6 +200,7 @@
 | S68 | 2026-08-16 | **КСДСФ:** `CnInvUplSfDouble` на DEV; наполнение 1:1 Excel; bulk без очереди; экран + кнопка; create mutation | JAR **0.1.0.198**; [DDL](../../../sql/26-0816-sudz-sf-num-collision/) | 🔶 UAT |
 | S68t | 2026-08-18 | **Walker ≠ FemsqTree:** JSON + каталог + обёртка. **T1** ✅ v1; срез 1 + T4b ✅. Далее срез 2 / T5 | [02-12](../../UI/02-12_femsq-tree/relation-tree.md); ADR [009](../../../../project/decisions/009-femsq-walk-tree.md); §5.6 S68t | 🔶 T5 |
 | S69 | 2026-08-17 | **1.1.1.2 / паспорт `CnInvPmtUpl*`:** съём Access закрыт. Шаг 8 (`TwoLoad`) — только показ; запись/перепривязка двоящих СФ — вручную оператором. Runtime InvDouble: **0 строк**. INSERT финала: `ags_cn_inv_pm`. Java pmt — не этот чат | [02-11](../../UI/02-11_cn-inv-pmt-upl-access.md); [03 §1.1.1.2](../../domain/sudz/03-processes.md); §5.7; [съём](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/) | ✅ |
+| S70 | 2026-08-19 | **Экран D «Загрузка платежей»:** задача **0072** visual v1 ✅, UAT владельца ✅. Вкладка `g_p` на экране свода ≠ этот лаунчер | [chat-plan-26-0819](./chat-plan-26-0819-cn-inv-pmt-upl.md); [resume 26-0819](../chat-resume/chat-resume-26-0819-cn-inv-pmt-upl.md); [02-9 §4b](../../UI/02-9_sudz-mvp-screens.md#4b-экран-d--загрузка-платежей-cn_inv_pm_upl--лаунчер-file_f); §5.8 | ✅ visual |
 
 ### 5.3. Объекты Access (формы / запросы / таблицы / отчёты)
 
@@ -618,5 +621,14 @@ nested `invNum` (`ciputciCnInv`↔`inNumNull`) → `cnInv` (`inInv`↔`ciInv`);
 
 **Шаг 8 (владелец, 2026-08-18):** `cipuCn_CtptCnOneInvTwoLoad` — **намеренно без apply**. Двоящие СФ (номер уже >1 в БД): создать новую запись или перепривязать существующую может только оператор вручную после решения. Автозапись в загрузке закрыта. Согласуется с S68 п.3 (перепривязка не в bulk). Java-воронка pmt **не** начинается в этом чате.
 
-**Паспорт Access закрыт.** Дальше — по решению владельца: Java 1.1.1.2 или другой сегмент.
+**Паспорт Access закрыт.** Дальше — план UI [chat-plan-26-0819-cn-inv-pmt-upl.md](./chat-plan-26-0819-cn-inv-pmt-upl.md) (задача **0072**, экран D). Не писать реализацию pmt в §5.6 / 0069.
+
+### 5.8. 1.1.1.2 — экран FEMSQ «Загрузка платежей» (S70; не 0069)
+
+**Рабочий план:** [chat-plan-26-0819-cn-inv-pmt-upl.md](./chat-plan-26-0819-cn-inv-pmt-upl.md) · задача **0072** · эскиз [02-9 §4b](../../UI/02-9_sudz-mvp-screens.md#4b-экран-d--загрузка-платежей-cn_inv_pm_upl--лаунчер-file_f) · резюме [chat-resume-26-0819](../chat-resume/chat-resume-26-0819-cn-inv-pmt-upl.md).
+
+**Решение владельца (2026-08-19):** visual analog экрана C без пресетов; лог на вкладке; нижние вкладки ход / повторы СФ / стройки новые; список = все `cn_inv_pm_upl`; вкладка «выгрузки платежей» на C = мост `g_p` (1 дбт → N pmt), не этот экран. Visual v1 в FEMSQ принят владельцем 2026-08-19. Следующий чат — лаунчер File (не воронка). Детали UI — в плане 26-0819, не здесь.
+
+Этот файл (0802) остаётся картой домена; детали UI pmt сюда не копировать.
+
 

@@ -3,12 +3,12 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2026-08-18T17:40:00+03:00",
+      "lastUpdated": "2026-08-19T21:55:00+03:00",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0072",
+      "nextTaskId": "0073",
       "items": {
         "0064": {
           "task": {
@@ -2621,6 +2621,45 @@
               "description": "S64–S65 стороны ✅. T7 дерево СФ вкладки — та же обёртка walker после T4b (Решение 009), JSON contracts-inv. Вкладка «Общее» не переписывается."
             }
           }
+        },
+        "0072": {
+          "task": {
+            "displayName": "СУДЗ: экран загрузки платежей (visual v1) (completed, high). № 0072",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "TopBar СУДЗ → Загрузка платежей (экран D, sudz-pmt-upl)",
+                "Список всех cn_inv_pm_upl (дата, имя, ключ); выбор строки",
+                "Вкладка «загрузка»: путь, cipufSheet, флаги flLoad/flTbl, кнопка «загрузка» stub, 13 чекбоксов cipu* без пресетов",
+                "Нижние вкладки: ход загрузки (пустое поле лога), повторяющиеся СФ (каркас), стройки новые (каркас); «счета, сумма» disabled",
+                "Экран C: вкладка «выгрузки платежей» (g_p) не удалена и не подменена этим экраном",
+                "Домен и Excel не пишутся"
+              ],
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.web",
+                  "module:frontend"
+                ],
+                "journalRefs": [
+                  "chat:chat-2026-08-19-001"
+                ],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md",
+                "chatResume": "docs/development/notes/chats/chat-resume/chat-resume-26-0819-cn-inv-pmt-upl.md",
+                "domainPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+                "uiNote": "docs/development/notes/UI/02-9_sudz-mvp-screens.md",
+                "accessNote": "docs/development/notes/UI/02-11_cn-inv-pmt-upl-access.md",
+                "frontendView": "code/femsq-frontend-q/src/views/sudz/SudzPmtUplView.vue",
+                "frontendStore": "code/femsq-frontend-q/src/stores/sudz-pmt-upl.ts",
+                "dependsOnTasks": []
+              },
+              "created": "2026-08-19",
+              "lastUpdated": "2026-08-19",
+              "description": "Процесс 1.1.1.2. Visual analog SudzDbtUplView без воронки. Не 0069. Паспорт Access S69 закрыт. Список: sudzPmUplLookups. Visual v1 принят владельцем 2026-08-19."
+            }
+          }
         }
       }
     },
@@ -3431,6 +3470,18 @@
                           "taskId": "0071",
                           "positionInParent": 7,
                           "comment": "S62; T7 дерево СФ после T4b; эталон UI/assets/26-0815-cnNum"
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "✅ Загрузка платежей → экран D visual v1 (completed, high). № 02.03.08 → 0072",
+                        "item-attributes": {
+                          "structureId": "02.03.08",
+                          "taskId": "0072",
+                          "positionInParent": 8,
+                          "comment": "1.1.1.2; не 0069; chat-plan-26-0819; паспорт 02-11"
                         },
                         "task-items": []
                       }

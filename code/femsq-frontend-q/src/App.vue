@@ -27,6 +27,7 @@
     <SudzPortfolioView v-else-if="connection.activeView === 'sudz-portfolio'" />
     <SudzDebtsView v-else-if="connection.activeView === 'sudz-debts'" />
     <SudzDbtUplView v-else-if="connection.activeView === 'sudz-dbt-upl'" />
+    <SudzPmtUplView v-else-if="connection.activeView === 'sudz-pmt-upl'" />
     <SudzSfDoubleView v-else-if="connection.activeView === 'sudz-sf-double'" />
     <ContractsView v-else-if="connection.activeView === 'contracts'" />
     <TestGridView v-else-if="connection.activeView === 'test-grid'" />
@@ -81,7 +82,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, onMounted, watch } from 'vue';
+import { ref, nextTick, onMounted, watch, defineAsyncComponent } from 'vue';
 import { useQuasar, QPage, QList, QItem, QItemSection, QIcon } from 'quasar';
 
 import AppLayout from '@/components/layout/AppLayout.vue';
@@ -92,8 +93,7 @@ import ConstructionSitesByCodeView from '@/views/construction-sites/Construction
 import SudzPortfolioView from '@/views/sudz/SudzPortfolioView.vue';
 import SudzDebtsView from '@/views/sudz/SudzDebtsView.vue';
 import SudzDbtUplView from '@/views/sudz/SudzDbtUplView.vue';
-import SudzSfDoubleView from '@/views/sudz/SudzSfDoubleView.vue';
-import ContractsView from '@/views/contracts/ContractsView.vue';
+import SudzPmtUplView from '@/views/sudz/SudzPmtUplView.vue';
 import InvestmentChainsView from '@/views/investment-chains/InvestmentChainsView.vue';
 import ReportsCatalog from '@/modules/reports/views/ReportsCatalog.vue';
 import AuditsView from '@/views/audits/AuditsView.vue';
@@ -109,6 +109,10 @@ import {
   testConnection,
   type ApiError
 } from '@/api/connection-api';
+
+/** Отложенно: тянут FemsqTree из feQuLib, которого в текущем checkout нет. */
+const SudzSfDoubleView = defineAsyncComponent(() => import('@/views/sudz/SudzSfDoubleView.vue'));
+const ContractsView = defineAsyncComponent(() => import('@/views/contracts/ContractsView.vue'));
 
 const connection = useConnectionStore();
 const themeStore = useThemeStore();
