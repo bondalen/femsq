@@ -13,6 +13,7 @@ export type RelationPickerCandidateRow = RelationPickerRow & {
   cnNum?: string | null;
   invKey?: number | null;
   invNum?: string | null;
+  label?: string | null;
 };
 
 export interface BuildCnInvLinkFormOptions {
@@ -31,6 +32,9 @@ export interface BuildCnInvLinkFormOptions {
 export function buildCnInvLinkForm(options: BuildCnInvLinkFormOptions): RelationFormState {
   const { context, domain, cnCandidates, selectedCnCandidate, cnPickerSpec, invPickerSpec, pickerColumns } =
     options;
+  const relationTypeColumns: FemsqTableColumn<RelationPickerCandidateRow>[] = [
+    { name: 'label', label: 'Тип связи', field: 'label', align: 'left' }
+  ];
   const currentInvRow: RelationPickerCandidateRow = {
     rowKey: String(domain.invKey),
     invKey: domain.invKey,
@@ -70,7 +74,7 @@ export function buildCnInvLinkForm(options: BuildCnInvLinkFormOptions): Relation
         label: 'Тип связи',
         kind: 'enum-fk',
         value: null,
-        displayValue: 'v1: справочник ещё не подключён'
+        displayValue: 'Пока не требуется для ags.cnInv'
       }
     ],
     pickers: [
@@ -98,6 +102,17 @@ export function buildCnInvLinkForm(options: BuildCnInvLinkFormOptions): Relation
         selected: [currentInvRow],
         treeSpec: invPickerSpec,
         treeRootId: context.node.fromId
+      },
+      {
+        id: 'relationType',
+        kind: 'lookup-list',
+        tabLabel: 'Тип связи',
+        valueField: 'rowKey',
+        displayField: 'label',
+        disabled: true,
+        rows: [{ rowKey: 'not-used', label: 'Для ags.cnInv отдельный тип связи пока не нужен' }],
+        columns: relationTypeColumns,
+        selected: []
       }
     ]
   };

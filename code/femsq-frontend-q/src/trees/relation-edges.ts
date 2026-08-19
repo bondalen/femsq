@@ -18,6 +18,7 @@ export const RELATION_EDGES: Record<string, RelationEdgeMeta> = {
   'invNum.inv': { from: 'invNum', to: 'inv', card: 'N:1' },
   'inv.cnInv': { from: 'inv', to: 'cnInv', card: '1:N' },
   'cnInv.cn': { from: 'cnInv', to: 'cn', card: 'N:1' },
+  'cn.cnInv': { from: 'cn', to: 'cnInv', card: '1:N' },
   'cn.cnNum': { from: 'cn', to: 'cnNum', card: '1:N' },
   'cn.cn_s': { from: 'cn', to: 'cn_s', card: '1:N' },
   'cn_s.smpl': { from: 'cn_s', to: 'smpl', card: '1:N' },

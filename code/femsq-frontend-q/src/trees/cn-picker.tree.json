@@ -13,6 +13,33 @@
   "detail": "*",
   "children": [
     {
+      "edge": "cn.cnInv",
+      "to": "cnInv",
+      "card": "1:N",
+      "folder": "Договор, счета-фактуры",
+      "title": [
+        "ciKey",
+        "ciInv"
+      ],
+      "detail": "*",
+      "actions": [
+        {
+          "id": "cnInv.link.create",
+          "kind": "link-related",
+          "label": "Добавить связь с СФ",
+          "icon": "add_link",
+          "scope": "folder",
+          "modal": "record",
+          "form": "cnInv.link",
+          "visibleWhen": {
+            "nodeKind": "folder",
+            "edge": "cn.cnInv"
+          }
+        }
+      ],
+      "children": []
+    },
+    {
       "edge": "cn.cnNum",
       "to": "cnNum",
       "card": "1:N",

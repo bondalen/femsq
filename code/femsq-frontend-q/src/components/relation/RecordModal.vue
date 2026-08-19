@@ -41,8 +41,18 @@
             :name="picker.id"
             class="q-pa-none col column no-wrap"
           >
-            <div v-if="picker.kind === 'lookup-list'" class="q-pa-md text-grey-6">
-              Lookup-list skeleton.
+            <div v-if="picker.kind === 'lookup-list'" class="col column no-wrap">
+              <FemsqTable
+                class="fit"
+                :rows="picker.rows"
+                :columns="picker.columns"
+                row-key="rowKey"
+                dense
+                flat
+                selection="single"
+                :selected="picker.selected"
+                @update:selected="emitSelect(picker, $event)"
+              />
             </div>
             <QSplitter v-else v-model="pickerSplit" :limits="[25, 70]" horizontal class="col">
               <template #before>
