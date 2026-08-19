@@ -79,6 +79,7 @@
                 row-key="rowKey"
                 dense
                 flat
+                :show-filter="false"
                 selection="single"
                 :selected="picker.selected"
                 @update:selected="emitSelect(picker, $event)"
@@ -124,6 +125,7 @@
                     row-key="rowKey"
                     dense
                     flat
+                    :show-filter="false"
                     selection="single"
                     :selected="picker.selected"
                     @update:selected="emitSelect(picker, $event)"
@@ -155,7 +157,13 @@
 
       <QCardActions align="right">
         <QBtn flat no-caps label="Отмена" @click="close" />
-        <QBtn color="primary" unelevated no-caps label="OK" @click="emit('save')" />
+        <QBtn
+          color="primary"
+          unelevated
+          no-caps
+          :label="props.form.mode === 'edit' ? 'Сохранить' : 'OK'"
+          @click="emit('save')"
+        />
       </QCardActions>
     </QCard>
   </QDialog>

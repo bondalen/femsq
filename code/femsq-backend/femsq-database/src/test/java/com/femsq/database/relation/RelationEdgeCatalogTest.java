@@ -13,6 +13,8 @@ class RelationEdgeCatalogTest {
         assertEquals("inv", RelationEdgeCatalog.requireEdge("invNum.inv").to().name());
         assertEquals(RelationCard.ONE_TO_MANY, RelationEdgeCatalog.requireEdge("inv.cnInv").card());
         assertEquals("cn_key", RelationEdgeCatalog.requireEdge("cnInv.cn").to().pk());
+        assertEquals("ciInv", RelationEdgeCatalog.requireEdge("cnInv.inv").fromJoin());
+        assertEquals(RelationCard.MANY_TO_ONE, RelationEdgeCatalog.requireEdge("cnInv.inv").card());
         assertEquals(RelationCard.ONE_TO_MANY, RelationEdgeCatalog.requireEdge("cn.cnInv").card());
         assertEquals("upl", RelationEdgeCatalog.requireEdge("cid.upl").to().name());
         assertEquals("invDbt", RelationEdgeCatalog.requireEdge("inv.invDbt").to().name());

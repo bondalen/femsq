@@ -18,6 +18,7 @@ export type RelationPickerCandidateRow = RelationPickerRow & {
 
 export interface BuildCnInvLinkFormOptions {
   context: RelationTreeActionContext;
+  mode?: 'create' | 'edit';
   domain?: SudzSfDoubleDomainMatch | null;
   cnCandidates: RelationPickerCandidateRow[];
   invCandidates: RelationPickerCandidateRow[];
@@ -37,6 +38,7 @@ export interface BuildCnInvLinkFormOptions {
 export function buildCnInvLinkForm(options: BuildCnInvLinkFormOptions): RelationFormState {
   const {
     context,
+    mode = 'create',
     domain,
     cnCandidates,
     invCandidates,
@@ -53,10 +55,15 @@ export function buildCnInvLinkForm(options: BuildCnInvLinkFormOptions): Relation
     { name: 'label', label: 'Тип связи', field: 'label', align: 'left' }
   ];
   const edge = context.node.edge;
-  const invLocked = edge === 'inv.cnInv';
-  const cnLocked = edge === 'cn.cnInv';
+  const nodeTable = context.node.table;
+  const invLocked = edge === 'inv.cnInv' || (mode === 'edit' && nodeTable === 'cnInv' && context.root.table === 'invNum');
+  const cnLocked = edge === 'cn.cnInv' || (mode === 'edit' && nodeTable === 'cnInv' && context.root.table === 'cn');
+  const currentInvKey = Number(context.node.fields.ciInv ?? domain?.invKey ?? null);
+  const currentCnKey = Number(context.node.fields.ciCn ?? domain?.cnKey ?? null);
   const currentInvRow =
-    selectedInvCandidate ??
+    (mode === 'edit' && currentInvKey > 0 && selectedInvCandidate?.invKey !== currentInvKey
+      ? null
+      : selectedInvCandidate) ??
     (domain
       ? {
           rowKey: String(domain.invKey),
@@ -66,11 +73,35 @@ export function buildCnInvLinkForm(options: BuildCnInvLinkFormOptions): Relation
           cnNum: domain.cnNum
         }
       : null);
-  const currentCnRow = selectedCnCandidate;
+  const currentCnRow =
+    selectedCnCandidate ??
+    (currentCnKey > 0
+      ? {
+          rowKey: String(currentCnKey),
+          cnKey: currentCnKey,
+          cnNum: null,
+          invKey: null,
+          invNum: null
+        }
+      : null);
+  const fallbackInvRow =
+    currentInvKey > 0
+      ? {
+          rowKey: String(currentInvKey),
+          invKey: currentInvKey,
+          invNum: null,
+          cnKey: currentCnKey > 0 ? currentCnKey : null,
+          cnNum: currentCnRow?.cnNum ?? null
+        }
+      : null;
+  const effectiveInvRow = currentInvRow ?? fallbackInvRow;
+  const fixedInvId = context.node.fromId ?? (currentInvKey > 0 ? currentInvKey : null);
+  const fixedCnId = context.node.fromId ?? (currentCnKey > 0 ? currentCnKey : null);
+  const title = mode === 'edit' ? 'Редактировать связь СФ с договором' : 'Связать СФ с договором';
   return {
     id: 'cnInv.link',
-    title: 'Связать СФ с договором',
-    mode: 'create',
+    title,
+    mode,
     fields: [
       {
         name: 'invId',
@@ -78,12 +109,14 @@ export function buildCnInvLinkForm(options: BuildCnInvLinkFormOptions): Relation
         kind: 'readonly-fixed',
         locked: invLocked,
         required: true,
-        value: invLocked ? context.node.fromId : currentInvRow?.invKey ?? null,
+        value: invLocked ? fixedInvId : effectiveInvRow?.invKey ?? null,
         displayValue:
           invLocked && domain?.invNum
             ? `${domain.invNum} [inv=${context.node.fromId ?? '—'}]`
-            : currentInvRow?.invNum != null
-              ? `${currentInvRow.invNum} [inv=${currentInvRow.invKey ?? '—'}]`
+            : effectiveInvRow?.invNum != null
+              ? `${effectiveInvRow.invNum} [inv=${effectiveInvRow.invKey ?? '—'}]`
+              : effectiveInvRow?.invKey != null
+                ? `[inv=${effectiveInvRow.invKey}]`
               : null
       },
       {
@@ -92,12 +125,14 @@ export function buildCnInvLinkForm(options: BuildCnInvLinkFormOptions): Relation
         kind: 'fk-single',
         required: true,
         locked: cnLocked,
-        value: cnLocked ? context.node.fromId : currentCnRow?.cnKey ?? null,
+        value: cnLocked ? fixedCnId : currentCnRow?.cnKey ?? null,
         displayValue:
           cnLocked && currentCnRow?.cnNum != null
             ? `${currentCnRow.cnNum} [cn=${context.node.fromId ?? '—'}]`
             : currentCnRow?.cnNum != null
               ? `${currentCnRow.cnNum} [cn=${currentCnRow.cnKey ?? '—'}]`
+              : currentCnRow?.cnKey != null
+                ? `[cn=${currentCnRow.cnKey}]`
             : null
       },
       {
@@ -135,11 +170,11 @@ export function buildCnInvLinkForm(options: BuildCnInvLinkFormOptions): Relation
         searchDebounceMs: invLocked ? undefined : 450,
         searchLoading: invLocked ? undefined : invSearchLoading ?? false,
         searchStatus: invLocked ? undefined : invSearchStatus,
-        rows: invLocked && currentInvRow ? [currentInvRow] : invCandidates,
+        rows: invLocked && effectiveInvRow ? [effectiveInvRow] : invCandidates,
         columns: pickerColumns,
-        selected: currentInvRow ? [currentInvRow] : [],
+        selected: effectiveInvRow ? [effectiveInvRow] : [],
         treeSpec: invPickerSpec,
-        treeRootId: invLocked ? context.node.fromId : currentInvRow?.invKey ?? null
+        treeRootId: invLocked ? fixedInvId : effectiveInvRow?.invKey ?? null
       },
       {
         id: 'relationType',

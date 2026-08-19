@@ -148,4 +148,32 @@ describe('relation-tree walker', () => {
     expect(context.node.edge).toBe('inv.cnInv');
     expect(context.node.fromId).toBe(85069);
   });
+
+  it('scope=folder показывает action только на папке, не на записях', () => {
+    const folder = buildFolderNode('cn:123', 123, {
+      edge: 'cn.cnInv',
+      to: 'cnInv',
+      card: '1:N',
+      folder: 'Договор, счета-фактуры',
+      title: ['ciKey'],
+      detail: '*',
+      actions: [
+        {
+          id: 'cnInv.link.create',
+          kind: 'link-related',
+          label: 'Добавить связь с СФ',
+          scope: 'folder'
+        }
+      ],
+      children: []
+    });
+
+    const kids = childrenAfterFolderLoad(folder, [{ key: 10, fields: { ciKey: '10' } }]);
+    expect(folder.kind).toBe('folder');
+    expect(folder.actions).toHaveLength(1);
+    expect(kids).toHaveLength(1);
+    // На записях action должен быть скрыт (scope=folder).
+    expect(kids[0].kind).toBe('record');
+    expect(kids[0].actions).toEqual([]);
+  });
 });

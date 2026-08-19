@@ -273,7 +273,7 @@ import {
 } from 'quasar';
 import { FemsqTable, type FemsqTableColumn } from 'fequlib';
 
-import { createCnInv } from '@/api/contracts-api';
+import { createCnInv, deleteCnInv, updateCnInv } from '@/api/contracts-api';
 import { fetchRelationExpand, fetchRelationNode } from '@/api/relation-api';
 import RecordModal from '@/components/relation/RecordModal.vue';
 import RelationTree from '@/components/relation/RelationTree.vue';
@@ -302,6 +302,9 @@ const orgIdFilter = ref('');
 const relationTreeKey = ref(0);
 const relationAction = ref<RelationTreeActionContext | null>(null);
 const linkModalOpen = ref(false);
+const cnInvFormMode = computed<'create' | 'edit'>(() =>
+  relationAction.value?.actionId === 'cnInv.link.edit' ? 'edit' : 'create'
+);
 
 const createDialog = reactive({
   open: false,
@@ -426,6 +429,7 @@ const linkForm = computed<RelationFormState | null>(() => {
   }
   return buildCnInvLinkForm({
     context: action,
+    mode: cnInvFormMode.value,
     domain: null,
     cnCandidates: [cnCandidate],
     invCandidates: store.cnInvLookupRows as RelationPickerCandidateRow[],
@@ -452,11 +456,19 @@ function onNestedCnNumClick(_evt: Event, row: CnNumDto): void {
  * Contract-side action открывает тот же flow `cnInv.link`.
  */
 function onRelationAction(context: RelationTreeActionContext): void {
-  if (context.actionId !== 'cnInv.link.create' || context.node.edge !== 'cn.cnInv') {
+  if (context.actionId === 'cnInv.link.create' && context.node.edge === 'cn.cnInv') {
+    relationAction.value = context;
+    linkModalOpen.value = true;
     return;
   }
-  relationAction.value = context;
-  linkModalOpen.value = true;
+  if (context.actionId === 'cnInv.link.edit' && context.node.table === 'cnInv') {
+    relationAction.value = context;
+    linkModalOpen.value = true;
+    return;
+  }
+  if (context.actionId === 'cnInv.link.delete' && context.node.table === 'cnInv') {
+    void onDeleteCnInv(context);
+  }
 }
 
 function onPickerSelect(pickerId: string, rowKey: string | null): void {
@@ -481,22 +493,68 @@ async function onPickerSearch(pickerId: string, value: string): Promise<void> {
 }
 
 async function onLinkSave(): Promise<void> {
+  const mode = cnInvFormMode.value;
   const cnKey = selectedCnCandidate.value?.cnKey;
-  const invKey = store.selectedCnInvLookup?.invKey;
+  const currentInvFromAction = Number(relationAction.value?.node.fields.ciInv ?? null);
+  const invKey =
+    store.selectedCnInvLookup?.invKey ?? (currentInvFromAction > 0 ? currentInvFromAction : null);
   if (cnKey == null || invKey == null) {
     $q.notify({ type: 'warning', message: 'Выберите СФ для привязки к договору.' });
     return;
   }
   try {
-    await createCnInv({ ciInv: invKey, ciCn: cnKey });
+    const ciKey = relationAction.value?.node.rowKey;
+    if (mode === 'edit') {
+      if (ciKey == null) {
+        throw new Error('Не найден ciKey для правки cnInv.');
+      }
+      await updateCnInv(ciKey, { ciInv: invKey, ciCn: cnKey });
+    } else {
+      await createCnInv({ ciInv: invKey, ciCn: cnKey });
+    }
     linkModalOpen.value = false;
     relationAction.value = null;
     relationTreeKey.value += 1;
-    $q.notify({ type: 'positive', message: 'Связь cnInv сохранена' });
+    $q.notify({
+      type: 'positive',
+      message: mode === 'edit' ? 'Связь cnInv обновлена' : 'Связь cnInv сохранена'
+    });
   } catch (error) {
     $q.notify({
       type: 'negative',
       message: error instanceof Error ? error.message : 'Не удалось сохранить cnInv'
+    });
+  }
+}
+
+async function onDeleteCnInv(context: RelationTreeActionContext): Promise<void> {
+  const ciKey = context.node.rowKey;
+  if (ciKey == null) {
+    $q.notify({ type: 'warning', message: 'Не найден ciKey для удаления cnInv.' });
+    return;
+  }
+  const confirmed = await new Promise<boolean>((resolve) => {
+    $q.dialog({
+      title: 'Удалить связь с СФ',
+      message: `Удалить запись cnInv ciKey=${ciKey}?`,
+      cancel: true,
+      persistent: true
+    })
+      .onOk(() => resolve(true))
+      .onCancel(() => resolve(false))
+      .onDismiss(() => resolve(false));
+  });
+  if (!confirmed) {
+    return;
+  }
+  try {
+    await deleteCnInv(ciKey);
+    relationTreeKey.value += 1;
+    $q.notify({ type: 'positive', message: 'Связь cnInv удалена' });
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: error instanceof Error ? error.message : 'Не удалось удалить cnInv'
     });
   }
 }

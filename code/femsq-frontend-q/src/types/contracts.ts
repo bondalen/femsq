@@ -128,6 +128,11 @@ export interface CnInvCreateRequest {
   ciCn: number;
 }
 
+export interface CnInvUpdateRequest {
+  ciInv: number;
+  ciCn: number;
+}
+
 export interface CnContractCreatedDto {
   cnKey: number;
   cnnKey: number;

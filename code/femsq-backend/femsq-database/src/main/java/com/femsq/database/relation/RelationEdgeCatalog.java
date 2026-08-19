@@ -232,6 +232,10 @@ public final class RelationEdgeCatalog {
                 new RelationEdge("cnInv.cn", CN_INV, CN, "ciCn", null, RelationCard.MANY_TO_ONE)
         );
         edges.put(
+                "cnInv.inv",
+                new RelationEdge("cnInv.inv", CN_INV, INV, "ciInv", null, RelationCard.MANY_TO_ONE)
+        );
+        edges.put(
                 "cn.cnInv",
                 new RelationEdge("cn.cnInv", CN, CN_INV, null, "ciCn", RelationCard.ONE_TO_MANY)
         );

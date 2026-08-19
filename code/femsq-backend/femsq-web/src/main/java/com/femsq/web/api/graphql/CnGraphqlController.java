@@ -19,6 +19,7 @@ import com.femsq.web.api.dto.CnContractCreatedDto;
 import com.femsq.web.api.dto.CnDto;
 import com.femsq.web.api.dto.CnInvCreateRequest;
 import com.femsq.web.api.dto.CnInvDto;
+import com.femsq.web.api.dto.CnInvUpdateRequest;
 import com.femsq.web.api.dto.CnNumDto;
 import com.femsq.web.api.dto.CnNumTypeLookupDto;
 import com.femsq.web.api.dto.CnUpdateRequest;
@@ -174,6 +175,18 @@ public class CnGraphqlController {
     public CnInvDto createCnInv(@Argument("input") CnInvCreateRequest input) {
         log.info("GraphQL mutation createCnInv");
         return mutate(() -> toCnInvDto(cnInvService.create(input.ciInv(), input.ciCn())));
+    }
+
+    @MutationMapping
+    public CnInvDto updateCnInv(@Argument("id") int id, @Argument("input") CnInvUpdateRequest input) {
+        log.info(() -> "GraphQL mutation updateCnInv id=" + id);
+        return mutate(() -> toCnInvDto(cnInvService.update(id, input.ciInv(), input.ciCn())));
+    }
+
+    @MutationMapping
+    public boolean deleteCnInv(@Argument("id") int id) {
+        log.info(() -> "GraphQL mutation deleteCnInv id=" + id);
+        return mutate(() -> cnInvService.delete(id));
     }
 
     @MutationMapping

@@ -112,6 +112,7 @@
                         </div>
                         <RelationTree
                           v-else
+                          :key="relationTreeKey"
                           class="col"
                           :spec="relationSpec"
                           :root-id="selectedDomain[0].invNumKey"
@@ -150,9 +151,10 @@
 /**
  * Экран КСДСФ: разбор СФ с совпадающими номерами (S68).
  */
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 import { FemsqTable, type FemsqTableColumn } from 'fequlib';
+import { deleteCnInv, fetchCnNums, updateCnInv } from '@/api/contracts-api';
 import RecordModal from '@/components/relation/RecordModal.vue';
 import RelationTree from '@/components/relation/RelationTree.vue';
 import {
@@ -184,7 +186,8 @@ import {
   QTab,
   QTabPanel,
   QTabPanels,
-  QTabs
+  QTabs,
+  useQuasar
 } from 'quasar';
 
 type DomainRow = SudzSfDoubleDomainMatch & { rowKey: string };
@@ -202,6 +205,7 @@ const contractsInvSpec = contractsInvSpecJson as RelationTreeSpec;
 
 const connection = useConnectionStore();
 const store = useSudzDbtUplStore();
+const $q = useQuasar();
 
 const queueSplit = ref(22);
 const ksdsfSplit = ref(34);
@@ -219,6 +223,13 @@ const selectedDomain = ref<DomainRow[]>([]);
 const relationAction = ref<RelationTreeActionContext | null>(null);
 const linkModalOpen = ref(false);
 const selectedCnCandidate = ref<PickerCandidateRow | null>(null);
+const relationTreeKey = ref(0);
+const cnInvFormMode = computed<'create' | 'edit'>(() =>
+  relationAction.value?.actionId === 'cnInv.link.edit' ? 'edit' : 'create'
+);
+
+const cnAllRows = ref<PickerCandidateRow[]>([]);
+const cnAllLoading = ref(false);
 
 const uplKey = computed(() => store.selectedUplKey);
 const rows = computed(() => store.sfDoubles);
@@ -271,6 +282,10 @@ const excelRows = computed(() => {
 });
 
 const cnPickerRows = computed<PickerCandidateRow[]>(() => {
+  return cnAllRows.value.length > 0 ? cnAllRows.value : cnPickerRowsFromDomainMatches.value;
+});
+
+const cnPickerRowsFromDomainMatches = computed<PickerCandidateRow[]>(() => {
   const map = new Map<string, PickerCandidateRow>();
   for (const row of domainMatches.value) {
     if (row.cnKey == null) continue;
@@ -288,6 +303,34 @@ const cnPickerRows = computed<PickerCandidateRow[]>(() => {
   return Array.from(map.values());
 });
 
+onMounted(async () => {
+  if (cnAllRows.value.length > 0 || cnAllLoading.value) {
+    return;
+  }
+  cnAllLoading.value = true;
+  try {
+    const cnNums = await fetchCnNums();
+    const map = new Map<number, PickerCandidateRow>();
+    for (const row of cnNums) {
+      const cnKey = row.cnnCn;
+      if (map.has(cnKey)) continue;
+      map.set(cnKey, {
+        rowKey: String(cnKey),
+        cnKey,
+        cnNum: row.cnnNum,
+        invKey: null,
+        invNum: null
+      });
+    }
+    cnAllRows.value = Array.from(map.values());
+  } catch (e) {
+    // Если полный список договоров не загрузился — откатываемся к domainMatches как "best effort".
+    error.value = e instanceof Error ? e.message : String(e);
+  } finally {
+    cnAllLoading.value = false;
+  }
+});
+
 const linkForm = computed<RelationFormState | null>(() => {
   const action = relationAction.value;
   const domain = selectedDomainRow.value;
@@ -296,6 +339,7 @@ const linkForm = computed<RelationFormState | null>(() => {
   }
   return buildCnInvLinkForm({
     context: action,
+    mode: cnInvFormMode.value,
     domain,
     cnCandidates: cnPickerRows.value,
     invCandidates: domain ? [domain] : [],
@@ -345,6 +389,23 @@ function goBack(): void {
   connection.navigate('sudz-dbt-upl');
 }
 
+function cnCandidateFromContext(context: RelationTreeActionContext): PickerCandidateRow | null {
+  const cnKeyRaw = Number(context.node.fields.ciCn ?? null);
+  if (!Number.isFinite(cnKeyRaw) || cnKeyRaw <= 0) {
+    return null;
+  }
+  const cnKey = cnKeyRaw;
+  return (
+    cnPickerRows.value.find((row) => row.cnKey === cnKey) ?? {
+      rowKey: String(cnKey),
+      cnKey,
+      cnNum: null,
+      invKey: null,
+      invNum: null
+    }
+  );
+}
+
 /**
  * Создаёт новый СФ по выбранной строке очереди.
  */
@@ -373,13 +434,27 @@ async function onCreate(): Promise<void> {
  * @param context действие с контекстом узла
  */
 function onRelationAction(context: RelationTreeActionContext): void {
-  if (context.actionId !== 'cnInv.link.create') {
-    error.value = `Действие ${context.actionId} ещё не реализовано на экране КСДСФ.`;
+  if (context.actionId === 'cnInv.link.create') {
+    relationAction.value = context;
+    const preferredCnKey = selectedDomainRow.value?.cnKey ?? null;
+    selectedCnCandidate.value =
+      (preferredCnKey != null ? cnPickerRows.value.find((r) => r.cnKey === preferredCnKey) : null) ??
+      cnPickerRows.value[0] ??
+      null;
+    linkModalOpen.value = true;
     return;
   }
-  relationAction.value = context;
-  selectedCnCandidate.value = cnPickerRows.value[0] ?? null;
-  linkModalOpen.value = true;
+  if (context.actionId === 'cnInv.link.edit' && context.node.table === 'cnInv') {
+    relationAction.value = context;
+    selectedCnCandidate.value = cnCandidateFromContext(context);
+    linkModalOpen.value = true;
+    return;
+  }
+  if (context.actionId === 'cnInv.link.delete' && context.node.table === 'cnInv') {
+    void onDeleteCnInv(context);
+    return;
+  }
+  error.value = `Действие ${context.actionId} ещё не реализовано на экране КСДСФ.`;
 }
 
 /**
@@ -392,7 +467,17 @@ function onPickerSelect(pickerId: string, rowKey: string | null): void {
   if (pickerId !== 'cn') {
     return;
   }
-  selectedCnCandidate.value = cnPickerRows.value.find((row) => row.rowKey === rowKey) ?? null;
+  selectedCnCandidate.value =
+    cnPickerRows.value.find((row) => row.rowKey === rowKey) ??
+    (rowKey != null
+      ? {
+          rowKey,
+          cnKey: Number(rowKey) || null,
+          cnNum: null,
+          invKey: null,
+          invNum: null
+        }
+      : null);
 }
 
 /**
@@ -403,8 +488,11 @@ async function onLinkSave(): Promise<void> {
     error.value = 'Выберите договор для новой связи cnInv.';
     return;
   }
+  const mode = cnInvFormMode.value;
   const ciusKey = selected.value?.ciusKey;
-  const invKey = relationAction.value?.node.fromId;
+  const currentInvFromAction = Number(relationAction.value?.node.fields.ciInv ?? null);
+  const invKey =
+    relationAction.value?.node.fromId ?? (currentInvFromAction > 0 ? currentInvFromAction : null);
   const cnKey = selectedCnCandidate.value.cnKey;
   if (ciusKey == null || invKey == null || cnKey == null) {
     error.value = 'Недостаточно данных для создания связи cnInv.';
@@ -413,6 +501,18 @@ async function onLinkSave(): Promise<void> {
   domainLoading.value = true;
   error.value = null;
   try {
+    if (mode === 'edit') {
+      const ciKey = relationAction.value?.node.rowKey;
+      if (ciKey == null) {
+        throw new Error('Не найден ciKey для правки cnInv.');
+      }
+      await updateCnInv(ciKey, { ciInv: invKey, ciCn: cnKey });
+      relationTreeKey.value += 1;
+      linkModalOpen.value = false;
+      relationAction.value = null;
+      error.value = null;
+      return;
+    }
     const updated = await linkSudzSfDoubleToCn({ ciusKey, invKey, cnKey });
     if (store.selectedUplKey != null) {
       await store.selectUpl(store.selectedUplKey);
@@ -425,6 +525,35 @@ async function onLinkSave(): Promise<void> {
     error.value = e instanceof Error ? e.message : String(e);
   } finally {
     domainLoading.value = false;
+  }
+}
+
+async function onDeleteCnInv(context: RelationTreeActionContext): Promise<void> {
+  const ciKey = context.node.rowKey;
+  if (ciKey == null) {
+    error.value = 'Не найден ciKey для удаления cnInv.';
+    return;
+  }
+  const confirmed = await new Promise<boolean>((resolve) => {
+    $q.dialog({
+      title: 'Удалить связь с договором',
+      message: `Удалить запись cnInv ciKey=${ciKey}?`,
+      cancel: true,
+      persistent: true
+    })
+      .onOk(() => resolve(true))
+      .onCancel(() => resolve(false))
+      .onDismiss(() => resolve(false));
+  });
+  if (!confirmed) {
+    return;
+  }
+  try {
+    await deleteCnInv(ciKey);
+    relationTreeKey.value += 1;
+    error.value = null;
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : String(e);
   }
 }
 </script>

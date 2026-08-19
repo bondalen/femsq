@@ -28,6 +28,22 @@ export interface RelationTreeActionSpec {
   };
 }
 
+/**
+ * Фильтрует действия по scope относительно типа узла.
+ * По умолчанию (scope не задан) — действие показывается и на записи, и на папке.
+ */
+function filterActionsByScope(
+  actions: RelationTreeActionSpec[] | undefined,
+  nodeKind: 'record' | 'folder'
+): RelationTreeActionSpec[] | undefined {
+  if (!actions?.length) return actions;
+  return actions.filter((action) => {
+    if (!action.scope) return true;
+    if (action.scope === 'both') return true;
+    return action.scope === nodeKind;
+  });
+}
+
 /** Спека узла-ребёнка. */
 export interface RelationTreeChildSpec {
   edge: string;
@@ -223,7 +239,7 @@ export function buildRecordNode(
     kind: 'record',
     title: formatRelationTitle(spec.title, fields),
     fields: formatRelationDetail(spec.detail, fields),
-    actions: spec.actions,
+    actions: filterActionsByScope(spec.actions, 'record'),
     table,
     rowKey,
     childSpecs: spec.children,
@@ -249,7 +265,7 @@ export function buildFolderNode(
     kind: 'folder',
     title: spec.folder || spec.edge,
     fields: [],
-    actions: spec.actions,
+    actions: filterActionsByScope(spec.actions, 'folder'),
     edge: spec.edge,
     fromId,
     folderSpec: spec,

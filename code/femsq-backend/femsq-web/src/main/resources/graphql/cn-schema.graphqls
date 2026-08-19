@@ -22,6 +22,10 @@ extend type Mutation {
   updateCn(id: Int!, input: CnUpdateRequest!): Cn!
   """Создать связь существующих договора и СФ в ags.cnInv."""
   createCnInv(input: CnInvCreateRequest!): CnInv!
+  """Перепривязать существующую связь cnInv, сохранив запись таблицы ags.cnInv."""
+  updateCnInv(id: Int!, input: CnInvUpdateRequest!): CnInv!
+  """Удалить запись связи ags.cnInv по ciKey."""
+  deleteCnInv(id: Int!): Boolean!
 
   createCnSide(input: CnSideCreateRequest!): CnSide!
   updateCnSide(id: Int!, input: CnSideUpdateRequest!): CnSide!
@@ -126,6 +130,11 @@ input CnUpdateRequest {
 }
 
 input CnInvCreateRequest {
+  ciInv: Int!
+  ciCn: Int!
+}
+
+input CnInvUpdateRequest {
   ciInv: Int!
   ciCn: Int!
 }

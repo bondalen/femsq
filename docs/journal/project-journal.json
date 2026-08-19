@@ -591,6 +591,84 @@
                   }
                 ]
               }
+            },
+            {
+              "log": {
+                "displayName": "S68t T6b: action scope + показ iNum в дереве (success). № log-2026-08-19-004",
+                "log-attributes": {
+                  "id": "log-2026-08-19-004",
+                  "timestamp": "2026-08-19T14:55:30+03:00",
+                  "level": "success",
+                  "effort": "0.25h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend"
+                    ],
+                    "developmentTasks": [
+                      "0071"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Ограничили actions scope на RelationTree + добавили ребро cnInv.inv",
+                    "details": "В walker `relation-tree.ts` действия теперь фильтруются по `action.scope` (folder/record), чтобы кнопка связи СФ показывалась только на узле «Договор, счета-фактуры». В `cn-picker.tree.json` добавлен уровень `cnInv -> inv` с отображением `inv.iNum`, чтобы было видно, какой именно СФ привязан. В backend/whitelist добавлено ребро `cnInv.inv` (RelationEdgeCatalog) и обновлён frontend whitelist (relation-edges.ts).",
+                    "outcome": "UI больше не провоцирует создание связи с неверным cn из-за неправильного контекста и позволяет визуально подтвердить привязанный СФ по номеру.",
+                    "references": [
+                      "code/femsq-frontend-q/src/trees/relation-tree.ts",
+                      "code/femsq-frontend-q/tests/unit/relation-tree.spec.ts",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/relation/RelationEdgeCatalog.java",
+                      "code/femsq-backend/femsq-database/src/test/java/com/femsq/database/relation/RelationEdgeCatalogTest.java",
+                      "code/femsq-frontend-q/src/trees/relation-edges.ts",
+                      "code/femsq-frontend-q/src/trees/cn-picker.tree.json"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S68t T6b: cnInv edit/delete на record-узле (success). № log-2026-08-19-005",
+                "log-attributes": {
+                  "id": "log-2026-08-19-005",
+                  "timestamp": "2026-08-19T15:25:30+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend"
+                    ],
+                    "developmentTasks": [
+                      "0069",
+                      "0071"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Добавлены стандартные действия таблицы cnInv: create на folder, edit/delete на record",
+                    "details": "Backend: CnInvService расширен операциями update/delete; в GraphQL Contracts добавлены `updateCnInv` и `deleteCnInv`, DTO `CnInvUpdateRequest`. Frontend: JSON-спеки `cn-picker` и `ksdsf-inv-num` получили actions `cnInv.link.edit` и `cnInv.link.delete` на record-узлах `cnInv`; `ContractsView` и `SudzSfDoubleView` обрабатывают edit/delete, а `RecordModal` переиспользуется для режима edit с блокировкой той стороны связи, из-под которой открыта модалка.",
+                    "outcome": "Стандарт по умолчанию для tree-модалок зафиксирован в коде: folder = Add, record = Edit/Delete для строки соответствующей таблицы БД.",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/service/CnInvService.java",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/service/DefaultCnInvService.java",
+                      "code/femsq-backend/femsq-web/src/main/resources/graphql/cn-schema.graphqls",
+                      "code/femsq-frontend-q/src/trees/cn-picker.tree.json",
+                      "code/femsq-frontend-q/src/trees/ksdsf-inv-num.tree.json",
+                      "code/femsq-frontend-q/src/views/contracts/ContractsView.vue",
+                      "code/femsq-frontend-q/src/views/sudz/SudzSfDoubleView.vue"
+                    ]
+                  }
+                ]
+              }
             }
           ]
         }

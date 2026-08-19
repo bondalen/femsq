@@ -40,6 +40,31 @@
                 "nodeKind": "folder",
                 "edge": "inv.cnInv"
               }
+            },
+            {
+              "id": "cnInv.link.edit",
+              "kind": "open-form",
+              "label": "Редактировать связь с договором",
+              "icon": "edit_link",
+              "scope": "record",
+              "modal": "record",
+              "form": "cnInv.link",
+              "visibleWhen": {
+                "nodeKind": "record",
+                "table": "cnInv"
+              }
+            },
+            {
+              "id": "cnInv.link.delete",
+              "kind": "delete-record",
+              "label": "Удалить связь с договором",
+              "icon": "link_off",
+              "scope": "record",
+              "modal": "none",
+              "visibleWhen": {
+                "nodeKind": "record",
+                "table": "cnInv"
+              }
             }
           ],
           "title": [

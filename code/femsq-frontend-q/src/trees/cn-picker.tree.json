@@ -35,9 +35,46 @@
             "nodeKind": "folder",
             "edge": "cn.cnInv"
           }
+        },
+        {
+          "id": "cnInv.link.edit",
+          "kind": "open-form",
+          "label": "Редактировать связь с СФ",
+          "icon": "edit_link",
+          "scope": "record",
+          "modal": "record",
+          "form": "cnInv.link",
+          "visibleWhen": {
+            "nodeKind": "record",
+            "table": "cnInv"
+          }
+        },
+        {
+          "id": "cnInv.link.delete",
+          "kind": "delete-record",
+          "label": "Удалить связь с СФ",
+          "icon": "link_off",
+          "scope": "record",
+          "modal": "none",
+          "visibleWhen": {
+            "nodeKind": "record",
+            "table": "cnInv"
+          }
         }
       ],
-      "children": []
+      "children": [
+        {
+          "edge": "cnInv.inv",
+          "to": "inv",
+          "card": "N:1",
+          "folder": "СФ, номер",
+          "title": [
+            "iNum"
+          ],
+          "detail": "*",
+          "children": []
+        }
+      ]
     },
     {
       "edge": "cn.cnNum",

@@ -37,12 +37,8 @@ public class DefaultCnInvService implements CnInvService {
 
     @Override
     public CnInv create(int invKey, int cnKey) {
-        if (invKey <= 0) {
-            throw new IllegalArgumentException("invKey должен быть положительным: " + invKey);
-        }
-        if (cnKey <= 0) {
-            throw new IllegalArgumentException("cnKey должен быть положительным: " + cnKey);
-        }
+        requirePositive("invKey", invKey);
+        requirePositive("cnKey", cnKey);
         String schema = schemaPrefix();
         try (Connection connection = connectionFactory.createConnection()) {
             connection.setAutoCommit(false);
@@ -88,6 +84,73 @@ public class DefaultCnInvService implements CnInvService {
         }
     }
 
+    @Override
+    public CnInv update(int ciKey, int invKey, int cnKey) {
+        requirePositive("ciKey", ciKey);
+        requirePositive("invKey", invKey);
+        requirePositive("cnKey", cnKey);
+        String schema = schemaPrefix();
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                CnInv current = findById(connection, schema, ciKey);
+                requireExists(connection, "SELECT 1 FROM " + schema + "inv WHERE iKey = ?", "СФ inv не найден: ", invKey);
+                requireExists(connection, "SELECT 1 FROM " + schema + "cn WHERE cn_key = ?", "Договор cn не найден: ", cnKey);
+                if (current.ciInv() == invKey && current.ciCn() == cnKey) {
+                    connection.commit();
+                    return current;
+                }
+                CnInv duplicate = findByPair(connection, schema, invKey, cnKey);
+                if (duplicate != null && !Objects.equals(duplicate.ciKey(), ciKey)) {
+                    throw new IllegalArgumentException(
+                            "Связь cnInv уже существует: ciKey=" + duplicate.ciKey() + " (inv=" + invKey + ", cn=" + cnKey + ")");
+                }
+                try (PreparedStatement statement = connection.prepareStatement(
+                        "UPDATE " + schema + "cnInv SET ciInv = ?, ciCn = ? WHERE ciKey = ?")) {
+                    statement.setInt(1, invKey);
+                    statement.setInt(2, cnKey);
+                    statement.setInt(3, ciKey);
+                    int affected = statement.executeUpdate();
+                    if (affected == 0) {
+                        throw new DaoException("Не удалось обновить cnInv ciKey=" + ciKey);
+                    }
+                }
+                CnInv updated = findById(connection, schema, ciKey);
+                connection.commit();
+                log.log(Level.INFO, "CnInvService.update ciKey={0} invKey={1} cnKey={2}",
+                        new Object[]{ciKey, invKey, cnKey});
+                return updated;
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw new DaoException("Не удалось обновить cnInv ciKey=" + ciKey, exception);
+        }
+    }
+
+    @Override
+    public boolean delete(int ciKey) {
+        requirePositive("ciKey", ciKey);
+        String schema = schemaPrefix();
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(
+                     "DELETE FROM " + schema + "cnInv WHERE ciKey = ?")) {
+            statement.setInt(1, ciKey);
+            boolean deleted = statement.executeUpdate() > 0;
+            log.log(Level.INFO, "CnInvService.delete ciKey={0} deleted={1}", new Object[]{ciKey, deleted});
+            return deleted;
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw new DaoException("Не удалось удалить cnInv ciKey=" + ciKey, exception);
+        }
+    }
+
     private String schemaPrefix() {
         try {
             String schema = configurationService.loadConfig().schema();
@@ -109,6 +172,12 @@ public class DefaultCnInvService implements CnInvService {
                     throw new IllegalArgumentException(message + key);
                 }
             }
+        }
+    }
+
+    private static void requirePositive(String label, int key) {
+        if (key <= 0) {
+            throw new IllegalArgumentException(label + " должен быть положительным: " + key);
         }
     }
 

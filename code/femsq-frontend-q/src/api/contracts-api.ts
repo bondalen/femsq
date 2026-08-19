@@ -12,6 +12,7 @@ import type {
   CnDto,
   CnInvCreateRequest,
   CnInvDto,
+  CnInvUpdateRequest,
   CnNumDto,
   CnNumTypeLookupDto,
   CnSideCreateRequest,
@@ -152,6 +153,23 @@ const CREATE_CN_INV = gql`
   }
 `;
 
+const UPDATE_CN_INV = gql`
+  mutation UpdateCnInv($id: Int!, $input: CnInvUpdateRequest!) {
+    updateCnInv(id: $id, input: $input) {
+      ciKey
+      ciInv
+      ciCn
+      ciTimeOfEntry
+    }
+  }
+`;
+
+const DELETE_CN_INV = gql`
+  mutation DeleteCnInv($id: Int!) {
+    deleteCnInv(id: $id)
+  }
+`;
+
 const CREATE_CN_SIDE = gql`
   mutation CreateCnSide($input: CnSideCreateRequest!) {
     createCnSide(input: $input) {
@@ -261,7 +279,20 @@ function toRequestError(error: unknown, fallback: string): RequestError {
     return error;
   }
   const message = error instanceof Error ? error.message : fallback;
-  return new RequestError(message, 0);
+  return new RequestError(message, {
+    status: 0,
+    statusText: 'GraphQL',
+    url: '/graphql'
+  });
+}
+
+function emptyResponseError(operation: string): RequestError {
+  return new RequestError(`Пустой ответ ${operation}`, {
+    status: 0,
+    statusText: 'GraphQL',
+    url: '/graphql',
+    body: { operation }
+  });
 }
 
 /**
@@ -383,7 +414,7 @@ export async function createCnContract(input: CnContractCreateRequest): Promise<
       variables: { input }
     });
     if (!result.data?.createCnContract) {
-      throw new RequestError('Пустой ответ createCnContract', 0);
+      throw emptyResponseError('createCnContract');
     }
     return result.data.createCnContract;
   } catch (error) {
@@ -401,7 +432,7 @@ export async function updateCn(id: number, input: CnUpdateRequest): Promise<CnDt
       variables: { id, input }
     });
     if (!result.data?.updateCn) {
-      throw new RequestError('Пустой ответ updateCn', 0);
+      throw emptyResponseError('updateCn');
     }
     return result.data.updateCn;
   } catch (error) {
@@ -419,11 +450,44 @@ export async function createCnInv(input: CnInvCreateRequest): Promise<CnInvDto> 
       variables: { input }
     });
     if (!result.data?.createCnInv) {
-      throw new RequestError('Пустой ответ createCnInv', 0);
+      throw emptyResponseError('createCnInv');
     }
     return result.data.createCnInv;
   } catch (error) {
     throw toRequestError(error, 'Не удалось создать связь cnInv');
+  }
+}
+
+/**
+ * Обновляет связь договора и СФ по ciKey.
+ */
+export async function updateCnInv(id: number, input: CnInvUpdateRequest): Promise<CnInvDto> {
+  try {
+    const result = await apolloClient.mutate<{ updateCnInv: CnInvDto }>({
+      mutation: UPDATE_CN_INV,
+      variables: { id, input }
+    });
+    if (!result.data?.updateCnInv) {
+      throw emptyResponseError('updateCnInv');
+    }
+    return result.data.updateCnInv;
+  } catch (error) {
+    throw toRequestError(error, 'Не удалось обновить связь cnInv');
+  }
+}
+
+/**
+ * Удаляет связь cnInv по ciKey.
+ */
+export async function deleteCnInv(id: number): Promise<boolean> {
+  try {
+    const result = await apolloClient.mutate<{ deleteCnInv: boolean }>({
+      mutation: DELETE_CN_INV,
+      variables: { id }
+    });
+    return result.data?.deleteCnInv ?? false;
+  } catch (error) {
+    throw toRequestError(error, 'Не удалось удалить связь cnInv');
   }
 }
 
@@ -437,7 +501,7 @@ export async function createCnSide(input: CnSideCreateRequest): Promise<CnSideDt
       variables: { input }
     });
     if (!result.data?.createCnSide) {
-      throw new RequestError('Пустой ответ createCnSide', 0);
+      throw emptyResponseError('createCnSide');
     }
     return result.data.createCnSide;
   } catch (error) {
@@ -455,7 +519,7 @@ export async function updateCnSide(id: number, input: CnSideUpdateRequest): Prom
       variables: { id, input }
     });
     if (!result.data?.updateCnSide) {
-      throw new RequestError('Пустой ответ updateCnSide', 0);
+      throw emptyResponseError('updateCnSide');
     }
     return result.data.updateCnSide;
   } catch (error) {
@@ -488,7 +552,7 @@ export async function createCnSOrgSmpl(input: CnSOrgSmplCreateRequest): Promise<
       variables: { input }
     });
     if (!result.data?.createCnSOrgSmpl) {
-      throw new RequestError('Пустой ответ createCnSOrgSmpl', 0);
+      throw emptyResponseError('createCnSOrgSmpl');
     }
     return result.data.createCnSOrgSmpl;
   } catch (error) {
@@ -506,7 +570,7 @@ export async function updateCnSOrgSmpl(id: number, input: CnSOrgSmplUpdateReques
       variables: { id, input }
     });
     if (!result.data?.updateCnSOrgSmpl) {
-      throw new RequestError('Пустой ответ updateCnSOrgSmpl', 0);
+      throw emptyResponseError('updateCnSOrgSmpl');
     }
     return result.data.updateCnSOrgSmpl;
   } catch (error) {
@@ -539,7 +603,7 @@ export async function createCnSOrg(input: CnSOrgCreateRequest): Promise<CnSOrgDt
       variables: { input }
     });
     if (!result.data?.createCnSOrg) {
-      throw new RequestError('Пустой ответ createCnSOrg', 0);
+      throw emptyResponseError('createCnSOrg');
     }
     return result.data.createCnSOrg;
   } catch (error) {
@@ -557,7 +621,7 @@ export async function updateCnSOrg(id: number, input: CnSOrgUpdateRequest): Prom
       variables: { id, input }
     });
     if (!result.data?.updateCnSOrg) {
-      throw new RequestError('Пустой ответ updateCnSOrg', 0);
+      throw emptyResponseError('updateCnSOrg');
     }
     return result.data.updateCnSOrg;
   } catch (error) {
