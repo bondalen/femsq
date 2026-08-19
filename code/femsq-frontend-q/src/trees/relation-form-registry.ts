@@ -128,6 +128,7 @@ export function buildCnInvLinkForm(options: BuildCnInvLinkFormOptions): Relation
         searchValue: invLocked ? undefined : invSearchValue ?? '',
         searchPlaceholder: invLocked ? undefined : 'Номер СФ',
         searchHint: invLocked ? undefined : 'Введите точный номер и нажмите «Найти».',
+        searchDebounceMs: invLocked ? undefined : 450,
         rows: invLocked && currentInvRow ? [currentInvRow] : invCandidates,
         columns: pickerColumns,
         selected: currentInvRow ? [currentInvRow] : [],

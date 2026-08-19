@@ -50,7 +50,7 @@
                     :hint="picker.searchHint"
                     dense
                     outlined
-                    @update:model-value="setPickerSearch(picker.id, $event)"
+                    @update:model-value="setPickerSearch(picker, $event)"
                     @keyup.enter="emitSearch(picker)"
                   />
                 </div>
@@ -81,7 +81,7 @@
                         :hint="picker.searchHint"
                         dense
                         outlined
-                        @update:model-value="setPickerSearch(picker.id, $event)"
+                        @update:model-value="setPickerSearch(picker, $event)"
                         @keyup.enter="emitSearch(picker)"
                       />
                     </div>
@@ -160,11 +160,16 @@ const emit = defineEmits<{
 const pickerSplit = ref(38);
 const activePickerId = ref('');
 const pickerSearch = ref<Record<string, string>>({});
+const searchTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 watch(
   () => props.form.id,
   () => {
     activePickerId.value = props.form.pickers[0]?.id ?? '';
+    for (const timer of searchTimers.values()) {
+      clearTimeout(timer);
+    }
+    searchTimers.clear();
     pickerSearch.value = Object.fromEntries(
       props.form.pickers.map((picker) => [picker.id, picker.searchValue ?? ''])
     );
@@ -195,11 +200,24 @@ function emitSelect(
   emit('picker-select', picker.id, selected?.[0]?.rowKey ?? null);
 }
 
-function setPickerSearch(pickerId: string, value: string | number | null): void {
+function setPickerSearch(picker: RelationPickerState, value: string | number | null): void {
+  const pickerId = picker.id;
   pickerSearch.value = {
     ...pickerSearch.value,
     [pickerId]: value == null ? '' : String(value)
   };
+  if (!picker.searchDebounceMs || picker.searchDebounceMs <= 0) {
+    return;
+  }
+  const prev = searchTimers.get(pickerId);
+  if (prev) {
+    clearTimeout(prev);
+  }
+  const timer = setTimeout(() => {
+    emit('picker-search', pickerId, pickerSearch.value[pickerId] ?? '');
+    searchTimers.delete(pickerId);
+  }, picker.searchDebounceMs);
+  searchTimers.set(pickerId, timer);
 }
 
 function emitSearch(picker: RelationPickerState): void {

@@ -457,9 +457,6 @@ function onRelationAction(context: RelationTreeActionContext): void {
   if (context.actionId !== 'cnInv.link.create' || context.node.edge !== 'cn.cnInv') {
     return;
   }
-  invSearch.value = '';
-  invCandidates.value = [];
-  selectedInvCandidate.value = null;
   relationAction.value = context;
   linkModalOpen.value = true;
 }

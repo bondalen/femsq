@@ -47,6 +47,7 @@ export interface RelationPickerState {
   searchValue?: string;
   searchPlaceholder?: string;
   searchHint?: string;
+  searchDebounceMs?: number;
   rows: RelationPickerRow[];
   columns: FemsqTableColumn<RelationPickerRow>[];
   selected: RelationPickerRow[];
