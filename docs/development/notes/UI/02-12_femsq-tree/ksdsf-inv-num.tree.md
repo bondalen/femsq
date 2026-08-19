@@ -1,7 +1,7 @@
 # КСДСФ: дерево от `invNum`
 
 **Экземпляр:** низ вкладки «Счета-фактуры» на `sudz-sf-double`  
-**JSON:** [`src/trees/ksdsf-inv-num.tree.json`](../../../../code/femsq-frontend-q/src/trees/ksdsf-inv-num.tree.json)  
+**JSON:** [`src/trees/ksdsf-inv-num.tree.json`](../../../../code/femsq-frontend-q/src/trees/ksdsf-inv-num.tree.json) (**T1** ✅ 2026-08-19, `version: 1`)  
 **Корень данных:** `invNum.inKey` выбранной строки **верхнего списка**  
 **Правила:** [relation-tree.md](./relation-tree.md) · [Решение 009](../../../../project/decisions/009-femsq-walk-tree.md) (walker ≠ `FemsqTree`; поле `to` у детей — с T4b)  
 **Экран:** [02-9_sudz-mvp-screens.md](../02-9_sudz-mvp-screens.md) · **план:** [chat-plan-26-0802-sudz.md](../../chats/chat-plan/chat-plan-26-0802-sudz.md) S68
@@ -98,11 +98,35 @@
                                   - Заголовок узла:
                                     - `csosKey`
                                     - `csosOrgId`
-                                    - подпись орг. / БУиРГ
                                   - Деталь узла:
+                                    - `csosTimeOfEntry`
                                     - `...`
                                   - Вложенные узлы:
-                                    - `1.1.1.1.1.2.1.1.1.1. cn_s_org`
+                                    - `1.1.1.1.1.2.1.1.1.1. org_id` (БУиРГ smpl, N:1)
+                                      - Заголовок узла:
+                                        - `org_id_value_l`
+                                      - Деталь узла:
+                                        - `org_id_type`
+                                        - `org_id_key`
+                                      - Вложенные узлы:
+                                        - `1.1.1.1.1.2.1.1.1.1.1. og`
+                                          - Заголовок узла:
+                                            - `ogNm`
+                                            - `ogKey`
+                                          - Деталь узла:
+                                            - `ogNmOf`
+                                            - `...`
+                                          - Вложенные узлы:
+                                            - `1.1.1.1.1.2.1.1.1.1.1.1. Идентификаторы` (папка `org_id`, 1:N)
+                                              - Заголовок узла:
+                                                - `org_id_type`
+                                                - `org_id_value_l` / `org_id_value_t`
+                                              - Деталь узла:
+                                                - `org_id_value_t_ext`
+                                                - `...`
+                                              - Вложенные узлы:
+                                                - *(лист)*
+                                    - `1.1.1.1.1.2.1.1.1.2. cn_s_org`
                                       - Заголовок узла:
                                         - `cn_s_org_key`
                                         - `csoCnDate`

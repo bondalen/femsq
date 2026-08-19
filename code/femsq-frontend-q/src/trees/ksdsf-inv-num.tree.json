@@ -1,6 +1,6 @@
 {
   "id": "ksdsf-inv-num",
-  "version": 0,
+  "version": 1,
   "root": {
     "table": "invNum",
     "pk": "inKey"
@@ -27,6 +27,21 @@
           "to": "cnInv",
           "card": "1:N",
           "folder": "СФ, связи с договорами",
+          "actions": [
+            {
+              "id": "cnInv.link.create",
+              "kind": "link-related",
+              "label": "Добавить связь",
+              "icon": "add_link",
+              "scope": "folder",
+              "modal": "record",
+              "form": "cnInv.link",
+              "visibleWhen": {
+                "nodeKind": "folder",
+                "edge": "inv.cnInv"
+              }
+            }
+          ],
           "title": [
             "ciKey",
             "ciCn"
@@ -79,6 +94,49 @@
                       ],
                       "detail": "*",
                       "children": [
+                        {
+                          "edge": "smpl.orgId",
+                          "to": "orgId",
+                          "card": "N:1",
+                          "title": [
+                            "org_id_value_l"
+                          ],
+                          "detail": [
+                            "org_id_type",
+                            "org_id_key"
+                          ],
+                          "children": [
+                            {
+                              "edge": "orgId.og",
+                              "to": "og",
+                              "card": "N:1",
+                              "title": [
+                                "ogNm",
+                                "ogKey"
+                              ],
+                              "detail": [
+                                "ogNmOf",
+                                "ogINN",
+                                "ogKPP"
+                              ],
+                              "children": [
+                                {
+                                  "edge": "og.orgId",
+                                  "to": "orgId",
+                                  "card": "1:N",
+                                  "folder": "Идентификаторы",
+                                  "title": [
+                                    "org_id_type",
+                                    "org_id_value_l",
+                                    "org_id_value_t"
+                                  ],
+                                  "detail": "*",
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        },
                         {
                           "edge": "smpl.org",
                           "to": "org",

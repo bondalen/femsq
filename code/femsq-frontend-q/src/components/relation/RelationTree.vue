@@ -16,7 +16,21 @@
     @load="onLoad"
   >
     <template #header="{ node }">
-      <span class="relation-tree-title">{{ node.title }}</span>
+      <div class="row items-center no-wrap full-width q-gutter-xs">
+        <span class="relation-tree-title col">{{ node.title }}</span>
+        <QBtn
+          v-for="action in node.actions ?? []"
+          :key="action.id"
+          flat
+          dense
+          no-caps
+          size="sm"
+          color="primary"
+          :icon="action.icon"
+          :label="action.label"
+          @click.stop="onActionClick(node, action)"
+        />
+      </div>
     </template>
     <template #detail="{ node }">
       <QMarkupTable v-if="node.fields?.length" dense flat bordered>
@@ -39,15 +53,18 @@
 import { ref, watch } from 'vue';
 
 import { FemsqTree, type FemsqTreeKey, type FemsqTreeLoadPayload } from 'fequlib';
-import { QMarkupTable } from 'quasar';
+import { QBtn, QMarkupTable } from 'quasar';
 
 import {
   buildRecordNode,
   childrenAfterFolderLoad,
   childrenAfterRecordLoad,
+  createActionContext,
   fieldMapOf,
   patchRelationChildren,
   relationRootToken,
+  type RelationTreeActionContext,
+  type RelationTreeActionSpec,
   type RelationFetchExpand,
   type RelationFetchNode,
   type RelationTreeNode,
@@ -68,6 +85,10 @@ const props = withDefaults(
     rootClass: 'relation-tree'
   }
 );
+
+const emit = defineEmits<{
+  action: [context: RelationTreeActionContext];
+}>();
 
 const nodes = ref<RelationTreeNode[]>([]);
 const expandedKeys = ref<FemsqTreeKey[]>([]);
@@ -144,6 +165,16 @@ async function onLoad(payload: FemsqTreeLoadPayload<RelationTreeNode>): Promise<
   } finally {
     loadingKeys.value = loadingKeys.value.filter((item) => item !== key);
   }
+}
+
+/**
+ * Делегирует action хосту, не зная экранов и GraphQL.
+ *
+ * @param node узел дерева
+ * @param action описание действия
+ */
+function onActionClick(node: RelationTreeNode, action: RelationTreeActionSpec): void {
+  emit('action', createActionContext(props.spec.root.table, props.rootId, node, action));
 }
 </script>
 

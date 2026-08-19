@@ -6,6 +6,7 @@ import {
   childTableOf,
   childrenAfterFolderLoad,
   childrenAfterRecordLoad,
+  createActionContext,
   formatRelationTitle,
   patchRelationChildren,
   relationRootToken,
@@ -122,5 +123,29 @@ describe('relation-tree walker', () => {
     const patched = patchRelationChildren([root], 'invNum:1', [inv]);
     expect(patched[0].children?.[0].id).toBe('inv:2');
     expect(root.children).toBeUndefined();
+  });
+
+  it('папка и action дают контекст для хоста', () => {
+    const folder = buildFolderNode('inv:85069', 85069, {
+      edge: 'inv.cnInv',
+      to: 'cnInv',
+      card: '1:N',
+      folder: 'СФ, связи с договорами',
+      title: ['ciKey', 'ciCn'],
+      detail: '*',
+      actions: [
+        {
+          id: 'cnInv.link.create',
+          kind: 'link-related',
+          label: 'Добавить связь'
+        }
+      ],
+      children: []
+    });
+    const context = createActionContext('invNum', 85078, folder, folder.actions![0]);
+    expect(context.actionId).toBe('cnInv.link.create');
+    expect(context.root.id).toBe(85078);
+    expect(context.node.edge).toBe('inv.cnInv');
+    expect(context.node.fromId).toBe(85069);
   });
 });

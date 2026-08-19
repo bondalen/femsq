@@ -14,7 +14,6 @@ import com.femsq.database.model.sudz.SudzPmUplLookup;
 import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
 import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
-import com.femsq.database.model.sudz.SudzSfDoubleTreeDebt;
 import com.femsq.database.model.sudz.SudzSvodResult;
 import com.femsq.database.model.sudz.SudzUplLookup;
 import com.femsq.database.model.sudz.SudzYear;
@@ -525,25 +524,6 @@ public class SudzGraphqlController {
     public List<SudzSfDoubleDomainMatch> sudzSfDoubleDomainMatches(@Argument String invNum) {
         try {
             return sudzService.findSfDoubleDomainMatches(invNum);
-        } catch (IllegalArgumentException exception) {
-            throw badRequest(exception);
-        } catch (MissingConfigurationException exception) {
-            throw unavailable(exception);
-        } catch (DaoException exception) {
-            throw internal(exception);
-        }
-    }
-
-    /**
-     * СГК простой и новая ДЗ для дерева КСДСФ.
-     *
-     * @param invKey {@code inv.iKey}
-     * @return вложенные карточки
-     */
-    @QueryMapping
-    public SudzSfDoubleTreeDebt sudzSfDoubleTreeDebt(@Argument int invKey) {
-        try {
-            return sudzService.findSfDoubleTreeDebt(invKey);
         } catch (IllegalArgumentException exception) {
             throw badRequest(exception);
         } catch (MissingConfigurationException exception) {

@@ -24,7 +24,6 @@ import type {
   SudzRsltReturnImportResult,
   SudzSfDoubleDomainMatch,
   SudzSfDoubleExcelCandidate,
-  SudzSfDoubleTreeDebt,
   SudzSvodResult,
   SudzUplLookup,
   SudzYear,
@@ -259,71 +258,6 @@ const SUDZ_SF_DOUBLE_DOMAIN = gql`
       ciKey
       cnKey
       cnNum
-    }
-  }
-`;
-
-const SUDZ_SF_DOUBLE_TREE_DEBT = gql`
-  query SudzSfDoubleTreeDebt($invKey: Int!) {
-    sudzSfDoubleTreeDebt(invKey: $invKey) {
-      smpls {
-        ciasKey
-        ciasCnInv
-        ciasAccnt
-        accountNum
-        ciasCnSOrgSmpl
-        ciasNote
-        ciasTimeOfEntry
-        accounts {
-          ciaKey
-          ciaCnSOrg
-          ciaName
-          ciaNote
-          ciaCnInvAccntSmpl
-          ciaTimeOfEntry
-          debts {
-            cnInvDbtKey
-            dateStart
-            dateMaturity
-            debtType
-            dbtTtl
-            dbtOverd
-            docBase
-            link
-            uplKey
-            number
-            mark
-            cidTimeOfEntry
-          }
-        }
-      }
-      invDbts {
-        idKey
-        idInv
-        idNum
-        idNote
-        idTimeOfEntry
-        links {
-          iddKey
-          iddInv
-          iddDbt
-          iddInvDbt
-          iddTimeOfEntry
-          dbt {
-            dbtKey
-            dbtNote
-            values {
-              dvKey
-              dvUpl
-              dvTtl
-              dvOverd
-              dvDateStart
-              dvDateMaturity
-              dvDocBase
-            }
-          }
-        }
-      }
     }
   }
 `;
@@ -647,27 +581,6 @@ export async function getSudzSfDoubleDomainMatches(
     return result.data?.sudzSfDoubleDomainMatches ?? [];
   } catch (error) {
     throw wrapApolloError(error, 'SudzSfDoubleDomainMatches');
-  }
-}
-
-/**
- * СГК простой и новая ДЗ для дерева КСДСФ.
- */
-export async function getSudzSfDoubleTreeDebt(invKey: number): Promise<SudzSfDoubleTreeDebt> {
-  try {
-    const result = await apolloClient.query<{ sudzSfDoubleTreeDebt: SudzSfDoubleTreeDebt }>({
-      query: SUDZ_SF_DOUBLE_TREE_DEBT,
-      variables: { invKey },
-      fetchPolicy: 'network-only'
-    });
-    return (
-      result.data?.sudzSfDoubleTreeDebt ?? {
-        smpls: [],
-        invDbts: []
-      }
-    );
-  } catch (error) {
-    throw wrapApolloError(error, 'SudzSfDoubleTreeDebt');
   }
 }
 

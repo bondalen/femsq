@@ -45,8 +45,6 @@ extend type Query {
   sudzSfDoubleExcelCandidate(ciusKey: Int!): SudzSfDoubleExcelCandidate
   """Доменные СФ с совпадающим номером."""
   sudzSfDoubleDomainMatches(invNum: String!): [SudzSfDoubleDomainMatch!]!
-  """СГК простой и новая ДЗ для дерева КСДСФ (по invKey выбранного СФ)."""
-  sudzSfDoubleTreeDebt(invKey: Int!): SudzSfDoubleTreeDebt!
 }
 
 extend type Mutation {
@@ -420,89 +418,6 @@ type SudzSfDoubleDomainMatch {
   ciKey: Int
   cnKey: Int
   cnNum: String
-}
-
-"""СГК простой + новая ДЗ выбранного СФ."""
-type SudzSfDoubleTreeDebt {
-  smpls: [SudzSfDoubleAccntSmpl!]!
-  invDbts: [SudzSfDoubleInvDbt!]!
-}
-
-"""ags.cnInvAccntSmpl."""
-type SudzSfDoubleAccntSmpl {
-  ciasKey: Int!
-  ciasCnInv: Int!
-  ciasAccnt: Int
-  accountNum: Int
-  ciasCnSOrgSmpl: Int
-  ciasNote: String
-  ciasTimeOfEntry: DateTime
-  accounts: [SudzSfDoubleCnInvAccnt!]!
-}
-
-"""ags.cnInvAccnt."""
-type SudzSfDoubleCnInvAccnt {
-  ciaKey: Int!
-  ciaCnSOrg: Int
-  ciaName: String
-  ciaNote: String
-  ciaCnInvAccntSmpl: Int!
-  ciaTimeOfEntry: DateTime
-  debts: [SudzSfDoubleCnInvDbt!]!
-}
-
-"""ags.cn_inv_dbt."""
-type SudzSfDoubleCnInvDbt {
-  cnInvDbtKey: Int!
-  dateStart: Date
-  dateMaturity: Date
-  debtType: String
-  dbtTtl: Float
-  dbtOverd: Float
-  docBase: String
-  link: String
-  uplKey: Int
-  number: Int
-  mark: Int
-  cidTimeOfEntry: DateTime
-}
-
-"""sudz.invDbt."""
-type SudzSfDoubleInvDbt {
-  idKey: Int!
-  idInv: Int!
-  idNum: Int
-  idNote: String
-  idTimeOfEntry: DateTime
-  links: [SudzSfDoubleInvDbtDbt!]!
-}
-
-"""sudz.invDbtDbt."""
-type SudzSfDoubleInvDbtDbt {
-  iddKey: Int!
-  iddInv: Int
-  iddDbt: Int
-  iddInvDbt: Int
-  iddTimeOfEntry: DateTime
-  dbt: SudzSfDoubleDbt
-}
-
-"""sudz.Dbt."""
-type SudzSfDoubleDbt {
-  dbtKey: Int!
-  dbtNote: String
-  values: [SudzSfDoubleDbtValue!]!
-}
-
-"""sudz.DbtValue."""
-type SudzSfDoubleDbtValue {
-  dvKey: Int!
-  dvUpl: Int
-  dvTtl: Float
-  dvOverd: Float
-  dvDateStart: Date
-  dvDateMaturity: Date
-  dvDocBase: String
 }
 
 """Вход upsert шапки лаунчера."""

@@ -9268,7 +9268,7 @@
           "chat-attributes": {
             "id": "chat-2026-08-11-001",
             "created": "2026-08-11",
-            "lastUpdated": "2026-08-18",
+            "lastUpdated": "2026-08-19",
             "owner": "Александр",
             "status": "in_progress",
             "priority": "high",
@@ -10055,6 +10055,111 @@
                       "code/femsq-frontend-q/src/components/relation/RelationTree.vue",
                       "code/femsq-frontend-q/src/trees/relation-tree.ts",
                       "code/femsq-frontend-q/tests/unit/relation-tree.spec.ts"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S68t T1: JSON экземпляров подписан (success). № log-2026-08-19-001",
+                "log-attributes": {
+                  "id": "log-2026-08-19-001",
+                  "timestamp": "2026-08-19T09:16:00+03:00",
+                  "level": "success",
+                  "effort": "0.25h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0069",
+                      "0071"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Подтверждён T1: два независимых JSON деревьев",
+                    "details": "Сверка с каталогом 02-12 §3: ksdsf-inv-num 15 рёбер (корень invNum), contracts-inv 14 (корень inv); все дети с to; card совпадает; без $ref; единственное отличие КСДСФ — invNum.inv. Вне JSON по решению: cias.accnt, inv.invNum; lookup-подписи орг/счёта — не колонки title. version→1.",
+                    "outcome": "T1 ✅. Можно T5: расширить RelationEdgeCatalog и переключить экран на полный JSON.",
+                    "references": [
+                      "code/femsq-frontend-q/src/trees/ksdsf-inv-num.tree.json",
+                      "code/femsq-frontend-q/src/trees/contracts-inv.tree.json",
+                      "docs/development/notes/UI/02-12_femsq-tree/relation-tree.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S68t T5: полный каталог КСДСФ + экран на RelationTree (success). № log-2026-08-19-002",
+                "log-attributes": {
+                  "id": "log-2026-08-19-002",
+                  "timestamp": "2026-08-19T09:35:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend"
+                    ],
+                    "developmentTasks": [
+                      "0069"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "T5: полный RelationEdgeCatalog и экран КСДСФ без H1 builder",
+                    "details": "Java RelationEdgeCatalog: 16 таблиц, 15 рёбер (cnNum…cid.upl, inv.invDbt…dbt.dv). SudzSfDoubleView: только RelationTree + ksdsf-inv-num.tree.json, корень invNum/inKey. Удалены sudz-sf-double-tree.ts, slice1 JSON, sudzSfDoubleTreeDebt (GQL/DAO/service). JAR 0.1.0.201.",
+                    "outcome": "T5 ✅. Следующий шаг T6 UAT якорь 832930.",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/relation/RelationEdgeCatalog.java",
+                      "code/femsq-frontend-q/src/views/sudz/SudzSfDoubleView.vue",
+                      "code/femsq-frontend-q/src/trees/ksdsf-inv-num.tree.json"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S68t T6a: спроектирован CRUD-контракт RelationTree (success). № log-2026-08-19-003",
+                "log-attributes": {
+                  "id": "log-2026-08-19-003",
+                  "timestamp": "2026-08-19T12:00:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend"
+                    ],
+                    "developmentTasks": [
+                      "0069",
+                      "0071"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксирован следующий слой над RelationTree: actions + RecordModal",
+                    "details": "В 02-12 и chat-plan добавлен контракт: actions декларативно живут в JSON, walker отдаёт ActionContext, хост FEMSQ открывает RecordModal и вызывает GraphQL. Форма трактуется как форма записи таблицы; таблица связи (например cnInv) — частный случай. Для FK/lookup вводится pickerSpec: lookup-list и table-tree-picker. В relation-tree.md зафиксирована конкретная v1 JSON-схема для actions, formSpec, fieldSpec и pickerSpec.",
+                    "outcome": "Можно реализовывать T6a/T6b без смешения слоёв renderer/walker/host.",
+                    "references": [
+                      "docs/development/notes/UI/02-12_femsq-tree/relation-tree.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
                     ]
                   }
                 ]

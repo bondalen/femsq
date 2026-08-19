@@ -23,7 +23,6 @@ import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
 import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
-import com.femsq.database.model.sudz.SudzSfDoubleTreeDebt;
 import com.femsq.database.model.sudz.SudzSvodResult;
 import com.femsq.database.model.sudz.SudzUplLookup;
 import com.femsq.database.model.sudz.SudzYear;
@@ -478,14 +477,6 @@ public class DefaultSudzService implements SudzService {
     @Override
     public List<SudzSfDoubleDomainMatch> findSfDoubleDomainMatches(String invNum) {
         return sudzDao.findSfDoubleDomainMatches(invNum);
-    }
-
-    @Override
-    public SudzSfDoubleTreeDebt findSfDoubleTreeDebt(int invKey) {
-        if (invKey <= 0) {
-            throw new IllegalArgumentException("invKey должен быть положительным: " + invKey);
-        }
-        return sudzDao.findSfDoubleTreeDebt(invKey);
     }
 
     @Override

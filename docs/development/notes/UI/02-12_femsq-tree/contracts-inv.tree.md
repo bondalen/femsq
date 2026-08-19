@@ -1,7 +1,7 @@
 # Договоры: дерево СФ от `inv`
 
 **Экземпляр:** вкладка «Счета-фактуры» экрана «Договоры» (ещё не в UI)  
-**JSON:** [`src/trees/contracts-inv.tree.json`](../../../../code/femsq-frontend-q/src/trees/contracts-inv.tree.json)  
+**JSON:** [`src/trees/contracts-inv.tree.json`](../../../../code/femsq-frontend-q/src/trees/contracts-inv.tree.json) (**T1** ✅ 2026-08-19, `version: 1`)  
 **Корень данных:** `inv.iKey` = `cnInv.ciInv` выбранной слева связи  
 **Правила:** [relation-tree.md](./relation-tree.md) · [Решение 009](../../../../project/decisions/009-femsq-walk-tree.md) (тот же walker, что КСДСФ; монтировать только после T4b)  
 **Экран:** [02-10_contracts-cnNum-access.md](../02-10_contracts-cnNum-access.md) · **план:** [chat-plan-26-0802-sudz.md](../../chats/chat-plan/chat-plan-26-0802-sudz.md) S62 / 0071
@@ -84,12 +84,36 @@
                             - `1.1.1.1.2.1.1.1. smpl`
                               - Заголовок узла:
                                 - `csosKey`
-                                - `csosOrgId`
-                                - подпись орг. / БУиРГ
                               - Деталь узла:
+                                - `csosOrgId`
+                                - `csosTimeOfEntry`
                                 - `...`
                               - Вложенные узлы:
-                                - `1.1.1.1.2.1.1.1.1. cn_s_org`
+                                - `1.1.1.1.2.1.1.1.1. org_id` (БУиРГ smpl, N:1)
+                                  - Заголовок узла:
+                                    - `org_id_value_l`
+                                  - Деталь узла:
+                                    - `org_id_type`
+                                    - `org_id_key`
+                                  - Вложенные узлы:
+                                    - `1.1.1.1.2.1.1.1.1.1. og`
+                                      - Заголовок узла:
+                                        - `ogNm`
+                                        - `ogKey`
+                                      - Деталь узла:
+                                        - `ogNmOf`
+                                        - `...`
+                                      - Вложенные узлы:
+                                        - `1.1.1.1.2.1.1.1.1.1.1. Идентификаторы` (папка `org_id`, 1:N)
+                                          - Заголовок узла:
+                                            - `org_id_type`
+                                            - `org_id_value_l` / `org_id_value_t`
+                                          - Деталь узла:
+                                            - `org_id_value_t_ext`
+                                            - `...`
+                                          - Вложенные узлы:
+                                            - *(лист)*
+                                - `1.1.1.1.2.1.1.1.2. cn_s_org`
                                   - Заголовок узла:
                                     - `cn_s_org_key`
                                     - `csoCnDate`

@@ -6,6 +6,28 @@
 /** Как рисовать ребёнка: сразу запись или папка. */
 export type RelationCard = 'N:1' | '1:1' | '1:N';
 
+/** Действие на узле/папке. Выполняется на хосте. */
+export interface RelationTreeActionSpec {
+  id: string;
+  kind:
+    | 'create-child'
+    | 'link-related'
+    | 'unlink-related'
+    | 'open-form'
+    | 'navigate'
+    | 'delete-record';
+  label: string;
+  icon?: string;
+  scope?: 'record' | 'folder' | 'both';
+  modal?: 'record' | 'none';
+  form?: string;
+  visibleWhen?: {
+    nodeKind?: 'record' | 'folder';
+    edge?: string;
+    table?: string;
+  };
+}
+
 /** Спека узла-ребёнка. */
 export interface RelationTreeChildSpec {
   edge: string;
@@ -14,6 +36,7 @@ export interface RelationTreeChildSpec {
   folder?: string;
   title: string[];
   detail: string[] | '*';
+  actions?: RelationTreeActionSpec[];
   children: RelationTreeChildSpec[];
 }
 
@@ -57,6 +80,7 @@ export interface RelationTreeNode {
   kind: 'record' | 'folder';
   title: string;
   fields: RelationTreeField[];
+  actions?: RelationTreeActionSpec[];
   children?: RelationTreeNode[];
   leaf?: boolean;
   table?: string;
@@ -65,6 +89,24 @@ export interface RelationTreeNode {
   edge?: string;
   fromId?: number;
   folderSpec?: RelationTreeChildSpec;
+}
+
+/** Контекст действия, который walker отдаёт хосту. */
+export interface RelationTreeActionContext {
+  actionId: string;
+  root: {
+    table: string;
+    id: number | null;
+  };
+  node: {
+    kind: 'record' | 'folder';
+    table: string | null;
+    edge: string | null;
+    fromId: number | null;
+    rowKey: number | null;
+    title: string;
+    fields: Record<string, string | null>;
+  };
 }
 
 const MISSING = '—';
@@ -173,7 +215,7 @@ export function buildRecordNode(
   table: string,
   rowKey: number,
   fields: Record<string, string | null>,
-  spec: Pick<RelationTreeChildSpec, 'title' | 'detail' | 'children'>
+  spec: Pick<RelationTreeChildSpec, 'title' | 'detail' | 'children' | 'actions'>
 ): RelationTreeNode {
   const hasChildren = spec.children.length > 0;
   return {
@@ -181,6 +223,7 @@ export function buildRecordNode(
     kind: 'record',
     title: formatRelationTitle(spec.title, fields),
     fields: formatRelationDetail(spec.detail, fields),
+    actions: spec.actions,
     table,
     rowKey,
     childSpecs: spec.children,
@@ -206,6 +249,7 @@ export function buildFolderNode(
     kind: 'folder',
     title: spec.folder || spec.edge,
     fields: [],
+    actions: spec.actions,
     edge: spec.edge,
     fromId,
     folderSpec: spec,
@@ -259,6 +303,39 @@ export function childrenAfterFolderLoad(
   }
   const to = childTableOf(spec);
   return rows.map((row) => buildRecordNode(to, row.key, row.fields, spec));
+}
+
+/**
+ * Контекст action для хоста.
+ *
+ * @param rootTable таблица корня
+ * @param rootId ключ корня
+ * @param node выбранный узел/папка
+ * @param action действие
+ * @return сериализуемый контекст
+ */
+export function createActionContext(
+  rootTable: string,
+  rootId: number | null,
+  node: RelationTreeNode,
+  action: RelationTreeActionSpec
+): RelationTreeActionContext {
+  return {
+    actionId: action.id,
+    root: {
+      table: rootTable,
+      id: rootId
+    },
+    node: {
+      kind: node.kind,
+      table: node.table ?? null,
+      edge: node.edge ?? null,
+      fromId: node.fromId ?? null,
+      rowKey: node.rowKey ?? null,
+      title: node.title,
+      fields: Object.fromEntries(node.fields.map((field) => [field.label, field.value === MISSING ? null : field.value]))
+    }
+  };
 }
 
 /**

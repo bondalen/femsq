@@ -1,6 +1,6 @@
 {
   "id": "contracts-inv",
-  "version": 0,
+  "version": 1,
   "root": {
     "table": "inv",
     "pk": "iKey"
@@ -67,21 +67,64 @@
                     "csosKey",
                     "csosOrgId"
                   ],
-                  "detail": "*",
-                  "children": [
-                    {
-                      "edge": "smpl.org",
-                      "to": "org",
-                      "card": "1:N",
-                      "folder": "cn_s_org",
-                      "title": [
-                        "cn_s_org_key",
-                        "csoCnDate"
-                      ],
                       "detail": "*",
-                      "children": []
-                    }
-                  ]
+                      "children": [
+                        {
+                          "edge": "smpl.orgId",
+                          "to": "orgId",
+                          "card": "N:1",
+                          "title": [
+                            "org_id_value_l"
+                          ],
+                          "detail": [
+                            "org_id_type",
+                            "org_id_key"
+                          ],
+                          "children": [
+                            {
+                              "edge": "orgId.og",
+                              "to": "og",
+                              "card": "N:1",
+                              "title": [
+                                "ogNm",
+                                "ogKey"
+                              ],
+                              "detail": [
+                                "ogNmOf",
+                                "ogINN",
+                                "ogKPP"
+                              ],
+                              "children": [
+                                {
+                                  "edge": "og.orgId",
+                                  "to": "orgId",
+                                  "card": "1:N",
+                                  "folder": "Идентификаторы",
+                                  "title": [
+                                    "org_id_type",
+                                    "org_id_value_l",
+                                    "org_id_value_t"
+                                  ],
+                                  "detail": "*",
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "edge": "smpl.org",
+                          "to": "org",
+                          "card": "1:N",
+                          "folder": "cn_s_org",
+                          "title": [
+                            "cn_s_org_key",
+                            "csoCnDate"
+                          ],
+                          "detail": "*",
+                          "children": []
+                        }
+                      ]
                 }
               ]
             }
