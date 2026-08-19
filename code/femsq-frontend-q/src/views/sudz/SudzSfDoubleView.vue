@@ -134,6 +134,15 @@
         </QSplitter>
       </template>
     </QSplitter>
+    <RecordModal
+      v-if="linkForm"
+      v-model="linkModalOpen"
+      :form="linkForm"
+      :fetch-node="fetchRelationNode"
+      :fetch-expand="fetchRelationExpand"
+      @picker-select="onPickerSelect"
+      @save="onLinkSave"
+    />
   </QPage>
 </template>
 
@@ -144,11 +153,13 @@
 import { computed, ref, watch } from 'vue';
 
 import { FemsqTable, type FemsqTableColumn } from 'fequlib';
+import RecordModal from '@/components/relation/RecordModal.vue';
 import RelationTree from '@/components/relation/RelationTree.vue';
 import {
   createSudzSfFromDouble,
   getSudzSfDoubleDomainMatches,
-  getSudzSfDoubleExcelCandidate
+  getSudzSfDoubleExcelCandidate,
+  linkSudzSfDoubleToCn
 } from '@/api/sudz-api';
 import { fetchRelationExpand, fetchRelationNode } from '@/api/relation-api';
 import { useConnectionStore } from '@/stores/connection';
@@ -158,7 +169,11 @@ import type {
   SudzSfDoubleDomainMatch,
   SudzSfDoubleExcelCandidate
 } from '@/types/sudz';
-import ksdsfSpec from '@/trees/ksdsf-inv-num.tree.json';
+import * as cnPickerSpecJson from '@/trees/cn-picker.tree.json';
+import * as contractsInvSpecJson from '@/trees/contracts-inv.tree.json';
+import * as ksdsfSpec from '@/trees/ksdsf-inv-num.tree.json';
+import { buildCnInvLinkForm } from '@/trees/relation-form-registry';
+import type { RelationFormState, RelationPickerRow } from '@/trees/relation-forms';
 import type { RelationTreeActionContext, RelationTreeSpec } from '@/trees/relation-tree';
 import {
   QBtn,
@@ -173,8 +188,17 @@ import {
 } from 'quasar';
 
 type DomainRow = SudzSfDoubleDomainMatch & { rowKey: string };
+type PickerCandidateRow = RelationPickerRow & {
+  rowKey: string;
+  cnKey?: number | null;
+  cnNum?: string | null;
+  invKey?: number | null;
+  invNum?: string | null;
+};
 
 const relationSpec = ksdsfSpec as RelationTreeSpec;
+const cnPickerSpec = cnPickerSpecJson as RelationTreeSpec;
+const contractsInvSpec = contractsInvSpecJson as RelationTreeSpec;
 
 const connection = useConnectionStore();
 const store = useSudzDbtUplStore();
@@ -192,6 +216,9 @@ const selectedRows = ref<SudzCnInvUplSfDouble[]>([]);
 const excel = ref<SudzSfDoubleExcelCandidate | null>(null);
 const domainMatches = ref<DomainRow[]>([]);
 const selectedDomain = ref<DomainRow[]>([]);
+const relationAction = ref<RelationTreeActionContext | null>(null);
+const linkModalOpen = ref(false);
+const selectedCnCandidate = ref<PickerCandidateRow | null>(null);
 
 const uplKey = computed(() => store.selectedUplKey);
 const rows = computed(() => store.sfDoubles);
@@ -200,6 +227,7 @@ const selected = computed(() => selectedRows.value[0] ?? null);
 const canCreate = computed(
   () => selected.value != null && selected.value.ciusStatus === 'open' && !!selected.value.ciusCnKey
 );
+const selectedDomainRow = computed(() => selectedDomain.value[0] ?? null);
 
 const queueColumns: FemsqTableColumn<SudzCnInvUplSfDouble>[] = [
   { name: 'ciusStatus', label: 'статус', field: 'ciusStatus', align: 'left' },
@@ -214,6 +242,13 @@ const domainColumns: FemsqTableColumn<DomainRow>[] = [
   { name: 'invNum', label: 'номер', field: 'invNum', align: 'left' },
   { name: 'cnNum', label: 'договор', field: 'cnNum', align: 'left' },
   { name: 'cnKey', label: 'cn', field: 'cnKey', align: 'right' }
+];
+
+const pickerColumns: FemsqTableColumn<PickerCandidateRow>[] = [
+  { name: 'cnKey', label: 'cn', field: 'cnKey', align: 'right' },
+  { name: 'cnNum', label: 'договор', field: 'cnNum', align: 'left' },
+  { name: 'invKey', label: 'inv', field: 'invKey', align: 'right' },
+  { name: 'invNum', label: 'СФ', field: 'invNum', align: 'left' }
 ];
 
 const excelRows = computed(() => {
@@ -235,12 +270,50 @@ const excelRows = computed(() => {
   ];
 });
 
+const cnPickerRows = computed<PickerCandidateRow[]>(() => {
+  const map = new Map<string, PickerCandidateRow>();
+  for (const row of domainMatches.value) {
+    if (row.cnKey == null) continue;
+    const key = String(row.cnKey);
+    if (!map.has(key)) {
+      map.set(key, {
+        rowKey: key,
+        cnKey: row.cnKey,
+        cnNum: row.cnNum,
+        invKey: row.invKey,
+        invNum: row.invNum
+      });
+    }
+  }
+  return Array.from(map.values());
+});
+
+const linkForm = computed<RelationFormState | null>(() => {
+  const action = relationAction.value;
+  const domain = selectedDomainRow.value;
+  if (!linkModalOpen.value || action == null || domain == null) {
+    return null;
+  }
+  return buildCnInvLinkForm({
+    context: action,
+    domain,
+    cnCandidates: cnPickerRows.value,
+    selectedCnCandidate: selectedCnCandidate.value,
+    cnPickerSpec,
+    invPickerSpec: contractsInvSpec,
+    pickerColumns
+  });
+});
+
 watch(
   selected,
   async (row) => {
     excel.value = null;
     domainMatches.value = [];
     selectedDomain.value = [];
+    relationAction.value = null;
+    linkModalOpen.value = false;
+    selectedCnCandidate.value = null;
     if (!row) return;
     excelLoading.value = true;
     domainLoading.value = true;
@@ -293,12 +366,64 @@ async function onCreate(): Promise<void> {
 }
 
 /**
- * Skeleton T6a: walker отдаёт action хосту, но реальная модалка ещё не подключена.
+ * Skeleton T6b: action открывает универсальную модалку host-side.
  *
  * @param context действие с контекстом узла
  */
 function onRelationAction(context: RelationTreeActionContext): void {
-  error.value = `Действие ${context.actionId} ещё не реализовано на экране КСДСФ.`;
+  if (context.actionId !== 'cnInv.link.create') {
+    error.value = `Действие ${context.actionId} ещё не реализовано на экране КСДСФ.`;
+    return;
+  }
+  relationAction.value = context;
+  selectedCnCandidate.value = cnPickerRows.value[0] ?? null;
+  linkModalOpen.value = true;
+}
+
+/**
+ * Обновляет выбор строки во вкладках модалки.
+ *
+ * @param pickerId идентификатор вкладки выбора
+ * @param rowKey ключ выбранной строки
+ */
+function onPickerSelect(pickerId: string, rowKey: string | null): void {
+  if (pickerId !== 'cn') {
+    return;
+  }
+  selectedCnCandidate.value = cnPickerRows.value.find((row) => row.rowKey === rowKey) ?? null;
+}
+
+/**
+ * Выполняет реальную GraphQL mutation ручной привязки.
+ */
+async function onLinkSave(): Promise<void> {
+  if (selectedCnCandidate.value == null) {
+    error.value = 'Выберите договор для новой связи cnInv.';
+    return;
+  }
+  const ciusKey = selected.value?.ciusKey;
+  const invKey = relationAction.value?.node.fromId;
+  const cnKey = selectedCnCandidate.value.cnKey;
+  if (ciusKey == null || invKey == null || cnKey == null) {
+    error.value = 'Недостаточно данных для создания связи cnInv.';
+    return;
+  }
+  domainLoading.value = true;
+  error.value = null;
+  try {
+    const updated = await linkSudzSfDoubleToCn({ ciusKey, invKey, cnKey });
+    if (store.selectedUplKey != null) {
+      await store.selectUpl(store.selectedUplKey);
+    }
+    const refreshed = store.sfDoubles.find((r) => r.ciusKey === updated.ciusKey) ?? updated;
+    selectedRows.value = [refreshed];
+    linkModalOpen.value = false;
+    relationAction.value = null;
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : String(e);
+  } finally {
+    domainLoading.value = false;
+  }
 }
 </script>
 

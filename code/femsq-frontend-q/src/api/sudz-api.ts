@@ -11,6 +11,7 @@ import type {
   CreateSudzPmUplInput,
   CreateSudzUplInput,
   CreateSudzYearInput,
+  LinkSudzSfDoubleInput,
   SudzCmmGrLookup,
   SudzCnInvUplSfDouble,
   SudzD644Row,
@@ -265,6 +266,14 @@ const SUDZ_SF_DOUBLE_DOMAIN = gql`
 const CREATE_SF_FROM_DOUBLE = gql`
   mutation CreateSudzSfFromDouble($ciusKey: Int!) {
     createSudzSfFromDouble(ciusKey: $ciusKey) {
+      ${SF_DOUBLE_FIELDS}
+    }
+  }
+`;
+
+const LINK_SF_DOUBLE_TO_CN = gql`
+  mutation LinkSudzSfDoubleToCn($input: LinkSudzSfDoubleInput!) {
+    linkSudzSfDoubleToCn(input: $input) {
       ${SF_DOUBLE_FIELDS}
     }
   }
@@ -598,6 +607,25 @@ export async function createSudzSfFromDouble(ciusKey: number): Promise<SudzCnInv
     return data;
   } catch (error) {
     throw wrapApolloError(error, 'CreateSudzSfFromDouble');
+  }
+}
+
+/**
+ * Привязать строку КСДСФ к существующему договору через ags.cnInv.
+ */
+export async function linkSudzSfDoubleToCn(
+  input: LinkSudzSfDoubleInput
+): Promise<SudzCnInvUplSfDouble> {
+  try {
+    const result = await apolloClient.mutate<{ linkSudzSfDoubleToCn: SudzCnInvUplSfDouble }>({
+      mutation: LINK_SF_DOUBLE_TO_CN,
+      variables: { input }
+    });
+    const data = result.data?.linkSudzSfDoubleToCn;
+    if (!data) throw new Error('Пустой ответ linkSudzSfDoubleToCn');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'LinkSudzSfDoubleToCn');
   }
 }
 

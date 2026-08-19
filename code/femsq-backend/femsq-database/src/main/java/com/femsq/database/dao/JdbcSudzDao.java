@@ -2319,8 +2319,120 @@ public class JdbcSudzDao implements SudzDao {
         }
     }
 
+    @Override
+    public SudzCnInvUplSfDouble linkSfDoubleToCn(int ciusKey, int invKey, int cnKey) {
+        String sf = q("CnInvUplSfDouble");
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                SudzCnInvUplSfDouble row;
+                try (PreparedStatement ps = connection.prepareStatement(
+                        "SELECT ciusKey, ciusCidut, ciusCiput, ciusDbtFile, ciusPmtFile, ciusUnloadKey,"
+                                + " ciusDbtTblCnInvRow, ciusPmtTblCnInvRow, ciusCnKey, ciusCnNum, ciusInvNum,"
+                                + " ciusInvNumCount, ciusStatus, ciusStatusAt, ciusCreatedInvKey"
+                                + " FROM " + sf + " WHERE ciusKey = ?")) {
+                    ps.setInt(1, ciusKey);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) {
+                            throw new IllegalArgumentException("Строка очереди не найдена: " + ciusKey);
+                        }
+                        row = mapSfDouble(rs);
+                    }
+                }
+                if (!"open".equals(row.ciusStatus())) {
+                    throw new IllegalArgumentException(
+                            "Привязать можно только строку со статусом open, сейчас: " + row.ciusStatus());
+                }
+                if (!recordExists(connection, "SELECT 1 FROM ags.inv WHERE iKey = ?", invKey)) {
+                    throw new IllegalArgumentException("СФ inv не найден: " + invKey);
+                }
+                if (!recordExists(connection, "SELECT 1 FROM ags.cn WHERE cn_key = ?", cnKey)) {
+                    throw new IllegalArgumentException("Договор cn не найден: " + cnKey);
+                }
+                if (!recordExists(connection, "SELECT 1 FROM ags.cnInv WHERE ciInv = ? AND ciCn = ?", invKey, cnKey)) {
+                    try (PreparedStatement cnInvPs = connection.prepareStatement(
+                            "INSERT INTO ags.cnInv (ciInv, ciCn, ciTimeOfEntry) VALUES (?, ?, ?)")) {
+                        cnInvPs.setInt(1, invKey);
+                        cnInvPs.setInt(2, cnKey);
+                        cnInvPs.setTimestamp(3, now);
+                        cnInvPs.executeUpdate();
+                    }
+                }
+                String cnNum = loadCnNum(connection, cnKey);
+                try (PreparedStatement upd = connection.prepareStatement(
+                        "UPDATE " + sf
+                                + " SET ciusCnKey = ?, ciusCnNum = ?, ciusStatus = 'linked',"
+                                + " ciusStatusAt = ?, ciusCreatedInvKey = ? WHERE ciusKey = ?")) {
+                    upd.setInt(1, cnKey);
+                    if (cnNum == null || cnNum.isBlank()) {
+                        upd.setNull(2, Types.NVARCHAR);
+                    } else {
+                        upd.setNString(2, cnNum);
+                    }
+                    upd.setTimestamp(3, now);
+                    upd.setInt(4, invKey);
+                    upd.setInt(5, ciusKey);
+                    upd.executeUpdate();
+                }
+                connection.commit();
+                log.log(Level.INFO, "linkSfDoubleToCn ciusKey={0} invKey={1} cnKey={2}",
+                        new Object[]{ciusKey, invKey, cnKey});
+                try (PreparedStatement ps = connection.prepareStatement(
+                        "SELECT ciusKey, ciusCidut, ciusCiput, ciusDbtFile, ciusPmtFile, ciusUnloadKey,"
+                                + " ciusDbtTblCnInvRow, ciusPmtTblCnInvRow, ciusCnKey, ciusCnNum, ciusInvNum,"
+                                + " ciusInvNumCount, ciusStatus, ciusStatusAt, ciusCreatedInvKey"
+                                + " FROM " + sf + " WHERE ciusKey = ?")) {
+                    ps.setInt(1, ciusKey);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        rs.next();
+                        return mapSfDouble(rs);
+                    }
+                }
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось привязать строку очереди ciusKey=" + ciusKey, exception);
+        }
+    }
+
     private static java.time.LocalDate toLocalDate(Timestamp ts) {
         return ts == null ? null : ts.toLocalDateTime().toLocalDate();
+    }
+
+    /**
+     * Проверка существования одной записи по простому запросу.
+     */
+    private static boolean recordExists(Connection connection, String sql, int... params) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            for (int i = 0; i < params.length; i++) {
+                statement.setInt(i + 1, params[i]);
+            }
+            try (ResultSet rs = statement.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    /**
+     * Берёт первый номер договора для показа в очереди после ручной привязки.
+     */
+    private static String loadCnNum(Connection connection, int cnKey) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT TOP 1 cnnNum FROM ags.cnNum WHERE cnnCn = ? ORDER BY cnnKey")) {
+            statement.setInt(1, cnKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                return rs.next() ? rs.getNString("cnnNum") : null;
+            }
+        }
     }
 
     /**

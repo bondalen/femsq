@@ -95,6 +95,8 @@ extend type Mutation {
   rollbackSudzCnNotLoad(cnMark: Int!): Int!
   """Создать новый СФ из строки очереди КСДСФ (статус open → created)."""
   createSudzSfFromDouble(ciusKey: Int!): SudzCnInvUplSfDouble!
+  """Привязать строку очереди КСДСФ к существующему договору через ags.cnInv."""
+  linkSudzSfDoubleToCn(input: LinkSudzSfDoubleInput!): SudzCnInvUplSfDouble!
 }
 
 """Год-вариант СУДЗ (yr) с lookup-подписями."""
@@ -384,6 +386,13 @@ type SudzCnInvUplSfDouble {
   ciusStatus: String!
   ciusStatusAt: DateTime
   ciusCreatedInvKey: Int
+}
+
+"""Вход ручной привязки строки КСДСФ к существующему inv/cn."""
+input LinkSudzSfDoubleInput {
+  ciusKey: Int!
+  invKey: Int!
+  cnKey: Int!
 }
 
 """Excel-кандидат (строка CnInvDbtUplTbl)."""

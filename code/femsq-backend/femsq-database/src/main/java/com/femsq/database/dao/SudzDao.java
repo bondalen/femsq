@@ -415,4 +415,14 @@ public interface SudzDao {
      * @return обновлённая строка
      */
     SudzCnInvUplSfDouble createSfFromDouble(int ciusKey);
+
+    /**
+     * Привязать строку очереди к существующему договору через {@code ags.cnInv}.
+     *
+     * @param ciusKey ключ очереди со статусом open
+     * @param invKey ключ существующего {@code ags.inv}
+     * @param cnKey ключ существующего {@code ags.cn}
+     * @return обновлённая строка
+     */
+    SudzCnInvUplSfDouble linkSfDoubleToCn(int ciusKey, int invKey, int cnKey);
 }

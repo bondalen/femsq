@@ -410,4 +410,14 @@ public interface SudzService {
      * @return обновлённая строка
      */
     SudzCnInvUplSfDouble createSfFromDouble(int ciusKey);
+
+    /**
+     * Привязать строку очереди КСДСФ к существующему договору через {@code ags.cnInv}.
+     *
+     * @param ciusKey ключ open
+     * @param invKey существующий СФ
+     * @param cnKey существующий договор
+     * @return обновлённая строка
+     */
+    SudzCnInvUplSfDouble linkSfDoubleToCn(int ciusKey, int invKey, int cnKey);
 }

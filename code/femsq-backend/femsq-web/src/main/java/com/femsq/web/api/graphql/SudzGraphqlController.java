@@ -22,6 +22,7 @@ import com.femsq.database.model.sudz.SudzYearUpl;
 import com.femsq.database.model.sudz.SudzYyyyLookup;
 import com.femsq.database.service.SudzService;
 import com.femsq.web.api.dto.sudz.CreateSudzCmmGrInput;
+import com.femsq.web.api.dto.sudz.LinkSudzSfDoubleInput;
 import com.femsq.web.api.dto.sudz.CreateSudzPmUplInput;
 import com.femsq.web.api.dto.sudz.CreateSudzUplInput;
 import com.femsq.web.api.dto.sudz.CreateSudzYearInput;
@@ -543,6 +544,25 @@ public class SudzGraphqlController {
     public SudzCnInvUplSfDouble createSudzSfFromDouble(@Argument int ciusKey) {
         try {
             return sudzService.createSfFromDouble(ciusKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Привязать строку очереди КСДСФ к существующему договору.
+     *
+     * @param input ключ очереди + существующие inv/cn
+     * @return обновлённая строка
+     */
+    @MutationMapping
+    public SudzCnInvUplSfDouble linkSudzSfDoubleToCn(@Argument("input") LinkSudzSfDoubleInput input) {
+        try {
+            return sudzService.linkSfDoubleToCn(input.ciusKey(), input.invKey(), input.cnKey());
         } catch (IllegalArgumentException exception) {
             throw badRequest(exception);
         } catch (MissingConfigurationException exception) {

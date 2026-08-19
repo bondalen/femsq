@@ -1,0 +1,96 @@
+{
+  "id": "cn-picker",
+  "version": 1,
+  "root": {
+    "table": "cn",
+    "pk": "cn_key"
+  },
+  "title": [
+    "cn_key",
+    "cnMark",
+    "cn_date"
+  ],
+  "detail": "*",
+  "children": [
+    {
+      "edge": "cn.cnNum",
+      "to": "cnNum",
+      "card": "1:N",
+      "folder": "Договор, номера",
+      "title": [
+        "cnnKey",
+        "cnnNum",
+        "cnnType"
+      ],
+      "detail": "*",
+      "children": []
+    },
+    {
+      "edge": "cn.cn_s",
+      "to": "cn_s",
+      "card": "1:N",
+      "folder": "Договор. Стороны",
+      "title": [
+        "cn_s_key",
+        "cn_s_type"
+      ],
+      "detail": "*",
+      "children": [
+        {
+          "edge": "cn_s.smpl",
+          "to": "smpl",
+          "card": "1:N",
+          "folder": "Организации",
+          "title": [
+            "csosKey",
+            "csosOrgId"
+          ],
+          "detail": "*",
+          "children": [
+            {
+              "edge": "smpl.orgId",
+              "to": "orgId",
+              "card": "N:1",
+              "title": [
+                "org_id_value_l"
+              ],
+              "detail": [
+                "org_id_type",
+                "org_id_key"
+              ],
+              "children": [
+                {
+                  "edge": "orgId.og",
+                  "to": "og",
+                  "card": "N:1",
+                  "title": [
+                    "ogNm",
+                    "ogKey"
+                  ],
+                  "detail": [
+                    "ogNmOf",
+                    "ogINN",
+                    "ogKPP"
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "edge": "smpl.org",
+              "to": "org",
+              "card": "1:N",
+              "folder": "cn_s_org",
+              "title": [
+                "cn_s_org_key",
+                "csoCnDate"
+              ],
+              "detail": "*",
+              "children": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

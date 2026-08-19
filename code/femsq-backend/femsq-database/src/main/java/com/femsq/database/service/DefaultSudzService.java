@@ -487,6 +487,20 @@ public class DefaultSudzService implements SudzService {
         return sudzDao.createSfFromDouble(ciusKey);
     }
 
+    @Override
+    public SudzCnInvUplSfDouble linkSfDoubleToCn(int ciusKey, int invKey, int cnKey) {
+        if (ciusKey <= 0) {
+            throw new IllegalArgumentException("ciusKey должен быть положительным: " + ciusKey);
+        }
+        if (invKey <= 0) {
+            throw new IllegalArgumentException("invKey должен быть положительным: " + invKey);
+        }
+        if (cnKey <= 0) {
+            throw new IllegalArgumentException("cnKey должен быть положительным: " + cnKey);
+        }
+        return sudzDao.linkSfDoubleToCn(ciusKey, invKey, cnKey);
+    }
+
     private static String escapeHtml(String value) {
         if (value == null) {
             return "";

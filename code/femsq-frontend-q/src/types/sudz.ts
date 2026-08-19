@@ -212,6 +212,13 @@ export interface RunSudzDbtUplFunnelInput {
   flLoad: boolean;
 }
 
+/** Ручная привязка строки КСДСФ к существующему inv/cn. */
+export interface LinkSudzSfDoubleInput {
+  ciusKey: number;
+  invKey: number;
+  cnKey: number;
+}
+
 export interface SudzDbtUplFunnelResult {
   launcher: SudzDbtUplLauncher;
   ranSteps: string[];
