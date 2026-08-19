@@ -42,6 +42,22 @@
             class="q-pa-none col column no-wrap"
           >
             <div v-if="picker.kind === 'lookup-list'" class="col column no-wrap">
+              <div v-if="picker.searchPlaceholder" class="row items-end q-col-gutter-sm q-pa-sm">
+                <div class="col">
+                  <QInput
+                    :model-value="pickerSearch[picker.id] ?? ''"
+                    :label="picker.searchPlaceholder"
+                    :hint="picker.searchHint"
+                    dense
+                    outlined
+                    @update:model-value="setPickerSearch(picker.id, $event)"
+                    @keyup.enter="emitSearch(picker)"
+                  />
+                </div>
+                <div class="shrink-0">
+                  <QBtn color="primary" unelevated no-caps label="Найти" @click="emitSearch(picker)" />
+                </div>
+              </div>
               <FemsqTable
                 class="fit"
                 :rows="picker.rows"
@@ -56,17 +72,35 @@
             </div>
             <QSplitter v-else v-model="pickerSplit" :limits="[25, 70]" horizontal class="col">
               <template #before>
-                <FemsqTable
-                  class="fit"
-                  :rows="picker.rows"
-                  :columns="picker.columns"
-                  row-key="rowKey"
-                  dense
-                  flat
-                  selection="single"
-                  :selected="picker.selected"
-                  @update:selected="emitSelect(picker, $event)"
-                />
+                <div class="fit column no-wrap">
+                  <div v-if="picker.searchPlaceholder" class="row items-end q-col-gutter-sm q-pa-sm">
+                    <div class="col">
+                      <QInput
+                        :model-value="pickerSearch[picker.id] ?? ''"
+                        :label="picker.searchPlaceholder"
+                        :hint="picker.searchHint"
+                        dense
+                        outlined
+                        @update:model-value="setPickerSearch(picker.id, $event)"
+                        @keyup.enter="emitSearch(picker)"
+                      />
+                    </div>
+                    <div class="shrink-0">
+                      <QBtn color="primary" unelevated no-caps label="Найти" @click="emitSearch(picker)" />
+                    </div>
+                  </div>
+                  <FemsqTable
+                    class="col"
+                    :rows="picker.rows"
+                    :columns="picker.columns"
+                    row-key="rowKey"
+                    dense
+                    flat
+                    selection="single"
+                    :selected="picker.selected"
+                    @update:selected="emitSelect(picker, $event)"
+                  />
+                </div>
               </template>
               <template #after>
                 <div class="q-pa-sm column fill-pane no-wrap">
@@ -119,16 +153,21 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:modelValue': [value: boolean];
   'picker-select': [pickerId: string, rowKey: string | null];
+  'picker-search': [pickerId: string, value: string];
   save: [];
 }>();
 
 const pickerSplit = ref(38);
 const activePickerId = ref('');
+const pickerSearch = ref<Record<string, string>>({});
 
 watch(
   () => props.form.id,
   () => {
     activePickerId.value = props.form.pickers[0]?.id ?? '';
+    pickerSearch.value = Object.fromEntries(
+      props.form.pickers.map((picker) => [picker.id, picker.searchValue ?? ''])
+    );
   },
   { immediate: true }
 );
@@ -154,6 +193,17 @@ function emitSelect(
   selected: Array<{ rowKey?: string | null }> | undefined
 ): void {
   emit('picker-select', picker.id, selected?.[0]?.rowKey ?? null);
+}
+
+function setPickerSearch(pickerId: string, value: string | number | null): void {
+  pickerSearch.value = {
+    ...pickerSearch.value,
+    [pickerId]: value == null ? '' : String(value)
+  };
+}
+
+function emitSearch(picker: RelationPickerState): void {
+  emit('picker-search', picker.id, pickerSearch.value[picker.id] ?? '');
 }
 </script>
 

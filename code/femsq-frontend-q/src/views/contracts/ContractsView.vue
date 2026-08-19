@@ -246,6 +246,7 @@
       :fetch-node="fetchRelationNode"
       :fetch-expand="fetchRelationExpand"
       @picker-select="onPickerSelect"
+      @picker-search="onPickerSearch"
       @save="onLinkSave"
     />
   </QPage>
@@ -302,6 +303,7 @@ const orgIdFilter = ref('');
 const relationTreeKey = ref(0);
 const relationAction = ref<RelationTreeActionContext | null>(null);
 const linkModalOpen = ref(false);
+const invSearch = ref('');
 const invCandidates = ref<RelationPickerCandidateRow[]>([]);
 const selectedInvCandidate = ref<RelationPickerCandidateRow | null>(null);
 
@@ -435,7 +437,8 @@ const linkForm = computed<RelationFormState | null>(() => {
     selectedInvCandidate: selectedInvCandidate.value,
     cnPickerSpec: cnRelationSpec,
     invPickerSpec: contractsInvSpec,
-    pickerColumns
+    pickerColumns,
+    invSearchValue: invSearch.value
   });
 });
 
@@ -448,35 +451,16 @@ function onNestedCnNumClick(_evt: Event, row: CnNumDto): void {
 }
 
 /**
- * Contract-side action открывает тот же flow `cnInv.link`, но сначала запрашивает номер СФ.
+ * Contract-side action открывает тот же flow `cnInv.link`.
  */
-async function onRelationAction(context: RelationTreeActionContext): Promise<void> {
+function onRelationAction(context: RelationTreeActionContext): void {
   if (context.actionId !== 'cnInv.link.create' || context.node.edge !== 'cn.cnInv') {
     return;
   }
-  const result = await promptInvoiceNumber();
-  if (result == null) {
-    return;
-  }
-  const invNum = result.trim();
-  if (!invNum) {
-    $q.notify({ type: 'warning', message: 'Введите номер СФ.' });
-    return;
-  }
-  const matches = await getSudzSfDoubleDomainMatches(invNum);
-  invCandidates.value = matches.map((row, index) => ({
-    rowKey: `${row.invKey}-${index}`,
-    invKey: row.invKey,
-    invNum: row.invNum,
-    cnKey: row.cnKey,
-    cnNum: row.cnNum
-  }));
-  if (invCandidates.value.length === 0) {
-    $q.notify({ type: 'warning', message: `СФ с номером «${invNum}» в домене не найдены.` });
-    return;
-  }
+  invSearch.value = '';
+  invCandidates.value = [];
+  selectedInvCandidate.value = null;
   relationAction.value = context;
-  selectedInvCandidate.value = invCandidates.value[0];
   linkModalOpen.value = true;
 }
 
@@ -485,6 +469,38 @@ function onPickerSelect(pickerId: string, rowKey: string | null): void {
     return;
   }
   selectedInvCandidate.value = invCandidates.value.find((row) => row.rowKey === rowKey) ?? null;
+}
+
+async function onPickerSearch(pickerId: string, value: string): Promise<void> {
+  if (pickerId !== 'inv') {
+    return;
+  }
+  invSearch.value = value;
+  const invNum = value.trim();
+  if (!invNum) {
+    invCandidates.value = [];
+    selectedInvCandidate.value = null;
+    return;
+  }
+  try {
+    const matches = await getSudzSfDoubleDomainMatches(invNum);
+    invCandidates.value = matches.map((row, index) => ({
+      rowKey: `${row.invKey}-${index}`,
+      invKey: row.invKey,
+      invNum: row.invNum,
+      cnKey: row.cnKey,
+      cnNum: row.cnNum
+    }));
+    selectedInvCandidate.value = invCandidates.value[0] ?? null;
+    if (invCandidates.value.length === 0) {
+      $q.notify({ type: 'warning', message: `СФ с номером «${invNum}» в домене не найдены.` });
+    }
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: error instanceof Error ? error.message : 'Ошибка поиска СФ'
+    });
+  }
 }
 
 async function onLinkSave(): Promise<void> {
@@ -500,27 +516,12 @@ async function onLinkSave(): Promise<void> {
     relationAction.value = null;
     relationTreeKey.value += 1;
     $q.notify({ type: 'positive', message: 'Связь cnInv сохранена' });
-  } catch {
-    /* contracts-api already wraps message */
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: error instanceof Error ? error.message : 'Не удалось сохранить cnInv'
+    });
   }
-}
-
-function promptInvoiceNumber(): Promise<string | null> {
-  return new Promise((resolve) => {
-    $q.dialog({
-      title: 'Найти СФ',
-      message: 'Введите точный номер существующего счёта-фактуры для привязки к договору.',
-      prompt: {
-        model: '',
-        type: 'text'
-      },
-      cancel: true,
-      persistent: true
-    })
-      .onOk((value) => resolve(typeof value === 'string' ? value : ''))
-      .onCancel(() => resolve(null))
-      .onDismiss(() => resolve(null));
-  });
 }
 
 function filterOrgIds(val: string, update: (fn: () => void) => void): void {
