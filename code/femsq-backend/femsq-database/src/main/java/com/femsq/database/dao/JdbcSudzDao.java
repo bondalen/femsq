@@ -2362,7 +2362,7 @@ public class JdbcSudzDao implements SudzDao {
                 String cnNum = loadCnNum(connection, cnKey);
                 try (PreparedStatement upd = connection.prepareStatement(
                         "UPDATE " + sf
-                                + " SET ciusCnKey = ?, ciusCnNum = ?, ciusStatus = 'linked',"
+                                + " SET ciusCnKey = ?, ciusCnNum = ?, ciusStatus = 'created',"
                                 + " ciusStatusAt = ?, ciusCreatedInvKey = ? WHERE ciusKey = ?")) {
                     upd.setInt(1, cnKey);
                     if (cnNum == null || cnNum.isBlank()) {

@@ -1,24 +1,34 @@
 <template>
-  <QPage class="sudz-sf-page column no-wrap absolute-full">
-    <div class="row items-center q-px-md q-py-sm shrink-0 q-gutter-sm">
-      <QBtn flat dense no-caps icon="arrow_back" label="К загрузке свода" @click="goBack" />
-      <div class="text-subtitle1">Разбор СФ с совпадающими номерами</div>
-      <QSpace />
-      <div class="text-caption text-grey-6">
-        upl={{ uplKey ?? '—' }} · очередь {{ rows.length }} · open {{ openCount }}
+  <!-- absolute-full на внутреннем div, как на экране «Загрузка свода» — иначе шапка с «Назад» обрезается -->
+  <QPage class="q-pa-none sudz-sf-page" data-test="sudz-sf-double-view">
+    <div class="absolute-full q-pa-md column no-wrap sudz-sf-page-inner">
+      <div class="row items-center q-mb-sm q-gutter-sm shrink-0">
+        <QBtn
+          color="primary"
+          unelevated
+          dense
+          no-caps
+          icon="arrow_back"
+          label="К загрузке свода"
+          data-test="sudz-sf-double-back"
+          @click="goBack"
+        />
+        <div class="text-h6 col">Разбор СФ с совпадающими номерами</div>
+        <div class="text-caption text-grey-6 shrink-0">
+          upl={{ uplKey ?? '—' }} · очередь {{ rows.length }} · open {{ openCount }}
+        </div>
       </div>
-    </div>
 
-    <div v-if="!uplKey" class="q-pa-md text-grey-6">Выберите выгрузку на экране «Загрузка свода».</div>
-    <div v-else-if="error" class="q-pa-md text-negative">{{ error }}</div>
+      <div v-if="!uplKey" class="text-grey-6">Выберите выгрузку на экране «Загрузка свода».</div>
+      <div v-else-if="error" class="text-negative">{{ error }}</div>
 
-    <QSplitter
-      v-else
-      v-model="queueSplit"
-      :limits="[15, 40]"
-      separator-class="sudz-split-sep"
-      class="col sudz-sf-splitter"
-    >
+      <QSplitter
+        v-else
+        v-model="queueSplit"
+        :limits="[15, 40]"
+        separator-class="sudz-split-sep"
+        class="col sudz-sf-splitter"
+      >
       <template #before>
         <div class="column fill-pane no-wrap q-pa-sm">
           <FemsqTable
@@ -134,13 +144,16 @@
           </template>
         </QSplitter>
       </template>
-    </QSplitter>
+      </QSplitter>
+    </div>
     <RecordModal
       v-if="linkForm"
       v-model="linkModalOpen"
       :form="linkForm"
       :fetch-node="fetchRelationNode"
       :fetch-expand="fetchRelationExpand"
+      :save-error="linkSaveError"
+      :save-loading="linkSaveLoading"
       @picker-select="onPickerSelect"
       @save="onLinkSave"
     />
@@ -181,7 +194,6 @@ import {
   QBtn,
   QMarkupTable,
   QPage,
-  QSpace,
   QSplitter,
   QTab,
   QTabPanel,
@@ -223,6 +235,8 @@ const selectedDomain = ref<DomainRow[]>([]);
 const relationAction = ref<RelationTreeActionContext | null>(null);
 const linkModalOpen = ref(false);
 const selectedCnCandidate = ref<PickerCandidateRow | null>(null);
+const linkSaveError = ref<string | null>(null);
+const linkSaveLoading = ref(false);
 const relationTreeKey = ref(0);
 const cnInvFormMode = computed<'create' | 'edit'>(() =>
   relationAction.value?.actionId === 'cnInv.link.edit' ? 'edit' : 'create'
@@ -436,6 +450,7 @@ async function onCreate(): Promise<void> {
 function onRelationAction(context: RelationTreeActionContext): void {
   if (context.actionId === 'cnInv.link.create') {
     relationAction.value = context;
+    linkSaveError.value = null;
     const preferredCnKey = selectedDomainRow.value?.cnKey ?? null;
     selectedCnCandidate.value =
       (preferredCnKey != null ? cnPickerRows.value.find((r) => r.cnKey === preferredCnKey) : null) ??
@@ -446,6 +461,7 @@ function onRelationAction(context: RelationTreeActionContext): void {
   }
   if (context.actionId === 'cnInv.link.edit' && context.node.table === 'cnInv') {
     relationAction.value = context;
+    linkSaveError.value = null;
     selectedCnCandidate.value = cnCandidateFromContext(context);
     linkModalOpen.value = true;
     return;
@@ -485,20 +501,23 @@ function onPickerSelect(pickerId: string, rowKey: string | null): void {
  */
 async function onLinkSave(): Promise<void> {
   if (selectedCnCandidate.value == null) {
-    error.value = 'Выберите договор для новой связи cnInv.';
+    linkSaveError.value = 'Выберите договор для новой связи cnInv.';
     return;
   }
   const mode = cnInvFormMode.value;
   const ciusKey = selected.value?.ciusKey;
   const currentInvFromAction = Number(relationAction.value?.node.fields.ciInv ?? null);
   const invKey =
-    relationAction.value?.node.fromId ?? (currentInvFromAction > 0 ? currentInvFromAction : null);
+    relationAction.value?.node.fromId ??
+    selectedDomainRow.value?.invKey ??
+    (currentInvFromAction > 0 ? currentInvFromAction : null);
   const cnKey = selectedCnCandidate.value.cnKey;
   if (ciusKey == null || invKey == null || cnKey == null) {
-    error.value = 'Недостаточно данных для создания связи cnInv.';
+    linkSaveError.value = 'Недостаточно данных для создания связи cnInv.';
     return;
   }
-  domainLoading.value = true;
+  linkSaveLoading.value = true;
+  linkSaveError.value = null;
   error.value = null;
   try {
     if (mode === 'edit') {
@@ -510,7 +529,6 @@ async function onLinkSave(): Promise<void> {
       relationTreeKey.value += 1;
       linkModalOpen.value = false;
       relationAction.value = null;
-      error.value = null;
       return;
     }
     const updated = await linkSudzSfDoubleToCn({ ciusKey, invKey, cnKey });
@@ -522,9 +540,11 @@ async function onLinkSave(): Promise<void> {
     linkModalOpen.value = false;
     relationAction.value = null;
   } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e);
+    const message = e instanceof Error ? e.message : String(e);
+    linkSaveError.value = message;
+    error.value = message;
   } finally {
-    domainLoading.value = false;
+    linkSaveLoading.value = false;
   }
 }
 
@@ -560,6 +580,11 @@ async function onDeleteCnInv(context: RelationTreeActionContext): Promise<void> 
 
 <style scoped>
 .sudz-sf-page {
+  min-height: 0;
+}
+
+.sudz-sf-page-inner {
+  box-sizing: border-box;
   min-height: 0;
 }
 .sudz-sf-splitter {

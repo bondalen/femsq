@@ -8,6 +8,9 @@
       </QCardSection>
 
       <QCardSection class="q-pt-none">
+        <QBanner v-if="props.saveError" class="bg-negative text-white q-mb-sm" rounded dense>
+          {{ props.saveError }}
+        </QBanner>
         <div class="column q-gutter-sm">
           <QInput
             v-for="field in form.fields"
@@ -162,6 +165,7 @@
           unelevated
           no-caps
           :label="props.form.mode === 'edit' ? 'Сохранить' : 'OK'"
+          :loading="props.saveLoading"
           @click="emit('save')"
         />
       </QCardActions>
@@ -173,7 +177,7 @@
 import { ref, watch } from 'vue';
 
 import { FemsqTable } from 'fequlib';
-import { QBtn, QCard, QCardActions, QCardSection, QDialog, QInput, QSeparator, QSpace, QSplitter, QTab, QTabPanel, QTabPanels, QTabs } from 'quasar';
+import { QBanner, QBtn, QCard, QCardActions, QCardSection, QDialog, QInput, QSeparator, QSpace, QSplitter, QTab, QTabPanel, QTabPanels, QTabs } from 'quasar';
 
 import RelationTree from '@/components/relation/RelationTree.vue';
 import type { RelationFetchExpand, RelationFetchNode } from '@/trees/relation-tree';
@@ -184,6 +188,8 @@ const props = defineProps<{
   form: RelationFormState;
   fetchNode: RelationFetchNode;
   fetchExpand: RelationFetchExpand;
+  saveError?: string | null;
+  saveLoading?: boolean;
 }>();
 
 const emit = defineEmits<{
