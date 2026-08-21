@@ -20,12 +20,14 @@ import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
 import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
+import com.femsq.database.model.sudz.SudzSfDoubleSumMatches;
 import com.femsq.database.model.sudz.SudzSvodResult;
 import com.femsq.database.model.sudz.SudzUplLookup;
 import com.femsq.database.model.sudz.SudzYear;
 import com.femsq.database.model.sudz.SudzYearDetail;
 import com.femsq.database.model.sudz.SudzYearUpl;
 import com.femsq.database.model.sudz.SudzYyyyLookup;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -402,6 +404,15 @@ public interface SudzService {
      * @return совпадения
      */
     List<SudzSfDoubleDomainMatch> findSfDoubleDomainMatches(String invNum);
+
+    /**
+     * Кандидаты вкладки «Суммы» по сумме Excel ±ε.
+     *
+     * @param debt сумма Excel
+     * @param epsilon допуск (рубли)
+     * @return старые и новые совпадения
+     */
+    SudzSfDoubleSumMatches findSfDoubleSumMatches(BigDecimal debt, BigDecimal epsilon);
 
     /**
      * Создать новый СФ из строки очереди КСДСФ.

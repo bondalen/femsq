@@ -19,6 +19,14 @@ class RelationEdgeCatalogTest {
         assertEquals("upl", RelationEdgeCatalog.requireEdge("cid.upl").to().name());
         assertEquals("invDbt", RelationEdgeCatalog.requireEdge("inv.invDbt").to().name());
         assertEquals("dv", RelationEdgeCatalog.requireEdge("dbt.dv").to().name());
+        assertEquals("cia", RelationEdgeCatalog.requireEdge("cid.cia").to().name());
+        assertEquals("cias", RelationEdgeCatalog.requireEdge("cia.cias").to().name());
+        assertEquals("cnInv", RelationEdgeCatalog.requireEdge("cias.cnInv").to().name());
+        assertEquals("invNum", RelationEdgeCatalog.requireEdge("inv.invNum").to().name());
+        assertEquals("dbt", RelationEdgeCatalog.requireEdge("dv.dbt").to().name());
+        assertEquals("idd", RelationEdgeCatalog.requireEdge("dbt.idd").to().name());
+        assertEquals("invDbt", RelationEdgeCatalog.requireEdge("idd.invDbt").to().name());
+        assertEquals("inv", RelationEdgeCatalog.requireEdge("invDbt.inv").to().name());
         assertEquals("og", RelationEdgeCatalog.requireEdge("orgId.og").to().name());
         assertEquals("csosOrgId", RelationEdgeCatalog.requireEdge("smpl.orgId").fromJoin());
     }
@@ -27,9 +35,9 @@ class RelationEdgeCatalogTest {
     void unknownEdgeFails() {
         IllegalArgumentException error = assertThrows(
                 IllegalArgumentException.class,
-                () -> RelationEdgeCatalog.requireEdge("inv.invNum")
+                () -> RelationEdgeCatalog.requireEdge("no.such.edge")
         );
-        assertEquals("Неизвестное ребро relationExpand: inv.invNum", error.getMessage());
+        assertEquals("Неизвестное ребро relationExpand: no.such.edge", error.getMessage());
     }
 
     @Test

@@ -45,6 +45,11 @@ extend type Query {
   sudzSfDoubleExcelCandidate(ciusKey: Int!): SudzSfDoubleExcelCandidate
   """Доменные СФ с совпадающим номером."""
   sudzSfDoubleDomainMatches(invNum: String!): [SudzSfDoubleDomainMatch!]!
+  """
+  Кандидаты вкладки «Суммы»: старая (cn_inv_dbt) и новая (DbtValue) структуры
+  по сумме Excel ± epsilon (по умолчанию 0.01).
+  """
+  sudzSfDoubleSumMatches(debt: Float!, epsilon: Float): SudzSfDoubleSumMatches!
 }
 
 extend type Mutation {
@@ -427,6 +432,32 @@ type SudzSfDoubleDomainMatch {
   ciKey: Int
   cnKey: Int
   cnNum: String
+}
+
+"""Совпадение суммы в старой структуре (ags.cn_inv_dbt)."""
+type SudzSfDoubleOldSumMatch {
+  cidKey: Int!
+  number: Int
+  dbtTtl: Float
+  dbtOverd: Float
+  debtType: String
+  uplKey: Int
+  ciaKey: Int
+}
+
+"""Совпадение суммы в новой структуре (sudz.DbtValue)."""
+type SudzSfDoubleNewSumMatch {
+  dvKey: Int!
+  dvTtl: Float
+  dvOverd: Float
+  dvUpl: Int
+  dvDbt: Int
+}
+
+"""Пара списков совпадений по сумме для вкладки «Суммы»."""
+type SudzSfDoubleSumMatches {
+  oldMatches: [SudzSfDoubleOldSumMatch!]!
+  newMatches: [SudzSfDoubleNewSumMatch!]!
 }
 
 """Вход upsert шапки лаунчера."""

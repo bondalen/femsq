@@ -90,7 +90,7 @@
             <div class="column fill-pane no-wrap q-pa-sm">
               <QTabs v-model="domainTab" dense class="shrink-0" active-color="primary">
                 <QTab name="sf" label="Счета-фактуры" no-caps />
-                <QTab name="sums" label="Суммы" no-caps disable />
+                <QTab name="sums" label="Суммы" no-caps />
               </QTabs>
               <QTabPanels v-model="domainTab" class="col column no-wrap" animated>
                 <QTabPanel name="sf" class="q-pa-none column fill-pane no-wrap">
@@ -136,8 +136,112 @@
                     </template>
                   </QSplitter>
                 </QTabPanel>
-                <QTabPanel name="sums" class="q-pa-md text-grey-6">
-                  Вкладка «суммы» — отдельное ТЗ (S68).
+                <QTabPanel name="sums" class="q-pa-none column fill-pane no-wrap" data-test="sudz-sf-sums-tab">
+                  <div class="text-caption text-grey-6 q-px-sm q-pt-xs shrink-0">
+                    Якорь Excel:
+                    {{ excelDebtLabel }}
+                    · совпадение только по сумме (ε={{ sumMatchEpsilon }}) · lookup API — следующий срез
+                  </div>
+                  <QSplitter
+                    v-model="sumsOldNewSplit"
+                    horizontal
+                    :limits="[30, 70]"
+                    separator-class="sudz-split-sep"
+                    class="col sudz-sf-splitter"
+                  >
+                    <template #before>
+                      <div class="column fill-pane no-wrap q-pa-xs">
+                        <div class="text-subtitle2 q-px-sm shrink-0">Старая структура · cn_inv_dbt</div>
+                        <QSplitter
+                          v-model="sumsOldSplit"
+                          horizontal
+                          :limits="[25, 70]"
+                          separator-class="sudz-split-sep"
+                          class="col sudz-sf-splitter"
+                        >
+                          <template #before>
+                            <FemsqTable
+                              class="fit"
+                              :rows="oldSumRows"
+                              :columns="oldSumColumns"
+                              row-key="rowKey"
+                              dense
+                              flat
+                              :loading="oldSumLoading"
+                              selection="single"
+                              v-model:selected="selectedOldSum"
+                              :show-filter="false"
+                              data-test="sudz-sf-sums-old-list"
+                            />
+                          </template>
+                          <template #after>
+                            <div class="q-pa-sm column fill-pane no-wrap">
+                              <div v-if="!selectedOldSumRow" class="text-grey-6">
+                                Выберите сумму в таблице (старая структура).
+                              </div>
+                              <RelationTree
+                                v-else
+                                :key="`cid-sum-${selectedOldSumRow.cidKey}`"
+                                class="col"
+                                :spec="cidSumSpec"
+                                :root-id="selectedOldSumRow.cidKey"
+                                :fetch-node="fetchRelationNode"
+                                :fetch-expand="fetchRelationExpand"
+                                data-test="sudz-sf-sums-old-tree"
+                                root-class="sudz-sf-double-tree"
+                              />
+                            </div>
+                          </template>
+                        </QSplitter>
+                      </div>
+                    </template>
+                    <template #after>
+                      <div class="column fill-pane no-wrap q-pa-xs">
+                        <div class="text-subtitle2 q-px-sm shrink-0">Новая структура · DbtValue</div>
+                        <QSplitter
+                          v-model="sumsNewSplit"
+                          horizontal
+                          :limits="[25, 70]"
+                          separator-class="sudz-split-sep"
+                          class="col sudz-sf-splitter"
+                        >
+                          <template #before>
+                            <FemsqTable
+                              class="fit"
+                              :rows="newSumRows"
+                              :columns="newSumColumns"
+                              row-key="rowKey"
+                              dense
+                              flat
+                              :loading="newSumLoading"
+                              selection="single"
+                              v-model:selected="selectedNewSum"
+                              :show-filter="false"
+                              data-test="sudz-sf-sums-new-list"
+                            />
+                          </template>
+                          <template #after>
+                            <div class="q-pa-sm column fill-pane no-wrap">
+                              <div v-if="!selectedNewSumRow" class="text-grey-6">
+                                Выберите сумму в таблице (новая структура).
+                              </div>
+                              <RelationTree
+                                v-else
+                                :key="`dv-sum-${selectedNewSumRow.dvKey}`"
+                                class="col"
+                                :spec="dvSumSpec"
+                                :root-id="selectedNewSumRow.dvKey"
+                                :fetch-node="fetchRelationNode"
+                                :fetch-expand="fetchRelationExpand"
+                                data-test="sudz-sf-sums-new-tree"
+                                root-class="sudz-sf-double-tree"
+                              />
+                            </div>
+                          </template>
+                        </QSplitter>
+                      </div>
+                    </template>
+                  </QSplitter>
                 </QTabPanel>
               </QTabPanels>
             </div>
@@ -174,6 +278,7 @@ import {
   createSudzSfFromDouble,
   getSudzSfDoubleDomainMatches,
   getSudzSfDoubleExcelCandidate,
+  getSudzSfDoubleSumMatches,
   linkSudzSfDoubleToCn
 } from '@/api/sudz-api';
 import { fetchRelationExpand, fetchRelationNode } from '@/api/relation-api';
@@ -186,6 +291,8 @@ import type {
 } from '@/types/sudz';
 import * as cnPickerSpecJson from '@/trees/cn-picker.tree.json';
 import * as contractsInvSpecJson from '@/trees/contracts-inv.tree.json';
+import * as cidSumSpecJson from '@/trees/ksdsf-cid-sum.tree.json';
+import * as dvSumSpecJson from '@/trees/ksdsf-dv-sum.tree.json';
 import * as ksdsfSpec from '@/trees/ksdsf-inv-num.tree.json';
 import { buildCnInvLinkForm } from '@/trees/relation-form-registry';
 import type { RelationFormState, RelationPickerRow } from '@/trees/relation-forms';
@@ -211,9 +318,34 @@ type PickerCandidateRow = RelationPickerRow & {
   invNum?: string | null;
 };
 
+/** Строка таблицы сумм старой структуры (макет; данные — следующий срез). */
+type OldSumRow = {
+  rowKey: string;
+  cidKey: number;
+  dbtTtl: number | null;
+  dbtOverd: number | null;
+  number: number | null;
+  debtType: string | null;
+};
+
+/** Строка таблицы сумм новой структуры (макет; данные — следующий срез). */
+type NewSumRow = {
+  rowKey: string;
+  dvKey: number;
+  dvTtl: number | null;
+  dvOverd: number | null;
+  dvUpl: number | null;
+  dvDbt: number | null;
+};
+
 const relationSpec = ksdsfSpec as RelationTreeSpec;
 const cnPickerSpec = cnPickerSpecJson as RelationTreeSpec;
 const contractsInvSpec = contractsInvSpecJson as RelationTreeSpec;
+const cidSumSpec = cidSumSpecJson as RelationTreeSpec;
+const dvSumSpec = dvSumSpecJson as RelationTreeSpec;
+
+/** Допуск совпадения суммы с Excel (рубли). */
+const sumMatchEpsilon = 0.01;
 
 const connection = useConnectionStore();
 const store = useSudzDbtUplStore();
@@ -222,6 +354,9 @@ const $q = useQuasar();
 const queueSplit = ref(22);
 const ksdsfSplit = ref(34);
 const domainSplit = ref(45);
+const sumsOldNewSplit = ref(50);
+const sumsOldSplit = ref(40);
+const sumsNewSplit = ref(40);
 const domainTab = ref('sf');
 const loading = ref(false);
 const creating = ref(false);
@@ -232,6 +367,12 @@ const selectedRows = ref<SudzCnInvUplSfDouble[]>([]);
 const excel = ref<SudzSfDoubleExcelCandidate | null>(null);
 const domainMatches = ref<DomainRow[]>([]);
 const selectedDomain = ref<DomainRow[]>([]);
+const oldSumRows = ref<OldSumRow[]>([]);
+const newSumRows = ref<NewSumRow[]>([]);
+const selectedOldSum = ref<OldSumRow[]>([]);
+const selectedNewSum = ref<NewSumRow[]>([]);
+const oldSumLoading = ref(false);
+const newSumLoading = ref(false);
 const relationAction = ref<RelationTreeActionContext | null>(null);
 const linkModalOpen = ref(false);
 const selectedCnCandidate = ref<PickerCandidateRow | null>(null);
@@ -253,6 +394,15 @@ const canCreate = computed(
   () => selected.value != null && selected.value.ciusStatus === 'open' && !!selected.value.ciusCnKey
 );
 const selectedDomainRow = computed(() => selectedDomain.value[0] ?? null);
+const selectedOldSumRow = computed(() => selectedOldSum.value[0] ?? null);
+const selectedNewSumRow = computed(() => selectedNewSum.value[0] ?? null);
+const excelDebtLabel = computed(() => {
+  const debt = excel.value?.cidutDebt;
+  if (debt == null) {
+    return 'сумма не загружена';
+  }
+  return String(debt);
+});
 
 const queueColumns: FemsqTableColumn<SudzCnInvUplSfDouble>[] = [
   { name: 'ciusStatus', label: 'статус', field: 'ciusStatus', align: 'left' },
@@ -267,6 +417,22 @@ const domainColumns: FemsqTableColumn<DomainRow>[] = [
   { name: 'invNum', label: 'номер', field: 'invNum', align: 'left' },
   { name: 'cnNum', label: 'договор', field: 'cnNum', align: 'left' },
   { name: 'cnKey', label: 'cn', field: 'cnKey', align: 'right' }
+];
+
+const oldSumColumns: FemsqTableColumn<OldSumRow>[] = [
+  { name: 'cidKey', label: 'cid', field: 'cidKey', align: 'right' },
+  { name: 'number', label: '№', field: 'number', align: 'right' },
+  { name: 'dbtTtl', label: 'сумма', field: 'dbtTtl', align: 'right' },
+  { name: 'dbtOverd', label: 'просроч.', field: 'dbtOverd', align: 'right' },
+  { name: 'debtType', label: 'тип', field: 'debtType', align: 'left' }
+];
+
+const newSumColumns: FemsqTableColumn<NewSumRow>[] = [
+  { name: 'dvKey', label: 'dv', field: 'dvKey', align: 'right' },
+  { name: 'dvDbt', label: 'dbt', field: 'dvDbt', align: 'right' },
+  { name: 'dvTtl', label: 'сумма', field: 'dvTtl', align: 'right' },
+  { name: 'dvOverd', label: 'просроч.', field: 'dvOverd', align: 'right' },
+  { name: 'dvUpl', label: 'upl', field: 'dvUpl', align: 'right' }
 ];
 
 const pickerColumns: FemsqTableColumn<PickerCandidateRow>[] = [
@@ -371,12 +537,18 @@ watch(
     excel.value = null;
     domainMatches.value = [];
     selectedDomain.value = [];
+    oldSumRows.value = [];
+    newSumRows.value = [];
+    selectedOldSum.value = [];
+    selectedNewSum.value = [];
     relationAction.value = null;
     linkModalOpen.value = false;
     selectedCnCandidate.value = null;
     if (!row) return;
     excelLoading.value = true;
     domainLoading.value = true;
+    oldSumLoading.value = true;
+    newSumLoading.value = true;
     error.value = null;
     try {
       excel.value = await getSudzSfDoubleExcelCandidate(row.ciusKey);
@@ -386,11 +558,33 @@ watch(
         ...m,
         rowKey: `${m.invKey}-${m.ciKey ?? 'x'}-${i}`
       }));
+      const debt = excel.value?.cidutDebt;
+      if (debt != null && Number.isFinite(debt)) {
+        const sums = await getSudzSfDoubleSumMatches(debt, sumMatchEpsilon);
+        oldSumRows.value = sums.oldMatches.map((m) => ({
+          rowKey: String(m.cidKey),
+          cidKey: m.cidKey,
+          number: m.number,
+          dbtTtl: m.dbtTtl,
+          dbtOverd: m.dbtOverd,
+          debtType: m.debtType
+        }));
+        newSumRows.value = sums.newMatches.map((m) => ({
+          rowKey: String(m.dvKey),
+          dvKey: m.dvKey,
+          dvTtl: m.dvTtl,
+          dvOverd: m.dvOverd,
+          dvUpl: m.dvUpl,
+          dvDbt: m.dvDbt
+        }));
+      }
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e);
     } finally {
       excelLoading.value = false;
       domainLoading.value = false;
+      oldSumLoading.value = false;
+      newSumLoading.value = false;
     }
   },
   { immediate: true }

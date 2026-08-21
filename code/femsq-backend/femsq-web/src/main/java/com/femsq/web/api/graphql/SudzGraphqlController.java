@@ -14,6 +14,7 @@ import com.femsq.database.model.sudz.SudzPmUplLookup;
 import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
 import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
+import com.femsq.database.model.sudz.SudzSfDoubleSumMatches;
 import com.femsq.database.model.sudz.SudzSvodResult;
 import com.femsq.database.model.sudz.SudzUplLookup;
 import com.femsq.database.model.sudz.SudzYear;
@@ -31,6 +32,7 @@ import com.femsq.web.api.dto.sudz.SudzDebtCollectionInput;
 import com.femsq.web.api.dto.sudz.UpdateSudzDbtUplFileInput;
 import com.femsq.web.api.dto.sudz.UpdateSudzYearInput;
 import com.femsq.web.api.sudz.SudzDbtUplFunnelRunner;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -525,6 +527,31 @@ public class SudzGraphqlController {
     public List<SudzSfDoubleDomainMatch> sudzSfDoubleDomainMatches(@Argument String invNum) {
         try {
             return sudzService.findSfDoubleDomainMatches(invNum);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Кандидаты вкладки «Суммы» по сумме Excel ±ε.
+     *
+     * @param debt сумма Excel ({@code cidutDebt})
+     * @param epsilon допуск; null → 0.01
+     * @return старые и новые совпадения
+     */
+    @QueryMapping
+    public SudzSfDoubleSumMatches sudzSfDoubleSumMatches(
+            @Argument double debt,
+            @Argument Double epsilon
+    ) {
+        try {
+            BigDecimal debtBd = BigDecimal.valueOf(debt);
+            BigDecimal epsBd = epsilon == null ? new BigDecimal("0.01") : BigDecimal.valueOf(epsilon);
+            return sudzService.findSfDoubleSumMatches(debtBd, epsBd);
         } catch (IllegalArgumentException exception) {
             throw badRequest(exception);
         } catch (MissingConfigurationException exception) {

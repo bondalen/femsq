@@ -23,12 +23,14 @@ import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
 import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
+import com.femsq.database.model.sudz.SudzSfDoubleSumMatches;
 import com.femsq.database.model.sudz.SudzSvodResult;
 import com.femsq.database.model.sudz.SudzUplLookup;
 import com.femsq.database.model.sudz.SudzYear;
 import com.femsq.database.model.sudz.SudzYearDetail;
 import com.femsq.database.model.sudz.SudzYearUpl;
 import com.femsq.database.model.sudz.SudzYyyyLookup;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -477,6 +479,18 @@ public class DefaultSudzService implements SudzService {
     @Override
     public List<SudzSfDoubleDomainMatch> findSfDoubleDomainMatches(String invNum) {
         return sudzDao.findSfDoubleDomainMatches(invNum);
+    }
+
+    @Override
+    public SudzSfDoubleSumMatches findSfDoubleSumMatches(BigDecimal debt, BigDecimal epsilon) {
+        if (debt == null) {
+            throw new IllegalArgumentException("debt обязателен");
+        }
+        BigDecimal eps = epsilon == null ? new BigDecimal("0.01") : epsilon;
+        if (eps.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("epsilon не может быть отрицательным: " + eps);
+        }
+        return sudzDao.findSfDoubleSumMatches(debt, eps);
     }
 
     @Override

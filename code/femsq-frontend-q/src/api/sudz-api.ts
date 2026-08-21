@@ -25,6 +25,7 @@ import type {
   SudzRsltReturnImportResult,
   SudzSfDoubleDomainMatch,
   SudzSfDoubleExcelCandidate,
+  SudzSfDoubleSumMatches,
   SudzSvodResult,
   SudzUplLookup,
   SudzYear,
@@ -259,6 +260,29 @@ const SUDZ_SF_DOUBLE_DOMAIN = gql`
       ciKey
       cnKey
       cnNum
+    }
+  }
+`;
+
+const SUDZ_SF_DOUBLE_SUM_MATCHES = gql`
+  query SudzSfDoubleSumMatches($debt: Float!, $epsilon: Float) {
+    sudzSfDoubleSumMatches(debt: $debt, epsilon: $epsilon) {
+      oldMatches {
+        cidKey
+        number
+        dbtTtl
+        dbtOverd
+        debtType
+        uplKey
+        ciaKey
+      }
+      newMatches {
+        dvKey
+        dvTtl
+        dvOverd
+        dvUpl
+        dvDbt
+      }
     }
   }
 `;
@@ -590,6 +614,34 @@ export async function getSudzSfDoubleDomainMatches(
     return result.data?.sudzSfDoubleDomainMatches ?? [];
   } catch (error) {
     throw wrapApolloError(error, 'SudzSfDoubleDomainMatches');
+  }
+}
+
+/**
+ * Кандидаты вкладки «Суммы» по сумме Excel ±ε.
+ */
+export async function getSudzSfDoubleSumMatches(
+  debt: number,
+  epsilon: number = 0.01
+): Promise<SudzSfDoubleSumMatches> {
+  try {
+    const result = await apolloClient.query<{
+      sudzSfDoubleSumMatches: SudzSfDoubleSumMatches;
+    }>({
+      query: SUDZ_SF_DOUBLE_SUM_MATCHES,
+      variables: { debt, epsilon },
+      fetchPolicy: 'network-only'
+    });
+    const data = result.data?.sudzSfDoubleSumMatches;
+    if (!data) {
+      return { oldMatches: [], newMatches: [] };
+    }
+    return {
+      oldMatches: data.oldMatches ?? [],
+      newMatches: data.newMatches ?? []
+    };
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzSfDoubleSumMatches');
   }
 }
 

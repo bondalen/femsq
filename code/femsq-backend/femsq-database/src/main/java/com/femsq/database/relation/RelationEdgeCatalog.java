@@ -299,6 +299,38 @@ public final class RelationEdgeCatalog {
                 "dbt.dv",
                 new RelationEdge("dbt.dv", DBT, DV, null, "dvDbt", RelationCard.ONE_TO_MANY)
         );
+        edges.put(
+                "cid.cia",
+                new RelationEdge("cid.cia", CID, CIA, "cidCnInvAccntCtpt", null, RelationCard.MANY_TO_ONE)
+        );
+        edges.put(
+                "cia.cias",
+                new RelationEdge("cia.cias", CIA, CIAS, "ciaCnInvAccntSmpl", null, RelationCard.MANY_TO_ONE)
+        );
+        edges.put(
+                "cias.cnInv",
+                new RelationEdge("cias.cnInv", CIAS, CN_INV, "ciasCnInv", null, RelationCard.MANY_TO_ONE)
+        );
+        edges.put(
+                "inv.invNum",
+                new RelationEdge("inv.invNum", INV, INV_NUM, null, "inInv", RelationCard.ONE_TO_MANY)
+        );
+        edges.put(
+                "dv.dbt",
+                new RelationEdge("dv.dbt", DV, DBT, "dvDbt", null, RelationCard.MANY_TO_ONE)
+        );
+        edges.put(
+                "dbt.idd",
+                new RelationEdge("dbt.idd", DBT, IDD, null, "iddDbt", RelationCard.ONE_TO_MANY)
+        );
+        edges.put(
+                "idd.invDbt",
+                new RelationEdge("idd.invDbt", IDD, INV_DBT, "iddInvDbt", null, RelationCard.MANY_TO_ONE)
+        );
+        edges.put(
+                "invDbt.inv",
+                new RelationEdge("invDbt.inv", INV_DBT, INV, "idInv", null, RelationCard.MANY_TO_ONE)
+        );
         EDGES = Map.copyOf(edges);
     }
 

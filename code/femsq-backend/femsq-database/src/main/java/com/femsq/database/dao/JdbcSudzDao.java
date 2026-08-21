@@ -28,6 +28,9 @@ import com.femsq.database.model.sudz.SudzRsltPeriod;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
 import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
+import com.femsq.database.model.sudz.SudzSfDoubleNewSumMatch;
+import com.femsq.database.model.sudz.SudzSfDoubleOldSumMatch;
+import com.femsq.database.model.sudz.SudzSfDoubleSumMatches;
 import com.femsq.database.model.sudz.SudzSvodAccount;
 import com.femsq.database.model.sudz.SudzSvodResult;
 import com.femsq.database.model.sudz.SudzSvodTotal;
@@ -2223,6 +2226,98 @@ public class JdbcSudzDao implements SudzDao {
             throw exception;
         } catch (SQLException exception) {
             throw wrap("Не удалось найти доменные СФ по номеру", exception);
+        }
+    }
+
+    @Override
+    public SudzSfDoubleSumMatches findSfDoubleSumMatches(BigDecimal debt, BigDecimal epsilon) {
+        Objects.requireNonNull(debt, "debt");
+        Objects.requireNonNull(epsilon, "epsilon");
+        List<SudzSfDoubleOldSumMatch> oldMatches = findOldSumMatches(debt, epsilon);
+        List<SudzSfDoubleNewSumMatch> newMatches = findNewSumMatches(debt, epsilon);
+        log.log(
+                Level.FINE,
+                "SfDouble sum matches debt={0} eps={1}: old={2} new={3}",
+                new Object[] {debt, epsilon, oldMatches.size(), newMatches.size()}
+        );
+        return new SudzSfDoubleSumMatches(oldMatches, newMatches);
+    }
+
+    /**
+     * Старые суммы ({@code ags.cn_inv_dbt}) с {@code ABS(dbt_ttl − debt) ≤ ε}.
+     *
+     * @param debt якорь Excel
+     * @param epsilon допуск
+     * @return до 200 строк
+     */
+    private List<SudzSfDoubleOldSumMatch> findOldSumMatches(BigDecimal debt, BigDecimal epsilon) {
+        String sql = ""
+                + "SELECT TOP 200 cn_inv_dbt_key, number, dbt_ttl, dbt_overd, debt_type,"
+                + " cn_inv_dbt_upl, cidCnInvAccntCtpt"
+                + " FROM ags.cn_inv_dbt"
+                + " WHERE ABS(CAST(dbt_ttl AS decimal(19,4)) - ?) <= ?"
+                + " ORDER BY cn_inv_dbt_key";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setBigDecimal(1, debt);
+            statement.setBigDecimal(2, epsilon);
+            try (ResultSet rs = statement.executeQuery()) {
+                List<SudzSfDoubleOldSumMatch> result = new ArrayList<>();
+                while (rs.next()) {
+                    result.add(new SudzSfDoubleOldSumMatch(
+                            rs.getInt("cn_inv_dbt_key"),
+                            getInteger(rs, "number"),
+                            rs.getBigDecimal("dbt_ttl"),
+                            rs.getBigDecimal("dbt_overd"),
+                            rs.getNString("debt_type"),
+                            getInteger(rs, "cn_inv_dbt_upl"),
+                            getInteger(rs, "cidCnInvAccntCtpt")
+                    ));
+                }
+                return List.copyOf(result);
+            }
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось найти cn_inv_dbt по сумме", exception);
+        }
+    }
+
+    /**
+     * Новые суммы ({@code sudz.DbtValue} / схема СУДЗ) с {@code ABS(dvTtl − debt) ≤ ε}.
+     *
+     * @param debt якорь Excel
+     * @param epsilon допуск
+     * @return до 200 строк
+     */
+    private List<SudzSfDoubleNewSumMatch> findNewSumMatches(BigDecimal debt, BigDecimal epsilon) {
+        String dv = q("DbtValue");
+        String sql = ""
+                + "SELECT TOP 200 dvKey, dvTtl, dvOverd, dvUpl, dvDbt"
+                + " FROM " + dv
+                + " WHERE ABS(CAST(dvTtl AS decimal(19,4)) - ?) <= ?"
+                + " ORDER BY dvKey";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setBigDecimal(1, debt);
+            statement.setBigDecimal(2, epsilon);
+            try (ResultSet rs = statement.executeQuery()) {
+                List<SudzSfDoubleNewSumMatch> result = new ArrayList<>();
+                while (rs.next()) {
+                    result.add(new SudzSfDoubleNewSumMatch(
+                            rs.getInt("dvKey"),
+                            rs.getBigDecimal("dvTtl"),
+                            rs.getBigDecimal("dvOverd"),
+                            getInteger(rs, "dvUpl"),
+                            getInteger(rs, "dvDbt")
+                    ));
+                }
+                return List.copyOf(result);
+            }
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось найти DbtValue по сумме", exception);
         }
     }
 

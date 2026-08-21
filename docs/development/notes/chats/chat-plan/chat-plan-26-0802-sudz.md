@@ -1,7 +1,7 @@
 # План: аналог «системы управления дебиторской задолженностью» (СУДЗ) из MS Access
 
 **Дата создания:** 2026-08-02  
-**Последнее обновление:** 2026-08-19  
+**Последнее обновление:** 2026-08-21  
 **Проект:** FEMSQ  
 **Версия плана:** 0.91.1 (S70: visual v1 экрана платежей 0072)  
 **Задача:** 0065–0072 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md); **активно: 0069** + **S68 КСДСФ** + **S68t дерево (T6 UAT)** + блокер **0071 Договоры**; **S69** паспорт Access pmt ✅; **S70** экран D / [0072](../../../project-development.json) visual v1 ✅  
@@ -547,9 +547,28 @@ nested `invNum` (`ciputciCnInv`↔`inNumNull`) → `cnInv` (`inInv`↔`ciInv`);
 - T7 не параллелить с T5: один wrapper, два JSON — сначала один живой потребитель. T7 не начинать до T4b.
 - Backend Java-каталог не обобщать, пока нет второго Spring-хоста.
 
-**Вне этого среза (не смешивать с T0–T7):** UAT create/наполнения очереди; вкладка «суммы»; адаптер pmt; массовая перепривязка СФ; `FemsqTreeList` для сторон договора; **T9** (`FemsqWalkTree`).
+**Вне этого среза (не смешивать с T0–T7):** UAT create/наполнения очереди; адаптер pmt; массовая перепривязка СФ; `FemsqTreeList` для сторон договора; **T9** (`FemsqWalkTree`).
 
-**Фазы S68 далее (не дерево):** UAT наполнения/create; вкладка «суммы»; адаптер pmt; перепривязка — позже.
+**Фазы S68 далее (не дерево):** UAT наполнения/create; **вкладка «суммы» (S68s)**; адаптер pmt; перепривязка — позже.
+
+##### S68s (2026-08-21): вкладка «Суммы» на КСДСФ
+
+**Решения владельца:**
+
+1. Вкладка делится **по вертикали**: сверху старая структура (`ags.cn_inv_dbt`), снизу новая (`sudz.DbtValue`).
+2. В каждой половине: **таблица** сумм сверху + **RelationTree** снизу.
+3. Совпадение сумм v1 — **только по сумме** (`ABS(сумма − cidutDebt) ≤ ε`), без фильтра по договору Excel.
+4. Корень новой половины — **`DbtValue`**.
+5. Подсветка строк по выбранному СФ на вкладке «СФ» — **не нужна**.
+6. В JSON деревьев приоритет — хорошо раскрыть **СФ**: все `invNum` и все `cnInv`→договоры/стороны.
+
+**Конспекты / JSON (черновик T1):** [ksdsf-cid-sum.tree.md](../../UI/02-12_femsq-tree/ksdsf-cid-sum.tree.md) · [ksdsf-dv-sum.tree.md](../../UI/02-12_femsq-tree/ksdsf-dv-sum.tree.md) · `src/trees/ksdsf-*-sum.tree.json`.
+
+**Нужны новые рёбра каталога:** `cid.cia`, `cia.cias`, `cias.cnInv`, `inv.invNum`, `dv.dbt`, `dbt.idd`, `idd.invDbt`, `invDbt.inv` — **добавлены** (JAR ≥ 0.1.0.213).
+
+**Срезы:** (1) ✅ макет UI + enable вкладки (JAR 211); (2) ✅ GraphQL `sudzSfDoubleSumMatches(debt, epsilon)`; (3) ✅ рёбра + JSON деревьев; (4) UAT якорь `106647` / `41666666.67` (DEV: ~49 `cn_inv_dbt`, 0 `DbtValue`).
+
+**API (срез 2):** query возвращает `oldMatches` (`ags.cn_inv_dbt` по `dbt_ttl`) и `newMatches` (`sudz.DbtValue` по `dvTtl`), TOP 200, ε=0.01.
 
 **Практика Access (источник):** [`Form_CnInvDbtUpl_gt_File_f.cls`](../../../../project/proposals/vba-analysis/VBA-Code-Export/Form-Modules/Form_CnInvDbtUpl_gt_File_f.cls) ≈ стр. 140–247: после Excel→Tbl идёт **инлайн**-блок «отсутствующие контрагенты» (не выделен в `Sub`), затем именованные `CnNotLoad` … `CnCtptInvAccDbtExist`; `CnCtptInvAccExistDbl` закомментирован с 03.02.2023.
 

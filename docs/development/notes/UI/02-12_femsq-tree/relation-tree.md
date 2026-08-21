@@ -4,8 +4,8 @@
 **Статус:** **T1** ✅ (полные JSON v1); **T4b** ✅; **T5** ✅ (полный каталог + экран КСДСФ на `ksdsf-inv-num.tree.json`); далее **T6** UAT + проектирование actions/forms  
 **План:** [chat-plan-26-0802-sudz.md](../../chats/chat-plan/chat-plan-26-0802-sudz.md) S68t  
 **ADR:** [Решение 009](../../../../project/decisions/009-femsq-walk-tree.md)  
-**Конспекты:** [ksdsf-inv-num.tree.md](./ksdsf-inv-num.tree.md) · [contracts-inv.tree.md](./contracts-inv.tree.md)  
-**JSON:** [`ksdsf-inv-num.tree.json`](../../../../code/femsq-frontend-q/src/trees/ksdsf-inv-num.tree.json) · [`contracts-inv.tree.json`](../../../../code/femsq-frontend-q/src/trees/contracts-inv.tree.json)  
+**Конспекты:** [ksdsf-inv-num.tree.md](./ksdsf-inv-num.tree.md) · [contracts-inv.tree.md](./contracts-inv.tree.md) · [ksdsf-cid-sum.tree.md](./ksdsf-cid-sum.tree.md) · [ksdsf-dv-sum.tree.md](./ksdsf-dv-sum.tree.md)  
+**JSON:** [`ksdsf-inv-num.tree.json`](../../../../code/femsq-frontend-q/src/trees/ksdsf-inv-num.tree.json) · [`contracts-inv.tree.json`](../../../../code/femsq-frontend-q/src/trees/contracts-inv.tree.json) · [`ksdsf-cid-sum.tree.json`](../../../../code/femsq-frontend-q/src/trees/ksdsf-cid-sum.tree.json) · [`ksdsf-dv-sum.tree.json`](../../../../code/femsq-frontend-q/src/trees/ksdsf-dv-sum.tree.json)  
 **Renderer:** FemsqTree v1 (feQuLib **0016** done) · не путать с [FemsqTable](../02-8_femsq-table-component.md) · обходник — не `FemsqTree`
 
 ## 0. Решение

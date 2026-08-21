@@ -19,12 +19,14 @@ import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
 import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
+import com.femsq.database.model.sudz.SudzSfDoubleSumMatches;
 import com.femsq.database.model.sudz.SudzSvodResult;
 import com.femsq.database.model.sudz.SudzUplLookup;
 import com.femsq.database.model.sudz.SudzYear;
 import com.femsq.database.model.sudz.SudzYearDetail;
 import com.femsq.database.model.sudz.SudzYearUpl;
 import com.femsq.database.model.sudz.SudzYyyyLookup;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -407,6 +409,15 @@ public interface SudzDao {
      * @return совпадения (inv + cnInv)
      */
     List<SudzSfDoubleDomainMatch> findSfDoubleDomainMatches(String invNum);
+
+    /**
+     * Кандидаты вкладки «Суммы»: {@code cn_inv_dbt} и {@code DbtValue} по сумме ±ε.
+     *
+     * @param debt сумма Excel ({@code cidutDebt})
+     * @param epsilon допуск (рубли), обычно {@code 0.01}
+     * @return списки совпадений (лимит TOP 200 на каждую сторону)
+     */
+    SudzSfDoubleSumMatches findSfDoubleSumMatches(BigDecimal debt, BigDecimal epsilon);
 
     /**
      * Создать новый СФ по строке очереди (Access {@code btnInvAdd} / {@code btnInvCreate}).

@@ -190,6 +190,32 @@ export interface SudzSfDoubleDomainMatch {
   cnNum: string | null;
 }
 
+/** Совпадение суммы в старой структуре (cn_inv_dbt). */
+export interface SudzSfDoubleOldSumMatch {
+  cidKey: number;
+  number: number | null;
+  dbtTtl: number | null;
+  dbtOverd: number | null;
+  debtType: string | null;
+  uplKey: number | null;
+  ciaKey: number | null;
+}
+
+/** Совпадение суммы в новой структуре (DbtValue). */
+export interface SudzSfDoubleNewSumMatch {
+  dvKey: number;
+  dvTtl: number | null;
+  dvOverd: number | null;
+  dvUpl: number | null;
+  dvDbt: number | null;
+}
+
+/** Пара списков совпадений по сумме для вкладки «Суммы». */
+export interface SudzSfDoubleSumMatches {
+  oldMatches: SudzSfDoubleOldSumMatch[];
+  newMatches: SudzSfDoubleNewSumMatch[];
+}
+
 /** Карточка лаунчера экрана C. */
 export interface SudzDbtUplLauncher {
   upl: SudzUplLookup;

@@ -13,7 +13,7 @@ export interface RelationEdgeMeta {
   card: RelationCard;
 }
 
-/** Каталог КСДСФ / Договоров (19 рёбер v1 + org_id / og). */
+/** Каталог КСДСФ / Договоров / сумм (обратные рёбра S68s). */
 export const RELATION_EDGES: Record<string, RelationEdgeMeta> = {
   'invNum.inv': { from: 'invNum', to: 'inv', card: 'N:1' },
   'inv.cnInv': { from: 'inv', to: 'cnInv', card: '1:N' },
@@ -34,5 +34,13 @@ export const RELATION_EDGES: Record<string, RelationEdgeMeta> = {
   'inv.invDbt': { from: 'inv', to: 'invDbt', card: '1:N' },
   'invDbt.idd': { from: 'invDbt', to: 'idd', card: '1:N' },
   'idd.dbt': { from: 'idd', to: 'dbt', card: 'N:1' },
-  'dbt.dv': { from: 'dbt', to: 'dv', card: '1:N' }
+  'dbt.dv': { from: 'dbt', to: 'dv', card: '1:N' },
+  'cid.cia': { from: 'cid', to: 'cia', card: 'N:1' },
+  'cia.cias': { from: 'cia', to: 'cias', card: 'N:1' },
+  'cias.cnInv': { from: 'cias', to: 'cnInv', card: 'N:1' },
+  'inv.invNum': { from: 'inv', to: 'invNum', card: '1:N' },
+  'dv.dbt': { from: 'dv', to: 'dbt', card: 'N:1' },
+  'dbt.idd': { from: 'dbt', to: 'idd', card: '1:N' },
+  'idd.invDbt': { from: 'idd', to: 'invDbt', card: 'N:1' },
+  'invDbt.inv': { from: 'invDbt', to: 'inv', card: 'N:1' }
 };
