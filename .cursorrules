@@ -129,6 +129,19 @@ Cистема работы с контрагентами и объектами �
 4. Правила и чеклист: `docs/deployment/sql-server-deployment-rules.md`.
 5. Машина `prod-fisheye` в `development.environments.machines` — реестр продуктивного сервера.
 
+## Проверка локального feQuLib перед сборкой
+
+FEMSQ потребляет npm-пакет `fequlib` через `file:../../../feQuLib` (соседний клон, Решение 008). Сборка frontend без актуального клона падает (например: `"FemsqTree" is not exported by feQuLib/src/index.ts`).
+
+**ОБЯЗАТЕЛЬНО** перед `./code/scripts/build-thin-jar.sh`, `mvn package` (модуль с frontend) и `npm run build` / `npm run dev` в `code/femsq-frontend-q`:
+
+1. Выполнить `./code/scripts/check-fequlib.sh` (скрипт сам делает `git fetch` и проверяет экспорт `FemsqTree`).
+2. Если клон отстаёт от `origin/main` — `git pull` в `/home/alex/projects/feQuLib`, затем продолжить сборку.
+3. **Не** копировать и **не** воссоздавать компоненты feQuLib (`FemsqTree`, `FemsqTable` и т.д.) внутри FEMSQ из‑за рассинхрона. Исправление — синхронизация соседнего репозитория.
+4. Пропуск только при явной просьбе пользователя (`FEQULIB_SKIP_SYNC=1`).
+
+`check-fequlib.sh` вызывается из `build-thin-jar.sh` **до** увеличения версии, чтобы сбой проверки не тратил номер сборки.
+
 ## Правила управления версиями
 
 ### Автоматическое увеличение версии при сборке
@@ -216,6 +229,6 @@ NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print $1"."$2"."$3"."($4+1)"-SNA
 ---
 
 **Файл создан:** 2025-10-08
-**Последнее обновление:** 2026-05-18
-**Версия:** 1.5.0
+**Последнее обновление:** 2026-08-24
+**Версия:** 1.6.0
 **Автор:** Александр

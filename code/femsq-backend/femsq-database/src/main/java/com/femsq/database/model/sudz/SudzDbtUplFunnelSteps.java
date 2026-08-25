@@ -3,8 +3,8 @@ package com.femsq.database.model.sudz;
 import java.util.List;
 
 /**
- * Канонический реестр шагов воронки загрузки свода (S61f).
- * Порядок фиксирован; {@code CnCtptInvAccExistDbl} отключён как в Access с 03.02.2023.
+ * Канонический реестр шагов воронки загрузки свода (S61f / S66e).
+ * Порядок фиксирован; Access-хвост после AccSmpl отключён (S66e сегм. 11).
  */
 public final class SudzDbtUplFunnelSteps {
 
@@ -44,9 +44,25 @@ public final class SudzDbtUplFunnelSteps {
     public static final String CN_CTPT_EXIST_INV_NOT_LOAD = "CnCtptExistInvNotLoad";
 
     /**
+     * Access {@code CnCtptInvExistAccSmplNotLoad}: СФ есть, нет простой карточки
+     * {@code cnInvAccntSmpl}; при flLoad — INSERT.
+     */
+    public static final String CN_CTPT_INV_EXIST_ACC_SMPL_NOT_LOAD = "CnCtptInvExistAccSmplNotLoad";
+
+    /**
+     * S66e: актуализация {@code sudz.invDbtVar} по UNIQUE-четвёрке FK.
+     */
+    public static final String INV_DBT_VAR_ENSURE = "invDbtVarEnsure";
+
+    /**
+     * S66e: auto {@code invDbt}/{@code invDbtDbtVar} либо очередь
+     * {@code CnInvUplInvDbtDouble}.
+     */
+    public static final String INV_DBT_LOAD = "invDbtLoad";
+
+    /**
      * Полный упорядоченный реестр шагов <em>панели</em> (без Excel→Tbl).
-     * titleRu — из комментариев VBA перед шагом ({@code Form_CnInvDbtUpl_gt_File_f}).
-     * Очистка InvDouble не в панели: prelude к {@link #CN_CTPT_EXIST_INV_NOT_LOAD}.
+     * titleRu — из комментариев VBA / S66e; Access-хвост — disabled.
      */
     public static final List<StepDef> ALL = List.of(
             new StepDef(ORG_NOT_IN_BUIRG,
@@ -58,24 +74,31 @@ public final class SudzDbtUplFunnelSteps {
                     true),
             new StepDef(CN_CTPT_EXIST_INV_NOT_LOAD,
                     "Отображаем новые счета-фактуры для существующих договоров", true),
-            new StepDef("CnCtptInvExistAccSmplNotLoad",
+            new StepDef(CN_CTPT_INV_EXIST_ACC_SMPL_NOT_LOAD,
                     "Отображаем счета-фактуры не имеющие Задолженностей простых в БД либо добавляем их",
+                    true),
+            new StepDef(INV_DBT_VAR_ENSURE,
+                    "Актуализируем варианты контекста задолженности (invDbtVar)", true),
+            new StepDef(INV_DBT_LOAD,
+                    "Загружаем слоты задолженностей СФ (invDbt) либо ставим в очередь разбора",
                     true),
             new StepDef("invDbtDouble",
                     "Проверяем имеющиеся в БД задолженности, которые более чем одна у счёта-фактуры",
-                    true),
+                    false),
             new StepDef("CnCtptInvExistAccNotLoad",
-                    "Отображаем счета-фактуры не имеющие Задолженностей в БД либо добавляем их", true),
+                    "Отображаем счета-фактуры не имеющие Задолженностей в БД либо добавляем их",
+                    false),
             new StepDef("ciduTblCnCtptInvAccNameCountOneNot",
-                    "Отображаем повторяющиеся Задолженности (с именами) имеющиеся в источнике", true),
+                    "Отображаем повторяющиеся Задолженности (с именами) имеющиеся в источнике",
+                    false),
             new StepDef("CnCtptInvAccExistDbl",
                     "Отображаем Задолженности имеющие более одной задолженности в выгрузке (отключён)",
                     false),
             new StepDef("CnCtptInvAccExistDbtNotLoad",
                     "Отображаем Задолженности не имеющие задолженности в БД либо добавляем их туда",
-                    true),
+                    false),
             new StepDef("CnCtptInvAccDbtExist",
-                    "Отображаем пары СФ+СГК имеющие задолженности в БД", true)
+                    "Отображаем пары СФ+СГК имеющие задолженности в БД", false)
     );
 
     /**

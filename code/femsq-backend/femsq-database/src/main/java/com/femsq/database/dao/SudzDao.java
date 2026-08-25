@@ -1,8 +1,16 @@
 package com.femsq.database.dao;
 
 import com.femsq.database.model.sudz.SudzCmmGrLookup;
+import com.femsq.database.model.sudz.SudzCnInvUplInvDbtDouble;
 import com.femsq.database.model.sudz.SudzCnInvUplSfDouble;
 import com.femsq.database.model.sudz.SudzD644Row;
+import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotRow;
+import com.femsq.database.model.sudz.SudzDbtUplInvDbtLoadApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarAmbiguousRow;
+import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarEnsureApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarEnsureRow;
+import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarEnsureSnapshot;
 import com.femsq.database.model.sudz.SudzDbtUplCnCtptExistInvApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplCnCtptExistInvResult;
 import com.femsq.database.model.sudz.SudzDbtUplCnExistCtptNotLoad;
@@ -19,6 +27,7 @@ import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
 import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
+import com.femsq.database.model.sudz.SudzSfDoubleHints;
 import com.femsq.database.model.sudz.SudzSfDoubleSumMatches;
 import com.femsq.database.model.sudz.SudzSvodResult;
 import com.femsq.database.model.sudz.SudzUplLookup;
@@ -387,6 +396,82 @@ public interface SudzDao {
     SudzDbtUplCnCtptExistInvApplyResult applyDbtUplCnCtptExistInvNotLoad(int unloadKey);
 
     /**
+     * Diff шага {@code CnCtptInvExistAccSmplNotLoad}: СФ есть, нет
+     * {@code ags.cnInvAccntSmpl} на ({@code ciKey}, {@code account_key}, БУиРГ).
+     * Эталон: {@code ciduCnCtptInvAccSmplNot} ← All ← ExistInvAll.
+     *
+     * @param unloadKey {@code cidutUnloadKey}
+     * @return строки для лога
+     */
+    List<SudzDbtUplAccSmplNotRow> findDbtUplCnCtptInvExistAccSmplNot(int unloadKey);
+
+    /**
+     * INSERT в {@code ags.cnInvAccntSmpl} по diff AccSmpl
+     * ({@code ciduCnCtptInvAccSmplNotIns}).
+     *
+     * @param unloadKey {@code cidutUnloadKey}
+     * @return число внесённых пар СФ+СГК
+     */
+    SudzDbtUplAccSmplNotApplyResult applyDbtUplCnCtptInvExistAccSmplNotLoad(int unloadKey);
+
+    /**
+     * Diff шага {@code invDbtVarEnsure}: missing + ambiguous одним проходом CTE.
+     *
+     * @param unloadKey {@code cidutUnloadKey}
+     * @return снимок для лога
+     */
+    SudzDbtUplInvDbtVarEnsureSnapshot findDbtUplInvDbtVarEnsureSnapshot(int unloadKey);
+
+    /**
+     * Diff шага {@code invDbtVarEnsure}: однозначная четвёрка FK, нет {@code invDbtVar}.
+     *
+     * @param unloadKey {@code cidutUnloadKey}
+     * @return строки для лога
+     */
+    List<SudzDbtUplInvDbtVarEnsureRow> findDbtUplInvDbtVarEnsureMissing(int unloadKey);
+
+    /**
+     * Контексты {@code invDbtVarEnsure}, где {@code cnNum}/{@code invNum} не уникальны.
+     *
+     * @param unloadKey {@code cidutUnloadKey}
+     * @return строки для лога
+     */
+    List<SudzDbtUplInvDbtVarAmbiguousRow> findDbtUplInvDbtVarEnsureAmbiguous(int unloadKey);
+
+    /**
+     * INSERT {@code sudz.invDbtVar} для однозначных отсутствующих контекстов.
+     *
+     * @param unloadKey {@code cidutUnloadKey}
+     * @return число внесённых вариантов
+     */
+    SudzDbtUplInvDbtVarEnsureApplyResult applyDbtUplInvDbtVarEnsure(int unloadKey);
+
+    /**
+     * Пересборка очереди {@code CnInvUplInvDbtDouble} для выгрузки.
+     *
+     * @param unloadKey {@code upl_key}
+     * @param fileKey {@code cidufKey} (может быть null)
+     * @return число строк очереди после rebuild
+     */
+    int rebuildInvDbtDoubleQueue(int unloadKey, Integer fileKey);
+
+    /**
+     * Auto INSERT {@code sudz.invDbt} / {@code invDbtDbtVar} для однозначных iKey.
+     *
+     * @param unloadKey {@code upl_key}
+     * @return счётчики apply (+ queuedCount после чтения очереди)
+     */
+    SudzDbtUplInvDbtLoadApplyResult applyDbtUplInvDbtLoadUnambiguous(int unloadKey);
+
+    /**
+     * Очередь разбора двоящих задолженностей по выгрузке.
+     *
+     * @param unloadKey {@code upl_key}
+     * @return строки {@code CnInvUplInvDbtDouble}
+     */
+    List<SudzCnInvUplInvDbtDouble> findInvDbtDoublesByUnload(int unloadKey);
+
+    /**
      * Очередь КСДСФ по выгрузке долгов.
      *
      * @param unloadKey {@code upl_key}
@@ -418,6 +503,15 @@ public interface SudzDao {
      * @return списки совпадений (лимит TOP 200 на каждую сторону)
      */
     SudzSfDoubleSumMatches findSfDoubleSumMatches(BigDecimal debt, BigDecimal epsilon);
+
+    /**
+     * Подсказки КСДСФ: исполнитель Excel среди СФ по номеру и сумм (old/new).
+     *
+     * @param ciusKey ключ очереди
+     * @param epsilon допуск суммы (для зон сумм)
+     * @return три секции с ключами выбора строк
+     */
+    SudzSfDoubleHints findSfDoubleHints(int ciusKey, BigDecimal epsilon);
 
     /**
      * Создать новый СФ по строке очереди (Access {@code btnInvAdd} / {@code btnInvCreate}).

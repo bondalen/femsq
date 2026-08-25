@@ -1,20 +1,22 @@
 <template>
-  <div v-if="rootId == null" class="text-grey-6">Нет ключа корня.</div>
-  <div v-else-if="error" class="text-negative">{{ error }}</div>
-  <FemsqTree
-    v-else
-    class="col"
-    :nodes="nodes"
-    node-key="id"
-    :lazy="true"
-    :expand-on-click="false"
-    v-model:expanded-keys="expandedKeys"
-    v-model:selected-key="selectedKey"
-    v-model:loading-keys="loadingKeys"
-    :data-test="dataTest"
-    :root-class="rootClass"
-    @load="onLoad"
-  >
+  <!-- Высота рамки у хоста; overflow — у FemsqTree fill (не оба). -->
+  <div class="relation-tree-host">
+    <div v-if="rootId == null" class="text-grey-6">Нет ключа корня.</div>
+    <div v-else-if="error" class="text-negative">{{ error }}</div>
+    <FemsqTree
+      v-else
+      fill
+      :nodes="nodes"
+      node-key="id"
+      :lazy="true"
+      :expand-on-click="false"
+      v-model:expanded-keys="expandedKeys"
+      v-model:selected-key="selectedKey"
+      v-model:loading-keys="loadingKeys"
+      :data-test="dataTest"
+      :root-class="rootClass"
+      @load="onLoad"
+    >
     <template #header="{ node }">
       <div class="row items-center no-wrap full-width q-gutter-xs">
         <span class="relation-tree-title col">{{ node.title }}</span>
@@ -43,12 +45,14 @@
       </QMarkupTable>
     </template>
     <template #empty>пока нет дочерних узлов</template>
-  </FemsqTree>
+    </FemsqTree>
+  </div>
 </template>
 
 <script setup lang="ts">
 /**
  * Обёртка FemsqTree: JSON экземпляра + колбэки fetch хоста. Без Excel/очереди.
+ * Скролл: `fill` на FemsqTree; хост задаёт высоту, без overflow:auto на обёртке.
  */
 import { ref, watch } from 'vue';
 
@@ -179,6 +183,12 @@ function onActionClick(node: RelationTreeNode, action: RelationTreeActionSpec): 
 </script>
 
 <style scoped>
+.relation-tree-host {
+  min-height: 0;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
 .relation-tree-title {
   font-size: var(--femsq-content-body-size);
 }

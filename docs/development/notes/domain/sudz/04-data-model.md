@@ -1,8 +1,8 @@
 # СУДЗ — модель данных (FishEye.ags)
 
 **Дата создания:** 2026-08-03  
-**Последнее обновление:** 2026-08-18 (S69: паспорт Access pmt закрыт)
-**Статус:** рабочий черновик для накопления сведений (сегменты S4–S14, S25–S29, S61f, S69)  
+**Последнее обновление:** 2026-08-24 (S66e: FEMSQ `invDbtVarEnsure`/`invDbtLoad`)
+**Статус:** рабочий черновик для накопления сведений (сегменты S4–S14, S25–S29, S61f, S66c, S66e, S69)  
 **План чата:** [chat-plan-26-0802-sudz.md](../../chats/chat-plan/chat-plan-26-0802-sudz.md)  
 **ER-снимок (Access, текущее состояние):** [assets/26-0803-sudz-er-segment.png](./assets/26-0803-sudz-er-segment.png)  
 **Эскиз целевой модели (S16, актуальный):** [assets/26-0803-sudz-target-sketch-dbt.png](./assets/26-0803-sudz-target-sketch-dbt.png) — разбор в [04-3 §7](./04-3_problems-solutions.md#7-ревизия-целевой-модели-по-эскизу-владельца-dbt--invdbtdbt--dbtvalue-s14) 
@@ -419,9 +419,11 @@
 | 2 | `CnExistCtptNotLoad` | Договор есть, но исполнитель в БД не совпадает с исполнителем из свода | Только показ — авто-исправление стороны не предусмотрено. **FEMSQ (S62):** ручной разбор на экране «Договоры» (эталон Access `cnNum`) — [02-10](../../UI/02-10_contracts-cnNum-access.md); задача **0071**. |
 | — | (очистка `CnInvDbtUplFileInvDouble` через `dbAccess.TableRecordsClear`) | — | подготовка грида ручного разбора (см. §2.2, `cn_inv_dbt_double`) |
 | 3 | `CnCtptExistInvNotLoad` | Договор есть, СФ (документ) в БД нет | **Авто-создаёт**: `ags_inv` → `ags_invNum` → `ags_cnInv` (построчно, DAO). |
-| 4 | `CnCtptInvExistAccSmplNotLoad` | СФ есть, «простой» карточки (`cnInvAccntSmpl`) нет | **Авто-вставка** сохранённым запросом `ciduCnCtptInvAccSmplNotIns`. |
-| 5 | `invDbtDouble` | Диагностика: карточки (`cnInvAccnt`) с уже установленным `ciaName`, у которых **более одной** записи `cn_inv_dbt` — сверяются с источником по номеру СФ (см. формулу `SumMatch` ниже) | Только показ (диагностика существующей неоднозначности, не создание новых записей). |
-| 6 | `CnCtptInvExistAccNotLoad` | СФ+СГК есть, полной карточки (`cnInvAccnt`) нет | **Авто-вставка** сохранённым запросом `ciduCnCtptInvAccSmplExtAccNotIns`. |
+| 4 | `CnCtptInvExistAccSmplNotLoad` | СФ есть, «простой» карточки (`cnInvAccntSmpl`) нет | **Авто-вставка** сохранённым запросом `ciduCnCtptInvAccSmplNotIns`. **Последний шаг, общий со целевой схемой** (S63 / S66c). |
+| 4a | **FEMSQ** `invDbtVarEnsure` | Контекст `sudz.invDbtVar` (чётвёрка FK) | INSERT при однозначности + `flLoad` (S66e). |
+| 4b | **FEMSQ** `invDbtLoad` | Слот `sudz.invDbt` + мост; очередь `CnInvUplInvDbtDouble` | rebuild очереди всегда; auto calm при `flLoad`; экран stub (S66e). `Dbt`/`DbtValue` — позже. |
+| 5 | `invDbtDouble` | Имя 2022 г.; QueryDef **`invDoubleCia`**: … | Только показ. В FEMSQ панели **disabled** (S66e). |
+| 6 | `CnCtptInvExistAccNotLoad` | СФ+СГК есть, полной карточки (`cnInvAccnt`) нет | **Авто-вставка** `ciduCnCtptInvAccSmplExtAccNotIns` → **`ags_cnInvAccnt`**. В цели 0069 этот уровень — `Dbt`/`invDbt`, не cia. |
 | 7 | `ciduTblCnCtptInvAccNameCountOneNot` | В **источнике** одна и та же тройка (договор, СФ, счёт) распадается на **несколько** разных имён задолженности (`DbtCount<>1`) | Только показ — сигнал «нужно разнести по именам вручную» (прямая иллюстрация костыля `ciaName`/P2 «в моменте создания»). |
 | 8 | *(отключено с 03.02.2023, закомментировано)* `CnCtptInvAccExistDbl` | Пары СФ+СГК с более чем одной задолженностью **в самом источнике** | не вызывается. |
 | 9 | `CnCtptInvAccExistDbtNotLoad` | Карточка (`cnInvAccnt`) есть, строки `cn_inv_dbt` для **этой** выгрузки нет | **Авто-вставка** сохранённым запросом `ciduCnCtptInvAccSmplExtAccExtDbtNotIns`. |
@@ -430,6 +432,8 @@
 **Важное наблюдение:** шаги 1–2 (создание договора/стороны) и диагностика 5/7 показывают, что репозиторий **явно избегает автоматической записи там, где есть неоднозначность** — ровно тот же принцип «не решать за оператора», что уже видели в `ags.fnCiasDbtUplCst` (S26, `'строек: N'`) и в решении S24 «не нельзя, а нужно правило выбора». Автоматика включается только на уровнях, где ключ однозначен (СФ↔договор, простая карточка, полная карточка, факт выгрузки).
 
 #### Правило `SumMatch` — точная формула для М9 (класс `CiaNm`, метод `SumMatch`)
+
+**S66c/S66e — шов воронки:** шаги 1–4 Access (до `cnInvAccntSmpl`) — старая и новая структура совпадают. Шаги 5–10 Access остаются эталоном старого контура и в FEMSQ **disabled**. После AccSmpl FEMSQ пишет **`sudz.invDbtVar` / `invDbt` / `invDbtDbtVar`** (+ очередь); `Dbt`/`DbtValue` отложены (сегм. 15). Разбор: [chat-plan S66c](../../chats/chat-plan/chat-plan-26-0802-sudz.md#s66c--шов-после-accsmpl-старая-vs-новая-воронка-2026-08-24) · [S66e](../../chats/chat-plan/chat-plan-26-0802-sudz.md#s66e--порядок-определения-invdbt-сегментами-2026-08-24). DDL очереди: [26-0824-sudz-inv-dbt-double](../../sql/26-0824-sudz-inv-dbt-double/).
 
 Для диагностики шага 5 (`invDbtDouble`) и, по всей видимости, как общий паттерн сопоставления, класс `CiaNm` (представляет пару «карточка (`ciaKey`) + имя (`ciaName`)») реализует метод:
 

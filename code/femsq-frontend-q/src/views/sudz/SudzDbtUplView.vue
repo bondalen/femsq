@@ -264,6 +264,11 @@
                 <QTab name="progress" label="ход загрузки" data-test="sudz-dbt-upl-tab-progress" />
                 <QTab name="sheets" label="перечень листов" data-test="sudz-dbt-upl-tab-sheets" />
                 <QTab name="doubles" label="повторяющиеся СФ" data-test="sudz-dbt-upl-tab-doubles" />
+                <QTab
+                  name="inv-dbt-doubles"
+                  label="двоящие долги СФ"
+                  data-test="sudz-dbt-upl-tab-inv-dbt-doubles"
+                />
               </QTabs>
               <QSeparator />
 
@@ -326,6 +331,34 @@
                       :disable="!store.sfDoubles.length"
                       data-test="sudz-dbt-upl-open-sf-double"
                       @click="openSfDouble"
+                    />
+                  </div>
+                </QTabPanel>
+
+                <QTabPanel name="inv-dbt-doubles" class="q-pa-none fill-pane column no-wrap">
+                  <FemsqTable
+                    class="col"
+                    :rows="store.invDbtDoubles"
+                    :columns="invDbtDoubleColumns"
+                    row-key="ciudKey"
+                    dense
+                    flat
+                    :loading="store.loading"
+                    data-test="sudz-dbt-upl-inv-dbt-doubles"
+                  />
+                  <div class="row items-center q-pa-sm q-gutter-sm shrink-0">
+                    <div v-if="!store.invDbtDoubles.length" class="text-grey-6 col">
+                      Очередь двоящих долгов пуста (после шага invDbtLoad).
+                    </div>
+                    <QSpace v-else />
+                    <QBtn
+                      flat
+                      dense
+                      no-caps
+                      color="primary"
+                      label="Разбор двоящих задолженностей СФ…"
+                      data-test="sudz-dbt-upl-open-inv-dbt-double"
+                      @click="openInvDbtDouble"
                     />
                   </div>
                 </QTabPanel>
@@ -401,7 +434,12 @@ import {
   funnelPresetPrefixCount,
   type FunnelPresetId
 } from '@/sudz/dbt-upl-funnel-steps';
-import type { SudzCnInvUplSfDouble, SudzDbtUplFileSh, SudzUplLookup } from '@/types/sudz';
+import type {
+  SudzCnInvUplInvDbtDouble,
+  SudzCnInvUplSfDouble,
+  SudzDbtUplFileSh,
+  SudzUplLookup
+} from '@/types/sudz';
 
 const $q = useQuasar();
 const store = useSudzDbtUplStore();
@@ -468,11 +506,33 @@ const sfDoubleColumns: FemsqTableColumn<SudzCnInvUplSfDouble>[] = [
   { name: 'ciusInvNumCount', label: 'совпад.', field: 'ciusInvNumCount', align: 'right' }
 ];
 
+const invDbtDoubleColumns: FemsqTableColumn<SudzCnInvUplInvDbtDouble>[] = [
+  { name: 'ciudStatus', label: 'статус', field: 'ciudStatus', align: 'left' },
+  { name: 'ciudCnNum', label: 'Договор', field: 'ciudCnNum', align: 'left' },
+  { name: 'ciudInvNum', label: 'СФ', field: 'ciudInvNum', align: 'left' },
+  {
+    name: 'ciudDebt',
+    label: 'сумма',
+    field: 'ciudDebt',
+    align: 'right',
+    format: (v) => (v == null ? '' : String(v))
+  },
+  { name: 'ciudReason', label: 'причина', field: 'ciudReason', align: 'left' },
+  { name: 'ciudIKey', label: 'iKey', field: 'ciudIKey', align: 'right' }
+];
+
 /**
  * Открывает экран КСДСФ для текущей выгрузки.
  */
 function openSfDouble(): void {
   connection.navigate('sudz-sf-double');
+}
+
+/**
+ * Открывает каркас экрана разбора двоящих задолженностей СФ.
+ */
+function openInvDbtDouble(): void {
+  connection.navigate('sudz-inv-dbt-double');
 }
 
 const selectedRows = ref<SudzUplLookup[]>([]);

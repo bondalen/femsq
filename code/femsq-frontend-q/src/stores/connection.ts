@@ -15,6 +15,7 @@ export type ActiveView =
   | 'sudz-dbt-upl'
   | 'sudz-pmt-upl'
   | 'sudz-sf-double'
+  | 'sudz-inv-dbt-double'
   | 'contracts'
   | 'test-grid';
 export type AuthMode = 'sql' | 'windows' | 'token';

@@ -29,6 +29,7 @@
     <SudzDbtUplView v-else-if="connection.activeView === 'sudz-dbt-upl'" />
     <SudzPmtUplView v-else-if="connection.activeView === 'sudz-pmt-upl'" />
     <SudzSfDoubleView v-else-if="connection.activeView === 'sudz-sf-double'" />
+    <SudzInvDbtDoubleView v-else-if="connection.activeView === 'sudz-inv-dbt-double'" />
     <ContractsView v-else-if="connection.activeView === 'contracts'" />
     <TestGridView v-else-if="connection.activeView === 'test-grid'" />
 
@@ -112,6 +113,9 @@ import {
 
 /** Отложенно: тянут FemsqTree из feQuLib, которого в текущем checkout нет. */
 const SudzSfDoubleView = defineAsyncComponent(() => import('@/views/sudz/SudzSfDoubleView.vue'));
+const SudzInvDbtDoubleView = defineAsyncComponent(
+  () => import('@/views/sudz/SudzInvDbtDoubleView.vue')
+);
 const ContractsView = defineAsyncComponent(() => import('@/views/contracts/ContractsView.vue'));
 
 const connection = useConnectionStore();

@@ -14,6 +14,7 @@ import com.femsq.database.model.sudz.SudzPmUplLookup;
 import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
 import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
+import com.femsq.database.model.sudz.SudzSfDoubleHints;
 import com.femsq.database.model.sudz.SudzSfDoubleSumMatches;
 import com.femsq.database.model.sudz.SudzSvodResult;
 import com.femsq.database.model.sudz.SudzUplLookup;
@@ -552,6 +553,30 @@ public class SudzGraphqlController {
             BigDecimal debtBd = BigDecimal.valueOf(debt);
             BigDecimal epsBd = epsilon == null ? new BigDecimal("0.01") : BigDecimal.valueOf(epsilon);
             return sudzService.findSfDoubleSumMatches(debtBd, epsBd);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Подсказки КСДСФ: исполнитель Excel среди СФ по номеру и сумм.
+     *
+     * @param ciusKey ключ очереди
+     * @param epsilon допуск суммы; null → 0.01
+     * @return три секции
+     */
+    @QueryMapping
+    public SudzSfDoubleHints sudzSfDoubleHints(
+            @Argument int ciusKey,
+            @Argument Double epsilon
+    ) {
+        try {
+            BigDecimal epsBd = epsilon == null ? new BigDecimal("0.01") : BigDecimal.valueOf(epsilon);
+            return sudzService.findSfDoubleHints(ciusKey, epsBd);
         } catch (IllegalArgumentException exception) {
             throw badRequest(exception);
         } catch (MissingConfigurationException exception) {

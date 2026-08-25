@@ -1,8 +1,8 @@
 # СУДЗ — эскизы экранов MVP (G4)
 
 **Дата создания:** 2026-08-07  
-**Последнее обновление:** 2026-08-19 (S70: экран D «Загрузка платежей», visual v1 / 0072)
-**Статус:** экран A0 = yr; Progress — лаунчер **операций**; бывший Rslt → «Долги / мероприятия»; **C — лаунчер загрузки свода**; **D — лаунчер загрузки платежей (visual v1)**; для `CnExistCtptNotLoad` нужен TopBar **Договоры** ([02-10](./02-10_contracts-cnNum-access.md))
+**Последнее обновление:** 2026-08-24 (S68u: UAT КСДСФ upl 910 — очередь пуста)  
+**Статус:** экран A0 = yr; Progress — лаунчер **операций**; бывший Rslt → «Долги / мероприятия»; **C — лаунчер загрузки свода**; **D — лаунчер загрузки платежей (visual v1)**; КСДСФ — `SudzSfDoubleView` (**S68u** UAT 910 ✅: двоящих № нет) + **S68h**/**S68v**; для `CnExistCtptNotLoad` — TopBar **Договоры** ([02-10](./02-10_contracts-cnNum-access.md))
 **Домен:** [01-overview](../domain/sudz/01-overview.md) · процесс [03-processes](../domain/sudz/03-processes.md) · витрина [08-target-schema §3.6](../domain/sudz/08-target-schema.md) · алгоритм Access [04 §2.7](../domain/sudz/04-data-model.md#27-полный-алгоритм-btncidufload_click--цепочка-сопоставления-подтверждено-s29) · платежи [04 §2.9](../domain/sudz/04-data-model.md#29-алгоритм-btnupload_click--cninvpmtupl-процесс-1112-каркас-s69)  
 **IA:** [02-4_app-forms-ia.md](./02-4_app-forms-ia.md)  
 **План СУДЗ:** [chat-plan-26-0802-sudz.md](../chats/chat-plan/chat-plan-26-0802-sudz.md) §5.6  
@@ -232,7 +232,7 @@
 | Путь, флаги, лог | **`CnInvDbtUplFile`** | **`CnInvDbtUplFile`** | GraphQL `sudzDbtUplLauncher` / `updateSudzDbtUplFile` |
 | Перечень листов | **`CnInvDbtUplFileSh`** | **`CnInvDbtUplFileSh`** | read в лаунчере |
 | Staging строк Excel | **`CnInvDbtUplTbl`*** | **есть** (пусто до воронки) | этап 7 |
-| Очередь неоднозначностей | **`CnInvDbtUplFileInvDouble`** | **есть** (пусто) | каркас грида; ≠ VIEW `ags.cn_inv_dbt_double` |
+| Очередь неоднозначностей | **`CnInvDbtUplFileInvDouble`** + **`CnInvUplSfDouble`** | **есть** | грид вкладки + экран КСДСФ; UAT 910: **0** open (S68u) |
 | Счета / долги (внешн. вкладки) | queries → `cn_inv_dbt` | **`ags.cn_inv_dbt`** | вкладки disabled |
 | Выгрузки платежей | `cn_inv_dbt_upl_g_p` + pm | **есть** | вкладка disabled; **не** экран D — мост 1 дбт→N pmt |
 
@@ -271,14 +271,29 @@ Access: **список сверху / детали снизу** (не master с�
 │ │  Пресеты: org | до договоров dry-run | полная dry-run | + apply    │ │
 │ │                                                                    │ │
 │ │  Подвкладки File_f:                                                │ │
-│ │  [ ход загрузки ] [ перечень листов ] [ повторяющиеся СФ ]         │ │
+│ │  [ ход загрузки ] [ перечень листов ] [ повторяющиеся СФ ] [ двоящие долги СФ ] │ │
 │ │                                                                    │ │
 │ │  · Ход: HTML/лог (cidufLoadingProgress; в Access — RTF→HTML)       │ │
 │ │  · Листы: грид лист | счёт | проверять?                            │ │
 │ │  · Повторы СФ: каркас InvDouble + место под «создать СФ…»          │ │
+│ │    → экран КСДСФ (`SudzSfDoubleView`): очередь | Excel | СФ | Суммы │ │
+│ │    → S68h: под колонкой «СФ» — текстовые подсказки исполнителя     │ │
+│ │      (БУиРГ|ИНН) + кнопки inKey / cidKey / dvKey для выбора строки │ │
+│ │  · Двоящие долги СФ: очередь `CnInvUplInvDbtDouble` (S66e)         │ │
+│ │    → stub `SudzInvDbtDoubleView` («Разбор двоящих задолженностей…»)│ │
 │ └────────────────────────────────────────────────────────────────────┘ │
 │ * срез = uplStatusOnDate (в Access-гриде нет — колонка на решение)   │
 ```
+
+### КСДСФ · подсказки S68h
+
+Экран `SudzSfDoubleView` (кнопка с вкладки «повторяющиеся СФ»). Под колонкой «Счета-фактуры»:
+
+- GraphQL `sudzSfDoubleHints(ciusKey)` — зоны `sfByNum` / `sumsOld` / `sumsNew`;
+- match: исполнитель `cn_s_type=2`, якорь Excel **БУиРГ или ИНН**;
+- клик по ключу выбирает строку в таблице СФ или сумм (не через tree).
+
+План: [chat-plan §5.6 S68h](../chats/chat-plan/chat-plan-26-0802-sudz.md). **S68u (2026-08-24):** upl 910 разобран — `CnInvUplSfDouble` пуста, двоящих № в воронке нет.
 
 ### Панель шагов воронки (S61f) — решение владельца
 
@@ -308,7 +323,7 @@ Access: **список сверху / детали снизу** (не master с�
 | Лаунчер | панель шагов | комментирование Sub в VBA | **док S61f**; UI/код — позже |
 | Ход | лог | `cidufLoadingProgress` (RTF→HTML) | слот |
 | Листы | грид | `CnInvDbtUplFileSh` | **каркас** |
-| Повторы | грид + кнопка | `InvDouble` | **каркас** |
+| Повторы | грид + кнопка → КСДСФ | `InvDouble` / `CnInvUplSfDouble` | ✅ UAT 910 (S68u) |
 | Внешние вкладки | pm / счета / долги | `g_p`, sum-query, `cn_inv_dbt` | ярлыки optional; контент вне UAT v1 |
 
 ### Поведение v1 (без воронки)

@@ -14,6 +14,7 @@ import {
 } from '@/api/sudz-api';
 import type {
   CreateSudzUplInput,
+  SudzCnInvUplInvDbtDouble,
   SudzCnInvUplSfDouble,
   SudzDbtUplFile,
   SudzDbtUplFileSh,
@@ -53,6 +54,9 @@ export const useSudzDbtUplStore = defineStore('sudz-dbt-upl', () => {
   const sheets = computed<SudzDbtUplFileSh[]>(() => launcher.value?.sheets ?? []);
   const invDoubles = computed<SudzDbtUplInvDouble[]>(() => launcher.value?.invDoubles ?? []);
   const sfDoubles = computed<SudzCnInvUplSfDouble[]>(() => launcher.value?.sfDoubles ?? []);
+  const invDbtDoubles = computed<SudzCnInvUplInvDbtDouble[]>(
+    () => launcher.value?.invDbtDoubles ?? []
+  );
 
   /**
    * Загружает список выгрузок (новые сверху).
@@ -227,6 +231,7 @@ export const useSudzDbtUplStore = defineStore('sudz-dbt-upl', () => {
     sheets,
     invDoubles,
     sfDoubles,
+    invDbtDoubles,
     loadUpls,
     selectUpl,
     createUpl,

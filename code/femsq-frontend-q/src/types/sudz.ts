@@ -156,6 +156,23 @@ export interface SudzCnInvUplSfDouble {
   ciusCreatedInvKey: number | null;
 }
 
+/** Очередь двоящих задолженностей СФ (CnInvUplInvDbtDouble). */
+export interface SudzCnInvUplInvDbtDouble {
+  ciudKey: number;
+  ciudCidut: number;
+  ciudDbtFile: number | null;
+  ciudUnloadKey: number;
+  ciudIKey: number | null;
+  ciudCnNum: string | null;
+  ciudInvNum: string | null;
+  ciudDebt: number | null;
+  ciudIdvvKey: number | null;
+  ciudReason: string | null;
+  ciudStatus: string;
+  ciudStatusAt: string | null;
+  ciudCreatedIdKey: number | null;
+}
+
 /** Excel-кандидат КСДСФ. */
 export interface SudzSfDoubleExcelCandidate {
   cidutKey: number;
@@ -216,6 +233,33 @@ export interface SudzSfDoubleSumMatches {
   newMatches: SudzSfDoubleNewSumMatch[];
 }
 
+/** Ключ подсказки для выбора строки на экране КСДСФ. */
+export interface SudzSfDoubleHintItem {
+  zone: string;
+  pickKey: string;
+  pickValue: number;
+  invKey: number | null;
+  cnKey: number | null;
+  cnNum: string | null;
+  matchBy: string;
+  label: string | null;
+}
+
+/** Секция подсказки (yes/no/unknown/na). */
+export interface SudzSfDoubleHintSection {
+  status: string;
+  message: string;
+  totalCount: number;
+  items: SudzSfDoubleHintItem[];
+}
+
+/** Три зоны подсказок по исполнителю Excel. */
+export interface SudzSfDoubleHints {
+  sfByNum: SudzSfDoubleHintSection;
+  sumsOld: SudzSfDoubleHintSection;
+  sumsNew: SudzSfDoubleHintSection;
+}
+
 /** Карточка лаунчера экрана C. */
 export interface SudzDbtUplLauncher {
   upl: SudzUplLookup;
@@ -223,6 +267,7 @@ export interface SudzDbtUplLauncher {
   sheets: SudzDbtUplFileSh[];
   invDoubles: SudzDbtUplInvDouble[];
   sfDoubles: SudzCnInvUplSfDouble[];
+  invDbtDoubles: SudzCnInvUplInvDbtDouble[];
 }
 
 export interface UpdateSudzDbtUplFileInput {

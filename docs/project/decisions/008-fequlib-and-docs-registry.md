@@ -1,7 +1,7 @@
 Решение 008: Внешние проекты — feQuLib и реестр документации проектов (Postgres)
 
 Дата: 2026-07-25  
-Последнее обновление: 2026-08-18  
+Последнее обновление: 2026-08-24  
 Статус: ✅ Принято; MVP выполнен (0061/0060); projectize выполнен (0063); визуальный контракт хост↔lib зафиксирован (2026-07-29)  
 Участники: Александр
 
@@ -48,7 +48,7 @@
 | docs-registry | https://github.com/bondalen/docs-registry | `/home/alex/projects/docs-registry` |
 | feQuLib (npm: `fequlib`) | https://github.com/bondalen/fequlib | `/home/alex/projects/feQuLib` |
 
-FEMSQ потребляет `fequlib` через `file:../../../feQuLib` (пока соседние клоны; переход на git-URL/тег — позже, по semver).
+FEMSQ потребляет `fequlib` через `file:../../../feQuLib` (пока соседние клоны; переход на git-URL/тег — позже, по semver). Перед сборкой FEMSQ обязательна проверка клона: `./code/scripts/check-fequlib.sh`. Не воссоздавать компоненты библиотеки в FEMSQ при рассинхроне — `git pull` в feQuLib.
 
 ### Дизайн: хост и библиотека (2026-07-29)
 

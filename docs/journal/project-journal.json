@@ -3,9 +3,72 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-08-19"
+      "lastUpdated": "2026-08-24"
     },
     "sessions": [
+      {
+        "chat": {
+          "displayName": "СУДЗ: воронка — переход AccSmpl → invDbt (не cnInvAccnt) (in_progress, high). № chat-2026-08-24-001",
+          "chat-attributes": {
+            "id": "chat-2026-08-24-001",
+            "created": "2026-08-24",
+            "lastUpdated": "2026-08-24",
+            "owner": "Александр",
+            "status": "in_progress",
+            "priority": "high",
+            "tags": [
+              "sudz",
+              "0069",
+              "funnel",
+              "invDbt",
+              "cnInvAccnt",
+              "S66c"
+            ],
+            "links": {
+              "projectDocsRefs": [
+                "module:backend.web"
+              ],
+              "developmentTasks": [
+                "0069"
+              ],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s66c--шов-после-accsmpl-старая-vs-новая-воронка-2026-08-24"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "S66c: шов AccSmpl — Access cnInvAccnt vs цель invDbt/Dbt (success). № log-2026-08-24-001",
+                "log-attributes": {
+                  "id": "log-2026-08-24-001",
+                  "timestamp": "2026-08-24T16:24:43+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0069"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксировать шов воронки и SQL invDoubleCia; стоп кода AccNot/invDbtDouble",
+                    "details": "После AccSmpl Access INSERT cnInvAccnt и cn_inv_dbt. Критерий 0069 — Dbt/invDbt/DbtValue. QueryDef invDoubleCia: ciaName на cnInvAccnt, GROUP BY iKey, таблица invDbt не участвует. Код следующих Access-шагов не писать до решения: паритет Access / сразу цель / гибрид-лог.",
+                    "outcome": "План 0.94.1: владелец выбрал сразу целевую воронку. Следующий шаг — согласовать match без ciaName (черновик stepId), не AccNot и не клон invDbtDouble.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+                      "docs/project/proposals/vba-analysis/access-queries/invDoubleCia.access.sql"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
       {
         "chat": {
           "displayName": "СУДЗ: экран загрузки платежей visual v1 (completed, high). № chat-2026-08-19-001",

@@ -1,8 +1,16 @@
 package com.femsq.database.service;
 
 import com.femsq.database.model.sudz.SudzCmmGrLookup;
+import com.femsq.database.model.sudz.SudzCnInvUplInvDbtDouble;
 import com.femsq.database.model.sudz.SudzCnInvUplSfDouble;
 import com.femsq.database.model.sudz.SudzD644Row;
+import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotRow;
+import com.femsq.database.model.sudz.SudzDbtUplInvDbtLoadApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarAmbiguousRow;
+import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarEnsureApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarEnsureRow;
+import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarEnsureSnapshot;
 import com.femsq.database.model.sudz.SudzDbtUplCnCtptExistInvApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplCnCtptExistInvResult;
 import com.femsq.database.model.sudz.SudzDbtUplCnExistCtptNotLoad;
@@ -20,6 +28,7 @@ import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
 import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
+import com.femsq.database.model.sudz.SudzSfDoubleHints;
 import com.femsq.database.model.sudz.SudzSfDoubleSumMatches;
 import com.femsq.database.model.sudz.SudzSvodResult;
 import com.femsq.database.model.sudz.SudzUplLookup;
@@ -382,6 +391,79 @@ public interface SudzService {
     SudzDbtUplCnCtptExistInvApplyResult applyDbtUplCnCtptExistInvNotLoad(int unloadKey);
 
     /**
+     * Diff: СФ есть, нет простой карточки {@code cnInvAccntSmpl}.
+     *
+     * @param unloadKey {@code upl_key}
+     * @return строки лога AccSmpl
+     */
+    List<SudzDbtUplAccSmplNotRow> listDbtUplCnCtptInvExistAccSmplNot(int unloadKey);
+
+    /**
+     * INSERT {@code cnInvAccntSmpl} при {@code flLoad}.
+     *
+     * @param unloadKey {@code upl_key}
+     * @return число внесённых пар
+     */
+    SudzDbtUplAccSmplNotApplyResult applyDbtUplCnCtptInvExistAccSmplNotLoad(int unloadKey);
+
+    /**
+     * Diff ensure: missing + ambiguous одним проходом CTE.
+     *
+     * @param unloadKey {@code upl_key}
+     * @return снимок для лога
+     */
+    SudzDbtUplInvDbtVarEnsureSnapshot listDbtUplInvDbtVarEnsureSnapshot(int unloadKey);
+
+    /**
+     * Diff: однозначная четвёрка FK, нет {@code invDbtVar}.
+     *
+     * @param unloadKey {@code upl_key}
+     * @return строки лога ensure
+     */
+    List<SudzDbtUplInvDbtVarEnsureRow> listDbtUplInvDbtVarEnsureMissing(int unloadKey);
+
+    /**
+     * Контексты ensure с неоднозначным {@code cnNum}/{@code invNum}.
+     *
+     * @param unloadKey {@code upl_key}
+     * @return строки лога
+     */
+    List<SudzDbtUplInvDbtVarAmbiguousRow> listDbtUplInvDbtVarEnsureAmbiguous(int unloadKey);
+
+    /**
+     * INSERT {@code sudz.invDbtVar} при {@code flLoad}.
+     *
+     * @param unloadKey {@code upl_key}
+     * @return число внесённых вариантов
+     */
+    SudzDbtUplInvDbtVarEnsureApplyResult applyDbtUplInvDbtVarEnsure(int unloadKey);
+
+    /**
+     * Пересборка очереди {@code CnInvUplInvDbtDouble}.
+     *
+     * @param unloadKey {@code upl_key}
+     * @param fileKey {@code cidufKey}
+     * @return число строк очереди
+     */
+    int rebuildInvDbtDoubleQueue(int unloadKey, Integer fileKey);
+
+    /**
+     * Auto {@code invDbt}/{@code invDbtDbtVar} для однозначных iKey.
+     *
+     * @param unloadKey {@code upl_key}
+     * @return счётчики
+     */
+    SudzDbtUplInvDbtLoadApplyResult applyDbtUplInvDbtLoadUnambiguous(int unloadKey);
+
+    /**
+     * Очередь разбора двоящих задолженностей.
+     *
+     * @param unloadKey {@code upl_key}
+     * @return строки
+     */
+    List<SudzCnInvUplInvDbtDouble> findInvDbtDoublesByUnload(int unloadKey);
+
+    /**
      * Очередь КСДСФ по выгрузке долгов.
      *
      * @param unloadKey {@code upl_key}
@@ -413,6 +495,15 @@ public interface SudzService {
      * @return старые и новые совпадения
      */
     SudzSfDoubleSumMatches findSfDoubleSumMatches(BigDecimal debt, BigDecimal epsilon);
+
+    /**
+     * Подсказки КСДСФ по исполнителю Excel (СФ по номеру + суммы old/new).
+     *
+     * @param ciusKey ключ очереди
+     * @param epsilon допуск суммы
+     * @return секции с ключами выбора
+     */
+    SudzSfDoubleHints findSfDoubleHints(int ciusKey, BigDecimal epsilon);
 
     /**
      * Создать новый СФ из строки очереди КСДСФ.

@@ -1,0 +1,7 @@
+﻿-- Access QueryDef: ciduCnCtptInvAccSmplExtAccExtDbtExt
+-- Type: SELECT (0)
+-- dumped: 2026-08-24 15:25
+
+SELECT ciduCnCtptInvAccSmplExtAccExtDbt.cidutCntrPrtNum, ciduCnCtptInvAccSmplExtAccExtDbt.cidutCntrPrtName, ciduCnCtptInvAccSmplExtAccExtDbt.cidutCnName, ciduCnCtptInvAccSmplExtAccExtDbt.cidutCnNameNull, ciduCnCtptInvAccSmplExtAccExtDbt.cidutCnDate, ciduCnCtptInvAccSmplExtAccExtDbt.cidutCnDateNull, ciduCnCtptInvAccSmplExtAccExtDbt.cidutCnInv, ciduCnCtptInvAccSmplExtAccExtDbt.cidutCnInvNull, ciduCnCtptInvAccSmplExtAccExtDbt.cidutCnInvNameNull, ciduCnCtptInvAccSmplExtAccExtDbt.cn_key, ciduCnCtptInvAccSmplExtAccExtDbt.cn_s_org_key, ciduCnCtptInvAccSmplExtAccExtDbt.iKey, ciduCnCtptInvAccSmplExtAccExtDbt.ciKey, ciduCnCtptInvAccSmplExtAccExtDbt.account_num, ciduCnCtptInvAccSmplExtAccExtDbt.account_key, ciduCnCtptInvAccSmplExtAccExtDbt.ciasKey, ciduCnCtptInvAccSmplExtAccExtDbt.ciasCn_s_org_smpl, ciduCnCtptInvAccSmplExtAccExtDbt.ciaKey, ciduCnCtptInvAccSmplExtAccExtDbt.cidutUnloadKey, ciduCnCtptInvAccSmplExtAccExtDbt.cn_inv_dbt_key
+FROM ciduCnCtptInvAccSmplExtAccExtDbt
+WHERE (((ciduCnCtptInvAccSmplExtAccExtDbt.cn_inv_dbt_key) Is Not Null));

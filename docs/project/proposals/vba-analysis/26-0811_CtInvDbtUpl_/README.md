@@ -28,8 +28,18 @@ CnInvDbtUplTblCnInv  (новые СФ)
 CnInvDbtUplFileInvDouble  (очередь ручного разбора; cidufiCiduf → File)
 ```
 
+## Дамп QueryDef воронки (`cidu*`)
+
+Аналог платежей [`DumpCipuQueryDefs.bas`](../26-0813_CnInvPmtUpl_/DumpCipuQueryDefs.bas):
+
+1. Импорт в Access: [`DumpCiduQueryDefs.bas`](./DumpCiduQueryDefs.bas) → модуль `modDumpCiduQueryDefs`.
+2. Immediate: `DumpCiduQueryDefs "C:\temp\cidu-sql"`
+3. Папку UTF-8 `.sql` — в чат / сюда как `cidu-sql/`.
+
+Снимок 2026-08-24 15:25: [`cidu-sql/README.md`](./cidu-sql/README.md) (36 файлов).
+
+**Вне scope дампа:** `*Old`, `CnInvPmtUpl*` / `cipu*`.
+
 ## Следующий шаг (этап 2–4 §5.6)
 
 Карта → решение имён/`sudz` DDL → apply DEV. UI после DDL.
-
-**Вне scope дампа:** `*Old`, `CnInvPmtUpl*`.

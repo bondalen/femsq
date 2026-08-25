@@ -1,10 +1,10 @@
 # СУДЗ — целевая физическая схема (DEV: `sudz`; прод: `ags`)
 
 **Дата создания:** 2026-08-07  
-**Последнее обновление:** 2026-08-15 (S63: pm/PrDoc остаются на `cnInvAccntSmpl`)  
+**Последнее обновление:** 2026-08-24 (S66e: очередь `CnInvUplInvDbtDouble`)  
 **Статус:** DEV-контур MVP на `sudz`; лаборатория `test_sudz`; **прод — влитие в `ags`**  
 **План чата:** [chat-plan-26-0802-sudz.md](../../chats/chat-plan/chat-plan-26-0802-sudz.md)  
-**Контекст:** [04-3 проблемы/решения](./04-3_problems-solutions.md) · эскиз [assets/26-0807-sudz-target-sketch-dbtvar.png](./assets/26-0807-sudz-target-sketch-dbtvar.png) (связь pm исправлена решением S63 — см. [fix](./assets/26-0815-sudz-target-sketch-pm-accnt-fix.png)) · [07-readiness](./07-readiness.md)  
+**Контекст:** [04-3 проблемы/решения](./04-3_problems-solutions.md) · эскиз **актуальный** [assets/26-0824-sudz-target-sketch-dbtvar.png](./assets/26-0824-sudz-target-sketch-dbtvar.png) (2026-08-24; правки к предыдущему) · история: [26-0807-…](./assets/26-0807-sudz-target-sketch-dbtvar.png), S63 fix [26-0815-…pm-accnt-fix.png](./assets/26-0815-sudz-target-sketch-pm-accnt-fix.png) · [07-readiness](./07-readiness.md)  
 **SQL-пакеты:** [26-0807-sudz-target-schema](../../sql/26-0807-sudz-target-schema/) (`sudz` DEV) · [26-0807-sudz-test-schema](../../sql/26-0807-sudz-test-schema/) (лаборатория)
 
 Документ фиксирует **точный** перечень таблиц, колонок, ключей, индексов и триггеров целевой модели СУДЗ. ER ниже — рабочая диаграмма в Cursor (Mermaid): правим её **параллельно** со спецификацией полей.
@@ -387,6 +387,8 @@ erDiagram
 `ags.cn` / `ags.cnNum` / `ags.inv` / `ags.invNum` / `ags.cnInv` / `ags.accnt` / `ags.cn_s_org` / `ags.cn_s_org_smpl` / `ags.cn_inv_dbt_upl` / `ags.cn_inv_pm*` / **`ags.cnInvAccntSmpl`** / `ags.cn_PrDoc*` — DDL не меняем (**S63:** pm и PrDoc остаются на Smpl; не трогать).
 
 Старый контур **`ags.cn_inv_dbt` / `ags.cnInvAccnt`** — кандидат на архив/deprecate после cutover долгов на `Dbt` (роль ID долга). **`cnInvAccntSmpl` не архивировать** в горизонте СУДЗ — операционный якорь PM (и PrDoc вне СУДЗ).
+
+**S66c (воронка 0069):** последний Access-шаг с прямым аналогом в цели — INSERT `cnInvAccntSmpl`. Дальше Access пишет `cnInvAccnt`/`cn_inv_dbt`; FEMSQ по критерию 0069 должен писать `Dbt`/`invDbt*`/`DbtValue`. Новые stepId **не** выводятся из `cidu*Acc*` без решения владельца. Имя VBA `invDbtDouble` ≠ таблица `invDbt` (QueryDef `invDoubleCia` на `cnInvAccnt`).
 
 ---
 

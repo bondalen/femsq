@@ -20,6 +20,11 @@ cd "$CODE_ROOT"
 
 echo "Проект: $CODE_ROOT"
 
+# Локальный feQuLib должен быть синхронизирован с GitHub до bump версии:
+# иначе frontend падает на экспорте (FemsqTree и др.), а номер сборки уже увеличен.
+echo -e "\n${YELLOW}Проверка локального feQuLib...${NC}"
+"$SCRIPT_DIR/check-fequlib.sh"
+
 # Автоматически увеличиваем версию
 echo -e "\n${YELLOW}Увеличение версии...${NC}"
 "$SCRIPT_DIR/increment-version.sh"

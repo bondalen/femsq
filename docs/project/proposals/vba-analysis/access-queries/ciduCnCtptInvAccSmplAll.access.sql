@@ -1,0 +1,15 @@
+/*
+ * Объект MS Access: сохранённый запрос ciduCnCtptInvAccSmplAll
+ *
+ * Назначение: ExistInvAll (ciKey NOT NULL) + счёт из Tbl + LEFT JOIN Smpl
+ * по (ciKey, account_key, БУиРГ).
+ *
+ * Дамп: 26-0811_CtInvDbtUpl_/cidu-sql/ 2026-08-24 15:25
+ *
+ * Диалект: Microsoft Access SQL (Jet/ACE). Не исполнять как есть на SQL Server.
+ *
+ * lastUpdated: 2026-08-24
+ */
+
+SELECT x.cidutCntrPrtNum, x.cidutCntrPrtName, x.cidutCnName, x.cidutCnNameNull, x.cidutCnDate, x.cidutCnDateNull, x.cidutCnInv, x.cidutCnInvNull, x.cn_key, x.cn_s_org_key, x.iKey, x.ciKey, x.account_num, x.account_key, s.ciasKey, s.ciasCn_s_org_smpl
+FROM (SELECT z.cidutCntrPrtNum, z.cidutCntrPrtName, z.cidutCnName, z.cidutCnNameNull, z.cidutCnDate, z.cidutCnDateNull, z.cidutCnInv, z.cidutCnInvNull, z.cn_key, z.cn_s_org_key, z.iKey, z.ciKey, y.account_num, y.account_key FROM (SELECT c.cidutCntrPrtNum, c.cidutCntrPrtName, c.cidutCnName, c.cidutCnNameNull, c.cidutCnDate, c.cidutCnDateNull, c.cidutCnInv, c.cidutCnInvNull, c.cn_key, c.cn_s_org_key, c.iKey, c.ciKey FROM ciduCnCtptExistInvAll AS c WHERE (((c.ciKey) Is Not Null)))  AS z LEFT JOIN (SELECT t.cidutCntrPrtNum, t.cidutCnNameNull, t.cidutCnDateNull, t.cidutCnInvNull, a.account_num, a.account_key FROM CnInvDbtUplTbl AS t INNER JOIN ags_accnt AS a ON t.cidutAccount = a.account_key)  AS y ON (z.cidutCnInvNull = y.cidutCnInvNull) AND (z.cidutCnDateNull = y.cidutCnDateNull) AND (z.cidutCnNameNull = y.cidutCnNameNull) AND (z.cidutCntrPrtNum = y.cidutCntrPrtNum))  AS x LEFT JOIN (SELECT s.ciasKey, s.ciasCnInv, s.ciasAccnt, s.ciasCn_s_org_smpl, i.org_id_value_l FROM (ags_cnInvAccntSmpl AS s INNER JOIN ags_cn_s_org_smpl AS o ON s.ciasCn_s_org_smpl = o.csosKey) INNER JOIN ags_org_id AS i ON o.csosOrgId = i.org_id_key)  AS s ON (x.account_key = s.ciasAccnt) AND (x.ciKey = s.ciasCnInv) AND (x.cidutCntrPrtNum = s.org_id_value_l);

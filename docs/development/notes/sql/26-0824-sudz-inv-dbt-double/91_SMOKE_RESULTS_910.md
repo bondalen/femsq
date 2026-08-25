@@ -1,0 +1,7 @@
+-- Smoke timings (upl 910) — results 2026-08-25 after #sudzEia materialization.
+-- AccSmpl (single-pass OUTER APPLY):          0 rows, ~119 ms
+-- ensure snapshot via #eia: missing=1631, ambiguous=118, ~6.7 s
+-- invDbtLoad classify needQueue via #eia:     169 keys, ~5.9 s
+--
+-- Go for UI dry-run: AccSmpl + invDbtVarEnsure (+ optionally invDbtLoad rebuild).
+-- Full script body retained for re-run in 91_SMOKE_ensure_load_timing_910.sql (update to #eia pattern when re-executing).

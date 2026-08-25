@@ -3,7 +3,7 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2026-08-19T21:55:00+03:00",
+      "lastUpdated": "2026-08-24T16:24:00+03:00",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     "tasks": {
@@ -2529,7 +2529,9 @@
                 ],
                 "journalRefs": [
                   "chat:chat-2026-08-11-001",
-                  "log:log-2026-08-18-003"
+                  "chat:chat-2026-08-24-001",
+                  "log:log-2026-08-18-003",
+                  "log:log-2026-08-24-001"
                 ],
                 "aiRuleRefs": [],
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
@@ -2540,8 +2542,8 @@
                 ]
               },
               "created": "2026-08-07",
-              "lastUpdated": "2026-08-18",
-              "description": "Шаг 1.1.1.1. excelToTbl/orgNotInBuirg/CnNotLoad/CnExistCtptNotLoad ✅. Блокер сторон снят (0071 UAT). CnCtptExistInvNotLoad dry ✅. S68 КСДСФ 🔶. S68t: срез 1 + T4b ✅; далее T5 полный JSON КСДСФ. Walker ≠ FemsqTree, Решение 009. Опора: 04 §2.7, chat-plan §5.6."
+              "lastUpdated": "2026-08-24",
+              "description": "Шаг 1.1.1.1. AccSmpl ✅. S66c целевая воронка. S66d stepId отложен. S66e: порядок определения invDbt — сегментами владельца; stepId после. Next: сегмент 1. 0071 🔶."
             }
           }
         },
@@ -3445,7 +3447,7 @@
                           "structureId": "02.03.05",
                           "taskId": "0069",
                           "positionInParent": 5,
-                          "comment": "1.1.1.1; S68t T4b walker до полного дерева/T7; Решение 009"
+                          "comment": "1.1.1.1; S66c шов после AccSmpl; S68t T4b walker; Решение 009"
                         },
                         "task-items": []
                       }

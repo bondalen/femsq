@@ -1,13 +1,13 @@
 /**
- * Реестр шагов воронки загрузки свода (S61f) — зеркало backend SudzDbtUplFunnelSteps.
- * titleRu — из комментариев VBA перед вызовом (Form_CnInvDbtUpl_gt_File_f); id меняются по мере разработки.
+ * Реестр шагов воронки загрузки свода (S61f / S66e) — зеркало backend SudzDbtUplFunnelSteps.
+ * titleRu — из комментариев VBA / S66e; Access-хвост после AccSmpl — disabled.
  */
 
 export interface SudzDbtUplFunnelStepDef {
   id: string;
-  /** Подпись из комментария VBA (не имя процедуры). */
+  /** Подпись из комментария VBA / S66e (не имя процедуры). */
   titleRu: string;
-  /** false — как CnCtptInvAccExistDbl в Access */
+  /** false — отключён (Access-хвост / CnCtptInvAccExistDbl) */
   enabled: boolean;
 }
 
@@ -39,19 +39,29 @@ export const SUDZ_DBT_UPL_FUNNEL_STEPS: SudzDbtUplFunnelStepDef[] = [
     enabled: true
   },
   {
+    id: 'invDbtVarEnsure',
+    titleRu: 'Актуализируем варианты контекста задолженности (invDbtVar)',
+    enabled: true
+  },
+  {
+    id: 'invDbtLoad',
+    titleRu: 'Загружаем слоты задолженностей СФ (invDbt) либо ставим в очередь разбора',
+    enabled: true
+  },
+  {
     id: 'invDbtDouble',
     titleRu: 'Проверяем имеющиеся в БД задолженности, которые более чем одна у счёта-фактуры',
-    enabled: true
+    enabled: false
   },
   {
     id: 'CnCtptInvExistAccNotLoad',
     titleRu: 'Отображаем счета-фактуры не имеющие Задолженностей в БД либо добавляем их',
-    enabled: true
+    enabled: false
   },
   {
     id: 'ciduTblCnCtptInvAccNameCountOneNot',
     titleRu: 'Отображаем повторяющиеся Задолженности (с именами) имеющиеся в источнике',
-    enabled: true
+    enabled: false
   },
   {
     id: 'CnCtptInvAccExistDbl',
@@ -61,12 +71,12 @@ export const SUDZ_DBT_UPL_FUNNEL_STEPS: SudzDbtUplFunnelStepDef[] = [
   {
     id: 'CnCtptInvAccExistDbtNotLoad',
     titleRu: 'Отображаем Задолженности не имеющие задолженности в БД либо добавляем их туда',
-    enabled: true
+    enabled: false
   },
   {
     id: 'CnCtptInvAccDbtExist',
     titleRu: 'Отображаем пары СФ+СГК имеющие задолженности в БД',
-    enabled: true
+    enabled: false
   }
 ];
 

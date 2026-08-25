@@ -25,6 +25,7 @@ import type {
   SudzRsltReturnImportResult,
   SudzSfDoubleDomainMatch,
   SudzSfDoubleExcelCandidate,
+  SudzSfDoubleHints,
   SudzSfDoubleSumMatches,
   SudzSvodResult,
   SudzUplLookup,
@@ -140,6 +141,22 @@ const SF_DOUBLE_FIELDS = `
   ciusCreatedInvKey
 `;
 
+const INV_DBT_DOUBLE_FIELDS = `
+  ciudKey
+  ciudCidut
+  ciudDbtFile
+  ciudUnloadKey
+  ciudIKey
+  ciudCnNum
+  ciudInvNum
+  ciudDebt
+  ciudIdvvKey
+  ciudReason
+  ciudStatus
+  ciudStatusAt
+  ciudCreatedIdKey
+`;
+
 const SUDZ_DBT_UPL_LAUNCHER = gql`
   query SudzDbtUplLauncher($uplKey: Int!) {
     sudzDbtUplLauncher(uplKey: $uplKey) {
@@ -171,6 +188,9 @@ const SUDZ_DBT_UPL_LAUNCHER = gql`
       }
       sfDoubles {
         ${SF_DOUBLE_FIELDS}
+      }
+      invDbtDoubles {
+        ${INV_DBT_DOUBLE_FIELDS}
       }
     }
   }
@@ -218,6 +238,9 @@ const RUN_DBT_UPL_FUNNEL = gql`
         }
         sfDoubles {
           ${SF_DOUBLE_FIELDS}
+        }
+        invDbtDoubles {
+          ${INV_DBT_DOUBLE_FIELDS}
         }
       }
     }
@@ -282,6 +305,58 @@ const SUDZ_SF_DOUBLE_SUM_MATCHES = gql`
         dvOverd
         dvUpl
         dvDbt
+      }
+    }
+  }
+`;
+
+const SUDZ_SF_DOUBLE_HINTS = gql`
+  query SudzSfDoubleHints($ciusKey: Int!, $epsilon: Float) {
+    sudzSfDoubleHints(ciusKey: $ciusKey, epsilon: $epsilon) {
+      sfByNum {
+        status
+        message
+        totalCount
+        items {
+          zone
+          pickKey
+          pickValue
+          invKey
+          cnKey
+          cnNum
+          matchBy
+          label
+        }
+      }
+      sumsOld {
+        status
+        message
+        totalCount
+        items {
+          zone
+          pickKey
+          pickValue
+          invKey
+          cnKey
+          cnNum
+          matchBy
+          label
+        }
+      }
+      sumsNew {
+        status
+        message
+        totalCount
+        items {
+          zone
+          pickKey
+          pickValue
+          invKey
+          cnKey
+          cnNum
+          matchBy
+          label
+        }
       }
     }
   }
@@ -571,7 +646,7 @@ export async function getSudzDbtUplLauncher(uplKey: number): Promise<SudzDbtUplL
     });
     const data = result.data?.sudzDbtUplLauncher;
     if (!data) throw new Error('Пустой ответ sudzDbtUplLauncher');
-    return { ...data, sfDoubles: data.sfDoubles ?? [] };
+    return { ...data, sfDoubles: data.sfDoubles ?? [], invDbtDoubles: data.invDbtDoubles ?? [] };
   } catch (error) {
     throw wrapApolloError(error, 'SudzDbtUplLauncher');
   }
@@ -642,6 +717,32 @@ export async function getSudzSfDoubleSumMatches(
     };
   } catch (error) {
     throw wrapApolloError(error, 'SudzSfDoubleSumMatches');
+  }
+}
+
+/**
+ * Подсказки КСДСФ: исполнитель Excel среди СФ по номеру и сумм.
+ */
+export async function getSudzSfDoubleHints(
+  ciusKey: number,
+  epsilon: number = 0.01
+): Promise<SudzSfDoubleHints> {
+  try {
+    const result = await apolloClient.query<{
+      sudzSfDoubleHints: SudzSfDoubleHints;
+    }>({
+      query: SUDZ_SF_DOUBLE_HINTS,
+      variables: { ciusKey, epsilon },
+      fetchPolicy: 'network-only'
+    });
+    const data = result.data?.sudzSfDoubleHints;
+    if (!data) {
+      const empty = { status: 'na', message: 'Нет данных подсказки.', totalCount: 0, items: [] };
+      return { sfByNum: empty, sumsOld: empty, sumsNew: empty };
+    }
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzSfDoubleHints');
   }
 }
 
@@ -717,7 +818,8 @@ export async function runSudzDbtUplFunnel(
       ...data,
       launcher: {
         ...data.launcher,
-        sfDoubles: data.launcher.sfDoubles ?? []
+        sfDoubles: data.launcher.sfDoubles ?? [],
+        invDbtDoubles: data.launcher.invDbtDoubles ?? []
       }
     };
   } catch (error) {

@@ -6,7 +6,7 @@
       "description": "Cистема работы с контрагентами и объектами при капитальном строительстве на основе БД MS SQL Server FEMSQ (Fish Eye MS SQL Server)",
       "author": "Александр",
       "created": "2025-10-08",
-      "lastUpdated": "2026-08-19",
+      "lastUpdated": "2026-08-24",
       "status": "in_progress",
       "repository": "https://github.com/bondalen/femsq.git",
       "license": "MIT",
@@ -79,6 +79,7 @@
         "serving": "Spring Boot Static Resources",
         "deployment": "Встроен в Spring Boot JAR (единый артефакт)",
         "component_library": "fequlib (`file:../../../feQuLib`)",
+        "component_library_sync": "Перед сборкой JAR/frontend проверять соседний клон: ./code/scripts/check-fequlib.sh (вызывается из build-thin-jar.sh до increment-version). Не копировать компоненты lib в FEMSQ.",
         "tree": {
           "renderer": "FemsqTree (feQuLib 0016)",
           "walker": "RelationTree в FEMSQ; кандидат FemsqWalkTree; Решение 009",

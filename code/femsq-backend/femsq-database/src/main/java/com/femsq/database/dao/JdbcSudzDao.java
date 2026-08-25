@@ -4,12 +4,20 @@ import com.femsq.database.config.DatabaseConfigurationService.MissingConfigurati
 import com.femsq.database.connection.ConnectionFactory;
 import com.femsq.database.exception.DaoException;
 import com.femsq.database.model.sudz.SudzCmmGrLookup;
+import com.femsq.database.model.sudz.SudzCnInvUplInvDbtDouble;
 import com.femsq.database.model.sudz.SudzCnInvUplSfDouble;
 import com.femsq.database.model.sudz.SudzD644Row;
 import com.femsq.database.model.sudz.SudzDbtUplFile;
 import com.femsq.database.model.sudz.SudzDbtUplFileSh;
 import com.femsq.database.model.sudz.SudzDbtUplInvDouble;
 import com.femsq.database.model.sudz.SudzDbtUplLauncher;
+import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotRow;
+import com.femsq.database.model.sudz.SudzDbtUplInvDbtLoadApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarAmbiguousRow;
+import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarEnsureApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarEnsureRow;
+import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarEnsureSnapshot;
 import com.femsq.database.model.sudz.SudzDbtUplCnCtptExistInvApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplCnCtptExistInvContract;
 import com.femsq.database.model.sudz.SudzDbtUplCnCtptExistInvItem;
@@ -28,6 +36,9 @@ import com.femsq.database.model.sudz.SudzRsltPeriod;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
 import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
+import com.femsq.database.model.sudz.SudzSfDoubleHintItem;
+import com.femsq.database.model.sudz.SudzSfDoubleHintSection;
+import com.femsq.database.model.sudz.SudzSfDoubleHints;
 import com.femsq.database.model.sudz.SudzSfDoubleNewSumMatch;
 import com.femsq.database.model.sudz.SudzSfDoubleOldSumMatch;
 import com.femsq.database.model.sudz.SudzSfDoubleSumMatches;
@@ -974,14 +985,16 @@ public class JdbcSudzDao implements SudzDao {
             List<SudzDbtUplFileSh> sheets = List.of();
             List<SudzDbtUplInvDouble> invDoubles = List.of();
             List<SudzCnInvUplSfDouble> sfDoubles = List.of();
+            List<SudzCnInvUplInvDbtDouble> invDbtDoubles = List.of();
             if (file.isPresent()) {
                 int fileKey = file.get().cidufKey();
                 sheets = loadDbtUplFileSheets(connection, fileKey);
                 invDoubles = loadDbtUplInvDoubles(connection, fileKey);
             }
             sfDoubles = loadSfDoublesByUnload(connection, uplKey);
+            invDbtDoubles = loadInvDbtDoublesByUnload(connection, uplKey);
             return Optional.of(new SudzDbtUplLauncher(
-                    upl.get(), file.orElse(null), sheets, invDoubles, sfDoubles));
+                    upl.get(), file.orElse(null), sheets, invDoubles, sfDoubles, invDbtDoubles));
         } catch (MissingConfigurationException exception) {
             throw exception;
         } catch (SQLException exception) {
@@ -1842,6 +1855,901 @@ public class JdbcSudzDao implements SudzDao {
         }
     }
 
+    /**
+     * CTE {@code ciduCnCtptInvAccSmplNot}: ExistList → ExistInvAll → AccSmplAll
+     * → {@code ciasKey IS NULL}. Anti-join Smpl: ({@code ciKey}, {@code account_key}, БУиРГ),
+     * не {@code csosKey}. {@code cidutAccount} = {@code account_key}.
+     * Tbl фильтруется {@code cidutUnloadKey} (в Access буфер один пакет).
+     *
+     * @param tbl квалифицированное имя {@code CnInvDbtUplTbl}
+     * @return SQL с одним {@code ?} = unloadKey; финальный CTE {@code accSmplNot}
+     */
+    /**
+     * Общий префикс CTE воронки долгов до {@code existInvAll} (AccSmpl / invDbt*).
+     *
+     * @param tbl квалифицированное имя {@code CnInvDbtUplTbl}
+     * @return SQL WITH … existInvAll AS (…)
+     */
+    private static String sqlDbtUplExistInvAllCte(String tbl) {
+        return ""
+                + "WITH tbl AS ( "
+                + "  SELECT a.cidutCntrPrtNum, a.cidutCntrPrtName, a.cidutCntrPrtITN, "
+                + "         a.cidutCnName, a.cidutCnDate, a.cidutCnInv, a.cidutAccount, "
+                + "         CASE WHEN a.cidutCnDate IS NULL THEN CAST('19000101' AS date) "
+                + "              ELSE CAST(a.cidutCnDate AS date) END AS cidutCnDateNull, "
+                + "         CASE WHEN a.cidutCnName IS NULL OR LTRIM(RTRIM(a.cidutCnName)) = N'' "
+                + "              THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(a.cidutCnName)) END AS cidutCnNameNull, "
+                + "         CASE WHEN a.cidutCnInv IS NULL OR LTRIM(RTRIM(a.cidutCnInv)) = N'' "
+                + "              THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(a.cidutCnInv)) END AS cidutCnInvNull "
+                + "  FROM " + tbl + " AS a "
+                + "  WHERE a.cidutUnloadKey = ? "
+                + "), "
+                + "ctptNot AS ( "
+                + "  SELECT z.cidutCntrPrtNum "
+                + "  FROM ( "
+                + "    SELECT cidutCntrPrtNum, cidutCntrPrtName, cidutCntrPrtITN "
+                + "    FROM tbl "
+                + "    GROUP BY cidutCntrPrtNum, cidutCntrPrtName, cidutCntrPrtITN "
+                + "  ) AS z "
+                + "  LEFT JOIN ags.org_id AS x "
+                + "    ON z.cidutCntrPrtNum = x.org_id_value_l AND x.org_id_type = 1 "
+                + "  WHERE x.org_id_key IS NULL "
+                + "), "
+                + "tblCtptExist AS ( "
+                + "  SELECT DISTINCT n.cidutCntrPrtNum, og.ogNm AS cidutCntrPrtName, "
+                + "         n.cidutCnName, n.cidutCnDate, n.cidutCnDateNull, n.cidutCnNameNull, "
+                + "         n.cidutCnInv, n.cidutCnInvNull, n.cidutAccount "
+                + "  FROM tbl AS n "
+                + "  LEFT JOIN ctptNot AS b ON n.cidutCntrPrtNum = b.cidutCntrPrtNum "
+                + "  INNER JOIN ags.org_id AS oi "
+                + "    ON n.cidutCntrPrtNum = oi.org_id_value_l AND oi.org_id_type = 1 "
+                + "  LEFT JOIN ags.og AS og ON oi.org = og.ogKey "
+                + "  WHERE b.cidutCntrPrtNum IS NULL "
+                + "), "
+                // cnCtptList / variants сужены до ключей выгрузки — иначе полный cnInv
+                // даёт минуты на AccSmpl / invDbtVarEnsure (UAT 910).
+                + "cnNeed AS ( "
+                + "  SELECT DISTINCT cidutCnNameNull, cidutCntrPrtNum, cidutCnDateNull "
+                + "  FROM tblCtptExist "
+                + "), "
+                + "cnCtptList AS ( "
+                + "  SELECT c.cn_key, num.cnnNumNull AS cn_number, o.cn_s_org_key, "
+                + "         i.org_id_value_l, "
+                + "         CASE WHEN o.csoCnDate IS NULL THEN CAST('19000101' AS date) "
+                + "              ELSE CAST(o.csoCnDate AS date) END AS csoCnDateNull "
+                + "  FROM cnNeed AS need "
+                + "  INNER JOIN ags.cnNum AS num ON need.cidutCnNameNull = num.cnnNumNull "
+                + "  INNER JOIN ags.cn AS c ON c.cn_key = num.cnnCn "
+                + "  INNER JOIN ags.cn_s AS s ON c.cn_key = s.cn_key AND s.cn_s_type = 2 "
+                + "  INNER JOIN ags.cn_s_org_smpl AS m ON s.cn_s_key = m.csosCn_s "
+                + "  INNER JOIN ags.cn_s_org AS o ON m.csosKey = o.csoCn_s_org_smpl "
+                + "  INNER JOIN ags.org_id AS i ON m.csosOrgId = i.org_id_key "
+                + "  WHERE need.cidutCntrPrtNum = i.org_id_value_l "
+                + "    AND need.cidutCnDateNull = CASE WHEN o.csoCnDate IS NULL "
+                + "         THEN CAST('19000101' AS date) ELSE CAST(o.csoCnDate AS date) END "
+                + "), "
+                + "existList AS ( "
+                + "  SELECT k.cidutCntrPrtNum, k.cidutCntrPrtName, k.cidutCnName, "
+                + "         k.cidutCnNameNull, k.cidutCnDate, k.cidutCnDateNull, "
+                + "         l.cn_key, l.cn_s_org_key "
+                + "  FROM tblCtptExist AS k "
+                + "  INNER JOIN cnCtptList AS l "
+                + "    ON k.cidutCnNameNull = l.cn_number "
+                + "   AND k.cidutCnDateNull = l.csoCnDateNull "
+                + "   AND k.cidutCntrPrtNum = l.org_id_value_l "
+                + "  GROUP BY k.cidutCntrPrtNum, k.cidutCntrPrtName, k.cidutCnName, "
+                + "           k.cidutCnNameNull, k.cidutCnDate, k.cidutCnDateNull, "
+                + "           l.cn_key, l.cn_s_org_key "
+                + "), "
+                + "existInvGrouped AS ( "
+                + "  SELECT h.cidutCntrPrtNum, h.cidutCntrPrtName, h.cidutCnName, "
+                + "         h.cidutCnNameNull, h.cidutCnDate, h.cidutCnDateNull, "
+                + "         t.cidutCnInv, t.cidutCnInvNull, h.cn_key, h.cn_s_org_key "
+                + "  FROM existList AS h "
+                + "  LEFT JOIN tbl AS t "
+                + "    ON h.cidutCntrPrtNum = t.cidutCntrPrtNum "
+                + "   AND h.cidutCnNameNull = t.cidutCnNameNull "
+                + "   AND h.cidutCnDateNull = t.cidutCnDateNull "
+                + "  GROUP BY h.cidutCntrPrtNum, h.cidutCntrPrtName, h.cidutCnName, "
+                + "           h.cidutCnNameNull, h.cidutCnDate, h.cidutCnDateNull, "
+                + "           t.cidutCnInv, t.cidutCnInvNull, h.cn_key, h.cn_s_org_key "
+                + "), "
+                + "needInv AS ( "
+                + "  SELECT DISTINCT cn_key, cidutCnInvNull "
+                + "  FROM existInvGrouped "
+                + "), "
+                // INNER JOIN (не EXISTS): стабильный hash/merge; EXISTS по inNumNull
+                // без индекса иногда уходит в nested loop на минуты (UAT 910).
+                + "invNums AS ( "
+                + "  SELECT DISTINCT cidutCnInvNull FROM needInv "
+                + "), "
+                + "invNumNeed AS ( "
+                + "  SELECT n.inInv, n.inNumNull "
+                + "  FROM ags.invNum AS n "
+                + "  INNER JOIN invNums AS need ON need.cidutCnInvNull = n.inNumNull "
+                + "), "
+                + "invCi AS ( "
+                + "  SELECT n.inNumNull, ci.ciKey, ci.ciCn, inv.iKey "
+                + "  FROM invNumNeed AS n "
+                + "  INNER JOIN ags.inv AS inv ON inv.iKey = n.inInv "
+                + "  INNER JOIN ags.cnInv AS ci ON ci.ciInv = n.inInv "
+                + "), "
+                + "existInvAll AS ( "
+                + "  SELECT f.cidutCntrPrtNum, f.cidutCntrPrtName, f.cidutCnName, "
+                + "         f.cidutCnNameNull, f.cidutCnDate, f.cidutCnDateNull, "
+                + "         f.cidutCnInv, f.cidutCnInvNull, f.cn_key, f.cn_s_org_key, "
+                + "         ic.iKey, ic.ciKey "
+                + "  FROM existInvGrouped AS f "
+                + "  LEFT JOIN invCi AS ic "
+                + "    ON ic.inNumNull = f.cidutCnInvNull "
+                + "   AND ic.ciCn = f.cn_key "
+                + ") ";
+    }
+
+    /**
+     * AccSmpl поверх {@code #sudzEia} (без повторного инлайна existInvAll).
+     *
+     * @param tbl квалифицированное имя Tbl
+     * @return SQL WITH … accSmplNot AS (…)
+     */
+    private static String sqlDbtUplAccSmplNotFromEia(String tbl) {
+        return ""
+                + "WITH accY AS ( "
+                + "  SELECT t.cidutCntrPrtNum, "
+                + "         CASE WHEN t.cidutCnDate IS NULL THEN CAST('19000101' AS date) "
+                + "              ELSE CAST(t.cidutCnDate AS date) END AS cidutCnDateNull, "
+                + "         CASE WHEN t.cidutCnName IS NULL OR LTRIM(RTRIM(t.cidutCnName)) = N'' "
+                + "              THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(t.cidutCnName)) END AS cidutCnNameNull, "
+                + "         CASE WHEN t.cidutCnInv IS NULL OR LTRIM(RTRIM(t.cidutCnInv)) = N'' "
+                + "              THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(t.cidutCnInv)) END AS cidutCnInvNull, "
+                + "         acc.account_num, acc.account_key "
+                + "  FROM " + tbl + " AS t "
+                + "  INNER JOIN ags.accnt AS acc ON t.cidutAccount = acc.account_key "
+                + "  WHERE t.cidutUnloadKey = ? "
+                + "), "
+                + "accSmplAll AS ( "
+                + "  SELECT z.cidutCntrPrtNum, z.cidutCntrPrtName, z.cidutCnName, "
+                + "         z.cidutCnNameNull, z.cidutCnDate, z.cidutCnInv, "
+                + "         z.cn_key, z.iKey, z.ciKey, y.account_num, y.account_key, "
+                + "         matched.ciasKey "
+                + "  FROM #sudzEia AS z "
+                + "  LEFT JOIN accY AS y "
+                + "    ON z.cidutCnInvNull = y.cidutCnInvNull "
+                + "   AND z.cidutCnDateNull = y.cidutCnDateNull "
+                + "   AND z.cidutCnNameNull = y.cidutCnNameNull "
+                + "   AND z.cidutCntrPrtNum = y.cidutCntrPrtNum "
+                + "  OUTER APPLY ( "
+                + "    SELECT TOP 1 s.ciasKey "
+                + "    FROM ags.cnInvAccntSmpl AS s "
+                + "    INNER JOIN ags.cn_s_org_smpl AS o ON s.ciasCn_s_org_smpl = o.csosKey "
+                + "    INNER JOIN ags.org_id AS i ON o.csosOrgId = i.org_id_key "
+                + "    WHERE s.ciasCnInv = z.ciKey "
+                + "      AND s.ciasAccnt = y.account_key "
+                + "      AND i.org_id_value_l = z.cidutCntrPrtNum "
+                + "  ) AS matched "
+                + "  WHERE z.ciKey IS NOT NULL "
+                + "), "
+                + "accSmplNot AS ( "
+                + "  SELECT cidutCntrPrtNum, cidutCntrPrtName, cidutCnName, cidutCnNameNull, "
+                + "         cidutCnDate, cidutCnInv, cn_key, iKey, ciKey, "
+                + "         account_num, account_key "
+                + "  FROM accSmplAll "
+                + "  WHERE ciasKey IS NULL AND account_key IS NOT NULL "
+                + ") ";
+    }
+
+    /**
+     * CTE шага {@code invDbtVarEnsure} поверх материализованного {@code #sudzEia}.
+     * Не ссылается на existInvAll повторно — иначе SQL Server инлайнит CTE в nested loop на минуты.
+     *
+     * @param tbl квалифицированное имя Tbl
+     * @param invDbtVar квалифицированное имя {@code invDbtVar}
+     * @return SQL WITH … ctx AS (…)
+     */
+    private static String sqlDbtUplInvDbtVarEnsureCte(String tbl, String invDbtVar) {
+        return ""
+                + "WITH accY AS ( "
+                + "  SELECT t.cidutCntrPrtNum, "
+                + "         CASE WHEN t.cidutCnDate IS NULL THEN CAST('19000101' AS date) "
+                + "              ELSE CAST(t.cidutCnDate AS date) END AS cidutCnDateNull, "
+                + "         CASE WHEN t.cidutCnName IS NULL OR LTRIM(RTRIM(t.cidutCnName)) = N'' "
+                + "              THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(t.cidutCnName)) END AS cidutCnNameNull, "
+                + "         CASE WHEN t.cidutCnInv IS NULL OR LTRIM(RTRIM(t.cidutCnInv)) = N'' "
+                + "              THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(t.cidutCnInv)) END AS cidutCnInvNull, "
+                + "         acc.account_num, acc.account_key "
+                + "  FROM " + tbl + " AS t "
+                + "  INNER JOIN ags.accnt AS acc ON t.cidutAccount = acc.account_key "
+                + "  WHERE t.cidutUnloadKey = ? "
+                + "), "
+                + "cnnUnique AS ( "
+                + "  SELECT n.cnnCn, MIN(n.cnnKey) AS cnnKey "
+                + "  FROM ags.cnNum AS n "
+                + "  WHERE n.cnnType = 1 "
+                + "  GROUP BY n.cnnCn "
+                + "  HAVING COUNT(*) = 1 "
+                + "), "
+                + "inUnique AS ( "
+                + "  SELECT n.inInv, n.inNumNull, MIN(n.inKey) AS inKey "
+                + "  FROM ags.invNum AS n "
+                + "  GROUP BY n.inInv, n.inNumNull "
+                + "  HAVING COUNT(*) = 1 "
+                + "), "
+                + "ctxBase AS ( "
+                + "  SELECT DISTINCT z.cidutCntrPrtNum, z.cidutCntrPrtName, z.cidutCnName, "
+                + "         z.cidutCnDate, z.cidutCnInv, z.cidutCnInvNull, z.iKey, "
+                + "         z.cn_s_org_key, y.account_key, y.account_num, "
+                + "         cnn.cnnKey, invn.inKey AS invNumKey "
+                + "  FROM #sudzEia AS z "
+                + "  INNER JOIN accY AS y "
+                + "    ON z.cidutCnInvNull = y.cidutCnInvNull "
+                + "   AND z.cidutCnDateNull = y.cidutCnDateNull "
+                + "   AND z.cidutCnNameNull = y.cidutCnNameNull "
+                + "   AND z.cidutCntrPrtNum = y.cidutCntrPrtNum "
+                + "  LEFT JOIN cnnUnique AS cnn ON cnn.cnnCn = z.cn_key "
+                + "  LEFT JOIN inUnique AS invn "
+                + "    ON invn.inInv = z.iKey AND invn.inNumNull = z.cidutCnInvNull "
+                + "  WHERE z.iKey IS NOT NULL "
+                + "    AND z.cn_s_org_key IS NOT NULL "
+                + "    AND y.account_key IS NOT NULL "
+                + "), "
+                + "ctx AS ( "
+                + "  SELECT b.cidutCntrPrtNum, b.cidutCntrPrtName, b.cidutCnName, "
+                + "         b.cidutCnDate, b.cidutCnInv, b.iKey, b.cn_s_org_key, "
+                + "         b.account_key, b.account_num, b.cnnKey, b.invNumKey, "
+                + "         v.idvvKey "
+                + "  FROM ctxBase AS b "
+                + "  LEFT JOIN " + invDbtVar + " AS v "
+                + "    ON v.idvvCnNum = b.cnnKey "
+                + "   AND v.idvvInvNum = b.invNumKey "
+                + "   AND v.idvvAccnt = b.account_key "
+                + "   AND v.idvvCn_s_org = b.cn_s_org_key "
+                + ") ";
+    }
+
+    /**
+     * Материализует {@code existInvAll} в {@code #sudzEia} (один проход CTE).
+     * Только {@link Statement}: {@code PreparedStatement}/{@code sp_prepexec} не видит
+     * локальный temp на том же connection (Invalid object name #sudzEia).
+     *
+     * @param connection открытое JDBC-соединение
+     * @param unloadKey {@code cidutUnloadKey} (уже проверен &gt; 0)
+     * @throws SQLException при ошибке SQL
+     */
+    private void fillSudzEiaTemp(Connection connection, int unloadKey) throws SQLException {
+        String tbl = q("CnInvDbtUplTbl");
+        try (Statement drop = connection.createStatement()) {
+            drop.executeUpdate("IF OBJECT_ID('tempdb..#sudzEia') IS NOT NULL DROP TABLE #sudzEia");
+        }
+        String sql = sqlDbtUplExistInvAllCte(tbl)
+                .replace("a.cidutUnloadKey = ?", "a.cidutUnloadKey = " + unloadKey)
+                + "SELECT cidutCntrPrtNum, cidutCntrPrtName, cidutCnName, cidutCnNameNull, "
+                + "       cidutCnDate, cidutCnDateNull, cidutCnInv, cidutCnInvNull, "
+                + "       cn_key, cn_s_org_key, iKey, ciKey "
+                + "INTO #sudzEia "
+                + "FROM existInvAll "
+                + "OPTION (RECOMPILE)";
+        try (Statement statement = connection.createStatement()) {
+            int n = statement.executeUpdate(sql);
+            log.log(Level.INFO, "fillSudzEiaTemp unloadKey={0} rows={1}", new Object[]{unloadKey, n});
+        }
+    }
+
+    /**
+     * Подставляет литерал {@code unloadKey} вместо {@code ?} в SQL поверх {@code #sudzEia}.
+     * Нужен {@link Statement}, не PreparedStatement (см. {@link #fillSudzEiaTemp}).
+     *
+     * @param sql шаблон с {@code ?} для unloadKey
+     * @param unloadKey ключ выгрузки
+     * @return SQL с литералом
+     */
+    private static String bindUnloadKeyLiterals(String sql, int unloadKey) {
+        return sql.replace("?", Integer.toString(unloadKey));
+    }
+
+    @Override
+    public List<SudzDbtUplAccSmplNotRow> findDbtUplCnCtptInvExistAccSmplNot(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        String tbl = q("CnInvDbtUplTbl");
+        String sql = sqlDbtUplAccSmplNotFromEia(tbl)
+                + "SELECT h.cidutCntrPrtNum, h.cidutCntrPrtName, h.cidutCnName, h.cidutCnDate, "
+                + "       h.cn_key, h.cidutCnInv, h.iKey, h.ciKey, "
+                + "       h.account_num, h.account_key "
+                + "FROM accSmplNot AS h "
+                + "ORDER BY h.cn_key, h.cidutCnInv, h.account_key, h.ciKey "
+                + "OPTION (RECOMPILE)";
+        try (Connection connection = connectionFactory.createConnection()) {
+            long t0 = System.nanoTime();
+            fillSudzEiaTemp(connection, unloadKey);
+            long fillMs = (System.nanoTime() - t0) / 1_000_000L;
+            List<SudzDbtUplAccSmplNotRow> rows = new ArrayList<>();
+            String bound = sql.replace("t.cidutUnloadKey = ?", "t.cidutUnloadKey = " + unloadKey);
+            long q0 = System.nanoTime();
+            try (Statement statement = connection.createStatement();
+                 ResultSet rs = statement.executeQuery(bound)) {
+                while (rs.next()) {
+                    Date cnDateSql = rs.getDate("cidutCnDate");
+                    LocalDate cnDate = cnDateSql == null ? null : cnDateSql.toLocalDate();
+                    Integer cntrPrtNum = (Integer) rs.getObject("cidutCntrPrtNum");
+                    rows.add(new SudzDbtUplAccSmplNotRow(
+                            cntrPrtNum,
+                            rs.getNString("cidutCntrPrtName"),
+                            rs.getNString("cidutCnName"),
+                            cnDate,
+                            rs.getInt("cn_key"),
+                            rs.getNString("cidutCnInv"),
+                            rs.getInt("iKey"),
+                            rs.getInt("ciKey"),
+                            rs.getInt("account_num"),
+                            rs.getInt("account_key")
+                    ));
+                }
+            }
+            long queryMs = (System.nanoTime() - q0) / 1_000_000L;
+            log.log(Level.INFO,
+                    "findDbtUplCnCtptInvExistAccSmplNot unloadKey={0} rows={1} fillMs={2} queryMs={3}",
+                    new Object[]{unloadKey, rows.size(), fillMs, queryMs});
+            return List.copyOf(rows);
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось выбрать AccSmplNot unloadKey=" + unloadKey, exception);
+        }
+    }
+
+    @Override
+    public SudzDbtUplAccSmplNotApplyResult applyDbtUplCnCtptInvExistAccSmplNotLoad(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        String tbl = q("CnInvDbtUplTbl");
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                fillSudzEiaTemp(connection, unloadKey);
+                String bound = sqlDbtUplAccSmplNotFromEia(tbl)
+                        .replace("t.cidutUnloadKey = ?", "t.cidutUnloadKey = " + unloadKey)
+                        + "INSERT INTO ags.cnInvAccntSmpl "
+                        + "  (ciasCnInv, ciasAccnt, ciasCn_s_org_smpl, ciasTimeOfEntry) "
+                        + "SELECT a.ciKey, a.account_key, z.csosKey, "
+                        + "       CAST('" + now.toLocalDateTime() + "' AS datetime2) "
+                        + "FROM accSmplNot AS a "
+                        + "INNER JOIN ( "
+                        + "  SELECT css.csosKey, cn.cnnNumNull, i.org_id_value_l "
+                        + "  FROM ags.cn_s_org_smpl AS css "
+                        + "  INNER JOIN ags.cn_s AS cs ON css.csosCn_s = cs.cn_s_key "
+                        + "  INNER JOIN ags.cn AS c ON cs.cn_key = c.cn_key "
+                        + "  INNER JOIN ags.cnNum AS cn ON c.cn_key = cn.cnnCn "
+                        + "  INNER JOIN ags.org_id AS i ON css.csosOrgId = i.org_id_key "
+                        + "  WHERE i.org_id_value_l IS NOT NULL "
+                        + "    AND i.org_id_type = 1 "
+                        + "    AND cs.cn_s_type = 2 "
+                        + ") AS z ON a.cidutCnNameNull = z.cnnNumNull "
+                        + "       AND a.cidutCntrPrtNum = z.org_id_value_l "
+                        + "WHERE NOT EXISTS ( "
+                        + "  SELECT 1 FROM ags.cnInvAccntSmpl AS f "
+                        + "  WHERE f.ciasCnInv = a.ciKey "
+                        + "    AND f.ciasAccnt = a.account_key "
+                        + "    AND f.ciasCn_s_org_smpl = z.csosKey "
+                        + ") "
+                        + "GROUP BY a.ciKey, a.account_key, z.csosKey";
+                try (Statement statement = connection.createStatement()) {
+                    int inserted = statement.executeUpdate(bound);
+                    connection.commit();
+                    log.log(Level.INFO,
+                            "applyDbtUplCnCtptInvExistAccSmplNotLoad unloadKey={0} inserted={1}",
+                            new Object[]{unloadKey, inserted});
+                    return new SudzDbtUplAccSmplNotApplyResult(inserted);
+                }
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось выполнить apply AccSmplNotLoad unloadKey=" + unloadKey, exception);
+        }
+    }
+
+    @Override
+    public SudzDbtUplInvDbtVarEnsureSnapshot findDbtUplInvDbtVarEnsureSnapshot(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        String tbl = q("CnInvDbtUplTbl");
+        String invDbtVar = q("invDbtVar");
+        // #sudzEia + ctx: монолитный CTE с повторным инлайном existInvAll зависал на минуты.
+        String sql = sqlDbtUplInvDbtVarEnsureCte(tbl, invDbtVar)
+                + "SELECT cidutCntrPrtNum, cidutCntrPrtName, cidutCnName, cidutCnDate, cidutCnInv, "
+                + "       iKey, account_key, account_num, cnnKey, invNumKey, cn_s_org_key, idvvKey, "
+                + "       CASE "
+                + "         WHEN cnnKey IS NULL AND invNumKey IS NULL THEN N'both' "
+                + "         WHEN cnnKey IS NULL THEN N'cnn' "
+                + "         WHEN invNumKey IS NULL THEN N'invNum' "
+                + "         ELSE N'missing' "
+                + "       END AS kind "
+                + "FROM ctx "
+                + "WHERE (cnnKey IS NULL OR invNumKey IS NULL) "
+                + "   OR (cnnKey IS NOT NULL AND invNumKey IS NOT NULL AND idvvKey IS NULL) "
+                + "ORDER BY cidutCnName, cidutCnInv, account_key, iKey "
+                + "OPTION (RECOMPILE)";
+        try (Connection connection = connectionFactory.createConnection()) {
+            fillSudzEiaTemp(connection, unloadKey);
+            List<SudzDbtUplInvDbtVarEnsureRow> missing = new ArrayList<>();
+            List<SudzDbtUplInvDbtVarAmbiguousRow> ambiguous = new ArrayList<>();
+            java.util.LinkedHashSet<String> ambiguousKeys = new java.util.LinkedHashSet<>();
+            String bound = bindUnloadKeyLiterals(sql, unloadKey);
+            try (Statement statement = connection.createStatement();
+                 ResultSet rs = statement.executeQuery(bound)) {
+                while (rs.next()) {
+                    String kind = rs.getNString("kind");
+                    if ("missing".equals(kind)) {
+                        missing.add(mapInvDbtVarEnsureRow(rs));
+                        continue;
+                    }
+                    String key = rs.getNString("cidutCnName") + "\0"
+                            + rs.getNString("cidutCnInv") + "\0"
+                            + rs.getInt("iKey") + "\0" + kind;
+                    if (ambiguousKeys.add(key)) {
+                        ambiguous.add(new SudzDbtUplInvDbtVarAmbiguousRow(
+                                rs.getNString("cidutCnName"),
+                                rs.getNString("cidutCnInv"),
+                                rs.getInt("iKey"),
+                                kind
+                        ));
+                    }
+                }
+            }
+            log.log(Level.INFO,
+                    "findDbtUplInvDbtVarEnsureSnapshot unloadKey={0} missing={1} ambiguous={2}",
+                    new Object[]{unloadKey, missing.size(), ambiguous.size()});
+            return new SudzDbtUplInvDbtVarEnsureSnapshot(
+                    List.copyOf(missing), List.copyOf(ambiguous));
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось выбрать invDbtVarEnsure snapshot unloadKey=" + unloadKey, exception);
+        }
+    }
+
+    @Override
+    public List<SudzDbtUplInvDbtVarEnsureRow> findDbtUplInvDbtVarEnsureMissing(int unloadKey) {
+        return findDbtUplInvDbtVarEnsureSnapshot(unloadKey).missing();
+    }
+
+    @Override
+    public List<SudzDbtUplInvDbtVarAmbiguousRow> findDbtUplInvDbtVarEnsureAmbiguous(int unloadKey) {
+        return findDbtUplInvDbtVarEnsureSnapshot(unloadKey).ambiguous();
+    }
+
+    @Override
+    public SudzDbtUplInvDbtVarEnsureApplyResult applyDbtUplInvDbtVarEnsure(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        String tbl = q("CnInvDbtUplTbl");
+        String invDbtVar = q("invDbtVar");
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                fillSudzEiaTemp(connection, unloadKey);
+                // unloadKey + timestamp literals — Statement, иначе #sudzEia невидим.
+                String bound = sqlDbtUplInvDbtVarEnsureCte(tbl, invDbtVar)
+                        .replace("t.cidutUnloadKey = ?", "t.cidutUnloadKey = " + unloadKey)
+                        + "INSERT INTO " + invDbtVar
+                        + "  (idvvCnNum, idvvInvNum, idvvAccnt, idvvCn_s_org, idvvTimeOfEntry) "
+                        + "SELECT DISTINCT c.cnnKey, c.invNumKey, c.account_key, c.cn_s_org_key, "
+                        + "       CAST('" + now.toLocalDateTime() + "' AS datetime2) "
+                        + "FROM ctx AS c "
+                        + "WHERE c.cnnKey IS NOT NULL AND c.invNumKey IS NOT NULL AND c.idvvKey IS NULL";
+                try (Statement statement = connection.createStatement()) {
+                    int inserted = statement.executeUpdate(bound);
+                    connection.commit();
+                    log.log(Level.INFO, "applyDbtUplInvDbtVarEnsure unloadKey={0} inserted={1}",
+                            new Object[]{unloadKey, inserted});
+                    return new SudzDbtUplInvDbtVarEnsureApplyResult(inserted);
+                }
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось выполнить apply invDbtVarEnsure unloadKey=" + unloadKey, exception);
+        }
+    }
+
+    @Override
+    public int rebuildInvDbtDoubleQueue(int unloadKey, Integer fileKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        String tbl = q("CnInvDbtUplTbl");
+        String invDbtVar = q("invDbtVar");
+        String invDbt = q("invDbt");
+        String queue = q("CnInvUplInvDbtDouble");
+        String classifyCte = sqlDbtUplInvDbtVarEnsureCte(tbl, invDbtVar)
+                + ", "
+                + "resolvedUnique AS ( "
+                + "  SELECT * FROM ctx "
+                + "  WHERE cnnKey IS NOT NULL AND invNumKey IS NOT NULL "
+                + "), "
+                + "ambiguousIKeys AS ( "
+                + "  SELECT DISTINCT iKey FROM ctx "
+                + "  WHERE cnnKey IS NULL OR invNumKey IS NULL "
+                + "), "
+                + "multiCtxIKeys AS ( "
+                + "  SELECT iKey FROM resolvedUnique "
+                + "  GROUP BY iKey "
+                + "  HAVING COUNT(DISTINCT CONCAT( "
+                + "    CAST(cnnKey AS varchar(20)), N'|', "
+                + "    CAST(invNumKey AS varchar(20)), N'|', "
+                + "    CAST(account_key AS varchar(20)), N'|', "
+                + "    CAST(cn_s_org_key AS varchar(20)))) > 1 "
+                + "), "
+                + "histInvDbtMulti AS ( "
+                + "  SELECT idInv AS iKey FROM " + invDbt + " "
+                + "  GROUP BY idInv HAVING COUNT(*) > 1 "
+                + "), "
+                + "histNamedAccMulti AS ( "
+                + "  SELECT ci.ciInv AS iKey "
+                + "  FROM ags.cnInvAccnt AS a "
+                + "  INNER JOIN ags.cnInvAccntSmpl AS s ON a.ciaCnInvAccntSmpl = s.ciasKey "
+                + "  INNER JOIN ags.cnInv AS ci ON s.ciasCnInv = ci.ciKey "
+                + "  WHERE a.ciaName IS NOT NULL "
+                + "  GROUP BY ci.ciInv "
+                + "  HAVING COUNT(*) > 1 "
+                + "), "
+                + "tblRows AS ( "
+                + "  SELECT a.cidutKey, a.cidutUnloadKey, a.cidutCnName, a.cidutCnInv, a.cidutDebt, "
+                + "         a.cidutCntrPrtNum, "
+                + "         CASE WHEN a.cidutCnDate IS NULL THEN CAST('19000101' AS date) "
+                + "              ELSE CAST(a.cidutCnDate AS date) END AS cidutCnDateNull, "
+                + "         CASE WHEN a.cidutCnName IS NULL OR LTRIM(RTRIM(a.cidutCnName)) = N'' "
+                + "              THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(a.cidutCnName)) END AS cidutCnNameNull, "
+                + "         CASE WHEN a.cidutCnInv IS NULL OR LTRIM(RTRIM(a.cidutCnInv)) = N'' "
+                + "              THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(a.cidutCnInv)) END AS cidutCnInvNull "
+                + "  FROM " + tbl + " AS a "
+                + "  WHERE a.cidutUnloadKey = ? "
+                + "), "
+                + "currentMulti AS ( "
+                + "  SELECT e.iKey "
+                + "  FROM tblRows AS t "
+                + "  INNER JOIN #sudzEia AS e "
+                + "    ON e.cidutCntrPrtNum = t.cidutCntrPrtNum "
+                + "   AND e.cidutCnNameNull = t.cidutCnNameNull "
+                + "   AND e.cidutCnDateNull = t.cidutCnDateNull "
+                + "   AND e.cidutCnInvNull = t.cidutCnInvNull "
+                + "  WHERE e.iKey IS NOT NULL "
+                + "  GROUP BY e.iKey "
+                + "  HAVING COUNT(DISTINCT t.cidutKey) > 1 "
+                + "), "
+                + "needQueue AS ( "
+                + "  SELECT iKey, N'ambiguous' AS reason FROM ambiguousIKeys "
+                + "  UNION "
+                + "  SELECT iKey, N'multi' FROM multiCtxIKeys "
+                + "  UNION "
+                + "  SELECT iKey, N'multi' FROM histInvDbtMulti "
+                + "  UNION "
+                + "  SELECT iKey, N'multi' FROM histNamedAccMulti "
+                + "  UNION "
+                + "  SELECT iKey, N'multi' FROM currentMulti "
+                + "), "
+                + "needQueueBest AS ( "
+                + "  SELECT iKey, MIN(reason) AS reason "
+                + "  FROM needQueue "
+                + "  GROUP BY iKey "
+                + "), "
+                + "rowMatch AS ( "
+                + "  SELECT t.cidutKey, t.cidutCnName, t.cidutCnInv, t.cidutDebt, "
+                + "         e.iKey, c.idvvKey, n.reason "
+                + "  FROM tblRows AS t "
+                + "  INNER JOIN #sudzEia AS e "
+                + "    ON e.cidutCntrPrtNum = t.cidutCntrPrtNum "
+                + "   AND e.cidutCnNameNull = t.cidutCnNameNull "
+                + "   AND e.cidutCnDateNull = t.cidutCnDateNull "
+                + "   AND e.cidutCnInvNull = t.cidutCnInvNull "
+                + "  INNER JOIN needQueueBest AS n ON n.iKey = e.iKey "
+                + "  LEFT JOIN resolvedUnique AS c "
+                + "    ON c.iKey = e.iKey "
+                + "   AND c.cidutCntrPrtNum = e.cidutCntrPrtNum "
+                + "   AND ((c.cidutCnInv = e.cidutCnInv) "
+                + "     OR (c.cidutCnInv IS NULL AND e.cidutCnInv IS NULL)) "
+                + ") ";
+        String insertSql = classifyCte
+                + "INSERT INTO " + queue
+                + " (ciudCidut, ciudDbtFile, ciudUnloadKey, ciudIKey, ciudCnNum, ciudInvNum, "
+                + "  ciudDebt, ciudIdvvKey, ciudReason, ciudStatus) "
+                + "SELECT DISTINCT r.cidutKey, ?, ?, r.iKey, r.cidutCnName, r.cidutCnInv, "
+                + "       r.cidutDebt, r.idvvKey, r.reason, 'open' "
+                + "FROM rowMatch AS r";
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                fillSudzEiaTemp(connection, unloadKey);
+                try (PreparedStatement del = connection.prepareStatement(
+                        "DELETE FROM " + queue + " WHERE ciudUnloadKey = ?")) {
+                    del.setInt(1, unloadKey);
+                    int deleted = del.executeUpdate();
+                    log.log(Level.INFO, "CnInvUplInvDbtDouble cleared unloadKey={0} deleted={1}",
+                            new Object[]{unloadKey, deleted});
+                }
+                String fileLit = fileKey == null ? "NULL" : Integer.toString(fileKey);
+                String boundInsert = insertSql
+                        .replace("t.cidutUnloadKey = ?", "t.cidutUnloadKey = " + unloadKey)
+                        .replace("a.cidutUnloadKey = ?", "a.cidutUnloadKey = " + unloadKey)
+                        .replace("?, ?", fileLit + ", " + unloadKey);
+                try (Statement ins = connection.createStatement()) {
+                    int n = ins.executeUpdate(boundInsert);
+                    connection.commit();
+                    log.log(Level.INFO, "CnInvUplInvDbtDouble filled unloadKey={0} rows={1}",
+                            new Object[]{unloadKey, n});
+                    return n;
+                }
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось пересобрать CnInvUplInvDbtDouble unloadKey=" + unloadKey, exception);
+        }
+    }
+
+    @Override
+    public SudzDbtUplInvDbtLoadApplyResult applyDbtUplInvDbtLoadUnambiguous(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        String tbl = q("CnInvDbtUplTbl");
+        String invDbtVar = q("invDbtVar");
+        String invDbt = q("invDbt");
+        String bridge = q("invDbtDbtVar");
+        String queue = q("CnInvUplInvDbtDouble");
+        String calmCte = sqlDbtUplInvDbtVarEnsureCte(tbl, invDbtVar)
+                + ", "
+                + "resolvedUnique AS ( "
+                + "  SELECT * FROM ctx "
+                + "  WHERE cnnKey IS NOT NULL AND invNumKey IS NOT NULL AND idvvKey IS NOT NULL "
+                + "), "
+                + "queuedIKeys AS ( "
+                + "  SELECT DISTINCT ciudIKey AS iKey FROM " + queue
+                + "  WHERE ciudUnloadKey = ? AND ciudIKey IS NOT NULL "
+                + "), "
+                + "histInvDbtMulti AS ( "
+                + "  SELECT idInv AS iKey FROM " + invDbt + " "
+                + "  GROUP BY idInv HAVING COUNT(*) > 1 "
+                + "), "
+                + "histNamedAccMulti AS ( "
+                + "  SELECT ci.ciInv AS iKey "
+                + "  FROM ags.cnInvAccnt AS a "
+                + "  INNER JOIN ags.cnInvAccntSmpl AS s ON a.ciaCnInvAccntSmpl = s.ciasKey "
+                + "  INNER JOIN ags.cnInv AS ci ON s.ciasCnInv = ci.ciKey "
+                + "  WHERE a.ciaName IS NOT NULL "
+                + "  GROUP BY ci.ciInv HAVING COUNT(*) > 1 "
+                + "), "
+                + "tblIKey AS ( "
+                + "  SELECT e.iKey, COUNT(DISTINCT a.cidutKey) AS rowCnt "
+                + "  FROM " + tbl + " AS a "
+                + "  INNER JOIN #sudzEia AS e "
+                + "    ON e.cidutCntrPrtNum = a.cidutCntrPrtNum "
+                + "   AND e.cidutCnNameNull = CASE "
+                + "         WHEN a.cidutCnName IS NULL OR LTRIM(RTRIM(a.cidutCnName)) = N'' "
+                + "         THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(a.cidutCnName)) END "
+                + "   AND e.cidutCnDateNull = CASE "
+                + "         WHEN a.cidutCnDate IS NULL THEN CAST('19000101' AS date) "
+                + "         ELSE CAST(a.cidutCnDate AS date) END "
+                + "   AND e.cidutCnInvNull = CASE "
+                + "         WHEN a.cidutCnInv IS NULL OR LTRIM(RTRIM(a.cidutCnInv)) = N'' "
+                + "         THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(a.cidutCnInv)) END "
+                + "  WHERE a.cidutUnloadKey = ? AND e.iKey IS NOT NULL "
+                + "  GROUP BY e.iKey "
+                + "), "
+                + "currentMulti AS ( "
+                + "  SELECT iKey FROM tblIKey WHERE rowCnt > 1 "
+                + "), "
+                + "multiCtx AS ( "
+                + "  SELECT iKey FROM resolvedUnique "
+                + "  GROUP BY iKey "
+                + "  HAVING COUNT(DISTINCT CONCAT( "
+                + "    CAST(cnnKey AS varchar(20)), N'|', "
+                + "    CAST(invNumKey AS varchar(20)), N'|', "
+                + "    CAST(account_key AS varchar(20)), N'|', "
+                + "    CAST(cn_s_org_key AS varchar(20)))) > 1 "
+                + "), "
+                + "calm AS ( "
+                + "  SELECT r.iKey, r.idvvKey "
+                + "  FROM resolvedUnique AS r "
+                + "  WHERE NOT EXISTS (SELECT 1 FROM queuedIKeys q WHERE q.iKey = r.iKey) "
+                + "    AND NOT EXISTS (SELECT 1 FROM histInvDbtMulti h WHERE h.iKey = r.iKey) "
+                + "    AND NOT EXISTS (SELECT 1 FROM histNamedAccMulti h WHERE h.iKey = r.iKey) "
+                + "    AND NOT EXISTS (SELECT 1 FROM currentMulti m WHERE m.iKey = r.iKey) "
+                + "    AND NOT EXISTS (SELECT 1 FROM multiCtx m WHERE m.iKey = r.iKey) "
+                + "), "
+                + "calmOne AS ( "
+                + "  SELECT iKey, MIN(idvvKey) AS idvvKey "
+                + "  FROM calm "
+                + "  GROUP BY iKey "
+                + "  HAVING COUNT(DISTINCT idvvKey) = 1 "
+                + "), "
+                + "existingDbt AS ( "
+                + "  SELECT d.idInv, COUNT(*) AS cnt, MIN(d.idKey) AS idKey "
+                + "  FROM " + invDbt + " AS d "
+                + "  INNER JOIN calmOne AS c ON c.iKey = d.idInv "
+                + "  GROUP BY d.idInv "
+                + ") ";
+        String insertInvDbt = calmCte
+                + "INSERT INTO " + invDbt + " (idInv, idNum, idTimeOfEntry) "
+                + "SELECT c.iKey, 1, ? "
+                + "FROM calmOne AS c "
+                + "WHERE NOT EXISTS (SELECT 1 FROM existingDbt e WHERE e.idInv = c.iKey)";
+        String insertBridge = calmCte
+                + "INSERT INTO " + bridge + " (iddvInvDbt, iddvInvDbtVar, iddvTimeOfEntry) "
+                + "SELECT d.idKey, c.idvvKey, ? "
+                + "FROM calmOne AS c "
+                + "INNER JOIN " + invDbt + " AS d ON d.idInv = c.iKey "
+                + "WHERE (SELECT COUNT(*) FROM " + invDbt + " x WHERE x.idInv = c.iKey) = 1 "
+                + "  AND NOT EXISTS ( "
+                + "    SELECT 1 FROM " + bridge + " b "
+                + "    WHERE b.iddvInvDbt = d.idKey AND b.iddvInvDbtVar = c.idvvKey "
+                + ")";
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                fillSudzEiaTemp(connection, unloadKey);
+                String tsLit = "'" + now.toLocalDateTime() + "'";
+                String invDbtSql = insertInvDbt
+                        .replace("t.cidutUnloadKey = ?", "t.cidutUnloadKey = " + unloadKey)
+                        .replace("ciudUnloadKey = ?", "ciudUnloadKey = " + unloadKey)
+                        .replace("a.cidutUnloadKey = ?", "a.cidutUnloadKey = " + unloadKey)
+                        .replace(", ?", ", CAST(" + tsLit + " AS datetime2)");
+                String bridgeSql = insertBridge
+                        .replace("t.cidutUnloadKey = ?", "t.cidutUnloadKey = " + unloadKey)
+                        .replace("ciudUnloadKey = ?", "ciudUnloadKey = " + unloadKey)
+                        .replace("a.cidutUnloadKey = ?", "a.cidutUnloadKey = " + unloadKey)
+                        .replace(", ?", ", CAST(" + tsLit + " AS datetime2)");
+                int insertedInvDbt;
+                try (Statement ps = connection.createStatement()) {
+                    insertedInvDbt = ps.executeUpdate(invDbtSql);
+                }
+                int insertedBridges;
+                try (Statement ps = connection.createStatement()) {
+                    insertedBridges = ps.executeUpdate(bridgeSql);
+                }
+                int queuedCount;
+                try (PreparedStatement ps = connection.prepareStatement(
+                        "SELECT COUNT(*) FROM " + queue + " WHERE ciudUnloadKey = ?")) {
+                    ps.setInt(1, unloadKey);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        rs.next();
+                        queuedCount = rs.getInt(1);
+                    }
+                }
+                connection.commit();
+                log.log(Level.INFO,
+                        "applyDbtUplInvDbtLoadUnambiguous unloadKey={0} invDbt={1} bridges={2} queued={3}",
+                        new Object[]{unloadKey, insertedInvDbt, insertedBridges, queuedCount});
+                return new SudzDbtUplInvDbtLoadApplyResult(insertedInvDbt, insertedBridges, queuedCount);
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось выполнить apply invDbtLoad unloadKey=" + unloadKey, exception);
+        }
+    }
+
+    @Override
+    public List<SudzCnInvUplInvDbtDouble> findInvDbtDoublesByUnload(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        try (Connection connection = connectionFactory.createConnection()) {
+            return loadInvDbtDoublesByUnload(connection, unloadKey);
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось прочитать CnInvUplInvDbtDouble unloadKey=" + unloadKey, exception);
+        }
+    }
+
+    /**
+     * Очередь двоящих долгов СФ в рамках открытого соединения.
+     *
+     * @param connection соединение
+     * @param unloadKey {@code upl_key}
+     * @return строки
+     * @throws SQLException при ошибке JDBC
+     */
+    private List<SudzCnInvUplInvDbtDouble> loadInvDbtDoublesByUnload(
+            Connection connection,
+            int unloadKey
+    ) throws SQLException {
+        String sql = "SELECT ciudKey, ciudCidut, ciudDbtFile, ciudUnloadKey, ciudIKey, "
+                + "ciudCnNum, ciudInvNum, ciudDebt, ciudIdvvKey, ciudReason, "
+                + "ciudStatus, ciudStatusAt, ciudCreatedIdKey "
+                + "FROM " + q("CnInvUplInvDbtDouble")
+                + " WHERE ciudUnloadKey = ? "
+                + "ORDER BY ciudStatus, ciudKey";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, unloadKey);
+            List<SudzCnInvUplInvDbtDouble> result = new ArrayList<>();
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    result.add(mapInvDbtDouble(rs));
+                }
+            }
+            return List.copyOf(result);
+        }
+    }
+
+    private static SudzDbtUplInvDbtVarEnsureRow mapInvDbtVarEnsureRow(ResultSet rs) throws SQLException {
+        Date cnDateSql = rs.getDate("cidutCnDate");
+        LocalDate cnDate = cnDateSql == null ? null : cnDateSql.toLocalDate();
+        return new SudzDbtUplInvDbtVarEnsureRow(
+                getInteger(rs, "cidutCntrPrtNum"),
+                rs.getNString("cidutCntrPrtName"),
+                rs.getNString("cidutCnName"),
+                cnDate,
+                rs.getNString("cidutCnInv"),
+                rs.getInt("iKey"),
+                rs.getInt("account_key"),
+                rs.getInt("account_num"),
+                getInteger(rs, "cnnKey"),
+                getInteger(rs, "invNumKey"),
+                rs.getInt("cn_s_org_key"),
+                getInteger(rs, "idvvKey")
+        );
+    }
+
+    private static SudzCnInvUplInvDbtDouble mapInvDbtDouble(ResultSet rs) throws SQLException {
+        Timestamp statusAt = rs.getTimestamp("ciudStatusAt");
+        return new SudzCnInvUplInvDbtDouble(
+                rs.getInt("ciudKey"),
+                rs.getInt("ciudCidut"),
+                getInteger(rs, "ciudDbtFile"),
+                rs.getInt("ciudUnloadKey"),
+                getInteger(rs, "ciudIKey"),
+                rs.getNString("ciudCnNum"),
+                rs.getNString("ciudInvNum"),
+                rs.getBigDecimal("ciudDebt"),
+                getInteger(rs, "ciudIdvvKey"),
+                rs.getNString("ciudReason"),
+                rs.getString("ciudStatus"),
+                toOffsetDateTime(statusAt),
+                getInteger(rs, "ciudCreatedIdKey")
+        );
+    }
+
     private static List<SudzDbtUplCnCtptExistInvContract> loadCnCtptExistInvContracts(
             Connection connection,
             String buf
@@ -2241,6 +3149,467 @@ public class JdbcSudzDao implements SudzDao {
                 new Object[] {debt, epsilon, oldMatches.size(), newMatches.size()}
         );
         return new SudzSfDoubleSumMatches(oldMatches, newMatches);
+    }
+
+    private static final int HINT_ITEM_LIMIT = 20;
+
+    @Override
+    public SudzSfDoubleHints findSfDoubleHints(int ciusKey, BigDecimal epsilon) {
+        Objects.requireNonNull(epsilon, "epsilon");
+        Optional<SudzSfDoubleExcelCandidate> excelOpt = findSfDoubleExcelCandidate(ciusKey);
+        if (excelOpt.isEmpty()) {
+            SudzSfDoubleHintSection empty = section(
+                    "na",
+                    "Строка очереди / Excel-кандидат не найдены.",
+                    0,
+                    List.of()
+            );
+            return new SudzSfDoubleHints(empty, empty, empty);
+        }
+        SudzSfDoubleExcelCandidate excel = excelOpt.get();
+        Integer buirg = excel.cidutCntrPrtNum();
+        String itn = blankToNull(excel.cidutCntrPrtITN());
+        boolean hasAnchor = buirg != null || itn != null;
+
+        String invNum = loadSfDoubleInvNum(ciusKey);
+        SudzSfDoubleHintSection sfByNum;
+        if (invNum == null || invNum.isBlank() || "NullИлиПусто".equals(invNum)) {
+            sfByNum = section("na", "В очереди нет номера СФ для проверки.", 0, List.of());
+        } else if (!hasAnchor) {
+            sfByNum = section(
+                    "unknown",
+                    "В Excel нет БУиРГ и ИНН контрагента — проверку исполнителя по СФ выполнить нельзя.",
+                    0,
+                    List.of()
+            );
+        } else {
+            List<SudzSfDoubleHintItem> items = findSfHintItemsByInvNum(invNum, buirg, itn);
+            sfByNum = buildCtptSection(
+                    "СФ с совпадающими номерами",
+                    items,
+                    "inKey"
+            );
+        }
+
+        BigDecimal debt = excel.cidutDebt();
+        SudzSfDoubleHintSection sumsOld;
+        SudzSfDoubleHintSection sumsNew;
+        if (debt == null) {
+            SudzSfDoubleHintSection noDebt = section(
+                    "na",
+                    "В Excel нет суммы (cidutDebt) — проверку по суммам выполнить нельзя.",
+                    0,
+                    List.of()
+            );
+            sumsOld = noDebt;
+            sumsNew = noDebt;
+        } else if (!hasAnchor) {
+            SudzSfDoubleHintSection noCtpt = section(
+                    "unknown",
+                    "В Excel нет БУиРГ и ИНН контрагента — проверку исполнителя по суммам выполнить нельзя.",
+                    0,
+                    List.of()
+            );
+            sumsOld = noCtpt;
+            sumsNew = noCtpt;
+        } else {
+            sumsOld = buildCtptSection(
+                    "совпадающих суммах (старая структура)",
+                    findOldSumHintItems(debt, epsilon, buirg, itn),
+                    "cidKey"
+            );
+            sumsNew = buildCtptSection(
+                    "совпадающих суммах (новая структура)",
+                    findNewSumHintItems(debt, epsilon, buirg, itn),
+                    "dvKey"
+            );
+        }
+        return new SudzSfDoubleHints(sfByNum, sumsOld, sumsNew);
+    }
+
+    /**
+     * Собирает секцию yes/no с усечением списка ключей.
+     */
+    private static SudzSfDoubleHintSection buildCtptSection(
+            String whereRu,
+            List<SudzSfDoubleHintItem> all,
+            String pickKeyRu
+    ) {
+        int total = all.size();
+        List<SudzSfDoubleHintItem> shown = all.size() > HINT_ITEM_LIMIT
+                ? List.copyOf(all.subList(0, HINT_ITEM_LIMIT))
+                : all;
+        if (total == 0) {
+            return section(
+                    "no",
+                    "В " + whereRu + " совпадающего контрагента (исполнитель) нет.",
+                    0,
+                    List.of()
+            );
+        }
+        String more = total > shown.size() ? " (показаны первые " + shown.size() + " из " + total + ")" : "";
+        return section(
+                "yes",
+                "В " + whereRu + " есть совпадающий контрагент (исполнитель)"
+                        + more + ". Ключи для выбора: " + pickKeyRu + ".",
+                total,
+                shown
+        );
+    }
+
+    private static SudzSfDoubleHintSection section(
+            String status,
+            String message,
+            int totalCount,
+            List<SudzSfDoubleHintItem> items
+    ) {
+        return new SudzSfDoubleHintSection(status, message, totalCount, List.copyOf(items));
+    }
+
+    private static String blankToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    /**
+     * Номер СФ из строки очереди.
+     */
+    private String loadSfDoubleInvNum(int ciusKey) {
+        String sql = "SELECT ciusInvNum FROM " + q("CnInvUplSfDouble") + " WHERE ciusKey = ?";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, ciusKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+                return rs.getNString("ciusInvNum");
+            }
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось прочитать ciusInvNum для ciusKey=" + ciusKey, exception);
+        }
+    }
+
+    /**
+     * SQL-фрагмент: org исполнителя совпадает с Excel по БУиРГ или ИНН (через og).
+     */
+    private static String executorOrgMatchSql(String orgIdAlias) {
+        return "("
+                + " (" + orgIdAlias + ".org_id_type = 1 AND ? IS NOT NULL"
+                + " AND " + orgIdAlias + ".org_id_value_l = ?)"
+                + " OR (" + orgIdAlias + ".org_id_type = 2 AND ? IS NOT NULL"
+                + " AND " + orgIdAlias + ".org_id_value_t = ?)"
+                + " OR EXISTS ("
+                + "   SELECT 1 FROM ags.org_id alt"
+                + "   WHERE alt.org = " + orgIdAlias + ".org"
+                + "     AND (("
+                + "       alt.org_id_type = 1 AND ? IS NOT NULL AND alt.org_id_value_l = ?"
+                + "     ) OR ("
+                + "       alt.org_id_type = 2 AND ? IS NOT NULL AND alt.org_id_value_t = ?"
+                + "     ))"
+                + " )"
+                + ")";
+    }
+
+    /**
+     * Биндит 8 параметров якоря (buirg×4 + itn×4 в порядке executorOrgMatchSql).
+     */
+    private static void bindExecutorAnchors(
+            PreparedStatement statement,
+            int startIndex,
+            Integer buirg,
+            String itn
+    ) throws SQLException {
+        int i = startIndex;
+        // type=1 direct
+        if (buirg == null) {
+            statement.setNull(i++, Types.INTEGER);
+            statement.setNull(i++, Types.INTEGER);
+        } else {
+            statement.setInt(i++, buirg);
+            statement.setInt(i++, buirg);
+        }
+        // type=2 direct
+        if (itn == null) {
+            statement.setNull(i++, Types.NVARCHAR);
+            statement.setNull(i++, Types.NVARCHAR);
+        } else {
+            statement.setNString(i++, itn);
+            statement.setNString(i++, itn);
+        }
+        // EXISTS type=1
+        if (buirg == null) {
+            statement.setNull(i++, Types.INTEGER);
+            statement.setNull(i++, Types.INTEGER);
+        } else {
+            statement.setInt(i++, buirg);
+            statement.setInt(i++, buirg);
+        }
+        // EXISTS type=2
+        if (itn == null) {
+            statement.setNull(i++, Types.NVARCHAR);
+            statement.setNull(i, Types.NVARCHAR);
+        } else {
+            statement.setNString(i++, itn);
+            statement.setNString(i, itn);
+        }
+    }
+
+    private static String resolveMatchBy(ResultSet rs, Integer buirg, String itn) throws SQLException {
+        boolean byBuirg = false;
+        boolean byItn = false;
+        if (buirg != null) {
+            Integer v = (Integer) rs.getObject("hitBuirg");
+            byBuirg = v != null && v == 1;
+        }
+        if (itn != null) {
+            Integer v = (Integer) rs.getObject("hitItn");
+            byItn = v != null && v == 1;
+        }
+        if (byBuirg && byItn) {
+            return "BOTH";
+        }
+        if (byBuirg) {
+            return "BUIRG";
+        }
+        if (byItn) {
+            return "ITN";
+        }
+        return "BUIRG";
+    }
+
+    private List<SudzSfDoubleHintItem> findSfHintItemsByInvNum(
+            String invNum,
+            Integer buirg,
+            String itn
+    ) {
+        String sql = ""
+                + "SELECT DISTINCT n.inKey, i.iKey AS invKey, ci.ciCn AS cnKey,"
+                + " (SELECT TOP 1 num.cnnNumNull FROM ags.cnNum AS num"
+                + "  WHERE num.cnnCn = ci.ciCn ORDER BY num.cnnKey) AS cnNum,"
+                + " CASE WHEN ? IS NOT NULL AND EXISTS ("
+                + "   SELECT 1 FROM ags.org_id hx WHERE hx.org = oi.org"
+                + "     AND hx.org_id_type = 1 AND hx.org_id_value_l = ?"
+                + " ) THEN 1 ELSE 0 END AS hitBuirg,"
+                + " CASE WHEN ? IS NOT NULL AND EXISTS ("
+                + "   SELECT 1 FROM ags.org_id hx WHERE hx.org = oi.org"
+                + "     AND hx.org_id_type = 2 AND hx.org_id_value_t = ?"
+                + " ) THEN 1 ELSE 0 END AS hitItn"
+                + " FROM ags.invNum AS n"
+                + " INNER JOIN ags.inv AS i ON i.iKey = n.inInv"
+                + " INNER JOIN ags.cnInv AS ci ON ci.ciInv = i.iKey"
+                + " INNER JOIN ags.cn_s AS s ON s.cn_key = ci.ciCn AND s.cn_s_type = 2"
+                + " INNER JOIN ags.cn_s_org_smpl AS m ON m.csosCn_s = s.cn_s_key"
+                + " INNER JOIN ags.org_id AS oi ON oi.org_id_key = m.csosOrgId"
+                + " WHERE n.inNumNull = ?"
+                + "   AND " + executorOrgMatchSql("oi")
+                + " ORDER BY n.inKey, i.iKey, ci.ciCn";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            int p = 1;
+            if (buirg == null) {
+                statement.setNull(p++, Types.INTEGER);
+                statement.setNull(p++, Types.INTEGER);
+            } else {
+                statement.setInt(p++, buirg);
+                statement.setInt(p++, buirg);
+            }
+            if (itn == null) {
+                statement.setNull(p++, Types.NVARCHAR);
+                statement.setNull(p++, Types.NVARCHAR);
+            } else {
+                statement.setNString(p++, itn);
+                statement.setNString(p++, itn);
+            }
+            statement.setNString(p++, invNum.trim());
+            bindExecutorAnchors(statement, p, buirg, itn);
+            try (ResultSet rs = statement.executeQuery()) {
+                List<SudzSfDoubleHintItem> result = new ArrayList<>();
+                while (rs.next()) {
+                    int inKey = rs.getInt("inKey");
+                    Integer invKey = getInteger(rs, "invKey");
+                    Integer cnKey = getInteger(rs, "cnKey");
+                    String cnNum = rs.getNString("cnNum");
+                    String matchBy = resolveMatchBy(rs, buirg, itn);
+                    result.add(new SudzSfDoubleHintItem(
+                            "sf",
+                            "inKey",
+                            inKey,
+                            invKey,
+                            cnKey,
+                            cnNum,
+                            matchBy,
+                            "inKey=" + inKey
+                                    + (cnKey != null ? " · cn=" + cnKey : "")
+                    ));
+                }
+                return List.copyOf(result);
+            }
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось проверить контрагента среди СФ по номеру", exception);
+        }
+    }
+
+    private List<SudzSfDoubleHintItem> findOldSumHintItems(
+            BigDecimal debt,
+            BigDecimal epsilon,
+            Integer buirg,
+            String itn
+    ) {
+        String sql = ""
+                + "SELECT DISTINCT d.cn_inv_dbt_key AS cidKey, ci.ciCn AS cnKey,"
+                + " (SELECT TOP 1 num.cnnNumNull FROM ags.cnNum AS num"
+                + "  WHERE num.cnnCn = ci.ciCn ORDER BY num.cnnKey) AS cnNum,"
+                + " CASE WHEN ? IS NOT NULL AND EXISTS ("
+                + "   SELECT 1 FROM ags.org_id hx WHERE hx.org = oi.org"
+                + "     AND hx.org_id_type = 1 AND hx.org_id_value_l = ?"
+                + " ) THEN 1 ELSE 0 END AS hitBuirg,"
+                + " CASE WHEN ? IS NOT NULL AND EXISTS ("
+                + "   SELECT 1 FROM ags.org_id hx WHERE hx.org = oi.org"
+                + "     AND hx.org_id_type = 2 AND hx.org_id_value_t = ?"
+                + " ) THEN 1 ELSE 0 END AS hitItn"
+                + " FROM ags.cn_inv_dbt AS d"
+                + " INNER JOIN ags.cnInvAccnt AS cia ON cia.ciaKey = d.cidCnInvAccntCtpt"
+                + " INNER JOIN ags.cn_s_org AS cso ON cso.cn_s_org_key = cia.ciaCn_s_org"
+                + " INNER JOIN ags.cn_s_org_smpl AS m ON m.csosKey = cso.csoCn_s_org_smpl"
+                + " INNER JOIN ags.cn_s AS s ON s.cn_s_key = m.csosCn_s AND s.cn_s_type = 2"
+                + " INNER JOIN ags.org_id AS oi ON oi.org_id_key = m.csosOrgId"
+                + " LEFT JOIN ags.cnInvAccntSmpl AS cias ON cias.ciasKey = cia.ciaCnInvAccntSmpl"
+                + " LEFT JOIN ags.cnInv AS ci ON ci.ciKey = cias.ciasCnInv"
+                + " WHERE ABS(CAST(d.dbt_ttl AS decimal(19,4)) - ?) <= ?"
+                + "   AND " + executorOrgMatchSql("oi")
+                + " ORDER BY d.cn_inv_dbt_key";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            int p = 1;
+            if (buirg == null) {
+                statement.setNull(p++, Types.INTEGER);
+                statement.setNull(p++, Types.INTEGER);
+            } else {
+                statement.setInt(p++, buirg);
+                statement.setInt(p++, buirg);
+            }
+            if (itn == null) {
+                statement.setNull(p++, Types.NVARCHAR);
+                statement.setNull(p++, Types.NVARCHAR);
+            } else {
+                statement.setNString(p++, itn);
+                statement.setNString(p++, itn);
+            }
+            statement.setBigDecimal(p++, debt);
+            statement.setBigDecimal(p++, epsilon);
+            bindExecutorAnchors(statement, p, buirg, itn);
+            try (ResultSet rs = statement.executeQuery()) {
+                List<SudzSfDoubleHintItem> result = new ArrayList<>();
+                while (rs.next()) {
+                    int cidKey = rs.getInt("cidKey");
+                    Integer cnKey = getInteger(rs, "cnKey");
+                    String cnNum = rs.getNString("cnNum");
+                    String matchBy = resolveMatchBy(rs, buirg, itn);
+                    result.add(new SudzSfDoubleHintItem(
+                            "sumsOld",
+                            "cidKey",
+                            cidKey,
+                            null,
+                            cnKey,
+                            cnNum,
+                            matchBy,
+                            "cidKey=" + cidKey
+                    ));
+                }
+                return List.copyOf(result);
+            }
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось проверить контрагента среди cn_inv_dbt по сумме", exception);
+        }
+    }
+
+    private List<SudzSfDoubleHintItem> findNewSumHintItems(
+            BigDecimal debt,
+            BigDecimal epsilon,
+            Integer buirg,
+            String itn
+    ) {
+        String dv = q("DbtValue");
+        String idd = q("invDbtDbt");
+        String invDbt = q("invDbt");
+        String sql = ""
+                + "SELECT DISTINCT dv.dvKey, ci.ciCn AS cnKey,"
+                + " (SELECT TOP 1 num.cnnNumNull FROM ags.cnNum AS num"
+                + "  WHERE num.cnnCn = ci.ciCn ORDER BY num.cnnKey) AS cnNum,"
+                + " CASE WHEN ? IS NOT NULL AND EXISTS ("
+                + "   SELECT 1 FROM ags.org_id hx WHERE hx.org = oi.org"
+                + "     AND hx.org_id_type = 1 AND hx.org_id_value_l = ?"
+                + " ) THEN 1 ELSE 0 END AS hitBuirg,"
+                + " CASE WHEN ? IS NOT NULL AND EXISTS ("
+                + "   SELECT 1 FROM ags.org_id hx WHERE hx.org = oi.org"
+                + "     AND hx.org_id_type = 2 AND hx.org_id_value_t = ?"
+                + " ) THEN 1 ELSE 0 END AS hitItn"
+                + " FROM " + dv + " AS dv"
+                + " INNER JOIN " + idd + " AS idd ON idd.iddDbt = dv.dvDbt"
+                + " INNER JOIN " + invDbt + " AS idb ON idb.idKey = idd.iddInvDbt"
+                + " INNER JOIN ags.inv AS i0 ON i0.iKey = idb.idInv"
+                + " INNER JOIN ags.cnInv AS ci ON ci.ciInv = i0.iKey"
+                + " INNER JOIN ags.cn_s AS s ON s.cn_key = ci.ciCn AND s.cn_s_type = 2"
+                + " INNER JOIN ags.cn_s_org_smpl AS m ON m.csosCn_s = s.cn_s_key"
+                + " INNER JOIN ags.org_id AS oi ON oi.org_id_key = m.csosOrgId"
+                + " WHERE ABS(CAST(dv.dvTtl AS decimal(19,4)) - ?) <= ?"
+                + "   AND " + executorOrgMatchSql("oi")
+                + " ORDER BY dv.dvKey";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            int p = 1;
+            if (buirg == null) {
+                statement.setNull(p++, Types.INTEGER);
+                statement.setNull(p++, Types.INTEGER);
+            } else {
+                statement.setInt(p++, buirg);
+                statement.setInt(p++, buirg);
+            }
+            if (itn == null) {
+                statement.setNull(p++, Types.NVARCHAR);
+                statement.setNull(p++, Types.NVARCHAR);
+            } else {
+                statement.setNString(p++, itn);
+                statement.setNString(p++, itn);
+            }
+            statement.setBigDecimal(p++, debt);
+            statement.setBigDecimal(p++, epsilon);
+            bindExecutorAnchors(statement, p, buirg, itn);
+            try (ResultSet rs = statement.executeQuery()) {
+                List<SudzSfDoubleHintItem> result = new ArrayList<>();
+                while (rs.next()) {
+                    int dvKey = rs.getInt("dvKey");
+                    Integer cnKey = getInteger(rs, "cnKey");
+                    String cnNum = rs.getNString("cnNum");
+                    String matchBy = resolveMatchBy(rs, buirg, itn);
+                    result.add(new SudzSfDoubleHintItem(
+                            "sumsNew",
+                            "dvKey",
+                            dvKey,
+                            null,
+                            cnKey,
+                            cnNum,
+                            matchBy,
+                            "dvKey=" + dvKey
+                    ));
+                }
+                return List.copyOf(result);
+            }
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось проверить контрагента среди DbtValue по сумме", exception);
+        }
     }
 
     /**

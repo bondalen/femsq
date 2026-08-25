@@ -2,9 +2,17 @@ package com.femsq.database.service;
 
 import com.femsq.database.dao.SudzDao;
 import com.femsq.database.model.sudz.SudzCmmGrLookup;
+import com.femsq.database.model.sudz.SudzCnInvUplInvDbtDouble;
 import com.femsq.database.model.sudz.SudzCnInvUplSfDouble;
 import com.femsq.database.model.sudz.SudzD644Row;
 import com.femsq.database.model.sudz.SudzAccessStrMark;
+import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotRow;
+import com.femsq.database.model.sudz.SudzDbtUplInvDbtLoadApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarAmbiguousRow;
+import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarEnsureApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarEnsureRow;
+import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarEnsureSnapshot;
 import com.femsq.database.model.sudz.SudzDbtUplCnCtptExistInvApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplCnCtptExistInvResult;
 import com.femsq.database.model.sudz.SudzDbtUplCnExistCtptNotLoad;
@@ -23,6 +31,7 @@ import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
 import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
+import com.femsq.database.model.sudz.SudzSfDoubleHints;
 import com.femsq.database.model.sudz.SudzSfDoubleSumMatches;
 import com.femsq.database.model.sudz.SudzSvodResult;
 import com.femsq.database.model.sudz.SudzUplLookup;
@@ -461,6 +470,78 @@ public class DefaultSudzService implements SudzService {
     }
 
     @Override
+    public List<SudzDbtUplAccSmplNotRow> listDbtUplCnCtptInvExistAccSmplNot(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.findDbtUplCnCtptInvExistAccSmplNot(unloadKey);
+    }
+
+    @Override
+    public SudzDbtUplAccSmplNotApplyResult applyDbtUplCnCtptInvExistAccSmplNotLoad(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.applyDbtUplCnCtptInvExistAccSmplNotLoad(unloadKey);
+    }
+
+    @Override
+    public SudzDbtUplInvDbtVarEnsureSnapshot listDbtUplInvDbtVarEnsureSnapshot(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.findDbtUplInvDbtVarEnsureSnapshot(unloadKey);
+    }
+
+    @Override
+    public List<SudzDbtUplInvDbtVarEnsureRow> listDbtUplInvDbtVarEnsureMissing(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.findDbtUplInvDbtVarEnsureMissing(unloadKey);
+    }
+
+    @Override
+    public List<SudzDbtUplInvDbtVarAmbiguousRow> listDbtUplInvDbtVarEnsureAmbiguous(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.findDbtUplInvDbtVarEnsureAmbiguous(unloadKey);
+    }
+
+    @Override
+    public SudzDbtUplInvDbtVarEnsureApplyResult applyDbtUplInvDbtVarEnsure(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.applyDbtUplInvDbtVarEnsure(unloadKey);
+    }
+
+    @Override
+    public int rebuildInvDbtDoubleQueue(int unloadKey, Integer fileKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.rebuildInvDbtDoubleQueue(unloadKey, fileKey);
+    }
+
+    @Override
+    public SudzDbtUplInvDbtLoadApplyResult applyDbtUplInvDbtLoadUnambiguous(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.applyDbtUplInvDbtLoadUnambiguous(unloadKey);
+    }
+
+    @Override
+    public List<SudzCnInvUplInvDbtDouble> findInvDbtDoublesByUnload(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.findInvDbtDoublesByUnload(unloadKey);
+    }
+
+    @Override
     public List<SudzCnInvUplSfDouble> findSfDoublesByUnload(int unloadKey) {
         if (unloadKey <= 0) {
             throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
@@ -491,6 +572,18 @@ public class DefaultSudzService implements SudzService {
             throw new IllegalArgumentException("epsilon не может быть отрицательным: " + eps);
         }
         return sudzDao.findSfDoubleSumMatches(debt, eps);
+    }
+
+    @Override
+    public SudzSfDoubleHints findSfDoubleHints(int ciusKey, BigDecimal epsilon) {
+        if (ciusKey <= 0) {
+            throw new IllegalArgumentException("ciusKey должен быть положительным: " + ciusKey);
+        }
+        BigDecimal eps = epsilon == null ? new BigDecimal("0.01") : epsilon;
+        if (eps.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("epsilon не может быть отрицательным: " + eps);
+        }
+        return sudzDao.findSfDoubleHints(ciusKey, eps);
     }
 
     @Override

@@ -8,6 +8,11 @@ spring:
     name: femsq-web
   graphql:
     schema:
+      # Отключаем авто-сканирование файлов схемы по умолчанию, т.к. схемы
+      # регистрируются явно в GraphQlConfig (builder.schemaResources(...)).
+      # Иначе возможны дубли SDL и ошибка:
+      # "tried to redefine existing 'X' type".
+      locations: []
       printer:
         enabled: true
     graphiql:

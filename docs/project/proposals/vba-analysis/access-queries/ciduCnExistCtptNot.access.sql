@@ -1,54 +1,22 @@
 /*
  * Объект MS Access: сохранённый запрос ciduCnExistCtptNot
  *
- * Назначение: договоры из буфера, у которых номер уже есть в БД, но нет пары
- * (номер + БУиРГ исполнителя + дата) в ciduCnCtptList / аналоге.
- * Отличие от ciduCnNumNotLoad: HAVING Count(cn_key) > 0 (номер существует).
+ * Назначение: договоры из буфера, у которых нет пары (номер + БУиРГ + дата)
+ * в ciduCnCtptList, но они не входят в ciduCnNotLoad (номер уже есть в cnNum).
  *
  * VBA: Form_CnInvDbtUpl_gt_File_f.CnExistCtptNotLoad → OpenRecordset("ciduCnExistCtptNot").
- * Эталон длинного SQL: SqlLong.SqlCnExistCtptNotLoad() (устаревший join через
- * ags_cn.cn_number / cn_s_org без smpl). В FEMSQ T-SQL — та же семантика, что
- * у CnNotLoad: cnNum.cnnNumNull + cn_s → smpl → cn_s_org (как ciduCnCtptList).
+ * Живой SQL: ExistNot LEFT JOIN CnNotLoad WHERE countCnName IS NULL
+ * (не HAVING Count(cn_key)>0 — та форма была реконструкцией S61n).
  *
- * Диалект ниже: Microsoft Access SQL (Jet/ACE), реконструкция по SqlLong +
- * современной цепочке QueryDef. Не исполнять как есть на SQL Server.
+ * FEMSQ: эквивалент HAVING COUNT(cn)>0 по ExistNot. UAT 910 (2026-08-24): оба набора = 2, Δ=0.
  *
- * lastUpdated: 2026-08-14
+ * Дамп: 26-0811_CtInvDbtUpl_/cidu-sql/ 2026-08-24 15:25
+ *
+ * Диалект: Microsoft Access SQL (Jet/ACE). Не исполнять как есть на SQL Server.
+ *
+ * lastUpdated: 2026-08-24
  */
 
-SELECT
-    z.cidutCntrPrtNum,
-    z.cidutCntrPrtName,
-    z.cidutCntrPrtITN,
-    z.cidutCnName,
-    z.cidutCnDate,
-    Count(y.cn_key) AS cnCount
-FROM (
-    SELECT
-        k.cidutCntrPrtNum,
-        k.cidutCntrPrtName,
-        k.cidutCntrPrtITN,
-        k.cidutCnName,
-        k.cidutCnDate
-    FROM ciduCnCtptExistNot AS k
-    GROUP BY
-        k.cidutCntrPrtNum,
-        k.cidutCntrPrtName,
-        k.cidutCntrPrtITN,
-        k.cidutCnName,
-        k.cidutCnDate
-) AS z
-LEFT JOIN (
-    SELECT
-        n.cnnNumNull AS cn_number,
-        o.cn_key
-    FROM ags_cn AS o
-    INNER JOIN ags_cnNum AS n ON o.cn_key = n.cnnCn
-) AS y ON z.cidutCnName = y.cn_number
-GROUP BY
-    z.cidutCntrPrtNum,
-    z.cidutCntrPrtName,
-    z.cidutCntrPrtITN,
-    z.cidutCnName,
-    z.cidutCnDate
-HAVING (((Count(y.cn_key)) > 0));
+SELECT ciduCnCtptExistNot.cidutCntrPrtNum, ciduCnCtptExistNot.cidutCntrPrtName, ciduCnCtptExistNot.cidutCntrPrtITN, ciduCnCtptExistNot.cidutCnName, ciduCnCtptExistNot.cidutCnDate, ciduCnCtptExistNot.cidutCnDateNull, ciduCnCtptExistNot.cidutCnNameNull, ciduCnNotLoad.countCnName
+FROM ciduCnCtptExistNot LEFT JOIN ciduCnNotLoad ON (ciduCnCtptExistNot.cidutCnDateNull = ciduCnNotLoad.cidutCnDate) AND (ciduCnCtptExistNot.cidutCnNameNull = ciduCnNotLoad.cidutCnName) AND (ciduCnCtptExistNot.cidutCntrPrtNum = ciduCnNotLoad.cidutCntrPrtNum)
+WHERE (((ciduCnNotLoad.countCnName) Is Null));

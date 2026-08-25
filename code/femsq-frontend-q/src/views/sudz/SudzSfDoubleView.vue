@@ -22,6 +22,7 @@
       <div v-if="!uplKey" class="text-grey-6">Выберите выгрузку на экране «Загрузка свода».</div>
       <div v-else-if="error" class="text-negative">{{ error }}</div>
 
+      <!-- Вариант A: слева очередь+Excel столбиком; справа СФ и Суммы рядом (без вкладок) -->
       <QSplitter
         v-else
         v-model="queueSplit"
@@ -29,225 +30,277 @@
         separator-class="sudz-split-sep"
         class="col sudz-sf-splitter"
       >
-      <template #before>
-        <div class="column fill-pane no-wrap q-pa-sm">
-          <FemsqTable
-            class="col"
-            :rows="rows"
-            :columns="queueColumns"
-            row-key="ciusKey"
-            dense
-            flat
-            :loading="loading"
-            selection="single"
-            v-model:selected="selectedRows"
-            data-test="sudz-sf-double-queue"
-          />
-          <div class="row items-center q-gutter-sm q-pt-sm shrink-0">
-            <QBtn
-              color="primary"
-              unelevated
-              dense
-              no-caps
-              label="Создать СФ по Excel"
-              :disable="!canCreate"
-              :loading="creating"
-              data-test="sudz-sf-double-create"
-              @click="onCreate"
-            />
-            <div class="text-caption text-grey-6">
-              Перепривязка — вручную в «Договоры» (позже).
-            </div>
-          </div>
-        </div>
-      </template>
+        <template #before>
+          <QSplitter
+            v-model="queueExcelSplit"
+            horizontal
+            :limits="[30, 75]"
+            separator-class="sudz-split-sep"
+            class="fit sudz-sf-splitter"
+          >
+            <template #before>
+              <div class="column fill-pane no-wrap q-pa-sm">
+                <FemsqTable
+                  fill
+                  class="col"
+                  :rows="rows"
+                  :columns="queueColumns"
+                  row-key="ciusKey"
+                  dense
+                  flat
+                  :loading="loading"
+                  selection="single"
+                  v-model:selected="selectedRows"
+                  data-test="sudz-sf-double-queue"
+                />
+                <div class="row items-center q-gutter-sm q-pt-sm shrink-0">
+                  <QBtn
+                    color="primary"
+                    unelevated
+                    dense
+                    no-caps
+                    label="Создать СФ по Excel"
+                    :disable="!canCreate"
+                    :loading="creating"
+                    data-test="sudz-sf-double-create"
+                    @click="onCreate"
+                  />
+                  <div class="text-caption text-grey-6">
+                    Перепривязка — вручную в «Договоры» (позже).
+                  </div>
+                </div>
+              </div>
+            </template>
+            <template #after>
+              <div class="column fill-pane no-wrap q-pa-sm" data-test="sudz-sf-excel-pane">
+                <div class="text-subtitle2 q-mb-sm shrink-0">Excel · кандидат</div>
+                <div v-if="!selected" class="text-grey-6">Выберите строку очереди.</div>
+                <div v-else-if="excelLoading" class="text-grey-6">Загрузка…</div>
+                <div v-else-if="!excel" class="text-grey-6">Строка Tbl не найдена.</div>
+                <QMarkupTable v-else dense flat bordered class="col overflow-auto">
+                  <tbody>
+                    <tr v-for="row in excelRows" :key="row.label">
+                      <td class="text-grey-6" style="width: 40%">{{ row.label }}</td>
+                      <td>{{ row.value }}</td>
+                    </tr>
+                  </tbody>
+                </QMarkupTable>
+              </div>
+            </template>
+          </QSplitter>
+        </template>
 
-      <template #after>
-        <QSplitter
-          v-model="ksdsfSplit"
-          :limits="[25, 50]"
-          separator-class="sudz-split-sep"
-          class="fit sudz-sf-splitter"
-        >
-          <template #before>
-            <div class="column fill-pane no-wrap q-pa-sm">
-              <div class="text-subtitle2 q-mb-sm shrink-0">Excel · кандидат</div>
-              <div v-if="!selected" class="text-grey-6">Выберите строку очереди.</div>
-              <div v-else-if="excelLoading" class="text-grey-6">Загрузка…</div>
-              <div v-else-if="!excel" class="text-grey-6">Строка Tbl не найдена.</div>
-              <QMarkupTable v-else dense flat bordered class="col overflow-auto">
-                <tbody>
-                  <tr v-for="row in excelRows" :key="row.label">
-                    <td class="text-grey-6" style="width: 40%">{{ row.label }}</td>
-                    <td>{{ row.value }}</td>
-                  </tr>
-                </tbody>
-              </QMarkupTable>
-            </div>
-          </template>
-
-          <template #after>
-            <div class="column fill-pane no-wrap q-pa-sm">
-              <QTabs v-model="domainTab" dense class="shrink-0" active-color="primary">
-                <QTab name="sf" label="Счета-фактуры" no-caps />
-                <QTab name="sums" label="Суммы" no-caps />
-              </QTabs>
-              <QTabPanels v-model="domainTab" class="col column no-wrap" animated>
-                <QTabPanel name="sf" class="q-pa-none column fill-pane no-wrap">
-                  <QSplitter
-                    v-model="domainSplit"
-                    horizontal
-                    :limits="[25, 70]"
-                    separator-class="sudz-split-sep"
-                    class="col sudz-sf-splitter"
-                  >
-                    <template #before>
-                      <FemsqTable
-                        class="fit"
-                        :rows="domainMatches"
-                        :columns="domainColumns"
-                        row-key="rowKey"
-                        dense
-                        flat
-                        :loading="domainLoading"
-                        selection="single"
-                        v-model:selected="selectedDomain"
-                        data-test="sudz-sf-domain-list"
+        <template #after>
+          <QSplitter
+            v-model="sfSumsSplit"
+            :limits="[30, 70]"
+            separator-class="sudz-split-sep"
+            class="fit sudz-sf-splitter"
+          >
+            <template #before>
+              <div class="column fill-pane no-wrap q-pa-sm" data-test="sudz-sf-domain-pane">
+                <div class="text-subtitle2 q-mb-xs shrink-0">Счета-фактуры</div>
+                <QSplitter
+                  v-model="domainSplit"
+                  horizontal
+                  :limits="[25, 70]"
+                  separator-class="sudz-split-sep"
+                  class="col sudz-sf-splitter"
+                >
+                  <template #before>
+                    <FemsqTable
+                      fill
+                      class="fit"
+                      :rows="domainMatches"
+                      :columns="domainColumns"
+                      row-key="rowKey"
+                      dense
+                      flat
+                      :loading="domainLoading"
+                      selection="single"
+                      v-model:selected="selectedDomain"
+                      data-test="sudz-sf-domain-list"
+                    />
+                  </template>
+                  <template #after>
+                    <div class="q-pa-sm column fill-pane no-wrap">
+                      <div v-if="!selectedDomain[0]" class="text-grey-6">
+                        Выберите СФ в списке совпадений.
+                      </div>
+                      <RelationTree
+                        v-else
+                        :key="relationTreeKey"
+                        class="col"
+                        :spec="relationSpec"
+                        :root-id="selectedDomain[0].invNumKey"
+                        :fetch-node="fetchRelationNode"
+                        :fetch-expand="fetchRelationExpand"
+                        @action="onRelationAction"
+                        data-test="sf-double-tree"
+                        root-class="sudz-sf-double-tree"
                       />
-                    </template>
-                    <template #after>
-                      <div class="q-pa-sm overflow-auto column fill-pane no-wrap">
-                        <div v-if="!selectedDomain[0]" class="text-grey-6">
-                          Выберите СФ в списке совпадений.
-                        </div>
-                        <RelationTree
-                          v-else
-                          :key="relationTreeKey"
-                          class="col"
-                          :spec="relationSpec"
-                          :root-id="selectedDomain[0].invNumKey"
-                          :fetch-node="fetchRelationNode"
-                          :fetch-expand="fetchRelationExpand"
-                          @action="onRelationAction"
-                          data-test="sf-double-tree"
-                          root-class="sudz-sf-double-tree"
+                    </div>
+                  </template>
+                </QSplitter>
+                <div
+                  class="sudz-sf-hints shrink-0 q-mt-sm q-pa-sm"
+                  data-test="sudz-sf-hints"
+                >
+                  <div class="text-caption text-grey-6 q-mb-xs">
+                    Подсказки по контрагенту (исполнитель · БУиРГ или ИНН)
+                  </div>
+                  <div v-if="hintsLoading" class="text-grey-6">Проверка…</div>
+                  <template v-else-if="hints">
+                    <div
+                      v-for="section in hintSections"
+                      :key="section.key"
+                      class="sudz-sf-hint-section q-mb-xs"
+                    >
+                      <div class="text-body2">{{ section.data.message }}</div>
+                      <div
+                        v-if="section.data.items.length"
+                        class="row q-gutter-xs q-mt-xs"
+                      >
+                        <QBtn
+                          v-for="item in section.data.items"
+                          :key="`${item.zone}-${item.pickValue}`"
+                          dense
+                          outline
+                          no-caps
+                          size="sm"
+                          color="primary"
+                          :label="item.label || `${item.pickKey}=${item.pickValue}`"
+                          :title="`matchBy=${item.matchBy}`"
+                          @click="onHintPick(item)"
                         />
                       </div>
-                    </template>
-                  </QSplitter>
-                </QTabPanel>
-                <QTabPanel name="sums" class="q-pa-none column fill-pane no-wrap" data-test="sudz-sf-sums-tab">
-                  <div class="text-caption text-grey-6 q-px-sm q-pt-xs shrink-0">
-                    Якорь Excel:
-                    {{ excelDebtLabel }}
-                    · совпадение только по сумме (ε={{ sumMatchEpsilon }}) · lookup API — следующий срез
-                  </div>
-                  <QSplitter
-                    v-model="sumsOldNewSplit"
-                    horizontal
-                    :limits="[30, 70]"
-                    separator-class="sudz-split-sep"
-                    class="col sudz-sf-splitter"
-                  >
-                    <template #before>
-                      <div class="column fill-pane no-wrap q-pa-xs">
-                        <div class="text-subtitle2 q-px-sm shrink-0">Старая структура · cn_inv_dbt</div>
-                        <QSplitter
-                          v-model="sumsOldSplit"
-                          horizontal
-                          :limits="[25, 70]"
-                          separator-class="sudz-split-sep"
-                          class="col sudz-sf-splitter"
-                        >
-                          <template #before>
-                            <FemsqTable
-                              class="fit"
-                              :rows="oldSumRows"
-                              :columns="oldSumColumns"
-                              row-key="rowKey"
-                              dense
-                              flat
-                              :loading="oldSumLoading"
-                              selection="single"
-                              v-model:selected="selectedOldSum"
-                              :show-filter="false"
-                              data-test="sudz-sf-sums-old-list"
-                            />
-                          </template>
-                          <template #after>
-                            <div class="q-pa-sm column fill-pane no-wrap">
-                              <div v-if="!selectedOldSumRow" class="text-grey-6">
-                                Выберите сумму в таблице (старая структура).
-                              </div>
-                              <RelationTree
-                                v-else
-                                :key="`cid-sum-${selectedOldSumRow.cidKey}`"
-                                class="col"
-                                :spec="cidSumSpec"
-                                :root-id="selectedOldSumRow.cidKey"
-                                :fetch-node="fetchRelationNode"
-                                :fetch-expand="fetchRelationExpand"
-                                data-test="sudz-sf-sums-old-tree"
-                                root-class="sudz-sf-double-tree"
-                              />
-                            </div>
-                          </template>
-                        </QSplitter>
+                    </div>
+                  </template>
+                  <div v-else class="text-grey-6">Выберите строку очереди.</div>
+                </div>
+              </div>
+            </template>
+
+            <template #after>
+              <div
+                class="column fill-pane no-wrap q-pa-sm"
+                data-test="sudz-sf-sums-tab"
+              >
+                <div class="text-subtitle2 q-mb-xs shrink-0">Суммы</div>
+                <div class="text-caption text-grey-6 q-mb-xs shrink-0">
+                  Якорь Excel: {{ excelDebtLabel }} · совпадение только по сумме
+                  (ε={{ sumMatchEpsilon }})
+                </div>
+                <QSplitter
+                  v-model="sumsOldNewSplit"
+                  horizontal
+                  :limits="[30, 70]"
+                  separator-class="sudz-split-sep"
+                  class="col sudz-sf-splitter"
+                >
+                  <template #before>
+                    <div class="column fill-pane no-wrap q-pa-xs">
+                      <div class="text-subtitle2 q-px-sm shrink-0">
+                        Старая структура · cn_inv_dbt
                       </div>
-                    </template>
-                    <template #after>
-                      <div class="column fill-pane no-wrap q-pa-xs">
-                        <div class="text-subtitle2 q-px-sm shrink-0">Новая структура · DbtValue</div>
-                        <QSplitter
-                          v-model="sumsNewSplit"
-                          horizontal
-                          :limits="[25, 70]"
-                          separator-class="sudz-split-sep"
-                          class="col sudz-sf-splitter"
-                        >
-                          <template #before>
-                            <FemsqTable
-                              class="fit"
-                              :rows="newSumRows"
-                              :columns="newSumColumns"
-                              row-key="rowKey"
-                              dense
-                              flat
-                              :loading="newSumLoading"
-                              selection="single"
-                              v-model:selected="selectedNewSum"
-                              :show-filter="false"
-                              data-test="sudz-sf-sums-new-list"
-                            />
-                          </template>
-                          <template #after>
-                            <div class="q-pa-sm column fill-pane no-wrap">
-                              <div v-if="!selectedNewSumRow" class="text-grey-6">
-                                Выберите сумму в таблице (новая структура).
-                              </div>
-                              <RelationTree
-                                v-else
-                                :key="`dv-sum-${selectedNewSumRow.dvKey}`"
-                                class="col"
-                                :spec="dvSumSpec"
-                                :root-id="selectedNewSumRow.dvKey"
-                                :fetch-node="fetchRelationNode"
-                                :fetch-expand="fetchRelationExpand"
-                                data-test="sudz-sf-sums-new-tree"
-                                root-class="sudz-sf-double-tree"
-                              />
+                      <QSplitter
+                        v-model="sumsOldSplit"
+                        horizontal
+                        :limits="[25, 70]"
+                        separator-class="sudz-split-sep"
+                        class="col sudz-sf-splitter"
+                      >
+                        <template #before>
+                          <FemsqTable
+                            fill
+                            class="fit"
+                            :rows="oldSumRows"
+                            :columns="oldSumColumns"
+                            row-key="rowKey"
+                            dense
+                            flat
+                            :loading="oldSumLoading"
+                            selection="single"
+                            v-model:selected="selectedOldSum"
+                            :show-filter="false"
+                            data-test="sudz-sf-sums-old-list"
+                          />
+                        </template>
+                        <template #after>
+                          <div class="q-pa-sm column fill-pane no-wrap">
+                            <div v-if="!selectedOldSumRow" class="text-grey-6">
+                              Выберите сумму в таблице (старая структура).
                             </div>
-                          </template>
-                        </QSplitter>
+                            <RelationTree
+                              v-else
+                              :key="`cid-sum-${selectedOldSumRow.cidKey}`"
+                              class="col"
+                              :spec="cidSumSpec"
+                              :root-id="selectedOldSumRow.cidKey"
+                              :fetch-node="fetchRelationNode"
+                              :fetch-expand="fetchRelationExpand"
+                              data-test="sudz-sf-sums-old-tree"
+                              root-class="sudz-sf-double-tree"
+                            />
+                          </div>
+                        </template>
+                      </QSplitter>
+                    </div>
+                  </template>
+                  <template #after>
+                    <div class="column fill-pane no-wrap q-pa-xs">
+                      <div class="text-subtitle2 q-px-sm shrink-0">
+                        Новая структура · DbtValue
                       </div>
-                    </template>
-                  </QSplitter>
-                </QTabPanel>
-              </QTabPanels>
-            </div>
-          </template>
-        </QSplitter>
-      </template>
+                      <QSplitter
+                        v-model="sumsNewSplit"
+                        horizontal
+                        :limits="[25, 70]"
+                        separator-class="sudz-split-sep"
+                        class="col sudz-sf-splitter"
+                      >
+                        <template #before>
+                          <FemsqTable
+                            fill
+                            class="fit"
+                            :rows="newSumRows"
+                            :columns="newSumColumns"
+                            row-key="rowKey"
+                            dense
+                            flat
+                            :loading="newSumLoading"
+                            selection="single"
+                            v-model:selected="selectedNewSum"
+                            :show-filter="false"
+                            data-test="sudz-sf-sums-new-list"
+                          />
+                        </template>
+                        <template #after>
+                          <div class="q-pa-sm column fill-pane no-wrap">
+                            <div v-if="!selectedNewSumRow" class="text-grey-6">
+                              Выберите сумму в таблице (новая структура).
+                            </div>
+                            <RelationTree
+                              v-else
+                              :key="`dv-sum-${selectedNewSumRow.dvKey}`"
+                              class="col"
+                              :spec="dvSumSpec"
+                              :root-id="selectedNewSumRow.dvKey"
+                              :fetch-node="fetchRelationNode"
+                              :fetch-expand="fetchRelationExpand"
+                              data-test="sudz-sf-sums-new-tree"
+                              root-class="sudz-sf-double-tree"
+                            />
+                          </div>
+                        </template>
+                      </QSplitter>
+                    </div>
+                  </template>
+                </QSplitter>
+              </div>
+            </template>
+          </QSplitter>
+        </template>
       </QSplitter>
     </div>
     <RecordModal
@@ -278,6 +331,7 @@ import {
   createSudzSfFromDouble,
   getSudzSfDoubleDomainMatches,
   getSudzSfDoubleExcelCandidate,
+  getSudzSfDoubleHints,
   getSudzSfDoubleSumMatches,
   linkSudzSfDoubleToCn
 } from '@/api/sudz-api';
@@ -287,7 +341,9 @@ import { useSudzDbtUplStore } from '@/stores/sudz-dbt-upl';
 import type {
   SudzCnInvUplSfDouble,
   SudzSfDoubleDomainMatch,
-  SudzSfDoubleExcelCandidate
+  SudzSfDoubleExcelCandidate,
+  SudzSfDoubleHintItem,
+  SudzSfDoubleHints
 } from '@/types/sudz';
 import * as cnPickerSpecJson from '@/trees/cn-picker.tree.json';
 import * as contractsInvSpecJson from '@/trees/contracts-inv.tree.json';
@@ -297,17 +353,7 @@ import * as ksdsfSpec from '@/trees/ksdsf-inv-num.tree.json';
 import { buildCnInvLinkForm } from '@/trees/relation-form-registry';
 import type { RelationFormState, RelationPickerRow } from '@/trees/relation-forms';
 import type { RelationTreeActionContext, RelationTreeSpec } from '@/trees/relation-tree';
-import {
-  QBtn,
-  QMarkupTable,
-  QPage,
-  QSplitter,
-  QTab,
-  QTabPanel,
-  QTabPanels,
-  QTabs,
-  useQuasar
-} from 'quasar';
+import { QBtn, QMarkupTable, QPage, QSplitter, useQuasar } from 'quasar';
 
 type DomainRow = SudzSfDoubleDomainMatch & { rowKey: string };
 type PickerCandidateRow = RelationPickerRow & {
@@ -318,7 +364,7 @@ type PickerCandidateRow = RelationPickerRow & {
   invNum?: string | null;
 };
 
-/** Строка таблицы сумм старой структуры (макет; данные — следующий срез). */
+/** Строка таблицы сумм старой структуры (`ags.cn_inv_dbt`). */
 type OldSumRow = {
   rowKey: string;
   cidKey: number;
@@ -328,7 +374,7 @@ type OldSumRow = {
   debtType: string | null;
 };
 
-/** Строка таблицы сумм новой структуры (макет; данные — следующий срез). */
+/** Строка таблицы сумм новой структуры (`sudz.DbtValue`). */
 type NewSumRow = {
   rowKey: string;
   dvKey: number;
@@ -351,13 +397,16 @@ const connection = useConnectionStore();
 const store = useSudzDbtUplStore();
 const $q = useQuasar();
 
+/** Ширина левой колонки (очередь + Excel), %. */
 const queueSplit = ref(22);
-const ksdsfSplit = ref(34);
+/** Высота очереди внутри левой колонки, % (Excel — остаток снизу). */
+const queueExcelSplit = ref(55);
+/** Ширина панели «СФ» относительно «Суммы», %. */
+const sfSumsSplit = ref(50);
 const domainSplit = ref(45);
 const sumsOldNewSplit = ref(50);
 const sumsOldSplit = ref(40);
 const sumsNewSplit = ref(40);
-const domainTab = ref('sf');
 const loading = ref(false);
 const creating = ref(false);
 const excelLoading = ref(false);
@@ -373,6 +422,8 @@ const selectedOldSum = ref<OldSumRow[]>([]);
 const selectedNewSum = ref<NewSumRow[]>([]);
 const oldSumLoading = ref(false);
 const newSumLoading = ref(false);
+const hintsLoading = ref(false);
+const hints = ref<SudzSfDoubleHints | null>(null);
 const relationAction = ref<RelationTreeActionContext | null>(null);
 const linkModalOpen = ref(false);
 const selectedCnCandidate = ref<PickerCandidateRow | null>(null);
@@ -402,6 +453,16 @@ const excelDebtLabel = computed(() => {
     return 'сумма не загружена';
   }
   return String(debt);
+});
+
+const hintSections = computed(() => {
+  const data = hints.value;
+  if (!data) return [];
+  return [
+    { key: 'sfByNum', data: data.sfByNum },
+    { key: 'sumsOld', data: data.sumsOld },
+    { key: 'sumsNew', data: data.sumsNew }
+  ];
 });
 
 const queueColumns: FemsqTableColumn<SudzCnInvUplSfDouble>[] = [
@@ -541,6 +602,7 @@ watch(
     newSumRows.value = [];
     selectedOldSum.value = [];
     selectedNewSum.value = [];
+    hints.value = null;
     relationAction.value = null;
     linkModalOpen.value = false;
     selectedCnCandidate.value = null;
@@ -549,6 +611,7 @@ watch(
     domainLoading.value = true;
     oldSumLoading.value = true;
     newSumLoading.value = true;
+    hintsLoading.value = true;
     error.value = null;
     try {
       excel.value = await getSudzSfDoubleExcelCandidate(row.ciusKey);
@@ -578,6 +641,7 @@ watch(
           dvDbt: m.dvDbt
         }));
       }
+      hints.value = await getSudzSfDoubleHints(row.ciusKey, sumMatchEpsilon);
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e);
     } finally {
@@ -585,10 +649,41 @@ watch(
       domainLoading.value = false;
       oldSumLoading.value = false;
       newSumLoading.value = false;
+      hintsLoading.value = false;
     }
   },
   { immediate: true }
 );
+
+/**
+ * Выбор строки СФ/сумм по ключу из подсказки.
+ *
+ * @param item элемент подсказки
+ */
+function onHintPick(item: SudzSfDoubleHintItem): void {
+  if (item.zone === 'sf') {
+    const row =
+      domainMatches.value.find((m) => m.invNumKey === item.pickValue) ??
+      domainMatches.value.find((m) => m.invKey === item.invKey);
+    if (row) {
+      selectedDomain.value = [row];
+    }
+    return;
+  }
+  if (item.zone === 'sumsOld') {
+    const row = oldSumRows.value.find((m) => m.cidKey === item.pickValue);
+    if (row) {
+      selectedOldSum.value = [row];
+    }
+    return;
+  }
+  if (item.zone === 'sumsNew') {
+    const row = newSumRows.value.find((m) => m.dvKey === item.pickValue);
+    if (row) {
+      selectedNewSum.value = [row];
+    }
+  }
+}
 
 /**
  * Возврат на экран загрузки свода.
@@ -795,5 +890,13 @@ async function onDeleteCnInv(context: RelationTreeActionContext): Promise<void> 
 }
 .sudz-sf-double-tree {
   min-height: 0;
+}
+.sudz-sf-hints {
+  max-height: 28%;
+  overflow: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+.sudz-sf-hint-section {
+  line-height: 1.35;
 }
 </style>

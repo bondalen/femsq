@@ -1,7 +1,7 @@
 # СУДЗ — учёт проблем модели данных и способов решения
 
 **Дата создания:** 2026-08-03  
-**Последнее обновление:** 2026-08-15 (S63: ошибка эскиза pm→smpl без accnt; предпочтение варианта 1 — `cnInvAccntSmpl`)  
+**Последнее обновление:** 2026-08-24 (S66c: шов воронки; invDoubleCia ≠ invDbt)  
 **Статус:** рабочий реестр (нарастающий)  
 **План чата:** [chat-plan-26-0802-sudz.md](../../chats/chat-plan/chat-plan-26-0802-sudz.md)  
 **Контекст модели:** [04-data-model.md](./04-data-model.md) · пример [04-2](./04-2_example-rslt-82-85.md) · **физ. схема + ER:** [08-target-schema.md](./08-target-schema.md)
@@ -87,7 +87,7 @@
 | Ручное «уточнение основания» в Rslt | практика | Различение глазами | **нет** |
 | Целевая модель `Dbt`+`invDbt`+`invDbtDbt` | S14–S32 | Каждый долг — отдельная сущность `Dbt`; на одном `Inv` допустимо N слотов `invDbt` без текстового дискриминатора | **да** — `ciaName` больше не нужен |
 
-**Найден точный код разбора P2 (S29):** `btnCidufLoad_Click()` (загрузчик свода) диагностирует именно этот случай процедурой `invDbtDouble` — карточки (`cnInvAccnt`) с установленным `ciaName`, у которых больше одной строки `cn_inv_dbt`, сверяются с источником через метод `CiaNm.SumMatch(dbt_ttl, maxDate)`:
+**Найден точный код разбора P2 (S29):** `btnCidufLoad_Click()` диагностирует случай процедурой `invDbtDouble`. **S66c:** QueryDef `invDoubleCia` выбирает `iKey` из цепочки **`cnInvAccnt` (ciaName NOT NULL) → Smpl → cnInv → inv`**, без `HAVING COUNT>1` и **без** таблицы `invDbt`. VBA затем сверяет № СФ с источником через `CiaNm.SumMatch(dbt_ttl, maxDate)` по `cn_inv_dbt`:
 
 ```sql
 -- составной ключ сопоставления новой суммы с существующей "именованной" задолженностью
@@ -835,7 +835,7 @@ ALTER TABLE ags.invDbtDbt
 ## 9. Ошибка эскиза dbtvar: `cn_inv_pm` → `cn_s_org_smpl` без СГК (S63)
 
 **Дата:** 2026-08-15  
-**Артефакты:** [26-0807-sudz-target-sketch-dbtvar.png](./assets/26-0807-sudz-target-sketch-dbtvar.png) (ошибочная связь); [26-0815-sudz-target-sketch-pm-accnt-fix.png](./assets/26-0815-sudz-target-sketch-pm-accnt-fix.png) (слева — ошибка, справа — вариант 1); живой ER [26-0815-sudz-er-live-pm-accnt.png](./assets/26-0815-sudz-er-live-pm-accnt.png).
+**Артефакты:** [26-0824-sudz-target-sketch-dbtvar.png](./assets/26-0824-sudz-target-sketch-dbtvar.png) (**актуальный** эскиз, 2026-08-24); [26-0807-sudz-target-sketch-dbtvar.png](./assets/26-0807-sudz-target-sketch-dbtvar.png) (S32; ошибочная связь pm); [26-0815-sudz-target-sketch-pm-accnt-fix.png](./assets/26-0815-sudz-target-sketch-pm-accnt-fix.png) (слева — ошибка, справа — вариант 1); живой ER [26-0815-sudz-er-live-pm-accnt.png](./assets/26-0815-sudz-er-live-pm-accnt.png).
 
 ### 9.1. В чём ошибка
 

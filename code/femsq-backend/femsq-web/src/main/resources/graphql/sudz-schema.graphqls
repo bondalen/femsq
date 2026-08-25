@@ -50,6 +50,11 @@ extend type Query {
   по сумме Excel ± epsilon (по умолчанию 0.01).
   """
   sudzSfDoubleSumMatches(debt: Float!, epsilon: Float): SudzSfDoubleSumMatches!
+  """
+  Подсказки КСДСФ: есть ли исполнитель Excel среди СФ по номеру и сумм (old/new).
+  Ключи items — для выбора строки в таблицах экрана.
+  """
+  sudzSfDoubleHints(ciusKey: Int!, epsilon: Float): SudzSfDoubleHints!
 }
 
 extend type Mutation {
@@ -341,6 +346,8 @@ type SudzDbtUplLauncher {
   invDoubles: [SudzDbtUplInvDouble!]!
   """Очередь КСДСФ (CnInvUplSfDouble) по uplKey."""
   sfDoubles: [SudzCnInvUplSfDouble!]!
+  """Очередь двоящих долгов СФ (CnInvUplInvDbtDouble) по uplKey."""
+  invDbtDoubles: [SudzCnInvUplInvDbtDouble!]!
 }
 
 """Шапка лаунчера (CnInvDbtUplFile)."""
@@ -391,6 +398,23 @@ type SudzCnInvUplSfDouble {
   ciusStatus: String!
   ciusStatusAt: DateTime
   ciusCreatedInvKey: Int
+}
+
+"""Очередь двоящих задолженностей СФ (CnInvUplInvDbtDouble)."""
+type SudzCnInvUplInvDbtDouble {
+  ciudKey: Int!
+  ciudCidut: Int!
+  ciudDbtFile: Int
+  ciudUnloadKey: Int!
+  ciudIKey: Int
+  ciudCnNum: String
+  ciudInvNum: String
+  ciudDebt: Float
+  ciudIdvvKey: Int
+  ciudReason: String
+  ciudStatus: String!
+  ciudStatusAt: DateTime
+  ciudCreatedIdKey: Int
 }
 
 """Вход ручной привязки строки КСДСФ к существующему inv/cn."""
@@ -458,6 +482,34 @@ type SudzSfDoubleNewSumMatch {
 type SudzSfDoubleSumMatches {
   oldMatches: [SudzSfDoubleOldSumMatch!]!
   newMatches: [SudzSfDoubleNewSumMatch!]!
+}
+
+"""Ключ совпадения для выбора строки на экране КСДСФ."""
+type SudzSfDoubleHintItem {
+  zone: String!
+  pickKey: String!
+  pickValue: Int!
+  invKey: Int
+  cnKey: Int
+  cnNum: String
+  matchBy: String!
+  label: String
+}
+
+"""Секция подсказки (СФ / суммы old / суммы new)."""
+type SudzSfDoubleHintSection {
+  """yes | no | unknown | na"""
+  status: String!
+  message: String!
+  totalCount: Int!
+  items: [SudzSfDoubleHintItem!]!
+}
+
+"""Три зоны подсказок по исполнителю Excel."""
+type SudzSfDoubleHints {
+  sfByNum: SudzSfDoubleHintSection!
+  sumsOld: SudzSfDoubleHintSection!
+  sumsNew: SudzSfDoubleHintSection!
 }
 
 """Вход upsert шапки лаунчера."""

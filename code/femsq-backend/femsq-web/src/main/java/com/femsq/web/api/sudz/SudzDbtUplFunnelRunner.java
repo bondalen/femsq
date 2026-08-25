@@ -1,10 +1,13 @@
 package com.femsq.web.api.sudz;
 
+import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplCnCtptExistInvApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplCnNotLoadApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplFile;
 import com.femsq.database.model.sudz.SudzDbtUplFunnelResult;
 import com.femsq.database.model.sudz.SudzDbtUplFunnelSteps;
+import com.femsq.database.model.sudz.SudzDbtUplInvDbtLoadApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarEnsureApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplLauncher;
 import com.femsq.database.model.sudz.SudzDbtUplTblRow;
 import com.femsq.database.service.SudzService;
@@ -21,8 +24,9 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 /**
- * Оркестратор воронки загрузки свода: {@code excelToTbl} … {@code CnCtptExistInvNotLoad};
- * прочие шаги панели — stub. Очистка InvDouble — prelude внутри шага СФ.
+ * Оркестратор воронки загрузки свода: {@code excelToTbl} …
+ * {@code invDbtLoad}; Access-хвост панели — disabled (S66e).
+ * Очистка InvDouble — prelude внутри шага СФ.
  * Лог шагов — хронология сверху вниз, каждый шаг в сворачиваемом блоке.
  */
 @Service
@@ -85,11 +89,14 @@ public class SudzDbtUplFunnelRunner {
 
         List<String> ran = new ArrayList<>();
         boolean anyStub = false;
+        long funnelT0 = System.currentTimeMillis();
         if (flTbl) {
             ran.add(SudzDbtUplFunnelSteps.EXCEL_TO_TBL);
             progress.open("<b>" + SudzDbtUplFunnelSteps.EXCEL_TO_TBL + "</b> — "
                     + "Обновлять промежуточную таблицу по данным источника", true);
+            long stepT0 = System.currentTimeMillis();
             runExcelToTbl(uplKey, progress);
+            appendStepTiming(progress, SudzDbtUplFunnelSteps.EXCEL_TO_TBL, stepT0);
             progress.close();
         }
         for (String stepId : ordered) {
@@ -101,6 +108,7 @@ public class SudzDbtUplFunnelRunner {
                     .orElse(stepId);
             progress.open("<b>" + SudzDbtUplProgressLog.escape(stepId) + "</b> — "
                     + SudzDbtUplProgressLog.escape(title), true);
+            long stepT0 = System.currentTimeMillis();
             if (SudzDbtUplFunnelSteps.ORG_NOT_IN_BUIRG.equals(stepId)) {
                 runOrgNotInBuirg(uplKey, progress);
             } else if (SudzDbtUplFunnelSteps.CN_NOT_LOAD.equals(stepId)) {
@@ -109,18 +117,43 @@ public class SudzDbtUplFunnelRunner {
                 runCnExistCtptNotLoad(uplKey, progress);
             } else if (SudzDbtUplFunnelSteps.CN_CTPT_EXIST_INV_NOT_LOAD.equals(stepId)) {
                 runCnCtptExistInvNotLoad(uplKey, progress, flLoad);
+            } else if (SudzDbtUplFunnelSteps.CN_CTPT_INV_EXIST_ACC_SMPL_NOT_LOAD.equals(stepId)) {
+                runCnCtptInvExistAccSmplNotLoad(uplKey, progress, flLoad);
+            } else if (SudzDbtUplFunnelSteps.INV_DBT_VAR_ENSURE.equals(stepId)) {
+                runInvDbtVarEnsure(uplKey, progress, flLoad);
+            } else if (SudzDbtUplFunnelSteps.INV_DBT_LOAD.equals(stepId)) {
+                runInvDbtLoad(uplKey, progress, flLoad);
             } else {
                 anyStub = true;
                 progress.line("<font color=\"CadetBlue\">STUB</font>: шаг принят оркестратором,"
                         + " реализация позже.");
             }
+            appendStepTiming(progress, stepId, stepT0);
             progress.close();
         }
-        progress.line("<font color=\"blue\">Воронка завершена</font> — " + SudzDbtUplProgressLog.now());
+        long funnelMs = System.currentTimeMillis() - funnelT0;
+        progress.line("<font color=\"blue\">Воронка завершена</font> — "
+                + SudzDbtUplProgressLog.now()
+                + " (всего <b>" + funnelMs + "</b> мс)");
+        log.log(Level.INFO, "runDbtUplFunnel done uplKey={0} totalMs={1} steps={2}",
+                new Object[]{uplKey, funnelMs, ran});
 
         sudzService.setDbtUplFileProgress(uplKey, progress.toHtml());
         SudzDbtUplLauncher after = sudzService.getDbtUplLauncher(uplKey);
         return new SudzDbtUplFunnelResult(after, List.copyOf(ran), anyStub);
+    }
+
+    /**
+     * Пишет длительность шага в HTML-лог и INFO.
+     *
+     * @param progress лог воронки
+     * @param stepId идентификатор шага
+     * @param stepT0 {@link System#currentTimeMillis()} на старте шага
+     */
+    private static void appendStepTiming(SudzDbtUplProgressLog progress, String stepId, long stepT0) {
+        long ms = System.currentTimeMillis() - stepT0;
+        progress.line("шаг: <b>" + ms + "</b> мс");
+        log.log(Level.INFO, "funnel step {0} ms={1}", new Object[]{stepId, ms});
     }
 
     /**
@@ -303,6 +336,126 @@ public class SudzDbtUplFunnelRunner {
                         prepared.contracts().size(),
                         flLoad,
                         applyResult == null ? 0 : applyResult.insertedCount()
+                });
+    }
+
+    /**
+     * CnCtptInvExistAccSmplNotLoad: diff без {@code cnInvAccntSmpl}; INSERT при flLoad.
+     *
+     * @param uplKey ключ выгрузки
+     * @param progress лог шага
+     * @param flLoad писать ли в домен
+     */
+    private void runCnCtptInvExistAccSmplNotLoad(int uplKey, SudzDbtUplProgressLog progress, boolean flLoad) {
+        int tblCount = sudzService.countDbtUplTbl(uplKey);
+        progress.line("Буфер Tbl: <font color=\"DarkCyan\">" + tblCount + "</font> строк"
+                + " (unloadKey=" + uplKey + ").");
+        if (tblCount == 0) {
+            progress.line("<font color=\"Salmon\">буфер пуст</font> — сначала включите"
+                    + " «обнов. по исх?» либо загрузите Excel в Tbl.");
+        }
+        var rows = sudzService.listDbtUplCnCtptInvExistAccSmplNot(uplKey);
+        int beforeCount = rows.size();
+        SudzDbtUplAccSmplNotLoadLog.append(progress, rows);
+
+        SudzDbtUplAccSmplNotApplyResult applyResult = null;
+        if (flLoad && beforeCount > 0) {
+            applyResult = sudzService.applyDbtUplCnCtptInvExistAccSmplNotLoad(uplKey);
+            progress.line("Внесено пар СФ+СГК (строк) в БД: <b><font color=\"DarkGreen\">"
+                    + applyResult.insertedCount() + "</font></b> Для "
+                    + beforeCount + " задолженностей.");
+            rows = sudzService.listDbtUplCnCtptInvExistAccSmplNot(uplKey);
+            SudzDbtUplAccSmplNotLoadLog.append(progress, rows);
+        }
+        log.log(Level.INFO,
+                "CnCtptInvExistAccSmplNotLoad uplKey={0} tbl={1} missing={2} flLoad={3} applied={4} after={5}",
+                new Object[]{
+                        uplKey,
+                        tblCount,
+                        beforeCount,
+                        flLoad,
+                        applyResult == null ? 0 : applyResult.insertedCount(),
+                        rows.size()
+                });
+    }
+
+    /**
+     * invDbtVarEnsure: missing/ambiguous лог; INSERT {@code sudz.invDbtVar} при flLoad.
+     *
+     * @param uplKey ключ выгрузки
+     * @param progress лог шага
+     * @param flLoad писать ли в sudz
+     */
+    private void runInvDbtVarEnsure(int uplKey, SudzDbtUplProgressLog progress, boolean flLoad) {
+        int tblCount = sudzService.countDbtUplTbl(uplKey);
+        progress.line("Буфер Tbl: <font color=\"DarkCyan\">" + tblCount + "</font> строк"
+                + " (unloadKey=" + uplKey + ").");
+        if (tblCount == 0) {
+            progress.line("<font color=\"Salmon\">буфер пуст</font> — сначала включите"
+                    + " «обнов. по исх?» либо загрузите Excel в Tbl.");
+        }
+        var snapshot = sudzService.listDbtUplInvDbtVarEnsureSnapshot(uplKey);
+        var missing = snapshot.missing();
+        var ambiguous = snapshot.ambiguous();
+        int beforeMissing = missing.size();
+        SudzDbtUplInvDbtVarEnsureLog.append(progress, missing, ambiguous, null);
+
+        SudzDbtUplInvDbtVarEnsureApplyResult applyResult = null;
+        if (flLoad && beforeMissing > 0) {
+            applyResult = sudzService.applyDbtUplInvDbtVarEnsure(uplKey);
+            snapshot = sudzService.listDbtUplInvDbtVarEnsureSnapshot(uplKey);
+            missing = snapshot.missing();
+            ambiguous = snapshot.ambiguous();
+            SudzDbtUplInvDbtVarEnsureLog.append(progress, missing, ambiguous, applyResult);
+        }
+        log.log(Level.INFO,
+                "invDbtVarEnsure uplKey={0} tbl={1} missing={2} ambiguous={3} flLoad={4} applied={5}",
+                new Object[]{
+                        uplKey,
+                        tblCount,
+                        beforeMissing,
+                        ambiguous.size(),
+                        flLoad,
+                        applyResult == null ? 0 : applyResult.insertedCount()
+                });
+    }
+
+    /**
+     * invDbtLoad: всегда rebuild очереди; при flLoad — auto однозначных invDbt/мостов.
+     *
+     * @param uplKey ключ выгрузки
+     * @param progress лог шага
+     * @param flLoad писать ли в sudz
+     */
+    private void runInvDbtLoad(int uplKey, SudzDbtUplProgressLog progress, boolean flLoad) {
+        int tblCount = sudzService.countDbtUplTbl(uplKey);
+        progress.line("Буфер Tbl: <font color=\"DarkCyan\">" + tblCount + "</font> строк"
+                + " (unloadKey=" + uplKey + ").");
+        if (tblCount == 0) {
+            progress.line("<font color=\"Salmon\">буфер пуст</font> — сначала включите"
+                    + " «обнов. по исх?» либо загрузите Excel в Tbl.");
+        }
+        Integer fileKey = null;
+        SudzDbtUplLauncher launcher = sudzService.getDbtUplLauncher(uplKey);
+        if (launcher.file() != null) {
+            fileKey = launcher.file().cidufKey();
+        }
+        int queuedCount = sudzService.rebuildInvDbtDoubleQueue(uplKey, fileKey);
+        SudzDbtUplInvDbtLoadApplyResult applyResult = null;
+        if (flLoad) {
+            applyResult = sudzService.applyDbtUplInvDbtLoadUnambiguous(uplKey);
+            queuedCount = applyResult.queuedCount();
+        }
+        SudzDbtUplInvDbtLoadLog.append(progress, queuedCount, applyResult);
+        log.log(Level.INFO,
+                "invDbtLoad uplKey={0} tbl={1} queued={2} flLoad={3} invDbt={4} bridges={5}",
+                new Object[]{
+                        uplKey,
+                        tblCount,
+                        queuedCount,
+                        flLoad,
+                        applyResult == null ? 0 : applyResult.insertedInvDbt(),
+                        applyResult == null ? 0 : applyResult.insertedBridges()
                 });
     }
 }

@@ -10,12 +10,14 @@ import java.util.List;
  * @param sheets листы FileSh
  * @param invDoubles legacy очередь {@code FileInvDouble} (может быть пуста после S68)
  * @param sfDoubles общая очередь {@code CnInvUplSfDouble} (КСДСФ)
+ * @param invDbtDoubles очередь {@code CnInvUplInvDbtDouble} (двоящие долги СФ, S66e)
  */
 public record SudzDbtUplLauncher(
         SudzUplLookup upl,
         SudzDbtUplFile file,
         List<SudzDbtUplFileSh> sheets,
         List<SudzDbtUplInvDouble> invDoubles,
-        List<SudzCnInvUplSfDouble> sfDoubles
+        List<SudzCnInvUplSfDouble> sfDoubles,
+        List<SudzCnInvUplInvDbtDouble> invDbtDoubles
 ) {
 }
