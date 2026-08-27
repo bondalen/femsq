@@ -3,7 +3,7 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-08-26"
+      "lastUpdated": "2026-08-27"
     },
     "sessions": [
       {
@@ -150,7 +150,7 @@
           "chat-attributes": {
             "id": "chat-2026-08-24-001",
             "created": "2026-08-24",
-            "lastUpdated": "2026-08-26",
+            "lastUpdated": "2026-08-27",
             "owner": "Александр",
             "status": "in_progress",
             "priority": "high",
@@ -164,7 +164,9 @@
               "S71",
               "S72",
               "S73",
-              "cutover"
+              "S74",
+              "cutover",
+              "M2"
             ],
             "links": {
               "projectDocsRefs": [
@@ -178,6 +180,65 @@
             }
           },
           "entries": [
+            {
+              "log": {
+                "displayName": "S74 M2 D4a concurrent-cia split (success). № log-2026-08-27-019",
+                "log-attributes": {
+                  "id": "log-2026-08-27-019",
+                  "timestamp": "2026-08-27T13:10:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "D4a: 06a_SPLIT_concurrent_cia_slots + re-seed E1",
+                    "details": "Правило: ≥2 cid на (slot,upl) → доп. invDbt (idNum 241+). DEV N_split=9 (8× M2-concurrent-cia, 40665=M2-cn-migrate). DbtValue=42367=cid, concurrent=0. Cutover §1.5 / D4a для prod.",
+                    "outcome": "Итоги выгрузок восстановлены; план 0.99.6; cutover 0.3.5; сегм. 36.",
+                    "references": [
+                      "docs/development/notes/sql/26-0827-sudz-m2-seed/06a_SPLIT_concurrent_cia_slots.sql",
+                      "docs/deployment/db-upgrade-sudz-invdbt-cutover.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S74 M2 DEV seed applied (success). № log-2026-08-27-018",
+                "log-attributes": {
+                  "id": "log-2026-08-27-018",
+                  "timestamp": "2026-08-27T12:15:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "M2 seed на sudz: DDL invDbtCia + D3′ *Dbt, CLEAR demo, grains/entropy/L*/E1",
+                    "details": "Backup FishEye_*_pre-m2-seed.bak. Пакет 26-0827-sudz-m2-seed. idNum unnamed=0; FK dvUpl→ags.cn_inv_dbt_upl. Counts: invDbt 11907, Dbt 11897, Value 42354 (−13 UNIQUE slot+upl), cia bridge 12693. L001–L010 OK. cmm demo cleared (sandbox *InvAccnt→Dbt).",
+                    "outcome": "M2 ✅; next M3 calm F1. План 0.99.5; cutover 0.3.4; сегм. 35.",
+                    "references": [
+                      "docs/development/notes/sql/26-0827-sudz-m2-seed/",
+                      "docs/deployment/db-upgrade-sudz-invdbt-cutover.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                    ]
+                  }
+                ]
+              }
+            },
             {
               "log": {
                 "displayName": "S74 E1 полный backfill Value (success). № log-2026-08-27-017",

@@ -3,7 +3,7 @@
 **Файл:** `docs/deployment/db-upgrade-sudz-invdbt-cutover.md`  
 **Дата создания:** 2026-08-27  
 **lastUpdated:** 2026-08-27  
-**Версия:** 0.3.3 (E1: полный backfill Value + invDbtVar)  
+**Версия:** 0.3.5 (M2: concurrent multi-cia split в seed)  
 **Автор:** Александр  
 **Статус:** черновик — наполнение по мере обсуждения `Dbt`, DEV-репетиции и обследования prod
 
@@ -193,10 +193,28 @@ N_slots_plan / N_Dbt_plan; **сверить** очередь §1.2 (10 `iKey`) �
 | D2 | `Dbt` по решениям §1.1 (ожидаемо 1:1 со слотом на старте) |
 | D3 | `invDbtDbt` |
 | D4 | Мост cia ↔ слот (`UNIQUE(ciaKey)`) |
+| **D4a** | **Concurrent multi-cia split (§1.5)** — доп. `invDbt`/`Dbt` до E1 |
 | D5 | Cmm **D3′:** ADD `*Dbt` + backfill (не затирать `*InvAccnt`) |
-| D6 | VERIFY counts (+ cmm: `*Dbt` заполнен где есть комментарии) |
+| D6 | VERIFY: `DbtValue` count = `cn_inv_dbt`; нет коллизий `(slot,upl)` |
 
-Репетиция сначала на **DEV (`sudz`)**.
+Репетиция сначала на **DEV (`sudz`)**. Пакет: `docs/development/notes/sql/26-0827-sudz-m2-seed/` (шаг `06a_SPLIT_concurrent_cia_slots.sql`).
+
+### 1.5. Concurrent multi-cia → отдельные `invDbt` (обязательно в seed / prod)
+
+**Симптом (M2 DEV):** 13 пар `cn_inv_dbt` на одном зерне S73 (unnamed) в одной upl → `UNIQUE(dvInvDbt,dvUpl)` оставлял одну сумму → **занижение/искажение** итога свода и СГК.
+
+**Причина:** несколько `cia` с пустым `ciaName` склеены в один слот; СГК в парах **одинаковый**; `cn_s_org` разный (часто одно юрлицо, разные dated-строки).
+
+| Класс | Суть | Пример DEV |
+|-------|------|------------|
+| **A** | Один cn + один СФ; недоразмеченный P2 | iKey 3867, 4766, 14920, … |
+| **B** | Один `inv` на два cn одной орг.-исполнителя (переезд) | **40665** (`41104-23-…` / `41104-24-…`, ИНН 2309001660) |
+
+**Правило seed (D4a):** если через мост cia→слот в одной upl ≥2 строк `cn_inv_dbt` на один слот — `min(ciaKey)` остаётся; остальным cia — новый `invDbt` (`idNum` ≥241), новый `Dbt` (`dbtNote` `M2-concurrent-cia` или `M2-cn-migrate` для класса B), обновление моста. Затем E1 без потерь.
+
+**На prod:** тот же шаг после D4, до E; N_split пересчитать (не хардкодить 9). VERIFY: `COUNT(DbtValue)=COUNT(cn_inv_dbt)` и 0 групп `(slot,upl)` с COUNT>1.
+
+---
 
 ### E — `DbtValue`
 
@@ -275,12 +293,27 @@ Backup → DDL → seed D(+E) → JAR → smoke → режим Access.
 | 0.3.1 | 2026-08-27 | **D3′:** cmm — ADD `*Dbt`, не затирать `*InvAccnt`; §1.3 |
 | 0.3.2 | 2026-08-27 | **§1.4:** резолв `cnNum`/`invNum` по `TimeOfEntry`≤asOf (без ручной очереди) |
 | 0.3.3 | 2026-08-27 | **E1 ✅:** вся история `cn_inv_dbt` → Value; var по потребности §1.4 |
+| 0.3.4 | 2026-08-27 | **M2 DEV ✅:** пакет `26-0827-sudz-m2-seed/`; bak `FishEye_*_pre-m2-seed.bak` |
+| 0.3.5 | 2026-08-27 | **§1.5 / D4a:** concurrent multi-cia → доп. `invDbt`; E1 без потерь сумм |
+
+### 6.1. Результат M2 на DEV (`sudz`, 2026-08-27; после 06a)
+
+| Объект | N | Примечание |
+|--------|--:|------------|
+| `invDbt` | 11 907 + N_split | N_split=9 на DEV |
+| `Dbt` | 11 897 + N_split | L* −10; +split |
+| `DbtValue` | = `cn_inv_dbt` | целевой инвариант (42 367) |
+| `idNum` unnamed | **0** | |
+| split notes | `M2-concurrent-cia` / `M2-cn-migrate` | §1.5 |
+| `dvUpl` FK | → `ags.cn_inv_dbt_upl` | |
+
+Откат: `ROLLBACK_M2.sql` или restore bak.
 
 ---
 
 ## 7. Следующий шаг
 
-1. **M1** ✅ (D1–D7; D3 уточнён **D3′**).  
-2. Краткая сводка в 08 (в т.ч. D3′).  
-3. **M2** — репетиция на DEV: seed слоты/`Dbt`/L*/мосты + **E1** (вся история Value + var §1.4) + D3′ cmm + `ROLLBACK_M2`.  
-4. (Параллельно) шаблон SQL survey фазы A на DEV.
+1. **M1** ✅ · **M2** ✅ (DEV, с D4a).  
+2. **M3** — calm F1 (sum→слот).  
+3. Prod seed checklist: D1…D4 → **D4a** → E1 → VERIFY сумм.  
+4. Краткая сводка M2-конвенций в 08.

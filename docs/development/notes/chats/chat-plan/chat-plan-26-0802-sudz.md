@@ -3,9 +3,9 @@
 **Дата создания:** 2026-08-02  
 **Последнее обновление:** 2026-08-27  
 **Проект:** FEMSQ  
-**Версия плана:** 0.99.4 (E1 полный backfill; next M2 seed)  
-**Задача:** 0065–0072 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md); **активно: 0069** — **S74 M2** DEV seed (**E1**); **0071** Договоры 🔶; **S69**/**S70** ✅  
-**Статус плана:** ✅ 0070; **S66e**/**S71**/**S72** A1–A2/B1/B1b ✅; **S73 зерно** ✅; **S74 M1** ✅; **E1** ✅; next **M2**; **0071** 🔶
+**Версия плана:** 0.99.6 (M2 D4a concurrent-cia split; E1 full totals)  
+**Задача:** 0065–0072 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md); **активно: 0069** — **S74 M3** calm F1; **0071** Договоры 🔶; **S69**/**S70** ✅  
+**Статус плана:** ✅ 0070; **S66e**/**S71**/**S72** A1–A2/B1/B1b ✅; **S73 зерно** ✅; **S74 M1**/**M2** ✅ (D4a); next **M3**; **0071** 🔶
 **Cutover prod/DEV:** [db-upgrade-sudz-invdbt-cutover.md](../../../../deployment/db-upgrade-sudz-invdbt-cutover.md) · §5.6 [S74](#s74--трек-cutover-m1m6--2026-08-27) · D1: [04-5](../../domain/sudz/04-5_dbt-invdbt-cardinality-d1.md)  
 **Паспорт pmt:** [02-11_cn-inv-pmt-upl-access.md](../../UI/02-11_cn-inv-pmt-upl-access.md) · §5.7  
 **План UI pmt:** [chat-plan-26-0819-cn-inv-pmt-upl.md](./chat-plan-26-0819-cn-inv-pmt-upl.md) · §5.8  
@@ -816,6 +816,8 @@ Apply Inv (`inNumCount IS NULL` vs Access «весь TblCnInv») — намер�
 | 32 | 2026-08-27 | **D3′:** cmm — ADD nullable `*Dbt`, не затирать `*InvAccnt` | ✅ |
 | 33 | 2026-08-27 | **Seed invDbtVar:** `cnNum`/`invNum` по `TimeOfEntry`≤asOf (без ручной очереди) | ✅ |
 | 34 | 2026-08-27 | **E1:** вся история `cn_inv_dbt` → Value; var сколько нужно для корректной загрузки | ✅ |
+| 35 | 2026-08-27 | **M2 DEV seed:** пакет `26-0827-sudz-m2-seed`; counts 11907/11897/42354; L* OK; bak pre-m2-seed | ✅ |
+| 36 | 2026-08-27 | **D4a:** concurrent multi-cia → доп. `invDbt` (классы A/B; 40665=migrate); E1 = cid; cutover §1.5 | ✅ |
 
 **Код v1 (2026-08-24, после подтверждения владельца):** реализованы `invDbtVarEnsure` + `invDbtLoad` (DAO/оркестратор/логи), DDL `sudz.CnInvUplInvDbtDouble`, stub экрана `sudz-inv-dbt-double`, Access-хвост disabled. Auto load = calm path (без sum-match multi). **2026-08-25:** на лаунчере отдельная вкладка «двоящие долги СФ» (очередь `invDbtDoubles` рядом с «повторяющиеся СФ»). Следующее: **UAT upl 910** (dry → flLoad), затем наполнение экрана разбора.
 
@@ -1287,8 +1289,8 @@ Access-stub’ы (`invDbtDouble`, `CnCtptInvExistAccNotLoad`, `ciduTbl…NameCou
 | # | Мероприятие | Содержание | Выход | Статус |
 |---|-------------|------------|-------|--------|
 | **M1** | Обсуждение `Dbt` (без UI) | Повестка **D1–D7** ✅; сегм. 24–31 | Письменный канон seed `Dbt` | ✅ |
-| **M2** | DEV-перенос old→new | Seed слоты/`Dbt`/мосты + **E1** (вся `cn_inv_dbt`→Value + var §1.4) + **D3′** cmm; `ROLLBACK_M2` | `sudz` заполнен; cutover-док обновлён | 🔄 next |
-| **M3** | Calm F1 | Sum уникальна → тот же `invDbt`; код + UAT 910 | Меньше open в очереди | ☐ после M2 |
+| **M2** | DEV-перенос old→new | Seed + **D4a** concurrent split + **E1** + **D3′**; `ROLLBACK_M2` | `DbtValue`=cid; cutover §1.5 | ✅ 2026-08-27 |
+| **M3** | Calm F1 | Sum уникальна → тот же `invDbt`; код + UAT 910 | Меньше open в очереди | 🔄 next |
 | **M4** | Экран двоящих + чекбокс 7 | Доработка UI/регламента на seeded; Create/Link + Value | Сегм. 22 закрыт по UI | ☐ после M3 |
 | **M5** | Остальные чекбоксы воронки | До завершения процесса загрузки свода (C2/Exist/… по реестру stepId) | Воронка 1.1.1.1 закрыта | ☐ после M4 |
 | **M6** | Prod | Survey A → `MSSQL2012/` → окно H → dual-read off | Cutover на FishEye | ☐ после M5 |
@@ -1303,7 +1305,7 @@ Access-stub’ы (`invDbtDouble`, `CnCtptInvExistAccNotLoad`, `ciduTbl…NameCou
 
 **Контекст:** обязательность `Dbt` в модели; M2 физ. (S71); **Value — SoT выгрузки**; **seed канона `Dbt` — трек S74**, не «после всего UI».
 
-**Порядок ближайших работ:** **S74 M2 → M3 → M4 → M5 → M6** (M1 ✅); хвосты S72 **B2/B3** — по мере M2/M5; **0071** параллельно.
+**Порядок ближайших работ:** **S74 M3 → M4 → M5 → M6** (M1–M2 ✅); хвосты S72 **B2/B3** — по мере M3/M5; **0071** параллельно.
 
 ###### Фаза A — слой I + очередь (+ Value после B1)
 
