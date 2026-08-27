@@ -374,14 +374,15 @@ type OldSumRow = {
   debtType: string | null;
 };
 
-/** Строка таблицы сумм новой структуры (`sudz.DbtValue`). */
+/** Строка таблицы сумм новой структуры (`sudz.DbtValue`, M2). */
 type NewSumRow = {
   rowKey: string;
   dvKey: number;
   dvTtl: number | null;
   dvOverd: number | null;
   dvUpl: number | null;
-  dvDbt: number | null;
+  dvInvDbt: number | null;
+  dbtKey: number | null;
 };
 
 const relationSpec = ksdsfSpec as RelationTreeSpec;
@@ -490,7 +491,8 @@ const oldSumColumns: FemsqTableColumn<OldSumRow>[] = [
 
 const newSumColumns: FemsqTableColumn<NewSumRow>[] = [
   { name: 'dvKey', label: 'dv', field: 'dvKey', align: 'right' },
-  { name: 'dvDbt', label: 'dbt', field: 'dvDbt', align: 'right' },
+  { name: 'dvInvDbt', label: 'invDbt', field: 'dvInvDbt', align: 'right' },
+  { name: 'dbtKey', label: 'dbt', field: 'dbtKey', align: 'right' },
   { name: 'dvTtl', label: 'сумма', field: 'dvTtl', align: 'right' },
   { name: 'dvOverd', label: 'просроч.', field: 'dvOverd', align: 'right' },
   { name: 'dvUpl', label: 'upl', field: 'dvUpl', align: 'right' }
@@ -638,7 +640,8 @@ watch(
           dvTtl: m.dvTtl,
           dvOverd: m.dvOverd,
           dvUpl: m.dvUpl,
-          dvDbt: m.dvDbt
+          dvInvDbt: m.dvInvDbt,
+          dbtKey: m.dbtKey
         }));
       }
       hints.value = await getSudzSfDoubleHints(row.ciusKey, sumMatchEpsilon);

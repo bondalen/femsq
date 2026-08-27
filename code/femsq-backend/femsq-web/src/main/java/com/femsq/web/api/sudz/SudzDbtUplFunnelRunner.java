@@ -421,7 +421,7 @@ public class SudzDbtUplFunnelRunner {
     }
 
     /**
-     * invDbtLoad: всегда rebuild очереди; при flLoad — auto однозначных invDbt/мостов.
+     * invDbtLoad: всегда rebuild очереди; при flLoad — auto однозначных invDbt/мостов/DbtValue.
      *
      * @param uplKey ключ выгрузки
      * @param progress лог шага
@@ -448,14 +448,15 @@ public class SudzDbtUplFunnelRunner {
         }
         SudzDbtUplInvDbtLoadLog.append(progress, queuedCount, applyResult);
         log.log(Level.INFO,
-                "invDbtLoad uplKey={0} tbl={1} queued={2} flLoad={3} invDbt={4} bridges={5}",
+                "invDbtLoad uplKey={0} tbl={1} queued={2} flLoad={3} invDbt={4} bridges={5} values={6}",
                 new Object[]{
                         uplKey,
                         tblCount,
                         queuedCount,
                         flLoad,
                         applyResult == null ? 0 : applyResult.insertedInvDbt(),
-                        applyResult == null ? 0 : applyResult.insertedBridges()
+                        applyResult == null ? 0 : applyResult.insertedBridges(),
+                        applyResult == null ? 0 : applyResult.insertedValues()
                 });
     }
 }

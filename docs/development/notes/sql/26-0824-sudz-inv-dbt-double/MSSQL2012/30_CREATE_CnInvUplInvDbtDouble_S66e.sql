@@ -23,6 +23,7 @@ BEGIN
         ciudDebt           decimal(18, 2) NULL,
         ciudIdvvKey        int            NULL,
         ciudReason         nvarchar(64)   NULL,
+        ciudReasonDetail   nvarchar(max)  NULL,
 
         ciudStatus         varchar(16)    NOT NULL
             CONSTRAINT DF_CnInvUplInvDbtDouble_Status DEFAULT ('open'),

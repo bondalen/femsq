@@ -1,7 +1,7 @@
 # Relation tree: карта экземпляра (JSON) + каталог рёбер
 
 **Дата:** 2026-08-18 · **обновлено:** 2026-08-19  
-**Статус:** **T1** ✅; **T4b** ✅; **T5** ✅; **T6** ✅ (S68u 2026-08-24); далее T6a/T6b actions/forms, T7 Договоры  
+**Статус:** **T1** ✅; **T4b** ✅; **T5** ✅; **T6** ✅ (S68u 2026-08-24); T6a/T6b в коде; **T7** — [chat-plan-26-0826-contracts-inv.md](../../chats/chat-plan/chat-plan-26-0826-contracts-inv.md)  
 **План:** [chat-plan-26-0802-sudz.md](../../chats/chat-plan/chat-plan-26-0802-sudz.md) S68t  
 **ADR:** [Решение 009](../../../../project/decisions/009-femsq-walk-tree.md)  
 **Конспекты:** [ksdsf-inv-num.tree.md](./ksdsf-inv-num.tree.md) · [contracts-inv.tree.md](./contracts-inv.tree.md) · [ksdsf-cid-sum.tree.md](./ksdsf-cid-sum.tree.md) · [ksdsf-dv-sum.tree.md](./ksdsf-dv-sum.tree.md)  
@@ -489,7 +489,7 @@ relationExpand(edge: String!, fromId: Int!): [RelationRow!]!
 6. КСДСФ: верхний список; низ = обёртка(`invNum`, `inKey`, json КСДСФ); builder удалён — **T5** ✅, UAT — **T6** ✅ (S68u 2026-08-24).  
 7. **T6a (новое):** actions в `RelationTree` + хостовый `ActionContext` без GraphQL в walker.  
 8. **T6b (новое):** универсальная `RecordModal`/`pickerSpec` для `cnInv` (пара `cnId + invId`), затем обобщение на обычные сущности и таблицы связи с доп. полями.  
-9. Договоры: вкладки «Общее» / «Счета-фактуры»; слева `cnInv`, справа обёртка(`inv`, `ciInv`, json Договоров) — **T7**.  
+9. Договоры: вкладки «Стороны» / «Счета-фактуры»; слева `cnInv`, справа обёртка(`inv`, `ciInv`, json Договоров) — **T7** · [план 26-0826](../../chats/chat-plan/chat-plan-26-0826-contracts-inv.md).  
 10. Дыра `FemsqTree` — **T8**. Вынос walker в feQuLib (`FemsqWalkTree`) — **T9**, после T7 / второго продукта.
 
 ## 6. Вне v0

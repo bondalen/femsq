@@ -233,6 +233,7 @@ export const useSudzDbtUplStore = defineStore('sudz-dbt-upl', () => {
     sfDoubles,
     invDbtDoubles,
     loadUpls,
+    loadLauncher,
     selectUpl,
     createUpl,
     saveFile,

@@ -2,6 +2,8 @@ package com.femsq.database.service;
 
 import com.femsq.database.model.sudz.SudzCmmGrLookup;
 import com.femsq.database.model.sudz.SudzCnInvUplInvDbtDouble;
+import com.femsq.database.model.sudz.SudzInvDbtSlot;
+import com.femsq.database.model.sudz.SudzInvDbtVarCandidates;
 import com.femsq.database.model.sudz.SudzCnInvUplSfDouble;
 import com.femsq.database.model.sudz.SudzD644Row;
 import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotApplyResult;
@@ -462,6 +464,65 @@ public interface SudzService {
      * @return строки
      */
     List<SudzCnInvUplInvDbtDouble> findInvDbtDoublesByUnload(int unloadKey);
+
+    /**
+     * Excel для строки очереди двоящих долгов.
+     *
+     * @param ciudKey ключ
+     * @return карточка
+     */
+    Optional<SudzSfDoubleExcelCandidate> findInvDbtDoubleExcelCandidate(int ciudKey);
+
+    /**
+     * Слоты {@code invDbt} по СФ.
+     *
+     * @param iKey {@code iKey}
+     * @return слоты
+     */
+    List<SudzInvDbtSlot> findInvDbtSlotsByInv(int iKey);
+
+    /**
+     * Create слота + Value из очереди двоящих.
+     *
+     * @param ciudKey ключ
+     * @return строка очереди
+     */
+    SudzCnInvUplInvDbtDouble createInvDbtFromDouble(int ciudKey);
+
+    /**
+     * Link слота + Value.
+     *
+     * @param ciudKey ключ очереди
+     * @param idKey слот
+     * @return строка очереди
+     */
+    SudzCnInvUplInvDbtDouble linkInvDbtDouble(int ciudKey, int idKey);
+
+    /**
+     * Кандидаты FK для create {@code invDbtVar} (экран двоящих).
+     *
+     * @param ciudKey ключ очереди
+     * @return кандидаты
+     */
+    SudzInvDbtVarCandidates findInvDbtVarCandidates(int ciudKey);
+
+    /**
+     * Create/reuse {@code invDbtVar} и привязка к строке очереди.
+     *
+     * @param ciudKey ключ очереди
+     * @param idvvCnNum {@code cnnKey}
+     * @param idvvInvNum {@code inKey}
+     * @param idvvAccnt счёт ГК
+     * @param idvvCnSOrg {@code cn_s_org_key}
+     * @return обновлённая строка
+     */
+    SudzCnInvUplInvDbtDouble ensureInvDbtVarForDouble(
+            int ciudKey,
+            int idvvCnNum,
+            int idvvInvNum,
+            int idvvAccnt,
+            int idvvCnSOrg
+    );
 
     /**
      * Очередь КСДСФ по выгрузке долгов.

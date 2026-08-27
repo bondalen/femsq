@@ -264,23 +264,22 @@
                     "dbtKey"
                   ],
                   "detail": "*",
-                  "children": [
-                    {
-                      "edge": "dbt.dv",
-                      "to": "dv",
-                      "card": "1:N",
-                      "folder": "DbtValue",
-                      "title": [
-                        "dvKey",
-                        "dvTtl",
-                        "dvUpl"
-                      ],
-                      "detail": "*",
-                      "children": []
-                    }
-                  ]
+                  "children": []
                 }
               ]
+            },
+            {
+              "edge": "invDbt.dv",
+              "to": "dv",
+              "card": "1:N",
+              "folder": "DbtValue",
+              "title": [
+                "dvKey",
+                "dvTtl",
+                "dvUpl"
+              ],
+              "detail": "*",
+              "children": []
             }
           ]
         }

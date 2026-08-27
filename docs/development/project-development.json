@@ -2608,10 +2608,12 @@
                   "module:frontend"
                 ],
                 "journalRefs": [
-                  "chat:chat-2026-08-11-001"
+                  "chat:chat-2026-08-11-001",
+                  "chat:chat-2026-08-26-001"
                 ],
                 "aiRuleRefs": [],
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+                "chatPlanSfTab": "docs/development/notes/chats/chat-plan/chat-plan-26-0826-contracts-inv.md",
                 "uiNote": "docs/development/notes/UI/02-10_contracts-cnNum-access.md",
                 "uiAssets": "docs/development/notes/UI/assets/26-0815-cnNum/README.md",
                 "dependsOnTasks": [
@@ -2619,8 +2621,8 @@
                 ]
               },
               "created": "2026-08-15",
-              "lastUpdated": "2026-08-18",
-              "description": "S64–S65 стороны ✅. T7 дерево СФ вкладки — та же обёртка walker после T4b (Решение 009), JSON contracts-inv. Вкладка «Общее» не переписывается."
+              "lastUpdated": "2026-08-26",
+              "description": "S64–S65 стороны ✅. T7 этапы 1–2 ✅. P1 ✅ cnInvsByCn page + IX_cnInv_ciCn. Next P2 mode=server. План chat-plan-26-0826-contracts-inv."
             }
           }
         },

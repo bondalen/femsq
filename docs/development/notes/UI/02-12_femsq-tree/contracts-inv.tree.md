@@ -1,10 +1,10 @@
 # Договоры: дерево СФ от `inv`
 
-**Экземпляр:** вкладка «Счета-фактуры» экрана «Договоры» (ещё не в UI)  
+**Экземпляр:** вкладка «Счета-фактуры» экрана «Договоры» (T7: список `cnInv` + это дерево; CRUD — этап 3)  
 **JSON:** [`src/trees/contracts-inv.tree.json`](../../../../code/femsq-frontend-q/src/trees/contracts-inv.tree.json) (**T1** ✅ 2026-08-19, `version: 1`)  
 **Корень данных:** `inv.iKey` = `cnInv.ciInv` выбранной слева связи  
 **Правила:** [relation-tree.md](./relation-tree.md) · [Решение 009](../../../../project/decisions/009-femsq-walk-tree.md) (тот же walker, что КСДСФ; монтировать только после T4b)  
-**Экран:** [02-10_contracts-cnNum-access.md](../02-10_contracts-cnNum-access.md) · **план:** [chat-plan-26-0802-sudz.md](../../chats/chat-plan/chat-plan-26-0802-sudz.md) S62 / 0071
+**Экран:** [02-10_contracts-cnNum-access.md](../02-10_contracts-cnNum-access.md) · **план T7:** [chat-plan-26-0826-contracts-inv.md](../../chats/chat-plan/chat-plan-26-0826-contracts-inv.md) · домен: [chat-plan-26-0802-sudz.md](../../chats/chat-plan/chat-plan-26-0802-sudz.md) S62 / 0071
 
 Слева перечень `cnInv` договора — не часть дерева. Здесь один корень — `inv`. Карта **своя**: правки КСДСФ сюда сами не приезжают.
 

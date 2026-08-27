@@ -14,6 +14,7 @@
 | `docs/project/extensions/database/compatibility.json` | Ограничения 2012, workarounds |
 | `docs/project/extensions/deployment/environments.json` | Краткий реестр dev/prod |
 | `docs/deployment/db-upgrade-*.md` | Порядок работ по конкретной задаче |
+| `docs/deployment/db-upgrade-sudz-invdbt-cutover.md` | Каркас раскатки СУДЗ (`invDbt` / Value) на prod |
 | `docs/deployment/sql-flash-drive-packaging.md` | **Формирование флеш-носителя** для офлайн-деплоя |
 
 ---

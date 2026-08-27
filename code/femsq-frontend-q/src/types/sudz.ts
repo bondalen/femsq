@@ -168,9 +168,39 @@ export interface SudzCnInvUplInvDbtDouble {
   ciudDebt: number | null;
   ciudIdvvKey: number | null;
   ciudReason: string | null;
+  /** Текстовый канал сообщений ([queue.build] …). */
+  ciudReasonDetail: string | null;
   ciudStatus: string;
   ciudStatusAt: string | null;
   ciudCreatedIdKey: number | null;
+}
+
+/** Кандидаты create invDbtVar на экране двоящих. */
+export interface SudzInvDbtVarSideCandidate {
+  cnKey: number;
+  cnSOrgKey: number;
+  csoCnDate: string | null;
+}
+
+export interface SudzInvDbtVarCnNumCandidate {
+  cnnKey: number;
+  cnKey: number;
+  cnnNumNull: string | null;
+}
+
+export interface SudzInvDbtVarInvNumCandidate {
+  inKey: number;
+  inInv: number;
+  inNumNull: string | null;
+}
+
+export interface SudzInvDbtVarCandidates {
+  ciudKey: number;
+  iKey: number | null;
+  accountKey: number | null;
+  sides: SudzInvDbtVarSideCandidate[];
+  cnNums: SudzInvDbtVarCnNumCandidate[];
+  invNums: SudzInvDbtVarInvNumCandidate[];
 }
 
 /** Excel-кандидат КСДСФ. */
@@ -218,13 +248,14 @@ export interface SudzSfDoubleOldSumMatch {
   ciaKey: number | null;
 }
 
-/** Совпадение суммы в новой структуре (DbtValue). */
+/** Совпадение суммы в новой структуре (DbtValue, M2). */
 export interface SudzSfDoubleNewSumMatch {
   dvKey: number;
   dvTtl: number | null;
   dvOverd: number | null;
   dvUpl: number | null;
-  dvDbt: number | null;
+  dvInvDbt: number | null;
+  dbtKey: number | null;
 }
 
 /** Пара списков совпадений по сумме для вкладки «Суммы». */

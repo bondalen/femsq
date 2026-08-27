@@ -43,6 +43,12 @@ extend type Query {
   sudzDbtUplLauncher(uplKey: Int!): SudzDbtUplLauncher!
   """Excel-кандидат КСДСФ по ключу очереди."""
   sudzSfDoubleExcelCandidate(ciusKey: Int!): SudzSfDoubleExcelCandidate
+  """Excel-кандидат очереди двоящих долгов по ciudKey."""
+  sudzInvDbtDoubleExcelCandidate(ciudKey: Int!): SudzSfDoubleExcelCandidate
+  """Слоты invDbt по iKey (экран двоящих долгов)."""
+  sudzInvDbtSlots(iKey: Int!): [SudzInvDbtSlot!]!
+  """Кандидаты FK для create invDbtVar по строке очереди двоящих."""
+  sudzInvDbtVarCandidates(ciudKey: Int!): SudzInvDbtVarCandidates!
   """Доменные СФ с совпадающим номером."""
   sudzSfDoubleDomainMatches(invNum: String!): [SudzSfDoubleDomainMatch!]!
   """
@@ -107,6 +113,12 @@ extend type Mutation {
   createSudzSfFromDouble(ciusKey: Int!): SudzCnInvUplSfDouble!
   """Привязать строку очереди КСДСФ к существующему договору через ags.cnInv."""
   linkSudzSfDoubleToCn(input: LinkSudzSfDoubleInput!): SudzCnInvUplSfDouble!
+  """Create слота invDbt + мост + DbtValue из очереди двоящих долгов (A2)."""
+  createSudzInvDbtFromDouble(ciudKey: Int!): SudzCnInvUplInvDbtDouble!
+  """Link к существующему слоту + мост + DbtValue (A2)."""
+  linkSudzInvDbtDouble(input: LinkSudzInvDbtDoubleInput!): SudzCnInvUplInvDbtDouble!
+  """Create/reuse invDbtVar и привязка ciudIdvvKey (ambiguous на экране двоящих)."""
+  ensureSudzInvDbtVarForDouble(input: EnsureSudzInvDbtVarForDoubleInput!): SudzCnInvUplInvDbtDouble!
 }
 
 """Год-вариант СУДЗ (yr) с lookup-подписями."""
@@ -412,6 +424,8 @@ type SudzCnInvUplInvDbtDouble {
   ciudDebt: Float
   ciudIdvvKey: Int
   ciudReason: String
+  """Текстовый канал сообщений (v1: блок [queue.build] при rebuild)."""
+  ciudReasonDetail: String
   ciudStatus: String!
   ciudStatusAt: DateTime
   ciudCreatedIdKey: Int
@@ -422,6 +436,57 @@ input LinkSudzSfDoubleInput {
   ciusKey: Int!
   invKey: Int!
   cnKey: Int!
+}
+
+"""Привязка строки очереди двоящих долгов к существующему слоту invDbt."""
+input LinkSudzInvDbtDoubleInput {
+  ciudKey: Int!
+  idKey: Int!
+}
+
+"""Create/reuse invDbtVar для строки очереди двоящих."""
+input EnsureSudzInvDbtVarForDoubleInput {
+  ciudKey: Int!
+  idvvCnNum: Int!
+  idvvInvNum: Int!
+  idvvAccnt: Int!
+  idvvCnSOrg: Int!
+}
+
+"""Слот sudz.invDbt (экран двоящих долгов)."""
+type SudzInvDbtSlot {
+  idKey: Int!
+  idInv: Int!
+  idNum: Int!
+  idNote: String
+}
+
+"""Кандидаты FK для create invDbtVar."""
+type SudzInvDbtVarCandidates {
+  ciudKey: Int!
+  iKey: Int
+  accountKey: Int
+  sides: [SudzInvDbtVarSideCandidate!]!
+  cnNums: [SudzInvDbtVarCnNumCandidate!]!
+  invNums: [SudzInvDbtVarInvNumCandidate!]!
+}
+
+type SudzInvDbtVarSideCandidate {
+  cnKey: Int!
+  cnSOrgKey: Int!
+  csoCnDate: Date
+}
+
+type SudzInvDbtVarCnNumCandidate {
+  cnnKey: Int!
+  cnKey: Int!
+  cnnNumNull: String
+}
+
+type SudzInvDbtVarInvNumCandidate {
+  inKey: Int!
+  inInv: Int!
+  inNumNull: String
 }
 
 """Excel-кандидат (строка CnInvDbtUplTbl)."""
@@ -469,13 +534,16 @@ type SudzSfDoubleOldSumMatch {
   ciaKey: Int
 }
 
-"""Совпадение суммы в новой структуре (sudz.DbtValue)."""
+"""Совпадение суммы в новой структуре (sudz.DbtValue, M2: якорь invDbt)."""
 type SudzSfDoubleNewSumMatch {
   dvKey: Int!
   dvTtl: Float
   dvOverd: Float
   dvUpl: Int
-  dvDbt: Int
+  """Слот invDbt (dvInvDbt)."""
+  dvInvDbt: Int
+  """Канон Dbt через invDbtDbt; null, если канона ещё нет."""
+  dbtKey: Int
 }
 
 """Пара списков совпадений по сумме для вкладки «Суммы»."""

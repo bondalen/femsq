@@ -4,6 +4,8 @@ import com.femsq.database.config.DatabaseConfigurationService;
 import com.femsq.database.connection.ConnectionFactory;
 import com.femsq.database.exception.DaoException;
 import com.femsq.database.model.CnInv;
+import com.femsq.database.model.CnInvListItem;
+import com.femsq.database.model.CnInvPage;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,16 +15,23 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Минимальный доменный сервис создания связи {@code ags.cnInv}.
+ * Доменный сервис {@code ags.cnInv}: CRUD связи и page-список по договору.
  */
 public class DefaultCnInvService implements CnInvService {
 
     private static final Logger log = Logger.getLogger(DefaultCnInvService.class.getName());
+    private static final int DEFAULT_ROWS = 25;
+    private static final int MAX_ROWS = 200;
+    private static final Set<String> SORT_WHITELIST = Set.of("ciKey", "ciInv", "iNum", "ciTimeOfEntry");
 
     private final ConnectionFactory connectionFactory;
     private final DatabaseConfigurationService configurationService;
@@ -33,6 +42,59 @@ public class DefaultCnInvService implements CnInvService {
     ) {
         this.connectionFactory = Objects.requireNonNull(connectionFactory, "connectionFactory");
         this.configurationService = Objects.requireNonNull(configurationService, "configurationService");
+    }
+
+    @Override
+    public CnInvPage listByCn(
+            int cnKey,
+            int page,
+            int rowsPerPage,
+            String filter,
+            String sortBy,
+            boolean descending
+    ) {
+        requirePositive("cnKey", cnKey);
+        int safePage = page < 1 ? 1 : page;
+        int safeRows = rowsPerPage < 1 ? DEFAULT_ROWS : Math.min(rowsPerPage, MAX_ROWS);
+        int offset = (safePage - 1) * safeRows;
+        String orderCol = resolveSortColumn(sortBy);
+        String orderDir = descending ? "DESC" : "ASC";
+        String schema = schemaPrefix();
+        String trimmedFilter = filter == null ? "" : filter.trim();
+        Integer numericFilter = parsePositiveInt(trimmedFilter);
+
+        String fromJoin = " FROM " + schema + "cnInv ci LEFT JOIN " + schema + "inv i ON i.iKey = ci.ciInv"
+                + " WHERE ci.ciCn = ?";
+        StringBuilder whereExtra = new StringBuilder();
+        List<Object> filterParams = new ArrayList<>();
+        if (!trimmedFilter.isEmpty()) {
+            whereExtra.append(" AND (LOWER(CAST(i.iNum AS nvarchar(200))) LIKE ?");
+            filterParams.add("%" + trimmedFilter.toLowerCase(Locale.ROOT) + "%");
+            if (numericFilter != null) {
+                whereExtra.append(" OR ci.ciInv = ? OR ci.ciKey = ?");
+                filterParams.add(numericFilter);
+                filterParams.add(numericFilter);
+            }
+            whereExtra.append(')');
+        }
+
+        String countSql = "SELECT COUNT(*)" + fromJoin + whereExtra;
+        String dataSql = "SELECT ci.ciKey, ci.ciInv, ci.ciCn, ci.ciTimeOfEntry, i.iNum"
+                + fromJoin + whereExtra
+                + " ORDER BY " + orderCol + ' ' + orderDir
+                + " OFFSET " + offset + " ROWS FETCH NEXT " + safeRows + " ROWS ONLY";
+
+        try (Connection connection = connectionFactory.createConnection()) {
+            int total = executeCount(connection, countSql, cnKey, filterParams);
+            List<CnInvListItem> items = executePage(connection, dataSql, cnKey, filterParams);
+            log.log(Level.FINE, "CnInvService.listByCn cnKey={0} page={1} rows={2} total={3}",
+                    new Object[]{cnKey, safePage, safeRows, total});
+            return new CnInvPage(List.copyOf(items), total, safePage, safeRows);
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw new DaoException("Не удалось загрузить cnInv page для cn=" + cnKey, exception);
+        }
     }
 
     @Override
@@ -216,5 +278,109 @@ public class DefaultCnInvService implements CnInvService {
                 rs.getInt("ciCn"),
                 entered
         );
+    }
+
+    private static int executeCount(
+            Connection connection,
+            String sql,
+            int cnKey,
+            List<Object> filterParams
+    ) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            bindListParams(statement, cnKey, filterParams);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    return 0;
+                }
+                return rs.getInt(1);
+            }
+        }
+    }
+
+    private static List<CnInvListItem> executePage(
+            Connection connection,
+            String sql,
+            int cnKey,
+            List<Object> filterParams
+    ) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            bindListParams(statement, cnKey, filterParams);
+            try (ResultSet rs = statement.executeQuery()) {
+                List<CnInvListItem> items = new ArrayList<>();
+                while (rs.next()) {
+                    items.add(mapListItem(rs));
+                }
+                return items;
+            }
+        }
+    }
+
+    private static void bindListParams(
+            PreparedStatement statement,
+            int cnKey,
+            List<Object> filterParams
+    ) throws SQLException {
+        int index = 1;
+        statement.setInt(index++, cnKey);
+        for (Object param : filterParams) {
+            if (param instanceof String value) {
+                statement.setNString(index++, value);
+            } else if (param instanceof Integer value) {
+                statement.setInt(index++, value);
+            } else {
+                statement.setObject(index++, param);
+            }
+        }
+    }
+
+    private static CnInvListItem mapListItem(ResultSet rs) throws SQLException {
+        Timestamp ts = rs.getTimestamp("ciTimeOfEntry");
+        OffsetDateTime entered = ts == null
+                ? null
+                : ts.toLocalDateTime().atZone(ZoneId.systemDefault()).toOffsetDateTime();
+        String iNum = rs.getString("iNum");
+        if (rs.wasNull()) {
+            iNum = null;
+        }
+        return new CnInvListItem(
+                rs.getInt("ciKey"),
+                rs.getInt("ciInv"),
+                rs.getInt("ciCn"),
+                entered,
+                iNum
+        );
+    }
+
+    /**
+     * Whitelist колонки ORDER BY (с префиксом таблицы).
+     */
+    private static String resolveSortColumn(String sortBy) {
+        String key = sortBy == null || sortBy.isBlank() ? "ciKey" : sortBy.trim();
+        if (!SORT_WHITELIST.contains(key)) {
+            key = "ciKey";
+        }
+        return switch (key) {
+            case "iNum" -> "i.iNum";
+            case "ciInv" -> "ci.ciInv";
+            case "ciTimeOfEntry" -> "ci.ciTimeOfEntry";
+            default -> "ci.ciKey";
+        };
+    }
+
+    private static Integer parsePositiveInt(String raw) {
+        if (raw == null || raw.isEmpty()) {
+            return null;
+        }
+        for (int i = 0; i < raw.length(); i++) {
+            if (!Character.isDigit(raw.charAt(i))) {
+                return null;
+            }
+        }
+        try {
+            int value = Integer.parseInt(raw);
+            return value > 0 ? value : null;
+        } catch (NumberFormatException exception) {
+            return null;
+        }
     }
 }

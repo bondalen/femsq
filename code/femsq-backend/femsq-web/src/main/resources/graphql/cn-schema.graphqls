@@ -5,6 +5,19 @@ extend type Query {
   cnNumsByCn(cnKey: Int!): [CnNum!]!
   """Карточка договора."""
   cn(cnKey: Int!): Cn
+  """
+  Страница связей cnInv договора (T7 P1).
+  page с 1; rowsPerPage default 25 (max 200);
+  sortBy: ciKey|ciInv|iNum|ciTimeOfEntry; filter — подстрока iNum (+ число → ciInv/ciKey).
+  """
+  cnInvsByCn(
+    cnKey: Int!
+    page: Int = 1
+    rowsPerPage: Int = 25
+    filter: String
+    sortBy: String
+    descending: Boolean = false
+  ): CnInvPage!
   """Дерево сторон договора: cn_s → smpl → org."""
   cnSides(cnKey: Int!): [CnSide!]!
   """Lookup org_id (БУиРГ) для csosOrgId."""
@@ -62,6 +75,16 @@ type CnInv {
   ciInv: Int
   ciCn: Int
   ciTimeOfEntry: DateTime
+  """Номер СФ из inv.iNum (page-список); у create/update может быть null."""
+  iNum: String
+}
+
+"""Страница связей cnInv по договору."""
+type CnInvPage {
+  items: [CnInv!]!
+  totalCount: Int!
+  page: Int!
+  rowsPerPage: Int!
 }
 
 type CnSide {

@@ -1,7 +1,7 @@
 # СУДЗ — обзор домена
 
 **Дата создания:** 2026-08-03  
-**Последнее обновление:** 2026-08-06 (S27: имя домена/TopBar/роли решены; найдена форма загрузки свода)  
+**Последнее обновление:** 2026-08-26 (S73: ссылка на зерно/счёт долгов)  
 **Статус:** черновик (сбор сегментов)  
 **План чата:** [chat-plan-26-0802-sudz.md](../../chats/chat-plan/chat-plan-26-0802-sudz.md)  
 **Готовность к разработке:** [07-readiness.md](./07-readiness.md)
@@ -104,4 +104,5 @@
 - [04-1_ms-descriptions.md](./04-1_ms-descriptions.md)
 - [04-2_example-rslt-82-85.md](./04-2_example-rslt-82-85.md)
 - [04-3_problems-solutions.md](./04-3_problems-solutions.md)
+- [04-4_legacy-debt-grain.md](./04-4_legacy-debt-grain.md) — зерно `(iKey,ciaName)` и счёт долгов (S73)
 - Excel на шаре: §5.5 [плана чата](../../chats/chat-plan/chat-plan-26-0802-sudz.md)

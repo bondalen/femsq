@@ -26,6 +26,16 @@ export interface CnInvDto {
   ciTimeOfEntry: string | null;
 }
 
+/** Строка списка связей договора↔СФ на вкладке «Счета-фактуры» (T7). */
+export interface CnInvListRow {
+  ciKey: number;
+  ciInv: number;
+  ciCn: number | null;
+  ciTimeOfEntry: string | null;
+  /** Номер СФ из {@code inv.iNum}; может быть null на очень больших списках. */
+  iNum: string | null;
+}
+
 export interface ContractInvLookupRow {
   rowKey: string;
   invKey: number | null;

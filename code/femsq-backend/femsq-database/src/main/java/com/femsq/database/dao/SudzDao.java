@@ -2,6 +2,8 @@ package com.femsq.database.dao;
 
 import com.femsq.database.model.sudz.SudzCmmGrLookup;
 import com.femsq.database.model.sudz.SudzCnInvUplInvDbtDouble;
+import com.femsq.database.model.sudz.SudzInvDbtSlot;
+import com.femsq.database.model.sudz.SudzInvDbtVarCandidates;
 import com.femsq.database.model.sudz.SudzCnInvUplSfDouble;
 import com.femsq.database.model.sudz.SudzD644Row;
 import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotApplyResult;
@@ -456,10 +458,10 @@ public interface SudzDao {
     int rebuildInvDbtDoubleQueue(int unloadKey, Integer fileKey);
 
     /**
-     * Auto INSERT {@code sudz.invDbt} / {@code invDbtDbtVar} для однозначных iKey.
+     * Auto INSERT {@code sudz.invDbt} / {@code invDbtDbtVar} / {@code DbtValue} для однозначных iKey (B1b).
      *
      * @param unloadKey {@code upl_key}
-     * @return счётчики apply (+ queuedCount после чтения очереди)
+     * @return счётчики apply (+ queuedCount после очистки очереди)
      */
     SudzDbtUplInvDbtLoadApplyResult applyDbtUplInvDbtLoadUnambiguous(int unloadKey);
 
@@ -470,6 +472,65 @@ public interface SudzDao {
      * @return строки {@code CnInvUplInvDbtDouble}
      */
     List<SudzCnInvUplInvDbtDouble> findInvDbtDoublesByUnload(int unloadKey);
+
+    /**
+     * Excel-кандидат для строки очереди двоящих долгов.
+     *
+     * @param ciudKey ключ {@code CnInvUplInvDbtDouble}
+     * @return карточка Tbl
+     */
+    Optional<SudzSfDoubleExcelCandidate> findInvDbtDoubleExcelCandidate(int ciudKey);
+
+    /**
+     * Слоты {@code invDbt} по СФ.
+     *
+     * @param iKey {@code ags.inv.iKey}
+     * @return слоты
+     */
+    List<SudzInvDbtSlot> findInvDbtSlotsByInv(int iKey);
+
+    /**
+     * Create нового слота + мост + {@code DbtValue} из очереди (A2).
+     *
+     * @param ciudKey ключ очереди
+     * @return обновлённая строка
+     */
+    SudzCnInvUplInvDbtDouble createInvDbtFromDouble(int ciudKey);
+
+    /**
+     * Link к существующему слоту + мост + {@code DbtValue} (A2).
+     *
+     * @param ciudKey ключ очереди
+     * @param idKey {@code invDbt.idKey}
+     * @return обновлённая строка
+     */
+    SudzCnInvUplInvDbtDouble linkInvDbtDouble(int ciudKey, int idKey);
+
+    /**
+     * Кандидаты FK для create {@code invDbtVar} по строке очереди двоящих.
+     *
+     * @param ciudKey ключ {@code CnInvUplInvDbtDouble}
+     * @return стороны / cnNum / invNum / account
+     */
+    SudzInvDbtVarCandidates findInvDbtVarCandidates(int ciudKey);
+
+    /**
+     * INSERT (или reuse UNIQUE) {@code invDbtVar} и запись {@code ciudIdvvKey} в очередь.
+     *
+     * @param ciudKey ключ очереди
+     * @param idvvCnNum выбранный {@code cnnKey}
+     * @param idvvInvNum выбранный {@code inKey}
+     * @param idvvAccnt счёт ГК
+     * @param idvvCnSOrg сторона исполнителя
+     * @return обновлённая строка очереди
+     */
+    SudzCnInvUplInvDbtDouble ensureInvDbtVarForDouble(
+            int ciudKey,
+            int idvvCnNum,
+            int idvvInvNum,
+            int idvvAccnt,
+            int idvvCnSOrg
+    );
 
     /**
      * Очередь КСДСФ по выгрузке долгов.

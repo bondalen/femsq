@@ -4,6 +4,8 @@ import com.femsq.database.config.DatabaseConfigurationService.MissingConfigurati
 import com.femsq.database.exception.DaoException;
 import com.femsq.database.model.CnContractCreate;
 import com.femsq.database.model.CnInv;
+import com.femsq.database.model.CnInvListItem;
+import com.femsq.database.model.CnInvPage;
 import com.femsq.database.model.CnS;
 import com.femsq.database.model.CnSOrg;
 import com.femsq.database.model.CnSOrgSmpl;
@@ -19,6 +21,7 @@ import com.femsq.web.api.dto.CnContractCreatedDto;
 import com.femsq.web.api.dto.CnDto;
 import com.femsq.web.api.dto.CnInvCreateRequest;
 import com.femsq.web.api.dto.CnInvDto;
+import com.femsq.web.api.dto.CnInvPageDto;
 import com.femsq.web.api.dto.CnInvUpdateRequest;
 import com.femsq.web.api.dto.CnNumDto;
 import com.femsq.web.api.dto.CnNumTypeLookupDto;
@@ -112,6 +115,34 @@ public class CnGraphqlController {
         } catch (MissingConfigurationException exception) {
             throw unavailable(exception);
         }
+    }
+
+    /**
+     * Страница связей cnInv выбранного договора (T7 P1).
+     */
+    @QueryMapping
+    public CnInvPageDto cnInvsByCn(
+            @Argument("cnKey") int cnKey,
+            @Argument("page") Integer page,
+            @Argument("rowsPerPage") Integer rowsPerPage,
+            @Argument("filter") String filter,
+            @Argument("sortBy") String sortBy,
+            @Argument("descending") Boolean descending
+    ) {
+        int safePage = page == null ? 1 : page;
+        int safeRows = rowsPerPage == null ? 25 : rowsPerPage;
+        boolean desc = Boolean.TRUE.equals(descending);
+        log.info(() -> "GraphQL query cnInvsByCn cnKey=" + cnKey
+                + " page=" + safePage + " rowsPerPage=" + safeRows);
+        return mutate(() -> {
+            CnInvPage result = cnInvService.listByCn(cnKey, safePage, safeRows, filter, sortBy, desc);
+            return new CnInvPageDto(
+                    result.items().stream().map(CnGraphqlController::toCnInvDto).toList(),
+                    result.totalCount(),
+                    result.page(),
+                    result.rowsPerPage()
+            );
+        });
     }
 
     @QueryMapping
@@ -278,7 +309,11 @@ public class CnGraphqlController {
     }
 
     private static CnInvDto toCnInvDto(CnInv row) {
-        return new CnInvDto(row.ciKey(), row.ciInv(), row.ciCn(), row.ciTimeOfEntry());
+        return new CnInvDto(row.ciKey(), row.ciInv(), row.ciCn(), row.ciTimeOfEntry(), null);
+    }
+
+    private static CnInvDto toCnInvDto(CnInvListItem row) {
+        return new CnInvDto(row.ciKey(), row.ciInv(), row.ciCn(), row.ciTimeOfEntry(), row.iNum());
     }
 
     @FunctionalInterface

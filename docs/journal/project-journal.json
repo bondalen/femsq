@@ -3,16 +3,154 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-08-24"
+      "lastUpdated": "2026-08-26"
     },
     "sessions": [
+      {
+        "chat": {
+          "displayName": "Договоры: вкладка СФ / T7 (active, high). № chat-2026-08-26-001",
+          "chat-attributes": {
+            "id": "chat-2026-08-26-001",
+            "created": "2026-08-26",
+            "lastUpdated": "2026-08-26",
+            "owner": "Александр",
+            "status": "active",
+            "priority": "high",
+            "tags": [
+              "contracts",
+              "0071",
+              "T7",
+              "cnInv",
+              "RelationTree",
+              "ui"
+            ],
+            "links": {
+              "projectDocsRefs": [
+                "module:frontend",
+                "module:backend.web"
+              ],
+              "developmentTasks": [
+                "0071"
+              ],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0826-contracts-inv.md",
+              "domainPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+              "uiNote": "docs/development/notes/UI/02-10_contracts-cnNum-access.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "T7 P1: GraphQL cnInvsByCn page + индекс ciCn (success). № log-2026-08-26-003",
+                "log-attributes": {
+                  "id": "log-2026-08-26-003",
+                  "timestamp": "2026-08-26T10:25:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0071"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Реализовать P1 page API связей cnInv по договору",
+                    "details": "§7.5: page с 1, rowsPerPage=25 (max 200), sort whitelist, filter iNum(+число). GraphQL cnInvsByCn → CnInvPage (items+totalCount+iNum). DefaultCnInvService.listByCn + JOIN inv. Индекс IX_cnInv_ciCn на DEV; пакет docs/development/notes/sql/26-0826-cninv-cicn-index (+MSSQL2012). Client-path relationExpand не тронут. mvn compile OK.",
+                    "outcome": "План 0.4.0; P1 ✅. Next P2 mode=server на вкладке СФ.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0826-contracts-inv.md",
+                      "code/femsq-backend/femsq-web/src/main/resources/graphql/cn-schema.graphqls",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/service/DefaultCnInvService.java",
+                      "docs/development/notes/sql/26-0826-cninv-cicn-index/"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "T7 этапы 1–2: список cnInv + дерево contracts-inv (success). № log-2026-08-26-002",
+                "log-attributes": {
+                  "id": "log-2026-08-26-002",
+                  "timestamp": "2026-08-26T09:45:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0071"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Реализовать чтение вкладки СФ по плану T7 (этапы 1–2)",
+                    "details": "fetchCnInvsByCn через relationExpand cn.cnInv + enrich iNum при ≤80 строк; store cnInvs/selectedCnInv; lazy load при открытии вкладки SF. UI: сплиттер список cnInv | RelationTree(contracts-inv, root=ciInv). Interim cn-picker с вкладки снят. CRUD cnInv — этап 3. Массовые договоры (десятки тысяч cnInv) — риск client-list, известен.",
+                    "outcome": "План 0.2.0; S1 ✅. Next: этап 3 actions/RecordModal.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0826-contracts-inv.md",
+                      "code/femsq-frontend-q/src/views/contracts/ContractsView.vue",
+                      "code/femsq-frontend-q/src/api/contracts-api.ts",
+                      "code/femsq-frontend-q/src/stores/contracts.ts"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "План T7 вкладки «Счета-фактуры», код не начат (success). № log-2026-08-26-001",
+                "log-attributes": {
+                  "id": "log-2026-08-26-001",
+                  "timestamp": "2026-08-26T09:14:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0071"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксировать отдельный план чата для T7 / вкладки СФ на Договорах",
+                    "details": "As-is: вкладка SF на interim cn-picker (корень cn). To-be: слева cnInv, справа RelationTree + contracts-inv (корень inv/ciInv). Создан chat-plan-26-0826-contracts-inv; указатели в 0802 (S73/T7), 0071 chatPlanSfTab, 02-10, contracts-inv.tree.md, relation-tree.md. Этап 0 плана ✅; этапы 1–6 — реализация.",
+                    "outcome": "Документы готовы к реализации T7. Код экрана в этом шаге не менялся.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0826-contracts-inv.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+                      "docs/development/project-development.json"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
       {
         "chat": {
           "displayName": "СУДЗ: воронка — переход AccSmpl → invDbt (не cnInvAccnt) (in_progress, high). № chat-2026-08-24-001",
           "chat-attributes": {
             "id": "chat-2026-08-24-001",
             "created": "2026-08-24",
-            "lastUpdated": "2026-08-24",
+            "lastUpdated": "2026-08-26",
             "owner": "Александр",
             "status": "in_progress",
             "priority": "high",
@@ -22,7 +160,11 @@
               "funnel",
               "invDbt",
               "cnInvAccnt",
-              "S66c"
+              "S66c",
+              "S71",
+              "S72",
+              "S73",
+              "cutover"
             ],
             "links": {
               "projectDocsRefs": [
@@ -36,6 +178,1003 @@
             }
           },
           "entries": [
+            {
+              "log": {
+                "displayName": "S74 E1 полный backfill Value (success). № log-2026-08-27-017",
+                "log-attributes": {
+                  "id": "log-2026-08-27-017",
+                  "timestamp": "2026-08-27T12:00:00+03:00",
+                  "level": "success",
+                  "effort": "0.2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "docs",
+                    "outcome": "E1: вся cn_inv_dbt→DbtValue; invDbtVar сколько нужно (§1.4); сегм. 34; cutover v0.3.3.",
+                    "extendedDescriptions": [
+                      "docs/deployment/db-upgrade-sudz-invdbt-cutover.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S74 §1.4 temporal cnNum/invNum (success). № log-2026-08-27-016",
+                "log-attributes": {
+                  "id": "log-2026-08-27-016",
+                  "timestamp": "2026-08-27T11:55:00+03:00",
+                  "level": "success",
+                  "effort": "0.3h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "docs",
+                    "outcome": "Канон seed invDbtVar: max TimeOfEntry≤asOf для cnNum/invNum; проверено на 6+4 multi; сегм. 33; cutover v0.3.2.",
+                    "extendedDescriptions": [
+                      "docs/deployment/db-upgrade-sudz-invdbt-cutover.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S74 D3′: cmm ADD *Dbt (success). № log-2026-08-27-015",
+                "log-attributes": {
+                  "id": "log-2026-08-27-015",
+                  "timestamp": "2026-08-27T11:10:00+03:00",
+                  "level": "success",
+                  "effort": "0.25h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "docs",
+                    "outcome": "D3′: ADD nullable *Dbt на cmm, *InvAccnt не затирать; cutover §1.3 / v0.3.1; сегм. 32.",
+                    "extendedDescriptions": [
+                      "docs/deployment/db-upgrade-sudz-invdbt-cutover.md",
+                      "docs/development/notes/domain/sudz/08-target-schema.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S74 M1 закрыт D1–D7 ✅ → M2 (success). № log-2026-08-27-014",
+                "log-attributes": {
+                  "id": "log-2026-08-27-014",
+                  "timestamp": "2026-08-27T11:00:00+03:00",
+                  "level": "success",
+                  "effort": "0.2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "docs",
+                    "outcome": "D7 утверждён; M1 закрыт; cutover v0.3.0; сводка в 08; next M2 DEV seed.",
+                    "extendedDescriptions": [
+                      "docs/deployment/db-upgrade-sudz-invdbt-cutover.md",
+                      "docs/development/notes/domain/sudz/08-target-schema.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S74 M1: D6 ✅ dbtNote, открыт D7 (success). № log-2026-08-27-013",
+                "log-attributes": {
+                  "id": "log-2026-08-27-013",
+                  "timestamp": "2026-08-27T10:55:00+03:00",
+                  "level": "success",
+                  "effort": "0.15h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "docs",
+                    "outcome": "D6: seed с dbtNote S73-split/quarter; предложение D7: C1 auto при однозначности, иначе очередь.",
+                    "extendedDescriptions": [
+                      "docs/deployment/db-upgrade-sudz-invdbt-cutover.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S74 M1: D5 ✅ + очередь 10 iKey, открыт D6 (success). № log-2026-08-27-012",
+                "log-attributes": {
+                  "id": "log-2026-08-27-012",
+                  "timestamp": "2026-08-27T10:50:00+03:00",
+                  "level": "success",
+                  "effort": "0.2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "docs",
+                    "outcome": "D5: N=11907; перечень 10 iKey в cutover §1.2 и 04-4 на ручной разбор; открыт D6 (мин. атрибуты Dbt).",
+                    "extendedDescriptions": [
+                      "docs/deployment/db-upgrade-sudz-invdbt-cutover.md",
+                      "docs/development/notes/domain/sudz/04-4_legacy-debt-grain.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S74 M1: D4 ✅, открыт D5 manual10 (success). № log-2026-08-27-011",
+                "log-attributes": {
+                  "id": "log-2026-08-27-011",
+                  "timestamp": "2026-08-27T10:45:00+03:00",
+                  "level": "success",
+                  "effort": "0.15h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "docs",
+                    "outcome": "D4 утверждён (INNER invDbtDbt); предложение D5: энтропия 11907, 10 manual не блокер.",
+                    "extendedDescriptions": [
+                      "docs/deployment/db-upgrade-sudz-invdbt-cutover.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S74 M1: D3 ✅, открыт D4 витрины (success). № log-2026-08-27-010",
+                "log-attributes": {
+                  "id": "log-2026-08-27-010",
+                  "timestamp": "2026-08-27T10:45:00+03:00",
+                  "level": "success",
+                  "effort": "0.15h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "docs",
+                    "outcome": "D3 утверждён (cmm в seed M2); предложение D4: INNER invDbtDbt на целевых витринах.",
+                    "extendedDescriptions": [
+                      "docs/deployment/db-upgrade-sudz-invdbt-cutover.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S74 M1: D2 ✅, открыт D3 cmm (success). № log-2026-08-27-009",
+                "log-attributes": {
+                  "id": "log-2026-08-27-009",
+                  "timestamp": "2026-08-27T10:40:00+03:00",
+                  "level": "success",
+                  "effort": "0.15h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "docs",
+                    "outcome": "D2 утверждён (P1→тот же Dbt); предложение D3: cmm в том же seed M2.",
+                    "extendedDescriptions": [
+                      "docs/deployment/db-upgrade-sudz-invdbt-cutover.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S74 M1: D1 закрыт, открыт D2 (success). № log-2026-08-27-008",
+                "log-attributes": {
+                  "id": "log-2026-08-27-008",
+                  "timestamp": "2026-08-27T10:40:00+03:00",
+                  "level": "success",
+                  "effort": "0.2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "docs",
+                    "outcome": "D1 ✅ (L001–L010); сегм. 25 / предложение D2: P1 → тот же Dbt + invDbtDbt.",
+                    "extendedDescriptions": [
+                      "docs/deployment/db-upgrade-sudz-invdbt-cutover.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S74 D1: БД сумма-матч 12032/12033 (success). № log-2026-08-27-007",
+                "log-attributes": {
+                  "id": "log-2026-08-27-007",
+                  "timestamp": "2026-08-27T10:35:00+03:00",
+                  "level": "success",
+                  "effort": "0.4h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "docs",
+                    "outcome": "Точный dbt_ttl на других inv cn 1466/1191 = только L001–L010; ciaName 1/2 без близнеца (P2-нарезка).",
+                    "extendedDescriptions": [
+                      "docs/development/notes/domain/sudz/04-5_dbt-invdbt-cardinality-d1.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S74 D1: сверка 26-0212 T/AI/AX/BM (success). № log-2026-08-27-006",
+                "log-attributes": {
+                  "id": "log-2026-08-27-006",
+                  "timestamp": "2026-08-27T10:25:00+03:00",
+                  "level": "success",
+                  "effort": "0.3h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "docs",
+                    "outcome": "Rslt_26-0212: T=AI=AX на 10 строках = L001–L010; BM стр.512 = алиас «732»↔«732 от 10.01.24», не 1:N. Новых ID нет.",
+                    "extendedDescriptions": [
+                      "docs/development/notes/domain/sudz/04-5_dbt-invdbt-cardinality-d1.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S74 D1: реестр L002–L010 по кол. T 26-0505 (success). № log-2026-08-27-005",
+                "log-attributes": {
+                  "id": "log-2026-08-27-005",
+                  "timestamp": "2026-08-27T10:15:00+03:00",
+                  "level": "success",
+                  "effort": "0.4h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "docs",
+                    "outcome": "Кол. T Rslt_26-0505: 10 непустых; в реестр L002–L010 (86–90,92–95) + L001; iKey правых СФ с cn 1466/1191.",
+                    "extendedDescriptions": [
+                      "docs/development/notes/domain/sudz/04-5_dbt-invdbt-cardinality-d1.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S74 M1/D1: 1:N только из Rslt Excel (success). № log-2026-08-27-004",
+                "log-attributes": {
+                  "id": "log-2026-08-27-004",
+                  "timestamp": "2026-08-27T09:50:00+03:00",
+                  "level": "success",
+                  "effort": "0.8h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "docs",
+                    "outcome": "Сегм.24 + 04-5: P1/1:N вне БД, только Rslt Excel; эталон test_sudz 85→12032+20505; L001. План 0.98.1.",
+                    "extendedDescriptions": [
+                      "docs/development/notes/domain/sudz/04-5_dbt-invdbt-cardinality-d1.md",
+                      "docs/development/notes/domain/sudz/04-2_example-rslt-82-85.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S74: трек M1–M6 в плане; старт M1 Dbt (success). № log-2026-08-27-003",
+                "log-attributes": {
+                  "id": "log-2026-08-27-003",
+                  "timestamp": "2026-08-27T09:10:00+03:00",
+                  "level": "success",
+                  "effort": "0.4h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s74--трек-cutover-m1m6--2026-08-27"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "docs",
+                    "outcome": "План 0.98.0: S74 M1–M6; сегм.23; S72 C перестроен. Старт M1 — предложения D1–D7 в чате.",
+                    "extendedDescriptions": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+                      "docs/deployment/db-upgrade-sudz-invdbt-cutover.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S73b: порядок Dbt→DEV cutover→экран/7 (success). № log-2026-08-27-002",
+                "log-attributes": {
+                  "id": "log-2026-08-27-002",
+                  "timestamp": "2026-08-27T09:00:00+03:00",
+                  "level": "success",
+                  "effort": "0.3h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "docs",
+                    "outcome": "Cutover v0.2: Dbt в seed (не фаза J); повестка D1–D7; DEV-репетиция до экрана/7. План 0.97.24.",
+                    "extendedDescriptions": [
+                      "docs/deployment/db-upgrade-sudz-invdbt-cutover.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S73a: каркас cutover prod + calm F1 (success). № log-2026-08-27-001",
+                "log-attributes": {
+                  "id": "log-2026-08-27-001",
+                  "timestamp": "2026-08-27T08:40:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "docs",
+                    "outcome": "Каркас раскатки СУДЗ на prod (фазы A–J), calm sum-match после seed, экран new-first. План 0.97.23.",
+                    "extendedDescriptions": [
+                      "docs/deployment/db-upgrade-sudz-invdbt-cutover.md",
+                      "docs/deployment/db-upgrade-sudz-invdbt-cutover-deploy-day-checklist.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S73: зерно legacy + счёт долгов 11906–11907 (success). № log-2026-08-26-015",
+                "log-attributes": {
+                  "id": "log-2026-08-26-015",
+                  "timestamp": "2026-08-26T22:55:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "docs",
+                    "outcome": "Канон S73: (iKey,ciaName)≈(idInv,idNum); СГК вне ключа; 11906–11907 долгов; 10 manual. Док 04-4 + правки 02/04/04-3/08; план 0.97.22.",
+                    "extendedDescriptions": [
+                      "docs/development/notes/domain/sudz/04-4_legacy-debt-grain.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S72 сегм.22: откат Create 329 + RU queue.build + кейсы (success). № log-2026-08-26-014",
+                "log-attributes": {
+                  "id": "log-2026-08-26-014",
+                  "timestamp": "2026-08-26T21:15:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "docs",
+                    "outcome": "План 0.97.21 сегм.22. Откат slot 10130. RU-тексты detail (133). Кейсы 329/12032/1933 для DBHub-разбора.",
+                    "extendedDescriptions": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S72 A2-messages: ciudReasonDetail + панель Сообщения (success). № log-2026-08-26-013",
+                "log-attributes": {
+                  "id": "log-2026-08-26-013",
+                  "timestamp": "2026-08-26T12:05:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "code",
+                    "outcome": "План 0.97.20. JAR 0.1.0.222. DDL ciudReasonDetail; rebuild [queue.build]; UI панель. Smoke iKey=329 named_cia+hist_cid.",
+                    "extendedDescriptions": [
+                      "docs/development/notes/sql/26-0826-sudz-inv-dbt-double-messages/README.md",
+                      "docs/development/notes/sql/26-0826-sudz-dbtvalue-m2/A2_INV_DBT_DOUBLE.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S72 A2: hotfix loadLauncher + Create invDbtVar (success). № log-2026-08-26-012",
+                "log-attributes": {
+                  "id": "log-2026-08-26-012",
+                  "timestamp": "2026-08-26T11:10:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "code",
+                    "outcome": "План 0.97.19. JAR 0.1.0.220. Export loadLauncher; ensureSudzInvDbtVarForDouble. Smoke ciud=1800→var 10134→slot 10131.",
+                    "extendedDescriptions": [
+                      "docs/development/notes/sql/26-0826-sudz-dbtvalue-m2/A2_INV_DBT_DOUBLE.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S72 A2: экран двоящих долгов v1 (success). № log-2026-08-26-011",
+                "log-attributes": {
+                  "id": "log-2026-08-26-011",
+                  "timestamp": "2026-08-26T10:50:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "code",
+                    "outcome": "План 0.97.18. JAR 0.1.0.219. Create/Link+Value; UI КСДСФ-каркас. Smoke ciud=1918→slot 10130. Ambiguous var — later.",
+                    "extendedDescriptions": [
+                      "docs/development/notes/sql/26-0826-sudz-dbtvalue-m2/A2_INV_DBT_DOUBLE.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S72 B1b: DbtValue в calm invDbtLoad (success). № log-2026-08-26-010",
+                "log-attributes": {
+                  "id": "log-2026-08-26-010",
+                  "timestamp": "2026-08-26T10:30:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "code",
+                    "outcome": "План 0.97.17. JAR 0.1.0.218. upl910: +1628 DbtValue; queue 133; idempotent 0. Next=A2.",
+                    "extendedDescriptions": [
+                      "docs/development/notes/sql/26-0826-sudz-dbtvalue-m2/B1b_VALUE_CALM.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S72 B1: DDL M2 DbtValue + JAR 217 (success). № log-2026-08-26-009",
+                "log-attributes": {
+                  "id": "log-2026-08-26-009",
+                  "timestamp": "2026-08-26T10:15:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "deploy",
+                    "outcome": "План 0.97.16. P9 GO. bak pre-B1. ALTER sudz+test_sudz; view; trigger. JAR 0.1.0.217. Smoke sums=8, edges, D644/xlsx 200. Next=B1b/A2.",
+                    "extendedDescriptions": [
+                      "docs/development/notes/sql/26-0826-sudz-dbtvalue-m2/B1_APPLY_RESULT.md",
+                      "docs/development/notes/sql/26-0826-sudz-dbtvalue-m2/P9_GO_GATE.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S72 B1-prep P7–P8: deploy + rollback (success). № log-2026-08-26-008",
+                "log-attributes": {
+                  "id": "log-2026-08-26-008",
+                  "timestamp": "2026-08-26T10:10:00+03:00",
+                  "level": "success",
+                  "effort": "0.25h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "docs",
+                    "outcome": "План 0.97.15. P7_DEPLOY + P8_ROLLBACK (диск OK). P9 ждёт GO B1 / HOLD.",
+                    "extendedDescriptions": [
+                      "docs/development/notes/sql/26-0826-sudz-dbtvalue-m2/P7_DEPLOY.md",
+                      "docs/development/notes/sql/26-0826-sudz-dbtvalue-m2/P8_ROLLBACK.md",
+                      "docs/development/notes/sql/26-0826-sudz-dbtvalue-m2/P9_GO_GATE.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S72 B1-prep P6: патч app dvInvDbt (success). № log-2026-08-26-007",
+                "log-attributes": {
+                  "id": "log-2026-08-26-007",
+                  "timestamp": "2026-08-26T10:05:00+03:00",
+                  "level": "success",
+                  "effort": "0.75h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "code",
+                    "outcome": "План 0.97.14. API dvInvDbt+dbtKey; рёбра dv.invDbt/invDbt.dv; деревья. JAR только после B1. Next=P7.",
+                    "extendedDescriptions": [
+                      "docs/development/notes/sql/26-0826-sudz-dbtvalue-m2/P6_APP_PATCH.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S72 B1-prep P4–P5: SQL-пакет + dry fact (success). № log-2026-08-26-006",
+                "log-attributes": {
+                  "id": "log-2026-08-26-006",
+                  "timestamp": "2026-08-26T10:00:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "docs",
+                    "outcome": "План 0.97.13. Черновики 01–04+99 (без apply). P5: sudz+test_sudz 16/16 dbtKey via invDbtDbt. Next=P6 app patch.",
+                    "extendedDescriptions": [
+                      "docs/development/notes/sql/26-0826-sudz-dbtvalue-m2/README.md",
+                      "docs/development/notes/sql/26-0826-sudz-dbtvalue-m2/P5_VERIFY_RESULT.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S72 B1-prep P3: dry-check backfill (success). № log-2026-08-26-005",
+                "log-attributes": {
+                  "id": "log-2026-08-26-005",
+                  "timestamp": "2026-08-26T09:36:00+03:00",
+                  "level": "success",
+                  "effort": "0.25h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "verify",
+                    "outcome": "План 0.97.11. sudz+test_sudz: 16/16 one_slot, dup=0. 00_VERIFY_before.sql. Next=P4.",
+                    "extendedDescriptions": [
+                      "docs/development/notes/sql/26-0826-sudz-dbtvalue-m2/P3_VERIFY_RESULT.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S72 B1-prep P2: baseline до DDL (success). № log-2026-08-26-004",
+                "log-attributes": {
+                  "id": "log-2026-08-26-004",
+                  "timestamp": "2026-08-26T09:32:00+03:00",
+                  "level": "success",
+                  "effort": "0.75h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "verify",
+                    "outcome": "План 0.97.10. P2_BASELINE: очередь 133; sums new=8; edges ok; D644/Rslt xlsx 200; fact=16. Next=P3.",
+                    "extendedDescriptions": [
+                      "docs/development/notes/sql/26-0826-sudz-dbtvalue-m2/P2_BASELINE.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S72 B1-prep P1: инвентарь dvDbt (success). № log-2026-08-26-003",
+                "log-attributes": {
+                  "id": "log-2026-08-26-003",
+                  "timestamp": "2026-08-26T09:20:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "docs",
+                    "outcome": "План 0.97.9. Реестр docs/development/notes/sql/26-0826-sudz-dbtvalue-m2/P1_INVENTORY_dvDbt.md. Next=P2 baseline.",
+                    "extendedDescriptions": [
+                      "docs/development/notes/sql/26-0826-sudz-dbtvalue-m2/P1_INVENTORY_dvDbt.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S72 B1-prep: чеклист подготовки к DDL M2 (success). № log-2026-08-26-002",
+                "log-attributes": {
+                  "id": "log-2026-08-26-002",
+                  "timestamp": "2026-08-26T09:15:00+03:00",
+                  "level": "success",
+                  "effort": "0.25h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "docs",
+                    "outcome": "План 0.97.8. B1-prep P0–P9: инвентарь, baseline P2a–e, dry-check, черновики SQL/view/кода, стратегия выкладки, откат, гейт GO. Next=P1.",
+                    "extendedDescriptions": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S72 сегм.21: Value в calm+экран; B1 next (success). № log-2026-08-26-001",
+                "log-attributes": {
+                  "id": "log-2026-08-26-001",
+                  "timestamp": "2026-08-26T08:59:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "decision",
+                    "outcome": "План 0.97.7. Сегм. 20 UI экрана двоящих; сегм. 21: SoT=DbtValue, Value в calm invDbtLoad и на экране; A4 снят; next=B1 DDL M2. Код не менялся.",
+                    "extendedDescriptions": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S72 A3: histCidMulti в queue/calm (success). № log-2026-08-25-004",
+                "log-attributes": {
+                  "id": "log-2026-08-25-004",
+                  "timestamp": "2026-08-25T22:30:00+03:00",
+                  "level": "success",
+                  "effort": "0.75h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Добавить histCidMulti по сегм. 13",
+                    "details": "CTE: iKey с >1 cn_inv_dbt в какой-то upl (не lifetime). Общий sqlInvDbtHistMultiCtes для rebuild очереди и calm. Глобально ~60 iKey; lifetime gt1 (~8k) сознательно не берём. JAR 0.1.0.215.",
+                    "outcome": "Код A3 готов; нужен dry UAT 910 (ожидание: очередь ≥133, небольшой прирост).",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S72 A1: UAT ensure/load upl 910 принят (success). № log-2026-08-25-003",
+                "log-attributes": {
+                  "id": "log-2026-08-25-003",
+                  "timestamp": "2026-08-25T22:19:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0069"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "UAT A1 воронка 1–7 на upl 910",
+                    "details": "Apply flLoad: Auto invDbt 1627, очередь 133, ~124с. БД: invDbt/iddv=1630 (3 seed+1627), invDbtVar=1634. Dry повтор: очередь 133, слоты не выросли (~39с). Воронка UI: снятие левого чекбокса снимает правые — ожидаемо S61f.",
+                    "outcome": "A1 ✅. Next A3 hist multi в queue/calm.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S72: дорожная карта A–D зафиксирована (success). № log-2026-08-25-002",
+                "log-attributes": {
+                  "id": "log-2026-08-25-002",
+                  "timestamp": "2026-08-25T21:56:00+03:00",
+                  "level": "success",
+                  "effort": "0.25h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0069"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксировать roadmap A1→A3→A2→A4→B→C в плане",
+                    "details": "Фазы: A слой I ensure/load/hist/экран/SoT; B миграция M2 DDL+витрины; C Dbt+invDbtDbt+DbtValue; D параллель. Next = A1 UAT 910.",
+                    "outcome": "План 0.97.3, S72, сегм. 19. Код не менялся.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S71: M2 DbtValue без dvDbt — фиксация в доке (success). № log-2026-08-25-001",
+                "log-attributes": {
+                  "id": "log-2026-08-25-001",
+                  "timestamp": "2026-08-25T18:53:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0069"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Утвердить модель DbtValue M2 и обновить спеку",
+                    "details": "Владелец: без прямого FK Dbt↔DbtValue; якорь invDbt + invDbtVar + upl; UNIQUE(dvInvDbt,dvUpl); Dbt обязателен через invDbtDbt. Чекбокс invDbtLoad по-прежнему без Dbt/Value. DDL в БД со старым dvDbt — backlog.",
+                    "outcome": "Обновлены 08-target-schema, 04-3 §10, chat-plan 0.97.2 / S71 / сегм. 18. Код и миграция DDL не трогались.",
+                    "references": [
+                      "docs/development/notes/domain/sudz/08-target-schema.md",
+                      "docs/development/notes/domain/sudz/04-3_problems-solutions.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                    ]
+                  }
+                ]
+              }
+            },
             {
               "log": {
                 "displayName": "S66c: шов AccSmpl — Access cnInvAccnt vs цель invDbt/Dbt (success). № log-2026-08-24-001",

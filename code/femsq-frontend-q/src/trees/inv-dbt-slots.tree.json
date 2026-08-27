@@ -1,0 +1,40 @@
+{
+  "id": "inv-dbt-slots",
+  "version": 1,
+  "root": {
+    "table": "inv",
+    "pk": "iKey"
+  },
+  "title": ["iKey", "iTimeOfEntry"],
+  "detail": "*",
+  "children": [
+    {
+      "edge": "inv.invDbt",
+      "to": "invDbt",
+      "card": "1:N",
+      "folder": "Слоты долгов",
+      "title": ["idKey", "idNum", "idNote"],
+      "detail": "*",
+      "children": [
+        {
+          "edge": "invDbt.dv",
+          "to": "dv",
+          "card": "1:N",
+          "folder": "DbtValue",
+          "title": ["dvKey", "dvTtl", "dvUpl"],
+          "detail": "*",
+          "children": []
+        },
+        {
+          "edge": "invDbt.idd",
+          "to": "idd",
+          "card": "1:N",
+          "folder": "invDbtDbt",
+          "title": ["iddKey", "iddDbt"],
+          "detail": "*",
+          "children": []
+        }
+      ]
+    }
+  ]
+}

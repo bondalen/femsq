@@ -1,14 +1,15 @@
 # Договоры — эталон Access `cnNum` и план экрана FEMSQ
 
 **Дата создания:** 2026-08-15  
-**Последнее обновление:** 2026-08-15 (пакеты 3–4: Accnt/dbt, lookups, PM, PrDoc; Access vs dbtvar)  
-**Статус:** 🔶 эталон Access почти полный (структура); **реализация UI/API не начата**  
+**Последнее обновление:** 2026-08-26 (указатель на план T7 / вкладка СФ)  
+**Статус:** 🔶 эталон Access; UI: стороны ✅ (S64/S65); вкладка СФ — interim `cn-picker`, целевой T7 в отдельном плане  
 **Скрины Design/SQL/Runtime:** [assets/26-0815-cnNum/README.md](./assets/26-0815-cnNum/README.md) (файлы `00`–`13`, `20`–`74`)  
 **Целевая модель UI:** [26-0807-sudz-target-sketch-dbtvar.png](../domain/sudz/assets/26-0807-sudz-target-sketch-dbtvar.png) — экран FEMSQ **не** клонирует Access-вложенность  
 **IA:** [02-4_app-forms-ia.md](./02-4_app-forms-ia.md) — пункт TopBar «Договоры»  
 **Связь с СУДЗ:** воронка 0069, шаг `CnExistCtptNotLoad` (только лог) → ручная правка стороны договора  
-**План чата:** [chat-plan-26-0802-sudz.md](../chats/chat-plan/chat-plan-26-0802-sudz.md) **S62**  
-**Дерево СФ (вкладка, ещё не в UI):** [contracts-inv.tree.md](./02-12_femsq-tree/contracts-inv.tree.md)  
+**План чата (домен/стороны):** [chat-plan-26-0802-sudz.md](../chats/chat-plan/chat-plan-26-0802-sudz.md) **S62**  
+**План вкладки СФ (T7):** [chat-plan-26-0826-contracts-inv.md](../chats/chat-plan/chat-plan-26-0826-contracts-inv.md)  
+**Дерево СФ:** [contracts-inv.tree.md](./02-12_femsq-tree/contracts-inv.tree.md)  
 **Задача:** [0071](../../project-development.json)
 
 ---

@@ -17,6 +17,7 @@ import java.time.OffsetDateTime;
  * @param ciudDebt сумма долга из Excel
  * @param ciudIdvvKey {@code invDbtVar} если известен
  * @param ciudReason multi|ambiguous|sum
+ * @param ciudReasonDetail текстовый канал сообщений ({@code [queue.build]} …)
  * @param ciudStatus open|created|deferred
  * @param ciudStatusAt время смены статуса
  * @param ciudCreatedIdKey {@code invDbt.idKey} после create
@@ -32,6 +33,7 @@ public record SudzCnInvUplInvDbtDouble(
         BigDecimal ciudDebt,
         Integer ciudIdvvKey,
         String ciudReason,
+        String ciudReasonDetail,
         String ciudStatus,
         OffsetDateTime ciudStatusAt,
         Integer ciudCreatedIdKey

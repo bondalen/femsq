@@ -3,7 +3,10 @@ package com.femsq.web.api.graphql;
 import com.femsq.database.config.DatabaseConfigurationService.MissingConfigurationException;
 import com.femsq.database.exception.DaoException;
 import com.femsq.database.model.sudz.SudzCmmGrLookup;
+import com.femsq.database.model.sudz.SudzCnInvUplInvDbtDouble;
 import com.femsq.database.model.sudz.SudzCnInvUplSfDouble;
+import com.femsq.database.model.sudz.SudzInvDbtSlot;
+import com.femsq.database.model.sudz.SudzInvDbtVarCandidates;
 import com.femsq.database.model.sudz.SudzD644Row;
 import com.femsq.database.model.sudz.SudzDbtUplFile;
 import com.femsq.database.model.sudz.SudzDbtUplFunnelResult;
@@ -24,6 +27,8 @@ import com.femsq.database.model.sudz.SudzYearUpl;
 import com.femsq.database.model.sudz.SudzYyyyLookup;
 import com.femsq.database.service.SudzService;
 import com.femsq.web.api.dto.sudz.CreateSudzCmmGrInput;
+import com.femsq.web.api.dto.sudz.EnsureSudzInvDbtVarForDoubleInput;
+import com.femsq.web.api.dto.sudz.LinkSudzInvDbtDoubleInput;
 import com.femsq.web.api.dto.sudz.LinkSudzSfDoubleInput;
 import com.femsq.web.api.dto.sudz.CreateSudzPmUplInput;
 import com.femsq.web.api.dto.sudz.CreateSudzUplInput;
@@ -519,6 +524,63 @@ public class SudzGraphqlController {
     }
 
     /**
+     * Excel-кандидат очереди двоящих долгов.
+     *
+     * @param ciudKey ключ очереди
+     * @return карточка или null
+     */
+    @QueryMapping
+    public SudzSfDoubleExcelCandidate sudzInvDbtDoubleExcelCandidate(@Argument int ciudKey) {
+        try {
+            return sudzService.findInvDbtDoubleExcelCandidate(ciudKey).orElse(null);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Слоты {@code invDbt} по СФ.
+     *
+     * @param iKey {@code ags.inv.iKey}
+     * @return слоты
+     */
+    @QueryMapping
+    public List<SudzInvDbtSlot> sudzInvDbtSlots(@Argument int iKey) {
+        try {
+            return sudzService.findInvDbtSlotsByInv(iKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Кандидаты FK для create {@code invDbtVar}.
+     *
+     * @param ciudKey ключ очереди
+     * @return кандидаты
+     */
+    @QueryMapping
+    public SudzInvDbtVarCandidates sudzInvDbtVarCandidates(@Argument int ciudKey) {
+        try {
+            return sudzService.findInvDbtVarCandidates(ciudKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
      * Доменные СФ с совпадающим номером.
      *
      * @param invNum номер СФ
@@ -615,6 +677,73 @@ public class SudzGraphqlController {
     public SudzCnInvUplSfDouble linkSudzSfDoubleToCn(@Argument("input") LinkSudzSfDoubleInput input) {
         try {
             return sudzService.linkSfDoubleToCn(input.ciusKey(), input.invKey(), input.cnKey());
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Create слота + Value из очереди двоящих долгов.
+     *
+     * @param ciudKey ключ open
+     * @return обновлённая строка
+     */
+    @MutationMapping
+    public SudzCnInvUplInvDbtDouble createSudzInvDbtFromDouble(@Argument int ciudKey) {
+        try {
+            return sudzService.createInvDbtFromDouble(ciudKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Link слота + Value.
+     *
+     * @param input очередь + idKey
+     * @return обновлённая строка
+     */
+    @MutationMapping
+    public SudzCnInvUplInvDbtDouble linkSudzInvDbtDouble(
+            @Argument("input") LinkSudzInvDbtDoubleInput input
+    ) {
+        try {
+            return sudzService.linkInvDbtDouble(input.ciudKey(), input.idKey());
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Create/reuse {@code invDbtVar} и {@code ciudIdvvKey} на строке очереди.
+     *
+     * @param input ключи FK
+     * @return обновлённая строка
+     */
+    @MutationMapping
+    public SudzCnInvUplInvDbtDouble ensureSudzInvDbtVarForDouble(
+            @Argument("input") EnsureSudzInvDbtVarForDoubleInput input
+    ) {
+        try {
+            return sudzService.ensureInvDbtVarForDouble(
+                    input.ciudKey(),
+                    input.idvvCnNum(),
+                    input.idvvInvNum(),
+                    input.idvvAccnt(),
+                    input.idvvCnSOrg()
+            );
         } catch (IllegalArgumentException exception) {
             throw badRequest(exception);
         } catch (MissingConfigurationException exception) {

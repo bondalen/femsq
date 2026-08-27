@@ -1,13 +1,14 @@
 # СУДЗ — модель данных (FishEye.ags)
 
 **Дата создания:** 2026-08-03  
-**Последнее обновление:** 2026-08-24 (S66e: FEMSQ `invDbtVarEnsure`/`invDbtLoad`)
-**Статус:** рабочий черновик для накопления сведений (сегменты S4–S14, S25–S29, S61f, S66c, S66e, S69)  
+**Последнее обновление:** 2026-08-26 (S73: зерно долга / счёт в старой структуре)  
+**Статус:** рабочий черновик для накопления сведений (сегменты S4–S14, S25–S29, S61f, S66c, S66e, S69, S73)  
 **План чата:** [chat-plan-26-0802-sudz.md](../../chats/chat-plan/chat-plan-26-0802-sudz.md)  
 **ER-снимок (Access, текущее состояние):** [assets/26-0803-sudz-er-segment.png](./assets/26-0803-sudz-er-segment.png)  
 **Эскиз целевой модели (S16, актуальный):** [assets/26-0803-sudz-target-sketch-dbt.png](./assets/26-0803-sudz-target-sketch-dbt.png) — разбор в [04-3 §7](./04-3_problems-solutions.md#7-ревизия-целевой-модели-по-эскизу-владельца-dbt--invdbtdbt--dbtvalue-s14) 
 **MS_Description:** [04-1_ms-descriptions.md](./04-1_ms-descriptions.md)  
-**Реестр проблем:** [04-3_problems-solutions.md](./04-3_problems-solutions.md)
+**Реестр проблем:** [04-3_problems-solutions.md](./04-3_problems-solutions.md)  
+**Зерно / счёт долгов (S73):** [04-4_legacy-debt-grain.md](./04-4_legacy-debt-grain.md)
 
 ---
 
@@ -264,6 +265,7 @@
 - (`idciaInvDbtInv`, `idciaInvDbtNum`, `idciaCia`)
 - Rowcount: ~6 366; создана **2022-12-06** (рядом с заливкой `invDbt`)
 - Статус: **служебное / оборот**; **вне снимка ER**
+- **S73:** 1 cia → 1 строка моста; **354** слота с несколькими cia (схлопывание карточек к `(idInv,idNum)`); для named **`idNum = ciaName`**. Канон зерна и счёт долгов: [04-4](./04-4_legacy-debt-grain.md).
 
 ---
 
@@ -286,11 +288,11 @@
 
 #### `cnInvAccnt` — «полная» карточка / задуманная таблица задолженностей
 
-- PK: **`ciaKey`**
-- Поля имени: **`ciaName`**, `ciaNameNull` — различение нескольких задолженностей (P2)
+- PK: **`ciaKey`** — идентификатор **карточки**, не канон зерна долга (S73)
+- Поля имени: **`ciaName`**, `ciaNameNull` — различение нескольких задолженностей (P2); смысл зерна: **`(iKey, ciaName)` ≈ `(idInv, idNum)`**
 - FK: **`ciaCn_s_org`** → `cn_s_org` **и** **`ciaCnInvAccntSmpl`** → `cnInvAccntSmpl` — оба обязательны; синхронность smpl-ключей **не в схеме** (P6)
 - MS_Description (таблица): *«Табличка, собственно, задолженностей…»* — см. [04-1](./04-1_ms-descriptions.md)
-- Rowcount: ~12 693
+- Rowcount: ~12 693 карточек; **число долгов (рабочая оценка S73): 11 906–11 907** — см. [04-4](./04-4_legacy-debt-grain.md)
 - Статус: **ядро текущего операционного контура СУДЗ** (свод/`cn_inv_dbt`/cmm); **не** обеспечивает match при смене документа (P1); dual-FK — долг перед целевой моделью (P6)
 
 ---
@@ -736,6 +738,10 @@ CiaNm (ciaKey + ciaName)
 - Каркас: [02-11](../../UI/02-11_cn-inv-pmt-upl-access.md); алгоритм кнопки — §2.9 (имена шагов из экспорта `File_f`, SQL запросов не выдуман).
 - Паспорт Access закрыт (2026-08-18). Шаг 8: apply намеренно выключен — двоящие СФ только вручную (создать или перепривязать). Runtime InvDouble: **0 строк**. VBA pmt в VBE = `File_f` + `cnInv`. QueryDef / helper / буфер / Offset / RS File_f сняты.
 
+### S73 — 2026-08-26
+
+- Канон зерна старой структуры и счёт долгов: [04-4_legacy-debt-grain.md](./04-4_legacy-debt-grain.md). Кратко: `(iKey, ciaName) ≈ (idInv, idNum)`; СГК не в ключе (0 concurrent multi-acc в одной upl); оценка **11 906–11 907** долгов при **10** ручных кейсах.
+
 ---
 
 ## 9. Связанные материалы
@@ -745,6 +751,7 @@ CiaNm (ciaKey + ciaName)
 - MS_Description: [04-1_ms-descriptions.md](./04-1_ms-descriptions.md)
 - Пример Rslt 82/85: [04-2_example-rslt-82-85.md](./04-2_example-rslt-82-85.md)
 - Реестр проблем: [04-3_problems-solutions.md](./04-3_problems-solutions.md)
+- Зерно / счёт долгов (S73): [04-4_legacy-debt-grain.md](./04-4_legacy-debt-grain.md)
 - VBA (фрагмент долгов / `ciaKey`): [VBA-ANALYSIS-SUMMARY.md](../../../../project/proposals/vba-analysis/VBA-ANALYSIS-SUMMARY.md)
 - Формы загрузки долгов (Access): `Form_CnInvDbtUpl*.cls`
 - Формы загрузки платежей (Access): [02-11](../../UI/02-11_cn-inv-pmt-upl-access.md); `Form_CnInvPmtUpl_gt_File_f.cls`

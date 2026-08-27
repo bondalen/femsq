@@ -18,12 +18,12 @@ class RelationEdgeCatalogTest {
         assertEquals(RelationCard.ONE_TO_MANY, RelationEdgeCatalog.requireEdge("cn.cnInv").card());
         assertEquals("upl", RelationEdgeCatalog.requireEdge("cid.upl").to().name());
         assertEquals("invDbt", RelationEdgeCatalog.requireEdge("inv.invDbt").to().name());
-        assertEquals("dv", RelationEdgeCatalog.requireEdge("dbt.dv").to().name());
+        assertEquals("dv", RelationEdgeCatalog.requireEdge("invDbt.dv").to().name());
+        assertEquals("invDbt", RelationEdgeCatalog.requireEdge("dv.invDbt").to().name());
         assertEquals("cia", RelationEdgeCatalog.requireEdge("cid.cia").to().name());
         assertEquals("cias", RelationEdgeCatalog.requireEdge("cia.cias").to().name());
         assertEquals("cnInv", RelationEdgeCatalog.requireEdge("cias.cnInv").to().name());
         assertEquals("invNum", RelationEdgeCatalog.requireEdge("inv.invNum").to().name());
-        assertEquals("dbt", RelationEdgeCatalog.requireEdge("dv.dbt").to().name());
         assertEquals("idd", RelationEdgeCatalog.requireEdge("dbt.idd").to().name());
         assertEquals("invDbt", RelationEdgeCatalog.requireEdge("idd.invDbt").to().name());
         assertEquals("inv", RelationEdgeCatalog.requireEdge("invDbt.inv").to().name());

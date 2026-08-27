@@ -1,11 +1,12 @@
 # СУДЗ — целевая физическая схема (DEV: `sudz`; прод: `ags`)
 
 **Дата создания:** 2026-08-07  
-**Последнее обновление:** 2026-08-24 (S66e: очередь `CnInvUplInvDbtDouble`)  
+**Последнее обновление:** 2026-08-27 (D3′: cmm ADD `*Dbt`)  
 **Статус:** DEV-контур MVP на `sudz`; лаборатория `test_sudz`; **прод — влитие в `ags`**  
 **План чата:** [chat-plan-26-0802-sudz.md](../../chats/chat-plan/chat-plan-26-0802-sudz.md)  
-**Контекст:** [04-3 проблемы/решения](./04-3_problems-solutions.md) · эскиз **актуальный** [assets/26-0824-sudz-target-sketch-dbtvar.png](./assets/26-0824-sudz-target-sketch-dbtvar.png) (2026-08-24; правки к предыдущему) · история: [26-0807-…](./assets/26-0807-sudz-target-sketch-dbtvar.png), S63 fix [26-0815-…pm-accnt-fix.png](./assets/26-0815-sudz-target-sketch-pm-accnt-fix.png) · [07-readiness](./07-readiness.md)  
-**SQL-пакеты:** [26-0807-sudz-target-schema](../../sql/26-0807-sudz-target-schema/) (`sudz` DEV) · [26-0807-sudz-test-schema](../../sql/26-0807-sudz-test-schema/) (лаборатория)
+**Контекст:** [04-3 проблемы/решения](./04-3_problems-solutions.md) · зерно legacy [04-4](./04-4_legacy-debt-grain.md) · эскиз **актуальный** [assets/26-0824-sudz-target-sketch-dbtvar.png](./assets/26-0824-sudz-target-sketch-dbtvar.png) (2026-08-24; правки к предыдущему) · история: [26-0807-…](./assets/26-0807-sudz-target-sketch-dbtvar.png), S63 fix [26-0815-…pm-accnt-fix.png](./assets/26-0815-sudz-target-sketch-pm-accnt-fix.png) · [07-readiness](./07-readiness.md)  
+**SQL-пакеты:** [26-0807-sudz-target-schema](../../sql/26-0807-sudz-target-schema/) (`sudz` DEV) · [26-0807-sudz-test-schema](../../sql/26-0807-sudz-test-schema/) (лаборатория)  
+**Отклонение DEV DDL:** в БД пока ещё есть `dvDbt` (S38); целевая спека — **M2** (S71); миграция DDL/витрин — **B1** (S72). **Воронка (сегм. 21, 2026-08-26):** после B1 `DbtValue` пишется в **calm `invDbtLoad`** и на экране двоящих **до** канона `Dbt`; `Dbt`/`invDbtDbt` — шаг C1.
 
 Документ фиксирует **точный** перечень таблиц, колонок, ключей, индексов и триггеров целевой модели СУДЗ. ER ниже — рабочая диаграмма в Cursor (Mermaid): правим её **параллельно** со спецификацией полей.
 
@@ -31,10 +32,12 @@
 |--------------|--------|
 | Без пометки / «живые» | Уже в `ags`, DDL не трогаем; на ER для связей |
 | Новые / оживляемые | Создаются в **`sudz`** (лаборатория — `test_sudz`) |
-| Красный путь | Идентификация долга: `Cn`→…→`invDbtDbt`→`Dbt` |
-| Фиолетовый путь | История контекста: `DbtValue`→`invDbtVar`↔`invDbtDbtVar` |
+| Красный путь | Идентификация долга: `Cn`→…→`invDbtDbt`→`Dbt` (**обязателен** для каждой задолженности; не FK с `DbtValue`) |
+| Фиолетовый путь | Факт выгрузки + контекст: `DbtValue`→`invDbt` + `invDbtVar`↔`invDbtDbtVar` |
 
-**Не переносится:** `ciaName` / `ciaNameNull` (костыль P2) — см. [04-3 §7.9 / S33](./04-3_problems-solutions.md#79-второй-эскиз-владельца--invdbtvar--invdbtdbtvar-вариант-именования-долга-s32).
+**Не переносится:** колонка `ciaName` / `ciaNameNull` (костыль P2) — см. [04-3 §7.9 / S33](./04-3_problems-solutions.md#79-второй-эскиз-владельца--invdbtvar--invdbtdbtvar-вариант-именования-долга-s32).  
+**S73:** смысл дискриминатора на СФ — **`invDbt.idNum`**; для seed named **`idNum ← ciaName`**. Зерно legacy и счёт: [04-4](./04-4_legacy-debt-grain.md). СГК — на `invDbtVar` / снимке, не в ключе слота.  
+**Cutover на prod (каркас):** [db-upgrade-sudz-invdbt-cutover.md](../../../deployment/db-upgrade-sudz-invdbt-cutover.md).
 
 ---
 
@@ -62,10 +65,10 @@ erDiagram
   %% ===== Оживление =====
   invDbt ||--o{ invDbtDbt : "iddInvDbt"
   invDbt ||--o{ invDbtDbtVar : "iddvInvDbt"
+  invDbt ||--o{ DbtValue : "dvInvDbt"
 
   %% ===== Новые =====
   Dbt ||--o{ invDbtDbt : "iddDbt"
-  Dbt ||--o{ DbtValue : "dvDbt"
   Dbt ||--o{ cnInvCmm : "cnicInvAccnt"
   Dbt ||--o{ cnInvCmmDt : "cnicdInvAccnt"
   Dbt ||--o{ cnInvCmmFn : "cnicfInvAccnt"
@@ -167,7 +170,7 @@ erDiagram
 
   DbtValue {
     int dvKey PK
-    int dvDbt FK
+    int dvInvDbt FK
     int dvInvDbtVar FK
     int dvUpl FK
     money dvTtl
@@ -252,7 +255,7 @@ erDiagram
 | Индексы | пока нет (по потребности UI/отчётов) |
 | FK | нет |
 
-**Миграция seed:** 1 строка на `cnInvAccnt.ciaKey` (карта `ciaKey → dbtKey` для перецепления `cnInvCmm*`).
+**Миграция seed:** не «1 строка на `ciaKey`» вслепую. База — зерно S73 / слот `invDbt`; связи **1 `Dbt` → N слотов** (P1) брать из **реестра внешних Rslt Excel** ([04-5](./04-5_dbt-invdbt-cardinality-d1.md)), не из `ags.cn_inv_dbt`. Канон cutover **M1 (D1–D7)** — [db-upgrade-sudz-invdbt-cutover.md](../../../deployment/db-upgrade-sudz-invdbt-cutover.md) §1.1: база 1:1 + мердж L*; после seed P1→тот же `Dbt`; **cmm D3′** — ADD nullable `*Dbt` + backfill, не rewrite `*InvAccnt` (§1.3); витрины INNER `invDbtDbt`; N≈11907 + очередь §1.2; seed с `dbtNote`; C1 после cutover = auto при однозначности.
 
 ---
 
@@ -321,14 +324,16 @@ erDiagram
 
 ---
 
-### 2.5. `test_sudz.DbtValue` — величина долга в выгрузке
+### 2.5. `DbtValue` — величина долга в выгрузке (**M2 / S71**)
 
-Заменяет роль `cn_inv_dbt` в новом контуре. Контекст — **только** через `invDbtVar` (решение S32).
+Заменяет роль `cn_inv_dbt` в новом контуре. Контекст — через `invDbtVar` (S32). **Прямого FK на `Dbt` нет** (эскиз S32/`26-0824`, решение владельца **S71 / M2**).
+
+**Зерно:** один слот `invDbt` — одна строка величины на выгрузку (`UNIQUE(dvInvDbt, dvUpl)`). Это закрывает **P2** (несколько долгов с одним `invDbtVar` в одной upl — разные слоты). Канон `Dbt` для отчётов — **выводимый**: `DbtValue` → `invDbt` → `invDbtDbt` → `Dbt` (когда связь заведена).
 
 | Колонка | Тип | Null | Описание | Источник-аналог |
 |---------|-----|------|----------|-----------------|
 | `dvKey` | `int` IDENTITY | NO | PK | — |
-| `dvDbt` | `int` | NO | FK → `Dbt.dbtKey` | `cidCnInvAccntCtpt` → карта |
+| `dvInvDbt` | `int` | NO | FK → `invDbt.idKey` (якорь слота) | слот СФ-долга |
 | `dvInvDbtVar` | `int` | NO | FK → `invDbtVar.idvvKey` | — |
 | `dvUpl` | `int` | NO | FK → `cn_inv_dbt_upl.upl_key` | `cn_inv_dbt_upl` |
 | `dvTtl` | `money` | NO | Сумма ДЗ | `dbt_ttl` |
@@ -341,10 +346,18 @@ erDiagram
 | Артефакт | Определение |
 |----------|-------------|
 | PK | `PK_DbtValue` (`dvKey`) |
-| UNIQUE | `UX_DbtValue_DbtUpl` (`dvDbt`, `dvUpl`) — один долг — одна строка на выгрузку (как `Задолженность_Выгрузка` на `cn_inv_dbt`) |
-| FK | `dvDbt` → `test_sudz.Dbt`; `dvInvDbtVar` → `test_sudz.invDbtVar`; `dvUpl` → **`test_sudz.cn_inv_dbt_upl`** (S39: sandbox-выгрузки; в `ags` нет пакетов новее 30.06.2025) |
-| Индекс | `IX_DbtValue_Upl` (`dvUpl`) — выборки по выгрузке |
-| Триггер | §4.1 — согласованность `Dbt`↔`invDbtVar` через `invDbtDbt` / membership в `cnInv` |
+| UNIQUE | `UX_DbtValue_InvDbtUpl` (`dvInvDbt`, `dvUpl`) — один слот — одна величина на выгрузку |
+| FK | `dvInvDbt` → `invDbt`; `dvInvDbtVar` → `invDbtVar`; `dvUpl` → `cn_inv_dbt_upl` (на DEV sandbox — как сейчас в пакете S39) |
+| Индекс | `IX_DbtValue_Upl` (`dvUpl`); `IX_DbtValue_Var` (`dvInvDbtVar`) — по потребности |
+| Триггер | §4.1 — слот↔var согласованы; **не** требует наличия `invDbtDbt`/`Dbt` |
+
+**Снято (было в S38, отклонение от эскиза):** колонка `dvDbt`, `UX_DbtValue_DbtUpl`, FK на `Dbt`.
+
+**Следствия:**
+
+- Величину можно писать **после** слоя слота/`invDbtVar`, **до** создания `Dbt`/`invDbtDbt` (порядок воронки / чекбоксы — отдельно; см. S66e сегм. 15 и S71).
+- Витрины `vw_Yr_DbtFact` / `Yr_DbtChanges*` должны брать `dbtKey` через `invDbtDbt`, не из `dv.dvDbt` (миграция SQL — backlog).
+- `Dbt` по-прежнему **обязателен** для задолженности в целевой модели; связь с величиной — через красный мост, не через колонку на `DbtValue`.
 
 **Не переносятся в `DbtValue`:** `debt_type`, `link`, `number`, `mark` — уточнить по потребности; пока вне MVP, если не понадобятся отчётам.
 
@@ -394,7 +407,9 @@ erDiagram
 
 ### 3.4. Зеркала комментариев / года (`test_sudz.cnInvCmm*` / `cnInvGr` / `yr`) — S40
 
-Живые `ags.cnInvCmm*` **не** ALTER’им. В песочнице — зеркала с тем же составом колонок; колонки `*InvAccnt` по имени сохранены, но FK ведут на **`test_sudz.Dbt.dbtKey`**.
+Живые `ags.cnInvCmm*` на cutover: **не** переназначать `*InvAccnt` на `Dbt` (в отличие от упрощённых зеркал `test_sudz`). Канон **D3′:** ADD nullable `*Dbt` + backfill — [cutover §1.3](../../../deployment/db-upgrade-sudz-invdbt-cutover.md#13-cmm-и-dbtkey--уточнение-d3-2026-08-27).
+
+Живые `ags.cnInvCmm*` **не** ALTER’им ради смены смысла `*InvAccnt`. В песочнице — зеркала с тем же составом колонок; колонки `*InvAccnt` по имени сохранены, но FK ведут на **`test_sudz.Dbt.dbtKey`** (лаб. упрощение).
 
 | Таблица | Назначение | FK на `Dbt` | Прочие FK |
 |--------|------------|-------------|-----------|
@@ -602,15 +617,19 @@ base=`2025-01-24` (801), curr=`2026-01-30` (805); mery/cst — seed `20` (гру
 
 ## 4. Триггеры
 
-### 4.1. `trg_DbtValue_Consistency` (на `DbtValue`) — **создан в БД (S38)**
+### 4.1. `trg_DbtValue_Consistency` (на `DbtValue`) — **целевая логика M2 / S71**
 
-После INSERT/UPDATE — из `dvInvDbtVar` взять `idvvCnNum` / `idvvInvNum` / `idvvAccnt` / `idvvCn_s_org`; проверить:
+*(В БД пока старый триггер S38 с `dvDbt` — заменить при миграции DDL.)*
 
-1. `cnNum.cnnCn` ∈ множество договоров `cnInv` для `Inv` из `invNum.inInv`;
-2. существует строка `invDbtDbt` с `(iddInv = invNum.inInv, iddDbt = dvDbt)`;
-3. существует `invDbtDbtVar`, связывающая слот этого `invDbtDbt` с данным `invDbtVar` (S5 — жёстко).
+После INSERT/UPDATE:
 
-Детали логики — [04-3 §7.5](./04-3_problems-solutions.md) (адаптировано под перенос FK с `DbtValue` на `invDbtVar`).
+1. `cnNum.cnnCn` из `dvInvDbtVar` ∈ множество договоров `cnInv` для `Inv` из `invNum` того же var;
+2. `invDbt.idInv` слота `dvInvDbt` = `invNum.inInv` из `dvInvDbtVar` (слот и контекст про одну СФ);
+3. существует `invDbtDbtVar`, связывающая **этот** слот `dvInvDbt` с **этим** `dvInvDbtVar`.
+
+**Не проверять** наличие `invDbtDbt` / `Dbt` при записи величины (иначе снова жёсткая привязка к канону на уровне Value). Согласованность с каноном — забота шага, который пишет `invDbtDbt`, и отчётных запросов (LEFT/INNER JOIN по мосту).
+
+Историческая логика с `dvDbt` — [04-3 §7.5](./04-3_problems-solutions.md); смена модели — [04-3 §10](./04-3_problems-solutions.md#10-dbtvalue-без-прямого-fk-на-dbt-m2--s71).
 
 ### 4.2. `trg_invDbtDbtVar_NoForeignContext` (на `invDbtDbtVar`) — **создан в БД (S37)**
 
@@ -642,7 +661,8 @@ base=`2025-01-24` (801), curr=`2026-01-30` (805); mery/cst — seed `20` (гру
 | S2 | UNIQUE на `invDbtVar` по четвёрке контекста — ок? | Да | ✅ принято (создано в БД, без label) |
 | S3 | Переносить ли `dvDocBase` в MVP? | Да, как вспомогательный текст из свода | ✅ принято (в таблице) |
 | S4 | Поля `debt_type` / `link` / `number` / `mark` из `cn_inv_dbt` | Вне MVP, пока не потребуются отчёты | ✅ вне MVP |
-| S5 | Жёсткость п.3 триггера 4.1 (`invDbtDbtVar` обязателен) | Да — иначе фиолетовый путь неполон | ✅ принято (в триггере) |
+| S5 | Жёсткость п.3 триггера 4.1 (`invDbtDbtVar` обязателен) | Да — иначе фиолетовый путь неполон | ✅ принято (в триггере); при M2 — связь **слот↔var**, не через `dvDbt` |
+| S6 | Прямой FK `DbtValue.dvDbt`? | Нет — эскиз + M2: якорь `invDbt`, `Dbt` выводим через `invDbtDbt` | ✅ S71 |
 
 ---
 
@@ -843,3 +863,16 @@ base=`2025-01-24` (801), curr=`2026-01-30` (805); mery/cst — seed `20` (гру
 - **S59c:** у Свода те же переключатели **Предпросмотр / Excel**, что у D644/Rslt (раньше Свод скрывал их и был только Excel).
 - Полный числовой паритет свода с Excel-миллиардами — после seed всего портфеля (оговорка S46).
 - Версия: `0.1.0.171-SNAPSHOT`.
+
+### S71 — 2026-08-25 (M2: `DbtValue` без `dvDbt`)
+
+- Владелец: целевая модель — **M2**: якорь величины = **`invDbt`** (+ `invDbtVar`, `upl`); **прямого FK `dvDbt` нет** (как на эскизе `26-0824` / текст S32).
+- Спека §2.5 / ER / §4.1 обновлены; `UNIQUE(dvInvDbt, dvUpl)`; `Dbt` обязателен в модели, связь с величиной — через `invDbtDbt`.
+- **Физический DDL / seed / `vw_Yr_DbtFact` в БД пока со старым `dvDbt`** — миграция **B1** (S72); после B1 Value пишется в воронке (сегм. 21).
+- Разбор: [04-3 §10](./04-3_problems-solutions.md#10-dbtvalue-без-прямого-fk-на-dbt-m2--s71).
+
+### S72 сегм. 21 — 2026-08-26 (`DbtValue` в calm + экран)
+
+- SoT «Excel учтён в upl» = `DbtValue`.
+- Пишется в **calm `invDbtLoad`** и на экране двоящих **после B1**; **`Dbt`/`invDbtDbt` не на 7**.
+- План: [chat-plan S72](../../chats/chat-plan/chat-plan-26-0802-sudz.md#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25).

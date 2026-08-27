@@ -36,7 +36,9 @@ public final class SudzDbtUplInvDbtLoadLog {
             progress.line("Auto invDbt: <b><font color=\"DarkGreen\">"
                     + applyResult.insertedInvDbt()
                     + "</font></b>; мостов invDbtDbtVar: <b><font color=\"DarkGreen\">"
-                    + applyResult.insertedBridges() + "</font></b>.");
+                    + applyResult.insertedBridges()
+                    + "</font></b>; DbtValue: <b><font color=\"DarkGreen\">"
+                    + applyResult.insertedValues() + "</font></b>.");
         }
     }
 }

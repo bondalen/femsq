@@ -3,6 +3,8 @@ package com.femsq.database.service;
 import com.femsq.database.dao.SudzDao;
 import com.femsq.database.model.sudz.SudzCmmGrLookup;
 import com.femsq.database.model.sudz.SudzCnInvUplInvDbtDouble;
+import com.femsq.database.model.sudz.SudzInvDbtSlot;
+import com.femsq.database.model.sudz.SudzInvDbtVarCandidates;
 import com.femsq.database.model.sudz.SudzCnInvUplSfDouble;
 import com.femsq.database.model.sudz.SudzD644Row;
 import com.femsq.database.model.sudz.SudzAccessStrMark;
@@ -539,6 +541,62 @@ public class DefaultSudzService implements SudzService {
             throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
         }
         return sudzDao.findInvDbtDoublesByUnload(unloadKey);
+    }
+
+    @Override
+    public Optional<SudzSfDoubleExcelCandidate> findInvDbtDoubleExcelCandidate(int ciudKey) {
+        if (ciudKey <= 0) {
+            throw new IllegalArgumentException("ciudKey должен быть положительным: " + ciudKey);
+        }
+        return sudzDao.findInvDbtDoubleExcelCandidate(ciudKey);
+    }
+
+    @Override
+    public List<SudzInvDbtSlot> findInvDbtSlotsByInv(int iKey) {
+        if (iKey <= 0) {
+            throw new IllegalArgumentException("iKey должен быть положительным: " + iKey);
+        }
+        return sudzDao.findInvDbtSlotsByInv(iKey);
+    }
+
+    @Override
+    public SudzCnInvUplInvDbtDouble createInvDbtFromDouble(int ciudKey) {
+        if (ciudKey <= 0) {
+            throw new IllegalArgumentException("ciudKey должен быть положительным: " + ciudKey);
+        }
+        return sudzDao.createInvDbtFromDouble(ciudKey);
+    }
+
+    @Override
+    public SudzCnInvUplInvDbtDouble linkInvDbtDouble(int ciudKey, int idKey) {
+        if (ciudKey <= 0 || idKey <= 0) {
+            throw new IllegalArgumentException("ciudKey и idKey должны быть положительными");
+        }
+        return sudzDao.linkInvDbtDouble(ciudKey, idKey);
+    }
+
+    @Override
+    public SudzInvDbtVarCandidates findInvDbtVarCandidates(int ciudKey) {
+        if (ciudKey <= 0) {
+            throw new IllegalArgumentException("ciudKey должен быть положительным: " + ciudKey);
+        }
+        return sudzDao.findInvDbtVarCandidates(ciudKey);
+    }
+
+    @Override
+    public SudzCnInvUplInvDbtDouble ensureInvDbtVarForDouble(
+            int ciudKey,
+            int idvvCnNum,
+            int idvvInvNum,
+            int idvvAccnt,
+            int idvvCnSOrg
+    ) {
+        if (ciudKey <= 0 || idvvCnNum <= 0 || idvvInvNum <= 0 || idvvAccnt <= 0 || idvvCnSOrg <= 0) {
+            throw new IllegalArgumentException(
+                    "ciudKey и FK invDbtVar должны быть положительными");
+        }
+        return sudzDao.ensureInvDbtVarForDouble(
+                ciudKey, idvvCnNum, idvvInvNum, idvvAccnt, idvvCnSOrg);
     }
 
     @Override

@@ -110,22 +110,62 @@
                     <ContractPartiesPanel />
                   </QTabPanel>
                   <QTabPanel name="sf" class="q-pa-xs fit">
-                    <div class="column fill-pane no-wrap">
-                      <div class="text-caption text-grey-7 q-pb-sm">
-                        Дерево договора и его связей; action на папке `cn.cnInv` открывает ту же `RecordModal`.
-                      </div>
-                      <RelationTree
-                        v-if="store.selectedCn"
-                        :key="relationTreeKey"
-                        class="col"
-                        :spec="cnRelationSpec"
-                        :root-id="store.selectedCn.cnKey"
-                        :fetch-node="fetchRelationNode"
-                        :fetch-expand="fetchRelationExpand"
-                        @action="onRelationAction"
-                        root-class="contracts-relation-tree"
-                      />
-                    </div>
+                    <QSplitter
+                      v-model="sfSplit"
+                      :limits="[22, 55]"
+                      separator-class="cn-split-sep"
+                      class="fit"
+                      data-test="cn-sf-splitter"
+                    >
+                      <template #before>
+                        <div class="column fill-pane no-wrap" data-test="cn-inv-list">
+                          <div class="text-caption text-grey-7 q-pb-xs shrink-0">
+                            Связи cnInv договора
+                            <span v-if="store.cnInvs.length"> · {{ store.cnInvs.length }}</span>
+                          </div>
+                          <FemsqTable
+                            class="col cn-inv-table"
+                            root-class="cn-inv-table"
+                            row-key="ciKey"
+                            :rows="store.cnInvs"
+                            :columns="cnInvColumns"
+                            :loading="store.loadingCnInvs"
+                            :show-filter="true"
+                            v-model:pagination="cnInvPagination"
+                            selection="single"
+                            v-model:selected="selectedCnInvRows"
+                            dense
+                            @row-click="onCnInvRowClick"
+                          />
+                        </div>
+                      </template>
+                      <template #after>
+                        <div class="column fill-pane no-wrap" data-test="cn-inv-tree">
+                          <div class="text-caption text-grey-7 q-pb-xs shrink-0">
+                            Дерево СФ (<code>contracts-inv</code>); CRUD связи — следующим этапом
+                          </div>
+                          <RelationTree
+                            v-if="store.selectedCnInv"
+                            :key="`inv-${store.selectedCnInv.ciInv}`"
+                            class="col"
+                            :spec="contractsInvSpec"
+                            :root-id="store.selectedCnInv.ciInv"
+                            :fetch-node="fetchRelationNode"
+                            :fetch-expand="fetchRelationExpand"
+                            root-class="contracts-relation-tree"
+                          />
+                          <div v-else class="text-grey-7 q-pa-sm">
+                            {{
+                              store.loadingCnInvs
+                                ? 'Загрузка связей…'
+                                : store.cnInvs.length === 0
+                                  ? 'У договора нет связей cnInv'
+                                  : 'Выберите связь слева'
+                            }}
+                          </div>
+                        </div>
+                      </template>
+                    </QSplitter>
                   </QTabPanel>
                 </QTabPanels>
               </template>
@@ -253,7 +293,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import {
   QBanner,
   QBtn,
@@ -284,7 +324,7 @@ import type { RelationFormState } from '@/trees/relation-forms';
 import type { RelationTreeActionContext, RelationTreeSpec } from '@/trees/relation-tree';
 import ContractPartiesPanel from '@/views/contracts/ContractPartiesPanel.vue';
 import { useContractsStore } from '@/stores/contracts';
-import type { CnNumDto } from '@/types/contracts';
+import type { CnInvListRow, CnNumDto } from '@/types/contracts';
 import { parseFlexibleDate } from '@/utils/flexible-date';
 
 const store = useContractsStore();
@@ -295,9 +335,12 @@ const contractsInvSpec = contractsInvSpecJson as RelationTreeSpec;
 const masterSplit = ref(36);
 /** Доля высоты блока номеров над сторонами. */
 const detailSplit = ref(32);
+/** Доля ширины списка cnInv на вкладке СФ. */
+const sfSplit = ref(36);
 const detailTab = ref<'parties' | 'sf'>('parties');
 const cnNumPagination = ref({ page: 1, rowsPerPage: 25 });
 const nestedPagination = ref({ page: 1, rowsPerPage: 10 });
+const cnInvPagination = ref({ page: 1, rowsPerPage: 25 });
 const orgIdFilter = ref('');
 const relationTreeKey = ref(0);
 const relationAction = ref<RelationTreeActionContext | null>(null);
@@ -359,6 +402,41 @@ const detailColumns: FemsqTableColumn<CnNumDto>[] = [
   }
 ];
 
+const cnInvColumns: FemsqTableColumn<CnInvListRow>[] = [
+  {
+    name: 'iNum',
+    label: '№ СФ',
+    field: 'iNum',
+    sortable: true,
+    align: 'left',
+    filterValue: (row) => row.iNum ?? ''
+  },
+  {
+    name: 'ciInv',
+    label: 'inv',
+    field: 'ciInv',
+    sortable: true,
+    align: 'right',
+    filterValue: (row) => String(row.ciInv)
+  },
+  {
+    name: 'ciKey',
+    label: 'ciKey',
+    field: 'ciKey',
+    sortable: true,
+    align: 'right',
+    filterValue: (row) => String(row.ciKey)
+  },
+  {
+    name: 'ciTimeOfEntry',
+    label: 'ввод',
+    field: 'ciTimeOfEntry',
+    sortable: true,
+    align: 'left',
+    filterValue: (row) => row.ciTimeOfEntry ?? ''
+  }
+];
+
 const pickerColumns: FemsqTableColumn<RelationPickerCandidateRow>[] = [
   { name: 'cnKey', label: 'cn', field: 'cnKey', align: 'right' },
   { name: 'cnNum', label: 'договор', field: 'cnNum', align: 'left' },
@@ -407,6 +485,19 @@ const nestedSelectedRows = computed({
   }
 });
 
+const selectedCnInvRows = computed({
+  get: () => {
+    const row = store.selectedCnInv;
+    return row ? [row] : [];
+  },
+  set: (rows: CnInvListRow[]) => {
+    const first = rows[0];
+    if (first) {
+      store.selectCnInv(first.ciKey);
+    }
+  }
+});
+
 const selectedCnCandidate = computed<RelationPickerCandidateRow | null>(() => {
   const cn = store.selectedCn;
   if (!cn) {
@@ -450,6 +541,13 @@ function onCnNumRowClick(_evt: Event, row: CnNumDto): void {
 
 function onNestedCnNumClick(_evt: Event, row: CnNumDto): void {
   void store.selectCnNum(row.cnnKey);
+}
+
+/**
+ * Выбор связи cnInv на вкладке «Счета-фактуры».
+ */
+function onCnInvRowClick(_evt: Event, row: CnInvListRow): void {
+  store.selectCnInv(row.ciKey);
 }
 
 /**
@@ -693,6 +791,18 @@ async function saveCreate(): Promise<void> {
 onMounted(() => {
   void store.loadCnNums();
 });
+
+/**
+ * Список cnInv грузим лениво при открытии вкладки СФ (массовые договоры могут быть большими).
+ */
+watch(
+  [() => store.selectedCn?.cnKey ?? null, detailTab],
+  ([cnKey, tab]) => {
+    if (tab === 'sf' && cnKey != null) {
+      void store.loadCnInvs(cnKey);
+    }
+  }
+);
 </script>
 
 <style scoped>
@@ -719,7 +829,8 @@ onMounted(() => {
 }
 
 .master-table,
-.nested-table {
+.nested-table,
+.cn-inv-table {
   width: 100%;
 }
 

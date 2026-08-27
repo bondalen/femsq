@@ -23,6 +23,7 @@ BEGIN
         ciudDebt           decimal(18, 2) NULL,
         ciudIdvvKey        int            NULL,      -- sudz.invDbtVar.idvvKey (если известен)
         ciudReason         nvarchar(64)   NULL,      -- multi | ambiguous | sum
+        ciudReasonDetail   nvarchar(max)  NULL,      -- текстовый канал ([queue.build] …)
 
         -- open | created | deferred
         ciudStatus         varchar(16)    NOT NULL

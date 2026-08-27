@@ -14,6 +14,8 @@ import type {
   LinkSudzSfDoubleInput,
   SudzCmmGrLookup,
   SudzCnInvUplSfDouble,
+  SudzCnInvUplInvDbtDouble,
+  SudzInvDbtVarCandidates,
   SudzD644Row,
   SudzDbtUplFile,
   SudzDbtUplLauncher,
@@ -152,6 +154,7 @@ const INV_DBT_DOUBLE_FIELDS = `
   ciudDebt
   ciudIdvvKey
   ciudReason
+  ciudReasonDetail
   ciudStatus
   ciudStatusAt
   ciudCreatedIdKey
@@ -273,6 +276,92 @@ const SUDZ_SF_DOUBLE_EXCEL = gql`
   }
 `;
 
+const SUDZ_INV_DBT_DOUBLE_EXCEL = gql`
+  query SudzInvDbtDoubleExcelCandidate($ciudKey: Int!) {
+    sudzInvDbtDoubleExcelCandidate(ciudKey: $ciudKey) {
+      cidutKey
+      findDbtNum
+      cidutAccount
+      cidutCntrPrtNum
+      cidutCntrPrtName
+      cidutCntrPrtITN
+      cidutCnName
+      cidutCnDate
+      cidutCnInv
+      cidutCnInvName
+      cidutFormtnDate
+      cidutMatrtyDate
+      cidutDebt
+      cidutDebtOverdue
+      cidutDoc
+      cidutLink
+      cidutSheet
+      cidutSheetNum
+      cidutUnloadKey
+    }
+  }
+`;
+
+const SUDZ_INV_DBT_SLOTS = gql`
+  query SudzInvDbtSlots($iKey: Int!) {
+    sudzInvDbtSlots(iKey: $iKey) {
+      idKey
+      idInv
+      idNum
+      idNote
+    }
+  }
+`;
+
+const CREATE_INV_DBT_FROM_DOUBLE = gql`
+  mutation CreateSudzInvDbtFromDouble($ciudKey: Int!) {
+    createSudzInvDbtFromDouble(ciudKey: $ciudKey) {
+      ${INV_DBT_DOUBLE_FIELDS}
+    }
+  }
+`;
+
+const LINK_INV_DBT_DOUBLE = gql`
+  mutation LinkSudzInvDbtDouble($input: LinkSudzInvDbtDoubleInput!) {
+    linkSudzInvDbtDouble(input: $input) {
+      ${INV_DBT_DOUBLE_FIELDS}
+    }
+  }
+`;
+
+const SUDZ_INV_DBT_VAR_CANDIDATES = gql`
+  query SudzInvDbtVarCandidates($ciudKey: Int!) {
+    sudzInvDbtVarCandidates(ciudKey: $ciudKey) {
+      ciudKey
+      iKey
+      accountKey
+      sides {
+        cnKey
+        cnSOrgKey
+        csoCnDate
+      }
+      cnNums {
+        cnnKey
+        cnKey
+        cnnNumNull
+      }
+      invNums {
+        inKey
+        inInv
+        inNumNull
+      }
+    }
+  }
+`;
+
+const ENSURE_INV_DBT_VAR_FOR_DOUBLE = gql`
+  mutation EnsureSudzInvDbtVarForDouble($input: EnsureSudzInvDbtVarForDoubleInput!) {
+    ensureSudzInvDbtVarForDouble(input: $input) {
+      ${INV_DBT_DOUBLE_FIELDS}
+    }
+  }
+`;
+
 const SUDZ_SF_DOUBLE_DOMAIN = gql`
   query SudzSfDoubleDomainMatches($invNum: String!) {
     sudzSfDoubleDomainMatches(invNum: $invNum) {
@@ -304,7 +393,8 @@ const SUDZ_SF_DOUBLE_SUM_MATCHES = gql`
         dvTtl
         dvOverd
         dvUpl
-        dvDbt
+        dvInvDbt
+        dbtKey
       }
     }
   }
@@ -760,6 +850,129 @@ export async function createSudzSfFromDouble(ciusKey: number): Promise<SudzCnInv
     return data;
   } catch (error) {
     throw wrapApolloError(error, 'CreateSudzSfFromDouble');
+  }
+}
+
+/** Excel-кандидат очереди двоящих долгов. */
+export async function getSudzInvDbtDoubleExcelCandidate(
+  ciudKey: number
+): Promise<SudzSfDoubleExcelCandidate | null> {
+  try {
+    const result = await apolloClient.query<{
+      sudzInvDbtDoubleExcelCandidate: SudzSfDoubleExcelCandidate | null;
+    }>({
+      query: SUDZ_INV_DBT_DOUBLE_EXCEL,
+      variables: { ciudKey },
+      fetchPolicy: 'network-only'
+    });
+    return result.data?.sudzInvDbtDoubleExcelCandidate ?? null;
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzInvDbtDoubleExcelCandidate');
+  }
+}
+
+/** Слоты invDbt по СФ. */
+export async function getSudzInvDbtSlots(
+  iKey: number
+): Promise<{ idKey: number; idInv: number; idNum: number; idNote: string | null }[]> {
+  try {
+    const result = await apolloClient.query<{
+      sudzInvDbtSlots: { idKey: number; idInv: number; idNum: number; idNote: string | null }[];
+    }>({
+      query: SUDZ_INV_DBT_SLOTS,
+      variables: { iKey },
+      fetchPolicy: 'network-only'
+    });
+    return result.data?.sudzInvDbtSlots ?? [];
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzInvDbtSlots');
+  }
+}
+
+/** Create слота + DbtValue из очереди двоящих. */
+export async function createSudzInvDbtFromDouble(
+  ciudKey: number
+): Promise<SudzCnInvUplInvDbtDouble> {
+  try {
+    const result = await apolloClient.mutate<{
+      createSudzInvDbtFromDouble: SudzCnInvUplInvDbtDouble;
+    }>({
+      mutation: CREATE_INV_DBT_FROM_DOUBLE,
+      variables: { ciudKey }
+    });
+    const data = result.data?.createSudzInvDbtFromDouble;
+    if (!data) throw new Error('Пустой ответ createSudzInvDbtFromDouble');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'CreateSudzInvDbtFromDouble');
+  }
+}
+
+/** Link слота + DbtValue. */
+export async function linkSudzInvDbtDouble(
+  ciudKey: number,
+  idKey: number
+): Promise<SudzCnInvUplInvDbtDouble> {
+  try {
+    const result = await apolloClient.mutate<{
+      linkSudzInvDbtDouble: SudzCnInvUplInvDbtDouble;
+    }>({
+      mutation: LINK_INV_DBT_DOUBLE,
+      variables: { input: { ciudKey, idKey } }
+    });
+    const data = result.data?.linkSudzInvDbtDouble;
+    if (!data) throw new Error('Пустой ответ linkSudzInvDbtDouble');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'LinkSudzInvDbtDouble');
+  }
+}
+
+/** Кандидаты FK для create invDbtVar. */
+export async function getSudzInvDbtVarCandidates(
+  ciudKey: number
+): Promise<SudzInvDbtVarCandidates> {
+  try {
+    const result = await apolloClient.query<{
+      sudzInvDbtVarCandidates: SudzInvDbtVarCandidates;
+    }>({
+      query: SUDZ_INV_DBT_VAR_CANDIDATES,
+      variables: { ciudKey },
+      fetchPolicy: 'network-only'
+    });
+    const data = result.data?.sudzInvDbtVarCandidates;
+    if (!data) throw new Error('Пустой ответ sudzInvDbtVarCandidates');
+    return {
+      ...data,
+      sides: data.sides ?? [],
+      cnNums: data.cnNums ?? [],
+      invNums: data.invNums ?? []
+    };
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzInvDbtVarCandidates');
+  }
+}
+
+/** Create/reuse invDbtVar и ciudIdvvKey. */
+export async function ensureSudzInvDbtVarForDouble(input: {
+  ciudKey: number;
+  idvvCnNum: number;
+  idvvInvNum: number;
+  idvvAccnt: number;
+  idvvCnSOrg: number;
+}): Promise<SudzCnInvUplInvDbtDouble> {
+  try {
+    const result = await apolloClient.mutate<{
+      ensureSudzInvDbtVarForDouble: SudzCnInvUplInvDbtDouble;
+    }>({
+      mutation: ENSURE_INV_DBT_VAR_FOR_DOUBLE,
+      variables: { input }
+    });
+    const data = result.data?.ensureSudzInvDbtVarForDouble;
+    if (!data) throw new Error('Пустой ответ ensureSudzInvDbtVarForDouble');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'EnsureSudzInvDbtVarForDouble');
   }
 }
 

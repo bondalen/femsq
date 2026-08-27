@@ -180,7 +180,7 @@ public final class RelationEdgeCatalog {
             "dvKey",
             List.of(
                     "dvKey",
-                    "dvDbt",
+                    "dvInvDbt",
                     "dvInvDbtVar",
                     "dvUpl",
                     "dvTtl",
@@ -296,8 +296,12 @@ public final class RelationEdgeCatalog {
                 new RelationEdge("idd.dbt", IDD, DBT, "iddDbt", null, RelationCard.MANY_TO_ONE)
         );
         edges.put(
-                "dbt.dv",
-                new RelationEdge("dbt.dv", DBT, DV, null, "dvDbt", RelationCard.ONE_TO_MANY)
+                "dv.invDbt",
+                new RelationEdge("dv.invDbt", DV, INV_DBT, "dvInvDbt", null, RelationCard.MANY_TO_ONE)
+        );
+        edges.put(
+                "invDbt.dv",
+                new RelationEdge("invDbt.dv", INV_DBT, DV, null, "dvInvDbt", RelationCard.ONE_TO_MANY)
         );
         edges.put(
                 "cid.cia",
@@ -314,10 +318,6 @@ public final class RelationEdgeCatalog {
         edges.put(
                 "inv.invNum",
                 new RelationEdge("inv.invNum", INV, INV_NUM, null, "inInv", RelationCard.ONE_TO_MANY)
-        );
-        edges.put(
-                "dv.dbt",
-                new RelationEdge("dv.dbt", DV, DBT, "dvDbt", null, RelationCard.MANY_TO_ONE)
         );
         edges.put(
                 "dbt.idd",

@@ -14,6 +14,7 @@ import {
   deleteCnSOrg,
   deleteCnSOrgSmpl,
   fetchCn,
+  fetchCnInvsByCn,
   fetchCnNums,
   fetchCnNumsByCn,
   fetchCnNumDuplicateCount,
@@ -31,6 +32,7 @@ import type {
   CnContractCreateRequest,
   CnContractCreatedDto,
   CnDto,
+  CnInvListRow,
   ContractInvLookupRow,
   CnNumDto,
   CnNumTypeLookupDto,
@@ -74,6 +76,8 @@ export const useContractsStore = defineStore('contracts', () => {
   const selectedCn = ref<CnDto | null>(null);
   const cnNumsForCn = ref<CnNumDto[]>([]);
   const sides = ref<CnSideDto[]>([]);
+  const cnInvs = ref<CnInvListRow[]>([]);
+  const selectedCiKey = ref<number | null>(null);
   const orgIdLookups = ref<CnSOrgIdLookupDto[]>([]);
   const numTypes = ref<CnNumTypeLookupDto[]>([]);
   const expandedSides = ref<Set<number>>(new Set());
@@ -81,12 +85,16 @@ export const useContractsStore = defineStore('contracts', () => {
   const loadingList = ref(false);
   const loadingDetail = ref(false);
   const loadingSides = ref(false);
+  const loadingCnInvs = ref(false);
   const saving = ref(false);
   const error = ref<string | null>(null);
   const cnInvLookupByCn = ref<Record<string, ContractInvLookupState>>({});
 
   const selectedCnNum = computed(
     () => cnNums.value.find((row) => row.cnnKey === selectedCnnKey.value) ?? null
+  );
+  const selectedCnInv = computed(
+    () => cnInvs.value.find((row) => row.ciKey === selectedCiKey.value) ?? null
   );
   const activeCnLookupKey = computed(() => String(selectedCn.value?.cnKey ?? '0'));
   const currentCnInvLookup = computed(() => {
@@ -141,6 +149,8 @@ export const useContractsStore = defineStore('contracts', () => {
           selectedCn.value = null;
           cnNumsForCn.value = [];
           sides.value = [];
+          cnInvs.value = [];
+          selectedCiKey.value = null;
         }
       }
       if (selectedCnnKey.value == null && cnNums.value.length > 0) {
@@ -164,10 +174,14 @@ export const useContractsStore = defineStore('contracts', () => {
       selectedCn.value = null;
       cnNumsForCn.value = [];
       sides.value = [];
+      cnInvs.value = [];
+      selectedCiKey.value = null;
       return;
     }
     loadingDetail.value = true;
     error.value = null;
+    cnInvs.value = [];
+    selectedCiKey.value = null;
     try {
       const [cn, nums] = await Promise.all([fetchCn(row.cnnCn), fetchCnNumsByCn(row.cnnCn)]);
       selectedCn.value = cn;
@@ -178,9 +192,42 @@ export const useContractsStore = defineStore('contracts', () => {
       selectedCn.value = null;
       cnNumsForCn.value = [];
       sides.value = [];
+      cnInvs.value = [];
+      selectedCiKey.value = null;
     } finally {
       loadingDetail.value = false;
     }
+  }
+
+  /**
+   * Загружает связи cnInv выбранного договора (вкладка «Счета-фактуры»).
+   */
+  async function loadCnInvs(cnKey: number): Promise<void> {
+    loadingCnInvs.value = true;
+    error.value = null;
+    try {
+      const rows = await fetchCnInvsByCn(cnKey);
+      cnInvs.value = rows;
+      if (selectedCiKey.value != null && !rows.some((row) => row.ciKey === selectedCiKey.value)) {
+        selectedCiKey.value = null;
+      }
+      if (selectedCiKey.value == null && rows.length > 0) {
+        selectedCiKey.value = rows[0].ciKey;
+      }
+    } catch (err) {
+      error.value = err instanceof RequestError ? err.message : 'Ошибка загрузки СФ договора';
+      cnInvs.value = [];
+      selectedCiKey.value = null;
+    } finally {
+      loadingCnInvs.value = false;
+    }
+  }
+
+  /**
+   * Выбор связи cnInv в списке вкладки СФ.
+   */
+  function selectCnInv(ciKey: number): void {
+    selectedCiKey.value = ciKey;
   }
 
   /**
@@ -468,11 +515,15 @@ export const useContractsStore = defineStore('contracts', () => {
     cnNumsForCn,
     sides,
     displaySides,
+    cnInvs,
+    selectedCiKey,
+    selectedCnInv,
     orgIdLookups,
     numTypes,
     loadingList,
     loadingDetail,
     loadingSides,
+    loadingCnInvs,
     saving,
     error,
     cnInvLookupQuery,
@@ -483,6 +534,8 @@ export const useContractsStore = defineStore('contracts', () => {
     selectedCnInvLookup,
     loadCnNums,
     selectCnNum,
+    loadCnInvs,
+    selectCnInv,
     loadSides,
     ensureOrgIdLookups,
     ensureNumTypes,

@@ -13,19 +13,21 @@
   "detail": "*",
   "children": [
     {
-      "edge": "dv.dbt",
-      "to": "dbt",
+      "edge": "dv.invDbt",
+      "to": "invDbt",
       "card": "N:1",
       "title": [
-        "dbtKey"
+        "idKey",
+        "idNum",
+        "idInv"
       ],
       "detail": "*",
       "children": [
         {
-          "edge": "dbt.idd",
+          "edge": "invDbt.idd",
           "to": "idd",
           "card": "1:N",
-          "folder": "Dbt, связи с invDbt",
+          "folder": "invDbtDbt → Dbt",
           "title": [
             "iddKey",
             "iddInvDbt",
@@ -34,141 +36,138 @@
           "detail": "*",
           "children": [
             {
-              "edge": "idd.invDbt",
-              "to": "invDbt",
+              "edge": "idd.dbt",
+              "to": "dbt",
               "card": "N:1",
               "title": [
-                "idKey",
-                "idNum",
-                "idInv"
+                "dbtKey"
+              ],
+              "detail": "*",
+              "children": []
+            }
+          ]
+        },
+        {
+          "edge": "invDbt.inv",
+          "to": "inv",
+          "card": "N:1",
+          "title": [
+            "iKey",
+            "iTimeOfEntry"
+          ],
+          "detail": "*",
+          "children": [
+            {
+              "edge": "inv.invNum",
+              "to": "invNum",
+              "card": "1:N",
+              "folder": "СФ, номера",
+              "title": [
+                "inKey",
+                "inNum",
+                "inInv"
+              ],
+              "detail": "*",
+              "children": []
+            },
+            {
+              "edge": "inv.cnInv",
+              "to": "cnInv",
+              "card": "1:N",
+              "folder": "СФ, связи с договорами",
+              "title": [
+                "ciKey",
+                "ciCn",
+                "ciInv"
               ],
               "detail": "*",
               "children": [
                 {
-                  "edge": "invDbt.inv",
-                  "to": "inv",
+                  "edge": "cnInv.cn",
+                  "to": "cn",
                   "card": "N:1",
                   "title": [
-                    "iKey",
-                    "iTimeOfEntry"
+                    "cn_key",
+                    "cnMark",
+                    "cn_date"
                   ],
                   "detail": "*",
                   "children": [
                     {
-                      "edge": "inv.invNum",
-                      "to": "invNum",
+                      "edge": "cn.cnNum",
+                      "to": "cnNum",
                       "card": "1:N",
-                      "folder": "СФ, номера",
+                      "folder": "Договор, номера",
                       "title": [
-                        "inKey",
-                        "inNum",
-                        "inInv"
+                        "cnnKey",
+                        "cnnNum",
+                        "cnnType"
                       ],
                       "detail": "*",
                       "children": []
                     },
                     {
-                      "edge": "inv.cnInv",
-                      "to": "cnInv",
+                      "edge": "cn.cn_s",
+                      "to": "cn_s",
                       "card": "1:N",
-                      "folder": "СФ, связи с договорами",
+                      "folder": "Договор. Стороны",
                       "title": [
-                        "ciKey",
-                        "ciCn",
-                        "ciInv"
+                        "cn_s_key",
+                        "cn_s_type"
                       ],
                       "detail": "*",
                       "children": [
                         {
-                          "edge": "cnInv.cn",
-                          "to": "cn",
-                          "card": "N:1",
+                          "edge": "cn_s.smpl",
+                          "to": "smpl",
+                          "card": "1:N",
+                          "folder": "Организации",
                           "title": [
-                            "cn_key",
-                            "cnMark",
-                            "cn_date"
+                            "csosKey",
+                            "csosOrgId"
                           ],
                           "detail": "*",
                           "children": [
                             {
-                              "edge": "cn.cnNum",
-                              "to": "cnNum",
-                              "card": "1:N",
-                              "folder": "Договор, номера",
+                              "edge": "smpl.orgId",
+                              "to": "orgId",
+                              "card": "N:1",
                               "title": [
-                                "cnnKey",
-                                "cnnNum",
-                                "cnnType"
+                                "org_id_value_l"
+                              ],
+                              "detail": [
+                                "org_id_type",
+                                "org_id_key"
+                              ],
+                              "children": [
+                                {
+                                  "edge": "orgId.og",
+                                  "to": "og",
+                                  "card": "N:1",
+                                  "title": [
+                                    "ogNm",
+                                    "ogKey"
+                                  ],
+                                  "detail": [
+                                    "ogNmOf",
+                                    "ogINN",
+                                    "ogKPP"
+                                  ],
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "edge": "smpl.org",
+                              "to": "org",
+                              "card": "1:N",
+                              "folder": "cn_s_org",
+                              "title": [
+                                "cn_s_org_key",
+                                "csoCnDate"
                               ],
                               "detail": "*",
                               "children": []
-                            },
-                            {
-                              "edge": "cn.cn_s",
-                              "to": "cn_s",
-                              "card": "1:N",
-                              "folder": "Договор. Стороны",
-                              "title": [
-                                "cn_s_key",
-                                "cn_s_type"
-                              ],
-                              "detail": "*",
-                              "children": [
-                                {
-                                  "edge": "cn_s.smpl",
-                                  "to": "smpl",
-                                  "card": "1:N",
-                                  "folder": "Организации",
-                                  "title": [
-                                    "csosKey",
-                                    "csosOrgId"
-                                  ],
-                                  "detail": "*",
-                                  "children": [
-                                    {
-                                      "edge": "smpl.orgId",
-                                      "to": "orgId",
-                                      "card": "N:1",
-                                      "title": [
-                                        "org_id_value_l"
-                                      ],
-                                      "detail": [
-                                        "org_id_type",
-                                        "org_id_key"
-                                      ],
-                                      "children": [
-                                        {
-                                          "edge": "orgId.og",
-                                          "to": "og",
-                                          "card": "N:1",
-                                          "title": [
-                                            "ogNm",
-                                            "ogKey"
-                                          ],
-                                          "detail": [
-                                            "ogNmOf",
-                                            "ogINN",
-                                            "ogKPP"
-                                          ],
-                                          "children": []
-                                        }
-                                      ]
-                                    },
-                                    {
-                                      "edge": "smpl.org",
-                                      "to": "org",
-                                      "card": "1:N",
-                                      "folder": "cn_s_org",
-                                      "title": [
-                                        "cn_s_org_key",
-                                        "csoCnDate"
-                                      ],
-                                      "detail": "*",
-                                      "children": []
-                                    }
-                                  ]
-                                }
-                              ]
                             }
                           ]
                         }

@@ -6,12 +6,14 @@ import { gql } from '@apollo/client/core';
 
 import { apolloClient } from '@/plugins/apollo';
 import { RequestError } from './http';
+import { fetchRelationExpand, fetchRelationNode, type RelationApiRow } from './relation-api';
 import type {
   CnContractCreateRequest,
   CnContractCreatedDto,
   CnDto,
   CnInvCreateRequest,
   CnInvDto,
+  CnInvListRow,
   CnInvUpdateRequest,
   CnNumDto,
   CnNumTypeLookupDto,
@@ -27,6 +29,28 @@ import type {
   CnSOrgUpdateRequest,
   CnUpdateRequest
 } from '@/types/contracts';
+
+/** Порог: для коротких списков подтягиваем {@code inv.iNum} отдельными relationNode. */
+const CN_INV_INUM_ENRICH_LIMIT = 80;
+
+/**
+ * Читает поле строки relationExpand/relationNode.
+ */
+function relationField(row: RelationApiRow, name: string): string | null {
+  return row.fields.find((field) => field.name === name)?.value ?? null;
+}
+
+/**
+ * Парсит целое из поля relation-строки.
+ */
+function relationInt(row: RelationApiRow, name: string): number | null {
+  const raw = relationField(row, name);
+  if (raw == null || raw === '') {
+    return null;
+  }
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : null;
+}
 
 const CN_NUMS_QUERY = gql`
   query CnNums {
@@ -437,6 +461,43 @@ export async function updateCn(id: number, input: CnUpdateRequest): Promise<CnDt
     return result.data.updateCn;
   } catch (error) {
     throw toRequestError(error, 'Не удалось обновить договор');
+  }
+}
+
+/**
+ * Связи {@code cnInv} выбранного договора (ребро {@code cn.cnInv}).
+ * Для списков ≤ {@link CN_INV_INUM_ENRICH_LIMIT} дополнительно читает {@code inv.iNum}.
+ *
+ * @param cnKey {@code ags.cn.cn_key}
+ */
+export async function fetchCnInvsByCn(cnKey: number): Promise<CnInvListRow[]> {
+  try {
+    const rows = await fetchRelationExpand('cn.cnInv', cnKey);
+    const mapped: CnInvListRow[] = [];
+    for (const row of rows) {
+      const ciInv = relationInt(row, 'ciInv');
+      if (ciInv == null || ciInv <= 0) {
+        continue;
+      }
+      mapped.push({
+        ciKey: row.key,
+        ciInv,
+        ciCn: relationInt(row, 'ciCn'),
+        ciTimeOfEntry: relationField(row, 'ciTimeOfEntry'),
+        iNum: null
+      });
+    }
+    if (mapped.length > 0 && mapped.length <= CN_INV_INUM_ENRICH_LIMIT) {
+      await Promise.all(
+        mapped.map(async (item) => {
+          const inv = await fetchRelationNode('inv', item.ciInv);
+          item.iNum = inv != null ? relationField(inv, 'iNum') : null;
+        })
+      );
+    }
+    return mapped;
+  } catch (error) {
+    throw toRequestError(error, 'Не удалось загрузить счета-фактуры договора');
   }
 }
 
