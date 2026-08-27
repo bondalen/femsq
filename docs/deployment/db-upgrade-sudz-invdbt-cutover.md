@@ -3,7 +3,7 @@
 **Файл:** `docs/deployment/db-upgrade-sudz-invdbt-cutover.md`  
 **Дата создания:** 2026-08-27  
 **lastUpdated:** 2026-08-27  
-**Версия:** 0.3.5 (M2: concurrent multi-cia split в seed)  
+**Версия:** 0.3.6 (M3 Calm F1)  
 **Автор:** Александр  
 **Статус:** черновик — наполнение по мере обсуждения `Dbt`, DEV-репетиции и обследования prod
 
@@ -229,7 +229,9 @@ N_slots_plan / N_Dbt_plan; **сверить** очередь §1.2 (10 `iKey`) �
 
 ### F — Calm F1
 
-При уникальной сумме `S` на `iKey` среди слотов (по истории Value) и в текущем Excel → писать в этот `invDbt`, не в очередь. После D (+E).
+При уникальной сумме `S` на `iKey` среди слотов (история `DbtValue.dvTtl`, ε=0.01) и однозначном `invDbtVar` → писать Value в этот `invDbt`, не в очередь. Реализация: `JdbcSudzDao` F1 CTE; UAT 910 — [M3_CALM_F1.md](../development/notes/sql/26-0827-sudz-m2-seed/M3_CALM_F1.md). DEV: FK `dvUpl` → `sudz.cn_inv_dbt_upl` (06c).
+
+**Статус:** ✅ M3 2026-08-27 (JAR 0.1.0.225).
 
 ### G — Приёмка DEV
 
@@ -295,6 +297,7 @@ Backup → DDL → seed D(+E) → JAR → smoke → режим Access.
 | 0.3.3 | 2026-08-27 | **E1 ✅:** вся история `cn_inv_dbt` → Value; var по потребности §1.4 |
 | 0.3.4 | 2026-08-27 | **M2 DEV ✅:** пакет `26-0827-sudz-m2-seed/`; bak `FishEye_*_pre-m2-seed.bak` |
 | 0.3.5 | 2026-08-27 | **§1.5 / D4a:** concurrent multi-cia → доп. `invDbt`; E1 без потерь сумм |
+| 0.3.6 | 2026-08-27 | **M3 Calm F1** + 06c FK `dvUpl`→`sudz.cn_inv_dbt_upl`; UAT 910 |
 
 ### 6.1. Результат M2 на DEV (`sudz`, 2026-08-27; после 06a)
 
@@ -302,10 +305,9 @@ Backup → DDL → seed D(+E) → JAR → smoke → режим Access.
 |--------|--:|------------|
 | `invDbt` | 11 907 + N_split | N_split=9 на DEV |
 | `Dbt` | 11 897 + N_split | L* −10; +split |
-| `DbtValue` | = `cn_inv_dbt` | целевой инвариант (42 367) |
-| `idNum` unnamed | **0** | |
+| `DbtValue` | = `cn_inv_dbt` | 42 367 |
 | split notes | `M2-concurrent-cia` / `M2-cn-migrate` | §1.5 |
-| `dvUpl` FK | → `ags.cn_inv_dbt_upl` | |
+| `dvUpl` FK | → `sudz.cn_inv_dbt_upl` | **06c** (не ags) |
 
 Откат: `ROLLBACK_M2.sql` или restore bak.
 
@@ -313,7 +315,7 @@ Backup → DDL → seed D(+E) → JAR → smoke → режим Access.
 
 ## 7. Следующий шаг
 
-1. **M1** ✅ · **M2** ✅ (DEV, с D4a).  
-2. **M3** — calm F1 (sum→слот).  
-3. Prod seed checklist: D1…D4 → **D4a** → E1 → VERIFY сумм.  
-4. Краткая сводка M2-конвенций в 08.
+1. **M1–M3** ✅.  
+2. **M4** — экран двоящих + чекбокс 7.  
+3. Prod seed checklist: D1…D4 → **D4a** → E1 → VERIFY; F1 в коде JAR.  
+4. Краткая сводка M2/M3-конвенций в 08.

@@ -182,6 +182,35 @@
           "entries": [
             {
               "log": {
+                "displayName": "S74 M3 Calm F1 + UAT 910 (success). № log-2026-08-27-020",
+                "log-attributes": {
+                  "id": "log-2026-08-27-020",
+                  "timestamp": "2026-08-27T15:15:00+03:00",
+                  "level": "success",
+                  "effort": "2.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Calm F1 sum→slot in invDbtLoad; 06c FK sudz upl; UAT 910",
+                    "details": "JdbcSudzDao F1 CTE ε=0.01; exclude from queue when unique slot+var. 06c: dvUpl→sudz.cn_inv_dbt_upl. Queue INSERT skip existing cidut. JAR 0.1.0.225. UAT 910: Values 1629 (f1=1), open ~131 (mostly ambiguous).",
+                    "outcome": "M3 ✅; next M4. План 0.99.7; cutover 0.3.6; сегм. 37.",
+                    "references": [
+                      "docs/development/notes/sql/26-0827-sudz-m2-seed/M3_CALM_F1.md",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
                 "displayName": "S74 M2 D4a concurrent-cia split (success). № log-2026-08-27-019",
                 "log-attributes": {
                   "id": "log-2026-08-27-019",

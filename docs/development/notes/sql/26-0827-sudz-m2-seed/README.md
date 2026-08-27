@@ -31,7 +31,7 @@
 | Энтропия §1.2 | `idNum=254` / `253`; Value СГК `606012` → sibling |
 | **Concurrent multi-cia (06a)** | если ≥2 `cn_inv_dbt` на `(slot,upl)` — доп. `invDbt` (`idNum` 241+), `dbtNote` `M2-concurrent-cia` или `M2-cn-migrate` |
 | L001–L010 | оба слота → один `Dbt` |
-| `dvUpl` | FK → `ags.cn_inv_dbt_upl` |
+| `dvUpl` | FK → `sudz.cn_inv_dbt_upl` (06c; зеркало ags + funnel 910) |
 
 ## Порядок apply
 
@@ -44,11 +44,14 @@
 05_SEED_Dbt_bridges_Lmerge.sql
 06_SEED_invDbtCia.sql
 06a_SPLIT_concurrent_cia_slots.sql   -- обязателен до E1 / на prod
-06b_DDL_DbtValue_upl_FK_ags.sql
+06b_DDL_DbtValue_upl_FK_ags.sql   -- legacy; superseded by 06c
+06c_DDL_DbtValue_upl_FK_sudz.sql  -- sync ags→sudz upl + FK → sudz (воронка 910)
 07_SEED_E1_var_value.sql
 08_BACKFILL_cmm_Dbt.sql
 99_VERIFY.sql
 ```
+
+**M3:** код calm F1 в `JdbcSudzDao` (после M2 seed); UAT upl 910.
 
 Откат: `ROLLBACK_M2.sql` (или restore `.bak`).
 
