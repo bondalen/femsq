@@ -3,7 +3,10 @@ package com.femsq.database.service;
 import com.femsq.database.dao.SudzDao;
 import com.femsq.database.model.sudz.SudzCmmGrLookup;
 import com.femsq.database.model.sudz.SudzCnInvUplInvDbtDouble;
+import com.femsq.database.model.sudz.SudzInvDbtDoubleAdvice;
 import com.femsq.database.model.sudz.SudzInvDbtSlot;
+import com.femsq.database.model.sudz.SudzInvDbtSlotTimeline;
+import com.femsq.database.model.sudz.SudzInvDbtTimelinePoint;
 import com.femsq.database.model.sudz.SudzInvDbtVarCandidates;
 import com.femsq.database.model.sudz.SudzCnInvUplSfDouble;
 import com.femsq.database.model.sudz.SudzD644Row;
@@ -581,6 +584,23 @@ public class DefaultSudzService implements SudzService {
             throw new IllegalArgumentException("ciudKey должен быть положительным: " + ciudKey);
         }
         return sudzDao.findInvDbtVarCandidates(ciudKey);
+    }
+
+    @Override
+    public SudzInvDbtDoubleAdvice findInvDbtDoubleAdvice(int ciudKey, BigDecimal epsilon) {
+        if (ciudKey <= 0) {
+            throw new IllegalArgumentException("ciudKey должен быть положительным: " + ciudKey);
+        }
+        BigDecimal eps = epsilon == null ? new BigDecimal("0.01") : epsilon;
+        return sudzDao.findInvDbtDoubleAdvice(ciudKey, eps);
+    }
+
+    @Override
+    public SudzInvDbtSlotTimeline findInvDbtSlotTimeline(int iKey, int idKey, int ciudKey) {
+        if (iKey <= 0 || idKey <= 0 || ciudKey <= 0) {
+            throw new IllegalArgumentException("iKey, idKey и ciudKey должны быть положительными");
+        }
+        return sudzDao.findInvDbtSlotTimeline(iKey, idKey, ciudKey);
     }
 
     @Override

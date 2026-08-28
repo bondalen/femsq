@@ -47,6 +47,12 @@ if ! grep -q "export { default as FemsqTree }" "$INDEX_TS"; then
   exit 1
 fi
 
+if ! grep -q "export { default as FemsqChart }" "$INDEX_TS"; then
+  echo -e "${RED}ERROR: FemsqChart не экспортируется из $INDEX_TS${NC}"
+  echo "Синхронизировать feQuLib (сегм. 22c / chart platform)."
+  exit 1
+fi
+
 cd "$FEQULIB_DIR"
 BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 HEAD="$(git rev-parse HEAD)"

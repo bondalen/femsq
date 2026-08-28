@@ -3,10 +3,10 @@
 **Дата создания:** 2026-08-02  
 **Последнее обновление:** 2026-08-27  
 **Проект:** FEMSQ  
-**Версия плана:** 0.99.7 (M3 Calm F1 ✅; next M4)  
-**Задача:** 0065–0072 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md); **активно: 0069** — **S74 M4** экран/7; **0071** Договоры 🔶; **S69**/**S70** ✅  
-**Статус плана:** ✅ 0070; **S66e**/**S71**/**S72** A1–A2/B1/B1b ✅; **S73 зерно** ✅; **S74 M1–M3** ✅; next **M4**; **0071** 🔶
-**Cutover prod/DEV:** [db-upgrade-sudz-invdbt-cutover.md](../../../../deployment/db-upgrade-sudz-invdbt-cutover.md) · §5.6 [S74](#s74--трек-cutover-m1m6--2026-08-27) · D1: [04-5](../../domain/sudz/04-5_dbt-invdbt-cardinality-d1.md)  
+**Версия плана:** 0.99.10 (КСДД 22c ✅)
+**Задача:** 0065–0072 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md); **активно: 0069** — **S74 M5** чекбоксы; **0071** Договоры 🔶; **S69**/**S70** ✅
+**Статус плана:** ✅ 0070; **S66e**/**S71**/**S72** A1–A2/B1/B1b ✅; **S73 зерно** ✅; **S74 M1–M4** ✅; next **M5**; **0071** 🔶
+**Cutover prod/DEV:** [db-upgrade-sudz-invdbt-cutover.md](../../../../deployment/db-upgrade-sudz-invdbt-cutover.md) · §5.6 [S74](#s74--трек-cutover-m1m6--2026-08-27) · D1: [04-5](../../domain/sudz/04-5_dbt-invdbt-cardinality-d1.md)
 **Паспорт pmt:** [02-11_cn-inv-pmt-upl-access.md](../../UI/02-11_cn-inv-pmt-upl-access.md) · §5.7  
 **План UI pmt:** [chat-plan-26-0819-cn-inv-pmt-upl.md](./chat-plan-26-0819-cn-inv-pmt-upl.md) · §5.8  
 **План UI Договоры / СФ (T7):** [chat-plan-26-0826-contracts-inv.md](./chat-plan-26-0826-contracts-inv.md) · 0071  
@@ -205,7 +205,7 @@
 | S71 | 2026-08-25 | **M2:** `DbtValue` без `dvDbt`; якорь `invDbt` + var + upl; `Dbt` обязателен, связь через `invDbtDbt`; DDL в БД пока старый — backlog | [04-3 §10](../../domain/sudz/04-3_problems-solutions.md#10-dbtvalue-без-прямого-fk-на-dbt-m2--s71); [08 §2.5](../../domain/sudz/08-target-schema.md) | ✅ док |
 | S72 | 2026-08-25…26 | Дорожная карта; **B1/B1b/A2** ✅; порядок C пересмотрен **S74** | [§5.6 S72](#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25) | 🔄 |
 | S73-grain | 2026-08-26 | Зерно legacy `(iKey,ciaName)≈idNum`; счёт **11906–11907** | [04-4](../../domain/sudz/04-4_legacy-debt-grain.md) | ✅ |
-| S74 | 2026-08-27 | Трек cutover **M1–M6** (Dbt→DEV seed→calm→экран/7→чекбоксы→prod) | [§5.6 S74](#s74--трек-cutover-m1m6--2026-08-27); [cutover](../../../../deployment/db-upgrade-sudz-invdbt-cutover.md) | 🔄 M4 (M1–M3 ✅) |
+| S74 | 2026-08-27 | Трек cutover **M1–M6** (Dbt→DEV seed→calm→экран/7→чекбоксы→prod) | [§5.6 S74](#s74--трек-cutover-m1m6--2026-08-27); [cutover](../../../../deployment/db-upgrade-sudz-invdbt-cutover.md) | 🔄 M5 (M1–M4 ✅) |
 | S73 | 2026-08-26 | **0071 T7:** отдельный план вкладки «Счета-фактуры» (слева `cnInv`, справа `contracts-inv`); interim = `cn-picker` | [chat-plan-26-0826-contracts-inv.md](./chat-plan-26-0826-contracts-inv.md) | 🔄 план |
 | S67 | 2026-08-16 | UAT 910 dry: **128** дог. / **705** СФ ✅, но rebuild **~3m14s** (CTE). Перепись на `#temp`+индексы; лог СФ усечён (8+…) | JAR **0.1.0.196** | ✅ via S67a |
 | S67a | 2026-08-16 | `#temp` без COLLATE → conflict Latin1 vs Cyrillic на JOIN `cnnNumNull`. Колонки `#cidu*` → `Cyrillic_General_CI_AS` | JAR **0.1.0.197** | ✅ UAT: sqlMs=241, 128/705 |
@@ -803,7 +803,7 @@ Apply Inv (`inNumCount IS NULL` vs Access «весь TblCnInv») — намер�
 | 19 | 2026-08-25 | Дорожная карта S72 A→D; **порядок пересмотрен сегм. 21** | ✅→21 |
 | 20 | 2026-08-26 | **UI экрана двоящих:** каркас как КСДСФ; create+link; var на экране; плоский список; суммы old↑/new↓ + деревья; `ciaName` в old | ✅ |
 | 21 | 2026-08-26 | **SoT выгрузки = `DbtValue`:** Value с экрана **и** в **calm** `invDbtLoad`; B1 до записи; A4 снят; `Dbt`/`invDbtDbt` — C1 | ✅ |
-| 22 | 2026-08-26 | Экран двоящих: кейсы; **S73-grain**; счёт **11906–11907** / 10 manual | 🔄 |
+| 22 | 2026-08-26 | Экран двоящих: кейсы; **S73-grain**; счёт **11906–11907** / 10 manual | ✅ M4 |
 | 23 | 2026-08-27 | Трек **S74 M1–M6**; старт **M1** (повестка Dbt D1–D7) | ✅ |
 | 24 | 2026-08-27 | **M1/D1:** 1:N `Dbt`↔`invDbt` только во внешних Rslt Excel; реестр L001–L010; БД без новых | ✅ |
 | 25 | 2026-08-27 | **M1/D2:** P1 после seed — тот же `Dbt` + новый слот / `invDbtDbt` (не новый `Dbt`) | ✅ |
@@ -819,6 +819,8 @@ Apply Inv (`inNumCount IS NULL` vs Access «весь TblCnInv») — намер�
 | 35 | 2026-08-27 | **M2 DEV seed:** пакет `26-0827-sudz-m2-seed`; counts 11907/11897/42354; L* OK; bak pre-m2-seed | ✅ |
 | 36 | 2026-08-27 | **D4a:** concurrent multi-cia → доп. `invDbt` (классы A/B; 40665=migrate); E1 = cid; cutover §1.5 | ✅ |
 | 37 | 2026-08-27 | **M3 Calm F1:** sum→слот (ε=0.01); 06c FK sudz upl; UAT 910: Value 1629 / f1=1 / queue ~131; JAR 225 | ✅ |
+| 38 | 2026-08-27 | **M4 экран/7:** ciaName + деревья сумм + `[row.select]`; Link UAT `2446→4405`; dry 7 → queued=124; JAR 226 | ✅ |
+| 39 | 2026-08-28 | **КСДД 22b:** очередь как КСДСФ — full DELETE rebuild, DELETE после resolve, UI «к разбору» | ✅ |
 
 **Код v1 (2026-08-24, после подтверждения владельца):** реализованы `invDbtVarEnsure` + `invDbtLoad` (DAO/оркестратор/логи), DDL `sudz.CnInvUplInvDbtDouble`, stub экрана `sudz-inv-dbt-double`, Access-хвост disabled. Auto load = calm path (без sum-match multi). **2026-08-25:** на лаунчере отдельная вкладка «двоящие долги СФ» (очередь `invDbtDoubles` рядом с «повторяющиеся СФ»). Следующее: **UAT upl 910** (dry → flLoad), затем наполнение экрана разбора.
 
@@ -1069,7 +1071,7 @@ Access-stub’ы (`invDbtDouble`, `CnCtptInvExistAccNotLoad`, `ciduTbl…NameCou
 
 **Сегмент 22 — процесс работы оператора на экране двоящих (владелец, 2026-08-26):**
 
-**Статус:** 🔄 наработка опыта на кейсах DBHub (upl 910); UI-регламент и ETL old→new — после кейсов. **Канон зерна (S73) зафиксирован в доках.**
+**Статус:** ✅ закрыт по UI (M4 2026-08-27): `ciaName`, деревья сумм, `[row.select]`, регламент Link по уникальной сумме; UAT Link `2446→4405`. Defer/bulk — вне scope.
 
 **Принято сейчас:**
 1. Тексты `[queue.build]` — **человекочитаемые** (коды в скобках).
@@ -1077,10 +1079,39 @@ Access-stub’ы (`invDbtDouble`, `CnCtptInvExistAccNotLoad`, `ciduTbl…NameCou
 3. Smoke Create по `iKey=329` / slot **10130** — **откатан** (Value+мост+слот удалены; очередь снова `open`).
 4. **S73 — зерно старого долга:** `(iKey, ciaNameNull) ≈ (idInv, idNum)`; СГК **не** в ключе (0 concurrent multi-acc); оценка числа долгов **11 906–11 907**, из них **10** ручных (`9` сплит + `4480`). Док: [04-4](../../domain/sudz/04-4_legacy-debt-grain.md).
 5. **Cutover (v0.2 → S74):** мероприятия **M1–M6** — см. [S74](#s74--трек-cutover-m1m6--2026-08-27). Док: [db-upgrade-sudz-invdbt-cutover.md](../../../../deployment/db-upgrade-sudz-invdbt-cutover.md).
+6. **M4 UI:** old sums показывают **`ciaName`**; панели сумм — таблица+дерево; live `[row.select]`; регламент — [M4_SCREEN.md](../../../sql/26-0827-sudz-m2-seed/M4_SCREEN.md).
 
-**Кейсы для разбора (очередь 910):** см. чат; старт: `329`, `12032` (7 Excel↔cia по сумме), ambiguous `1933`. *После M2 seed приоритет смещается на new.*
+**Кейсы для разбора (очередь 910):** `329` (multi, сумма вне истории → ручной выбор); `12032` (7 Excel↔слот по сумме — Link smoke `2446→4405`); ambiguous без var → Create var. *После M2 seed приоритет — new.*
 
-**Сверка:** сегм. 20/21; P2 / `ciaName`; S73-grain; S74.
+**Сверка:** сегм. 20/21; P2 / `ciaName`; S73-grain; S74 M4.
+
+**Сегмент 22b — КСДД: очередь как КСДСФ (владелец, 2026-08-28):**
+
+**Статус:** ✅ код + UI
+
+| # | Решение |
+|---|---------|
+| Имя | **КСДД** — компонент сличения двоящих долгов (аналог КСДСФ) |
+| Rebuild | `DELETE` **все** строки upl; `INSERT` только `open` (Excel∩домен, без Value на upl) |
+| После Link/Create | строка **удаляется** из очереди; SoT = `DbtValue` на upl |
+| UI / launcher | только `open`; «к разбору N» |
+
+Док: [KSDD_QUEUE.md](../../../sql/26-0827-sudz-m2-seed/KSDD_QUEUE.md).
+
+**Сегмент 22c — КСДД: советник + динамика слота (владелец, 2026-08-28):**
+
+**Статус:** ✅ код (JAR после сборки)
+
+| # | Решение |
+|---|---------|
+| Советник | GraphQL `sudzInvDbtDoubleAdvice` → `[advisor]` в «Сообщения» (F1, accnt, амортизация) |
+| Динамика | вкладка по **выбранному** слоту; `sudzInvDbtSlotTimeline` |
+| Графики | **FemsqChart** (feQuLib, ECharts 5); ADR [010](../../../../project/decisions/010-chart-platform-echarts.md) |
+| PDF | Jasper позже; общий SQL с timeline |
+
+Док: [KSDD_ADVISOR.md](../../../sql/26-0827-sudz-m2-seed/KSDD_ADVISOR.md).
+
+**Сверка:** S68u (КСДСФ); сегм. 22; A2.
 
 **Сегмент 23 — трек cutover и возврат к воронке (владелец, 2026-08-27):**
 
@@ -1292,8 +1323,8 @@ Access-stub’ы (`invDbtDouble`, `CnCtptInvExistAccNotLoad`, `ciduTbl…NameCou
 | **M1** | Обсуждение `Dbt` (без UI) | Повестка **D1–D7** ✅; сегм. 24–31 | Письменный канон seed `Dbt` | ✅ |
 | **M2** | DEV-перенос old→new | Seed + **D4a** concurrent split + **E1** + **D3′**; `ROLLBACK_M2` | `DbtValue`=cid; cutover §1.5 | ✅ 2026-08-27 |
 | **M3** | Calm F1 | Sum уникальна → тот же `invDbt`; код + UAT 910 | Value 1629 / f1=1; [M3_CALM_F1](../../../sql/26-0827-sudz-m2-seed/M3_CALM_F1.md) | ✅ 2026-08-27 |
-| **M4** | Экран двоящих + чекбокс 7 | Доработка UI/регламента на seeded; Create/Link + Value | Сегм. 22 закрыт по UI | 🔄 next |
-| **M5** | Остальные чекбоксы воронки | До завершения процесса загрузки свода (C2/Exist/… по реестру stepId) | Воронка 1.1.1.1 закрыта | ☐ после M4 |
+| **M4** | Экран двоящих + чекбокс 7 | Доработка UI/регламента на seeded; Create/Link + Value | Сегм. 22 закрыт по UI; [M4_SCREEN](../../../sql/26-0827-sudz-m2-seed/M4_SCREEN.md) | ✅ 2026-08-27 |
+| **M5** | Остальные чекбоксы воронки | До завершения процесса загрузки свода (C2/Exist/… по реестру stepId) | Воронка 1.1.1.1 закрыта | 🔄 next |
 | **M6** | Prod | Survey A → `MSSQL2012/` → окно H → dual-read off | Cutover на FishEye | ☐ после M5 |
 
 **Подпункты M1 (D1–D7)** — см. cutover §1.1; стартовые предложения — в чате при открытии M1.
@@ -1306,7 +1337,7 @@ Access-stub’ы (`invDbtDouble`, `CnCtptInvExistAccNotLoad`, `ciduTbl…NameCou
 
 **Контекст:** обязательность `Dbt` в модели; M2 физ. (S71); **Value — SoT выгрузки**; **seed канона `Dbt` — трек S74**, не «после всего UI».
 
-**Порядок ближайших работ:** **S74 M4 → M5 → M6** (M1–M3 ✅); хвосты S72 **B2/B3** — по мере M4/M5; **0071** параллельно.
+**Порядок ближайших работ:** **S74 M5 → M6** (M1–M4 ✅); хвосты S72 **B2/B3** — по мере M5; **0071** параллельно.
 
 ###### Фаза A — слой I + очередь (+ Value после B1)
 
@@ -1314,7 +1345,7 @@ Access-stub’ы (`invDbtDouble`, `CnCtptInvExistAccNotLoad`, `ciduTbl…NameCou
 |---|-----|------------|--------|
 | **A1** | UAT 910 ensure/load | dry → apply ensure/load → dry; 1634 var; apply Auto **1627** → БД **1630** `invDbt`+мост; очередь **133**; dry повтор без роста слотов (~39 с) | ✅ 2026-08-25 |
 | **A3** | Hist multi в queue/calm | сегм. 13 OR: +`histCidMulti`; JAR **0.1.0.215**; UAT dry 910: очередь **133** | ✅ |
-| **A2** | Экран двоящих долгов СФ | UI сегм. 20; create/link слоя I + **`DbtValue`** на upl; rebuild не open при наличии Value | ✅ v1 2026-08-26; **доработка = S74 M4** |
+| **A2** | Экран двоящих долгов СФ | UI сегм. 20; create/link слоя I + **`DbtValue`** на upl; rebuild не open при наличии Value | ✅ v1 2026-08-26; **M4 2026-08-27** |
 | ~~**A4**~~ | ~~отдельный SoT слоя I~~ | **Снят (сегм. 21):** SoT = `DbtValue` | ❌ |
 
 ###### Фаза B — физика Value M2 (**до** записи Value в воронке)

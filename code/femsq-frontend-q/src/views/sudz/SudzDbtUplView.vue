@@ -266,7 +266,7 @@
                 <QTab name="doubles" label="повторяющиеся СФ" data-test="sudz-dbt-upl-tab-doubles" />
                 <QTab
                   name="inv-dbt-doubles"
-                  label="двоящие долги СФ"
+                  label="КСДД"
                   data-test="sudz-dbt-upl-tab-inv-dbt-doubles"
                 />
               </QTabs>
@@ -348,7 +348,7 @@
                   />
                   <div class="row items-center q-pa-sm q-gutter-sm shrink-0">
                     <div v-if="!store.invDbtDoubles.length" class="text-grey-6 col">
-                      Очередь двоящих долгов пуста (после шага invDbtLoad).
+                      КСДД: к разбору нет (после шага invDbtLoad или всё разобрано).
                     </div>
                     <QSpace v-else />
                     <QBtn
@@ -356,7 +356,7 @@
                       dense
                       no-caps
                       color="primary"
-                      label="Разбор двоящих задолженностей СФ…"
+                      label="КСДД — разбор двоящих долгов…"
                       data-test="sudz-dbt-upl-open-inv-dbt-double"
                       @click="openInvDbtDouble"
                     />
@@ -529,7 +529,7 @@ function openSfDouble(): void {
 }
 
 /**
- * Открывает каркас экрана разбора двоящих задолженностей СФ.
+ * Открывает экран КСДД (разбор двоящих долгов) для текущей выгрузки.
  */
 function openInvDbtDouble(): void {
   connection.navigate('sudz-inv-dbt-double');

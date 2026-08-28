@@ -15,6 +15,8 @@ import type {
   SudzCmmGrLookup,
   SudzCnInvUplSfDouble,
   SudzCnInvUplInvDbtDouble,
+  SudzInvDbtDoubleAdvice,
+  SudzInvDbtSlotTimeline,
   SudzInvDbtVarCandidates,
   SudzD644Row,
   SudzDbtUplFile,
@@ -313,6 +315,40 @@ const SUDZ_INV_DBT_SLOTS = gql`
   }
 `;
 
+const SUDZ_INV_DBT_DOUBLE_ADVICE = gql`
+  query SudzInvDbtDoubleAdvice($ciudKey: Int!, $epsilon: Float) {
+    sudzInvDbtDoubleAdvice(ciudKey: $ciudKey, epsilon: $epsilon) {
+      messageText
+      confidence
+      action
+      recommendIdKey
+      recommendVarKey
+    }
+  }
+`;
+
+const SUDZ_INV_DBT_SLOT_TIMELINE = gql`
+  query SudzInvDbtSlotTimeline($iKey: Int!, $idKey: Int!, $ciudKey: Int!) {
+    sudzInvDbtSlotTimeline(iKey: $iKey, idKey: $idKey, ciudKey: $ciudKey) {
+      idKey
+      idNum
+      ciaName
+      varKey
+      accnt
+      excelAnchor
+      excelStatusDate
+      points {
+        uplKey
+        statusDate
+        ttl
+        overdue
+        source
+        varKey
+      }
+    }
+  }
+`;
+
 const CREATE_INV_DBT_FROM_DOUBLE = gql`
   mutation CreateSudzInvDbtFromDouble($ciudKey: Int!) {
     createSudzInvDbtFromDouble(ciudKey: $ciudKey) {
@@ -387,6 +423,7 @@ const SUDZ_SF_DOUBLE_SUM_MATCHES = gql`
         debtType
         uplKey
         ciaKey
+        ciaName
       }
       newMatches {
         dvKey
@@ -886,6 +923,59 @@ export async function getSudzInvDbtSlots(
     return result.data?.sudzInvDbtSlots ?? [];
   } catch (error) {
     throw wrapApolloError(error, 'SudzInvDbtSlots');
+  }
+}
+
+/** Советник КСДД для панели «Сообщения». */
+export async function getSudzInvDbtDoubleAdvice(
+  ciudKey: number,
+  epsilon: number = 0.01
+): Promise<SudzInvDbtDoubleAdvice> {
+  try {
+    const result = await apolloClient.query<{
+      sudzInvDbtDoubleAdvice: SudzInvDbtDoubleAdvice;
+    }>({
+      query: SUDZ_INV_DBT_DOUBLE_ADVICE,
+      variables: { ciudKey, epsilon },
+      fetchPolicy: 'network-only'
+    });
+    const data = result.data?.sudzInvDbtDoubleAdvice;
+    if (!data) {
+      return {
+        messageText: '[advisor]\nнет данных',
+        confidence: 'none',
+        action: 'manual',
+        recommendIdKey: null,
+        recommendVarKey: null
+      };
+    }
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzInvDbtDoubleAdvice');
+  }
+}
+
+/** Временной ряд DbtValue выбранного слота. */
+export async function getSudzInvDbtSlotTimeline(
+  iKey: number,
+  idKey: number,
+  ciudKey: number
+): Promise<SudzInvDbtSlotTimeline> {
+  try {
+    const result = await apolloClient.query<{
+      sudzInvDbtSlotTimeline: SudzInvDbtSlotTimeline;
+    }>({
+      query: SUDZ_INV_DBT_SLOT_TIMELINE,
+      variables: { iKey, idKey, ciudKey },
+      fetchPolicy: 'network-only'
+    });
+    const data = result.data?.sudzInvDbtSlotTimeline;
+    if (!data) {
+      throw new Error('Пустой ответ sudzInvDbtSlotTimeline');
+    }
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzInvDbtSlotTimeline');
   }
 }
 

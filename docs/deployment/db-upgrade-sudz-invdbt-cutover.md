@@ -3,7 +3,7 @@
 **Файл:** `docs/deployment/db-upgrade-sudz-invdbt-cutover.md`  
 **Дата создания:** 2026-08-27  
 **lastUpdated:** 2026-08-27  
-**Версия:** 0.3.6 (M3 Calm F1)  
+**Версия:** 0.3.7 (M4 экран/7)  
 **Автор:** Александр  
 **Статус:** черновик — наполнение по мере обсуждения `Dbt`, DEV-репетиции и обследования prod
 
@@ -233,6 +233,12 @@ N_slots_plan / N_Dbt_plan; **сверить** очередь §1.2 (10 `iKey`) �
 
 **Статус:** ✅ M3 2026-08-27 (JAR 0.1.0.225).
 
+### M4 — экран двоящих + чекбокс 7 (после seed)
+
+UI/регламент на seeded: `ciaName` в old sums, деревья сумм, live `[row.select]`, Link/Create + Value (без `Dbt`). UAT: Link `ciud=2446→idKey=4405` (Value 910); dry `invDbtLoad` → queued=124, values=0. Док: [M4_SCREEN.md](../development/notes/sql/26-0827-sudz-m2-seed/M4_SCREEN.md).
+
+**Статус:** ✅ M4 2026-08-27 (JAR 0.1.0.226).
+
 ### G — Приёмка DEV
 
 Dry seed; UAT calm F1; **возврат к экрану + чекбоксу 7** на seeded данных; далее остальные чекбоксы воронки.
@@ -298,6 +304,7 @@ Backup → DDL → seed D(+E) → JAR → smoke → режим Access.
 | 0.3.4 | 2026-08-27 | **M2 DEV ✅:** пакет `26-0827-sudz-m2-seed/`; bak `FishEye_*_pre-m2-seed.bak` |
 | 0.3.5 | 2026-08-27 | **§1.5 / D4a:** concurrent multi-cia → доп. `invDbt`; E1 без потерь сумм |
 | 0.3.6 | 2026-08-27 | **M3 Calm F1** + 06c FK `dvUpl`→`sudz.cn_inv_dbt_upl`; UAT 910 |
+| 0.3.7 | 2026-08-27 | **M4** экран/7: ciaName, деревья сумм, `[row.select]`; Link UAT; JAR 226 |
 
 ### 6.1. Результат M2 на DEV (`sudz`, 2026-08-27; после 06a)
 
@@ -315,7 +322,7 @@ Backup → DDL → seed D(+E) → JAR → smoke → режим Access.
 
 ## 7. Следующий шаг
 
-1. **M1–M3** ✅.  
-2. **M4** — экран двоящих + чекбокс 7.  
-3. Prod seed checklist: D1…D4 → **D4a** → E1 → VERIFY; F1 в коде JAR.  
-4. Краткая сводка M2/M3-конвенций в 08.
+1. **M1–M4** ✅.  
+2. **M5** — остальные чекбоксы воронки.  
+3. **M6** — prod survey → `MSSQL2012/` → окно H.  
+4. Краткая сводка M2–M4-конвенций в 08.

@@ -2,7 +2,9 @@ package com.femsq.database.dao;
 
 import com.femsq.database.model.sudz.SudzCmmGrLookup;
 import com.femsq.database.model.sudz.SudzCnInvUplInvDbtDouble;
+import com.femsq.database.model.sudz.SudzInvDbtDoubleAdvice;
 import com.femsq.database.model.sudz.SudzInvDbtSlot;
+import com.femsq.database.model.sudz.SudzInvDbtSlotTimeline;
 import com.femsq.database.model.sudz.SudzInvDbtVarCandidates;
 import com.femsq.database.model.sudz.SudzCnInvUplSfDouble;
 import com.femsq.database.model.sudz.SudzD644Row;
@@ -513,6 +515,25 @@ public interface SudzDao {
      * @return стороны / cnNum / invNum / account
      */
     SudzInvDbtVarCandidates findInvDbtVarCandidates(int ciudKey);
+
+    /**
+     * Советник КСДД (сегм. 22c).
+     *
+     * @param ciudKey ключ очереди
+     * @param epsilon допуск суммы
+     * @return рекомендация оператору
+     */
+    SudzInvDbtDoubleAdvice findInvDbtDoubleAdvice(int ciudKey, BigDecimal epsilon);
+
+    /**
+     * Временной ряд одного слота invDbt (вкладка «Динамика»).
+     *
+     * @param iKey СФ
+     * @param idKey слот
+     * @param ciudKey очередь (якорь Excel)
+     * @return точки DbtValue
+     */
+    SudzInvDbtSlotTimeline findInvDbtSlotTimeline(int iKey, int idKey, int ciudKey);
 
     /**
      * INSERT (или reuse UNIQUE) {@code invDbtVar} и запись {@code ciudIdvvKey} в очередь.

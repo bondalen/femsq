@@ -12,9 +12,9 @@
           data-test="sudz-inv-dbt-double-back"
           @click="goBack"
         />
-        <div class="text-h6 col">Разбор двоящих задолженностей СФ</div>
+        <div class="text-h6 col">КСДД — разбор двоящих долгов</div>
         <div class="text-caption text-grey-6 shrink-0">
-          upl={{ uplKey ?? '—' }} · очередь {{ rows.length }} · open {{ openCount }}
+          upl={{ uplKey ?? '—' }} · к разбору {{ rows.length }}
         </div>
       </div>
 
@@ -111,9 +111,9 @@
                 >
                   <div class="text-caption text-grey-6 q-mb-xs">Сообщения</div>
                   <pre
-                    v-if="selected?.ciudReasonDetail"
+                    v-if="messagesText"
                     class="sudz-inv-dbt-messages-body"
-                  >{{ selected.ciudReasonDetail }}</pre>
+                  >{{ messagesText }}</pre>
                   <div v-else class="text-grey-6">
                     Нет сообщений (rebuild очереди заполнит [queue.build]).
                   </div>
@@ -133,47 +133,92 @@
             <template #before>
               <div class="column fill-pane no-wrap q-pa-sm">
                 <div class="text-subtitle2 q-mb-xs shrink-0">Слоты invDbt · СФ</div>
-                <QSplitter
-                  v-model="domainSplit"
-                  horizontal
-                  :limits="[25, 70]"
-                  separator-class="sudz-split-sep"
-                  class="col sudz-sf-splitter"
+                <QTabs
+                  v-model="slotsTab"
+                  dense
+                  align="left"
+                  class="shrink-0"
+                  data-test="sudz-inv-dbt-slots-tabs"
                 >
-                  <template #before>
-                    <FemsqTable
-                      fill
-                      class="fit"
-                      :rows="slots"
-                      :columns="slotColumns"
-                      row-key="idKey"
-                      dense
-                      flat
-                      :loading="slotsLoading"
-                      selection="single"
-                      v-model:selected="selectedSlots"
-                      data-test="sudz-inv-dbt-slots"
-                    />
-                  </template>
-                  <template #after>
-                    <div class="q-pa-sm column fill-pane no-wrap">
-                      <div v-if="!selected?.ciudIKey" class="text-grey-6">
-                        Выберите строку с iKey.
-                      </div>
-                      <RelationTree
-                        v-else
-                        :key="`inv-${selected.ciudIKey}-${treeTick}`"
-                        class="col"
-                        :spec="invSlotsSpec"
-                        :root-id="selected.ciudIKey"
-                        :fetch-node="fetchRelationNode"
-                        :fetch-expand="fetchRelationExpand"
-                        data-test="sudz-inv-dbt-tree"
-                        root-class="sudz-sf-double-tree"
-                      />
+                  <QTab name="slots" label="Слоты и дерево" />
+                  <QTab name="dynamics" label="Динамика" :disable="!selectedSlot" />
+                </QTabs>
+                <QTabPanels v-model="slotsTab" animated class="col sudz-inv-dbt-slot-panels">
+                  <QTabPanel name="slots" class="q-pa-none column fill-pane no-wrap">
+                    <QSplitter
+                      v-model="domainSplit"
+                      horizontal
+                      :limits="[25, 70]"
+                      separator-class="sudz-split-sep"
+                      class="col sudz-sf-splitter"
+                    >
+                      <template #before>
+                        <FemsqTable
+                          fill
+                          class="fit"
+                          :rows="slots"
+                          :columns="slotColumns"
+                          row-key="idKey"
+                          dense
+                          flat
+                          :loading="slotsLoading"
+                          selection="single"
+                          v-model:selected="selectedSlots"
+                          data-test="sudz-inv-dbt-slots"
+                        />
+                      </template>
+                      <template #after>
+                        <div class="q-pa-sm column fill-pane no-wrap">
+                          <div v-if="!selected?.ciudIKey" class="text-grey-6">
+                            Выберите строку с iKey.
+                          </div>
+                          <RelationTree
+                            v-else
+                            :key="`inv-${selected.ciudIKey}-${treeTick}`"
+                            class="col"
+                            :spec="invSlotsSpec"
+                            :root-id="selected.ciudIKey"
+                            :fetch-node="fetchRelationNode"
+                            :fetch-expand="fetchRelationExpand"
+                            data-test="sudz-inv-dbt-tree"
+                            root-class="sudz-sf-double-tree"
+                          />
+                        </div>
+                      </template>
+                    </QSplitter>
+                  </QTabPanel>
+                  <QTabPanel name="dynamics" class="q-pa-none column fill-pane no-wrap">
+                    <div v-if="!selectedSlot" class="text-grey-6 q-pa-sm">
+                      Выберите слот в таблице на вкладке «Слоты и дерево».
                     </div>
-                  </template>
-                </QSplitter>
+                    <template v-else>
+                      <div class="text-caption text-grey-7 q-px-sm q-pt-xs shrink-0">
+                        idKey={{ timeline?.idKey ?? selectedSlot.idKey }}
+                        <span v-if="timeline?.ciaName"> · ciaName={{ timeline.ciaName }}</span>
+                        <span v-if="timeline?.varKey != null"> · var={{ timeline.varKey }}</span>
+                        <span v-if="timeline?.accnt != null"> · accnt={{ timeline.accnt }}</span>
+                      </div>
+                      <FemsqChart
+                        fill
+                        class="col"
+                        :spec="slotChartSpec"
+                        data-test="sudz-inv-dbt-slot-chart"
+                      />
+                      <FemsqTable
+                        class="col-shrink"
+                        style="max-height: 38%"
+                        :rows="timelineRows"
+                        :columns="timelineColumns"
+                        row-key="rowKey"
+                        dense
+                        flat
+                        :loading="timelineLoading"
+                        :show-filter="false"
+                        data-test="sudz-inv-dbt-slot-timeline"
+                      />
+                    </template>
+                  </QTabPanel>
+                </QTabPanels>
               </div>
             </template>
 
@@ -193,18 +238,49 @@
                   <template #before>
                     <div class="column fill-pane no-wrap q-pa-xs">
                       <div class="text-subtitle2 q-px-sm shrink-0">
-                        Старая · cn_inv_dbt (ciaKey)
+                        Старая · cn_inv_dbt (ciaName)
                       </div>
-                      <FemsqTable
-                        fill
-                        class="col"
-                        :rows="oldSumRows"
-                        :columns="oldSumColumns"
-                        row-key="rowKey"
-                        dense
-                        flat
-                        :show-filter="false"
-                      />
+                      <QSplitter
+                        v-model="sumsOldSplit"
+                        horizontal
+                        :limits="[25, 70]"
+                        separator-class="sudz-split-sep"
+                        class="col sudz-sf-splitter"
+                      >
+                        <template #before>
+                          <FemsqTable
+                            fill
+                            class="fit"
+                            :rows="oldSumRows"
+                            :columns="oldSumColumns"
+                            row-key="rowKey"
+                            dense
+                            flat
+                            selection="single"
+                            v-model:selected="selectedOldSum"
+                            :show-filter="false"
+                            data-test="sudz-inv-dbt-sums-old"
+                          />
+                        </template>
+                        <template #after>
+                          <div class="q-pa-sm column fill-pane no-wrap">
+                            <div v-if="!selectedOldSumRow" class="text-grey-6">
+                              Выберите сумму (старая).
+                            </div>
+                            <RelationTree
+                              v-else
+                              :key="`cid-sum-${selectedOldSumRow.cidKey}`"
+                              class="col"
+                              :spec="cidSumSpec"
+                              :root-id="selectedOldSumRow.cidKey"
+                              :fetch-node="fetchRelationNode"
+                              :fetch-expand="fetchRelationExpand"
+                              data-test="sudz-inv-dbt-sums-old-tree"
+                              root-class="sudz-sf-double-tree"
+                            />
+                          </div>
+                        </template>
+                      </QSplitter>
                     </div>
                   </template>
                   <template #after>
@@ -212,16 +288,47 @@
                       <div class="text-subtitle2 q-px-sm shrink-0">
                         Новая · DbtValue
                       </div>
-                      <FemsqTable
-                        fill
-                        class="col"
-                        :rows="newSumRows"
-                        :columns="newSumColumns"
-                        row-key="rowKey"
-                        dense
-                        flat
-                        :show-filter="false"
-                      />
+                      <QSplitter
+                        v-model="sumsNewSplit"
+                        horizontal
+                        :limits="[25, 70]"
+                        separator-class="sudz-split-sep"
+                        class="col sudz-sf-splitter"
+                      >
+                        <template #before>
+                          <FemsqTable
+                            fill
+                            class="fit"
+                            :rows="newSumRows"
+                            :columns="newSumColumns"
+                            row-key="rowKey"
+                            dense
+                            flat
+                            selection="single"
+                            v-model:selected="selectedNewSum"
+                            :show-filter="false"
+                            data-test="sudz-inv-dbt-sums-new"
+                          />
+                        </template>
+                        <template #after>
+                          <div class="q-pa-sm column fill-pane no-wrap">
+                            <div v-if="!selectedNewSumRow" class="text-grey-6">
+                              Выберите сумму (новая).
+                            </div>
+                            <RelationTree
+                              v-else
+                              :key="`dv-sum-${selectedNewSumRow.dvKey}`"
+                              class="col"
+                              :spec="dvSumSpec"
+                              :root-id="selectedNewSumRow.dvKey"
+                              :fetch-node="fetchRelationNode"
+                              :fetch-expand="fetchRelationExpand"
+                              data-test="sudz-inv-dbt-sums-new-tree"
+                              root-class="sudz-sf-double-tree"
+                            />
+                          </div>
+                        </template>
+                      </QSplitter>
                     </div>
                   </template>
                 </QSplitter>
@@ -303,7 +410,9 @@ import RelationTree from '@/components/relation/RelationTree.vue';
 import {
   createSudzInvDbtFromDouble,
   ensureSudzInvDbtVarForDouble,
+  getSudzInvDbtDoubleAdvice,
   getSudzInvDbtDoubleExcelCandidate,
+  getSudzInvDbtSlotTimeline,
   getSudzInvDbtSlots,
   getSudzInvDbtVarCandidates,
   getSudzSfDoubleSumMatches,
@@ -314,6 +423,8 @@ import { useConnectionStore } from '@/stores/connection';
 import { useSudzDbtUplStore } from '@/stores/sudz-dbt-upl';
 import type {
   SudzCnInvUplInvDbtDouble,
+  SudzInvDbtDoubleAdvice,
+  SudzInvDbtSlotTimeline,
   SudzInvDbtVarCandidates,
   SudzInvDbtVarCnNumCandidate,
   SudzInvDbtVarInvNumCandidate,
@@ -322,7 +433,15 @@ import type {
 } from '@/types/sudz';
 import type { RelationTreeSpec } from '@/trees/relation-tree';
 import invSlotsSpecJson from '@/trees/inv-dbt-slots.tree.json';
-import { FemsqTable, type FemsqTableColumn } from 'fequlib';
+import * as cidSumSpecJson from '@/trees/ksdsf-cid-sum.tree.json';
+import * as dvSumSpecJson from '@/trees/ksdsf-dv-sum.tree.json';
+import {
+  FemsqChart,
+  FemsqTable,
+  buildTimeSeriesChartSpec,
+  type ChartSpec,
+  type FemsqTableColumn
+} from 'fequlib';
 import {
   QBtn,
   QCard,
@@ -333,6 +452,10 @@ import {
   QPage,
   QSpace,
   QSplitter,
+  QTab,
+  QTabPanel,
+  QTabPanels,
+  QTabs,
   useQuasar
 } from 'quasar';
 import { computed, ref, watch } from 'vue';
@@ -344,6 +467,7 @@ type SumOld = {
   dbtTtl: number | null;
   dbtOverd: number | null;
   ciaKey: number | null;
+  ciaName: string | null;
 };
 type SumNew = {
   rowKey: string;
@@ -353,8 +477,17 @@ type SumNew = {
   dvTtl: number | null;
   dvUpl: number | null;
 };
+type TimelineRow = {
+  rowKey: string;
+  uplKey: number | null;
+  statusDate: string | null;
+  ttl: number | null;
+  overdue: number | null;
+};
 
 const invSlotsSpec = invSlotsSpecJson as RelationTreeSpec;
+const cidSumSpec = cidSumSpecJson as RelationTreeSpec;
+const dvSumSpec = dvSumSpecJson as RelationTreeSpec;
 const sumMatchEpsilon = 0.01;
 
 const connection = useConnectionStore();
@@ -366,10 +499,14 @@ const queueExcelSplit = ref(55);
 const sfSumsSplit = ref(50);
 const domainSplit = ref(40);
 const sumsOldNewSplit = ref(50);
+const sumsOldSplit = ref(40);
+const sumsNewSplit = ref(40);
 
 const loading = ref(false);
 const excelLoading = ref(false);
 const slotsLoading = ref(false);
+const timelineLoading = ref(false);
+const advisorLoading = ref(false);
 const acting = ref(false);
 const error = ref<string | null>(null);
 const rows = ref<SudzCnInvUplInvDbtDouble[]>([]);
@@ -379,6 +516,12 @@ const slots = ref<SlotRow[]>([]);
 const selectedSlots = ref<SlotRow[]>([]);
 const oldSumRows = ref<SumOld[]>([]);
 const newSumRows = ref<SumNew[]>([]);
+const selectedOldSum = ref<SumOld[]>([]);
+const selectedNewSum = ref<SumNew[]>([]);
+const liveSelectDetail = ref('');
+const advisor = ref<SudzInvDbtDoubleAdvice | null>(null);
+const timeline = ref<SudzInvDbtSlotTimeline | null>(null);
+const slotsTab = ref<'slots' | 'dynamics'>('slots');
 const treeTick = ref(0);
 const varDialog = ref(false);
 const varCandidates = ref<SudzInvDbtVarCandidates | null>(null);
@@ -388,7 +531,9 @@ const selectedInvNums = ref<SudzInvDbtVarInvNumCandidate[]>([]);
 
 const uplKey = computed(() => store.selectedUplKey);
 const selected = computed(() => selectedRows.value[0] ?? null);
-const openCount = computed(() => rows.value.filter((r) => r.ciudStatus === 'open').length);
+const selectedSlot = computed(() => selectedSlots.value[0] ?? null);
+const selectedOldSumRow = computed(() => selectedOldSum.value[0] ?? null);
+const selectedNewSumRow = computed(() => selectedNewSum.value[0] ?? null);
 const canCreateVar = computed(
   () =>
     !!selected.value &&
@@ -422,8 +567,64 @@ const canConfirmVar = computed(() => {
   );
 });
 const excelDebtLabel = computed(() => {
-  const d = excel.value?.cidutDebt;
+  const d = excel.value?.cidutDebt ?? selected.value?.ciudDebt;
   return d == null ? '—' : String(d);
+});
+/**
+ * Текст панели сообщений: [queue.build] + live [row.select].
+ */
+const messagesText = computed(() => {
+  const parts: string[] = [];
+  const build = selected.value?.ciudReasonDetail?.trim();
+  if (build) parts.push(build);
+  const live = liveSelectDetail.value.trim();
+  if (live) parts.push(live);
+  const adv = advisor.value?.messageText?.trim();
+  if (adv) parts.push(adv);
+  return parts.join('\n\n');
+});
+
+const timelineRows = computed((): TimelineRow[] => {
+  const pts = timeline.value?.points ?? [];
+  return pts.map((p, i) => ({
+    rowKey: `${p.uplKey ?? i}-${p.statusDate ?? i}`,
+    uplKey: p.uplKey,
+    statusDate: p.statusDate,
+    ttl: p.ttl,
+    overdue: p.overdue
+  }));
+});
+
+const timelineColumns: FemsqTableColumn<TimelineRow>[] = [
+  { name: 'uplKey', label: 'upl', field: 'uplKey', align: 'right' },
+  { name: 'statusDate', label: 'дата', field: 'statusDate', align: 'left' },
+  { name: 'ttl', label: 'сумма', field: 'ttl', align: 'right' },
+  { name: 'overdue', label: 'просроч.', field: 'overdue', align: 'right' }
+];
+
+/**
+ * ChartSpec для вкладки «Динамика» (выбранный слот).
+ */
+const slotChartSpec = computed((): ChartSpec | null => {
+  const tl = timeline.value;
+  if (!tl?.points?.length) return null;
+  const seriesLabel =
+    tl.ciaName != null ? `ciaName=${tl.ciaName}` : `idKey=${tl.idKey}`;
+  const points = tl.points
+    .filter((p) => p.statusDate != null && p.ttl != null)
+    .map((p) => ({ date: p.statusDate as string, value: p.ttl as number }));
+  const markers =
+    tl.excelAnchor != null
+      ? [
+          {
+            type: 'horizontal' as const,
+            value: tl.excelAnchor,
+            label: `Excel ${tl.excelAnchor}`,
+            style: 'dashed' as const
+          }
+        ]
+      : undefined;
+  return buildTimeSeriesChartSpec(seriesLabel, points, markers, 'DbtValue по выгрузкам');
 });
 
 const queueColumns: FemsqTableColumn<SudzCnInvUplInvDbtDouble>[] = [
@@ -462,6 +663,7 @@ const invNumColumns: FemsqTableColumn<SudzInvDbtVarInvNumCandidate>[] = [
 
 const oldSumColumns: FemsqTableColumn<SumOld>[] = [
   { name: 'cidKey', label: 'cid', field: 'cidKey', align: 'right' },
+  { name: 'ciaName', label: 'ciaName', field: 'ciaName', align: 'left' },
   { name: 'ciaKey', label: 'cia', field: 'ciaKey', align: 'right' },
   { name: 'dbtTtl', label: 'сумма', field: 'dbtTtl', align: 'right' },
   { name: 'dbtOverd', label: 'просроч.', field: 'dbtOverd', align: 'right' }
@@ -499,9 +701,11 @@ function goBack(): void {
 }
 
 /**
- * Перечитать очередь из лаунчера.
+ * Перечитать очередь; при указанном ciudKey восстановить выделение.
+ *
+ * @param keepCiudKey ключ строки для re-select после create/link/var
  */
-async function reloadQueue(): Promise<void> {
+async function reloadQueue(keepCiudKey?: number): Promise<void> {
   const key = uplKey.value;
   if (key == null) {
     rows.value = [];
@@ -516,6 +720,10 @@ async function reloadQueue(): Promise<void> {
       const bi = b.ciudIKey ?? Number.MAX_SAFE_INTEGER;
       return ai - bi || a.ciudKey - b.ciudKey;
     });
+    if (keepCiudKey != null) {
+      const refreshed = rows.value.find((r) => r.ciudKey === keepCiudKey);
+      selectedRows.value = refreshed ? [refreshed] : [];
+    }
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
   } finally {
@@ -575,11 +783,8 @@ async function onConfirmCreateVar(): Promise<void> {
       message: `var=${updated.ciudIdvvKey} для ciud=${row.ciudKey}`
     });
     varDialog.value = false;
-    await reloadQueue();
-    const refreshed = rows.value.find((r) => r.ciudKey === row.ciudKey);
-    if (refreshed) {
-      selectedRows.value = [refreshed];
-    }
+    await reloadQueue(row.ciudKey);
+    treeTick.value += 1;
   } catch (e) {
     $q.notify({
       type: 'negative',
@@ -600,7 +805,7 @@ async function onCreate(): Promise<void> {
   try {
     await createSudzInvDbtFromDouble(row.ciudKey);
     $q.notify({ type: 'positive', message: `Create слота для ciud=${row.ciudKey}` });
-    await reloadQueue();
+    await reloadQueue(row.ciudKey);
     treeTick.value += 1;
   } catch (e) {
     $q.notify({
@@ -626,7 +831,7 @@ async function onLink(): Promise<void> {
       type: 'positive',
       message: `Link ciud=${row.ciudKey} → idKey=${slot.idKey}`
     });
-    await reloadQueue();
+    await reloadQueue(row.ciudKey);
     treeTick.value += 1;
   } catch (e) {
     $q.notify({
@@ -664,9 +869,16 @@ watch(selected, async (row) => {
   selectedSlots.value = [];
   oldSumRows.value = [];
   newSumRows.value = [];
+  selectedOldSum.value = [];
+  selectedNewSum.value = [];
+  liveSelectDetail.value = '';
+  advisor.value = null;
+  timeline.value = null;
+  slotsTab.value = 'slots';
   if (!row) return;
   excelLoading.value = true;
   slotsLoading.value = true;
+  advisorLoading.value = true;
   try {
     excel.value = await getSudzInvDbtDoubleExcelCandidate(row.ciudKey);
     if (row.ciudIKey != null) {
@@ -681,7 +893,8 @@ watch(selected, async (row) => {
         number: m.number,
         dbtTtl: m.dbtTtl,
         dbtOverd: m.dbtOverd,
-        ciaKey: m.ciaKey
+        ciaKey: m.ciaKey,
+        ciaName: m.ciaName
       }));
       newSumRows.value = sums.newMatches.map((m) => ({
         rowKey: String(m.dvKey),
@@ -692,13 +905,77 @@ watch(selected, async (row) => {
         dvUpl: m.dvUpl
       }));
     }
+    advisor.value = await getSudzInvDbtDoubleAdvice(row.ciudKey, sumMatchEpsilon);
+    applyAdvisorSlotPick(advisor.value);
+    const slotNotes = slots.value
+      .map((s) => `${s.idKey}${s.idNote ? `(${s.idNote})` : ''}`)
+      .join(', ');
+    const oldCia = oldSumRows.value
+      .map((m) => m.ciaName ?? (m.ciaKey != null ? `cia#${m.ciaKey}` : '—'))
+      .slice(0, 8)
+      .join(', ');
+    const newSlots = newSumRows.value
+      .map((m) => m.dvInvDbt)
+      .filter((v): v is number => v != null)
+      .slice(0, 8)
+      .join(', ');
+    liveSelectDetail.value = [
+      '[row.select]',
+      `ciud=${row.ciudKey} · iKey=${row.ciudIKey ?? '—'} · status=${row.ciudStatus} · reason=${row.ciudReason ?? '—'} · var=${row.ciudIdvvKey ?? '—'}`,
+      `excel debt=${debt ?? '—'} · ε=${sumMatchEpsilon}`,
+      `slots=${slots.value.length}${slotNotes ? `: ${slotNotes}` : ''}`,
+      `oldSums=${oldSumRows.value.length}${oldCia ? ` · ciaName: ${oldCia}` : ''}`,
+      `newSums=${newSumRows.value.length}${newSlots ? ` · invDbt: ${newSlots}` : ''}`,
+      advisor.value?.confidence
+        ? `advisor: ${advisor.value.action ?? '—'} · confidence=${advisor.value.confidence}`
+        : ''
+    ]
+      .filter(Boolean)
+      .join('\n');
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
   } finally {
     excelLoading.value = false;
     slotsLoading.value = false;
+    advisorLoading.value = false;
   }
 });
+
+watch(selectedSlots, async (picked) => {
+  timeline.value = null;
+  const row = selected.value;
+  const slot = picked[0];
+  if (!row?.ciudIKey || !slot) return;
+  timelineLoading.value = true;
+  try {
+    timeline.value = await getSudzInvDbtSlotTimeline(
+      row.ciudIKey,
+      slot.idKey,
+      row.ciudKey
+    );
+  } catch (e) {
+    $q.notify({
+      type: 'negative',
+      message: e instanceof Error ? e.message : String(e)
+    });
+  } finally {
+    timelineLoading.value = false;
+  }
+});
+
+/**
+ * Pre-select слота по recommendIdKey из советника.
+ *
+ * @param adv ответ API
+ */
+function applyAdvisorSlotPick(adv: SudzInvDbtDoubleAdvice | null): void {
+  const idKey = adv?.recommendIdKey;
+  if (idKey == null) return;
+  const slot = slots.value.find((s) => s.idKey === idKey);
+  if (slot) {
+    selectedSlots.value = [slot];
+  }
+}
 </script>
 
 <style scoped>
@@ -725,5 +1002,12 @@ watch(selected, async (row) => {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 12px;
   line-height: 1.35;
+}
+.sudz-inv-dbt-slot-panels {
+  min-height: 0;
+  background: transparent;
+}
+.sudz-inv-dbt-slot-panels :deep(.q-tab-panel) {
+  padding: 0;
 }
 </style>

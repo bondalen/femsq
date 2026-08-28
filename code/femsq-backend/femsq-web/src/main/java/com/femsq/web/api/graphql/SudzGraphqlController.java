@@ -5,7 +5,9 @@ import com.femsq.database.exception.DaoException;
 import com.femsq.database.model.sudz.SudzCmmGrLookup;
 import com.femsq.database.model.sudz.SudzCnInvUplInvDbtDouble;
 import com.femsq.database.model.sudz.SudzCnInvUplSfDouble;
+import com.femsq.database.model.sudz.SudzInvDbtDoubleAdvice;
 import com.femsq.database.model.sudz.SudzInvDbtSlot;
+import com.femsq.database.model.sudz.SudzInvDbtSlotTimeline;
 import com.femsq.database.model.sudz.SudzInvDbtVarCandidates;
 import com.femsq.database.model.sudz.SudzD644Row;
 import com.femsq.database.model.sudz.SudzDbtUplFile;
@@ -571,6 +573,55 @@ public class SudzGraphqlController {
     public SudzInvDbtVarCandidates sudzInvDbtVarCandidates(@Argument int ciudKey) {
         try {
             return sudzService.findInvDbtVarCandidates(ciudKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Советник КСДД (22c).
+     *
+     * @param ciudKey ключ очереди
+     * @param epsilon допуск суммы; null → 0.01
+     * @return текст {@code [advisor]}
+     */
+    @QueryMapping
+    public SudzInvDbtDoubleAdvice sudzInvDbtDoubleAdvice(
+            @Argument int ciudKey,
+            @Argument Double epsilon
+    ) {
+        try {
+            BigDecimal epsBd = epsilon == null ? new BigDecimal("0.01") : BigDecimal.valueOf(epsilon);
+            return sudzService.findInvDbtDoubleAdvice(ciudKey, epsBd);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Временной ряд одного слота invDbt.
+     *
+     * @param iKey СФ
+     * @param idKey слот
+     * @param ciudKey очередь
+     * @return точки DbtValue
+     */
+    @QueryMapping
+    public SudzInvDbtSlotTimeline sudzInvDbtSlotTimeline(
+            @Argument int iKey,
+            @Argument int idKey,
+            @Argument int ciudKey
+    ) {
+        try {
+            return sudzService.findInvDbtSlotTimeline(iKey, idKey, ciudKey);
         } catch (IllegalArgumentException exception) {
             throw badRequest(exception);
         } catch (MissingConfigurationException exception) {

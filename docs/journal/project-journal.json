@@ -150,7 +150,7 @@
           "chat-attributes": {
             "id": "chat-2026-08-24-001",
             "created": "2026-08-24",
-            "lastUpdated": "2026-08-27",
+            "lastUpdated": "2026-08-28",
             "owner": "Александр",
             "status": "in_progress",
             "priority": "high",
@@ -166,7 +166,8 @@
               "S73",
               "S74",
               "cutover",
-              "M2"
+              "M2",
+              "M4"
             ],
             "links": {
               "projectDocsRefs": [
@@ -180,6 +181,94 @@
             }
           },
           "entries": [
+            {
+              "log": {
+                "displayName": "КСДД 22c: советник + FemsqChart (success). № log-2026-08-28-002",
+                "log-attributes": {
+                  "id": "log-2026-08-28-002",
+                  "timestamp": "2026-08-28T14:20:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "KSDD advisor + slot timeline + FemsqChart",
+                    "details": "GraphQL sudzInvDbtDoubleAdvice / sudzInvDbtSlotTimeline; InvDbtDoubleAdvisor (F1, accnt, amortization); UI tabs Динамика; feQuLib FemsqChart ECharts; ADR 010.",
+                    "outcome": "Operator sees [advisor] and chart for selected slot; UAT anchor iKey=329.",
+                    "references": [
+                      "docs/project/decisions/010-chart-platform-echarts.md",
+                      "docs/development/notes/sql/26-0827-sudz-m2-seed/KSDD_ADVISOR.md",
+                      "/home/alex/projects/feQuLib/src/components/chart/FemsqChart.vue"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "КСДД 22b: очередь как КСДСФ (success). № log-2026-08-28-001",
+                "log-attributes": {
+                  "id": "log-2026-08-28-001",
+                  "timestamp": "2026-08-28T13:30:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "KSDD queue policy aligned with KSDSF",
+                    "details": "rebuildInvDbtDoubleQueue: DELETE all by upl; resolve: DELETE row after Value; launcher/КСДД UI open-only; naming КСДД. Doc KSDD_QUEUE.md; сегм. 22b.",
+                    "outcome": "Operator queue = work only; legacy created hidden until next rebuild clears DB.",
+                    "references": [
+                      "docs/development/notes/sql/26-0827-sudz-m2-seed/KSDD_QUEUE.md",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S74 M4 экран двоящих + UAT Link (success). № log-2026-08-27-021",
+                "log-attributes": {
+                  "id": "log-2026-08-27-021",
+                  "timestamp": "2026-08-27T17:50:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "M4 UI polish + Link UAT 2446→4405 + dry checkbox 7",
+                    "details": "ciaName in findOldSumMatches; sum trees; live [row.select]; reloadQueue re-select. Link Value dv=43997. Dry invDbtLoad queued=124. JAR 0.1.0.226. Сегм. 22 ✅.",
+                    "outcome": "M4 ✅; next M5. План 0.99.8; cutover 0.3.7; сегм. 38.",
+                    "references": [
+                      "docs/development/notes/sql/26-0827-sudz-m2-seed/M4_SCREEN.md",
+                      "code/femsq-frontend-q/src/views/sudz/SudzInvDbtDoubleView.vue"
+                    ]
+                  }
+                ]
+              }
+            },
             {
               "log": {
                 "displayName": "S74 M3 Calm F1 + UAT 910 (success). № log-2026-08-27-020",

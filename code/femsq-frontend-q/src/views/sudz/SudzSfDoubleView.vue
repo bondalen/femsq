@@ -372,6 +372,8 @@ type OldSumRow = {
   dbtOverd: number | null;
   number: number | null;
   debtType: string | null;
+  ciaKey: number | null;
+  ciaName: string | null;
 };
 
 /** Строка таблицы сумм новой структуры (`sudz.DbtValue`, M2). */
@@ -484,6 +486,7 @@ const domainColumns: FemsqTableColumn<DomainRow>[] = [
 const oldSumColumns: FemsqTableColumn<OldSumRow>[] = [
   { name: 'cidKey', label: 'cid', field: 'cidKey', align: 'right' },
   { name: 'number', label: '№', field: 'number', align: 'right' },
+  { name: 'ciaName', label: 'ciaName', field: 'ciaName', align: 'left' },
   { name: 'dbtTtl', label: 'сумма', field: 'dbtTtl', align: 'right' },
   { name: 'dbtOverd', label: 'просроч.', field: 'dbtOverd', align: 'right' },
   { name: 'debtType', label: 'тип', field: 'debtType', align: 'left' }
@@ -632,7 +635,9 @@ watch(
           number: m.number,
           dbtTtl: m.dbtTtl,
           dbtOverd: m.dbtOverd,
-          debtType: m.debtType
+          debtType: m.debtType,
+          ciaKey: m.ciaKey,
+          ciaName: m.ciaName
         }));
         newSumRows.value = sums.newMatches.map((m) => ({
           rowKey: String(m.dvKey),

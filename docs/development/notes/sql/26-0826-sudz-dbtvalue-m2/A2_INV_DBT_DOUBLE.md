@@ -1,7 +1,7 @@
 # A2 — экран двоящих долгов СФ (messages v1, 2026-08-26)
 
-**JAR:** `0.1.0.222-SNAPSHOT`  
-**Сегм. 20 / 21**
+**JAR:** `0.1.0.226-SNAPSHOT`  
+**Сегм. 20 / 21 / M4**
 
 ## Hotfix + Create var (ранее)
 
@@ -15,7 +15,7 @@
 | Артефакт | Содержание |
 |----------|------------|
 | DDL | `ciudReasonDetail nvarchar(max)` — пакет `26-0826-sudz-inv-dbt-double-messages/` |
-| Rebuild | блок `[queue.build]` со всеми сработавшими OR-критериями; DELETE только `open`; refresh detail у `created`/`deferred` |
+| Rebuild | **DELETE всех** строк upl (как КСДСФ); INSERT только `open` по Excel∩домен; после Link/Create — **DELETE** строки |
 | UI | `SudzInvDbtDoubleView` — `<pre>` под Excel-кандидатом |
 
 Формат v1:
@@ -42,6 +42,8 @@ reason=multi|ambiguous
 
 ## Остаток
 
-- Live-блоки в ту же панель (`[row.select]` …).
-- `ciaName` в old sums; defer/bulk.
+- ~~Live-блоки в ту же панель (`[row.select]` …).~~ → **M4** ✅
+- ~~`ciaName` в old sums~~ → **M4** ✅; defer/bulk — вне M4.
 - **B2** / **B3**.
+
+Док: [M4_SCREEN.md](../26-0827-sudz-m2-seed/M4_SCREEN.md).

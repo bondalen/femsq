@@ -2,7 +2,9 @@ package com.femsq.database.service;
 
 import com.femsq.database.model.sudz.SudzCmmGrLookup;
 import com.femsq.database.model.sudz.SudzCnInvUplInvDbtDouble;
+import com.femsq.database.model.sudz.SudzInvDbtDoubleAdvice;
 import com.femsq.database.model.sudz.SudzInvDbtSlot;
+import com.femsq.database.model.sudz.SudzInvDbtSlotTimeline;
 import com.femsq.database.model.sudz.SudzInvDbtVarCandidates;
 import com.femsq.database.model.sudz.SudzCnInvUplSfDouble;
 import com.femsq.database.model.sudz.SudzD644Row;
@@ -505,6 +507,25 @@ public interface SudzService {
      * @return кандидаты
      */
     SudzInvDbtVarCandidates findInvDbtVarCandidates(int ciudKey);
+
+    /**
+     * Советник КСДД (сегм. 22c).
+     *
+     * @param ciudKey ключ очереди
+     * @param epsilon допуск суммы
+     * @return рекомендация
+     */
+    SudzInvDbtDoubleAdvice findInvDbtDoubleAdvice(int ciudKey, BigDecimal epsilon);
+
+    /**
+     * Временной ряд слота invDbt.
+     *
+     * @param iKey СФ
+     * @param idKey слот
+     * @param ciudKey очередь
+     * @return timeline
+     */
+    SudzInvDbtSlotTimeline findInvDbtSlotTimeline(int iKey, int idKey, int ciudKey);
 
     /**
      * Create/reuse {@code invDbtVar} и привязка к строке очереди.

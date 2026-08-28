@@ -12,6 +12,7 @@ import java.math.BigDecimal;
  * @param debtType тип долга
  * @param uplKey выгрузка
  * @param ciaKey счёт/контрагент ({@code cidCnInvAccntCtpt})
+ * @param ciaName имя карточки ({@code cnInvAccnt.ciaName}; сегм. 20 / M4)
  */
 public record SudzSfDoubleOldSumMatch(
         int cidKey,
@@ -20,6 +21,7 @@ public record SudzSfDoubleOldSumMatch(
         BigDecimal dbtOverd,
         String debtType,
         Integer uplKey,
-        Integer ciaKey
+        Integer ciaKey,
+        String ciaName
 ) {
 }

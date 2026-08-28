@@ -61,6 +61,14 @@ extend type Query {
   Ключи items — для выбора строки в таблицах экрана.
   """
   sudzSfDoubleHints(ciusKey: Int!, epsilon: Float): SudzSfDoubleHints!
+  """
+  Советник КСДД (22c): рекомендация оператору для строки очереди двоящих долгов.
+  """
+  sudzInvDbtDoubleAdvice(ciudKey: Int!, epsilon: Float): SudzInvDbtDoubleAdvice!
+  """
+  Временной ряд DbtValue одного слота invDbt (вкладка «Динамика», выбранный слот).
+  """
+  sudzInvDbtSlotTimeline(iKey: Int!, idKey: Int!, ciudKey: Int!): SudzInvDbtSlotTimeline!
 }
 
 extend type Mutation {
@@ -532,6 +540,8 @@ type SudzSfDoubleOldSumMatch {
   debtType: String
   uplKey: Int
   ciaKey: Int
+  """Имя карточки cnInvAccnt (сегм. 20 / M4)."""
+  ciaName: String
 }
 
 """Совпадение суммы в новой структуре (sudz.DbtValue, M2: якорь invDbt)."""
@@ -578,6 +588,37 @@ type SudzSfDoubleHints {
   sfByNum: SudzSfDoubleHintSection!
   sumsOld: SudzSfDoubleHintSection!
   sumsNew: SudzSfDoubleHintSection!
+}
+
+"""Советник КСДД для панели «Сообщения» ([advisor])."""
+type SudzInvDbtDoubleAdvice {
+  messageText: String!
+  confidence: String
+  action: String
+  recommendIdKey: Int
+  recommendVarKey: Int
+}
+
+"""Точка ряда DbtValue по слоту."""
+type SudzInvDbtTimelinePoint {
+  uplKey: Int
+  statusDate: Date
+  ttl: Float
+  overdue: Float
+  source: String
+  varKey: Int
+}
+
+"""Временной ряд одного слота invDbt."""
+type SudzInvDbtSlotTimeline {
+  idKey: Int!
+  idNum: Int!
+  ciaName: String
+  varKey: Int
+  accnt: Int
+  excelAnchor: Float
+  excelStatusDate: Date
+  points: [SudzInvDbtTimelinePoint!]!
 }
 
 """Вход upsert шапки лаунчера."""

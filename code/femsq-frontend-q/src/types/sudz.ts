@@ -246,6 +246,8 @@ export interface SudzSfDoubleOldSumMatch {
   debtType: string | null;
   uplKey: number | null;
   ciaKey: number | null;
+  /** Имя карточки cnInvAccnt (сегм. 20 / M4). */
+  ciaName: string | null;
 }
 
 /** Совпадение суммы в новой структуре (DbtValue, M2). */
@@ -289,6 +291,37 @@ export interface SudzSfDoubleHints {
   sfByNum: SudzSfDoubleHintSection;
   sumsOld: SudzSfDoubleHintSection;
   sumsNew: SudzSfDoubleHintSection;
+}
+
+/** Советник КСДД ([advisor] в «Сообщения»). */
+export interface SudzInvDbtDoubleAdvice {
+  messageText: string;
+  confidence: string | null;
+  action: string | null;
+  recommendIdKey: number | null;
+  recommendVarKey: number | null;
+}
+
+/** Точка ряда DbtValue по слоту. */
+export interface SudzInvDbtTimelinePoint {
+  uplKey: number | null;
+  statusDate: string | null;
+  ttl: number | null;
+  overdue: number | null;
+  source: string | null;
+  varKey: number | null;
+}
+
+/** Временной ряд одного слота invDbt. */
+export interface SudzInvDbtSlotTimeline {
+  idKey: number;
+  idNum: number;
+  ciaName: string | null;
+  varKey: number | null;
+  accnt: number | null;
+  excelAnchor: number | null;
+  excelStatusDate: string | null;
+  points: SudzInvDbtTimelinePoint[];
 }
 
 /** Карточка лаунчера экрана C. */

@@ -6,7 +6,10 @@ import com.femsq.database.exception.DaoException;
 import com.femsq.database.model.sudz.SudzCmmGrLookup;
 import com.femsq.database.model.sudz.SudzCnInvUplInvDbtDouble;
 import com.femsq.database.model.sudz.SudzCnInvUplSfDouble;
+import com.femsq.database.model.sudz.SudzInvDbtDoubleAdvice;
 import com.femsq.database.model.sudz.SudzInvDbtSlot;
+import com.femsq.database.model.sudz.SudzInvDbtSlotTimeline;
+import com.femsq.database.model.sudz.SudzInvDbtTimelinePoint;
 import com.femsq.database.model.sudz.SudzInvDbtVarCandidates;
 import com.femsq.database.model.sudz.SudzInvDbtVarCnNumCandidate;
 import com.femsq.database.model.sudz.SudzInvDbtVarInvNumCandidate;
@@ -2709,10 +2712,7 @@ public class JdbcSudzDao implements SudzDao {
                 + "  ciudDebt, ciudIdvvKey, ciudReason, ciudReasonDetail, ciudStatus) "
                 + "SELECT DISTINCT r.cidutKey, ?, ?, r.iKey, r.cidutCnName, r.cidutCnInv, "
                 + "       r.cidutDebt, r.idvvKey, r.reason, r.detailText, 'open' "
-                + "FROM rowMatch AS r "
-                + "WHERE NOT EXISTS ( "
-                + "  SELECT 1 FROM " + queue + " AS q WHERE q.ciudCidut = r.cidutKey "
-                + ")";
+                + "FROM rowMatch AS r";
         String refreshDetailSql =
                 "UPDATE q SET ciudReasonDetail = d.detailText "
                         + "FROM " + queue + " AS q "
@@ -2728,12 +2728,11 @@ public class JdbcSudzDao implements SudzDao {
                                     + "DROP TABLE #invDbtQDetail");
                 }
                 try (PreparedStatement del = connection.prepareStatement(
-                        "DELETE FROM " + queue
-                                + " WHERE ciudUnloadKey = ? AND ciudStatus = 'open'")) {
+                        "DELETE FROM " + queue + " WHERE ciudUnloadKey = ?")) {
                     del.setInt(1, unloadKey);
                     int deleted = del.executeUpdate();
                     log.log(Level.INFO,
-                            "CnInvUplInvDbtDouble cleared open unloadKey={0} deleted={1}",
+                            "CnInvUplInvDbtDouble cleared unloadKey={0} deleted={1}",
                             new Object[]{unloadKey, deleted});
                 }
                 String fileLit = fileKey == null ? "NULL" : Integer.toString(fileKey);
@@ -3079,7 +3078,7 @@ public class JdbcSudzDao implements SudzDao {
                 + "ciudCnNum, ciudInvNum, ciudDebt, ciudIdvvKey, ciudReason, "
                 + "ciudReasonDetail, ciudStatus, ciudStatusAt, ciudCreatedIdKey "
                 + "FROM " + q("CnInvUplInvDbtDouble")
-                + " WHERE ciudUnloadKey = ? "
+                + " WHERE ciudUnloadKey = ? AND ciudStatus = 'open' "
                 + "ORDER BY CASE WHEN ciudIKey IS NULL THEN 1 ELSE 0 END, ciudIKey, ciudKey";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, unloadKey);
@@ -3438,8 +3437,296 @@ public class JdbcSudzDao implements SudzDao {
         }
     }
 
+    @Override
+    public SudzInvDbtDoubleAdvice findInvDbtDoubleAdvice(int ciudKey, BigDecimal epsilon) {
+        if (ciudKey <= 0) {
+            throw new IllegalArgumentException("ciudKey должен быть положительным: " + ciudKey);
+        }
+        SudzCnInvUplInvDbtDouble row = loadInvDbtDoubleByKey(ciudKey);
+        SudzSfDoubleExcelCandidate excel = findInvDbtDoubleExcelCandidate(ciudKey).orElse(null);
+        Integer iKey = row.ciudIKey();
+        if (iKey == null || iKey <= 0) {
+            return new SudzInvDbtDoubleAdvice(
+                    "[advisor]\ncheck=na: нет iKey на строке очереди",
+                    "none",
+                    "manual",
+                    null,
+                    row.ciudIdvvKey());
+        }
+        List<SudzInvDbtSlot> slots = findInvDbtSlotsByInv(iKey);
+        Map<Integer, Integer> slotAccnts = new LinkedHashMap<>();
+        Map<Integer, Integer> slotVars = new LinkedHashMap<>();
+        loadSlotVarAccntMaps(slots, slotAccnts, slotVars);
+        Optional<Integer> f1Slot = findF1UniqueSlot(iKey, row.ciudDebt(), epsilon);
+        List<SudzSfDoubleNewSumMatch> newMatches = List.of();
+        if (row.ciudDebt() != null) {
+            java.util.Set<Integer> slotIds = new java.util.LinkedHashSet<>();
+            for (SudzInvDbtSlot s : slots) {
+                slotIds.add(s.idKey());
+            }
+            newMatches = findNewSumMatches(row.ciudDebt(), epsilon).stream()
+                    .filter(m -> m.dvInvDbt() != null && slotIds.contains(m.dvInvDbt()))
+                    .toList();
+        }
+        Map<Integer, List<SudzInvDbtTimelinePoint>> timelines = new LinkedHashMap<>();
+        for (SudzInvDbtSlot slot : slots) {
+            timelines.put(slot.idKey(), loadTimelinePoints(slot.idKey()));
+        }
+        LocalDate excelStatusDate = loadUplStatusOnDate(row.ciudUnloadKey());
+        return InvDbtDoubleAdvisor.advise(
+                row,
+                excel,
+                slots,
+                slotAccnts,
+                slotVars,
+                f1Slot,
+                newMatches,
+                timelines,
+                excelStatusDate,
+                epsilon);
+    }
+
+    @Override
+    public SudzInvDbtSlotTimeline findInvDbtSlotTimeline(int iKey, int idKey, int ciudKey) {
+        if (iKey <= 0 || idKey <= 0 || ciudKey <= 0) {
+            throw new IllegalArgumentException("iKey, idKey и ciudKey должны быть положительными");
+        }
+        SudzCnInvUplInvDbtDouble row = loadInvDbtDoubleByKey(ciudKey);
+        if (row.ciudIKey() == null || row.ciudIKey() != iKey) {
+            throw new IllegalArgumentException("ciudKey не относится к iKey=" + iKey);
+        }
+        SudzInvDbtSlot slot = findInvDbtSlotsByInv(iKey).stream()
+                .filter(s -> s.idKey() == idKey)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Слот не найден: " + idKey));
+        Map<Integer, Integer> accnts = new LinkedHashMap<>();
+        Map<Integer, Integer> vars = new LinkedHashMap<>();
+        loadSlotVarAccntMaps(List.of(slot), accnts, vars);
+        String ciaName = parseCiaNameFromNote(slot.idNote());
+        List<SudzInvDbtTimelinePoint> points = loadTimelinePoints(idKey);
+        LocalDate excelStatusDate = loadUplStatusOnDate(row.ciudUnloadKey());
+        return new SudzInvDbtSlotTimeline(
+                slot.idKey(),
+                slot.idNum(),
+                ciaName,
+                vars.get(idKey),
+                accnts.get(idKey),
+                row.ciudDebt(),
+                excelStatusDate,
+                points);
+    }
+
     /**
-     * Create ({@code idKey==null}) или link слота + мост + {@code DbtValue}; очередь → created.
+     * Загружает строку очереди двоящих по ключу.
+     *
+     * @param ciudKey ключ
+     * @return строка
+     */
+    private SudzCnInvUplInvDbtDouble loadInvDbtDoubleByKey(int ciudKey) {
+        String sql = "SELECT ciudKey, ciudCidut, ciudDbtFile, ciudUnloadKey, ciudIKey, "
+                + "ciudCnNum, ciudInvNum, ciudDebt, ciudIdvvKey, ciudReason, "
+                + "ciudReasonDetail, ciudStatus, ciudStatusAt, ciudCreatedIdKey "
+                + "FROM " + q("CnInvUplInvDbtDouble") + " WHERE ciudKey = ?";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, ciudKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    throw new IllegalArgumentException("Строка очереди не найдена: " + ciudKey);
+                }
+                return mapInvDbtDouble(rs);
+            }
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось прочитать очередь ciudKey=" + ciudKey, exception);
+        }
+    }
+
+    /**
+     * Дата среза выгрузки ({@code uplStatusOnDate}).
+     *
+     * @param uplKey ключ выгрузки
+     * @return дата или null
+     */
+    private LocalDate loadUplStatusOnDate(int uplKey) {
+        String upl = q("cn_inv_dbt_upl");
+        String sql = "SELECT uplStatusOnDate FROM " + upl + " WHERE upl_key = ?";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, uplKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+                return getLocalDate(rs, "uplStatusOnDate");
+            }
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось прочитать uplStatusOnDate upl=" + uplKey, exception);
+        }
+    }
+
+    /**
+     * Точки {@code DbtValue} слота по времени.
+     *
+     * @param idKey слот invDbt
+     * @return упорядоченный список
+     */
+    private List<SudzInvDbtTimelinePoint> loadTimelinePoints(int idKey) {
+        String dv = q("DbtValue");
+        String upl = q("cn_inv_dbt_upl");
+        String sql = ""
+                + "SELECT dv.dvUpl, CAST(u.uplStatusOnDate AS date) AS statusDate,"
+                + " dv.dvTtl, dv.dvOverd, dv.dvInvDbtVar"
+                + " FROM " + dv + " AS dv"
+                + " LEFT JOIN " + upl + " AS u ON u.upl_key = dv.dvUpl"
+                + " WHERE dv.dvInvDbt = ?"
+                + " ORDER BY u.uplStatusOnDate, dv.dvUpl";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, idKey);
+            List<SudzInvDbtTimelinePoint> result = new ArrayList<>();
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    result.add(new SudzInvDbtTimelinePoint(
+                            getInteger(rs, "dvUpl"),
+                            getLocalDate(rs, "statusDate"),
+                            rs.getBigDecimal("dvTtl"),
+                            rs.getBigDecimal("dvOverd"),
+                            "dbtValue",
+                            getInteger(rs, "dvInvDbtVar")
+                    ));
+                }
+            }
+            return List.copyOf(result);
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось прочитать timeline idKey=" + idKey, exception);
+        }
+    }
+
+    /**
+     * Primary var и accnt по слотам.
+     *
+     * @param slots слоты
+     * @param accnts out: idKey → accnt
+     * @param vars out: idKey → var
+     */
+    private void loadSlotVarAccntMaps(
+            List<SudzInvDbtSlot> slots,
+            Map<Integer, Integer> accnts,
+            Map<Integer, Integer> vars
+    ) {
+        if (slots.isEmpty()) {
+            return;
+        }
+        String bridge = q("invDbtDbtVar");
+        String var = q("invDbtVar");
+        StringBuilder in = new StringBuilder();
+        for (int i = 0; i < slots.size(); i++) {
+            if (i > 0) {
+                in.append(',');
+            }
+            in.append('?');
+        }
+        String sql = ""
+                + "SELECT b.iddvInvDbt AS idKey, b.iddvInvDbtVar AS varKey, v.idvvAccnt AS accnt"
+                + " FROM " + bridge + " AS b"
+                + " INNER JOIN " + var + " AS v ON v.idvvKey = b.iddvInvDbtVar"
+                + " WHERE b.iddvInvDbt IN (" + in + ")"
+                + " ORDER BY b.iddvInvDbt, b.iddvKey";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            int p = 1;
+            for (SudzInvDbtSlot slot : slots) {
+                statement.setInt(p++, slot.idKey());
+            }
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    int idKey = rs.getInt("idKey");
+                    if (!vars.containsKey(idKey)) {
+                        vars.put(idKey, rs.getInt("varKey"));
+                        accnts.put(idKey, rs.getInt("accnt"));
+                    }
+                }
+            }
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось прочитать var/accnt слотов", exception);
+        }
+    }
+
+    /**
+     * F1: единственный слот на iKey с историей DbtValue = debt.
+     *
+     * @param iKey СФ
+     * @param debt сумма
+     * @param epsilon допуск
+     * @return idKey слота
+     */
+    private Optional<Integer> findF1UniqueSlot(int iKey, BigDecimal debt, BigDecimal epsilon) {
+        if (debt == null) {
+            return Optional.empty();
+        }
+        String invDbt = q("invDbt");
+        String dbtValue = q("DbtValue");
+        String sql = ""
+                + "SELECT d.idKey"
+                + " FROM " + invDbt + " AS d"
+                + " WHERE d.idInv = ?"
+                + "   AND EXISTS ("
+                + "     SELECT 1 FROM " + dbtValue + " AS dv"
+                + "     WHERE dv.dvInvDbt = d.idKey"
+                + "       AND ABS(CAST(dv.dvTtl AS decimal(19,4)) - ?) <= ?"
+                + "   )";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, iKey);
+            statement.setBigDecimal(2, debt);
+            statement.setBigDecimal(3, epsilon);
+            List<Integer> matches = new ArrayList<>();
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    matches.add(rs.getInt("idKey"));
+                }
+            }
+            if (matches.size() == 1) {
+                return Optional.of(matches.get(0));
+            }
+            return Optional.empty();
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось проверить F1 iKey=" + iKey, exception);
+        }
+    }
+
+    /**
+     * Извлекает ciaName из {@code idNote} ({@code ciaName=1}).
+     *
+     * @param idNote note слота
+     * @return ciaName или null
+     */
+    private static String parseCiaNameFromNote(String idNote) {
+        if (idNote == null || idNote.isBlank()) {
+            return null;
+        }
+        String prefix = "ciaName=";
+        int idx = idNote.indexOf(prefix);
+        if (idx < 0) {
+            return null;
+        }
+        return idNote.substring(idx + prefix.length()).trim();
+    }
+
+    /**
+     * Create ({@code idKey==null}) или link слота + мост + {@code DbtValue}; строка очереди удаляется.
      *
      * @param ciudKey ключ очереди
      * @param linkIdKey существующий слот или null
@@ -3573,30 +3860,31 @@ public class JdbcSudzDao implements SudzDao {
                         throw new IllegalStateException("Не найдена строка Tbl cidut=" + row.ciudCidut());
                     }
                 }
-                try (PreparedStatement upd = connection.prepareStatement(
-                        "UPDATE " + queue
-                                + " SET ciudStatus = 'created', ciudStatusAt = ?, ciudCreatedIdKey = ?"
-                                + " WHERE ciudKey = ?")) {
-                    upd.setTimestamp(1, now);
-                    upd.setInt(2, slotKey);
-                    upd.setInt(3, ciudKey);
-                    upd.executeUpdate();
+                try (PreparedStatement del = connection.prepareStatement(
+                        "DELETE FROM " + queue + " WHERE ciudKey = ?")) {
+                    del.setInt(1, ciudKey);
+                    del.executeUpdate();
                 }
                 connection.commit();
                 log.log(Level.INFO,
-                        "resolveInvDbtDouble ciudKey={0} slot={1} link={2} upl={3}",
+                        "resolveInvDbtDouble ciudKey={0} slot={1} link={2} upl={3} (queue row removed)",
                         new Object[]{ciudKey, slotKey, linkIdKey != null, uplKey});
-                try (PreparedStatement ps = connection.prepareStatement(
-                        "SELECT ciudKey, ciudCidut, ciudDbtFile, ciudUnloadKey, ciudIKey,"
-                                + " ciudCnNum, ciudInvNum, ciudDebt, ciudIdvvKey, ciudReason,"
-                                + " ciudReasonDetail, ciudStatus, ciudStatusAt, ciudCreatedIdKey"
-                                + " FROM " + queue + " WHERE ciudKey = ?")) {
-                    ps.setInt(1, ciudKey);
-                    try (ResultSet rs = ps.executeQuery()) {
-                        rs.next();
-                        return mapInvDbtDouble(rs);
-                    }
-                }
+                java.time.OffsetDateTime statusAt = java.time.OffsetDateTime.now();
+                return new SudzCnInvUplInvDbtDouble(
+                        row.ciudKey(),
+                        row.ciudCidut(),
+                        row.ciudDbtFile(),
+                        row.ciudUnloadKey(),
+                        row.ciudIKey(),
+                        row.ciudCnNum(),
+                        row.ciudInvNum(),
+                        row.ciudDebt(),
+                        row.ciudIdvvKey(),
+                        row.ciudReason(),
+                        row.ciudReasonDetail(),
+                        "created",
+                        statusAt,
+                        slotKey);
             } catch (RuntimeException | SQLException exception) {
                 connection.rollback();
                 throw exception;
@@ -4531,11 +4819,12 @@ public class JdbcSudzDao implements SudzDao {
      */
     private List<SudzSfDoubleOldSumMatch> findOldSumMatches(BigDecimal debt, BigDecimal epsilon) {
         String sql = ""
-                + "SELECT TOP 200 cn_inv_dbt_key, number, dbt_ttl, dbt_overd, debt_type,"
-                + " cn_inv_dbt_upl, cidCnInvAccntCtpt"
-                + " FROM ags.cn_inv_dbt"
-                + " WHERE ABS(CAST(dbt_ttl AS decimal(19,4)) - ?) <= ?"
-                + " ORDER BY cn_inv_dbt_key";
+                + "SELECT TOP 200 d.cn_inv_dbt_key, d.number, d.dbt_ttl, d.dbt_overd, d.debt_type,"
+                + " d.cn_inv_dbt_upl, d.cidCnInvAccntCtpt, a.ciaName"
+                + " FROM ags.cn_inv_dbt AS d"
+                + " LEFT JOIN ags.cnInvAccnt AS a ON a.ciaKey = d.cidCnInvAccntCtpt"
+                + " WHERE ABS(CAST(d.dbt_ttl AS decimal(19,4)) - ?) <= ?"
+                + " ORDER BY d.cn_inv_dbt_key";
         try (Connection connection = connectionFactory.createConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setBigDecimal(1, debt);
@@ -4550,7 +4839,8 @@ public class JdbcSudzDao implements SudzDao {
                             rs.getBigDecimal("dbt_overd"),
                             rs.getNString("debt_type"),
                             getInteger(rs, "cn_inv_dbt_upl"),
-                            getInteger(rs, "cidCnInvAccntCtpt")
+                            getInteger(rs, "cidCnInvAccntCtpt"),
+                            rs.getNString("ciaName")
                     ));
                 }
                 return List.copyOf(result);
