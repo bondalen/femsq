@@ -6,6 +6,8 @@ import com.femsq.database.model.sudz.SudzDbtUplCnNotLoadApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplFile;
 import com.femsq.database.model.sudz.SudzDbtUplFunnelResult;
 import com.femsq.database.model.sudz.SudzDbtUplFunnelSteps;
+import com.femsq.database.model.sudz.SudzDbtUplDbtValueLoadApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplInvDbtDbtEnsureApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplInvDbtLoadApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarEnsureApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplLauncher;
@@ -54,13 +56,24 @@ public class SudzDbtUplFunnelRunner {
      * <em>заменяет</em> предыдущий {@code cidufLoadingProgress}.
      *
      * @param uplKey ключ выгрузки
+     * @param yrKey контекст портфеля года ({@code yr.yr_key})
      * @param steps префикс stepId панели (без excelToTbl)
      * @param flLoad флаг записи (для будущих apply; сейчас в логе)
      * @return результат
      */
-    public SudzDbtUplFunnelResult run(int uplKey, List<String> steps, boolean flLoad) {
+    public SudzDbtUplFunnelResult run(int uplKey, int yrKey, List<String> steps, boolean flLoad) {
         if (uplKey <= 0) {
             throw new IllegalArgumentException("uplKey должен быть положительным: " + uplKey);
+        }
+        if (yrKey <= 0) {
+            throw new IllegalArgumentException("yrKey должен быть положительным: " + yrKey);
+        }
+        List<Integer> portfolioYears = sudzService.findYearKeysForUpl(uplKey);
+        if (!portfolioYears.contains(yrKey)) {
+            throw new IllegalArgumentException(
+                    "upl " + uplKey + " не входит в портфель yr=" + yrKey
+                            + (portfolioYears.isEmpty()
+                            ? "" : "; доступны yr: " + portfolioYears));
         }
         List<String> ordered = new ArrayList<>();
         for (String stepId : steps) {
@@ -78,12 +91,12 @@ public class SudzDbtUplFunnelRunner {
             throw new IllegalArgumentException(
                     "Включите «обнов. по исх?» или отметьте хотя бы один шаг воронки");
         }
-        log.log(Level.INFO, "runDbtUplFunnel uplKey={0}, steps={1}, flLoad={2}, flTbl={3}",
-                new Object[]{uplKey, ordered, flLoad, flTbl});
+        log.log(Level.INFO, "runDbtUplFunnel uplKey={0}, yrKey={1}, steps={2}, flLoad={3}, flTbl={4}",
+                new Object[]{uplKey, yrKey, ordered, flLoad, flTbl});
 
         SudzDbtUplProgressLog progress = new SudzDbtUplProgressLog();
         progress.line("<b><font color=\"DarkGoldenrod\">Воронка</font></b> upl_key="
-                + uplKey + ", flLoad=" + flLoad + ", flTbl=" + flTbl
+                + uplKey + ", yr_key=" + yrKey + ", flLoad=" + flLoad + ", flTbl=" + flTbl
                 + ", шагов панели=" + ordered.size()
                 + ". " + SudzDbtUplProgressLog.now());
 
@@ -123,6 +136,10 @@ public class SudzDbtUplFunnelRunner {
                 runInvDbtVarEnsure(uplKey, progress, flLoad);
             } else if (SudzDbtUplFunnelSteps.INV_DBT_LOAD.equals(stepId)) {
                 runInvDbtLoad(uplKey, progress, flLoad);
+            } else if (SudzDbtUplFunnelSteps.INV_DBT_DBT_ENSURE.equals(stepId)) {
+                runInvDbtDbtEnsure(uplKey, progress, flLoad);
+            } else if (SudzDbtUplFunnelSteps.DBT_VALUE_LOAD.equals(stepId)) {
+                runDbtValueLoad(uplKey, yrKey, progress, flLoad);
             } else {
                 anyStub = true;
                 progress.line("<font color=\"CadetBlue\">STUB</font>: шаг принят оркестратором,"
@@ -456,6 +473,78 @@ public class SudzDbtUplFunnelRunner {
                         flLoad,
                         applyResult == null ? 0 : applyResult.insertedInvDbt(),
                         applyResult == null ? 0 : applyResult.insertedBridges(),
+                        applyResult == null ? 0 : applyResult.insertedValues()
+                });
+    }
+
+    /**
+     * invDbtDbtEnsure (C1): слоты с Value на upl без моста → F1 reuse или новый Dbt.
+     *
+     * @param uplKey ключ выгрузки
+     * @param progress лог шага
+     * @param flLoad писать ли в sudz
+     */
+    private void runInvDbtDbtEnsure(int uplKey, SudzDbtUplProgressLog progress, boolean flLoad) {
+        var snapshot = sudzService.findDbtUplInvDbtDbtEnsureSnapshot(uplKey);
+        SudzDbtUplInvDbtDbtEnsureLog.append(progress, snapshot, null);
+        SudzDbtUplInvDbtDbtEnsureApplyResult applyResult = null;
+        if (flLoad && snapshot.missingBridge() > 0) {
+            applyResult = sudzService.applyDbtUplInvDbtDbtEnsure(uplKey);
+            snapshot = sudzService.findDbtUplInvDbtDbtEnsureSnapshot(uplKey);
+            SudzDbtUplInvDbtDbtEnsureLog.append(progress, snapshot, applyResult);
+        }
+        log.log(Level.INFO,
+                "invDbtDbtEnsure uplKey={0} missing={1} f1={2} new={3} ambiguous={4} flLoad={5} applied={6}",
+                new Object[]{
+                        uplKey,
+                        snapshot.missingBridge(),
+                        snapshot.f1Ready(),
+                        snapshot.newReady(),
+                        snapshot.ambiguous(),
+                        flLoad,
+                        applyResult == null ? 0 : applyResult.insertedBridges()
+                });
+    }
+
+    /**
+     * dbtValueLoad (C2): tail DbtValue, diff base yr→curr, rebuild очереди P1.
+     *
+     * @param uplKey ключ выгрузки
+     * @param yrKey контекст портфеля года
+     * @param progress лог шага
+     * @param flLoad писать ли в sudz
+     */
+    private void runDbtValueLoad(int uplKey, int yrKey, SudzDbtUplProgressLog progress, boolean flLoad) {
+        Integer fileKey = null;
+        SudzDbtUplLauncher launcher = sudzService.getDbtUplLauncher(uplKey);
+        if (launcher.file() != null) {
+            fileKey = launcher.file().cidufKey();
+        }
+        var snapshot = sudzService.findDbtUplDbtValueLoadSnapshot(uplKey, yrKey);
+        SudzDbtUplDbtValueLoadLog.append(progress, snapshot, null);
+        int p1Queued = sudzService.rebuildDbtP1Queue(uplKey, fileKey, yrKey);
+        progress.line("P1 rebuild: <font color=\"DarkCyan\">" + p1Queued + "</font> строк");
+        SudzDbtUplDbtValueLoadApplyResult applyResult = null;
+        if (flLoad && snapshot.tailReady() > 0) {
+            applyResult = sudzService.applyDbtUplDbtValueLoadTail(uplKey, yrKey);
+            applyResult = new SudzDbtUplDbtValueLoadApplyResult(
+                    applyResult.insertedValues(),
+                    applyResult.skippedTailAmbiguous(),
+                    p1Queued);
+            snapshot = sudzService.findDbtUplDbtValueLoadSnapshot(uplKey, yrKey);
+            SudzDbtUplDbtValueLoadLog.append(progress, snapshot, applyResult);
+        } else if (flLoad) {
+            snapshot = sudzService.findDbtUplDbtValueLoadSnapshot(uplKey, yrKey);
+        }
+        log.log(Level.INFO,
+                "dbtValueLoad uplKey={0} yrKey={1} base={2} disappeared={3} p1={4} flLoad={5} tail={6}",
+                new Object[]{
+                        uplKey,
+                        yrKey,
+                        snapshot.baseUpl(),
+                        snapshot.disappeared(),
+                        snapshot.p1Queued(),
+                        flLoad,
                         applyResult == null ? 0 : applyResult.insertedValues()
                 });
     }

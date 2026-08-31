@@ -1,0 +1,28 @@
+{
+  "mode": "PIT ags26/27/28→801/802/803 + pogasheno>0 only",
+  "jar": "0.1.0.239-SNAPSHOT",
+  "ttl_overd_match": true,
+  "access_rows": 3738,
+  "femsq_rows": 2836,
+  "access_sums": {
+    "base_Ttl": "418736881179.49",
+    "base_Overd": "5164261005.80",
+    "q1_Ttl": "493437037552.97",
+    "q1_Overd": "11052684998.86",
+    "q1_pog": "571801628.05",
+    "q2_Ttl": "577277433283.50",
+    "q2_Overd": "10077877126.91",
+    "q2_pog": "783325767.48"
+  },
+  "femsq_sums": {
+    "base_Ttl": "418736881179.49",
+    "base_Overd": "5164261005.80",
+    "q1_Ttl": "493437037552.97",
+    "q1_Overd": "11052684998.86",
+    "q1_pog": "535214467.22",
+    "q2_Ttl": "577277433283.50",
+    "q2_Overd": "10077877126.91",
+    "q2_pog": "692013029.99"
+  },
+  "note": "погашено: Access has 7/12 nonempty (manual/Access grain); FEMSQ positive-only Overd(base)-Overd(curr)"
+}

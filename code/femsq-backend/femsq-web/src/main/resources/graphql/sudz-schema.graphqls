@@ -41,6 +41,8 @@ extend type Query {
   Ошибка, если выгрузка не найдена.
   """
   sudzDbtUplLauncher(uplKey: Int!): SudzDbtUplLauncher!
+  """Года-портфели, в которых upl входит в yr_upl_p (для контекста воронки)."""
+  sudzYearKeysForUpl(uplKey: Int!): [Int!]!
   """Excel-кандидат КСДСФ по ключу очереди."""
   sudzSfDoubleExcelCandidate(ciusKey: Int!): SudzSfDoubleExcelCandidate
   """Excel-кандидат очереди двоящих долгов по ciudKey."""
@@ -110,6 +112,18 @@ extend type Mutation {
 
   """Upsert шапки лаунчера загрузки свода (CnInvDbtUplFile) по uplKey."""
   updateSudzDbtUplFile(input: UpdateSudzDbtUplFileInput!): SudzDbtUplFile!
+
+  """Создать лист Excel для выгрузки (CnInvDbtUplFileSh)."""
+  createSudzDbtUplFileSh(input: CreateSudzDbtUplFileShInput!): SudzDbtUplFileSh!
+
+  """Обновить лист Excel выгрузки."""
+  updateSudzDbtUplFileSh(input: UpdateSudzDbtUplFileShInput!): SudzDbtUplFileSh!
+
+  """Удалить лист Excel выгрузки."""
+  deleteSudzDbtUplFileSh(cidufsKey: Int!): Boolean!
+
+  """6 стандартных листов общего свода (если список пуст)."""
+  seedSudzDbtUplStandardSheets(uplKey: Int!): [SudzDbtUplFileSh!]!
 
   """
   Stub-прогон воронки (S61f): шаги-префикс + flLoad; пишет HTML в лог; домен не меняет.
@@ -368,6 +382,8 @@ type SudzDbtUplLauncher {
   sfDoubles: [SudzCnInvUplSfDouble!]!
   """Очередь двоящих долгов СФ (CnInvUplInvDbtDouble) по uplKey."""
   invDbtDoubles: [SudzCnInvUplInvDbtDouble!]!
+  """Очередь P1 multi-Dbt (CnInvUplDbtP1) по uplKey."""
+  dbtP1: [SudzCnInvUplDbtP1!]!
 }
 
 """Шапка лаунчера (CnInvDbtUplFile)."""
@@ -385,7 +401,10 @@ type SudzDbtUplFileSh {
   cidufsKey: Int!
   cidufsFile: Int!
   cidufsSheet: String!
+  """Ключ ags.accnt.account_key."""
   cidufsAccount: Int!
+  """Номер счёта ГК (ags.accnt.account_num)."""
+  accountNum: Int
   cidufsTest: Boolean!
 }
 
@@ -437,6 +456,31 @@ type SudzCnInvUplInvDbtDouble {
   ciudStatus: String!
   ciudStatusAt: DateTime
   ciudCreatedIdKey: Int
+}
+
+"""Очередь кандидатов P1 multi-Dbt (CnInvUplDbtP1)."""
+type SudzCnInvUplDbtP1 {
+  cip1Key: Int!
+  cip1UnloadKey: Int!
+  cip1BaseUpl: Int!
+  cip1DbtFile: Int
+  cip1DbtKey: Int!
+  cip1BaseSlotKey: Int!
+  cip1BaseIKey: Int
+  cip1BaseCnNum: String
+  cip1BaseInvNum: String
+  cip1MatchSum: Float!
+  cip1SumKind: String!
+  cip1CandCidut: Int
+  cip1CandIKey: Int
+  cip1CandCnNum: String
+  cip1CandInvNum: String
+  cip1CandDebt: Float
+  cip1Reason: String!
+  cip1ReasonDetail: String
+  cip1Status: String!
+  cip1StatusAt: DateTime
+  cip1LinkedSlotKey: Int
 }
 
 """Вход ручной привязки строки КСДСФ к существующему inv/cn."""
@@ -502,6 +546,8 @@ type SudzSfDoubleExcelCandidate {
   cidutKey: Int!
   findDbtNum: Int
   cidutAccount: Int
+  """Номер счёта ГК (ags.accnt.account_num), как в дереве слотов."""
+  cidutAccntNum: Int
   cidutCntrPrtNum: Int
   cidutCntrPrtName: String
   cidutCntrPrtITN: String
@@ -632,9 +678,28 @@ input UpdateSudzDbtUplFileInput {
   flTbl: Boolean
 }
 
+"""Вход создания листа CnInvDbtUplFileSh."""
+input CreateSudzDbtUplFileShInput {
+  uplKey: Int!
+  sheet: String!
+  """Номер счёта ГК (606012 …), не account_key."""
+  accountNum: Int!
+  test: Boolean!
+}
+
+"""Вход обновления листа CnInvDbtUplFileSh."""
+input UpdateSudzDbtUplFileShInput {
+  cidufsKey: Int!
+  sheet: String
+  accountNum: Int
+  test: Boolean
+}
+
 """Вход stub/реального прогона воронки."""
 input RunSudzDbtUplFunnelInput {
   uplKey: Int!
+  """Контекст портфеля года (yr.yr_key) для diff base→curr."""
+  yrKey: Int!
   """Префикс цепочки stepId (S61f)."""
   steps: [String!]!
   flLoad: Boolean!

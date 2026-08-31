@@ -1,6 +1,6 @@
 {
   "id": "inv-dbt-slots",
-  "version": 1,
+  "version": 2,
   "root": {
     "table": "inv",
     "pk": "iKey"
@@ -17,11 +17,30 @@
       "detail": "*",
       "children": [
         {
+          "queryId": "sudz.invDbtVar.contextBySlot",
+          "to": "idvvCtx",
+          "card": "1:N",
+          "folder": "invDbtVar (контекст)",
+          "title": ["summaryLine"],
+          "detail": [
+            "idvvKey",
+            "iddvKey",
+            "accntNum",
+            "cnNumLabel",
+            "invNumLabel",
+            "orgName",
+            "orgInn",
+            "cnSOrgKey"
+          ],
+          "children": []
+        },
+        {
           "edge": "invDbt.dv",
           "to": "dv",
           "card": "1:N",
           "folder": "DbtValue",
           "title": ["dvKey", "dvTtl", "dvUpl"],
+          "valueKinds": { "dvTtl": "money" },
           "detail": "*",
           "children": []
         },

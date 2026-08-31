@@ -6,6 +6,7 @@ import com.femsq.database.exception.DaoException;
 import com.femsq.database.model.relation.RelationCard;
 import com.femsq.database.model.relation.RelationEdge;
 import com.femsq.database.model.relation.RelationField;
+import com.femsq.database.model.relation.RelationQueryDefinition;
 import com.femsq.database.model.relation.RelationRow;
 import com.femsq.database.model.relation.RelationTable;
 import java.math.BigDecimal;
@@ -89,6 +90,48 @@ public class JdbcRelationDao implements RelationDao {
         } catch (SQLException exception) {
             log.log(Level.SEVERE, "relationExpand failed", exception);
             throw new DaoException("Не удалось раскрыть ребро " + edge.name() + " fromId=" + fromId, exception);
+        }
+    }
+
+    @Override
+    public List<RelationRow> runQuery(RelationQueryDefinition definition, int fromId) {
+        Objects.requireNonNull(definition, "definition");
+        String sql = bindAgsSchema(definition.sql().trim());
+        validateReadOnlyQuery(sql);
+        log.log(Level.FINE, "relationQuery {0} fromId={1}", new Object[] {definition.id(), fromId});
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setQueryTimeout(5);
+            statement.setMaxRows(definition.maxRows());
+            statement.setInt(1, fromId);
+            try (ResultSet rs = statement.executeQuery()) {
+                List<RelationRow> rows = new ArrayList<>();
+                while (rs.next()) {
+                    rows.add(mapRow(rs, definition.keyColumn()));
+                }
+                return List.copyOf(rows);
+            }
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            log.log(Level.SEVERE, "relationQuery failed", exception);
+            throw new DaoException(
+                    "Не удалось выполнить relationQuery " + definition.id() + " fromId=" + fromId,
+                    exception);
+        }
+    }
+
+    private String bindAgsSchema(String sql) {
+        return sql.replace("ags.", agsSchema() + ".");
+    }
+
+    private static void validateReadOnlyQuery(String sql) {
+        String upper = sql.toUpperCase();
+        if (!upper.startsWith("SELECT")) {
+            throw new IllegalArgumentException("relationQuery: только SELECT");
+        }
+        if (sql.contains(";")) {
+            throw new IllegalArgumentException("relationQuery: один statement без ';'");
         }
     }
 

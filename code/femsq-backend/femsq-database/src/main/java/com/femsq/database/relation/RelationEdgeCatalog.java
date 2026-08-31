@@ -191,6 +191,27 @@ public final class RelationEdgeCatalog {
                     "dvTimeOfEntry"
             )
     );
+    private static final RelationTable IDVV = table(
+            "idvv",
+            "sudz",
+            "invDbtVar",
+            "idvvKey",
+            List.of(
+                    "idvvKey",
+                    "idvvCnNum",
+                    "idvvInvNum",
+                    "idvvAccnt",
+                    "idvvCn_s_org",
+                    "idvvTimeOfEntry"
+            )
+    );
+    private static final RelationTable IDDV = table(
+            "iddv",
+            "sudz",
+            "invDbtDbtVar",
+            "iddvKey",
+            List.of("iddvKey", "iddvInvDbt", "iddvInvDbtVar", "iddvTimeOfEntry")
+    );
 
     private static final Map<String, RelationTable> TABLES;
 
@@ -216,6 +237,8 @@ public final class RelationEdgeCatalog {
         tables.put(IDD.name(), IDD);
         tables.put(DBT.name(), DBT);
         tables.put(DV.name(), DV);
+        tables.put(IDVV.name(), IDVV);
+        tables.put(IDDV.name(), IDDV);
         TABLES = Map.copyOf(tables);
 
         Map<String, RelationEdge> edges = new LinkedHashMap<>();
@@ -302,6 +325,26 @@ public final class RelationEdgeCatalog {
         edges.put(
                 "invDbt.dv",
                 new RelationEdge("invDbt.dv", INV_DBT, DV, null, "dvInvDbt", RelationCard.ONE_TO_MANY)
+        );
+        edges.put(
+                "invDbt.iddv",
+                new RelationEdge(
+                        "invDbt.iddv",
+                        INV_DBT,
+                        IDDV,
+                        null,
+                        "iddvInvDbt",
+                        RelationCard.ONE_TO_MANY)
+        );
+        edges.put(
+                "iddv.idvv",
+                new RelationEdge(
+                        "iddv.idvv",
+                        IDDV,
+                        IDVV,
+                        "iddvInvDbtVar",
+                        null,
+                        RelationCard.MANY_TO_ONE)
         );
         edges.put(
                 "cid.cia",

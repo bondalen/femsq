@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildFolderNode,
   buildRecordNode,
+  childExpandKeyOf,
   childTableOf,
   childrenAfterFolderLoad,
   childrenAfterRecordLoad,
@@ -26,6 +27,26 @@ describe('relation-tree walker', () => {
     expect(formatRelationTitle(['inKey', 'inNum'], { inKey: '85078', inNum: '832930' })).toBe(
       '85078 · 832930'
     );
+  });
+
+  it('форматирует денежные поля title по valueKinds', () => {
+    expect(
+      formatRelationTitle(
+        ['dvKey', 'dvTtl', 'dvUpl'],
+        { dvKey: '11340', dvTtl: '186961.48', dvUpl: '20' },
+        { dvTtl: 'money' }
+      )
+    ).toBe('11340 · 186\u00a0961,48 · 20');
+  });
+
+  it('форматирует денежные поля title по valueKinds', () => {
+    expect(
+      formatRelationTitle(
+        ['dvKey', 'dvTtl', 'dvUpl'],
+        { dvKey: '11340', dvTtl: '186961.48', dvUpl: '20' },
+        { dvTtl: 'money' }
+      )
+    ).toBe('11340 · 186\u00a0961,48 · 20');
   });
 
   it('N:1 дети — записи, 1:N — папка без строк', () => {
@@ -92,6 +113,31 @@ describe('relation-tree walker', () => {
     expect(kids).toHaveLength(1);
     expect(kids[0].id).toBe('inv:85069');
     expect(kids[0].kind).toBe('record');
+  });
+
+  it('queryId даёт папку с relationQuery, без edge', () => {
+    const folder = buildFolderNode('invDbt:42', 42, {
+      queryId: 'sudz.invDbtVar.contextBySlot',
+      to: 'idvvCtx',
+      card: '1:N',
+      folder: 'invDbtVar (контекст)',
+      title: ['summaryLine'],
+      detail: ['idvvKey'],
+      children: []
+    });
+    expect(folder.queryId).toBe('sudz.invDbtVar.contextBySlot');
+    expect(folder.edge).toBeUndefined();
+    expect(childExpandKeyOf(folder.folderSpec!)).toBe('query:sudz.invDbtVar.contextBySlot');
+    const kids = childrenAfterFolderLoad(folder, [
+      {
+        key: 1718,
+        fields: {
+          summaryLine: '6766 · счёт 23 · дог. X',
+          idvvKey: '6766'
+        }
+      }
+    ]);
+    expect(kids[0].title).toBe('6766 · счёт 23 · дог. X');
   });
 
   it('без to бросает', () => {

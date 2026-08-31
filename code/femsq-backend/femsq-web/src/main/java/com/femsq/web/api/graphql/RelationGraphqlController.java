@@ -69,6 +69,26 @@ public class RelationGraphqlController {
         }
     }
 
+    /**
+     * Именованный read-only запрос реестра relationQuery.
+     *
+     * @param queryId id JSON
+     * @param fromId bind {@code ?}
+     * @return строки для дерева
+     */
+    @QueryMapping
+    public List<RelationRow> relationQuery(@Argument String queryId, @Argument int fromId) {
+        try {
+            return relationService.query(queryId, fromId);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
     private ResponseStatusException badRequest(IllegalArgumentException exception) {
         log.warning(() -> exception.getMessage());
         return new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage(), exception);

@@ -9,6 +9,7 @@ import { RequestError } from './http';
 import type {
   CreateSudzCmmGrInput,
   CreateSudzPmUplInput,
+  CreateSudzDbtUplFileShInput,
   CreateSudzUplInput,
   CreateSudzYearInput,
   LinkSudzSfDoubleInput,
@@ -38,6 +39,8 @@ import type {
   SudzYearUpl,
   SudzYyyyLookup,
   UpdateSudzDbtUplFileInput,
+  UpdateSudzDbtUplFileShInput,
+  SudzDbtUplFileSh,
   RunSudzDbtUplFunnelInput,
   SudzDbtUplFunnelResult,
   UpdateSudzYearInput
@@ -162,6 +165,30 @@ const INV_DBT_DOUBLE_FIELDS = `
   ciudCreatedIdKey
 `;
 
+const DBT_P1_FIELDS = `
+  cip1Key
+  cip1UnloadKey
+  cip1BaseUpl
+  cip1DbtFile
+  cip1DbtKey
+  cip1BaseSlotKey
+  cip1BaseIKey
+  cip1BaseCnNum
+  cip1BaseInvNum
+  cip1MatchSum
+  cip1SumKind
+  cip1CandCidut
+  cip1CandIKey
+  cip1CandCnNum
+  cip1CandInvNum
+  cip1CandDebt
+  cip1Reason
+  cip1ReasonDetail
+  cip1Status
+  cip1StatusAt
+  cip1LinkedSlotKey
+`;
+
 const SUDZ_DBT_UPL_LAUNCHER = gql`
   query SudzDbtUplLauncher($uplKey: Int!) {
     sudzDbtUplLauncher(uplKey: $uplKey) {
@@ -179,6 +206,7 @@ const SUDZ_DBT_UPL_LAUNCHER = gql`
         cidufsFile
         cidufsSheet
         cidufsAccount
+        accountNum
         cidufsTest
       }
       invDoubles {
@@ -197,6 +225,9 @@ const SUDZ_DBT_UPL_LAUNCHER = gql`
       invDbtDoubles {
         ${INV_DBT_DOUBLE_FIELDS}
       }
+      dbtP1 {
+        ${DBT_P1_FIELDS}
+      }
     }
   }
 `;
@@ -206,6 +237,42 @@ const UPDATE_DBT_UPL_FILE = gql`
     updateSudzDbtUplFile(input: $input) {
       ${DBT_UPL_FILE_FIELDS}
     }
+  }
+`;
+
+const CREATE_DBT_UPL_FILE_SH = gql`
+  mutation CreateSudzDbtUplFileSh($input: CreateSudzDbtUplFileShInput!) {
+    createSudzDbtUplFileSh(input: $input) {
+      cidufsKey cidufsFile cidufsSheet cidufsAccount accountNum cidufsTest
+    }
+  }
+`;
+
+const UPDATE_DBT_UPL_FILE_SH = gql`
+  mutation UpdateSudzDbtUplFileSh($input: UpdateSudzDbtUplFileShInput!) {
+    updateSudzDbtUplFileSh(input: $input) {
+      cidufsKey cidufsFile cidufsSheet cidufsAccount accountNum cidufsTest
+    }
+  }
+`;
+
+const DELETE_DBT_UPL_FILE_SH = gql`
+  mutation DeleteSudzDbtUplFileSh($cidufsKey: Int!) {
+    deleteSudzDbtUplFileSh(cidufsKey: $cidufsKey)
+  }
+`;
+
+const SEED_DBT_UPL_STANDARD_SHEETS = gql`
+  mutation SeedSudzDbtUplStandardSheets($uplKey: Int!) {
+    seedSudzDbtUplStandardSheets(uplKey: $uplKey) {
+      cidufsKey cidufsFile cidufsSheet cidufsAccount accountNum cidufsTest
+    }
+  }
+`;
+
+const SUDZ_YEAR_KEYS_FOR_UPL = gql`
+  query SudzYearKeysForUpl($uplKey: Int!) {
+    sudzYearKeysForUpl(uplKey: $uplKey)
   }
 `;
 
@@ -229,6 +296,7 @@ const RUN_DBT_UPL_FUNNEL = gql`
           cidufsFile
           cidufsSheet
           cidufsAccount
+          accountNum
           cidufsTest
         }
         invDoubles {
@@ -247,6 +315,9 @@ const RUN_DBT_UPL_FUNNEL = gql`
         invDbtDoubles {
           ${INV_DBT_DOUBLE_FIELDS}
         }
+        dbtP1 {
+          ${DBT_P1_FIELDS}
+        }
       }
     }
   }
@@ -258,6 +329,7 @@ const SUDZ_SF_DOUBLE_EXCEL = gql`
       cidutKey
       findDbtNum
       cidutAccount
+      cidutAccntNum
       cidutCntrPrtNum
       cidutCntrPrtName
       cidutCntrPrtITN
@@ -284,6 +356,7 @@ const SUDZ_INV_DBT_DOUBLE_EXCEL = gql`
       cidutKey
       findDbtNum
       cidutAccount
+      cidutAccntNum
       cidutCntrPrtNum
       cidutCntrPrtName
       cidutCntrPrtITN
@@ -773,7 +846,7 @@ export async function getSudzDbtUplLauncher(uplKey: number): Promise<SudzDbtUplL
     });
     const data = result.data?.sudzDbtUplLauncher;
     if (!data) throw new Error('Пустой ответ sudzDbtUplLauncher');
-    return { ...data, sfDoubles: data.sfDoubles ?? [], invDbtDoubles: data.invDbtDoubles ?? [] };
+    return { ...data, sfDoubles: data.sfDoubles ?? [], invDbtDoubles: data.invDbtDoubles ?? [], dbtP1: data.dbtP1 ?? [] };
   } catch (error) {
     throw wrapApolloError(error, 'SudzDbtUplLauncher');
   }
@@ -1105,6 +1178,90 @@ export async function updateSudzDbtUplFile(
 }
 
 /**
+ * Создаёт лист CnInvDbtUplFileSh.
+ */
+export async function createSudzDbtUplFileSh(
+  input: CreateSudzDbtUplFileShInput
+): Promise<SudzDbtUplFileSh> {
+  try {
+    const result = await apolloClient.mutate<{ createSudzDbtUplFileSh: SudzDbtUplFileSh }>({
+      mutation: CREATE_DBT_UPL_FILE_SH,
+      variables: { input }
+    });
+    const data = result.data?.createSudzDbtUplFileSh;
+    if (!data) throw new Error('Пустой ответ createSudzDbtUplFileSh');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'CreateSudzDbtUplFileSh');
+  }
+}
+
+/**
+ * Обновляет лист CnInvDbtUplFileSh.
+ */
+export async function updateSudzDbtUplFileSh(
+  input: UpdateSudzDbtUplFileShInput
+): Promise<SudzDbtUplFileSh> {
+  try {
+    const result = await apolloClient.mutate<{ updateSudzDbtUplFileSh: SudzDbtUplFileSh }>({
+      mutation: UPDATE_DBT_UPL_FILE_SH,
+      variables: { input }
+    });
+    const data = result.data?.updateSudzDbtUplFileSh;
+    if (!data) throw new Error('Пустой ответ updateSudzDbtUplFileSh');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'UpdateSudzDbtUplFileSh');
+  }
+}
+
+/**
+ * Удаляет лист CnInvDbtUplFileSh.
+ */
+export async function deleteSudzDbtUplFileSh(cidufsKey: number): Promise<boolean> {
+  try {
+    const result = await apolloClient.mutate<{ deleteSudzDbtUplFileSh: boolean }>({
+      mutation: DELETE_DBT_UPL_FILE_SH,
+      variables: { cidufsKey }
+    });
+    return result.data?.deleteSudzDbtUplFileSh ?? false;
+  } catch (error) {
+    throw wrapApolloError(error, 'DeleteSudzDbtUplFileSh');
+  }
+}
+
+/**
+ * 6 стандартных листов общего свода (если список пуст).
+ */
+export async function seedSudzDbtUplStandardSheets(uplKey: number): Promise<SudzDbtUplFileSh[]> {
+  try {
+    const result = await apolloClient.mutate<{ seedSudzDbtUplStandardSheets: SudzDbtUplFileSh[] }>({
+      mutation: SEED_DBT_UPL_STANDARD_SHEETS,
+      variables: { uplKey }
+    });
+    return result.data?.seedSudzDbtUplStandardSheets ?? [];
+  } catch (error) {
+    throw wrapApolloError(error, 'SeedSudzDbtUplStandardSheets');
+  }
+}
+
+/**
+ * Года-портфели, содержащие upl (контекст воронки C2).
+ */
+export async function getSudzYearKeysForUpl(uplKey: number): Promise<number[]> {
+  try {
+    const result = await apolloClient.query<{ sudzYearKeysForUpl: number[] }>({
+      query: SUDZ_YEAR_KEYS_FOR_UPL,
+      variables: { uplKey },
+      fetchPolicy: 'network-only'
+    });
+    return result.data.sudzYearKeysForUpl ?? [];
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzYearKeysForUpl');
+  }
+}
+
+/**
  * Stub/реальный прогон воронки (S61f).
  */
 export async function runSudzDbtUplFunnel(
@@ -1122,7 +1279,8 @@ export async function runSudzDbtUplFunnel(
       launcher: {
         ...data.launcher,
         sfDoubles: data.launcher.sfDoubles ?? [],
-        invDbtDoubles: data.launcher.invDbtDoubles ?? []
+        invDbtDoubles: data.launcher.invDbtDoubles ?? [],
+        dbtP1: data.launcher.dbtP1 ?? []
       }
     };
   } catch (error) {

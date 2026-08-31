@@ -27,6 +27,8 @@ class RelationEdgeCatalogTest {
         assertEquals("idd", RelationEdgeCatalog.requireEdge("dbt.idd").to().name());
         assertEquals("invDbt", RelationEdgeCatalog.requireEdge("idd.invDbt").to().name());
         assertEquals("inv", RelationEdgeCatalog.requireEdge("invDbt.inv").to().name());
+        assertEquals("idvv", RelationEdgeCatalog.requireEdge("iddv.idvv").to().name());
+        assertEquals("iddv", RelationEdgeCatalog.requireEdge("invDbt.iddv").to().name());
         assertEquals("og", RelationEdgeCatalog.requireEdge("orgId.og").to().name());
         assertEquals("csosOrgId", RelationEdgeCatalog.requireEdge("smpl.orgId").fromJoin());
     }

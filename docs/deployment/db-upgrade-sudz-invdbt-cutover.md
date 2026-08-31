@@ -2,8 +2,8 @@
 
 **Файл:** `docs/deployment/db-upgrade-sudz-invdbt-cutover.md`  
 **Дата создания:** 2026-08-27  
-**lastUpdated:** 2026-08-27  
-**Версия:** 0.3.7 (M4 экран/7)  
+**lastUpdated:** 2026-08-31  
+**Версия:** 0.3.8 (E1′ PIT / Rslt stage1)  
 **Автор:** Александр  
 **Статус:** черновик — наполнение по мере обсуждения `Dbt`, DEV-репетиции и обследования prod
 
@@ -227,6 +227,26 @@ N_slots_plan / N_Dbt_plan; **сверить** очередь §1.2 (10 `iKey`) �
 **Канон E1 (владелец, 2026-08-27):** перетащить **всю** историю величин в новую структуру в корректном виде.  
 Для каждой строки `cn_inv_dbt` (через cia→слот→`Dbt`): INSERT `DbtValue` + обеспечить `invDbtVar`/`invDbtDbtVar` с `accnt`/`cn_s_org` из cia и `cnNum`/`invNum` по §1.4 на asOf этой выгрузки. UNIQUE четвёрки `invDbtVar` — переиспользовать тот же var, когда контекст совпал; плодить новые var, когда asOf дал другой номер/счёт/сторону. Ручная очередь на multi-num **не** нужна.
 
+### E1′ — паритет исторических Rslt (PIT, 2026-08-31)
+
+**Зачем:** совпадение FEMSQ `ags_Yr_DbtChangesRslt_*` с эталонными Access Excel по **суммам row1** и контрольным строкам.
+
+| Правило | Суть |
+|---------|------|
+| **PIT** | `DbtValue` на выгрузку U = **ровно** строки `cn_inv_dbt` этой же U (membership). На DEV yr900: `801←ags26`, `802←27`, `803←28` — пакет [`09_BACKFILL_DbtValue_pit_ags26_28.sql`](../development/notes/sql/26-0831-sudz-dbt-slot-link/09_BACKFILL_DbtValue_pit_ags26_28.sql). |
+| **Запрет** | last-asOf-any («последний факт слота с asOf≤даты») для срезов, по которым сверяют Access Rslt — скрипты `06`/`07` пакета 26-0831. Даёт ~10k строк и **другие** SUBTOTAL. |
+| **L\*** | До сверки Rslt: seed L001–L010 + `ApplyDbtSlotLinks` ([04-5](../development/notes/domain/sudz/04-5_dbt-invdbt-cardinality-d1.md)). |
+| **Экспортёр** | JAR ≥ **0.1.0.240**: схлопывание периодов L*; погашено = `NULLIF(Overd(база)−ISNULL(Overd(d),0), 0)` (нет факта → Overd(d)=0). |
+| **Эталон stage1** | `ags_Yr_DbtChangesRslt_26-0212_26-0217.xlsx`, объём **база–QI–QII**; колонки **QIII/QIV в эталоне игнорировать** (отдельного Excel QIII нет). |
+
+**Gate перед приёмкой Rslt (DEV / перед окном H):**
+
+1. SQL: `SUM/COUNT(DbtValue)` по целевым upl ≡ исходные `ags.cn_inv_dbt` (или явная карта PIT).  
+2. Скрипт [`verify_rslt_stage1.py`](../development/notes/sql/26-0831-sudz-dbt-slot-link/verify_rslt_stage1.py) — exit 0: row1 Ttl/Overd/погашено; L*/7947; все строки «погашено»; стратификация.  
+3. `99_VERIFY_rslt_stage1.sql` — L_bridge_ok=0.
+
+Связь с E1: построчный перенос `cn_inv_dbt`→`DbtValue` **уже PIT**. Опасность — синтетические upl портфеля года (DEV 801–803) и «широкий» snapshot вместо membership.
+
 ### F — Calm F1
 
 При уникальной сумме `S` на `iKey` среди слотов (история `DbtValue.dvTtl`, ε=0.01) и однозначном `invDbtVar` → писать Value в этот `invDbt`, не в очередь. Реализация: `JdbcSudzDao` F1 CTE; UAT 910 — [M3_CALM_F1.md](../development/notes/sql/26-0827-sudz-m2-seed/M3_CALM_F1.md). DEV: FK `dvUpl` → `sudz.cn_inv_dbt_upl` (06c).
@@ -305,6 +325,7 @@ Backup → DDL → seed D(+E) → JAR → smoke → режим Access.
 | 0.3.5 | 2026-08-27 | **§1.5 / D4a:** concurrent multi-cia → доп. `invDbt`; E1 без потерь сумм |
 | 0.3.6 | 2026-08-27 | **M3 Calm F1** + 06c FK `dvUpl`→`sudz.cn_inv_dbt_upl`; UAT 910 |
 | 0.3.7 | 2026-08-27 | **M4** экран/7: ciaName, деревья сумм, `[row.select]`; Link UAT; JAR 226 |
+| 0.3.8 | 2026-08-31 | **E1′** PIT для паритета Rslt; gate verify_rslt_stage1; запрет last-asOf-any |
 
 ### 6.1. Результат M2 на DEV (`sudz`, 2026-08-27; после 06a)
 

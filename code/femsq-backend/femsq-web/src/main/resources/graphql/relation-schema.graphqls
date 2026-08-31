@@ -5,6 +5,8 @@ extend type Query {
   relationNode(table: String!, id: Int!): RelationRow
   """Раскрытие ребра из whitelist. Неизвестное ребро — ошибка."""
   relationExpand(edge: String!, fromId: Int!): [RelationRow!]!
+  """Именованный SELECT из реестра backend. SQL с клиента не принимается."""
+  relationQuery(queryId: String!, fromId: Int!): [RelationRow!]!
 }
 
 type RelationRow {

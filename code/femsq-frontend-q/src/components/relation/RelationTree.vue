@@ -71,9 +71,11 @@ import {
   type RelationTreeActionSpec,
   type RelationFetchExpand,
   type RelationFetchNode,
+  type RelationFetchQuery,
   type RelationTreeNode,
   type RelationTreeSpec
 } from '@/trees/relation-tree';
+import { fetchRelationQuery } from '@/api/relation-api';
 
 const props = withDefaults(
   defineProps<{
@@ -81,10 +83,12 @@ const props = withDefaults(
     rootId: number | null;
     fetchNode: RelationFetchNode;
     fetchExpand: RelationFetchExpand;
+    fetchQuery?: RelationFetchQuery;
     dataTest?: string;
     rootClass?: string;
   }>(),
   {
+    fetchQuery: fetchRelationQuery,
     dataTest: 'relation-tree',
     rootClass: 'relation-tree'
   }
@@ -123,6 +127,7 @@ watch(
       const root = buildRecordNode(props.spec.root.table, row.key, fieldMapOf(row.fields), {
         title: props.spec.title,
         detail: props.spec.detail,
+        valueKinds: props.spec.valueKinds,
         children: props.spec.children
       });
       nodes.value = [root];
@@ -146,8 +151,13 @@ async function onLoad(payload: FemsqTreeLoadPayload<RelationTreeNode>): Promise<
   loadingKeys.value = [...loadingKeys.value, key];
   try {
     let children: RelationTreeNode[] = [];
-    if (node.kind === 'folder' && node.fromId != null && node.edge) {
-      const rows = await props.fetchExpand(node.edge, node.fromId);
+    if (node.kind === 'folder' && node.fromId != null) {
+      let rows: Array<{ key: number; fields: Array<{ name: string; value: string | null }> }> = [];
+      if (node.queryId) {
+        rows = await props.fetchQuery(node.queryId, node.fromId);
+      } else if (node.edge) {
+        rows = await props.fetchExpand(node.edge, node.fromId);
+      }
       children = childrenAfterFolderLoad(
         node,
         rows.map((row) => ({ key: row.key, fields: fieldMapOf(row.fields) }))
@@ -156,6 +166,9 @@ async function onLoad(payload: FemsqTreeLoadPayload<RelationTreeNode>): Promise<
       const loaded: Record<string, Array<{ key: number; fields: Record<string, string | null> }>> = {};
       for (const spec of node.childSpecs ?? []) {
         if (spec.card === '1:N') {
+          continue;
+        }
+        if (!spec.edge) {
           continue;
         }
         const rows = await props.fetchExpand(spec.edge, node.rowKey);

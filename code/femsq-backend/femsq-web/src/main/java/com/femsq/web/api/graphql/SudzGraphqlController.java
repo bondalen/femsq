@@ -11,6 +11,7 @@ import com.femsq.database.model.sudz.SudzInvDbtSlotTimeline;
 import com.femsq.database.model.sudz.SudzInvDbtVarCandidates;
 import com.femsq.database.model.sudz.SudzD644Row;
 import com.femsq.database.model.sudz.SudzDbtUplFile;
+import com.femsq.database.model.sudz.SudzDbtUplFileSh;
 import com.femsq.database.model.sudz.SudzDbtUplFunnelResult;
 import com.femsq.database.model.sudz.SudzDbtUplLauncher;
 import com.femsq.database.model.sudz.SudzDebtCollection;
@@ -37,7 +38,9 @@ import com.femsq.web.api.dto.sudz.CreateSudzUplInput;
 import com.femsq.web.api.dto.sudz.CreateSudzYearInput;
 import com.femsq.web.api.dto.sudz.RunSudzDbtUplFunnelInput;
 import com.femsq.web.api.dto.sudz.SudzDebtCollectionInput;
+import com.femsq.web.api.dto.sudz.CreateSudzDbtUplFileShInput;
 import com.femsq.web.api.dto.sudz.UpdateSudzDbtUplFileInput;
+import com.femsq.web.api.dto.sudz.UpdateSudzDbtUplFileShInput;
 import com.femsq.web.api.dto.sudz.UpdateSudzYearInput;
 import com.femsq.web.api.sudz.SudzDbtUplFunnelRunner;
 import java.math.BigDecimal;
@@ -488,6 +491,25 @@ public class SudzGraphqlController {
     }
 
     /**
+     * Года-портфели, содержащие upl в {@code yr_upl_p}.
+     *
+     * @param uplKey ключ выгрузки
+     * @return {@code yr_key}
+     */
+    @QueryMapping
+    public List<Integer> sudzYearKeysForUpl(@Argument int uplKey) {
+        try {
+            return sudzService.findYearKeysForUpl(uplKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
      * Лаунчер загрузки свода для выбранной выгрузки.
      *
      * @param uplKey ключ выгрузки
@@ -824,6 +846,84 @@ public class SudzGraphqlController {
     }
 
     /**
+     * Создаёт лист {@code CnInvDbtUplFileSh}.
+     *
+     * @param input uplKey, sheet, accountNum, test
+     * @return созданный лист
+     */
+    @MutationMapping
+    public SudzDbtUplFileSh createSudzDbtUplFileSh(@Argument CreateSudzDbtUplFileShInput input) {
+        try {
+            return sudzService.createDbtUplFileSh(
+                    input.uplKey(), input.sheet(), input.accountNum(), input.test());
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Обновляет лист {@code CnInvDbtUplFileSh}.
+     *
+     * @param input cidufsKey и поля
+     * @return обновлённый лист
+     */
+    @MutationMapping
+    public SudzDbtUplFileSh updateSudzDbtUplFileSh(@Argument UpdateSudzDbtUplFileShInput input) {
+        try {
+            return sudzService.updateDbtUplFileSh(
+                    input.cidufsKey(), input.sheet(), input.accountNum(), input.test());
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Удаляет лист {@code CnInvDbtUplFileSh}.
+     *
+     * @param cidufsKey ключ листа
+     * @return true, если удалено
+     */
+    @MutationMapping
+    public boolean deleteSudzDbtUplFileSh(@Argument int cidufsKey) {
+        try {
+            return sudzService.deleteDbtUplFileSh(cidufsKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * 6 стандартных листов общего свода (если список пуст).
+     *
+     * @param uplKey ключ выгрузки
+     * @return актуальный список листов
+     */
+    @MutationMapping
+    public List<SudzDbtUplFileSh> seedSudzDbtUplStandardSheets(@Argument int uplKey) {
+        try {
+            return sudzService.seedDbtUplStandardSheets(uplKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
      * Stub-прогон воронки загрузки свода (панель шагов S61f).
      *
      * @param input uplKey, steps, flLoad
@@ -832,7 +932,7 @@ public class SudzGraphqlController {
     @MutationMapping
     public SudzDbtUplFunnelResult runSudzDbtUplFunnel(@Argument RunSudzDbtUplFunnelInput input) {
         try {
-            return dbtUplFunnelRunner.run(input.uplKey(), input.steps(), input.flLoad());
+            return dbtUplFunnelRunner.run(input.uplKey(), input.yrKey(), input.steps(), input.flLoad());
         } catch (IllegalArgumentException exception) {
             throw badRequest(exception);
         } catch (MissingConfigurationException exception) {

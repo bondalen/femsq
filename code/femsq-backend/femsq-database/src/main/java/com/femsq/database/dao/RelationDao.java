@@ -1,6 +1,7 @@
 package com.femsq.database.dao;
 
 import com.femsq.database.model.relation.RelationEdge;
+import com.femsq.database.model.relation.RelationQueryDefinition;
 import com.femsq.database.model.relation.RelationRow;
 import com.femsq.database.model.relation.RelationTable;
 import java.util.List;
@@ -28,4 +29,13 @@ public interface RelationDao {
      * @return 0..N строк to
      */
     List<RelationRow> expand(RelationEdge edge, int fromId);
+
+    /**
+     * Именованный SELECT из {@link com.femsq.database.relation.RelationQueryCatalog}.
+     *
+     * @param definition запрос
+     * @param fromId bind первого {@code ?}
+     * @return строки
+     */
+    List<RelationRow> runQuery(RelationQueryDefinition definition, int fromId);
 }

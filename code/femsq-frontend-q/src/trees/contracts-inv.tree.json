@@ -162,6 +162,7 @@
                     "number",
                     "dbt_ttl"
                   ],
+                  "valueKinds": { "dbt_ttl": "money" },
                   "detail": "*",
                   "children": [
                     {
@@ -228,6 +229,7 @@
             "dvTtl",
             "dvUpl"
           ],
+          "valueKinds": { "dvTtl": "money" },
           "detail": "*",
           "children": []
         }

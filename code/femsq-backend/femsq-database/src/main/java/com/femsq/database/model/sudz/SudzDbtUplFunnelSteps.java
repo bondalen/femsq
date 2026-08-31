@@ -61,6 +61,16 @@ public final class SudzDbtUplFunnelSteps {
     public static final String INV_DBT_LOAD = "invDbtLoad";
 
     /**
+     * C1 / M5: auto {@code Dbt} + {@code invDbtDbt} для слотов с {@code DbtValue} на upl.
+     */
+    public static final String INV_DBT_DBT_ENSURE = "invDbtDbtEnsure";
+
+    /**
+     * C2 / M5: {@code DbtValue} tail + diff base yr→curr + очередь P1.
+     */
+    public static final String DBT_VALUE_LOAD = "dbtValueLoad";
+
+    /**
      * Полный упорядоченный реестр шагов <em>панели</em> (без Excel→Tbl).
      * titleRu — из комментариев VBA / S66e; Access-хвост — disabled.
      */
@@ -82,6 +92,10 @@ public final class SudzDbtUplFunnelSteps {
             new StepDef(INV_DBT_LOAD,
                     "Загружаем слоты задолженностей СФ (invDbt) либо ставим в очередь разбора",
                     true),
+            new StepDef(INV_DBT_DBT_ENSURE,
+                    "Привязываем слоты к канону Dbt (invDbtDbt)", true),
+            new StepDef(DBT_VALUE_LOAD,
+                    "Загружаем Value, diff base→curr и очередь P1 (multi-Dbt)", true),
             new StepDef("invDbtDouble",
                     "Проверяем имеющиеся в БД задолженности, которые более чем одна у счёта-фактуры",
                     false),

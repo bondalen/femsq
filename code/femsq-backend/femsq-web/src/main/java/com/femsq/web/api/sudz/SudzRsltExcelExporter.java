@@ -219,15 +219,28 @@ public final class SudzRsltExcelExporter {
         int c = 0;
         c = writeTyped(row, c, debt.dbtKey(), styles.data());
         c = writeTyped(row, c, debt.accountNum(), styles.data());
+        BigDecimal baseOverd = null;
+        if (!slices.isEmpty()) {
+            SudzRsltPeriod base = findPeriod(debt, slices.get(0).uplDate());
+            if (base != null) {
+                baseOverd = base.overd();
+            }
+        }
         for (int s = 0; s < slices.size(); s++) {
             SliceMeta slice = slices.get(s);
             boolean first = s == 0;
             SudzRsltPeriod period = findPeriod(debt, slice.uplDate());
             int blockCols = first ? 14 : 15;
             if (period == null) {
+                /* Нет факта в срезе: пустой блок; погашено — как Access ISNULL(Overd,0)=0. */
                 for (int k = 0; k < blockCols; k++) {
-                    Cell cell = row.createCell(c++);
-                    cell.setCellStyle(styles.data());
+                    boolean pogCol = !first && k == blockCols - 1;
+                    if (pogCol) {
+                        c = writeMoney(row, c, pogashenoAccess(baseOverd, null), styles.money());
+                    } else {
+                        Cell cell = row.createCell(c++);
+                        cell.setCellStyle(styles.data());
+                    }
                 }
                 continue;
             }
@@ -247,7 +260,7 @@ public final class SudzRsltExcelExporter {
             c = writeTyped(row, c, period.cstAgPnName(), styles.data());
             c = writeTyped(row, c, period.agOrg(), styles.data());
             if (!first) {
-                c = writeMoney(row, c, period.pogasheno(), styles.money());
+                c = writeMoney(row, c, pogashenoAccess(baseOverd, period.overd()), styles.money());
             }
         }
         c = writeTyped(row, c, debt.curator(), styles.data());
@@ -263,6 +276,23 @@ public final class SudzRsltExcelExporter {
             Cell cell = row.createCell(c++);
             cell.setCellStyle(styles.data());
         }
+    }
+
+    /**
+     * Access / S42d: {@code NULLIF(Overd(база) − ISNULL(Overd(d), 0), 0)}.
+     * Нет строки в срезе → Overd(d)=0 (долг выбыл из выгрузки). Отрицательную дельту не пишем
+     * (колонка «погашенная»; эталон 26-0212 — только снижения).
+     */
+    static BigDecimal pogashenoAccess(BigDecimal baseOverd, BigDecimal currOverdOrNull) {
+        if (baseOverd == null) {
+            return null;
+        }
+        BigDecimal curr = currOverdOrNull != null ? currOverdOrNull : BigDecimal.ZERO;
+        BigDecimal delta = baseOverd.subtract(curr);
+        if (delta.compareTo(BigDecimal.ZERO) <= 0) {
+            return null;
+        }
+        return delta;
     }
 
     private static void applyColumnWidths(Sheet sheet, List<ColumnDef> columns) {

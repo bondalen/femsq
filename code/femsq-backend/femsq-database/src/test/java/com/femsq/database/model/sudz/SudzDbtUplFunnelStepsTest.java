@@ -31,6 +31,13 @@ class SudzDbtUplFunnelStepsTest {
     }
 
     @Test
+    void enabledChainEndsWithDbtValueLoadAfterInvDbtDbtEnsure() {
+        List<String> chain = SudzDbtUplFunnelSteps.enabledIds();
+        assertEquals(SudzDbtUplFunnelSteps.INV_DBT_DBT_ENSURE, chain.get(chain.size() - 2));
+        assertEquals(SudzDbtUplFunnelSteps.DBT_VALUE_LOAD, chain.get(chain.size() - 1));
+    }
+
+    @Test
     void enabledChainEndsWithInvDbtLoadAfterAccSmpl() {
         List<String> chain = SudzDbtUplFunnelSteps.enabledIds();
         assertTrue(chain.size() >= 2);
@@ -38,7 +45,6 @@ class SudzDbtUplFunnelStepsTest {
         assertTrue(accSmpl >= 0);
         assertEquals(SudzDbtUplFunnelSteps.INV_DBT_VAR_ENSURE, chain.get(accSmpl + 1));
         assertEquals(SudzDbtUplFunnelSteps.INV_DBT_LOAD, chain.get(accSmpl + 2));
-        assertEquals(SudzDbtUplFunnelSteps.INV_DBT_LOAD, chain.get(chain.size() - 1));
     }
 
     @Test

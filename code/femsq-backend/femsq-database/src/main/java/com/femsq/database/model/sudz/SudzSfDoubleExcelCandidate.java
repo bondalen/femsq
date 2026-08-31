@@ -11,6 +11,8 @@ public record SudzSfDoubleExcelCandidate(
         int cidutKey,
         Integer findDbtNum,
         Integer cidutAccount,
+        /** Номер счёта ГК ({@code ags.accnt.account_num}), как в дереве слотов. */
+        Integer cidutAccntNum,
         Integer cidutCntrPrtNum,
         String cidutCntrPrtName,
         String cidutCntrPrtITN,

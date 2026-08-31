@@ -49,6 +49,16 @@ export const SUDZ_DBT_UPL_FUNNEL_STEPS: SudzDbtUplFunnelStepDef[] = [
     enabled: true
   },
   {
+    id: 'invDbtDbtEnsure',
+    titleRu: 'Привязываем слоты к канону Dbt (invDbtDbt)',
+    enabled: true
+  },
+  {
+    id: 'dbtValueLoad',
+    titleRu: 'Загружаем Value, diff base→curr и очередь P1 (multi-Dbt)',
+    enabled: true
+  },
+  {
     id: 'invDbtDouble',
     titleRu: 'Проверяем имеющиеся в БД задолженности, которые более чем одна у счёта-фактуры',
     enabled: false

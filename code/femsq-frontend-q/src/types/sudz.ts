@@ -122,7 +122,22 @@ export interface SudzDbtUplFileSh {
   cidufsFile: number;
   cidufsSheet: string;
   cidufsAccount: number;
+  accountNum: number | null;
   cidufsTest: boolean;
+}
+
+export interface CreateSudzDbtUplFileShInput {
+  uplKey: number;
+  sheet: string;
+  accountNum: number;
+  test: boolean;
+}
+
+export interface UpdateSudzDbtUplFileShInput {
+  cidufsKey: number;
+  sheet?: string | null;
+  accountNum?: number | null;
+  test?: boolean | null;
 }
 
 /** Очередь InvDouble (legacy). */
@@ -175,6 +190,31 @@ export interface SudzCnInvUplInvDbtDouble {
   ciudCreatedIdKey: number | null;
 }
 
+/** Очередь кандидатов P1 multi-Dbt (CnInvUplDbtP1). */
+export interface SudzCnInvUplDbtP1 {
+  cip1Key: number;
+  cip1UnloadKey: number;
+  cip1BaseUpl: number;
+  cip1DbtFile: number | null;
+  cip1DbtKey: number;
+  cip1BaseSlotKey: number;
+  cip1BaseIKey: number | null;
+  cip1BaseCnNum: string | null;
+  cip1BaseInvNum: string | null;
+  cip1MatchSum: number;
+  cip1SumKind: string;
+  cip1CandCidut: number | null;
+  cip1CandIKey: number | null;
+  cip1CandCnNum: string | null;
+  cip1CandInvNum: string | null;
+  cip1CandDebt: number | null;
+  cip1Reason: string;
+  cip1ReasonDetail: string | null;
+  cip1Status: string;
+  cip1StatusAt: string | null;
+  cip1LinkedSlotKey: number | null;
+}
+
 /** Кандидаты create invDbtVar на экране двоящих. */
 export interface SudzInvDbtVarSideCandidate {
   cnKey: number;
@@ -208,6 +248,8 @@ export interface SudzSfDoubleExcelCandidate {
   cidutKey: number;
   findDbtNum: number | null;
   cidutAccount: number | null;
+  /** Номер счёта ГК (ags.accnt.account_num), как в дереве слотов. */
+  cidutAccntNum: number | null;
   cidutCntrPrtNum: number | null;
   cidutCntrPrtName: string | null;
   cidutCntrPrtITN: string | null;
@@ -332,6 +374,7 @@ export interface SudzDbtUplLauncher {
   invDoubles: SudzDbtUplInvDouble[];
   sfDoubles: SudzCnInvUplSfDouble[];
   invDbtDoubles: SudzCnInvUplInvDbtDouble[];
+  dbtP1: SudzCnInvUplDbtP1[];
 }
 
 export interface UpdateSudzDbtUplFileInput {
@@ -343,6 +386,8 @@ export interface UpdateSudzDbtUplFileInput {
 
 export interface RunSudzDbtUplFunnelInput {
   uplKey: number;
+  /** Контекст портфеля года (yr.yr_key) для diff base→curr. */
+  yrKey: number;
   steps: string[];
   flLoad: boolean;
 }

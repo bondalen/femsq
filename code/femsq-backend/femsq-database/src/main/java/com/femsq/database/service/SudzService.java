@@ -1,6 +1,7 @@
 package com.femsq.database.service;
 
 import com.femsq.database.model.sudz.SudzCmmGrLookup;
+import com.femsq.database.model.sudz.SudzCnInvUplDbtP1;
 import com.femsq.database.model.sudz.SudzCnInvUplInvDbtDouble;
 import com.femsq.database.model.sudz.SudzInvDbtDoubleAdvice;
 import com.femsq.database.model.sudz.SudzInvDbtSlot;
@@ -10,6 +11,10 @@ import com.femsq.database.model.sudz.SudzCnInvUplSfDouble;
 import com.femsq.database.model.sudz.SudzD644Row;
 import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotRow;
+import com.femsq.database.model.sudz.SudzDbtUplDbtValueLoadApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplDbtValueLoadSnapshot;
+import com.femsq.database.model.sudz.SudzDbtUplInvDbtDbtEnsureApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplInvDbtDbtEnsureSnapshot;
 import com.femsq.database.model.sudz.SudzDbtUplInvDbtLoadApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarAmbiguousRow;
 import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarEnsureApplyResult;
@@ -21,6 +26,7 @@ import com.femsq.database.model.sudz.SudzDbtUplCnExistCtptNotLoad;
 import com.femsq.database.model.sudz.SudzDbtUplCnNotLoad;
 import com.femsq.database.model.sudz.SudzDbtUplCnNotLoadApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplFile;
+import com.femsq.database.model.sudz.SudzDbtUplFileSh;
 import com.femsq.database.model.sudz.SudzDbtUplFunnelResult;
 import com.femsq.database.model.sudz.SudzDbtUplLauncher;
 import com.femsq.database.model.sudz.SudzDbtUplOrgNotInBuirg;
@@ -293,6 +299,44 @@ public interface SudzService {
     SudzDbtUplFile updateDbtUplFile(int uplKey, String path, Boolean flLoad, Boolean flTbl);
 
     /**
+     * Создаёт лист {@code CnInvDbtUplFileSh}.
+     *
+     * @param uplKey ключ выгрузки
+     * @param sheet имя листа Excel
+     * @param accountNum номер счёта ГК
+     * @param test флаг «проверять?»
+     * @return созданный лист
+     */
+    SudzDbtUplFileSh createDbtUplFileSh(int uplKey, String sheet, int accountNum, boolean test);
+
+    /**
+     * Обновляет лист {@code CnInvDbtUplFileSh}.
+     *
+     * @param cidufsKey ключ листа
+     * @param sheet имя; null — не менять
+     * @param accountNum номер счёта; null — не менять
+     * @param test флаг; null — не менять
+     * @return обновлённый лист
+     */
+    SudzDbtUplFileSh updateDbtUplFileSh(int cidufsKey, String sheet, Integer accountNum, Boolean test);
+
+    /**
+     * Удаляет лист {@code CnInvDbtUplFileSh}.
+     *
+     * @param cidufsKey ключ листа
+     * @return true, если удалено
+     */
+    boolean deleteDbtUplFileSh(int cidufsKey);
+
+    /**
+     * 6 стандартных листов общего свода (если список пуст).
+     *
+     * @param uplKey ключ выгрузки
+     * @return актуальные листы
+     */
+    List<SudzDbtUplFileSh> seedDbtUplStandardSheets(int uplKey);
+
+    /**
      * Stub-прогон воронки (S61f): пишет лог по отмеченным шагам, домен не меняет.
      *
      * @param uplKey ключ выгрузки
@@ -458,6 +502,66 @@ public interface SudzService {
      * @return счётчики
      */
     SudzDbtUplInvDbtLoadApplyResult applyDbtUplInvDbtLoadUnambiguous(int unloadKey);
+
+    /**
+     * Снимок {@code invDbtDbtEnsure} (C1).
+     *
+     * @param unloadKey {@code upl_key}
+     * @return missing / f1 / new / ambiguous
+     */
+    SudzDbtUplInvDbtDbtEnsureSnapshot findDbtUplInvDbtDbtEnsureSnapshot(int unloadKey);
+
+    /**
+     * Apply {@code invDbtDbtEnsure} (C1).
+     *
+     * @param unloadKey {@code upl_key}
+     * @return счётчики
+     */
+    SudzDbtUplInvDbtDbtEnsureApplyResult applyDbtUplInvDbtDbtEnsure(int unloadKey);
+
+    /**
+     * Снимок {@code dbtValueLoad} (C2).
+     *
+     * @param unloadKey {@code upl_key}
+     * @param yrKey контекст портфеля года
+     * @return skip / tail / disappeared / P1
+     */
+    SudzDbtUplDbtValueLoadSnapshot findDbtUplDbtValueLoadSnapshot(int unloadKey, int yrKey);
+
+    /**
+     * Apply {@code dbtValueLoad} (C2): догон {@code DbtValue} для tail-слотов.
+     *
+     * @param unloadKey {@code upl_key}
+     * @param yrKey контекст портфеля года
+     * @return счётчики tail
+     */
+    SudzDbtUplDbtValueLoadApplyResult applyDbtUplDbtValueLoadTail(int unloadKey, int yrKey);
+
+    /**
+     * Пересборка очереди {@code CnInvUplDbtP1} (исчезновение base→curr + sum-match).
+     *
+     * @param unloadKey {@code upl_key}
+     * @param fileKey {@code cidufKey} (может быть null)
+     * @param yrKey контекст портфеля года
+     * @return число строк после rebuild
+     */
+    int rebuildDbtP1Queue(int unloadKey, Integer fileKey, int yrKey);
+
+    /**
+     * Года-портфели, в которых upl входит в {@code yr_upl_p}.
+     *
+     * @param uplKey {@code upl_key}
+     * @return {@code yr_key}
+     */
+    List<Integer> findYearKeysForUpl(int uplKey);
+
+    /**
+     * Очередь P1-кандидатов.
+     *
+     * @param unloadKey {@code upl_key}
+     * @return строки {@code CnInvUplDbtP1}
+     */
+    List<SudzCnInvUplDbtP1> findDbtP1ByUnload(int unloadKey);
 
     /**
      * Очередь разбора двоящих задолженностей.

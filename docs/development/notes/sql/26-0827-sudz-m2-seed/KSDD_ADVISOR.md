@@ -14,7 +14,7 @@
 
 | check | Рекомендация |
 |-------|--------------|
-| `no_var` | Create var |
+| `no_var` | Выбрать контекст |
 | `unique_sum_f1` / `sum_exact_new` | Link slot |
 | `account_match` + `bridge_ready` | Link (medium/high) |
 | `amortization` + `gap_projection` | Link slot (страховка, кейс 329) |

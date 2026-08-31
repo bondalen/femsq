@@ -872,6 +872,14 @@ watch(
   { immediate: true }
 );
 
+/** Выбор строки чекбоксом не вызывает @row-click — подгружаем detail по v-model:selected. */
+watch(selectedYearRows, (rows) => {
+  const row = rows[0];
+  if (row != null && row.yrKey !== store.selectedYrKey) {
+    void store.selectYear(row.yrKey);
+  }
+});
+
 watch(
   () => store.yearUpls,
   (upls) => {

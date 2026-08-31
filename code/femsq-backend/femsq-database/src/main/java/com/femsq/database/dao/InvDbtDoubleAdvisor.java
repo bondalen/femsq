@@ -18,7 +18,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Эвристики советника КСДД (сегм. 22c): текст {@code [advisor]} для оператора.
+ * Эвристики советника КСДД (сегм. 22c): текст {@code [советник]} для оператора.
  */
 final class InvDbtDoubleAdvisor {
 
@@ -57,14 +57,14 @@ final class InvDbtDoubleAdvisor {
     ) {
         Objects.requireNonNull(row, "row");
         BigDecimal eps = epsilon == null ? DEFAULT_EPS : epsilon;
-        StringBuilder msg = new StringBuilder("[advisor]");
+        StringBuilder msg = new StringBuilder("[советник]");
         String confidence = "none";
         String action = "manual";
         Integer recommendSlot = null;
         Integer recommendVar = row.ciudIdvvKey();
 
         if (row.ciudIdvvKey() == null || row.ciudIdvvKey() <= 0) {
-            appendLine(msg, "check=no_var: нет invDbtVar → сначала Create var");
+            appendLine(msg, "Нет варианта контекста (invDbtVar) — сначала «Выбрать контекст»");
             return new SudzInvDbtDoubleAdvice(
                     msg.toString(), "high", "create_var", null, null);
         }
@@ -76,21 +76,20 @@ final class InvDbtDoubleAdvisor {
                     .map(SudzInvDbtSlot::idKey)
                     .toList();
             if (accntSlots.size() == 1) {
-                appendLine(msg, "check=account_match: Excel accnt=" + excelAccnt
-                        + " → slot " + accntSlots.get(0));
+                appendLine(msg, "Счёт Excel (" + excelAccnt + ") совпадает со слотом "
+                        + accntSlots.get(0));
             } else if (accntSlots.isEmpty()) {
-                appendLine(msg, "check=account_match: ни один слот не совпадает с accnt Excel ("
-                        + excelAccnt + ")");
+                appendLine(msg, "Ни один слот не совпадает со счётом Excel (" + excelAccnt + ")");
             } else {
-                appendLine(msg, "check=account_match: accnt " + excelAccnt + " → слоты "
+                appendLine(msg, "Счёт Excel (" + excelAccnt + ") — подходящие слоты: "
                         + accntSlots);
             }
         }
 
         if (f1UniqueSlot.isPresent()) {
             int slot = f1UniqueSlot.get();
-            appendLine(msg, "check=unique_sum_f1: сумма Excel → единственный slot " + slot);
-            appendLine(msg, "recommend=link slot=" + slot + " confidence=high");
+            appendLine(msg, "Сумма Excel однозначно указывает на слот " + slot);
+            appendRecommendLink(msg, slot, "high");
             return new SudzInvDbtDoubleAdvice(
                     msg.toString(), "high", "link", slot, row.ciudIdvvKey());
         }
@@ -98,14 +97,14 @@ final class InvDbtDoubleAdvisor {
         if (newSumMatches.size() == 1) {
             SudzSfDoubleNewSumMatch m = newSumMatches.get(0);
             if (m.dvInvDbt() != null) {
-                appendLine(msg, "check=sum_exact_new: dvKey=" + m.dvKey()
-                        + " invDbt=" + m.dvInvDbt());
-                appendLine(msg, "recommend=link slot=" + m.dvInvDbt() + " confidence=high");
+                appendLine(msg, "Точное совпадение суммы в DbtValue: dvKey=" + m.dvKey()
+                        + ", invDbt=" + m.dvInvDbt());
+                appendRecommendLink(msg, m.dvInvDbt(), "high");
                 return new SudzInvDbtDoubleAdvice(
                         msg.toString(), "high", "link", m.dvInvDbt(), row.ciudIdvvKey());
             }
         } else if (newSumMatches.isEmpty() && row.ciudDebt() != null) {
-            appendLine(msg, "check=sum_exact: якорь " + formatMoney(row.ciudDebt())
+            appendLine(msg, "Якорь " + formatMoney(row.ciudDebt())
                     + " не найден в истории DbtValue (±" + eps + ")");
         }
 
@@ -115,8 +114,8 @@ final class InvDbtDoubleAdvisor {
                 .findFirst()
                 .orElse(null);
         if (bridgedSlot != null) {
-            appendLine(msg, "check=bridge_ready: var " + row.ciudIdvvKey()
-                    + " уже на slot " + bridgedSlot);
+            appendLine(msg, "Мост готов: var " + row.ciudIdvvKey()
+                    + " уже привязан к слоту " + bridgedSlot);
         }
 
         AmortizationResult bestAmort = null;
@@ -134,29 +133,30 @@ final class InvDbtDoubleAdvisor {
             }
         }
         if (bestAmort != null) {
-            appendLine(msg, "check=amortization: slot " + bestAmort.slotId()
+            appendLine(msg, "Амортизация, слот " + bestAmort.slotId()
                     + " (" + bestAmort.label() + "): шаг "
                     + formatMoney(bestAmort.step()) + " × " + bestAmort.steps()
                     + " (R²=" + String.format(Locale.US, "%.4f", bestAmort.r2()) + ")");
-            appendLine(msg, "check=gap_projection: " + bestAmort.projectionLine());
+            appendLine(msg, "Прогноз по разрыву: " + bestAmort.projectionLine());
             recommendSlot = bestAmort.slotId();
             confidence = bestAmort.confidence();
             action = "link";
-            appendLine(msg, "recommend=link slot=" + recommendSlot + " confidence=" + confidence);
-            appendLine(msg, "reason=равномерная амортизация + "
+            appendRecommendLink(msg, recommendSlot, confidence);
+            appendLine(msg, "Причина: равномерная амортизация + "
                     + (bestAmort.projectionHit() ? "попадание Excel в тренд" : "сверить первичку"));
         } else if (bridgedSlot != null && excelAccnt != null
                 && excelAccnt.equals(slotAccnts.get(bridgedSlot))) {
             recommendSlot = bridgedSlot;
             confidence = "medium";
             action = "link";
-            appendLine(msg, "recommend=link slot=" + bridgedSlot + " confidence=medium");
-            appendLine(msg, "reason=accnt Excel + готовый мост var↔slot");
+            appendRecommendLink(msg, bridgedSlot, confidence);
+            appendLine(msg, "Причина: счёт Excel совпадает, мост var↔slot уже есть");
         } else {
-            appendLine(msg, "recommend=manual: выберите slot по ciaName / контексту");
+            appendLine(msg, "Рекомендация: выберите слот вручную (по ciaName / контексту)");
         }
 
-        appendLine(msg, "note=советник не заменяет первичку; при medium/low — проверьте вручную");
+        appendLine(msg, "Примечание: советник не заменяет первичку; при средней или низкой "
+                + "уверенности проверьте вручную");
         return new SudzInvDbtDoubleAdvice(
                 msg.toString(), confidence, action, recommendSlot, recommendVar);
     }
@@ -245,7 +245,7 @@ final class InvDbtDoubleAdvisor {
         double r2 = 1.0 - Math.min(1.0, stdDev / meanAbs);
         SudzInvDbtTimelinePoint last = tail.get(tail.size() - 1);
         boolean projectionHit = false;
-        String projectionLine = "нет даты среза upl";
+        String projectionLine = "нет даты среза выгрузки";
         String confidence = "medium";
         if (excelStatusDate != null && last.statusDate() != null) {
             long days = ChronoUnit.DAYS.between(last.statusDate(), excelStatusDate);
@@ -268,7 +268,7 @@ final class InvDbtDoubleAdvisor {
                 }
             }
         }
-        String label = slotNote != null && !slotNote.isBlank() ? slotNote : "slot " + slotId;
+        String label = slotNote != null && !slotNote.isBlank() ? slotNote : "слот " + slotId;
         return new AmortizationResult(
                 slotId,
                 label,
@@ -279,6 +279,21 @@ final class InvDbtDoubleAdvisor {
                 projectionLine,
                 confidence
         );
+    }
+
+    private static void appendRecommendLink(StringBuilder sb, int slot, String confidence) {
+        appendLine(sb, "→ Связать со слотом " + slot + " (уверенность: "
+                + confidenceRu(confidence) + ")");
+    }
+
+    private static String confidenceRu(String confidence) {
+        return switch (confidence) {
+            case "high" -> "высокая";
+            case "medium" -> "средняя";
+            case "low" -> "низкая";
+            case "none" -> "нет";
+            default -> confidence;
+        };
     }
 
     private static void appendLine(StringBuilder sb, String line) {

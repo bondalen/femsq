@@ -146,6 +146,21 @@
                         @update:model-value="(v) => store.patchFileFlags({ flTbl: !!v })"
                       />
                     </div>
+                    <div class="col-grow" style="min-width: 220px">
+                      <QSelect
+                        v-model="store.selectedYrKey"
+                        :options="store.yrContextOptions"
+                        emit-value
+                        map-options
+                        dense
+                        outlined
+                        label="Портфель года (yr)"
+                        hint="Контекст diff base→curr; для 31.12 — Q4 vs база след. года"
+                        hint-persistent
+                        :disable="!store.selectedUpl || store.yrContextOptions.length === 0"
+                        data-test="sudz-dbt-upl-yr-context"
+                      />
+                    </div>
                     <div class="col-auto">
                       <QBtn
                         color="primary"
@@ -154,7 +169,7 @@
                         dense
                         label="загрузка"
                         :loading="store.funnelRunning"
-                        :disable="!store.selectedUpl"
+                        :disable="!store.selectedUpl || store.selectedYrKey == null"
                         data-test="sudz-dbt-upl-run"
                         @click="onRunLoad"
                       />
@@ -298,11 +313,56 @@
                     row-key="cidufsKey"
                     dense
                     flat
-                    :loading="store.loading"
+                    selection="single"
+                    v-model:selected="selectedSheetRows"
+                    :loading="store.loading || store.saving"
                     data-test="sudz-dbt-upl-sheets"
+                    @row-click="onSheetRowClick"
                   />
-                  <div v-if="!store.sheets.length" class="text-grey-6 q-pa-sm shrink-0">
-                    Листов нет (появятся после чтения Excel).
+                  <div class="row items-center q-pa-sm q-gutter-sm shrink-0">
+                    <QBtn
+                      outline
+                      dense
+                      no-caps
+                      color="primary"
+                      label="6 стандартных"
+                      :disable="!store.selectedUpl"
+                      :loading="store.saving"
+                      data-test="sudz-dbt-upl-sheets-seed"
+                      @click="onSeedStandardSheets"
+                    />
+                    <QBtn
+                      outline
+                      dense
+                      no-caps
+                      label="Добавить…"
+                      :disable="!store.selectedUpl"
+                      data-test="sudz-dbt-upl-sheets-add"
+                      @click="openSheetDialog()"
+                    />
+                    <QBtn
+                      outline
+                      dense
+                      no-caps
+                      label="Изменить…"
+                      :disable="selectedSheetRows.length === 0"
+                      data-test="sudz-dbt-upl-sheets-edit"
+                      @click="openSheetDialog(selectedSheetRows[0])"
+                    />
+                    <QBtn
+                      outline
+                      dense
+                      no-caps
+                      color="negative"
+                      label="Удалить"
+                      :disable="selectedSheetRows.length === 0"
+                      data-test="sudz-dbt-upl-sheets-delete"
+                      @click="onDeleteSheet"
+                    />
+                    <QSpace />
+                    <div v-if="!store.sheets.length" class="text-grey-6">
+                      Листов нет — «6 стандартных» или «Добавить…»
+                    </div>
                   </div>
                 </QTabPanel>
 
@@ -318,7 +378,7 @@
                     data-test="sudz-dbt-upl-doubles"
                   />
                   <div class="row items-center q-pa-sm q-gutter-sm shrink-0">
-                    <div v-if="!store.sfDoubles.length" class="text-grey-6 col">
+                    <div v-if="!store.sfDoublesOpenCount" class="text-grey-6 col">
                       Очередь неоднозначностей пуста (после шага CnCtptExistInvNotLoad).
                     </div>
                     <QSpace v-else />
@@ -328,7 +388,7 @@
                       no-caps
                       color="primary"
                       label="Разбор повторяющихся СФ…"
-                      :disable="!store.sfDoubles.length"
+                      :disable="!store.sfDoublesOpenCount"
                       data-test="sudz-dbt-upl-open-sf-double"
                       @click="openSfDouble"
                     />
@@ -347,7 +407,7 @@
                     data-test="sudz-dbt-upl-inv-dbt-doubles"
                   />
                   <div class="row items-center q-pa-sm q-gutter-sm shrink-0">
-                    <div v-if="!store.invDbtDoubles.length" class="text-grey-6 col">
+                    <div v-if="!store.invDbtDoublesOpenCount" class="text-grey-6 col">
                       КСДД: к разбору нет (после шага invDbtLoad или всё разобрано).
                     </div>
                     <QSpace v-else />
@@ -398,6 +458,51 @@
         </QCardActions>
       </QCard>
     </QDialog>
+
+    <QDialog v-model="sheetDialog.open" persistent>
+      <QCard style="min-width: 360px">
+        <QCardSection class="text-subtitle1">
+          {{ sheetDialog.editKey == null ? 'Новый лист Excel' : 'Изменить лист' }}
+        </QCardSection>
+        <QCardSection class="q-gutter-sm">
+          <QInput
+            v-model="sheetDialog.sheet"
+            dense
+            outlined
+            label="Имя листа (как в xlsx)"
+            hint="Обычно совпадает с номером счёта ГК"
+            data-test="sudz-dbt-upl-sheet-name"
+          />
+          <QInput
+            v-model="sheetDialog.accountNum"
+            dense
+            outlined
+            type="number"
+            label="Счёт ГК (account_num)"
+            hint="606012, 762210 … — из ags.accnt"
+            data-test="sudz-dbt-upl-sheet-accnt"
+          />
+          <QToggle
+            v-model="sheetDialog.test"
+            dense
+            label="проверять?"
+            data-test="sudz-dbt-upl-sheet-test"
+          />
+        </QCardSection>
+        <QCardActions align="right">
+          <QBtn flat no-caps label="Отмена" v-close-popup />
+          <QBtn
+            color="primary"
+            unelevated
+            no-caps
+            :label="sheetDialog.editKey == null ? 'Добавить' : 'Сохранить'"
+            :loading="store.saving"
+            data-test="sudz-dbt-upl-sheet-submit"
+            @click="onSheetDialogSubmit"
+          />
+        </QCardActions>
+      </QCard>
+    </QDialog>
   </QPage>
 </template>
 
@@ -413,6 +518,7 @@ import {
   QDialog,
   QInput,
   QPage,
+  QSelect,
   QSeparator,
   QSpace,
   QSplitter,
@@ -426,6 +532,7 @@ import {
 import { FemsqTable, type FemsqTableColumn } from 'fequlib';
 
 import { useConnectionStore } from '@/stores/connection';
+import { useSudzPortfolioStore } from '@/stores/sudz-portfolio';
 import { useSudzDbtUplStore } from '@/stores/sudz-dbt-upl';
 import {
   SUDZ_DBT_UPL_FUNNEL_ENABLED_IDS,
@@ -443,6 +550,7 @@ import type {
 
 const $q = useQuasar();
 const store = useSudzDbtUplStore();
+const portfolioStore = useSudzPortfolioStore();
 const connection = useConnectionStore();
 
 /** Доля высоты списка выгрузок (%). */
@@ -489,7 +597,14 @@ const uplColumns: FemsqTableColumn<SudzUplLookup>[] = [
 
 const sheetColumns: FemsqTableColumn<SudzDbtUplFileSh>[] = [
   { name: 'cidufsSheet', label: 'Лист', field: 'cidufsSheet', align: 'left' },
-  { name: 'cidufsAccount', label: 'Счёт', field: 'cidufsAccount', align: 'right' },
+  {
+    name: 'accountNum',
+    label: 'Счёт ГК',
+    field: 'accountNum',
+    align: 'right',
+    format: (v) => (v == null ? '' : String(v))
+  },
+  { name: 'cidufsAccount', label: 'accnt_key', field: 'cidufsAccount', align: 'right' },
   {
     name: 'cidufsTest',
     label: 'проверять?',
@@ -498,6 +613,16 @@ const sheetColumns: FemsqTableColumn<SudzDbtUplFileSh>[] = [
     format: (v) => (v ? 'да' : '')
   }
 ];
+
+const selectedSheetRows = ref<SudzDbtUplFileSh[]>([]);
+
+const sheetDialog = reactive({
+  open: false,
+  editKey: null as number | null,
+  sheet: '',
+  accountNum: '',
+  test: true
+});
 
 const sfDoubleColumns: FemsqTableColumn<SudzCnInvUplSfDouble>[] = [
   { name: 'ciusStatus', label: 'статус', field: 'ciusStatus', align: 'left' },
@@ -520,6 +645,103 @@ const invDbtDoubleColumns: FemsqTableColumn<SudzCnInvUplInvDbtDouble>[] = [
   { name: 'ciudReason', label: 'причина', field: 'ciudReason', align: 'left' },
   { name: 'ciudIKey', label: 'iKey', field: 'ciudIKey', align: 'right' }
 ];
+
+watch(
+  () => store.sheets,
+  () => {
+    selectedSheetRows.value = [];
+  }
+);
+
+/**
+ * Выбор строки листа в таблице.
+ */
+function onSheetRowClick(_evt: Event, row: SudzDbtUplFileSh): void {
+  selectedSheetRows.value = [row];
+}
+
+/**
+ * Открывает диалог добавления/редактирования листа.
+ */
+function openSheetDialog(row?: SudzDbtUplFileSh): void {
+  if (row) {
+    sheetDialog.editKey = row.cidufsKey;
+    sheetDialog.sheet = row.cidufsSheet;
+    sheetDialog.accountNum = String(row.accountNum ?? row.cidufsSheet);
+    sheetDialog.test = row.cidufsTest;
+  } else {
+    sheetDialog.editKey = null;
+    sheetDialog.sheet = '';
+    sheetDialog.accountNum = '';
+    sheetDialog.test = true;
+  }
+  sheetDialog.open = true;
+}
+
+/**
+ * Сохраняет лист из диалога.
+ */
+async function onSheetDialogSubmit(): Promise<void> {
+  const sheet = sheetDialog.sheet.trim();
+  const accountNum = Number.parseInt(sheetDialog.accountNum, 10);
+  if (!sheet) {
+    $q.notify({ type: 'warning', message: 'Укажите имя листа' });
+    return;
+  }
+  if (!Number.isFinite(accountNum) || accountNum <= 0) {
+    $q.notify({ type: 'warning', message: 'Укажите корректный номер счёта ГК' });
+    return;
+  }
+  const ok =
+    sheetDialog.editKey == null
+      ? await store.addSheet(sheet, accountNum, sheetDialog.test)
+      : await store.editSheet(sheetDialog.editKey, sheet, accountNum, sheetDialog.test);
+  if (ok) {
+    sheetDialog.open = false;
+    $q.notify({ type: 'positive', message: 'Лист сохранён' });
+  } else if (store.error) {
+    $q.notify({ type: 'negative', message: store.error });
+  }
+}
+
+/**
+ * Добавляет 6 стандартных листов общего свода.
+ */
+async function onSeedStandardSheets(): Promise<void> {
+  const before = store.sheets.length;
+  const added = await store.seedStandardSheets();
+  if (added.length === 0 && before > 0) {
+    $q.notify({ type: 'info', message: 'Листы уже есть — seed пропущен' });
+  } else if (added.length > 0) {
+    $q.notify({ type: 'positive', message: `Добавлено листов: ${added.length}` });
+  } else if (store.error) {
+    $q.notify({ type: 'negative', message: store.error });
+  }
+}
+
+/**
+ * Удаляет выбранный лист.
+ */
+async function onDeleteSheet(): Promise<void> {
+  const row = selectedSheetRows.value[0];
+  if (!row) {
+    return;
+  }
+  $q.dialog({
+    title: 'Удалить лист?',
+    message: `${row.cidufsSheet} (accnt ${row.accountNum ?? row.cidufsAccount})`,
+    cancel: true,
+    persistent: true
+  }).onOk(async () => {
+    const ok = await store.removeSheet(row.cidufsKey);
+    if (ok) {
+      selectedSheetRows.value = [];
+      $q.notify({ type: 'positive', message: 'Лист удалён' });
+    } else if (store.error) {
+      $q.notify({ type: 'negative', message: store.error });
+    }
+  });
+}
 
 /**
  * Открывает экран КСДСФ для текущей выгрузки.
@@ -698,6 +920,13 @@ async function onRunLoad(): Promise<void> {
     $q.notify({ type: 'warning', message: 'Выберите выгрузку' });
     return;
   }
+  if (store.selectedYrKey == null) {
+    $q.notify({
+      type: 'warning',
+      message: 'Выберите портфель года (yr) — контекст для diff base→curr'
+    });
+    return;
+  }
   const pathOk = await onPathCommit();
   if (!pathOk) {
     return;
@@ -730,8 +959,11 @@ async function onRunLoad(): Promise<void> {
   }
 }
 
-onMounted(() => {
-  void store.loadUpls();
+onMounted(async () => {
+  await store.loadUpls();
+  if (portfolioStore.selectedYrKey != null) {
+    store.setPreferredYrKey(portfolioStore.selectedYrKey);
+  }
 });
 </script>
 

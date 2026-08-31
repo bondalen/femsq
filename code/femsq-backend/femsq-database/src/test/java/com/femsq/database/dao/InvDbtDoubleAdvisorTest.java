@@ -28,7 +28,7 @@ class InvDbtDoubleAdvisorTest {
                 1, 1, null, 910, 329, null, null, new BigDecimal("30404.40"),
                 6766, "multi", null, "open", null, null);
         var excel = new com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate(
-                1, null, 23, null, null, null, null, null, null, null, null, null,
+                1, null, 23, 761010, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("30404.40"), null, null, null, null, null, 910);
         var slot = new com.femsq.database.model.sudz.SudzInvDbtSlot(42, 329, 1, "ciaName=1");
         var advice = InvDbtDoubleAdvisor.advise(
@@ -42,8 +42,8 @@ class InvDbtDoubleAdvisorTest {
                 java.util.Map.of(42, points),
                 LocalDate.parse("2025-12-31"),
                 new BigDecimal("0.01"));
-        assertTrue(advice.messageText().contains("[advisor]"));
-        assertTrue(advice.messageText().contains("recommend=link slot=42"));
+        assertTrue(advice.messageText().contains("[советник]"));
+        assertTrue(advice.messageText().contains("Связать со слотом 42"));
         assertTrue("high".equals(advice.confidence()) || "medium".equals(advice.confidence()));
     }
 

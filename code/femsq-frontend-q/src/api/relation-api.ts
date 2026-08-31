@@ -1,5 +1,5 @@
 /**
- * Apollo: relationNode / relationExpand (не экран СУДЗ).
+ * Apollo: relationNode / relationExpand / relationQuery (не экран СУДЗ).
  */
 import { gql } from '@apollo/client/core';
 
@@ -49,6 +49,14 @@ const RELATION_EXPAND = gql`
   }
 `;
 
+const RELATION_QUERY = gql`
+  query RelationQuery($queryId: String!, $fromId: Int!) {
+    relationQuery(queryId: $queryId, fromId: $fromId) {
+      ${RELATION_ROW_FIELDS}
+    }
+  }
+`;
+
 /**
  * Строка таблицы каталога.
  *
@@ -86,5 +94,25 @@ export async function fetchRelationExpand(edge: string, fromId: number): Promise
     return result.data?.relationExpand ?? [];
   } catch (error) {
     throw wrapApolloError(error, 'RelationExpand');
+  }
+}
+
+/**
+ * Именованный SELECT из реестра backend.
+ *
+ * @param queryId id JSON
+ * @param fromId bind {@code ?}
+ * @return строки
+ */
+export async function fetchRelationQuery(queryId: string, fromId: number): Promise<RelationApiRow[]> {
+  try {
+    const result = await apolloClient.query<{ relationQuery: RelationApiRow[] }>({
+      query: RELATION_QUERY,
+      variables: { queryId, fromId },
+      fetchPolicy: 'network-only'
+    });
+    return result.data?.relationQuery ?? [];
+  } catch (error) {
+    throw wrapApolloError(error, 'RelationQuery');
   }
 }

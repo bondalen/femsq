@@ -26,4 +26,13 @@ public interface RelationService {
      * @return строки to
      */
     List<RelationRow> expand(String edge, int fromId);
+
+    /**
+     * Именованный read-only запрос для дерева.
+     *
+     * @param queryId id реестра
+     * @param fromId bind {@code ?}
+     * @return строки
+     */
+    List<RelationRow> query(String queryId, int fromId);
 }

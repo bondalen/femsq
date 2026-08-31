@@ -1,0 +1,86 @@
+{
+  "pass": true,
+  "checks": {
+    "row1_sums_base_qi_qii": {
+      "ok": true,
+      "detail": {
+        "ttl": {
+          "ref": "418736881179.49",
+          "gen": "418736881179.49",
+          "ref_n": 1548,
+          "gen_n": 1548,
+          "ok": true
+        },
+        "o0": {
+          "ref": "5164261005.80",
+          "gen": "5164261005.80",
+          "ref_n": 1548,
+          "gen_n": 1548,
+          "ok": true
+        },
+        "ttl_i": {
+          "ref": "493437037552.97",
+          "gen": "493437037552.97",
+          "ref_n": 1794,
+          "gen_n": 1794,
+          "ok": true
+        },
+        "o_i": {
+          "ref": "11052684998.86",
+          "gen": "11052684998.86",
+          "ref_n": 1794,
+          "gen_n": 1794,
+          "ok": true
+        },
+        "pog_i": {
+          "ref": "571801628.05",
+          "gen": "571801628.05",
+          "ref_n": 7,
+          "gen_n": 7,
+          "ok": true
+        },
+        "ttl_ii": {
+          "ref": "577277433283.50",
+          "gen": "577277433283.50",
+          "ref_n": 2337,
+          "gen_n": 2337,
+          "ok": true
+        },
+        "o_ii": {
+          "ref": "10077877126.91",
+          "gen": "10077877126.91",
+          "ref_n": 2337,
+          "gen_n": 2337,
+          "ok": true
+        },
+        "pog_ii": {
+          "ref": "783325767.48",
+          "gen": "783325767.48",
+          "ref_n": 12,
+          "gen_n": 12,
+          "ok": true
+        }
+      }
+    },
+    "controls": {
+      "ok": true,
+      "errors": []
+    },
+    "pogasheno_rows": {
+      "ok": true,
+      "n": 12,
+      "errors": []
+    },
+    "stratified_sample": {
+      "ok": true,
+      "picked": 80,
+      "matched_ok": 80,
+      "errors": []
+    }
+  },
+  "errors": [],
+  "rows": {
+    "ref": 3738,
+    "gen": 2836
+  }
+}

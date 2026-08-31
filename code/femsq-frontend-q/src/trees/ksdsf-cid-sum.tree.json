@@ -10,6 +10,7 @@
     "number",
     "dbt_ttl"
   ],
+  "valueKinds": { "dbt_ttl": "money" },
   "detail": "*",
   "children": [
     {

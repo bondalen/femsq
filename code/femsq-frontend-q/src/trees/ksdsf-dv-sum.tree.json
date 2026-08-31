@@ -10,6 +10,7 @@
     "dvTtl",
     "dvUpl"
   ],
+  "valueKinds": { "dvTtl": "money" },
   "detail": "*",
   "children": [
     {

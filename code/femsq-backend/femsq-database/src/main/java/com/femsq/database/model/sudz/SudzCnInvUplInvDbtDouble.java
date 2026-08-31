@@ -16,7 +16,7 @@ import java.time.OffsetDateTime;
  * @param ciudInvNum номер СФ
  * @param ciudDebt сумма долга из Excel
  * @param ciudIdvvKey {@code invDbtVar} если известен
- * @param ciudReason multi|ambiguous|sum
+ * @param ciudReason multi|excel_unresolved|sum
  * @param ciudReasonDetail текстовый канал сообщений ({@code [queue.build]} …)
  * @param ciudStatus open|created|deferred
  * @param ciudStatusAt время смены статуса

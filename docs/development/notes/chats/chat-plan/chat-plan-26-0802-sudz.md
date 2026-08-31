@@ -1,11 +1,11 @@
 # План: аналог «системы управления дебиторской задолженностью» (СУДЗ) из MS Access
 
 **Дата создания:** 2026-08-02  
-**Последнее обновление:** 2026-08-27  
+**Последнее обновление:** 2026-08-31  
 **Проект:** FEMSQ  
-**Версия плана:** 0.99.10 (КСДД 22c ✅)
+**Версия плана:** 0.99.17 (сегм. 36 C2 dbtValueLoad + P1 queue ✅)
 **Задача:** 0065–0072 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md); **активно: 0069** — **S74 M5** чекбоксы; **0071** Договоры 🔶; **S69**/**S70** ✅
-**Статус плана:** ✅ 0070; **S66e**/**S71**/**S72** A1–A2/B1/B1b ✅; **S73 зерно** ✅; **S74 M1–M4** ✅; next **M5**; **0071** 🔶
+**Статус плана:** ✅ 0070; **S66e**/**S71**/**S72** A1–A2/B1/B1b ✅; **S73 зерно** ✅; **S74 M1–M4** ✅; **M5 C1** ✅; next **C2**; **0071** 🔶
 **Cutover prod/DEV:** [db-upgrade-sudz-invdbt-cutover.md](../../../../deployment/db-upgrade-sudz-invdbt-cutover.md) · §5.6 [S74](#s74--трек-cutover-m1m6--2026-08-27) · D1: [04-5](../../domain/sudz/04-5_dbt-invdbt-cardinality-d1.md)
 **Паспорт pmt:** [02-11_cn-inv-pmt-upl-access.md](../../UI/02-11_cn-inv-pmt-upl-access.md) · §5.7  
 **План UI pmt:** [chat-plan-26-0819-cn-inv-pmt-upl.md](./chat-plan-26-0819-cn-inv-pmt-upl.md) · §5.8  
@@ -14,7 +14,7 @@
 **Резюме pmt (S69):** [chat-resume-26-0817-cn-inv-pmt-upl.md](../chat-resume/chat-resume-26-0817-cn-inv-pmt-upl.md)
 
 
-**Доменные доки:** [01-overview](../../domain/sudz/01-overview.md) · [02-glossary](../../domain/sudz/02-glossary.md) · [03-processes](../../domain/sudz/03-processes.md) · [04-data-model](../../domain/sudz/04-data-model.md) · [04-1 MS_Description](../../domain/sudz/04-1_ms-descriptions.md) · [04-3 проблемы](../../domain/sudz/04-3_problems-solutions.md) · [04-4 зерно/счёт долгов](../../domain/sudz/04-4_legacy-debt-grain.md) · [04-5 D1 кардинальность Dbt↔invDbt](../../domain/sudz/04-5_dbt-invdbt-cardinality-d1.md) · [07-readiness (покрытие/готовность)](../../domain/sudz/07-readiness.md) · [08-target-schema (физ. схема + ER)](../../domain/sudz/08-target-schema.md)  
+**Доменные доки:** [01-overview](../../domain/sudz/01-overview.md) · [02-glossary](../../domain/sudz/02-glossary.md) · [03-processes](../../domain/sudz/03-processes.md) · [04-data-model](../../domain/sudz/04-data-model.md) · [04-1 MS_Description](../../domain/sudz/04-1_ms-descriptions.md) · [04-3 проблемы](../../domain/sudz/04-3_problems-solutions.md) · [04-4 зерно/счёт долгов](../../domain/sudz/04-4_legacy-debt-grain.md) · [04-5 D1 кардинальность Dbt↔invDbt](../../domain/sudz/04-5_dbt-invdbt-cardinality-d1.md) · [04-6 multi-Dbt P1 три пути](../../domain/sudz/04-6_multi-dbt-p1-three-paths.md) · [07-readiness (покрытие/готовность)](../../domain/sudz/07-readiness.md) · [08-target-schema (физ. схема + ER)](../../domain/sudz/08-target-schema.md)  
 **UI-эскизы:** [02-9_sudz-mvp-screens.md](../../UI/02-9_sudz-mvp-screens.md)  
 **Дерево:** [02-12 relation-tree](../../UI/02-12_femsq-tree/relation-tree.md) · [КСДСФ](../../UI/02-12_femsq-tree/ksdsf-inv-num.tree.md) · [Договоры/СФ](../../UI/02-12_femsq-tree/contracts-inv.tree.md) · ADR [009](../../../../project/decisions/009-femsq-walk-tree.md)  
 **IA (целевое меню):** [02-4_app-forms-ia.md](../../UI/02-4_app-forms-ia.md)  
@@ -206,6 +206,7 @@
 | S72 | 2026-08-25…26 | Дорожная карта; **B1/B1b/A2** ✅; порядок C пересмотрен **S74** | [§5.6 S72](#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25) | 🔄 |
 | S73-grain | 2026-08-26 | Зерно legacy `(iKey,ciaName)≈idNum`; счёт **11906–11907** | [04-4](../../domain/sudz/04-4_legacy-debt-grain.md) | ✅ |
 | S74 | 2026-08-27 | Трек cutover **M1–M6** (Dbt→DEV seed→calm→экран/7→чекбоксы→prod) | [§5.6 S74](#s74--трек-cutover-m1m6--2026-08-27); [cutover](../../../../deployment/db-upgrade-sudz-invdbt-cutover.md) | 🔄 M5 (M1–M4 ✅) |
+| S75 | 2026-08-31 | **Rslt stage1** база–QI–QII: PIT `09`, L*, row1+погашено+выборка; E1′ в cutover; gate `verify-rslt-stage1.sh` | [26-0831](../../sql/26-0831-sudz-dbt-slot-link/); [E1′](../../../../deployment/db-upgrade-sudz-invdbt-cutover.md#e1--паритет-исторических-rslt-pit-2026-08-31) | ✅ |
 | S73 | 2026-08-26 | **0071 T7:** отдельный план вкладки «Счета-фактуры» (слева `cnInv`, справа `contracts-inv`); interim = `cn-picker` | [chat-plan-26-0826-contracts-inv.md](./chat-plan-26-0826-contracts-inv.md) | 🔄 план |
 | S67 | 2026-08-16 | UAT 910 dry: **128** дог. / **705** СФ ✅, но rebuild **~3m14s** (CTE). Перепись на `#temp`+индексы; лог СФ усечён (8+…) | JAR **0.1.0.196** | ✅ via S67a |
 | S67a | 2026-08-16 | `#temp` без COLLATE → conflict Latin1 vs Cyrillic на JOIN `cnnNumNull`. Колонки `#cidu*` → `Cyrillic_General_CI_AS` | JAR **0.1.0.197** | ✅ UAT: sqlMs=241, 128/705 |
@@ -820,7 +821,13 @@ Apply Inv (`inNumCount IS NULL` vs Access «весь TblCnInv») — намер�
 | 36 | 2026-08-27 | **D4a:** concurrent multi-cia → доп. `invDbt` (классы A/B; 40665=migrate); E1 = cid; cutover §1.5 | ✅ |
 | 37 | 2026-08-27 | **M3 Calm F1:** sum→слот (ε=0.01); 06c FK sudz upl; UAT 910: Value 1629 / f1=1 / queue ~131; JAR 225 | ✅ |
 | 38 | 2026-08-27 | **M4 экран/7:** ciaName + деревья сумм + `[row.select]`; Link UAT `2446→4405`; dry 7 → queued=124; JAR 226 | ✅ |
-| 39 | 2026-08-28 | **КСДД 22b:** очередь как КСДСФ — full DELETE rebuild, DELETE после resolve, UI «к разбору» | ✅ |
+| 39 | 2026-08-28 | **КСДД 22b:** rebuild — full DELETE upl, INSERT только `open` | ✅ |
+| 40 | 2026-08-29 | **КСДД 22e:** Link/Create → `created` (как КСДСФ S68); экран все статусы, launcher — open | ✅ |
+| 41 | 2026-08-30 | **КСДД 22f:** resolveByExcel; `excel_unresolved`; calm INSERT var; UI «Выбрать контекст» | ✅ |
+| 42 | 2026-08-30 | **22g/B3:** регресс upl 910; open=0; D644 OK | ✅ |
+| 43 | 2026-08-30 | **M5/C1:** stepId `invDbtDbtEnsure`; calm+экран `Dbt`+`invDbtDbt`; UAT 705 мостов | ✅ |
+| 44 | 2026-08-31 | **Сегм. 35:** multi-Dbt P1 — три пути; `overdReduced`; исчезновение base yr→curr | ✅ решения |
+| 45 | 2026-08-31 | **Сегм. 36/C2:** `dbtValueLoad` + `CnInvUplDbtP1`; DDL DEV | ✅ код |
 
 **Код v1 (2026-08-24, после подтверждения владельца):** реализованы `invDbtVarEnsure` + `invDbtLoad` (DAO/оркестратор/логи), DDL `sudz.CnInvUplInvDbtDouble`, stub экрана `sudz-inv-dbt-double`, Access-хвост disabled. Auto load = calm path (без sum-match multi). **2026-08-25:** на лаунчере отдельная вкладка «двоящие долги СФ» (очередь `invDbtDoubles` рядом с «повторяющиеся СФ»). Следующее: **UAT upl 910** (dry → flLoad), затем наполнение экрана разбора.
 
@@ -1085,16 +1092,26 @@ Access-stub’ы (`invDbtDouble`, `CnCtptInvExistAccNotLoad`, `ciduTbl…NameCou
 
 **Сверка:** сегм. 20/21; P2 / `ciaName`; S73-grain; S74 M4.
 
-**Сегмент 22b — КСДД: очередь как КСДСФ (владелец, 2026-08-28):**
+**Сегмент 22b — КСДД: очередь rebuild (владелец, 2026-08-28):**
 
-**Статус:** ✅ код + UI
+**Статус:** ✅ код + UI · Link/Create уточнён в **22e**
 
 | # | Решение |
 |---|---------|
 | Имя | **КСДД** — компонент сличения двоящих долгов (аналог КСДСФ) |
 | Rebuild | `DELETE` **все** строки upl; `INSERT` только `open` (Excel∩домен, без Value на upl) |
-| После Link/Create | строка **удаляется** из очереди; SoT = `DbtValue` на upl |
-| UI / launcher | только `open`; «к разбору N» |
+| SoT | `DbtValue` на upl |
+
+**Сегмент 22e — КСДД: Link/Create → `created` как КСДСФ (2026-08-29):**
+
+**Статус:** ✅ код
+
+| # | Решение |
+|---|---------|
+| Link / Create слота | `UPDATE ciudStatus='created'`, `ciudCreatedIdKey`=слот; **не** DELETE |
+| Очередь на экране | все статусы; кнопки только `open` |
+| Launcher | бейдж «к разбору» = только `open` |
+| Сверка | S68 п.4 — статус до следующего прогона загрузки/свода |
 
 Док: [KSDD_QUEUE.md](../../../sql/26-0827-sudz-m2-seed/KSDD_QUEUE.md).
 
@@ -1111,7 +1128,73 @@ Access-stub’ы (`invDbtDouble`, `CnCtptInvExistAccNotLoad`, `ciduTbl…NameCou
 
 Док: [KSDD_ADVISOR.md](../../../sql/26-0827-sudz-m2-seed/KSDD_ADVISOR.md).
 
-**Сверка:** S68u (КСДСФ); сегм. 22; A2.
+**Сегмент 22d — relationQuery: контекст invDbtVar в дереве (2026-08-28):**
+
+**Статус:** ✅ код
+
+| # | Решение |
+|---|---------|
+| API | GraphQL `relationQuery(queryId, fromId)`; реестр `RelationQueryCatalog` (Java) |
+| JSON | `inv-dbt-slots.tree.json` v2: `queryId` `sudz.invDbtVar.contextBySlot`, title `summaryLine` |
+| Безопасность | только whitelist SELECT; SQL не с клиента; TOP 50, timeout 5 с |
+| ADR | [011-relation-query-registry.md](../../../../project/decisions/011-relation-query-registry.md) |
+
+**Сверка:** ADR 009 (walker); сегм. 22c (bridge_ready в дереве).
+
+**Сегмент 22f — КСДД: resolveByExcel, calm-excel (2026-08-30):**
+
+**Статус:** ✅ код
+
+| # | Решение |
+|---|---------|
+| ensure CTE | `cnnKey`/`invNumKey` по совпадению `cidutCnNameNull`/`cidutCnInvNull` с `ags.cnNum`/`ags.invNum` (OUTER APPLY), не `cnnUnique`/`inUnique` |
+| Очередь | ложный `ambiguous` → **`excel_unresolved`** (0 или >1 match по тексту Excel); настоящий **`multi`** без изменений |
+| calm | `applyDbtUplInvDbtLoadUnambiguous`: INSERT missing `invDbtVar` перед слотами; ~118 строк upl 910 → auto без KSDD |
+| UI | кнопка **«Выбрать контекст»**; reason `excel` в гриде |
+| ags | санитария **не** нужна — Excel остаётся SoT для выбора FK |
+
+Док: [KSDD_QUEUE.md](../../../sql/26-0827-sudz-m2-seed/KSDD_QUEUE.md).
+
+**Сегмент 22g — КСДД: закрытие UAT + B3 (2026-08-30):**
+
+**Статус:** ✅
+
+| # | Результат |
+|---|-----------|
+| upl 910 open | **0** после 22f calm |
+| D644 REST | HTTP 200 |
+| Док | [B3_SMOKE_22g.md](../../../sql/26-0827-sudz-m2-seed/B3_SMOKE_22g.md) |
+
+**Сегмент 23/C1 — M5: `invDbtDbtEnsure` (2026-08-30):**
+
+**Статус:** ✅ код
+
+| # | Решение |
+|---|---------|
+| stepId | **`invDbtDbtEnsure`** после `invDbtLoad` |
+| calm | F1 reuse → тот же `Dbt` (**D2**); иначе без sibling-моста → новый `Dbt` (**D7**); sibling без F1 → ambiguous (лог) |
+| экран | Create/Link: `ensureInvDbtDbtBridgeForSlot` после `DbtValue` |
+| UAT 910 | **705** новых `Dbt`+мостов; missing=**0** |
+
+**Сегмент 35 — multi-Dbt (P1): три пути, UI канона, `overdReduced` (владелец, 2026-08-31):**
+
+**Статус:** ✅ решения зафиксированы · **C2 код** сегм. 36
+
+| # | Решение |
+|---|---------|
+| Задача | Один **`Dbt`** → несколько **`invDbt`** (разные `iKey`); не путать с КСДД (P2) |
+| Суть P1 | **Исчезновение** `Dbt` на curr относительно base (нет Value на слоте), не «уменьшение суммы» |
+| Путь **1** | Исторический: cross-iKey sum-match, L* (D1/D2) |
+| Путь **2** | Base **`yr.cn_inv_dbt_upl`** → curr; исчезнувшие `Dbt` + sum-match `cidutDebt` из `overdReduced`/base; очередь P1 (C2) |
+| Путь **2b** | Q↔Q исчезновение — **фаза 2** (по потребности) |
+| Путь **3** | UI rebind (0071 + экран `Dbt`); полный случай |
+| Sum-match | Полная сумма; **все** совпадения; без жёсткого фильтра cn/контрагент |
+| Auto cross-iKey | **Отложено** — по опыту UI (аналог calm КСДД) |
+| Retrofix 910 | **Отложено** |
+| Именование | Excel/UI: **«погашено»**; код: **`overdReduced`** ✅ |
+| Док | [04-6_multi-dbt-p1-three-paths.md](../../domain/sudz/04-6_multi-dbt-p1-three-paths.md) |
+
+**Сверка:** сегм. 24–25 (D1/D2); 23/C1 (default 1:1); C2 next; 0071; V10.
 
 **Сегмент 23 — трек cutover и возврат к воронке (владелец, 2026-08-27):**
 
@@ -1133,9 +1216,9 @@ Access-stub’ы (`invDbtDouble`, `CnCtptInvExistAccNotLoad`, `ciduTbl…NameCou
 
 **Сегмент 25 — M1/D2: P1 после cutover (владелец, 2026-08-27):**
 
-**Утверждено:** при P1 после seed — **тот же `Dbt` + новый `invDbt` + `invDbtDbt`** (calm F1 / сумма 2a / экран 2b·M4). **Новый `Dbt`** — только действительно новый долг (**D7/C1**), не смена СФ.
+**Утверждено:** при P1 после seed — **тот же `Dbt` + новый `invDbt` + `invDbtDbt`** (calm F1 / сумма 2a / экран 2b·M4). **Новый `Dbt`** — только действительно новый долг (**D7/C1**), не смена СФ. Три пути и UI rebind — **сегм. 35**.
 
-**Сверка:** D1 / 04-5; S16 красный путь; сегм. 3/6 (2a/2b); M3–M4 — механизм, D2 — семантика.
+**Сверка:** D1 / 04-5; сегм. 35; S16 красный путь; сегм. 3/6 (2a/2b); M3–M4 — механизм, D2 — семантика.
 
 **Сегмент 26 — M1/D3: перенос мероприятий cmm (владелец, 2026-08-27):**
 
@@ -1324,7 +1407,7 @@ Access-stub’ы (`invDbtDouble`, `CnCtptInvExistAccNotLoad`, `ciduTbl…NameCou
 | **M2** | DEV-перенос old→new | Seed + **D4a** concurrent split + **E1** + **D3′**; `ROLLBACK_M2` | `DbtValue`=cid; cutover §1.5 | ✅ 2026-08-27 |
 | **M3** | Calm F1 | Sum уникальна → тот же `invDbt`; код + UAT 910 | Value 1629 / f1=1; [M3_CALM_F1](../../../sql/26-0827-sudz-m2-seed/M3_CALM_F1.md) | ✅ 2026-08-27 |
 | **M4** | Экран двоящих + чекбокс 7 | Доработка UI/регламента на seeded; Create/Link + Value | Сегм. 22 закрыт по UI; [M4_SCREEN](../../../sql/26-0827-sudz-m2-seed/M4_SCREEN.md) | ✅ 2026-08-27 |
-| **M5** | Остальные чекбоксы воронки | До завершения процесса загрузки свода (C2/Exist/… по реестру stepId) | Воронка 1.1.1.1 закрыта | 🔄 next |
+| **M5** | Остальные чекбоксы воронки | C1 ✅ `invDbtDbtEnsure`; C2/C3 — next | 🔄 C2 next |
 | **M6** | Prod | Survey A → `MSSQL2012/` → окно H → dual-read off | Cutover на FishEye | ☐ после M5 |
 
 **Подпункты M1 (D1–D7)** — см. cutover §1.1; стартовые предложения — в чате при открытии M1.
@@ -1389,8 +1472,8 @@ Access-stub’ы (`invDbtDouble`, `CnCtptInvExistAccNotLoad`, `ciduTbl…NameCou
 | # | Шаг | Содержание | Статус |
 |---|-----|------------|--------|
 | **C0** | Разовый seed `Dbt` | = **S74 M1✅+M2✅** (не чекбокс) | ✅ M2 |
-| **C1** | `Dbt` + `invDbtDbt` в воронке | auto для новых слотов без канона; иначе очередь (D7) | ☐ в **M5** |
-| **C2** | `DbtValueLoad` / Exist | skip/diff; догон | ☐ **M5** |
+| **C1** | `Dbt` + `invDbtDbt` в воронке | auto для новых слотов без канона; иначе очередь (D7) | ✅ 2026-08-30 |
+| **C2** | `dbtValueLoad` / Exist | diff base yr→curr; исчезнувшие `Dbt` + очередь P1 (`overdReduced`, сегм. 35) | ✅ **M5** код |
 | **C3** | «Учтено» / отчёты | Value + путь к `Dbt` | ☐ **M5** |
 
 ###### Фаза D — параллельно (не блокер M1)

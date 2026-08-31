@@ -3,6 +3,7 @@ package com.femsq.database.service;
 import com.femsq.database.dao.RelationDao;
 import com.femsq.database.model.relation.RelationRow;
 import com.femsq.database.relation.RelationEdgeCatalog;
+import com.femsq.database.relation.RelationQueryCatalog;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -35,5 +36,11 @@ public class DefaultRelationService implements RelationService {
     public List<RelationRow> expand(String edge, int fromId) {
         log.log(Level.FINE, "relationExpand edge={0} fromId={1}", new Object[] {edge, fromId});
         return relationDao.expand(RelationEdgeCatalog.requireEdge(edge), fromId);
+    }
+
+    @Override
+    public List<RelationRow> query(String queryId, int fromId) {
+        log.log(Level.FINE, "relationQuery queryId={0} fromId={1}", new Object[] {queryId, fromId});
+        return relationDao.runQuery(RelationQueryCatalog.require(queryId), fromId);
     }
 }

@@ -14,7 +14,7 @@
         />
         <div class="text-h6 col">КСДД — разбор двоящих долгов</div>
         <div class="text-caption text-grey-6 shrink-0">
-          upl={{ uplKey ?? '—' }} · к разбору {{ rows.length }}
+          upl={{ uplKey ?? '—' }} · очередь {{ rows.length }} · open {{ openCount }}
         </div>
       </div>
 
@@ -57,7 +57,7 @@
                     unelevated
                     dense
                     no-caps
-                    label="Create var"
+                    label="Выбрать контекст"
                     :disable="!canCreateVar"
                     :loading="acting"
                     data-test="sudz-inv-dbt-double-create-var"
@@ -86,7 +86,7 @@
                     @click="onLink"
                   />
                   <div class="text-caption text-grey-6">
-                    Без var — Create var; затем Create/Link слота.
+                    Без var — «Выбрать контекст»; затем Create/Link слота.
                   </div>
                 </div>
               </div>
@@ -143,7 +143,7 @@
                   <QTab name="slots" label="Слоты и дерево" />
                   <QTab name="dynamics" label="Динамика" :disable="!selectedSlot" />
                 </QTabs>
-                <QTabPanels v-model="slotsTab" animated class="col sudz-inv-dbt-slot-panels">
+                <QTabPanels v-model="slotsTab" animated class="col min-h-0 sudz-inv-dbt-slot-panels">
                   <QTabPanel name="slots" class="q-pa-none column fill-pane no-wrap">
                     <QSplitter
                       v-model="domainSplit"
@@ -198,24 +198,37 @@
                         <span v-if="timeline?.varKey != null"> · var={{ timeline.varKey }}</span>
                         <span v-if="timeline?.accnt != null"> · accnt={{ timeline.accnt }}</span>
                       </div>
-                      <FemsqChart
-                        fill
-                        class="col"
-                        :spec="slotChartSpec"
-                        data-test="sudz-inv-dbt-slot-chart"
-                      />
-                      <FemsqTable
-                        class="col-shrink"
-                        style="max-height: 38%"
-                        :rows="timelineRows"
-                        :columns="timelineColumns"
-                        row-key="rowKey"
-                        dense
-                        flat
-                        :loading="timelineLoading"
-                        :show-filter="false"
-                        data-test="sudz-inv-dbt-slot-timeline"
-                      />
+                      <QSplitter
+                        v-model="dynamicsSplit"
+                        horizontal
+                        :limits="[25, 75]"
+                        separator-class="sudz-split-sep"
+                        class="col min-h-0 sudz-sf-splitter"
+                        data-test="sudz-inv-dbt-dynamics-split"
+                      >
+                        <template #before>
+                          <FemsqChart
+                            fill
+                            class="fit"
+                            :spec="slotChartSpec"
+                            data-test="sudz-inv-dbt-slot-chart"
+                          />
+                        </template>
+                        <template #after>
+                          <FemsqTable
+                            fill
+                            class="fit"
+                            :rows="timelineRows"
+                            :columns="timelineColumns"
+                            row-key="rowKey"
+                            dense
+                            flat
+                            :loading="timelineLoading"
+                            :show-filter="false"
+                            data-test="sudz-inv-dbt-slot-timeline"
+                          />
+                        </template>
+                      </QSplitter>
                     </template>
                   </QTabPanel>
                 </QTabPanels>
@@ -342,7 +355,7 @@
     <QDialog v-model="varDialog" persistent>
       <QCard style="min-width: 640px; max-width: 90vw">
         <QCardSection class="row items-center q-pb-none">
-          <div class="text-h6">Create invDbtVar · ciud={{ selected?.ciudKey }}</div>
+          <div class="text-h6">Выбор контекста invDbtVar · ciud={{ selected?.ciudKey }}</div>
           <QSpace />
           <QBtn icon="close" flat round dense v-close-popup />
         </QCardSection>
@@ -393,7 +406,7 @@
             color="primary"
             unelevated
             no-caps
-            label="Создать var"
+            label="Применить контекст"
             :disable="!canConfirmVar"
             :loading="acting"
             data-test="sudz-inv-dbt-var-confirm"
@@ -439,6 +452,8 @@ import {
   FemsqChart,
   FemsqTable,
   buildTimeSeriesChartSpec,
+  formatMoneyOrDash,
+  moneyColumn,
   type ChartSpec,
   type FemsqTableColumn
 } from 'fequlib';
@@ -498,6 +513,7 @@ const queueSplit = ref(28);
 const queueExcelSplit = ref(55);
 const sfSumsSplit = ref(50);
 const domainSplit = ref(40);
+const dynamicsSplit = ref(55);
 const sumsOldNewSplit = ref(50);
 const sumsOldSplit = ref(40);
 const sumsNewSplit = ref(40);
@@ -531,6 +547,7 @@ const selectedInvNums = ref<SudzInvDbtVarInvNumCandidate[]>([]);
 
 const uplKey = computed(() => store.selectedUplKey);
 const selected = computed(() => selectedRows.value[0] ?? null);
+const openCount = computed(() => rows.value.filter((r) => r.ciudStatus === 'open').length);
 const selectedSlot = computed(() => selectedSlots.value[0] ?? null);
 const selectedOldSumRow = computed(() => selectedOldSum.value[0] ?? null);
 const selectedNewSumRow = computed(() => selectedNewSum.value[0] ?? null);
@@ -598,8 +615,8 @@ const timelineRows = computed((): TimelineRow[] => {
 const timelineColumns: FemsqTableColumn<TimelineRow>[] = [
   { name: 'uplKey', label: 'upl', field: 'uplKey', align: 'right' },
   { name: 'statusDate', label: 'дата', field: 'statusDate', align: 'left' },
-  { name: 'ttl', label: 'сумма', field: 'ttl', align: 'right' },
-  { name: 'overdue', label: 'просроч.', field: 'overdue', align: 'right' }
+  { name: 'ttl', label: 'сумма', field: 'ttl', align: 'right', valueKind: 'money' },
+  { name: 'overdue', label: 'просроч.', field: 'overdue', align: 'right', valueKind: 'money' }
 ];
 
 /**
@@ -627,13 +644,26 @@ const slotChartSpec = computed((): ChartSpec | null => {
   return buildTimeSeriesChartSpec(seriesLabel, points, markers, 'DbtValue по выгрузкам');
 });
 
+/**
+ * Человекочитаемый код причины очереди.
+ */
+function formatQueueReason(reason: string | null | undefined): string {
+  if (reason === 'excel_unresolved') return 'excel';
+  return reason ?? '—';
+}
+
 const queueColumns: FemsqTableColumn<SudzCnInvUplInvDbtDouble>[] = [
   { name: 'ciudIKey', label: 'iKey', field: 'ciudIKey', align: 'right', sortable: true },
   { name: 'ciudInvNum', label: 'СФ', field: 'ciudInvNum', align: 'left' },
   { name: 'ciudCnNum', label: 'договор', field: 'ciudCnNum', align: 'left' },
-  { name: 'ciudDebt', label: 'сумма', field: 'ciudDebt', align: 'right' },
+  moneyColumn({ name: 'ciudDebt', label: 'сумма', field: 'ciudDebt' }),
   { name: 'ciudIdvvKey', label: 'var', field: 'ciudIdvvKey', align: 'right' },
-  { name: 'ciudReason', label: 'reason', field: 'ciudReason', align: 'left' },
+  {
+    name: 'ciudReason',
+    label: 'reason',
+    field: (row) => formatQueueReason(row.ciudReason),
+    align: 'left'
+  },
   { name: 'ciudStatus', label: 'status', field: 'ciudStatus', align: 'left' }
 ];
 
@@ -665,15 +695,15 @@ const oldSumColumns: FemsqTableColumn<SumOld>[] = [
   { name: 'cidKey', label: 'cid', field: 'cidKey', align: 'right' },
   { name: 'ciaName', label: 'ciaName', field: 'ciaName', align: 'left' },
   { name: 'ciaKey', label: 'cia', field: 'ciaKey', align: 'right' },
-  { name: 'dbtTtl', label: 'сумма', field: 'dbtTtl', align: 'right' },
-  { name: 'dbtOverd', label: 'просроч.', field: 'dbtOverd', align: 'right' }
+  moneyColumn({ name: 'dbtTtl', label: 'сумма', field: 'dbtTtl' }),
+  moneyColumn({ name: 'dbtOverd', label: 'просроч.', field: 'dbtOverd' })
 ];
 
 const newSumColumns: FemsqTableColumn<SumNew>[] = [
   { name: 'dvKey', label: 'dv', field: 'dvKey', align: 'right' },
   { name: 'dvInvDbt', label: 'invDbt', field: 'dvInvDbt', align: 'right' },
   { name: 'dbtKey', label: 'dbt', field: 'dbtKey', align: 'right' },
-  { name: 'dvTtl', label: 'сумма', field: 'dvTtl', align: 'right' },
+  moneyColumn({ name: 'dvTtl', label: 'сумма', field: 'dvTtl' }),
   { name: 'dvUpl', label: 'upl', field: 'dvUpl', align: 'right' }
 ];
 
@@ -684,10 +714,11 @@ const excelRows = computed(() => {
     { label: 'cidutKey', value: String(e.cidutKey) },
     { label: 'контрагент', value: e.cidutCntrPrtName ?? '—' },
     { label: 'БУиРГ', value: e.cidutCntrPrtNum ?? '—' },
+    { label: 'счёт ГК', value: e.cidutAccntNum ?? e.cidutAccount ?? '—' },
     { label: 'договор', value: e.cidutCnName ?? '—' },
     { label: 'СФ', value: e.cidutCnInv ?? '—' },
-    { label: 'сумма', value: e.cidutDebt ?? '—' },
-    { label: 'просроч.', value: e.cidutDebtOverdue ?? '—' },
+    { label: 'сумма', value: formatMoneyOrDash(e.cidutDebt) },
+    { label: 'просроч.', value: formatMoneyOrDash(e.cidutDebtOverdue) },
     { label: 'образование', value: e.cidutFormtnDate ?? '—' },
     { label: 'срок', value: e.cidutMatrtyDate ?? '—' }
   ];
@@ -716,6 +747,8 @@ async function reloadQueue(keepCiudKey?: number): Promise<void> {
   try {
     await store.selectUpl(key);
     rows.value = [...store.invDbtDoubles].sort((a, b) => {
+      const st = a.ciudStatus.localeCompare(b.ciudStatus);
+      if (st !== 0) return st;
       const ai = a.ciudIKey ?? Number.MAX_SAFE_INTEGER;
       const bi = b.ciudIKey ?? Number.MAX_SAFE_INTEGER;
       return ai - bi || a.ciudKey - b.ciudKey;
@@ -732,7 +765,7 @@ async function reloadQueue(keepCiudKey?: number): Promise<void> {
 }
 
 /**
- * Открыть диалог Create var.
+ * Открыть диалог выбора контекста invDbtVar.
  */
 async function onOpenCreateVar(): Promise<void> {
   const row = selected.value;
@@ -927,7 +960,7 @@ watch(selected, async (row) => {
       `oldSums=${oldSumRows.value.length}${oldCia ? ` · ciaName: ${oldCia}` : ''}`,
       `newSums=${newSumRows.value.length}${newSlots ? ` · invDbt: ${newSlots}` : ''}`,
       advisor.value?.confidence
-        ? `advisor: ${advisor.value.action ?? '—'} · confidence=${advisor.value.confidence}`
+        ? `советник: ${actionRu(advisor.value.action)} · уверенность: ${confidenceRu(advisor.value.confidence)}`
         : ''
     ]
       .filter(Boolean)
@@ -962,6 +995,44 @@ watch(selectedSlots, async (picked) => {
     timelineLoading.value = false;
   }
 });
+
+/**
+ * Действие советника на русском для [row.select].
+ *
+ * @param action код API
+ */
+function actionRu(action: string | null | undefined): string {
+  switch (action) {
+    case 'link':
+      return 'связать';
+    case 'create_var':
+      return 'создать var';
+    case 'manual':
+      return 'вручную';
+    default:
+      return action ?? '—';
+  }
+}
+
+/**
+ * Уверенность советника на русском.
+ *
+ * @param confidence код API
+ */
+function confidenceRu(confidence: string | null | undefined): string {
+  switch (confidence) {
+    case 'high':
+      return 'высокая';
+    case 'medium':
+      return 'средняя';
+    case 'low':
+      return 'низкая';
+    case 'none':
+      return 'нет';
+    default:
+      return confidence ?? '—';
+  }
+}
 
 /**
  * Pre-select слота по recommendIdKey из советника.
@@ -1005,7 +1076,14 @@ function applyAdvisorSlotPick(adv: SudzInvDbtDoubleAdvice | null): void {
 }
 .sudz-inv-dbt-slot-panels {
   min-height: 0;
+  overflow: hidden;
   background: transparent;
+}
+.sudz-inv-dbt-slot-panels :deep(.q-panel),
+.sudz-inv-dbt-slot-panels :deep(.q-tab-panel) {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 .sudz-inv-dbt-slot-panels :deep(.q-tab-panel) {
   padding: 0;

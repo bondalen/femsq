@@ -323,7 +323,7 @@
  */
 import { computed, onMounted, ref, watch } from 'vue';
 
-import { FemsqTable, type FemsqTableColumn } from 'fequlib';
+import { FemsqTable, formatMoneyOrDash, moneyColumn, type FemsqTableColumn } from 'fequlib';
 import { deleteCnInv, fetchCnNums, updateCnInv } from '@/api/contracts-api';
 import RecordModal from '@/components/relation/RecordModal.vue';
 import RelationTree from '@/components/relation/RelationTree.vue';
@@ -487,8 +487,8 @@ const oldSumColumns: FemsqTableColumn<OldSumRow>[] = [
   { name: 'cidKey', label: 'cid', field: 'cidKey', align: 'right' },
   { name: 'number', label: '№', field: 'number', align: 'right' },
   { name: 'ciaName', label: 'ciaName', field: 'ciaName', align: 'left' },
-  { name: 'dbtTtl', label: 'сумма', field: 'dbtTtl', align: 'right' },
-  { name: 'dbtOverd', label: 'просроч.', field: 'dbtOverd', align: 'right' },
+  moneyColumn({ name: 'dbtTtl', label: 'сумма', field: 'dbtTtl' }),
+  moneyColumn({ name: 'dbtOverd', label: 'просроч.', field: 'dbtOverd' }),
   { name: 'debtType', label: 'тип', field: 'debtType', align: 'left' }
 ];
 
@@ -496,8 +496,8 @@ const newSumColumns: FemsqTableColumn<NewSumRow>[] = [
   { name: 'dvKey', label: 'dv', field: 'dvKey', align: 'right' },
   { name: 'dvInvDbt', label: 'invDbt', field: 'dvInvDbt', align: 'right' },
   { name: 'dbtKey', label: 'dbt', field: 'dbtKey', align: 'right' },
-  { name: 'dvTtl', label: 'сумма', field: 'dvTtl', align: 'right' },
-  { name: 'dvOverd', label: 'просроч.', field: 'dvOverd', align: 'right' },
+  moneyColumn({ name: 'dvTtl', label: 'сумма', field: 'dvTtl' }),
+  moneyColumn({ name: 'dvOverd', label: 'просроч.', field: 'dvOverd' }),
   { name: 'dvUpl', label: 'upl', field: 'dvUpl', align: 'right' }
 ];
 
@@ -515,6 +515,7 @@ const excelRows = computed(() => {
     { label: 'FindDbtNum / cidutKey', value: `${e.findDbtNum ?? '—'} / ${e.cidutKey}` },
     { label: 'лист / строка', value: `${e.cidutSheet ?? '—'} / ${e.cidutSheetNum ?? '—'}` },
     { label: 'БУиРГ', value: String(e.cidutCntrPrtNum ?? '—') },
+    { label: 'счёт ГК', value: e.cidutAccntNum ?? e.cidutAccount ?? '—' },
     { label: 'контрагент', value: e.cidutCntrPrtName ?? '—' },
     { label: 'ИНН', value: e.cidutCntrPrtITN ?? '—' },
     { label: 'договор', value: e.cidutCnName ?? '—' },
@@ -522,7 +523,7 @@ const excelRows = computed(() => {
     { label: 'СФ', value: e.cidutCnInv ?? '—' },
     { label: 'имя СФ', value: e.cidutCnInvName ?? '—' },
     { label: 'дата обр. / погаш.', value: `${e.cidutFormtnDate ?? '—'} / ${e.cidutMatrtyDate ?? '—'}` },
-    { label: 'долг / просрочка', value: `${e.cidutDebt ?? '—'} / ${e.cidutDebtOverdue ?? '—'}` },
+    { label: 'долг / просрочка', value: `${formatMoneyOrDash(e.cidutDebt)} / ${formatMoneyOrDash(e.cidutDebtOverdue)}` },
     { label: 'doc / link', value: `${e.cidutDoc ?? '—'} / ${e.cidutLink ?? '—'}` }
   ];
 });

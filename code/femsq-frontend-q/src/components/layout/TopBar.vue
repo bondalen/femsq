@@ -1,6 +1,8 @@
 <template>
   <QToolbar class="q-px-md femsq-top-bar" data-test="top-bar">
-    <div class="femsq-brand" data-test="top-bar-brand">FEMSQ</div>
+    <div class="femsq-brand" data-test="top-bar-brand">
+      FEMSQ<span v-if="appVersion" class="femsq-brand-version">: {{ appVersion }}</span>
+    </div>
 
     <QSpace />
 
@@ -287,9 +289,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, QToolbar, QBtn, QSpace, QMenu, QList, QItem, QItemSection } from 'quasar';
 
+import { getAppVersion } from '@/api/app-api';
 import type { ActiveView } from '@/stores/connection';
 
 interface Props {
@@ -309,8 +312,18 @@ const emit = defineEmits<{
 
 const $q = useQuasar();
 const menu = ref(false);
+/** Версия backend-сборки (из /api/v1/app/version). */
+const appVersion = ref('');
 
 const isXs = computed(() => $q.screen.xs);
+
+onMounted(async () => {
+  try {
+    appVersion.value = await getAppVersion();
+  } catch {
+    // Версия необязательна для работы UI; при недоступном backend остаётся только «FEMSQ».
+  }
+});
 
 watch(isXs, (xs) => {
   if (!xs) {
@@ -338,6 +351,12 @@ function handleNavigate(view: ActiveView): void {
   letter-spacing: 0.02em;
   color: var(--femsq-text);
   user-select: none;
+  white-space: nowrap;
+}
+
+.femsq-brand-version {
+  font-weight: 400;
+  color: var(--femsq-text-muted);
 }
 
 .femsq-nav {

@@ -3,8 +3,16 @@
  * Без каталога рёбер и без API хоста.
  */
 
+import { formatMoney } from 'fequlib';
+
 /** Как рисовать ребёнка: сразу запись или папка. */
 export type RelationCard = 'N:1' | '1:1' | '1:N';
+
+/** Семантика поля в title/detail (форматирование в UI). */
+export type RelationValueKind = 'money';
+
+/** Карта имя поля → kind для title и detail. */
+export type RelationValueKinds = Record<string, RelationValueKind>;
 
 /** Действие на узле/папке. Выполняется на хосте. */
 export interface RelationTreeActionSpec {
@@ -46,12 +54,17 @@ function filterActionsByScope(
 
 /** Спека узла-ребёнка. */
 export interface RelationTreeChildSpec {
-  edge: string;
+  /** Ребро каталога FK (mutually exclusive с {@code queryId} для load). */
+  edge?: string;
+  /** Именованный SELECT из backend-реестра ({@code relationQuery}). */
+  queryId?: string;
   to: string;
   card: RelationCard;
   folder?: string;
   title: string[];
   detail: string[] | '*';
+  /** Форматирование полей title/detail, напр. `{ "dvTtl": "money" }`. */
+  valueKinds?: RelationValueKinds;
   actions?: RelationTreeActionSpec[];
   children: RelationTreeChildSpec[];
 }
@@ -63,6 +76,7 @@ export interface RelationTreeSpec {
   root: { table: string; pk: string };
   title: string[];
   detail: string[] | '*';
+  valueKinds?: RelationValueKinds;
   children: RelationTreeChildSpec[];
 }
 
@@ -90,6 +104,12 @@ export type RelationFetchExpand = (
   fromId: number
 ) => Promise<RelationFetchRow[]>;
 
+/** Раскрытие именованного запроса. */
+export type RelationFetchQuery = (
+  queryId: string,
+  fromId: number
+) => Promise<RelationFetchRow[]>;
+
 /** Узел FemsqTree, который строит обходник. */
 export interface RelationTreeNode {
   id: string;
@@ -103,6 +123,7 @@ export interface RelationTreeNode {
   rowKey?: number;
   childSpecs?: RelationTreeChildSpec[];
   edge?: string;
+  queryId?: string;
   fromId?: number;
   folderSpec?: RelationTreeChildSpec;
 }
@@ -128,6 +149,29 @@ export interface RelationTreeActionContext {
 const MISSING = '—';
 
 /**
+ * Значение одного поля title/detail с учётом valueKinds.
+ *
+ * @param name имя поля
+ * @param raw сырое значение из API
+ * @param valueKinds карта kind
+ * @return строка для UI
+ */
+export function formatRelationFieldValue(
+  name: string,
+  raw: string | null | undefined,
+  valueKinds?: RelationValueKinds
+): string {
+  if (raw == null || raw === '') {
+    return MISSING;
+  }
+  if (valueKinds?.[name] === 'money') {
+    const formatted = formatMoney(raw);
+    return formatted === '' ? MISSING : formatted;
+  }
+  return raw;
+}
+
+/**
  * Таблица назначения из JSON. Каталог хоста не читаем.
  *
  * @param spec ребёнок
@@ -135,9 +179,25 @@ const MISSING = '—';
  */
 export function childTableOf(spec: RelationTreeChildSpec): string {
   if (!spec.to) {
-    throw new Error(`JSON ребёнка без to: ${spec.edge}`);
+    throw new Error(`JSON ребёнка без to: ${spec.edge ?? spec.queryId}`);
   }
   return spec.to;
+}
+
+/**
+ * Ключ папки/ребра для id узла.
+ *
+ * @param spec ребёнок
+ * @return edge или query:id
+ */
+export function childExpandKeyOf(spec: RelationTreeChildSpec): string {
+  if (spec.queryId) {
+    return `query:${spec.queryId}`;
+  }
+  if (!spec.edge) {
+    throw new Error('JSON ребёнка: нужен edge или queryId');
+  }
+  return spec.edge;
 }
 
 /**
@@ -195,9 +255,10 @@ export function fieldMapOf(
  */
 export function formatRelationTitle(
   columns: string[],
-  fields: Record<string, string | null>
+  fields: Record<string, string | null>,
+  valueKinds?: RelationValueKinds
 ): string {
-  return columns.map((column) => fields[column] || MISSING).join(' · ');
+  return columns.map((column) => formatRelationFieldValue(column, fields[column], valueKinds)).join(' · ');
 }
 
 /**
@@ -209,12 +270,13 @@ export function formatRelationTitle(
  */
 export function formatRelationDetail(
   detail: string[] | '*',
-  fields: Record<string, string | null>
+  fields: Record<string, string | null>,
+  valueKinds?: RelationValueKinds
 ): RelationTreeField[] {
   const names = detail === '*' ? Object.keys(fields) : detail;
   return names.map((name) => ({
     label: name,
-    value: fields[name] || MISSING
+    value: formatRelationFieldValue(name, fields[name], valueKinds)
   }));
 }
 
@@ -231,14 +293,14 @@ export function buildRecordNode(
   table: string,
   rowKey: number,
   fields: Record<string, string | null>,
-  spec: Pick<RelationTreeChildSpec, 'title' | 'detail' | 'children' | 'actions'>
+  spec: Pick<RelationTreeChildSpec, 'title' | 'detail' | 'children' | 'actions' | 'valueKinds'>
 ): RelationTreeNode {
   const hasChildren = spec.children.length > 0;
   return {
     id: `${table}:${rowKey}`,
     kind: 'record',
-    title: formatRelationTitle(spec.title, fields),
-    fields: formatRelationDetail(spec.detail, fields),
+    title: formatRelationTitle(spec.title, fields, spec.valueKinds),
+    fields: formatRelationDetail(spec.detail, fields, spec.valueKinds),
     actions: filterActionsByScope(spec.actions, 'record'),
     table,
     rowKey,
@@ -260,13 +322,15 @@ export function buildFolderNode(
   fromId: number,
   spec: RelationTreeChildSpec
 ): RelationTreeNode {
+  const expandKey = childExpandKeyOf(spec);
   return {
-    id: `${parentId}/${spec.edge}`,
+    id: `${parentId}/${expandKey}`,
     kind: 'folder',
-    title: spec.folder || spec.edge,
+    title: spec.folder || spec.queryId || spec.edge || expandKey,
     fields: [],
     actions: filterActionsByScope(spec.actions, 'folder'),
     edge: spec.edge,
+    queryId: spec.queryId,
     fromId,
     folderSpec: spec,
     table: childTableOf(spec),

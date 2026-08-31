@@ -2,6 +2,7 @@ package com.femsq.database.service;
 
 import com.femsq.database.dao.SudzDao;
 import com.femsq.database.model.sudz.SudzCmmGrLookup;
+import com.femsq.database.model.sudz.SudzCnInvUplDbtP1;
 import com.femsq.database.model.sudz.SudzCnInvUplInvDbtDouble;
 import com.femsq.database.model.sudz.SudzInvDbtDoubleAdvice;
 import com.femsq.database.model.sudz.SudzInvDbtSlot;
@@ -13,6 +14,10 @@ import com.femsq.database.model.sudz.SudzD644Row;
 import com.femsq.database.model.sudz.SudzAccessStrMark;
 import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotRow;
+import com.femsq.database.model.sudz.SudzDbtUplDbtValueLoadApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplDbtValueLoadSnapshot;
+import com.femsq.database.model.sudz.SudzDbtUplInvDbtDbtEnsureApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplInvDbtDbtEnsureSnapshot;
 import com.femsq.database.model.sudz.SudzDbtUplInvDbtLoadApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarAmbiguousRow;
 import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarEnsureApplyResult;
@@ -24,6 +29,7 @@ import com.femsq.database.model.sudz.SudzDbtUplCnExistCtptNotLoad;
 import com.femsq.database.model.sudz.SudzDbtUplCnNotLoad;
 import com.femsq.database.model.sudz.SudzDbtUplCnNotLoadApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplFile;
+import com.femsq.database.model.sudz.SudzDbtUplFileSh;
 import com.femsq.database.model.sudz.SudzDbtUplFunnelResult;
 import com.femsq.database.model.sudz.SudzDbtUplFunnelSteps;
 import com.femsq.database.model.sudz.SudzDbtUplLauncher;
@@ -344,6 +350,47 @@ public class DefaultSudzService implements SudzService {
     }
 
     @Override
+    public SudzDbtUplFileSh createDbtUplFileSh(int uplKey, String sheet, int accountNum, boolean test) {
+        if (uplKey <= 0) {
+            throw new IllegalArgumentException("uplKey должен быть положительным: " + uplKey);
+        }
+        log.log(Level.INFO, "createDbtUplFileSh uplKey={0}, sheet={1}", new Object[]{uplKey, sheet});
+        return sudzDao.createDbtUplFileSh(uplKey, sheet, accountNum, test);
+    }
+
+    @Override
+    public SudzDbtUplFileSh updateDbtUplFileSh(
+            int cidufsKey,
+            String sheet,
+            Integer accountNum,
+            Boolean test
+    ) {
+        if (cidufsKey <= 0) {
+            throw new IllegalArgumentException("cidufsKey должен быть положительным: " + cidufsKey);
+        }
+        log.log(Level.INFO, "updateDbtUplFileSh cidufsKey={0}", cidufsKey);
+        return sudzDao.updateDbtUplFileSh(cidufsKey, sheet, accountNum, test);
+    }
+
+    @Override
+    public boolean deleteDbtUplFileSh(int cidufsKey) {
+        if (cidufsKey <= 0) {
+            throw new IllegalArgumentException("cidufsKey должен быть положительным: " + cidufsKey);
+        }
+        log.log(Level.INFO, "deleteDbtUplFileSh cidufsKey={0}", cidufsKey);
+        return sudzDao.deleteDbtUplFileSh(cidufsKey);
+    }
+
+    @Override
+    public List<SudzDbtUplFileSh> seedDbtUplStandardSheets(int uplKey) {
+        if (uplKey <= 0) {
+            throw new IllegalArgumentException("uplKey должен быть положительным: " + uplKey);
+        }
+        log.log(Level.INFO, "seedDbtUplStandardSheets uplKey={0}", uplKey);
+        return sudzDao.seedDbtUplStandardSheets(uplKey);
+    }
+
+    @Override
     public SudzDbtUplFunnelResult runDbtUplFunnelStub(int uplKey, List<String> steps, boolean flLoad) {
         if (uplKey <= 0) {
             throw new IllegalArgumentException("uplKey должен быть положительным: " + uplKey);
@@ -536,6 +583,71 @@ public class DefaultSudzService implements SudzService {
             throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
         }
         return sudzDao.applyDbtUplInvDbtLoadUnambiguous(unloadKey);
+    }
+
+    @Override
+    public SudzDbtUplInvDbtDbtEnsureSnapshot findDbtUplInvDbtDbtEnsureSnapshot(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.findDbtUplInvDbtDbtEnsureSnapshot(unloadKey);
+    }
+
+    @Override
+    public SudzDbtUplInvDbtDbtEnsureApplyResult applyDbtUplInvDbtDbtEnsure(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.applyDbtUplInvDbtDbtEnsure(unloadKey);
+    }
+
+    @Override
+    public SudzDbtUplDbtValueLoadSnapshot findDbtUplDbtValueLoadSnapshot(int unloadKey, int yrKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        if (yrKey <= 0) {
+            throw new IllegalArgumentException("yrKey должен быть положительным: " + yrKey);
+        }
+        return sudzDao.findDbtUplDbtValueLoadSnapshot(unloadKey, yrKey);
+    }
+
+    @Override
+    public SudzDbtUplDbtValueLoadApplyResult applyDbtUplDbtValueLoadTail(int unloadKey, int yrKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        if (yrKey <= 0) {
+            throw new IllegalArgumentException("yrKey должен быть положительным: " + yrKey);
+        }
+        return sudzDao.applyDbtUplDbtValueLoadTail(unloadKey, yrKey);
+    }
+
+    @Override
+    public int rebuildDbtP1Queue(int unloadKey, Integer fileKey, int yrKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        if (yrKey <= 0) {
+            throw new IllegalArgumentException("yrKey должен быть положительным: " + yrKey);
+        }
+        return sudzDao.rebuildDbtP1Queue(unloadKey, fileKey, yrKey);
+    }
+
+    @Override
+    public List<Integer> findYearKeysForUpl(int uplKey) {
+        if (uplKey <= 0) {
+            throw new IllegalArgumentException("uplKey должен быть положительным: " + uplKey);
+        }
+        return sudzDao.findYearKeysForUpl(uplKey);
+    }
+
+    @Override
+    public List<SudzCnInvUplDbtP1> findDbtP1ByUnload(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.findDbtP1ByUnload(unloadKey);
     }
 
     @Override
