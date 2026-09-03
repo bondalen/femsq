@@ -96,6 +96,9 @@ docs/sql_err/images/**/*.bmp
 # Локальный кэш Excel (канонические файлы — на SMB-шаре nb-win, mount /mnt/nb-win-share)
 /docs/excel/
 
+# UAT/verify dumps (forensics CSV/JSON/md) — только локально, не в репо
+docs/development/notes/sql/**/artifacts/
+
 # Deploy flash packages (built artifacts, not source)
 docs/development/notes/sql/**/*_deploy/open/
 docs/development/notes/sql/**/*_deploy/archive/*.zip
