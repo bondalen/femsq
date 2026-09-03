@@ -335,6 +335,15 @@ export interface SudzSfDoubleHints {
   sumsNew: SudzSfDoubleHintSection;
 }
 
+/** Советник КСДСФ ([советник] в «Сообщения»). */
+export interface SudzSfDoubleAdvice {
+  messageText: string;
+  confidence: string | null;
+  action: string | null;
+  recommendInvKey: number | null;
+  recommendCnKey: number | null;
+}
+
 /** Советник КСДД ([advisor] в «Сообщения»). */
 export interface SudzInvDbtDoubleAdvice {
   messageText: string;

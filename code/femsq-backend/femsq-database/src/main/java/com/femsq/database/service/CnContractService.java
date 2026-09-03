@@ -28,4 +28,12 @@ public interface CnContractService {
      * @return count
      */
     int countByCnnNum(String cnnNum);
+
+    /**
+     * Удаляет договор без связей cnInv (стороны и номера — каскадом).
+     *
+     * @param cnKey PK {@code ags.cn}
+     * @return {@code true}, если cn удалён
+     */
+    boolean deleteByCnKey(int cnKey);
 }

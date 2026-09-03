@@ -10,8 +10,11 @@ import com.femsq.database.model.sudz.SudzInvDbtVarCandidates;
 import com.femsq.database.model.sudz.SudzCnInvUplSfDouble;
 import com.femsq.database.model.sudz.SudzD644Row;
 import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotLoadResult;
 import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotRow;
+import com.femsq.database.model.sudz.SudzDbtUplAccSmplVarInvPhaseResult;
 import com.femsq.database.model.sudz.SudzDbtUplDbtValueLoadApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplDbtValueLoadPhaseResult;
 import com.femsq.database.model.sudz.SudzDbtUplDbtValueLoadSnapshot;
 import com.femsq.database.model.sudz.SudzDbtUplInvDbtDbtEnsureApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplInvDbtDbtEnsureSnapshot;
@@ -27,6 +30,7 @@ import com.femsq.database.model.sudz.SudzDbtUplCnNotLoad;
 import com.femsq.database.model.sudz.SudzDbtUplCnNotLoadApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplFile;
 import com.femsq.database.model.sudz.SudzDbtUplFileSh;
+import com.femsq.database.model.sudz.SudzDbtUplFunnelQueueClearResult;
 import com.femsq.database.model.sudz.SudzDbtUplFunnelResult;
 import com.femsq.database.model.sudz.SudzDbtUplLauncher;
 import com.femsq.database.model.sudz.SudzDbtUplOrgNotInBuirg;
@@ -38,6 +42,7 @@ import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
 import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
+import com.femsq.database.model.sudz.SudzSfDoubleAdvice;
 import com.femsq.database.model.sudz.SudzSfDoubleHints;
 import com.femsq.database.model.sudz.SudzSfDoubleSumMatches;
 import com.femsq.database.model.sudz.SudzSvodResult;
@@ -422,6 +427,16 @@ public interface SudzService {
     int clearDbtUplInvDouble();
 
     /**
+     * Сброс очередей и scratch-буферов воронки для выгрузки перед любым прогоном.
+     * Очередь либо пересобрана текущим прогоном, либо пуста — без хвостов прошлых запусков.
+     *
+     * @param unloadKey {@code upl_key}
+     * @param fileKey ключ {@code CnInvDbtUplFile} (для FileInvDouble) или null → {@code unloadKey}
+     * @return счётчики DELETE по таблицам
+     */
+    SudzDbtUplFunnelQueueClearResult clearDbtUplFunnelQueues(int unloadKey, Integer fileKey);
+
+    /**
      * Пересборка буфера новых СФ + данные лога (+ InvDouble при fileKey).
      *
      * @param unloadKey {@code upl_key}
@@ -453,6 +468,14 @@ public interface SudzService {
      * @return число внесённых пар
      */
     SudzDbtUplAccSmplNotApplyResult applyDbtUplCnCtptInvExistAccSmplNotLoad(int unloadKey);
+
+    /**
+     * Diff + apply AccSmpl за один проход {@code #sudzEia} (при {@code flLoad=true}).
+     *
+     * @param unloadKey {@code upl_key}
+     * @return строки лога и итог INSERT
+     */
+    SudzDbtUplAccSmplNotLoadResult findAndApplyDbtUplCnCtptInvExistAccSmplNotLoad(int unloadKey);
 
     /**
      * Diff ensure: missing + ambiguous одним проходом CTE.
@@ -504,6 +527,17 @@ public interface SudzService {
     SudzDbtUplInvDbtLoadApplyResult applyDbtUplInvDbtLoadUnambiguous(int unloadKey);
 
     /**
+     * Rebuild очереди InvDouble + apply однозначных в одном JDBC-проходе.
+     */
+    SudzDbtUplInvDbtLoadApplyResult runInvDbtLoadPhase(int unloadKey, Integer fileKey, boolean flLoad);
+
+    /**
+     * AccSmpl + invDbtVarEnsure + invDbtLoad в одном JDBC-проходе.
+     */
+    SudzDbtUplAccSmplVarInvPhaseResult runAccSmplVarInvDbtPhase(
+            int unloadKey, Integer fileKey, boolean flLoad);
+
+    /**
      * Снимок {@code invDbtDbtEnsure} (C1).
      *
      * @param unloadKey {@code upl_key}
@@ -536,6 +570,12 @@ public interface SudzService {
      * @return счётчики tail
      */
     SudzDbtUplDbtValueLoadApplyResult applyDbtUplDbtValueLoadTail(int unloadKey, int yrKey);
+
+    /**
+     * Rebuild P1 + tail apply + снимок в одном JDBC-проходе.
+     */
+    SudzDbtUplDbtValueLoadPhaseResult runDbtValueLoadPhase(
+            int unloadKey, Integer fileKey, int yrKey, boolean flLoad);
 
     /**
      * Пересборка очереди {@code CnInvUplDbtP1} (исчезновение base→curr + sum-match).
@@ -690,6 +730,15 @@ public interface SudzService {
      * @return секции с ключами выбора
      */
     SudzSfDoubleHints findSfDoubleHints(int ciusKey, BigDecimal epsilon);
+
+    /**
+     * Советник КСДСФ для панели «Сообщения».
+     *
+     * @param ciusKey ключ очереди
+     * @param epsilon допуск суммы; null → 0.01
+     * @return текст {@code [советник]}
+     */
+    SudzSfDoubleAdvice findSfDoubleAdvice(int ciusKey, BigDecimal epsilon);
 
     /**
      * Создать новый СФ из строки очереди КСДСФ.

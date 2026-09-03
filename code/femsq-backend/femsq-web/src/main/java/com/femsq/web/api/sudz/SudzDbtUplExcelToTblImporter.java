@@ -145,6 +145,47 @@ public class SudzDbtUplExcelToTblImporter {
         logHeader(sheetLog, H_DOC, headers.get(H_DOC));
         logHeader(sheetLog, H_LINK, headers.get(H_LINK));
 
+        int added;
+        if (hasRequiredStandardHeaders(headers)) {
+            sheetLog.line("найдены ячейки, необходимые для внесения задолженности");
+            added = parseStandardDataRows(sheet, sh, unloadKey, headers, rows, findDbtNum, sheetLog);
+        } else if (SudzDbtUplExcelCompactLayout.matchesSignature(sheet, sh.cidufsSheet(), cellReader)) {
+            sheetLog.line("<font color=\"DarkOrange\">распознан <b>компактный формат без шапки</b></font>"
+                    + " (БУиРГ; ИНН и дата договора отсутствуют)");
+            added = parseCompactDataRows(sheet, sh, unloadKey, rows, findDbtNum, sheetLog);
+        } else {
+            sheetLog.line("<font color=\"red\">не найдены все ячейки, необходимые для задолженности</font>");
+            added = 0;
+        }
+
+        parent.open("Лист <font color=\"Teal\"><b>"
+                        + SudzDbtUplProgressLog.escape(sh.cidufsSheet())
+                        + "</b></font> — " + added + " строк",
+                false);
+        parent.raw(sheetLog.toHtml());
+        parent.close();
+    }
+
+    private boolean hasRequiredStandardHeaders(Map<String, int[]> headers) {
+        return headers.get(H_INV) != null
+                && headers.get(H_ORG_NUM) != null
+                && headers.get(H_ORG_NAME) != null
+                && headers.get(H_CN) != null
+                && headers.get(H_FORM) != null
+                && headers.get(H_MAT) != null
+                && headers.get(H_DEBT) != null
+                && headers.get(H_OVERDUE) != null;
+    }
+
+    private int parseStandardDataRows(
+            Sheet sheet,
+            SudzDbtUplFileSh sh,
+            int unloadKey,
+            Map<String, int[]> headers,
+            List<SudzDbtUplTblRow> rows,
+            int[] findDbtNum,
+            SudzDbtUplProgressLog sheetLog
+    ) {
         int[] inv = headers.get(H_INV);
         int[] orgNum = headers.get(H_ORG_NUM);
         int[] orgName = headers.get(H_ORG_NAME);
@@ -154,60 +195,106 @@ public class SudzDbtUplExcelToTblImporter {
         int[] mat = headers.get(H_MAT);
         int[] debt = headers.get(H_DEBT);
         int[] overdue = headers.get(H_OVERDUE);
+        int invCol = inv[1];
+        int headerRow = inv[0];
+        int lastRow = sheet.getLastRowNum();
+        int sheetRowNo = 0;
         int added = 0;
-        if (inv == null || orgNum == null || orgName == null || cn == null || cnDate == null
-                || form == null || mat == null || debt == null || overdue == null) {
-            sheetLog.line("<font color=\"red\">не найдены все ячейки, необходимые для задолженности</font>");
-        } else {
-            sheetLog.line("найдены ячейки, необходимые для внесения задолженности");
-            int invCol = inv[1];
-            int headerRow = inv[0];
-            int lastRow = sheet.getLastRowNum();
-            int sheetRowNo = 0;
-            for (int r = headerRow + 1; r <= lastRow; r++) {
-                Row row = sheet.getRow(r);
-                if (row == null) {
-                    continue;
-                }
-                Cell invCell = row.getCell(invCol);
-                if (!rowLooksLikeDebt(row, invCol)) {
-                    continue;
-                }
-                sheetRowNo++;
-                findDbtNum[0]++;
-                String invVal = cellReader.readString(invCell);
-                rows.add(new SudzDbtUplTblRow(
-                        findDbtNum[0],
-                        sh.cidufsAccount(),
-                        softInt(row.getCell(orgNum[1])),
-                        cellReader.readString(row.getCell(orgName[1])),
-                        headerValue(headers, H_ITN, row),
-                        cellReader.readString(row.getCell(cn[1])),
-                        toDateTime(cellReader.readDate(row.getCell(cnDate[1]))),
-                        invVal,
-                        toDateTime(cellReader.readDate(row.getCell(form[1]))),
-                        toDateTime(cellReader.readDate(row.getCell(mat[1]))),
-                        softDecimal(row.getCell(debt[1])),
-                        softDecimal(row.getCell(overdue[1])),
-                        headerValue(headers, H_DOC, row),
-                        headerValue(headers, H_LINK, row),
-                        sh.cidufsKey(),
-                        sheetRowNo,
-                        unloadKey
-                ));
-                added++;
-                sheetLog.line("счет-фактура <font color=\"Teal\">"
-                        + SudzDbtUplProgressLog.escape(invVal == null ? "" : invVal)
-                        + "</font> обнаружен. <font color=\"DarkGreen\">Добавлено</font>.");
+        for (int r = headerRow + 1; r <= lastRow; r++) {
+            Row row = sheet.getRow(r);
+            if (row == null) {
+                continue;
             }
+            if (!rowLooksLikeDebt(row, invCol)) {
+                continue;
+            }
+            sheetRowNo++;
+            findDbtNum[0]++;
+            String invVal = cellReader.readString(row.getCell(invCol));
+            LocalDateTime cnDateVal = cnDate == null
+                    ? null
+                    : toDateTime(cellReader.readDate(row.getCell(cnDate[1])));
+            rows.add(new SudzDbtUplTblRow(
+                    findDbtNum[0],
+                    sh.cidufsAccount(),
+                    softInt(row.getCell(orgNum[1])),
+                    cellReader.readString(row.getCell(orgName[1])),
+                    headerValue(headers, H_ITN, row),
+                    cellReader.readString(row.getCell(cn[1])),
+                    cnDateVal,
+                    invVal,
+                    toDateTime(cellReader.readDate(row.getCell(form[1]))),
+                    toDateTime(cellReader.readDate(row.getCell(mat[1]))),
+                    softDecimal(row.getCell(debt[1])),
+                    softDecimal(row.getCell(overdue[1])),
+                    headerValue(headers, H_DOC, row),
+                    headerValue(headers, H_LINK, row),
+                    sh.cidufsKey(),
+                    sheetRowNo,
+                    unloadKey
+            ));
+            added++;
+            logInvAdded(sheetLog, invVal);
         }
+        return added;
+    }
 
-        parent.open("Лист <font color=\"Teal\"><b>"
-                        + SudzDbtUplProgressLog.escape(sh.cidufsSheet())
-                        + "</b></font> — " + added + " строк",
-                false);
-        parent.raw(sheetLog.toHtml());
-        parent.close();
+    /**
+     * Компактная раскладка: данные с первой строки, фиксированные колонки
+     * {@link SudzDbtUplExcelCompactLayout}.
+     */
+    private int parseCompactDataRows(
+            Sheet sheet,
+            SudzDbtUplFileSh sh,
+            int unloadKey,
+            List<SudzDbtUplTblRow> rows,
+            int[] findDbtNum,
+            SudzDbtUplProgressLog sheetLog
+    ) {
+        int invCol = SudzDbtUplExcelCompactLayout.COL_INV;
+        int lastRow = sheet.getLastRowNum();
+        int sheetRowNo = 0;
+        int added = 0;
+        for (int r = 0; r <= lastRow; r++) {
+            Row row = sheet.getRow(r);
+            if (row == null) {
+                continue;
+            }
+            if (!rowLooksLikeDebt(row, invCol)) {
+                continue;
+            }
+            sheetRowNo++;
+            findDbtNum[0]++;
+            String invVal = cellReader.readString(row.getCell(invCol));
+            rows.add(new SudzDbtUplTblRow(
+                    findDbtNum[0],
+                    sh.cidufsAccount(),
+                    softInt(row.getCell(SudzDbtUplExcelCompactLayout.COL_ORG_NUM)),
+                    cellReader.readString(row.getCell(SudzDbtUplExcelCompactLayout.COL_ORG_NAME)),
+                    null,
+                    cellReader.readString(row.getCell(SudzDbtUplExcelCompactLayout.COL_CN)),
+                    null,
+                    invVal,
+                    toDateTime(cellReader.readDate(row.getCell(SudzDbtUplExcelCompactLayout.COL_FORM))),
+                    toDateTime(cellReader.readDate(row.getCell(SudzDbtUplExcelCompactLayout.COL_MAT))),
+                    softDecimal(row.getCell(SudzDbtUplExcelCompactLayout.COL_DEBT)),
+                    softDecimal(row.getCell(SudzDbtUplExcelCompactLayout.COL_OVERDUE)),
+                    cellReader.readString(row.getCell(SudzDbtUplExcelCompactLayout.COL_DOC)),
+                    cellReader.readString(row.getCell(SudzDbtUplExcelCompactLayout.COL_LINK)),
+                    sh.cidufsKey(),
+                    sheetRowNo,
+                    unloadKey
+            ));
+            added++;
+            logInvAdded(sheetLog, invVal);
+        }
+        return added;
+    }
+
+    private void logInvAdded(SudzDbtUplProgressLog sheetLog, String invVal) {
+        sheetLog.line("счет-фактура <font color=\"Teal\">"
+                + SudzDbtUplProgressLog.escape(invVal == null ? "" : invVal)
+                + "</font> обнаружен. <font color=\"DarkGreen\">Добавлено</font>.");
     }
 
     private String headerValue(Map<String, int[]> headers, String name, Row row) {

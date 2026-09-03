@@ -20,6 +20,7 @@ import com.femsq.database.model.sudz.SudzPmUplLookup;
 import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
 import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
+import com.femsq.database.model.sudz.SudzSfDoubleAdvice;
 import com.femsq.database.model.sudz.SudzSfDoubleHints;
 import com.femsq.database.model.sudz.SudzSfDoubleSumMatches;
 import com.femsq.database.model.sudz.SudzSvodResult;
@@ -712,6 +713,30 @@ public class SudzGraphqlController {
         try {
             BigDecimal epsBd = epsilon == null ? new BigDecimal("0.01") : BigDecimal.valueOf(epsilon);
             return sudzService.findSfDoubleHints(ciusKey, epsBd);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Советник КСДСФ: рекомендация link / create / manual.
+     *
+     * @param ciusKey ключ очереди
+     * @param epsilon допуск суммы; null → 0.01
+     * @return текст {@code [советник]}
+     */
+    @QueryMapping
+    public SudzSfDoubleAdvice sudzSfDoubleAdvice(
+            @Argument int ciusKey,
+            @Argument Double epsilon
+    ) {
+        try {
+            BigDecimal epsBd = epsilon == null ? new BigDecimal("0.01") : BigDecimal.valueOf(epsilon);
+            return sudzService.findSfDoubleAdvice(ciusKey, epsBd);
         } catch (IllegalArgumentException exception) {
             throw badRequest(exception);
         } catch (MissingConfigurationException exception) {

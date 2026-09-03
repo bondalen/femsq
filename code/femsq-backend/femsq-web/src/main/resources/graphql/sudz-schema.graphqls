@@ -63,6 +63,8 @@ extend type Query {
   Ключи items — для выбора строки в таблицах экрана.
   """
   sudzSfDoubleHints(ciusKey: Int!, epsilon: Float): SudzSfDoubleHints!
+  """Советник КСДСФ для панели «Сообщения» ([советник])."""
+  sudzSfDoubleAdvice(ciusKey: Int!, epsilon: Float): SudzSfDoubleAdvice!
   """
   Советник КСДД (22c): рекомендация оператору для строки очереди двоящих долгов.
   """
@@ -634,6 +636,15 @@ type SudzSfDoubleHints {
   sfByNum: SudzSfDoubleHintSection!
   sumsOld: SudzSfDoubleHintSection!
   sumsNew: SudzSfDoubleHintSection!
+}
+
+"""Советник КСДСФ для панели «Сообщения» ([советник])."""
+type SudzSfDoubleAdvice {
+  messageText: String!
+  confidence: String
+  action: String
+  recommendInvKey: Int
+  recommendCnKey: Int
 }
 
 """Советник КСДД для панели «Сообщения» ([advisor])."""

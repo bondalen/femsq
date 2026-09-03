@@ -54,4 +54,10 @@ class SudzDbtUplFunnelStepsTest {
         assertThrows(IllegalArgumentException.class,
                 () -> SudzDbtUplFunnelSteps.requirePrefixOfEnabled(List.of("invDbtDouble")));
     }
+
+    @Test
+    void singleDbtValueLoadRetryAllowed() {
+        assertDoesNotThrow(() -> SudzDbtUplFunnelSteps.requirePrefixOfEnabled(
+                List.of(SudzDbtUplFunnelSteps.DBT_VALUE_LOAD)));
+    }
 }

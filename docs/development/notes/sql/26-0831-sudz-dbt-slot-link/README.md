@@ -1,7 +1,7 @@
 # DbtSlotLink — реестр P1 (L001–L010) и синхронизация invDbtDbt
 
 **Дата:** 2026-08-31  
-**lastUpdated:** 2026-08-31  
+**lastUpdated:** 2026-09-01  
 **Схема DEV:** `sudz`  
 **Прод:** `MSSQL2012/` → `ags`  
 **Документация:** [04-5](../../domain/sudz/04-5_dbt-invdbt-cardinality-d1.md), [04-6 §3.3](../../domain/sudz/04-6_multi-dbt-p1-three-paths.md)
@@ -20,6 +20,7 @@
 03_PROC_ApplyDbtSlotLinks.sql
 04_TRIGGER_invDbtDbt_GroupConsistency.sql
 05_TRIGGER_Dbt_NoDeleteIfCanonical.sql
+11_TRIGGER_DbtValue_no_sibling_dup.sql   -- A1 P1: sibling same-ttl + one-per-Dbt@upl
 09_BACKFILL_DbtValue_pit_ags26_28.sql  -- Stage1: 801←26, 802←27, 803←28 (PIT)
 EXEC sudz.ApplyDbtSlotLinks;           -- или @lid = N'L001'
 08_SEED_cmm_grp805_stage1.sql          -- Cmm seed для сверки Rslt (7947, L001)
@@ -53,6 +54,22 @@ EXEC sudz.ApplyDbtSlotLinks;           -- или @lid = N'L001'
 **Cutover:** [E1′ PIT](../../../../deployment/db-upgrade-sudz-invdbt-cutover.md#e1--паритет-исторических-rslt-pit-2026-08-31) — запрет last-asOf-any (`06`/`07`).
 
 **Exit stage1:** `verify-rslt-stage1.sh` exit 0; JAR ≥0.1.0.240; upl 804/901 вне scope.
+
+### Stage 2 — QIV (variant B, S76)
+
+| Артефакт | Путь |
+|----------|------|
+| Реестр дельт A/B | [stage2_qiv_delta_registry.md](./stage2_qiv_delta_registry.md) |
+| PASS после подгонки (не gate) | `artifacts/stage2_qiv_verify_26-0831.json` |
+| Экспорт asOfUpl=901 | `artifacts/ags_Yr_DbtChangesRslt_900_asOf901_qiv_parity_26-0831.xlsx` |
+| B-seed (deprecated) | `10_SEED_access_q4_missing_9.sql` — **не применять** |
+| P3 manifest | [p3_data_gap_manifest.json](./p3_data_gap_manifest.json) |
+| A1 trigger (P1) | `11_TRIGGER_DbtValue_no_sibling_dup.sql` |
+| Gate A1 SQL | `99_VERIFY_qiv_stage2.sql` |
+
+**Важно:** PASS QIV 2026-08-31 достигнут ручными SQL — см. реестр §6. Целевой gate: apply без SQL + `verify_qiv_excel_only` / `verify_qiv_full_access` (черновик в реестре §7).
+
+**Exit stage2 (целевой):** группа A закрыта в коде; группа B задокументирована; QIII по-прежнему вне scope.
 
 ## C1 (воронка)
 

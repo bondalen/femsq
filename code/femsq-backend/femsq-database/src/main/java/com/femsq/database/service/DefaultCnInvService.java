@@ -167,6 +167,8 @@ public class DefaultCnInvService implements CnInvService {
                     throw new IllegalArgumentException(
                             "Связь cnInv уже существует: ciKey=" + duplicate.ciKey() + " (inv=" + invKey + ", cn=" + cnKey + ")");
                 }
+                int oldCnKey = current.ciCn();
+                int oldInvKey = current.ciInv();
                 try (PreparedStatement statement = connection.prepareStatement(
                         "UPDATE " + schema + "cnInv SET ciInv = ?, ciCn = ? WHERE ciKey = ?")) {
                     statement.setInt(1, invKey);
@@ -176,6 +178,9 @@ public class DefaultCnInvService implements CnInvService {
                     if (affected == 0) {
                         throw new DaoException("Не удалось обновить cnInv ciKey=" + ciKey);
                     }
+                }
+                if (oldCnKey != cnKey) {
+                    remappingInvDbtVarForCnTransfer(connection, schema, oldInvKey, oldCnKey, cnKey);
                 }
                 CnInv updated = findById(connection, schema, ciKey);
                 connection.commit();
@@ -223,6 +228,238 @@ public class DefaultCnInvService implements CnInvService {
         } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
             log.log(Level.WARNING, "Configuration missing for cnInv, fallback ags.", exception);
             return "ags.";
+        }
+    }
+
+    /**
+     * При переносе cnInv на другой договор перепривязывает контекст {@code sudz.invDbtVar}
+     * (чётвёрка cnNum/invNum/accnt/cn_s_org), чтобы не рвать мост {@code invDbtDbtVar}.
+     *
+     * @param connection открытая транзакция
+     * @param schema префикс ags (с точкой)
+     * @param invKey СФ (до/после переноса — тот же iKey, если inv не меняли)
+     * @param oldCnKey исходный договор
+     * @param newCnKey целевой договор
+     */
+    private void remappingInvDbtVarForCnTransfer(
+            Connection connection,
+            String schema,
+            int invKey,
+            int oldCnKey,
+            int newCnKey
+    ) throws SQLException {
+        if (oldCnKey == newCnKey) {
+            return;
+        }
+        String selectVars = ""
+                + "SELECT v.idvvKey, v.idvvCnNum, v.idvvInvNum, v.idvvAccnt, v.idvvCn_s_org "
+                + "FROM sudz.invDbtVar AS v "
+                + "WHERE v.idvvInvNum IN (SELECT n.inKey FROM " + schema + "invNum AS n WHERE n.inInv = ?) "
+                + "  AND ( "
+                + "    v.idvvCn_s_org IN ("
+                + "      SELECT o.cn_s_org_key FROM " + schema + "cn_s_org AS o "
+                + "      INNER JOIN " + schema + "cn_s_org_smpl AS m ON m.csosKey = o.csoCn_s_org_smpl "
+                + "      INNER JOIN " + schema + "cn_s AS s ON s.cn_s_key = m.csosCn_s "
+                + "      WHERE s.cn_key = ?) "
+                + "    OR v.idvvCnNum IN (SELECT cnnKey FROM " + schema + "cnNum WHERE cnnCn = ?) "
+                + "  )";
+        List<int[]> vars = new ArrayList<>();
+        try (PreparedStatement statement = connection.prepareStatement(selectVars)) {
+            statement.setInt(1, invKey);
+            statement.setInt(2, oldCnKey);
+            statement.setInt(3, oldCnKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    vars.add(new int[]{
+                            rs.getInt("idvvKey"),
+                            rs.getInt("idvvCnNum"),
+                            rs.getInt("idvvInvNum"),
+                            rs.getInt("idvvAccnt"),
+                            rs.getInt("idvvCn_s_org")
+                    });
+                }
+            }
+        }
+        for (int[] var : vars) {
+            int idvvKey = var[0];
+            int oldCnnKey = var[1];
+            int invNumKey = var[2];
+            int accntKey = var[3];
+            int oldOrgKey = var[4];
+            Integer targetCnn = resolveTargetCnNum(connection, schema, oldCnnKey, newCnKey);
+            Integer targetOrg = resolveTargetCnSOrg(connection, schema, oldOrgKey, newCnKey);
+            if (targetCnn == null || targetOrg == null) {
+                throw new IllegalArgumentException(
+                        "Не удалось перепривязать invDbtVar idvvKey=" + idvvKey
+                                + ": на cn=" + newCnKey + " нет подходящего cnNum/cn_s_org "
+                                + "(сначала добавьте номер и сторону на целевом договоре).");
+            }
+            Integer existing = findInvDbtVarKey(connection, targetCnn, invNumKey, accntKey, targetOrg);
+            if (existing != null && existing == idvvKey) {
+                continue;
+            }
+            if (existing != null) {
+                mergeInvDbtVarBridge(connection, idvvKey, existing);
+                try (PreparedStatement del = connection.prepareStatement(
+                        "DELETE FROM sudz.invDbtVar WHERE idvvKey = ?")) {
+                    del.setInt(1, idvvKey);
+                    del.executeUpdate();
+                }
+                log.log(Level.INFO,
+                        "Merged invDbtVar idvvKey={0} → {1} (cn {2}→{3})",
+                        new Object[]{idvvKey, existing, oldCnKey, newCnKey});
+            } else {
+                try (PreparedStatement upd = connection.prepareStatement(
+                        "UPDATE sudz.invDbtVar SET idvvCnNum = ?, idvvCn_s_org = ? WHERE idvvKey = ?")) {
+                    upd.setInt(1, targetCnn);
+                    upd.setInt(2, targetOrg);
+                    upd.setInt(3, idvvKey);
+                    upd.executeUpdate();
+                }
+                log.log(Level.INFO,
+                        "Remapped invDbtVar idvvKey={0}: cnNum {1}→{2}, cn_s_org {3}→{4} (cn {5}→{6})",
+                        new Object[]{idvvKey, oldCnnKey, targetCnn, oldOrgKey, targetOrg, oldCnKey, newCnKey});
+            }
+        }
+    }
+
+    private static Integer resolveTargetCnNum(
+            Connection connection,
+            String schema,
+            int oldCnnKey,
+            int newCnKey
+    ) throws SQLException {
+        String oldNum = null;
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT cnnNum FROM " + schema + "cnNum WHERE cnnKey = ?")) {
+            statement.setInt(1, oldCnnKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (rs.next()) {
+                    oldNum = rs.getNString(1);
+                }
+            }
+        }
+        if (oldNum != null && !oldNum.isBlank()) {
+            try (PreparedStatement statement = connection.prepareStatement(
+                    "SELECT TOP 1 cnnKey FROM " + schema + "cnNum "
+                            + "WHERE cnnCn = ? AND LTRIM(RTRIM(cnnNum)) = LTRIM(RTRIM(?)) "
+                            + "ORDER BY cnnKey")) {
+                statement.setInt(1, newCnKey);
+                statement.setNString(2, oldNum.trim());
+                try (ResultSet rs = statement.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt(1);
+                    }
+                }
+            }
+        }
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT TOP 1 cnnKey FROM " + schema + "cnNum WHERE cnnCn = ? ORDER BY cnnKey")) {
+            statement.setInt(1, newCnKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : null;
+            }
+        }
+    }
+
+    private static Integer resolveTargetCnSOrg(
+            Connection connection,
+            String schema,
+            int oldOrgKey,
+            int newCnKey
+    ) throws SQLException {
+        Integer orgId = null;
+        java.sql.Date cnDate = null;
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT m.csosOrgId, o.csoCnDate FROM " + schema + "cn_s_org AS o "
+                        + "INNER JOIN " + schema + "cn_s_org_smpl AS m ON m.csosKey = o.csoCn_s_org_smpl "
+                        + "WHERE o.cn_s_org_key = ?")) {
+            statement.setInt(1, oldOrgKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (rs.next()) {
+                    orgId = (Integer) rs.getObject(1);
+                    cnDate = rs.getDate(2);
+                }
+            }
+        }
+        String base = ""
+                + "SELECT TOP 1 o.cn_s_org_key FROM " + schema + "cn_s_org AS o "
+                + "INNER JOIN " + schema + "cn_s_org_smpl AS m ON m.csosKey = o.csoCn_s_org_smpl "
+                + "INNER JOIN " + schema + "cn_s AS s ON s.cn_s_key = m.csosCn_s "
+                + "WHERE s.cn_key = ? AND s.cn_s_type = 2 ";
+        if (orgId != null && cnDate != null) {
+            try (PreparedStatement statement = connection.prepareStatement(
+                    base + "AND m.csosOrgId = ? AND o.csoCnDate = ? ORDER BY o.cn_s_org_key")) {
+                statement.setInt(1, newCnKey);
+                statement.setInt(2, orgId);
+                statement.setDate(3, cnDate);
+                try (ResultSet rs = statement.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt(1);
+                    }
+                }
+            }
+        }
+        if (orgId != null) {
+            try (PreparedStatement statement = connection.prepareStatement(
+                    base + "AND m.csosOrgId = ? ORDER BY "
+                            + "CASE WHEN o.csoCnDate IS NULL THEN 1 ELSE 0 END, o.cn_s_org_key")) {
+                statement.setInt(1, newCnKey);
+                statement.setInt(2, orgId);
+                try (ResultSet rs = statement.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt(1);
+                    }
+                }
+            }
+        }
+        try (PreparedStatement statement = connection.prepareStatement(
+                base + "ORDER BY o.cn_s_org_key")) {
+            statement.setInt(1, newCnKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : null;
+            }
+        }
+    }
+
+    private static Integer findInvDbtVarKey(
+            Connection connection,
+            int cnnKey,
+            int invNumKey,
+            int accntKey,
+            int cnSOrgKey
+    ) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT idvvKey FROM sudz.invDbtVar "
+                        + "WHERE idvvCnNum = ? AND idvvInvNum = ? AND idvvAccnt = ? AND idvvCn_s_org = ?")) {
+            statement.setInt(1, cnnKey);
+            statement.setInt(2, invNumKey);
+            statement.setInt(3, accntKey);
+            statement.setInt(4, cnSOrgKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : null;
+            }
+        }
+    }
+
+    private static void mergeInvDbtVarBridge(Connection connection, int fromVarKey, int toVarKey)
+            throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "UPDATE sudz.invDbtDbtVar SET iddvInvDbtVar = ? "
+                        + "WHERE iddvInvDbtVar = ? "
+                        + "  AND NOT EXISTS ("
+                        + "    SELECT 1 FROM sudz.invDbtDbtVar AS x "
+                        + "    WHERE x.iddvInvDbt = sudz.invDbtDbtVar.iddvInvDbt "
+                        + "      AND x.iddvInvDbtVar = ?)")) {
+            statement.setInt(1, toVarKey);
+            statement.setInt(2, fromVarKey);
+            statement.setInt(3, toVarKey);
+            statement.executeUpdate();
+        }
+        try (PreparedStatement statement = connection.prepareStatement(
+                "DELETE FROM sudz.invDbtDbtVar WHERE iddvInvDbtVar = ?")) {
+            statement.setInt(1, fromVarKey);
+            statement.executeUpdate();
         }
     }
 

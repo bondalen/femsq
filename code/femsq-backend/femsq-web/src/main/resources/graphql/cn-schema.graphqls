@@ -31,8 +31,15 @@ extend type Query {
 extend type Mutation {
   """Новый договор: cn + cnNum + исполнитель (smpl/org). Не путать с +smpl к существующему."""
   createCnContract(input: CnContractCreateRequest!): CnContractCreated!
+  """Добавить второй номер к существующему cn (не создаёт новый договор)."""
+  createCnNum(input: CnNumCreateRequest!): CnNum!
   """Правка карточки cn (в т.ч. cn_date) — отдельно от csoCnDate сторон."""
   updateCn(id: Int!, input: CnUpdateRequest!): Cn!
+  """
+  Удаляет договор cn и дочерние cnNum/cn_s, если нет связей cnInv.
+  Связи cnInv удаляются отдельно (deleteCnInv).
+  """
+  deleteCn(id: Int!): Boolean!
   """Создать связь существующих договора и СФ в ags.cnInv."""
   createCnInv(input: CnInvCreateRequest!): CnInv!
   """Перепривязать существующую связь cnInv, сохранив запись таблицы ags.cnInv."""
@@ -142,6 +149,16 @@ input CnContractCreateRequest {
   cnnType: Int!
   """Исполнитель; если нет — создаются только cn + cnNum."""
   csosOrgId: Int
+  note: String
+}
+
+input CnNumCreateRequest {
+  """Существующий договор."""
+  cnKey: Int!
+  """Номер; пусто/null → NULL в БД."""
+  cnnNum: String
+  """Обязателен: cnNum.cnnType NOT NULL."""
+  cnnType: Int!
   note: String
 }
 

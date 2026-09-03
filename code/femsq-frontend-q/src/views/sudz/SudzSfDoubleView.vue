@@ -53,10 +53,24 @@
                   v-model:selected="selectedRows"
                   data-test="sudz-sf-double-queue"
                 />
-                <div class="row items-center q-gutter-sm q-pt-sm shrink-0">
+                <div class="row items-center q-gutter-sm q-pt-sm shrink-0 sudz-sf-queue-actions">
                   <QBtn
-                    color="primary"
+                    v-if="showAdvisorLinkBtn"
+                    :color="advisorLinkHighlight ? 'positive' : 'primary'"
                     unelevated
+                    dense
+                    no-caps
+                    icon="link"
+                    label="Связать с договором Excel"
+                    :disable="!canAdvisorLink"
+                    :loading="advisorLinking"
+                    data-test="sudz-sf-double-advisor-link"
+                    @click="onAdvisorLink"
+                  />
+                  <QBtn
+                    :color="advisorCreateHighlight ? 'positive' : 'grey-7'"
+                    :outline="!advisorCreateHighlight"
+                    :unelevated="advisorCreateHighlight"
                     dense
                     no-caps
                     label="Создать СФ по Excel"
@@ -65,8 +79,8 @@
                     data-test="sudz-sf-double-create"
                     @click="onCreate"
                   />
-                  <div class="text-caption text-grey-6">
-                    Перепривязка — вручную в «Договоры» (позже).
+                  <div v-if="advisorSummary" class="text-caption text-grey-7 col">
+                    {{ advisorSummary }}
                   </div>
                 </div>
               </div>
@@ -85,6 +99,20 @@
                     </tr>
                   </tbody>
                 </QMarkupTable>
+                <div
+                  class="sudz-sf-messages shrink-0 q-mt-sm q-pa-sm"
+                  data-test="sudz-sf-messages"
+                >
+                  <div class="text-caption text-grey-6 q-mb-xs">
+                    Сообщения
+                    <span v-if="advisorLoading" class="q-ml-xs">· советник…</span>
+                  </div>
+                  <pre
+                    v-if="messagesText"
+                    class="sudz-sf-messages-body"
+                  >{{ messagesText }}</pre>
+                  <div v-else class="text-grey-6">Выберите строку очереди.</div>
+                </div>
               </div>
             </template>
           </QSplitter>
@@ -331,6 +359,7 @@ import {
   createSudzSfFromDouble,
   getSudzSfDoubleDomainMatches,
   getSudzSfDoubleExcelCandidate,
+  getSudzSfDoubleAdvice,
   getSudzSfDoubleHints,
   getSudzSfDoubleSumMatches,
   linkSudzSfDoubleToCn
@@ -342,6 +371,7 @@ import type {
   SudzCnInvUplSfDouble,
   SudzSfDoubleDomainMatch,
   SudzSfDoubleExcelCandidate,
+  SudzSfDoubleAdvice,
   SudzSfDoubleHintItem,
   SudzSfDoubleHints
 } from '@/types/sudz';
@@ -412,6 +442,7 @@ const sumsOldSplit = ref(40);
 const sumsNewSplit = ref(40);
 const loading = ref(false);
 const creating = ref(false);
+const advisorLinking = ref(false);
 const excelLoading = ref(false);
 const domainLoading = ref(false);
 const error = ref<string | null>(null);
@@ -426,7 +457,9 @@ const selectedNewSum = ref<NewSumRow[]>([]);
 const oldSumLoading = ref(false);
 const newSumLoading = ref(false);
 const hintsLoading = ref(false);
+const advisorLoading = ref(false);
 const hints = ref<SudzSfDoubleHints | null>(null);
+const advisor = ref<SudzSfDoubleAdvice | null>(null);
 const relationAction = ref<RelationTreeActionContext | null>(null);
 const linkModalOpen = ref(false);
 const selectedCnCandidate = ref<PickerCandidateRow | null>(null);
@@ -447,6 +480,35 @@ const selected = computed(() => selectedRows.value[0] ?? null);
 const canCreate = computed(
   () => selected.value != null && selected.value.ciusStatus === 'open' && !!selected.value.ciusCnKey
 );
+const showAdvisorLinkBtn = computed(
+  () => advisor.value?.action === 'link' || advisor.value?.action === 'alias_cn_num'
+);
+const advisorLinkHighlight = computed(() => {
+  const adv = advisor.value;
+  return adv?.action === 'link' && (adv.confidence === 'high' || adv.confidence === 'medium');
+});
+const canAdvisorLink = computed(() => {
+  const row = selected.value;
+  const adv = advisor.value;
+  if (row == null || row.ciusStatus !== 'open' || adv == null) {
+    return false;
+  }
+  if (adv.action !== 'link' && adv.action !== 'alias_cn_num') {
+    return false;
+  }
+  const invKey = adv.recommendInvKey ?? selectedDomainRow.value?.invKey;
+  const cnKey = adv.recommendCnKey ?? row.ciusCnKey;
+  return invKey != null && cnKey != null && cnKey > 0;
+});
+const advisorCreateHighlight = computed(
+  () => advisor.value?.action === 'create' && advisor.value?.confidence === 'high'
+);
+const messagesText = computed(() => advisor.value?.messageText?.trim() ?? '');
+const advisorSummary = computed(() => {
+  const adv = advisor.value;
+  if (!adv?.action) return '';
+  return `советник: ${actionRu(adv.action)} · уверенность: ${confidenceRu(adv.confidence)}`;
+});
 const selectedDomainRow = computed(() => selectedDomain.value[0] ?? null);
 const selectedOldSumRow = computed(() => selectedOldSum.value[0] ?? null);
 const selectedNewSumRow = computed(() => selectedNewSum.value[0] ?? null);
@@ -609,6 +671,7 @@ watch(
     selectedOldSum.value = [];
     selectedNewSum.value = [];
     hints.value = null;
+    advisor.value = null;
     relationAction.value = null;
     linkModalOpen.value = false;
     selectedCnCandidate.value = null;
@@ -618,6 +681,7 @@ watch(
     oldSumLoading.value = true;
     newSumLoading.value = true;
     hintsLoading.value = true;
+    advisorLoading.value = true;
     error.value = null;
     try {
       excel.value = await getSudzSfDoubleExcelCandidate(row.ciusKey);
@@ -650,7 +714,13 @@ watch(
           dbtKey: m.dbtKey
         }));
       }
-      hints.value = await getSudzSfDoubleHints(row.ciusKey, sumMatchEpsilon);
+      const [hintsResult, advisorResult] = await Promise.all([
+        getSudzSfDoubleHints(row.ciusKey, sumMatchEpsilon),
+        getSudzSfDoubleAdvice(row.ciusKey, sumMatchEpsilon)
+      ]);
+      hints.value = hintsResult;
+      advisor.value = advisorResult;
+      applyAdvisorInvPick(advisorResult);
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e);
     } finally {
@@ -659,10 +729,61 @@ watch(
       oldSumLoading.value = false;
       newSumLoading.value = false;
       hintsLoading.value = false;
+      advisorLoading.value = false;
     }
   },
   { immediate: true }
 );
+
+/**
+ * Pre-select СФ по recommendInvKey из советника.
+ *
+ * @param adv ответ API
+ */
+function applyAdvisorInvPick(adv: SudzSfDoubleAdvice | null): void {
+  const invKey = adv?.recommendInvKey;
+  if (invKey == null) return;
+  const row = domainMatches.value.find((m) => m.invKey === invKey);
+  if (row) {
+    selectedDomain.value = [row];
+  }
+}
+
+/**
+ * Человекочитаемый код действия советника.
+ */
+function actionRu(action: string | null | undefined): string {
+  switch (action) {
+    case 'link':
+      return 'связать';
+    case 'alias_cn_num':
+      return 'добавить номер договора';
+    case 'create':
+      return 'создать СФ';
+    case 'manual':
+      return 'вручную';
+    default:
+      return action ?? '—';
+  }
+}
+
+/**
+ * Человекочитаемая уверенность советника.
+ */
+function confidenceRu(confidence: string | null | undefined): string {
+  switch (confidence) {
+    case 'high':
+      return 'высокая';
+    case 'medium':
+      return 'средняя';
+    case 'low':
+      return 'низкая';
+    case 'none':
+      return 'нет';
+    default:
+      return confidence ?? '—';
+  }
+}
 
 /**
  * Выбор строки СФ/сумм по ключу из подсказки.
@@ -716,6 +837,44 @@ function cnCandidateFromContext(context: RelationTreeActionContext): PickerCandi
       invNum: null
     }
   );
+}
+
+/**
+ * Привязка по рекомендации советника (inv + cn из Excel).
+ */
+async function onAdvisorLink(): Promise<void> {
+  const row = selected.value;
+  const adv = advisor.value;
+  if (row == null || !canAdvisorLink.value || adv == null) {
+    return;
+  }
+  if (adv.action !== 'link' && adv.action !== 'alias_cn_num') {
+    return;
+  }
+  const invKey = adv.recommendInvKey ?? selectedDomainRow.value?.invKey;
+  const cnKey = adv.recommendCnKey ?? row.ciusCnKey;
+  if (invKey == null || cnKey == null) {
+    return;
+  }
+  advisorLinking.value = true;
+  error.value = null;
+  try {
+    const updated = await linkSudzSfDoubleToCn({ ciusKey: row.ciusKey, invKey, cnKey });
+    if (store.selectedUplKey != null) {
+      await store.selectUpl(store.selectedUplKey);
+    }
+    const refreshed = store.sfDoubles.find((r) => r.ciusKey === updated.ciusKey) ?? updated;
+    selectedRows.value = [refreshed];
+    $q.notify({
+      type: 'positive',
+      message: `Связано: inv=${invKey} · cn=${cnKey}`,
+      timeout: 2500
+    });
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : String(e);
+  } finally {
+    advisorLinking.value = false;
+  }
 }
 
 /**
@@ -904,6 +1063,22 @@ async function onDeleteCnInv(context: RelationTreeActionContext): Promise<void> 
   max-height: 28%;
   overflow: auto;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+.sudz-sf-messages {
+  max-height: 35%;
+  overflow: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+.sudz-sf-queue-actions {
+  flex-wrap: wrap;
+}
+.sudz-sf-messages-body {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.35;
 }
 .sudz-sf-hint-section {
   line-height: 1.35;

@@ -127,6 +127,13 @@ export interface CnContractCreateRequest {
   note?: string | null;
 }
 
+export interface CnNumCreateRequest {
+  cnKey: number;
+  cnnNum?: string | null;
+  cnnType: number;
+  note?: string | null;
+}
+
 export interface CnUpdateRequest {
   cnDate?: string | null;
   cnNote?: string | null;

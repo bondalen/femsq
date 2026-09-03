@@ -31,6 +31,7 @@ import type {
   SudzSfDoubleDomainMatch,
   SudzSfDoubleExcelCandidate,
   SudzSfDoubleHints,
+  SudzSfDoubleAdvice,
   SudzSfDoubleSumMatches,
   SudzSvodResult,
   SudzUplLookup,
@@ -128,6 +129,15 @@ const DBT_UPL_FILE_FIELDS = `
   cidufFlLoad
   cidufFlTbl
   cidufLoadingProgress
+`;
+
+/** Поля File без HTML-лога (ответ mutation воронки — лог подгружается отдельно). */
+const DBT_UPL_FILE_FIELDS_SLIM = `
+  cidufKey
+  cidufUpload
+  cidufPath
+  cidufFlLoad
+  cidufFlTbl
 `;
 
 const SF_DOUBLE_FIELDS = `
@@ -289,7 +299,7 @@ const RUN_DBT_UPL_FUNNEL = gql`
           uplStatusOnDate
         }
         file {
-          ${DBT_UPL_FILE_FIELDS}
+          ${DBT_UPL_FILE_FIELDS_SLIM}
         }
         sheets {
           cidufsKey
@@ -558,6 +568,18 @@ const SUDZ_SF_DOUBLE_HINTS = gql`
           label
         }
       }
+    }
+  }
+`;
+
+const SUDZ_SF_DOUBLE_ADVICE = gql`
+  query SudzSfDoubleAdvice($ciusKey: Int!, $epsilon: Float) {
+    sudzSfDoubleAdvice(ciusKey: $ciusKey, epsilon: $epsilon) {
+      messageText
+      confidence
+      action
+      recommendInvKey
+      recommendCnKey
     }
   }
 `;
@@ -943,6 +965,35 @@ export async function getSudzSfDoubleHints(
     return data;
   } catch (error) {
     throw wrapApolloError(error, 'SudzSfDoubleHints');
+  }
+}
+
+/** Советник КСДСФ для панели «Сообщения». */
+export async function getSudzSfDoubleAdvice(
+  ciusKey: number,
+  epsilon: number = 0.01
+): Promise<SudzSfDoubleAdvice> {
+  try {
+    const result = await apolloClient.query<{
+      sudzSfDoubleAdvice: SudzSfDoubleAdvice;
+    }>({
+      query: SUDZ_SF_DOUBLE_ADVICE,
+      variables: { ciusKey, epsilon },
+      fetchPolicy: 'network-only'
+    });
+    const data = result.data?.sudzSfDoubleAdvice;
+    if (!data) {
+      return {
+        messageText: '[советник]\nнет данных',
+        confidence: 'none',
+        action: 'manual',
+        recommendInvKey: null,
+        recommendCnKey: null
+      };
+    }
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzSfDoubleAdvice');
   }
 }
 

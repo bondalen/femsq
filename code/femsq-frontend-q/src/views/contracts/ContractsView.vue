@@ -72,10 +72,32 @@
                 no-caps
                 size="sm"
                 color="primary"
+                icon="add"
+                label="Номер"
+                data-test="cn-num-add-btn"
+                @click="openAddNumDialog"
+              />
+              <QBtn
+                flat
+                dense
+                no-caps
+                size="sm"
+                color="primary"
                 icon="edit"
                 label="cn_date"
                 data-test="cn-edit-btn"
                 @click="openEditCnDialog"
+              />
+              <QBtn
+                flat
+                dense
+                no-caps
+                size="sm"
+                color="negative"
+                icon="delete"
+                label="Договор"
+                data-test="cn-delete-btn"
+                @click="confirmDeleteCn"
               />
             </div>
             <QTabs v-model="detailTab" dense class="shrink-0 q-mb-xs" active-color="primary">
@@ -119,9 +141,46 @@
                     >
                       <template #before>
                         <div class="column fill-pane no-wrap" data-test="cn-inv-list">
-                          <div class="text-caption text-grey-7 q-pb-xs shrink-0">
-                            Связи cnInv договора
-                            <span v-if="store.cnInvs.length"> · {{ store.cnInvs.length }}</span>
+                          <div class="row items-center q-gutter-xs q-pb-xs shrink-0">
+                            <div class="col text-caption text-grey-7">
+                              Связи cnInv договора
+                              <span v-if="store.cnInvs.length"> · {{ store.cnInvs.length }}</span>
+                            </div>
+                            <QBtn
+                              flat
+                              dense
+                              no-caps
+                              size="sm"
+                              color="primary"
+                              icon="add"
+                              label="Связь"
+                              data-test="cn-inv-create-btn"
+                              @click="openCreateCnInvDialog"
+                            />
+                            <QBtn
+                              flat
+                              dense
+                              no-caps
+                              size="sm"
+                              color="primary"
+                              icon="edit"
+                              label="Перенести"
+                              :disable="!store.selectedCnInv"
+                              data-test="cn-inv-edit-btn"
+                              @click="openEditCnInvDialog"
+                            />
+                            <QBtn
+                              flat
+                              dense
+                              no-caps
+                              size="sm"
+                              color="negative"
+                              icon="delete"
+                              label="Связь"
+                              :disable="!store.selectedCnInv"
+                              data-test="cn-inv-delete-btn"
+                              @click="confirmDeleteSelectedCnInv"
+                            />
                           </div>
                           <FemsqTable
                             class="col cn-inv-table"
@@ -142,17 +201,18 @@
                       <template #after>
                         <div class="column fill-pane no-wrap" data-test="cn-inv-tree">
                           <div class="text-caption text-grey-7 q-pb-xs shrink-0">
-                            Дерево СФ (<code>contracts-inv</code>); CRUD связи — следующим этапом
+                            Дерево СФ (<code>contracts-inv</code>)
                           </div>
                           <RelationTree
                             v-if="store.selectedCnInv"
-                            :key="`inv-${store.selectedCnInv.ciInv}`"
+                            :key="`inv-${store.selectedCnInv.ciInv}-${relationTreeKey}`"
                             class="col"
                             :spec="contractsInvSpec"
                             :root-id="store.selectedCnInv.ciInv"
                             :fetch-node="fetchRelationNode"
                             :fetch-expand="fetchRelationExpand"
                             root-class="contracts-relation-tree"
+                            @action="onRelationAction"
                           />
                           <div v-else class="text-grey-7 q-pa-sm">
                             {{
@@ -230,6 +290,43 @@
             label="Создать"
             :loading="store.saving"
             @click="saveCreate"
+          />
+        </QCardActions>
+      </QCard>
+    </QDialog>
+
+    <QDialog v-model="addNumDialog.open" persistent>
+      <QCard class="dialog-card">
+        <QCardSection class="dialog-title">Добавить номер к договору</QCardSection>
+        <QCardSection class="text-caption text-grey-7">
+          Добавляет строку в <code>cnNum</code> для cn_key={{ store.selectedCn?.cnKey ?? '—' }}.
+          Не создаёт новый договор — в отличие от «+ Договор» в шапке.
+        </QCardSection>
+        <QCardSection class="q-gutter-sm">
+          <QInput v-model="addNumDialog.cnnNum" label="Номер *" dense autofocus />
+          <QSelect
+            v-model="addNumDialog.cnnType"
+            :options="numTypeOptions"
+            emit-value
+            map-options
+            label="Тип номера *"
+            dense
+            options-dense
+          />
+          <QBanner v-if="addNumDialog.duplicateHint" class="bg-warning text-dark" rounded dense>
+            {{ addNumDialog.duplicateHint }}
+          </QBanner>
+        </QCardSection>
+        <QCardActions align="right">
+          <QBtn flat dense no-caps label="Отмена" v-close-popup />
+          <QBtn
+            flat
+            dense
+            no-caps
+            color="primary"
+            label="Добавить"
+            :loading="store.saving"
+            @click="saveAddNum"
           />
         </QCardActions>
       </QCard>
@@ -313,7 +410,7 @@ import {
 } from 'quasar';
 import { FemsqTable, type FemsqTableColumn } from 'fequlib';
 
-import { createCnInv, deleteCnInv, updateCnInv } from '@/api/contracts-api';
+import { createCnInv, updateCnInv } from '@/api/contracts-api';
 import { fetchRelationExpand, fetchRelationNode } from '@/api/relation-api';
 import RecordModal from '@/components/relation/RecordModal.vue';
 import RelationTree from '@/components/relation/RelationTree.vue';
@@ -345,6 +442,9 @@ const orgIdFilter = ref('');
 const relationTreeKey = ref(0);
 const relationAction = ref<RelationTreeActionContext | null>(null);
 const linkModalOpen = ref(false);
+/** Выбранный договор в модалке cnInv (для переноса связи в режиме «Правка»). */
+const linkCnCandidate = ref<RelationPickerCandidateRow | null>(null);
+const cnPickerQuery = ref('');
 const cnInvFormMode = computed<'create' | 'edit'>(() =>
   relationAction.value?.actionId === 'cnInv.link.edit' ? 'edit' : 'create'
 );
@@ -355,6 +455,13 @@ const createDialog = reactive({
   csoCnDate: '',
   cnnType: 1,
   csosOrgId: null as number | null,
+  duplicateHint: '' as string
+});
+
+const addNumDialog = reactive({
+  open: false,
+  cnnNum: '',
+  cnnType: 1,
   duplicateHint: '' as string
 });
 
@@ -512,26 +619,75 @@ const selectedCnCandidate = computed<RelationPickerCandidateRow | null>(() => {
   };
 });
 
+/**
+ * Кандидаты договора для picker в модалке (dedupe по cn_key из master cnNum).
+ */
+const cnPickerRows = computed<RelationPickerCandidateRow[]>(() => {
+  const q = cnPickerQuery.value.trim().toLowerCase();
+  const seen = new Set<number>();
+  const rows: RelationPickerCandidateRow[] = [];
+  for (const item of store.cnNums) {
+    if (seen.has(item.cnnCn)) {
+      continue;
+    }
+    seen.add(item.cnnCn);
+    const cnNum = item.cnnNum ?? '';
+    if (q && !cnNum.toLowerCase().includes(q) && !String(item.cnnCn).includes(q)) {
+      continue;
+    }
+    rows.push({
+      rowKey: String(item.cnnCn),
+      cnKey: item.cnnCn,
+      cnNum: item.cnnNum,
+      invKey: null,
+      invNum: null
+    });
+  }
+  return rows;
+});
+
+const selectedCnInvCandidate = computed<RelationPickerCandidateRow | null>(() => {
+  const row = store.selectedCnInv;
+  if (!row) {
+    return null;
+  }
+  return {
+    rowKey: String(row.ciInv),
+    invKey: row.ciInv,
+    invNum: row.iNum,
+    cnKey: store.selectedCn?.cnKey ?? null,
+    cnNum: store.selectedCnNum?.cnnNum ?? store.selectedCn?.cnNumber ?? null
+  };
+});
+
 const linkForm = computed<RelationFormState | null>(() => {
   const action = relationAction.value;
-  const cnCandidate = selectedCnCandidate.value;
+  const cnCandidate = linkCnCandidate.value ?? selectedCnCandidate.value;
   if (!linkModalOpen.value || action == null || cnCandidate == null) {
     return null;
   }
+  const isEdit = cnInvFormMode.value === 'edit';
   return buildCnInvLinkForm({
     context: action,
     mode: cnInvFormMode.value,
     domain: null,
-    cnCandidates: [cnCandidate],
+    cnCandidates: isEdit ? cnPickerRows.value : [cnCandidate],
     invCandidates: store.cnInvLookupRows as RelationPickerCandidateRow[],
     selectedCnCandidate: cnCandidate,
-    selectedInvCandidate: store.selectedCnInvLookup as RelationPickerCandidateRow | null,
+    selectedInvCandidate: isEdit
+      ? selectedCnInvCandidate.value
+      : (store.selectedCnInvLookup as RelationPickerCandidateRow | null),
     cnPickerSpec: cnRelationSpec,
     invPickerSpec: contractsInvSpec,
     pickerColumns,
     invSearchValue: store.cnInvLookupQuery,
     invSearchLoading: store.cnInvLookupLoading,
-    invSearchStatus: store.cnInvLookupStatus
+    invSearchStatus: store.cnInvLookupStatus,
+    cnSearchValue: cnPickerQuery.value,
+    cnSearchStatus:
+      cnPickerRows.value.length > 0
+        ? `Договоров в списке: ${cnPickerRows.value.length}`
+        : 'Нет договоров по фильтру — уточните номер или cn_key'
   });
 });
 
@@ -548,6 +704,57 @@ function onNestedCnNumClick(_evt: Event, row: CnNumDto): void {
  */
 function onCnInvRowClick(_evt: Event, row: CnInvListRow): void {
   store.selectCnInv(row.ciKey);
+}
+
+/**
+ * Контекст action для создания/правки cnInv с панели «Счета-фактуры».
+ */
+function cnInvActionContext(
+  actionId: 'cnInv.link.create' | 'cnInv.link.edit',
+  ciKey?: number | null,
+  invKey?: number | null
+): RelationTreeActionContext {
+  const cnKey = store.selectedCn?.cnKey ?? null;
+  return {
+    actionId,
+    root: { table: 'cn', id: cnKey },
+    node: {
+      kind: 'record',
+      table: actionId === 'cnInv.link.edit' ? 'cnInv' : 'cn',
+      edge: 'cn.cnInv',
+      fromId: cnKey,
+      rowKey: ciKey ?? null,
+      title: '',
+      fields: {
+        ciCn: cnKey != null ? String(cnKey) : null,
+        ciInv: invKey != null ? String(invKey) : null
+      }
+    }
+  };
+}
+
+function openCreateCnInvDialog(): void {
+  if (store.selectedCn == null) {
+    $q.notify({ type: 'warning', message: 'Сначала выберите договор' });
+    return;
+  }
+  store.clearCnInvLookup();
+  linkCnCandidate.value = selectedCnCandidate.value;
+  cnPickerQuery.value = '';
+  relationAction.value = cnInvActionContext('cnInv.link.create');
+  linkModalOpen.value = true;
+}
+
+function openEditCnInvDialog(): void {
+  const row = store.selectedCnInv;
+  if (row == null) {
+    $q.notify({ type: 'warning', message: 'Выберите связь cnInv' });
+    return;
+  }
+  linkCnCandidate.value = selectedCnCandidate.value;
+  cnPickerQuery.value = store.selectedCnNum?.cnnNum ?? store.selectedCn?.cnNumber ?? '';
+  relationAction.value = cnInvActionContext('cnInv.link.edit', row.ciKey, row.ciInv);
+  linkModalOpen.value = true;
 }
 
 /**
@@ -570,13 +777,30 @@ function onRelationAction(context: RelationTreeActionContext): void {
 }
 
 function onPickerSelect(pickerId: string, rowKey: string | null): void {
-  if (pickerId !== 'inv') {
+  if (pickerId === 'inv') {
+    store.selectCnInvLookup(rowKey);
     return;
   }
-  store.selectCnInvLookup(rowKey);
+  if (pickerId === 'cn') {
+    linkCnCandidate.value =
+      cnPickerRows.value.find((row) => row.rowKey === rowKey) ??
+      (rowKey != null
+        ? {
+            rowKey,
+            cnKey: Number(rowKey) || null,
+            cnNum: null,
+            invKey: null,
+            invNum: null
+          }
+        : null);
+  }
 }
 
 async function onPickerSearch(pickerId: string, value: string): Promise<void> {
+  if (pickerId === 'cn') {
+    cnPickerQuery.value = value;
+    return;
+  }
   if (pickerId !== 'inv') {
     return;
   }
@@ -592,10 +816,12 @@ async function onPickerSearch(pickerId: string, value: string): Promise<void> {
 
 async function onLinkSave(): Promise<void> {
   const mode = cnInvFormMode.value;
-  const cnKey = selectedCnCandidate.value?.cnKey;
+  const cnKey = linkCnCandidate.value?.cnKey ?? selectedCnCandidate.value?.cnKey;
   const currentInvFromAction = Number(relationAction.value?.node.fields.ciInv ?? null);
   const invKey =
-    store.selectedCnInvLookup?.invKey ?? (currentInvFromAction > 0 ? currentInvFromAction : null);
+    (mode === 'edit' ? store.selectedCnInv?.ciInv : null) ??
+    store.selectedCnInvLookup?.invKey ??
+    (currentInvFromAction > 0 ? currentInvFromAction : null);
   if (cnKey == null || invKey == null) {
     $q.notify({ type: 'warning', message: 'Выберите СФ для привязки к договору.' });
     return;
@@ -612,7 +838,16 @@ async function onLinkSave(): Promise<void> {
     }
     linkModalOpen.value = false;
     relationAction.value = null;
+    linkCnCandidate.value = null;
+    cnPickerQuery.value = '';
     relationTreeKey.value += 1;
+    if (cnKey != null) {
+      await store.loadCnInvs(cnKey);
+    }
+    const currentCnKey = store.selectedCn?.cnKey;
+    if (currentCnKey != null && currentCnKey !== cnKey) {
+      await store.loadCnInvs(currentCnKey);
+    }
     $q.notify({
       type: 'positive',
       message: mode === 'edit' ? 'Связь cnInv обновлена' : 'Связь cnInv сохранена'
@@ -625,16 +860,25 @@ async function onLinkSave(): Promise<void> {
   }
 }
 
-async function onDeleteCnInv(context: RelationTreeActionContext): Promise<void> {
-  const ciKey = context.node.rowKey;
-  if (ciKey == null) {
-    $q.notify({ type: 'warning', message: 'Не найден ciKey для удаления cnInv.' });
+async function confirmDeleteSelectedCnInv(): Promise<void> {
+  const row = store.selectedCnInv;
+  if (row == null) {
+    $q.notify({ type: 'warning', message: 'Выберите связь cnInv' });
     return;
   }
+  await confirmDeleteCnInv(row.ciKey, row.iNum, row.ciInv);
+}
+
+async function confirmDeleteCnInv(
+  ciKey: number,
+  invNum?: string | null,
+  invKey?: number | null
+): Promise<void> {
+  const label = invNum ?? (invKey != null ? `inv=${invKey}` : '');
   const confirmed = await new Promise<boolean>((resolve) => {
     $q.dialog({
       title: 'Удалить связь с СФ',
-      message: `Удалить запись cnInv ciKey=${ciKey}?`,
+      message: `Удалить cnInv ciKey=${ciKey}${label ? ` (${label})` : ''}?`,
       cancel: true,
       persistent: true
     })
@@ -646,14 +890,58 @@ async function onDeleteCnInv(context: RelationTreeActionContext): Promise<void> 
     return;
   }
   try {
-    await deleteCnInv(ciKey);
+    await store.removeCnInv(ciKey);
     relationTreeKey.value += 1;
     $q.notify({ type: 'positive', message: 'Связь cnInv удалена' });
-  } catch (error) {
+  } catch {
+    /* error в store */
+  }
+}
+
+async function onDeleteCnInv(context: RelationTreeActionContext): Promise<void> {
+  const ciKey = context.node.rowKey;
+  if (ciKey == null) {
+    $q.notify({ type: 'warning', message: 'Не найден ciKey для удаления cnInv.' });
+    return;
+  }
+  const invKey = Number(context.node.fields.ciInv ?? null);
+  await confirmDeleteCnInv(ciKey, null, invKey > 0 ? invKey : null);
+}
+
+async function confirmDeleteCn(): Promise<void> {
+  const cn = store.selectedCn;
+  if (cn == null) {
+    return;
+  }
+  await store.loadCnInvs(cn.cnKey);
+  if (store.cnInvs.length > 0) {
     $q.notify({
-      type: 'negative',
-      message: error instanceof Error ? error.message : 'Не удалось удалить cnInv'
+      type: 'warning',
+      message: `У договора cn=${cn.cnKey} есть ${store.cnInvs.length} связей cnInv — сначала удалите их на вкладке «Счета-фактуры».`
     });
+    return;
+  }
+  const confirmed = await new Promise<boolean>((resolve) => {
+    $q.dialog({
+      title: 'Удалить договор',
+      message:
+        `Удалить cn_key=${cn.cnKey} «${store.selectedCnNum?.cnnNum ?? cn.cnNumber ?? '—'}»? ` +
+        'Будут удалены номера и стороны; операция необратима.',
+      cancel: true,
+      persistent: true
+    })
+      .onOk(() => resolve(true))
+      .onCancel(() => resolve(false))
+      .onDismiss(() => resolve(false));
+  });
+  if (!confirmed) {
+    return;
+  }
+  try {
+    await store.removeCn(cn.cnKey);
+    $q.notify({ type: 'positive', message: 'Договор удалён' });
+  } catch {
+    /* error в store */
   }
 }
 
@@ -674,6 +962,25 @@ async function openCreateDialog(): Promise<void> {
   createDialog.csosOrgId = null;
   createDialog.duplicateHint = '';
   createDialog.open = true;
+}
+
+/**
+ * Открывает диалог добавления номера к выбранному cn.
+ */
+async function openAddNumDialog(): Promise<void> {
+  const cn = store.selectedCn;
+  if (!cn) {
+    return;
+  }
+  await store.ensureNumTypes();
+  const existingType =
+    store.selectedCnNum?.cnnType ??
+    store.cnNumsForCn.find((row) => row.cnnType != null && row.cnnType > 0)?.cnnType ??
+    1;
+  addNumDialog.cnnNum = '';
+  addNumDialog.cnnType = existingType;
+  addNumDialog.duplicateHint = '';
+  addNumDialog.open = true;
 }
 
 /**
@@ -786,6 +1093,74 @@ async function saveCreate(): Promise<void> {
   }
 
   await doCreate();
+}
+
+/**
+ * Добавляет второй номер к выбранному договору.
+ */
+async function saveAddNum(): Promise<void> {
+  const cnKey = store.selectedCn?.cnKey;
+  if (cnKey == null) {
+    $q.notify({ type: 'warning', message: 'Договор не выбран' });
+    return;
+  }
+  if (addNumDialog.cnnType == null || addNumDialog.cnnType <= 0) {
+    $q.notify({ type: 'warning', message: 'Укажите тип номера (обязательное поле БД)' });
+    return;
+  }
+  const cnnNumRaw = addNumDialog.cnnNum.trim();
+  if (cnnNumRaw === '') {
+    $q.notify({ type: 'warning', message: 'Укажите номер' });
+    return;
+  }
+
+  const alreadyOnCn = store.cnNumsForCn.some(
+    (row) => (row.cnnNum ?? '').trim().toUpperCase() === cnnNumRaw.toUpperCase()
+  );
+  if (alreadyOnCn) {
+    $q.notify({ type: 'warning', message: `Номер «${cnnNumRaw}» уже есть у этого договора` });
+    return;
+  }
+
+  let duplicates = 0;
+  try {
+    duplicates = await store.duplicateCount(cnnNumRaw);
+  } catch {
+    /* не блокируем */
+  }
+
+  const doAdd = async (): Promise<void> => {
+    try {
+      await store.addCnNum({
+        cnKey,
+        cnnNum: cnnNumRaw,
+        cnnType: addNumDialog.cnnType
+      });
+      addNumDialog.open = false;
+      $q.notify({ type: 'positive', message: 'Номер добавлен' });
+    } catch {
+      /* error в store */
+    }
+  };
+
+  if (duplicates > 0) {
+    addNumDialog.duplicateHint =
+      `В БД уже есть ${duplicates} номер(ов) «${cnnNumRaw}» (часто это дубль воронки). ` +
+      'Добавление к каноническому договору — ожидаемый сценарий объединения.';
+    $q.dialog({
+      title: 'Номер уже встречается',
+      message:
+        `В БД уже есть ${duplicates} записей с номером «${cnnNumRaw}». ` +
+        'Добавить его как второй номер к текущему договору?',
+      cancel: { flat: true, label: 'Отмена' },
+      ok: { flat: true, color: 'primary', label: 'Добавить' }
+    }).onOk(() => {
+      void doAdd();
+    });
+    return;
+  }
+
+  await doAdd();
 }
 
 onMounted(() => {

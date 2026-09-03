@@ -1,12 +1,15 @@
 package com.femsq.web.api.sudz;
 
 import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplAccSmplVarInvPhaseResult;
 import com.femsq.database.model.sudz.SudzDbtUplCnCtptExistInvApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplCnNotLoadApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplFile;
+import com.femsq.database.model.sudz.SudzDbtUplFunnelQueueClearResult;
 import com.femsq.database.model.sudz.SudzDbtUplFunnelResult;
 import com.femsq.database.model.sudz.SudzDbtUplFunnelSteps;
 import com.femsq.database.model.sudz.SudzDbtUplDbtValueLoadApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplDbtValueLoadPhaseResult;
 import com.femsq.database.model.sudz.SudzDbtUplInvDbtDbtEnsureApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplInvDbtLoadApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarEnsureApplyResult;
@@ -28,13 +31,25 @@ import org.springframework.stereotype.Service;
 /**
  * Оркестратор воронки загрузки свода: {@code excelToTbl} …
  * {@code invDbtLoad}; Access-хвост панели — disabled (S66e).
- * Очистка InvDouble — prelude внутри шага СФ.
+ * Очистка InvDouble — prelude внутри шага СФ и при старте любого прогона.
  * Лог шагов — хронология сверху вниз, каждый шаг в сворачиваемом блоке.
  */
 @Service
 public class SudzDbtUplFunnelRunner {
 
     private static final Logger log = Logger.getLogger(SudzDbtUplFunnelRunner.class.getName());
+
+    /**
+     * Контекст одного прогона воронки (batch AccSmpl→VarEnsure→InvDbtLoad).
+     */
+    private static final class FunnelBatchContext {
+        private final boolean accSmplVarInvBatch;
+        private SudzDbtUplAccSmplVarInvPhaseResult accSmplVarInvResult;
+
+        private FunnelBatchContext(boolean accSmplVarInvBatch) {
+            this.accSmplVarInvBatch = accSmplVarInvBatch;
+        }
+    }
 
     private final SudzService sudzService;
     private final SudzDbtUplExcelToTblImporter importer;
@@ -84,9 +99,11 @@ public class SudzDbtUplFunnelRunner {
         ordered = List.copyOf(ordered);
         SudzDbtUplFunnelSteps.requirePrefixOfEnabled(ordered);
 
+        boolean tailOnlyRetry = SudzDbtUplFunnelSteps.isSingleTailRetry(ordered);
+
         SudzDbtUplLauncher before = sudzService.getDbtUplLauncher(uplKey);
         SudzDbtUplFile file = before.file();
-        boolean flTbl = file != null && file.cidufFlTbl();
+        boolean flTbl = !tailOnlyRetry && file != null && file.cidufFlTbl();
         if (!flTbl && ordered.isEmpty()) {
             throw new IllegalArgumentException(
                     "Включите «обнов. по исх?» или отметьте хотя бы один шаг воронки");
@@ -100,9 +117,28 @@ public class SudzDbtUplFunnelRunner {
                 + ", шагов панели=" + ordered.size()
                 + ". " + SudzDbtUplProgressLog.now());
 
+        Integer fileKey = file != null ? file.cidufKey() : null;
+        SudzDbtUplFunnelQueueClearResult cleared = sudzService.clearDbtUplFunnelQueues(uplKey, fileKey);
+        progress.line("Очистка очередей воронки (хвосты прошлых прогонов): КСДСФ="
+                + cleared.sfDoubleDeleted() + ", КСДД=" + cleared.invDbtDoubleDeleted()
+                + ", FileInvDouble=" + cleared.fileInvDoubleDeleted()
+                + ", TblCnInv=" + cleared.tblCnInvDeleted()
+                + ", P1=" + cleared.dbtP1Deleted() + ".");
+        log.log(Level.INFO,
+                "funnel queue clear uplKey={0} sf={1} invDbt={2} fileInv={3} tblCnInv={4} p1={5}",
+                new Object[]{
+                        uplKey,
+                        cleared.sfDoubleDeleted(),
+                        cleared.invDbtDoubleDeleted(),
+                        cleared.fileInvDoubleDeleted(),
+                        cleared.tblCnInvDeleted(),
+                        cleared.dbtP1Deleted()
+                });
+
         List<String> ran = new ArrayList<>();
         boolean anyStub = false;
         long funnelT0 = System.currentTimeMillis();
+        FunnelBatchContext batchCtx = new FunnelBatchContext(flLoad && hasAccSmplVarInvBatch(ordered));
         if (flTbl) {
             ran.add(SudzDbtUplFunnelSteps.EXCEL_TO_TBL);
             progress.open("<b>" + SudzDbtUplFunnelSteps.EXCEL_TO_TBL + "</b> — "
@@ -131,11 +167,11 @@ public class SudzDbtUplFunnelRunner {
             } else if (SudzDbtUplFunnelSteps.CN_CTPT_EXIST_INV_NOT_LOAD.equals(stepId)) {
                 runCnCtptExistInvNotLoad(uplKey, progress, flLoad);
             } else if (SudzDbtUplFunnelSteps.CN_CTPT_INV_EXIST_ACC_SMPL_NOT_LOAD.equals(stepId)) {
-                runCnCtptInvExistAccSmplNotLoad(uplKey, progress, flLoad);
+                runCnCtptInvExistAccSmplNotLoad(uplKey, progress, flLoad, batchCtx);
             } else if (SudzDbtUplFunnelSteps.INV_DBT_VAR_ENSURE.equals(stepId)) {
-                runInvDbtVarEnsure(uplKey, progress, flLoad);
+                runInvDbtVarEnsure(uplKey, progress, flLoad, batchCtx);
             } else if (SudzDbtUplFunnelSteps.INV_DBT_LOAD.equals(stepId)) {
-                runInvDbtLoad(uplKey, progress, flLoad);
+                runInvDbtLoad(uplKey, progress, flLoad, batchCtx);
             } else if (SudzDbtUplFunnelSteps.INV_DBT_DBT_ENSURE.equals(stepId)) {
                 runInvDbtDbtEnsure(uplKey, progress, flLoad);
             } else if (SudzDbtUplFunnelSteps.DBT_VALUE_LOAD.equals(stepId)) {
@@ -363,7 +399,12 @@ public class SudzDbtUplFunnelRunner {
      * @param progress лог шага
      * @param flLoad писать ли в домен
      */
-    private void runCnCtptInvExistAccSmplNotLoad(int uplKey, SudzDbtUplProgressLog progress, boolean flLoad) {
+    private void runCnCtptInvExistAccSmplNotLoad(
+            int uplKey,
+            SudzDbtUplProgressLog progress,
+            boolean flLoad,
+            FunnelBatchContext batchCtx
+    ) {
         int tblCount = sudzService.countDbtUplTbl(uplKey);
         progress.line("Буфер Tbl: <font color=\"DarkCyan\">" + tblCount + "</font> строк"
                 + " (unloadKey=" + uplKey + ").");
@@ -371,28 +412,50 @@ public class SudzDbtUplFunnelRunner {
             progress.line("<font color=\"Salmon\">буфер пуст</font> — сначала включите"
                     + " «обнов. по исх?» либо загрузите Excel в Tbl.");
         }
-        var rows = sudzService.listDbtUplCnCtptInvExistAccSmplNot(uplKey);
-        int beforeCount = rows.size();
-        SudzDbtUplAccSmplNotLoadLog.append(progress, rows);
-
+        if (batchCtx.accSmplVarInvBatch) {
+            ensureAccSmplVarInvBatch(uplKey, batchCtx);
+            SudzDbtUplAccSmplNotApplyResult applyResult = batchCtx.accSmplVarInvResult.accSmpl();
+            progress.line("Batch apply: внесено пар СФ+СГК: <b><font color=\"DarkGreen\">"
+                    + (applyResult == null ? 0 : applyResult.insertedCount()) + "</font></b>"
+                    + " (без повторного diff-листа).");
+            log.log(Level.INFO,
+                    "CnCtptInvExistAccSmplNotLoad uplKey={0} tbl={1} batch=true applied={2}",
+                    new Object[]{
+                            uplKey,
+                            tblCount,
+                            applyResult == null ? 0 : applyResult.insertedCount()
+                    });
+            return;
+        }
+        int beforeCount;
         SudzDbtUplAccSmplNotApplyResult applyResult = null;
-        if (flLoad && beforeCount > 0) {
-            applyResult = sudzService.applyDbtUplCnCtptInvExistAccSmplNotLoad(uplKey);
-            progress.line("Внесено пар СФ+СГК (строк) в БД: <b><font color=\"DarkGreen\">"
-                    + applyResult.insertedCount() + "</font></b> Для "
-                    + beforeCount + " задолженностей.");
-            rows = sudzService.listDbtUplCnCtptInvExistAccSmplNot(uplKey);
+        if (flLoad) {
+            // Один fillSudzEiaTemp: diff для лога + INSERT (раньше fill вызывался дважды ≈ ×2 времени).
+            var load = sudzService.findAndApplyDbtUplCnCtptInvExistAccSmplNotLoad(uplKey);
+            beforeCount = load.rows().size();
+            SudzDbtUplAccSmplNotLoadLog.append(progress, load.rows());
+            applyResult = load.apply();
+            if (beforeCount > 0) {
+                progress.line("Внесено пар СФ+СГК (строк) в БД: <b><font color=\"DarkGreen\">"
+                        + applyResult.insertedCount() + "</font></b> Для "
+                        + beforeCount + " задолженностей (один проход #sudzEia).");
+            } else {
+                progress.line("Apply-only: внесено пар СФ+СГК: <b><font color=\"DarkGreen\">"
+                        + applyResult.insertedCount() + "</font></b>.");
+            }
+        } else {
+            var rows = sudzService.listDbtUplCnCtptInvExistAccSmplNot(uplKey);
+            beforeCount = rows.size();
             SudzDbtUplAccSmplNotLoadLog.append(progress, rows);
         }
         log.log(Level.INFO,
-                "CnCtptInvExistAccSmplNotLoad uplKey={0} tbl={1} missing={2} flLoad={3} applied={4} after={5}",
+                "CnCtptInvExistAccSmplNotLoad uplKey={0} tbl={1} missing={2} flLoad={3} applied={4}",
                 new Object[]{
                         uplKey,
                         tblCount,
                         beforeCount,
                         flLoad,
-                        applyResult == null ? 0 : applyResult.insertedCount(),
-                        rows.size()
+                        applyResult == null ? 0 : applyResult.insertedCount()
                 });
     }
 
@@ -402,8 +465,14 @@ public class SudzDbtUplFunnelRunner {
      * @param uplKey ключ выгрузки
      * @param progress лог шага
      * @param flLoad писать ли в sudz
+     * @param batchCtx контекст batch-фазы
      */
-    private void runInvDbtVarEnsure(int uplKey, SudzDbtUplProgressLog progress, boolean flLoad) {
+    private void runInvDbtVarEnsure(
+            int uplKey,
+            SudzDbtUplProgressLog progress,
+            boolean flLoad,
+            FunnelBatchContext batchCtx
+    ) {
         int tblCount = sudzService.countDbtUplTbl(uplKey);
         progress.line("Буфер Tbl: <font color=\"DarkCyan\">" + tblCount + "</font> строк"
                 + " (unloadKey=" + uplKey + ").");
@@ -411,29 +480,48 @@ public class SudzDbtUplFunnelRunner {
             progress.line("<font color=\"Salmon\">буфер пуст</font> — сначала включите"
                     + " «обнов. по исх?» либо загрузите Excel в Tbl.");
         }
+        if (batchCtx.accSmplVarInvBatch) {
+            ensureAccSmplVarInvBatch(uplKey, batchCtx);
+            var varEnsure = batchCtx.accSmplVarInvResult.varEnsure();
+            progress.line("Batch apply invDbtVar: <b><font color=\"DarkGreen\">"
+                    + (varEnsure == null ? 0 : varEnsure.insertedCount()) + "</font></b>"
+                    + " (без повторного snapshot).");
+            log.log(Level.INFO,
+                    "invDbtVarEnsure uplKey={0} tbl={1} batch=true applied={2}",
+                    new Object[]{
+                            uplKey,
+                            tblCount,
+                            varEnsure == null ? 0 : varEnsure.insertedCount()
+                    });
+            return;
+        }
+        if (flLoad) {
+            var applyResult = sudzService.applyDbtUplInvDbtVarEnsure(uplKey);
+            progress.line("Apply-only invDbtVar: <b><font color=\"DarkGreen\">"
+                    + applyResult.insertedCount() + "</font></b> INSERT.");
+            log.log(Level.INFO,
+                    "invDbtVarEnsure uplKey={0} tbl={1} flLoad={2} applied={3}",
+                    new Object[]{
+                            uplKey,
+                            tblCount,
+                            flLoad,
+                            applyResult.insertedCount()
+                    });
+            return;
+        }
         var snapshot = sudzService.listDbtUplInvDbtVarEnsureSnapshot(uplKey);
         var missing = snapshot.missing();
         var ambiguous = snapshot.ambiguous();
-        int beforeMissing = missing.size();
         SudzDbtUplInvDbtVarEnsureLog.append(progress, missing, ambiguous, null);
-
-        SudzDbtUplInvDbtVarEnsureApplyResult applyResult = null;
-        if (flLoad && beforeMissing > 0) {
-            applyResult = sudzService.applyDbtUplInvDbtVarEnsure(uplKey);
-            snapshot = sudzService.listDbtUplInvDbtVarEnsureSnapshot(uplKey);
-            missing = snapshot.missing();
-            ambiguous = snapshot.ambiguous();
-            SudzDbtUplInvDbtVarEnsureLog.append(progress, missing, ambiguous, applyResult);
-        }
         log.log(Level.INFO,
                 "invDbtVarEnsure uplKey={0} tbl={1} missing={2} ambiguous={3} flLoad={4} applied={5}",
                 new Object[]{
                         uplKey,
                         tblCount,
-                        beforeMissing,
+                        missing.size(),
                         ambiguous.size(),
                         flLoad,
-                        applyResult == null ? 0 : applyResult.insertedCount()
+                        0
                 });
     }
 
@@ -443,8 +531,14 @@ public class SudzDbtUplFunnelRunner {
      * @param uplKey ключ выгрузки
      * @param progress лог шага
      * @param flLoad писать ли в sudz
+     * @param batchCtx контекст batch-фазы
      */
-    private void runInvDbtLoad(int uplKey, SudzDbtUplProgressLog progress, boolean flLoad) {
+    private void runInvDbtLoad(
+            int uplKey,
+            SudzDbtUplProgressLog progress,
+            boolean flLoad,
+            FunnelBatchContext batchCtx
+    ) {
         int tblCount = sudzService.countDbtUplTbl(uplKey);
         progress.line("Буфер Tbl: <font color=\"DarkCyan\">" + tblCount + "</font> строк"
                 + " (unloadKey=" + uplKey + ").");
@@ -452,17 +546,15 @@ public class SudzDbtUplFunnelRunner {
             progress.line("<font color=\"Salmon\">буфер пуст</font> — сначала включите"
                     + " «обнов. по исх?» либо загрузите Excel в Tbl.");
         }
-        Integer fileKey = null;
-        SudzDbtUplLauncher launcher = sudzService.getDbtUplLauncher(uplKey);
-        if (launcher.file() != null) {
-            fileKey = launcher.file().cidufKey();
+        SudzDbtUplInvDbtLoadApplyResult applyResult;
+        if (batchCtx.accSmplVarInvBatch) {
+            ensureAccSmplVarInvBatch(uplKey, batchCtx);
+            applyResult = batchCtx.accSmplVarInvResult.invDbtLoad();
+        } else {
+            Integer fileKey = resolveFileKey(uplKey);
+            applyResult = sudzService.runInvDbtLoadPhase(uplKey, fileKey, flLoad);
         }
-        int queuedCount = sudzService.rebuildInvDbtDoubleQueue(uplKey, fileKey);
-        SudzDbtUplInvDbtLoadApplyResult applyResult = null;
-        if (flLoad) {
-            applyResult = sudzService.applyDbtUplInvDbtLoadUnambiguous(uplKey);
-            queuedCount = applyResult.queuedCount();
-        }
+        int queuedCount = applyResult.queuedCount();
         SudzDbtUplInvDbtLoadLog.append(progress, queuedCount, applyResult);
         log.log(Level.INFO,
                 "invDbtLoad uplKey={0} tbl={1} queued={2} flLoad={3} invDbt={4} bridges={5} values={6}",
@@ -471,9 +563,9 @@ public class SudzDbtUplFunnelRunner {
                         tblCount,
                         queuedCount,
                         flLoad,
-                        applyResult == null ? 0 : applyResult.insertedInvDbt(),
-                        applyResult == null ? 0 : applyResult.insertedBridges(),
-                        applyResult == null ? 0 : applyResult.insertedValues()
+                        applyResult.insertedInvDbt(),
+                        applyResult.insertedBridges(),
+                        applyResult.insertedValues()
                 });
     }
 
@@ -515,27 +607,33 @@ public class SudzDbtUplFunnelRunner {
      * @param flLoad писать ли в sudz
      */
     private void runDbtValueLoad(int uplKey, int yrKey, SudzDbtUplProgressLog progress, boolean flLoad) {
-        Integer fileKey = null;
-        SudzDbtUplLauncher launcher = sudzService.getDbtUplLauncher(uplKey);
-        if (launcher.file() != null) {
-            fileKey = launcher.file().cidufKey();
+        Integer fileKey = resolveFileKey(uplKey);
+        if (flLoad) {
+            SudzDbtUplDbtValueLoadPhaseResult phase =
+                    sudzService.runDbtValueLoadPhase(uplKey, fileKey, yrKey, true);
+            var snapshot = phase.snapshot();
+            SudzDbtUplDbtValueLoadLog.append(progress, snapshot, phase.applyResult());
+            if (phase.applyResult() != null) {
+                progress.line("P1 rebuild: <font color=\"DarkCyan\">"
+                        + phase.applyResult().p1Queued() + "</font> строк (phase).");
+            }
+            log.log(Level.INFO,
+                    "dbtValueLoad uplKey={0} yrKey={1} base={2} disappeared={3} p1={4} flLoad={5} tail={6} phase=true",
+                    new Object[]{
+                            uplKey,
+                            yrKey,
+                            snapshot.baseUpl(),
+                            snapshot.disappeared(),
+                            snapshot.p1Queued(),
+                            flLoad,
+                            phase.applyResult() == null ? 0 : phase.applyResult().insertedValues()
+                    });
+            return;
         }
         var snapshot = sudzService.findDbtUplDbtValueLoadSnapshot(uplKey, yrKey);
         SudzDbtUplDbtValueLoadLog.append(progress, snapshot, null);
         int p1Queued = sudzService.rebuildDbtP1Queue(uplKey, fileKey, yrKey);
         progress.line("P1 rebuild: <font color=\"DarkCyan\">" + p1Queued + "</font> строк");
-        SudzDbtUplDbtValueLoadApplyResult applyResult = null;
-        if (flLoad && snapshot.tailReady() > 0) {
-            applyResult = sudzService.applyDbtUplDbtValueLoadTail(uplKey, yrKey);
-            applyResult = new SudzDbtUplDbtValueLoadApplyResult(
-                    applyResult.insertedValues(),
-                    applyResult.skippedTailAmbiguous(),
-                    p1Queued);
-            snapshot = sudzService.findDbtUplDbtValueLoadSnapshot(uplKey, yrKey);
-            SudzDbtUplDbtValueLoadLog.append(progress, snapshot, applyResult);
-        } else if (flLoad) {
-            snapshot = sudzService.findDbtUplDbtValueLoadSnapshot(uplKey, yrKey);
-        }
         log.log(Level.INFO,
                 "dbtValueLoad uplKey={0} yrKey={1} base={2} disappeared={3} p1={4} flLoad={5} tail={6}",
                 new Object[]{
@@ -545,7 +643,30 @@ public class SudzDbtUplFunnelRunner {
                         snapshot.disappeared(),
                         snapshot.p1Queued(),
                         flLoad,
-                        applyResult == null ? 0 : applyResult.insertedValues()
+                        0
                 });
+    }
+
+    private static boolean hasAccSmplVarInvBatch(List<String> ordered) {
+        int accIdx = ordered.indexOf(SudzDbtUplFunnelSteps.CN_CTPT_INV_EXIST_ACC_SMPL_NOT_LOAD);
+        int varIdx = ordered.indexOf(SudzDbtUplFunnelSteps.INV_DBT_VAR_ENSURE);
+        int invIdx = ordered.indexOf(SudzDbtUplFunnelSteps.INV_DBT_LOAD);
+        return accIdx >= 0 && varIdx >= 0 && invIdx >= 0 && accIdx < varIdx && varIdx < invIdx;
+    }
+
+    private void ensureAccSmplVarInvBatch(int uplKey, FunnelBatchContext batchCtx) {
+        if (batchCtx.accSmplVarInvResult != null) {
+            return;
+        }
+        batchCtx.accSmplVarInvResult = sudzService.runAccSmplVarInvDbtPhase(
+                uplKey, resolveFileKey(uplKey), true);
+    }
+
+    private Integer resolveFileKey(int uplKey) {
+        SudzDbtUplLauncher launcher = sudzService.getDbtUplLauncher(uplKey);
+        if (launcher.file() != null) {
+            return launcher.file().cidufKey();
+        }
+        return null;
     }
 }

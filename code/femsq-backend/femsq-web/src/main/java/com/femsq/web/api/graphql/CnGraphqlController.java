@@ -3,6 +3,7 @@ package com.femsq.web.api.graphql;
 import com.femsq.database.config.DatabaseConfigurationService.MissingConfigurationException;
 import com.femsq.database.exception.DaoException;
 import com.femsq.database.model.CnContractCreate;
+import com.femsq.database.model.CnNumCreate;
 import com.femsq.database.model.CnInv;
 import com.femsq.database.model.CnInvListItem;
 import com.femsq.database.model.CnInvPage;
@@ -18,6 +19,7 @@ import com.femsq.database.service.CnSService;
 import com.femsq.database.service.CnService;
 import com.femsq.web.api.dto.CnContractCreateRequest;
 import com.femsq.web.api.dto.CnContractCreatedDto;
+import com.femsq.web.api.dto.CnNumCreateRequest;
 import com.femsq.web.api.dto.CnDto;
 import com.femsq.web.api.dto.CnInvCreateRequest;
 import com.femsq.web.api.dto.CnInvDto;
@@ -197,9 +199,26 @@ public class CnGraphqlController {
     }
 
     @MutationMapping
+    public CnNumDto createCnNum(@Argument("input") CnNumCreateRequest input) {
+        log.info(() -> "GraphQL mutation createCnNum cnKey=" + input.cnKey());
+        return mutate(() -> cnMapper.toDto(cnNumService.create(new CnNumCreate(
+                input.cnKey(),
+                input.cnnNum(),
+                input.cnnType(),
+                input.note()
+        ))));
+    }
+
+    @MutationMapping
     public CnDto updateCn(@Argument("id") int id, @Argument("input") CnUpdateRequest input) {
         log.info(() -> "GraphQL mutation updateCn id=" + id);
         return mutate(() -> cnMapper.toDto(cnService.update(cnMapper.toDomain(id, input))));
+    }
+
+    @MutationMapping
+    public boolean deleteCn(@Argument("id") int id) {
+        log.info(() -> "GraphQL mutation deleteCn id=" + id);
+        return mutate(() -> cnContractService.deleteByCnKey(id));
     }
 
     @MutationMapping

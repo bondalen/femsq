@@ -1,0 +1,131 @@
+{
+  "schema": "femsq.stage2.p3_data_gap.v1",
+  "created": "2026-09-01",
+  "lastUpdated": "2026-09-01",
+  "description": "Access Rslt QIV-only rows absent from Excel свод 31.12.2025 (upl 901 input). Not inserted into DEV — manifest for gate exclusions only.",
+  "excel_canon_upl901": "excel/2025-12/debit/*31.12.2025*Общий свод*.xlsx",
+  "hypothesis_missing_export_x": {
+    "status": "unconfirmed",
+    "note": "Postulated corrected 31.12.2025 export never archived on share; 8/9 corroborated by QI 2026 НОВЫЙ svod; X not found among 35 xlsx on share (2026-09-01)."
+  },
+  "corroboration_qi2026": "excel/2026_03/debit/*31.03.2026*Общий свод*-НОВЫЙ.xlsx",
+  "sum_qiv_ttl_excluded": "592890080.47",
+  "rows": [
+    {
+      "access_dbtKey": 6884,
+      "acc": 762210,
+      "inv": "б/н",
+      "org": 1009345,
+      "cn": "КС-51",
+      "qiv_ttl": "89633019.16",
+      "qiv_overd": "0",
+      "maturity_access_qiv": "2025-12-31",
+      "in_excel_31_12_2025": false,
+      "in_excel_qi_2026_novyj": true,
+      "in_excel_qii_2026_novyj_762210": false,
+      "hypothesis_x": "present_in_x"
+    },
+    {
+      "access_dbtKey": 105449,
+      "acc": 762210,
+      "inv": "б/н",
+      "org": 1255867,
+      "cn": "15-ЗБС/21-АС",
+      "qiv_ttl": "110642.38",
+      "qiv_overd": "0",
+      "maturity_access_qiv": "2025-12-31",
+      "in_excel_31_12_2025": false,
+      "in_excel_qi_2026_novyj": false,
+      "in_excel_qii_2026_novyj_762210": false,
+      "hypothesis_x": "present_in_x_paid_by_2025_12_31",
+      "note": "Not in any svod on share; Access Rslt_26-0505 carries base=110642.38; plausible year-end payoff before QI excel."
+    },
+    {
+      "access_dbtKey": 105450,
+      "acc": 762210,
+      "inv": "б/н",
+      "org": 1143509,
+      "cn": "27/0687/20",
+      "qiv_ttl": "2247973.63",
+      "qiv_overd": "0",
+      "maturity_access_qiv": "2025-12-31",
+      "in_excel_31_12_2025": false,
+      "in_excel_qi_2026_novyj": true,
+      "in_excel_qii_2026_novyj_762210": false,
+      "hypothesis_x": "present_in_x"
+    },
+    {
+      "access_dbtKey": 105451,
+      "acc": 762210,
+      "inv": "06/44-3185",
+      "org": 1009345,
+      "cn": "КС-51",
+      "qiv_ttl": "150551722.96",
+      "in_excel_31_12_2025": false,
+      "in_excel_qi_2026_novyj": true,
+      "in_excel_qii_2026_novyj_762210": false,
+      "hypothesis_x": "present_in_x"
+    },
+    {
+      "access_dbtKey": 105452,
+      "acc": 762210,
+      "inv": "06/44-4194",
+      "org": 1009345,
+      "cn": "КС-51",
+      "qiv_ttl": "253324136.00",
+      "in_excel_31_12_2025": false,
+      "in_excel_qi_2026_novyj": true,
+      "in_excel_qii_2026_novyj_762210": false,
+      "hypothesis_x": "present_in_x"
+    },
+    {
+      "access_dbtKey": 105453,
+      "acc": 762210,
+      "inv": "06/44-4562",
+      "org": 1009345,
+      "cn": "КС-51",
+      "qiv_ttl": "18021646.00",
+      "in_excel_31_12_2025": false,
+      "in_excel_qi_2026_novyj": true,
+      "in_excel_qii_2026_novyj_762210": false,
+      "hypothesis_x": "present_in_x"
+    },
+    {
+      "access_dbtKey": 105454,
+      "acc": 762210,
+      "inv": "06/44-5561",
+      "org": 1009345,
+      "cn": "КС-51",
+      "qiv_ttl": "54250324.36",
+      "in_excel_31_12_2025": false,
+      "in_excel_qi_2026_novyj": true,
+      "in_excel_qii_2026_novyj_762210": false,
+      "hypothesis_x": "present_in_x"
+    },
+    {
+      "access_dbtKey": 105455,
+      "acc": 762210,
+      "inv": "06/44-5788",
+      "org": 1009345,
+      "cn": "КС-51",
+      "qiv_ttl": "11857862.74",
+      "in_excel_31_12_2025": false,
+      "in_excel_qi_2026_novyj": true,
+      "in_excel_qii_2026_novyj_762210": false,
+      "hypothesis_x": "present_in_x"
+    },
+    {
+      "access_dbtKey": 105456,
+      "acc": 762210,
+      "inv": "Б/С",
+      "org": 1009345,
+      "cn": "КС-51",
+      "qiv_ttl": "12892753.24",
+      "qiv_overd": "0",
+      "in_excel_31_12_2025": false,
+      "in_excel_qi_2026_novyj": true,
+      "in_excel_qii_2026_novyj_762210": false,
+      "hypothesis_x": "present_in_x"
+    }
+  ]
+}

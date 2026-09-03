@@ -127,9 +127,21 @@ export FEMSQ_DB_AUTH_MODE=credentials
 - Запускаются: `mvn verify -Pintegration`
 
 ### E2E-тесты (Playwright)
+
 - Требуют запущенный backend
 - Проверяют UI через браузер
 - Запускаются: `npm run test:e2e` в `code/femsq-frontend-q`
+
+### UAT воронки загрузки свода (0069) без UI
+
+Ручные gate'ы (**CnExistCtptNotLoad**, КСДСФ, КСДД) **обязательны** между фазами прогона.  
+Одноразовый `runSudzDbtUplFunnel` со всеми enabled-шагами **не** заменяет полную загрузку upl.
+
+- **Runbook:** [sudz-dbt-upl-funnel-uat-runbook.md](../../docs/development/notes/sudz-dbt-upl-funnel-uat-runbook.md)
+- **Gate-check:** `./code/scripts/verify-funnel-manual-gates.sh <uplKey>`
+- **SQL:** `docs/development/notes/sql/26-0831-sudz-dbt-slot-link/verify_funnel_manual_gates.sql`
+
+Казус и порядок фаз A–E — § S76-C.9 в [chat-plan-26-0802-sudz.md](../../docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md).
 
 ## Отчеты о покрытии кода
 

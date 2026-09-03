@@ -10,8 +10,11 @@ import com.femsq.database.model.sudz.SudzInvDbtVarCandidates;
 import com.femsq.database.model.sudz.SudzCnInvUplSfDouble;
 import com.femsq.database.model.sudz.SudzD644Row;
 import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotLoadResult;
 import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotRow;
+import com.femsq.database.model.sudz.SudzDbtUplAccSmplVarInvPhaseResult;
 import com.femsq.database.model.sudz.SudzDbtUplDbtValueLoadApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplDbtValueLoadPhaseResult;
 import com.femsq.database.model.sudz.SudzDbtUplDbtValueLoadSnapshot;
 import com.femsq.database.model.sudz.SudzDbtUplInvDbtDbtEnsureApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplInvDbtDbtEnsureSnapshot;
@@ -27,6 +30,7 @@ import com.femsq.database.model.sudz.SudzDbtUplCnNotLoad;
 import com.femsq.database.model.sudz.SudzDbtUplCnNotLoadApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplFile;
 import com.femsq.database.model.sudz.SudzDbtUplFileSh;
+import com.femsq.database.model.sudz.SudzDbtUplFunnelQueueClearResult;
 import com.femsq.database.model.sudz.SudzDbtUplLauncher;
 import com.femsq.database.model.sudz.SudzDbtUplOrgNotInBuirg;
 import com.femsq.database.model.sudz.SudzDbtUplTblRow;
@@ -37,6 +41,7 @@ import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
 import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
+import com.femsq.database.model.sudz.SudzSfDoubleAdvice;
 import com.femsq.database.model.sudz.SudzSfDoubleHints;
 import com.femsq.database.model.sudz.SudzSfDoubleSumMatches;
 import com.femsq.database.model.sudz.SudzSvodResult;
@@ -424,6 +429,15 @@ public interface SudzDao {
     int clearDbtUplInvDouble();
 
     /**
+     * Сброс очередей воронки (КСДСФ, КСДД, P1, FileInvDouble, TblCnInv) для выгрузки.
+     *
+     * @param unloadKey {@code upl_key}
+     * @param fileKey ключ File или null
+     * @return счётчики DELETE
+     */
+    SudzDbtUplFunnelQueueClearResult clearDbtUplFunnelQueues(int unloadKey, Integer fileKey);
+
+    /**
      * Пересобирает буфер {@code CnInvDbtUplTblCnInv} (новые СФ для существующих договоров)
      * и возвращает данные для лога. При {@code fileKey != null} наполняет InvDouble
      * для СФ с ненулевым {@code inNumCount} (как {@code CnInvConcat}).
@@ -461,6 +475,15 @@ public interface SudzDao {
      * @return число внесённых пар СФ+СГК
      */
     SudzDbtUplAccSmplNotApplyResult applyDbtUplCnCtptInvExistAccSmplNotLoad(int unloadKey);
+
+    /**
+     * Diff + apply AccSmpl за одно JDBC-соединение (один {@code fillSudzEiaTemp}).
+     * Предпочтительно при {@code flLoad=true}, чтобы не строить {@code #sudzEia} дважды.
+     *
+     * @param unloadKey {@code cidutUnloadKey}
+     * @return строки лога и итог INSERT
+     */
+    SudzDbtUplAccSmplNotLoadResult findAndApplyDbtUplCnCtptInvExistAccSmplNotLoad(int unloadKey);
 
     /**
      * Diff шага {@code invDbtVarEnsure}: missing + ambiguous одним проходом CTE.
@@ -510,6 +533,27 @@ public interface SudzDao {
      * @return счётчики apply (+ queuedCount после очистки очереди)
      */
     SudzDbtUplInvDbtLoadApplyResult applyDbtUplInvDbtLoadUnambiguous(int unloadKey);
+
+    /**
+     * Rebuild очереди InvDouble + apply однозначных (одно JDBC-соединение, temp-наборы).
+     *
+     * @param unloadKey {@code upl_key}
+     * @param fileKey {@code cidufKey} (может быть null)
+     * @param flLoad выполнять apply
+     * @return счётчики apply или только queuedCount при {@code flLoad=false}
+     */
+    SudzDbtUplInvDbtLoadApplyResult runInvDbtLoadPhase(int unloadKey, Integer fileKey, boolean flLoad);
+
+    /**
+     * AccSmpl apply + invDbtVarEnsure apply + invDbtLoad phase в одном JDBC-соединении.
+     *
+     * @param unloadKey {@code upl_key}
+     * @param fileKey {@code cidufKey} (может быть null)
+     * @param flLoad выполнять apply-шаги
+     * @return счётчики трёх подшагов
+     */
+    SudzDbtUplAccSmplVarInvPhaseResult runAccSmplVarInvDbtPhase(
+            int unloadKey, Integer fileKey, boolean flLoad);
 
     /**
      * Снимок шага {@code invDbtDbtEnsure} (C1): слоты с Value на upl без {@code invDbtDbt}.
@@ -571,6 +615,18 @@ public interface SudzDao {
      * @return счётчики tail
      */
     SudzDbtUplDbtValueLoadApplyResult applyDbtUplDbtValueLoadTail(int unloadKey, int yrKey);
+
+    /**
+     * Rebuild P1 + tail apply + снимок в одном JDBC-проходе (без повторных CTE).
+     *
+     * @param unloadKey {@code upl_key}
+     * @param fileKey {@code cidufKey} (может быть null)
+     * @param yrKey контекст года
+     * @param flLoad выполнять tail apply
+     * @return снимок и счётчики apply
+     */
+    SudzDbtUplDbtValueLoadPhaseResult runDbtValueLoadPhase(
+            int unloadKey, Integer fileKey, int yrKey, boolean flLoad);
 
     /**
      * Очередь P1-кандидатов по выгрузке.
@@ -707,6 +763,15 @@ public interface SudzDao {
      * @return три секции с ключами выбора строк
      */
     SudzSfDoubleHints findSfDoubleHints(int ciusKey, BigDecimal epsilon);
+
+    /**
+     * Советник КСДСФ: рекомендация link / create / manual для оператора.
+     *
+     * @param ciusKey ключ очереди
+     * @param epsilon допуск суммы (для подсказок по суммам)
+     * @return блок {@code [советник]}
+     */
+    SudzSfDoubleAdvice findSfDoubleAdvice(int ciusKey, BigDecimal epsilon);
 
     /**
      * Создать новый СФ по строке очереди (Access {@code btnInvAdd} / {@code btnInvCreate}).

@@ -32,4 +32,12 @@ public interface CnContractDao {
      * @return число совпадений
      */
     int countByCnnNum(String cnnNum);
+
+    /**
+     * Удаляет договор и дочерние cn_s/cnNum, если нет связей cnInv.
+     *
+     * @param cnKey PK {@code ags.cn}
+     * @return {@code true}, если строка cn удалена
+     */
+    boolean deleteByCnKey(int cnKey);
 }

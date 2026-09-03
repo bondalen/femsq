@@ -15,6 +15,7 @@ import type {
   CnInvDto,
   CnInvListRow,
   CnInvUpdateRequest,
+  CnNumCreateRequest,
   CnNumDto,
   CnNumTypeLookupDto,
   CnSideCreateRequest,
@@ -154,6 +155,19 @@ const CREATE_CN_CONTRACT = gql`
   }
 `;
 
+const CREATE_CN_NUM = gql`
+  mutation CreateCnNum($input: CnNumCreateRequest!) {
+    createCnNum(input: $input) {
+      cnnKey
+      cnnNum
+      cnnCn
+      cnnType
+      cnnTypeName
+      cnnNote
+    }
+  }
+`;
+
 const UPDATE_CN = gql`
   mutation UpdateCn($id: Int!, $input: CnUpdateRequest!) {
     updateCn(id: $id, input: $input) {
@@ -163,6 +177,12 @@ const UPDATE_CN = gql`
       cnNote
       cnMark
     }
+  }
+`;
+
+const DELETE_CN = gql`
+  mutation DeleteCn($id: Int!) {
+    deleteCn(id: $id)
   }
 `;
 
@@ -447,6 +467,24 @@ export async function createCnContract(input: CnContractCreateRequest): Promise<
 }
 
 /**
+ * Добавляет номер к существующему договору (второй cnNum на том же cn).
+ */
+export async function createCnNum(input: CnNumCreateRequest): Promise<CnNumDto> {
+  try {
+    const result = await apolloClient.mutate<{ createCnNum: CnNumDto }>({
+      mutation: CREATE_CN_NUM,
+      variables: { input }
+    });
+    if (!result.data?.createCnNum) {
+      throw emptyResponseError('createCnNum');
+    }
+    return result.data.createCnNum;
+  } catch (error) {
+    throw toRequestError(error, 'Не удалось добавить номер договора');
+  }
+}
+
+/**
  * Обновляет карточку cn (cn_date / note / mark).
  */
 export async function updateCn(id: number, input: CnUpdateRequest): Promise<CnDto> {
@@ -461,6 +499,21 @@ export async function updateCn(id: number, input: CnUpdateRequest): Promise<CnDt
     return result.data.updateCn;
   } catch (error) {
     throw toRequestError(error, 'Не удалось обновить договор');
+  }
+}
+
+/**
+ * Удаляет договор cn (без связей cnInv; стороны и номера — каскадом на сервере).
+ */
+export async function deleteCn(id: number): Promise<boolean> {
+  try {
+    const result = await apolloClient.mutate<{ deleteCn: boolean }>({
+      mutation: DELETE_CN,
+      variables: { id }
+    });
+    return result.data?.deleteCn ?? false;
+  } catch (error) {
+    throw toRequestError(error, 'Не удалось удалить договор');
   }
 }
 

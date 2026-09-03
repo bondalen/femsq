@@ -46,4 +46,10 @@ public class DefaultCnContractService implements CnContractService {
     public int countByCnnNum(String cnnNum) {
         return cnContractDao.countByCnnNum(cnnNum == null ? "" : cnnNum);
     }
+
+    @Override
+    public boolean deleteByCnKey(int cnKey) {
+        log.log(Level.INFO, "Deleting contract cnKey={0}", cnKey);
+        return cnContractDao.deleteByCnKey(cnKey);
+    }
 }

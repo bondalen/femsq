@@ -30,6 +30,18 @@ AccSmpl → `#sudzEia` + Statement; в логе «шаг: N мс».
 
 SQL-профиль: `92_PROFILE_funnel_steps_910.sql` (fill / AccSmpl / ensure). Следующий выигрыш — не дублировать `fillSudzEiaTemp` между AccSmpl и ensure (~7 с×2).
 
+## 2026-09-02 (upl 902) — AccSmpl flLoad=true
+
+До фикса: `fillMs≈148s` × **2** (find + apply на разных connection) → шаг **~296 с**, INSERT=7.
+
+После: `findAndApply` — **один** `fillSudzEiaTemp`; индексы на `#sudzEia` (`ciKey`, Excel-ключ). Ожидаемо ~½ времени шага при том же fill.
+
+## 2026-09-02 — fill 902 vs 910 (почему «×20»)
+
+См. [`93_PROFILE_RESULTS_902_vs_910.md`](./93_PROFILE_RESULTS_902_vs_910.md): на **текущем** Java-SQL fill **902≈150 с и 910≈154 с** (не разница выгрузок). Baseline «910 fill≈7 с» — упрощённый SQL из этого файла / `92_PROFILE_*.sql` без `invMatchRank`+`NOT EXISTS`. Узкое место — коррелированный `NOT EXISTS` в `sqlInvNumRankCase`.
+
+**Fix 0.1.0.261:** set-based `#sudzEig` / `#pitByInv` / `#hasExtPit` в `fillSudzEiaTemp` → fill 902 **totalMs≈6 291** (было ~149 s).
+
 ## Как снять профиль
 
 1. Выполнить `92_PROFILE_funnel_steps_910.sql` в DEV.

@@ -7,9 +7,12 @@ import { defineStore } from 'pinia';
 
 import {
   createCnContract,
+  createCnNum,
   createCnSide,
   createCnSOrg,
   createCnSOrgSmpl,
+  deleteCn,
+  deleteCnInv,
   deleteCnSide,
   deleteCnSOrg,
   deleteCnSOrgSmpl,
@@ -35,6 +38,7 @@ import type {
   CnInvListRow,
   ContractInvLookupRow,
   CnNumDto,
+  CnNumCreateRequest,
   CnNumTypeLookupDto,
   CnSideCreateRequest,
   CnSideDto,
@@ -166,6 +170,8 @@ export const useContractsStore = defineStore('contracts', () => {
 
   /**
    * Выбор номера в master → загрузка договора, номеров и сторон.
+   * Связи cnInv привязаны к cn_key: при переключении номера того же договора
+   * список не сбрасываем (иначе watch по cnKey не сработает и вкладка СФ опустеет).
    */
   async function selectCnNum(cnnKey: number): Promise<void> {
     selectedCnnKey.value = cnnKey;
@@ -178,10 +184,13 @@ export const useContractsStore = defineStore('contracts', () => {
       selectedCiKey.value = null;
       return;
     }
+    const sameCn = selectedCn.value?.cnKey === row.cnnCn;
     loadingDetail.value = true;
     error.value = null;
-    cnInvs.value = [];
-    selectedCiKey.value = null;
+    if (!sameCn) {
+      cnInvs.value = [];
+      selectedCiKey.value = null;
+    }
     try {
       const [cn, nums] = await Promise.all([fetchCn(row.cnnCn), fetchCnNumsByCn(row.cnnCn)]);
       selectedCn.value = cn;
@@ -341,6 +350,68 @@ export const useContractsStore = defineStore('contracts', () => {
       return created;
     } catch (err) {
       error.value = err instanceof RequestError ? err.message : 'Ошибка создания договора';
+      throw err;
+    } finally {
+      saving.value = false;
+    }
+  }
+
+  /**
+   * Добавляет второй номер к выбранному договору и выбирает его в списке.
+   */
+  async function addCnNum(input: CnNumCreateRequest): Promise<CnNumDto> {
+    saving.value = true;
+    error.value = null;
+    try {
+      const created = await createCnNum(input);
+      await loadCnNums();
+      await selectCnNum(created.cnnKey);
+      return created;
+    } catch (err) {
+      error.value = err instanceof RequestError ? err.message : 'Ошибка добавления номера';
+      throw err;
+    } finally {
+      saving.value = false;
+    }
+  }
+
+  /**
+   * Удаляет связь cnInv и обновляет список на вкладке СФ.
+   */
+  async function removeCnInv(ciKey: number): Promise<void> {
+    const cnKey = selectedCn.value?.cnKey;
+    saving.value = true;
+    error.value = null;
+    try {
+      await deleteCnInv(ciKey);
+      if (cnKey != null) {
+        await loadCnInvs(cnKey);
+      }
+    } catch (err) {
+      error.value = err instanceof RequestError ? err.message : 'Ошибка удаления связи cnInv';
+      throw err;
+    } finally {
+      saving.value = false;
+    }
+  }
+
+  /**
+   * Удаляет договор cn (только без связей cnInv) и обновляет master-список.
+   */
+  async function removeCn(cnKey: number): Promise<void> {
+    saving.value = true;
+    error.value = null;
+    try {
+      await deleteCn(cnKey);
+      selectedCnnKey.value = null;
+      selectedCn.value = null;
+      cnNumsForCn.value = [];
+      sides.value = [];
+      cnInvs.value = [];
+      selectedCiKey.value = null;
+      await loadCnNums();
+    } catch (err) {
+      error.value = err instanceof RequestError ? err.message : 'Ошибка удаления договора';
       throw err;
     } finally {
       saving.value = false;
@@ -544,6 +615,9 @@ export const useContractsStore = defineStore('contracts', () => {
     selectCnInvLookup,
     clearCnInvLookup,
     createContract,
+    addCnNum,
+    removeCnInv,
+    removeCn,
     saveCn,
     isSideExpanded,
     toggleSide,

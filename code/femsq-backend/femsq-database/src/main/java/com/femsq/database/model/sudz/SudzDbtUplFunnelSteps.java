@@ -138,6 +138,9 @@ public final class SudzDbtUplFunnelSteps {
         if (requested.isEmpty()) {
             return;
         }
+        if (isSingleTailRetry(requested)) {
+            return;
+        }
         List<String> chain = enabledIds();
         if (requested.size() > chain.size()) {
             throw new IllegalArgumentException("Слишком много шагов: " + requested.size());
@@ -162,5 +165,15 @@ public final class SudzDbtUplFunnelSteps {
                         throw new IllegalArgumentException("Шаг отключён: " + id);
                     });
         }
+    }
+
+    /**
+     * Повторный прогон только {@link #DBT_VALUE_LOAD} (tail + P1) без префикса воронки.
+     *
+     * @param requested запрошенные id
+     * @return true, если ровно один шаг {@code dbtValueLoad}
+     */
+    public static boolean isSingleTailRetry(List<String> requested) {
+        return requested.size() == 1 && DBT_VALUE_LOAD.equals(requested.get(0));
     }
 }

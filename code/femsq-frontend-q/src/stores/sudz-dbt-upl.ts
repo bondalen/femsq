@@ -386,10 +386,17 @@ export const useSudzDbtUplStore = defineStore('sudz-dbt-upl', () => {
         steps,
         flLoad
       });
-      launcher.value = result.launcher;
+      await loadLauncher(selectedUplKey.value);
       return result;
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e);
+      if (selectedUplKey.value != null) {
+        try {
+          await loadLauncher(selectedUplKey.value);
+        } catch {
+          // progress мог обновиться на сервере до ошибки ответа
+        }
+      }
       return null;
     } finally {
       funnelRunning.value = false;

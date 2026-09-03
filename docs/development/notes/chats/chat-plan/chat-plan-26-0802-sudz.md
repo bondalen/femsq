@@ -1,11 +1,11 @@
 # План: аналог «системы управления дебиторской задолженностью» (СУДЗ) из MS Access
 
 **Дата создания:** 2026-08-02  
-**Последнее обновление:** 2026-08-31  
+**Последнее обновление:** 2026-09-02  
 **Проект:** FEMSQ  
-**Версия плана:** 0.99.17 (сегм. 36 C2 dbtValueLoad + P1 queue ✅)
-**Задача:** 0065–0072 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md); **активно: 0069** — **S74 M5** чекбоксы; **0071** Договоры 🔶; **S69**/**S70** ✅
-**Статус плана:** ✅ 0070; **S66e**/**S71**/**S72** A1–A2/B1/B1b ✅; **S73 зерно** ✅; **S74 M1–M4** ✅; **M5 C1** ✅; next **C2**; **0071** 🔶
+**Версия плана:** 0.99.20 (S76-C gate-runbook upl 902)
+**Задача:** 0065–0072 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md); **активно: 0069** — **S76** QIV parity (группы A/B); **S74 M5**; **0071** 🔶; **S69**/**S70** ✅
+**Статус плана:** ✅ 0070; **S75** stage1 ✅; **S76** 🔄 (PASS QIV после подгонки — не gate); **S74 M1–M4** ✅; **M5 C1** ✅; next **S76-A1**; **0071** 🔶
 **Cutover prod/DEV:** [db-upgrade-sudz-invdbt-cutover.md](../../../../deployment/db-upgrade-sudz-invdbt-cutover.md) · §5.6 [S74](#s74--трек-cutover-m1m6--2026-08-27) · D1: [04-5](../../domain/sudz/04-5_dbt-invdbt-cardinality-d1.md)
 **Паспорт pmt:** [02-11_cn-inv-pmt-upl-access.md](../../UI/02-11_cn-inv-pmt-upl-access.md) · §5.7  
 **План UI pmt:** [chat-plan-26-0819-cn-inv-pmt-upl.md](./chat-plan-26-0819-cn-inv-pmt-upl.md) · §5.8  
@@ -207,6 +207,7 @@
 | S73-grain | 2026-08-26 | Зерно legacy `(iKey,ciaName)≈idNum`; счёт **11906–11907** | [04-4](../../domain/sudz/04-4_legacy-debt-grain.md) | ✅ |
 | S74 | 2026-08-27 | Трек cutover **M1–M6** (Dbt→DEV seed→calm→экран/7→чекбоксы→prod) | [§5.6 S74](#s74--трек-cutover-m1m6--2026-08-27); [cutover](../../../../deployment/db-upgrade-sudz-invdbt-cutover.md) | 🔄 M5 (M1–M4 ✅) |
 | S75 | 2026-08-31 | **Rslt stage1** база–QI–QII: PIT `09`, L*, row1+погашено+выборка; E1′ в cutover; gate `verify-rslt-stage1.sh` | [26-0831](../../sql/26-0831-sudz-dbt-slot-link/); [E1′](../../../../deployment/db-upgrade-sudz-invdbt-cutover.md#e1--паритет-исторических-rslt-pit-2026-08-31) | ✅ |
+| S76 | 2026-09-01 | **Rslt stage2 / QIV (variant B):** реестр Δ Access vs воронка 901; группы **A** (код `invDbtLoad`) / **B** (вне Excel); tiered gate; **S76-C** воронка 901→903 без B-seed | [§5.6 S76](#s76--rslt-stage2-qiv-дельта-воронка-901-vs-access-variant-b-2026-09-01); [stage2_qiv_delta_registry.md](../../sql/26-0831-sudz-dbt-slot-link/stage2_qiv_delta_registry.md) | 🔄 |
 | S73 | 2026-08-26 | **0071 T7:** отдельный план вкладки «Счета-фактуры» (слева `cnInv`, справа `contracts-inv`); interim = `cn-picker` | [chat-plan-26-0826-contracts-inv.md](./chat-plan-26-0826-contracts-inv.md) | 🔄 план |
 | S67 | 2026-08-16 | UAT 910 dry: **128** дог. / **705** СФ ✅, но rebuild **~3m14s** (CTE). Перепись на `#temp`+индексы; лог СФ усечён (8+…) | JAR **0.1.0.196** | ✅ via S67a |
 | S67a | 2026-08-16 | `#temp` без COLLATE → conflict Latin1 vs Cyrillic на JOIN `cnnNumNull`. Колонки `#cidu*` → `Cyrillic_General_CI_AS` | JAR **0.1.0.197** | ✅ UAT: sqlMs=241, 128/705 |
@@ -1487,6 +1488,90 @@ Access-stub’ы (`invDbtDouble`, `CnCtptInvExistAccNotLoad`, `ciduTbl…NameCou
 **Запреты:** не писать **`Dbt`/`invDbtDbt`** внутри `invDbtLoad` / экрана **до решений M1** и без политики C1; после M2 seed — отдельное решение D7. Очередь ≠ SoT (SoT = `DbtValue`). **B1 DDL** на DEV ✅.
 
 **Сегмент 19/21/23** зеркалят эту карту.
+
+##### S76 — Rslt stage2 QIV: дельта воронка 901 vs Access (variant B) (2026-09-01)
+
+**Контекст:** после apply воронки на upl **901** (Excel «Дт Задолженность на 31.12.2025», Tbl **1764**) сверка с эталоном `ags_Yr_DbtChangesRslt_26-0212_26-0217.xlsx` дала Δ QIV (~+2,1 млрд Ttl). Владелец выбрал **variant B** — сначала паритет QIV с Access (QIII игнор), затем 902/903. Достигнут **PASS** сумм base–QI–QII–QIV после **ручных SQL-правок** — это **не** gate «воронка из одного Excel».
+
+**Реестр (рабочий документ):** [stage2_qiv_delta_registry.md](../../sql/26-0831-sudz-dbt-slot-link/stage2_qiv_delta_registry.md)  
+**Артефакты:** `artifacts/stage2_qiv_verify_26-0831.json`, `…asOf901_qiv_parity_26-0831.xlsx` (после подгонки)  
+**Эталон Access QIV:** срез **2026-01-30**; FEMSQ upl **901** — **2026-01-15** (разные asOf).
+
+###### Две группы явлений
+
+| Группа | Суть | Критерий «закрыто» |
+|--------|------|-------------------|
+| **A — код загрузки** | Tbl → `invDbtLoad` → `DbtValue@901` даёт лишнее / не то / не туда | Повторный apply на чистом upl **без ручных SQL** → Rslt QIV ≡ эталон (или ≡ Tbl-производимая часть) |
+| **B — вне Excel / вне приложения** | В Access Rslt есть строки, которых **нет** в загруженном своде на шаре | Реестр + объяснение происхождения; либо найден исходный Excel, либо зафиксирован **manual overlay** |
+
+###### Четыре явления (кратко)
+
+| # | Явление | Группа | Суть | Подгонка (2026-08-31) |
+|---|---------|--------|------|------------------------|
+| **1** | Дубли `DbtValue` на sibling-слотах (6760/28469, L006, 7454…) | **A** | `invDbtLoad` пишет Value на каждый слот iKey без guard «один слот на upl» | DELETE 4 Value (hist=0) |
+| **2** | 9240 / 90621: Tbl ≠ Access QIV (53,76M→64,51M; 2,5M→3M) | **A?/B?** | Рост сумм к QIV; разные даты среза 15.01 vs 30.01 | UPDATE Value |
+| **3** | 9 строк 762210 (`06/44-*`, `б/н`, `Б/С`), ~592,9 млн | **B** | QIV-only в Access; **0** строк на листе 762210 в Excel свода | `10_SEED_access_q4_missing_9.sql` |
+| **4** | `732 от 10.01.24`: Tbl есть, Value на укороченном `732` | **A** | partial match invNum вместо exact + hist-слота | INSERT на 8898, DELETE на `732` |
+
+###### План работ S76 (порядок разбора в чате)
+
+| Шаг | Содержание | Артефакт | Статус |
+|-----|------------|----------|--------|
+| **S76.0** | Зафиксировать реестр и критерии gate | `stage2_qiv_delta_registry.md`, эта секция | ✅ |
+| **S76-A** | Группа **A**: кейсы 1, 4 (+ релевантные подкейсы 2) — код `JdbcSudzDao.applyInvDbtLoad` | A1 sibling guard; A2 exact invNum; A3 post-apply отчёт; A4 UAT без SQL | ☐ next |
+| **S76-B** | Группа **B**: кейсы 2 (источник сумм), 3 (происхождение 9 строк) | VBA Rslt, prod `ags`, архив Excel, Приложение 2 | ☐ |
+| **S76-G** | Два gate: `excel_only` vs `full_access` + documented overlay | скрипты verify (черновик в реестре) | ☐ |
+
+**Формула целевого паритета:**
+
+```text
+Rslt(QIV) ≡ Excel_эталон
+  ⇔  (Tbl → funnel → Value) ≡ эталон_excel_producible
+     +  manual_overlay ≡ эталон_B   (если overlay документирован)
+```
+
+**Связь:** **S75** (PIT 801–803) не менять; **S76** не смешивать gate stage1 и stage2. Скрипт `10_SEED_…` — **временный UAT**, не cutover.
+
+**Следующий шаг в чате:** поочерёдный разбор **S76-A** (явления 1 и 4), затем **S76-B** (3 и 2).
+
+###### S76-C — воронка 901→903 без B-seed (2026-09-01)
+
+**Контекст:** P3 (9 строк QIV-only, ~592,9M) — **data gap** (Excel X не найден); B-seed **deprecated**. Продолжаем цикл воронки для завершения stage2 и tiered gate.
+
+| Шаг | Содержание | Артефакт | Статус |
+|-----|------------|----------|--------|
+| **S76-C.1** | Reset upl **901** (Tbl/Value/очередь + откат B-seed) | `12_RESET_upl901_clean_apply.sql` | ✅ |
+| **S76-C.2** | Seed File + FileSh **902/903** (13 листов «НОВЫЙ» svod) | `30_SEED_funnel_upl_902_903.sql` | ✅ |
+| **S76-C.3** | Funnel **901** `flLoad=true`, yrKey=**900** | GraphQL `runSudzDbtUplFunnel` | ✅ (~256 с; Tbl=1764, DV=1755) |
+| **S76-C.4** | Gate **T0+T1** @901 | `verify-qiv-stage2-gate.sh` | ✅ T0 A1=0; T2 FAIL Δq4≈−790M (ожидаемо P3) |
+| **S76-C.5** | Funnel **902**, yrKey=**901** | JAR **246** | ✅ (~431 с; Tbl=4618, DV=1694) |
+| **S76-C.6** | Funnel **903**, yrKey=**901** | JAR **247** compact 606012 | ✅ Tbl=5369 (+1172 лист 606012), DV=585 |
+| **S76-C.7** | Gate **T2** (ожидаемый FAIL ≈−592,9M) + manifest T2′ | `p3_data_gap_manifest.json` | ☐ |
+| **S76-C.8** | Запрос Excel **X** у оператора (15–30.01.2026) | вне репо | ☐ open |
+
+**Политика:** без `10_SEED_access_q4_missing_9.sql`; T2 FAIL по P3 — **документированный**, не блокер кода.
+
+###### S76-C.9 — казус «full apply без gate'ов» @902 (2026-09-02)
+
+**Суть:** GraphQL-прогон enabled-шагов **1–9** + `flLoad=true` **без** остановок на ручных gate'ах (G2 ExistCtpt, G3 КСДСФ, G4 КСДД) дал **неполную** загрузку: DbtValue=**1725**/1746, КСДД open=**10**. Вероятная причина расхождений Rslt @902 — пропуск ручных контуров, не только код `invDbtLoad`.
+
+| Факт | Значение |
+|------|----------|
+| G2 @902 | **5** договоров ExistCtpt (7 строк Tbl) — см. runbook |
+| Ошибка INSERT КСДД | duplicate `ciudCidut` — fix JAR **252** (`ROW_NUMBER` dedupe) |
+| Статус B2 @902 | apply **преждевременный**; оператор проходит G2 вручную → повторный прогон |
+
+**Артефакты:**
+
+| Файл | Назначение |
+|------|------------|
+| [sudz-dbt-upl-funnel-uat-runbook.md](../../sudz-dbt-upl-funnel-uat-runbook.md) | пошаговый UAT **с UI и без UI**; анти-паттерн; фазы A–E |
+| [verify_funnel_manual_gates.sql](../../sql/26-0831-sudz-dbt-slot-link/verify_funnel_manual_gates.sql) | SQL G2–G4 + сводка |
+| `code/scripts/verify-funnel-manual-gates.sh` | gate-check из GraphQL-лога (+ SQL при `FEMSQ_DB_*`) |
+
+**Правило для тестов без UI:** **не** передавать в `steps[]` префикс длиннее текущей фазы; после каждой фазы — `verify-funnel-manual-gates.sh` → ручная работа → следующая фаза.
+
+**Следующий шаг @902:** оператор закрывает G2 (5 договоров) → префикс 1–3 → G2 PASS → фазы C–E по runbook.
 
 ### 5.7. 1.1.1.2 — паспорт Access `CnInvPmtUpl*` (S69; не 0069)
 

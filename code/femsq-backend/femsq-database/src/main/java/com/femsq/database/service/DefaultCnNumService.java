@@ -2,6 +2,7 @@ package com.femsq.database.service;
 
 import com.femsq.database.dao.CnNumDao;
 import com.femsq.database.model.CnNum;
+import com.femsq.database.model.CnNumCreate;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
@@ -29,5 +30,11 @@ public class DefaultCnNumService implements CnNumService {
     public List<CnNum> getByCnKey(int cnKey) {
         log.fine(() -> "CnNumService.getByCnKey cnKey=" + cnKey);
         return cnNumDao.findByCnKey(cnKey);
+    }
+
+    @Override
+    public CnNum create(CnNumCreate input) {
+        log.info(() -> "CnNumService.create cnKey=" + input.cnKey());
+        return cnNumDao.create(input);
     }
 }

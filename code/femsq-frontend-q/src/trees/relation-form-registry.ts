@@ -30,6 +30,9 @@ export interface BuildCnInvLinkFormOptions {
   invSearchValue?: string;
   invSearchLoading?: boolean;
   invSearchStatus?: string;
+  cnSearchValue?: string;
+  cnSearchLoading?: boolean;
+  cnSearchStatus?: string;
 }
 
 /**
@@ -49,15 +52,26 @@ export function buildCnInvLinkForm(options: BuildCnInvLinkFormOptions): Relation
     pickerColumns,
     invSearchValue,
     invSearchLoading,
-    invSearchStatus
+    invSearchStatus,
+    cnSearchValue,
+    cnSearchLoading,
+    cnSearchStatus
   } = options;
   const relationTypeColumns: FemsqTableColumn<RelationPickerCandidateRow>[] = [
     { name: 'label', label: 'Тип связи', field: 'label', align: 'left' }
   ];
   const edge = context.node.edge;
   const nodeTable = context.node.table;
-  const invLocked = edge === 'inv.cnInv' || (mode === 'edit' && nodeTable === 'cnInv' && context.root.table === 'invNum');
-  const cnLocked = edge === 'cn.cnInv' || (mode === 'edit' && nodeTable === 'cnInv' && context.root.table === 'cn');
+  /** Режим переноса: сохранить ciKey и inv, сменить cn (экран «Договоры» → Правка). */
+  const isCnInvTransferEdit = mode === 'edit' && 'cnInv.link.edit' === context.actionId;
+  const invLocked =
+      isCnInvTransferEdit
+          || edge === 'inv.cnInv'
+          || (mode === 'edit' && nodeTable === 'cnInv' && context.root.table === 'invNum');
+  const cnLocked =
+      !isCnInvTransferEdit
+          && (edge === 'cn.cnInv'
+              || (mode === 'edit' && nodeTable === 'cnInv' && context.root.table === 'cn'));
   const currentInvKey = Number(context.node.fields.ciInv ?? domain?.invKey ?? null);
   const currentCnKey = Number(context.node.fields.ciCn ?? domain?.cnKey ?? null);
   const currentInvRow =
@@ -97,7 +111,12 @@ export function buildCnInvLinkForm(options: BuildCnInvLinkFormOptions): Relation
   const effectiveInvRow = currentInvRow ?? fallbackInvRow;
   const fixedInvId = context.node.fromId ?? (currentInvKey > 0 ? currentInvKey : null);
   const fixedCnId = context.node.fromId ?? (currentCnKey > 0 ? currentCnKey : null);
-  const title = mode === 'edit' ? 'Редактировать связь СФ с договором' : 'Связать СФ с договором';
+  const title =
+      isCnInvTransferEdit
+          ? 'Перенести связь на другой договор'
+          : mode === 'edit'
+            ? 'Редактировать связь СФ с договором'
+            : 'Связать СФ с договором';
   return {
     id: 'cnInv.link',
     title,
@@ -151,6 +170,12 @@ export function buildCnInvLinkForm(options: BuildCnInvLinkFormOptions): Relation
         valueField: 'cnKey',
         displayField: 'cnNum',
         disabled: cnLocked,
+        searchValue: cnLocked ? undefined : cnSearchValue ?? '',
+        searchPlaceholder: cnLocked ? undefined : 'Номер или cn_key',
+        searchHint: cnLocked ? undefined : 'Фильтр по master-списку договоров.',
+        searchDebounceMs: cnLocked ? undefined : 300,
+        searchLoading: cnLocked ? undefined : cnSearchLoading ?? false,
+        searchStatus: cnLocked ? undefined : cnSearchStatus,
         rows: cnLocked && currentCnRow ? [currentCnRow] : cnCandidates,
         columns: pickerColumns,
         selected: currentCnRow ? [currentCnRow] : [],

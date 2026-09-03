@@ -216,6 +216,168 @@ public class JdbcCnContractDao implements CnContractDao {
         }
     }
 
+    @Override
+    public boolean deleteByCnKey(int cnKey) {
+        if (cnKey <= 0) {
+            throw new IllegalArgumentException("cnKey должен быть положительным: " + cnKey);
+        }
+        String prefix = schemaPrefix();
+        log.log(Level.INFO, "Deleting cn cnKey={0}", cnKey);
+
+        try (Connection connection = connectionFactory.createConnection()) {
+            if (!cnExists(connection, prefix, cnKey)) {
+                throw new IllegalArgumentException("Договор cn не найден: " + cnKey);
+            }
+            int cnInvCount = countCnInv(connection, prefix, cnKey);
+            if (cnInvCount > 0) {
+                throw new IllegalArgumentException(
+                        "Нельзя удалить договор cn=" + cnKey + ": есть " + cnInvCount
+                                + " связей cnInv. Сначала удалите их на вкладке «Счета-фактуры».");
+            }
+
+            connection.setAutoCommit(false);
+            try {
+                int bridgedVars = countBridgedInvDbtVarForCn(connection, prefix, cnKey);
+                if (bridgedVars > 0) {
+                    throw new IllegalArgumentException(
+                            "Нельзя удалить договор cn=" + cnKey + ": есть " + bridgedVars
+                                    + " контекст(ов) sudz.invDbtVar со связью invDbtDbtVar. "
+                                    + "Сначала перенесите связи cnInv («Перенести») на канонический договор "
+                                    + "— контекст invDbtVar уйдёт вслед за ними.");
+                }
+                deleteOrphanInvDbtVarForCn(connection, prefix, cnKey);
+                try (PreparedStatement statement = connection.prepareStatement(
+                        "DELETE FROM " + prefix + "cn_s_org WHERE csoCn_s_org_smpl IN ("
+                                + "SELECT m.csosKey FROM " + prefix + "cn_s_org_smpl AS m "
+                                + "INNER JOIN " + prefix + "cn_s AS s ON m.csosCn_s = s.cn_s_key "
+                                + "WHERE s.cn_key = ?)")) {
+                    statement.setInt(1, cnKey);
+                    statement.executeUpdate();
+                }
+                try (PreparedStatement statement = connection.prepareStatement(
+                        "DELETE FROM " + prefix + "cn_s_org_smpl WHERE csosCn_s IN ("
+                                + "SELECT cn_s_key FROM " + prefix + "cn_s WHERE cn_key = ?)")) {
+                    statement.setInt(1, cnKey);
+                    statement.executeUpdate();
+                }
+                try (PreparedStatement statement = connection.prepareStatement(
+                        "DELETE FROM " + prefix + "cn_s WHERE cn_key = ?")) {
+                    statement.setInt(1, cnKey);
+                    statement.executeUpdate();
+                }
+                try (PreparedStatement statement = connection.prepareStatement(
+                        "DELETE FROM " + prefix + "cnNum WHERE cnnCn = ?")) {
+                    statement.setInt(1, cnKey);
+                    statement.executeUpdate();
+                }
+                int deletedCn;
+                try (PreparedStatement statement = connection.prepareStatement(
+                        "DELETE FROM " + prefix + "cn WHERE cn_key = ?")) {
+                    statement.setInt(1, cnKey);
+                    deletedCn = statement.executeUpdate();
+                }
+                connection.commit();
+                return deletedCn > 0;
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            if (isReferenceConstraintViolation(exception)) {
+                throw new IllegalArgumentException(
+                        "Нельзя удалить договор cn=" + cnKey
+                                + ": есть зависимости в других таблицах ("
+                                + exception.getMessage() + "). "
+                                + "Проверьте sudz.invDbtVar и другие ссылки на стороны договора.",
+                        exception);
+            }
+            throw new DaoException("Не удалось удалить договор cn=" + cnKey, exception);
+        }
+    }
+
+    /**
+     * Сколько {@code invDbtVar} договора уже связаны с долгами через {@code invDbtDbtVar}.
+     * Такие строки нельзя удалять — только переносить вместе с cnInv.
+     */
+    private static int countBridgedInvDbtVarForCn(Connection connection, String prefix, int cnKey)
+            throws SQLException {
+        String sql = "SELECT COUNT(DISTINCT v.idvvKey) FROM sudz.invDbtVar AS v "
+                + "INNER JOIN sudz.invDbtDbtVar AS b ON b.iddvInvDbtVar = v.idvvKey "
+                + "WHERE v.idvvCn_s_org IN ("
+                + "SELECT o.cn_s_org_key FROM " + prefix + "cn_s_org AS o "
+                + "INNER JOIN " + prefix + "cn_s_org_smpl AS m ON m.csosKey = o.csoCn_s_org_smpl "
+                + "INNER JOIN " + prefix + "cn_s AS s ON m.csosCn_s = s.cn_s_key "
+                + "WHERE s.cn_key = ?) "
+                + "OR v.idvvCnNum IN (SELECT cnnKey FROM " + prefix + "cnNum WHERE cnnCn = ?)";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, cnKey);
+            statement.setInt(2, cnKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                rs.next();
+                return rs.getInt(1);
+            }
+        }
+    }
+
+    /**
+     * Удаляет только «осиротевшие» {@code invDbtVar} без моста {@code invDbtDbtVar}
+     * (артефакты dry-run ensure на stub без реальных долгов).
+     */
+    private static void deleteOrphanInvDbtVarForCn(Connection connection, String prefix, int cnKey)
+            throws SQLException {
+        String sql = "DELETE FROM sudz.invDbtVar WHERE idvvKey IN ("
+                + "SELECT v.idvvKey FROM sudz.invDbtVar AS v "
+                + "WHERE (v.idvvCn_s_org IN ("
+                + "  SELECT o.cn_s_org_key FROM " + prefix + "cn_s_org AS o "
+                + "  INNER JOIN " + prefix + "cn_s_org_smpl AS m ON m.csosKey = o.csoCn_s_org_smpl "
+                + "  INNER JOIN " + prefix + "cn_s AS s ON m.csosCn_s = s.cn_s_key "
+                + "  WHERE s.cn_key = ?) "
+                + " OR v.idvvCnNum IN (SELECT cnnKey FROM " + prefix + "cnNum WHERE cnnCn = ?))"
+                + " AND NOT EXISTS ("
+                + "  SELECT 1 FROM sudz.invDbtDbtVar AS b WHERE b.iddvInvDbtVar = v.idvvKey))";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, cnKey);
+            statement.setInt(2, cnKey);
+            int deleted = statement.executeUpdate();
+            if (deleted > 0) {
+                log.log(Level.INFO, "Deleted orphan invDbtVar rows={0} for cnKey={1}",
+                        new Object[]{deleted, cnKey});
+            }
+        }
+    }
+
+    private static boolean isReferenceConstraintViolation(SQLException exception) {
+        String message = exception.getMessage();
+        return message != null && message.contains("REFERENCE constraint");
+    }
+
+    private static boolean cnExists(Connection connection, String prefix, int cnKey) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT 1 FROM " + prefix + "cn WHERE cn_key = ?")) {
+            statement.setInt(1, cnKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    private static int countCnInv(Connection connection, String prefix, int cnKey) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT COUNT(*) FROM " + prefix + "cnInv WHERE ciCn = ?")) {
+            statement.setInt(1, cnKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                rs.next();
+                return rs.getInt(1);
+            }
+        }
+    }
+
     private static int readGeneratedKey(PreparedStatement statement, String errorMessage) throws SQLException {
         try (ResultSet keys = statement.getGeneratedKeys()) {
             if (keys.next()) {
