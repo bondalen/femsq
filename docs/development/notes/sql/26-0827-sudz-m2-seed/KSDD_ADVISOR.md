@@ -25,9 +25,12 @@
 
 - «Сообщения»: `[queue.build]` + `[row.select]` + `[advisor]`
 - «Слоты invDbt»: вкладки **Слоты и дерево** | **Динамика** (только selected slot)
-- `FemsqChart` (feQuLib / ECharts) + таблица upl/дата/сумма
+- `FemsqChart` (feQuLib / ECharts): ряд канонических `DbtValue` (без PIT 801–899, одна точка на asOf) + **отдельный красный ряд Excel** (одна точка; подпись вертикально снизу вверх) + кнопки **+/−/1:1** масштаба по X
+- Таблица динамики = тот же канон, что точки ряда слота
+- Дерево `DbtValue.bySlotVarBridge` — тот же фильтр + `sudz.cn_inv_dbt_upl`
 - `recommendIdKey` → auto-select слота
 
 ## UAT
 
-- **329** ciud 2574 → advisor `link slot=42`, chart + Excel markLine 30404.4
+- **329** ciud 2574 → advisor `link slot=42`, chart: история + Excel-точка
+- **2031** iKey 5130: нет пар 26/801 на одной дате; Excel — красная точка

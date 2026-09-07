@@ -14,6 +14,19 @@ class RelationQueryCatalogTest {
         assertEquals("iddvKey", def.keyColumn());
         assertTrue(def.sql().contains("summaryLine"));
         assertTrue(def.sql().contains("invDbtDbtVar"));
+        assertTrue(def.sql().contains("cnSOrgDate"));
+        assertTrue(def.sql().contains("csoCnDate"));
+    }
+
+    @Test
+    void dbtValueBySlotVarBridgeIsRegistered() {
+        var def = RelationQueryCatalog.require(RelationQueryCatalog.SUDZ_DBT_VALUE_BY_SLOT_VAR_BRIDGE);
+        assertEquals("dvKey", def.keyColumn());
+        assertEquals(100, def.maxRows());
+        assertTrue(def.sql().contains("uplStatusOnDate"));
+        assertTrue(def.sql().contains("sudz.cn_inv_dbt_upl"));
+        assertTrue(def.sql().contains("910"));
+        assertTrue(def.sql().contains("iddvKey"));
     }
 
     @Test

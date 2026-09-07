@@ -1,6 +1,6 @@
 {
   "id": "inv-dbt-slots",
-  "version": 2,
+  "version": 3,
   "root": {
     "table": "inv",
     "pk": "iKey"
@@ -30,19 +30,33 @@
             "invNumLabel",
             "orgName",
             "orgInn",
-            "cnSOrgKey"
+            "cnSOrgKey",
+            "cnSOrgDate"
           ],
-          "children": []
-        },
-        {
-          "edge": "invDbt.dv",
-          "to": "dv",
-          "card": "1:N",
-          "folder": "DbtValue",
-          "title": ["dvKey", "dvTtl", "dvUpl"],
-          "valueKinds": { "dvTtl": "money" },
-          "detail": "*",
-          "children": []
+          "children": [
+            {
+              "queryId": "sudz.DbtValue.bySlotVarBridge",
+              "to": "dv",
+              "card": "1:N",
+              "folder": "DbtValue",
+              "title": ["dvKey", "dvTtl", "uplName", "uplStatusOnDate"],
+              "valueKinds": { "dvTtl": "money" },
+              "detail": [
+                "dvKey",
+                "dvInvDbt",
+                "dvInvDbtVar",
+                "dvUpl",
+                "dvTtl",
+                "dvOverd",
+                "uplName",
+                "uplStatusOnDate",
+                "uplDate",
+                "dvDateStart",
+                "dvDateMaturity"
+              ],
+              "children": []
+            }
+          ]
         },
         {
           "edge": "invDbt.idd",

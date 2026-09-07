@@ -122,8 +122,19 @@ describe('relation-tree walker', () => {
       card: '1:N',
       folder: 'invDbtVar (контекст)',
       title: ['summaryLine'],
-      detail: ['idvvKey'],
-      children: []
+      detail: ['idvvKey', 'cnSOrgDate'],
+      children: [
+        {
+          queryId: 'sudz.DbtValue.bySlotVarBridge',
+          to: 'dv',
+          card: '1:N',
+          folder: 'DbtValue',
+          title: ['dvKey', 'dvTtl', 'uplName', 'uplStatusOnDate'],
+          valueKinds: { dvTtl: 'money' },
+          detail: ['dvKey'],
+          children: []
+        }
+      ]
     });
     expect(folder.queryId).toBe('sudz.invDbtVar.contextBySlot');
     expect(folder.edge).toBeUndefined();
@@ -132,12 +143,20 @@ describe('relation-tree walker', () => {
       {
         key: 1718,
         fields: {
-          summaryLine: '6766 · счёт 23 · дог. X',
-          idvvKey: '6766'
+          summaryLine: '6766 · счёт 23 · дог. X · сторона 2014-10-01',
+          idvvKey: '6766',
+          cnSOrgDate: '2014-10-01'
         }
       }
     ]);
-    expect(kids[0].title).toBe('6766 · счёт 23 · дог. X');
+    expect(kids[0].title).toBe('6766 · счёт 23 · дог. X · сторона 2014-10-01');
+    expect(kids[0].leaf).toBeFalsy();
+    const afterRecord = childrenAfterRecordLoad(kids[0], {});
+    expect(afterRecord).toHaveLength(1);
+    expect(afterRecord[0].kind).toBe('folder');
+    expect(afterRecord[0].title).toBe('DbtValue');
+    expect(afterRecord[0].queryId).toBe('sudz.DbtValue.bySlotVarBridge');
+    expect(afterRecord[0].fromId).toBe(1718);
   });
 
   it('без to бросает', () => {

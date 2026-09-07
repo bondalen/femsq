@@ -1,7 +1,7 @@
 # Решение 011: relationQuery — реестр именованных SELECT для дерева
 
 **Дата:** 2026-08-28  
-**Последнее обновление:** 2026-08-28  
+**Последнее обновление:** 2026-09-04  
 **Статус:** ✅ Принято (v1)  
 **Участники:** Александр, Cursor AI
 
@@ -31,7 +31,8 @@ Relation-дерево (`RelationTree` + JSON экземпляра) умеет о
 
 `sudz.invDbtVar.contextBySlot` — контекст var по `invDbt.idKey`; поле **`summaryLine`** для заголовка узла.
 
-JSON: [`inv-dbt-slots.tree.json`](../../../code/femsq-frontend-q/src/trees/inv-dbt-slots.tree.json) v2.
+JSON: [`inv-dbt-slots.tree.json`](../../../code/femsq-frontend-q/src/trees/inv-dbt-slots.tree.json) v3
+(`contextBySlot` + вложенный `sudz.DbtValue.bySlotVarBridge` с именем/датой свода).
 
 ## Альтернативы (отклонены)
 

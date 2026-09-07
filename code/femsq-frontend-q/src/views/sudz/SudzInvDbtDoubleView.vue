@@ -451,7 +451,7 @@ import * as dvSumSpecJson from '@/trees/ksdsf-dv-sum.tree.json';
 import {
   FemsqChart,
   FemsqTable,
-  buildTimeSeriesChartSpec,
+  buildSlotDynamicsChartSpec,
   formatMoneyOrDash,
   moneyColumn,
   type ChartSpec,
@@ -620,28 +620,26 @@ const timelineColumns: FemsqTableColumn<TimelineRow>[] = [
 ];
 
 /**
- * ChartSpec для вкладки «Динамика» (выбранный слот).
+ * ChartSpec для вкладки «Динамика» (выбранный слот + якорь Excel отдельным рядом).
  */
 const slotChartSpec = computed((): ChartSpec | null => {
   const tl = timeline.value;
-  if (!tl?.points?.length) return null;
+  if (!tl?.points?.length && !(tl?.excelAnchor != null && tl.excelStatusDate)) {
+    return null;
+  }
   const seriesLabel =
     tl.ciaName != null ? `ciaName=${tl.ciaName}` : `idKey=${tl.idKey}`;
-  const points = tl.points
+  const points = (tl.points ?? [])
     .filter((p) => p.statusDate != null && p.ttl != null)
     .map((p) => ({ date: p.statusDate as string, value: p.ttl as number }));
-  const markers =
-    tl.excelAnchor != null
-      ? [
-          {
-            type: 'horizontal' as const,
-            value: tl.excelAnchor,
-            label: `Excel ${tl.excelAnchor}`,
-            style: 'dashed' as const
-          }
-        ]
-      : undefined;
-  return buildTimeSeriesChartSpec(seriesLabel, points, markers, 'DbtValue по выгрузкам');
+  const excel =
+    tl.excelAnchor != null && tl.excelStatusDate
+      ? { date: tl.excelStatusDate, value: tl.excelAnchor }
+      : null;
+  if (!points.length && !excel) {
+    return null;
+  }
+  return buildSlotDynamicsChartSpec(seriesLabel, points, excel, 'DbtValue по выгрузкам');
 });
 
 /**

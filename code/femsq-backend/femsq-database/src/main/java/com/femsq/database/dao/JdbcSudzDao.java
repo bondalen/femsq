@@ -11,6 +11,7 @@ import com.femsq.database.model.sudz.SudzInvDbtDoubleAdvice;
 import com.femsq.database.model.sudz.SudzInvDbtSlot;
 import com.femsq.database.model.sudz.SudzInvDbtSlotTimeline;
 import com.femsq.database.model.sudz.SudzInvDbtTimelinePoint;
+import com.femsq.database.model.sudz.SudzDbtValueUiCanonical;
 import com.femsq.database.model.sudz.SudzInvDbtVarCandidates;
 import com.femsq.database.model.sudz.SudzInvDbtVarCnNumCandidate;
 import com.femsq.database.model.sudz.SudzInvDbtVarInvNumCandidate;
@@ -5804,7 +5805,7 @@ public class JdbcSudzDao implements SudzDao {
                     ));
                 }
             }
-            return List.copyOf(result);
+            return SudzDbtValueUiCanonical.canonicalize(result);
         } catch (MissingConfigurationException exception) {
             throw exception;
         } catch (SQLException exception) {

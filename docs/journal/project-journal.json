@@ -215,6 +215,66 @@
             },
             {
               "log": {
+                "displayName": "КСДД динамика: канон точек + Excel series (success). № log-2026-09-04-002",
+                "log-attributes": {
+                  "id": "log-2026-09-04-002",
+                  "timestamp": "2026-09-04T20:20:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Выровнены точки динамики с деревом; Excel — красный ряд",
+                    "details": "SudzDbtValueUiCanonical (без PIT 801–899, 1 точка/asOf); bySlotVarBridge + sudz.cn_inv_dbt_upl; feQuLib buildSlotDynamicsChartSpec + containLabel.",
+                    "outcome": "Нет двойных дат 26/801; якорь Excel виден отдельной точкой.",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/model/sudz/SudzDbtValueUiCanonical.java",
+                      "code/femsq-frontend-q/src/views/sudz/SudzInvDbtDoubleView.vue",
+                      "/home/alex/projects/feQuLib/src/components/chart/femsq-chart.ts"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "КСДД дерево: дата стороны + DbtValue под var (success). № log-2026-09-04-001",
+                "log-attributes": {
+                  "id": "log-2026-09-04-001",
+                  "timestamp": "2026-09-04T19:45:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": ["0069"],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Улучшен treeview КСДД для разбора двоящих контекстов",
+                    "details": "inv-dbt-slots v3: summaryLine + cnSOrgDate; DbtValue вложен под invDbtVar через relationQuery bySlotVarBridge (uplName + uplStatusOnDate). Убрана общая папка DbtValue на слоте.",
+                    "outcome": "Оператор различает var по дате стороны и видит историю сумм под нужным контекстом.",
+                    "references": [
+                      "code/femsq-frontend-q/src/trees/inv-dbt-slots.tree.json",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/relation/RelationQueryCatalog.java",
+                      "docs/project/decisions/011-relation-query-registry.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
                 "displayName": "S76-C.9: runbook gate'ов воронки без UI (info). № log-2026-09-02-001",
                 "log-attributes": {
                   "id": "log-2026-09-02-001",

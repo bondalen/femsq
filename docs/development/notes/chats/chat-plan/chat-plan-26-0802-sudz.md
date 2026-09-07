@@ -1136,7 +1136,7 @@ Access-stub’ы (`invDbtDouble`, `CnCtptInvExistAccNotLoad`, `ciduTbl…NameCou
 | # | Решение |
 |---|---------|
 | API | GraphQL `relationQuery(queryId, fromId)`; реестр `RelationQueryCatalog` (Java) |
-| JSON | `inv-dbt-slots.tree.json` v2: `queryId` `sudz.invDbtVar.contextBySlot`, title `summaryLine` |
+| JSON | `inv-dbt-slots.tree.json` v3: `contextBySlot` (+ дата стороны); `DbtValue` вложен под var (`bySlotVarBridge`, имя/дата свода) |
 | Безопасность | только whitelist SELECT; SQL не с клиента; TOP 50, timeout 5 с |
 | ADR | [011-relation-query-registry.md](../../../../project/decisions/011-relation-query-registry.md) |
 
