@@ -84,6 +84,7 @@ code/femsq-backend/femsq-reports/src/main/resources/reports/embedded/.project
 *.xlsx
 *.xls
 *.xlsm
+.~lock.*
 
 # Скриншоты ошибок SQL/ODBC — только локально на nb-win (каталог: docs/sql_err/images/README.md)
 docs/sql_err/images/**/*.png
