@@ -90,6 +90,10 @@ final class SfDoubleAdvisor {
                     }
                     return linkAdvice(msg, confidence, item, item.cnKey());
                 }
+                Optional<SudzSfDoubleAdvice> sumLink = tryLinkByUniqueSumOnExcelCn(msg, hints, row);
+                if (sumLink.isPresent()) {
+                    return sumLink.get();
+                }
                 appendLine(msg, "СФ с номером и исполнителем Excel найден на другом договоре (cn_homonym)");
                 appendRecommendCreate(msg, "high");
                 appendLine(msg, "Причина: inv=" + (item.invKey() != null ? item.invKey() : item.pickValue())
@@ -138,6 +142,10 @@ final class SfDoubleAdvisor {
         }
 
         if ("no".equals(sfByNum.status())) {
+            Optional<SudzSfDoubleAdvice> sumLink = tryLinkByUniqueSumOnExcelCn(msg, hints, row);
+            if (sumLink.isPresent()) {
+                return sumLink.get();
+            }
             long homonymOnExcelCn = domain.stream()
                     .filter(m -> Objects.equals(m.cnKey(), row.ciusCnKey()))
                     .map(SudzSfDoubleDomainMatch::invKey)
@@ -160,6 +168,10 @@ final class SfDoubleAdvisor {
             return finish(msg, "high", "create", null, row.ciusCnKey());
         }
 
+        Optional<SudzSfDoubleAdvice> sumLink = tryLinkByUniqueSumOnExcelCn(msg, hints, row);
+        if (sumLink.isPresent()) {
+            return sumLink.get();
+        }
         Optional<SudzSfDoubleHintItem> sumItem = uniqueSumHintForRow(hints, row);
         if (sumItem.isPresent()) {
             List<SudzSfDoubleDomainMatch> onCn = domain.stream()
@@ -183,6 +195,48 @@ final class SfDoubleAdvisor {
         }
         appendLine(msg, "Примечание: советник не заменяет первичку");
         return finish(msg, "none", "manual", null, row.ciusCnKey());
+    }
+
+    /**
+     * Уникальная сумма (old/new) с исполнителем Excel на договоре очереди и известным {@code invKey}.
+     * <p>
+     * Кейс UAT C.10 / СГМ14-234: номер в Excel — заглушка «Б/С», а тот же долг уже в DbtValue
+     * на договоре Excel под другим номером СФ (предыдущая выгрузка). Без этой проверки советник
+     * рекомендовал create и плодил дубль.
+     *
+     * @param msg накопленный текст
+     * @param hints подсказки
+     * @param row строка очереди
+     * @return link-совет или empty
+     */
+    private static Optional<SudzSfDoubleAdvice> tryLinkByUniqueSumOnExcelCn(
+            StringBuilder msg,
+            SudzSfDoubleHints hints,
+            SudzCnInvUplSfDouble row
+    ) {
+        Optional<SudzSfDoubleHintItem> sumItem = uniqueSumHintForRow(hints, row);
+        if (sumItem.isEmpty()) {
+            return Optional.empty();
+        }
+        SudzSfDoubleHintItem item = sumItem.get();
+        Integer invKey = item.invKey();
+        if (invKey == null || invKey <= 0) {
+            return Optional.empty();
+        }
+        Integer targetCn = item.cnKey() != null ? item.cnKey() : row.ciusCnKey();
+        appendLine(msg, "Уникальная сумма с исполнителем Excel на договоре очереди (sum_same_cn)");
+        appendLine(msg, "Номер Excel «" + nullToDash(row.ciusInvNum())
+                + "» может отличаться от номера существующего СФ (заглушка / перенумерация между выгрузками)");
+        if ("sumsNew".equals(item.zone())) {
+            appendLine(msg, "Якорь суммы: dvKey=" + item.pickValue() + " → inv=" + invKey);
+        } else if ("sumsOld".equals(item.zone())) {
+            appendLine(msg, "Якорь суммы: cidKey=" + item.pickValue() + " → inv=" + invKey);
+        }
+        appendLine(msg, "→ Связать с inv=" + invKey
+                + " · cn=" + (targetCn != null ? targetCn : "—")
+                + " (уверенность: " + confidenceRu("high") + ")");
+        appendLine(msg, "Примечание: советник не заменяет первичку");
+        return Optional.of(finish(msg, "high", "link", invKey, targetCn));
     }
 
     private static String confidenceForVariantLink(SudzSfDoubleHints hints, SudzCnInvUplSfDouble row) {

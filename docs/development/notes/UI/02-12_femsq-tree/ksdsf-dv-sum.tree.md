@@ -32,6 +32,7 @@
                       - `СФ, номера` (папка `inv.invNum`, 1:N)
                       - `СФ, связи с договорами` (папка `inv.cnInv`, 1:N)
                         - `cnInv` → `cn` → `cnNum` / `cn_s` / org
+                          - заголовок `cn`: `cn_key`, `cnMark`, `cn_date`, `cnTimeOfEntry`, `cnName`
 
 ## Рёбра, которых ещё нет в каталоге (добавить перед T)
 

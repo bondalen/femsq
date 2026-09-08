@@ -17,6 +17,10 @@ export interface CnDto {
   cnDate: string | null;
   cnNote: string | null;
   cnMark: number | null;
+  /** Время ввода ags.cn (аудит). */
+  cnTimeOfEntry: string | null;
+  /** Отображаемое имя cnName. */
+  cnName: string | null;
 }
 
 export interface CnInvDto {

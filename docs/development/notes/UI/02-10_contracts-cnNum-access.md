@@ -1,7 +1,7 @@
 # Договоры — эталон Access `cnNum` и план экрана FEMSQ
 
 **Дата создания:** 2026-08-15  
-**Последнее обновление:** 2026-08-26 (указатель на план T7 / вкладка СФ)  
+**Последнее обновление:** 2026-09-08 (карточка cn: `cnTimeOfEntry`, `cnName`, `cnMark` на полосе; `cnnNote`; ввод smpl/org)  
 **Статус:** 🔶 эталон Access; UI: стороны ✅ (S64/S65); вкладка СФ — interim `cn-picker`, целевой T7 в отдельном плане  
 **Скрины Design/SQL/Runtime:** [assets/26-0815-cnNum/README.md](./assets/26-0815-cnNum/README.md) (файлы `00`–`13`, `20`–`74`)  
 **Целевая модель UI:** [26-0807-sudz-target-sketch-dbtvar.png](../domain/sudz/assets/26-0807-sudz-target-sketch-dbtvar.png) — экран FEMSQ **не** клонирует Access-вложенность  
@@ -32,7 +32,7 @@
 |---------|---------|----------------------------|--------------------|
 | Номер | `ags.cnNum` | `cnnKey`, `cnnNum`, `cnnCn`, `cnnType`, … | корень формы |
 | Тип номера | `ags.cnNumType` | `cnntKey`, `cnntName` | lookup `cnnType` |
-| Договор | `ags.cn` | `cn_key`, `cn_number`, `cn_date`, `cn_note`, `cnMark` | `cnnCn` → `cn_key` |
+| Договор | `ags.cn` | `cn_key`, `cn_number`, `cn_date`, `cn_note`, `cnMark`, **`cnTimeOfEntry`**, **`cnName`** | `cnnCn` → `cn_key` |
 | Сторона | `ags.cn_s` | `cn_s_key`, `cn_key`, `cn_s_type` | `cn_key` → `cn_key` |
 | Org без дат | `ags.cn_s_org_smpl` | `csosKey`, `csosCn_s`, `csosOrgId`, `csosTimeOfEntry` | `cn_s_key` → `csosCn_s` |
 | Org с датами | `ags.cn_s_org` | `cn_s_org_key`, `csoCn_s_org_smpl`, `date_beg`/`date_end`, `csoCnDate`, `csoAsbulID`, `csoTimeOfEntry` | `csosKey` → `csoCn_s_org_smpl` |
@@ -89,6 +89,8 @@ CRUD на уровнях разрешён. Вложенность 4–5 уров
 2. Список `cnNum` + nested номера `cn`.
 3. Дерево сторон с CRUD + **«+ Договор»** (новый cn+исполнитель).
 4. GraphQL read + mutations для сторон и создания договора.
+
+**Карточка cn (2026-09-08):** на полосе выбранного договора — `cnTimeOfEntry`, `cnMark`, `cnName` (read-only); в таблице номеров — колонка `cnnNote`; у сторон smpl/org — время ввода. Заголовки узлов `cn` в деревьях СФ/КСДСФ дополнены теми же полями.
 
 ---
 

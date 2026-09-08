@@ -18,6 +18,34 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class SfDoubleAdvisorTest {
 
     @Test
+    void sumSameCnOverridesCreateWhenInvNumDiffers() {
+        // UAT C.10: Excel «Б/С» на СГМ14-234, DbtValue уже на том же cn под другим № СФ
+        var row = new SudzCnInvUplSfDouble(
+                169, 43903, null, null, null, 901, null, null,
+                1312, "СГМ14-234", "Б/С", 1, "open", null, null);
+        var sumItem = new SudzSfDoubleHintItem(
+                "sumsNew", "dvKey", 43672, 91249, 1312, "СГМ14-234", "BUIRG",
+                "dvKey=43672 · inv=91249");
+        var hints = new SudzSfDoubleHints(
+                new SudzSfDoubleHintSection(
+                        "no",
+                        "В СФ с совпадающими номерами совпадающего контрагента (исполнитель) нет.",
+                        0,
+                        List.of()),
+                sectionNa(),
+                new SudzSfDoubleHintSection("yes", "sum new", 1, List.of(sumItem)));
+        var domain = List.of(
+                new SudzSfDoubleDomainMatch(91604, "Б/С", 91614, null, 94467, 308, "КС-51"));
+        var advice = SfDoubleAdvisor.advise(row, null, hints, domain);
+        assertEquals("link", advice.action());
+        assertEquals("high", advice.confidence());
+        assertEquals(91249, advice.recommendInvKey());
+        assertEquals(1312, advice.recommendCnKey());
+        assertTrue(advice.messageText().contains("sum_same_cn"));
+        assertFalse(advice.messageText().contains("Создать СФ по Excel"));
+    }
+
+    @Test
     void cnHomonymRecommendsCreate() {
         var row = new SudzCnInvUplSfDouble(
                 1, 100, null, null, null, 902, null, null,

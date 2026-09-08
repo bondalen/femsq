@@ -8,8 +8,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -45,7 +48,8 @@ public class JdbcCnDao implements CnDao {
 
     @Override
     public Optional<Cn> findById(int cnKey) {
-        String sql = "SELECT cn_key, cn_number, cn_date, cn_note, cnMark FROM " + tableName() + " WHERE cn_key = ?";
+        String sql = "SELECT cn_key, cn_number, cn_date, cn_note, cnMark, cnTimeOfEntry, cnName"
+                + " FROM " + tableName() + " WHERE cn_key = ?";
         log.log(Level.FINE, "Executing Cn.findById cnKey={0}", cnKey);
         try (Connection connection = connectionFactory.createConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -70,6 +74,7 @@ public class JdbcCnDao implements CnDao {
         if (cn.cnKey() == null || cn.cnKey() <= 0) {
             throw new DaoException("Для обновления cn нужен cn_key");
         }
+        // cnTimeOfEntry / cnName / cn_number — не меняем из карточки UI
         String sql = "UPDATE " + tableName() + " SET cn_date = ?, cn_note = ?, cnMark = ? WHERE cn_key = ?";
         log.log(Level.INFO, "Updating cn {0}", cn.cnKey());
         try (Connection connection = connectionFactory.createConnection();
@@ -105,12 +110,18 @@ public class JdbcCnDao implements CnDao {
     private static Cn mapRow(ResultSet rs) throws SQLException {
         java.sql.Date sqlDate = rs.getDate("cn_date");
         LocalDate cnDate = sqlDate != null ? sqlDate.toLocalDate() : null;
+        Timestamp enteredTs = rs.getTimestamp("cnTimeOfEntry");
+        OffsetDateTime entered = enteredTs == null
+                ? null
+                : enteredTs.toLocalDateTime().atZone(ZoneId.systemDefault()).toOffsetDateTime();
         return new Cn(
                 rs.getInt("cn_key"),
                 rs.getString("cn_number"),
                 cnDate,
                 rs.getString("cn_note"),
-                (Integer) rs.getObject("cnMark")
+                (Integer) rs.getObject("cnMark"),
+                entered,
+                rs.getNString("cnName")
         );
     }
 }

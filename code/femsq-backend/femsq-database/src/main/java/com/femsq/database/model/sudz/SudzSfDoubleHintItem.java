@@ -6,7 +6,7 @@ package com.femsq.database.model.sudz;
  * @param zone {@code sf} | {@code sumsOld} | {@code sumsNew}
  * @param pickKey имя поля выбора ({@code inKey}, {@code cidKey}, {@code dvKey})
  * @param pickValue значение ключа
- * @param invKey {@code ags.inv.iKey} (для зоны sf)
+ * @param invKey {@code ags.inv.iKey} (зона sf; для {@code sumsNew} — через {@code invDbt.idInv})
  * @param cnKey договор
  * @param cnNum номер договора
  * @param matchBy {@code BUIRG} | {@code ITN} | {@code BOTH}

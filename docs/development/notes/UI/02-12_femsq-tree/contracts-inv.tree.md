@@ -40,6 +40,9 @@
                 - `cn_key`
                 - `cnMark`
                 - `cn_date`
+                - `cnTimeOfEntry`
+                - `cnName`
+                - `cn_date`
               - Деталь узла:
                 - `cn_note`
                 - `...`

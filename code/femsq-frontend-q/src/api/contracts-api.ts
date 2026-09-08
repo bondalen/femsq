@@ -74,6 +74,8 @@ const CN_QUERY = gql`
       cnDate
       cnNote
       cnMark
+      cnTimeOfEntry
+      cnName
     }
   }
 `;
@@ -176,6 +178,8 @@ const UPDATE_CN = gql`
       cnDate
       cnNote
       cnMark
+      cnTimeOfEntry
+      cnName
     }
   }
 `;

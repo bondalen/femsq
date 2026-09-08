@@ -33,7 +33,7 @@
                     - `1.1.1.1.1.2. СФ, связи с договорами` (папка `inv.cnInv`, 1:N)
                       - строки `cnInv` → `cn` → `cnNum` / `cn_s` / org (ветка как на вкладке «СФ», без долгов вниз)
                 - `1.1.1.1.2. cn` (`cnInv.cn`, N:1) — договор этой связи суммы
-                  - Заголовок: `cn_key`, `cnMark`, `cn_date`
+                  - Заголовок: `cn_key`, `cnMark`, `cn_date`, `cnTimeOfEntry`, `cnName`
                   - Дети: `cn.cnNum`, `cn.cn_s` → smpl → orgId → og (как в ksdsf-inv-num)
 
 ## Рёбра, которых ещё нет в каталоге (добавить перед T)

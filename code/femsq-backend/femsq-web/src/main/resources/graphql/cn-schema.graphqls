@@ -75,6 +75,10 @@ type Cn {
   cnDate: Date
   cnNote: String
   cnMark: Int
+  """Время ввода записи ags.cn (аудит; read-only)."""
+  cnTimeOfEntry: DateTime
+  """Отображаемое имя (cnName); может отличаться от cn_number / cnnNum."""
+  cnName: String
 }
 
 type CnInv {

@@ -35,12 +35,14 @@ public class CnMapper {
                 entity.cnNumber(),
                 entity.cnDate(),
                 entity.cnNote(),
-                entity.cnMark()
+                entity.cnMark(),
+                entity.cnTimeOfEntry(),
+                entity.cnName()
         );
     }
 
     /**
-     * Собирает доменную модель для UPDATE (номер computed — не трогаем).
+     * Собирает доменную модель для UPDATE ({@code cn_number}, {@code cnTimeOfEntry}, {@code cnName} не трогаем).
      */
     public Cn toDomain(int cnKey, CnUpdateRequest request) {
         return new Cn(
@@ -48,7 +50,9 @@ public class CnMapper {
                 null,
                 request.cnDate(),
                 request.cnNote(),
-                request.cnMark()
+                request.cnMark(),
+                null,
+                null
         );
     }
 }

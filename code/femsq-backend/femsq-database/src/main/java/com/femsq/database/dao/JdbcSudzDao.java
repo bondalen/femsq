@@ -7233,7 +7233,7 @@ public class JdbcSudzDao implements SudzDao {
         String dv = q("DbtValue");
         String invDbt = q("invDbt");
         String sql = ""
-                + "SELECT DISTINCT dv.dvKey, ci.ciCn AS cnKey,"
+                + "SELECT DISTINCT dv.dvKey, idb.idInv AS invKey, ci.ciCn AS cnKey,"
                 + " (SELECT TOP 1 num.cnnNumNull FROM ags.cnNum AS num"
                 + "  WHERE num.cnnCn = ci.ciCn ORDER BY num.cnnKey) AS cnNum,"
                 + " CASE WHEN ? IS NOT NULL AND EXISTS ("
@@ -7278,6 +7278,7 @@ public class JdbcSudzDao implements SudzDao {
                 List<SudzSfDoubleHintItem> result = new ArrayList<>();
                 while (rs.next()) {
                     int dvKey = rs.getInt("dvKey");
+                    Integer invKey = getInteger(rs, "invKey");
                     Integer cnKey = getInteger(rs, "cnKey");
                     String cnNum = rs.getNString("cnNum");
                     String matchBy = resolveMatchBy(rs, buirg, itn);
@@ -7285,11 +7286,11 @@ public class JdbcSudzDao implements SudzDao {
                             "sumsNew",
                             "dvKey",
                             dvKey,
-                            null,
+                            invKey,
                             cnKey,
                             cnNum,
                             matchBy,
-                            "dvKey=" + dvKey
+                            invKey != null ? "dvKey=" + dvKey + " · inv=" + invKey : "dvKey=" + dvKey
                     ));
                 }
                 return List.copyOf(result);
@@ -7518,6 +7519,9 @@ public class JdbcSudzDao implements SudzDao {
                         cnInvPs.executeUpdate();
                     }
                 }
+                // Номер Excel на выбранный СФ (алиас): нужен при sum_same_cn / заглушках «Б/С»,
+                // когда существующий СФ уже с другим inNum (см. KSDSF_ADVISOR sum_same_cn).
+                ensureInvNumAliasOnInv(connection, invKey, row.ciusInvNum(), now);
                 String cnNum = loadCnNum(connection, cnKey);
                 try (PreparedStatement upd = connection.prepareStatement(
                         "UPDATE " + sf
@@ -7591,6 +7595,51 @@ public class JdbcSudzDao implements SudzDao {
             try (ResultSet rs = statement.executeQuery()) {
                 return rs.next() ? rs.getNString("cnnNum") : null;
             }
+        }
+    }
+
+    /**
+     * Добавить номер СФ из Excel как дополнительный {@code ags.invNum} на уже выбранный СФ.
+     * Не меняет {@code inv.iNum}; пропускает пустые/NullИлиПусто и уже существующий номер.
+     *
+     * @param connection соединение в транзакции
+     * @param invKey целевой {@code ags.inv.iKey}
+     * @param excelInvNum номер из очереди / Excel
+     * @param now метка времени
+     * @return true если вставлена новая строка
+     */
+    private boolean ensureInvNumAliasOnInv(
+            Connection connection,
+            int invKey,
+            String excelInvNum,
+            Timestamp now
+    ) throws SQLException {
+        if (excelInvNum == null || excelInvNum.isBlank() || "NullИлиПусто".equals(excelInvNum)) {
+            return false;
+        }
+        String trimmed = excelInvNum.trim();
+        String insertAlias = ""
+                + "INSERT INTO ags.invNum (inNum, inInv, inTimeOfEntry) "
+                + "SELECT ?, ?, ? "
+                + "WHERE NOT EXISTS ( "
+                + "  SELECT 1 FROM ags.invNum AS n "
+                + "  WHERE n.inInv = ? "
+                + "    AND LTRIM(RTRIM(ISNULL(n.inNum, N''))) = ? "
+                + ")";
+        try (PreparedStatement ps = connection.prepareStatement(insertAlias)) {
+            ps.setNString(1, trimmed);
+            ps.setInt(2, invKey);
+            ps.setTimestamp(3, now);
+            ps.setInt(4, invKey);
+            ps.setNString(5, trimmed);
+            int n = ps.executeUpdate();
+            if (n > 0) {
+                log.log(Level.INFO,
+                        "ensureInvNumAliasOnInv iKey={0} inNum={1}",
+                        new Object[]{invKey, trimmed});
+                return true;
+            }
+            return false;
         }
     }
 

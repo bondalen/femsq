@@ -65,6 +65,13 @@
                 cn_key={{ store.selectedCn.cnKey }}
                 · {{ store.selectedCn.cnNumber || '—' }}
                 · cn_date={{ store.selectedCn.cnDate || '—' }}
+                · ввод={{ formatCnDateTime(store.selectedCn.cnTimeOfEntry) }}
+                <template v-if="store.selectedCn.cnMark != null">
+                  · cnMark={{ store.selectedCn.cnMark }}
+                </template>
+                <template v-if="store.selectedCn.cnName">
+                  · cnName={{ store.selectedCn.cnName }}
+                </template>
               </span>
               <QBtn
                 flat
@@ -428,6 +435,22 @@ const store = useContractsStore();
 const $q = useQuasar();
 const cnRelationSpec = cnPickerSpecJson as RelationTreeSpec;
 const contractsInvSpec = contractsInvSpecJson as RelationTreeSpec;
+
+/**
+ * Краткий показ DateTime с GraphQL (ISO) для полосы карточки cn.
+ */
+function formatCnDateTime(value: string | null | undefined): string {
+  if (value == null || value === '') {
+    return '—';
+  }
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) {
+    return value;
+  }
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 /** Доля ширины левой панели (список cnNum), как Access. */
 const masterSplit = ref(36);
 /** Доля высоты блока номеров над сторонами. */
@@ -493,6 +516,14 @@ const masterColumns: FemsqTableColumn<CnNumDto>[] = [
 
 const detailColumns: FemsqTableColumn<CnNumDto>[] = [
   ...masterColumns,
+  {
+    name: 'cnnNote',
+    label: 'Примечание',
+    field: 'cnnNote',
+    sortable: true,
+    align: 'left',
+    filterValue: (row) => row.cnnNote ?? ''
+  },
   {
     name: 'cnnKey',
     label: 'cnnKey',

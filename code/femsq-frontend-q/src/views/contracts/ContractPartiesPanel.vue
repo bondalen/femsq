@@ -114,7 +114,12 @@
                     {{ smpl.orgLabel || smpl.csosOrgId }}
                   </td>
                   <td class="col-meta">{{ smpl.csosKey }}</td>
-                  <td class="col-meta">org_id={{ smpl.csosOrgId }}</td>
+                  <td class="col-meta">
+                    org_id={{ smpl.csosOrgId }}
+                    <template v-if="smpl.csosTimeOfEntry">
+                      · ввод={{ formatPartyTime(smpl.csosTimeOfEntry) }}
+                    </template>
+                  </td>
                   <td class="col-actions">
                     <QBtn
                       flat
@@ -162,7 +167,12 @@
                       csoCnDate={{ org.csoCnDate || '—' }}
                     </td>
                     <td class="col-meta">{{ org.cnSOrgKey }}</td>
-                    <td class="col-meta">{{ formatPeriod(org.dateBeg, org.dateEnd) }}</td>
+                    <td class="col-meta">
+                      {{ formatPeriod(org.dateBeg, org.dateEnd) }}
+                      <template v-if="org.csoTimeOfEntry">
+                        · ввод={{ formatPartyTime(org.csoTimeOfEntry) }}
+                      </template>
+                    </td>
                     <td class="col-actions">
                       <QBtn
                         flat
@@ -359,6 +369,21 @@ function formatPeriod(beg: string | null, end: string | null): string {
     return '—';
   }
   return `${beg || '…'} — ${end || '…'}`;
+}
+
+/**
+ * Краткий показ времени ввода стороны / org.
+ */
+function formatPartyTime(value: string | null | undefined): string {
+  if (value == null || value === '') {
+    return '—';
+  }
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) {
+    return value;
+  }
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 /**

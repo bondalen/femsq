@@ -87,7 +87,9 @@
                           "title": [
                             "cn_key",
                             "cnMark",
-                            "cn_date"
+                            "cn_date",
+                            "cnTimeOfEntry",
+                            "cnName"
                           ],
                           "detail": "*",
                           "children": [
@@ -184,7 +186,9 @@
                   "title": [
                     "cn_key",
                     "cnMark",
-                    "cn_date"
+                    "cn_date",
+                    "cnTimeOfEntry",
+                    "cnName"
                   ],
                   "detail": "*",
                   "children": [
