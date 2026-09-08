@@ -2542,8 +2542,8 @@
                 ]
               },
               "created": "2026-08-07",
-              "lastUpdated": "2026-09-07",
-              "description": "Шаг 1.1.1.1. AccSmpl ✅. S76: X (НОВЫЙ 31.12.2025) confirmed. Next: S76-C.10 UI gate-UAT 901(X)→902→Rslt vs 26-0505 (runbook). S76-A только после FAIL при закрытых G2–G4. 0071 🔶."
+              "lastUpdated": "2026-09-08",
+              "description": "Шаг 1.1.1.1. AccSmpl ✅. S76-C.10 UI 901(X)→902→Rslt. 2026-09-08: канон Rslt A/C зафиксирован (песочница); live-split 85166 нет. Next: C.10.1 G4 @901 (КСДД open=2, ciud 2807/2808). S76-A только после FAIL при закрытых G2–G4. 0071 🔶."
             }
           }
         },

@@ -3,9 +3,88 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-09-07"
+      "lastUpdated": "2026-09-08"
     },
     "sessions": [
+      {
+        "chat": {
+          "displayName": "СУДЗ: песочница split/merge test_sudz_sm. № chat-2026-09-08-001",
+          "chat-attributes": {
+            "id": "chat-2026-09-08-001",
+            "created": "2026-09-08",
+            "lastUpdated": "2026-09-08",
+            "owner": "Александр",
+            "status": "active",
+            "priority": "high",
+            "tags": ["sudz", "split", "merge", "test_sudz_sm", "0069"],
+            "links": {
+              "projectDocsRefs": ["module:backend.database"],
+              "developmentTasks": ["0069"],
+              "aiRuleRefs": [],
+              "sqlNote": "docs/development/notes/sql/26-0908-sudz-split-merge-sandbox/README.md",
+              "domainPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Создана схема test_sudz_sm 10×10 + split 111 + merge 113→112 (success). № log-2026-09-08-001",
+                "log-attributes": {
+                  "id": "log-2026-09-08-001",
+                  "timestamp": "2026-09-08T14:45:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "tags": ["sandbox"]
+                },
+                "entry": "Изолированная схема test_sudz_sm на FishEye: 10 выгрузок 201–210 и 10 долгов 111–120. Strict-зонды подтвердили UX(inv,dbt) и sibling same-ttl. После relax выполнен split 111 (201=36000, далее 2×18000) и merge моста 113→112 (две Value на срезе, ∑=30000). sudz.* не менялся."
+              }
+            },
+            {
+              "log": {
+                "displayName": "Merge-back 111@210 + читаемый SKETCH.md полос A/B/C (success). № log-2026-09-08-002",
+                "log-attributes": {
+                  "id": "log-2026-09-08-002",
+                  "timestamp": "2026-09-08T15:20:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": ["sandbox", "cmm", "rslt"]
+                },
+                "entry": "На test_sudz_sm: 12_MERGEBACK_111 возвращает срез 210 к одной Value 36000@311 (202–209 остаются 2×18000). Комментарии 209 — две доли, 210 — целый. apply_sm.py --cmm пишет SKETCH.md (полосы A/B/C вместо кортежей в консоли). sudz.* не менялся."
+              }
+            },
+            {
+              "log": {
+                "displayName": "Excel-макет Rslt песочницы с вертикальным merge (success). № log-2026-09-08-003",
+                "log-attributes": {
+                  "id": "log-2026-09-08-003",
+                  "timestamp": "2026-09-08T15:30:00+03:00",
+                  "level": "success",
+                  "effort": "0.7h",
+                  "status": "completed",
+                  "tags": ["sandbox", "rslt", "excel"]
+                },
+                "entry": "write_sm_xlsx.py собирает ags_Yr_DbtChangesRslt_sm_sandbox.xlsx из test_sudz_sm: листы A/B/C/112/111_timeline. Merge по зерну Value; погашено на зерне Dbt. SudzRsltExcelExporter и sudz.* не менялись."
+              }
+            },
+            {
+              "log": {
+                "displayName": "Канон полос A/C зафиксирован; возврат к S76-C.10 G4 (success). № log-2026-09-08-004",
+                "log-attributes": {
+                  "id": "log-2026-09-08-004",
+                  "timestamp": "2026-09-08T15:40:00+03:00",
+                  "level": "success",
+                  "effort": "0.4h",
+                  "status": "completed",
+                  "tags": ["sandbox", "c10", "canon"]
+                },
+                "entry": "08_CMM_AND_RSLT.md: канон Rslt = листы A и C (B/timeline/112 — справка). Экспортёр, D3″ и live-split 85166 отложены. Снимок C.10.1: G3@901 open=0; G4 open=2 (ciud 2807/2808, iKey=85166, 2×18000, reason=multi); DV=12 / Tbl=1774. Следующий шаг — UI КСДД без модели песочницы."
+              }
+            }
+          ]
+        }
+      },
       {
         "chat": {
           "displayName": "Договоры: вкладка СФ / T7 (active, high). № chat-2026-08-26-001",

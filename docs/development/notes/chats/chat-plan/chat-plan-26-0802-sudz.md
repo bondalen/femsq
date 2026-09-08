@@ -1,11 +1,11 @@
 # План: аналог «системы управления дебиторской задолженностью» (СУДЗ) из MS Access
 
 **Дата создания:** 2026-08-02  
-**Последнее обновление:** 2026-09-07  
+**Последнее обновление:** 2026-09-08  
 **Проект:** FEMSQ  
-**Версия плана:** 0.99.21 (S76-C.10 UI gate-UAT 901(X)→902→Rslt QI)
+**Версия плана:** 0.99.22 (S76-C.10 UI gate-UAT; канон Rslt A/C зафиксирован)
 **Задача:** 0065–0072 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md); **активно: 0069** — **S76-C.10** UI gate-UAT; **S74 M5**; **0071** 🔶; **S69**/**S70** ✅
-**Статус плана:** ✅ 0070; **S75** stage1 ✅; **S76** 🔄 (**X найден** → C.10 UI 901→902→Rslt); **S74 M1–M4** ✅; **M5 C1** ✅; next **S76-C.10**; **0071** 🔶
+**Статус плана:** ✅ 0070; **S75** stage1 ✅; **S76** 🔄 (**C.10.1 G4** @901); **S74 M1–M4** ✅; **M5 C1** ✅; next **S76-C.10.1 G4**; **0071** 🔶
 **Cutover prod/DEV:** [db-upgrade-sudz-invdbt-cutover.md](../../../../deployment/db-upgrade-sudz-invdbt-cutover.md) · §5.6 [S74](#s74--трек-cutover-m1m6--2026-08-27) · D1: [04-5](../../domain/sudz/04-5_dbt-invdbt-cardinality-d1.md)
 **Паспорт pmt:** [02-11_cn-inv-pmt-upl-access.md](../../UI/02-11_cn-inv-pmt-upl-access.md) · §5.7  
 **План UI pmt:** [chat-plan-26-0819-cn-inv-pmt-upl.md](./chat-plan-26-0819-cn-inv-pmt-upl.md) · §5.8  
@@ -207,7 +207,7 @@
 | S73-grain | 2026-08-26 | Зерно legacy `(iKey,ciaName)≈idNum`; счёт **11906–11907** | [04-4](../../domain/sudz/04-4_legacy-debt-grain.md) | ✅ |
 | S74 | 2026-08-27 | Трек cutover **M1–M6** (Dbt→DEV seed→calm→экран/7→чекбоксы→prod) | [§5.6 S74](#s74--трек-cutover-m1m6--2026-08-27); [cutover](../../../../deployment/db-upgrade-sudz-invdbt-cutover.md) | 🔄 M5 (M1–M4 ✅) |
 | S75 | 2026-08-31 | **Rslt stage1** база–QI–QII: PIT `09`, L*, row1+погашено+выборка; E1′ в cutover; gate `verify-rslt-stage1.sh` | [26-0831](../../sql/26-0831-sudz-dbt-slot-link/); [E1′](../../../../deployment/db-upgrade-sudz-invdbt-cutover.md#e1--паритет-исторических-rslt-pit-2026-08-31) | ✅ |
-| S76 | 2026-09-01…07 | **Rslt stage2 / QIV (variant B):** реестр Δ; **X найден** (НОВЫЙ 31.12.2025); **S76-C.10** UI gate-UAT 901(X)→902→Rslt QI | [§5.6 S76](#s76--rslt-stage2-qiv-дельта-воронка-901-vs-access-variant-b-2026-09-01); [stage2_qiv_delta_registry.md](../../sql/26-0831-sudz-dbt-slot-link/stage2_qiv_delta_registry.md) | 🔄 C.10 |
+| S76 | 2026-09-01…08 | **Rslt stage2 / QIV (variant B):** X confirmed; **S76-C.10** UI 901→902→Rslt; 2026-09-08 канон полос A/C (песочница), live-split 85166 нет | [§5.6 S76](#s76--rslt-stage2-qiv-дельта-воронка-901-vs-access-variant-b-2026-09-01); [08 A/C](../../sql/26-0908-sudz-split-merge-sandbox/08_CMM_AND_RSLT.md) | 🔄 C.10.1 G4 |
 | S73 | 2026-08-26 | **0071 T7:** отдельный план вкладки «Счета-фактуры» (слева `cnInv`, справа `contracts-inv`); interim = `cn-picker` | [chat-plan-26-0826-contracts-inv.md](./chat-plan-26-0826-contracts-inv.md) | 🔄 план |
 | S67 | 2026-08-16 | UAT 910 dry: **128** дог. / **705** СФ ✅, но rebuild **~3m14s** (CTE). Перепись на `#temp`+индексы; лог СФ усечён (8+…) | JAR **0.1.0.196** | ✅ via S67a |
 | S67a | 2026-08-16 | `#temp` без COLLATE → conflict Latin1 vs Cyrillic на JOIN `cnnNumNull`. Колонки `#cidu*` → `Cyrillic_General_CI_AS` | JAR **0.1.0.197** | ✅ UAT: sqlMs=241, 128/705 |
@@ -1532,7 +1532,7 @@ Rslt(QIV) ≡ Excel_эталон
 
 **Связь:** **S75** (PIT 801–803) не менять; **S76** не смешивать gate stage1 и stage2. Скрипт `10_SEED_…` — **временный UAT**, не cutover.
 
-**Следующий шаг в чате:** **S76-C.10** (UI gate-UAT). **S76-A** — только если после закрытых G2–G4 gate Rslt всё ещё FAIL по группе A. Группа B / явление 3 (X) — **закрыта** (C.8 ✅).
+**Следующий шаг в чате:** **S76-C.10.1 G4** @901 (КСДД open=2: ciud 2807/2808, `iKey=85166`). Канон полос A/C зафиксирован ([08](../../sql/26-0908-sudz-split-merge-sandbox/08_CMM_AND_RSLT.md)); **не** split 85166 на живом `sudz`. **S76-A** — только если после закрытых G2–G4 gate Rslt всё ещё FAIL по группе A. Группа B / явление 3 (X) — **закрыта** (C.8 ✅).
 
 ###### S76-C — воронка 901→903 без B-seed (2026-09-01)
 
@@ -1590,7 +1590,7 @@ Rslt(QIV) ≡ Excel_эталон
 | # | Шаг | Критерий | Статус |
 |---|-----|----------|--------|
 | **C.10.0** | Reset **901** (Tbl/DV/очереди); `cidufPath` = X | `12_RESET…` + path UI/GraphQL | 🔶 Tbl уже reload агентом 2026-09-07 (1774); DV=0 — перед UI-прогоном повторный reset по желанию оператора |
-| **C.10.1** | UI **901**: excelToTbl → фазы A–E (G0…G5) | G2–G4 open=0; DV≈Tbl (±док. искл.) | ☐ |
+| **C.10.1** | UI **901**: excelToTbl → фазы A–E (G0…G5) | G2–G4 open=0; DV≈Tbl (±док. искл.) | 🔶 G3@901 open=0; G4 open=**2** (2807/2808, 85166); DV=12 / Tbl=1774; без live-split |
 | **C.10.2** | Smoke P3 @901 | **9/9** сумм в `DbtValue@901` (~592,9M) | ☐ |
 | **C.10.3** | Gate QIV `excel_only` / T1 (и T2 без P3-gap) | vs `26-0212` или база `26-0505` | ☐ |
 | **C.10.4** | Reset/подготовка **902**; UI **902** теми же gate'ами | G2–G4 PASS | ☐ |
@@ -1602,7 +1602,9 @@ Rslt(QIV) ≡ Excel_эталон
 1. **`funnel_from_X` (901):** воронка из X без overlay → Rslt QIV ≡ эталон на пересечении + P3 присутствуют.  
 2. **`full_access_QI` (901+902):** Rslt vs `26-0505` (QIV+QI); 105449 отсутствует в QI — ожидаемо.
 
-**Запреты:** full apply без gate'ов (C.9); B-seed; сравнивать Rslt до G2–G4 PASS. **S76-A** не смешивать с C.10 до FAIL после закрытых gate'ов.
+**Запреты:** full apply без gate'ов (C.9); B-seed; сравнивать Rslt до G2–G4 PASS. **S76-A** не смешивать с C.10 до FAIL после закрытых gate'ов. Live-split 85166 / ALTER UNIQUE и Consistency — не в C.10 ([08 §3.3](../../sql/26-0908-sudz-split-merge-sandbox/08_CMM_AND_RSLT.md)).
+
+**2026-09-08:** песочница `test_sudz_sm` — канон Rslt **A** (крайний split) и **C** (крайний снова целый). Экспортёр и D3″ отложены. C.10 продолжается с G4 @901.
 
 ### 5.7. 1.1.1.2 — паспорт Access `CnInvPmtUpl*` (S69; не 0069)
 

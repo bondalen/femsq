@@ -43,3 +43,5 @@
 | `21_CREATE_Yr_DbtChangesD644Svod_S46.sql` | S46: `Yr_DbtChangesD644Svod` — годовой свод по счетам | применён |
 
 **Проверка:** `EXEC test_sudz.Yr_DbtChanges @yr=901;` (3 среза 2026) · `EXEC test_sudz.Yr_DbtChanges @yr=900;` (5 срезов 2025 / S45).
+
+Лаборатория split/merge (**не** эта схема): [26-0908-sudz-split-merge-sandbox](../26-0908-sudz-split-merge-sandbox/README.md) — `test_sudz_sm`.
