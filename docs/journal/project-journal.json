@@ -8,6 +8,72 @@
     "sessions": [
       {
         "chat": {
+          "displayName": "СУДЗ: split/merge живой sudz / S77 (active, high). № chat-2026-09-08-002",
+          "chat-attributes": {
+            "id": "chat-2026-09-08-002",
+            "created": "2026-09-08",
+            "lastUpdated": "2026-09-08",
+            "owner": "Александр",
+            "status": "active",
+            "priority": "high",
+            "tags": ["sudz", "split", "merge", "0069", "S77", "implementation"],
+            "links": {
+              "projectDocsRefs": ["module:backend.database"],
+              "developmentTasks": ["0069"],
+              "aiRuleRefs": [],
+              "sqlNote": "docs/development/notes/sql/26-0908-sudz-split-merge-dev/README.md",
+              "sandboxChat": "chat-2026-09-08-001",
+              "domainPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "S77 вписан в план; инварианты и черновик DDL без ALTER (success). № log-2026-09-08-005",
+                "log-attributes": {
+                  "id": "log-2026-09-08-005",
+                  "timestamp": "2026-09-08T16:50:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": ["S77", "invariants", "ddl-draft"]
+                },
+                "entry": "План 0.99.23: секция S77; C.10.3/C.10.5 помечены блокером S77; G4 2807/2808 — фикстура UAT. Текст замены инвариантов I1–I5 (UNIQUE/п.4–5/cmm *Dv/погашено/D4). Черновик docs/development/notes/sql/26-0908-sudz-split-merge-dev/ с THROW-guard, на sudz не применялся. Песочница остаётся chat-2026-09-08-001. Next: согласие владельца на запреты S77.1."
+              }
+            },
+            {
+              "log": {
+                "displayName": "S77.1 зерно cmm двух этапов Rslt; DDL I1–I3 на DEV sudz (success). № log-2026-09-08-006",
+                "log-attributes": {
+                  "id": "log-2026-09-08-006",
+                  "timestamp": "2026-09-08T17:45:00+03:00",
+                  "level": "success",
+                  "effort": "0.7h",
+                  "status": "completed",
+                  "tags": ["S77", "cmm", "ddl"]
+                },
+                "entry": "Уточнено зерно: «старые» cmm = DbtValue предшествующего среза (QIV при крайней QI); *_new на рассылке пустые, после импорта Excel — текущий раунд (QI). Согласованы I1–I6. На DEV sudz применён 01: UX_invDbtDbt_InvDbt снят, п.5 убран, п.4 с исключением того же Dbt; test_sudz UNIQUE на месте; UX(slot) и UX(dvInvDbt,dvUpl) живы. 02 *Dv не применялся. Next: S77.3 GraphQL Split/Merge."
+              }
+            },
+            {
+              "log": {
+                "displayName": "S77.3 GraphQL splitSudzDbt / mergeSudzDbt без UI КСДД (success). № log-2026-09-08-007",
+                "log-attributes": {
+                  "id": "log-2026-09-08-007",
+                  "timestamp": "2026-09-08T18:30:00+03:00",
+                  "level": "success",
+                  "effort": "1.2h",
+                  "status": "completed",
+                  "tags": ["S77", "graphql", "split", "merge"]
+                },
+                "entry": "JdbcSudzDao.splitDbt/mergeDbt: доли на одной upl, история предыдущих upl цела; Split вставляет invDbtDbt с тем же dbtKey (не ensureInvDbtDbtBridgeForSlot). Merge CANONS = UPDATE iddDbt (Dbt не удаляется); SHARES_ON_UPL = снять Value долей и восстановить одну на survivor-слоте. GraphQL splitSudzDbt/mergeSudzDbt + Apollo sudz-api. Кнопки КСДД, экспортёр, 02 *Dv, UAT 85166 не трогались. Next: S77.4 советник КСДД."
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
           "displayName": "СУДЗ: песочница split/merge test_sudz_sm. № chat-2026-09-08-001",
           "chat-attributes": {
             "id": "chat-2026-09-08-001",

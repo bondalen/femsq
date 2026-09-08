@@ -10,6 +10,11 @@ import com.femsq.database.model.sudz.SudzInvDbtSlot;
 import com.femsq.database.model.sudz.SudzInvDbtSlotTimeline;
 import com.femsq.database.model.sudz.SudzInvDbtVarCandidates;
 import com.femsq.database.model.sudz.SudzD644Row;
+import com.femsq.database.model.sudz.SudzDbtMergeCommand;
+import com.femsq.database.model.sudz.SudzDbtMergeResult;
+import com.femsq.database.model.sudz.SudzDbtSplitCommand;
+import com.femsq.database.model.sudz.SudzDbtSplitPart;
+import com.femsq.database.model.sudz.SudzDbtSplitResult;
 import com.femsq.database.model.sudz.SudzDbtUplFile;
 import com.femsq.database.model.sudz.SudzDbtUplFileSh;
 import com.femsq.database.model.sudz.SudzDbtUplFunnelResult;
@@ -33,6 +38,9 @@ import com.femsq.database.service.SudzService;
 import com.femsq.web.api.dto.sudz.CreateSudzCmmGrInput;
 import com.femsq.web.api.dto.sudz.EnsureSudzInvDbtVarForDoubleInput;
 import com.femsq.web.api.dto.sudz.LinkSudzInvDbtDoubleInput;
+import com.femsq.web.api.dto.sudz.MergeSudzDbtInput;
+import com.femsq.web.api.dto.sudz.SplitSudzDbtInput;
+import com.femsq.web.api.dto.sudz.SplitSudzDbtPartInput;
 import com.femsq.web.api.dto.sudz.LinkSudzSfDoubleInput;
 import com.femsq.web.api.dto.sudz.CreateSudzPmUplInput;
 import com.femsq.web.api.dto.sudz.CreateSudzUplInput;
@@ -45,7 +53,9 @@ import com.femsq.web.api.dto.sudz.UpdateSudzDbtUplFileShInput;
 import com.femsq.web.api.dto.sudz.UpdateSudzYearInput;
 import com.femsq.web.api.sudz.SudzDbtUplFunnelRunner;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.springframework.graphql.data.method.annotation.Argument;
@@ -825,6 +835,50 @@ public class SudzGraphqlController {
     }
 
     /**
+     * Split канона на доли одной upl (S77.3).
+     *
+     * @param input канон, слот, upl, доли
+     * @return новые слоты и Value
+     */
+    @MutationMapping
+    public SudzDbtSplitResult splitSudzDbt(@Argument("input") SplitSudzDbtInput input) {
+        try {
+            return sudzService.splitDbt(toSplitCommand(input));
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Merge канонов или долей на upl (S77.3).
+     *
+     * @param input режим и слоты
+     * @return сколько мостов/Value затронуто
+     */
+    @MutationMapping
+    public SudzDbtMergeResult mergeSudzDbt(@Argument("input") MergeSudzDbtInput input) {
+        try {
+            return sudzService.mergeDbt(new SudzDbtMergeCommand(
+                    input.mode(),
+                    input.survivorDbtKey(),
+                    input.slotKeys(),
+                    input.survivorSlotKey(),
+                    input.uplKey()
+            ));
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
      * Create/reuse {@code invDbtVar} и {@code ciudIdvvKey} на строке очереди.
      *
      * @param input ключи FK
@@ -984,6 +1038,41 @@ public class SudzGraphqlController {
         } catch (DaoException exception) {
             throw internal(exception);
         }
+    }
+
+    /**
+     * GraphQL Float → команда DAO Split.
+     *
+     * @param input вход мутации
+     * @return команда
+     */
+    private static SudzDbtSplitCommand toSplitCommand(SplitSudzDbtInput input) {
+        Objects.requireNonNull(input, "input");
+        if (input.parts() == null) {
+            throw new IllegalArgumentException("Split: parts обязателен");
+        }
+        List<SudzDbtSplitPart> parts = new ArrayList<>();
+        for (SplitSudzDbtPartInput part : input.parts()) {
+            Objects.requireNonNull(part, "part");
+            if (part.ttl() == null) {
+                throw new IllegalArgumentException("Split: ttl доли обязателен");
+            }
+            parts.add(new SudzDbtSplitPart(
+                    BigDecimal.valueOf(part.ttl()),
+                    part.overd() == null ? null : BigDecimal.valueOf(part.overd()),
+                    part.varKey(),
+                    part.note(),
+                    part.dateStart(),
+                    part.dateMaturity(),
+                    part.docBase()
+            ));
+        }
+        return new SudzDbtSplitCommand(
+                input.dbtKey(),
+                input.sourceSlotKey(),
+                input.uplKey(),
+                List.copyOf(parts)
+        );
     }
 
     private ResponseStatusException badRequest(IllegalArgumentException exception) {

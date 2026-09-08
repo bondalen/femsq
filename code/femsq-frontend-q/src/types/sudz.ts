@@ -243,6 +243,63 @@ export interface SudzInvDbtVarCandidates {
   invNums: SudzInvDbtVarInvNumCandidate[];
 }
 
+/** Режим Merge канонов или долей на upl (S77.3). */
+export type SudzDbtMergeMode = 'CANONS' | 'SHARES_ON_UPL';
+
+/** Одна доля Split. */
+export interface SplitSudzDbtPartInput {
+  ttl: number;
+  overd?: number | null;
+  varKey?: number | null;
+  note?: string | null;
+  dateStart?: string | null;
+  dateMaturity?: string | null;
+  docBase?: string | null;
+}
+
+/** Вход Split канона на доли одной upl. */
+export interface SplitSudzDbtInput {
+  dbtKey: number;
+  sourceSlotKey: number;
+  uplKey: number;
+  parts: SplitSudzDbtPartInput[];
+}
+
+/** Созданная доля Split. */
+export interface SudzDbtSplitPartResult {
+  slotKey: number;
+  varKey: number;
+  valueKey: number;
+  ttl: number;
+}
+
+/** Результат Split. */
+export interface SudzDbtSplitResult {
+  dbtKey: number;
+  sourceSlotKey: number;
+  uplKey: number;
+  removedSourceValue: boolean;
+  parts: SudzDbtSplitPartResult[];
+}
+
+/** Вход Merge. */
+export interface MergeSudzDbtInput {
+  mode: SudzDbtMergeMode;
+  survivorDbtKey: number;
+  slotKeys: number[];
+  survivorSlotKey?: number | null;
+  uplKey?: number | null;
+}
+
+/** Результат Merge. */
+export interface SudzDbtMergeResult {
+  survivorDbtKey: number;
+  mode: SudzDbtMergeMode;
+  updatedBridges: number;
+  removedShareValues: number;
+  restoredValueKey: number | null;
+}
+
 /** Excel-кандидат КСДСФ. */
 export interface SudzSfDoubleExcelCandidate {
   cidutKey: number;

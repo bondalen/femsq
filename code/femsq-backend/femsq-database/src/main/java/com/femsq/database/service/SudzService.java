@@ -9,6 +9,10 @@ import com.femsq.database.model.sudz.SudzInvDbtSlotTimeline;
 import com.femsq.database.model.sudz.SudzInvDbtVarCandidates;
 import com.femsq.database.model.sudz.SudzCnInvUplSfDouble;
 import com.femsq.database.model.sudz.SudzD644Row;
+import com.femsq.database.model.sudz.SudzDbtMergeCommand;
+import com.femsq.database.model.sudz.SudzDbtMergeResult;
+import com.femsq.database.model.sudz.SudzDbtSplitCommand;
+import com.femsq.database.model.sudz.SudzDbtSplitResult;
 import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotLoadResult;
 import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotRow;
@@ -643,6 +647,22 @@ public interface SudzService {
      * @return строка очереди
      */
     SudzCnInvUplInvDbtDouble linkInvDbtDouble(int ciudKey, int idKey);
+
+    /**
+     * Split канона на доли одной upl (S77.3). История предыдущих upl не режется.
+     *
+     * @param command канон, слот, upl, доли
+     * @return новые слоты и Value
+     */
+    SudzDbtSplitResult splitDbt(SudzDbtSplitCommand command);
+
+    /**
+     * Merge канонов (мост) или долей на upl (полоса C) (S77.3).
+     *
+     * @param command режим и слоты
+     * @return сколько мостов/Value затронуто
+     */
+    SudzDbtMergeResult mergeDbt(SudzDbtMergeCommand command);
 
     /**
      * Кандидаты FK для create {@code invDbtVar} (экран двоящих).

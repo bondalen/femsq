@@ -141,6 +141,16 @@ extend type Mutation {
   createSudzInvDbtFromDouble(ciudKey: Int!): SudzCnInvUplInvDbtDouble!
   """Link к существующему слоту + мост + DbtValue (A2)."""
   linkSudzInvDbtDouble(input: LinkSudzInvDbtDoubleInput!): SudzCnInvUplInvDbtDouble!
+  """
+  Split канона на доли одной upl (S77.3). История предыдущих upl на исходном слоте не режется.
+  Сумма ttl долей = канон (±0.01). Не через очередь Create/Link.
+  """
+  splitSudzDbt(input: SplitSudzDbtInput!): SudzDbtSplitResult!
+  """
+  Merge канонов (мост iddDbt → survivor) или долей на upl (полоса C: снять Value долей, восстановить одну на survivor-слоте).
+  Старый Dbt при CANONS не удаляется.
+  """
+  mergeSudzDbt(input: MergeSudzDbtInput!): SudzDbtMergeResult!
   """Create/reuse invDbtVar и привязка ciudIdvvKey (ambiguous на экране двоящих)."""
   ensureSudzInvDbtVarForDouble(input: EnsureSudzInvDbtVarForDoubleInput!): SudzCnInvUplInvDbtDouble!
 }
@@ -505,6 +515,68 @@ input EnsureSudzInvDbtVarForDoubleInput {
   idvvInvNum: Int!
   idvvAccnt: Int!
   idvvCnSOrg: Int!
+}
+
+"""Режим Merge (S77.3)."""
+enum SudzDbtMergeMode {
+  """N канонов → один Dbt; Value на слотах не трогаем (113→112)."""
+  CANONS
+  """Доли на одной СФ: на upl снова одна Value на survivor-слоте (полоса C)."""
+  SHARES_ON_UPL
+}
+
+"""Одна доля Split."""
+input SplitSudzDbtPartInput {
+  ttl: Float!
+  overd: Float
+  varKey: Int
+  note: String
+  dateStart: Date
+  dateMaturity: Date
+  docBase: String
+}
+
+"""Вход Split канона на доли одной upl."""
+input SplitSudzDbtInput {
+  dbtKey: Int!
+  sourceSlotKey: Int!
+  uplKey: Int!
+  parts: [SplitSudzDbtPartInput!]!
+}
+
+"""Созданная доля Split."""
+type SudzDbtSplitPartResult {
+  slotKey: Int!
+  varKey: Int!
+  valueKey: Int!
+  ttl: Float!
+}
+
+"""Результат Split."""
+type SudzDbtSplitResult {
+  dbtKey: Int!
+  sourceSlotKey: Int!
+  uplKey: Int!
+  removedSourceValue: Boolean!
+  parts: [SudzDbtSplitPartResult!]!
+}
+
+"""Вход Merge."""
+input MergeSudzDbtInput {
+  mode: SudzDbtMergeMode!
+  survivorDbtKey: Int!
+  slotKeys: [Int!]!
+  survivorSlotKey: Int
+  uplKey: Int
+}
+
+"""Результат Merge."""
+type SudzDbtMergeResult {
+  survivorDbtKey: Int!
+  mode: SudzDbtMergeMode!
+  updatedBridges: Int!
+  removedShareValues: Int!
+  restoredValueKey: Int
 }
 
 """Слот sudz.invDbt (экран двоящих долгов)."""

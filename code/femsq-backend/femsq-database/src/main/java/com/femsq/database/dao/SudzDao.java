@@ -34,6 +34,10 @@ import com.femsq.database.model.sudz.SudzDbtUplFunnelQueueClearResult;
 import com.femsq.database.model.sudz.SudzDbtUplLauncher;
 import com.femsq.database.model.sudz.SudzDbtUplOrgNotInBuirg;
 import com.femsq.database.model.sudz.SudzDbtUplTblRow;
+import com.femsq.database.model.sudz.SudzDbtMergeCommand;
+import com.femsq.database.model.sudz.SudzDbtMergeResult;
+import com.femsq.database.model.sudz.SudzDbtSplitCommand;
+import com.femsq.database.model.sudz.SudzDbtSplitResult;
 import com.femsq.database.model.sudz.SudzDebtCollection;
 import com.femsq.database.model.sudz.SudzPmLink;
 import com.femsq.database.model.sudz.SudzPmUplLookup;
@@ -790,4 +794,20 @@ public interface SudzDao {
      * @return обновлённая строка
      */
     SudzCnInvUplSfDouble linkSfDoubleToCn(int ciusKey, int invKey, int cnKey);
+
+    /**
+     * Split канона на доли одной upl (S77.3). История предыдущих upl на исходном слоте не режется.
+     *
+     * @param command канон, слот, upl, доли
+     * @return новые слоты и Value
+     */
+    SudzDbtSplitResult splitDbt(SudzDbtSplitCommand command);
+
+    /**
+     * Merge канонов (мост) или долей на upl (полоса C) (S77.3).
+     *
+     * @param command режим и слоты
+     * @return сколько мостов/Value затронуто
+     */
+    SudzDbtMergeResult mergeDbt(SudzDbtMergeCommand command);
 }

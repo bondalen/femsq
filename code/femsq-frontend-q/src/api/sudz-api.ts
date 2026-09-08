@@ -13,6 +13,8 @@ import type {
   CreateSudzUplInput,
   CreateSudzYearInput,
   LinkSudzSfDoubleInput,
+  MergeSudzDbtInput,
+  SplitSudzDbtInput,
   SudzCmmGrLookup,
   SudzCnInvUplSfDouble,
   SudzCnInvUplInvDbtDouble,
@@ -20,6 +22,8 @@ import type {
   SudzInvDbtSlotTimeline,
   SudzInvDbtVarCandidates,
   SudzD644Row,
+  SudzDbtMergeResult,
+  SudzDbtSplitResult,
   SudzDbtUplFile,
   SudzDbtUplLauncher,
   SudzDebtCollectionInput,
@@ -444,6 +448,35 @@ const LINK_INV_DBT_DOUBLE = gql`
   mutation LinkSudzInvDbtDouble($input: LinkSudzInvDbtDoubleInput!) {
     linkSudzInvDbtDouble(input: $input) {
       ${INV_DBT_DOUBLE_FIELDS}
+    }
+  }
+`;
+
+const SPLIT_SUDZ_DBT = gql`
+  mutation SplitSudzDbt($input: SplitSudzDbtInput!) {
+    splitSudzDbt(input: $input) {
+      dbtKey
+      sourceSlotKey
+      uplKey
+      removedSourceValue
+      parts {
+        slotKey
+        varKey
+        valueKey
+        ttl
+      }
+    }
+  }
+`;
+
+const MERGE_SUDZ_DBT = gql`
+  mutation MergeSudzDbt($input: MergeSudzDbtInput!) {
+    mergeSudzDbt(input: $input) {
+      survivorDbtKey
+      mode
+      updatedBridges
+      removedShareValues
+      restoredValueKey
     }
   }
 `;
@@ -1139,6 +1172,44 @@ export async function linkSudzInvDbtDouble(
     return data;
   } catch (error) {
     throw wrapApolloError(error, 'LinkSudzInvDbtDouble');
+  }
+}
+
+/** Split канона на доли одной upl (S77.3). История предыдущих upl не режется. */
+export async function splitSudzDbt(
+  input: SplitSudzDbtInput
+): Promise<SudzDbtSplitResult> {
+  try {
+    const result = await apolloClient.mutate<{
+      splitSudzDbt: SudzDbtSplitResult;
+    }>({
+      mutation: SPLIT_SUDZ_DBT,
+      variables: { input }
+    });
+    const data = result.data?.splitSudzDbt;
+    if (!data) throw new Error('Пустой ответ splitSudzDbt');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'SplitSudzDbt');
+  }
+}
+
+/** Merge канонов или долей на upl (S77.3). */
+export async function mergeSudzDbt(
+  input: MergeSudzDbtInput
+): Promise<SudzDbtMergeResult> {
+  try {
+    const result = await apolloClient.mutate<{
+      mergeSudzDbt: SudzDbtMergeResult;
+    }>({
+      mutation: MERGE_SUDZ_DBT,
+      variables: { input }
+    });
+    const data = result.data?.mergeSudzDbt;
+    if (!data) throw new Error('Пустой ответ mergeSudzDbt');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'MergeSudzDbt');
   }
 }
 

@@ -17,6 +17,14 @@ import com.femsq.database.model.sudz.SudzInvDbtVarCnNumCandidate;
 import com.femsq.database.model.sudz.SudzInvDbtVarInvNumCandidate;
 import com.femsq.database.model.sudz.SudzInvDbtVarSideCandidate;
 import com.femsq.database.model.sudz.SudzD644Row;
+import com.femsq.database.model.sudz.SudzDbtMergeCommand;
+import com.femsq.database.model.sudz.SudzDbtMergeMode;
+import com.femsq.database.model.sudz.SudzDbtMergeResult;
+import com.femsq.database.model.sudz.SudzDbtSplitCommand;
+import com.femsq.database.model.sudz.SudzDbtSplitMergeRules;
+import com.femsq.database.model.sudz.SudzDbtSplitPart;
+import com.femsq.database.model.sudz.SudzDbtSplitPartResult;
+import com.femsq.database.model.sudz.SudzDbtSplitResult;
 import com.femsq.database.model.sudz.SudzDbtUplFile;
 import com.femsq.database.model.sudz.SudzDbtUplFileSh;
 import com.femsq.database.model.sudz.SudzDbtUplFunnelQueueClearResult;
@@ -5351,6 +5359,487 @@ public class JdbcSudzDao implements SudzDao {
             throw exception;
         } catch (SQLException exception) {
             throw wrap("Не удалось прочитать invDbt для iKey=" + iKey, exception);
+        }
+    }
+
+    @Override
+    public SudzDbtSplitResult splitDbt(SudzDbtSplitCommand command) {
+        Objects.requireNonNull(command, "command");
+        SudzDbtSplitMergeRules.requireSplitParts(command.parts());
+        if (command.dbtKey() <= 0 || command.sourceSlotKey() <= 0 || command.uplKey() <= 0) {
+            throw new IllegalArgumentException("dbtKey, sourceSlotKey и uplKey должны быть положительными");
+        }
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+        String dbt = q("Dbt");
+        String invDbt = q("invDbt");
+        String invDbtDbt = q("invDbtDbt");
+        String invDbtVar = q("invDbtVar");
+        String bridgeVar = q("invDbtDbtVar");
+        String dbtValue = q("DbtValue");
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps = connection.prepareStatement(
+                        "SELECT 1 FROM " + dbt + " WHERE dbtKey = ?")) {
+                    ps.setInt(1, command.dbtKey());
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) {
+                            throw new IllegalArgumentException("Dbt не найден: " + command.dbtKey());
+                        }
+                    }
+                }
+                int iKey;
+                int bridgedDbt;
+                try (PreparedStatement ps = connection.prepareStatement(
+                        "SELECT s.idInv, idd.iddDbt FROM " + invDbt + " AS s "
+                                + "INNER JOIN " + invDbtDbt + " AS idd ON idd.iddInvDbt = s.idKey "
+                                + "WHERE s.idKey = ?")) {
+                    ps.setInt(1, command.sourceSlotKey());
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) {
+                            throw new IllegalArgumentException(
+                                    "Слот " + command.sourceSlotKey() + " не найден или без моста invDbtDbt");
+                        }
+                        iKey = rs.getInt("idInv");
+                        bridgedDbt = rs.getInt("iddDbt");
+                    }
+                }
+                if (bridgedDbt != command.dbtKey()) {
+                    throw new IllegalArgumentException(
+                            "Слот " + command.sourceSlotKey() + " принадлежит Dbt "
+                                    + bridgedDbt + ", а не " + command.dbtKey());
+                }
+                Integer sourceDvKey = null;
+                BigDecimal sourceTtl = null;
+                BigDecimal sourceOverd = null;
+                int refVarKey;
+                LocalDate refStart;
+                LocalDate refMaturity;
+                String refDoc;
+                try (PreparedStatement ps = connection.prepareStatement(
+                        "SELECT dvKey, dvTtl, dvOverd, dvInvDbtVar, dvDateStart, dvDateMaturity, dvDocBase "
+                                + "FROM " + dbtValue + " WHERE dvInvDbt = ? AND dvUpl = ?")) {
+                    ps.setInt(1, command.sourceSlotKey());
+                    ps.setInt(2, command.uplKey());
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            sourceDvKey = rs.getInt("dvKey");
+                            sourceTtl = rs.getBigDecimal("dvTtl");
+                            sourceOverd = rs.getBigDecimal("dvOverd");
+                            refVarKey = rs.getInt("dvInvDbtVar");
+                            refStart = getLocalDate(rs, "dvDateStart");
+                            refMaturity = getLocalDate(rs, "dvDateMaturity");
+                            refDoc = rs.getNString("dvDocBase");
+                        } else {
+                            refVarKey = 0;
+                            refStart = null;
+                            refMaturity = null;
+                            refDoc = null;
+                        }
+                    }
+                }
+                if (sourceDvKey == null) {
+                    try (PreparedStatement ps = connection.prepareStatement(
+                            "SELECT TOP 1 dvTtl, dvOverd, dvInvDbtVar, dvDateStart, dvDateMaturity, dvDocBase "
+                                    + "FROM " + dbtValue + " WHERE dvInvDbt = ? "
+                                    + "ORDER BY dvUpl DESC, dvKey DESC")) {
+                        ps.setInt(1, command.sourceSlotKey());
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (!rs.next()) {
+                                throw new IllegalArgumentException(
+                                        "У слота " + command.sourceSlotKey() + " нет DbtValue — нечего делить");
+                            }
+                            sourceTtl = rs.getBigDecimal("dvTtl");
+                            sourceOverd = rs.getBigDecimal("dvOverd");
+                            refVarKey = rs.getInt("dvInvDbtVar");
+                            refStart = getLocalDate(rs, "dvDateStart");
+                            refMaturity = getLocalDate(rs, "dvDateMaturity");
+                            refDoc = rs.getNString("dvDocBase");
+                        }
+                    }
+                }
+                SudzDbtSplitMergeRules.requireSplitSum(sourceTtl, command.parts());
+                int nextNum;
+                try (PreparedStatement mx = connection.prepareStatement(
+                        "SELECT ISNULL(MAX(idNum), 0) + 1 FROM " + invDbt + " WHERE idInv = ?")) {
+                    mx.setInt(1, iKey);
+                    try (ResultSet rs = mx.executeQuery()) {
+                        rs.next();
+                        nextNum = rs.getInt(1);
+                    }
+                }
+                List<SudzDbtSplitPartResult> created = new ArrayList<>();
+                for (int i = 0; i < command.parts().size(); i++) {
+                    SudzDbtSplitPart part = command.parts().get(i);
+                    int varKey = part.varKey() != null && part.varKey() > 0 ? part.varKey() : refVarKey;
+                    if (varKey <= 0) {
+                        throw new IllegalArgumentException("Split: у доли[" + i + "] нет invDbtVar");
+                    }
+                    try (PreparedStatement chk = connection.prepareStatement(
+                            "SELECT n.inInv FROM " + invDbtVar + " AS v "
+                                    + "INNER JOIN ags.invNum AS n ON n.inKey = v.idvvInvNum "
+                                    + "WHERE v.idvvKey = ?")) {
+                        chk.setInt(1, varKey);
+                        try (ResultSet rs = chk.executeQuery()) {
+                            if (!rs.next()) {
+                                throw new IllegalArgumentException("invDbtVar не найден: " + varKey);
+                            }
+                            if (rs.getInt("inInv") != iKey) {
+                                throw new IllegalArgumentException(
+                                        "invDbtVar " + varKey + " относится к другой СФ");
+                            }
+                        }
+                    }
+                    int slotKey;
+                    String note = part.note() != null && !part.note().isBlank()
+                            ? part.note()
+                            : "S77-split-" + (i + 1);
+                    try (PreparedStatement ins = connection.prepareStatement(
+                            "INSERT INTO " + invDbt
+                                    + " (idInv, idNum, idNote, idTimeOfEntry) VALUES (?, ?, ?, ?)",
+                            Statement.RETURN_GENERATED_KEYS)) {
+                        ins.setInt(1, iKey);
+                        ins.setInt(2, nextNum++);
+                        ins.setNString(3, note);
+                        ins.setTimestamp(4, now);
+                        ins.executeUpdate();
+                        slotKey = readGeneratedKey(ins, "Не удалось получить idKey invDbt");
+                    }
+                    try (PreparedStatement br = connection.prepareStatement(
+                            "INSERT INTO " + invDbtDbt
+                                    + " (iddInv, iddDbt, iddInvDbt, iddTimeOfEntry) VALUES (?, ?, ?, ?)")) {
+                        br.setInt(1, iKey);
+                        br.setInt(2, command.dbtKey());
+                        br.setInt(3, slotKey);
+                        br.setTimestamp(4, now);
+                        br.executeUpdate();
+                    }
+                    try (PreparedStatement chkBr = connection.prepareStatement(
+                            "SELECT 1 FROM " + bridgeVar + " WHERE iddvInvDbt = ? AND iddvInvDbtVar = ?")) {
+                        chkBr.setInt(1, slotKey);
+                        chkBr.setInt(2, varKey);
+                        boolean hasBridge;
+                        try (ResultSet rs = chkBr.executeQuery()) {
+                            hasBridge = rs.next();
+                        }
+                        if (!hasBridge) {
+                            try (PreparedStatement insBr = connection.prepareStatement(
+                                    "INSERT INTO " + bridgeVar
+                                            + " (iddvInvDbt, iddvInvDbtVar, iddvTimeOfEntry) VALUES (?, ?, ?)")) {
+                                insBr.setInt(1, slotKey);
+                                insBr.setInt(2, varKey);
+                                insBr.setTimestamp(3, now);
+                                insBr.executeUpdate();
+                            }
+                        }
+                    }
+                    BigDecimal overd = SudzDbtSplitMergeRules.splitOverd(
+                            part.ttl(), sourceTtl, sourceOverd, part.overd());
+                    LocalDate start = part.dateStart() != null ? part.dateStart() : refStart;
+                    LocalDate maturity = part.dateMaturity() != null ? part.dateMaturity() : refMaturity;
+                    String doc = part.docBase() != null ? part.docBase() : refDoc;
+                    int valueKey;
+                    try (PreparedStatement ins = connection.prepareStatement(
+                            "INSERT INTO " + dbtValue
+                                    + " (dvInvDbt, dvInvDbtVar, dvUpl, dvTtl, dvOverd,"
+                                    + "  dvDateStart, dvDateMaturity, dvDocBase, dvTimeOfEntry) "
+                                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                            Statement.RETURN_GENERATED_KEYS)) {
+                        ins.setInt(1, slotKey);
+                        ins.setInt(2, varKey);
+                        ins.setInt(3, command.uplKey());
+                        ins.setBigDecimal(4, part.ttl());
+                        ins.setBigDecimal(5, overd);
+                        if (start == null) {
+                            ins.setNull(6, Types.DATE);
+                        } else {
+                            ins.setDate(6, Date.valueOf(start));
+                        }
+                        if (maturity == null) {
+                            ins.setNull(7, Types.DATE);
+                        } else {
+                            ins.setDate(7, Date.valueOf(maturity));
+                        }
+                        ins.setNString(8, doc);
+                        ins.setTimestamp(9, now);
+                        ins.executeUpdate();
+                        valueKey = readGeneratedKey(ins, "Не удалось получить dvKey");
+                    }
+                    created.add(new SudzDbtSplitPartResult(slotKey, varKey, valueKey, part.ttl()));
+                }
+                boolean removed = false;
+                if (sourceDvKey != null) {
+                    try (PreparedStatement del = connection.prepareStatement(
+                            "DELETE FROM " + dbtValue + " WHERE dvKey = ?")) {
+                        del.setInt(1, sourceDvKey);
+                        del.executeUpdate();
+                    }
+                    removed = true;
+                }
+                connection.commit();
+                log.log(Level.INFO,
+                        "splitDbt dbt={0} sourceSlot={1} upl={2} parts={3} removedSource={4}",
+                        new Object[]{
+                                command.dbtKey(), command.sourceSlotKey(), command.uplKey(),
+                                created.size(), removed
+                        });
+                return new SudzDbtSplitResult(
+                        command.dbtKey(),
+                        command.sourceSlotKey(),
+                        command.uplKey(),
+                        removed,
+                        List.copyOf(created));
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось выполнить Split dbt=" + command.dbtKey(), exception);
+        }
+    }
+
+    @Override
+    public SudzDbtMergeResult mergeDbt(SudzDbtMergeCommand command) {
+        Objects.requireNonNull(command, "command");
+        Objects.requireNonNull(command.mode(), "mode");
+        if (command.survivorDbtKey() <= 0) {
+            throw new IllegalArgumentException("survivorDbtKey должен быть положительным");
+        }
+        if (command.slotKeys() == null || command.slotKeys().isEmpty()) {
+            throw new IllegalArgumentException("Merge: нужен хотя бы один слот");
+        }
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+        String dbt = q("Dbt");
+        String invDbt = q("invDbt");
+        String invDbtDbt = q("invDbtDbt");
+        String dbtValue = q("DbtValue");
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps = connection.prepareStatement(
+                        "SELECT 1 FROM " + dbt + " WHERE dbtKey = ?")) {
+                    ps.setInt(1, command.survivorDbtKey());
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) {
+                            throw new IllegalArgumentException(
+                                    "Dbt не найден: " + command.survivorDbtKey());
+                        }
+                    }
+                }
+                int updatedBridges = 0;
+                int removedShareValues = 0;
+                Integer restoredValueKey = null;
+                if (command.mode() == SudzDbtMergeMode.CANONS) {
+                    for (Integer slotKey : command.slotKeys()) {
+                        if (slotKey == null || slotKey <= 0) {
+                            throw new IllegalArgumentException("slotKeys содержат пустой ключ");
+                        }
+                        int currentDbt;
+                        try (PreparedStatement ps = connection.prepareStatement(
+                                "SELECT idd.iddDbt FROM " + invDbt + " AS s "
+                                        + "INNER JOIN " + invDbtDbt + " AS idd ON idd.iddInvDbt = s.idKey "
+                                        + "WHERE s.idKey = ?")) {
+                            ps.setInt(1, slotKey);
+                            try (ResultSet rs = ps.executeQuery()) {
+                                if (!rs.next()) {
+                                    throw new IllegalArgumentException(
+                                            "Слот не найден или без моста: " + slotKey);
+                                }
+                                currentDbt = rs.getInt("iddDbt");
+                            }
+                        }
+                        if (currentDbt == command.survivorDbtKey()) {
+                            continue;
+                        }
+                        try (PreparedStatement upd = connection.prepareStatement(
+                                "UPDATE " + invDbtDbt + " SET iddDbt = ? WHERE iddInvDbt = ?")) {
+                            upd.setInt(1, command.survivorDbtKey());
+                            upd.setInt(2, slotKey);
+                            updatedBridges += upd.executeUpdate();
+                        }
+                    }
+                } else if (command.mode() == SudzDbtMergeMode.SHARES_ON_UPL) {
+                    if (command.survivorSlotKey() == null || command.survivorSlotKey() <= 0) {
+                        throw new IllegalArgumentException("SHARES_ON_UPL: нужен survivorSlotKey");
+                    }
+                    if (command.uplKey() == null || command.uplKey() <= 0) {
+                        throw new IllegalArgumentException("SHARES_ON_UPL: нужен uplKey");
+                    }
+                    int survivorSlot = command.survivorSlotKey();
+                    int uplKey = command.uplKey();
+                    if (command.slotKeys().contains(survivorSlot)) {
+                        throw new IllegalArgumentException(
+                                "SHARES_ON_UPL: survivorSlotKey не должен входить в slotKeys долей");
+                    }
+                    int survivorInv;
+                    int survivorDbt;
+                    try (PreparedStatement ps = connection.prepareStatement(
+                            "SELECT s.idInv, idd.iddDbt FROM " + invDbt + " AS s "
+                                    + "INNER JOIN " + invDbtDbt + " AS idd ON idd.iddInvDbt = s.idKey "
+                                    + "WHERE s.idKey = ?")) {
+                        ps.setInt(1, survivorSlot);
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (!rs.next()) {
+                                throw new IllegalArgumentException(
+                                        "Слот-победитель не найден: " + survivorSlot);
+                            }
+                            survivorInv = rs.getInt("idInv");
+                            survivorDbt = rs.getInt("iddDbt");
+                        }
+                    }
+                    if (survivorDbt != command.survivorDbtKey()) {
+                        throw new IllegalArgumentException(
+                                "Слот " + survivorSlot + " не принадлежит Dbt " + command.survivorDbtKey());
+                    }
+                    try (PreparedStatement ps = connection.prepareStatement(
+                            "SELECT dvKey FROM " + dbtValue + " WHERE dvInvDbt = ? AND dvUpl = ?")) {
+                        ps.setInt(1, survivorSlot);
+                        ps.setInt(2, uplKey);
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next()) {
+                                throw new IllegalArgumentException(
+                                        "На слоте " + survivorSlot + " уже есть Value @upl "
+                                                + uplKey + " — полоса C предполагает пустой survivor на этом срезе");
+                            }
+                        }
+                    }
+                    BigDecimal sumTtl = BigDecimal.ZERO;
+                    BigDecimal sumOverd = BigDecimal.ZERO;
+                    Integer refVar = null;
+                    LocalDate refStart = null;
+                    LocalDate refMaturity = null;
+                    String refDoc = null;
+                    for (Integer slotKey : command.slotKeys()) {
+                        if (slotKey == null || slotKey <= 0) {
+                            throw new IllegalArgumentException("slotKeys содержат пустой ключ");
+                        }
+                        int slotInv;
+                        int slotDbt;
+                        try (PreparedStatement ps = connection.prepareStatement(
+                                "SELECT s.idInv, idd.iddDbt FROM " + invDbt + " AS s "
+                                        + "INNER JOIN " + invDbtDbt + " AS idd ON idd.iddInvDbt = s.idKey "
+                                        + "WHERE s.idKey = ?")) {
+                            ps.setInt(1, slotKey);
+                            try (ResultSet rs = ps.executeQuery()) {
+                                if (!rs.next()) {
+                                    throw new IllegalArgumentException("Слот доли не найден: " + slotKey);
+                                }
+                                slotInv = rs.getInt("idInv");
+                                slotDbt = rs.getInt("iddDbt");
+                            }
+                        }
+                        if (slotInv != survivorInv) {
+                            throw new IllegalArgumentException(
+                                    "SHARES_ON_UPL: слот " + slotKey + " на другой СФ");
+                        }
+                        if (slotDbt != command.survivorDbtKey()) {
+                            throw new IllegalArgumentException(
+                                    "SHARES_ON_UPL: слот " + slotKey + " не того же Dbt");
+                        }
+                        try (PreparedStatement ps = connection.prepareStatement(
+                                "SELECT dvTtl, dvOverd, dvInvDbtVar, dvDateStart, dvDateMaturity, dvDocBase "
+                                        + "FROM " + dbtValue + " WHERE dvInvDbt = ? AND dvUpl = ?")) {
+                            ps.setInt(1, slotKey);
+                            ps.setInt(2, uplKey);
+                            try (ResultSet rs = ps.executeQuery()) {
+                                if (!rs.next()) {
+                                    throw new IllegalArgumentException(
+                                            "Нет Value доли слот=" + slotKey + " upl=" + uplKey);
+                                }
+                                sumTtl = sumTtl.add(rs.getBigDecimal("dvTtl"));
+                                BigDecimal ov = rs.getBigDecimal("dvOverd");
+                                sumOverd = sumOverd.add(ov != null ? ov : BigDecimal.ZERO);
+                                if (refVar == null) {
+                                    refVar = rs.getInt("dvInvDbtVar");
+                                    refStart = getLocalDate(rs, "dvDateStart");
+                                    refMaturity = getLocalDate(rs, "dvDateMaturity");
+                                    refDoc = rs.getNString("dvDocBase");
+                                }
+                            }
+                        }
+                    }
+                    try (PreparedStatement hist = connection.prepareStatement(
+                            "SELECT TOP 1 dvInvDbtVar, dvDateStart, dvDateMaturity, dvDocBase "
+                                    + "FROM " + dbtValue + " WHERE dvInvDbt = ? "
+                                    + "ORDER BY dvUpl DESC, dvKey DESC")) {
+                        hist.setInt(1, survivorSlot);
+                        try (ResultSet rs = hist.executeQuery()) {
+                            if (rs.next()) {
+                                refVar = rs.getInt("dvInvDbtVar");
+                                refStart = getLocalDate(rs, "dvDateStart");
+                                refMaturity = getLocalDate(rs, "dvDateMaturity");
+                                refDoc = rs.getNString("dvDocBase");
+                            }
+                        }
+                    }
+                    if (refVar == null || refVar <= 0) {
+                        throw new IllegalArgumentException("SHARES_ON_UPL: нет invDbtVar для целой Value");
+                    }
+                    for (Integer slotKey : command.slotKeys()) {
+                        try (PreparedStatement del = connection.prepareStatement(
+                                "DELETE FROM " + dbtValue + " WHERE dvInvDbt = ? AND dvUpl = ?")) {
+                            del.setInt(1, slotKey);
+                            del.setInt(2, uplKey);
+                            removedShareValues += del.executeUpdate();
+                        }
+                    }
+                    try (PreparedStatement ins = connection.prepareStatement(
+                            "INSERT INTO " + dbtValue
+                                    + " (dvInvDbt, dvInvDbtVar, dvUpl, dvTtl, dvOverd,"
+                                    + "  dvDateStart, dvDateMaturity, dvDocBase, dvTimeOfEntry) "
+                                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                            Statement.RETURN_GENERATED_KEYS)) {
+                        ins.setInt(1, survivorSlot);
+                        ins.setInt(2, refVar);
+                        ins.setInt(3, uplKey);
+                        ins.setBigDecimal(4, sumTtl);
+                        ins.setBigDecimal(5, sumOverd);
+                        if (refStart == null) {
+                            ins.setNull(6, Types.DATE);
+                        } else {
+                            ins.setDate(6, Date.valueOf(refStart));
+                        }
+                        if (refMaturity == null) {
+                            ins.setNull(7, Types.DATE);
+                        } else {
+                            ins.setDate(7, Date.valueOf(refMaturity));
+                        }
+                        ins.setNString(8, refDoc);
+                        ins.setTimestamp(9, now);
+                        ins.executeUpdate();
+                        restoredValueKey = readGeneratedKey(ins, "Не удалось получить dvKey merge-back");
+                    }
+                } else {
+                    throw new IllegalArgumentException("Неизвестный режим Merge: " + command.mode());
+                }
+                connection.commit();
+                log.log(Level.INFO,
+                        "mergeDbt mode={0} survivor={1} bridges={2} removedValues={3}",
+                        new Object[]{command.mode(), command.survivorDbtKey(), updatedBridges, removedShareValues});
+                return new SudzDbtMergeResult(
+                        command.survivorDbtKey(),
+                        command.mode(),
+                        updatedBridges,
+                        removedShareValues,
+                        restoredValueKey);
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось выполнить Merge dbt=" + command.survivorDbtKey(), exception);
         }
     }
 

@@ -11,6 +11,10 @@ import com.femsq.database.model.sudz.SudzInvDbtTimelinePoint;
 import com.femsq.database.model.sudz.SudzInvDbtVarCandidates;
 import com.femsq.database.model.sudz.SudzCnInvUplSfDouble;
 import com.femsq.database.model.sudz.SudzD644Row;
+import com.femsq.database.model.sudz.SudzDbtMergeCommand;
+import com.femsq.database.model.sudz.SudzDbtMergeResult;
+import com.femsq.database.model.sudz.SudzDbtSplitCommand;
+import com.femsq.database.model.sudz.SudzDbtSplitResult;
 import com.femsq.database.model.sudz.SudzAccessStrMark;
 import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotLoadResult;
@@ -745,6 +749,25 @@ public class DefaultSudzService implements SudzService {
             throw new IllegalArgumentException("ciudKey и idKey должны быть положительными");
         }
         return sudzDao.linkInvDbtDouble(ciudKey, idKey);
+    }
+
+    @Override
+    public SudzDbtSplitResult splitDbt(SudzDbtSplitCommand command) {
+        Objects.requireNonNull(command, "command");
+        if (command.dbtKey() <= 0 || command.sourceSlotKey() <= 0 || command.uplKey() <= 0) {
+            throw new IllegalArgumentException("dbtKey, sourceSlotKey и uplKey должны быть положительными");
+        }
+        return sudzDao.splitDbt(command);
+    }
+
+    @Override
+    public SudzDbtMergeResult mergeDbt(SudzDbtMergeCommand command) {
+        Objects.requireNonNull(command, "command");
+        Objects.requireNonNull(command.mode(), "mode");
+        if (command.survivorDbtKey() <= 0) {
+            throw new IllegalArgumentException("survivorDbtKey должен быть положительным");
+        }
+        return sudzDao.mergeDbt(command);
     }
 
     @Override
