@@ -16,7 +16,7 @@
             "owner": "Александр",
             "status": "active",
             "priority": "high",
-            "tags": ["sudz", "split", "merge", "0069", "S77", "implementation"],
+            "tags": ["sudz", "split", "merge", "0069", "S77", "S78", "implementation"],
             "links": {
               "projectDocsRefs": ["module:backend.database"],
               "developmentTasks": ["0069"],
@@ -109,6 +109,132 @@
                   "tags": ["S77", "C.10.2", "P3", "902", "G5"]
                 },
                 "entry": "Коммит/пуш: working tree уже clean на e481b40. G5: dbtValueLoad только с yrKey=900 (base 801). P3: 7×КС-51 — DELETE мостов invDbtDbtVar на sentinel cn_s_org=2115 (дата Tbl=2014-10-01 → 307); dbtValueLoad tail=7. 105449 (15-ЗБС/21-АС): AccSmpl+Var без слота → ciud 3786 reason=none → createSudzInvDbtFromDouble → slot 13043 + Value@901. C.10.2 = 9/9. Tbl=1774 DV=1309 (хвост ambiguous ~sentinel). 902: premature G4=9 сброшен скриптом 12_RESET_upl902_clean_apply.sql (Tbl/DV/G4=0, path НОВЫЙ). 901 не тронут. B-seed/02/full funnel не применялись. Next: UI 902 G0…G5; опц. bulk sentinel 2115 для G5; S77.8 после того."
+              }
+            },
+            {
+              "log": {
+                "displayName": "S78 MVP: экран канона Dbt + ops guide (success). № log-2026-09-09-004",
+                "log-attributes": {
+                  "id": "log-2026-09-09-004",
+                  "timestamp": "2026-09-09T12:15:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "tags": ["S78", "dbt-canon", "ops-guide"]
+                },
+                "entry": "S78 MVP: ops guide; GraphQL searchSudzDbtCanons / sudzDbtCanon / linkSudzInvDbtToDbt / unlinkSudzInvDbtFromDbt; UI СУДЗ→«Долг (канон)» (поиск СФ/дог./БУиРГ/дата/idNum/dbtKey → кандидаты → слоты; привязать/отвязать). Отвязка при Value — отказ. Next: UAT экрана; S78.4 Value/связки; S77.7 G5@901."
+              }
+            },
+            {
+              "log": {
+                "displayName": "S78 UI: FemsqTable сверху, карточка Dbt снизу (success). № log-2026-09-09-005",
+                "log-attributes": {
+                  "id": "log-2026-09-09-005",
+                  "timestamp": "2026-09-09T12:55:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": ["S78", "dbt-canon", "FemsqTable"]
+                },
+                "entry": "Экран «Долг (канон)»: убраны форма поиска и QMarkupTable. Сверху FemsqTable mode=server, критерии в фильтрах колонок (без API при пустых). Весь низ — карточка Dbt, слоты тоже FemsqTable. GraphQL не менялся. Next: UAT; S78.4 Value/связки."
+              }
+            },
+            {
+              "log": {
+                "displayName": "S78.4: дерево + график областей + модалки Value/Split/Merge (success). № log-2026-09-09-006",
+                "log-attributes": {
+                  "id": "log-2026-09-09-006",
+                  "timestamp": "2026-09-09T13:40:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "tags": ["S78.4", "dbt-canon", "FemsqTree", "FemsqChart"]
+                },
+                "entry": "S78.4A–E: feQuLib FemsqChart area/stack 0.1.5; GraphQL uplName/uplDate/uplStatusOnDate на SudzDbtCanonValue + upsert/delete Value; карточка — QSplitter FemsqTree (слот→var→Value) / FemsqChart (две области на слот, цвета --femsq-chart-*); модалки Value и Split/Merge. Не RelationTree inv-dbt-slots и не sudzInvDbtSlotTimeline. Next: UAT мутаций на DEV осторожно; S78.5 later."
+              }
+            },
+            {
+              "log": {
+                "displayName": "График канона: вся история Value, ось ГГ-ММ, хвост +1 месяц (success). № log-2026-09-09-007",
+                "log-attributes": {
+                  "id": "log-2026-09-09-007",
+                  "timestamp": "2026-09-09T14:45:00+03:00",
+                  "level": "success",
+                  "effort": "0.7h",
+                  "status": "completed",
+                  "tags": ["S78", "dbt-canon", "FemsqChart"]
+                },
+                "entry": "Ось X канона: tickFormat yy-MM (25-12); ступенька step=end; после последней DbtValue точка +1 календарный месяц и padEndDays=20, чтобы доли split были полосой, не вертикалью. История графика = все DbtValue слота (не csoDate 2018). feQuLib: step, tickFormat, padEndDays. Next: S78.5 later."
+              }
+            },
+            {
+              "log": {
+                "displayName": "Карточка Dbt: три вкладки + организация в поиске (success). № log-2026-09-09-008",
+                "log-attributes": {
+                  "id": "log-2026-09-09-008",
+                  "timestamp": "2026-09-09T15:20:00+03:00",
+                  "level": "success",
+                  "effort": "0.8h",
+                  "status": "completed",
+                  "tags": ["S78", "dbt-canon", "tabs", "orgName"]
+                },
+                "entry": "Карточка канона: вкладки Долг (дерево+график) / Слоты (таблица связи) / Комментарии (макет дерево|текст, CRUD cnInvCmm пока не подключён). Поиск: колонка Организация (og.ogNm) + фильтр LIKE. Next: согласовать CRUD комментариев; GraphQL групп/типов."
+              }
+            },
+            {
+              "log": {
+                "displayName": "Комментарии канона: дерево Dbt→DbtValue + модалка группы (success). № log-2026-09-09-009",
+                "log-attributes": {
+                  "id": "log-2026-09-09-009",
+                  "timestamp": "2026-09-09T15:45:00+03:00",
+                  "level": "success",
+                  "effort": "0.6h",
+                  "status": "completed",
+                  "tags": ["S78", "dbt-canon", "cnInvCmm", "DbtValue"]
+                },
+                "entry": "Вкладка Комментарии: корень Dbt → слоты → DbtValue → листья cmm на Value; добавление через модалку группы (yr_CmmGr / New) и типа. Локальный макет, в БД не пишем (cnicDv / I4). Next: GraphQL cmm по dvKey после I4."
+              }
+            },
+            {
+              "log": {
+                "displayName": "Поиск канона: омоглифы А/A в № СФ (success). № log-2026-09-09-010",
+                "log-attributes": {
+                  "id": "log-2026-09-09-010",
+                  "timestamp": "2026-09-09T16:15:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": ["S78", "dbt-canon", "search", "invNum"]
+                },
+                "entry": "Поиск № СФ сворачивает кириллицу/латиницу (А56 vs A56). FemsqTable передаёт свежие columnFilters в @request. Next: CRUD cmm на DbtValue."
+              }
+            },
+            {
+              "log": {
+                "displayName": "S77 I4: *Dv → DbtValue на DEV sudz (success). № log-2026-09-09-011",
+                "log-attributes": {
+                  "id": "log-2026-09-09-011",
+                  "timestamp": "2026-09-09T16:40:00+03:00",
+                  "level": "success",
+                  "effort": "0.3h",
+                  "status": "completed",
+                  "tags": ["S77", "I4", "cnicDv", "DbtValue"]
+                },
+                "entry": "Применён 02_DRAFT_cmm_D3double_Dv.sql на FishEye.sudz (не ags/test_sudz/prod): nullable cnicDv/cicaDv/ciccDv/cnicdDv/cnicfDv/cnigDv + FK на DbtValue. *Dbt/*InvAccnt без изменений. Backfill и GraphQL CRUD — next."
+              }
+            },
+            {
+              "log": {
+                "displayName": "S78.6: backfill *Dv + GraphQL cmm на Value (success). № log-2026-09-09-012",
+                "log-attributes": {
+                  "id": "log-2026-09-09-012",
+                  "timestamp": "2026-09-09T17:25:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "tags": ["S78", "S77", "cnicDv", "graphql", "comments"]
+                },
+                "entry": "Backfill 04: 4+2+2 stage1 на dv 100276/100233 (срез группы 805 = upl 901 yr900). GraphQL upsert/deleteSudzDbtCanonComment по dvKey; вкладка Комментарии без stubs. Split/Merge переносят *Dv; delete Value отказ при cmm. UNIQUE (группа,тип,dv) и полоса C экспортёра — next. Не 85166."
               }
             }
           ]

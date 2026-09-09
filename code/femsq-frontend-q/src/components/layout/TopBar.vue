@@ -103,6 +103,7 @@
           'femsq-nav-item--active':
             activeView === 'sudz-portfolio' ||
             activeView === 'sudz-debts' ||
+            activeView === 'sudz-dbt-canon' ||
             activeView === 'sudz-dbt-upl' ||
             activeView === 'sudz-pmt-upl'
         }"
@@ -130,6 +131,15 @@
               @click="handleNavigate('sudz-debts')"
             >
               <QItemSection>Долги / мероприятия</QItemSection>
+            </QItem>
+            <QItem
+              clickable
+              v-close-popup
+              :active="activeView === 'sudz-dbt-canon'"
+              data-test="nav-sudz-dbt-canon"
+              @click="handleNavigate('sudz-dbt-canon')"
+            >
+              <QItemSection>Долг (канон)</QItemSection>
             </QItem>
             <QItem clickable disable>
               <QItemSection>Исходящие документы</QItemSection>

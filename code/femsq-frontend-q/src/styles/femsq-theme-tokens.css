@@ -85,6 +85,8 @@ html[data-femsq-theme='kimbie-dark'] {
   --femsq-log-anomaly-ref: #c9a0ff;
   --femsq-log-scrollbar-thumb: rgba(209, 154, 102, 0.55);
   --femsq-log-scrollbar-track: rgba(0, 0, 0, 0.25);
+  --femsq-chart-current: #98c379;
+  --femsq-chart-overdue: #d19a66;
 
   color-scheme: dark;
 }
@@ -157,6 +159,8 @@ html[data-femsq-theme='vs-light'] {
   --femsq-log-anomaly-ref: #6b3fa0;
   --femsq-log-scrollbar-thumb: rgba(0, 0, 0, 0.35);
   --femsq-log-scrollbar-track: rgba(0, 0, 0, 0.06);
+  --femsq-chart-current: #107c10;
+  --femsq-chart-overdue: #c19c00;
 
   color-scheme: light;
 }

@@ -36,6 +36,9 @@ import com.femsq.database.model.sudz.SudzDbtUplOrgNotInBuirg;
 import com.femsq.database.model.sudz.SudzDbtUplTblRow;
 import com.femsq.database.model.sudz.SudzDbtMergeCommand;
 import com.femsq.database.model.sudz.SudzDbtMergeResult;
+import com.femsq.database.model.sudz.SudzDbtCanonCandidate;
+import com.femsq.database.model.sudz.SudzDbtCanonDetail;
+import com.femsq.database.model.sudz.SudzDbtCanonSearchFilter;
 import com.femsq.database.model.sudz.SudzDbtSplitCommand;
 import com.femsq.database.model.sudz.SudzDbtSplitResult;
 import com.femsq.database.model.sudz.SudzDebtCollection;
@@ -810,4 +813,83 @@ public interface SudzDao {
      * @return сколько мостов/Value затронуто
      */
     SudzDbtMergeResult mergeDbt(SudzDbtMergeCommand command);
+
+    /**
+     * Поиск канонов Dbt по фильтрам (S78).
+     *
+     * @param filter критерии (хотя бы один)
+     * @return кандидаты (схлопнуты по dbtKey)
+     */
+    List<SudzDbtCanonCandidate> searchDbtCanons(SudzDbtCanonSearchFilter filter);
+
+    /**
+     * Карточка канона со слотами и Value (S78).
+     *
+     * @param dbtKey ключ канона
+     * @return деталь
+     */
+    SudzDbtCanonDetail findDbtCanon(int dbtKey);
+
+    /**
+     * Привязать слот к канону (INSERT или UPDATE моста) (S78).
+     *
+     * @param slotKey слот invDbt
+     * @param dbtKey канон
+     * @return обновлённая карточка канона
+     */
+    SudzDbtCanonDetail linkInvDbtToDbt(int slotKey, int dbtKey);
+
+    /**
+     * Отвязать слот от канона; отказ при наличии DbtValue (S78).
+     *
+     * @param slotKey слот
+     * @return карточка канона после отвязки
+     */
+    SudzDbtCanonDetail unlinkInvDbtFromDbt(int slotKey);
+
+    /**
+     * Создать или обновить {@code DbtValue} на слоте канона (S78.4D).
+     *
+     * @param slotKey слот
+     * @param valueKey ключ Value или {@code null} для INSERT
+     * @param uplKey выгрузка
+     * @param ttl сумма
+     * @param overd просрочка (может быть {@code null})
+     * @return карточка канона
+     */
+    SudzDbtCanonDetail upsertDbtCanonValue(
+            int slotKey,
+            Integer valueKey,
+            int uplKey,
+            java.math.BigDecimal ttl,
+            java.math.BigDecimal overd
+    );
+
+    /**
+     * Удалить {@code DbtValue} (S78.4D), чтобы можно было отвязать слот.
+     *
+     * @param valueKey ключ Value
+     * @return карточка канона
+     */
+    SudzDbtCanonDetail deleteDbtCanonValue(int valueKey);
+
+    /**
+     * Upsert {@code cnInvCmm} на {@code DbtValue} (группа + тип 1/8).
+     * Пустой текст сохраняет строку.
+     *
+     * @param valueKey {@code dvKey}
+     * @param cmmGrKey {@code cnicGroup}
+     * @param cnicType 1 или 8
+     * @param text текст (может быть пустым)
+     * @return карточка канона
+     */
+    SudzDbtCanonDetail upsertDbtCanonComment(int valueKey, int cmmGrKey, int cnicType, String text);
+
+    /**
+     * Удалить комментарий канона по {@code cnicKey}.
+     *
+     * @param cmmKey {@code cnicKey}
+     * @return карточка канона
+     */
+    SudzDbtCanonDetail deleteDbtCanonComment(int cmmKey);
 }

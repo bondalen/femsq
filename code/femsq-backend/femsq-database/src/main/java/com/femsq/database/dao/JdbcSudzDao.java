@@ -18,6 +18,10 @@ import com.femsq.database.model.sudz.SudzInvDbtVarCnNumCandidate;
 import com.femsq.database.model.sudz.SudzInvDbtVarInvNumCandidate;
 import com.femsq.database.model.sudz.SudzInvDbtVarSideCandidate;
 import com.femsq.database.model.sudz.SudzD644Row;
+import com.femsq.database.model.sudz.SudzDbtCanonCandidate;
+import com.femsq.database.model.sudz.SudzDbtCanonDetail;
+import com.femsq.database.model.sudz.SudzDbtCanonSearchFilter;
+import com.femsq.database.model.sudz.SudzInvNumFold;
 import com.femsq.database.model.sudz.SudzDbtMergeCommand;
 import com.femsq.database.model.sudz.SudzDbtMergeMode;
 import com.femsq.database.model.sudz.SudzDbtMergeResult;
@@ -93,12 +97,15 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -5570,6 +5577,9 @@ public class JdbcSudzDao implements SudzDao {
                 }
                 boolean removed = false;
                 if (sourceDvKey != null) {
+                    if (!created.isEmpty()) {
+                        retargetCmmDv(connection, sourceDvKey, created.get(0).valueKey());
+                    }
                     try (PreparedStatement del = connection.prepareStatement(
                             "DELETE FROM " + dbtValue + " WHERE dvKey = ?")) {
                         del.setInt(1, sourceDvKey);
@@ -5782,6 +5792,19 @@ public class JdbcSudzDao implements SudzDao {
                     if (refVar == null || refVar <= 0) {
                         throw new IllegalArgumentException("SHARES_ON_UPL: нет invDbtVar для целой Value");
                     }
+                    List<Integer> shareDvKeys = new ArrayList<>();
+                    for (Integer slotKey : command.slotKeys()) {
+                        try (PreparedStatement ps = connection.prepareStatement(
+                                "SELECT dvKey FROM " + dbtValue + " WHERE dvInvDbt = ? AND dvUpl = ?")) {
+                            ps.setInt(1, slotKey);
+                            ps.setInt(2, uplKey);
+                            try (ResultSet rs = ps.executeQuery()) {
+                                if (rs.next()) {
+                                    shareDvKeys.add(rs.getInt("dvKey"));
+                                }
+                            }
+                        }
+                    }
                     for (Integer slotKey : command.slotKeys()) {
                         try (PreparedStatement del = connection.prepareStatement(
                                 "DELETE FROM " + dbtValue + " WHERE dvInvDbt = ? AND dvUpl = ?")) {
@@ -5816,6 +5839,12 @@ public class JdbcSudzDao implements SudzDao {
                         ins.executeUpdate();
                         restoredValueKey = readGeneratedKey(ins, "Не удалось получить dvKey merge-back");
                     }
+                    for (Integer oldDv : shareDvKeys) {
+                        retargetCmmDv(
+                                connection,
+                                oldDv,
+                                Objects.requireNonNull(restoredValueKey, "restoredValueKey"));
+                    }
                 } else {
                     throw new IllegalArgumentException("Неизвестный режим Merge: " + command.mode());
                 }
@@ -5841,6 +5870,720 @@ public class JdbcSudzDao implements SudzDao {
             throw exception;
         } catch (SQLException exception) {
             throw wrap("Не удалось выполнить Merge dbt=" + command.survivorDbtKey(), exception);
+        }
+    }
+
+    @Override
+    public List<SudzDbtCanonCandidate> searchDbtCanons(SudzDbtCanonSearchFilter filter) {
+        Objects.requireNonNull(filter, "filter");
+        int limit = filter.limit() <= 0 ? 50 : Math.min(filter.limit(), 200);
+        boolean has =
+                (filter.dbtKey() != null && filter.dbtKey() > 0)
+                        || (filter.cnNum() != null && !filter.cnNum().isBlank())
+                        || (filter.invNum() != null && !filter.invNum().isBlank())
+                        || (filter.orgName() != null && !filter.orgName().isBlank())
+                        || filter.orgBuirg() != null
+                        || filter.csoDate() != null
+                        || filter.idNum() != null;
+        if (!has) {
+            throw new IllegalArgumentException(
+                    "Задайте хотя бы один критерий поиска (СФ, договор, БУиРГ, дата, idNum или dbtKey)");
+        }
+        String invDbt = q("invDbt");
+        String invDbtDbt = q("invDbtDbt");
+        String invDbtVar = q("invDbtVar");
+        String bridge = q("invDbtDbtVar");
+        String dbtValue = q("DbtValue");
+        StringBuilder sql = new StringBuilder();
+        sql.append("WITH base AS ( ")
+                .append("  SELECT idd.iddDbt AS dbtKey, d.idKey AS slotKey, d.idNum, ")
+                .append("         cn.cnnNumNull AS cnNum, inv.inNumNull AS invNum, ")
+                .append("         oi.org_id_value_l AS orgBuirg, og.ogNm AS orgName, ")
+                .append("         CASE WHEN o.csoCnDate IS NULL THEN CAST('19000101' AS date) ")
+                .append("              ELSE CAST(o.csoCnDate AS date) END AS csoDate ")
+                .append("  FROM ").append(invDbtDbt).append(" AS idd ")
+                .append("  INNER JOIN ").append(invDbt).append(" AS d ON d.idKey = idd.iddInvDbt ")
+                .append("  LEFT JOIN ").append(bridge).append(" AS b ON b.iddvInvDbt = d.idKey ")
+                .append("  LEFT JOIN ").append(invDbtVar).append(" AS v ON v.idvvKey = b.iddvInvDbtVar ")
+                .append("  LEFT JOIN ags.cnNum AS cn ON cn.cnnKey = v.idvvCnNum ")
+                .append("  LEFT JOIN ags.invNum AS inv ON inv.inKey = v.idvvInvNum ")
+                .append("  LEFT JOIN ags.cn_s_org AS o ON o.cn_s_org_key = v.idvvCn_s_org ")
+                .append("  LEFT JOIN ags.cn_s_org_smpl AS m ON m.csosKey = o.csoCn_s_org_smpl ")
+                .append("  LEFT JOIN ags.org_id AS oi ON oi.org_id_key = m.csosOrgId AND oi.org_id_type = 1 ")
+                .append("  LEFT JOIN ags.og AS og ON og.ogKey = oi.org ")
+                .append("  WHERE 1 = 1 ");
+        List<Object> params = new ArrayList<>();
+        if (filter.dbtKey() != null && filter.dbtKey() > 0) {
+            sql.append(" AND idd.iddDbt = ? ");
+            params.add(filter.dbtKey());
+        }
+        if (filter.cnNum() != null && !filter.cnNum().isBlank()) {
+            sql.append(" AND cn.cnnNumNull LIKE ? ");
+            params.add("%" + filter.cnNum().trim() + "%");
+        }
+        if (filter.invNum() != null && !filter.invNum().isBlank()) {
+            sql.append(" AND ")
+                    .append(SudzInvNumFold.sqlFoldExpr("inv.inNumNull"))
+                    .append(" LIKE ? ");
+            params.add("%" + SudzInvNumFold.fold(filter.invNum().trim()) + "%");
+        }
+        if (filter.orgBuirg() != null) {
+            sql.append(" AND oi.org_id_value_l = ? ");
+            params.add(filter.orgBuirg());
+        }
+        if (filter.orgName() != null && !filter.orgName().isBlank()) {
+            sql.append(" AND og.ogNm LIKE ? ");
+            params.add("%" + filter.orgName().trim() + "%");
+        }
+        if (filter.csoDate() != null) {
+            sql.append(" AND CASE WHEN o.csoCnDate IS NULL THEN CAST('19000101' AS date) ")
+                    .append(" ELSE CAST(o.csoCnDate AS date) END = ? ");
+            params.add(Date.valueOf(filter.csoDate()));
+        }
+        if (filter.idNum() != null) {
+            sql.append(" AND d.idNum = ? ");
+            params.add(filter.idNum());
+        }
+        sql.append("), ")
+                .append("agg AS ( ")
+                .append("  SELECT dbtKey, COUNT(DISTINCT slotKey) AS slotCount, ")
+                .append("         MIN(cnNum) AS cnNum, MIN(invNum) AS invNum, ")
+                .append("         MIN(orgBuirg) AS orgBuirg, MIN(orgName) AS orgName, MIN(csoDate) AS csoDate, ")
+                .append("         MIN(idNum) AS idNumMin, MAX(idNum) AS idNumMax ")
+                .append("  FROM base GROUP BY dbtKey ")
+                .append("), ")
+                .append("lastUpl AS ( ")
+                .append("  SELECT idd.iddDbt AS dbtKey, MAX(dv.dvUpl) AS maxUpl ")
+                .append("  FROM ").append(invDbtDbt).append(" AS idd ")
+                .append("  INNER JOIN ").append(dbtValue).append(" AS dv ON dv.dvInvDbt = idd.iddInvDbt ")
+                .append("  GROUP BY idd.iddDbt ")
+                .append("), ")
+                .append("ttlAt AS ( ")
+                .append("  SELECT idd.iddDbt AS dbtKey, SUM(CAST(dv.dvTtl AS decimal(19,4))) AS lastTtlSum ")
+                .append("  FROM ").append(invDbtDbt).append(" AS idd ")
+                .append("  INNER JOIN ").append(dbtValue).append(" AS dv ON dv.dvInvDbt = idd.iddInvDbt ")
+                .append("  INNER JOIN lastUpl AS lu ON lu.dbtKey = idd.iddDbt AND lu.maxUpl = dv.dvUpl ")
+                .append("  GROUP BY idd.iddDbt ")
+                .append(") ")
+                .append("SELECT TOP (").append(limit).append(") ")
+                .append("  a.dbtKey, a.slotCount, a.cnNum, a.invNum, a.orgBuirg, a.orgName, a.csoDate, ")
+                .append("  a.idNumMin, a.idNumMax, t.lastTtlSum ")
+                .append("FROM agg AS a ")
+                .append("LEFT JOIN ttlAt AS t ON t.dbtKey = a.dbtKey ")
+                .append("ORDER BY a.dbtKey");
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement ps = connection.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                Object p = params.get(i);
+                if (p instanceof Date date) {
+                    ps.setDate(i + 1, date);
+                } else if (p instanceof Integer integer) {
+                    ps.setInt(i + 1, integer);
+                } else if (p instanceof Long longVal) {
+                    ps.setLong(i + 1, longVal);
+                } else {
+                    ps.setNString(i + 1, Objects.toString(p, null));
+                }
+            }
+            List<SudzDbtCanonCandidate> out = new ArrayList<>();
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    out.add(new SudzDbtCanonCandidate(
+                            rs.getInt("dbtKey"),
+                            rs.getInt("slotCount"),
+                            rs.getNString("cnNum"),
+                            rs.getNString("invNum"),
+                            getInteger(rs, "orgBuirg"),
+                            rs.getNString("orgName"),
+                            getLocalDate(rs, "csoDate"),
+                            getInteger(rs, "idNumMin"),
+                            getInteger(rs, "idNumMax"),
+                            rs.getBigDecimal("lastTtlSum")));
+                }
+            }
+            return List.copyOf(out);
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось найти каноны Dbt", exception);
+        }
+    }
+
+    @Override
+    public SudzDbtCanonDetail findDbtCanon(int dbtKey) {
+        if (dbtKey <= 0) {
+            throw new IllegalArgumentException("dbtKey должен быть положительным: " + dbtKey);
+        }
+        String invDbt = q("invDbt");
+        String invDbtDbt = q("invDbtDbt");
+        String invDbtVar = q("invDbtVar");
+        String bridge = q("invDbtDbtVar");
+        String dbtValue = q("DbtValue");
+        String dbt = q("Dbt");
+        String existsSql = "SELECT 1 FROM " + dbt + " WHERE dbtKey = ?";
+        String slotsSql = ""
+                + "SELECT d.idKey AS slotKey, d.idInv AS iKey, d.idNum, "
+                + "       v.idvvKey AS varKey, cn.cnnNumNull AS cnNum, inv.inNumNull AS invNum, "
+                + "       oi.org_id_value_l AS orgBuirg, "
+                + "       CASE WHEN o.csoCnDate IS NULL THEN CAST('19000101' AS date) "
+                + "            ELSE CAST(o.csoCnDate AS date) END AS csoDate, "
+                + "       v.idvvAccnt AS accountKey, a.account_num AS accountNum "
+                + "FROM " + invDbtDbt + " AS idd "
+                + "INNER JOIN " + invDbt + " AS d ON d.idKey = idd.iddInvDbt "
+                + "LEFT JOIN " + bridge + " AS b ON b.iddvInvDbt = d.idKey "
+                + "LEFT JOIN " + invDbtVar + " AS v ON v.idvvKey = b.iddvInvDbtVar "
+                + "LEFT JOIN ags.cnNum AS cn ON cn.cnnKey = v.idvvCnNum "
+                + "LEFT JOIN ags.invNum AS inv ON inv.inKey = v.idvvInvNum "
+                + "LEFT JOIN ags.cn_s_org AS o ON o.cn_s_org_key = v.idvvCn_s_org "
+                + "LEFT JOIN ags.cn_s_org_smpl AS m ON m.csosKey = o.csoCn_s_org_smpl "
+                + "LEFT JOIN ags.org_id AS oi ON oi.org_id_key = m.csosOrgId AND oi.org_id_type = 1 "
+                + "LEFT JOIN ags.accnt AS a ON a.account_key = v.idvvAccnt "
+                + "WHERE idd.iddDbt = ? "
+                + "ORDER BY d.idInv, d.idNum, d.idKey";
+        String valuesSql = ""
+                + "SELECT dv.dvKey, dv.dvUpl, dv.dvTtl, dv.dvOverd, "
+                + "       u.upl_name AS uplName, "
+                + "       CAST(u.upl_date AS date) AS uplDate, "
+                + "       CAST(u.uplStatusOnDate AS date) AS uplStatusOnDate "
+                + "FROM " + dbtValue + " AS dv "
+                + "LEFT JOIN " + q("cn_inv_dbt_upl") + " AS u ON u.upl_key = dv.dvUpl "
+                + "WHERE dv.dvInvDbt = ? "
+                + "ORDER BY COALESCE(u.uplStatusOnDate, u.upl_date) DESC, dv.dvUpl DESC";
+        try (Connection connection = connectionFactory.createConnection()) {
+            try (PreparedStatement ps = connection.prepareStatement(existsSql)) {
+                ps.setInt(1, dbtKey);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) {
+                        throw new IllegalArgumentException("Канон Dbt не найден: " + dbtKey);
+                    }
+                }
+            }
+            List<SudzDbtCanonDetail.SudzDbtCanonSlot> slots = new ArrayList<>();
+            Set<Integer> seenSlots = new HashSet<>();
+            try (PreparedStatement ps = connection.prepareStatement(slotsSql)) {
+                ps.setInt(1, dbtKey);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        int slotKey = rs.getInt("slotKey");
+                        if (!seenSlots.add(slotKey)) {
+                            continue;
+                        }
+                        List<SudzDbtCanonDetail.SudzDbtCanonValue> values = new ArrayList<>();
+                        try (PreparedStatement vp = connection.prepareStatement(valuesSql)) {
+                            vp.setInt(1, slotKey);
+                            try (ResultSet vr = vp.executeQuery()) {
+                                while (vr.next()) {
+                                    values.add(new SudzDbtCanonDetail.SudzDbtCanonValue(
+                                            vr.getInt("dvKey"),
+                                            vr.getInt("dvUpl"),
+                                            vr.getBigDecimal("dvTtl"),
+                                            vr.getBigDecimal("dvOverd"),
+                                            vr.getNString("uplName"),
+                                            getLocalDate(vr, "uplDate"),
+                                            getLocalDate(vr, "uplStatusOnDate"),
+                                            List.of()));
+                                }
+                            }
+                        }
+                        slots.add(new SudzDbtCanonDetail.SudzDbtCanonSlot(
+                                slotKey,
+                                rs.getInt("iKey"),
+                                rs.getInt("idNum"),
+                                getInteger(rs, "varKey"),
+                                rs.getNString("cnNum"),
+                                rs.getNString("invNum"),
+                                getInteger(rs, "orgBuirg"),
+                                getLocalDate(rs, "csoDate"),
+                                getInteger(rs, "accountKey"),
+                                getInteger(rs, "accountNum"),
+                                List.copyOf(values)));
+                    }
+                }
+            }
+            List<SudzDbtCanonDetail.SudzDbtCanonCmmYear> cmmYears =
+                    loadCanonCmmYears(connection, slots);
+            List<SudzDbtCanonDetail.SudzDbtCanonSlot> withComments =
+                    attachCanonComments(connection, slots, cmmYears);
+            return new SudzDbtCanonDetail(dbtKey, List.copyOf(withComments), List.copyOf(cmmYears));
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось загрузить канон Dbt=" + dbtKey, exception);
+        }
+    }
+
+    @Override
+    public SudzDbtCanonDetail linkInvDbtToDbt(int slotKey, int dbtKey) {
+        if (slotKey <= 0 || dbtKey <= 0) {
+            throw new IllegalArgumentException("slotKey и dbtKey должны быть положительными");
+        }
+        String invDbt = q("invDbt");
+        String invDbtDbt = q("invDbtDbt");
+        String dbt = q("Dbt");
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps = connection.prepareStatement(
+                        "SELECT 1 FROM " + dbt + " WHERE dbtKey = ?")) {
+                    ps.setInt(1, dbtKey);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) {
+                            throw new IllegalArgumentException("Канон Dbt не найден: " + dbtKey);
+                        }
+                    }
+                }
+                try (PreparedStatement ps = connection.prepareStatement(
+                        "SELECT 1 FROM " + invDbt + " WHERE idKey = ?")) {
+                    ps.setInt(1, slotKey);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) {
+                            throw new IllegalArgumentException("Слот invDbt не найден: " + slotKey);
+                        }
+                    }
+                }
+                Integer current = null;
+                try (PreparedStatement ps = connection.prepareStatement(
+                        "SELECT iddDbt FROM " + invDbtDbt + " WHERE iddInvDbt = ?")) {
+                    ps.setInt(1, slotKey);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            current = rs.getInt("iddDbt");
+                        }
+                    }
+                }
+                if (current == null) {
+                    try (PreparedStatement ins = connection.prepareStatement(
+                            "INSERT INTO " + invDbtDbt
+                                    + " (iddInv, iddDbt, iddInvDbt, iddTimeOfEntry) "
+                                    + "SELECT d.idInv, ?, d.idKey, ? FROM " + invDbt + " AS d "
+                                    + "WHERE d.idKey = ?")) {
+                        ins.setInt(1, dbtKey);
+                        ins.setTimestamp(2, now);
+                        ins.setInt(3, slotKey);
+                        if (ins.executeUpdate() != 1) {
+                            throw new IllegalStateException(
+                                    "Не удалось вставить мост invDbtDbt для слота " + slotKey);
+                        }
+                    }
+                } else if (current != dbtKey) {
+                    try (PreparedStatement upd = connection.prepareStatement(
+                            "UPDATE " + invDbtDbt + " SET iddDbt = ? WHERE iddInvDbt = ?")) {
+                        upd.setInt(1, dbtKey);
+                        upd.setInt(2, slotKey);
+                        upd.executeUpdate();
+                    }
+                }
+                connection.commit();
+                log.log(Level.INFO,
+                        "linkInvDbtToDbt slot={0} dbt={1} previous={2}",
+                        new Object[]{slotKey, dbtKey, current});
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+            return findDbtCanon(dbtKey);
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось привязать слот " + slotKey + " к Dbt " + dbtKey, exception);
+        }
+    }
+
+    @Override
+    public SudzDbtCanonDetail unlinkInvDbtFromDbt(int slotKey) {
+        if (slotKey <= 0) {
+            throw new IllegalArgumentException("slotKey должен быть положительным: " + slotKey);
+        }
+        String invDbtDbt = q("invDbtDbt");
+        String dbtValue = q("DbtValue");
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            Integer dbtKey;
+            try {
+                try (PreparedStatement ps = connection.prepareStatement(
+                        "SELECT iddDbt FROM " + invDbtDbt + " WHERE iddInvDbt = ?")) {
+                    ps.setInt(1, slotKey);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) {
+                            throw new IllegalArgumentException(
+                                    "У слота нет связи с каноном: " + slotKey);
+                        }
+                        dbtKey = rs.getInt("iddDbt");
+                    }
+                }
+                try (PreparedStatement ps = connection.prepareStatement(
+                        "SELECT COUNT(*) AS n FROM " + dbtValue + " WHERE dvInvDbt = ?")) {
+                    ps.setInt(1, slotKey);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        rs.next();
+                        if (rs.getInt("n") > 0) {
+                            throw new IllegalArgumentException(
+                                    "Нельзя отвязать слот " + slotKey
+                                            + ": есть DbtValue. Сначала обработайте Value.");
+                        }
+                    }
+                }
+                try (PreparedStatement del = connection.prepareStatement(
+                        "DELETE FROM " + invDbtDbt + " WHERE iddInvDbt = ?")) {
+                    del.setInt(1, slotKey);
+                    del.executeUpdate();
+                }
+                connection.commit();
+                log.log(Level.INFO,
+                        "unlinkInvDbtFromDbt slot={0} dbt={1}",
+                        new Object[]{slotKey, dbtKey});
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+            return findDbtCanon(dbtKey);
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось отвязать слот " + slotKey, exception);
+        }
+    }
+
+    @Override
+    public SudzDbtCanonDetail upsertDbtCanonValue(
+            int slotKey,
+            Integer valueKey,
+            int uplKey,
+            BigDecimal ttl,
+            BigDecimal overd
+    ) {
+        if (slotKey <= 0 || uplKey <= 0) {
+            throw new IllegalArgumentException("slotKey и uplKey должны быть положительными");
+        }
+        if (ttl == null) {
+            throw new IllegalArgumentException("ttl обязателен");
+        }
+        String invDbtDbt = q("invDbtDbt");
+        String bridge = q("invDbtDbtVar");
+        String dbtValue = q("DbtValue");
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            int dbtKey;
+            try {
+                try (PreparedStatement ps = connection.prepareStatement(
+                        "SELECT iddDbt FROM " + invDbtDbt + " WHERE iddInvDbt = ?")) {
+                    ps.setInt(1, slotKey);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) {
+                            throw new IllegalArgumentException(
+                                    "У слота нет связи с каноном: " + slotKey);
+                        }
+                        dbtKey = rs.getInt("iddDbt");
+                    }
+                }
+                if (valueKey != null && valueKey > 0) {
+                    try (PreparedStatement upd = connection.prepareStatement(
+                            "UPDATE " + dbtValue
+                                    + " SET dvTtl = ?, dvOverd = ?, dvUpl = ? "
+                                    + "WHERE dvKey = ? AND dvInvDbt = ?")) {
+                        upd.setBigDecimal(1, ttl);
+                        if (overd == null) {
+                            upd.setNull(2, Types.DECIMAL);
+                        } else {
+                            upd.setBigDecimal(2, overd);
+                        }
+                        upd.setInt(3, uplKey);
+                        upd.setInt(4, valueKey);
+                        upd.setInt(5, slotKey);
+                        int n = upd.executeUpdate();
+                        if (n == 0) {
+                            throw new IllegalArgumentException(
+                                    "Value " + valueKey + " не найден на слоте " + slotKey);
+                        }
+                    }
+                } else {
+                    Integer varKey = null;
+                    try (PreparedStatement ps = connection.prepareStatement(
+                            "SELECT iddvInvDbtVar FROM " + bridge + " WHERE iddvInvDbt = ?")) {
+                        ps.setInt(1, slotKey);
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next()) {
+                                varKey = rs.getInt("iddvInvDbtVar");
+                            }
+                        }
+                    }
+                    if (varKey == null || varKey <= 0) {
+                        throw new IllegalArgumentException(
+                                "Нет invDbtVar на слоте " + slotKey + " — нельзя создать Value");
+                    }
+                    try (PreparedStatement chk = connection.prepareStatement(
+                            "SELECT dvKey FROM " + dbtValue
+                                    + " WHERE dvInvDbt = ? AND dvUpl = ?")) {
+                        chk.setInt(1, slotKey);
+                        chk.setInt(2, uplKey);
+                        try (ResultSet rs = chk.executeQuery()) {
+                            if (rs.next()) {
+                                throw new IllegalArgumentException(
+                                        "На слоте " + slotKey + " уже есть Value для upl " + uplKey);
+                            }
+                        }
+                    }
+                    Date refStart = null;
+                    Date refMaturity = null;
+                    String refDoc = null;
+                    try (PreparedStatement ref = connection.prepareStatement(
+                            "SELECT TOP (1) dvDateStart, dvDateMaturity, dvDocBase FROM "
+                                    + dbtValue + " WHERE dvInvDbt = ? ORDER BY dvUpl DESC")) {
+                        ref.setInt(1, slotKey);
+                        try (ResultSet rs = ref.executeQuery()) {
+                            if (rs.next()) {
+                                refStart = rs.getDate("dvDateStart");
+                                refMaturity = rs.getDate("dvDateMaturity");
+                                refDoc = rs.getNString("dvDocBase");
+                            }
+                        }
+                    }
+                    try (PreparedStatement ins = connection.prepareStatement(
+                            "INSERT INTO " + dbtValue
+                                    + " (dvInvDbt, dvInvDbtVar, dvUpl, dvTtl, dvOverd,"
+                                    + "  dvDateStart, dvDateMaturity, dvDocBase, dvTimeOfEntry) "
+                                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                        ins.setInt(1, slotKey);
+                        ins.setInt(2, varKey);
+                        ins.setInt(3, uplKey);
+                        ins.setBigDecimal(4, ttl);
+                        if (overd == null) {
+                            ins.setNull(5, Types.DECIMAL);
+                        } else {
+                            ins.setBigDecimal(5, overd);
+                        }
+                        if (refStart == null) {
+                            ins.setNull(6, Types.DATE);
+                        } else {
+                            ins.setDate(6, refStart);
+                        }
+                        if (refMaturity == null) {
+                            ins.setNull(7, Types.DATE);
+                        } else {
+                            ins.setDate(7, refMaturity);
+                        }
+                        ins.setNString(8, refDoc);
+                        ins.setTimestamp(9, now);
+                        ins.executeUpdate();
+                    }
+                }
+                connection.commit();
+                log.log(Level.INFO,
+                        "upsertDbtCanonValue slot={0} value={1} upl={2} ttl={3}",
+                        new Object[]{slotKey, valueKey, uplKey, ttl});
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+            return findDbtCanon(dbtKey);
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось сохранить Value слота " + slotKey, exception);
+        }
+    }
+
+    @Override
+    public SudzDbtCanonDetail deleteDbtCanonValue(int valueKey) {
+        if (valueKey <= 0) {
+            throw new IllegalArgumentException("valueKey должен быть положительным: " + valueKey);
+        }
+        String dbtValue = q("DbtValue");
+        String invDbtDbt = q("invDbtDbt");
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            int dbtKey;
+            try {
+                Integer slotKey = null;
+                try (PreparedStatement ps = connection.prepareStatement(
+                        "SELECT dvInvDbt FROM " + dbtValue + " WHERE dvKey = ?")) {
+                    ps.setInt(1, valueKey);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) {
+                            throw new IllegalArgumentException("Value не найден: " + valueKey);
+                        }
+                        slotKey = rs.getInt("dvInvDbt");
+                    }
+                }
+                try (PreparedStatement ps = connection.prepareStatement(
+                        "SELECT iddDbt FROM " + invDbtDbt + " WHERE iddInvDbt = ?")) {
+                    ps.setInt(1, slotKey);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) {
+                            throw new IllegalArgumentException(
+                                    "У слота Value нет канона: " + slotKey);
+                        }
+                        dbtKey = rs.getInt("iddDbt");
+                    }
+                }
+                if (countCommentsOnValue(connection, valueKey) > 0) {
+                    throw new IllegalArgumentException(
+                            "Сначала удалите комментарии с Value " + valueKey);
+                }
+                try (PreparedStatement del = connection.prepareStatement(
+                        "DELETE FROM " + dbtValue + " WHERE dvKey = ?")) {
+                    del.setInt(1, valueKey);
+                    del.executeUpdate();
+                }
+                connection.commit();
+                log.log(Level.INFO,
+                        "deleteDbtCanonValue value={0} slot={1} dbt={2}",
+                        new Object[]{valueKey, slotKey, dbtKey});
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+            return findDbtCanon(dbtKey);
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось удалить Value " + valueKey, exception);
+        }
+    }
+
+    @Override
+    public SudzDbtCanonDetail upsertDbtCanonComment(
+            int valueKey,
+            int cmmGrKey,
+            int cnicType,
+            String text
+    ) {
+        if (valueKey <= 0 || cmmGrKey <= 0) {
+            throw new IllegalArgumentException("valueKey и cmmGrKey должны быть положительными");
+        }
+        if (cnicType != CNIC_TYPE_MERY && cnicType != CNIC_TYPE_CURATOR) {
+            throw new IllegalArgumentException("cnicType должен быть 1 или 8: " + cnicType);
+        }
+        String body = text == null ? "" : text;
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            int dbtKey = 0;
+            try {
+                dbtKey = resolveDbtKeyForValue(connection, valueKey);
+                ensureCmmGrExists(connection, cmmGrKey);
+                String updateSql = "UPDATE " + q("cnInvCmm")
+                        + " SET cnicText = ?, cnicDbt = ?, cnicInvAccnt = ? "
+                        + " WHERE cnicGroup = ? AND cnicType = ? AND cnicDv = ?";
+                int updated;
+                try (PreparedStatement statement = connection.prepareStatement(updateSql)) {
+                    statement.setNString(1, body);
+                    statement.setInt(2, dbtKey);
+                    statement.setInt(3, dbtKey);
+                    statement.setInt(4, cmmGrKey);
+                    statement.setInt(5, cnicType);
+                    statement.setInt(6, valueKey);
+                    updated = statement.executeUpdate();
+                }
+                if (updated == 0) {
+                    String insertSql = "INSERT INTO " + q("cnInvCmm")
+                            + " (cnicType, cnicGroup, cnicInv, cnicText, cnicInvAccnt, cnicDbt, cnicDv) "
+                            + " VALUES (?, ?, NULL, ?, ?, ?, ?)";
+                    try (PreparedStatement statement = connection.prepareStatement(insertSql)) {
+                        statement.setInt(1, cnicType);
+                        statement.setInt(2, cmmGrKey);
+                        statement.setNString(3, body);
+                        statement.setInt(4, dbtKey);
+                        statement.setInt(5, dbtKey);
+                        statement.setInt(6, valueKey);
+                        statement.executeUpdate();
+                    }
+                }
+                connection.commit();
+                log.log(Level.INFO,
+                        "upsertDbtCanonComment value={0} gr={1} type={2} updated={3}",
+                        new Object[]{valueKey, cmmGrKey, cnicType, updated});
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+            return findDbtCanon(dbtKey);
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось сохранить комментарий Value=" + valueKey, exception);
+        }
+    }
+
+    @Override
+    public SudzDbtCanonDetail deleteDbtCanonComment(int cmmKey) {
+        if (cmmKey <= 0) {
+            throw new IllegalArgumentException("cmmKey должен быть положительным: " + cmmKey);
+        }
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            int dbtKey = 0;
+            try {
+                Integer valueKey = null;
+                try (PreparedStatement ps = connection.prepareStatement(
+                        "SELECT cnicDv, cnicDbt, cnicInvAccnt FROM " + q("cnInvCmm")
+                                + " WHERE cnicKey = ?")) {
+                    ps.setInt(1, cmmKey);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) {
+                            throw new IllegalArgumentException("Комментарий не найден: " + cmmKey);
+                        }
+                        valueKey = getInteger(rs, "cnicDv");
+                        Integer dbt = getInteger(rs, "cnicDbt");
+                        if (dbt == null) {
+                            dbt = getInteger(rs, "cnicInvAccnt");
+                        }
+                        if (valueKey != null) {
+                            dbtKey = resolveDbtKeyForValue(connection, valueKey);
+                        } else if (dbt != null) {
+                            dbtKey = dbt;
+                        } else {
+                            throw new IllegalArgumentException(
+                                    "У комментария " + cmmKey + " нет канона");
+                        }
+                    }
+                }
+                try (PreparedStatement del = connection.prepareStatement(
+                        "DELETE FROM " + q("cnInvCmm") + " WHERE cnicKey = ?")) {
+                    del.setInt(1, cmmKey);
+                    del.executeUpdate();
+                }
+                connection.commit();
+                log.log(Level.INFO, "deleteDbtCanonComment cmm={0} dbt={1}",
+                        new Object[]{cmmKey, dbtKey});
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+            return findDbtCanon(dbtKey);
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось удалить комментарий " + cmmKey, exception);
         }
     }
 
@@ -8551,6 +9294,225 @@ public class JdbcSudzDao implements SudzDao {
             }
         }
         throw new DaoException(errorMessage);
+    }
+
+    private int resolveDbtKeyForValue(Connection connection, int valueKey) throws SQLException {
+        String sql = "SELECT idd.iddDbt FROM " + q("DbtValue") + " AS dv "
+                + "INNER JOIN " + q("invDbtDbt") + " AS idd ON idd.iddInvDbt = dv.dvInvDbt "
+                + "WHERE dv.dvKey = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, valueKey);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    throw new IllegalArgumentException("Value не найден или без канона: " + valueKey);
+                }
+                return rs.getInt("iddDbt");
+            }
+        }
+    }
+
+    private int countCommentsOnValue(Connection connection, int valueKey) throws SQLException {
+        String sql = "SELECT "
+                + "(SELECT COUNT(*) FROM " + q("cnInvCmm") + " WHERE cnicDv = ?) "
+                + "+ (SELECT COUNT(*) FROM " + q("cnInvCmmAg") + " WHERE cicaDv = ?) "
+                + "+ (SELECT COUNT(*) FROM " + q("cnInvCmmCst") + " WHERE ciccDv = ?) "
+                + "+ (SELECT COUNT(*) FROM " + q("cnInvCmmDt") + " WHERE cnicdDv = ?) "
+                + "+ (SELECT COUNT(*) FROM " + q("cnInvCmmFn") + " WHERE cnicfDv = ?) "
+                + "+ (SELECT COUNT(*) FROM " + q("cnInvGr") + " WHERE cnigDv = ?)";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            for (int i = 1; i <= 6; i++) {
+                ps.setInt(i, valueKey);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                return rs.getInt(1);
+            }
+        }
+    }
+
+    /**
+     * Переносит якорь cmm со старой Value на новую (Split/Merge).
+     *
+     * @param connection соединение
+     * @param oldDv исходный {@code dvKey}
+     * @param newDv целевой {@code dvKey}
+     */
+    private void retargetCmmDv(Connection connection, int oldDv, int newDv) throws SQLException {
+        if (oldDv == newDv) {
+            return;
+        }
+        String[] sqls = {
+                "UPDATE " + q("cnInvCmm") + " SET cnicDv = ? WHERE cnicDv = ?",
+                "UPDATE " + q("cnInvCmmAg") + " SET cicaDv = ? WHERE cicaDv = ?",
+                "UPDATE " + q("cnInvCmmCst") + " SET ciccDv = ? WHERE ciccDv = ?",
+                "UPDATE " + q("cnInvCmmDt") + " SET cnicdDv = ? WHERE cnicdDv = ?",
+                "UPDATE " + q("cnInvCmmFn") + " SET cnicfDv = ? WHERE cnicfDv = ?",
+                "UPDATE " + q("cnInvGr") + " SET cnigDv = ? WHERE cnigDv = ?"
+        };
+        for (String sql : sqls) {
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                ps.setInt(1, newDv);
+                ps.setInt(2, oldDv);
+                ps.executeUpdate();
+            }
+        }
+        log.log(Level.INFO, "retargetCmmDv {0} → {1}", new Object[]{oldDv, newDv});
+    }
+
+    private List<SudzDbtCanonDetail.SudzDbtCanonCmmYear> loadCanonCmmYears(
+            Connection connection,
+            List<SudzDbtCanonDetail.SudzDbtCanonSlot> slots
+    ) throws SQLException {
+        Set<Integer> upls = new HashSet<>();
+        for (SudzDbtCanonDetail.SudzDbtCanonSlot slot : slots) {
+            for (SudzDbtCanonDetail.SudzDbtCanonValue value : slot.values()) {
+                upls.add(value.uplKey());
+            }
+        }
+        if (upls.isEmpty()) {
+            return List.of();
+        }
+        List<Integer> uplList = new ArrayList<>(upls);
+        String placeholders = String.join(",", Collections.nCopies(uplList.size(), "?"));
+        String sql = "SELECT y.yr_key, y.yr_variant, y.yr_CmmGr, y.yr_CmmGr_New, "
+                + "       yp.cn_inv_dbt_upl AS uplKey, "
+                + "       g.cnicgName AS cmmGrName, gn.cnicgName AS cmmGrNewName "
+                + "FROM " + q("yr") + " AS y "
+                + "INNER JOIN " + q("yr_upl_p") + " AS yp ON yp.yr_upl_p_yr = y.yr_key "
+                + "LEFT JOIN " + q("cnInvCmmGr") + " AS g ON g.cnicgKey = y.yr_CmmGr "
+                + "LEFT JOIN " + q("cnInvCmmGr") + " AS gn ON gn.cnicgKey = y.yr_CmmGr_New "
+                + "WHERE yp.cn_inv_dbt_upl IN (" + placeholders + ") "
+                + "ORDER BY y.yr_key, yp.cn_inv_dbt_upl";
+        Map<Integer, SudzDbtCanonDetail.SudzDbtCanonCmmYear> years = new LinkedHashMap<>();
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            for (int i = 0; i < uplList.size(); i++) {
+                ps.setInt(i + 1, uplList.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int yrKey = rs.getInt("yr_key");
+                    int uplKey = rs.getInt("uplKey");
+                    SudzDbtCanonDetail.SudzDbtCanonCmmYear existing = years.get(yrKey);
+                    if (existing == null) {
+                        years.put(yrKey, new SudzDbtCanonDetail.SudzDbtCanonCmmYear(
+                                yrKey,
+                                rs.getNString("yr_variant"),
+                                getInteger(rs, "yr_CmmGr"),
+                                rs.getNString("cmmGrName"),
+                                getInteger(rs, "yr_CmmGr_New"),
+                                rs.getNString("cmmGrNewName"),
+                                new ArrayList<>(List.of(uplKey))));
+                    } else if (!existing.uplKeys().contains(uplKey)) {
+                        existing.uplKeys().add(uplKey);
+                    }
+                }
+            }
+        }
+        List<SudzDbtCanonDetail.SudzDbtCanonCmmYear> result = new ArrayList<>();
+        for (SudzDbtCanonDetail.SudzDbtCanonCmmYear year : years.values()) {
+            result.add(new SudzDbtCanonDetail.SudzDbtCanonCmmYear(
+                    year.yrKey(),
+                    year.yrVariant(),
+                    year.cmmGr(),
+                    year.cmmGrName(),
+                    year.cmmGrNew(),
+                    year.cmmGrNewName(),
+                    List.copyOf(year.uplKeys())));
+        }
+        return result;
+    }
+
+    private List<SudzDbtCanonDetail.SudzDbtCanonSlot> attachCanonComments(
+            Connection connection,
+            List<SudzDbtCanonDetail.SudzDbtCanonSlot> slots,
+            List<SudzDbtCanonDetail.SudzDbtCanonCmmYear> cmmYears
+    ) throws SQLException {
+        List<Integer> valueKeys = new ArrayList<>();
+        for (SudzDbtCanonDetail.SudzDbtCanonSlot slot : slots) {
+            for (SudzDbtCanonDetail.SudzDbtCanonValue value : slot.values()) {
+                valueKeys.add(value.valueKey());
+            }
+        }
+        Map<Integer, List<SudzDbtCanonDetail.SudzDbtCanonComment>> byDv = new LinkedHashMap<>();
+        if (!valueKeys.isEmpty()) {
+            String placeholders = String.join(",", Collections.nCopies(valueKeys.size(), "?"));
+            String sql = "SELECT cm.cnicKey, cm.cnicDv, cm.cnicGroup, cm.cnicType, cm.cnicText, "
+                    + "       g.cnicgName "
+                    + "FROM " + q("cnInvCmm") + " AS cm "
+                    + "LEFT JOIN " + q("cnInvCmmGr") + " AS g ON g.cnicgKey = cm.cnicGroup "
+                    + "WHERE cm.cnicDv IN (" + placeholders + ") "
+                    + "  AND cm.cnicType IN (" + CNIC_TYPE_MERY + ", " + CNIC_TYPE_CURATOR + ") "
+                    + "ORDER BY cm.cnicGroup, cm.cnicType, cm.cnicKey";
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                for (int i = 0; i < valueKeys.size(); i++) {
+                    ps.setInt(i + 1, valueKeys.get(i));
+                }
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        int dv = rs.getInt("cnicDv");
+                        int gr = rs.getInt("cnicGroup");
+                        String kind = resolveCommentGroupKind(gr, cmmYears);
+                        SudzDbtCanonDetail.SudzDbtCanonComment comment =
+                                new SudzDbtCanonDetail.SudzDbtCanonComment(
+                                        rs.getInt("cnicKey"),
+                                        dv,
+                                        gr,
+                                        rs.getNString("cnicgName"),
+                                        kind,
+                                        rs.getInt("cnicType"),
+                                        rs.getNString("cnicText"));
+                        byDv.computeIfAbsent(dv, key -> new ArrayList<>()).add(comment);
+                    }
+                }
+            }
+        }
+        List<SudzDbtCanonDetail.SudzDbtCanonSlot> rebuilt = new ArrayList<>();
+        for (SudzDbtCanonDetail.SudzDbtCanonSlot slot : slots) {
+            List<SudzDbtCanonDetail.SudzDbtCanonValue> values = new ArrayList<>();
+            for (SudzDbtCanonDetail.SudzDbtCanonValue value : slot.values()) {
+                List<SudzDbtCanonDetail.SudzDbtCanonComment> comments =
+                        byDv.getOrDefault(value.valueKey(), List.of());
+                values.add(new SudzDbtCanonDetail.SudzDbtCanonValue(
+                        value.valueKey(),
+                        value.uplKey(),
+                        value.ttl(),
+                        value.overd(),
+                        value.uplName(),
+                        value.uplDate(),
+                        value.uplStatusOnDate(),
+                        List.copyOf(comments)));
+            }
+            rebuilt.add(new SudzDbtCanonDetail.SudzDbtCanonSlot(
+                    slot.slotKey(),
+                    slot.iKey(),
+                    slot.idNum(),
+                    slot.varKey(),
+                    slot.cnNum(),
+                    slot.invNum(),
+                    slot.orgBuirg(),
+                    slot.csoDate(),
+                    slot.accountKey(),
+                    slot.accountNum(),
+                    List.copyOf(values)));
+        }
+        return rebuilt;
+    }
+
+    private static String resolveCommentGroupKind(
+            int cmmGrKey,
+            List<SudzDbtCanonDetail.SudzDbtCanonCmmYear> years
+    ) {
+        for (SudzDbtCanonDetail.SudzDbtCanonCmmYear year : years) {
+            if (year.cmmGr() != null && year.cmmGr() == cmmGrKey) {
+                return "official";
+            }
+        }
+        for (SudzDbtCanonDetail.SudzDbtCanonCmmYear year : years) {
+            if (year.cmmGrNew() != null && year.cmmGrNew() == cmmGrKey) {
+                return "new";
+            }
+        }
+        return "other";
     }
 
     private void upsertComment(

@@ -12,6 +12,9 @@ import com.femsq.database.model.sudz.SudzInvDbtVarCandidates;
 import com.femsq.database.model.sudz.SudzD644Row;
 import com.femsq.database.model.sudz.SudzDbtMergeCommand;
 import com.femsq.database.model.sudz.SudzDbtMergeResult;
+import com.femsq.database.model.sudz.SudzDbtCanonCandidate;
+import com.femsq.database.model.sudz.SudzDbtCanonDetail;
+import com.femsq.database.model.sudz.SudzDbtCanonSearchFilter;
 import com.femsq.database.model.sudz.SudzDbtSplitCommand;
 import com.femsq.database.model.sudz.SudzDbtSplitPart;
 import com.femsq.database.model.sudz.SudzDbtSplitResult;
@@ -39,6 +42,9 @@ import com.femsq.web.api.dto.sudz.CreateSudzCmmGrInput;
 import com.femsq.web.api.dto.sudz.EnsureSudzInvDbtVarForDoubleInput;
 import com.femsq.web.api.dto.sudz.LinkSudzInvDbtDoubleInput;
 import com.femsq.web.api.dto.sudz.MergeSudzDbtInput;
+import com.femsq.web.api.dto.sudz.SudzDbtCanonSearchInput;
+import com.femsq.web.api.dto.sudz.UpsertSudzDbtCanonCommentInput;
+import com.femsq.web.api.dto.sudz.UpsertSudzDbtCanonValueInput;
 import com.femsq.web.api.dto.sudz.SplitSudzDbtInput;
 import com.femsq.web.api.dto.sudz.SplitSudzDbtPartInput;
 import com.femsq.web.api.dto.sudz.LinkSudzSfDoubleInput;
@@ -869,6 +875,191 @@ public class SudzGraphqlController {
                     input.survivorSlotKey(),
                     input.uplKey()
             ));
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Поиск канонов Dbt (S78).
+     *
+     * @param input фильтры
+     * @return кандидаты
+     */
+    @QueryMapping
+    public List<SudzDbtCanonCandidate> searchSudzDbtCanons(
+            @Argument("input") SudzDbtCanonSearchInput input
+    ) {
+        try {
+            int limit = input.limit() == null ? 50 : input.limit();
+            return sudzService.searchDbtCanons(new SudzDbtCanonSearchFilter(
+                    input.cnNum(),
+                    input.invNum(),
+                    input.orgBuirg(),
+                    input.orgName(),
+                    input.csoDate(),
+                    input.idNum(),
+                    input.dbtKey(),
+                    limit
+            ));
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Карточка канона Dbt (S78).
+     *
+     * @param dbtKey ключ
+     * @return деталь
+     */
+    @QueryMapping
+    public SudzDbtCanonDetail sudzDbtCanon(@Argument int dbtKey) {
+        try {
+            return sudzService.findDbtCanon(dbtKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Привязать слот к канону (S78).
+     *
+     * @param slotKey слот
+     * @param dbtKey канон
+     * @return карточка
+     */
+    @MutationMapping
+    public SudzDbtCanonDetail linkSudzInvDbtToDbt(
+            @Argument int slotKey,
+            @Argument int dbtKey
+    ) {
+        try {
+            return sudzService.linkInvDbtToDbt(slotKey, dbtKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Отвязать слот от канона (S78).
+     *
+     * @param slotKey слот
+     * @return карточка канона
+     */
+    @MutationMapping
+    public SudzDbtCanonDetail unlinkSudzInvDbtFromDbt(@Argument int slotKey) {
+        try {
+            return sudzService.unlinkInvDbtFromDbt(slotKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Upsert DbtValue на слоте канона (S78.4D).
+     *
+     * @param input слот, upl, суммы
+     * @return карточка
+     */
+    @MutationMapping
+    public SudzDbtCanonDetail upsertSudzDbtCanonValue(
+            @Argument("input") UpsertSudzDbtCanonValueInput input
+    ) {
+        try {
+            BigDecimal ttl = BigDecimal.valueOf(input.ttl());
+            BigDecimal overd = input.overd() == null ? null : BigDecimal.valueOf(input.overd());
+            return sudzService.upsertDbtCanonValue(
+                    input.slotKey(),
+                    input.valueKey(),
+                    input.uplKey(),
+                    ttl,
+                    overd
+            );
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Удалить DbtValue (S78.4D).
+     *
+     * @param valueKey ключ
+     * @return карточка
+     */
+    @MutationMapping
+    public SudzDbtCanonDetail deleteSudzDbtCanonValue(@Argument int valueKey) {
+        try {
+            return sudzService.deleteDbtCanonValue(valueKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Upsert комментария на {@code DbtValue} (S78.6).
+     *
+     * @param input value, группа, тип, текст
+     * @return карточка
+     */
+    @MutationMapping
+    public SudzDbtCanonDetail upsertSudzDbtCanonComment(
+            @Argument("input") UpsertSudzDbtCanonCommentInput input
+    ) {
+        try {
+            return sudzService.upsertDbtCanonComment(
+                    input.valueKey(),
+                    input.cmmGrKey(),
+                    input.cnicType(),
+                    input.text()
+            );
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Удалить комментарий канона.
+     *
+     * @param cmmKey {@code cnicKey}
+     * @return карточка
+     */
+    @MutationMapping
+    public SudzDbtCanonDetail deleteSudzDbtCanonComment(@Argument int cmmKey) {
+        try {
+            return sudzService.deleteDbtCanonComment(cmmKey);
         } catch (IllegalArgumentException exception) {
             throw badRequest(exception);
         } catch (MissingConfigurationException exception) {

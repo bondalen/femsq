@@ -73,6 +73,10 @@ extend type Query {
   Временной ряд DbtValue одного слота invDbt (вкладка «Динамика», выбранный слот).
   """
   sudzInvDbtSlotTimeline(iKey: Int!, idKey: Int!, ciudKey: Int!): SudzInvDbtSlotTimeline!
+  """Поиск канонов Dbt (S78): фильтры по var / idNum / dbtKey."""
+  searchSudzDbtCanons(input: SudzDbtCanonSearchInput!): [SudzDbtCanonCandidate!]!
+  """Карточка канона Dbt со слотами и Value (S78)."""
+  sudzDbtCanon(dbtKey: Int!): SudzDbtCanonDetail!
 }
 
 extend type Mutation {
@@ -151,6 +155,18 @@ extend type Mutation {
   Старый Dbt при CANONS не удаляется.
   """
   mergeSudzDbt(input: MergeSudzDbtInput!): SudzDbtMergeResult!
+  """Привязать слот invDbt к канону Dbt (S78)."""
+  linkSudzInvDbtToDbt(slotKey: Int!, dbtKey: Int!): SudzDbtCanonDetail!
+  """Отвязать слот от канона; отказ при наличии DbtValue (S78)."""
+  unlinkSudzInvDbtFromDbt(slotKey: Int!): SudzDbtCanonDetail!
+  """Создать или обновить DbtValue на слоте канона (S78.4D)."""
+  upsertSudzDbtCanonValue(input: UpsertSudzDbtCanonValueInput!): SudzDbtCanonDetail!
+  """Удалить DbtValue (чтобы можно было отвязать слот)."""
+  deleteSudzDbtCanonValue(valueKey: Int!): SudzDbtCanonDetail!
+  """Upsert текста cnInvCmm на DbtValue (группа + тип 1/8). Пустой текст не удаляет."""
+  upsertSudzDbtCanonComment(input: UpsertSudzDbtCanonCommentInput!): SudzDbtCanonDetail!
+  """Удалить комментарий канона по cnicKey."""
+  deleteSudzDbtCanonComment(cmmKey: Int!): SudzDbtCanonDetail!
   """Create/reuse invDbtVar и привязка ciudIdvvKey (ambiguous на экране двоящих)."""
   ensureSudzInvDbtVarForDouble(input: EnsureSudzInvDbtVarForDoubleInput!): SudzCnInvUplInvDbtDouble!
 }
@@ -579,6 +595,109 @@ type SudzDbtMergeResult {
   updatedBridges: Int!
   removedShareValues: Int!
   restoredValueKey: Int
+}
+
+"""Вход поиска канонов Dbt (S78). Все поля опциональны; нужен ≥1 критерий."""
+input SudzDbtCanonSearchInput {
+  cnNum: String
+  invNum: String
+  orgBuirg: Int
+  orgName: String
+  csoDate: Date
+  idNum: Int
+  dbtKey: Int
+  limit: Int
+}
+
+"""Кандидат канона в поиске."""
+type SudzDbtCanonCandidate {
+  dbtKey: Int!
+  slotCount: Int!
+  cnNum: String
+  invNum: String
+  orgBuirg: Int
+  orgName: String
+  csoDate: Date
+  idNumMin: Int
+  idNumMax: Int
+  lastTtlSum: Float
+}
+
+"""Карточка канона со слотами."""
+type SudzDbtCanonDetail {
+  dbtKey: Int!
+  slots: [SudzDbtCanonSlot!]!
+  """Год-варианты, пересекающие upl карточки (для выбора yr_CmmGr / New)."""
+  cmmYears: [SudzDbtCanonCmmYear!]!
+}
+
+"""Слот канона."""
+type SudzDbtCanonSlot {
+  slotKey: Int!
+  iKey: Int!
+  idNum: Int!
+  varKey: Int
+  cnNum: String
+  invNum: String
+  orgBuirg: Int
+  csoDate: Date
+  accountKey: Int
+  accountNum: Int
+  values: [SudzDbtCanonValue!]!
+}
+
+"""Value на слоте."""
+type SudzDbtCanonValue {
+  valueKey: Int!
+  uplKey: Int!
+  ttl: Float
+  overd: Float
+  uplName: String
+  uplDate: Date
+  uplStatusOnDate: Date
+  comments: [SudzDbtCanonComment!]!
+}
+
+"""Комментарий cnInvCmm на DbtValue (типы 1 и 8)."""
+type SudzDbtCanonComment {
+  cmmKey: Int!
+  valueKey: Int!
+  cmmGrKey: Int!
+  cmmGrName: String
+  """official | new | other"""
+  groupKind: String!
+  cnicType: Int!
+  text: String
+}
+
+"""Год-вариант с группами комментариев для карточки канона."""
+type SudzDbtCanonCmmYear {
+  yrKey: Int!
+  yrVariant: String
+  cmmGr: Int
+  cmmGrName: String
+  cmmGrNew: Int
+  cmmGrNewName: String
+  uplKeys: [Int!]!
+}
+
+"""Вход upsert комментария на DbtValue."""
+input UpsertSudzDbtCanonCommentInput {
+  valueKey: Int!
+  cmmGrKey: Int!
+  """1 мероприятия, 8 куратор."""
+  cnicType: Int!
+  """Пустая строка сохраняет ряд."""
+  text: String!
+}
+
+"""Вход upsert DbtValue на слоте канона."""
+input UpsertSudzDbtCanonValueInput {
+  slotKey: Int!
+  uplKey: Int!
+  ttl: Float!
+  overd: Float
+  valueKey: Int
 }
 
 """Слот sudz.invDbt (экран двоящих долгов)."""

@@ -23,6 +23,11 @@ import type {
   SudzInvDbtVarCandidates,
   SudzD644Row,
   SudzDbtMergeResult,
+  SudzDbtCanonCandidate,
+  SudzDbtCanonDetail,
+  SudzDbtCanonSearchInput,
+  UpsertSudzDbtCanonCommentInput,
+  UpsertSudzDbtCanonValueInput,
   SudzDbtSplitResult,
   SudzDbtUplFile,
   SudzDbtUplLauncher,
@@ -489,6 +494,122 @@ const MERGE_SUDZ_DBT = gql`
       updatedBridges
       removedShareValues
       restoredValueKey
+    }
+  }
+`;
+
+const SUDZ_DBT_CANON_DETAIL_FIELDS = `
+  dbtKey
+  cmmYears {
+    yrKey
+    yrVariant
+    cmmGr
+    cmmGrName
+    cmmGrNew
+    cmmGrNewName
+    uplKeys
+  }
+  slots {
+    slotKey
+    iKey
+    idNum
+    varKey
+    cnNum
+    invNum
+    orgBuirg
+    csoDate
+    accountKey
+    accountNum
+    values {
+      valueKey
+      uplKey
+      ttl
+      overd
+      uplName
+      uplDate
+      uplStatusOnDate
+      comments {
+        cmmKey
+        valueKey
+        cmmGrKey
+        cmmGrName
+        groupKind
+        cnicType
+        text
+      }
+    }
+  }
+`;
+
+const SEARCH_SUDZ_DBT_CANONS = gql`
+  query SearchSudzDbtCanons($input: SudzDbtCanonSearchInput!) {
+    searchSudzDbtCanons(input: $input) {
+      dbtKey
+      slotCount
+      cnNum
+      invNum
+      orgBuirg
+      orgName
+      csoDate
+      idNumMin
+      idNumMax
+      lastTtlSum
+    }
+  }
+`;
+
+const SUDZ_DBT_CANON = gql`
+  query SudzDbtCanon($dbtKey: Int!) {
+    sudzDbtCanon(dbtKey: $dbtKey) {
+      ${SUDZ_DBT_CANON_DETAIL_FIELDS}
+    }
+  }
+`;
+
+const LINK_SUDZ_INV_DBT_TO_DBT = gql`
+  mutation LinkSudzInvDbtToDbt($slotKey: Int!, $dbtKey: Int!) {
+    linkSudzInvDbtToDbt(slotKey: $slotKey, dbtKey: $dbtKey) {
+      ${SUDZ_DBT_CANON_DETAIL_FIELDS}
+    }
+  }
+`;
+
+const UNLINK_SUDZ_INV_DBT_FROM_DBT = gql`
+  mutation UnlinkSudzInvDbtFromDbt($slotKey: Int!) {
+    unlinkSudzInvDbtFromDbt(slotKey: $slotKey) {
+      ${SUDZ_DBT_CANON_DETAIL_FIELDS}
+    }
+  }
+`;
+
+const UPSERT_SUDZ_DBT_CANON_VALUE = gql`
+  mutation UpsertSudzDbtCanonValue($input: UpsertSudzDbtCanonValueInput!) {
+    upsertSudzDbtCanonValue(input: $input) {
+      ${SUDZ_DBT_CANON_DETAIL_FIELDS}
+    }
+  }
+`;
+
+const DELETE_SUDZ_DBT_CANON_VALUE = gql`
+  mutation DeleteSudzDbtCanonValue($valueKey: Int!) {
+    deleteSudzDbtCanonValue(valueKey: $valueKey) {
+      ${SUDZ_DBT_CANON_DETAIL_FIELDS}
+    }
+  }
+`;
+
+const UPSERT_SUDZ_DBT_CANON_COMMENT = gql`
+  mutation UpsertSudzDbtCanonComment($input: UpsertSudzDbtCanonCommentInput!) {
+    upsertSudzDbtCanonComment(input: $input) {
+      ${SUDZ_DBT_CANON_DETAIL_FIELDS}
+    }
+  }
+`;
+
+const DELETE_SUDZ_DBT_CANON_COMMENT = gql`
+  mutation DeleteSudzDbtCanonComment($cmmKey: Int!) {
+    deleteSudzDbtCanonComment(cmmKey: $cmmKey) {
+      ${SUDZ_DBT_CANON_DETAIL_FIELDS}
     }
   }
 `;
@@ -1225,6 +1346,157 @@ export async function mergeSudzDbt(
     return data;
   } catch (error) {
     throw wrapApolloError(error, 'MergeSudzDbt');
+  }
+}
+
+/** Поиск канонов Dbt (S78). */
+export async function searchSudzDbtCanons(
+  input: SudzDbtCanonSearchInput
+): Promise<SudzDbtCanonCandidate[]> {
+  try {
+    const result = await apolloClient.query<{
+      searchSudzDbtCanons: SudzDbtCanonCandidate[];
+    }>({
+      query: SEARCH_SUDZ_DBT_CANONS,
+      variables: { input },
+      fetchPolicy: 'network-only'
+    });
+    return result.data?.searchSudzDbtCanons ?? [];
+  } catch (error) {
+    throw wrapApolloError(error, 'SearchSudzDbtCanons');
+  }
+}
+
+/** Карточка канона Dbt (S78). */
+export async function getSudzDbtCanon(dbtKey: number): Promise<SudzDbtCanonDetail> {
+  try {
+    const result = await apolloClient.query<{
+      sudzDbtCanon: SudzDbtCanonDetail;
+    }>({
+      query: SUDZ_DBT_CANON,
+      variables: { dbtKey },
+      fetchPolicy: 'network-only'
+    });
+    const data = result.data?.sudzDbtCanon;
+    if (!data) throw new Error('Пустой ответ sudzDbtCanon');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzDbtCanon');
+  }
+}
+
+/** Привязать слот к канону (S78). */
+export async function linkSudzInvDbtToDbt(
+  slotKey: number,
+  dbtKey: number
+): Promise<SudzDbtCanonDetail> {
+  try {
+    const result = await apolloClient.mutate<{
+      linkSudzInvDbtToDbt: SudzDbtCanonDetail;
+    }>({
+      mutation: LINK_SUDZ_INV_DBT_TO_DBT,
+      variables: { slotKey, dbtKey }
+    });
+    const data = result.data?.linkSudzInvDbtToDbt;
+    if (!data) throw new Error('Пустой ответ linkSudzInvDbtToDbt');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'LinkSudzInvDbtToDbt');
+  }
+}
+
+/** Отвязать слот от канона (S78). */
+export async function unlinkSudzInvDbtFromDbt(
+  slotKey: number
+): Promise<SudzDbtCanonDetail> {
+  try {
+    const result = await apolloClient.mutate<{
+      unlinkSudzInvDbtFromDbt: SudzDbtCanonDetail;
+    }>({
+      mutation: UNLINK_SUDZ_INV_DBT_FROM_DBT,
+      variables: { slotKey }
+    });
+    const data = result.data?.unlinkSudzInvDbtFromDbt;
+    if (!data) throw new Error('Пустой ответ unlinkSudzInvDbtFromDbt');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'UnlinkSudzInvDbtFromDbt');
+  }
+}
+
+/** Upsert DbtValue на слоте канона (S78.4D). */
+export async function upsertSudzDbtCanonValue(
+  input: UpsertSudzDbtCanonValueInput
+): Promise<SudzDbtCanonDetail> {
+  try {
+    const result = await apolloClient.mutate<{
+      upsertSudzDbtCanonValue: SudzDbtCanonDetail;
+    }>({
+      mutation: UPSERT_SUDZ_DBT_CANON_VALUE,
+      variables: { input }
+    });
+    const data = result.data?.upsertSudzDbtCanonValue;
+    if (!data) throw new Error('Пустой ответ upsertSudzDbtCanonValue');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'UpsertSudzDbtCanonValue');
+  }
+}
+
+/** Удалить DbtValue (S78.4D). */
+export async function deleteSudzDbtCanonValue(
+  valueKey: number
+): Promise<SudzDbtCanonDetail> {
+  try {
+    const result = await apolloClient.mutate<{
+      deleteSudzDbtCanonValue: SudzDbtCanonDetail;
+    }>({
+      mutation: DELETE_SUDZ_DBT_CANON_VALUE,
+      variables: { valueKey }
+    });
+    const data = result.data?.deleteSudzDbtCanonValue;
+    if (!data) throw new Error('Пустой ответ deleteSudzDbtCanonValue');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'DeleteSudzDbtCanonValue');
+  }
+}
+
+/** Upsert комментария на DbtValue (S78.6). */
+export async function upsertSudzDbtCanonComment(
+  input: UpsertSudzDbtCanonCommentInput
+): Promise<SudzDbtCanonDetail> {
+  try {
+    const result = await apolloClient.mutate<{
+      upsertSudzDbtCanonComment: SudzDbtCanonDetail;
+    }>({
+      mutation: UPSERT_SUDZ_DBT_CANON_COMMENT,
+      variables: { input }
+    });
+    const data = result.data?.upsertSudzDbtCanonComment;
+    if (!data) throw new Error('Пустой ответ upsertSudzDbtCanonComment');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'UpsertSudzDbtCanonComment');
+  }
+}
+
+/** Удалить комментарий канона. */
+export async function deleteSudzDbtCanonComment(
+  cmmKey: number
+): Promise<SudzDbtCanonDetail> {
+  try {
+    const result = await apolloClient.mutate<{
+      deleteSudzDbtCanonComment: SudzDbtCanonDetail;
+    }>({
+      mutation: DELETE_SUDZ_DBT_CANON_COMMENT,
+      variables: { cmmKey }
+    });
+    const data = result.data?.deleteSudzDbtCanonComment;
+    if (!data) throw new Error('Пустой ответ deleteSudzDbtCanonComment');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'DeleteSudzDbtCanonComment');
   }
 }
 

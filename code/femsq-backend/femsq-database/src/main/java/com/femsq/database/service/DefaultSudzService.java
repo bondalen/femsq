@@ -13,6 +13,9 @@ import com.femsq.database.model.sudz.SudzCnInvUplSfDouble;
 import com.femsq.database.model.sudz.SudzD644Row;
 import com.femsq.database.model.sudz.SudzDbtMergeCommand;
 import com.femsq.database.model.sudz.SudzDbtMergeResult;
+import com.femsq.database.model.sudz.SudzDbtCanonCandidate;
+import com.femsq.database.model.sudz.SudzDbtCanonDetail;
+import com.femsq.database.model.sudz.SudzDbtCanonSearchFilter;
 import com.femsq.database.model.sudz.SudzDbtSplitCommand;
 import com.femsq.database.model.sudz.SudzDbtSplitResult;
 import com.femsq.database.model.sudz.SudzAccessStrMark;
@@ -768,6 +771,86 @@ public class DefaultSudzService implements SudzService {
             throw new IllegalArgumentException("survivorDbtKey должен быть положительным");
         }
         return sudzDao.mergeDbt(command);
+    }
+
+    @Override
+    public List<SudzDbtCanonCandidate> searchDbtCanons(SudzDbtCanonSearchFilter filter) {
+        Objects.requireNonNull(filter, "filter");
+        return sudzDao.searchDbtCanons(filter);
+    }
+
+    @Override
+    public SudzDbtCanonDetail findDbtCanon(int dbtKey) {
+        if (dbtKey <= 0) {
+            throw new IllegalArgumentException("dbtKey должен быть положительным: " + dbtKey);
+        }
+        return sudzDao.findDbtCanon(dbtKey);
+    }
+
+    @Override
+    public SudzDbtCanonDetail linkInvDbtToDbt(int slotKey, int dbtKey) {
+        if (slotKey <= 0 || dbtKey <= 0) {
+            throw new IllegalArgumentException("slotKey и dbtKey должны быть положительными");
+        }
+        return sudzDao.linkInvDbtToDbt(slotKey, dbtKey);
+    }
+
+    @Override
+    public SudzDbtCanonDetail unlinkInvDbtFromDbt(int slotKey) {
+        if (slotKey <= 0) {
+            throw new IllegalArgumentException("slotKey должен быть положительным: " + slotKey);
+        }
+        return sudzDao.unlinkInvDbtFromDbt(slotKey);
+    }
+
+    @Override
+    public SudzDbtCanonDetail upsertDbtCanonValue(
+            int slotKey,
+            Integer valueKey,
+            int uplKey,
+            BigDecimal ttl,
+            BigDecimal overd
+    ) {
+        if (slotKey <= 0 || uplKey <= 0) {
+            throw new IllegalArgumentException("slotKey и uplKey должны быть положительными");
+        }
+        if (ttl == null) {
+            throw new IllegalArgumentException("ttl обязателен");
+        }
+        return sudzDao.upsertDbtCanonValue(slotKey, valueKey, uplKey, ttl, overd);
+    }
+
+    @Override
+    public SudzDbtCanonDetail deleteDbtCanonValue(int valueKey) {
+        if (valueKey <= 0) {
+            throw new IllegalArgumentException("valueKey должен быть положительным: " + valueKey);
+        }
+        return sudzDao.deleteDbtCanonValue(valueKey);
+    }
+
+    @Override
+    public SudzDbtCanonDetail upsertDbtCanonComment(
+            int valueKey,
+            int cmmGrKey,
+            int cnicType,
+            String text
+    ) {
+        if (valueKey <= 0 || cmmGrKey <= 0) {
+            throw new IllegalArgumentException("valueKey и cmmGrKey должны быть положительными");
+        }
+        if (cnicType != 1 && cnicType != 8) {
+            throw new IllegalArgumentException("cnicType должен быть 1 (мероприятия) или 8 (куратор)");
+        }
+        String body = text == null ? "" : text;
+        return sudzDao.upsertDbtCanonComment(valueKey, cmmGrKey, cnicType, body);
+    }
+
+    @Override
+    public SudzDbtCanonDetail deleteDbtCanonComment(int cmmKey) {
+        if (cmmKey <= 0) {
+            throw new IllegalArgumentException("cmmKey должен быть положительным: " + cmmKey);
+        }
+        return sudzDao.deleteDbtCanonComment(cmmKey);
     }
 
     @Override

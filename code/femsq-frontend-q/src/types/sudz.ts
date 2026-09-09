@@ -301,6 +301,99 @@ export interface SudzDbtMergeResult {
   restoredValueKey: number | null;
 }
 
+/** S78.4D: upsert Value на слоте. */
+export interface UpsertSudzDbtCanonValueInput {
+  slotKey: number;
+  uplKey: number;
+  ttl: number;
+  overd?: number | null;
+  valueKey?: number | null;
+}
+
+/** S78.6: upsert комментария на DbtValue. */
+export interface UpsertSudzDbtCanonCommentInput {
+  valueKey: number;
+  cmmGrKey: number;
+  cnicType: number;
+  text: string;
+}
+
+export interface SudzDbtCanonComment {
+  cmmKey: number;
+  valueKey: number;
+  cmmGrKey: number;
+  cmmGrName: string | null;
+  groupKind: 'official' | 'new' | 'other';
+  cnicType: number;
+  text: string | null;
+}
+
+export interface SudzDbtCanonCmmYear {
+  yrKey: number;
+  yrVariant: string | null;
+  cmmGr: number | null;
+  cmmGrName: string | null;
+  cmmGrNew: number | null;
+  cmmGrNewName: string | null;
+  uplKeys: number[];
+}
+
+/** S78: фильтр поиска канона. */
+export interface SudzDbtCanonSearchInput {
+  cnNum?: string | null;
+  invNum?: string | null;
+  orgBuirg?: number | null;
+  orgName?: string | null;
+  csoDate?: string | null;
+  idNum?: number | null;
+  dbtKey?: number | null;
+  limit?: number | null;
+}
+
+export interface SudzDbtCanonCandidate {
+  dbtKey: number;
+  slotCount: number;
+  cnNum: string | null;
+  invNum: string | null;
+  orgBuirg: number | null;
+  orgName: string | null;
+  csoDate: string | null;
+  idNumMin: number | null;
+  idNumMax: number | null;
+  lastTtlSum: number | null;
+}
+
+export interface SudzDbtCanonValue {
+  valueKey: number;
+  uplKey: number;
+  ttl: number | null;
+  overd: number | null;
+  uplName: string | null;
+  uplDate: string | null;
+  uplStatusOnDate: string | null;
+  comments?: SudzDbtCanonComment[];
+}
+
+export interface SudzDbtCanonSlot {
+  slotKey: number;
+  iKey: number;
+  idNum: number;
+  varKey: number | null;
+  cnNum: string | null;
+  invNum: string | null;
+  orgBuirg: number | null;
+  csoDate: string | null;
+  accountKey: number | null;
+  accountNum: number | null;
+  values: SudzDbtCanonValue[];
+}
+
+export interface SudzDbtCanonDetail {
+  dbtKey: number;
+  slots: SudzDbtCanonSlot[];
+  cmmYears?: SudzDbtCanonCmmYear[];
+}
+
 /** Excel-кандидат КСДСФ. */
 export interface SudzSfDoubleExcelCandidate {
   cidutKey: number;

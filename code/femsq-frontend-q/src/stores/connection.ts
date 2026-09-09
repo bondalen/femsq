@@ -12,6 +12,7 @@ export type ActiveView =
   | 'audits'
   | 'sudz-portfolio'
   | 'sudz-debts'
+  | 'sudz-dbt-canon'
   | 'sudz-dbt-upl'
   | 'sudz-pmt-upl'
   | 'sudz-sf-double'

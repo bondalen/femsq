@@ -26,6 +26,7 @@
     <AuditsView v-else-if="connection.activeView === 'audits'" />
     <SudzPortfolioView v-else-if="connection.activeView === 'sudz-portfolio'" />
     <SudzDebtsView v-else-if="connection.activeView === 'sudz-debts'" />
+    <SudzDbtCanonView v-else-if="connection.activeView === 'sudz-dbt-canon'" />
     <SudzDbtUplView v-else-if="connection.activeView === 'sudz-dbt-upl'" />
     <SudzPmtUplView v-else-if="connection.activeView === 'sudz-pmt-upl'" />
     <SudzSfDoubleView v-else-if="connection.activeView === 'sudz-sf-double'" />
@@ -93,6 +94,7 @@ import ConstructionSitesView from '@/views/construction-sites/ConstructionSitesV
 import ConstructionSitesByCodeView from '@/views/construction-sites/ConstructionSitesByCodeView.vue';
 import SudzPortfolioView from '@/views/sudz/SudzPortfolioView.vue';
 import SudzDebtsView from '@/views/sudz/SudzDebtsView.vue';
+import SudzDbtCanonView from '@/views/sudz/SudzDbtCanonView.vue';
 import SudzDbtUplView from '@/views/sudz/SudzDbtUplView.vue';
 import SudzPmtUplView from '@/views/sudz/SudzPmtUplView.vue';
 import InvestmentChainsView from '@/views/investment-chains/InvestmentChainsView.vue';

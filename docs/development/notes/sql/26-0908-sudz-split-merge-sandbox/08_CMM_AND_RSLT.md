@@ -2,7 +2,7 @@
 
 **Дата:** 2026-09-08  
 **lastUpdated:** 2026-09-09  
-**Статус:** канон полос **A** и **C** зафиксирован (2026-09-08). S77.1–.6: I1–I3 на DEV `sudz`; Split/Merge; КСДД split; UAT 85166 G4 `open=0`; экспортёр A (N Value, погашено на ∑). Полоса C (два старых cmm) ждёт I4 `*Dv`. C.10.3/C.10.5 — блокер до S77.8.  
+**Статус:** канон полос **A** и **C** зафиксирован (2026-09-08). S77.1–.6: I1–I3 на DEV `sudz`; Split/Merge; КСДД split; UAT 85166 G4 `open=0`; экспортёр A (N Value, погашено на ∑). **I4 `*Dv` на DEV `sudz` ✅ 2026-09-09** (колонки + backfill stage1 на Value среза группы). GraphQL CRUD канона — S78.6. C.10.3/C.10.5 — блокер до S77.8.  
 **Связь:** [README песочницы](./README.md) · Excel [ags_Yr_DbtChangesRslt_sm_sandbox.xlsx](./ags_Yr_DbtChangesRslt_sm_sandbox.xlsx) · D3′ [cutover §1.3](../../../../deployment/db-upgrade-sudz-invdbt-cutover.md) · план [S77](../../chats/chat-plan/chat-plan-26-0802-sudz.md#s77--splitmerge-ядро--воронка--rslt-ac-dev-2026-09-08) · [S76-C.10](../../chats/chat-plan/chat-plan-26-0802-sudz.md#s76-c10--ui-gate-uat-901x--902--rslt-qi-2026-09-07)
 
 ## 1. Что не так сейчас
@@ -17,7 +17,7 @@
 
 Отсюда: **все комментарии раунда** (тексты, типы Ag/Cst/Dt/Fn и вхождения в именованные группы) вязать к **`DbtValue` (`dvKey`)**. Канон `Dbt` для них только выводится: Value → слот → `invDbtDbt`.
 
-D3′ (`*Dbt` рядом с `*InvAccnt`) не отменяем: это мост Access. Следующий шаг той же линии — nullable `*Dv` → `DbtValue` (**S77 I4 / черновик `02_DRAFT_cmm_D3double_Dv.sql`**, не в пакете 01).
+D3′ (`*Dbt` рядом с `*InvAccnt`) не отменяем: это мост Access. Nullable `*Dv` → `DbtValue` (**S77 I4 / `02_DRAFT_cmm_D3double_Dv.sql`**, DEV `sudz` 2026-09-09).
 
 ## 2. Без исключений на `Dbt`
 
@@ -53,8 +53,8 @@ D3′ (`*Dbt` рядом с `*InvAccnt`) не отменяем: это мост 
 
 ### 3.3 Что из этого не следует прямо сейчас
 
-- **S77.5:** экспортёр и предпросмотр пишут полосу **A** (N строк факта = N Value среза; «погашено» и колонки зерна 1 — merge). Полоса **C** (два старых cmm на предшествующем split) **не** имитируется: нет якоря `*Dv`.
-- I1–I3 на DEV `sudz` применены (S77.2). `02` (*Dv) **не** применялся.
+- **S77.5:** экспортёр и предпросмотр пишут полосу **A** (N строк факта = N Value среза; «погашено» и колонки зерна 1 — merge). Полоса **C** — после того, как экспортёр читает `*Dv` (backfill stage1 на DEV есть).
+- I1–I4 на DEV `sudz` применены (`01` S77.2; `02` *Dv + `04` backfill 2026-09-09). `ags` / `test_sudz` / prod не трогали.
 - Якорь **85166** (слоты 13041/13042, ciud 2807/2808 `created`, G4 `open=0`) — Split **S77.6** уже в живом `sudz`; Create/Link не вызывать повторно.
 
 ## 4. Песочница

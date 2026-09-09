@@ -1,18 +1,17 @@
 /*
- * S77 D3″ DRAFT — nullable *Dv → sudz.DbtValue рядом с D3′ *Dbt.
+ * S77 D3″ — nullable *Dv → sudz.DbtValue рядом с D3′ *Dbt.
  *
- * НЕ ВЫПОЛНЯТЬ вместе с 01, пока не согласован якорь cmm (S77 I4).
+ * Применён на DEV FishEye, схема sudz, 2026-09-09 (согласие владельца I4).
  * *InvAccnt и *Dbt не трогаем. Access-мост цел.
+ * Не копировать в MSSQL2012/, не применять на продуктив.
  *
- * Чтобы применить: удалите единственный THROW ниже (и только его).
  * Имена зеркалят D3′: cnicDv / cicaDv / ciccDv / cnicdDv / cnicfDv / cnigDv.
  *
- * lastUpdated: 2026-09-08
+ * lastUpdated: 2026-09-09
  */
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
-
-THROW 50077, N'S77 D3″ DRAFT: не выполнять до согласия I4. Удалите этот THROW.', 1;
+GO
 
 IF COL_LENGTH(N'sudz.cnInvCmm', N'cnicDv') IS NULL
 BEGIN
@@ -22,6 +21,7 @@ BEGIN
             REFERENCES sudz.DbtValue (dvKey);
     PRINT N'ADD sudz.cnInvCmm.cnicDv';
 END
+GO
 
 IF COL_LENGTH(N'sudz.cnInvCmmAg', N'cicaDv') IS NULL
 BEGIN
@@ -31,6 +31,7 @@ BEGIN
             REFERENCES sudz.DbtValue (dvKey);
     PRINT N'ADD sudz.cnInvCmmAg.cicaDv';
 END
+GO
 
 IF COL_LENGTH(N'sudz.cnInvCmmCst', N'ciccDv') IS NULL
 BEGIN
@@ -40,6 +41,7 @@ BEGIN
             REFERENCES sudz.DbtValue (dvKey);
     PRINT N'ADD sudz.cnInvCmmCst.ciccDv';
 END
+GO
 
 IF COL_LENGTH(N'sudz.cnInvCmmDt', N'cnicdDv') IS NULL
 BEGIN
@@ -49,6 +51,7 @@ BEGIN
             REFERENCES sudz.DbtValue (dvKey);
     PRINT N'ADD sudz.cnInvCmmDt.cnicdDv';
 END
+GO
 
 IF COL_LENGTH(N'sudz.cnInvCmmFn', N'cnicfDv') IS NULL
 BEGIN
@@ -58,6 +61,7 @@ BEGIN
             REFERENCES sudz.DbtValue (dvKey);
     PRINT N'ADD sudz.cnInvCmmFn.cnicfDv';
 END
+GO
 
 IF COL_LENGTH(N'sudz.cnInvGr', N'cnigDv') IS NULL
 BEGIN
@@ -67,5 +71,7 @@ BEGIN
             REFERENCES sudz.DbtValue (dvKey);
     PRINT N'ADD sudz.cnInvGr.cnigDv';
 END
+GO
 
-PRINT N'S77 D3″ DRAFT: *Dv added, *Dbt/*InvAccnt unchanged.';
+PRINT N'S77 D3″: *Dv added on sudz, *Dbt/*InvAccnt unchanged.';
+GO
