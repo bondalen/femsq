@@ -36,6 +36,9 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  * {@code excel/2025-12/debit/ags_Yr_DbtChangesRslt_26-0212_26-0217.xlsx}.
  *
  * <p>Боковик FEMSQ (08 §3.6.0): {@code dbtKey} + {@code account_num}; СФ/{@code idNum} — в блоках срезов.
+ *
+ * <p>S77.5 полосы A/C: число строк канона = max(число {@code DbtValue} по срезам).
+ * Колонка с зерном 1 (канон, «погашено» на ∑ Overd, cmm на {@code Dbt}) сливается.
  */
 public final class SudzRsltExcelExporter {
 
@@ -114,7 +117,11 @@ public final class SudzRsltExcelExporter {
             Row rowTech = sheet.createRow(2);
             rowHuman.setHeightInPoints(96f);
 
-            int lastDataRow = debts.isEmpty() ? 3 : 2 + debts.size();
+            int totalBandRows = 0;
+            for (SudzRsltDebt debt : debts) {
+                totalBandRows += bandRowCount(debt, slices);
+            }
+            int lastDataRow = debts.isEmpty() ? 3 : 2 + totalBandRows;
 
             for (int i = 0; i < columns.size(); i++) {
                 ColumnDef col = columns.get(i);
@@ -135,9 +142,9 @@ public final class SudzRsltExcelExporter {
                 }
             }
 
-            for (int r = 0; r < debts.size(); r++) {
-                Row row = sheet.createRow(3 + r);
-                writeDebtRow(row, debts.get(r), slices, columns, styles, fillNew);
+            int excelRow = 3;
+            for (SudzRsltDebt debt : debts) {
+                excelRow += writeDebtBand(sheet, excelRow, debt, slices, columns, styles, fillNew);
             }
 
             if (!columns.isEmpty()) {
@@ -208,74 +215,182 @@ public final class SudzRsltExcelExporter {
         return cols;
     }
 
-    private static void writeDebtRow(
-            Row row,
+    /**
+     * Число строк полосы канона: max числа Value по срезам (cmm пока зерно {@code Dbt} = 1).
+     *
+     * @param debt канон
+     * @param slices срезы книги
+     * @return ≥ 1
+     */
+    private static int bandRowCount(SudzRsltDebt debt, List<SliceMeta> slices) {
+        int n = 1;
+        for (SliceMeta slice : slices) {
+            n = Math.max(n, periodsOn(debt, slice.uplDate()).size());
+        }
+        return n;
+    }
+
+    /**
+     * Пишет полосу A/C: N строк факта, merge колонок с зерном 1.
+     *
+     * @param sheet лист
+     * @param firstRow 0-based первая строка данных
+     * @param debt канон
+     * @param slices срезы
+     * @param columns колонки
+     * @param styles стили
+     * @param fillNew колонки {@code *_new}
+     * @return число записанных строк
+     */
+    private static int writeDebtBand(
+            Sheet sheet,
+            int firstRow,
             SudzRsltDebt debt,
             List<SliceMeta> slices,
             List<ColumnDef> columns,
             Styles styles,
             boolean fillNew
     ) {
-        int c = 0;
-        c = writeTyped(row, c, debt.dbtKey(), styles.data());
-        c = writeTyped(row, c, debt.accountNum(), styles.data());
-        BigDecimal baseOverd = null;
-        if (!slices.isEmpty()) {
-            SudzRsltPeriod base = findPeriod(debt, slices.get(0).uplDate());
-            if (base != null) {
-                baseOverd = base.overd();
-            }
+        int nRows = bandRowCount(debt, slices);
+        for (int r = 0; r < nRows; r++) {
+            sheet.createRow(firstRow + r);
         }
+        int c = 0;
+        c = writeBandCol(sheet, firstRow, nRows, c, List.of(debt.dbtKey()), styles, false);
+        c = writeBandCol(sheet, firstRow, nRows, c, one(debt.accountNum()), styles, false);
+        List<SudzRsltPeriod> basePeriods = slices.isEmpty()
+                ? List.of()
+                : periodsOn(debt, slices.get(0).uplDate());
+        BigDecimal baseOverd = sumOverd(basePeriods);
         for (int s = 0; s < slices.size(); s++) {
             SliceMeta slice = slices.get(s);
             boolean first = s == 0;
-            SudzRsltPeriod period = findPeriod(debt, slice.uplDate());
-            int blockCols = first ? 14 : 15;
-            if (period == null) {
-                /* Нет факта в срезе: пустой блок; погашено — как Access ISNULL(Overd,0)=0. */
-                for (int k = 0; k < blockCols; k++) {
-                    boolean pogCol = !first && k == blockCols - 1;
-                    if (pogCol) {
-                        c = writeMoney(row, c, pogashenoAccess(baseOverd, null), styles.money());
-                    } else {
-                        Cell cell = row.createCell(c++);
-                        cell.setCellStyle(styles.data());
-                    }
-                }
-                continue;
-            }
-            c = writeTyped(row, c, period.invNumEnum(), styles.data());
-            c = writeTyped(row, c, period.idNum(), styles.data());
-            c = writeTyped(row, c, period.cnNumEnum(), styles.data());
-            c = writeTyped(row, c, period.csoCnDate(), styles.data());
-            c = writeTyped(row, c, period.orgIdValueL(), styles.data());
-            c = writeTyped(row, c, period.itn(), styles.data());
-            c = writeTyped(row, c, period.ctptOrg(), styles.data());
-            c = writeTyped(row, c, period.maturity(), styles.data());
-            c = writeMoney(row, c, period.ttl(), styles.money());
-            c = writeMoney(row, c, period.overd(), styles.money());
-            Cell keySpacer = row.createCell(c++);
-            keySpacer.setCellStyle(styles.data());
-            c = writeTyped(row, c, period.cstAgPnCode(), styles.data());
-            c = writeTyped(row, c, period.cstAgPnName(), styles.data());
-            c = writeTyped(row, c, period.agOrg(), styles.data());
+            List<SudzRsltPeriod> periods = periodsOn(debt, slice.uplDate());
+            c = writeBandCol(sheet, firstRow, nRows, c, mapPeriod(periods, SudzRsltPeriod::invNumEnum), styles, false);
+            c = writeBandCol(sheet, firstRow, nRows, c, mapPeriod(periods, SudzRsltPeriod::idNum), styles, false);
+            c = writeBandCol(sheet, firstRow, nRows, c, mapPeriod(periods, SudzRsltPeriod::cnNumEnum), styles, false);
+            c = writeBandCol(sheet, firstRow, nRows, c, mapPeriod(periods, SudzRsltPeriod::csoCnDate), styles, false);
+            c = writeBandCol(sheet, firstRow, nRows, c, mapPeriod(periods, SudzRsltPeriod::orgIdValueL), styles, false);
+            c = writeBandCol(sheet, firstRow, nRows, c, mapPeriod(periods, SudzRsltPeriod::itn), styles, false);
+            c = writeBandCol(sheet, firstRow, nRows, c, mapPeriod(periods, SudzRsltPeriod::ctptOrg), styles, false);
+            c = writeBandCol(sheet, firstRow, nRows, c, mapPeriod(periods, SudzRsltPeriod::maturity), styles, false);
+            c = writeBandCol(sheet, firstRow, nRows, c, mapPeriod(periods, SudzRsltPeriod::ttl), styles, true);
+            c = writeBandCol(sheet, firstRow, nRows, c, mapPeriod(periods, SudzRsltPeriod::overd), styles, true);
+            c = writeBandCol(sheet, firstRow, nRows, c, List.of(), styles, false);
+            c = writeBandCol(sheet, firstRow, nRows, c, mapPeriod(periods, SudzRsltPeriod::cstAgPnCode), styles, false);
+            c = writeBandCol(sheet, firstRow, nRows, c, mapPeriod(periods, SudzRsltPeriod::cstAgPnName), styles, false);
+            c = writeBandCol(sheet, firstRow, nRows, c, mapPeriod(periods, SudzRsltPeriod::agOrg), styles, false);
             if (!first) {
-                c = writeMoney(row, c, pogashenoAccess(baseOverd, period.overd()), styles.money());
+                BigDecimal curr = periods.isEmpty() ? null : sumOverd(periods);
+                c = writeBandCol(
+                        sheet, firstRow, nRows, c,
+                        one(pogashenoAccess(baseOverd, curr)),
+                        styles,
+                        true);
             }
         }
-        c = writeTyped(row, c, debt.curator(), styles.data());
-        c = writeTyped(row, c, debt.mery(), styles.data());
-        c = writeTyped(row, c, debt.cstCode(), styles.data());
-        c = writeTyped(row, c, debt.cstName(), styles.data());
+        c = writeBandCol(sheet, firstRow, nRows, c, one(debt.curator()), styles, false);
+        c = writeBandCol(sheet, firstRow, nRows, c, one(debt.mery()), styles, false);
+        c = writeBandCol(sheet, firstRow, nRows, c, one(debt.cstCode()), styles, false);
+        c = writeBandCol(sheet, firstRow, nRows, c, one(debt.cstName()), styles, false);
         if (fillNew) {
-            c = writeTyped(row, c, debt.curatorNew(), styles.data());
-            c = writeTyped(row, c, debt.meryNew(), styles.data());
-            c = writeTyped(row, c, debt.cstCodeNew(), styles.data());
+            c = writeBandCol(sheet, firstRow, nRows, c, one(debt.curatorNew()), styles, false);
+            c = writeBandCol(sheet, firstRow, nRows, c, one(debt.meryNew()), styles, false);
+            c = writeBandCol(sheet, firstRow, nRows, c, one(debt.cstCodeNew()), styles, false);
         }
         while (c < columns.size()) {
-            Cell cell = row.createCell(c++);
+            c = writeBandCol(sheet, firstRow, nRows, c, List.of(), styles, false);
+        }
+        return nRows;
+    }
+
+    private static <T> List<Object> mapPeriod(
+            List<SudzRsltPeriod> periods,
+            java.util.function.Function<SudzRsltPeriod, T> getter
+    ) {
+        List<Object> out = new ArrayList<>(periods.size());
+        for (SudzRsltPeriod period : periods) {
+            out.add(getter.apply(period));
+        }
+        return out;
+    }
+
+    /**
+     * Колонка полосы: одна величина → merge на nRows; несколько → по строке.
+     *
+     * @param sheet лист
+     * @param firstRow 0-based
+     * @param nRows высота полосы
+     * @param col индекс колонки
+     * @param values зерно колонки
+     * @param styles стили
+     * @param money денежный формат
+     * @return col+1
+     */
+    private static int writeBandCol(
+            Sheet sheet,
+            int firstRow,
+            int nRows,
+            int col,
+            List<?> values,
+            Styles styles,
+            boolean money
+    ) {
+        boolean merge = nRows > 1 && values.size() <= 1;
+        for (int r = 0; r < nRows; r++) {
+            Row row = sheet.getRow(firstRow + r);
+            Object value = null;
+            if (merge) {
+                if (r == 0 && !values.isEmpty()) {
+                    value = values.get(0);
+                }
+            } else if (r < values.size()) {
+                value = values.get(r);
+            }
+            putCell(row, col, value, styles, money);
+        }
+        if (merge) {
+            sheet.addMergedRegion(new CellRangeAddress(firstRow, firstRow + nRows - 1, col, col));
+        }
+        return col + 1;
+    }
+
+    private static void putCell(Row row, int col, Object value, Styles styles, boolean money) {
+        if (money) {
+            writeMoney(row, col, value instanceof BigDecimal decimal ? decimal : null, styles.money());
+            return;
+        }
+        if (value instanceof Integer integer) {
+            writeTyped(row, col, integer, styles.data());
+        } else if (value instanceof Long longValue) {
+            writeTyped(row, col, longValue, styles.data());
+        } else if (value instanceof LocalDate date) {
+            writeTyped(row, col, date, styles.data());
+        } else if (value instanceof String text) {
+            writeTyped(row, col, text, styles.data());
+        } else if (value instanceof BigDecimal decimal) {
+            writeTyped(row, col, decimal.toPlainString(), styles.data());
+        } else {
+            Cell cell = row.createCell(col);
             cell.setCellStyle(styles.data());
         }
+    }
+
+    private static List<Object> one(Object value) {
+        List<Object> list = new ArrayList<>(1);
+        list.add(value);
+        return list;
+    }
+
+    static BigDecimal sumOverd(List<SudzRsltPeriod> periods) {
+        BigDecimal sum = null;
+        for (SudzRsltPeriod period : periods) {
+            if (period.overd() == null) {
+                continue;
+            }
+            sum = sum == null ? period.overd() : sum.add(period.overd());
+        }
+        return sum;
     }
 
     /**
@@ -331,6 +446,8 @@ public final class SudzRsltExcelExporter {
         for (Map.Entry<LocalDate, LocalDate> e : asOfByUpl.entrySet()) {
             slices.add(new SliceMeta(e.getKey(), e.getValue()));
         }
+        slices.sort(java.util.Comparator.comparing(
+                SliceMeta::uplDate, java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())));
         return slices;
     }
 
@@ -352,13 +469,14 @@ public final class SudzRsltExcelExporter {
         return MONTH_RU[date.getMonthValue() - 1] + " " + date.getYear();
     }
 
-    private static SudzRsltPeriod findPeriod(SudzRsltDebt debt, LocalDate date) {
+    static List<SudzRsltPeriod> periodsOn(SudzRsltDebt debt, LocalDate date) {
+        List<SudzRsltPeriod> found = new ArrayList<>();
         for (SudzRsltPeriod period : debt.periods()) {
             if (date != null && date.equals(period.uplDate())) {
-                return period;
+                found.add(period);
             }
         }
-        return null;
+        return found;
     }
 
     private static void writeHeaderCell(Row row, int col, String value, CellStyle style) {

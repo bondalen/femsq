@@ -8,6 +8,7 @@ import com.femsq.database.model.sudz.SudzCnInvUplDbtP1;
 import com.femsq.database.model.sudz.SudzCnInvUplInvDbtDouble;
 import com.femsq.database.model.sudz.SudzCnInvUplSfDouble;
 import com.femsq.database.model.sudz.SudzInvDbtDoubleAdvice;
+import com.femsq.database.model.sudz.SudzInvDbtSplitCandidate;
 import com.femsq.database.model.sudz.SudzInvDbtSlot;
 import com.femsq.database.model.sudz.SudzInvDbtSlotTimeline;
 import com.femsq.database.model.sudz.SudzInvDbtTimelinePoint;
@@ -802,7 +803,7 @@ public class JdbcSudzDao implements SudzDao {
                 + "  AND (? IS NULL OR f.upl_date <= ( "
                 + "        SELECT u.upl_date FROM " + q("cn_inv_dbt_upl") + " u WHERE u.upl_key = ? "
                 + "      )) "
-                + "ORDER BY f.dbtKey, f.upl_date, f.upl_key";
+                + "ORDER BY f.dbtKey, f.upl_date, f.upl_key, f.idNum";
 
         log.log(Level.INFO, "Loading sudz Rslt portfolio for yr={0}, asOfUpl={1}",
                 new Object[]{yrKey, asOfUpl});
@@ -839,18 +840,6 @@ public class JdbcSudzDao implements SudzDao {
                         );
                         builders.put(dbtKey, builder);
                     }
-                    BigDecimal overd = getBigDecimal(rs, "dvOverd");
-                    if (builder.baseOverd == null) {
-                        builder.baseOverd = overd;
-                    }
-                    /* Access: NULLIF(Overd(база)−ISNULL(Overd(d),0), 0); рост Overd не пишем. */
-                    BigDecimal pogasheno = null;
-                    if (builder.baseOverd != null && overd != null) {
-                        BigDecimal delta = builder.baseOverd.subtract(overd);
-                        if (delta.compareTo(BigDecimal.ZERO) > 0) {
-                            pogasheno = delta;
-                        }
-                    }
                     builder.periods.add(new SudzRsltPeriod(
                             rs.getInt("upl_key"),
                             getLocalDate(rs, "upl_date"),
@@ -864,11 +853,11 @@ public class JdbcSudzDao implements SudzDao {
                             rs.getString("CtptOrg"),
                             getLocalDate(rs, "dvDateMaturity"),
                             getBigDecimal(rs, "dvTtl"),
-                            overd,
+                            getBigDecimal(rs, "dvOverd"),
                             rs.getString("CstAgPnCode"),
                             rs.getString("CstAgPnName"),
                             rs.getString("AgOrg"),
-                            pogasheno
+                            null
                     ));
                 }
                 List<SudzRsltDebt> debts = new ArrayList<>(builders.size());
@@ -5566,6 +5555,18 @@ public class JdbcSudzDao implements SudzDao {
                         valueKey = readGeneratedKey(ins, "Не удалось получить dvKey");
                     }
                     created.add(new SudzDbtSplitPartResult(slotKey, varKey, valueKey, part.ttl()));
+                    if (part.ciudKey() != null && part.ciudKey() > 0) {
+                        String queue = q("CnInvUplInvDbtDouble");
+                        try (PreparedStatement upd = connection.prepareStatement(
+                                "UPDATE " + queue
+                                        + " SET ciudStatus = N'created', ciudStatusAt = ?, ciudCreatedIdKey = ?"
+                                        + " WHERE ciudKey = ? AND ciudStatus = N'open'")) {
+                            upd.setTimestamp(1, now);
+                            upd.setInt(2, slotKey);
+                            upd.setInt(3, part.ciudKey());
+                            upd.executeUpdate();
+                        }
+                    }
                 }
                 boolean removed = false;
                 if (sourceDvKey != null) {
@@ -6165,6 +6166,12 @@ public class JdbcSudzDao implements SudzDao {
             timelines.put(slot.idKey(), loadTimelinePoints(slot.idKey()));
         }
         LocalDate excelStatusDate = loadUplStatusOnDate(row.ciudUnloadKey());
+        Optional<SudzInvDbtSplitCandidate> split = Optional.empty();
+        BigDecimal eps = epsilon == null ? new BigDecimal("0.01") : epsilon;
+        List<InvDbtDoubleAdvisor.OpenShare> shares = loadOpenSharesForInv(
+                iKey, row.ciudUnloadKey());
+        List<InvDbtDoubleAdvisor.SlotCanon> canons = loadSlotCanons(iKey, row.ciudUnloadKey());
+        split = InvDbtDoubleAdvisor.detectSplit(row, shares, canons, row.ciudUnloadKey(), eps);
         return InvDbtDoubleAdvisor.advise(
                 row,
                 excel,
@@ -6175,7 +6182,8 @@ public class JdbcSudzDao implements SudzDao {
                 newMatches,
                 timelines,
                 excelStatusDate,
-                epsilon);
+                epsilon,
+                split);
     }
 
     @Override
@@ -6234,6 +6242,95 @@ public class JdbcSudzDao implements SudzDao {
             throw exception;
         } catch (SQLException exception) {
             throw wrap("Не удалось прочитать очередь ciudKey=" + ciudKey, exception);
+        }
+    }
+
+    /**
+     * Открытые доли очереди той же СФ и upl (S77.4).
+     *
+     * @param iKey СФ
+     * @param uplKey срез
+     * @return доли
+     */
+    private List<InvDbtDoubleAdvisor.OpenShare> loadOpenSharesForInv(int iKey, int uplKey) {
+        String queue = q("CnInvUplInvDbtDouble");
+        String tbl = q("CnInvDbtUplTbl");
+        String sql = "SELECT q.ciudKey, q.ciudDebt, q.ciudIdvvKey, t.cidutDebtOverdue "
+                + "FROM " + queue + " AS q "
+                + "LEFT JOIN " + tbl + " AS t ON t.cidutKey = q.ciudCidut "
+                + "WHERE q.ciudIKey = ? AND q.ciudUnloadKey = ? AND q.ciudStatus = N'open' "
+                + "  AND q.ciudDebt IS NOT NULL AND q.ciudDebt > 0 "
+                + "ORDER BY q.ciudKey";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, iKey);
+            statement.setInt(2, uplKey);
+            List<InvDbtDoubleAdvisor.OpenShare> result = new ArrayList<>();
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    int varKey = rs.getInt("ciudIdvvKey");
+                    boolean varNull = rs.wasNull();
+                    result.add(new InvDbtDoubleAdvisor.OpenShare(
+                            rs.getInt("ciudKey"),
+                            rs.getBigDecimal("ciudDebt"),
+                            rs.getBigDecimal("cidutDebtOverdue"),
+                            varNull || varKey <= 0 ? null : varKey));
+                }
+            }
+            return List.copyOf(result);
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось прочитать open-доли iKey=" + iKey, exception);
+        }
+    }
+
+    /**
+     * Последняя Value слотов СФ (текущая upl предпочтительнее истории) (S77.4).
+     *
+     * @param iKey СФ
+     * @param uplKey срез
+     * @return каноны слотов
+     */
+    private List<InvDbtDoubleAdvisor.SlotCanon> loadSlotCanons(int iKey, int uplKey) {
+        String invDbt = q("invDbt");
+        String invDbtDbt = q("invDbtDbt");
+        String dbtValue = q("DbtValue");
+        String slotsSql = "SELECT s.idKey, idd.iddDbt FROM " + invDbt + " AS s "
+                + "INNER JOIN " + invDbtDbt + " AS idd ON idd.iddInvDbt = s.idKey "
+                + "WHERE s.idInv = ? ORDER BY s.idNum, s.idKey";
+        String valueSql = "SELECT TOP 1 dvTtl, dvInvDbtVar FROM " + dbtValue
+                + " WHERE dvInvDbt = ? ORDER BY CASE WHEN dvUpl = ? THEN 0 ELSE 1 END, "
+                + "dvUpl DESC, dvKey DESC";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement slotsPs = connection.prepareStatement(slotsSql)) {
+            slotsPs.setInt(1, iKey);
+            List<InvDbtDoubleAdvisor.SlotCanon> result = new ArrayList<>();
+            try (ResultSet slotsRs = slotsPs.executeQuery()) {
+                while (slotsRs.next()) {
+                    int slotKey = slotsRs.getInt("idKey");
+                    int dbtKey = slotsRs.getInt("iddDbt");
+                    try (PreparedStatement valPs = connection.prepareStatement(valueSql)) {
+                        valPs.setInt(1, slotKey);
+                        valPs.setInt(2, uplKey);
+                        try (ResultSet valRs = valPs.executeQuery()) {
+                            if (valRs.next()) {
+                                int varKey = valRs.getInt("dvInvDbtVar");
+                                result.add(new InvDbtDoubleAdvisor.SlotCanon(
+                                        slotKey,
+                                        dbtKey,
+                                        valRs.getBigDecimal("dvTtl"),
+                                        varKey <= 0 ? null : varKey));
+                            }
+                        }
+                    }
+                }
+            }
+            return List.copyOf(result);
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось прочитать каноны слотов iKey=" + iKey, exception);
         }
     }
 
@@ -8661,7 +8758,6 @@ public class JdbcSudzDao implements SudzDao {
         private final String meryNew;
         private final String cstCodeNew;
         private final List<SudzRsltPeriod> periods = new ArrayList<>();
-        private BigDecimal baseOverd;
 
         private Builder(int dbtKey, String accountNum, String curator, String mery,
                         String cstCode, String cstName,
@@ -8684,10 +8780,11 @@ public class JdbcSudzDao implements SudzDao {
     }
 
     /**
-     * Схлопывает несколько {@code vw_Yr_DbtFact}-строк одного {@code dbtKey} на один {@code uplKey}
-     * (L*: два слота → один долг). Для базового upl — «левый» СF (А19…); для последующих — continuator (90, 7…).
+     * На одном {@code uplKey}: доли одной СФ (одинаковый {@code invNumEnum}) оставляем все —
+     * зерно Rslt = Value (S77.5 полоса A/C). Разные СФ на одном каноне (L*) по-прежнему
+     * схлопываются к одному счёту (база — «левый» А19…; далее — continuator).
      */
-    private static List<SudzRsltPeriod> collapseRsltPeriods(List<SudzRsltPeriod> rows) {
+    static List<SudzRsltPeriod> collapseRsltPeriods(List<SudzRsltPeriod> rows) {
         if (rows.size() <= 1) {
             return List.copyOf(rows);
         }
@@ -8696,13 +8793,27 @@ public class JdbcSudzDao implements SudzDao {
             byUpl.computeIfAbsent(row.uplKey(), key -> new ArrayList<>()).add(row);
         }
         int minUpl = byUpl.keySet().stream().min(Integer::compareTo).orElse(0);
-        List<SudzRsltPeriod> merged = new ArrayList<>(byUpl.size());
+        List<SudzRsltPeriod> merged = new ArrayList<>();
         for (Map.Entry<Integer, List<SudzRsltPeriod>> entry : byUpl.entrySet()) {
-            merged.add(mergeRsltPeriodSlice(entry.getValue(), entry.getKey() == minUpl));
+            List<SudzRsltPeriod> slice = new ArrayList<>(entry.getValue());
+            slice.sort(Comparator
+                    .comparing(SudzRsltPeriod::idNum, Comparator.nullsLast(Comparator.naturalOrder()))
+                    .thenComparing(SudzRsltPeriod::invNumEnum, Comparator.nullsLast(Comparator.naturalOrder())));
+            long distinctInv = slice.stream()
+                    .map(SudzRsltPeriod::invNumEnum)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .count();
+            if (slice.size() > 1 && distinctInv <= 1) {
+                merged.addAll(slice);
+            } else {
+                merged.add(mergeRsltPeriodSlice(slice, entry.getKey() == minUpl));
+            }
         }
         merged.sort(Comparator
                 .comparing(SudzRsltPeriod::uplDate, Comparator.nullsLast(Comparator.naturalOrder()))
-                .thenComparing(SudzRsltPeriod::uplKey));
+                .thenComparing(SudzRsltPeriod::uplKey)
+                .thenComparing(SudzRsltPeriod::idNum, Comparator.nullsLast(Comparator.naturalOrder())));
         return List.copyOf(merged);
     }
 

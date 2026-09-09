@@ -51,6 +51,6 @@ class SudzDbtSplitMergeRulesTest {
     }
 
     private static SudzDbtSplitPart part(BigDecimal ttl) {
-        return new SudzDbtSplitPart(ttl, null, null, null, null, null, null);
+        return new SudzDbtSplitPart(ttl, null, null, null, null, null, null, null);
     }
 }

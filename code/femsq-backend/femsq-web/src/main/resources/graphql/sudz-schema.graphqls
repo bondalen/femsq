@@ -534,6 +534,8 @@ input SplitSudzDbtPartInput {
   dateStart: Date
   dateMaturity: Date
   docBase: String
+  """Строка очереди КСДД; после Split статус created."""
+  ciudKey: Int
 }
 
 """Вход Split канона на доли одной upl."""
@@ -726,6 +728,21 @@ type SudzInvDbtDoubleAdvice {
   action: String
   recommendIdKey: Int
   recommendVarKey: Int
+  recommendDbtKey: Int
+  recommendUplKey: Int
+  splitParts: [SudzDbtSplitPart!]
+}
+
+"""Доля Split (ответ советника / зеркало input)."""
+type SudzDbtSplitPart {
+  ttl: Float!
+  overd: Float
+  varKey: Int
+  note: String
+  dateStart: Date
+  dateMaturity: Date
+  docBase: String
+  ciudKey: Int
 }
 
 """Точка ряда DbtValue по слоту."""

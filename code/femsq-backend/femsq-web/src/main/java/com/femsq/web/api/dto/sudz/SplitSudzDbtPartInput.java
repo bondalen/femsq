@@ -12,6 +12,7 @@ import java.time.LocalDate;
  * @param dateStart дата образования
  * @param dateMaturity срок
  * @param docBase документ основания
+ * @param ciudKey строка очереди КСДД; после Split → created
  */
 public record SplitSudzDbtPartInput(
         Double ttl,
@@ -20,6 +21,7 @@ public record SplitSudzDbtPartInput(
         String note,
         LocalDate dateStart,
         LocalDate dateMaturity,
-        String docBase
+        String docBase,
+        Integer ciudKey
 ) {
 }

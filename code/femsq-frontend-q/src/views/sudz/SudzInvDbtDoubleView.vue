@@ -68,6 +68,17 @@
                     unelevated
                     dense
                     no-caps
+                    label="Split на доли"
+                    :disable="!canSplit"
+                    :loading="acting"
+                    data-test="sudz-inv-dbt-double-split"
+                    @click="onSplit"
+                  />
+                  <QBtn
+                    color="primary"
+                    unelevated
+                    dense
+                    no-caps
                     label="Create слот"
                     :disable="!canCreate"
                     :loading="acting"
@@ -86,7 +97,7 @@
                     @click="onLink"
                   />
                   <div class="text-caption text-grey-6">
-                    Без var — «Выбрать контекст»; затем Create/Link слота.
+                    Split — если свод N×S = Value слота. Иначе без var — «Выбрать контекст»; затем Create/Link.
                   </div>
                 </div>
               </div>
@@ -429,7 +440,8 @@ import {
   getSudzInvDbtSlots,
   getSudzInvDbtVarCandidates,
   getSudzSfDoubleSumMatches,
-  linkSudzInvDbtDouble
+  linkSudzInvDbtDouble,
+  splitSudzDbt
 } from '@/api/sudz-api';
 import { fetchRelationExpand, fetchRelationNode } from '@/api/relation-api';
 import { useConnectionStore } from '@/stores/connection';
@@ -558,8 +570,10 @@ const canCreateVar = computed(
     !!selected.value.ciudIKey &&
     !selected.value.ciudIdvvKey
 );
+const splitAdvised = computed(() => advisor.value?.action === 'split');
 const canCreate = computed(
   () =>
+    !splitAdvised.value &&
     !!selected.value &&
     selected.value.ciudStatus === 'open' &&
     !!selected.value.ciudIKey &&
@@ -568,6 +582,19 @@ const canCreate = computed(
 const canLink = computed(
   () => canCreate.value && !!selectedSlots.value[0]
 );
+const canSplit = computed(() => {
+  const adv = advisor.value;
+  const row = selected.value;
+  return (
+    !!row &&
+    row.ciudStatus === 'open' &&
+    adv?.action === 'split' &&
+    !!adv.recommendIdKey &&
+    !!adv.recommendDbtKey &&
+    !!adv.recommendUplKey &&
+    (adv.splitParts?.length ?? 0) >= 2
+  );
+});
 const cnNumsForSide = computed(() => {
   const side = selectedSides.value[0];
   const all = varCandidates.value?.cnNums ?? [];
@@ -827,6 +854,49 @@ async function onConfirmCreateVar(): Promise<void> {
 }
 
 /**
+ * Split канона на доли свода (S77.4). Не Create/Link.
+ */
+async function onSplit(): Promise<void> {
+  const row = selected.value;
+  const adv = advisor.value;
+  if (!row || !adv?.recommendDbtKey || !adv.recommendIdKey || !adv.recommendUplKey) {
+    return;
+  }
+  const parts = (adv.splitParts ?? []).map((p) => ({
+    ttl: p.ttl,
+    overd: p.overd,
+    varKey: p.varKey,
+    note: p.note,
+    dateStart: p.dateStart,
+    dateMaturity: p.dateMaturity,
+    docBase: p.docBase,
+    ciudKey: p.ciudKey
+  }));
+  acting.value = true;
+  try {
+    const result = await splitSudzDbt({
+      dbtKey: adv.recommendDbtKey,
+      sourceSlotKey: adv.recommendIdKey,
+      uplKey: adv.recommendUplKey,
+      parts
+    });
+    $q.notify({
+      type: 'positive',
+      message: `Split dbt=${result.dbtKey} → ${result.parts.length} долей @upl=${result.uplKey}`
+    });
+    await reloadQueue(row.ciudKey);
+    treeTick.value += 1;
+  } catch (e) {
+    $q.notify({
+      type: 'negative',
+      message: e instanceof Error ? e.message : String(e)
+    });
+  } finally {
+    acting.value = false;
+  }
+}
+
+/**
  * Create нового слота + Value.
  */
 async function onCreate(): Promise<void> {
@@ -1001,10 +1071,14 @@ watch(selectedSlots, async (picked) => {
  */
 function actionRu(action: string | null | undefined): string {
   switch (action) {
+    case 'split':
+      return 'разделить';
     case 'link':
       return 'связать';
     case 'create_var':
       return 'создать var';
+    case 'create_slot':
+      return 'создать слот';
     case 'manual':
       return 'вручную';
     default:

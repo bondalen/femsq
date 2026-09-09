@@ -410,6 +410,18 @@ const SUDZ_INV_DBT_DOUBLE_ADVICE = gql`
       action
       recommendIdKey
       recommendVarKey
+      recommendDbtKey
+      recommendUplKey
+      splitParts {
+        ttl
+        overd
+        varKey
+        note
+        dateStart
+        dateMaturity
+        docBase
+        ciudKey
+      }
     }
   }
 `;
@@ -1103,7 +1115,10 @@ export async function getSudzInvDbtDoubleAdvice(
         confidence: 'none',
         action: 'manual',
         recommendIdKey: null,
-        recommendVarKey: null
+        recommendVarKey: null,
+        recommendDbtKey: null,
+        recommendUplKey: null,
+        splitParts: []
       };
     }
     return data;

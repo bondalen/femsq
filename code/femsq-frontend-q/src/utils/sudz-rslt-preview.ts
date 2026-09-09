@@ -9,6 +9,8 @@ import type { SudzRsltDebt, SudzRsltPeriod } from '@/types/sudz';
 /** Плоская строка предпросмотра (имена полей = техн. имена Excel row3). */
 export type SudzRsltPreviewRow = Record<string, string | number | null> & {
   dbtKey: number;
+  /** Уникальный ключ полосы: канон + индекс строки факта (S77.5). */
+  rowKey: string;
 };
 
 export interface SudzRsltPreview {
@@ -53,7 +55,7 @@ export function buildSudzRsltPreview(
   const newSuffix = `новый, по состоянию на ${monthYearRu(newAsOf)}`;
   const columnDefs = buildColumnDefs(slices, newSuffix);
   const columns = columnDefs.map((def) => toFemsqColumn(def));
-  const rows = debts.map((debt) => flattenDebt(debt, slices, fillNew));
+  const rows = debts.flatMap((debt) => flattenDebt(debt, slices, fillNew));
   return {
     columns,
     rows,
@@ -186,51 +188,123 @@ function toFemsqColumn(def: ColumnDef): FemsqTableColumn<SudzRsltPreviewRow> {
   };
 }
 
+/**
+ * Полоса канона: N строк = max(Value по срезам). Зерно 1 (QIV Ttl, погашено) — только первая строка.
+ *
+ * @param debt канон
+ * @param slices срезы книги
+ * @param fillNew колонки *_new
+ * @return строки предпросмотра
+ */
 function flattenDebt(
   debt: SudzRsltDebt,
   slices: SliceMeta[],
   fillNew: boolean
-): SudzRsltPreviewRow {
-  const row: SudzRsltPreviewRow = {
-    dbtKey: debt.dbtKey,
-    account_num: debt.accountNum
-  };
-
-  slices.forEach((slice, index) => {
-    const period = findPeriod(debt, slice.uplDate);
-    const p = slice.uplDate;
-    const first = index === 0;
-    row[`${p}_invNumEnum`] = period?.invNumEnum ?? null;
-    row[`${p}_idNum`] = period?.idNum ?? null;
-    row[`${p}_cnNumEnum`] = period?.cnNumEnum ?? null;
-    row[`${p}_csoCnDate`] = period?.csoCnDate ?? null;
-    row[`${p}_org_id_value_l`] = period?.orgIdValueL ?? null;
-    row[`${p}_ITN`] = period?.itn ?? null;
-    row[`${p}_CtptOrg`] = period?.ctptOrg ?? null;
-    row[`${p}_Maturity`] = period?.maturity ?? null;
-    row[`${p}_Ttl`] = period?.ttl ?? null;
-    row[`${p}_Overd`] = period?.overd ?? null;
-    row[`${p}_CstAgPnKey`] = null;
-    row[`${p}_CstAgPnCode`] = period?.cstAgPnCode ?? null;
-    row[`${p}_CstAgPnName`] = period?.cstAgPnName ?? null;
-    row[`${p}_AgOrg`] = period?.agOrg ?? null;
-    if (!first) {
-      row[`${p}_погашено`] = period?.pogasheno ?? null;
-    }
-  });
-
-  row['Куратор от Управления'] = debt.curator;
-  row['Мероприятия по погашению дебиторской задолженности'] = debt.mery;
-  row['Код стройки'] = debt.cstCode;
-  row['Код стройкиN'] = debt.cstName;
-  row.cur_new = fillNew ? (debt.curatorNew ?? null) : null;
-  row.mery_new = fillNew ? (debt.meryNew ?? null) : null;
-  row.cstAgPn_new = fillNew ? (debt.cstCodeNew ?? null) : null;
-  return row;
+): SudzRsltPreviewRow[] {
+  const nRows = bandRowCount(debt, slices);
+  const basePeriods = slices.length ? periodsOn(debt, slices[0].uplDate) : [];
+  const baseOverd = sumOverd(basePeriods);
+  const rows: SudzRsltPreviewRow[] = [];
+  for (let r = 0; r < nRows; r++) {
+    const row: SudzRsltPreviewRow = {
+      dbtKey: debt.dbtKey,
+      rowKey: `${debt.dbtKey}:${r}`,
+      account_num: debt.accountNum
+    };
+    slices.forEach((slice, index) => {
+      const periods = periodsOn(debt, slice.uplDate);
+      const p = slice.uplDate;
+      const first = index === 0;
+      row[`${p}_invNumEnum`] = pick(mapPeriod(periods, (x) => x.invNumEnum), r, nRows);
+      row[`${p}_idNum`] = pick(mapPeriod(periods, (x) => x.idNum), r, nRows);
+      row[`${p}_cnNumEnum`] = pick(mapPeriod(periods, (x) => x.cnNumEnum), r, nRows);
+      row[`${p}_csoCnDate`] = pick(mapPeriod(periods, (x) => x.csoCnDate), r, nRows);
+      row[`${p}_org_id_value_l`] = pick(mapPeriod(periods, (x) => x.orgIdValueL), r, nRows);
+      row[`${p}_ITN`] = pick(mapPeriod(periods, (x) => x.itn), r, nRows);
+      row[`${p}_CtptOrg`] = pick(mapPeriod(periods, (x) => x.ctptOrg), r, nRows);
+      row[`${p}_Maturity`] = pick(mapPeriod(periods, (x) => x.maturity), r, nRows);
+      row[`${p}_Ttl`] = pick(mapPeriod(periods, (x) => x.ttl), r, nRows);
+      row[`${p}_Overd`] = pick(mapPeriod(periods, (x) => x.overd), r, nRows);
+      row[`${p}_CstAgPnKey`] = null;
+      row[`${p}_CstAgPnCode`] = pick(mapPeriod(periods, (x) => x.cstAgPnCode), r, nRows);
+      row[`${p}_CstAgPnName`] = pick(mapPeriod(periods, (x) => x.cstAgPnName), r, nRows);
+      row[`${p}_AgOrg`] = pick(mapPeriod(periods, (x) => x.agOrg), r, nRows);
+      if (!first) {
+        const curr = periods.length ? sumOverd(periods) : null;
+        row[`${p}_погашено`] = pick([pogashenoAccess(baseOverd, curr)], r, nRows);
+      }
+    });
+    row['Куратор от Управления'] = debt.curator;
+    row['Мероприятия по погашению дебиторской задолженности'] = debt.mery;
+    row['Код стройки'] = debt.cstCode;
+    row['Код стройкиN'] = debt.cstName;
+    row.cur_new = fillNew ? (debt.curatorNew ?? null) : null;
+    row.mery_new = fillNew ? (debt.meryNew ?? null) : null;
+    row.cstAgPn_new = fillNew ? (debt.cstCodeNew ?? null) : null;
+    rows.push(row);
+  }
+  return rows;
 }
 
-function findPeriod(debt: SudzRsltDebt, uplDate: string): SudzRsltPeriod | undefined {
-  return (debt.periods ?? []).find((p) => p.uplDate === uplDate);
+function bandRowCount(debt: SudzRsltDebt, slices: SliceMeta[]): number {
+  let n = 1;
+  for (const slice of slices) {
+    n = Math.max(n, periodsOn(debt, slice.uplDate).length);
+  }
+  return n;
+}
+
+function periodsOn(debt: SudzRsltDebt, uplDate: string): SudzRsltPeriod[] {
+  return (debt.periods ?? []).filter((period) => period.uplDate === uplDate);
+}
+
+function mapPeriod<T>(
+  periods: SudzRsltPeriod[],
+  getter: (period: SudzRsltPeriod) => T
+): Array<T | null> {
+  return periods.map((period) => getter(period) ?? null);
+}
+
+/**
+ * Как Excel writeBandCol: одно значение на полосе — только первая строка (merge).
+ */
+function pick(
+  values: Array<string | number | null>,
+  rowIndex: number,
+  nRows: number
+): string | number | null {
+  const merge = nRows > 1 && values.length <= 1;
+  if (merge) {
+    return rowIndex === 0 && values.length > 0 ? (values[0] ?? null) : null;
+  }
+  return rowIndex < values.length ? (values[rowIndex] ?? null) : null;
+}
+
+function sumOverd(periods: SudzRsltPeriod[]): number | null {
+  let sum: number | null = null;
+  for (const period of periods) {
+    if (period.overd == null) {
+      continue;
+    }
+    sum = sum == null ? period.overd : sum + period.overd;
+  }
+  return sum;
+}
+
+/** Access / S42d: NULLIF(Overd(база) − ISNULL(Overd(d), 0), 0); отрицательную дельту не пишем. */
+export function pogashenoAccess(
+  baseOverd: number | null | undefined,
+  currOverdOrNull: number | null | undefined
+): number | null {
+  if (baseOverd == null) {
+    return null;
+  }
+  const curr = currOverdOrNull ?? 0;
+  const delta = baseOverd - curr;
+  if (delta <= 0) {
+    return null;
+  }
+  return delta;
 }
 
 function quarterLabel(isoDate: string): string {

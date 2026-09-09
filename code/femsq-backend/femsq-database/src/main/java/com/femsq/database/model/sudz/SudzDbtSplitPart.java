@@ -13,6 +13,7 @@ import java.time.LocalDate;
  * @param dateStart дата образования; null — с эталона
  * @param dateMaturity срок; null — с эталона
  * @param docBase документ основания; null — с эталона
+ * @param ciudKey строка очереди КСДД; после Split → {@code created}
  */
 public record SudzDbtSplitPart(
         BigDecimal ttl,
@@ -21,6 +22,7 @@ public record SudzDbtSplitPart(
         String note,
         LocalDate dateStart,
         LocalDate dateMaturity,
-        String docBase
+        String docBase,
+        Integer ciudKey
 ) {
 }

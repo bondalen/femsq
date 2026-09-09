@@ -110,8 +110,8 @@
             <div class="text-caption text-grey-7 q-mb-xs">Реквизиты по срезам (чтение)</div>
             <div class="periods-scroll">
               <div
-                v-for="period in store.selectedDebt.periods"
-                :key="period.uplKey"
+                v-for="(period, periodIdx) in store.selectedDebt.periods"
+                :key="`${period.uplKey}-${period.idNum ?? periodIdx}`"
                 class="period-row q-mb-sm"
               >
                 <div class="text-caption text-weight-medium">

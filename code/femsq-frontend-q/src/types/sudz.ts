@@ -255,6 +255,7 @@ export interface SplitSudzDbtPartInput {
   dateStart?: string | null;
   dateMaturity?: string | null;
   docBase?: string | null;
+  ciudKey?: number | null;
 }
 
 /** Вход Split канона на доли одной upl. */
@@ -408,6 +409,9 @@ export interface SudzInvDbtDoubleAdvice {
   action: string | null;
   recommendIdKey: number | null;
   recommendVarKey: number | null;
+  recommendDbtKey: number | null;
+  recommendUplKey: number | null;
+  splitParts: SplitSudzDbtPartInput[] | null;
 }
 
 /** Точка ряда DbtValue по слоту. */

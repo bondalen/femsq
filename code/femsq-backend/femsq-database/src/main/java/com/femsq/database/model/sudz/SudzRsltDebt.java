@@ -3,7 +3,7 @@ package com.femsq.database.model.sudz;
 import java.util.List;
 
 /**
- * Долг в витрине Rslt (зерно {@code dbtKey}).
+ * Долг в витрине Rslt (канон {@code dbtKey}; периоды — по {@code DbtValue}, не 1×upl).
  *
  * @param curatorNew куратор из {@code yr_CmmGr_New} (колонка {@code cur_new}; только Rslt повтор)
  * @param meryNew мероприятия из {@code yr_CmmGr_New} ({@code mery_new})

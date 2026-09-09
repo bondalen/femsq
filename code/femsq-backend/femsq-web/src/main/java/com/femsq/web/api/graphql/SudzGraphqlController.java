@@ -1064,7 +1064,8 @@ public class SudzGraphqlController {
                     part.note(),
                     part.dateStart(),
                     part.dateMaturity(),
-                    part.docBase()
+                    part.docBase(),
+                    part.ciudKey()
             ));
         }
         return new SudzDbtSplitCommand(

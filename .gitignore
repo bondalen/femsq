@@ -17,6 +17,7 @@ mvnw.cmd
 .idea/
 *.iml
 .vscode/
+*.code-workspace
 *.swp
 *.swo
 *~

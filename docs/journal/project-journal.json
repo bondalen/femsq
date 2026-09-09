@@ -3,7 +3,7 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-09-08"
+      "lastUpdated": "2026-09-09"
     },
     "sessions": [
       {
@@ -12,7 +12,7 @@
           "chat-attributes": {
             "id": "chat-2026-09-08-002",
             "created": "2026-09-08",
-            "lastUpdated": "2026-09-08",
+            "lastUpdated": "2026-09-09",
             "owner": "Александр",
             "status": "active",
             "priority": "high",
@@ -67,6 +67,34 @@
                   "tags": ["S77", "graphql", "split", "merge"]
                 },
                 "entry": "JdbcSudzDao.splitDbt/mergeDbt: доли на одной upl, история предыдущих upl цела; Split вставляет invDbtDbt с тем же dbtKey (не ensureInvDbtDbtBridgeForSlot). Merge CANONS = UPDATE iddDbt (Dbt не удаляется); SHARES_ON_UPL = снять Value долей и восстановить одну на survivor-слоте. GraphQL splitSudzDbt/mergeSudzDbt + Apollo sudz-api. Кнопки КСДД, экспортёр, 02 *Dv, UAT 85166 не трогались. Next: S77.4 советник КСДД."
+              }
+            },
+            {
+              "log": {
+                "displayName": "S77.4 советник Split + кнопка КСДД, не Link (success). № log-2026-09-09-001",
+                "log-attributes": {
+                  "id": "log-2026-09-09-001",
+                  "timestamp": "2026-09-09T09:30:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "tags": ["S77", "ksdd", "advisor", "split"]
+                },
+                "entry": "S77.4+S77.6: советник action=split (N строк свода, ∑ = Value слота, каждая ≠ целому). КСДД: «Split на доли»; Create/Link при split выкл. UAT 85166 @901: Split → слоты 13041/13042 Values 2×18000 @901, история 11897 на 28/803/910 цела, ciud 2807/2808 created, G4 open=0. Create/Link не вызывались. Next: S77.5 экспортёр A/C; S77.7 остаток 901→902."
+              }
+            },
+            {
+              "log": {
+                "displayName": "S77.5 экспортёр полос A/C: N строк Value, погашено на ∑ (success). № log-2026-09-09-002",
+                "log-attributes": {
+                  "id": "log-2026-09-09-002",
+                  "timestamp": "2026-09-09T10:00:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "tags": ["S77", "rslt", "exporter", "grain"]
+                },
+                "entry": "S77.5: collapseRsltPeriods оставляет доли одной СФ (N Value на upl); L* по-прежнему 1×upl. SudzRsltExcelExporter пишет полосу высотой max(Value): факты по строкам, dbtKey/account/погашено merge. погашено = NULLIF(∑Overd_база−∑Overd_срез,0), не 18000×2. Предпросмотр N строк + rowKey. Тесты: JdbcSudzDaoRsltCollapseTest, SudzRsltExcelExporterTest, sudz-rslt-preview.spec. 02 *Dv не применялся; C.10.3/C.10.5 не снимались. Next: S77.7 901→902."
               }
             }
           ]

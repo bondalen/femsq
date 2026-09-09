@@ -1,11 +1,11 @@
 # План: аналог «системы управления дебиторской задолженностью» (СУДЗ) из MS Access
 
 **Дата создания:** 2026-08-02  
-**Последнее обновление:** 2026-09-08  
+**Последнее обновление:** 2026-09-09  
 **Проект:** FEMSQ  
-**Версия плана:** 0.99.24 (S77.3 GraphQL Split/Merge; C.10.3/C.10.5 — блокер S77)
-**Задача:** 0065–0072 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md); **активно: 0069** — **S77** split/merge (инварианты→DDL→ядро→воронка→Rslt A/C); **S76-C.10** ⛔ до S77; **S74 M5**; **0071** 🔶; **S69**/**S70** ✅
-**Статус плана:** ✅ 0070; **S75** stage1 ✅; **S76** 🔄 (**C.10.1 G4** фикстура 85166); **S77** 🔄 **S77.1–.3** ✅; next **S77.4** КСДД Split-советник; **S74 M1–M4** ✅; **M5 C1** ✅; **0071** 🔶
+**Версия плана:** 0.99.27 (S77.5 экспортёр A/C; C.10.3/C.10.5 — блокер до S77.8)
+**Задача:** 0065–0072 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md); **активно: 0069** — **S77** split/merge (инварианты→DDL→ядро→воронка→Rslt A/C); **S76-C.10** ⛔ до S77.8; **S74 M5**; **0071** 🔶; **S69**/**S70** ✅
+**Статус плана:** ✅ 0070; **S75** stage1 ✅; **S76** 🔄 (**C.10.1 G4** 85166 закрыт Split); **S77** 🔄 **S77.1–.6** ✅; next **S77.7** 901→902; **S74 M1–M4** ✅; **M5 C1** ✅; **0071** 🔶
 **Cutover prod/DEV:** [db-upgrade-sudz-invdbt-cutover.md](../../../../deployment/db-upgrade-sudz-invdbt-cutover.md) · §5.6 [S74](#s74--трек-cutover-m1m6--2026-08-27) · D1: [04-5](../../domain/sudz/04-5_dbt-invdbt-cardinality-d1.md)
 **Паспорт pmt:** [02-11_cn-inv-pmt-upl-access.md](../../UI/02-11_cn-inv-pmt-upl-access.md) · §5.7  
 **План UI pmt:** [chat-plan-26-0819-cn-inv-pmt-upl.md](./chat-plan-26-0819-cn-inv-pmt-upl.md) · §5.8  
@@ -208,7 +208,7 @@
 | S74 | 2026-08-27 | Трек cutover **M1–M6** (Dbt→DEV seed→calm→экран/7→чекбоксы→prod) | [§5.6 S74](#s74--трек-cutover-m1m6--2026-08-27); [cutover](../../../../deployment/db-upgrade-sudz-invdbt-cutover.md) | 🔄 M5 (M1–M4 ✅) |
 | S75 | 2026-08-31 | **Rslt stage1** база–QI–QII: PIT `09`, L*, row1+погашено+выборка; E1′ в cutover; gate `verify-rslt-stage1.sh` | [26-0831](../../sql/26-0831-sudz-dbt-slot-link/); [E1′](../../../../deployment/db-upgrade-sudz-invdbt-cutover.md#e1--паритет-исторических-rslt-pit-2026-08-31) | ✅ |
 | S76 | 2026-09-01…08 | **Rslt stage2 / QIV (variant B):** X confirmed; **S76-C.10** UI 901→902→Rslt; C.10.3/C.10.5 **блокер S77** (не принимать 1×36000 при своде 2×18000) | [§5.6 S76](#s76--rslt-stage2-qiv-дельта-воронка-901-vs-access-variant-b-2026-09-01); [08 A/C](../../sql/26-0908-sudz-split-merge-sandbox/08_CMM_AND_RSLT.md) | 🔄 C.10.1 G4; ⛔ C.10.3/5 → S77 |
-| S77 | 2026-09-08 | **split/merge в живом `sudz` (DEV)** и воронке: инварианты → DDL → Split/Merge → КСДД → экспортёр A/C → UAT 85166 → 901/902 → `26-0505`. Не узкий срез. | [§5.6 S77](#s77--splitmerge-ядро--воронка--rslt-ac-dev-2026-09-08); черновик [26-0908-sudz-split-merge-dev](../../sql/26-0908-sudz-split-merge-dev/) | 🔄 S77.4; GraphQL Split/Merge ✅ |
+| S77 | 2026-09-08 | **split/merge в живом `sudz` (DEV)** и воронке: инварианты → DDL → Split/Merge → КСДД → экспортёр A/C → UAT 85166 → 901/902 → `26-0505`. Не узкий срез. | [§5.6 S77](#s77--splitmerge-ядро--воронка--rslt-ac-dev-2026-09-08); черновик [26-0908-sudz-split-merge-dev](../../sql/26-0908-sudz-split-merge-dev/) | 🔄 S77.7; A/C ✅; 85166 Split ✅ |
 | S73 | 2026-08-26 | **0071 T7:** отдельный план вкладки «Счета-фактуры» (слева `cnInv`, справа `contracts-inv`); interim = `cn-picker` | [chat-plan-26-0826-contracts-inv.md](./chat-plan-26-0826-contracts-inv.md) | 🔄 план |
 | S67 | 2026-08-16 | UAT 910 dry: **128** дог. / **705** СФ ✅, но rebuild **~3m14s** (CTE). Перепись на `#temp`+индексы; лог СФ усечён (8+…) | JAR **0.1.0.196** | ✅ via S67a |
 | S67a | 2026-08-16 | `#temp` без COLLATE → conflict Latin1 vs Cyrillic на JOIN `cnnNumNull`. Колонки `#cidu*` → `Cyrillic_General_CI_AS` | JAR **0.1.0.197** | ✅ UAT: sqlMs=241, 128/705 |
@@ -1533,7 +1533,7 @@ Rslt(QIV) ≡ Excel_эталон
 
 **Связь:** **S75** (PIT 801–803) не менять; **S76** не смешивать gate stage1 и stage2. Скрипт `10_SEED_…` — **временный UAT**, не cutover.
 
-**Следующий шаг в чате:** **S77.4** — советник КСДД «свод N×S vs ∑ на слоте → Split, не Link». S77.3 ✅ (`splitSudzDbt` / `mergeSudzDbt`). S77.1 ✅. S77.2 ✅ (`01` на DEV `sudz`). **C.10.1 G4** @901 (ciud 2807/2808, `iKey=85166`) остаётся **фикстурой UAT** S77. **C.10.3 / C.10.5** — **блокер S77**. Канон полос A/C: [08](../../sql/26-0908-sudz-split-merge-sandbox/08_CMM_AND_RSLT.md). Кнопки КСДД и экспортёр **не** трогались.
+**Следующий шаг в чате:** **S77.7** остаток 901→902 теми же gate'ами. S77.5 ✅ экспортёр A/C (N строк Value, погашено на ∑ канона). S77.6 ✅ 85166 Split. Полоса C (два старых cmm) — после I4 `*Dv`. **C.10.3 / C.10.5** — **блокер до S77.8**.
 
 ###### S76-C — воронка 901→903 без B-seed (2026-09-01)
 
@@ -1591,7 +1591,7 @@ Rslt(QIV) ≡ Excel_эталон
 | # | Шаг | Критерий | Статус |
 |---|-----|----------|--------|
 | **C.10.0** | Reset **901** (Tbl/DV/очереди); `cidufPath` = X | `12_RESET…` + path UI/GraphQL | 🔶 Tbl уже reload агентом 2026-09-07 (1774); DV=0 — перед UI-прогоном повторный reset по желанию оператора |
-| **C.10.1** | UI **901**: excelToTbl → фазы A–E (G0…G5) | G2–G4 open=0; DV≈Tbl (±док. искл.) | 🔶 G3@901 open=0; G4 open=**2** (2807/2808, 85166) — **фикстура S77**; DV=12 / Tbl=1774; Create/Link без split нельзя |
+| **C.10.1** | UI **901**: excelToTbl → фазы A–E (G0…G5) | G2–G4 open=0; DV≈Tbl (±док. искл.) | 🔶 G3@901 open=0; **G4 open=0** (S77.6 Split 85166 → 2×18000 @901, слоты 13041/13042); DV vs Tbl ещё не закрыт |
 | **C.10.2** | Smoke P3 @901 | **9/9** сумм в `DbtValue@901` (~592,9M) | ☐ (суммы P3 не зависят от зерна 85166) |
 | **C.10.3** | Gate QIV `excel_only` / T1 (и T2 без P3-gap) | vs `26-0212` или база `26-0505` | ⛔ **блокер S77** — не PASS при 1×36000 vs свод 2×18000 |
 | **C.10.4** | Reset/подготовка **902**; UI **902** теми же gate'ами | G2–G4 PASS | ☐ после S77 + G4@901 |
@@ -1669,9 +1669,9 @@ Rslt(QIV) ≡ Excel_эталон
 | **S77.1** | Текст инвариантов + согласие на запреты | ✅ 2026-09-08 (зерно cmm: предшествующий срез / два этапа Rslt) |
 | **S77.2** | DDL DEV (`sudz` only): DROP UX + переписать Consistency п.4, убрать п.5 | ✅ DEV 2026-09-08; `test_sudz` не тронут; `02` *Dv не применялся |
 | **S77.3** | Мутации GraphQL **Split** / **Merge** (те же, что вызовут экран и воронка) | ✅ 2026-09-08; UI КСДД не вешался |
-| **S77.4** | КСДД / `invDbtLoad`: советник «свод N×S, на слоте ∑=N×S → Split, не Link»; после Split `dbtValueLoad` пишет N строк | ☐ |
-| **S77.5** | Экспортёр полос **A/C** (`SudzRsltExcelExporter` сейчас 1 строка на `Dbt`) | ☐ |
-| **S77.6** | UAT 85166 @901: Split → 2×18000 → G4 `open=0` | ☐ фикстура 2807/2808 |
+| **S77.4** | КСДД / `invDbtLoad`: советник «свод N×S, на слоте ∑=N×S → Split, не Link»; после Split `dbtValueLoad` пишет N строк | ✅ 2026-09-09; кнопка Split; Link/Create при split выкл. |
+| **S77.5** | Экспортёр полос **A/C** (`SudzRsltExcelExporter` сейчас 1 строка на `Dbt`) | ✅ 2026-09-09; N Value; merge зерна 1; cmm C без `*Dv` |
+| **S77.6** | UAT 85166 @901: Split → 2×18000 → G4 `open=0` | ✅ 2026-09-09; слоты 13041/13042; история 11897 цела; Create/Link не вызывались |
 | **S77.7** | Остаток G5 901 → UI 902 теми же gate'ами | ☐ |
 | **S77.8** | Rslt vs `26-0505` → снять блокер C.10.3 / C.10.5 | ☐ |
 
@@ -1681,7 +1681,7 @@ Rslt(QIV) ≡ Excel_эталон
 
 **Merge (смысл):** N канонов или N долей → один `Dbt`; Value остаются на слотах (как 113→112 в песочнице); на текущей upl при слиянии долей — снова одна Value (полоса C).
 
-**GraphQL (S77.3):** `splitSudzDbt(input: SplitSudzDbtInput!)` / `mergeSudzDbt(input: MergeSudzDbtInput!)` (`CANONS` | `SHARES_ON_UPL`). Java: `JdbcSudzDao.splitDbt` / `mergeDbt`; Apollo: `splitSudzDbt` / `mergeSudzDbt` в `sudz-api.ts`. Split **не** идёт через очередь Create/Link и **не** вызывает `ensureInvDbtDbtBridgeForSlot` (тот helper завёл бы новый `Dbt`). Кнопки КСДД — S77.4.
+**GraphQL (S77.3):** `splitSudzDbt` / `mergeSudzDbt`. **КСДД (S77.4):** советник `action=split` + кнопка «Split на доли»; `ciudKey` доли закрывает очередь (`created`). Кнопки Create/Link при split выключены.
 
 ### 5.7. 1.1.1.2 — паспорт Access `CnInvPmtUpl*` (S69; не 0069)
 

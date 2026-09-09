@@ -442,13 +442,13 @@
                               </tr>
                             </thead>
                             <tbody>
-                              <tr v-for="row in filteredProtoRows" :key="row.dbtKey">
+                              <tr v-for="row in filteredProtoRows" :key="row.rowKey">
                                 <td
                                   v-for="col in progress.protoColumns"
                                   :key="col.name"
                                   :class="{
                                     'proto-td--selected':
-                                      protoCell.dbtKey === row.dbtKey &&
+                                      protoCell.rowKey === row.rowKey &&
                                       protoCell.colName === col.name,
                                     'proto-c--overd':
                                       typeof col.classes === 'string' && col.classes.includes('overd')
@@ -691,6 +691,7 @@ const progress = reactive({
 /** Выбранная ячейка предпросмотра — полный текст в нижней панели. */
 const protoCell = reactive({
   dbtKey: null as number | null,
+  rowKey: '' as string,
   colName: '',
   colLabel: '',
   text: ''
@@ -1219,6 +1220,7 @@ function onProtoCellSelect(
   col: FemsqTableColumn<SudzRsltPreviewRow>
 ): void {
   protoCell.dbtKey = row.dbtKey;
+  protoCell.rowKey = row.rowKey;
   protoCell.colName = col.name;
   protoCell.colLabel = col.label;
   protoCell.text = formatProtoCell(row, col);
@@ -1226,6 +1228,7 @@ function onProtoCellSelect(
 
 function clearProtoCell(): void {
   protoCell.dbtKey = null;
+  protoCell.rowKey = '';
   protoCell.colName = '';
   protoCell.colLabel = '';
   protoCell.text = '';

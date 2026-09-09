@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -45,6 +46,60 @@ class InvDbtDoubleAdvisorTest {
         assertTrue(advice.messageText().contains("[советник]"));
         assertTrue(advice.messageText().contains("Связать со слотом 42"));
         assertTrue("high".equals(advice.confidence()) || "medium".equals(advice.confidence()));
+        assertEquals("link", advice.action());
+    }
+
+    @Test
+    void splitWhenSiblingSumEqualsSlotAndSharesDiffer() {
+        var row = new com.femsq.database.model.sudz.SudzCnInvUplInvDbtDouble(
+                2807, 1, null, 901, 85166, null, null, new BigDecimal("18000"),
+                1, "multi", null, "open", null, null);
+        var shares = List.of(
+                new InvDbtDoubleAdvisor.OpenShare(2807, new BigDecimal("18000"), null, 1),
+                new InvDbtDoubleAdvisor.OpenShare(2808, new BigDecimal("18000"), null, 1)
+        );
+        var canons = List.of(
+                new InvDbtDoubleAdvisor.SlotCanon(11897, 99, new BigDecimal("36000"), 1)
+        );
+        var split = InvDbtDoubleAdvisor.detectSplit(
+                row, shares, canons, 901, new BigDecimal("0.01"));
+        assertTrue(split.isPresent());
+        var excel = new com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate(
+                1, null, 23, 761010, null, null, null, null, null, null, null, null, null,
+                new BigDecimal("18000"), null, null, null, null, null, 901);
+        var slot = new com.femsq.database.model.sudz.SudzInvDbtSlot(11897, 85166, 1, "ciaName=1");
+        var advice = InvDbtDoubleAdvisor.advise(
+                row,
+                excel,
+                List.of(slot),
+                java.util.Map.of(11897, 23),
+                java.util.Map.of(11897, 1),
+                java.util.Optional.empty(),
+                List.of(),
+                java.util.Map.of(),
+                LocalDate.parse("2025-12-31"),
+                new BigDecimal("0.01"),
+                split);
+        assertEquals("split", advice.action());
+        assertEquals(11897, advice.recommendIdKey());
+        assertEquals(99, advice.recommendDbtKey());
+        assertTrue(advice.messageText().contains("не Link"));
+        assertEquals(2, advice.splitParts().size());
+    }
+
+    @Test
+    void noSplitWhenShareEqualsWholeSlot() {
+        var row = new com.femsq.database.model.sudz.SudzCnInvUplInvDbtDouble(
+                1, 1, null, 901, 10, null, null, new BigDecimal("36000"),
+                1, "multi", null, "open", null, null);
+        var shares = List.of(
+                new InvDbtDoubleAdvisor.OpenShare(1, new BigDecimal("36000"), null, 1)
+        );
+        var canons = List.of(
+                new InvDbtDoubleAdvisor.SlotCanon(5, 9, new BigDecimal("36000"), 1)
+        );
+        assertTrue(InvDbtDoubleAdvisor.detectSplit(
+                row, shares, canons, 901, new BigDecimal("0.01")).isEmpty());
     }
 
     private static SudzInvDbtTimelinePoint point(String date, double ttl) {

@@ -2,7 +2,9 @@ package com.femsq.database.dao;
 
 import com.femsq.database.model.sudz.SudzInvDbtDoubleAdvice;
 import com.femsq.database.model.sudz.SudzInvDbtSlot;
+import com.femsq.database.model.sudz.SudzInvDbtSplitCandidate;
 import com.femsq.database.model.sudz.SudzInvDbtTimelinePoint;
+import com.femsq.database.model.sudz.SudzDbtSplitPart;
 import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
 import com.femsq.database.model.sudz.SudzSfDoubleNewSumMatch;
 import com.femsq.database.model.sudz.SudzCnInvUplInvDbtDouble;
@@ -29,20 +31,27 @@ final class InvDbtDoubleAdvisor {
     }
 
     /**
-     * Сформировать совет по строке очереди.
+     * Канон слота для детекта Split: последняя Value (предпочтительно текущая upl).
      *
-     * @param row строка очереди
-     * @param excel Excel-кандидат
-     * @param slots слоты на iKey
-     * @param slotAccnts accnt по idKey (primary var)
-     * @param slotVars var по idKey
-     * @param f1UniqueSlot единственный слот F1 или empty
-     * @param newSumMatches совпадения DbtValue по сумме
-     * @param slotTimelines ряды по слотам (для амортизации)
-     * @param excelStatusDate дата среза upl
-     * @param epsilon допуск суммы
-     * @return совет
+     * @param slotKey {@code invDbt.idKey}
+     * @param dbtKey канон
+     * @param ttl сумма
+     * @param varKey эталонный var
      */
+    record SlotCanon(int slotKey, int dbtKey, BigDecimal ttl, Integer varKey) {
+    }
+
+    /**
+     * Открытая строка очереди / доля свода.
+     *
+     * @param ciudKey ключ очереди
+     * @param ttl сумма Excel
+     * @param overd просрочка Excel
+     * @param varKey var строки
+     */
+    record OpenShare(int ciudKey, BigDecimal ttl, BigDecimal overd, Integer varKey) {
+    }
+
     static SudzInvDbtDoubleAdvice advise(
             SudzCnInvUplInvDbtDouble row,
             SudzSfDoubleExcelCandidate excel,
@@ -55,6 +64,49 @@ final class InvDbtDoubleAdvisor {
             LocalDate excelStatusDate,
             BigDecimal epsilon
     ) {
+        return advise(
+                row,
+                excel,
+                slots,
+                slotAccnts,
+                slotVars,
+                f1UniqueSlot,
+                newSumMatches,
+                slotTimelines,
+                excelStatusDate,
+                epsilon,
+                Optional.empty());
+    }
+
+    /**
+     * Сформировать совет по строке очереди.
+     *
+     * @param row строка очереди
+     * @param excel Excel-кандидат
+     * @param slots слоты на iKey
+     * @param slotAccnts accnt по idKey (primary var)
+     * @param slotVars var по idKey
+     * @param f1UniqueSlot единственный слот F1 или empty
+     * @param newSumMatches совпадения DbtValue по сумме
+     * @param slotTimelines ряды по слотам (для амортизации)
+     * @param excelStatusDate дата среза upl
+     * @param epsilon допуск суммы
+     * @param split готовый кандидат Split (S77.4)
+     * @return совет
+     */
+    static SudzInvDbtDoubleAdvice advise(
+            SudzCnInvUplInvDbtDouble row,
+            SudzSfDoubleExcelCandidate excel,
+            List<SudzInvDbtSlot> slots,
+            java.util.Map<Integer, Integer> slotAccnts,
+            java.util.Map<Integer, Integer> slotVars,
+            Optional<Integer> f1UniqueSlot,
+            List<SudzSfDoubleNewSumMatch> newSumMatches,
+            java.util.Map<Integer, List<SudzInvDbtTimelinePoint>> slotTimelines,
+            LocalDate excelStatusDate,
+            BigDecimal epsilon,
+            Optional<SudzInvDbtSplitCandidate> split
+    ) {
         Objects.requireNonNull(row, "row");
         BigDecimal eps = epsilon == null ? DEFAULT_EPS : epsilon;
         StringBuilder msg = new StringBuilder("[советник]");
@@ -62,6 +114,25 @@ final class InvDbtDoubleAdvisor {
         String action = "manual";
         Integer recommendSlot = null;
         Integer recommendVar = row.ciudIdvvKey();
+
+        if (split != null && split.isPresent()) {
+            SudzInvDbtSplitCandidate cand = split.get();
+            appendLine(msg, "Свод " + cand.parts().size() + " строк, сумма "
+                    + formatMoney(cand.sourceTtl())
+                    + " = Value слота " + cand.sourceSlotKey()
+                    + " (Dbt " + cand.dbtKey() + ")");
+            appendLine(msg, "→ Split слота " + cand.sourceSlotKey()
+                    + " на доли (уверенность: высокая) — не Link и не Create");
+            return new SudzInvDbtDoubleAdvice(
+                    msg.toString(),
+                    "high",
+                    "split",
+                    cand.sourceSlotKey(),
+                    row.ciudIdvvKey(),
+                    cand.dbtKey(),
+                    cand.uplKey(),
+                    cand.parts());
+        }
 
         if (row.ciudIdvvKey() == null || row.ciudIdvvKey() <= 0) {
             appendLine(msg, "Нет варианта контекста (invDbtVar) — сначала «Выбрать контекст»");
@@ -159,6 +230,79 @@ final class InvDbtDoubleAdvisor {
                 + "уверенности проверьте вручную");
         return new SudzInvDbtDoubleAdvice(
                 msg.toString(), confidence, action, recommendSlot, recommendVar);
+    }
+
+    /**
+     * N строк свода на СФ, сумма = Value слота, каждая строка ≠ целому → Split.
+     *
+     * @param row текущая строка очереди
+     * @param shares открытые доли той же СФ/upl (включая текущую)
+     * @param canons слоты с последней Value
+     * @param uplKey срез
+     * @param epsilon допуск
+     * @return кандидат или empty
+     */
+    static Optional<SudzInvDbtSplitCandidate> detectSplit(
+            SudzCnInvUplInvDbtDouble row,
+            List<OpenShare> shares,
+            List<SlotCanon> canons,
+            int uplKey,
+            BigDecimal epsilon
+    ) {
+        Objects.requireNonNull(row, "row");
+        BigDecimal eps = epsilon == null ? DEFAULT_EPS : epsilon;
+        if (shares == null || shares.size() < 2 || canons == null || canons.isEmpty() || uplKey <= 0) {
+            return Optional.empty();
+        }
+        boolean currentInShares = shares.stream().anyMatch(s -> s.ciudKey() == row.ciudKey());
+        if (!currentInShares) {
+            return Optional.empty();
+        }
+        BigDecimal sum = BigDecimal.ZERO;
+        for (OpenShare share : shares) {
+            if (share.ttl() == null || share.ttl().compareTo(BigDecimal.ZERO) <= 0) {
+                return Optional.empty();
+            }
+            sum = sum.add(share.ttl());
+        }
+        List<SlotCanon> matches = new ArrayList<>();
+        for (SlotCanon canon : canons) {
+            if (canon.ttl() == null) {
+                continue;
+            }
+            if (canon.ttl().subtract(sum).abs().compareTo(eps) > 0) {
+                continue;
+            }
+            boolean shareEqualsWhole = shares.stream()
+                    .anyMatch(s -> s.ttl().subtract(canon.ttl()).abs().compareTo(eps) <= 0);
+            if (shareEqualsWhole) {
+                continue;
+            }
+            matches.add(canon);
+        }
+        if (matches.size() != 1) {
+            return Optional.empty();
+        }
+        SlotCanon canon = matches.get(0);
+        List<SudzDbtSplitPart> parts = new ArrayList<>();
+        int i = 1;
+        for (OpenShare share : shares) {
+            parts.add(new SudzDbtSplitPart(
+                    share.ttl(),
+                    share.overd(),
+                    share.varKey(),
+                    "S77-split-" + i++,
+                    null,
+                    null,
+                    null,
+                    share.ciudKey()));
+        }
+        return Optional.of(new SudzInvDbtSplitCandidate(
+                canon.dbtKey(),
+                canon.slotKey(),
+                uplKey,
+                canon.ttl(),
+                List.copyOf(parts)));
     }
 
     private record AmortizationResult(
