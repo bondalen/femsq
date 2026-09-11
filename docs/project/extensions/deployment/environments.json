@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$comment": "Реестр окружений FEMSQ: разработка и продуктивный SQL Server. Дублирует и дополняет project.development.environments в project-docs.json.",
-  "lastUpdated": "2026-06-24",
+  "lastUpdated": "2026-09-11",
 
   "summary": {
     "production_database": "FishEye на MS SQL Server 2012 SP4 (11.0.7507.2)",
@@ -48,6 +48,31 @@
           "schema": "ags",
           "connectivity": "wireguard",
           "note": "Тот же Docker на nb-win; см. docs/development/remote-development-nb-win.md"
+        },
+        "application": {
+          "url": "http://localhost:8080",
+          "config_template": "docs/development/examples/database.properties.alex-fedora"
+        },
+        "cursor": {
+          "mcp_setup": "code/scripts/setup-cursor-mcp.sh",
+          "mcp_template": ".cursor/mcp.remote-nb-win.json.example"
+        }
+      },
+      {
+        "id": "asus-kubuntu",
+        "name": "Удалённая рабочая станция Kubuntu (Ubuntu 24.04)",
+        "role": "development_remote",
+        "database_server": "nb-win",
+        "sql_server": {
+          "deployment": "remote_docker",
+          "container_on_server": "femsq-mssql",
+          "host": "10.7.0.3",
+          "port": 1433,
+          "product_version": "2022",
+          "database": "FishEye",
+          "schema": "ags",
+          "connectivity": "wireguard",
+          "note": "Тот же Docker на nb-win; профиль как alex-fedora. См. docs/development/remote-development-nb-win.md и chat-plan-26-0911-asus-kubuntu-setup.md"
         },
         "application": {
           "url": "http://localhost:8080",

@@ -20,7 +20,8 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
-    dedupe: ['vue', 'quasar']
+    // feQuLib (file:) тянет echarts из своих исходников — дедуп с хостом
+    dedupe: ['vue', 'quasar', 'echarts', 'vue-echarts']
   },
   optimizeDeps: {
     exclude: ['fequlib']

@@ -3,9 +3,184 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-09-09"
+      "lastUpdated": "2026-09-11"
     },
     "sessions": [
+      {
+        "chat": {
+          "displayName": "Донастройка asus-kubuntu (completed, medium). № chat-2026-09-11-001",
+          "chat-attributes": {
+            "id": "chat-2026-09-11-001",
+            "created": "2026-09-11",
+            "lastUpdated": "2026-09-11",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "medium",
+            "tags": ["environment", "kubuntu", "asus-kubuntu", "remote-dev", "setup"],
+            "links": {
+              "projectDocsRefs": [
+                "project.development.environments.machines.asus-kubuntu"
+              ],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0911-asus-kubuntu-setup.md",
+              "chatResume": "docs/development/notes/chats/chat-resume/chat-resume-26-0911-asus-kubuntu-setup.md",
+              "remoteDevDoc": "docs/development/remote-development-nb-win.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Аудит окружения и план донастройки (info). № log-2026-09-11-001",
+                "log-attributes": {
+                  "id": "log-2026-09-11-001",
+                  "timestamp": "2026-09-11T16:38:00+03:00",
+                  "level": "info",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": ["audit", "chat-plan"]
+                },
+                "entries": [
+                  {
+                    "action": "Проверка окружения на новой машине asus-kubuntu",
+                    "details": "Hostname asus-kubuntu не был в реестре. WireGuard vps-vpn (10.7.0.2), SQL 10.7.0.3:1433 и SMB /mnt/nb-win-share уже работали; отсутствовали Java/Maven/Node, ~/.femsq/database.properties и клон feQuLib.",
+                    "outcome": "Создан план chat-plan-26-0911-asus-kubuntu-setup.md; профиль выбран как remote_docker (как alex-fedora).",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0911-asus-kubuntu-setup.md",
+                      "docs/project/project-docs.json"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Регистрация asus-kubuntu в реестре и MCP-скрипте (success). № log-2026-09-11-002",
+                "log-attributes": {
+                  "id": "log-2026-09-11-002",
+                  "timestamp": "2026-09-11T16:45:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": ["machines", "mcp", "1.1", "1.2"]
+                },
+                "entries": [
+                  {
+                    "action": "Добавить машину asus-kubuntu в реестр окружений",
+                    "details": "Запись development.environments.machines.asus-kubuntu (remote_docker → 10.7.0.3), check_order обновлён; зеркало в extensions/deployment/environments.json.",
+                    "outcome": "Автоопределение hostname → asus-kubuntu; DSN/MCP remote-шаблон.",
+                    "references": [
+                      "docs/project/project-docs.json",
+                      "docs/project/extensions/deployment/environments.json"
+                    ]
+                  },
+                  {
+                    "action": "Обновить setup-cursor-mcp.sh",
+                    "details": "Hostname asus-kubuntu выбирает .cursor/mcp.remote-nb-win.json.example (наряду с Fedora).",
+                    "outcome": "Скрипт успешно создаёт .cursor/mcp.json на asus-kubuntu.",
+                    "references": [
+                      "code/scripts/setup-cursor-mcp.sh"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Toolchain Java/Maven/Node в ~/.local (success). № log-2026-09-11-003",
+                "log-attributes": {
+                  "id": "log-2026-09-11-003",
+                  "timestamp": "2026-09-11T16:56:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": ["toolchain", "java", "maven", "node", "2"]
+                },
+                "entries": [
+                  {
+                    "action": "Установка toolchain без sudo",
+                    "details": "sudo требует пароль; curl отсутствует. Скачаны Temurin JDK 21.0.12.1, Maven 3.9.11, Node 20.19.5 в ~/.local/{jdk-21,maven,node}.",
+                    "outcome": "java/mvn/node/npm работают; ~/.bashrc указывает на ~/.local; FEMSQ_DB_HOST=10.7.0.3.",
+                    "references": [
+                      "~/.local/jdk-21",
+                      "~/.local/maven",
+                      "~/.local/node",
+                      "~/.bashrc"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "database.properties, SQL smoke и клон feQuLib (success). № log-2026-09-11-004",
+                "log-attributes": {
+                  "id": "log-2026-09-11-004",
+                  "timestamp": "2026-09-11T17:10:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": ["database.properties", "mcp", "feQuLib", "3", "4"]
+                },
+                "entries": [
+                  {
+                    "action": "Этап 3: конфиг приложения и smoke SQL",
+                    "details": "~/.femsq/database.properties из шаблона alex-fedora (600); setup-cursor-mcp.sh; SELECT через mssql к 10.7.0.3 → FishEye, SQL Server 2022 CU23.",
+                    "outcome": "Приложение и MCP готовы к remote БД; TCP/SQL OK.",
+                    "references": [
+                      "~/.femsq/database.properties",
+                      ".cursor/mcp.json"
+                    ]
+                  },
+                  {
+                    "action": "Этап 4: клон feQuLib",
+                    "details": "git clone → /home/alex/projects/java/spring/vue/feQuLib. check-fequlib.sh: sync origin/main, FemsqTree OK.",
+                    "outcome": "Локальный feQuLib пригоден для сборки frontend/JAR.",
+                    "references": [
+                      "/home/alex/projects/java/spring/vue/feQuLib",
+                      "code/scripts/check-fequlib.sh"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Дока Kubuntu + приёмка JAR 0.1.0.270 (success). № log-2026-09-11-005",
+                "log-attributes": {
+                  "id": "log-2026-09-11-005",
+                  "timestamp": "2026-09-11T17:28:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "tags": ["docs", "build", "acceptance", "5", "6", "echarts"]
+                },
+                "entries": [
+                  {
+                    "action": "Этап 5: документация remote-dev",
+                    "details": "remote-development-nb-win.md: схема Fedora+Kubuntu, quick start asus-kubuntu, реестр машин. chat-resume-26-0911.",
+                    "outcome": "Удалённая разработка документирована для двух клиентов.",
+                    "references": [
+                      "docs/development/remote-development-nb-win.md",
+                      "docs/development/notes/chats/chat-resume/chat-resume-26-0911-asus-kubuntu-setup.md"
+                    ]
+                  },
+                  {
+                    "action": "Этап 6: сборка и health",
+                    "details": "Версия 0.1.0.270. Vite падал на echarts/core из FemsqChart — добавлены echarts/vue-echarts в frontend, npm install в feQuLib, dedupe в vite.config. Fat JAR 83M; GET /api/v1/connection/status → 200 connected FishEye/ags. Сервер остановлен после smoke.",
+                    "outcome": "Приёмка окружения asus-kubuntu завершена.",
+                    "references": [
+                      "code/femsq-frontend-q/package.json",
+                      "code/femsq-frontend-q/vite.config.ts",
+                      "code/femsq-backend/femsq-web/target/femsq-web-0.1.0.270-SNAPSHOT.jar"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
       {
         "chat": {
           "displayName": "СУДЗ: split/merge живой sudz / S77 (active, high). № chat-2026-09-08-002",

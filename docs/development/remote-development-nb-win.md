@@ -1,19 +1,25 @@
-# Удалённая разработка: Cursor на Fedora, БД на nb-win
+# Удалённая разработка: Cursor на Fedora/Kubuntu, БД на nb-win
 
-**Последнее обновление:** 2026-08-14
+**Последнее обновление:** 2026-09-11
 
 ## Схема
 
 ```
-Fedora (alex-fedora)              WireGuard VPN              nb-win (10.7.0.3)
-  Cursor IDE  ───────────────────────────────────────────►  WSL2 + Docker
-  DBeaver     ───── TCP 10.7.0.3:1433 ─────────────────────►  femsq-mssql → FishEye
-  FEMSQ app   ───── (тот же host:port) ────────────────────►  та же БД
+Удалённая станция                     WireGuard VPN              nb-win (10.7.0.3)
+  Fedora (alex-fedora)  ────────────┐
+  Kubuntu (asus-kubuntu) ───────────┼── TCP 10.7.0.3:1433 ─────►  WSL2 + Docker
+  Cursor / DBeaver / FEMSQ ─────────┘                            femsq-mssql → FishEye
 ```
 
-Источник данных **не переносится** на Fedora: используется тот же контейнер `femsq-mssql` на nb-win. nb-win должен быть включён и доступен по VPN.
+Источник данных **не переносится** на Fedora/Kubuntu: используется тот же контейнер `femsq-mssql` на nb-win. nb-win должен быть включён и доступен по VPN.
 
-**Excel-файлы ревизий** хранятся на nb-win в общей SMB-шаре и монтируются на обеих машинах в **один и тот же Linux-путь** `/mnt/nb-win-share`. Локальная копия `docs/excel/` в репозитории **не используется** (папка в `.gitignore`).
+**Excel-файлы ревизий** хранятся на nb-win в общей SMB-шаре и монтируются на удалённых машинах в **один и тот же Linux-путь** `/mnt/nb-win-share`. Локальная копия `docs/excel/` в репозитории **не используется** (папка в `.gitignore`).
+
+| Машина | Hostname | Роль | VPN IP (пример) | Путь клона FEMSQ (пример) | feQuLib |
+|--------|----------|------|-----------------|---------------------------|---------|
+| nb-win | `nb-win` | хост Docker SQL | `10.7.0.3` | WSL | рядом с FEMSQ |
+| alex-fedora | `alex-fedora` | remote-dev | — | любой | `../feQuLib` |
+| asus-kubuntu | `asus-kubuntu` | remote-dev | `10.7.0.2` (`vps-vpn`) | `/home/alex/projects/java/spring/vue/femsq` | `/home/alex/projects/java/spring/vue/feQuLib` |
 
 ## Общее хранилище Excel (SMB + единый mount)
 
@@ -90,7 +96,9 @@ python3 code/scripts/compare-ralp-excel-snapshots.py
 Пути в БД (`ags.ra_dir.dir`, `ags.af.af_name`) указывают на **полный путь внутри mount**, например:
 `/mnt/nb-win-share/femsq/excel/2026_03/(2026)_Аренда_рабочий.xlsx`.
 
-### Fedora (CIFS mount)
+### Fedora / Kubuntu (CIFS mount)
+
+Одинаковый сценарий для `alex-fedora` и `asus-kubuntu` (и любой remote-станции с WireGuard).
 
 ```bash
 # 1. Учётные данные (один раз)
@@ -133,8 +141,8 @@ ls -la /mnt/nb-win-share/femsq/excel/2026_03/
 На nb-win WSL2 автоматически монтирует диски Windows через `drvfs` — `D:\` доступен как `/mnt/d/` **без каких-либо действий**, sudo и скриптов не требуется.
 
 1. **Нативный путь `/mnt/d/wire-guard-share-nb-win/...`** — всегда доступен на nb-win «из коробки» (drvfs). Использовать для разовой проверки файла (`ls`, `file`, чтение) без монтирования — bind mount **не нужен**.
-2. **Bind mount `/mnt/nb-win-share/...`** (`mount-nb-win-share-wsl.sh`, требует `sudo`) — нужен **только для единообразия путей** между nb-win и Fedora: значения `ags.ra_dir.dir` / `ags.ra_f.af_name` в БД задаются в конвенции `/mnt/nb-win-share/femsq/excel/...`, чтобы один и тот же путь резолвился на обеих машинах. На самом nb-win это удобство, а не необходимость доступа к файлам.
-3. **На Fedora** bind mount неприменим — там обязателен реальный CIFS-mount (`mount-nb-win-share.sh`) на тот же `/mnt/nb-win-share`.
+2. **Bind mount `/mnt/nb-win-share/...`** (`mount-nb-win-share-wsl.sh`, требует `sudo`) — нужен **только для единообразия путей** между nb-win и удалёнными станциями (Fedora/Kubuntu): значения `ags.ra_dir.dir` / `ags.ra_f.af_name` в БД задаются в конвенции `/mnt/nb-win-share/femsq/excel/...`, чтобы один и тот же путь резолвился на машинах. На самом nb-win это удобство, а не необходимость доступа к файлам.
+3. **На Fedora/Kubuntu** bind mount неприменим — там обязателен реальный CIFS-mount (`mount-nb-win-share.sh`) на тот же `/mnt/nb-win-share`.
 
 **Правило хранения путей (принято 2026-08-14):** в БД и в UI путь выглядит **как в Проводнике** той машины, с которой работает оператор (`D:\wire-guard-share-nb-win\...`). Процесс Java при чтении сам переводит путь в вид своей ОС (WSL: `D:\` → `/mnt/d/`, плюс bind `/mnt/nb-win-share` для этой шары). Перевод **не записывается** в БД. Ответственность за существование файла — на пользователе; программа помогает полем вставки и сообщением «файл не найден».
 
@@ -152,10 +160,12 @@ git pull
 ./code/scripts/setup-cursor-mcp.sh   # при необходимости
 ```
 
-## Быстрый старт после `git pull` (Fedora)
+## Быстрый старт после `git pull` (Fedora / Kubuntu)
+
+Общий сценарий для remote-станций (`alex-fedora`, `asus-kubuntu`).
 
 ```bash
-cd /path/to/femsq
+cd /path/to/femsq   # asus-kubuntu: /home/alex/projects/java/spring/vue/femsq
 
 # 1. MCP / DBHub для Cursor
 chmod +x code/scripts/setup-cursor-mcp.sh code/scripts/setup-dbhub.sh
@@ -164,17 +174,30 @@ chmod +x code/scripts/setup-cursor-mcp.sh code/scripts/setup-dbhub.sh
 # 2. Конфигурация FEMSQ (приложение, не в репозитории)
 mkdir -p ~/.femsq
 cp docs/development/examples/database.properties.alex-fedora ~/.femsq/database.properties
+chmod 600 ~/.femsq/database.properties
 
 # 3. SMB-шара с Excel (WireGuard должен быть активен)
 ./code/scripts/mount-nb-win-share.sh
 
-# 4. Проверка сети (WireGuard должен быть активен)
+# 4. Соседний клон feQuLib (путь file:../../../feQuLib относительно frontend)
+#    Ожидается: <parent>/feQuLib рядом с <parent>/femsq
+test -d ../feQuLib/.git || git clone git@github.com:bondalen/fequlib.git ../feQuLib
+./code/scripts/check-fequlib.sh
+
+# 5. Проверка сети (WireGuard должен быть активен)
 timeout 3 bash -c 'cat < /dev/null > /dev/tcp/10.7.0.3/1433' && echo OK || echo FAIL
 
-# 5. Перезапустить Cursor (MCP DBHub подхватит новый .cursor/mcp.json)
+# 6. Перезапустить Cursor или перезагрузить MCP (DBHub подхватит .cursor/mcp.json)
 ```
 
-## Параметры подключения (alex-fedora)
+### Заметки для asus-kubuntu (2026-09-11)
+
+- WireGuard-интерфейс: `vps-vpn`, клиентский IP `10.7.0.2`.
+- Toolchain может быть user-local: `~/.local/{jdk-21,maven,node}` (если apt/`sudo` ещё не настроены).
+- Секреты shell: `~/.config/secrets/github.env`, `~/.config/secrets/femsq-db.env` (mode 600); не хранить токены/пароли inline в `~/.bashrc`.
+- План донастройки: [chat-plan-26-0911-asus-kubuntu-setup.md](notes/chats/chat-plan/chat-plan-26-0911-asus-kubuntu-setup.md).
+
+## Параметры подключения (remote: alex-fedora / asus-kubuntu)
 
 | Параметр | Значение |
 |----------|----------|
@@ -185,6 +208,7 @@ timeout 3 bash -c 'cat < /dev/null > /dev/tcp/10.7.0.3/1433' && echo OK || echo 
 | Username | `sa` |
 | Password | dev-пароль из `docs/development/examples/database.properties.alex-fedora` |
 | Encrypt | `false`, `trustServerCertificate=true` |
+| Шаблон FEMSQ | тот же `database.properties.alex-fedora` (отдельный файл для Kubuntu не обязателен) |
 
 ## DBeaver
 
@@ -208,7 +232,7 @@ winget install --id Microsoft.SQLServerManagementStudio.22 -e `
 
 Обновление: `winget upgrade --id Microsoft.SQLServerManagementStudio.22 -e`
 
-На Fedora для скриптов и сеток результатов — **Cursor + расширение MSSQL** (`10.7.0.3`); приёмка `07n`/`07o`/`07p` — **sqlcmd**.
+На Fedora/Kubuntu для скриптов и сеток результатов — **Cursor + DBHub / расширение MSSQL** (`10.7.0.3`); приёмка `07n`/`07o`/`07p` — **sqlcmd** (если установлен).
 
 ## Cursor / DBHub
 
@@ -231,7 +255,7 @@ winget install --id Microsoft.SQLServerManagementStudio.22 -e `
 docker ps --filter name=femsq-mssql
 ```
 
-Если с Fedora порт недоступен — на nb-win (PowerShell от администратора):
+Если с Fedora/Kubuntu порт недоступен — на nb-win (PowerShell от администратора):
 
 ```powershell
 New-NetFirewallRule -DisplayName "FEMSQ SQL Docker via WireGuard" `
@@ -246,11 +270,12 @@ New-NetFirewallRule -DisplayName "FEMSQ SQL Docker via WireGuard" `
 | Файл | Назначение |
 |------|------------|
 | `.cursor/mcp.json.example` | nb-win, `localhost:1433` |
-| `.cursor/mcp.remote-nb-win.json.example` | Fedora, `10.7.0.3:1433` |
+| `.cursor/mcp.remote-nb-win.json.example` | Fedora/Kubuntu, `10.7.0.3:1433` |
 | `docs/development/examples/database.properties.nb-win` | FEMSQ на nb-win |
-| `docs/development/examples/database.properties.alex-fedora` | FEMSQ на Fedora |
+| `docs/development/examples/database.properties.alex-fedora` | FEMSQ на Fedora/Kubuntu (remote) |
 | `docs/development/examples/smbcredentials.example` | Шаблон `~/.smbcredentials` для CIFS |
-| `code/scripts/mount-nb-win-share.sh` | CIFS mount на Fedora |
+| `code/scripts/mount-nb-win-share.sh` | CIFS mount на Fedora/Kubuntu |
+| `code/scripts/setup-cursor-mcp.sh` | MCP по hostname (`nb-win` / Fedora / `asus-kubuntu`) |
 | `code/scripts/mount-nb-win-share-wsl.sh` | bind mount в WSL на nb-win |
 | `code/scripts/watch-audit-progress.sh` | мониторинг хода `executeAudit` в терминале |
 | `code/scripts/audit-switch-excel-snapshot.sh` | переключение `ra_dir` / пути RALP: `march` \| `july` |
@@ -264,7 +289,7 @@ New-NetFirewallRule -DisplayName "FEMSQ SQL Docker via WireGuard" `
 - `docs/project/project-docs.json` → `development.environments.machines`
 - `docs/project/extensions/deployment/environments.json`
 
-Машины: `nb-win` (хост БД), `alex-fedora` (удалённый клиент).
+Машины: `nb-win` (хост БД), `alex-fedora` и `asus-kubuntu` (удалённые клиенты), `prod-fisheye` (продуктив).
 
 ## См. также
 

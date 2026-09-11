@@ -6,7 +6,7 @@
       "description": "Cистема работы с контрагентами и объектами при капитальном строительстве на основе БД MS SQL Server FEMSQ (Fish Eye MS SQL Server)",
       "author": "Александр",
       "created": "2025-10-08",
-      "lastUpdated": "2026-08-24",
+      "lastUpdated": "2026-09-11",
       "status": "in_progress",
       "repository": "https://github.com/bondalen/femsq.git",
       "license": "MIT",
@@ -519,6 +519,7 @@
         "check_order": [
           "nb-win",
           "alex-fedora",
+          "asus-kubuntu",
           "prod-fisheye"
         ],
         "machines": {
@@ -552,7 +553,7 @@
               "interface": "nb-win-cloud-ru",
               "host_ip": "10.7.0.3",
               "sql_port": 1433,
-              "purpose": "Доступ удалённых клиентов (Fedora, DBeaver, Cursor) к Docker SQL Server",
+              "purpose": "Доступ удалённых клиентов (Fedora, Kubuntu, DBeaver, Cursor) к Docker SQL Server",
               "notes": "nb-win должен быть включён; на Windows — inbound TCP 1433 с подсети VPN. См. docs/development/remote-development-nb-win.md"
             },
             "excel_share": {
@@ -617,6 +618,59 @@
               "notes": "После git pull: mount-nb-win-share.sh (WireGuard). Пути в БД/UI — как в Проводнике оператора; на Fedora для Java это обычно /mnt/nb-win-share/.... См. development.file_paths."
             },
             "notes": "Cursor и DBeaver на Fedora; после git pull — mount-nb-win-share.sh, setup-cursor-mcp.sh, setup-dbhub.sh"
+          },
+          "asus-kubuntu": {
+            "name": "Удалённая рабочая станция (Kubuntu / Ubuntu 24.04)",
+            "role": "development_remote",
+            "hostname_pattern": "^asus-kubuntu$",
+            "os_pattern": ".*Ubuntu.*|.*Linux.*",
+            "priority": 2,
+            "database_server": "nb-win",
+            "database": {
+              "type": "remote_docker",
+              "container_on_server": "femsq-mssql",
+              "host": "10.7.0.3",
+              "port": 1433,
+              "database": "FishEye",
+              "schema": "ags",
+              "username": "sa",
+              "authentication": "sql_server",
+              "sql_server_product": "Microsoft SQL Server 2022 (Docker на nb-win)",
+              "connectivity": {
+                "method": "wireguard",
+                "vpn_required": true,
+                "vpn_interface": "vps-vpn",
+                "client_ip": "10.7.0.2",
+                "port_check": "timeout 3 bash -c 'cat < /dev/null > /dev/tcp/10.7.0.3/1433'",
+                "verified_date": "2026-09-11",
+                "verified_by": "WireGuard + TCP 1433 с asus-kubuntu"
+              },
+              "notes": "Тот же контейнер femsq-mssql, что на nb-win. host=10.7.0.3, не localhost. Профиль как alex-fedora; локальный Docker на Kubuntu не требуется."
+            },
+            "dbhub": {
+              "type": "local",
+              "path": ".cursor/dbhub",
+              "entry_point": ".cursor/dbhub/node_modules/@bytebase/dbhub/dist/index.js",
+              "dsn": "sqlserver://sa:kolob_OK1@10.7.0.3:1433/FishEye?sslmode=disable&encrypt=false&trustServerCertificate=true",
+              "mcp_config_template": ".cursor/mcp.remote-nb-win.json.example",
+              "setup_script": "code/scripts/setup-cursor-mcp.sh"
+            },
+            "application_config": {
+              "path": "~/.femsq/database.properties",
+              "template": "docs/development/examples/database.properties.alex-fedora"
+            },
+            "excel_share": {
+              "smb_unc": "//10.7.0.3/wire-guard-share-nb-win",
+              "linux_mount": "/mnt/nb-win-share",
+              "excel_root": "/mnt/nb-win-share/femsq/excel",
+              "folder_naming": "год_данных[_год_состояния]_месяц_состояния; при совпадении годов данных и состояния — один год + месяц (примеры: 2025_2026_01, 2026_03, 2026-07)",
+              "credentials": "~/.smbcredentials",
+              "credentials_template": "docs/development/examples/smbcredentials.example",
+              "mount_script": "code/scripts/mount-nb-win-share.sh",
+              "mount_method": "cifs",
+              "notes": "После git pull: mount-nb-win-share.sh (WireGuard). Пути в БД/UI — как в Проводнике оператора; для Java обычно /mnt/nb-win-share/.... См. development.file_paths."
+            },
+            "notes": "Cursor на Kubuntu 24.04; после git pull — mount-nb-win-share.sh, setup-cursor-mcp.sh, setup-dbhub.sh. План донастройки: docs/development/notes/chats/chat-plan/chat-plan-26-0911-asus-kubuntu-setup.md"
           },
           "prod-fisheye": {
             "name": "Продуктивный SQL Server (FishEye)",
