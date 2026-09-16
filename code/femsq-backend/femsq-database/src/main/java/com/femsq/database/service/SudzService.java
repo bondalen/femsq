@@ -32,6 +32,7 @@ import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarEnsureRow;
 import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarEnsureSnapshot;
 import com.femsq.database.model.sudz.SudzDbtUplCnCtptExistInvApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplCnCtptExistInvResult;
+import com.femsq.database.model.sudz.SudzDbtUplCnDateResolveResult;
 import com.femsq.database.model.sudz.SudzDbtUplCnExistCtptNotLoad;
 import com.femsq.database.model.sudz.SudzDbtUplCnNotLoad;
 import com.femsq.database.model.sudz.SudzDbtUplCnNotLoadApplyResult;
@@ -45,6 +46,9 @@ import com.femsq.database.model.sudz.SudzDbtUplTblRow;
 import com.femsq.database.model.sudz.SudzDebtCollection;
 import com.femsq.database.model.sudz.SudzPmLink;
 import com.femsq.database.model.sudz.SudzPmUplLookup;
+import com.femsq.database.model.sudz.SudzPmtUplFile;
+import com.femsq.database.model.sudz.SudzPmtUplLauncher;
+import com.femsq.database.model.sudz.SudzPmtUplTblRow;
 import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
@@ -216,13 +220,58 @@ public interface SudzService {
     boolean removeYearUpl(int yrUplPKey);
 
     /**
-     * Создаёт выгрузку платежей.
+     * Создаёт выгрузку платежей и пустую шапку File (B3).
      *
      * @param name имя
      * @param date дата
      * @return созданная выгрузка
      */
     SudzPmUplLookup createPmUpl(String name, LocalDate date);
+
+    /**
+     * Лаунчер загрузки платежей (пакет + File, ensure B2).
+     *
+     * @param pmKey ключ пакета
+     * @return карточка
+     * @throws IllegalArgumentException если пакет не найден
+     */
+    SudzPmtUplLauncher getPmtUplLauncher(int pmKey);
+
+    /**
+     * Upsert шапки лаунчера платежей.
+     *
+     * @param pmKey ключ пакета
+     * @param path путь/имя (nullable)
+     * @param sheet имя листа (nullable)
+     * @param flLoad флаг (nullable)
+     * @param flTbl флаг (nullable)
+     * @return актуальная шапка
+     */
+    SudzPmtUplFile updatePmtUplFile(
+            int pmKey,
+            String path,
+            String sheet,
+            Boolean flLoad,
+            Boolean flTbl
+    );
+
+    /**
+     * Записывает HTML-лог хода в шапку File платежей.
+     *
+     * @param pmKey ключ пакета
+     * @param progressHtml полный HTML
+     * @return актуальная шапка
+     */
+    SudzPmtUplFile setPmtUplFileProgress(int pmKey, String progressHtml);
+
+    /**
+     * Заменяет staging {@code CnInvPmtUplTbl} для пакета.
+     *
+     * @param unloadKey {@code cn_inv_pm_key}
+     * @param rows строки Excel→Tbl
+     * @return число вставленных строк
+     */
+    int replacePmtUplTbl(int unloadKey, List<SudzPmtUplTblRow> rows);
 
     /**
      * Связывает выгрузку ДЗ с платежами.
@@ -409,6 +458,15 @@ public interface SudzService {
      * @return строки для лога
      */
     List<SudzDbtUplCnExistCtptNotLoad> listDbtUplCnExistCtptNotLoad(int unloadKey);
+
+    /**
+     * C.10.6: резолв пустых дат договора в Tbl (Value→Tbl prior→unique side; create null при флаге).
+     *
+     * @param unloadKey {@code upl_key}
+     * @param createMissingNullSides писать ли отсутствующие null-стороны
+     * @return счётчики
+     */
+    SudzDbtUplCnDateResolveResult resolveDbtUplNullCnDates(int unloadKey, boolean createMissingNullSides);
 
     /**
      * Apply {@code CnNotLoad}: INSERT при {@code countCnName = 1}, общий {@code cnMark}.

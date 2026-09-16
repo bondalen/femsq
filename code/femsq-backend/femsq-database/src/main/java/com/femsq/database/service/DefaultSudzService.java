@@ -36,6 +36,7 @@ import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarEnsureRow;
 import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarEnsureSnapshot;
 import com.femsq.database.model.sudz.SudzDbtUplCnCtptExistInvApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplCnCtptExistInvResult;
+import com.femsq.database.model.sudz.SudzDbtUplCnDateResolveResult;
 import com.femsq.database.model.sudz.SudzDbtUplCnExistCtptNotLoad;
 import com.femsq.database.model.sudz.SudzDbtUplCnNotLoad;
 import com.femsq.database.model.sudz.SudzDbtUplCnNotLoadApplyResult;
@@ -49,6 +50,9 @@ import com.femsq.database.model.sudz.SudzDbtUplTblRow;
 import com.femsq.database.model.sudz.SudzDebtCollection;
 import com.femsq.database.model.sudz.SudzPmLink;
 import com.femsq.database.model.sudz.SudzPmUplLookup;
+import com.femsq.database.model.sudz.SudzPmtUplFile;
+import com.femsq.database.model.sudz.SudzPmtUplLauncher;
+import com.femsq.database.model.sudz.SudzPmtUplTblRow;
 import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
@@ -278,6 +282,49 @@ public class DefaultSudzService implements SudzService {
     }
 
     @Override
+    public SudzPmtUplLauncher getPmtUplLauncher(int pmKey) {
+        if (pmKey <= 0) {
+            throw new IllegalArgumentException("pmKey должен быть положительным: " + pmKey);
+        }
+        return sudzDao.findPmtUplLauncher(pmKey)
+                .orElseThrow(() -> new IllegalArgumentException("Выгрузка платежей не найдена: pmKey=" + pmKey));
+    }
+
+    @Override
+    public SudzPmtUplFile updatePmtUplFile(
+            int pmKey,
+            String path,
+            String sheet,
+            Boolean flLoad,
+            Boolean flTbl
+    ) {
+        if (pmKey <= 0) {
+            throw new IllegalArgumentException("pmKey должен быть положительным: " + pmKey);
+        }
+        log.log(Level.INFO, "updatePmtUplFile pmKey={0}", pmKey);
+        return sudzDao.upsertPmtUplFile(pmKey, path, sheet, flLoad, flTbl);
+    }
+
+    @Override
+    public SudzPmtUplFile setPmtUplFileProgress(int pmKey, String progressHtml) {
+        if (pmKey <= 0) {
+            throw new IllegalArgumentException("pmKey должен быть положительным: " + pmKey);
+        }
+        return sudzDao.setPmtUplFileProgress(pmKey, progressHtml);
+    }
+
+    @Override
+    public int replacePmtUplTbl(int unloadKey, List<SudzPmtUplTblRow> rows) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        Objects.requireNonNull(rows, "rows");
+        log.log(Level.INFO, "replacePmtUplTbl unloadKey={0}, rows={1}",
+                new Object[]{unloadKey, rows.size()});
+        return sudzDao.replacePmtUplTbl(unloadKey, rows);
+    }
+
+    @Override
     public SudzPmLink addPmLink(int dbtUplKey, int pmKey) {
         if (dbtUplKey <= 0) {
             throw new IllegalArgumentException("dbtUplKey должен быть положительным: " + dbtUplKey);
@@ -494,6 +541,17 @@ public class DefaultSudzService implements SudzService {
             throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
         }
         return sudzDao.findDbtUplCnExistCtptNotLoad(unloadKey);
+    }
+
+    @Override
+    public SudzDbtUplCnDateResolveResult resolveDbtUplNullCnDates(
+            int unloadKey,
+            boolean createMissingNullSides
+    ) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.resolveDbtUplNullCnDates(unloadKey, createMissingNullSides);
     }
 
     @Override

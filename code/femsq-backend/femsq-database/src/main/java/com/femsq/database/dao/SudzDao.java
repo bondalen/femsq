@@ -25,6 +25,7 @@ import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarEnsureRow;
 import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarEnsureSnapshot;
 import com.femsq.database.model.sudz.SudzDbtUplCnCtptExistInvApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplCnCtptExistInvResult;
+import com.femsq.database.model.sudz.SudzDbtUplCnDateResolveResult;
 import com.femsq.database.model.sudz.SudzDbtUplCnExistCtptNotLoad;
 import com.femsq.database.model.sudz.SudzDbtUplCnNotLoad;
 import com.femsq.database.model.sudz.SudzDbtUplCnNotLoadApplyResult;
@@ -44,6 +45,9 @@ import com.femsq.database.model.sudz.SudzDbtSplitResult;
 import com.femsq.database.model.sudz.SudzDebtCollection;
 import com.femsq.database.model.sudz.SudzPmLink;
 import com.femsq.database.model.sudz.SudzPmUplLookup;
+import com.femsq.database.model.sudz.SudzPmtUplFile;
+import com.femsq.database.model.sudz.SudzPmtUplLauncher;
+import com.femsq.database.model.sudz.SudzPmtUplTblRow;
 import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
@@ -224,13 +228,58 @@ public interface SudzDao {
     void removeYearUpl(int yrUplPKey);
 
     /**
-     * Создаёт выгрузку платежей.
+     * Создаёт выгрузку платежей и пустую шапку {@code CnInvPmtUplFile} (B3).
      *
      * @param name имя
      * @param date дата
      * @return ключ
      */
     int createPmUpl(String name, LocalDate date);
+
+    /**
+     * Лаунчер загрузки платежей: пакет + File (ensure при отсутствии, B2).
+     *
+     * @param pmKey ключ {@code cn_inv_pm_upl}
+     * @return карточка или empty, если пакет не найден
+     */
+    Optional<SudzPmtUplLauncher> findPmtUplLauncher(int pmKey);
+
+    /**
+     * Upsert шапки {@code CnInvPmtUplFile} по {@code cipufUpload}.
+     *
+     * @param pmKey ключ пакета
+     * @param path путь/имя; null — оставить / при insert пустая строка
+     * @param sheet имя листа; null — оставить / при insert null
+     * @param flLoad флаг; null — оставить / при insert false
+     * @param flTbl флаг; null — оставить / при insert false
+     * @return актуальная шапка
+     */
+    SudzPmtUplFile upsertPmtUplFile(
+            int pmKey,
+            String path,
+            String sheet,
+            Boolean flLoad,
+            Boolean flTbl
+    );
+
+    /**
+     * Записывает HTML-лог хода в шапку File платежей (ensure File при отсутствии).
+     *
+     * @param pmKey ключ пакета
+     * @param progressHtml полный HTML лога
+     * @return актуальная шапка
+     */
+    SudzPmtUplFile setPmtUplFileProgress(int pmKey, String progressHtml);
+
+    /**
+     * Заменяет буфер {@code CnInvPmtUplTbl} для пакета (DELETE по unload + INSERT).
+     * Перед DELETE очищает {@code CnInvUplSfDouble}, ссылающиеся на строки Tbl.
+     *
+     * @param unloadKey {@code cn_inv_pm_key} / {@code ciputUnloadKey}
+     * @param rows строки из Excel
+     * @return число вставленных строк
+     */
+    int replacePmtUplTbl(int unloadKey, List<SudzPmtUplTblRow> rows);
 
     /**
      * Связывает выгрузку ДЗ с выгрузкой платежей ({@code cn_inv_dbt_upl_g_p}).
@@ -402,6 +451,16 @@ public interface SudzDao {
      * @return строки для лога {@code CnExistCtptNotLoad}
      */
     List<SudzDbtUplCnExistCtptNotLoad> findDbtUplCnExistCtptNotLoad(int unloadKey);
+
+    /**
+     * C.10.6: заполняет пустые {@code cidutCnDate} из Value/Tbl prior / единственной стороны;
+     * опционально создаёт null-сторону, если org+№ ещё нет.
+     *
+     * @param unloadKey текущий {@code upl_key}
+     * @param createMissingNullSides создавать ли отсутствующие null-стороны
+     * @return счётчики резолва
+     */
+    SudzDbtUplCnDateResolveResult resolveDbtUplNullCnDates(int unloadKey, boolean createMissingNullSides);
 
     /**
      * INSERT договоров шага {@code CnNotLoad} (только строки с {@code countCnName = 1}).

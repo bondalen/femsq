@@ -43,6 +43,43 @@ export interface SudzPmUplLookup {
   date: string | null;
 }
 
+/** Шапка лаунчера CnInvPmtUplFile. */
+export interface SudzPmtUplFile {
+  cipufKey: number;
+  cipufUpload: number;
+  cipufPath: string;
+  cipufFlLoad: boolean;
+  cipufFlTbl: boolean;
+  cipufLoadingProgress: string | null;
+  cipufSheet: string | null;
+}
+
+/** Карточка лаунчера экрана D. */
+export interface SudzPmtUplLauncher {
+  upl: SudzPmUplLookup;
+  file: SudzPmtUplFile;
+}
+
+export interface UpdateSudzPmUplFileInput {
+  pmKey: number;
+  path?: string | null;
+  sheet?: string | null;
+  flLoad?: boolean | null;
+  flTbl?: boolean | null;
+}
+
+export interface RunSudzPmtUplFunnelInput {
+  pmKey: number;
+  steps: string[];
+  flLoad: boolean;
+}
+
+export interface SudzPmtUplFunnelResult {
+  launcher: SudzPmtUplLauncher;
+  ranSteps: string[];
+  stub: boolean;
+}
+
 export interface SudzPmLink {
   gPKey: number;
   dbtUpl: number;

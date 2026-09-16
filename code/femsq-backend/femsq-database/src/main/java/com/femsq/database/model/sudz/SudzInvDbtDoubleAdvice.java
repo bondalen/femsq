@@ -7,7 +7,7 @@ import java.util.List;
  *
  * @param messageText блок {@code [advisor]} (plain text)
  * @param confidence {@code high}, {@code medium}, {@code low}, {@code none}
- * @param action {@code split}, {@code link}, {@code create_var}, {@code create_slot}, {@code manual}
+ * @param action {@code split}, {@code link}, {@code linked}, {@code create_var}, {@code create_slot}, {@code manual}
  * @param recommendIdKey рекомендуемый слот invDbt
  * @param recommendVarKey var очереди / слота
  * @param recommendDbtKey канон при {@code split}

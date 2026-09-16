@@ -115,10 +115,13 @@
                         dense
                         outlined
                         label="Файл"
-                        hint="Путь как в Проводнике. Visual v1 — не сохраняется в БД."
+                        hint="Путь как в Проводнике; сохраняется в БД по blur / Enter."
                         hint-persistent
                         :disable="!store.selectedUpl"
+                        :loading="store.saving"
                         data-test="sudz-pmt-upl-file-name"
+                        @blur="onPathCommit"
+                        @keyup.enter="onPathCommit"
                       />
                     </div>
                     <div class="col-auto" style="min-width: 10rem">
@@ -130,25 +133,32 @@
                         hint="cipufSheet"
                         hint-persistent
                         :disable="!store.selectedUpl"
+                        :loading="store.saving"
                         data-test="sudz-pmt-upl-sheet"
+                        @blur="onSheetCommit"
+                        @keyup.enter="onSheetCommit"
                       />
                     </div>
                   </div>
                   <div class="row q-col-gutter-sm items-center q-mb-sm shrink-0">
                     <div class="col-auto">
                       <QToggle
-                        v-model="flLoad"
+                        :model-value="flLoad"
                         label="Обновлять"
                         dense
+                        :disable="!store.selectedUpl || store.saving"
                         data-test="sudz-pmt-upl-fl-load"
+                        @update:model-value="(v) => store.patchFileFlags({ flLoad: !!v })"
                       />
                     </div>
                     <div class="col-auto">
                       <QToggle
-                        v-model="flTbl"
+                        :model-value="flTbl"
                         label="обнов. по исх?"
                         dense
+                        :disable="!store.selectedUpl || store.saving"
                         data-test="sudz-pmt-upl-fl-tbl"
+                        @update:model-value="(v) => store.patchFileFlags({ flTbl: !!v })"
                       />
                     </div>
                     <div class="col-auto">
@@ -158,7 +168,8 @@
                         no-caps
                         dense
                         label="загрузка"
-                        :disable="!store.selectedUpl"
+                        :disable="!store.selectedUpl || store.funnelRunning || store.saving"
+                        :loading="store.funnelRunning"
                         data-test="sudz-pmt-upl-run"
                         @click="onRunLoad"
                       />
@@ -204,7 +215,8 @@
                   </div>
                   <div class="text-caption text-grey-7 q-mt-xs shrink-0">
                     Включён префикс из {{ selectedStepIds.length }} шагов · Excel→Tbl — «обнов. по исх?».
-                    Кнопка «загрузка» — stub (воронка и Excel вне v1). Наведите на ячейку — id процедуры.
+                    Кнопка «загрузка» — воронка 0074 (Excel→Tbl + stub cipu*). Наведите на ячейку — id
+                    процедуры.
                   </div>
                 </QTabPanel>
               </QTabPanels>
@@ -228,17 +240,20 @@
               <QSeparator />
 
               <QTabPanels v-model="subTab" animated class="col min-h-0 sudz-tab-panels">
-                <QTabPanel name="progress" class="q-pa-none fill-pane relative-position">
+                <QTabPanel name="progress" class="q-pa-none fill-pane">
                   <div
+                    v-if="progressHtml"
+                    ref="progressPane"
                     class="sudz-pmt-upl-progress q-pa-sm"
                     data-test="sudz-pmt-upl-progress"
+                    v-html="progressHtml"
                   />
                   <div
-                    v-if="!progressLog"
-                    class="text-grey-6 q-pa-sm absolute-top"
+                    v-else
+                    class="text-grey-6 q-pa-sm"
                     data-test="sudz-pmt-upl-progress-empty"
                   >
-                    Лог хода пуст (заполнится при воронке cipu*).
+                    Лог хода пуст (заполнится при «загрузка» / воронке).
                   </div>
                 </QTabPanel>
 
@@ -304,7 +319,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
 import {
   QBanner,
   QBtn,
@@ -332,6 +347,7 @@ import {
   SUDZ_PMT_UPL_FUNNEL_STEPS,
   pmtFunnelPrefixIds
 } from '@/sudz/pmt-upl-funnel-steps';
+import { normalizeExplorerPath } from '@/utils/explorer-path';
 import type { SudzPmUplLookup } from '@/types/sudz';
 
 const $q = useQuasar();
@@ -344,19 +360,41 @@ const detailSplit = ref(34);
 
 const mainTab = ref('load');
 const subTab = ref('progress');
-/** Черновик пути Excel (visual v1 — не пишется в БД). */
+/** Черновик пути Excel; в БД — по blur / Enter. */
 const pathDraft = ref('');
-/** Имя листа cipufSheet (у pmt нет FileSh). */
-const sheetDraft = ref('Sheet1');
-const flLoad = ref(true);
-const flTbl = ref(true);
-/** Пустое поле лога (visual v1). */
-const progressLog = ref('');
+/** Черновик cipufSheet (у pmt нет FileSh). */
+const sheetDraft = ref('');
+const progressPane = ref<HTMLElement | null>(null);
 /** Длина префикса среди enabled-шагов (по умолчанию — ничего). */
 const funnelPrefixLen = ref(0);
 const funnelSteps = SUDZ_PMT_UPL_FUNNEL_STEPS;
 
 const selectedStepIds = computed(() => pmtFunnelPrefixIds(funnelPrefixLen.value));
+const flLoad = computed(() => store.file?.cipufFlLoad ?? false);
+const flTbl = computed(() => store.file?.cipufFlTbl ?? false);
+const progressHtml = computed(() => store.file?.cipufLoadingProgress?.trim() || '');
+
+watch(
+  () => store.file?.cipufPath ?? '',
+  (path) => {
+    pathDraft.value = path;
+  }
+);
+
+watch(
+  () => store.file?.cipufSheet ?? '',
+  (sheet) => {
+    sheetDraft.value = sheet || '';
+  }
+);
+
+watch(progressHtml, async () => {
+  await nextTick();
+  const el = progressPane.value;
+  if (el) {
+    el.scrollTop = el.scrollHeight;
+  }
+});
 
 interface EmptyGridRow {
   rowKey: number;
@@ -422,8 +460,52 @@ function formatDate(value: string | null | undefined): string {
  */
 function onUplClick(_evt: Event, row: SudzPmUplLookup): void {
   if (row.pmKey !== store.selectedPmKey) {
-    store.selectUpl(row.pmKey);
+    void store.selectUpl(row.pmKey);
   }
+}
+
+/**
+ * Сохраняет путь из поля в cipufPath.
+ */
+async function onPathCommit(): Promise<boolean> {
+  if (!store.selectedUpl) {
+    return false;
+  }
+  const next = normalizeExplorerPath(pathDraft.value);
+  const current = store.file?.cipufPath ?? '';
+  if (next !== pathDraft.value) {
+    pathDraft.value = next;
+  }
+  if (next === current) {
+    return true;
+  }
+  const ok = await store.saveFile({ path: next });
+  if (ok) {
+    $q.notify({ type: 'positive', message: 'Путь сохранён в БД', timeout: 1200 });
+  }
+  return ok;
+}
+
+/**
+ * Сохраняет имя листа в cipufSheet.
+ */
+async function onSheetCommit(): Promise<boolean> {
+  if (!store.selectedUpl) {
+    return false;
+  }
+  const next = sheetDraft.value.trim();
+  const current = store.file?.cipufSheet ?? '';
+  if (next !== sheetDraft.value) {
+    sheetDraft.value = next;
+  }
+  if (next === (current || '')) {
+    return true;
+  }
+  const ok = await store.saveFile({ sheet: next });
+  if (ok) {
+    $q.notify({ type: 'positive', message: 'Лист сохранён в БД', timeout: 1200 });
+  }
+  return ok;
 }
 
 /**
@@ -488,18 +570,56 @@ function onStepToggle(stepIndex: number, checked: boolean): void {
 }
 
 /**
- * Stub кнопки «загрузка»: Excel и домен не пишутся.
+ * Запуск воронки: Excel→Tbl при flTbl + stub cipu* по префиксу.
  */
-function onRunLoad(): void {
+async function onRunLoad(): Promise<void> {
   if (!store.selectedUpl) {
     $q.notify({ type: 'warning', message: 'Выберите выгрузку' });
     return;
   }
-  subTab.value = 'progress';
-  $q.notify({
-    type: 'info',
-    message: 'Visual v1: воронка cipu* и Excel не запускаются'
-  });
+  const pathOk = await onPathCommit();
+  if (!pathOk) {
+    return;
+  }
+  const sheetOk = await onSheetCommit();
+  if (!sheetOk) {
+    return;
+  }
+  if (!store.file) {
+    $q.notify({ type: 'warning', message: 'Нет записи File для выбранной выгрузки' });
+    return;
+  }
+  if (flTbl.value && !pathDraft.value.trim()) {
+    $q.notify({
+      type: 'warning',
+      message: 'Вставьте путь к xlsx как в Проводнике и сохраните поле.'
+    });
+    return;
+  }
+  if (flTbl.value && !sheetDraft.value.trim()) {
+    $q.notify({
+      type: 'warning',
+      message: 'Укажите имя листа Excel (cipufSheet) и сохраните поле.'
+    });
+    return;
+  }
+  if (!flTbl.value && selectedStepIds.value.length === 0) {
+    $q.notify({
+      type: 'warning',
+      message: 'Включите «обнов. по исх?» или отметьте шаг воронки'
+    });
+    return;
+  }
+  const result = await store.runFunnelStub(selectedStepIds.value);
+  if (result) {
+    subTab.value = 'progress';
+    $q.notify({
+      type: result.ok ? 'positive' : 'warning',
+      message: result.message
+    });
+  } else if (store.error) {
+    $q.notify({ type: 'negative', message: store.error });
+  }
 }
 
 onMounted(() => {
@@ -630,8 +750,12 @@ onMounted(() => {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 12px;
   line-height: 1.35;
-  white-space: pre-wrap;
+  white-space: normal;
   word-break: break-word;
+}
+
+.sudz-pmt-upl-progress :deep(p) {
+  margin: 0 0 2px;
 }
 
 .sudz-upl-table {

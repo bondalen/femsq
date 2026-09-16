@@ -40,10 +40,12 @@ import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotLoadResult;
 import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotRow;
 import com.femsq.database.model.sudz.SudzDbtUplAccSmplVarInvPhaseResult;
 import com.femsq.database.model.sudz.SudzDbtUplInvDbtLoadApplyResult;
+import com.femsq.database.model.sudz.SudzDbtUplInvDbtLoadCalmRow;
 import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarAmbiguousRow;
 import com.femsq.database.model.sudz.SudzDbtUplDbtValueLoadApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplDbtValueLoadPhaseResult;
 import com.femsq.database.model.sudz.SudzDbtUplDbtValueLoadSnapshot;
+import com.femsq.database.model.sudz.SudzDbtUplContinuityRow;
 import com.femsq.database.model.sudz.SudzDbtUplInvDbtDbtEnsureApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplInvDbtDbtEnsureSnapshot;
 import com.femsq.database.model.sudz.SudzDbtUplInvDbtVarEnsureApplyResult;
@@ -53,6 +55,7 @@ import com.femsq.database.model.sudz.SudzDbtUplCnCtptExistInvApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplCnCtptExistInvContract;
 import com.femsq.database.model.sudz.SudzDbtUplCnCtptExistInvItem;
 import com.femsq.database.model.sudz.SudzDbtUplCnCtptExistInvResult;
+import com.femsq.database.model.sudz.SudzDbtUplCnDateResolveResult;
 import com.femsq.database.model.sudz.SudzDbtUplCnExistCtptNotLoad;
 import com.femsq.database.model.sudz.SudzDbtUplCnNotLoad;
 import com.femsq.database.model.sudz.SudzDbtUplCnNotLoadApplyResult;
@@ -62,6 +65,9 @@ import com.femsq.database.model.sudz.SudzDbtUplTblRow;
 import com.femsq.database.model.sudz.SudzDebtCollection;
 import com.femsq.database.model.sudz.SudzPmLink;
 import com.femsq.database.model.sudz.SudzPmUplLookup;
+import com.femsq.database.model.sudz.SudzPmtUplFile;
+import com.femsq.database.model.sudz.SudzPmtUplLauncher;
+import com.femsq.database.model.sudz.SudzPmtUplTblRow;
 import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzRsltPeriod;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
@@ -681,16 +687,264 @@ public class JdbcSudzDao implements SudzDao {
         log.log(Level.INFO, "Creating sudz pm upl name={0}", name);
         String sql = "INSERT INTO " + q("cn_inv_pm_upl")
                 + " (cn_inv_pm_date, cn_inv_pm_name) VALUES (?, ?)";
-        try (Connection connection = connectionFactory.createConnection();
-             PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            statement.setDate(1, Date.valueOf(date));
-            statement.setString(2, name);
-            statement.executeUpdate();
-            return readGeneratedKey(statement, "Не удалось получить cn_inv_pm_key");
+        String fileSql = "INSERT INTO " + q("CnInvPmtUplFile")
+                + " (cipufUpload, cipufPath, cipufFlLoad, cipufLoadingProgress, cipufFlTbl, cipufSheet)"
+                + " VALUES (?, N'', 0, NULL, 0, NULL)";
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                int pmKey;
+                try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                    statement.setDate(1, Date.valueOf(date));
+                    statement.setString(2, name);
+                    statement.executeUpdate();
+                    pmKey = readGeneratedKey(statement, "Не удалось получить cn_inv_pm_key");
+                }
+                try (PreparedStatement statement = connection.prepareStatement(fileSql)) {
+                    statement.setInt(1, pmKey);
+                    statement.executeUpdate();
+                }
+                connection.commit();
+                return pmKey;
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
         } catch (MissingConfigurationException exception) {
             throw exception;
         } catch (SQLException exception) {
             throw wrap("Не удалось создать выгрузку платежей СУДЗ", exception);
+        }
+    }
+
+    @Override
+    public Optional<SudzPmtUplLauncher> findPmtUplLauncher(int pmKey) {
+        log.log(Level.FINE, "Loading pmt upl launcher pmKey={0}", pmKey);
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                Optional<SudzPmUplLookup> upl = findPmUplLookupOn(connection, pmKey);
+                if (upl.isEmpty()) {
+                    connection.commit();
+                    return Optional.empty();
+                }
+                SudzPmtUplFile file = ensurePmtUplFile(connection, pmKey);
+                connection.commit();
+                return Optional.of(new SudzPmtUplLauncher(upl.get(), file));
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось получить лаунчер загрузки платежей pmKey=" + pmKey, exception);
+        }
+    }
+
+    @Override
+    public SudzPmtUplFile upsertPmtUplFile(
+            int pmKey,
+            String path,
+            String sheet,
+            Boolean flLoad,
+            Boolean flTbl
+    ) {
+        log.log(Level.INFO, "Upsert CnInvPmtUplFile upload={0}", pmKey);
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                ensurePmExists(connection, pmKey);
+                Optional<SudzPmtUplFile> existing = findPmtUplFileByUpload(connection, pmKey);
+                if (existing.isPresent()) {
+                    SudzPmtUplFile cur = existing.get();
+                    String newPath = path != null ? normalizeExplorerPath(path) : cur.cipufPath();
+                    String newSheet = sheet != null ? normalizeSheet(sheet) : cur.cipufSheet();
+                    boolean newFlLoad = flLoad != null ? flLoad : cur.cipufFlLoad();
+                    boolean newFlTbl = flTbl != null ? flTbl : cur.cipufFlTbl();
+                    String sql = "UPDATE " + q("CnInvPmtUplFile")
+                            + " SET cipufPath = ?, cipufSheet = ?, cipufFlLoad = ?, cipufFlTbl = ?"
+                            + " WHERE cipufKey = ?";
+                    try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                        statement.setString(1, newPath);
+                        if (newSheet == null) {
+                            statement.setNull(2, Types.NVARCHAR);
+                        } else {
+                            statement.setString(2, newSheet);
+                        }
+                        statement.setBoolean(3, newFlLoad);
+                        statement.setBoolean(4, newFlTbl);
+                        statement.setInt(5, cur.cipufKey());
+                        statement.executeUpdate();
+                    }
+                } else {
+                    String newPath = path != null ? normalizeExplorerPath(path) : "";
+                    String newSheet = sheet != null ? normalizeSheet(sheet) : null;
+                    boolean newFlLoad = flLoad != null && flLoad;
+                    boolean newFlTbl = flTbl != null && flTbl;
+                    String sql = "INSERT INTO " + q("CnInvPmtUplFile")
+                            + " (cipufUpload, cipufPath, cipufFlLoad, cipufLoadingProgress, cipufFlTbl, cipufSheet)"
+                            + " VALUES (?, ?, ?, NULL, ?, ?)";
+                    try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                        statement.setInt(1, pmKey);
+                        statement.setString(2, newPath);
+                        statement.setBoolean(3, newFlLoad);
+                        statement.setBoolean(4, newFlTbl);
+                        if (newSheet == null) {
+                            statement.setNull(5, Types.NVARCHAR);
+                        } else {
+                            statement.setString(5, newSheet);
+                        }
+                        statement.executeUpdate();
+                    }
+                }
+                connection.commit();
+                return findPmtUplFileByUpload(connection, pmKey)
+                        .orElseThrow(() -> new IllegalStateException(
+                                "CnInvPmtUplFile не найден после upsert: pmKey=" + pmKey));
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось сохранить CnInvPmtUplFile pmKey=" + pmKey, exception);
+        }
+    }
+
+    @Override
+    public SudzPmtUplFile setPmtUplFileProgress(int pmKey, String progressHtml) {
+        log.log(Level.INFO, "Set CnInvPmtUplFile progress upload={0}, len={1}",
+                new Object[]{pmKey, progressHtml == null ? 0 : progressHtml.length()});
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                ensurePmExists(connection, pmKey);
+                Optional<SudzPmtUplFile> existing = findPmtUplFileByUpload(connection, pmKey);
+                if (existing.isEmpty()) {
+                    String sql = "INSERT INTO " + q("CnInvPmtUplFile")
+                            + " (cipufUpload, cipufPath, cipufFlLoad, cipufLoadingProgress, cipufFlTbl, cipufSheet)"
+                            + " VALUES (?, N'', 0, ?, 0, NULL)";
+                    try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                        statement.setInt(1, pmKey);
+                        statement.setString(2, progressHtml);
+                        statement.executeUpdate();
+                    }
+                } else {
+                    String sql = "UPDATE " + q("CnInvPmtUplFile")
+                            + " SET cipufLoadingProgress = ? WHERE cipufKey = ?";
+                    try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                        statement.setString(1, progressHtml);
+                        statement.setInt(2, existing.get().cipufKey());
+                        statement.executeUpdate();
+                    }
+                }
+                connection.commit();
+                return findPmtUplFileByUpload(connection, pmKey)
+                        .orElseThrow(() -> new IllegalStateException(
+                                "CnInvPmtUplFile не найден после setProgress: pmKey=" + pmKey));
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось записать cipufLoadingProgress pmKey=" + pmKey, exception);
+        }
+    }
+
+    @Override
+    public int replacePmtUplTbl(int unloadKey, List<SudzPmtUplTblRow> rows) {
+        Objects.requireNonNull(rows, "rows");
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        log.log(Level.INFO, "Replace CnInvPmtUplTbl unloadKey={0}, rows={1}",
+                new Object[]{unloadKey, rows.size()});
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                clearPmtUplTblDependents(connection, unloadKey);
+                String deleteSql = "DELETE FROM " + q("CnInvPmtUplTbl") + " WHERE ciputUnloadKey = ?";
+                try (PreparedStatement delete = connection.prepareStatement(deleteSql)) {
+                    delete.setInt(1, unloadKey);
+                    delete.executeUpdate();
+                }
+                if (!rows.isEmpty()) {
+                    String insertSql = "INSERT INTO " + q("CnInvPmtUplTbl") + " ("
+                            + "ciputBE, ciputAccount, ciputCntrPrtNum, ciputCntrPrtName, ciputCAC,"
+                            + " ciputAgentNum, ciputAgentName, ciputCnName, ciputLink, ciputCnInv,"
+                            + " ciputEntryDate, ciputDocDate, ciputDueDate,"
+                            + " ciputDbtBlns, ciputDbtBlnsOverd, ciputDbtBlnsOverdNot,"
+                            + " ciputCdtBlns, ciputCdtBlnsOverd, ciputCdtBlnsOverdNot, ciputBlns,"
+                            + " ciputCnInvDocCode, ciputAlligmentDate, ciputBaseDate, ciputCnInvDocSum,"
+                            + " ciputStornoReason, ciputStornoDocCode, ciputSheetNum, ciputUnloadKey"
+                            + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+                    try (PreparedStatement insert = connection.prepareStatement(insertSql)) {
+                        int batch = 0;
+                        for (SudzPmtUplTblRow row : rows) {
+                            bindPmtTblRow(insert, row);
+                            insert.addBatch();
+                            batch++;
+                            if (batch % 500 == 0) {
+                                insert.executeBatch();
+                            }
+                        }
+                        insert.executeBatch();
+                    }
+                }
+                connection.commit();
+                return rows.size();
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось заменить CnInvPmtUplTbl unloadKey=" + unloadKey, exception);
+        }
+    }
+
+    /**
+     * Очищает КСДСФ, ссылающиеся на строки pmt Tbl, перед DELETE Tbl.
+     *
+     * @param connection транзакция вызывающего
+     * @param unloadKey ключ пакета
+     */
+    private void clearPmtUplTblDependents(Connection connection, int unloadKey) throws SQLException {
+        String sql = "DELETE FROM " + q("CnInvUplSfDouble")
+                + " WHERE ciusCiput IN (SELECT ciputKey FROM " + q("CnInvPmtUplTbl")
+                + " WHERE ciputUnloadKey = ?)";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, unloadKey);
+            int deleted = ps.executeUpdate();
+            if (deleted > 0) {
+                log.log(Level.INFO, "clearPmtUplTblDependents unloadKey={0} sfDeleted={1}",
+                        new Object[]{unloadKey, deleted});
+            }
+        } catch (SQLException exception) {
+            if (!isMissingTable(exception, "CnInvUplSfDouble")) {
+                throw exception;
+            }
         }
     }
 
@@ -846,6 +1100,10 @@ public class JdbcSudzDao implements SudzDao {
                                 rs.getString("cst_code_new")
                         );
                         builders.put(dbtKey, builder);
+                    } else {
+                        // account_num на каноне берём с последнего среза (ORDER BY upl):
+                        // смена счёта между upl (напр. 6593: 767502→606012) иначе залипает база.
+                        builder.accountNum = rs.getString("account_num");
                     }
                     builder.periods.add(new SudzRsltPeriod(
                             rs.getInt("upl_key"),
@@ -1037,7 +1295,7 @@ public class JdbcSudzDao implements SudzDao {
                 Optional<SudzDbtUplFile> existing = findDbtUplFileByUpload(connection, uplKey);
                 if (existing.isPresent()) {
                     SudzDbtUplFile cur = existing.get();
-                    String newPath = path != null ? path.trim() : cur.cidufPath();
+                    String newPath = path != null ? normalizeExplorerPath(path) : cur.cidufPath();
                     boolean newFlLoad = flLoad != null ? flLoad : cur.cidufFlLoad();
                     boolean newFlTbl = flTbl != null ? flTbl : cur.cidufFlTbl();
                     String sql = "UPDATE " + q("CnInvDbtUplFile")
@@ -1050,7 +1308,7 @@ public class JdbcSudzDao implements SudzDao {
                         statement.executeUpdate();
                     }
                 } else {
-                    String newPath = path != null ? path.trim() : "";
+                    String newPath = path != null ? normalizeExplorerPath(path) : "";
                     boolean newFlLoad = flLoad != null && flLoad;
                     boolean newFlTbl = flTbl != null && flTbl;
                     String sql = "INSERT INTO " + q("CnInvDbtUplFile")
@@ -1562,6 +1820,358 @@ public class JdbcSudzDao implements SudzDao {
             throw exception;
         } catch (SQLException exception) {
             throw wrap("Не удалось выбрать CnExistCtptNotLoad unloadKey=" + unloadKey, exception);
+        }
+    }
+
+    @Override
+    public SudzDbtUplCnDateResolveResult resolveDbtUplNullCnDates(
+            int unloadKey,
+            boolean createMissingNullSides
+    ) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        String tbl = q("CnInvDbtUplTbl");
+        String dbtValue = q("DbtValue");
+        String invDbt = q("invDbt");
+        String invDbtDbtVar = q("invDbtDbtVar");
+        String invDbtVar = q("invDbtVar");
+        String yrUplP = q("yr_upl_p");
+        String cnNorm = "CASE WHEN a.cidutCnName IS NULL OR LTRIM(RTRIM(a.cidutCnName)) = N'' "
+                + "THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(a.cidutCnName)) END";
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                int nullDateRows = countNullCnDateRows(connection, tbl, unloadKey);
+                int fromValue = updateCnDateFromPriorValue(
+                        connection, tbl, dbtValue, invDbt, invDbtDbtVar, invDbtVar, yrUplP, cnNorm, unloadKey);
+                int fromTbl = updateCnDateFromPriorTbl(connection, tbl, yrUplP, cnNorm, unloadKey);
+                int fromUniqueSide = updateCnDateFromUniqueSide(connection, tbl, cnNorm, unloadKey);
+                int alreadyNullSide = countPairsWithNullSide(connection, tbl, cnNorm, unloadKey);
+                int created = 0;
+                if (createMissingNullSides) {
+                    created = createMissingNullSides(connection, tbl, cnNorm, unloadKey);
+                }
+                int unresolved = countUnresolvedNullDatePairs(connection, tbl, cnNorm, unloadKey);
+                connection.commit();
+                log.log(Level.INFO,
+                        "resolveDbtUplNullCnDates upl={0} nullRows={1} value={2} tbl={3} side={4} "
+                                + "nullSide={5} created={6} unresolved={7}",
+                        new Object[]{
+                                unloadKey, nullDateRows, fromValue, fromTbl, fromUniqueSide,
+                                alreadyNullSide, created, unresolved
+                        });
+                return new SudzDbtUplCnDateResolveResult(
+                        nullDateRows, fromValue, fromTbl, fromUniqueSide,
+                        alreadyNullSide, created, unresolved);
+            } catch (SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось резолвить cidutCnDate unloadKey=" + unloadKey, exception);
+        }
+    }
+
+    private static int countNullCnDateRows(Connection connection, String tbl, int unloadKey)
+            throws SQLException {
+        String sql = "SELECT COUNT(*) FROM " + tbl + " WHERE cidutUnloadKey = ? AND cidutCnDate IS NULL";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, unloadKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                rs.next();
+                return rs.getInt(1);
+            }
+        }
+    }
+
+    private static int updateCnDateFromPriorValue(
+            Connection connection,
+            String tbl,
+            String dbtValue,
+            String invDbt,
+            String invDbtDbtVar,
+            String invDbtVar,
+            String yrUplP,
+            String cnNorm,
+            int unloadKey
+    ) throws SQLException {
+        String sql = ""
+                + "WITH prior AS ( "
+                + "  SELECT DISTINCT yp2.cn_inv_dbt_upl AS priorUpl "
+                + "  FROM " + yrUplP + " AS yp "
+                + "  INNER JOIN " + yrUplP + " AS yp2 "
+                + "    ON yp2.yr_upl_p_yr = yp.yr_upl_p_yr "
+                + "  WHERE yp.cn_inv_dbt_upl = ? AND yp2.cn_inv_dbt_upl < ? "
+                + "), "
+                + "val AS ( "
+                + "  SELECT i.org_id_value_l AS buirg, num.cnnNumNull AS cnNum, "
+                + "         CAST(o.csoCnDate AS date) AS dt, "
+                + "         ROW_NUMBER() OVER ( "
+                + "           PARTITION BY i.org_id_value_l, num.cnnNumNull "
+                + "           ORDER BY dv.dvUpl DESC, o.cn_s_org_key "
+                + "         ) AS rn "
+                + "  FROM " + dbtValue + " AS dv "
+                + "  INNER JOIN prior AS p ON p.priorUpl = dv.dvUpl "
+                + "  INNER JOIN " + invDbt + " AS id ON id.idKey = dv.dvInvDbt "
+                + "  INNER JOIN " + invDbtDbtVar + " AS br ON br.iddvInvDbt = id.idKey "
+                + "  INNER JOIN " + invDbtVar + " AS v ON v.idvvKey = br.iddvInvDbtVar "
+                + "  INNER JOIN ags.cn_s_org AS o ON o.cn_s_org_key = v.idvvCn_s_org "
+                + "  INNER JOIN ags.cn_s_org_smpl AS m ON m.csosKey = o.csoCn_s_org_smpl "
+                + "  INNER JOIN ags.org_id AS i ON i.org_id_key = m.csosOrgId AND i.org_id_type = 1 "
+                + "  INNER JOIN ags.cnNum AS num ON num.cnnKey = v.idvvCnNum "
+                + "), "
+                + "pick AS ( SELECT buirg, cnNum, dt FROM val WHERE rn = 1 AND dt IS NOT NULL ) "
+                + "UPDATE t SET t.cidutCnDate = CAST(p.dt AS datetime) "
+                + "FROM " + tbl + " AS t "
+                + "INNER JOIN pick AS p "
+                + "  ON t.cidutCntrPrtNum = p.buirg "
+                + " AND (" + cnNorm.replace("a.", "t.") + ") = p.cnNum "
+                + "WHERE t.cidutUnloadKey = ? AND t.cidutCnDate IS NULL";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, unloadKey);
+            statement.setInt(2, unloadKey);
+            statement.setInt(3, unloadKey);
+            return statement.executeUpdate();
+        }
+    }
+
+    private static int updateCnDateFromPriorTbl(
+            Connection connection,
+            String tbl,
+            String yrUplP,
+            String cnNorm,
+            int unloadKey
+    ) throws SQLException {
+        String sql = ""
+                + "WITH prior AS ( "
+                + "  SELECT DISTINCT yp2.cn_inv_dbt_upl AS priorUpl "
+                + "  FROM " + yrUplP + " AS yp "
+                + "  INNER JOIN " + yrUplP + " AS yp2 "
+                + "    ON yp2.yr_upl_p_yr = yp.yr_upl_p_yr "
+                + "  WHERE yp.cn_inv_dbt_upl = ? AND yp2.cn_inv_dbt_upl < ? "
+                + "), "
+                + "src AS ( "
+                + "  SELECT a.cidutCntrPrtNum AS buirg, " + cnNorm + " AS cnNum, "
+                + "         CAST(a.cidutCnDate AS date) AS dt, a.cidutUnloadKey AS upl, "
+                + "         ROW_NUMBER() OVER ( "
+                + "           PARTITION BY a.cidutCntrPrtNum, " + cnNorm + " "
+                + "           ORDER BY a.cidutUnloadKey DESC, a.cidutKey "
+                + "         ) AS rn "
+                + "  FROM " + tbl + " AS a "
+                + "  INNER JOIN prior AS p ON p.priorUpl = a.cidutUnloadKey "
+                + "  WHERE a.cidutCnDate IS NOT NULL "
+                + "), "
+                + "pick AS ( SELECT buirg, cnNum, dt FROM src WHERE rn = 1 ) "
+                + "UPDATE t SET t.cidutCnDate = CAST(p.dt AS datetime) "
+                + "FROM " + tbl + " AS t "
+                + "INNER JOIN pick AS p "
+                + "  ON t.cidutCntrPrtNum = p.buirg "
+                + " AND (" + cnNorm.replace("a.", "t.") + ") = p.cnNum "
+                + "WHERE t.cidutUnloadKey = ? AND t.cidutCnDate IS NULL";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, unloadKey);
+            statement.setInt(2, unloadKey);
+            statement.setInt(3, unloadKey);
+            return statement.executeUpdate();
+        }
+    }
+
+    private static int updateCnDateFromUniqueSide(
+            Connection connection,
+            String tbl,
+            String cnNorm,
+            int unloadKey
+    ) throws SQLException {
+        String sql = ""
+                + "WITH need AS ( "
+                + "  SELECT DISTINCT a.cidutCntrPrtNum AS buirg, " + cnNorm + " AS cnNum "
+                + "  FROM " + tbl + " AS a "
+                + "  WHERE a.cidutUnloadKey = ? AND a.cidutCnDate IS NULL "
+                + "), "
+                + "sides AS ( "
+                + "  SELECT i.org_id_value_l AS buirg, num.cnnNumNull AS cnNum, "
+                + "         CAST(o.csoCnDate AS date) AS dt "
+                + "  FROM ags.cn AS c "
+                + "  INNER JOIN ags.cn_s AS s ON c.cn_key = s.cn_key AND s.cn_s_type = 2 "
+                + "  INNER JOIN ags.cn_s_org_smpl AS m ON s.cn_s_key = m.csosCn_s "
+                + "  INNER JOIN ags.cn_s_org AS o ON m.csosKey = o.csoCn_s_org_smpl "
+                + "  INNER JOIN ags.org_id AS i ON m.csosOrgId = i.org_id_key AND i.org_id_type = 1 "
+                + "  INNER JOIN ags.cnNum AS num ON c.cn_key = num.cnnCn "
+                + "), "
+                + "agg AS ( "
+                + "  SELECT n.buirg, n.cnNum, "
+                + "         COUNT(DISTINCT CONVERT(varchar(10), s.dt, 23)) AS nDt, "
+                + "         MAX(s.dt) AS maxDt "
+                + "  FROM need AS n "
+                + "  INNER JOIN sides AS s ON s.buirg = n.buirg AND s.cnNum = n.cnNum "
+                + "  WHERE s.dt IS NOT NULL "
+                + "  GROUP BY n.buirg, n.cnNum "
+                + "  HAVING COUNT(DISTINCT CONVERT(varchar(10), s.dt, 23)) = 1 "
+                + ") "
+                + "UPDATE t SET t.cidutCnDate = CAST(a.maxDt AS datetime) "
+                + "FROM " + tbl + " AS t "
+                + "INNER JOIN agg AS a "
+                + "  ON t.cidutCntrPrtNum = a.buirg "
+                + " AND (" + cnNorm.replace("a.", "t.") + ") = a.cnNum "
+                + "WHERE t.cidutUnloadKey = ? AND t.cidutCnDate IS NULL";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, unloadKey);
+            statement.setInt(2, unloadKey);
+            return statement.executeUpdate();
+        }
+    }
+
+    private static int countPairsWithNullSide(
+            Connection connection,
+            String tbl,
+            String cnNorm,
+            int unloadKey
+    ) throws SQLException {
+        String sql = ""
+                + "WITH need AS ( "
+                + "  SELECT DISTINCT a.cidutCntrPrtNum AS buirg, " + cnNorm + " AS cnNum "
+                + "  FROM " + tbl + " AS a "
+                + "  WHERE a.cidutUnloadKey = ? AND a.cidutCnDate IS NULL "
+                + ") "
+                + "SELECT COUNT(*) FROM need AS n "
+                + "WHERE EXISTS ( "
+                + "  SELECT 1 FROM ags.cn AS c "
+                + "  INNER JOIN ags.cn_s AS s ON c.cn_key = s.cn_key AND s.cn_s_type = 2 "
+                + "  INNER JOIN ags.cn_s_org_smpl AS m ON s.cn_s_key = m.csosCn_s "
+                + "  INNER JOIN ags.cn_s_org AS o ON m.csosKey = o.csoCn_s_org_smpl "
+                + "  INNER JOIN ags.org_id AS i ON m.csosOrgId = i.org_id_key AND i.org_id_type = 1 "
+                + "  INNER JOIN ags.cnNum AS num ON c.cn_key = num.cnnCn "
+                + "  WHERE i.org_id_value_l = n.buirg AND num.cnnNumNull = n.cnNum "
+                + "    AND o.csoCnDate IS NULL "
+                + ")";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, unloadKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                rs.next();
+                return rs.getInt(1);
+            }
+        }
+    }
+
+    private int createMissingNullSides(
+            Connection connection,
+            String tbl,
+            String cnNorm,
+            int unloadKey
+    ) throws SQLException {
+        String listSql = ""
+                + "WITH need AS ( "
+                + "  SELECT DISTINCT a.cidutCntrPrtNum AS buirg, " + cnNorm + " AS cnNum "
+                + "  FROM " + tbl + " AS a "
+                + "  WHERE a.cidutUnloadKey = ? AND a.cidutCnDate IS NULL "
+                + "), "
+                + "cnOne AS ( "
+                + "  SELECT n.buirg, n.cnNum, MIN(c.cn_key) AS cn_key "
+                + "  FROM need AS n "
+                + "  INNER JOIN ags.cnNum AS num ON num.cnnNumNull = n.cnNum "
+                + "  INNER JOIN ags.cn AS c ON c.cn_key = num.cnnCn "
+                + "  GROUP BY n.buirg, n.cnNum "
+                + "  HAVING COUNT(DISTINCT c.cn_key) = 1 "
+                + ") "
+                + "SELECT o.buirg, o.cnNum, o.cn_key, oi.org_id_key "
+                + "FROM cnOne AS o "
+                + "INNER JOIN ags.org_id AS oi "
+                + "  ON oi.org_id_value_l = o.buirg AND oi.org_id_type = 1 "
+                + "WHERE NOT EXISTS ( "
+                + "  SELECT 1 FROM ags.cn_s AS s "
+                + "  INNER JOIN ags.cn_s_org_smpl AS m ON s.cn_s_key = m.csosCn_s "
+                + "  INNER JOIN ags.cn_s_org AS org ON m.csosKey = org.csoCn_s_org_smpl "
+                + "  INNER JOIN ags.org_id AS i ON m.csosOrgId = i.org_id_key AND i.org_id_type = 1 "
+                + "  WHERE s.cn_key = o.cn_key AND s.cn_s_type = 2 AND i.org_id_value_l = o.buirg "
+                + ")";
+        int created = 0;
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+        try (PreparedStatement list = connection.prepareStatement(listSql)) {
+            list.setInt(1, unloadKey);
+            try (ResultSet rs = list.executeQuery()) {
+                while (rs.next()) {
+                    int cnKey = rs.getInt("cn_key");
+                    int orgIdKey = rs.getInt("org_id_key");
+                    int cnSKey = ensureExecutorCnS(connection, cnKey);
+                    int csosKey;
+                    try (PreparedStatement insSmpl = connection.prepareStatement(
+                            "INSERT INTO ags.cn_s_org_smpl (csosCn_s, csosOrgId, csosTimeOfEntry) "
+                                    + "VALUES (?, ?, ?)",
+                            Statement.RETURN_GENERATED_KEYS)) {
+                        insSmpl.setInt(1, cnSKey);
+                        insSmpl.setInt(2, orgIdKey);
+                        insSmpl.setTimestamp(3, now);
+                        insSmpl.executeUpdate();
+                        csosKey = readGeneratedKey(insSmpl, "csosKey");
+                    }
+                    try (PreparedStatement insOrg = connection.prepareStatement(
+                            "INSERT INTO ags.cn_s_org (csoCn_s_org_smpl, csoTimeOfEntry) VALUES (?, ?)")) {
+                        insOrg.setInt(1, csosKey);
+                        insOrg.setTimestamp(2, now);
+                        insOrg.executeUpdate();
+                    }
+                    created++;
+                }
+            }
+        }
+        return created;
+    }
+
+    private static int ensureExecutorCnS(Connection connection, int cnKey) throws SQLException {
+        try (PreparedStatement find = connection.prepareStatement(
+                "SELECT cn_s_key FROM ags.cn_s WHERE cn_key = ? AND cn_s_type = 2")) {
+            find.setInt(1, cnKey);
+            try (ResultSet rs = find.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        try (PreparedStatement insert = connection.prepareStatement(
+                "INSERT INTO ags.cn_s (cn_key, cn_s_type) VALUES (?, 2)",
+                Statement.RETURN_GENERATED_KEYS)) {
+            insert.setInt(1, cnKey);
+            insert.executeUpdate();
+            return readGeneratedKey(insert, "cn_s_key");
+        }
+    }
+
+    private static int countUnresolvedNullDatePairs(
+            Connection connection,
+            String tbl,
+            String cnNorm,
+            int unloadKey
+    ) throws SQLException {
+        // Пары с NULL в Tbl, для которых нет стороны org+№+sentinel(дата null/1900)
+        String sql = ""
+                + "WITH need AS ( "
+                + "  SELECT DISTINCT a.cidutCntrPrtNum AS buirg, " + cnNorm + " AS cnNum "
+                + "  FROM " + tbl + " AS a "
+                + "  WHERE a.cidutUnloadKey = ? AND a.cidutCnDate IS NULL "
+                + ") "
+                + "SELECT COUNT(*) FROM need AS n "
+                + "WHERE NOT EXISTS ( "
+                + "  SELECT 1 FROM ags.cn AS c "
+                + "  INNER JOIN ags.cn_s AS s ON c.cn_key = s.cn_key AND s.cn_s_type = 2 "
+                + "  INNER JOIN ags.cn_s_org_smpl AS m ON s.cn_s_key = m.csosCn_s "
+                + "  INNER JOIN ags.cn_s_org AS o ON m.csosKey = o.csoCn_s_org_smpl "
+                + "  INNER JOIN ags.org_id AS i ON m.csosOrgId = i.org_id_key AND i.org_id_type = 1 "
+                + "  INNER JOIN ags.cnNum AS num ON c.cn_key = num.cnnCn "
+                + "  WHERE i.org_id_value_l = n.buirg AND num.cnnNumNull = n.cnNum "
+                + "    AND (CASE WHEN o.csoCnDate IS NULL THEN CAST('19000101' AS date) "
+                + "              ELSE CAST(o.csoCnDate AS date) END) = CAST('19000101' AS date) "
+                + ")";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, unloadKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                rs.next();
+                return rs.getInt(1);
+            }
         }
     }
 
@@ -3526,14 +4136,40 @@ public class JdbcSudzDao implements SudzDao {
                 String invDbt = q("invDbt");
                 materializeInvDbtCtxTemp(connection, unloadKey, tbl, invDbtVar, invDbt, q("DbtValue"));
                 int queuedCount = rebuildInvDbtDoubleQueueOnConnection(connection, unloadKey, fileKey, true);
-                SudzDbtUplInvDbtLoadApplyResult result = flLoad
-                        ? applyInvDbtLoadUnambiguousOnConnection(connection, unloadKey, now, queuedCount)
-                        : new SudzDbtUplInvDbtLoadApplyResult(0, 0, 0, queuedCount);
+                SudzDbtUplInvDbtLoadApplyResult result;
+                if (flLoad) {
+                    result = applyInvDbtLoadUnambiguousOnConnection(connection, unloadKey, now, queuedCount);
+                } else {
+                    refreshInvDbtCtxIdvvKeys(connection, invDbtVar);
+                    materializeInvDbtLoadWorkset(
+                            connection,
+                            unloadKey,
+                            tbl,
+                            invDbt,
+                            q("invDbtDbt"),
+                            q("DbtSlotLinkGroup"),
+                            q("DbtSlotLinkMember"),
+                            q("DbtValue"),
+                            q("CnInvUplInvDbtDouble"));
+                    InvDbtLoadSnapshot snap = loadInvDbtLoadSnapshot(connection, unloadKey, tbl, invDbt);
+                    result = new SudzDbtUplInvDbtLoadApplyResult(
+                            0, 0, 0, queuedCount,
+                            snap.calmCreate(), snap.calmF1(), snap.silentHole());
+                }
                 connection.commit();
                 long ms = (System.nanoTime() - t0) / 1_000_000L;
                 log.log(Level.INFO,
-                        "runInvDbtLoadPhase unloadKey={0} flLoad={1} queued={2} totalMs={3}",
-                        new Object[]{unloadKey, flLoad, result.queuedCount(), ms});
+                        "runInvDbtLoadPhase unloadKey={0} flLoad={1} queued={2} calmCreate={3}"
+                                + " calmF1={4} silentHole={5} totalMs={6}",
+                        new Object[]{
+                                unloadKey,
+                                flLoad,
+                                result.queuedCount(),
+                                result.calmCreatePending().size(),
+                                result.calmF1Pending().size(),
+                                result.silentHoleResolved().size(),
+                                ms
+                        });
                 return result;
             } catch (RuntimeException | SQLException exception) {
                 connection.rollback();
@@ -3581,20 +4217,39 @@ public class JdbcSudzDao implements SudzDao {
                 materializeInvDbtCtxTemp(
                         connection, unloadKey, tbl, invDbtVar, invDbt, q("DbtValue"));
                 int queuedCount = rebuildInvDbtDoubleQueueOnConnection(connection, unloadKey, fileKey, true);
-                SudzDbtUplInvDbtLoadApplyResult invDbtLoad = flLoad
-                        ? applyInvDbtLoadUnambiguousOnConnection(connection, unloadKey, now, queuedCount)
-                        : new SudzDbtUplInvDbtLoadApplyResult(0, 0, 0, queuedCount);
+                SudzDbtUplInvDbtLoadApplyResult invDbtLoad;
+                if (flLoad) {
+                    invDbtLoad = applyInvDbtLoadUnambiguousOnConnection(
+                            connection, unloadKey, now, queuedCount);
+                } else {
+                    refreshInvDbtCtxIdvvKeys(connection, invDbtVar);
+                    materializeInvDbtLoadWorkset(
+                            connection,
+                            unloadKey,
+                            tbl,
+                            invDbt,
+                            q("invDbtDbt"),
+                            q("DbtSlotLinkGroup"),
+                            q("DbtSlotLinkMember"),
+                            q("DbtValue"),
+                            q("CnInvUplInvDbtDouble"));
+                    InvDbtLoadSnapshot snap = loadInvDbtLoadSnapshot(connection, unloadKey, tbl, invDbt);
+                    invDbtLoad = new SudzDbtUplInvDbtLoadApplyResult(
+                            0, 0, 0, queuedCount,
+                            snap.calmCreate(), snap.calmF1(), snap.silentHole());
+                }
                 connection.commit();
                 long ms = (System.nanoTime() - t0) / 1_000_000L;
                 log.log(Level.INFO,
                         "runAccSmplVarInvDbtPhase unloadKey={0} flLoad={1} accSmpl={2} var={3} "
-                                + "invDbt={4} totalMs={5}",
+                                + "invDbt={4} calmCreate={5} totalMs={6}",
                         new Object[]{
                                 unloadKey,
                                 flLoad,
                                 accSmpl == null ? 0 : accSmpl.insertedCount(),
                                 varEnsure == null ? 0 : varEnsure.insertedCount(),
                                 invDbtLoad.insertedInvDbt(),
+                                invDbtLoad.calmCreatePending().size(),
                                 ms
                         });
                 return new SudzDbtUplAccSmplVarInvPhaseResult(accSmpl, varEnsure, invDbtLoad);
@@ -3677,6 +4332,7 @@ public class JdbcSudzDao implements SudzDao {
         refreshInvDbtCtxIdvvKeys(connection, invDbtVar);
         materializeInvDbtLoadWorkset(
                 connection, unloadKey, tbl, invDbt, invDbtDbt, linkGroup, linkMember, dbtValue, queue);
+        InvDbtLoadSnapshot snapBefore = loadInvDbtLoadSnapshot(connection, unloadKey, tbl, invDbt);
         String insertInvDbt =
                 "INSERT INTO " + invDbt + " (idInv, idNum, idTimeOfEntry) "
                         + "SELECT c.iKey, 1, CAST(" + tsLit + " AS datetime2) "
@@ -3792,13 +4448,162 @@ public class JdbcSudzDao implements SudzDao {
         }
         log.log(Level.INFO,
                 "applyDbtUplInvDbtLoadUnambiguous unloadKey={0} vars={1} invDbt={2} bridges={3}"
-                        + " values={4} f1Values={5} queued={6}",
+                        + " values={4} f1Values={5} queued={6} calmCreateBefore={7}",
                 new Object[]{
                         unloadKey, insertedVars, insertedInvDbt, insertedBridges, insertedValues,
-                        insertedValuesF1, queuedCount
+                        insertedValuesF1, queuedCount, snapBefore.calmCreate().size()
                 });
         return new SudzDbtUplInvDbtLoadApplyResult(
-                insertedInvDbt, insertedBridges, insertedValues, queuedCount);
+                insertedInvDbt,
+                insertedBridges,
+                insertedValues,
+                queuedCount,
+                snapBefore.calmCreate(),
+                snapBefore.calmF1(),
+                snapBefore.silentHole());
+    }
+
+    /**
+     * Снимок dry-лога: Calm Create / F1 / тихая дыра (ожидает {@code #calmOne}, {@code #f1One},
+     * {@code #invDbtCtx}, {@code #sudzEia}).
+     */
+    private InvDbtLoadSnapshot loadInvDbtLoadSnapshot(
+            Connection connection,
+            int unloadKey,
+            String tbl,
+            String invDbt
+    ) throws SQLException {
+        List<SudzDbtUplInvDbtLoadCalmRow> calmCreate = loadCalmCreatePending(
+                connection, unloadKey, tbl, invDbt);
+        List<SudzDbtUplInvDbtLoadCalmRow> calmF1 = loadCalmF1Pending(connection, unloadKey, tbl);
+        List<SudzDbtUplInvDbtLoadCalmRow> silentHole = loadSilentHoleResolved(
+                connection, unloadKey, tbl, invDbt);
+        return new InvDbtLoadSnapshot(calmCreate, calmF1, silentHole);
+    }
+
+    /** Calm Create: {@code #calmOne} без слота {@code invDbt}. */
+    private List<SudzDbtUplInvDbtLoadCalmRow> loadCalmCreatePending(
+            Connection connection,
+            int unloadKey,
+            String tbl,
+            String invDbt
+    ) throws SQLException {
+        String sql = ""
+                + "SELECT t.cidutKey, t.cidutCnName, t.cidutCnInv, "
+                + "       CAST(t.cidutDebt AS decimal(19,4)) AS debt, "
+                + "       c.iKey, c.idvvKey "
+                + "FROM #calmOne AS c "
+                + sqlTblExcelCrossApply(tbl, unloadKey, "c.iKey")
+                + "WHERE NOT EXISTS (SELECT 1 FROM " + invDbt + " d WHERE d.idInv = c.iKey) "
+                + "ORDER BY t.cidutKey";
+        return loadCalmRows(connection, sql, "calm_create");
+    }
+
+    /** Calm F1: {@code #f1One} с полями Excel. */
+    private List<SudzDbtUplInvDbtLoadCalmRow> loadCalmF1Pending(
+            Connection connection,
+            int unloadKey,
+            String tbl
+    ) throws SQLException {
+        String sql = ""
+                + "SELECT t.cidutKey, t.cidutCnName, t.cidutCnInv, "
+                + "       CAST(t.cidutDebt AS decimal(19,4)) AS debt, "
+                + "       f.iKey, f.idvvKey "
+                + "FROM #f1One AS f "
+                + sqlTblExcelCrossApply(tbl, unloadKey, "f.iKey")
+                + "ORDER BY t.cidutKey";
+        return loadCalmRows(connection, sql, "calm_f1");
+    }
+
+    /**
+     * Тихая дыра: однозначный ctx с {@code idvvKey}, нет слота, не в очереди и не в {@code #calmOne}.
+     */
+    private List<SudzDbtUplInvDbtLoadCalmRow> loadSilentHoleResolved(
+            Connection connection,
+            int unloadKey,
+            String tbl,
+            String invDbt
+    ) throws SQLException {
+        String queue = q("CnInvUplInvDbtDouble");
+        String sql = ""
+                + "WITH resolved AS ( "
+                + "  SELECT iKey, idvvKey FROM #invDbtCtx "
+                + "  WHERE cnnKey IS NOT NULL AND invNumKey IS NOT NULL AND idvvKey IS NOT NULL "
+                + "), resolvedOne AS ( "
+                + "  SELECT iKey, MIN(idvvKey) AS idvvKey FROM resolved "
+                + "  GROUP BY iKey HAVING COUNT(DISTINCT idvvKey) = 1 "
+                + ") "
+                + "SELECT t.cidutKey, t.cidutCnName, t.cidutCnInv, "
+                + "       CAST(t.cidutDebt AS decimal(19,4)) AS debt, "
+                + "       r.iKey, r.idvvKey "
+                + "FROM resolvedOne AS r "
+                + sqlTblExcelCrossApply(tbl, unloadKey, "r.iKey")
+                + "WHERE NOT EXISTS (SELECT 1 FROM " + invDbt + " d WHERE d.idInv = r.iKey) "
+                + "  AND NOT EXISTS ( "
+                + "    SELECT 1 FROM " + queue + " q "
+                + "    WHERE q.ciudUnloadKey = " + unloadKey + " AND q.ciudIKey = r.iKey "
+                + "  ) "
+                + "  AND NOT EXISTS (SELECT 1 FROM #calmOne c WHERE c.iKey = r.iKey) "
+                + "ORDER BY t.cidutKey";
+        return loadCalmRows(connection, sql, "silent_hole");
+    }
+
+    private static List<SudzDbtUplInvDbtLoadCalmRow> loadCalmRows(
+            Connection connection,
+            String sql,
+            String kind
+    ) throws SQLException {
+        List<SudzDbtUplInvDbtLoadCalmRow> rows = new ArrayList<>();
+        try (Statement statement = connection.createStatement();
+             ResultSet rs = statement.executeQuery(sql)) {
+            while (rs.next()) {
+                int cidutRaw = rs.getInt("cidutKey");
+                Integer cidutKey = rs.wasNull() ? null : cidutRaw;
+                int idvvRaw = rs.getInt("idvvKey");
+                Integer idvvKey = rs.wasNull() ? null : idvvRaw;
+                rows.add(new SudzDbtUplInvDbtLoadCalmRow(
+                        cidutKey,
+                        rs.getString("cidutCnName"),
+                        rs.getString("cidutCnInv"),
+                        rs.getBigDecimal("debt"),
+                        rs.getInt("iKey"),
+                        idvvKey,
+                        kind));
+            }
+        }
+        return rows;
+    }
+
+    /**
+     * CROSS APPLY одной Tbl-строки Excel по {@code iKey} (ключ + суммы + номера).
+     */
+    private static String sqlTblExcelCrossApply(String tbl, int unloadKey, String iKeyCol) {
+        return " CROSS APPLY ( "
+                + "   SELECT TOP 1 a.cidutKey, a.cidutCnName, a.cidutCnInv, a.cidutDebt "
+                + "   FROM " + tbl + " AS a "
+                + "   INNER JOIN #sudzEia AS e "
+                + "     ON e.cidutCntrPrtNum = a.cidutCntrPrtNum "
+                + "    AND e.cidutCnNameNull = CASE "
+                + "          WHEN a.cidutCnName IS NULL OR LTRIM(RTRIM(a.cidutCnName)) = N'' "
+                + "          THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(a.cidutCnName)) END "
+                + "    AND e.cidutCnDateNull = CASE "
+                + "          WHEN a.cidutCnDate IS NULL THEN CAST('19000101' AS date) "
+                + "          ELSE CAST(a.cidutCnDate AS date) END "
+                + "    AND e.cidutCnInvNull = CASE "
+                + "          WHEN a.cidutCnInv IS NULL OR LTRIM(RTRIM(a.cidutCnInv)) = N'' "
+                + "          THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(a.cidutCnInv)) END "
+                + "   WHERE a.cidutUnloadKey = " + unloadKey
+                + "     AND e.iKey = " + iKeyCol + " "
+                + "   ORDER BY a.cidutKey "
+                + " ) AS t ";
+    }
+
+    /** Внутренний снимок списков dry-лога invDbtLoad. */
+    private record InvDbtLoadSnapshot(
+            List<SudzDbtUplInvDbtLoadCalmRow> calmCreate,
+            List<SudzDbtUplInvDbtLoadCalmRow> calmF1,
+            List<SudzDbtUplInvDbtLoadCalmRow> silentHole
+    ) {
     }
 
     /** CROSS APPLY одной Tbl-строки по {@code iKey}. */
@@ -4310,30 +5115,10 @@ public class JdbcSudzDao implements SudzDao {
                 + "    SELECT 1 FROM p1Cand AS pc "
                 + "    WHERE pc.dbtKey = ms.dbtKey AND pc.sumKind = ms.sumKind "
                 + "  ) "
-                + "), "
-                + "tailSlots AS ( "
-                + "  SELECT idd.iddInvDbt AS slotKey, d.idInv AS iKey, "
-                + "         COUNT(DISTINCT b.iddvInvDbtVar) AS varCnt "
-                + "  FROM " + invDbtDbt + " AS idd "
-                + "  INNER JOIN " + invDbt + " AS d ON d.idKey = idd.iddInvDbt "
-                + "  INNER JOIN " + bridge + " AS b ON b.iddvInvDbt = idd.iddInvDbt "
-                + "  WHERE NOT EXISTS ( "
-                + "    SELECT 1 FROM " + dbtValue + " AS dv "
-                + "    WHERE dv.dvInvDbt = idd.iddInvDbt AND dv.dvUpl = " + currUpl
-                + "  ) "
-                + "    AND EXISTS ( "
-                + "      SELECT 1 FROM " + tbl + " AS a "
-                + eiaJoin
-                + "      WHERE a.cidutUnloadKey = " + currUpl + " AND e.iKey = d.idInv "
-                + "    ) "
-                + "  GROUP BY idd.iddInvDbt, d.idInv "
-                + "), "
-                + "tailReady AS ( "
-                + "  SELECT slotKey, iKey FROM tailSlots WHERE varCnt = 1 "
-                + "), "
-                + "tailAmbiguous AS ( "
-                + "  SELECT slotKey FROM tailSlots WHERE varCnt > 1 "
-                + ") ";
+                + ") "
+                + sqlDbtValueLoadExcelTailCteBody(
+                        dbtValue, invDbt, invDbtDbt, bridge, invDbtVar, tbl,
+                        currUpl, baseUpl, "tblIKey", true);
     }
 
     /**
@@ -4367,41 +5152,238 @@ public class JdbcSudzDao implements SudzDao {
     }
 
     /**
-     * CTE tail-слотов без base/disappeared (ожидает {@code #sudzEia}).
+     * CTE хвоста {@code dbtValueLoad}: Excel-строка → {@code idvvKey} (как шаг 6) → слот.
+     * Непрерывность (S77.9 M3): при N слотах на {@code iKey} предпочитать Value@base той же суммы,
+     * иначе уникальный lastTtl; иначе не silent ({@code tailAmbiguous} + dry-лог).
+     * Ожидает {@code #sudzEia} и источник {@code tblIKey} ({@code tblIKey} CTE или {@code #tblIKey}).
+     *
+     * @param baseUpl базовая выгрузка года (непрерывность)
+     * @param tblIKeySource {@code tblIKey} или {@code #tblIKey}
+     * @param continueWith {@code true} — фрагмент с ведущей запятой внутри существующего WITH
+     */
+    private static String sqlDbtValueLoadExcelTailCteBody(
+            String dbtValue,
+            String invDbt,
+            String invDbtDbt,
+            String bridge,
+            String invDbtVar,
+            String tbl,
+            int currUpl,
+            int baseUpl,
+            String tblIKeySource,
+            boolean continueWith
+    ) {
+        String prefix = continueWith ? ", " : "";
+        String sibling = sqlNoSiblingValueAtUpl(
+                invDbt, dbtValue, currUpl, "d.idKey", "ev.iKey", "ev.debt", tblIKeySource);
+        String contRankExpr = ""
+                + "CASE "
+                + "  WHEN c.baseTtl IS NOT NULL "
+                + "       AND ABS(c.debt - c.baseTtl) <= CAST(0.01 AS decimal(19,4)) THEN 0 "
+                + "  WHEN c.lastTtl IS NOT NULL "
+                + "       AND ABS(c.debt - c.lastTtl) <= CAST(0.01 AS decimal(19,4)) THEN 1 "
+                + "  WHEN c.lastTtl IS NULL THEN 2 "
+                + "  ELSE 3 "
+                + "END";
+        return prefix
+                + "excelAccY AS ( "
+                + "  SELECT t.cidutCntrPrtNum, "
+                + "         CASE WHEN t.cidutCnDate IS NULL THEN CAST('19000101' AS date) "
+                + "              ELSE CAST(t.cidutCnDate AS date) END AS cidutCnDateNull, "
+                + "         CASE WHEN t.cidutCnName IS NULL OR LTRIM(RTRIM(t.cidutCnName)) = N'' "
+                + "              THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(t.cidutCnName)) END AS cidutCnNameNull, "
+                + "         CASE WHEN t.cidutCnInv IS NULL OR LTRIM(RTRIM(t.cidutCnInv)) = N'' "
+                + "              THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(t.cidutCnInv)) END AS cidutCnInvNull, "
+                + "         acc.account_key "
+                + "  FROM " + tbl + " AS t "
+                + "  INNER JOIN ags.accnt AS acc ON t.cidutAccount = acc.account_key "
+                + "  WHERE t.cidutUnloadKey = " + currUpl
+                + "), "
+                + "excelRow AS ( "
+                + "  SELECT a.cidutKey, z.iKey, z.cn_s_org_key, y.account_key, "
+                + "         CASE WHEN cnnPick.matchCnt = 1 THEN cnnPick.pickKey END AS cnnKey, "
+                + "         CASE WHEN invPick.matchCnt = 1 THEN invPick.pickKey END AS invNumKey, "
+                + "         CAST(a.cidutDebt AS decimal(19,4)) AS debt "
+                + "  FROM " + tbl + " AS a "
+                + "  INNER JOIN #sudzEia AS z "
+                + "    ON z.cidutCntrPrtNum = a.cidutCntrPrtNum "
+                + "   AND z.cidutCnNameNull = CASE "
+                + "         WHEN a.cidutCnName IS NULL OR LTRIM(RTRIM(a.cidutCnName)) = N'' "
+                + "         THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(a.cidutCnName)) END "
+                + "   AND z.cidutCnDateNull = CASE "
+                + "         WHEN a.cidutCnDate IS NULL THEN CAST('19000101' AS date) "
+                + "         ELSE CAST(a.cidutCnDate AS date) END "
+                + "   AND z.cidutCnInvNull = CASE "
+                + "         WHEN a.cidutCnInv IS NULL OR LTRIM(RTRIM(a.cidutCnInv)) = N'' "
+                + "         THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(a.cidutCnInv)) END "
+                + "  INNER JOIN excelAccY AS y "
+                + "    ON y.cidutCntrPrtNum = a.cidutCntrPrtNum "
+                + "   AND y.cidutCnNameNull = z.cidutCnNameNull "
+                + "   AND y.cidutCnDateNull = z.cidutCnDateNull "
+                + "   AND y.cidutCnInvNull = z.cidutCnInvNull "
+                + "   AND y.account_key = a.cidutAccount "
+                + "  OUTER APPLY ( "
+                + "    SELECT COUNT(DISTINCT n.cnnKey) AS matchCnt, MIN(n.cnnKey) AS pickKey "
+                + "    FROM ags.cnNum AS n "
+                + "    WHERE n.cnnCn = z.cn_key AND n.cnnType = 1 "
+                + "      AND n.cnnNumNull = z.cidutCnNameNull "
+                + "  ) AS cnnPick "
+                + sqlInvNumVarPickApply("z.cidutCnInvNull", "z.cidutCnInv")
+                + "  WHERE a.cidutUnloadKey = " + currUpl
+                + "    AND z.iKey IS NOT NULL "
+                + "    AND z.cn_s_org_key IS NOT NULL "
+                + "    AND y.account_key IS NOT NULL "
+                + "), "
+                + "excelVar AS ( "
+                + "  SELECT r.cidutKey, r.iKey, r.debt, r.cn_s_org_key, r.account_key, "
+                + "         r.cnnKey, r.invNumKey, v.idvvKey "
+                + "  FROM excelRow AS r "
+                + "  LEFT JOIN " + invDbtVar + " AS v "
+                + "    ON v.idvvCnNum = r.cnnKey "
+                + "   AND v.idvvInvNum = r.invNumKey "
+                + "   AND v.idvvAccnt = r.account_key "
+                + "   AND v.idvvCn_s_org = r.cn_s_org_key "
+                + "), "
+                + "excelNeed AS ( "
+                + "  SELECT * FROM excelVar AS ev "
+                + "  WHERE NOT EXISTS ( "
+                + "    SELECT 1 FROM " + dbtValue + " AS dv "
+                + "    INNER JOIN " + invDbt + " AS d ON d.idKey = dv.dvInvDbt "
+                + "    WHERE dv.dvUpl = " + currUpl + " AND d.idInv = ev.iKey "
+                + "      AND ABS(CAST(dv.dvTtl AS decimal(19,4)) - ev.debt) "
+                + "          <= CAST(0.01 AS decimal(19,4)) "
+                + "  ) "
+                + "), "
+                + "bridgedCand AS ( "
+                + "  SELECT ev.cidutKey, ev.iKey, ev.idvvKey, ev.debt, d.idKey AS slotKey, "
+                + "         (SELECT TOP 1 CAST(dv.dvTtl AS decimal(19,4)) "
+                + "          FROM " + dbtValue + " AS dv "
+                + "          WHERE dv.dvInvDbt = d.idKey "
+                + "          ORDER BY dv.dvUpl DESC) AS lastTtl, "
+                + "         (SELECT TOP 1 CAST(dvB.dvTtl AS decimal(19,4)) "
+                + "          FROM " + dbtValue + " AS dvB "
+                + "          WHERE dvB.dvInvDbt = d.idKey AND dvB.dvUpl = " + baseUpl
+                + "         ) AS baseTtl "
+                + "  FROM excelNeed AS ev "
+                + "  INNER JOIN " + invDbt + " AS d ON d.idInv = ev.iKey "
+                + "  INNER JOIN " + invDbtDbt + " AS idd ON idd.iddInvDbt = d.idKey "
+                + "  INNER JOIN " + bridge + " AS b "
+                + "    ON b.iddvInvDbt = d.idKey AND b.iddvInvDbtVar = ev.idvvKey "
+                + "  WHERE ev.idvvKey IS NOT NULL "
+                + "    AND NOT EXISTS ( "
+                + "      SELECT 1 FROM " + dbtValue + " AS dv "
+                + "      WHERE dv.dvInvDbt = d.idKey AND dv.dvUpl = " + currUpl
+                + "    ) "
+                + "    AND " + sibling
+                + "), "
+                + "calmCand AS ( "
+                + "  SELECT ev.cidutKey, ev.iKey, ev.idvvKey, ev.debt, d.idKey AS slotKey, "
+                + "         CAST(NULL AS decimal(19,4)) AS lastTtl, "
+                + "         CAST(NULL AS decimal(19,4)) AS baseTtl "
+                + "  FROM excelNeed AS ev "
+                + "  INNER JOIN " + invDbt + " AS d ON d.idInv = ev.iKey "
+                + "  INNER JOIN " + invDbtDbt + " AS idd ON idd.iddInvDbt = d.idKey "
+                + "  WHERE ev.idvvKey IS NOT NULL "
+                + "    AND (SELECT COUNT(*) FROM " + invDbt + " AS x WHERE x.idInv = ev.iKey) = 1 "
+                + "    AND NOT EXISTS ( "
+                + "      SELECT 1 FROM " + dbtValue + " AS dv "
+                + "      WHERE dv.dvInvDbt = d.idKey AND dv.dvUpl = " + currUpl
+                + "    ) "
+                + "    AND NOT EXISTS ( "
+                + "      SELECT 1 FROM bridgedCand AS bc WHERE bc.cidutKey = ev.cidutKey "
+                + "    ) "
+                + "    AND " + sibling
+                + "), "
+                + "tailCandAll AS ( "
+                + "  SELECT * FROM bridgedCand "
+                + "  UNION ALL "
+                + "  SELECT * FROM calmCand "
+                + "), "
+                + "tailRanked AS ( "
+                + "  SELECT c.*, "
+                + "         " + contRankExpr + " AS sumRank, "
+                + "         COUNT(*) OVER (PARTITION BY c.cidutKey) AS slotCnt, "
+                + "         SUM(CASE WHEN " + contRankExpr + " = 0 THEN 1 ELSE 0 END) "
+                + "           OVER (PARTITION BY c.cidutKey) AS baseMatchCnt, "
+                + "         SUM(CASE WHEN " + contRankExpr + " = 1 THEN 1 ELSE 0 END) "
+                + "           OVER (PARTITION BY c.cidutKey) AS lastMatchCnt, "
+                + "         ROW_NUMBER() OVER ( "
+                + "           PARTITION BY c.cidutKey "
+                + "           ORDER BY " + contRankExpr + ", c.slotKey "
+                + "         ) AS rnExcel, "
+                + "         ROW_NUMBER() OVER ( "
+                + "           PARTITION BY c.slotKey "
+                + "           ORDER BY " + contRankExpr + ", c.cidutKey "
+                + "         ) AS rnSlot "
+                + "  FROM tailCandAll AS c "
+                + "), "
+                + "tailReady AS ( "
+                + "  SELECT slotKey, iKey, idvvKey, cidutKey, debt "
+                + "  FROM tailRanked "
+                + "  WHERE rnExcel = 1 AND rnSlot = 1 "
+                + "    AND ( "
+                + "      slotCnt = 1 "
+                + "      OR (sumRank = 0 AND baseMatchCnt = 1) "
+                + "      OR (sumRank = 1 AND baseMatchCnt = 0 AND lastMatchCnt = 1) "
+                + "    ) "
+                + "), "
+                + "tailAmbiguous AS ( "
+                + "  SELECT ev.cidutKey "
+                + "  FROM excelNeed AS ev "
+                + "  WHERE NOT EXISTS ( "
+                + "    SELECT 1 FROM tailReady AS tr WHERE tr.cidutKey = ev.cidutKey "
+                + "  ) "
+                + "), "
+                + "continuityRows AS ( "
+                + "  SELECT en.cidutKey, en.iKey, en.debt, "
+                + "         a.cidutCnInv, a.cidutCnName, "
+                + "         (SELECT COUNT(*) FROM " + invDbt + " AS x WHERE x.idInv = en.iKey) AS slotCnt, "
+                + "         tr.slotKey AS chosenSlotKey, "
+                + "         CASE "
+                + "           WHEN (SELECT COUNT(*) FROM " + invDbt + " AS x WHERE x.idInv = en.iKey) <= 1 "
+                + "             THEN N'single' "
+                + "           WHEN tr.slotKey IS NOT NULL AND EXISTS ( "
+                + "             SELECT 1 FROM tailRanked r "
+                + "             WHERE r.cidutKey = en.cidutKey AND r.slotKey = tr.slotKey "
+                + "               AND r.sumRank = 0) THEN N'pick_base' "
+                + "           WHEN tr.slotKey IS NOT NULL THEN N'pick_last' "
+                + "           ELSE N'ambiguous' "
+                + "         END AS decision, "
+                + "         ISNULL(( "
+                + "           SELECT CAST(r.slotKey AS nvarchar(20)) "
+                + "                + N'(r' + CAST(r.sumRank AS nvarchar(4)) + N')' "
+                + "                + NCHAR(44) "
+                + "           FROM tailRanked AS r "
+                + "           WHERE r.cidutKey = en.cidutKey "
+                + "           ORDER BY r.sumRank, r.slotKey "
+                + "           FOR XML PATH(N''), TYPE "
+                + "         ).value(N'.', N'nvarchar(400)'), N'') AS candidates "
+                + "  FROM excelNeed AS en "
+                + "  INNER JOIN " + tbl + " AS a ON a.cidutKey = en.cidutKey "
+                + "  LEFT JOIN tailReady AS tr ON tr.cidutKey = en.cidutKey "
+                + "  WHERE (SELECT COUNT(*) FROM " + invDbt + " AS x WHERE x.idInv = en.iKey) > 1 "
+                + ") ";
+    }
+
+    /**
+     * CTE хвоста без base/disappeared (ожидает {@code #sudzEia} и {@code #tblIKey}).
+     *
+     * @param baseUpl базовая выгрузка года (непрерывность)
      */
     private static String sqlDbtValueLoadTailOnlyCtes(
             String dbtValue,
             String invDbt,
             String invDbtDbt,
             String bridge,
+            String invDbtVar,
             String tbl,
-            int currUpl
+            int currUpl,
+            int baseUpl
     ) {
-        String eiaJoin = sqlTblSudzEiaJoin();
-        return ""
-                + "WITH tailSlots AS ( "
-                + "  SELECT idd.iddInvDbt AS slotKey, d.idInv AS iKey, "
-                + "         COUNT(DISTINCT b.iddvInvDbtVar) AS varCnt "
-                + "  FROM " + invDbtDbt + " AS idd "
-                + "  INNER JOIN " + invDbt + " AS d ON d.idKey = idd.iddInvDbt "
-                + "  INNER JOIN " + bridge + " AS b ON b.iddvInvDbt = idd.iddInvDbt "
-                + "  WHERE NOT EXISTS ( "
-                + "    SELECT 1 FROM " + dbtValue + " AS dv "
-                + "    WHERE dv.dvInvDbt = idd.iddInvDbt AND dv.dvUpl = " + currUpl
-                + "  ) "
-                + "    AND EXISTS ( "
-                + "      SELECT 1 FROM " + tbl + " AS a "
-                + eiaJoin
-                + "      WHERE a.cidutUnloadKey = " + currUpl + " AND e.iKey = d.idInv "
-                + "    ) "
-                + "  GROUP BY idd.iddInvDbt, d.idInv "
-                + "), "
-                + "tailReady AS ( "
-                + "  SELECT slotKey, iKey FROM tailSlots WHERE varCnt = 1 "
-                + "), "
-                + "tailAmbiguous AS ( "
-                + "  SELECT slotKey FROM tailSlots WHERE varCnt > 1 "
-                + ") ";
+        return "WITH "
+                + sqlDbtValueLoadExcelTailCteBody(
+                        dbtValue, invDbt, invDbtDbt, bridge, invDbtVar, tbl,
+                        currUpl, baseUpl, "#tblIKey", false);
     }
 
     @Override
@@ -4416,9 +5398,18 @@ public class JdbcSudzDao implements SudzDao {
         if (baseOpt.isEmpty() || baseOpt.get().equals(unloadKey)) {
             int skipped = countDbtValuesOnUpl(unloadKey);
             int p1Open = countDbtP1Open(unloadKey);
+            int mismatch = 0;
+            try (Connection connection = connectionFactory.createConnection()) {
+                fillSudzEiaTemp(connection, unloadKey);
+                mismatch = countAndLogVarInvMismatches(connection, unloadKey);
+            } catch (MissingConfigurationException exception) {
+                throw exception;
+            } catch (SQLException exception) {
+                throw wrap("Не удалось проверить varInvMismatch unloadKey=" + unloadKey, exception);
+            }
             return new SudzDbtUplDbtValueLoadSnapshot(
                     baseOpt.orElse(null), skipped, 0, 0, 0,
-                    countDbtP1Queued(unloadKey), p1Open);
+                    countDbtP1Queued(unloadKey), p1Open, mismatch);
         }
         int baseUpl = baseOpt.get();
         String dbtValue = q("DbtValue");
@@ -4444,14 +5435,20 @@ public class JdbcSudzDao implements SudzDao {
             try (Statement statement = connection.createStatement();
                  ResultSet rs = statement.executeQuery(sql)) {
                 rs.next();
-                return new SudzDbtUplDbtValueLoadSnapshot(
+                SudzDbtUplDbtValueLoadSnapshot snapshot = new SudzDbtUplDbtValueLoadSnapshot(
                         baseUpl,
                         rs.getInt("skippedValues"),
                         rs.getInt("tailReady"),
                         rs.getInt("tailAmbiguous"),
                         rs.getInt("disappeared"),
                         rs.getInt("p1Queued"),
-                        rs.getInt("p1Open"));
+                        rs.getInt("p1Open"),
+                        countAndLogVarInvMismatches(connection, unloadKey),
+                        loadContinuityRows(connection, ctes, unloadKey));
+                if (snapshot.tailAmbiguous() > 0 && snapshot.tailAmbiguous() <= 50) {
+                    logDbtValueLoadTailAmbiguous(connection, ctes, tbl, unloadKey);
+                }
+                return snapshot;
             }
         } catch (MissingConfigurationException exception) {
             throw exception;
@@ -4570,12 +5567,11 @@ public class JdbcSudzDao implements SudzDao {
     }
 
     /**
-     * INSERT {@code DbtValue} для tail-слотов (мост + Tbl, без Value на curr).
-     * A1.1b: {@code tailCand} + {@code rnPick=1} — не более одного слота на
-     * {@code (iKey, ttl)} в одном INSERT (batch-safe с триггером P1).
+     * INSERT {@code DbtValue} для Excel-ready хвоста ({@code idvvKey} с шага 6).
+     * При необходимости дописывает мост {@code invDbtDbtVar}.
      *
      * @param unloadKey {@code upl_key}
-     * @return число INSERT
+     * @return число INSERT Value
      */
     private int applyDbtValueLoadTail(int unloadKey, int yrKey) {
         Optional<Integer> baseOpt = findBaseUplForCurr(unloadKey, yrKey);
@@ -4590,52 +5586,39 @@ public class JdbcSudzDao implements SudzDao {
                 dbtValue, invDbt, invDbtDbt, bridge, invDbtVar, tbl, unloadKey, baseUpl);
         Timestamp now = Timestamp.valueOf(LocalDateTime.now());
         String tsLit = "'" + now.toLocalDateTime() + "'";
-        String insertSql = ctes
-                + ", "
-                + "tailCand AS ( "
-                + "  SELECT tr.slotKey, b.iddvInvDbtVar, d.idInv AS iKey, "
-                + "         COALESCE(t.cidutDebt, CAST(0 AS money)) AS cidutDebt, "
-                + "         COALESCE(t.cidutDebtOverdue, CAST(0 AS money)) AS cidutDebtOverdue, "
-                + "         CAST(t.cidutFormtnDate AS date) AS cidutFormtnDate, "
-                + "         CAST(t.cidutMatrtyDate AS date) AS cidutMatrtyDate, "
-                + "         COALESCE(NULLIF(LTRIM(RTRIM(t.cidutDoc)), N''), t.cidutCnInv) AS cidutDoc, "
-                + "         ROW_NUMBER() OVER ( "
-                + "           PARTITION BY d.idInv, "
-                + "                        CAST(COALESCE(t.cidutDebt, CAST(0 AS money)) AS decimal(19,4)) "
-                + "           ORDER BY tr.slotKey ASC "
-                + "         ) AS rnPick "
-                + "  FROM tailReady AS tr "
-                + "  INNER JOIN " + bridge + " AS b ON b.iddvInvDbt = tr.slotKey "
-                + "  INNER JOIN " + invDbt + " AS d ON d.idKey = tr.slotKey "
-                + "  CROSS APPLY ( "
-                + "    SELECT TOP 1 a.cidutDebt, a.cidutDebtOverdue, a.cidutFormtnDate,"
-                + "           a.cidutMatrtyDate, a.cidutDoc, a.cidutCnInv "
-                + "    FROM " + tbl + " AS a "
-                + sqlTblSudzEiaJoin()
-                + "    WHERE a.cidutUnloadKey = " + unloadKey + " AND e.iKey = d.idInv "
-                + "    ORDER BY a.cidutKey "
-                + "  ) AS t "
-                + "  WHERE NOT EXISTS ( "
-                + "    SELECT 1 FROM " + dbtValue + " dv "
-                + "    WHERE dv.dvInvDbt = tr.slotKey AND dv.dvUpl = " + unloadKey
-                + "  ) "
-                + "    AND " + sqlNoSiblingValueAtUpl(
-                        invDbt, dbtValue, unloadKey, "tr.slotKey", "d.idInv",
-                        "CAST(COALESCE(t.cidutDebt, CAST(0 AS money)) AS decimal(19,4))")
-                + ") "
+        String insertBridgeSql = ctes
+                + "INSERT INTO " + bridge + " (iddvInvDbt, iddvInvDbtVar, iddvTimeOfEntry) "
+                + "SELECT tr.slotKey, tr.idvvKey, CAST(" + tsLit + " AS datetime2) "
+                + "FROM tailReady AS tr "
+                + "WHERE NOT EXISTS ( "
+                + "  SELECT 1 FROM " + bridge + " AS b "
+                + "  WHERE b.iddvInvDbt = tr.slotKey AND b.iddvInvDbtVar = tr.idvvKey "
+                + ")";
+        String insertValueSql = ctes
                 + "INSERT INTO " + dbtValue
                 + " (dvInvDbt, dvInvDbtVar, dvUpl, dvTtl, dvOverd,"
                 + "  dvDateStart, dvDateMaturity, dvDocBase, dvTimeOfEntry) "
-                + "SELECT tc.slotKey, tc.iddvInvDbtVar, " + unloadKey + ","
-                + " tc.cidutDebt, tc.cidutDebtOverdue,"
-                + " tc.cidutFormtnDate, tc.cidutMatrtyDate,"
-                + " tc.cidutDoc, CAST(" + tsLit + " AS datetime2) "
-                + "FROM tailCand AS tc "
-                + "WHERE tc.rnPick = 1";
+                + "SELECT tr.slotKey, tr.idvvKey, " + unloadKey + ","
+                + " COALESCE(a.cidutDebt, CAST(0 AS money)),"
+                + " COALESCE(a.cidutDebtOverdue, CAST(0 AS money)),"
+                + " CAST(a.cidutFormtnDate AS date), CAST(a.cidutMatrtyDate AS date),"
+                + " COALESCE(NULLIF(LTRIM(RTRIM(a.cidutDoc)), N''), a.cidutCnInv),"
+                + " CAST(" + tsLit + " AS datetime2) "
+                + "FROM tailReady AS tr "
+                + "INNER JOIN " + tbl + " AS a ON a.cidutKey = tr.cidutKey "
+                + "WHERE NOT EXISTS ( "
+                + "  SELECT 1 FROM " + dbtValue + " AS dv "
+                + "  WHERE dv.dvInvDbt = tr.slotKey AND dv.dvUpl = " + unloadKey
+                + ") "
+                + "  AND " + sqlNoSiblingValueAtUpl(
+                        invDbt, dbtValue, unloadKey, "tr.slotKey", "tr.iKey",
+                        "CAST(COALESCE(a.cidutDebt, CAST(0 AS money)) AS decimal(19,4))",
+                        "tblIKey");
         try (Connection connection = connectionFactory.createConnection()) {
             fillSudzEiaTemp(connection, unloadKey);
             try (Statement statement = connection.createStatement()) {
-                return statement.executeUpdate(insertSql);
+                statement.executeUpdate(insertBridgeSql);
+                return statement.executeUpdate(insertValueSql);
             }
         } catch (SQLException exception) {
             throw wrap("Не удалось выполнить tail dbtValueLoad unloadKey=" + unloadKey, exception);
@@ -4651,6 +5634,7 @@ public class JdbcSudzDao implements SudzDao {
             statement.executeUpdate("IF OBJECT_ID('tempdb..#dvBaseCtx') IS NOT NULL DROP TABLE #dvBaseCtx");
             statement.executeUpdate("IF OBJECT_ID('tempdb..#dvTailReady') IS NOT NULL DROP TABLE #dvTailReady");
             statement.executeUpdate("IF OBJECT_ID('tempdb..#dvTailAmb') IS NOT NULL DROP TABLE #dvTailAmb");
+            statement.executeUpdate("IF OBJECT_ID('tempdb..#dvContinuity') IS NOT NULL DROP TABLE #dvContinuity");
             statement.executeUpdate("IF OBJECT_ID('tempdb..#tblIKey') IS NOT NULL DROP TABLE #tblIKey");
         }
     }
@@ -4743,14 +5727,25 @@ public class JdbcSudzDao implements SudzDao {
                     + "SELECT slotKey, dbtKey, iKey, debt, overd INTO #dvDisappeared FROM disappeared";
             statement.executeUpdate(disappearedSql);
             statement.executeUpdate(
-                    sqlDbtValueLoadTailOnlyCtes(dbtValue, invDbt, invDbtDbt, bridge, tbl, unloadKey)
-                            + "SELECT slotKey, iKey INTO #dvTailReady FROM tailReady");
-            statement.executeUpdate(
-                    sqlDbtValueLoadTailOnlyCtes(dbtValue, invDbt, invDbtDbt, bridge, tbl, unloadKey)
-                            + "SELECT slotKey INTO #dvTailAmb FROM tailAmbiguous");
-            statement.executeUpdate(
                     "SELECT iKey, COUNT(DISTINCT cidutKey) AS rowCnt INTO #tblIKey "
                             + "FROM #dvTblCurr GROUP BY iKey");
+            String invDbtVar = q("invDbtVar");
+            statement.executeUpdate(
+                    sqlDbtValueLoadTailOnlyCtes(
+                            dbtValue, invDbt, invDbtDbt, bridge, invDbtVar, tbl, unloadKey, baseUpl)
+                            + "SELECT slotKey, iKey, idvvKey, cidutKey, debt "
+                            + "INTO #dvTailReady FROM tailReady");
+            statement.executeUpdate(
+                    sqlDbtValueLoadTailOnlyCtes(
+                            dbtValue, invDbt, invDbtDbt, bridge, invDbtVar, tbl, unloadKey, baseUpl)
+                            + "SELECT cidutKey INTO #dvTailAmb FROM tailAmbiguous");
+            statement.executeUpdate(
+                    sqlDbtValueLoadTailOnlyCtes(
+                            dbtValue, invDbt, invDbtDbt, bridge, invDbtVar, tbl, unloadKey, baseUpl)
+                            + "SELECT cidutKey, iKey, debt, cidutCnInv, cidutCnName, slotCnt, "
+                            + "       chosenSlotKey, decision, candidates "
+                            + "INTO #dvContinuity FROM continuityRows");
+            logDbtValueLoadTailAmbiguousFromTemp(connection, tbl, unloadKey);
             statement.executeUpdate(
                     "SELECT ms.dbtKey, ms.slotKey, ms.iKey AS baseIKey, ms.matchSum, ms.sumKind, "
                             + "       t.cidutKey, t.iKey AS candIKey, t.debt AS candDebt, "
@@ -4783,7 +5778,6 @@ public class JdbcSudzDao implements SudzDao {
                             + "  SELECT 1 FROM #dvP1Cand AS pc "
                             + "  WHERE pc.dbtKey = ms.dbtKey AND pc.sumKind = ms.sumKind "
                             + ")");
-            String invDbtVar = q("invDbtVar");
             statement.executeUpdate(
                     "SELECT d.slotKey, d.dbtKey, d.iKey, "
                             + "       cn.cnnNum AS baseCnNum, inv.inNum AS baseInvNum "
@@ -4794,6 +5788,113 @@ public class JdbcSudzDao implements SudzDao {
                             + " INNER JOIN " + invDbtVar + " AS v ON v.idvvKey = dv.dvInvDbtVar "
                             + "LEFT JOIN ags.cnNum AS cn ON cn.cnnKey = v.idvvCnNum "
                             + "LEFT JOIN ags.invNum AS inv ON inv.inKey = v.idvvInvNum");
+        }
+    }
+
+    /**
+     * Лог строк Excel без однозначного Excel→slot (малый хвост — UAT).
+     * Ожидает CTE из {@link #sqlDbtValueLoadCoreCtes} / Excel-tail body.
+     */
+    private void logDbtValueLoadTailAmbiguous(
+            Connection connection,
+            String ctes,
+            String tbl,
+            int unloadKey
+    ) throws SQLException {
+        String sql = ctes
+                + "SELECT ta.cidutKey, a.cidutCnInv, a.cidutCnName, "
+                + "       CAST(a.cidutDebt AS decimal(19,4)) AS debt, "
+                + "       en.iKey, en.cnnKey, en.invNumKey, en.idvvKey, "
+                + "       (SELECT COUNT(*) FROM tailCandAll c WHERE c.cidutKey = ta.cidutKey) AS candSlots, "
+                + "       (SELECT COUNT(*) FROM " + q("invDbt") + " d WHERE d.idInv = en.iKey) AS slotsOnInv, "
+                + "       CASE "
+                + "         WHEN en.cidutKey IS NULL THEN N'need_missing' "
+                + "         WHEN en.cnnKey IS NULL OR en.invNumKey IS NULL THEN N'fk_ambiguous' "
+                + "         WHEN en.idvvKey IS NULL THEN N'no_invDbtVar' "
+                + "         WHEN NOT EXISTS (SELECT 1 FROM tailCandAll c WHERE c.cidutKey = ta.cidutKey) "
+                + "              THEN N'no_candidate_slot' "
+                + "         WHEN EXISTS ( "
+                + "              SELECT 1 FROM tailRanked r "
+                + "              WHERE r.cidutKey = ta.cidutKey AND r.rnExcel = 1 "
+                + "                AND r.slotCnt > 1 AND r.sumRank > 1) "
+                + "              THEN N'multi_slot_no_unique_continuum' "
+                + "         WHEN EXISTS ( "
+                + "              SELECT 1 FROM tailRanked r "
+                + "              WHERE r.cidutKey = ta.cidutKey AND r.rnExcel = 1 AND r.rnSlot > 1) "
+                + "              THEN N'slot_claimed_by_other_excel' "
+                + "         ELSE N'other' "
+                + "       END AS reason "
+                + "FROM tailAmbiguous AS ta "
+                + "INNER JOIN " + tbl + " AS a ON a.cidutKey = ta.cidutKey "
+                + "LEFT JOIN excelNeed AS en ON en.cidutKey = ta.cidutKey "
+                + "ORDER BY ta.cidutKey";
+        try (Statement statement = connection.createStatement();
+             ResultSet rs = statement.executeQuery(sql)) {
+            int n = 0;
+            while (rs.next()) {
+                n++;
+                log.log(Level.INFO,
+                        "dbtValueLoad tailAmbiguous unloadKey={0} #{1} cidut={2} iKey={3} "
+                                + "inv={4} cn={5} debt={6} idvv={7} cnn={8} invNum={9} "
+                                + "candSlots={10} slotsOnInv={11} reason={12}",
+                        new Object[]{
+                                unloadKey,
+                                n,
+                                rs.getInt("cidutKey"),
+                                rs.getObject("iKey"),
+                                rs.getNString("cidutCnInv"),
+                                rs.getNString("cidutCnName"),
+                                rs.getBigDecimal("debt"),
+                                rs.getObject("idvvKey"),
+                                rs.getObject("cnnKey"),
+                                rs.getObject("invNumKey"),
+                                rs.getInt("candSlots"),
+                                rs.getObject("slotsOnInv"),
+                                rs.getNString("reason")
+                        });
+            }
+        }
+    }
+
+    /**
+     * Лог {@code #dvTailAmb} после materialize (phase-путь).
+     */
+    private void logDbtValueLoadTailAmbiguousFromTemp(
+            Connection connection,
+            String tbl,
+            int unloadKey
+    ) throws SQLException {
+        int ambCount;
+        try (Statement statement = connection.createStatement();
+             ResultSet rs = statement.executeQuery("SELECT COUNT(*) AS c FROM #dvTailAmb")) {
+            rs.next();
+            ambCount = rs.getInt("c");
+        }
+        if (ambCount <= 0 || ambCount > 50) {
+            return;
+        }
+        String sql = ""
+                + "SELECT ta.cidutKey, a.cidutCnInv, a.cidutCnName, "
+                + "       CAST(a.cidutDebt AS decimal(19,4)) AS debt "
+                + "FROM #dvTailAmb AS ta "
+                + "INNER JOIN " + tbl + " AS a ON a.cidutKey = ta.cidutKey "
+                + "ORDER BY ta.cidutKey";
+        try (Statement statement = connection.createStatement();
+             ResultSet rs = statement.executeQuery(sql)) {
+            int n = 0;
+            while (rs.next()) {
+                n++;
+                log.log(Level.INFO,
+                        "dbtValueLoad #dvTailAmb unloadKey={0} #{1} cidut={2} inv={3} cn={4} debt={5}",
+                        new Object[]{
+                                unloadKey,
+                                n,
+                                rs.getInt("cidutKey"),
+                                rs.getNString("cidutCnInv"),
+                                rs.getNString("cidutCnName"),
+                                rs.getBigDecimal("debt")
+                        });
+            }
         }
     }
 
@@ -4819,8 +5920,171 @@ public class JdbcSudzDao implements SudzDao {
                     rs.getInt("tailAmbiguous"),
                     rs.getInt("disappeared"),
                     p1Queued,
-                    p1Open);
+                    p1Open,
+                    countAndLogVarInvMismatches(connection, unloadKey),
+                    loadContinuityRowsFromTemp(connection));
         }
+    }
+
+    /**
+     * Строки непрерывности из CTE {@code continuityRows} (dry snapshot).
+     */
+    private List<SudzDbtUplContinuityRow> loadContinuityRows(
+            Connection connection,
+            String ctes,
+            int unloadKey
+    ) throws SQLException {
+        String sql = ctes
+                + "SELECT TOP 40 cidutKey, iKey, debt, cidutCnInv, cidutCnName, slotCnt, "
+                + "       chosenSlotKey, decision, candidates "
+                + "FROM continuityRows "
+                + "ORDER BY CASE decision WHEN N'ambiguous' THEN 0 WHEN N'pick_base' THEN 1 "
+                + "         WHEN N'pick_last' THEN 2 ELSE 3 END, cidutKey";
+        try (Statement statement = connection.createStatement();
+             ResultSet rs = statement.executeQuery(sql)) {
+            List<SudzDbtUplContinuityRow> rows = new ArrayList<>();
+            while (rs.next()) {
+                rows.add(mapContinuityRow(rs));
+            }
+            if (!rows.isEmpty()) {
+                log.log(Level.INFO,
+                        "dbtValueLoad continuity unloadKey={0} rows={1}",
+                        new Object[]{unloadKey, rows.size()});
+            }
+            return List.copyOf(rows);
+        }
+    }
+
+    /**
+     * Строки непрерывности из {@code #dvContinuity} (phase).
+     */
+    private List<SudzDbtUplContinuityRow> loadContinuityRowsFromTemp(Connection connection)
+            throws SQLException {
+        try (Statement probe = connection.createStatement();
+             ResultSet has = probe.executeQuery(
+                     "SELECT CASE WHEN OBJECT_ID(N'tempdb..#dvContinuity') IS NOT NULL "
+                             + "THEN 1 ELSE 0 END AS h")) {
+            has.next();
+            if (has.getInt("h") == 0) {
+                return List.of();
+            }
+        }
+        String sql = "SELECT TOP 40 cidutKey, iKey, debt, cidutCnInv, cidutCnName, slotCnt, "
+                + "       chosenSlotKey, decision, candidates "
+                + "FROM #dvContinuity "
+                + "ORDER BY CASE decision WHEN N'ambiguous' THEN 0 WHEN N'pick_base' THEN 1 "
+                + "         WHEN N'pick_last' THEN 2 ELSE 3 END, cidutKey";
+        try (Statement statement = connection.createStatement();
+             ResultSet rs = statement.executeQuery(sql)) {
+            List<SudzDbtUplContinuityRow> rows = new ArrayList<>();
+            while (rs.next()) {
+                rows.add(mapContinuityRow(rs));
+            }
+            return List.copyOf(rows);
+        }
+    }
+
+    private static SudzDbtUplContinuityRow mapContinuityRow(ResultSet rs) throws SQLException {
+        Integer chosen = getInteger(rs, "chosenSlotKey");
+        String candidates = rs.getNString("candidates");
+        if (candidates != null && candidates.endsWith(",")) {
+            candidates = candidates.substring(0, candidates.length() - 1);
+        }
+        return new SudzDbtUplContinuityRow(
+                rs.getInt("cidutKey"),
+                rs.getInt("iKey"),
+                rs.getNString("cidutCnInv"),
+                rs.getNString("cidutCnName"),
+                rs.getBigDecimal("debt"),
+                rs.getInt("slotCnt"),
+                chosen,
+                rs.getNString("decision"),
+                candidates == null ? "" : candidates);
+    }
+
+    /**
+     * Value на curr, у которых номер СФ в {@code invDbtVar} не совпадает с Tbl/сводом
+     * (тот же {@code iKey} слота + сумма ±0.01). Пишет каждую строку в server log (SEVERE).
+     *
+     * @param connection JDBC (желательно с {@code #sudzEia}; опционально {@code #dvTblCurr})
+     * @param unloadKey текущая выгрузка
+     * @return число несоответствий
+     * @throws SQLException при ошибке SQL
+     */
+    private int countAndLogVarInvMismatches(Connection connection, int unloadKey) throws SQLException {
+        boolean hasDvTblCurr;
+        try (Statement probe = connection.createStatement();
+             ResultSet rs = probe.executeQuery(
+                     "SELECT CASE WHEN OBJECT_ID(N'tempdb..#dvTblCurr') IS NOT NULL "
+                             + "THEN 1 ELSE 0 END AS hasTemp")) {
+            rs.next();
+            hasDvTblCurr = rs.getInt("hasTemp") == 1;
+        }
+        String sql;
+        if (hasDvTblCurr) {
+            sql = ""
+                    + "SELECT dv.dvKey, dv.dvInvDbt AS slotKey, n.inNum AS varInv, "
+                    + "       t.cidutCnInv AS tblInv, t.cidutKey, t.debt AS tblDebt "
+                    + "FROM " + q("DbtValue") + " AS dv "
+                    + "JOIN " + q("invDbt") + " AS slot ON slot.idKey = dv.dvInvDbt "
+                    + "JOIN " + q("invDbtVar") + " AS v ON v.idvvKey = dv.dvInvDbtVar "
+                    + "JOIN ags.invNum AS n ON n.inKey = v.idvvInvNum "
+                    + "JOIN #dvTblCurr AS t ON t.iKey = slot.idInv "
+                    + "  AND ABS(t.debt - CAST(dv.dvTtl AS decimal(19,4))) "
+                    + "      <= CAST(0.01 AS decimal(19,4)) "
+                    + "WHERE dv.dvUpl = " + unloadKey + " "
+                    + "  AND LTRIM(RTRIM(ISNULL(n.inNum, N''))) "
+                    + "      <> LTRIM(RTRIM(ISNULL(t.cidutCnInv, N''))) "
+                    + "ORDER BY dv.dvKey, t.cidutKey";
+        } else {
+            String eiaJoin = sqlTblSudzEiaJoin();
+            sql = ""
+                    + "SELECT dv.dvKey, dv.dvInvDbt AS slotKey, n.inNum AS varInv, "
+                    + "       a.cidutCnInv AS tblInv, a.cidutKey, "
+                    + "       CAST(a.cidutDebt AS decimal(19,4)) AS tblDebt "
+                    + "FROM " + q("DbtValue") + " AS dv "
+                    + "JOIN " + q("invDbt") + " AS slot ON slot.idKey = dv.dvInvDbt "
+                    + "JOIN " + q("invDbtVar") + " AS v ON v.idvvKey = dv.dvInvDbtVar "
+                    + "JOIN ags.invNum AS n ON n.inKey = v.idvvInvNum "
+                    + "JOIN " + q("CnInvDbtUplTbl") + " AS a "
+                    + "  ON a.cidutUnloadKey = " + unloadKey + " "
+                    + eiaJoin
+                    + " AND e.iKey = slot.idInv "
+                    + " AND ABS(CAST(a.cidutDebt AS decimal(19,4)) - CAST(dv.dvTtl AS decimal(19,4))) "
+                    + "     <= CAST(0.01 AS decimal(19,4)) "
+                    + "WHERE dv.dvUpl = " + unloadKey + " "
+                    + "  AND LTRIM(RTRIM(ISNULL(n.inNum, N''))) "
+                    + "      <> LTRIM(RTRIM(ISNULL(a.cidutCnInv, N''))) "
+                    + "ORDER BY dv.dvKey, a.cidutKey";
+        }
+        int count = 0;
+        try (Statement statement = connection.createStatement();
+             ResultSet rs = statement.executeQuery(sql)) {
+            while (rs.next()) {
+                count++;
+                if (count <= 30) {
+                    log.log(Level.SEVERE,
+                            "dbtValueLoad varInvMismatch unloadKey={0} dvKey={1} slot={2} "
+                                    + "varInv=\"{3}\" tblInv=\"{4}\" cidutKey={5} debt={6}",
+                            new Object[]{
+                                    unloadKey,
+                                    rs.getInt("dvKey"),
+                                    rs.getInt("slotKey"),
+                                    rs.getString("varInv"),
+                                    rs.getString("tblInv"),
+                                    rs.getInt("cidutKey"),
+                                    rs.getBigDecimal("tblDebt")
+                            });
+                }
+            }
+        }
+        if (count > 0) {
+            log.log(Level.SEVERE,
+                    "dbtValueLoad varInvMismatch unloadKey={0} total={1} "
+                            + "(invDbtVar.invNum ≠ СФ в Tbl/своде при том же iKey и сумме)",
+                    new Object[]{unloadKey, count});
+        }
+        return count;
     }
 
     private int rebuildDbtP1QueueOnConnection(
@@ -4885,49 +6149,36 @@ public class JdbcSudzDao implements SudzDao {
             Timestamp now
     ) throws SQLException {
         String tsLit = "'" + now.toLocalDateTime() + "'";
+        String insertBridgeSql = ""
+                + "INSERT INTO " + bridge + " (iddvInvDbt, iddvInvDbtVar, iddvTimeOfEntry) "
+                + "SELECT tr.slotKey, tr.idvvKey, CAST(" + tsLit + " AS datetime2) "
+                + "FROM #dvTailReady AS tr "
+                + "WHERE NOT EXISTS ( "
+                + "  SELECT 1 FROM " + bridge + " AS b "
+                + "  WHERE b.iddvInvDbt = tr.slotKey AND b.iddvInvDbtVar = tr.idvvKey "
+                + ")";
         String insertSql = ""
-                + "WITH tailCand AS ( "
-                + "  SELECT tr.slotKey, b.iddvInvDbtVar, d.idInv AS iKey, "
-                + "         COALESCE(t.cidutDebt, CAST(0 AS money)) AS cidutDebt, "
-                + "         COALESCE(t.cidutDebtOverdue, CAST(0 AS money)) AS cidutDebtOverdue, "
-                + "         CAST(t.cidutFormtnDate AS date) AS cidutFormtnDate, "
-                + "         CAST(t.cidutMatrtyDate AS date) AS cidutMatrtyDate, "
-                + "         COALESCE(NULLIF(LTRIM(RTRIM(t.cidutDoc)), N''), t.cidutCnInv) AS cidutDoc, "
-                + "         ROW_NUMBER() OVER ( "
-                + "           PARTITION BY d.idInv, "
-                + "                        CAST(COALESCE(t.cidutDebt, CAST(0 AS money)) AS decimal(19,4)) "
-                + "           ORDER BY tr.slotKey ASC "
-                + "         ) AS rnPick "
-                + "  FROM #dvTailReady AS tr "
-                + "  INNER JOIN " + bridge + " AS b ON b.iddvInvDbt = tr.slotKey "
-                + "  INNER JOIN " + invDbt + " AS d ON d.idKey = tr.slotKey "
-                + "  CROSS APPLY ( "
-                + "    SELECT TOP 1 a.cidutDebt, a.cidutDebtOverdue, a.cidutFormtnDate,"
-                + "           a.cidutMatrtyDate, a.cidutDoc, a.cidutCnInv "
-                + "    FROM " + tbl + " AS a "
-                + sqlTblSudzEiaJoin()
-                + "    WHERE a.cidutUnloadKey = " + unloadKey + " AND e.iKey = d.idInv "
-                + "    ORDER BY a.cidutKey "
-                + "  ) AS t "
-                + "  WHERE NOT EXISTS ( "
-                + "    SELECT 1 FROM " + dbtValue + " dv "
-                + "    WHERE dv.dvInvDbt = tr.slotKey AND dv.dvUpl = " + unloadKey
-                + "  ) "
-                + "    AND " + sqlNoSiblingValueAtUpl(
-                        invDbt, dbtValue, unloadKey, "tr.slotKey", "d.idInv",
-                        "CAST(COALESCE(t.cidutDebt, CAST(0 AS money)) AS decimal(19,4))",
-                        "#tblIKey")
-                + ") "
                 + "INSERT INTO " + dbtValue
                 + " (dvInvDbt, dvInvDbtVar, dvUpl, dvTtl, dvOverd,"
                 + "  dvDateStart, dvDateMaturity, dvDocBase, dvTimeOfEntry) "
-                + "SELECT tc.slotKey, tc.iddvInvDbtVar, " + unloadKey + ","
-                + " tc.cidutDebt, tc.cidutDebtOverdue,"
-                + " tc.cidutFormtnDate, tc.cidutMatrtyDate,"
-                + " tc.cidutDoc, CAST(" + tsLit + " AS datetime2) "
-                + "FROM tailCand AS tc "
-                + "WHERE tc.rnPick = 1";
+                + "SELECT tr.slotKey, tr.idvvKey, " + unloadKey + ","
+                + " COALESCE(a.cidutDebt, CAST(0 AS money)),"
+                + " COALESCE(a.cidutDebtOverdue, CAST(0 AS money)),"
+                + " CAST(a.cidutFormtnDate AS date), CAST(a.cidutMatrtyDate AS date),"
+                + " COALESCE(NULLIF(LTRIM(RTRIM(a.cidutDoc)), N''), a.cidutCnInv),"
+                + " CAST(" + tsLit + " AS datetime2) "
+                + "FROM #dvTailReady AS tr "
+                + "INNER JOIN " + tbl + " AS a ON a.cidutKey = tr.cidutKey "
+                + "WHERE NOT EXISTS ( "
+                + "  SELECT 1 FROM " + dbtValue + " AS dv "
+                + "  WHERE dv.dvInvDbt = tr.slotKey AND dv.dvUpl = " + unloadKey
+                + ") "
+                + "  AND " + sqlNoSiblingValueAtUpl(
+                        invDbt, dbtValue, unloadKey, "tr.slotKey", "tr.iKey",
+                        "CAST(COALESCE(a.cidutDebt, CAST(0 AS money)) AS decimal(19,4))",
+                        "#tblIKey");
         try (Statement statement = connection.createStatement()) {
+            statement.executeUpdate(insertBridgeSql);
             return statement.executeUpdate(insertSql);
         }
     }
@@ -4956,8 +6207,9 @@ public class JdbcSudzDao implements SudzDao {
                     deleteDbtP1OnConnection(connection, unloadKey);
                     int skipped = countDbtValuesOnConnection(connection, unloadKey);
                     int p1Open = countDbtP1OpenOnConnection(connection, unloadKey);
+                    int mismatch = countAndLogVarInvMismatches(connection, unloadKey);
                     SudzDbtUplDbtValueLoadSnapshot snapshot = new SudzDbtUplDbtValueLoadSnapshot(
-                            baseOpt.orElse(null), skipped, 0, 0, 0, 0, p1Open);
+                            baseOpt.orElse(null), skipped, 0, 0, 0, 0, p1Open, mismatch);
                     connection.commit();
                     return new SudzDbtUplDbtValueLoadPhaseResult(snapshot, null);
                 }
@@ -5160,7 +6412,8 @@ public class JdbcSudzDao implements SudzDao {
     }
 
     /**
-     * C1 для одного слота: F1 reuse или новый {@code Dbt}; при sibling без F1 — исключение.
+     * C1 для одного слота: F1 reuse (сумма совпала с sibling) или новый {@code Dbt}.
+     * Sibling с другой суммой — отдельный канон (типичный КСДД Create второй задолженности на СФ).
      *
      * @param connection открытое соединение (транзакция снаружи)
      * @param slotKey {@code invDbt.idKey}
@@ -5216,16 +6469,19 @@ public class JdbcSudzDao implements SudzDao {
         }
         if (reuseDbt == null) {
             try (PreparedStatement sib = connection.prepareStatement(
-                    "SELECT 1 FROM " + invDbt + " AS d2 "
+                    "SELECT d2.idKey FROM " + invDbt + " AS d2 "
                             + "INNER JOIN " + invDbtDbt + " AS idd ON idd.iddInvDbt = d2.idKey "
                             + "WHERE d2.idInv = ? AND d2.idKey <> ?")) {
                 sib.setInt(1, iKey);
                 sib.setInt(2, slotKey);
                 try (ResultSet rs = sib.executeQuery()) {
                     if (rs.next()) {
-                        throw new IllegalArgumentException(
-                                "Неоднозначная привязка Dbt для слота " + slotKey
-                                        + " (есть sibling без F1) — только лог/ручной разбор");
+                        // Sibling с другим Dbt/суммой: это не Split одного канона, а вторая
+                        // задолженность на СФ (КСДД Create) — заводим новый Dbt.
+                        log.log(Level.INFO,
+                                "ensureInvDbtDbtBridgeForSlot: sibling idKey={0} без F1 к сумме "
+                                        + "слота {1} (iKey={2}) — создаём отдельный Dbt",
+                                new Object[]{rs.getInt(1), slotKey, iKey});
                     }
                 }
             }
@@ -6913,8 +8169,15 @@ public class JdbcSudzDao implements SudzDao {
         BigDecimal eps = epsilon == null ? new BigDecimal("0.01") : epsilon;
         List<InvDbtDoubleAdvisor.OpenShare> shares = loadOpenSharesForInv(
                 iKey, row.ciudUnloadKey());
+        List<InvDbtDoubleAdvisor.OpenShare> queueShares = loadQueueSharesForInv(
+                iKey, row.ciudUnloadKey());
         List<InvDbtDoubleAdvisor.SlotCanon> canons = loadSlotCanons(iKey, row.ciudUnloadKey());
         split = InvDbtDoubleAdvisor.detectSplit(row, shares, canons, row.ciudUnloadKey(), eps);
+        Optional<Integer> existingShareSlot = Optional.empty();
+        if (split.isEmpty()) {
+            existingShareSlot = InvDbtDoubleAdvisor.findExistingShareLink(
+                    row, queueShares, canons, eps);
+        }
         return InvDbtDoubleAdvisor.advise(
                 row,
                 excel,
@@ -6926,7 +8189,9 @@ public class JdbcSudzDao implements SudzDao {
                 timelines,
                 excelStatusDate,
                 epsilon,
-                split);
+                split,
+                existingShareSlot,
+                queueShares);
     }
 
     @Override
@@ -6996,12 +8261,27 @@ public class JdbcSudzDao implements SudzDao {
      * @return доли
      */
     private List<InvDbtDoubleAdvisor.OpenShare> loadOpenSharesForInv(int iKey, int uplKey) {
+        return loadQueueSharesForInv(iKey, uplKey).stream()
+                .filter(s -> s.linkedSlotKey() == null || s.linkedSlotKey() <= 0)
+                .toList();
+    }
+
+    /**
+     * Доли очереди той же СФ/upl: open и уже Linked ({@code created} с {@code ciudCreatedIdKey}).
+     *
+     * @param iKey СФ
+     * @param uplKey срез
+     * @return доли
+     */
+    private List<InvDbtDoubleAdvisor.OpenShare> loadQueueSharesForInv(int iKey, int uplKey) {
         String queue = q("CnInvUplInvDbtDouble");
         String tbl = q("CnInvDbtUplTbl");
-        String sql = "SELECT q.ciudKey, q.ciudDebt, q.ciudIdvvKey, t.cidutDebtOverdue "
+        String sql = "SELECT q.ciudKey, q.ciudDebt, q.ciudIdvvKey, q.ciudCreatedIdKey, "
+                + "t.cidutDebtOverdue "
                 + "FROM " + queue + " AS q "
                 + "LEFT JOIN " + tbl + " AS t ON t.cidutKey = q.ciudCidut "
-                + "WHERE q.ciudIKey = ? AND q.ciudUnloadKey = ? AND q.ciudStatus = N'open' "
+                + "WHERE q.ciudIKey = ? AND q.ciudUnloadKey = ? "
+                + "  AND q.ciudStatus IN (N'open', N'created') "
                 + "  AND q.ciudDebt IS NOT NULL AND q.ciudDebt > 0 "
                 + "ORDER BY q.ciudKey";
         try (Connection connection = connectionFactory.createConnection();
@@ -7013,18 +8293,21 @@ public class JdbcSudzDao implements SudzDao {
                 while (rs.next()) {
                     int varKey = rs.getInt("ciudIdvvKey");
                     boolean varNull = rs.wasNull();
+                    int linked = rs.getInt("ciudCreatedIdKey");
+                    boolean linkedNull = rs.wasNull();
                     result.add(new InvDbtDoubleAdvisor.OpenShare(
                             rs.getInt("ciudKey"),
                             rs.getBigDecimal("ciudDebt"),
                             rs.getBigDecimal("cidutDebtOverdue"),
-                            varNull || varKey <= 0 ? null : varKey));
+                            varNull || varKey <= 0 ? null : varKey,
+                            linkedNull || linked <= 0 ? null : linked));
                 }
             }
             return List.copyOf(result);
         } catch (MissingConfigurationException exception) {
             throw exception;
         } catch (SQLException exception) {
-            throw wrap("Не удалось прочитать open-доли iKey=" + iKey, exception);
+            throw wrap("Не удалось прочитать доли очереди iKey=" + iKey, exception);
         }
     }
 
@@ -7635,6 +8918,56 @@ public class JdbcSudzDao implements SudzDao {
         statement.setInt(17, row.cidutUnloadKey());
     }
 
+    private static void bindPmtTblRow(PreparedStatement statement, SudzPmtUplTblRow row)
+            throws SQLException {
+        statement.setNString(1, row.ciputBE());
+        setNullableInt(statement, 2, row.ciputAccount());
+        setNullableInt(statement, 3, row.ciputCntrPrtNum());
+        statement.setNString(4, row.ciputCntrPrtName());
+        statement.setNString(5, row.ciputCAC());
+        setNullableInt(statement, 6, row.ciputAgentNum());
+        statement.setNString(7, row.ciputAgentName());
+        statement.setNString(8, row.ciputCnName());
+        statement.setNString(9, row.ciputLink());
+        statement.setNString(10, row.ciputCnInv());
+        setTimestamp(statement, 11, row.ciputEntryDate());
+        setTimestamp(statement, 12, row.ciputDocDate());
+        setTimestamp(statement, 13, row.ciputDueDate());
+        setNullableDecimal(statement, 14, row.ciputDbtBlns());
+        setNullableDecimal(statement, 15, row.ciputDbtBlnsOverd());
+        setNullableDecimal(statement, 16, row.ciputDbtBlnsOverdNot());
+        setNullableDecimal(statement, 17, row.ciputCdtBlns());
+        setNullableDecimal(statement, 18, row.ciputCdtBlnsOverd());
+        setNullableDecimal(statement, 19, row.ciputCdtBlnsOverdNot());
+        setNullableDecimal(statement, 20, row.ciputBlns());
+        statement.setNString(21, row.ciputCnInvDocCode());
+        setTimestamp(statement, 22, row.ciputAlligmentDate());
+        setTimestamp(statement, 23, row.ciputBaseDate());
+        setNullableDecimal(statement, 24, row.ciputCnInvDocSum());
+        statement.setNString(25, row.ciputStornoReason());
+        statement.setNString(26, row.ciputStornoDocCode());
+        setNullableInt(statement, 27, row.ciputSheetNum());
+        statement.setInt(28, row.ciputUnloadKey());
+    }
+
+    private static void setNullableInt(PreparedStatement statement, int index, Integer value)
+            throws SQLException {
+        if (value == null) {
+            statement.setNull(index, Types.INTEGER);
+        } else {
+            statement.setInt(index, value);
+        }
+    }
+
+    private static void setNullableDecimal(PreparedStatement statement, int index, BigDecimal value)
+            throws SQLException {
+        if (value == null) {
+            statement.setNull(index, Types.DECIMAL);
+        } else {
+            statement.setBigDecimal(index, value);
+        }
+    }
+
     private static void setTimestamp(PreparedStatement statement, int index, LocalDateTime value)
             throws SQLException {
         if (value == null) {
@@ -7676,6 +9009,110 @@ public class JdbcSudzDao implements SudzDao {
                 return Optional.of(mapDbtUplFile(rs));
             }
         }
+    }
+
+    private Optional<SudzPmUplLookup> findPmUplLookupOn(Connection connection, int pmKey)
+            throws SQLException {
+        String sql = "SELECT cn_inv_pm_key, cn_inv_pm_name, cn_inv_pm_date FROM " + q("cn_inv_pm_upl")
+                + " WHERE cn_inv_pm_key = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, pmKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    return Optional.empty();
+                }
+                return Optional.of(new SudzPmUplLookup(
+                        rs.getInt("cn_inv_pm_key"),
+                        rs.getString("cn_inv_pm_name"),
+                        getLocalDate(rs, "cn_inv_pm_date")
+                ));
+            }
+        }
+    }
+
+    private Optional<SudzPmtUplFile> findPmtUplFileByUpload(Connection connection, int pmKey)
+            throws SQLException {
+        String sql = "SELECT cipufKey, cipufUpload, cipufPath, cipufFlLoad, cipufFlTbl,"
+                + " cipufLoadingProgress, cipufSheet"
+                + " FROM " + q("CnInvPmtUplFile") + " WHERE cipufUpload = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, pmKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    return Optional.empty();
+                }
+                return Optional.of(mapPmtUplFile(rs));
+            }
+        }
+    }
+
+    /**
+     * Гарантирует строку {@code CnInvPmtUplFile} (B2) и возвращает её.
+     */
+    private SudzPmtUplFile ensurePmtUplFile(Connection connection, int pmKey) throws SQLException {
+        ensurePmExists(connection, pmKey);
+        Optional<SudzPmtUplFile> existing = findPmtUplFileByUpload(connection, pmKey);
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+        String sql = "INSERT INTO " + q("CnInvPmtUplFile")
+                + " (cipufUpload, cipufPath, cipufFlLoad, cipufLoadingProgress, cipufFlTbl, cipufSheet)"
+                + " VALUES (?, N'', 0, NULL, 0, NULL)";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, pmKey);
+            statement.executeUpdate();
+        }
+        return findPmtUplFileByUpload(connection, pmKey)
+                .orElseThrow(() -> new IllegalStateException(
+                        "CnInvPmtUplFile не найден после insert: pmKey=" + pmKey));
+    }
+
+    private static SudzPmtUplFile mapPmtUplFile(ResultSet rs) throws SQLException {
+        String path = rs.getString("cipufPath");
+        return new SudzPmtUplFile(
+                rs.getInt("cipufKey"),
+                rs.getInt("cipufUpload"),
+                path != null ? path : "",
+                rs.getBoolean("cipufFlLoad"),
+                rs.getBoolean("cipufFlTbl"),
+                rs.getString("cipufLoadingProgress"),
+                rs.getString("cipufSheet")
+        );
+    }
+
+    /**
+     * Нормализует имя листа: trim; пустая строка → null.
+     */
+    private static String normalizeSheet(String sheet) {
+        String trimmed = sheet.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    /**
+     * Путь как в Проводнике: trim, кавычки, ложный {@code /} перед {@code D:\…}.
+     */
+    private static String normalizeExplorerPath(String raw) {
+        if (raw == null) {
+            return "";
+        }
+        String trimmed = raw.trim();
+        if (trimmed.length() >= 2) {
+            char first = trimmed.charAt(0);
+            char last = trimmed.charAt(trimmed.length() - 1);
+            if ((first == '"' && last == '"') || (first == '\'' && last == '\'')) {
+                trimmed = trimmed.substring(1, trimmed.length() - 1).trim();
+            }
+        }
+        if (trimmed.length() >= 3
+                && trimmed.charAt(0) == '/'
+                && Character.isLetter(trimmed.charAt(1))
+                && trimmed.charAt(2) == ':'
+                && (trimmed.length() == 3
+                        || trimmed.charAt(3) == '\\'
+                        || trimmed.charAt(3) == '/')) {
+            trimmed = trimmed.substring(1);
+        }
+        return trimmed;
     }
 
     private List<SudzDbtUplFileSh> loadDbtUplFileSheets(Connection connection, int fileKey)
@@ -9711,7 +11148,8 @@ public class JdbcSudzDao implements SudzDao {
 
     private static final class Builder {
         private final int dbtKey;
-        private final String accountNum;
+        /** Счёт с последнего прочитанного среза (см. обновление в {@code findYrDbtChanges}). */
+        private String accountNum;
         private final String curator;
         private final String mery;
         private final String cstCode;

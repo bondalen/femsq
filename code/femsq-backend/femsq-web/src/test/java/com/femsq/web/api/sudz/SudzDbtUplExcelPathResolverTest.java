@@ -24,6 +24,18 @@ class SudzDbtUplExcelPathResolverTest {
     }
 
     @Test
+    void stripsLeadingSlashBeforeWindowsDrive() {
+        assertEquals(
+                "D:\\femsq\\excel\\a.xlsx",
+                SudzDbtUplExcelPathResolver.normalizeStored("/D:\\femsq\\excel\\a.xlsx")
+        );
+        assertEquals(
+                "D:/femsq/a.xlsx",
+                SudzDbtUplExcelPathResolver.normalizeStored("/D:/femsq/a.xlsx")
+        );
+    }
+
+    @Test
     void windowsDriveBecomesWslMount() {
         String stored = "D:\\wire-guard-share-nb-win\\femsq\\excel\\a.xlsx";
         assertEquals(

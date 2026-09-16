@@ -14,10 +14,14 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Эвристики советника КСДД (сегм. 22c): текст {@code [советник]} для оператора.
@@ -42,14 +46,32 @@ final class InvDbtDoubleAdvisor {
     }
 
     /**
-     * Открытая строка очереди / доля свода.
+     * Строка очереди / доля свода (open или уже Linked).
      *
      * @param ciudKey ключ очереди
      * @param ttl сумма Excel
      * @param overd просрочка Excel
      * @param varKey var строки
+     * @param linkedSlotKey {@code ciudCreatedIdKey} после Link/Create; иначе null
      */
-    record OpenShare(int ciudKey, BigDecimal ttl, BigDecimal overd, Integer varKey) {
+    record OpenShare(
+            int ciudKey,
+            BigDecimal ttl,
+            BigDecimal overd,
+            Integer varKey,
+            Integer linkedSlotKey
+    ) {
+        /**
+         * Open-доля без привязанного слота.
+         *
+         * @param ciudKey ключ
+         * @param ttl сумма
+         * @param overd просрочка
+         * @param varKey var
+         */
+        OpenShare(int ciudKey, BigDecimal ttl, BigDecimal overd, Integer varKey) {
+            this(ciudKey, ttl, overd, varKey, null);
+        }
     }
 
     static SudzInvDbtDoubleAdvice advise(
@@ -75,7 +97,9 @@ final class InvDbtDoubleAdvisor {
                 slotTimelines,
                 excelStatusDate,
                 epsilon,
-                Optional.empty());
+                Optional.empty(),
+                Optional.empty(),
+                List.of());
     }
 
     /**
@@ -107,6 +131,102 @@ final class InvDbtDoubleAdvisor {
             BigDecimal epsilon,
             Optional<SudzInvDbtSplitCandidate> split
     ) {
+        return advise(
+                row,
+                excel,
+                slots,
+                slotAccnts,
+                slotVars,
+                f1UniqueSlot,
+                newSumMatches,
+                slotTimelines,
+                excelStatusDate,
+                epsilon,
+                split,
+                Optional.empty(),
+                List.of());
+    }
+
+    /**
+     * Сформировать совет по строке очереди.
+     *
+     * @param row строка очереди
+     * @param excel Excel-кандидат
+     * @param slots слоты на iKey
+     * @param slotAccnts accnt по idKey (primary var)
+     * @param slotVars var по idKey
+     * @param f1UniqueSlot единственный слот F1 или empty
+     * @param newSumMatches совпадения DbtValue по сумме
+     * @param slotTimelines ряды по слотам (для амортизации)
+     * @param excelStatusDate дата среза upl
+     * @param epsilon допуск суммы
+     * @param split готовый кандидат Split (S77.4)
+     * @param existingShareSlot слот-доля при уже выполненном Split
+     * @return совет
+     */
+    static SudzInvDbtDoubleAdvice advise(
+            SudzCnInvUplInvDbtDouble row,
+            SudzSfDoubleExcelCandidate excel,
+            List<SudzInvDbtSlot> slots,
+            java.util.Map<Integer, Integer> slotAccnts,
+            java.util.Map<Integer, Integer> slotVars,
+            Optional<Integer> f1UniqueSlot,
+            List<SudzSfDoubleNewSumMatch> newSumMatches,
+            java.util.Map<Integer, List<SudzInvDbtTimelinePoint>> slotTimelines,
+            LocalDate excelStatusDate,
+            BigDecimal epsilon,
+            Optional<SudzInvDbtSplitCandidate> split,
+            Optional<Integer> existingShareSlot
+    ) {
+        return advise(
+                row,
+                excel,
+                slots,
+                slotAccnts,
+                slotVars,
+                f1UniqueSlot,
+                newSumMatches,
+                slotTimelines,
+                excelStatusDate,
+                epsilon,
+                split,
+                existingShareSlot,
+                List.of());
+    }
+
+    /**
+     * Сформировать совет по строке очереди.
+     *
+     * @param row строка очереди
+     * @param excel Excel-кандидат
+     * @param slots слоты на iKey
+     * @param slotAccnts accnt по idKey (primary var)
+     * @param slotVars var по idKey
+     * @param f1UniqueSlot единственный слот F1 или empty
+     * @param newSumMatches совпадения DbtValue по сумме
+     * @param slotTimelines ряды по слотам (для амортизации)
+     * @param excelStatusDate дата среза upl
+     * @param epsilon допуск суммы
+     * @param split готовый кандидат Split (S77.4)
+     * @param existingShareSlot слот-доля при уже выполненном Split
+     * @param openShares open-строки той же СФ/upl (для подсказки «впервые N»)
+     * @return совет
+     */
+    static SudzInvDbtDoubleAdvice advise(
+            SudzCnInvUplInvDbtDouble row,
+            SudzSfDoubleExcelCandidate excel,
+            List<SudzInvDbtSlot> slots,
+            java.util.Map<Integer, Integer> slotAccnts,
+            java.util.Map<Integer, Integer> slotVars,
+            Optional<Integer> f1UniqueSlot,
+            List<SudzSfDoubleNewSumMatch> newSumMatches,
+            java.util.Map<Integer, List<SudzInvDbtTimelinePoint>> slotTimelines,
+            LocalDate excelStatusDate,
+            BigDecimal epsilon,
+            Optional<SudzInvDbtSplitCandidate> split,
+            Optional<Integer> existingShareSlot,
+            List<OpenShare> openShares
+    ) {
         Objects.requireNonNull(row, "row");
         BigDecimal eps = epsilon == null ? DEFAULT_EPS : epsilon;
         StringBuilder msg = new StringBuilder("[советник]");
@@ -114,6 +234,20 @@ final class InvDbtDoubleAdvisor {
         String action = "manual";
         Integer recommendSlot = null;
         Integer recommendVar = row.ciudIdvvKey();
+        int openShareCount = openShares == null
+                ? 0
+                : (int) openShares.stream()
+                .filter(s -> s.linkedSlotKey() == null || s.linkedSlotKey() <= 0)
+                .count();
+
+        if (row.ciudCreatedIdKey() != null && row.ciudCreatedIdKey() > 0
+                && "created".equalsIgnoreCase(row.ciudStatus())) {
+            int linked = row.ciudCreatedIdKey();
+            appendLine(msg, "Строка уже связана со слотом " + linked
+                    + " — повторный Link не нужен");
+            return new SudzInvDbtDoubleAdvice(
+                    msg.toString(), "high", "linked", linked, row.ciudIdvvKey());
+        }
 
         if (split != null && split.isPresent()) {
             SudzInvDbtSplitCandidate cand = split.get();
@@ -134,10 +268,33 @@ final class InvDbtDoubleAdvisor {
                     cand.parts());
         }
 
+        if (existingShareSlot != null && existingShareSlot.isPresent()) {
+            int slot = existingShareSlot.get();
+            appendLine(msg, "Доли канона уже созданы — Split не нужен");
+            appendLine(msg, "Сумма Excel совпадает с долей-слотом " + slot);
+            appendRecommendLink(msg, slot, "high");
+            return new SudzInvDbtDoubleAdvice(
+                    msg.toString(), "high", "link", slot, row.ciudIdvvKey());
+        }
+
         if (row.ciudIdvvKey() == null || row.ciudIdvvKey() <= 0) {
             appendLine(msg, "Нет варианта контекста (invDbtVar) — сначала «Выбрать контекст»");
             return new SudzInvDbtDoubleAdvice(
                     msg.toString(), "high", "create_var", null, null);
+        }
+
+        if (slots == null || slots.isEmpty()) {
+            appendLine(msg, "На СФ нет слотов invDbt");
+            if (openShareCount >= 2) {
+                appendLine(msg, "В очереди " + openShareCount
+                        + " open-задолженности на эту СФ — Create по одной на каждую строку"
+                        + " (не Split: нет канона-целого)");
+            }
+            appendLine(msg, "→ Создать слот под сумму Excel "
+                    + formatMoney(row.ciudDebt())
+                    + " (уверенность: высокая)");
+            return new SudzInvDbtDoubleAdvice(
+                    msg.toString(), "high", "create_slot", null, row.ciudIdvvKey());
         }
 
         Integer excelAccnt = excel != null ? excel.cidutAccount() : null;
@@ -179,14 +336,33 @@ final class InvDbtDoubleAdvisor {
                     + " не найден в истории DbtValue (±" + eps + ")");
         }
 
-        Integer bridgedSlot = slots.stream()
+        List<Integer> bridgedSlots = slots.stream()
                 .filter(s -> row.ciudIdvvKey().equals(slotVars.get(s.idKey())))
                 .map(SudzInvDbtSlot::idKey)
-                .findFirst()
-                .orElse(null);
-        if (bridgedSlot != null) {
+                .toList();
+        Integer bridgedSlot = bridgedSlots.size() == 1 ? bridgedSlots.get(0) : null;
+        boolean bridgeSumMatches = bridgedSlot != null
+                && slotLatestTtlMatches(bridgedSlot, row.ciudDebt(), slotTimelines, eps);
+        boolean slotClaimedByOtherShare = bridgedSlot != null && openShares != null
+                && openShares.stream().anyMatch(s ->
+                s.linkedSlotKey() != null
+                        && s.linkedSlotKey() == bridgedSlot
+                        && s.ciudKey() != row.ciudKey());
+        if (bridgedSlots.size() == 1) {
             appendLine(msg, "Мост готов: var " + row.ciudIdvvKey()
                     + " уже привязан к слоту " + bridgedSlot);
+            if (slotClaimedByOtherShare) {
+                appendLine(msg, "Слот " + bridgedSlot
+                        + " уже занят другой строкой очереди — нужен свой Create");
+            } else if (!bridgeSumMatches && row.ciudDebt() != null) {
+                appendLine(msg, "Сумма Excel " + formatMoney(row.ciudDebt())
+                        + " ≠ Value слота " + bridgedSlot
+                        + " — Link по мосту не предлагаем (нужен свой слот)");
+            }
+        } else if (bridgedSlots.size() > 1) {
+            appendLine(msg, "Мост var " + row.ciudIdvvKey()
+                    + " неоднозначен (несколько слотов: " + bridgedSlots
+                    + ") — не используем для Link");
         }
 
         AmortizationResult bestAmort = null;
@@ -209,21 +385,34 @@ final class InvDbtDoubleAdvisor {
                     + formatMoney(bestAmort.step()) + " × " + bestAmort.steps()
                     + " (R²=" + String.format(Locale.US, "%.4f", bestAmort.r2()) + ")");
             appendLine(msg, "Прогноз по разрыву: " + bestAmort.projectionLine());
+        }
+        if (bestAmort != null && bestAmort.projectionHit()) {
             recommendSlot = bestAmort.slotId();
             confidence = bestAmort.confidence();
             action = "link";
             appendRecommendLink(msg, recommendSlot, confidence);
-            appendLine(msg, "Причина: равномерная амортизация + "
-                    + (bestAmort.projectionHit() ? "попадание Excel в тренд" : "сверить первичку"));
-        } else if (bridgedSlot != null && excelAccnt != null
-                && excelAccnt.equals(slotAccnts.get(bridgedSlot))) {
-            recommendSlot = bridgedSlot;
-            confidence = "medium";
-            action = "link";
-            appendRecommendLink(msg, bridgedSlot, confidence);
-            appendLine(msg, "Причина: счёт Excel совпадает, мост var↔slot уже есть");
+            appendLine(msg, "Причина: равномерная амортизация + попадание Excel в тренд");
         } else {
-            appendLine(msg, "Рекомендация: выберите слот вручную (по ciaName / контексту)");
+            if (bestAmort != null) {
+                appendLine(msg, "Прогноз не попал в Excel — amort не используем для Link"
+                        + " (слот " + bestAmort.slotId() + ")");
+            }
+            if (bridgedSlot != null && bridgeSumMatches && !slotClaimedByOtherShare
+                    && excelAccnt != null
+                    && excelAccnt.equals(slotAccnts.get(bridgedSlot))) {
+                recommendSlot = bridgedSlot;
+                confidence = "medium";
+                action = "link";
+                appendRecommendLink(msg, bridgedSlot, confidence);
+                appendLine(msg, "Причина: счёт Excel совпадает, мост var↔slot уже есть,"
+                        + " сумма слота совпадает с Excel");
+            } else {
+                appendLine(msg, "Ни один слот не подходит под сумму Excel "
+                        + formatMoney(row.ciudDebt()));
+                appendLine(msg, "→ Создать новый слот (уверенность: высокая) — не Link на чужой");
+                return new SudzInvDbtDoubleAdvice(
+                        msg.toString(), "high", "create_slot", null, row.ciudIdvvKey());
+            }
         }
 
         appendLine(msg, "Примечание: советник не заменяет первичку; при средней или низкой "
@@ -234,6 +423,8 @@ final class InvDbtDoubleAdvisor {
 
     /**
      * N строк свода на СФ, сумма = Value слота, каждая строка ≠ целому → Split.
+     * Если у того же {@code dbt} уже есть слоты-доли с Value под open-строки — empty
+     * (повторный Split не предлагать; см. {@link #findExistingShareLink}).
      *
      * @param row текущая строка очереди
      * @param shares открытые доли той же СФ/upl (включая текущую)
@@ -278,6 +469,9 @@ final class InvDbtDoubleAdvisor {
             if (shareEqualsWhole) {
                 continue;
             }
+            if (sharesAlreadyCoveredBySiblingSlots(canon, shares, canons, eps)) {
+                continue;
+            }
             matches.add(canon);
         }
         if (matches.size() != 1) {
@@ -305,6 +499,162 @@ final class InvDbtDoubleAdvisor {
                 List.copyOf(parts)));
     }
 
+    /**
+     * Слот-доля для Link, когда Split уже выполнен.
+     * Учитывает уже Linked строки ({@code linkedSlotKey}): свободным open
+     * назначаются оставшиеся доли (не повтор того же слота).
+     *
+     * @param row текущая строка очереди
+     * @param shares доли той же СФ/upl (open + created)
+     * @param canons слоты с последней Value
+     * @param epsilon допуск
+     * @return {@code invDbt.idKey} доли или empty
+     */
+    static Optional<Integer> findExistingShareLink(
+            SudzCnInvUplInvDbtDouble row,
+            List<OpenShare> shares,
+            List<SlotCanon> canons,
+            BigDecimal epsilon
+    ) {
+        Objects.requireNonNull(row, "row");
+        BigDecimal eps = epsilon == null ? DEFAULT_EPS : epsilon;
+        if (shares == null || shares.isEmpty() || canons == null || canons.isEmpty()) {
+            return Optional.empty();
+        }
+        OpenShare current = shares.stream()
+                .filter(s -> s.ciudKey() == row.ciudKey())
+                .findFirst()
+                .orElse(null);
+        if (current == null) {
+            return Optional.empty();
+        }
+        if (current.linkedSlotKey() != null && current.linkedSlotKey() > 0) {
+            return Optional.empty();
+        }
+        for (OpenShare share : shares) {
+            if (share.ttl() == null || share.ttl().compareTo(BigDecimal.ZERO) <= 0) {
+                return Optional.empty();
+            }
+        }
+        BigDecimal familySum = shares.stream()
+                .map(OpenShare::ttl)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        Set<Integer> usedSlots = shares.stream()
+                .map(OpenShare::linkedSlotKey)
+                .filter(k -> k != null && k > 0)
+                .collect(Collectors.toCollection(java.util.LinkedHashSet::new));
+        List<OpenShare> openShares = shares.stream()
+                .filter(s -> s.linkedSlotKey() == null || s.linkedSlotKey() <= 0)
+                .toList();
+        if (openShares.isEmpty()) {
+            return Optional.empty();
+        }
+        Map<Integer, List<SlotCanon>> byDbt = canons.stream()
+                .collect(Collectors.groupingBy(SlotCanon::dbtKey, LinkedHashMap::new, Collectors.toList()));
+        for (List<SlotCanon> group : byDbt.values()) {
+            List<SlotCanon> partSlots = group.stream()
+                    .filter(c -> c.ttl() != null
+                            && c.ttl().subtract(familySum).abs().compareTo(eps) > 0)
+                    .filter(c -> !usedSlots.contains(c.slotKey()))
+                    .toList();
+            Map<Integer, Integer> assignment = matchSharesToSlots(openShares, partSlots, eps);
+            if (assignment.size() == openShares.size() && assignment.containsKey(row.ciudKey())) {
+                return Optional.of(assignment.get(row.ciudKey()));
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * У канона-целого уже есть слоты-доли того же {@code dbt}, Value которых покрывают open-строки.
+     *
+     * @param wholeCanon слот с суммой = ∑ open
+     * @param shares open-строки
+     * @param canons все каноны СФ
+     * @param epsilon допуск
+     * @return true если Split уже сделан
+     */
+    private static boolean sharesAlreadyCoveredBySiblingSlots(
+            SlotCanon wholeCanon,
+            List<OpenShare> shares,
+            List<SlotCanon> canons,
+            BigDecimal epsilon
+    ) {
+        List<SlotCanon> siblings = canons.stream()
+                .filter(c -> c.dbtKey() == wholeCanon.dbtKey()
+                        && c.slotKey() != wholeCanon.slotKey())
+                .toList();
+        return matchSharesToSlots(shares, siblings, epsilon).size() == shares.size();
+    }
+
+    /**
+     * Жадное сопоставление open-строк со слотами по сумме (±ε), порядок: ciudKey → idKey.
+     *
+     * @param shares доли свода
+     * @param slots кандидаты слотов
+     * @param epsilon допуск
+     * @return ciudKey → slotKey; неполный при невозможности покрыть все доли
+     */
+    private static Map<Integer, Integer> matchSharesToSlots(
+            List<OpenShare> shares,
+            List<SlotCanon> slots,
+            BigDecimal epsilon
+    ) {
+        Map<Integer, Integer> assignment = new LinkedHashMap<>();
+        if (shares == null || slots == null || slots.isEmpty()) {
+            return assignment;
+        }
+        List<OpenShare> orderedShares = shares.stream()
+                .sorted(Comparator.comparingInt(OpenShare::ciudKey))
+                .toList();
+        List<SlotCanon> available = new ArrayList<>(slots);
+        for (OpenShare share : orderedShares) {
+            Optional<SlotCanon> match = available.stream()
+                    .filter(s -> s.ttl() != null
+                            && share.ttl().subtract(s.ttl()).abs().compareTo(epsilon) <= 0)
+                    .min(Comparator.comparingInt(SlotCanon::slotKey));
+            if (match.isEmpty()) {
+                return Map.of();
+            }
+            assignment.put(share.ciudKey(), match.get().slotKey());
+            available.remove(match.get());
+        }
+        return assignment;
+    }
+
+    /**
+     * Последняя Value слота (±ε) совпадает с суммой Excel.
+     * Пустой ряд — считаем совместимым (слот ещё без истории).
+     *
+     * @param slotKey слот
+     * @param debt сумма Excel
+     * @param slotTimelines ряды
+     * @param epsilon допуск
+     * @return true если можно Link по сумме
+     */
+    private static boolean slotLatestTtlMatches(
+            int slotKey,
+            BigDecimal debt,
+            java.util.Map<Integer, List<SudzInvDbtTimelinePoint>> slotTimelines,
+            BigDecimal epsilon
+    ) {
+        if (debt == null) {
+            return false;
+        }
+        List<SudzInvDbtTimelinePoint> pts = slotTimelines == null
+                ? List.of()
+                : slotTimelines.getOrDefault(slotKey, List.of());
+        SudzInvDbtTimelinePoint last = pts.stream()
+                .filter(p -> p != null && p.statusDate() != null && p.ttl() != null)
+                .max(Comparator.comparing(SudzInvDbtTimelinePoint::statusDate)
+                        .thenComparing(p -> p.uplKey() == null ? Integer.MIN_VALUE : p.uplKey()))
+                .orElse(null);
+        if (last == null) {
+            return false;
+        }
+        return last.ttl().subtract(debt).abs().compareTo(epsilon) <= 0;
+    }
+
     private record AmortizationResult(
             int slotId,
             String label,
@@ -315,8 +665,14 @@ final class InvDbtDoubleAdvisor {
             String projectionLine,
             String confidence
     ) {
+        /**
+         * Попадание Excel в прогноз важнее «красивого» R² без попадания.
+         */
         double score() {
-            return r2 * (projectionHit ? 2.0 : 1.0);
+            if (projectionHit) {
+                return 100.0 + r2;
+            }
+            return r2;
         }
     }
 
@@ -351,6 +707,10 @@ final class InvDbtDoubleAdvisor {
         return best;
     }
 
+    /**
+     * Равномерная амортизация хвоста: шаг нормируется на число кварталов между точками
+     * (разрыв в 2 квартала → два шага {@code Δ/2}), иначе дыры в ряде ломают R².
+     */
     private static AmortizationResult tryUniformTail(
             int slotId,
             String slotNote,
@@ -359,16 +719,26 @@ final class InvDbtDoubleAdvisor {
             LocalDate excelStatusDate,
             BigDecimal epsilon
     ) {
-        List<BigDecimal> deltas = new ArrayList<>();
+        List<BigDecimal> perQuarterDeltas = new ArrayList<>();
         for (int i = 1; i < tail.size(); i++) {
-            deltas.add(tail.get(i).ttl().subtract(tail.get(i - 1).ttl()));
+            SudzInvDbtTimelinePoint prev = tail.get(i - 1);
+            SudzInvDbtTimelinePoint next = tail.get(i);
+            BigDecimal raw = next.ttl().subtract(prev.ttl());
+            long days = ChronoUnit.DAYS.between(prev.statusDate(), next.statusDate());
+            int quarters = Math.max(1, (int) Math.round(days / 91.25));
+            BigDecimal perQ = raw.divide(BigDecimal.valueOf(quarters), 4, RoundingMode.HALF_UP);
+            for (int q = 0; q < quarters; q++) {
+                perQuarterDeltas.add(perQ);
+            }
         }
-        boolean allNonPositive = deltas.stream().allMatch(d -> d.signum() <= 0);
-        boolean anyNegative = deltas.stream().anyMatch(d -> d.signum() < 0);
+        boolean allNonPositive = perQuarterDeltas.stream().allMatch(d -> d.signum() <= 0);
+        boolean anyNegative = perQuarterDeltas.stream().anyMatch(d -> d.signum() < 0);
         if (!allNonPositive || !anyNegative) {
             return null;
         }
-        List<BigDecimal> negativeDeltas = deltas.stream().filter(d -> d.signum() < 0).toList();
+        List<BigDecimal> negativeDeltas = perQuarterDeltas.stream()
+                .filter(d -> d.signum() < 0)
+                .toList();
         if (negativeDeltas.size() < MIN_AMORT_STEPS) {
             return null;
         }
@@ -394,12 +764,7 @@ final class InvDbtDoubleAdvisor {
         if (excelStatusDate != null && last.statusDate() != null) {
             long days = ChronoUnit.DAYS.between(last.statusDate(), excelStatusDate);
             if (days > 0) {
-                BigDecimal quarters = BigDecimal.valueOf(days)
-                        .divide(BigDecimal.valueOf(91.25), 4, RoundingMode.HALF_UP);
-                int qSteps = quarters.setScale(0, RoundingMode.HALF_UP).intValue();
-                if (qSteps < 1) {
-                    qSteps = 1;
-                }
+                int qSteps = Math.max(1, (int) Math.round(days / 91.25));
                 BigDecimal projected = last.ttl().add(meanDelta.multiply(BigDecimal.valueOf(qSteps)));
                 projectionHit = projected.subtract(excelDebt).abs().compareTo(epsilon) <= 0;
                 projectionLine = last.statusDate() + " " + formatMoney(last.ttl())

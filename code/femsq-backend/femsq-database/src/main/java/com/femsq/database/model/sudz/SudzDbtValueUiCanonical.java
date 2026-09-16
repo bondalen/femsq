@@ -11,29 +11,32 @@ import java.util.Objects;
 /**
  * Канонизация точек {@code DbtValue} для UI КСДД (дерево / динамика / советник).
  * <p>
- * Убирает PIT-копии Rslt ({@code upl} 801–899) и seed-песочницу ({@code upl} 900–909),
- * оставляет одну точку на дату среза (предпочтение большему {@code uplKey}: funnel 910
- * важнее seed 901).
+ * Убирает synthetic PIT-копии Rslt ({@code upl} 801–899). Рабочие срезы портфеля
+ * ({@code 901+} и т.п.) оставляем. На одну дату среза — одна точка (больший {@code uplKey}).
  */
 public final class SudzDbtValueUiCanonical {
 
     /** Нижняя граница synthetic PIT {@code upl} (включительно). */
     public static final int PIT_UPL_MIN = 801;
 
-    /** Верхняя граница seed-блока {@code upl} (включительно): PIT 801–899 + seed 900–909. */
-    public static final int SEED_UPL_MAX = 909;
+    /** Верхняя граница synthetic PIT {@code upl} (включительно). */
+    public static final int PIT_UPL_MAX = 899;
+
+    /** @deprecated используйте {@link #PIT_UPL_MAX}; оставлено для совместимости. */
+    @Deprecated
+    public static final int SEED_UPL_MAX = PIT_UPL_MAX;
 
     private SudzDbtValueUiCanonical() {
     }
 
     /**
-     * Synthetic PIT / seed — не для операторского UI КСДД.
+     * Synthetic PIT — не для операторского UI КСДД.
      *
      * @param uplKey ключ или null
      * @return true, если скрывать
      */
     public static boolean isPitUpl(Integer uplKey) {
-        return uplKey != null && uplKey >= PIT_UPL_MIN && uplKey <= SEED_UPL_MAX;
+        return uplKey != null && uplKey >= PIT_UPL_MIN && uplKey <= PIT_UPL_MAX;
     }
 
     /**

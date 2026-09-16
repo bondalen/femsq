@@ -75,8 +75,9 @@
                     @click="onSplit"
                   />
                   <QBtn
-                    color="primary"
-                    unelevated
+                    :color="createSlotAdvised ? 'positive' : 'primary'"
+                    :outline="!createSlotAdvised"
+                    :unelevated="createSlotAdvised"
                     dense
                     no-caps
                     label="Create слот"
@@ -86,8 +87,9 @@
                     @click="onCreate"
                   />
                   <QBtn
-                    color="secondary"
-                    unelevated
+                    :color="linkAdvised ? 'positive' : 'secondary'"
+                    :outline="!linkAdvised"
+                    :unelevated="linkAdvised"
                     dense
                     no-caps
                     label="Link к слоту"
@@ -571,6 +573,12 @@ const canCreateVar = computed(
     !selected.value.ciudIdvvKey
 );
 const splitAdvised = computed(() => advisor.value?.action === 'split');
+const createSlotAdvised = computed(() => advisor.value?.action === 'create_slot');
+const linkAdvised = computed(
+  () =>
+    advisor.value?.action === 'link' &&
+    (advisor.value.confidence === 'high' || advisor.value.confidence === 'medium')
+);
 const canCreate = computed(
   () =>
     !splitAdvised.value &&
@@ -919,12 +927,22 @@ async function onCreate(): Promise<void> {
 }
 
 /**
- * Link к выбранному слоту + Value.
+ * Link к слоту: при action=link берём recommendIdKey советника,
+ * иначе — текущий выбранный слот.
  */
 async function onLink(): Promise<void> {
   const row = selected.value;
-  const slot = selectedSlots.value[0];
-  if (!row || !slot) return;
+  if (!row) return;
+  const adv = advisor.value;
+  let slot = selectedSlots.value[0] ?? null;
+  if (adv?.action === 'link' && adv.recommendIdKey != null) {
+    const recommended = slots.value.find((s) => s.idKey === adv.recommendIdKey);
+    if (recommended) {
+      slot = recommended;
+      selectedSlots.value = [recommended];
+    }
+  }
+  if (!slot) return;
   acting.value = true;
   try {
     await linkSudzInvDbtDouble(row.ciudKey, slot.idKey);
@@ -1075,6 +1093,8 @@ function actionRu(action: string | null | undefined): string {
       return 'разделить';
     case 'link':
       return 'связать';
+    case 'linked':
+      return 'уже связано';
     case 'create_var':
       return 'создать var';
     case 'create_slot':
@@ -1107,12 +1127,13 @@ function confidenceRu(confidence: string | null | undefined): string {
 }
 
 /**
- * Pre-select слота по recommendIdKey из советника.
+ * Pre-select слота: уже Linked ({@code ciudCreatedIdKey}) или recommendIdKey советника.
  *
  * @param adv ответ API
  */
 function applyAdvisorSlotPick(adv: SudzInvDbtDoubleAdvice | null): void {
-  const idKey = adv?.recommendIdKey;
+  const row = selected.value;
+  const idKey = row?.ciudCreatedIdKey ?? adv?.recommendIdKey;
   if (idKey == null) return;
   const slot = slots.value.find((s) => s.idKey === idKey);
   if (slot) {

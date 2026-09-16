@@ -35,6 +35,8 @@ import type {
   SudzDebtCollectionResult,
   SudzPmLink,
   SudzPmUplLookup,
+  SudzPmtUplFile,
+  SudzPmtUplLauncher,
   SudzRsltDebt,
   SudzRsltReturnImportResult,
   SudzSfDoubleDomainMatch,
@@ -50,9 +52,12 @@ import type {
   SudzYyyyLookup,
   UpdateSudzDbtUplFileInput,
   UpdateSudzDbtUplFileShInput,
+  UpdateSudzPmUplFileInput,
   SudzDbtUplFileSh,
   RunSudzDbtUplFunnelInput,
   SudzDbtUplFunnelResult,
+  RunSudzPmtUplFunnelInput,
+  SudzPmtUplFunnelResult,
   UpdateSudzYearInput
 } from '@/types/sudz';
 
@@ -138,6 +143,16 @@ const DBT_UPL_FILE_FIELDS = `
   cidufFlLoad
   cidufFlTbl
   cidufLoadingProgress
+`;
+
+const PMT_UPL_FILE_FIELDS = `
+  cipufKey
+  cipufUpload
+  cipufPath
+  cipufFlLoad
+  cipufFlTbl
+  cipufLoadingProgress
+  cipufSheet
 `;
 
 /** Поля File без HTML-лога (ответ mutation воронки — лог подгружается отдельно). */
@@ -255,6 +270,48 @@ const UPDATE_DBT_UPL_FILE = gql`
   mutation UpdateSudzDbtUplFile($input: UpdateSudzDbtUplFileInput!) {
     updateSudzDbtUplFile(input: $input) {
       ${DBT_UPL_FILE_FIELDS}
+    }
+  }
+`;
+
+const SUDZ_PMT_UPL_LAUNCHER = gql`
+  query SudzPmUplLauncher($pmKey: Int!) {
+    sudzPmUplLauncher(pmKey: $pmKey) {
+      upl {
+        pmKey
+        name
+        date
+      }
+      file {
+        ${PMT_UPL_FILE_FIELDS}
+      }
+    }
+  }
+`;
+
+const UPDATE_PMT_UPL_FILE = gql`
+  mutation UpdateSudzPmUplFile($input: UpdateSudzPmUplFileInput!) {
+    updateSudzPmUplFile(input: $input) {
+      ${PMT_UPL_FILE_FIELDS}
+    }
+  }
+`;
+
+const RUN_PMT_UPL_FUNNEL = gql`
+  mutation RunSudzPmtUplFunnel($input: RunSudzPmtUplFunnelInput!) {
+    runSudzPmtUplFunnel(input: $input) {
+      stub
+      ranSteps
+      launcher {
+        upl {
+          pmKey
+          name
+          date
+        }
+        file {
+          ${PMT_UPL_FILE_FIELDS}
+        }
+      }
     }
   }
 `;
@@ -1730,6 +1787,62 @@ export async function getSudzPmUplLookups(): Promise<SudzPmUplLookup[]> {
     return result.data.sudzPmUplLookups;
   } catch (error) {
     throw wrapApolloError(error, 'SudzPmUplLookups');
+  }
+}
+
+/**
+ * Лаунчер загрузки платежей для выбранного пакета.
+ */
+export async function getSudzPmUplLauncher(pmKey: number): Promise<SudzPmtUplLauncher> {
+  try {
+    const result = await apolloClient.query<{ sudzPmUplLauncher: SudzPmtUplLauncher }>({
+      query: SUDZ_PMT_UPL_LAUNCHER,
+      variables: { pmKey },
+      fetchPolicy: 'network-only'
+    });
+    const data = result.data?.sudzPmUplLauncher;
+    if (!data) throw new Error('Пустой ответ sudzPmUplLauncher');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzPmUplLauncher');
+  }
+}
+
+/**
+ * Upsert шапки CnInvPmtUplFile.
+ */
+export async function updateSudzPmUplFile(
+  input: UpdateSudzPmUplFileInput
+): Promise<SudzPmtUplFile> {
+  try {
+    const result = await apolloClient.mutate<{ updateSudzPmUplFile: SudzPmtUplFile }>({
+      mutation: UPDATE_PMT_UPL_FILE,
+      variables: { input }
+    });
+    const data = result.data?.updateSudzPmUplFile;
+    if (!data) throw new Error('Пустой ответ updateSudzPmUplFile');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'UpdateSudzPmUplFile');
+  }
+}
+
+/**
+ * Прогон воронки платежей (0074): Excel→Tbl + stub cipu*.
+ */
+export async function runSudzPmtUplFunnel(
+  input: RunSudzPmtUplFunnelInput
+): Promise<SudzPmtUplFunnelResult> {
+  try {
+    const result = await apolloClient.mutate<{ runSudzPmtUplFunnel: SudzPmtUplFunnelResult }>({
+      mutation: RUN_PMT_UPL_FUNNEL,
+      variables: { input }
+    });
+    const data = result.data?.runSudzPmtUplFunnel;
+    if (!data) throw new Error('Пустой ответ runSudzPmtUplFunnel');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'RunSudzPmtUplFunnel');
   }
 }
 

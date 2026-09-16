@@ -15,8 +15,9 @@ class SudzDbtValueUiCanonicalTest {
     void pitRangeRecognized() {
         assertTrue(SudzDbtValueUiCanonical.isPitUpl(801));
         assertTrue(SudzDbtValueUiCanonical.isPitUpl(899));
-        assertTrue(SudzDbtValueUiCanonical.isPitUpl(903));
-        assertTrue(SudzDbtValueUiCanonical.isPitUpl(909));
+        assertFalse(SudzDbtValueUiCanonical.isPitUpl(900));
+        assertFalse(SudzDbtValueUiCanonical.isPitUpl(903));
+        assertFalse(SudzDbtValueUiCanonical.isPitUpl(909));
         assertFalse(SudzDbtValueUiCanonical.isPitUpl(800));
         assertFalse(SudzDbtValueUiCanonical.isPitUpl(910));
         assertFalse(SudzDbtValueUiCanonical.isPitUpl(26));
@@ -35,10 +36,11 @@ class SudzDbtValueUiCanonicalTest {
                 point(903, "2026-06-30", 200.23)
         );
         List<SudzInvDbtTimelinePoint> out = SudzDbtValueUiCanonical.canonicalize(raw);
-        assertEquals(3, out.size());
+        assertEquals(4, out.size());
         assertEquals(26, out.get(0).uplKey());
         assertEquals(27, out.get(1).uplKey());
         assertEquals(910, out.get(2).uplKey());
+        assertEquals(903, out.get(3).uplKey());
     }
 
     @Test

@@ -25,6 +25,9 @@ import com.femsq.database.model.sudz.SudzDbtUplLauncher;
 import com.femsq.database.model.sudz.SudzDebtCollection;
 import com.femsq.database.model.sudz.SudzPmLink;
 import com.femsq.database.model.sudz.SudzPmUplLookup;
+import com.femsq.database.model.sudz.SudzPmtUplFile;
+import com.femsq.database.model.sudz.SudzPmtUplFunnelResult;
+import com.femsq.database.model.sudz.SudzPmtUplLauncher;
 import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
 import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
@@ -52,12 +55,15 @@ import com.femsq.web.api.dto.sudz.CreateSudzPmUplInput;
 import com.femsq.web.api.dto.sudz.CreateSudzUplInput;
 import com.femsq.web.api.dto.sudz.CreateSudzYearInput;
 import com.femsq.web.api.dto.sudz.RunSudzDbtUplFunnelInput;
+import com.femsq.web.api.dto.sudz.RunSudzPmtUplFunnelInput;
 import com.femsq.web.api.dto.sudz.SudzDebtCollectionInput;
 import com.femsq.web.api.dto.sudz.CreateSudzDbtUplFileShInput;
 import com.femsq.web.api.dto.sudz.UpdateSudzDbtUplFileInput;
 import com.femsq.web.api.dto.sudz.UpdateSudzDbtUplFileShInput;
+import com.femsq.web.api.dto.sudz.UpdateSudzPmUplFileInput;
 import com.femsq.web.api.dto.sudz.UpdateSudzYearInput;
 import com.femsq.web.api.sudz.SudzDbtUplFunnelRunner;
+import com.femsq.web.api.sudz.SudzPmtUplFunnelRunner;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -81,17 +87,21 @@ public class SudzGraphqlController {
 
     private final SudzService sudzService;
     private final SudzDbtUplFunnelRunner dbtUplFunnelRunner;
+    private final SudzPmtUplFunnelRunner pmtUplFunnelRunner;
 
     /**
      * @param sudzService сервис СУДЗ
      * @param dbtUplFunnelRunner оркестратор воронки excelToTbl+…
+     * @param pmtUplFunnelRunner оркестратор воронки платежей (0074)
      */
     public SudzGraphqlController(
             SudzService sudzService,
-            SudzDbtUplFunnelRunner dbtUplFunnelRunner
+            SudzDbtUplFunnelRunner dbtUplFunnelRunner,
+            SudzPmtUplFunnelRunner pmtUplFunnelRunner
     ) {
         this.sudzService = sudzService;
         this.dbtUplFunnelRunner = dbtUplFunnelRunner;
+        this.pmtUplFunnelRunner = pmtUplFunnelRunner;
     }
 
     /**
@@ -536,6 +546,25 @@ public class SudzGraphqlController {
     public SudzDbtUplLauncher sudzDbtUplLauncher(@Argument int uplKey) {
         try {
             return sudzService.getDbtUplLauncher(uplKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Лаунчер загрузки платежей (пакет + File).
+     *
+     * @param pmKey ключ пакета
+     * @return карточка
+     */
+    @QueryMapping
+    public SudzPmtUplLauncher sudzPmUplLauncher(@Argument int pmKey) {
+        try {
+            return sudzService.getPmtUplLauncher(pmKey);
         } catch (IllegalArgumentException exception) {
             throw badRequest(exception);
         } catch (MissingConfigurationException exception) {
@@ -1106,6 +1135,45 @@ public class SudzGraphqlController {
     public SudzDbtUplFile updateSudzDbtUplFile(@Argument UpdateSudzDbtUplFileInput input) {
         try {
             return sudzService.updateDbtUplFile(input.uplKey(), input.path(), input.flLoad(), input.flTbl());
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Upsert шапки лаунчера платежей.
+     *
+     * @param input поля File
+     * @return актуальная шапка
+     */
+    @MutationMapping
+    public SudzPmtUplFile updateSudzPmUplFile(@Argument UpdateSudzPmUplFileInput input) {
+        try {
+            return sudzService.updatePmtUplFile(
+                    input.pmKey(), input.path(), input.sheet(), input.flLoad(), input.flTbl());
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Прогон воронки загрузки платежей (Excel→Tbl + stub cipu*).
+     *
+     * @param input pmKey, steps, flLoad
+     * @return результат с логом
+     */
+    @MutationMapping
+    public SudzPmtUplFunnelResult runSudzPmtUplFunnel(@Argument RunSudzPmtUplFunnelInput input) {
+        try {
+            return pmtUplFunnelRunner.run(input.pmKey(), input.steps(), input.flLoad());
         } catch (IllegalArgumentException exception) {
             throw badRequest(exception);
         } catch (MissingConfigurationException exception) {

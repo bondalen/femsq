@@ -336,12 +336,14 @@ public final class SudzRsltExcelExporter {
             Styles styles,
             boolean money
     ) {
+        // Зерно 1 при nRows>1: merge для вида Access, но значение пишем во все ячейки
+        // полосы — иначе xlsx/парсеры без expand merge теряют acc/dbtKey на 2-й доле Split (S77.7a).
         boolean merge = nRows > 1 && values.size() <= 1;
         for (int r = 0; r < nRows; r++) {
             Row row = sheet.getRow(firstRow + r);
             Object value = null;
             if (merge) {
-                if (r == 0 && !values.isEmpty()) {
+                if (!values.isEmpty()) {
                     value = values.get(0);
                 }
             } else if (r < values.size()) {

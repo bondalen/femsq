@@ -41,6 +41,8 @@ extend type Query {
   Ошибка, если выгрузка не найдена.
   """
   sudzDbtUplLauncher(uplKey: Int!): SudzDbtUplLauncher!
+  """Лаунчер загрузки платежей (пакет + CnInvPmtUplFile; ensure File при отсутствии)."""
+  sudzPmUplLauncher(pmKey: Int!): SudzPmtUplLauncher!
   """Года-портфели, в которых upl входит в yr_upl_p (для контекста воронки)."""
   sudzYearKeysForUpl(uplKey: Int!): [Int!]!
   """Excel-кандидат КСДСФ по ключу очереди."""
@@ -118,6 +120,14 @@ extend type Mutation {
 
   """Upsert шапки лаунчера загрузки свода (CnInvDbtUplFile) по uplKey."""
   updateSudzDbtUplFile(input: UpdateSudzDbtUplFileInput!): SudzDbtUplFile!
+
+  """Upsert шапки лаунчера платежей (CnInvPmtUplFile) по pmKey."""
+  updateSudzPmUplFile(input: UpdateSudzPmUplFileInput!): SudzPmtUplFile!
+
+  """
+  Прогон воронки платежей (0074): Excel→Tbl при cipufFlTbl + stub cipu*; пишет HTML в лог.
+  """
+  runSudzPmtUplFunnel(input: RunSudzPmtUplFunnelInput!): SudzPmtUplFunnelResult!
 
   """Создать лист Excel для выгрузки (CnInvDbtUplFileSh)."""
   createSudzDbtUplFileSh(input: CreateSudzDbtUplFileShInput!): SudzDbtUplFileSh!
@@ -247,6 +257,25 @@ type SudzPmUplLookup {
   pmKey: Int!
   name: String
   date: Date
+}
+
+"""Карточка лаунчера загрузки платежей (экран D / 0073)."""
+type SudzPmtUplLauncher {
+  upl: SudzPmUplLookup!
+  """Шапка File (после ensure всегда есть)."""
+  file: SudzPmtUplFile!
+}
+
+"""Шапка лаунчера платежей (CnInvPmtUplFile)."""
+type SudzPmtUplFile {
+  cipufKey: Int!
+  cipufUpload: Int!
+  cipufPath: String!
+  cipufFlLoad: Boolean!
+  cipufFlTbl: Boolean!
+  cipufLoadingProgress: String
+  """Имя листа Excel (у pmt нет FileSh)."""
+  cipufSheet: String
 }
 
 """Вход создания год-варианта."""
@@ -895,6 +924,35 @@ input UpdateSudzDbtUplFileInput {
   flLoad: Boolean
   """Null — не менять (при insert — false)."""
   flTbl: Boolean
+}
+
+"""Вход upsert шапки CnInvPmtUplFile."""
+input UpdateSudzPmUplFileInput {
+  pmKey: Int!
+  """Null — не менять путь (при insert — пустая строка)."""
+  path: String
+  """Null — не менять лист (при insert — null)."""
+  sheet: String
+  """Null — не менять (при insert — false)."""
+  flLoad: Boolean
+  """Null — не менять (при insert — false)."""
+  flTbl: Boolean
+}
+
+"""Вход прогона воронки платежей (0074)."""
+input RunSudzPmtUplFunnelInput {
+  pmKey: Int!
+  """Префикс цепочки cipu* (без excelToTbl)."""
+  steps: [String!]!
+  flLoad: Boolean!
+}
+
+"""Результат прогона воронки платежей."""
+type SudzPmtUplFunnelResult {
+  launcher: SudzPmtUplLauncher!
+  ranSteps: [String!]!
+  """true — тело cipu* ещё stub."""
+  stub: Boolean!
 }
 
 """Вход создания листа CnInvDbtUplFileSh."""

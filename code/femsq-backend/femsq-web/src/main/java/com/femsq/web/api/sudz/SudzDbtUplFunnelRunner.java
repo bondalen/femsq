@@ -163,7 +163,7 @@ public class SudzDbtUplFunnelRunner {
             } else if (SudzDbtUplFunnelSteps.CN_NOT_LOAD.equals(stepId)) {
                 runCnNotLoad(uplKey, progress, flLoad);
             } else if (SudzDbtUplFunnelSteps.CN_EXIST_CTPT_NOT_LOAD.equals(stepId)) {
-                runCnExistCtptNotLoad(uplKey, progress);
+                runCnExistCtptNotLoad(uplKey, progress, flLoad);
             } else if (SudzDbtUplFunnelSteps.CN_CTPT_EXIST_INV_NOT_LOAD.equals(stepId)) {
                 runCnCtptExistInvNotLoad(uplKey, progress, flLoad);
             } else if (SudzDbtUplFunnelSteps.CN_CTPT_INV_EXIST_ACC_SMPL_NOT_LOAD.equals(stepId)) {
@@ -321,13 +321,14 @@ public class SudzDbtUplFunnelRunner {
     }
 
     /**
-     * CnExistCtptNotLoad: номер договора есть в БД, исполнитель из свода не совпадает.
-     * Только лог; {@code cidufFlLoad} не влияет (как Access — apply не реализован).
+     * CnExistCtptNotLoad: prelude C.10.6 (резолв пустых дат) + лог ExistCtpt.
+     * Create null-сторон — только при {@code flLoad}.
      *
      * @param uplKey ключ выгрузки
      * @param progress лог шага
+     * @param flLoad создавать ли отсутствующие null-стороны
      */
-    private void runCnExistCtptNotLoad(int uplKey, SudzDbtUplProgressLog progress) {
+    private void runCnExistCtptNotLoad(int uplKey, SudzDbtUplProgressLog progress, boolean flLoad) {
         int tblCount = sudzService.countDbtUplTbl(uplKey);
         progress.line("Буфер Tbl: <font color=\"DarkCyan\">" + tblCount + "</font> строк"
                 + " (unloadKey=" + uplKey + ").");
@@ -335,6 +336,33 @@ public class SudzDbtUplFunnelRunner {
             progress.line("<font color=\"Salmon\">буфер пуст</font> — сначала включите"
                     + " «обнов. по исх?» либо загрузите Excel в Tbl.");
         }
+        var resolve = sudzService.resolveDbtUplNullCnDates(uplKey, flLoad);
+        progress.line("Резолв пустых дат договора (C.10.6): null-строк="
+                + "<font color=\"DarkCyan\">" + resolve.nullDateRows() + "</font>"
+                + "; Value@prior=" + resolve.fromValue()
+                + "; Tbl@prior=" + resolve.fromTbl()
+                + "; unique-side=" + resolve.fromUniqueSide()
+                + "; null-сторона уже есть (пар)=" + resolve.alreadyNullSide()
+                + "; create null-сторон=" + resolve.createdNullSides()
+                + "; не резолвлено (пар)="
+                + (resolve.unresolved() == 0
+                ? "<font color=\"DarkGreen\">0</font>"
+                : "<font color=\"Salmon\">" + resolve.unresolved() + "</font>")
+                + ".");
+        log.log(Level.INFO,
+                "CnExistCtptNotLoad resolve uplKey={0} nullRows={1} value={2} tbl={3} side={4} "
+                        + "nullSide={5} created={6} unresolved={7} flLoad={8}",
+                new Object[]{
+                        uplKey,
+                        resolve.nullDateRows(),
+                        resolve.fromValue(),
+                        resolve.fromTbl(),
+                        resolve.fromUniqueSide(),
+                        resolve.alreadyNullSide(),
+                        resolve.createdNullSides(),
+                        resolve.unresolved(),
+                        flLoad
+                });
         var rows = sudzService.listDbtUplCnExistCtptNotLoad(uplKey);
         SudzDbtUplCnExistCtptNotLoadLog.append(progress, rows);
         log.log(Level.INFO, "CnExistCtptNotLoad uplKey={0} tbl={1} mismatchRows={2}",
@@ -555,9 +583,10 @@ public class SudzDbtUplFunnelRunner {
             applyResult = sudzService.runInvDbtLoadPhase(uplKey, fileKey, flLoad);
         }
         int queuedCount = applyResult.queuedCount();
-        SudzDbtUplInvDbtLoadLog.append(progress, queuedCount, applyResult);
+        SudzDbtUplInvDbtLoadLog.append(progress, applyResult, flLoad);
         log.log(Level.INFO,
-                "invDbtLoad uplKey={0} tbl={1} queued={2} flLoad={3} invDbt={4} bridges={5} values={6}",
+                "invDbtLoad uplKey={0} tbl={1} queued={2} flLoad={3} invDbt={4} bridges={5} values={6}"
+                        + " calmCreate={7} calmF1={8} silentHole={9}",
                 new Object[]{
                         uplKey,
                         tblCount,
@@ -565,7 +594,10 @@ public class SudzDbtUplFunnelRunner {
                         flLoad,
                         applyResult.insertedInvDbt(),
                         applyResult.insertedBridges(),
-                        applyResult.insertedValues()
+                        applyResult.insertedValues(),
+                        applyResult.calmCreatePending().size(),
+                        applyResult.calmF1Pending().size(),
+                        applyResult.silentHoleResolved().size()
                 });
     }
 

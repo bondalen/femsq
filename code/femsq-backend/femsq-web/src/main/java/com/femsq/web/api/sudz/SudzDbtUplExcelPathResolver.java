@@ -48,6 +48,16 @@ public final class SudzDbtUplExcelPathResolver {
                 trimmed = trimmed.substring(1, trimmed.length() - 1).trim();
             }
         }
+        // Ложный ведущий / перед диском Windows (/D:\… → D:\…)
+        if (trimmed.length() >= 3
+                && trimmed.charAt(0) == '/'
+                && Character.isLetter(trimmed.charAt(1))
+                && trimmed.charAt(2) == ':'
+                && (trimmed.length() == 3
+                        || trimmed.charAt(3) == '\\'
+                        || trimmed.charAt(3) == '/')) {
+            trimmed = trimmed.substring(1);
+        }
         return trimmed;
     }
 

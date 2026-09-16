@@ -534,6 +534,7 @@ import { FemsqTable, type FemsqTableColumn } from 'fequlib';
 import { useConnectionStore } from '@/stores/connection';
 import { useSudzPortfolioStore } from '@/stores/sudz-portfolio';
 import { useSudzDbtUplStore } from '@/stores/sudz-dbt-upl';
+import { normalizeExplorerPath } from '@/utils/explorer-path';
 import {
   SUDZ_DBT_UPL_FUNNEL_ENABLED_IDS,
   SUDZ_DBT_UPL_FUNNEL_STEPS,
@@ -801,28 +802,13 @@ function formatDate(value: string | null | undefined): string {
 }
 
 /**
- * Снимает кавычки «Копировать как путь» — в БД путь как в адресной строке Проводника.
- */
-function stripExplorerPath(raw: string): string {
-  let trimmed = raw.trim();
-  if (trimmed.length >= 2) {
-    const first = trimmed[0];
-    const last = trimmed[trimmed.length - 1];
-    if ((first === '"' && last === '"') || (first === "'" && last === "'")) {
-      trimmed = trimmed.slice(1, -1).trim();
-    }
-  }
-  return trimmed;
-}
-
-/**
  * Сохраняет путь из поля в cidufPath (как вставил пользователь).
  */
 async function onPathCommit(): Promise<boolean> {
   if (!store.selectedUpl) {
     return false;
   }
-  const next = stripExplorerPath(pathDraft.value);
+  const next = normalizeExplorerPath(pathDraft.value);
   const current = store.file?.cidufPath ?? '';
   if (next !== pathDraft.value) {
     pathDraft.value = next;
