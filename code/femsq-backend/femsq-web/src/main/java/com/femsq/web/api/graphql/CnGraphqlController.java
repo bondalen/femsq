@@ -177,6 +177,19 @@ public class CnGraphqlController {
         return mutate(() -> cnContractService.countByCnnNum(cnnNum));
     }
 
+    @QueryMapping
+    public Integer cnContractIdentityMatch(
+            @Argument("cnnNum") String cnnNum,
+            @Argument("csoCnDate") java.time.LocalDate csoCnDate,
+            @Argument("csosOrgId") int csosOrgId
+    ) {
+        log.info(() -> "GraphQL query cnContractIdentityMatch orgId=" + csosOrgId);
+        return mutate(() -> {
+            var found = cnContractService.findCnKeyByPerformerIdentity(cnnNum, csoCnDate, csosOrgId);
+            return found.isPresent() ? found.getAsInt() : null;
+        });
+    }
+
     @MutationMapping
     public CnContractCreatedDto createCnContract(@Argument("input") CnContractCreateRequest input) {
         log.info("GraphQL mutation createCnContract");

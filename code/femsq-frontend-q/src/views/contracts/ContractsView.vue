@@ -1090,6 +1090,29 @@ async function saveCreate(): Promise<void> {
     /* не блокируем создание */
   }
 
+  if (createDialog.csosOrgId != null && createDialog.csosOrgId > 0) {
+    try {
+      const existingCn = await store.identityMatch({
+        cnnNum,
+        csoCnDate,
+        csosOrgId: createDialog.csosOrgId
+      });
+      if (existingCn != null) {
+        createDialog.duplicateHint =
+          `Уже есть договор cn_key=${existingCn} с тем же номером, датой исполнителя и стороной. ` +
+          'Клон запрещён — отмените и добавьте smpl к существующему (или выберите его в списке).';
+        $q.notify({
+          type: 'negative',
+          message: `Клон договора запрещён (уже есть cn_key=${existingCn}). Используйте «+ smpl».`,
+          timeout: 8000
+        });
+        return;
+      }
+    } catch {
+      /* backend всё равно отклонит create при клоне */
+    }
+  }
+
   const doCreate = async (): Promise<void> => {
     try {
       await store.createContract({
@@ -1108,13 +1131,14 @@ async function saveCreate(): Promise<void> {
   if (duplicates > 0) {
     const label = cnnNum ?? '(пустой номер)';
     createDialog.duplicateHint =
-      `Уже есть ${duplicates} номер(ов) «${label}». Коллизию система не разрешает — ` +
-      'если это новый договор, создавайте; если старый — отмените и добавьте smpl к существующему.';
+      `Уже есть ${duplicates} номер(ов) «${label}» у других договоров (часто другая сторона/дата). ` +
+      'Полный клон (номер+дата+сторона) система блокирует отдельно. ' +
+      'Если это новый договор — создавайте; если старый — отмените и добавьте smpl.';
     $q.dialog({
       title: 'Коллизия номера',
       message:
         `В БД уже есть ${duplicates} записей с номером «${label}». ` +
-        'Автоматически выбрать «тот самый» договор нельзя. Продолжить создание нового?',
+        'Это не полный клон (сторона/дата могут отличаться). Продолжить создание нового?',
       cancel: { flat: true, label: 'Отмена' },
       ok: { flat: true, color: 'primary', label: 'Создать новый' }
     }).onOk(() => {

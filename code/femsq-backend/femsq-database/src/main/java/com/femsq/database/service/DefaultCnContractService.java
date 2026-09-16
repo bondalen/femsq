@@ -5,8 +5,10 @@ import com.femsq.database.exception.DaoException;
 import com.femsq.database.model.CnContractCreate;
 import com.femsq.database.model.CnContractCreated;
 import com.femsq.database.model.CnNumTypeLookup;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
+import java.util.OptionalInt;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -31,6 +33,9 @@ public class DefaultCnContractService implements CnContractService {
             log.log(Level.INFO, "Created contract cn={0} cnn={1}",
                     new Object[]{created.cnKey(), created.cnnKey()});
             return created;
+        } catch (IllegalArgumentException exception) {
+            log.log(Level.WARNING, "Create contract rejected: {0}", exception.getMessage());
+            throw exception;
         } catch (DaoException exception) {
             log.log(Level.SEVERE, "Failed to create contract with performer", exception);
             throw exception;
@@ -45,6 +50,11 @@ public class DefaultCnContractService implements CnContractService {
     @Override
     public int countByCnnNum(String cnnNum) {
         return cnContractDao.countByCnnNum(cnnNum == null ? "" : cnnNum);
+    }
+
+    @Override
+    public OptionalInt findCnKeyByPerformerIdentity(String cnnNum, LocalDate csoCnDate, int csosOrgId) {
+        return cnContractDao.findCnKeyByPerformerIdentity(cnnNum, csoCnDate, csosOrgId);
     }
 
     @Override

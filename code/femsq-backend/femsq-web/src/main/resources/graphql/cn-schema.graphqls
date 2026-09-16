@@ -26,10 +26,16 @@ extend type Query {
   cnNumTypes: [CnNumTypeLookup!]!
   """Сколько уже есть номеров с тем же текстом (коллизия — решение оператора)."""
   cnNumDuplicateCount(cnnNum: String!): Int!
+  """
+  cn_key существующего договора с тем же ключом воронки
+  (номер + csoCnDate/NULL + org_id_value_l). Без исполнителя — null.
+  """
+  cnContractIdentityMatch(cnnNum: String, csoCnDate: Date, csosOrgId: Int!): Int
 }
 
 extend type Mutation {
-  """Новый договор: cn + cnNum + исполнитель (smpl/org). Не путать с +smpl к существующему."""
+  """Новый договор: cn + cnNum + исполнитель (smpl/org). Не путать с +smpl к существующему.
+  При полном совпадении номера+даты исполнителя+стороны — отказ (клон запрещён)."""
   createCnContract(input: CnContractCreateRequest!): CnContractCreated!
   """Добавить второй номер к существующему cn (не создаёт новый договор)."""
   createCnNum(input: CnNumCreateRequest!): CnNum!

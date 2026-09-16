@@ -145,6 +145,12 @@ const CN_NUM_DUPLICATE_COUNT_QUERY = gql`
   }
 `;
 
+const CN_CONTRACT_IDENTITY_MATCH_QUERY = gql`
+  query CnContractIdentityMatch($cnnNum: String, $csoCnDate: Date, $csosOrgId: Int!) {
+    cnContractIdentityMatch(cnnNum: $cnnNum, csoCnDate: $csoCnDate, csosOrgId: $csosOrgId)
+  }
+`;
+
 const CREATE_CN_CONTRACT = gql`
   mutation CreateCnContract($input: CnContractCreateRequest!) {
     createCnContract(input: $input) {
@@ -449,6 +455,30 @@ export async function fetchCnNumDuplicateCount(cnnNum: string): Promise<number> 
     return result.data.cnNumDuplicateCount ?? 0;
   } catch (error) {
     throw toRequestError(error, 'Не удалось проверить коллизию номера');
+  }
+}
+
+/**
+ * cn_key существующего договора с тем же ключом воронки (номер+дата+сторона), иначе null.
+ */
+export async function fetchCnContractIdentityMatch(input: {
+  cnnNum: string | null;
+  csoCnDate: string | null;
+  csosOrgId: number;
+}): Promise<number | null> {
+  try {
+    const result = await apolloClient.query<{ cnContractIdentityMatch: number | null }>({
+      query: CN_CONTRACT_IDENTITY_MATCH_QUERY,
+      variables: {
+        cnnNum: input.cnnNum,
+        csoCnDate: input.csoCnDate,
+        csosOrgId: input.csosOrgId
+      },
+      fetchPolicy: 'network-only'
+    });
+    return result.data.cnContractIdentityMatch ?? null;
+  } catch (error) {
+    throw toRequestError(error, 'Не удалось проверить клон договора');
   }
 }
 

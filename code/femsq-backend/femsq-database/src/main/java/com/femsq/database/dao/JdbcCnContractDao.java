@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.OptionalInt;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -71,6 +72,17 @@ public class JdbcCnContractDao implements CnContractDao {
 
         log.log(Level.INFO, "Creating cn (+party?) num={0} type={1} orgId={2} csoCnDate={3}",
                 new Object[]{numOrNull, input.cnnType(), orgId, csoCnDate});
+
+        if (orgId != null) {
+            OptionalInt existing = findCnKeyByPerformerIdentity(numOrNull, csoCnDate, orgId);
+            if (existing.isPresent()) {
+                throw new IllegalArgumentException(
+                        "Договор с тем же номером, датой исполнителя и стороной уже есть: cn_key="
+                                + existing.getAsInt()
+                                + ". Не создавайте клон — добавьте smpl/сторону к существующему "
+                                + "или выберите его в списке.");
+            }
+        }
 
         try (Connection connection = connectionFactory.createConnection()) {
             connection.setAutoCommit(false);
@@ -213,6 +225,54 @@ public class JdbcCnContractDao implements CnContractDao {
             throw exception;
         } catch (SQLException exception) {
             throw new DaoException("Не удалось посчитать совпадения cnnNum", exception);
+        }
+    }
+
+    @Override
+    public OptionalInt findCnKeyByPerformerIdentity(String cnnNum, LocalDate csoCnDate, int csosOrgId) {
+        if (csosOrgId <= 0) {
+            return OptionalInt.empty();
+        }
+        String raw = cnnNum == null ? "" : cnnNum.trim();
+        String numNull = raw.isEmpty() ? "NullИлиПусто" : raw;
+        String prefix = schemaPrefix();
+        String sql = ""
+                + "SELECT TOP 1 c.cn_key "
+                + "FROM " + prefix + "cn AS c "
+                + "INNER JOIN " + prefix + "cnNum AS n ON n.cnnCn = c.cn_key "
+                + "INNER JOIN " + prefix + "cn_s AS s ON s.cn_key = c.cn_key AND s.cn_s_type = 2 "
+                + "INNER JOIN " + prefix + "cn_s_org_smpl AS m ON m.csosCn_s = s.cn_s_key "
+                + "INNER JOIN " + prefix + "cn_s_org AS o ON o.csoCn_s_org_smpl = m.csosKey "
+                + "INNER JOIN " + prefix + "org_id AS i ON i.org_id_key = m.csosOrgId "
+                + "INNER JOIN " + prefix + "org_id AS want ON want.org_id_key = ? "
+                + "WHERE n.cnnNumNull = ? "
+                + "  AND i.org_id_value_l = want.org_id_value_l "
+                + "  AND CASE WHEN o.csoCnDate IS NULL THEN CAST('19000101' AS date) "
+                + "           ELSE CAST(o.csoCnDate AS date) END "
+                + "    = CASE WHEN ? IS NULL THEN CAST('19000101' AS date) ELSE CAST(? AS date) END "
+                + "ORDER BY c.cn_key";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, csosOrgId);
+            statement.setNString(2, numNull);
+            if (csoCnDate == null) {
+                statement.setNull(3, Types.DATE);
+                statement.setNull(4, Types.DATE);
+            } else {
+                Date sqlDate = Date.valueOf(csoCnDate);
+                statement.setDate(3, sqlDate);
+                statement.setDate(4, sqlDate);
+            }
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    return OptionalInt.empty();
+                }
+                return OptionalInt.of(rs.getInt(1));
+            }
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw new DaoException("Не удалось проверить идентичность договора", exception);
         }
     }
 

@@ -17,6 +17,7 @@ import {
   deleteCnSOrg,
   deleteCnSOrgSmpl,
   fetchCn,
+  fetchCnContractIdentityMatch,
   fetchCnInvsByCn,
   fetchCnNums,
   fetchCnNumsByCn,
@@ -283,6 +284,17 @@ export const useContractsStore = defineStore('contracts', () => {
    */
   async function duplicateCount(cnnNum: string): Promise<number> {
     return fetchCnNumDuplicateCount(cnnNum);
+  }
+
+  /**
+   * Полный клон ключа воронки (номер + дата исполнителя + сторона) → cn_key или null.
+   */
+  async function identityMatch(input: {
+    cnnNum: string | null;
+    csoCnDate: string | null;
+    csosOrgId: number;
+  }): Promise<number | null> {
+    return fetchCnContractIdentityMatch(input);
   }
 
   /**
@@ -611,6 +623,7 @@ export const useContractsStore = defineStore('contracts', () => {
     ensureOrgIdLookups,
     ensureNumTypes,
     duplicateCount,
+    identityMatch,
     searchCnInvLookup,
     selectCnInvLookup,
     clearCnInvLookup,
