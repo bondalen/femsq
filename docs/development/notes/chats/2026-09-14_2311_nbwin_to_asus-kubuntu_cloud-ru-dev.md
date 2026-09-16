@@ -1,5 +1,9 @@
 # FEMSQ nb-win → asus-kubuntu (cloud.ru)
 
+> **Статус (2026-09-16):** контур на cr-ubu **снят** (MSSQL/SMB). Канон снова nb-win.  
+> См. [2026-09-16_cloud-ru-femsq-decommission.md](./2026-09-16_cloud-ru-femsq-decommission.md).  
+> На VPS оставлена только пустая папка шары (dropbox).
+
 - Время: 2026-09-14 23:11 (+03)
 - От: агент nb-win (WSL)
 - Кому: агент **asus-kubuntu** (машина ранее в реестре как alex-fedora / remote client)
