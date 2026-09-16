@@ -5,7 +5,7 @@
   "description": "Local MCP DBHub install for FEMSQ (not a workspace npm project)",
   "license": "ISC",
   "dependencies": {
-    "@bytebase/dbhub": "^0.11.6"
+    "@bytebase/dbhub": "^0.11.10"
   },
   "overrides": {
     "mariadb": "3.4.0",

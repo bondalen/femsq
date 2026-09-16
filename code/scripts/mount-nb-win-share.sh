@@ -13,7 +13,8 @@
 set -euo pipefail
 
 MOUNT_POINT="/mnt/nb-win-share"
-SHARE="//10.7.0.3/wire-guard-share-nb-win"
+# По умолчанию nb-win; на период cloud.ru/cr-ubu: FEMSQ_SMB_SHARE='//10.7.0.1/wire-guard-share-nb-win'
+SHARE="${FEMSQ_SMB_SHARE:-//10.7.0.3/wire-guard-share-nb-win}"
 
 if [[ -n "${SUDO_USER:-}" ]]; then
   REAL_USER="$SUDO_USER"
