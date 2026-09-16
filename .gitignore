@@ -72,8 +72,9 @@ out/
 *.dll
 **/native-libs/
 
-# Local MCP configuration
+# Local MCP configuration (и бэкапы перед сменой DSN/машины)
 .cursor/mcp.json
+.cursor/mcp.json.bak*
 
 # Eclipse/IDE project metadata inside resources (не коммитим)
 code/femsq-backend/femsq-reports/src/main/resources/reports/embedded/.project
