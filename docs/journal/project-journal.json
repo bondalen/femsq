@@ -3,9 +3,486 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-09-11"
+      "lastUpdated": "2026-09-16"
     },
     "sessions": [
+      {
+        "chat": {
+          "displayName": "СУДЗ: S79 ложные погашения / Rslt сбор gate (active, high). № chat-2026-09-16-001",
+          "chat-attributes": {
+            "id": "chat-2026-09-16-001",
+            "created": "2026-09-16",
+            "lastUpdated": "2026-09-16",
+            "owner": "Александр",
+            "status": "active",
+            "priority": "high",
+            "tags": [
+              "sudz",
+              "S79",
+              "0075",
+              "Rslt",
+              "погашено",
+              "1.1.1.3",
+              "chat-plan"
+            ],
+            "links": {
+              "projectDocsRefs": [
+                "module:backend.web",
+                "module:frontend"
+              ],
+              "developmentTasks": [
+                "0075",
+                "0069",
+                "0070"
+              ],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+              "uiNote": "docs/development/notes/UI/02-9_sudz-mvp-screens.md",
+              "domainProcess": "docs/development/notes/domain/sudz/03-processes.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "S79 зафиксирован в плане и docs (success). № log-2026-09-16-001",
+                "log-attributes": {
+                  "id": "log-2026-09-16-001",
+                  "timestamp": "2026-09-16T14:15:00+03:00",
+                  "level": "success",
+                  "effort": "45m",
+                  "status": "completed",
+                  "tags": [
+                    "S79",
+                    "0075",
+                    "documentation"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0075"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксировать двушаговый контур ложных погашений перед 1.1.1.3",
+                    "details": "План 0.99.48 §S79 (шаг 1 Cursor S79.1–.7; шаг 2 Progress S79.A–E). Задача 0075 + дерево 02.03.11. Обновлены 02-9 Progress, 03 §1.1.1.3, 04-6, README 26-0831. Политика: до рассылки Rslt сбор и cmm/cst — только шаг 1.",
+                    "outcome": "Next: исполнить S79.1 (QI pog vs 26-0505 на asOf903).",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+                      "docs/development/notes/UI/02-9_sudz-mvp-screens.md",
+                      "docs/development/notes/domain/sudz/03-processes.md",
+                      "docs/development/notes/sql/26-0831-sudz-dbt-slot-link/artifacts/ags_Yr_DbtChangesRslt_901_asOf903_d4_post902_26-0916.xlsx"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "СУДЗ: экран D лаунчер File + воронка 0074 (active, high). № chat-2026-09-14-001",
+          "chat-attributes": {
+            "id": "chat-2026-09-14-001",
+            "created": "2026-09-14",
+            "lastUpdated": "2026-09-15",
+            "owner": "Александр",
+            "status": "active",
+            "priority": "high",
+            "tags": [
+              "sudz",
+              "CnInvPmtUpl",
+              "1.1.1.2",
+              "0073",
+              "0074",
+              "File",
+              "chat-plan"
+            ],
+            "links": {
+              "projectDocsRefs": [
+                "module:frontend",
+                "module:backend.web"
+              ],
+              "developmentTasks": [
+                "0073",
+                "0074"
+              ],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md",
+              "domainPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+              "uiNote": "docs/development/notes/UI/02-9_sudz-mvp-screens.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "0074 сжатый лог хода (success). № log-2026-09-15-001",
+                "log-attributes": {
+                  "id": "log-2026-09-15-001",
+                  "timestamp": "2026-09-15T10:25:00+03:00",
+                  "level": "success",
+                  "effort": "30m",
+                  "status": "completed",
+                  "tags": [
+                    "0074",
+                    "progress-log"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0074"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Сжать cipufLoadingProgress под внимание оператора",
+                    "details": "Предложение A: без построчного Excel; якорь/лист — только ошибки; сводка листа + счётчик без № докум.; cipu* stub — одна строка; итог «Воронка OK».",
+                    "outcome": "Лог ~несколько строк вместо ~5k. Нужна пересборка JAR для UAT.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/SudzPmtUplExcelToTblImporter.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/SudzPmtUplFunnelRunner.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "0074 G1–G5: Excel→Tbl + stub cipu* (success). № log-2026-09-14-009",
+                "log-attributes": {
+                  "id": "log-2026-09-14-009",
+                  "timestamp": "2026-09-14T16:00:20+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "tags": [
+                    "0074",
+                    "excelToTbl",
+                    "funnel"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend.web",
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0074"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Реализовать узкий срез воронки платежей",
+                    "details": "runSudzPmtUplFunnel; SudzPmtUplExcelToTblImporter (якорь «№ докум.», Offset A–Z); replacePmtUplTbl; UI кнопка «загрузка»; cipu* — stub в лог. Unit-тесты FunnelSteps + importer OK. G6 UAT на export_*.xlsx — следующий шаг.",
+                    "outcome": "G1–G5 ✅; G6 UAT ☐. План 0819 v0.7.0.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/SudzPmtUplFunnelRunner.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/SudzPmtUplExcelToTblImporter.java",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "2a path fix + задача 0074 воронка 2b (success). № log-2026-09-14-008",
+                "log-attributes": {
+                  "id": "log-2026-09-14-008",
+                  "timestamp": "2026-09-14T15:32:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": [
+                    "2a",
+                    "0074",
+                    "path"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0074"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Исправить ведущий / у Windows-пути и открыть 0074",
+                    "details": "normalizeExplorerPath (FE util + DAO + SudzDbtUplExcelPathResolver); исправлен cipufPath pmKey=1 в БД; vitest 5/5. Задача 0074 + §4.2 плана 0819 (узкий срез Excel→Tbl). Код воронки ещё не начат.",
+                    "outcome": "2a ✅; 0074 in_progress (план). Следующий шаг кода — G1–G3 funnel/Excel.",
+                    "references": [
+                      "code/femsq-frontend-q/src/utils/explorer-path.ts",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md",
+                      "docs/development/project-development.json"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "UAT F1 принят владельцем; 0073 закрыта (success). № log-2026-09-14-007",
+                "log-attributes": {
+                  "id": "log-2026-09-14-007",
+                  "timestamp": "2026-09-14T15:14:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": [
+                    "UAT",
+                    "0073",
+                    "F1"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0073"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Провести UAT лаунчера File на JAR 0.1.0.272 и закрыть 0073",
+                    "details": "Владелец: принято. Проверены path/sheet/флаги, +Выгрузка (pm_key=2), stub загрузка, возврат к pm_key=1, вкладка «выгрузки платежей» на C. Замечание: ведущий / у Windows-пути в БД. План 26-0819 v0.5.1.",
+                    "outcome": "0073 completed. Следующие кандидаты: мелкий fix пути; этап 2b воронка cipu*; или g_p на C.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md",
+                      "docs/development/project-development.json"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "F1 код: лаунчер File GraphQL + UI (success). № log-2026-09-14-006",
+                "log-attributes": {
+                  "id": "log-2026-09-14-006",
+                  "timestamp": "2026-09-14T13:50:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "tags": [
+                    "0073",
+                    "F1",
+                    "GraphQL",
+                    "UI"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.database",
+                      "module:backend.web",
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0073"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Реализовать лаунчер CnInvPmtUplFile (этап 2 / 0073)",
+                    "details": "Backend: SudzPmtUplFile/Launcher, findPmtUplLauncher+ensure (B2), upsertPmtUplFile, createPmUpl+File (B3), GraphQL sudzPmUplLauncher/updateSudzPmUplFile. Frontend: api/store/view — path/sheet/флаги в БД, лог v-html как экран C. Compile database+web OK. UAT владельца ещё нет.",
+                    "outcome": "C1–C6 и D1–D5 ✅; следующий шаг — пересборка JAR/UAT на экране D.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md",
+                      "code/femsq-backend/femsq-web/src/main/resources/graphql/sudz-schema.graphqls",
+                      "code/femsq-frontend-q/src/stores/sudz-pmt-upl.ts",
+                      "code/femsq-frontend-q/src/views/sudz/SudzPmtUplView.vue"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "B5: сплиттер шагов отложен (info). № log-2026-09-14-005",
+                "log-attributes": {
+                  "id": "log-2026-09-14-005",
+                  "timestamp": "2026-09-14T13:32:00+03:00",
+                  "level": "info",
+                  "effort": "0.1h",
+                  "status": "completed",
+                  "tags": [
+                    "B5",
+                    "0073"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0073"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксировать B5: UX сплиттера отложить",
+                    "details": "Владелец: не править detailSplit в 0073; подписи шагов — вручную сдвигом разделителя. План v0.4.3. Блок B закрыт; следующий шаг — реализация C (backend/GraphQL).",
+                    "outcome": "B1–B5 ✅; можно начинать код F1.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "B4: лог как у «Загрузка свода» (info). № log-2026-09-14-004",
+                "log-attributes": {
+                  "id": "log-2026-09-14-004",
+                  "timestamp": "2026-09-14T13:29:00+03:00",
+                  "level": "info",
+                  "effort": "0.1h",
+                  "status": "completed",
+                  "tags": [
+                    "B4",
+                    "0073"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0073"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксировать B4: формат лога как у экрана C",
+                    "details": "Владелец: лог экрана D как у «Загрузка свода» (SudzDbtUplView / cidufLoadingProgress). План v0.4.2. Остаётся B5 (сплиттер).",
+                    "outcome": "B1–B4 ✅; B5 на решении.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "B2/B3: ensure File; «+ Выгрузка» = пакет+File (info). № log-2026-09-14-003",
+                "log-attributes": {
+                  "id": "log-2026-09-14-003",
+                  "timestamp": "2026-09-14T13:12:00+03:00",
+                  "level": "info",
+                  "effort": "0.1h",
+                  "status": "completed",
+                  "tags": [
+                    "B2",
+                    "B3",
+                    "0073"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0073"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксировать B2 и B3 по бизнес-процессу оператора",
+                    "details": "B2: File ensure при отсутствии; пустой path до загрузки норма; ошибка отсутствия файла — только при запуске загрузки (2b). B3: «+ Выгрузка» создаёт cn_inv_pm_upl и пустой CnInvPmtUplFile вместе. План v0.4.1; §6a и C3/C6 уточнены.",
+                    "outcome": "B1–B3 ✅; остаются B4–B5.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "B1: список пакетов из sudz, не ags (info). № log-2026-09-14-002",
+                "log-attributes": {
+                  "id": "log-2026-09-14-002",
+                  "timestamp": "2026-09-14T12:59:00+03:00",
+                  "level": "info",
+                  "effort": "0.1h",
+                  "status": "completed",
+                  "tags": [
+                    "B1",
+                    "0073"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0073"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксировать B1: источник списка экрана D = sudz",
+                    "details": "Владелец: экран D = «Загрузка платежей»; sudz — тестовый DEV-контур (позже целевой ags при развёртывании); на ранних этапах не портить ags (аналог прод), восстанавливать sudz из ags при порче.",
+                    "outcome": "B1 ✅ в плане 26-0819 §4.1; остаются B2–B5.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Мероприятия F1 внесены в план 26-0819; задача 0073 (info). № log-2026-09-14-001",
+                "log-attributes": {
+                  "id": "log-2026-09-14-001",
+                  "timestamp": "2026-09-14T12:48:00+03:00",
+                  "level": "info",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": [
+                    "chat-plan",
+                    "0073",
+                    "F1"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0073"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксировать мероприятия этапа 2 / F1 в плане чата и открыть 0073",
+                    "details": "План 26-0819 v0.4.0: §1a цель F1, §4.1 A–F, §5a out-of-scope, §6a приёмка. Задача 0073 + пункт 02.03.09. Указатель 0802 §5.8. Код лаунчера не начат; следующий шаг — решения владельца B1–B5.",
+                    "outcome": "Рабочий план F1 готов; A1/A2/A4 закрыты; B–F ожидают.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md",
+                      "docs/development/project-development.json",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
       {
         "chat": {
           "displayName": "Донастройка asus-kubuntu (completed, medium). № chat-2026-09-11-001",
@@ -187,7 +664,7 @@
           "chat-attributes": {
             "id": "chat-2026-09-08-002",
             "created": "2026-09-08",
-            "lastUpdated": "2026-09-09",
+            "lastUpdated": "2026-09-15",
             "owner": "Александр",
             "status": "active",
             "priority": "high",
@@ -410,6 +887,20 @@
                   "tags": ["S78", "S77", "cnicDv", "graphql", "comments"]
                 },
                 "entry": "Backfill 04: 4+2+2 stage1 на dv 100276/100233 (срез группы 805 = upl 901 yr900). GraphQL upsert/deleteSudzDbtCanonComment по dvKey; вкладка Комментарии без stubs. Split/Merge переносят *Dv; delete Value отказ при cmm. UNIQUE (группа,тип,dv) и полоса C экспортёра — next. Не 85166."
+              }
+            },
+            {
+              "log": {
+                "displayName": "S77.7b в плане: dry-лог Calm Create / дыра Excel→slot @902 (info). № log-2026-09-15-001",
+                "log-attributes": {
+                  "id": "log-2026-09-15-001",
+                  "timestamp": "2026-09-15T10:20:00+03:00",
+                  "level": "info",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": ["S77.7b", "invDbtLoad", "dry-log", "902"]
+                },
+                "entry": "План 0.99.33: секция S77.7b. Диагноз 4×no_candidate_slot @902 — обрыв на чекбоксе 7 (var есть, слотов/КСДД нет; 2026-09-04: 12 var / 0 слотов). Мероприятия B0–B5: сначала dry-лог Calm Create на invDbtLoad (как missing у varEnsure), затем UAT dry-7 → apply-7 → dry-9=0 → Value. Запрет apply Value при дыре. Next: B0/B1 код лога."
               }
             }
           ]

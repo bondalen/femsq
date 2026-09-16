@@ -49,9 +49,12 @@
 07_SEED_E1_var_value.sql
 08_BACKFILL_cmm_Dbt.sql
 99_VERIFY.sql
+99b_REPORT_multi_slot_iKeys.sql   -- S77.9 M5: READ ONLY iKey N>1 (не удалять зёрна)
 ```
 
 **M3:** код calm F1 в `JdbcSudzDao` (после M2 seed); UAT upl 910.
+
+**S77.9 M5:** не схлопывать `первая`/`вторая` при seed — cutover §1.6; отчёт `99b`.
 
 Откат: `ROLLBACK_M2.sql` (или restore `.bak`).
 

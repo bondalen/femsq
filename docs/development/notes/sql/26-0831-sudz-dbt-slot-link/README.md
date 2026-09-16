@@ -1,10 +1,10 @@
 # DbtSlotLink — реестр P1 (L001–L010) и синхронизация invDbtDbt
 
 **Дата:** 2026-08-31  
-**lastUpdated:** 2026-09-01  
+**lastUpdated:** 2026-09-16  
 **Схема DEV:** `sudz`  
 **Прод:** `MSSQL2012/` → `ags`  
-**Документация:** [04-5](../../domain/sudz/04-5_dbt-invdbt-cardinality-d1.md), [04-6 §3.3](../../domain/sudz/04-6_multi-dbt-p1-three-paths.md)
+**Документация:** [04-5](../../domain/sudz/04-5_dbt-invdbt-cardinality-d1.md), [04-6](../../domain/sudz/04-6_multi-dbt-p1-three-paths.md) · **S79** ложные погашения: [chat-plan §S79](../../chats/chat-plan/chat-plan-26-0802-sudz.md#s79--двушаговый-контур-ложных-погашений-перед-rslt-сбор-2026-09-16) · вход `artifacts/ags_Yr_DbtChangesRslt_901_asOf903_d4_post902_26-0916.xlsx`
 
 ## Назначение
 
