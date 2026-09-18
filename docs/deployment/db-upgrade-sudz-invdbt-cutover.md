@@ -2,12 +2,14 @@
 
 **Файл:** `docs/deployment/db-upgrade-sudz-invdbt-cutover.md`  
 **Дата создания:** 2026-08-27  
-**lastUpdated:** 2026-09-15  
-**Версия:** 0.3.9 (S77.9 M5: не схлопывать первая/вторая)  
+**lastUpdated:** 2026-09-18  
+**Версия:** 0.3.10 (политика Access↔FEMSQ + smoke D644/контур B в чеклисте)  
 **Автор:** Александр  
 **Статус:** черновик — наполнение по мере обсуждения `Dbt`, DEV-репетиции и обследования prod
 
-**Краткий чеклист дня деплоя:** [`db-upgrade-sudz-invdbt-cutover-deploy-day-checklist.md`](db-upgrade-sudz-invdbt-cutover-deploy-day-checklist.md) *(заготовка)*
+**Краткий чеклист дня деплоя:** [`db-upgrade-sudz-invdbt-cutover-deploy-day-checklist.md`](db-upgrade-sudz-invdbt-cutover-deploy-day-checklist.md) *(контур B smoke + cutover)*  
+**Политика Access ↔ FEMSQ (R3):** [`sudz-access-femsq-write-policy.md`](sudz-access-femsq-write-policy.md)  
+**Smoke исходящих D644/Свод:** [`sudz-outgoing-d644-smoke.md`](sudz-outgoing-d644-smoke.md)  
 
 **Реестр продуктивного сервера:** `docs/project/project-docs.json` → `development.environments.machines.prod-fisheye`  
 **Общие правила SQL:** [`sql-server-deployment-rules.md`](sql-server-deployment-rules.md)  
@@ -304,7 +306,7 @@ Backup → DDL → seed D(+E) → JAR → smoke → режим Access.
 |---|------|--------|
 | R1 | S73 prod ≠ dev | Фаза A |
 | R2 | E0/E1/E2 | ✅ **E1** (вся история; сегм. 34) |
-| R3 | Access write после H | ☐ |
+| R3 | Access write после H | ☐ черновик политики: [sudz-access-femsq-write-policy.md](sudz-access-femsq-write-policy.md) — подпись владельца до окна H |
 | R4 | Повестка D1–D7 | ✅ M1 закрыт 2026-08-27 |
 | R5 | Время окна | Замер на DEV |
 | R6 | Collation prod | MSSQL2012 |
@@ -341,6 +343,7 @@ Backup → DDL → seed D(+E) → JAR → smoke → режим Access.
 | 0.3.7 | 2026-08-27 | **M4** экран/7: ciaName, деревья сумм, `[row.select]`; Link UAT; JAR 226 |
 | 0.3.8 | 2026-08-31 | **E1′** PIT для паритета Rslt; gate verify_rslt_stage1; запрет last-asOf-any |
 | 0.3.9 | 2026-09-15 | **§1.6 S77.9 M5:** не схлопывать `первая`/`вторая`; отчёт `99b_REPORT_multi_slot_iKeys.sql` |
+| 0.3.10 | 2026-09-18 | Ссылки: политика Access↔FEMSQ (R3), smoke D644/Свод, расширенный чеклист дня (контур B) |
 
 ### 6.1. Результат M2 на DEV (`sudz`, 2026-08-27; после 06a)
 

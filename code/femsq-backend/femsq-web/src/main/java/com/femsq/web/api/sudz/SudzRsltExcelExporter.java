@@ -37,6 +37,9 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  *
  * <p>Боковик FEMSQ (08 §3.6.0): {@code dbtKey} + {@code account_num}; СФ/{@code idNum} — в блоках срезов.
  *
+ * <p>Даты ({@code csoCnDate}, {@code Maturity}) пишутся как Excel-date с форматом {@code dd.MM.yyyy}.
+ * Суммы — учётный числовой формат {@code #,##0.00} без символа валюты.
+ *
  * <p>S77.5 полосы A/C: число строк канона = max(число {@code DbtValue} по срезам).
  * Колонка с зерном 1 (канон, «погашено» на ∑ Overd, cmm на {@code Dbt}) сливается.
  */
@@ -71,8 +74,12 @@ public final class SudzRsltExcelExporter {
     private static final String FILL_SUM_POG = "FAC090";    // row1 погашено
     private static final String FONT_SUM_RGB = "C0504D";    // accent2 (красный)
 
+    /** Учётный формат сумм: те же разделители, без символа валюты. */
     private static final String MONEY_FORMAT =
-            "_-* #,##0.00\\ [$₽-419]_-;\\-* #,##0.00\\ [$₽-419]_-;_-* \"-\"??\\ [$₽-419]_-;_-@_-";
+            "_-* #,##0.00_-;\\-* #,##0.00_-;_-* \"-\"??_-;_-@_-";
+
+    /** Даты в Rslt — настоящие Excel-даты с отображением дд.мм.гггг. */
+    private static final String DATE_FORMAT = "dd.MM.yyyy";
 
     private SudzRsltExcelExporter() {
     }
@@ -367,7 +374,7 @@ public final class SudzRsltExcelExporter {
         } else if (value instanceof Long longValue) {
             writeTyped(row, col, longValue, styles.data());
         } else if (value instanceof LocalDate date) {
-            writeTyped(row, col, date, styles.data());
+            writeTyped(row, col, date, styles.date());
         } else if (value instanceof String text) {
             writeTyped(row, col, text, styles.data());
         } else if (value instanceof BigDecimal decimal) {
@@ -526,7 +533,7 @@ public final class SudzRsltExcelExporter {
     private static int writeTyped(Row row, int col, LocalDate value, CellStyle style) {
         Cell cell = row.createCell(col);
         if (value != null) {
-            cell.setCellValue(value.format(ISO));
+            cell.setCellValue(java.sql.Date.valueOf(value));
         }
         cell.setCellStyle(style);
         return col + 1;
@@ -600,6 +607,7 @@ public final class SudzRsltExcelExporter {
         private final XSSFCellStyle sumPog;
         private final XSSFCellStyle sumEmpty;
         private final XSSFCellStyle data;
+        private final XSSFCellStyle date;
         private final XSSFCellStyle money;
 
         Styles(XSSFWorkbook workbook) {
@@ -636,6 +644,10 @@ public final class SudzRsltExcelExporter {
             data = workbook.createCellStyle();
             data.setFont(fontData);
 
+            date = workbook.createCellStyle();
+            date.setFont(fontData);
+            date.setDataFormat(workbook.createDataFormat().getFormat(DATE_FORMAT));
+
             money = workbook.createCellStyle();
             money.setFont(fontData);
             money.setDataFormat(workbook.createDataFormat().getFormat(MONEY_FORMAT));
@@ -669,6 +681,10 @@ public final class SudzRsltExcelExporter {
 
         XSSFCellStyle data() {
             return data;
+        }
+
+        XSSFCellStyle date() {
+            return date;
         }
 
         XSSFCellStyle money() {

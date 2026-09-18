@@ -65,6 +65,16 @@ class SudzRsltExcelExporterTest {
             assertTrue(merged(sheet, 3, 4, 0));
             assertTrue(merged(sheet, 3, 4, 10));
             assertTrue(merged(sheet, 3, 4, 30));
+            // Дата договора QI: настоящая Excel-дата, формат dd.MM.yyyy
+            var cnDate = sheet.getRow(3).getCell(19);
+            assertEquals(org.apache.poi.ss.usermodel.CellType.NUMERIC, cnDate.getCellType());
+            assertTrue(org.apache.poi.ss.usermodel.DateUtil.isCellDateFormatted(cnDate));
+            assertTrue(cnDate.getCellStyle().getDataFormatString().contains("dd.MM.yyyy")
+                    || cnDate.getCellStyle().getDataFormatString().contains("DD.MM.YYYY"));
+            // Деньги без символа рубля, разделители #,##0.00 сохранены
+            String moneyFmt = sheet.getRow(3).getCell(10).getCellStyle().getDataFormatString();
+            assertTrue(moneyFmt.contains("#,##0.00"));
+            assertTrue(!moneyFmt.contains("₽") && !moneyFmt.contains("[$"));
         }
     }
 
@@ -93,7 +103,7 @@ class SudzRsltExcelExporterTest {
     private static SudzRsltPeriod period(int upl, LocalDate date, int idNum, String inv, String ttl) {
         BigDecimal v = new BigDecimal(ttl);
         return new SudzRsltPeriod(
-                upl, date, date, inv, idNum, "32-426", null, null, null, "контрагент",
-                null, v, v, null, null, null, null);
+                upl, date, date, inv, idNum, "32-426", date, null, null, "контрагент",
+                date, v, v, null, null, null, null);
     }
 }

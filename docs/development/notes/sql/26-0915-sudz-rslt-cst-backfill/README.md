@@ -11,7 +11,19 @@
 | Access `Yr_DbtChanges` | `ags.fnCiasDbtUplCst(cias, dbtUpl)` ← `cn_inv_pm` + мост `cn_inv_dbt_upl_g_p` |
 | FEMSQ Rslt (`vw_Yr_DbtFact`) | `DbtUplCstAg (ducaDbt, ducaUpl, ducaCstAgPn)` |
 
-На DEV (2026-09-15): `DbtUplCstAg` для 901/902 пуст; `g_p` в `ags` обрывается на **2025-06-30** — поэтому fn(·, 901) пуст. На **проде** ожидается полный горизонт (см. S26: DEV отставал от бэкапов).
+На DEV (2026-09-15…16): `ags.cn_inv_dbt_upl` **нет** дат QIV/QI/QII (2025-12-31 / 2026-03-31 / 2026-06-30); `g_p` max **2025-06-30** → `fn(·, 901+)` пуст. Канон `00`→`01`→`02` — для **прода** (или после появления g_p).
+
+**DEV-обход (S80.1, 2026-09-16):** скрипт [`03_BACKFILL_DbtUplCstAg_FROM_ACCESS_EXCEL.mjs`](./03_BACKFILL_DbtUplCstAg_FROM_ACCESS_EXCEL.mjs) — `*_CstAgPnKey` из Access `26-0505` → softBase → softQi (QI-only / twin inv) → INSERT @901/@902; @903 = carry с 902 при Value@903. GEN inv = base **или** QI (col Q). Stub `cst`/`cstAg`/`cstAgPn` для Access keys вне каталога DEV (`artifacts/stage2_s80_*miss47*`, `*remain11*`, `*remain1_23393*`).
+
+| upl | DbtUplCstAg (итог S80.2b) |
+|-----|---------------------------|
+| 901 | **1660** |
+| 902 | **1636** |
+| 903 | **1446** (carry) |
+
+**S80.2b:** row QIV+QI ↔ Access — PASS, `E-S80-cst-backfill-miss=0` ([`stage2_s80_qiv_qi_vs_access_final_26-0916.json`](../26-0831-sudz-dbt-slot-link/artifacts/stage2_s80_qiv_qi_vs_access_final_26-0916.json)).
+
+Артефакты: `artifacts/stage2_s80_dbtuplcstag_from_access_*.json`, `…_insert_26-0916.sql`, patch SQL.
 
 ## Порядок на проде (SSMS, READ → кандидаты → apply)
 

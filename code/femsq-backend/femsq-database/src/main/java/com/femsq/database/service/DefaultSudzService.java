@@ -51,7 +51,17 @@ import com.femsq.database.model.sudz.SudzDebtCollection;
 import com.femsq.database.model.sudz.SudzPmLink;
 import com.femsq.database.model.sudz.SudzPmUplLookup;
 import com.femsq.database.model.sudz.SudzPmtUplFile;
+import com.femsq.database.model.sudz.SudzPmtUplAgNotLoad;
+import com.femsq.database.model.sudz.SudzPmtUplAgNotLoadApplyResult;
+import com.femsq.database.model.sudz.SudzPmtUplInvNotResult;
+import com.femsq.database.model.sudz.SudzPmtUplAcNotLoad;
+import com.femsq.database.model.sudz.SudzPmtUplDocNotApplyResult;
+import com.femsq.database.model.sudz.SudzPmtUplInsPmNotApplyResult;
+import com.femsq.database.model.sudz.SudzPmtUplInsPmNotResult;
+import com.femsq.database.model.sudz.SudzPmtUplCnNotLoad;
+import com.femsq.database.model.sudz.SudzPmtUplFunnelSteps;
 import com.femsq.database.model.sudz.SudzPmtUplLauncher;
+import com.femsq.database.model.sudz.SudzPmtUplLogOnlyResult;
 import com.femsq.database.model.sudz.SudzPmtUplTblRow;
 import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
@@ -322,6 +332,130 @@ public class DefaultSudzService implements SudzService {
         log.log(Level.INFO, "replacePmtUplTbl unloadKey={0}, rows={1}",
                 new Object[]{unloadKey, rows.size()});
         return sudzDao.replacePmtUplTbl(unloadKey, rows);
+    }
+
+    @Override
+    public int countPmtUplTbl(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.countPmtUplTbl(unloadKey);
+    }
+
+    @Override
+    public SudzPmtUplLogOnlyResult findPmtUplLogOnly(String stepId, int unloadKey, int sampleLimit) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        if (stepId == null || stepId.isBlank()) {
+            throw new IllegalArgumentException("stepId обязателен");
+        }
+        int limit = sampleLimit > 0 ? sampleLimit : SudzPmtUplFunnelSteps.LOG_ONLY_SAMPLE_LIMIT;
+        return switch (stepId) {
+            case "cipuCtpt_All_OIdNot" -> sudzDao.findPmtUplOidNot(unloadKey, limit);
+            case "cipuCacNot" -> sudzDao.findPmtUplCacNot(unloadKey, limit);
+            case "cipuCn_CtptCnTwo" -> sudzDao.findPmtUplCnTwo(unloadKey, limit);
+            case "cipuCn_AgTwo" -> sudzDao.findPmtUplAgTwo(unloadKey, limit);
+            case "cipuCn_CtptCnOneInvTwoLoad" -> sudzDao.findPmtUplInvTwo(unloadKey, limit);
+            case "cipuCn_CtptCnOneInvOneAcDcNot" -> sudzDao.findPmtUplDocNot(unloadKey, limit);
+            case "cipuInsPmExt" -> sudzDao.findPmtUplInsPmExt(unloadKey, limit);
+            default -> throw new IllegalArgumentException("Не log-only шаг H2: " + stepId);
+        };
+    }
+
+    @Override
+    public List<SudzPmtUplCnNotLoad> listPmtUplCnNotLoad(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.findPmtUplCnNotLoad(unloadKey);
+    }
+
+    @Override
+    public SudzDbtUplCnNotLoadApplyResult applyPmtUplCnNotLoad(List<SudzPmtUplCnNotLoad> rows) {
+        Objects.requireNonNull(rows, "rows");
+        int cnMark = SudzAccessStrMark.now();
+        String note = "Добавлено pmt " + LocalDateTime.now();
+        return sudzDao.applyPmtUplCnNotLoad(rows, cnMark, note);
+    }
+
+    @Override
+    public List<SudzPmtUplAgNotLoad> listPmtUplAgNotLoad(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.findPmtUplAgNotLoad(unloadKey);
+    }
+
+    @Override
+    public SudzPmtUplAgNotLoadApplyResult applyPmtUplAgNotLoad(List<SudzPmtUplAgNotLoad> rows) {
+        Objects.requireNonNull(rows, "rows");
+        String note = "Добавлено pmt AgNot " + LocalDateTime.now();
+        return sudzDao.applyPmtUplAgNotLoad(rows, note);
+    }
+
+    @Override
+    public SudzPmtUplInvNotResult rebuildPmtUplInvNot(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.rebuildPmtUplInvNot(unloadKey);
+    }
+
+    @Override
+    public SudzDbtUplCnCtptExistInvApplyResult applyPmtUplInvNotLoad(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.applyPmtUplInvNotLoad(unloadKey);
+    }
+
+    @Override
+    public List<SudzPmtUplAcNotLoad> listPmtUplAcNotLoad(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.findPmtUplAcNotLoad(unloadKey);
+    }
+
+    @Override
+    public SudzDbtUplAccSmplNotApplyResult applyPmtUplAcNotLoad(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.applyPmtUplAcNotLoad(unloadKey);
+    }
+
+    @Override
+    public List<String> listPmtUplDocNotLoad(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.findPmtUplDocNotLoad(unloadKey);
+    }
+
+    @Override
+    public SudzPmtUplDocNotApplyResult applyPmtUplDocNotLoad(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.applyPmtUplDocNotLoad(unloadKey);
+    }
+
+    @Override
+    public SudzPmtUplInsPmNotResult listPmtUplInsPmNotLoad(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.findPmtUplInsPmNotLoad(unloadKey);
+    }
+
+    @Override
+    public SudzPmtUplInsPmNotApplyResult applyPmtUplInsPmNotLoad(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.applyPmtUplInsPmNotLoad(unloadKey);
     }
 
     @Override

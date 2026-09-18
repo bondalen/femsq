@@ -67,6 +67,17 @@ import com.femsq.database.model.sudz.SudzPmLink;
 import com.femsq.database.model.sudz.SudzPmUplLookup;
 import com.femsq.database.model.sudz.SudzPmtUplFile;
 import com.femsq.database.model.sudz.SudzPmtUplLauncher;
+import com.femsq.database.model.sudz.SudzPmtUplAgNotLoad;
+import com.femsq.database.model.sudz.SudzPmtUplAgNotLoadApplyResult;
+import com.femsq.database.model.sudz.SudzPmtUplAgNotLoadInserted;
+import com.femsq.database.model.sudz.SudzPmtUplCnNotLoad;
+import com.femsq.database.model.sudz.SudzPmtUplInvNotContract;
+import com.femsq.database.model.sudz.SudzPmtUplInvNotResult;
+import com.femsq.database.model.sudz.SudzPmtUplAcNotLoad;
+import com.femsq.database.model.sudz.SudzPmtUplDocNotApplyResult;
+import com.femsq.database.model.sudz.SudzPmtUplInsPmNotApplyResult;
+import com.femsq.database.model.sudz.SudzPmtUplInsPmNotResult;
+import com.femsq.database.model.sudz.SudzPmtUplLogOnlyResult;
 import com.femsq.database.model.sudz.SudzPmtUplTblRow;
 import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzRsltPeriod;
@@ -700,9 +711,25 @@ public class JdbcSudzDao implements SudzDao {
                     statement.executeUpdate();
                     pmKey = readGeneratedKey(statement, "Не удалось получить cn_inv_pm_key");
                 }
-                try (PreparedStatement statement = connection.prepareStatement(fileSql)) {
-                    statement.setInt(1, pmKey);
-                    statement.executeUpdate();
+                // Access/seed может оставить CnInvPmtUplFile без cn_inv_pm_upl:
+                // следующий IDENTITY совпадёт с cipufUpload → UNIQUE UX_CnInvPmtUplFile_Upload.
+                Optional<SudzPmtUplFile> existingFile = findPmtUplFileByUpload(connection, pmKey);
+                if (existingFile.isPresent()) {
+                    String resetSql = "UPDATE " + q("CnInvPmtUplFile")
+                            + " SET cipufPath = N'', cipufFlLoad = 0, cipufLoadingProgress = NULL,"
+                            + " cipufFlTbl = 0, cipufSheet = NULL WHERE cipufUpload = ?";
+                    try (PreparedStatement statement = connection.prepareStatement(resetSql)) {
+                        statement.setInt(1, pmKey);
+                        statement.executeUpdate();
+                    }
+                    log.log(Level.INFO,
+                            "Reset existing CnInvPmtUplFile for new pmKey={0} (orphan/seed reuse)",
+                            pmKey);
+                } else {
+                    try (PreparedStatement statement = connection.prepareStatement(fileSql)) {
+                        statement.setInt(1, pmKey);
+                        statement.executeUpdate();
+                    }
                 }
                 connection.commit();
                 return pmKey;
@@ -921,6 +948,1268 @@ public class JdbcSudzDao implements SudzDao {
             throw exception;
         } catch (SQLException exception) {
             throw wrap("Не удалось заменить CnInvPmtUplTbl unloadKey=" + unloadKey, exception);
+        }
+    }
+
+    @Override
+    public int countPmtUplTbl(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        String sql = "SELECT COUNT(*) FROM " + q("CnInvPmtUplTbl") + " WHERE ciputUnloadKey = ?";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, unloadKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    return 0;
+                }
+                return rs.getInt(1);
+            }
+        } catch (SQLException exception) {
+            throw wrap("Не удалось посчитать CnInvPmtUplTbl unloadKey=" + unloadKey, exception);
+        }
+    }
+
+    @Override
+    public SudzPmtUplLogOnlyResult findPmtUplOidNot(int unloadKey, int sampleLimit) {
+        requireUnloadAndLimit(unloadKey, sampleLimit);
+        String tbl = q("CnInvPmtUplTbl");
+        // LEFT JOIN (как долги), не INNER Access OId — иначе лог структурно пуст (§2.9).
+        String sql = ""
+                + "WITH nums AS ( "
+                + "  SELECT t.ciputCntrPrtNum AS buirg, t.ciputCntrPrtName AS nm, N'контрагент' AS role "
+                + "  FROM " + tbl + " AS t "
+                + "  WHERE t.ciputUnloadKey = ? AND t.ciputCntrPrtNum IS NOT NULL "
+                + "  UNION ALL "
+                + "  SELECT t.ciputAgentNum, t.ciputAgentName, N'агент' "
+                + "  FROM " + tbl + " AS t "
+                + "  WHERE t.ciputUnloadKey = ? AND t.ciputAgentNum IS NOT NULL "
+                + "), "
+                + "uniq AS ( "
+                + "  SELECT buirg, role, MAX(nm) AS nm FROM nums GROUP BY buirg, role "
+                + ") "
+                + "SELECT u.buirg, u.nm, u.role "
+                + "FROM uniq AS u "
+                + "LEFT JOIN ags.org_id AS i ON i.org_id_value_l = u.buirg AND i.org_id_type = 1 "
+                + "WHERE i.org_id_key IS NULL "
+                + "ORDER BY u.role, u.buirg";
+        return queryLogOnly(sql, unloadKey, unloadKey, sampleLimit,
+                rs -> {
+                    Integer buirg = (Integer) rs.getObject("buirg");
+                    String nm = rs.getNString("nm");
+                    String role = rs.getNString("role");
+                    return role + " · БУиРГ " + (buirg == null ? "—" : buirg)
+                            + " · " + (nm == null ? "—" : nm.trim());
+                },
+                "OidNot unloadKey=" + unloadKey);
+    }
+
+    @Override
+    public SudzPmtUplLogOnlyResult findPmtUplCacNot(int unloadKey, int sampleLimit) {
+        requireUnloadAndLimit(unloadKey, sampleLimit);
+        String tbl = q("CnInvPmtUplTbl");
+        // cacOrNull как CnInvPmtUplTblNull; LEFT JOIN cstAgPn по cstapIpgPnN.
+        String sql = ""
+                + "WITH norm AS ( "
+                + "  SELECT CASE "
+                + "    WHEN t.ciputCAC IS NULL OR LTRIM(RTRIM(t.ciputCAC)) = N'' THEN "
+                + "      CASE WHEN t.ciputLink IS NOT NULL AND LEN(t.ciputLink) > 10 "
+                + "                AND SUBSTRING(t.ciputLink, 4, 1) = N'-' "
+                + "           THEN LEFT(t.ciputLink, 11) ELSE NULL END "
+                + "    WHEN LEN(t.ciputCAC) > 10 AND SUBSTRING(t.ciputCAC, 4, 1) = N'-' "
+                + "         THEN LEFT(t.ciputCAC, 11) "
+                + "    ELSE NULL END AS cacOrNull "
+                + "  FROM " + tbl + " AS t "
+                + "  WHERE t.ciputUnloadKey = ? "
+                + "), "
+                + "uniq AS ( "
+                + "  SELECT cacOrNull FROM norm WHERE cacOrNull IS NOT NULL GROUP BY cacOrNull "
+                + ") "
+                + "SELECT u.cacOrNull "
+                + "FROM uniq AS u "
+                + "LEFT JOIN ags.cstAgPn AS p ON u.cacOrNull = p.cstapIpgPnN "
+                + "WHERE p.cstapCsta IS NULL "
+                + "ORDER BY u.cacOrNull";
+        return queryLogOnly(sql, unloadKey, null, sampleLimit,
+                rs -> {
+                    String cac = rs.getNString("cacOrNull");
+                    return cac == null ? "—" : cac.trim();
+                },
+                "CacNot unloadKey=" + unloadKey);
+    }
+
+    @Override
+    public SudzPmtUplLogOnlyResult findPmtUplCnTwo(int unloadKey, int sampleLimit) {
+        requireUnloadAndLimit(unloadKey, sampleLimit);
+        String tbl = q("CnInvPmtUplTbl");
+        String sql = ""
+                + "WITH ctpt AS ( "
+                + "  SELECT t.ciputCntrPrtNum AS CntrPrtNum, "
+                + "         MAX(t.ciputCntrPrtName) AS CntrPrtName, "
+                + "         CASE WHEN t.ciputCnName IS NULL OR LTRIM(RTRIM(t.ciputCnName)) = N'' "
+                + "              THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(t.ciputCnName)) END AS CnName "
+                + "  FROM " + tbl + " AS t "
+                + "  WHERE t.ciputUnloadKey = ? AND t.ciputCntrPrtNum IS NOT NULL "
+                + "  GROUP BY t.ciputCntrPrtNum, "
+                + "           CASE WHEN t.ciputCnName IS NULL OR LTRIM(RTRIM(t.ciputCnName)) = N'' "
+                + "                THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(t.ciputCnName)) END "
+                + "), "
+                + "ex AS ( "
+                + "  SELECT c.cn_key, num.cnnNumNull AS cn_number, i.org_id_value_l "
+                + "  FROM ags.cn AS c "
+                + "  INNER JOIN ags.cn_s AS s ON c.cn_key = s.cn_key AND s.cn_s_type = 2 "
+                + "  INNER JOIN ags.cn_s_org_smpl AS os ON s.cn_s_key = os.csosCn_s "
+                + "  INNER JOIN ags.org_id AS i ON os.csosOrgId = i.org_id_key AND i.org_id_type = 1 "
+                + "  INNER JOIN ags.cnNum AS num ON c.cn_key = num.cnnCn "
+                + "), "
+                + "pairs AS ( "
+                + "  SELECT z.CntrPrtNum, z.CntrPrtName, z.CnName, e.cn_key "
+                + "  FROM ctpt AS z "
+                + "  LEFT JOIN ex AS e ON z.CntrPrtNum = e.org_id_value_l AND z.CnName = e.cn_number "
+                + "  GROUP BY z.CntrPrtNum, z.CntrPrtName, z.CnName, e.cn_key "
+                + ") "
+                + "SELECT CntrPrtNum, CntrPrtName, CnName, COUNT(cn_key) AS cnt "
+                + "FROM pairs "
+                + "GROUP BY CntrPrtNum, CntrPrtName, CnName "
+                + "HAVING COUNT(cn_key) > 1 "
+                + "ORDER BY cnt DESC, CntrPrtNum";
+        return queryLogOnly(sql, unloadKey, null, sampleLimit,
+                rs -> {
+                    Integer num = (Integer) rs.getObject("CntrPrtNum");
+                    String name = rs.getNString("CntrPrtName");
+                    String cn = rs.getNString("CnName");
+                    int cnt = rs.getInt("cnt");
+                    return "БУиРГ " + (num == null ? "—" : num)
+                            + " · " + (name == null ? "—" : name.trim())
+                            + " · № " + (cn == null ? "—" : cn.trim())
+                            + " · cn×" + cnt;
+                },
+                "CnTwo unloadKey=" + unloadKey);
+    }
+
+    @Override
+    public SudzPmtUplLogOnlyResult findPmtUplAgTwo(int unloadKey, int sampleLimit) {
+        requireUnloadAndLimit(unloadKey, sampleLimit);
+        String tbl = q("CnInvPmtUplTbl");
+        // Упрощённый H2: договоры из Tbl (исполнитель type=2), у которых агентов type=1 > 1.
+        String sql = ""
+                + "WITH ctpt AS ( "
+                + "  SELECT t.ciputCntrPrtNum AS CntrPrtNum, "
+                + "         CASE WHEN t.ciputCnName IS NULL OR LTRIM(RTRIM(t.ciputCnName)) = N'' "
+                + "              THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(t.ciputCnName)) END AS CnName, "
+                + "         t.ciputAgentNum, MAX(t.ciputAgentName) AS AgentName "
+                + "  FROM " + tbl + " AS t "
+                + "  WHERE t.ciputUnloadKey = ? AND t.ciputCntrPrtNum IS NOT NULL "
+                + "  GROUP BY t.ciputCntrPrtNum, "
+                + "           CASE WHEN t.ciputCnName IS NULL OR LTRIM(RTRIM(t.ciputCnName)) = N'' "
+                + "                THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(t.ciputCnName)) END, "
+                + "           t.ciputAgentNum "
+                + "), "
+                + "matched AS ( "
+                + "  SELECT z.CntrPrtNum, z.CnName, z.ciputAgentNum, z.AgentName, c.cn_key, "
+                + "         COUNT(DISTINCT osAg.csosKey) AS agCnt "
+                + "  FROM ctpt AS z "
+                + "  INNER JOIN ags.org_id AS i ON z.CntrPrtNum = i.org_id_value_l AND i.org_id_type = 1 "
+                + "  INNER JOIN ags.cn_s_org_smpl AS os ON os.csosOrgId = i.org_id_key "
+                + "  INNER JOIN ags.cn_s AS s ON s.cn_s_key = os.csosCn_s AND s.cn_s_type = 2 "
+                + "  INNER JOIN ags.cn AS c ON c.cn_key = s.cn_key "
+                + "  INNER JOIN ags.cnNum AS num ON num.cnnCn = c.cn_key AND num.cnnNumNull = z.CnName "
+                + "  INNER JOIN ags.cn_s AS sAg ON sAg.cn_key = c.cn_key AND sAg.cn_s_type = 1 "
+                + "  INNER JOIN ags.cn_s_org_smpl AS osAg ON osAg.csosCn_s = sAg.cn_s_key "
+                + "  GROUP BY z.CntrPrtNum, z.CnName, z.ciputAgentNum, z.AgentName, c.cn_key "
+                + ") "
+                + "SELECT CntrPrtNum, CnName, ciputAgentNum, AgentName, cn_key, agCnt "
+                + "FROM matched "
+                + "WHERE agCnt > 1 "
+                + "ORDER BY agCnt DESC, CntrPrtNum";
+        return queryLogOnly(sql, unloadKey, null, sampleLimit,
+                rs -> {
+                    Integer num = (Integer) rs.getObject("CntrPrtNum");
+                    String cn = rs.getNString("CnName");
+                    Integer ag = (Integer) rs.getObject("ciputAgentNum");
+                    int agCnt = rs.getInt("agCnt");
+                    return "cn_key=" + rs.getInt("cn_key")
+                            + " · № " + (cn == null ? "—" : cn.trim())
+                            + " · исп. " + (num == null ? "—" : num)
+                            + " · агент Excel " + (ag == null ? "—" : ag)
+                            + " · ag×" + agCnt;
+                },
+                "AgTwo unloadKey=" + unloadKey);
+    }
+
+    @Override
+    public SudzPmtUplLogOnlyResult findPmtUplInvTwo(int unloadKey, int sampleLimit) {
+        requireUnloadAndLimit(unloadKey, sampleLimit);
+        String tbl = q("CnInvPmtUplTbl");
+        String sql = ""
+                + "WITH invs AS ( "
+                + "  SELECT CASE WHEN t.ciputCnInv IS NULL OR LTRIM(RTRIM(t.ciputCnInv)) = N'' "
+                + "              THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(t.ciputCnInv)) END AS invNum, "
+                + "         MAX(t.ciputCntrPrtNum) AS CntrPrtNum, "
+                + "         MAX(t.ciputCntrPrtName) AS CntrPrtName "
+                + "  FROM " + tbl + " AS t "
+                + "  WHERE t.ciputUnloadKey = ? "
+                + "  GROUP BY CASE WHEN t.ciputCnInv IS NULL OR LTRIM(RTRIM(t.ciputCnInv)) = N'' "
+                + "               THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(t.ciputCnInv)) END "
+                + ") "
+                + "SELECT z.invNum, z.CntrPrtNum, z.CntrPrtName, COUNT(DISTINCT ci.ciKey) AS cnt "
+                + "FROM invs AS z "
+                + "INNER JOIN ags.invNum AS n ON n.inNum = z.invNum OR n.inNumNull = z.invNum "
+                + "INNER JOIN ags.inv AS i ON i.iKey = n.inInv "
+                + "INNER JOIN ags.cnInv AS ci ON ci.ciInv = i.iKey "
+                + "GROUP BY z.invNum, z.CntrPrtNum, z.CntrPrtName "
+                + "HAVING COUNT(DISTINCT ci.ciKey) > 1 "
+                + "ORDER BY cnt DESC, z.invNum";
+        return queryLogOnly(sql, unloadKey, null, sampleLimit,
+                rs -> {
+                    String inv = rs.getNString("invNum");
+                    Integer num = (Integer) rs.getObject("CntrPrtNum");
+                    int cnt = rs.getInt("cnt");
+                    return "СФ " + (inv == null ? "—" : inv.trim())
+                            + " · БУиРГ " + (num == null ? "—" : num)
+                            + " · ci×" + cnt;
+                },
+                "InvTwo unloadKey=" + unloadKey);
+    }
+
+    @Override
+    public SudzPmtUplLogOnlyResult findPmtUplDocNot(int unloadKey, int sampleLimit) {
+        requireUnloadAndLimit(unloadKey, sampleLimit);
+        String tbl = q("CnInvPmtUplTbl");
+        // H2 срез шага 11: коды документов Excel без cn_inv_doc (без полного AcDc-буфера).
+        String sql = ""
+                + "WITH docs AS ( "
+                + "  SELECT LTRIM(RTRIM(t.ciputCnInvDocCode)) AS kod "
+                + "  FROM " + tbl + " AS t "
+                + "  WHERE t.ciputUnloadKey = ? "
+                + "    AND t.ciputCnInvDocCode IS NOT NULL "
+                + "    AND LTRIM(RTRIM(t.ciputCnInvDocCode)) <> N'' "
+                + "  GROUP BY LTRIM(RTRIM(t.ciputCnInvDocCode)) "
+                + ") "
+                + "SELECT d.kod "
+                + "FROM docs AS d "
+                + "LEFT JOIN ags.cn_inv_doc AS x ON d.kod = x.cn_inv_doc_kod "
+                + "WHERE x.cn_inv_doc_key IS NULL "
+                + "ORDER BY d.kod";
+        return queryLogOnly(sql, unloadKey, null, sampleLimit,
+                rs -> {
+                    String kod = rs.getNString("kod");
+                    return kod == null ? "—" : kod.trim();
+                },
+                "DocNot unloadKey=" + unloadKey);
+    }
+
+    /**
+     * SQL {@code cipuDocNot}: distinct коды ПД Tbl без {@code cn_inv_doc}.
+     *
+     * @param tbl квалифицированное {@code CnInvPmtUplTbl}
+     * @return CTE+SELECT с одним {@code ?}
+     */
+    private static String sqlPmtUplDocNot(String tbl) {
+        return ";WITH docs AS ( "
+                + "  SELECT LTRIM(RTRIM(t.ciputCnInvDocCode)) AS kod "
+                + "  FROM " + tbl + " AS t "
+                + "  WHERE t.ciputUnloadKey = ? "
+                + "    AND t.ciputCnInvDocCode IS NOT NULL "
+                + "    AND LTRIM(RTRIM(t.ciputCnInvDocCode)) <> N'' "
+                + "  GROUP BY LTRIM(RTRIM(t.ciputCnInvDocCode)) "
+                + "), "
+                + "missing AS ( "
+                + "  SELECT d.kod "
+                + "  FROM docs AS d "
+                + "  LEFT JOIN ags.cn_inv_doc AS x "
+                + "    ON TRY_CAST(d.kod AS decimal(28, 8)) = x.cn_inv_doc_kod "
+                + "  WHERE x.cn_inv_doc_key IS NULL "
+                + "    AND TRY_CAST(d.kod AS decimal(28, 8)) IS NOT NULL "
+                + ") ";
+    }
+
+    @Override
+    public List<String> findPmtUplDocNotLoad(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        String sql = sqlPmtUplDocNot(q("CnInvPmtUplTbl"))
+                + "SELECT kod FROM missing ORDER BY kod";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, unloadKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                List<String> rows = new ArrayList<>();
+                while (rs.next()) {
+                    String kod = rs.getNString("kod");
+                    if (kod != null && !kod.isBlank()) {
+                        rows.add(kod.trim());
+                    }
+                }
+                return List.copyOf(rows);
+            }
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось выбрать pmt DocNotLoad unloadKey=" + unloadKey, exception);
+        }
+    }
+
+    @Override
+    public SudzPmtUplDocNotApplyResult applyPmtUplDocNotLoad(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        String sql = sqlPmtUplDocNot(q("CnInvPmtUplTbl"))
+                + "INSERT INTO ags.cn_inv_doc (cn_inv_doc_kod) "
+                + "SELECT TRY_CAST(m.kod AS decimal(28, 8)) FROM missing AS m";
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                int inserted;
+                try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                    statement.setInt(1, unloadKey);
+                    inserted = statement.executeUpdate();
+                }
+                connection.commit();
+                log.log(Level.INFO, "applyPmtUplDocNotLoad unloadKey={0} inserted={1}",
+                        new Object[]{unloadKey, inserted});
+                return new SudzPmtUplDocNotApplyResult(inserted);
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось выполнить apply pmt DocNotLoad unloadKey=" + unloadKey, exception);
+        }
+    }
+
+    /**
+     * CTE {@code cipuInsPmNot}: oneCn+oneInv+cias+doc, без уже существующих pm
+     * (inline ExtPm; {@code EXCEPT} по cias/doc/sheet для upl).
+     * Два {@code ?} = unloadKey (stg + EXCEPT).
+     *
+     * @param tbl квалифицированное {@code CnInvPmtUplTbl}
+     * @return CTE до {@code missingKeys} / {@code cand} / {@code agOne} / {@code insPmNot}
+     */
+    private static String sqlPmtUplInsPmNot(String tbl) {
+        return ";WITH stg AS ( "
+                + "  SELECT "
+                + "    a.ciputCntrPrtNum AS CntrPrtNum, "
+                + "    CASE WHEN a.ciputCnName IS NULL OR LTRIM(RTRIM(a.ciputCnName)) = N'' "
+                + "         THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(a.ciputCnName)) END AS CnName, "
+                + "    CASE WHEN a.ciputCnInv IS NULL OR LTRIM(RTRIM(a.ciputCnInv)) = N'' "
+                + "         THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(a.ciputCnInv)) END AS ciputCnInv, "
+                + "    a.ciputAccount, "
+                + "    LTRIM(RTRIM(a.ciputCnInvDocCode)) AS ciputCnInvDocCode, "
+                + "    a.ciputSheetNum, a.ciputUnloadKey, "
+                + "    ISNULL(a.ciputAgentNum, 9999999) AS ciputAgentNum, "
+                + "    a.ciputAgentName, a.ciputLink, a.ciputCAC, "
+                + "    a.ciputEntryDate, a.ciputDocDate, a.ciputDueDate, "
+                + "    a.ciputDbtBlns, a.ciputDbtBlnsOverd, a.ciputDbtBlnsOverdNot, "
+                + "    a.ciputCdtBlns, a.ciputCdtBlnsOverd, a.ciputCdtBlnsOverdNot, a.ciputBlns, "
+                + "    a.ciputAlligmentDate, a.ciputBaseDate, a.ciputCnInvDocSum, "
+                + "    a.ciputStornoReason, a.ciputStornoDocCode, "
+                + "    CASE "
+                + "      WHEN a.ciputCAC IS NULL OR a.ciputCAC = N'' THEN "
+                + "        CASE WHEN SUBSTRING(a.ciputLink, 4, 1) = N'-' AND LEN(a.ciputLink) > 10 "
+                + "             THEN LEFT(a.ciputLink, 11) ELSE NULL END "
+                + "      ELSE "
+                + "        CASE WHEN SUBSTRING(a.ciputCAC, 4, 1) = N'-' AND LEN(a.ciputCAC) > 10 "
+                + "             THEN LEFT(a.ciputCAC, 11) ELSE NULL END "
+                + "    END AS cacOrNull "
+                + "  FROM " + tbl + " AS a "
+                + "  WHERE a.ciputUnloadKey = ? "
+                + "), "
+                + "ctpt AS ( "
+                + "  SELECT CntrPrtNum, CnName, ciputCnInv, ciputAccount "
+                + "  FROM stg "
+                + "  WHERE CntrPrtNum IS NOT NULL AND ciputAccount IS NOT NULL "
+                + "    AND ciputCnInvDocCode IS NOT NULL AND ciputCnInvDocCode <> N'' "
+                + "  GROUP BY CntrPrtNum, CnName, ciputCnInv, ciputAccount "
+                + "), "
+                + "oneCn AS ( "
+                + "  SELECT z.CntrPrtNum, z.CnName, z.ciputCnInv, z.ciputAccount, "
+                + "         MIN(c.cn_key) AS cn_key, MIN(os.csosKey) AS csosKey "
+                + "  FROM ctpt AS z "
+                + "  INNER JOIN ags.org_id AS i "
+                + "    ON z.CntrPrtNum = i.org_id_value_l AND i.org_id_type = 1 "
+                + "  INNER JOIN ags.cn_s_org_smpl AS os ON os.csosOrgId = i.org_id_key "
+                + "  INNER JOIN ags.cn_s AS s ON s.cn_s_key = os.csosCn_s AND s.cn_s_type = 2 "
+                + "  INNER JOIN ags.cn AS c ON c.cn_key = s.cn_key "
+                + "  INNER JOIN ags.cnNum AS num "
+                + "    ON num.cnnCn = c.cn_key AND num.cnnNumNull = z.CnName "
+                + "  GROUP BY z.CntrPrtNum, z.CnName, z.ciputCnInv, z.ciputAccount "
+                + "  HAVING COUNT(DISTINCT c.cn_key) = 1 "
+                + "), "
+                + "oneInv AS ( "
+                + "  SELECT o.CntrPrtNum, o.CnName, o.ciputCnInv, o.ciputAccount, "
+                + "         o.cn_key, o.csosKey, MIN(ci.ciKey) AS ciKey "
+                + "  FROM oneCn AS o "
+                + "  INNER JOIN ags.cnInv AS ci ON ci.ciCn = o.cn_key "
+                + "  INNER JOIN ags.invNum AS n "
+                + "    ON n.inInv = ci.ciInv AND n.inNumNull = o.ciputCnInv "
+                + "  GROUP BY o.CntrPrtNum, o.CnName, o.ciputCnInv, o.ciputAccount, "
+                + "           o.cn_key, o.csosKey "
+                + "  HAVING COUNT(DISTINCT ci.ciKey) = 1 "
+                + "), "
+                + "cand AS ( "
+                + "  SELECT "
+                + "    f.ciasKey, d.cn_inv_doc_key, o.cn_key, o.ciKey, o.csosKey, a.account_key, "
+                + "    s.CntrPrtNum, s.CnName, s.ciputCnInv, s.ciputAccount, s.ciputCnInvDocCode, "
+                + "    s.ciputSheetNum, s.ciputUnloadKey, s.ciputAgentNum, s.ciputAgentName, "
+                + "    s.cacOrNull, s.ciputLink, "
+                + "    s.ciputEntryDate, s.ciputDocDate, s.ciputDueDate, "
+                + "    s.ciputDbtBlns, s.ciputDbtBlnsOverd, s.ciputDbtBlnsOverdNot, "
+                + "    s.ciputCdtBlns, s.ciputCdtBlnsOverd, s.ciputCdtBlnsOverdNot, s.ciputBlns, "
+                + "    s.ciputAlligmentDate, s.ciputBaseDate, s.ciputCnInvDocSum, "
+                + "    s.ciputStornoReason, s.ciputStornoDocCode, "
+                + "    p.cstapKey "
+                + "  FROM oneInv AS o "
+                + "  INNER JOIN ags.accnt AS a ON a.account_num = o.ciputAccount "
+                + "  INNER JOIN ags.cnInvAccntSmpl AS f "
+                + "    ON f.ciasCnInv = o.ciKey "
+                + "   AND f.ciasCn_s_org_smpl = o.csosKey "
+                + "   AND f.ciasAccnt = a.account_key "
+                + "  INNER JOIN stg AS s "
+                + "    ON s.CntrPrtNum = o.CntrPrtNum AND s.CnName = o.CnName "
+                + "   AND s.ciputCnInv = o.ciputCnInv AND s.ciputAccount = o.ciputAccount "
+                + "  INNER JOIN ags.cn_inv_doc AS d "
+                + "    ON TRY_CAST(s.ciputCnInvDocCode AS decimal(18, 0)) = d.cn_inv_doc_kod "
+                + "  LEFT JOIN ags.cstAgPn AS p ON s.cacOrNull = p.cstapIpgPnN "
+                + "), "
+                + "missingKeys AS ( "
+                + "  SELECT ciasKey, cn_inv_doc_key, ciputSheetNum FROM cand "
+                + "  GROUP BY ciasKey, cn_inv_doc_key, ciputSheetNum "
+                + "  EXCEPT "
+                + "  SELECT ciaCnInvAccntSmpl, cn_inv_doc, [number] "
+                + "  FROM ags.cn_inv_pm "
+                + "  WHERE cn_inv_pm_upl = ? "
+                + "), "
+                + "agOne AS ( "
+                + "  SELECT s.cn_key, i.org_id_value_l, MIN(os.csosKey) AS AgCsosKey "
+                + "  FROM (SELECT DISTINCT cn_key FROM cand) AS k "
+                + "  INNER JOIN ags.cn_s AS s ON s.cn_key = k.cn_key AND s.cn_s_type = 1 "
+                + "  INNER JOIN ags.cn_s_org_smpl AS os ON os.csosCn_s = s.cn_s_key "
+                + "  INNER JOIN ags.org_id AS i "
+                + "    ON i.org_id_key = os.csosOrgId AND i.org_id_type = 1 "
+                + "  GROUP BY s.cn_key, i.org_id_value_l "
+                + "  HAVING COUNT(DISTINCT os.csosKey) = 1 "
+                + "), "
+                + "insPmNot AS ( "
+                + "  SELECT c.*, ag.AgCsosKey, "
+                + "         ROW_NUMBER() OVER ( "
+                + "           PARTITION BY c.ciasKey, c.cn_inv_doc_key, c.ciputSheetNum "
+                + "           ORDER BY c.ciputUnloadKey "
+                + "         ) AS rn "
+                + "  FROM cand AS c "
+                + "  INNER JOIN missingKeys AS m "
+                + "    ON c.ciasKey = m.ciasKey "
+                + "   AND c.cn_inv_doc_key = m.cn_inv_doc_key "
+                + "   AND c.ciputSheetNum = m.ciputSheetNum "
+                + "  LEFT JOIN agOne AS ag "
+                + "    ON c.cn_key = ag.cn_key AND c.ciputAgentNum = ag.org_id_value_l "
+                + ") ";
+    }
+
+    @Override
+    public SudzPmtUplInsPmNotResult findPmtUplInsPmNotLoad(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        String sql = sqlPmtUplInsPmNot(q("CnInvPmtUplTbl"))
+                + "SELECT COUNT(*) AS n FROM missingKeys OPTION (RECOMPILE)";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setQueryTimeout(60);
+            statement.setInt(1, unloadKey);
+            statement.setInt(2, unloadKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                int n = 0;
+                if (rs.next()) {
+                    n = rs.getInt("n");
+                }
+                return new SudzPmtUplInsPmNotResult(n);
+            }
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось выбрать pmt InsPmNotLoad unloadKey=" + unloadKey, exception);
+        }
+    }
+
+    @Override
+    public SudzPmtUplInsPmNotApplyResult applyPmtUplInsPmNotLoad(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        String sql = sqlPmtUplInsPmNot(q("CnInvPmtUplTbl"))
+                + "INSERT INTO ags.cn_inv_pm ( "
+                + "  csoCn_s_org_smpl, cn_inv_doc, constract_code, cn_inv_pm_due, "
+                + "  dbt_blns, dbt_blns_overd, dbt_blns_not_overd, "
+                + "  cdt_blns, cdt_blns_overd, cdt_blns_not_overd, blns, "
+                + "  alignment_date, base_date, storno_reason, storno_doc, "
+                + "  cn_inv_pm_upl, [number], mark, cnipCstAgPn, "
+                + "  cn_inv_doc_date, cn_inv_doc_date_entry, cn_inv_doc_sum, cn_inv_doc_link, "
+                + "  ciaCnInvAccntSmpl, cipTimeOfEntry "
+                + ") "
+                + "SELECT "
+                + "  m.AgCsosKey, m.cn_inv_doc_key, m.cacOrNull, m.ciputDueDate, "
+                + "  ISNULL(m.ciputDbtBlns, 0), ISNULL(m.ciputDbtBlnsOverd, 0), "
+                + "  ISNULL(m.ciputDbtBlnsOverdNot, 0), "
+                + "  ISNULL(m.ciputCdtBlns, 0), ISNULL(m.ciputCdtBlnsOverd, 0), "
+                + "  ISNULL(m.ciputCdtBlnsOverdNot, 0), ISNULL(m.ciputBlns, 0), "
+                + "  m.ciputAlligmentDate, m.ciputBaseDate, m.ciputStornoReason, "
+                + "  TRY_CAST(m.ciputStornoDocCode AS decimal(28, 8)), "
+                + "  m.ciputUnloadKey, m.ciputSheetNum, "
+                + "  CAST(FORMAT(SYSDATETIME(), 'MddHHmm') AS int), "
+                + "  m.cstapKey, "
+                + "  m.ciputDocDate, m.ciputEntryDate, m.ciputCnInvDocSum, m.ciputLink, "
+                + "  m.ciasKey, SYSDATETIME() "
+                + "FROM insPmNot AS m "
+                + "WHERE m.rn = 1 "
+                + "OPTION (RECOMPILE)";
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                int inserted;
+                try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                    statement.setQueryTimeout(90);
+                    statement.setInt(1, unloadKey);
+                    statement.setInt(2, unloadKey);
+                    inserted = statement.executeUpdate();
+                }
+                connection.commit();
+                log.log(Level.INFO, "applyPmtUplInsPmNotLoad unloadKey={0} inserted={1}",
+                        new Object[]{unloadKey, inserted});
+                return new SudzPmtUplInsPmNotApplyResult(inserted);
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось выполнить apply pmt InsPmNotLoad unloadKey=" + unloadKey, exception);
+        }
+    }
+
+    @Override
+    public SudzPmtUplLogOnlyResult findPmtUplInsPmExt(int unloadKey, int sampleLimit) {
+        requireUnloadAndLimit(unloadKey, sampleLimit);
+        // H2 срез шага 13: уже загруженные pm этого upl (полный MainTest — после ExtPm буфера / H3).
+        String sql = ""
+                + "SELECT p.cn_inv_pm_key, p.number, d.cn_inv_doc_kod "
+                + "FROM ags.cn_inv_pm AS p "
+                + "LEFT JOIN ags.cn_inv_doc AS d ON d.cn_inv_doc_key = p.cn_inv_doc "
+                + "WHERE p.cn_inv_pm_upl = ? "
+                + "ORDER BY p.cn_inv_pm_key";
+        return queryLogOnly(sql, unloadKey, null, sampleLimit,
+                rs -> "pm_key=" + rs.getInt("cn_inv_pm_key")
+                        + " · sheet/number=" + rs.getObject("number")
+                        + " · doc=" + (rs.getNString("cn_inv_doc_kod") == null
+                        ? "—" : rs.getNString("cn_inv_doc_kod").trim()),
+                "InsPmExt unloadKey=" + unloadKey);
+    }
+
+    @Override
+    public List<SudzPmtUplCnNotLoad> findPmtUplCnNotLoad(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        String tbl = q("CnInvPmtUplTbl");
+        // cipuCn_CtptCnNot + SqlCipuCn_CtptCnNot.countCn (схожий № в cn/cnNum).
+        String sql = ""
+                + "WITH ctpt AS ( "
+                + "  SELECT t.ciputCntrPrtNum AS CntrPrtNum, "
+                + "         MAX(t.ciputCntrPrtName) AS CntrPrtName, "
+                + "         CASE WHEN t.ciputCnName IS NULL OR LTRIM(RTRIM(t.ciputCnName)) = N'' "
+                + "              THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(t.ciputCnName)) END AS CnName, "
+                + "         MAX(oi.org_id_key) AS org_id_key "
+                + "  FROM " + tbl + " AS t "
+                + "  LEFT JOIN ags.org_id AS oi "
+                + "    ON t.ciputCntrPrtNum = oi.org_id_value_l AND oi.org_id_type = 1 "
+                + "  WHERE t.ciputUnloadKey = ? AND t.ciputCntrPrtNum IS NOT NULL "
+                + "  GROUP BY t.ciputCntrPrtNum, "
+                + "           CASE WHEN t.ciputCnName IS NULL OR LTRIM(RTRIM(t.ciputCnName)) = N'' "
+                + "                THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(t.ciputCnName)) END "
+                + "), "
+                + "ex AS ( "
+                + "  SELECT c.cn_key, num.cnnNumNull AS cn_number, i.org_id_value_l "
+                + "  FROM ags.cn AS c "
+                + "  INNER JOIN ags.cn_s AS s ON c.cn_key = s.cn_key AND s.cn_s_type = 2 "
+                + "  INNER JOIN ags.cn_s_org_smpl AS os ON s.cn_s_key = os.csosCn_s "
+                + "  INNER JOIN ags.org_id AS i ON os.csosOrgId = i.org_id_key AND i.org_id_type = 1 "
+                + "  INNER JOIN ags.cnNum AS num ON c.cn_key = num.cnnCn "
+                + "), "
+                + "pairs AS ( "
+                + "  SELECT z.CntrPrtNum, z.CntrPrtName, z.CnName, z.org_id_key, e.cn_key "
+                + "  FROM ctpt AS z "
+                + "  LEFT JOIN ex AS e ON z.CntrPrtNum = e.org_id_value_l AND z.CnName = e.cn_number "
+                + "  GROUP BY z.CntrPrtNum, z.CntrPrtName, z.CnName, z.org_id_key, e.cn_key "
+                + "), "
+                + "missing AS ( "
+                + "  SELECT CntrPrtNum, CntrPrtName, CnName, org_id_key "
+                + "  FROM pairs "
+                + "  GROUP BY CntrPrtNum, CntrPrtName, CnName, org_id_key "
+                + "  HAVING COUNT(cn_key) = 0 "
+                + ") "
+                + "SELECT m.CntrPrtNum, m.CntrPrtName, m.CnName, m.org_id_key, "
+                + "       (SELECT COUNT(*) FROM ags.cn AS c "
+                + "         INNER JOIN ags.cnNum AS n ON c.cn_key = n.cnnCn "
+                + "         WHERE n.cnnNumNull = m.CnName) AS countCn "
+                + "FROM missing AS m "
+                + "ORDER BY m.CntrPrtNum, m.CnName";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, unloadKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                List<SudzPmtUplCnNotLoad> rows = new ArrayList<>();
+                while (rs.next()) {
+                    rows.add(new SudzPmtUplCnNotLoad(
+                            (Integer) rs.getObject("CntrPrtNum"),
+                            (Integer) rs.getObject("org_id_key"),
+                            rs.getNString("CntrPrtName"),
+                            rs.getNString("CnName"),
+                            rs.getInt("countCn")
+                    ));
+                }
+                return List.copyOf(rows);
+            }
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось выбрать pmt CnNotLoad unloadKey=" + unloadKey, exception);
+        }
+    }
+
+    @Override
+    public SudzDbtUplCnNotLoadApplyResult applyPmtUplCnNotLoad(
+            List<SudzPmtUplCnNotLoad> rows,
+            int cnMark,
+            String note
+    ) {
+        Objects.requireNonNull(rows, "rows");
+        Objects.requireNonNull(note, "note");
+        if (cnMark <= 0) {
+            throw new IllegalArgumentException("cnMark должен быть положительным: " + cnMark);
+        }
+        Map<Integer, SudzDbtUplCnNotLoadInserted> inserted = new LinkedHashMap<>();
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                int index = 1;
+                for (SudzPmtUplCnNotLoad row : rows) {
+                    if (row.countCn() == 0
+                            && row.orgIdKey() != null && row.orgIdKey() > 0
+                            && row.cnName() != null && !row.cnName().isBlank()
+                            && !"NullИлиПусто".equals(row.cnName())) {
+                        SudzDbtUplCnNotLoad asDbt = new SudzDbtUplCnNotLoad(
+                                row.buirg(),
+                                row.orgIdKey(),
+                                row.name(),
+                                null,
+                                row.cnName(),
+                                null,
+                                0,
+                                1
+                        );
+                        inserted.put(index, insertCnNotLoadChain(connection, asDbt, cnMark, note, now));
+                    }
+                    index++;
+                }
+                connection.commit();
+                log.log(Level.INFO, "pmt CnNotLoad apply cnMark={0} inserted={1}",
+                        new Object[]{cnMark, inserted.size()});
+                return new SudzDbtUplCnNotLoadApplyResult(cnMark, note, inserted, inserted.size());
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось выполнить apply pmt CnNotLoad cnMark=" + cnMark, exception);
+        }
+    }
+
+    @Override
+    public List<SudzPmtUplAgNotLoad> findPmtUplAgNotLoad(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        String tbl = q("CnInvPmtUplTbl");
+        // Пары (исполнитель+№ → cn_key) + агент Excel без smpl type=1 на этом cn.
+        String sql = ""
+                + "WITH ctpt AS ( "
+                + "  SELECT t.ciputCntrPrtNum AS CntrPrtNum, "
+                + "         CASE WHEN t.ciputCnName IS NULL OR LTRIM(RTRIM(t.ciputCnName)) = N'' "
+                + "              THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(t.ciputCnName)) END AS CnName, "
+                + "         t.ciputAgentNum, MAX(t.ciputAgentName) AS AgentName "
+                + "  FROM " + tbl + " AS t "
+                + "  WHERE t.ciputUnloadKey = ? "
+                + "    AND t.ciputCntrPrtNum IS NOT NULL "
+                + "    AND t.ciputAgentNum IS NOT NULL "
+                + "    AND t.ciputAgentNum <> 9999999 "
+                + "  GROUP BY t.ciputCntrPrtNum, "
+                + "           CASE WHEN t.ciputCnName IS NULL OR LTRIM(RTRIM(t.ciputCnName)) = N'' "
+                + "                THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(t.ciputCnName)) END, "
+                + "           t.ciputAgentNum "
+                + "), "
+                + "matched AS ( "
+                + "  SELECT z.CnName, z.ciputAgentNum, z.AgentName, c.cn_key, "
+                + "         (SELECT COUNT(*) FROM ags.cn_s AS sAg "
+                + "           INNER JOIN ags.cn_s_org_smpl AS osAg ON osAg.csosCn_s = sAg.cn_s_key "
+                + "           INNER JOIN ags.org_id AS oiAg "
+                + "             ON oiAg.org_id_key = osAg.csosOrgId AND oiAg.org_id_type = 1 "
+                + "           WHERE sAg.cn_key = c.cn_key AND sAg.cn_s_type = 1 "
+                + "             AND oiAg.org_id_value_l = z.ciputAgentNum) AS CountCsosKey, "
+                + "         (SELECT MIN(sAg.cn_s_key) FROM ags.cn_s AS sAg "
+                + "           WHERE sAg.cn_key = c.cn_key AND sAg.cn_s_type = 1) AS cn_s_key, "
+                + "         (SELECT MIN(oi.org_id_key) FROM ags.org_id AS oi "
+                + "           WHERE oi.org_id_value_l = z.ciputAgentNum AND oi.org_id_type = 1) AS org_id_key "
+                + "  FROM ctpt AS z "
+                + "  INNER JOIN ags.org_id AS i "
+                + "    ON z.CntrPrtNum = i.org_id_value_l AND i.org_id_type = 1 "
+                + "  INNER JOIN ags.cn_s_org_smpl AS os ON os.csosOrgId = i.org_id_key "
+                + "  INNER JOIN ags.cn_s AS s ON s.cn_s_key = os.csosCn_s AND s.cn_s_type = 2 "
+                + "  INNER JOIN ags.cn AS c ON c.cn_key = s.cn_key "
+                + "  INNER JOIN ags.cnNum AS num ON num.cnnCn = c.cn_key AND num.cnnNumNull = z.CnName "
+                + ") "
+                + "SELECT cn_key, cn_s_key, CnName, ciputAgentNum, AgentName, org_id_key "
+                + "FROM matched "
+                + "WHERE CountCsosKey = 0 "
+                + "ORDER BY ciputAgentNum, CnName, cn_key";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, unloadKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                List<SudzPmtUplAgNotLoad> rows = new ArrayList<>();
+                while (rs.next()) {
+                    Integer cnSKey = (Integer) rs.getObject("cn_s_key");
+                    rows.add(new SudzPmtUplAgNotLoad(
+                            rs.getInt("cn_key"),
+                            cnSKey,
+                            rs.getNString("CnName"),
+                            (Integer) rs.getObject("ciputAgentNum"),
+                            rs.getNString("AgentName"),
+                            (Integer) rs.getObject("org_id_key")
+                    ));
+                }
+                return List.copyOf(rows);
+            }
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось выбрать pmt AgNotLoad unloadKey=" + unloadKey, exception);
+        }
+    }
+
+    @Override
+    public SudzPmtUplAgNotLoadApplyResult applyPmtUplAgNotLoad(
+            List<SudzPmtUplAgNotLoad> rows,
+            String note
+    ) {
+        Objects.requireNonNull(rows, "rows");
+        Objects.requireNonNull(note, "note");
+        Map<Integer, SudzPmtUplAgNotLoadInserted> inserted = new LinkedHashMap<>();
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                int index = 1;
+                for (SudzPmtUplAgNotLoad row : rows) {
+                    if (row.orgIdKey() != null && row.orgIdKey() > 0 && row.cnKey() > 0) {
+                        inserted.put(index, insertAgNotLoadChain(connection, row, now));
+                    }
+                    index++;
+                }
+                connection.commit();
+                log.log(Level.INFO, "pmt AgNotLoad apply inserted={0}", inserted.size());
+                return new SudzPmtUplAgNotLoadApplyResult(note, inserted, inserted.size());
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось выполнить apply pmt AgNotLoad", exception);
+        }
+    }
+
+    @Override
+    public SudzPmtUplInvNotResult rebuildPmtUplInvNot(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        String tbl = q("CnInvPmtUplTbl");
+        String buf = q("CnInvPmtUplTblCnInv");
+        long t0 = System.nanoTime();
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                try (PreparedStatement del = connection.prepareStatement("DELETE FROM " + buf)) {
+                    del.executeUpdate();
+                }
+                // cipuCn_CtptCnOneInvNotIns: CountCn=1 + anti-join cnInv/inNumNull (Access exact).
+                // SQL Server: CTE (;WITH) перед INSERT, не после.
+                String insert = ""
+                        + ";WITH ctpt AS ( "
+                        + "  SELECT t.ciputCntrPrtNum AS CntrPrtNum, "
+                        + "         MAX(t.ciputCntrPrtName) AS CntrPrtName, "
+                        + "         CASE WHEN t.ciputCnName IS NULL OR LTRIM(RTRIM(t.ciputCnName)) = N'' "
+                        + "              THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(t.ciputCnName)) END AS CnName, "
+                        + "         CASE WHEN t.ciputCnInv IS NULL OR LTRIM(RTRIM(t.ciputCnInv)) = N'' "
+                        + "              THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(t.ciputCnInv)) END AS ciputCnInv "
+                        + "  FROM " + tbl + " AS t "
+                        + "  WHERE t.ciputUnloadKey = ? AND t.ciputCntrPrtNum IS NOT NULL "
+                        + "  GROUP BY t.ciputCntrPrtNum, "
+                        + "           CASE WHEN t.ciputCnName IS NULL OR LTRIM(RTRIM(t.ciputCnName)) = N'' "
+                        + "                THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(t.ciputCnName)) END, "
+                        + "           CASE WHEN t.ciputCnInv IS NULL OR LTRIM(RTRIM(t.ciputCnInv)) = N'' "
+                        + "                THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(t.ciputCnInv)) END "
+                        + "), "
+                        + "oneCn AS ( "
+                        + "  SELECT z.CntrPrtNum, z.CntrPrtName, z.CnName, z.ciputCnInv, "
+                        + "         MIN(c.cn_key) AS cn_key, "
+                        + "         MIN(os.csosKey) AS csosKey "
+                        + "  FROM ctpt AS z "
+                        + "  INNER JOIN ags.org_id AS i "
+                        + "    ON z.CntrPrtNum = i.org_id_value_l AND i.org_id_type = 1 "
+                        + "  INNER JOIN ags.cn_s_org_smpl AS os ON os.csosOrgId = i.org_id_key "
+                        + "  INNER JOIN ags.cn_s AS s ON s.cn_s_key = os.csosCn_s AND s.cn_s_type = 2 "
+                        + "  INNER JOIN ags.cn AS c ON c.cn_key = s.cn_key "
+                        + "  INNER JOIN ags.cnNum AS num "
+                        + "    ON num.cnnCn = c.cn_key AND num.cnnNumNull = z.CnName "
+                        + "  GROUP BY z.CntrPrtNum, z.CntrPrtName, z.CnName, z.ciputCnInv "
+                        + "  HAVING COUNT(DISTINCT c.cn_key) = 1 "
+                        + ") "
+                        + "INSERT INTO " + buf
+                        + " (ciputciCntrPrtNum, ciputciCntrPrtName, ciputciCnName,"
+                        + "  ciputciCn_key, ciputciCsosKey, ciputciCnInv, ciputciCnInvNumCount) "
+                        + "SELECT o.CntrPrtNum, o.CntrPrtName, o.CnName, o.cn_key, o.csosKey, "
+                        + "       o.ciputCnInv, cnt.inNumCount "
+                        + "FROM oneCn AS o "
+                        + "LEFT JOIN ( "
+                        + "  SELECT ci.ciCn, n.inNumNull "
+                        + "  FROM ags.cnInv AS ci "
+                        + "  INNER JOIN ags.invNum AS n ON n.inInv = ci.ciInv "
+                        + "  GROUP BY ci.ciCn, n.inNumNull "
+                        + ") AS g ON g.ciCn = o.cn_key AND g.inNumNull = o.ciputCnInv "
+                        + "LEFT JOIN ( "
+                        + "  SELECT n.inNumNull, COUNT(DISTINCT n.inInv) AS inNumCount "
+                        + "  FROM ags.invNum AS n "
+                        + "  GROUP BY n.inNumNull "
+                        + ") AS cnt ON cnt.inNumNull = o.ciputCnInv "
+                        + "WHERE g.ciCn IS NULL";
+                int inserted;
+                try (PreparedStatement ps = connection.prepareStatement(insert)) {
+                    ps.setInt(1, unloadKey);
+                    inserted = ps.executeUpdate();
+                }
+                List<SudzPmtUplInvNotContract> contracts = loadPmtInvNotContracts(connection, buf);
+                connection.commit();
+                long ms = (System.nanoTime() - t0) / 1_000_000L;
+                log.log(Level.INFO,
+                        "rebuildPmtUplInvNot unloadKey={0} rows={1} contracts={2} ms={3}",
+                        new Object[]{unloadKey, inserted, contracts.size(), ms});
+                return new SudzPmtUplInvNotResult(inserted, contracts);
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось пересобрать CnInvPmtUplTblCnInv unloadKey=" + unloadKey, exception);
+        }
+    }
+
+    @Override
+    public SudzDbtUplCnCtptExistInvApplyResult applyPmtUplInvNotLoad(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        String buf = q("CnInvPmtUplTblCnInv");
+        String select = "SELECT ciputciCn_key, ciputciCnInv FROM " + buf
+                + " WHERE ciputciCnInvNumCount IS NULL"
+                + " ORDER BY ciputciCn_key, ciputciRow";
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                int inserted = 0;
+                int aliasOnly = 0;
+                try (PreparedStatement statement = connection.prepareStatement(select);
+                     ResultSet rs = statement.executeQuery()) {
+                    while (rs.next()) {
+                        int cnKey = rs.getInt("ciputciCn_key");
+                        String cnInv = rs.getNString("ciputciCnInv");
+                        if (tryInsertInvNumAliasOnCn(connection, cnKey, cnInv, now)) {
+                            aliasOnly++;
+                            continue;
+                        }
+                        int invKey;
+                        try (PreparedStatement inv = connection.prepareStatement(
+                                "INSERT INTO ags.inv (iTimeOfEntry) VALUES (?)",
+                                Statement.RETURN_GENERATED_KEYS)) {
+                            inv.setTimestamp(1, now);
+                            inv.executeUpdate();
+                            invKey = readGeneratedKey(inv, "Не удалось получить iKey");
+                        }
+                        try (PreparedStatement invNum = connection.prepareStatement(
+                                "INSERT INTO ags.invNum (inNum, inInv, inTimeOfEntry) VALUES (?, ?, ?)")) {
+                            if (cnInv == null || cnInv.isBlank() || "NullИлиПусто".equals(cnInv)) {
+                                invNum.setNull(1, Types.NVARCHAR);
+                            } else {
+                                invNum.setNString(1, cnInv);
+                            }
+                            invNum.setInt(2, invKey);
+                            invNum.setTimestamp(3, now);
+                            invNum.executeUpdate();
+                        }
+                        try (PreparedStatement cnInvPs = connection.prepareStatement(
+                                "INSERT INTO ags.cnInv (ciInv, ciCn, ciTimeOfEntry) VALUES (?, ?, ?)")) {
+                            cnInvPs.setInt(1, invKey);
+                            cnInvPs.setInt(2, cnKey);
+                            cnInvPs.setTimestamp(3, now);
+                            cnInvPs.executeUpdate();
+                        }
+                        inserted++;
+                    }
+                }
+                connection.commit();
+                log.log(Level.INFO,
+                        "applyPmtUplInvNotLoad unloadKey={0} inserted={1} aliasOnly={2}",
+                        new Object[]{unloadKey, inserted, aliasOnly});
+                return new SudzDbtUplCnCtptExistInvApplyResult(inserted);
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось выполнить apply pmt InvNotLoad unloadKey=" + unloadKey, exception);
+        }
+    }
+
+    /**
+     * Группирует буфер TblCnInv по договору для HTML-лога Access.
+     */
+    private static List<SudzPmtUplInvNotContract> loadPmtInvNotContracts(
+            Connection connection,
+            String buf
+    ) throws SQLException {
+        String sql = "SELECT ciputciCn_key, ciputciCnName, ciputciCntrPrtNum, ciputciCntrPrtName,"
+                + " ciputciCnInv, ciputciCnInvNumCount "
+                + "FROM " + buf + " ORDER BY ciputciCn_key, ciputciRow";
+        Map<Integer, List<SudzDbtUplCnCtptExistInvItem>> byCn = new LinkedHashMap<>();
+        Map<Integer, String> names = new LinkedHashMap<>();
+        Map<Integer, Integer> buirgs = new LinkedHashMap<>();
+        Map<Integer, String> partyNames = new LinkedHashMap<>();
+        try (PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet rs = statement.executeQuery()) {
+            while (rs.next()) {
+                int cnKey = rs.getInt("ciputciCn_key");
+                names.putIfAbsent(cnKey, rs.getNString("ciputciCnName"));
+                buirgs.putIfAbsent(cnKey, (Integer) rs.getObject("ciputciCntrPrtNum"));
+                partyNames.putIfAbsent(cnKey, rs.getNString("ciputciCntrPrtName"));
+                Integer count = (Integer) rs.getObject("ciputciCnInvNumCount");
+                byCn.computeIfAbsent(cnKey, key -> new ArrayList<>())
+                        .add(new SudzDbtUplCnCtptExistInvItem(rs.getNString("ciputciCnInv"), count));
+            }
+        }
+        List<SudzPmtUplInvNotContract> contracts = new ArrayList<>();
+        for (Map.Entry<Integer, List<SudzDbtUplCnCtptExistInvItem>> entry : byCn.entrySet()) {
+            List<SudzDbtUplCnCtptExistInvItem> invoices = entry.getValue();
+            int cnKey = entry.getKey();
+            contracts.add(new SudzPmtUplInvNotContract(
+                    cnKey,
+                    names.get(cnKey),
+                    buirgs.get(cnKey),
+                    partyNames.get(cnKey),
+                    invoices.size(),
+                    invoices
+            ));
+        }
+        return List.copyOf(contracts);
+    }
+
+    /**
+     * CTE {@code cipuCn_CtptCnOneInvOneAcNot}: CountCn=1, CountCi=1, нет cnInvAccntSmpl.
+     *
+     * @param tbl квалифицированное {@code CnInvPmtUplTbl}
+     * @return SQL с одним {@code ?} = unloadKey; финальный SELECT missing
+     */
+    private static String sqlPmtUplAcNot(String tbl) {
+        return ";WITH ctpt AS ( "
+                + "  SELECT t.ciputCntrPrtNum AS CntrPrtNum, "
+                + "         MAX(t.ciputCntrPrtName) AS CntrPrtName, "
+                + "         CASE WHEN t.ciputCnName IS NULL OR LTRIM(RTRIM(t.ciputCnName)) = N'' "
+                + "              THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(t.ciputCnName)) END AS CnName, "
+                + "         CASE WHEN t.ciputCnInv IS NULL OR LTRIM(RTRIM(t.ciputCnInv)) = N'' "
+                + "              THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(t.ciputCnInv)) END AS ciputCnInv, "
+                + "         t.ciputAccount "
+                + "  FROM " + tbl + " AS t "
+                + "  WHERE t.ciputUnloadKey = ? "
+                + "    AND t.ciputCntrPrtNum IS NOT NULL "
+                + "    AND t.ciputAccount IS NOT NULL "
+                + "  GROUP BY t.ciputCntrPrtNum, "
+                + "           CASE WHEN t.ciputCnName IS NULL OR LTRIM(RTRIM(t.ciputCnName)) = N'' "
+                + "                THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(t.ciputCnName)) END, "
+                + "           CASE WHEN t.ciputCnInv IS NULL OR LTRIM(RTRIM(t.ciputCnInv)) = N'' "
+                + "                THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(t.ciputCnInv)) END, "
+                + "           t.ciputAccount "
+                + "), "
+                + "oneCn AS ( "
+                + "  SELECT z.CntrPrtNum, z.CntrPrtName, z.CnName, z.ciputCnInv, z.ciputAccount, "
+                + "         MIN(c.cn_key) AS cn_key, MIN(os.csosKey) AS csosKey "
+                + "  FROM ctpt AS z "
+                + "  INNER JOIN ags.org_id AS i "
+                + "    ON z.CntrPrtNum = i.org_id_value_l AND i.org_id_type = 1 "
+                + "  INNER JOIN ags.cn_s_org_smpl AS os ON os.csosOrgId = i.org_id_key "
+                + "  INNER JOIN ags.cn_s AS s ON s.cn_s_key = os.csosCn_s AND s.cn_s_type = 2 "
+                + "  INNER JOIN ags.cn AS c ON c.cn_key = s.cn_key "
+                + "  INNER JOIN ags.cnNum AS num "
+                + "    ON num.cnnCn = c.cn_key AND num.cnnNumNull = z.CnName "
+                + "  GROUP BY z.CntrPrtNum, z.CntrPrtName, z.CnName, z.ciputCnInv, z.ciputAccount "
+                + "  HAVING COUNT(DISTINCT c.cn_key) = 1 "
+                + "), "
+                + "oneInv AS ( "
+                + "  SELECT o.CntrPrtNum, o.CntrPrtName, o.CnName, o.ciputCnInv, o.ciputAccount, "
+                + "         o.cn_key, o.csosKey, MIN(ci.ciKey) AS ciKey "
+                + "  FROM oneCn AS o "
+                + "  INNER JOIN ags.cnInv AS ci ON ci.ciCn = o.cn_key "
+                + "  INNER JOIN ags.invNum AS n "
+                + "    ON n.inInv = ci.ciInv AND n.inNumNull = o.ciputCnInv "
+                + "  GROUP BY o.CntrPrtNum, o.CntrPrtName, o.CnName, o.ciputCnInv, o.ciputAccount, "
+                + "           o.cn_key, o.csosKey "
+                + "  HAVING COUNT(DISTINCT ci.ciKey) = 1 "
+                + "), "
+                + "missing AS ( "
+                + "  SELECT o.ciKey, o.csosKey, o.ciputAccount, o.CntrPrtNum, o.CntrPrtName, "
+                + "         o.CnName, o.cn_key, o.ciputCnInv, a.account_key "
+                + "  FROM oneInv AS o "
+                + "  INNER JOIN ags.accnt AS a ON a.account_num = o.ciputAccount "
+                + "  LEFT JOIN ags.cnInvAccntSmpl AS f "
+                + "    ON f.ciasCnInv = o.ciKey "
+                + "   AND f.ciasCn_s_org_smpl = o.csosKey "
+                + "   AND f.ciasAccnt = a.account_key "
+                + "  WHERE f.ciasKey IS NULL "
+                + ") ";
+    }
+
+    @Override
+    public List<SudzPmtUplAcNotLoad> findPmtUplAcNotLoad(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        String sql = sqlPmtUplAcNot(q("CnInvPmtUplTbl"))
+                + "SELECT ciKey, csosKey, ciputAccount, CntrPrtNum, CntrPrtName, CnName, "
+                + "       cn_key, ciputCnInv, account_key "
+                + "FROM missing "
+                + "ORDER BY CntrPrtNum, CnName, ciputCnInv, ciputAccount";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, unloadKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                List<SudzPmtUplAcNotLoad> rows = new ArrayList<>();
+                while (rs.next()) {
+                    rows.add(new SudzPmtUplAcNotLoad(
+                            rs.getInt("ciKey"),
+                            rs.getInt("csosKey"),
+                            rs.getInt("ciputAccount"),
+                            rs.getInt("account_key"),
+                            (Integer) rs.getObject("CntrPrtNum"),
+                            rs.getNString("CntrPrtName"),
+                            rs.getNString("CnName"),
+                            rs.getInt("cn_key"),
+                            rs.getNString("ciputCnInv")
+                    ));
+                }
+                return List.copyOf(rows);
+            }
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось выбрать pmt AcNotLoad unloadKey=" + unloadKey, exception);
+        }
+    }
+
+    @Override
+    public SudzDbtUplAccSmplNotApplyResult applyPmtUplAcNotLoad(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+        String sql = sqlPmtUplAcNot(q("CnInvPmtUplTbl"))
+                + "INSERT INTO ags.cnInvAccntSmpl "
+                + "  (ciasCnInv, ciasAccnt, ciasCn_s_org_smpl, ciasTimeOfEntry) "
+                + "SELECT m.ciKey, m.account_key, m.csosKey, ? "
+                + "FROM missing AS m "
+                + "GROUP BY m.ciKey, m.account_key, m.csosKey";
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                int inserted;
+                try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                    statement.setInt(1, unloadKey);
+                    statement.setTimestamp(2, now);
+                    inserted = statement.executeUpdate();
+                }
+                connection.commit();
+                log.log(Level.INFO, "applyPmtUplAcNotLoad unloadKey={0} inserted={1}",
+                        new Object[]{unloadKey, inserted});
+                return new SudzDbtUplAccSmplNotApplyResult(inserted);
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось выполнить apply pmt AcNotLoad unloadKey=" + unloadKey, exception);
+        }
+    }
+
+    /**
+     * INSERT агента: {@code cn_s} type=1 (при необходимости) + smpl + {@code cn_s_org}.
+     */
+    private SudzPmtUplAgNotLoadInserted insertAgNotLoadChain(
+            Connection connection,
+            SudzPmtUplAgNotLoad row,
+            Timestamp now
+    ) throws SQLException {
+        boolean createdCnS = false;
+        int cnSKey;
+        if (row.cnSKey() != null && row.cnSKey() > 0) {
+            cnSKey = row.cnSKey();
+        } else {
+            Integer existing = findAgentCnSKey(connection, row.cnKey());
+            if (existing != null) {
+                cnSKey = existing;
+            } else {
+                try (PreparedStatement statement = connection.prepareStatement(
+                        "INSERT INTO ags.cn_s (cn_key, cn_s_type) VALUES (?, 1)",
+                        Statement.RETURN_GENERATED_KEYS)) {
+                    statement.setInt(1, row.cnKey());
+                    statement.executeUpdate();
+                    cnSKey = readGeneratedKey(statement, "Не удалось получить cn_s_key агента");
+                    createdCnS = true;
+                }
+            }
+        }
+        int csosKey;
+        try (PreparedStatement statement = connection.prepareStatement(
+                "INSERT INTO ags.cn_s_org_smpl (csosCn_s, csosOrgId, csosTimeOfEntry) VALUES (?, ?, ?)",
+                Statement.RETURN_GENERATED_KEYS)) {
+            statement.setInt(1, cnSKey);
+            statement.setInt(2, row.orgIdKey());
+            statement.setTimestamp(3, now);
+            statement.executeUpdate();
+            csosKey = readGeneratedKey(statement, "Не удалось получить csosKey агента");
+        }
+        int cnSOrgKey;
+        try (PreparedStatement statement = connection.prepareStatement(
+                "INSERT INTO ags.cn_s_org (csoCn_s_org_smpl, csoTimeOfEntry) VALUES (?, ?)",
+                Statement.RETURN_GENERATED_KEYS)) {
+            statement.setInt(1, csosKey);
+            statement.setTimestamp(2, now);
+            statement.executeUpdate();
+            cnSOrgKey = readGeneratedKey(statement, "Не удалось получить cn_s_org_key агента");
+        }
+        return new SudzPmtUplAgNotLoadInserted(cnSKey, csosKey, cnSOrgKey, createdCnS);
+    }
+
+    private static Integer findAgentCnSKey(Connection connection, int cnKey) throws SQLException {
+        try (PreparedStatement find = connection.prepareStatement(
+                "SELECT cn_s_key FROM ags.cn_s WHERE cn_key = ? AND cn_s_type = 1")) {
+            find.setInt(1, cnKey);
+            try (ResultSet rs = find.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Общий исполнитель log-only SELECT → {@link SudzPmtUplLogOnlyResult}.
+     */
+    private SudzPmtUplLogOnlyResult queryLogOnly(
+            String sql,
+            int unloadKey,
+            Integer unloadKey2,
+            int sampleLimit,
+            SqlSampleMapper mapper,
+            String errorContext
+    ) {
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, unloadKey);
+            if (unloadKey2 != null) {
+                statement.setInt(2, unloadKey2);
+            }
+            try (ResultSet rs = statement.executeQuery()) {
+                List<String> samples = new ArrayList<>();
+                int total = 0;
+                while (rs.next()) {
+                    total++;
+                    if (samples.size() < sampleLimit) {
+                        samples.add(mapper.map(rs));
+                    }
+                }
+                return new SudzPmtUplLogOnlyResult(total, samples);
+            }
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось выполнить log-only " + errorContext, exception);
+        }
+    }
+
+    @FunctionalInterface
+    private interface SqlSampleMapper {
+        String map(ResultSet rs) throws SQLException;
+    }
+
+    private static void requireUnloadAndLimit(int unloadKey, int sampleLimit) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        if (sampleLimit <= 0) {
+            throw new IllegalArgumentException("sampleLimit должен быть положительным: " + sampleLimit);
         }
     }
 

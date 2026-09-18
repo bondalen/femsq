@@ -3,15 +3,16 @@
 **Дата создания:** 2026-08-02  
 **Последнее обновление:** 2026-09-16  
 **Проект:** FEMSQ  
-**Версия плана:** 0.99.48 (S79 двушаговый контур ложных погашений ☐; C.10.6 D4 ✅)
-**Задача:** 0065–0075 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md); **активно: 0075 / S79** — шаг 1 (опыт Cursor) ☐; шаг 2 (Progress UI) ☐ later; **0069** C.10.6 ✅ D0–D4; **S77.9** ✅; **S78** ✅; **0071** 🔶
-**Статус плана:** ✅ 0070; **S75** ✅; **S76** ✅ C.10.6 D0–D4; **S77** ✅ .1–.9; **S78.1–.4+.6** ✅ **S78.5** ☐; **S79** 🔄 (**S79.1** next); **S74 M1–M5** ✅; **0071** 🔶; **0075** ☐
+**Версия плана:** 0.99.52 (S82 asOf903 mailing: 28469 fixed ✅; cover note)
+**Задача:** 0065–0075 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md); **активно: 1.1.1.3** файл `…28469fix…`; **S82** ✅; **S81** ✅; **S80** ✅; **0075 / S79** шаг 1 ✅; **0069** C.10.6 ✅; **S77.9** ✅; **S78** ✅; **0071** 🔶
+**Статус плана:** ✅ 0070; **S75** ✅; **S76** ✅ C.10.6 D0–D4; **S77** ✅ .1–.9; **S78.1–.4+.6** ✅ **S78.5** ☐; **S79** ✅ шаг 1; **S80** ✅ .0–.2b; **S81** ✅ .1–.2 cmm; **S82** ✅; **S74 M1–M5** ✅; **0071** 🔶; **0075** 🔶
 **Cutover prod/DEV:** [db-upgrade-sudz-invdbt-cutover.md](../../../../deployment/db-upgrade-sudz-invdbt-cutover.md) · §5.6 [S74](#s74--трек-cutover-m1m6--2026-08-27) · D1: [04-5](../../domain/sudz/04-5_dbt-invdbt-cardinality-d1.md)
 **Паспорт pmt:** [02-11_cn-inv-pmt-upl-access.md](../../UI/02-11_cn-inv-pmt-upl-access.md) · §5.7  
 **План UI pmt:** [chat-plan-26-0819-cn-inv-pmt-upl.md](./chat-plan-26-0819-cn-inv-pmt-upl.md) · §5.8  
 **План UI Договоры / СФ (T7):** [chat-plan-26-0826-contracts-inv.md](./chat-plan-26-0826-contracts-inv.md) · 0071  
 **Резюме UI pmt (S70):** [chat-resume-26-0819-cn-inv-pmt-upl.md](../chat-resume/chat-resume-26-0819-cn-inv-pmt-upl.md)  
-**Резюме pmt (S69):** [chat-resume-26-0817-cn-inv-pmt-upl.md](../chat-resume/chat-resume-26-0817-cn-inv-pmt-upl.md)
+**Резюме pmt (S69):** [chat-resume-26-0817-cn-inv-pmt-upl.md](../chat-resume/chat-resume-26-0817-cn-inv-pmt-upl.md)  
+**WBS цели «P1 контур B на проде»:** [chat-plan-26-0918-sudz-rslt-prod-mailing.md](./chat-plan-26-0918-sudz-rslt-prod-mailing.md) (2026-09-18; v0.3.0 — оборот 1.1.* + исходящие 1.2.1)
 
 
 **Доменные доки:** [01-overview](../../domain/sudz/01-overview.md) · [02-glossary](../../domain/sudz/02-glossary.md) · [03-processes](../../domain/sudz/03-processes.md) · [04-data-model](../../domain/sudz/04-data-model.md) · [04-1 MS_Description](../../domain/sudz/04-1_ms-descriptions.md) · [04-3 проблемы](../../domain/sudz/04-3_problems-solutions.md) · [04-4 зерно/счёт долгов](../../domain/sudz/04-4_legacy-debt-grain.md) · [04-5 D1 кардинальность Dbt↔invDbt](../../domain/sudz/04-5_dbt-invdbt-cardinality-d1.md) · [04-6 multi-Dbt P1 три пути](../../domain/sudz/04-6_multi-dbt-p1-three-paths.md) · [07-readiness (покрытие/готовность)](../../domain/sudz/07-readiness.md) · [08-target-schema (физ. схема + ER)](../../domain/sudz/08-target-schema.md)  
@@ -210,7 +211,10 @@
 | S76 | 2026-09-01…16 | **Rslt stage2 / QIV (variant B):** X confirmed; **S76-C.10** UI 901→902→Rslt; **C.10.3–.5** ✅; **C.10.6** D0–D4 ✅ asOf903 | [§5.6 S76](#s76--rslt-stage2-qiv-дельта-воронка-901-vs-access-variant-b-2026-09-01); [C.10.6](#c106--qii-903-компактный-свод-резолв-даты-стороны-2026-09-15) | ✅ C.10.6 |
 | S77 | 2026-09-08…15 | **split/merge** + воронка 901/902 → `26-0505`. **S77.8** ✅; **S77.9** ✅ | [§5.6 S77](#s77--splitmerge-ядро--воронка--rslt-ac-dev-2026-09-08); [S77.9](#s779--непрерывность-слотов-e-rowgrain-28469-2026-09-15) | ✅ .1–.9 |
 | S78 | 2026-09-09 | **Экран канона Dbt:** FemsqTable-поиск → карточка; дерево слот→Value/upl; график областей ttl/overd; модалки Value и Split/Merge. | [§5.6 S78](#s78--экран-канона-dbt--поиск-и-связь-слотов-2026-09-09); [ops guide](../../ops/sudz-operator-guide.md) | ✅ S78.1–.4; ☐ S78.5 |
-| S79 | 2026-09-16 | **Двушаговый контур ложных погашений** перед Rslt сбор (1.1.1.3): опыт Cursor → Progress «Проверить» + «Выгрузить» | [§5.6 S79](#s79--двушаговый-контур-ложных-погашений-перед-rslt-сбор-2026-09-16); **0075** | 🔄 S79.1 next |
+| S79 | 2026-09-16 | **Двушаговый контур ложных погашений** перед Rslt сбор (1.1.1.3): опыт Cursor → Progress «Проверить» + «Выгрузить» | [§5.6 S79](#s79--двушаговый-контур-ложных-погашений-перед-rslt-сбор-2026-09-16); **0075** | ✅ шаг 1 суммы (owner); UI ☐ later |
+| S80 | 2026-09-16 | **Бэкфилл строек** в `DbtUplCstAg` (QIV/QI[/QII]) → затем cmm | [§5.6 S80](#s80--бэкфилл-строек-dbtuplcstag--после-s79-суммы-2026-09-16); [26-0915](../../sql/26-0915-sudz-rslt-cst-backfill/) | ✅ .0–.2b DEV; ☐ .3 prod fn |
+| S81 | 2026-09-16 | **Бэкфилл cmm** (куратор/мероприятия/год.код) из Access → `cnInvCmm*` | [§5.6 S81](#s81--бэкфилл-комментариев-cmm-из-access-2026-09-16); [26-0916](../../sql/26-0916-sudz-rslt-cmm-backfill/) | ✅ .1–.2 DEV |
+| S82 | 2026-09-16 | **Рассылка asOf903:** re-fix 28469 + cover note | [§5.6 S82](#s82--рассылка-asof903--фикс-зерна-28469-2026-09-16) | ✅ .1–.5 |
 | S73 | 2026-08-26 | **0071 T7:** отдельный план вкладки «Счета-фактуры» (слева `cnInv`, справа `contracts-inv`); interim = `cn-picker` | [chat-plan-26-0826-contracts-inv.md](./chat-plan-26-0826-contracts-inv.md) | 🔄 план |
 | S67 | 2026-08-16 | UAT 910 dry: **128** дог. / **705** СФ ✅, но rebuild **~3m14s** (CTE). Перепись на `#temp`+индексы; лог СФ усечён (8+…) | JAR **0.1.0.196** | ✅ via S67a |
 | S67a | 2026-08-16 | `#temp` без COLLATE → conflict Latin1 vs Cyrillic на JOIN `cnnNumNull`. Колонки `#cidu*` → `Cyrillic_General_CI_AS` | JAR **0.1.0.197** | ✅ UAT: sqlMs=241, 128/705 |
@@ -1535,7 +1539,7 @@ Rslt(QIV) ≡ Excel_эталон
 
 **Связь:** **S75** (PIT 801–803) не менять; **S76** не смешивать gate stage1 и stage2. Скрипт `10_SEED_…` — **временный UAT**, не cutover.
 
-**Следующий шаг в чате:** **S79.1** (ложные погашения, опыт Cursor на asOf903). До 1.1.1.3 / cmm/cst — только шаг 1 S79. Backlog later: P1 очереди; B5; S78.5; S79 шаг 2 (UI).
+**Следующий шаг в чате:** **1.1.1.3** отдать файл после **S82** (28469 fixed ✅). Prod-path `fn`+`g_p` (S80.3) — later. S79.5–.7 / UI ☐ later.
 
 ###### S76-C — воронка 901→903 без B-seed (2026-09-01)
 
@@ -1849,7 +1853,7 @@ Rslt(QIV) ≡ Excel_эталон
 **Входной артефакт (эталон прогона):** [`artifacts/ags_Yr_DbtChangesRslt_901_asOf903_d4_post902_26-0916.xlsx`](../../sql/26-0831-sudz-dbt-slot-link/artifacts/ags_Yr_DbtChangesRslt_901_asOf903_d4_post902_26-0916.xlsx) · сверка QI [`stage2_qii_d4_903_post902_26-0916.json`](../../sql/26-0831-sudz-dbt-slot-link/artifacts/stage2_qii_d4_903_post902_26-0916.json).  
 **Access QI:** `excel/2026_03/debit/ags_Yr_DbtChangesRslt_26-0505.xlsx`.
 
-**Политика владельца (2026-09-16):** до рассылки **1.1.1.3** (Rslt сбор → специалисты / 1.1.2) и до переноса строек/комментариев выполнять **только шаг 1** (опыт детекции). Шаг 2 (продукт Progress) — после правил и карточки кейса из шага 1. **Не** терять актуальный просроченный долг из базы **31.12.(Y−1)**, не сумев сопоставить его с QI/QII.
+**Политика владельца (2026-09-16):** до рассылки **1.1.1.3** и до переноса строек/комментариев — шаг 1 S79 (опыт детекции). **Итог владельца (тот же день):** по **суммам / погашениям** шаг 1 **достаточен** → разрешён переход к **S80 (стройки)**, затем cmm; продукт Progress (шаг 2) и S79.5–.7 — ☐ later, не блокер S80.
 
 **Суть риска:** в экспортёре «погашено» = `NULLIF(Overd_base − ISNULL(Overd_curr,0), 0)` на каноне `Dbt` ([`SudzRsltExcelExporter.pogashenoAccess`](../../../../../code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/SudzRsltExcelExporter.java)). Нет Value на curr → Overd_curr=0 → вся base-просрочка выглядит урегулированной. Это ловушка **P1 / L* / смены `invDbtVar`**, не обязательно реальное погашение ([04-6](../../domain/sudz/04-6_multi-dbt-p1-three-paths.md): исчезновение ≠ уменьшение суммы при живом Value).
 
@@ -1857,56 +1861,105 @@ Rslt(QIV) ≡ Excel_эталон
 
 | Шаг | Где | Цель | Статус |
 |-----|-----|------|--------|
-| **1** | Cursor AI + скрипты/SQL на DEV/nb-win | Опыт детекции ложных погашений; реестр кандидатов; правила классов; форма карточки кейса | 🔄 **S79.1** next |
-| **2** | Progress · Rslt сбор (продукт) | Две операции: **Проверить погашения** → разбор → **Выгрузить** Excel | ☐ after шаг 1 |
+| **1** | Cursor AI + скрипты/SQL на DEV/nb-win | Опыт детекции ложных погашений; реестр кандидатов; правила классов | ✅ **суммы 2026-09-16** (S79.5–.7 / карточка ☐ later) |
+| **2** | Progress · Rslt сбор (продукт) | Две операции: **Проверить погашения** → разбор → **Выгрузить** Excel | ☐ after артефакты шага 1 |
 
-**Запрет:** не открывать рассылку 1.1.1.3 / массовый бэкфилл cmm·cst, пока шаг 1 не дал правила и пилот разбора. Шаг 2 не кодировать «вслепую» до артефактов шага 1.
+**Запрет (снят для S80):** массовый бэкфилл **cst** разрешён после приёмки сумм владельцем. Рассылка 1.1.1.3 / массовый **cmm** — после S80 (стройки в витрине). Шаг 2 UI не кодировать «вслепую» до S79.7.
 
 ###### Шаг 1 — опыт Cursor (мероприятия)
 
 | # | Мероприятие | Содержание | Критерий | Статус |
 |---|-------------|------------|----------|--------|
-| **S79.1** | Gate QI «погашено» | asOf903 GEN ↔ `26-0505`: multiset строк с `q1_pog≠∅`; ключ `(acc, invNorm, base_o, q1_o, q1_pog)` ±ε; whitelist реестра ошибок | PASS вне whitelist | ☐ |
-| **S79.2** | Регрессия QI asOf902→asOf903 | колонки QI/`q1_pog` файла D4 ≡ `…asOf902_s778…` (добавление 903 не меняет QI) | Δ=0 | ☐ |
-| **S79.3** | Кандидаты QII | из GEN: полное исчезновение / снижение Overd с `q2_pog`; список + суммы | JSON кандидатов | ☐ |
-| **S79.4** | Sum-match twin | S в Tbl@902/@903 и/или фактах QI/QII **других** строк → класс **suspect**; нет twin → **likely-true**; коллизии → **ambiguous** | классификация | ☐ |
-| **S79.5** | Пересечение P1 / L* | open P1@902/@903 + реестр L*/Split; documented ≠ новый blocker | отчёт пересечений | ☐ |
-| **S79.6** | Пилот разбора | top-N suspect (порог суммы) в БД / **S78** канон; зафиксировать поля карточки кейса | N разобраны; правила уточнены | ☐ |
-| **S79.7** | Артефакты шага 1 | JSON/реестр + краткие правила → вход шага 2 | файлы в `26-0831/artifacts/` | ☐ |
+| **S79.1** | Gate QI «погашено» | asOf903 GEN ↔ `26-0505`: multiset строк с `q1_pog≠∅`; ключ softAmt; whitelist реестра | PASS вне whitelist | ✅ **2026-09-16** ∑ Δ=0; 37/37; documented alias `86740` — [реестр](../../sql/26-0831-sudz-dbt-slot-link/stage2_qiv_excel_error_registry.md#e-access-missing-86740-732); арт. [`stage2_s79_qi_pog_26-0916.json`](../../sql/26-0831-sudz-dbt-slot-link/artifacts/stage2_s79_qi_pog_26-0916.json) |
+| **S79.2** | Регрессия QI asOf902→asOf903 | колонки QI/`q1_pog` файла D4 ≡ `…asOf902_s778…` | Δ=0 | ✅ **2026-09-16** |
+| **S79.3** | Кандидаты QII | полное исчезновение / снижение Overd с `q2_pog` | JSON кандидатов | ✅ n=**52**; full=**33** / partial=**19**; арт. [`stage2_s79_qii_twins_26-0916.json`](../../sql/26-0831-sudz-dbt-slot-link/artifacts/stage2_s79_qii_twins_26-0916.json) |
+| **S79.4** | Sum-match twin | twin → **suspect**; нет → **likely-true**; коллизии → **ambiguous** | классификация | ✅ likely-true=**49**; suspect=**0**; ambiguous=**2**; documented=**1** |
+| **S79.4a** | Сверка с Access QI | из 52: **36** уже в `26-0505` как погашенные (softAmt); **15** новых к QII; **1** documented (`86740`) | список 15 | ✅ **2026-09-16** |
+| **S79.4b** | Разбор 15 (owner) | принять / отложить | вердикты | ✅ см. ниже |
+| **S79.5** | Пересечение P1 / L* | open P1@902/@903 + реестр L*/Split | отчёт | ☐ later (не блокер S80) |
+| **S79.6** | Пилот / карточка кейса | поля кейса для шага 2 | правила | ☐ later |
+| **S79.7** | Артефакты шага 1 → UI | JSON/реестр + краткие правила | файлы | ☐ later |
 
-**Классы (черновик, уточнять в S79.6):**
+**Вердикты владельца по 15 новым QII (2026-09-16):**
+
+| Группа | Excel rows | Вердикт |
+|--------|------------|---------|
+| Перенос maturity → **2028** | **230, 231, 121, 122, 60** (`1295/20`) | **принято** (как `86740`: урегулирование срока, не смена СФ) |
+| partial без сомнений | **1124, 1129** | **принято** |
+| full→∅ | **1160** (`А56-123094/2024`), **714** (`24/96`) | **сомнение** (март: неустойка, денег нет); twin в QII/Tbl@903 **не найден** → оставить as-is, не suspect |
+| full→∅ ожидали закрытие | **1403, 1049, 870** + Ясногорск **278–280** | **принято** (комментарии Прил.1 / ошибка учёта / ТУ) |
+
+**Классы (рабочие после разбора):**
 
 | Класс | Признак | Действие |
 |-------|---------|----------|
-| **likely-true** | погашение; twin-суммы нет в QI/QII/Tbl | не blocker выгрузки |
-| **suspect** | twin-сумма / смена inv·cn при выбытии | ручной разбор (S78 / P1) |
-| **ambiguous** | несколько близких сумм | ручной; не auto |
-| **documented** | whitelist реестра / известный L*·Split | пропуск |
+| **likely-true** | погашение / перенос срока; twin нет | не blocker |
+| **suspect** | twin-сумма / смена inv·cn | ручной (S78 / P1) — в QII прогоне **0** |
+| **ambiguous** | коллизия круглой суммы | не auto; оба кейса уже были в Access QI → не новые |
+| **documented** | whitelist / alias | пропуск |
 
-**Доп. проверки шага 1:** портфельный инвариант `∑ base_o ≈ ∑ Overd_QII(живые) + ∑ q2_pog` ± исключения; «двойной след» (строка с `q2_pog=S` + новая с `ttl=S` без общего `dbtKey`); split-инверсия (1×S → 2×S/2 на разных Dbt); **не** тащить в suspect снижение Overd при **том же** слоте/Value (это не P1).
-
-###### Шаг 2 — продукт Progress (после шага 1; полный объём)
+###### Шаг 2 — продукт Progress (после S79.7; полный объём)
 
 Место: **Портфель года → Ход (Progress)**; та же пара `(yr, asOfUpl)`, что у нынешнего **Rslt сбор · Выгрузить**.
 
 | Операция | Поведение | Статус |
 |----------|-----------|--------|
-| **A. Rslt сбор · Проверить погашения** | Считает витрину; **не** отдаёт xlsx. Лог (сводка N / suspect / ∑). Таблица **open suspect** (+ ambiguous). Переход строки → **Долг (канон) S78** (`dbtKey`/слот); при open P1 — очередь. Статусы кейса: `open` / `linked` / `confirmed_repaid` / `deferred` | ☐ |
-| **B. Rslt сбор · Выгрузить** | Как сейчас `rslt-sborn.xlsx`. По умолчанию — после A для `(yr, asOfUpl)` без open suspect выше порога (порог из S79.7). Мягкий «с предупреждением» — только явно. Append в `yr_Progress`: проверка OK → выгрузка | ☐ |
+| **A. Rslt сбор · Проверить погашения** | Считает витрину; **не** отдаёт xlsx. Лог + таблица open suspect | ☐ |
+| **B. Rslt сбор · Выгрузить** | `rslt-sborn.xlsx`; gate по open suspect (порог из S79.7) | ☐ |
 
-**Вне первого среза шага 2:** auto-merge/rebind из кнопки A; новый мастер вместо S78; та же двухкнопочность для Rslt повтор / D644 / Свод (отдельное решение); бэкфилл стройки/cmm.
-
-**Связь S78.5:** deep-link из таблицы A на карточку — естественный потребитель связок Rslt→канон; S78.5 можно совместить с шагом 2, не блокер шага 1.
+**Вне первого среза шага 2:** auto-merge/rebind; двухкнопочность для Rslt повтор / D644 / Свод.
 
 | # | Мероприятие шага 2 | Содержание | Статус |
 |---|-------------------|------------|--------|
-| **S79.A** | GraphQL проверка | query/mutation: вход `yr`+`asOfUpl` → лог + список кейсов + классы | ☐ |
+| **S79.A** | GraphQL проверка | query/mutation: `yr`+`asOfUpl` → лог + кейсы | ☐ |
 | **S79.B** | UI Progress A | операция + лог + таблица + переход S78 | ☐ |
-| **S79.C** | Статусы разбора | persist open/linked/… (минимально для gate B) | ☐ |
-| **S79.D** | Gate на Выгрузить | disable / confirm по open suspect | ☐ |
-| **S79.E** | UAT оператора | прогон на yr=901 asOf=903 после шага 1 | ☐ |
+| **S79.C** | Статусы разбора | persist open/linked/… | ☐ |
+| **S79.D** | Gate на Выгрузить | disable / confirm | ☐ |
+| **S79.E** | UAT оператора | yr=901 asOf=903 | ☐ |
 
-**Связь с C.10.6:** D4 закрыл ∑ QIV/QI и Ttl/Overd shortlist QII; **отдельного gate по ложным погашениям не было** — это S79.
+**Связь с C.10.6:** D4 закрыл ∑ QIV/QI и Ttl/Overd shortlist QII; gate по ложным погашениям — S79.
+
+##### S80 — бэкфилл строек (`DbtUplCstAg`) после S79 суммы (2026-09-16)
+
+**Зачем:** квартальные «Код/Наименование стройки» в FEMSQ Rslt берутся из `sudz.DbtUplCstAg` → `vw_Yr_DbtFact`. На DEV таблица для 901/902/903 пуста (sandbox 801–803); `ags.cn_inv_dbt_upl` / `g_p` **обрываются на 2025-06-30** → канон `fnCiasDbtUplCst` для 901+ **не питается**. Пакет обследования: [26-0915-sudz-rslt-cst-backfill](../../sql/26-0915-sudz-rslt-cst-backfill/).
+
+**Порядок владельца:** **стройки (S80) → комментарии/cmm → 1.1.1.3**.
+
+| # | Мероприятие | Содержание | Критерий | Статус |
+|---|-------------|------------|----------|--------|
+| **S80.0** | Survey DEV | map femsq↔ags upl; `g_p` горизонт; `DbtUplCstAg` | факт: ags upl для 901–903 **нет**; g_p max **2025-06-30**; duca@901=0 | ✅ **2026-09-16** |
+| **S80.1** | DEV backfill из Access Excel | `26-0505` `*_CstAgPnKey` → softBase/softQi + QI-inv match GEN → INSERT `DbtUplCstAg` @901/@902; @903 = carry; stub `cst`/`cstAg`/`cstAgPn` для Access keys вне DEV | покрытие витрины ≈ Access QI/QIV | ✅ **2026-09-16** итог duca 901=**1660** / 902=**1636** / 903=**1446**; скрипт [`03_…FROM_ACCESS_EXCEL.mjs`](../../sql/26-0915-sudz-rslt-cst-backfill/03_BACKFILL_DbtUplCstAg_FROM_ACCESS_EXCEL.mjs) + patch miss47/remain11 |
+| **S80.2** | Verify Rslt | `vw_Yr_DbtFact` yr=901: CstAgPnKey filled | N filled | ✅ **2026-09-16** (см. .2b) |
+| **S80.2b** | Row QIV+QI ↔ Access | `verify_s80_qiv_qi_vs_access.mjs` excl. comments/QII | PASS; only accounted (multi-cst / CnDate / Ctpt form / grain 28469 / Split A45) | ✅ **2026-09-16** FAIL=0; **E-S80-cst-backfill-miss=0**; арт. [`…s80_cst_final_26-0916.xlsx`](../../sql/26-0831-sudz-dbt-slot-link/artifacts/ags_Yr_DbtChangesRslt_901_asOf903_s80_cst_final_26-0916.xlsx), [`stage2_s80_qiv_qi_vs_access_final_26-0916.json`](../../sql/26-0831-sudz-dbt-slot-link/artifacts/stage2_s80_qiv_qi_vs_access_final_26-0916.json) |
+| **S80.3** | Prod path (later) | `00`→`01`→`02` через `fn`+`g_p` когда DEV/prod имеют upl | COMMIT после ревью | ☐ |
+| **S80.4** | QII / export_* | при появлении g_p или отдельного эталона QII — добить 903 не только carry | ☐ | ☐ |
+
+**Следом (не S80):** ✅ **S81** cmm; ✅ **S82** 28469 + cover — см. [§5.6 S82](#s82--рассылка-asof903--фикс-зерна-28469-2026-09-16). Далее **1.1.1.3**.
+
+##### S81 — бэкфилл комментариев (cmm) из Access (2026-09-16)
+
+**Зачем:** годовые колонки Rslt (куратор / мероприятия / код стройки) пусты на DEV → файл рассылки 1.1.1.3 без «старых» комментариев. Пакет: [26-0916-sudz-rslt-cmm-backfill](../../sql/26-0916-sudz-rslt-cmm-backfill/).
+
+| # | Мероприятие | Критерий | Статус |
+|---|-------------|----------|--------|
+| **S81.1** | Access `26-0505` → `cnInvCmm`/`cnInvCmmCst` @ `yr_CmmGr`/`_New` | softQi match; MERGE | ✅ **2026-09-16** 53/53 curator+mery; 1777 year-cst; 13 mery_new@904 |
+| **S81.2** | Verify sborn/povtor vs Access | curator/mery ≡; year-cst ≡ кроме multi; `*_new` в povtor | ✅ **2026-09-16** sborn curator/mery **53≡53**; cst **1777** (1×`строек: 2`); povtor mery_new **13** |
+
+**Артефакты:** [`…s81_cmm_26-0916.xlsx`](../../sql/26-0831-sudz-dbt-slot-link/artifacts/ags_Yr_DbtChangesRslt_901_asOf903_s81_cmm_26-0916.xlsx), [`stage2_s81_cmm_vs_access_26-0916.json`](../../sql/26-0831-sudz-dbt-slot-link/artifacts/stage2_s81_cmm_vs_access_26-0916.json).
+
+##### S82 — рассылка asOf903 / фикс зерна 28469 (2026-09-16)
+
+**Решения владельца:** раунд **903**; A45 — **2** строки OK; P1 open **364** — не блокер; **28469** чинить до рассылки (один долг).
+
+| # | Мероприятие | Критерий | Статус |
+|---|-------------|----------|--------|
+| **S82.1** | Диагностика 3398/3399 | Value@901 на 3399; @902/@903 на 3398 | ✅ |
+| **S82.2** | Merge CANONS 3399→3398 + Value@901 на survivor | один `dbtKey` 3398, 2 слота | ✅ |
+| **S82.3** | Guard dry `dbtValueLoad`@903 | не пишет Value на чужой канон | ✅ |
+| **S82.4** | Re-export + row-verify | 28469 = **1** строка; ∑Δ=0; FAIL=0 | ✅ [`…s81_cmm_28469fix_26-0916.xlsx`](../../sql/26-0831-sudz-dbt-slot-link/artifacts/ags_Yr_DbtChangesRslt_901_asOf903_s81_cmm_28469fix_26-0916.xlsx), [`…28469fix_26-0916.json`](../../sql/26-0831-sudz-dbt-slot-link/artifacts/stage2_s80_qiv_qi_vs_access_28469fix_26-0916.json) |
+| **S82.5** | Сопроводиловка | 903; `*_new`∅; P1=364; A45×2; 28469=1 | ✅ [`mailing_asOf903_cover_26-0916.md`](../../sql/26-0831-sudz-dbt-slot-link/artifacts/mailing_asOf903_cover_26-0916.md) |
+
+**Следующий шаг:** **1.1.1.3** отдать специалистам файл `…28469fix…`. Не в шаге: массовое P1; S79 UI; prod `fn`+`g_p`.
 
 ### 5.7. 1.1.1.2 — паспорт Access `CnInvPmtUpl*` (S69; не 0069)
 

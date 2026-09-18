@@ -3,8 +3,8 @@
 **Назначение:** порядки действий оператора в типовых и нетиповых ситуациях. Не заменяет dev-runbook воронки.
 
 **Создано:** 2026-09-09  
-**lastUpdated:** 2026-09-09 (вкладка Комментарии: дерево Dbt→DbtValue, не группы года)  
-**Связь:** план S78 · [chat-plan-26-0802-sudz.md](../chats/chat-plan/chat-plan-26-0802-sudz.md) · runbook [sudz-dbt-upl-funnel-uat-runbook.md](../sudz-dbt-upl-funnel-uat-runbook.md)
+**lastUpdated:** 2026-09-18 (ссылка: политика Access↔FEMSQ / smoke исходящих)  
+**Связь:** план S78 · [chat-plan-26-0802-sudz.md](../chats/chat-plan/chat-plan-26-0802-sudz.md) · runbook [sudz-dbt-upl-funnel-uat-runbook.md](../sudz-dbt-upl-funnel-uat-runbook.md) · [политика записи](../../../deployment/sudz-access-femsq-write-policy.md) · [smoke D644/Свод](../../../deployment/sudz-outgoing-d644-smoke.md)  
 
 ---
 
@@ -84,3 +84,11 @@
 Не выбирает один `Dbt` при нескольких кандидатах с одной СФ.  
 Не считает неоднозначность «ошибкой данных» без решения оператора.  
 Full apply воронки без gate'ов — запрещён (см. runbook).
+
+---
+
+## 6. Prod / cutover (указатели)
+
+- Кто пишет после окна H: [sudz-access-femsq-write-policy.md](../../../deployment/sudz-access-femsq-write-policy.md)
+- Smoke D644 / Свод: [sudz-outgoing-d644-smoke.md](../../../deployment/sudz-outgoing-d644-smoke.md)
+- День деплоя: [db-upgrade-sudz-invdbt-cutover-deploy-day-checklist.md](../../../deployment/db-upgrade-sudz-invdbt-cutover-deploy-day-checklist.md)

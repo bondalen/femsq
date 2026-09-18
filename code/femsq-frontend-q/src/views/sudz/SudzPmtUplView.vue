@@ -758,8 +758,60 @@ onMounted(() => {
   margin: 0 0 2px;
 }
 
+/* Как экран C (свод): свёртка шагов +/− */
+.sudz-pmt-upl-progress :deep(.sudz-funnel-log-block) {
+  margin: 4px 0 6px 2px;
+  padding-left: 6px;
+  border-left: 1px solid color-mix(in srgb, var(--q-primary) 35%, var(--femsq-border, #666));
+}
+
+.sudz-pmt-upl-progress :deep(.sudz-funnel-log-block > summary) {
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  padding: 2px 0;
+}
+
+.sudz-pmt-upl-progress :deep(.sudz-funnel-log-block > summary::-webkit-details-marker) {
+  display: none;
+}
+
+.sudz-pmt-upl-progress :deep(.sudz-funnel-log-pm)::before {
+  content: '+';
+  display: inline-block;
+  width: 1.1em;
+  font-weight: 700;
+  color: var(--q-primary);
+}
+
+.sudz-pmt-upl-progress :deep(details[open] > summary .sudz-funnel-log-pm)::before {
+  content: '\2212';
+}
+
+.sudz-pmt-upl-progress :deep(.sudz-funnel-log-body) {
+  padding: 2px 0 4px 10px;
+}
+
 .sudz-upl-table {
   min-height: 0;
   height: 100%;
+}
+</style>
+
+<!--
+  Без scoped: v-html не получает data-v-*, а хеш scoped меняется между сборками.
+  Те же селекторы, что у свода — чтобы +/− всегда рисовались у summary.
+-->
+<style>
+.sudz-pmt-upl-progress .sudz-funnel-log-pm::before {
+  content: '+';
+  display: inline-block;
+  width: 1.1em;
+  font-weight: 700;
+  color: var(--q-primary);
+}
+
+.sudz-pmt-upl-progress details[open] > summary .sudz-funnel-log-pm::before {
+  content: '\2212';
 }
 </style>

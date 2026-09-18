@@ -3,16 +3,363 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-09-16"
+      "lastUpdated": "2026-09-18"
     },
     "sessions": [
+      {
+        "chat": {
+          "displayName": "СУДЗ: канон 1.1.1.2 apply/g_p/Rslt (active, high). № chat-2026-09-18-001",
+          "chat-attributes": {
+            "id": "chat-2026-09-18-001",
+            "created": "2026-09-18",
+            "lastUpdated": "2026-09-18",
+            "owner": "Александр",
+            "status": "active",
+            "priority": "high",
+            "tags": [
+              "sudz",
+              "CnInvPmtUpl",
+              "1.1.1.2",
+              "0074",
+              "0076",
+              "g_p",
+              "chat-plan"
+            ],
+            "links": {
+              "projectDocsRefs": [
+                "module:frontend",
+                "module:backend.web",
+                "module:backend.database"
+              ],
+              "developmentTasks": [
+                "0074",
+                "0076"
+              ],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md",
+              "domainPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "H3 шаг 9 AcNotLoad UI UAT (success). № log-2026-09-18-008",
+                "log-attributes": {
+                  "id": "log-2026-09-18-008",
+                  "timestamp": "2026-09-18T16:01:20+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "tags": [
+                    "H3",
+                    "0076",
+                    "AcNotLoad",
+                    "UAT",
+                    "UI"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0076"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "cipuCn_CtptCnOneInvOneAcNotLoad + UI dry→apply→dry pm=8",
+                    "details": "JAR 294. Dry N=2 (ci 96053/96054, acc 767502). Apply inserted=2 (ciasKey 103366/103367). Dry после — пусто. CDP-wait без лимита зависал — дальше таймауты ≤30–45с.",
+                    "outcome": "Шаг 9 закрыт; далее 10 DocNot / 12 InsPm.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "H3 шаг 7 InvNotLoad find+apply UAT (success). № log-2026-09-18-007",
+                "log-attributes": {
+                  "id": "log-2026-09-18-007",
+                  "timestamp": "2026-09-18T14:39:08+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": [
+                    "H3",
+                    "0076",
+                    "InvNotLoad",
+                    "UAT"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0076"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Реализация cipuCn_CtptCnOneInvNotLoad + dry→apply→dry pm=8",
+                    "details": "rebuildPmtUplInvNot → CnInvPmtUplTblCnInv; apply inv→invNum→cnInv (inNumCount IS NULL + alias). JAR 293. Dry: 2 СФ (cn 2278/19276, 2576/9247). Apply inserted=2 → rebuild пусто. DB: ciKey 96053/96054.",
+                    "outcome": "Шаг 7 закрыт на DEV; следующие apply — 9 AcNot / 10 DocNot / 12 InsPm.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "H3 apply UAT: шаг 3+5 dry→apply→dry (success). № log-2026-09-18-006",
+                "log-attributes": {
+                  "id": "log-2026-09-18-006",
+                  "timestamp": "2026-09-18T14:15:15+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": [
+                    "H3",
+                    "0076",
+                    "apply",
+                    "UAT"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0076"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Протокол dry→apply→dry на pm=8",
+                    "details": "JAR 291. Шаг 3: dry пусто → apply cnMark=9181414 inserted=0 → dry пусто. Шаг 5: dry N=115/creatable=114 → apply inserted=114 (~37с) → dry N=1 (БУиРГ 15 без org_id, creatable=0). smpl type=1: 922→1036.",
+                    "outcome": "Apply path 3 и 5 подтверждён на DEV; следующий код — шаг 7 InvNotLoad.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "H3 шаг 5: cipuCn_AgNotLoad find+apply (success). № log-2026-09-18-005",
+                "log-attributes": {
+                  "id": "log-2026-09-18-005",
+                  "timestamp": "2026-09-18T14:03:58+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "tags": [
+                    "H3",
+                    "0076",
+                    "AgNotLoad",
+                    "UI"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0076"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "H3 шаг 5 AgNotLoad",
+                    "details": "JAR 291. findPmtUplAgNotLoad + apply (cn_s type=1 + smpl + cn_s_org). UAT UI pm=8 префикс 1–5, flTbl=0 flLoad=0: N=115, creatable=114, первые 15 в логе; 635 мс. Apply path готов, INSERT на QI не гоняли.",
+                    "outcome": "Шаг 5 ✅; следующий H3: cipuCn_CtptCnOneInvNotLoad (7).",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/SudzPmtUplFunnelRunner.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "H3 шаг 3: cipuCn_CtptCnNotLoad find+apply (success). № log-2026-09-18-004",
+                "log-attributes": {
+                  "id": "log-2026-09-18-004",
+                  "timestamp": "2026-09-18T13:05:40+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "tags": [
+                    "H3",
+                    "0076",
+                    "CnNotLoad",
+                    "UI"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0076"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "H3 вертикальный срез шаг 3",
+                    "details": "JAR 288. findPmtUplCnNotLoad + applyPmtUplCnNotLoad (countCn=0 + org_id → insertCnNotLoadChain / cnMark). UAT UI pm=8 префикс 1–3, flTbl=0 flLoad=0: «новые договоры (исполнитель+№) отсутствуют», 387 мс. QI Tbl уже покрыт доменом — INSERT 0.",
+                    "outcome": "Шаг 3 ✅; следующий H3: cipuCn_AgNotLoad (5).",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/SudzPmtUplFunnelRunner.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "H2 UAT: log-only cipu* на pm=8 (success). № log-2026-09-18-003",
+                "log-attributes": {
+                  "id": "log-2026-09-18-003",
+                  "timestamp": "2026-09-18T12:50:38+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": [
+                    "H2",
+                    "0076",
+                    "log-only",
+                    "UI"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0076"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "UAT H2 через UI",
+                    "details": "JAR 287. pm=8, flTbl=0, префикс OIdNot+CacNot. OIdNot N=1 (агент · БУиРГ 15 · ГАЗПРОМ ТРАНСГАЗ СТАВРОПОЛЬ); CacNot N=0; Воронка OK 266 мс. Сжатый лог в HTML <details>.",
+                    "outcome": "H2 ✅; следующий H3 apply→cn_inv_pm при flLoad.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/SudzPmtUplFunnelRunner.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "UI A: 5× export→Tbl + fix UNIQUE File (success). № log-2026-09-18-002",
+                "log-attributes": {
+                  "id": "log-2026-09-18-002",
+                  "timestamp": "2026-09-18T12:29:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "tags": [
+                    "H4",
+                    "0076",
+                    "excelToTbl",
+                    "UI"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0076"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Решение A через UI + fix createPmUpl",
+                    "details": "JAR 286. 5 пакетов pm=3/4/5/6/8 (дата 2026-04-22). Excel→Tbl: 4909/721/990/7481/583. createPmUpl: при orphan CnInvPmtUplFile (Access seed) — UPDATE reset вместо INSERT (UNIQUE cipufUpload). UI gap: GraphQL 400 → banner INTERNAL_ERROR uuid.",
+                    "outcome": "Tbl×5 ✅; следующий H2 log-only cipu*, затем apply→cn_inv_pm.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "G6 UAT + цель канон 0076 §4.3 (success). № log-2026-09-18-001",
+                "log-attributes": {
+                  "id": "log-2026-09-18-001",
+                  "timestamp": "2026-09-18T11:22:04+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": [
+                    "G6",
+                    "0074",
+                    "0076"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0074",
+                      "0076"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Окружение, G6, план канона 1.1.1.2",
+                    "details": "asus-kubuntu; JAR 285; SQL OK; export_606012→pmKey=1 Tbl 4909. sudz.g_p=0. 0074 completed; 0076 §4.3. H1 per-step stub. 0918 отложено; не бэкфилл S80.",
+                    "outcome": "G6 ✅; следующий H2 log-only cipu*. Решение: 1 пакет vs 5 export_*.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/SudzPmtUplFunnelRunner.java"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
       {
         "chat": {
           "displayName": "СУДЗ: S79 ложные погашения / Rslt сбор gate (active, high). № chat-2026-09-16-001",
           "chat-attributes": {
             "id": "chat-2026-09-16-001",
             "created": "2026-09-16",
-            "lastUpdated": "2026-09-16",
+            "lastUpdated": "2026-09-18",
             "owner": "Александр",
             "status": "active",
             "priority": "high",
@@ -42,6 +389,541 @@
             }
           },
           "entries": [
+            {
+              "log": {
+                "displayName": "‖ b: политика Access↔FEMSQ + smoke D644 + чеклист дня (success). № log-2026-09-18-010",
+                "log-attributes": {
+                  "id": "log-2026-09-18-010",
+                  "timestamp": "2026-09-18T15:32:58+03:00",
+                  "level": "success",
+                  "effort": "35m",
+                  "status": "completed",
+                  "tags": [
+                    "WBS",
+                    "cutover",
+                    "D644",
+                    "Access"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Подготовить доки 1.1.1.4.3 / 1.1.2.2 / 1.1.2.3 без кода b",
+                    "details": "Политика записи Access↔FEMSQ (R3 бланк); регламент smoke D644/Свод; расширен чеклист дня деплоя (0→d + краткий отчёт). Код/0076 не трогали.",
+                    "outcome": "План v0.3.7; прод-прогоны и подпись R3 — до окна H.",
+                    "references": [
+                      "docs/deployment/sudz-access-femsq-write-policy.md",
+                      "docs/deployment/sudz-outgoing-d644-smoke.md",
+                      "docs/deployment/db-upgrade-sudz-invdbt-cutover-deploy-day-checklist.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "03-1 §6–§7: спека .3.2 + UAT .3.5 без кода (success). № log-2026-09-18-009",
+                "log-attributes": {
+                  "id": "log-2026-09-18-009",
+                  "timestamp": "2026-09-18T14:34:08+03:00",
+                  "level": "success",
+                  "effort": "30m",
+                  "status": "completed",
+                  "tags": [
+                    "WBS",
+                    "процесс",
+                    "краткий-отчёт",
+                    "UAT"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Подготовить спеку backend и чеклист UAT без пересечения с 0076",
+                    "details": "03-1 §6: конвейер POI, порядок СГК, J/K, порт FioByDictionary→ags.v_fioDictWord, имя файла, лог/блокеры. §7: эталон итогов 2_ready + 6 пар ФИО. Код не трогали.",
+                    "outcome": "План v0.3.6; .3.2/.3.5 готовы к реализации после b.",
+                    "references": [
+                      "docs/development/notes/domain/sudz/03-1_brief-report-pre-load.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.1.1.0.3.1 DDL+seed ags.fioDict на DEV (success). № log-2026-09-18-008",
+                "log-attributes": {
+                  "id": "log-2026-09-18-008",
+                  "timestamp": "2026-09-18T14:16:09+03:00",
+                  "level": "success",
+                  "effort": "25m",
+                  "status": "completed",
+                  "tags": [
+                    "WBS",
+                    "SQL",
+                    "ags",
+                    "краткий-отчёт"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Применить DDL+seed словаря краткого отчёта на DEV",
+                    "details": "ags.fioDict + ags.v_fioDictWord; seed 211 строк / 460 слов; smoke Александр PASS; MSSQL2012/ в пакете; ‖ с b/0076.",
+                    "outcome": "WBS 1.1.1.0.3.1 ✅ DEV; план v0.3.5; прод — при cutover.",
+                    "references": [
+                      "docs/development/notes/sql/26-0918-sudz-brief-report-fio-dict/",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "WBS v0.3.4: UX краткого отчёта + листья .3.* (success). № log-2026-09-18-007",
+                "log-attributes": {
+                  "id": "log-2026-09-18-007",
+                  "timestamp": "2026-09-18T13:56:00+03:00",
+                  "level": "success",
+                  "effort": "20m",
+                  "status": "completed",
+                  "tags": [
+                    "WBS",
+                    "процесс",
+                    "план"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксировать UX автоматизации краткого отчёта",
+                    "details": "03-1 §5; листья 1.1.1.0.3.1–.5 (DDL, backend, UI, CRUD словаря, UAT); приёмка 1.3.0; старт после/вне 0076.",
+                    "outcome": "v0.3.4.",
+                    "references": [
+                      "docs/development/notes/domain/sudz/03-1_brief-report-pre-load.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "БП 1.1.1.0: порядок краткого отчёта (success). № log-2026-09-18-006",
+                "log-attributes": {
+                  "id": "log-2026-09-18-006",
+                  "timestamp": "2026-09-18T13:01:00+03:00",
+                  "level": "success",
+                  "effort": "45m",
+                  "status": "completed",
+                  "tags": [
+                    "WBS",
+                    "процесс",
+                    "Excel"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксировать бизнес-порядок краткого отчёта до БД",
+                    "details": "Действие1: маппинг полей свод→один лист + итоги + J/K. Действие2: Справочник/Словарь + VBA fio (инициалы). Документ 03-1; WBS 0.3.3.",
+                    "outcome": "Порядок без автоматизации закрыт; VBA — логика по фрагментам, полный .bas при необходимости у владельца.",
+                    "references": [
+                      "docs/development/notes/domain/sudz/03-1_brief-report-pre-load.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "WBS v0.3.2: узел 1.1.1.0 краткий отчёт (success). № log-2026-09-18-005",
+                "log-attributes": {
+                  "id": "log-2026-09-18-005",
+                  "timestamp": "2026-09-18T12:44:00+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "tags": [
+                    "WBS",
+                    "процесс",
+                    "план"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Включить в контур B этап краткого отчёта до БД",
+                    "details": "Узел 1.1.1.0; образец 1_отчёт_краткий (1_process.xlsm→2_ready.xlsx); след в 03-processes.",
+                    "outcome": "v0.3.2; порядок автоматизации — следующее обсуждение.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                      "docs/development/notes/domain/sudz/03-processes.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "WBS v0.3.1: синхрон фокуса b / 0819 (success). № log-2026-09-18-004",
+                "log-attributes": {
+                  "id": "log-2026-09-18-004",
+                  "timestamp": "2026-09-18T11:20:00+03:00",
+                  "level": "success",
+                  "effort": "10m",
+                  "status": "completed",
+                  "tags": [
+                    "WBS",
+                    "pm",
+                    "plan"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0072",
+                      "0074"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Синхронизировать скелет 0918 с активным 0819",
+                    "details": "Фокус 1.1.1.2; лист .4 сверка ↔ 26-0505; критерий закрытия b = канон fn+g_p, не бэкфилл.",
+                    "outcome": "v0.3.1.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "WBS v0.3.0: контур B (P1 на проде) (success). № log-2026-09-18-003",
+                "log-attributes": {
+                  "id": "log-2026-09-18-003",
+                  "timestamp": "2026-09-18T10:41:00+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "tags": [
+                    "WBS",
+                    "Rslt",
+                    "D644",
+                    "prod",
+                    "plan"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0069",
+                      "0071",
+                      "0072",
+                      "0075"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Расширить цель плана до контура B",
+                    "details": "БП 1.1.* + 1.2.1 (D644/Свод); c+=раунд/веха; d=исходящие; 1.2.2–1.2.3 вне scope; один релиз без лишних деплоев.",
+                    "outcome": "v0.3.0 в chat-plan-26-0918.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "WBS §1: дерево как скелет плана (success). № log-2026-09-18-002",
+                "log-attributes": {
+                  "id": "log-2026-09-18-002",
+                  "timestamp": "2026-09-18T10:27:00+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "tags": [
+                    "WBS",
+                    "Rslt",
+                    "plan"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0069",
+                      "0071",
+                      "0072",
+                      "0075"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Поднять дерево работ в §1 как скелет",
+                    "details": "v0.2.0: ★ критический путь, ‖ параллели, сжатая цепочка и фокус; §2–§5 — детализация.",
+                    "outcome": "Дальнейшие правки порядка — сначала в §1.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "WBS: цель Rslt на проде (success). № log-2026-09-18-001",
+                "log-attributes": {
+                  "id": "log-2026-09-18-001",
+                  "timestamp": "2026-09-18T09:52:00+03:00",
+                  "level": "success",
+                  "effort": "20m",
+                  "status": "completed",
+                  "tags": [
+                    "WBS",
+                    "Rslt",
+                    "prod",
+                    "plan"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0069",
+                      "0071",
+                      "0072",
+                      "0075"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Вынести порядок дальнейших действий в отдельный план-чат",
+                    "details": "WBS 1→1.1→1.1.1(a/b/c)→1.1.2(M6)→1.2→1.3; b = контур export_*/pm/0072; критический путь и вне scope зафиксированы.",
+                    "outcome": "Рабочий документ для правок порядка.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S82: импорт MAY красных в группу 906 через UI (success). № log-2026-09-17-003",
+                "log-attributes": {
+                  "id": "log-2026-09-17-003",
+                  "timestamp": "2026-09-17T17:12:00+03:00",
+                  "level": "success",
+                  "effort": "45m",
+                  "status": "completed",
+                  "tags": [
+                    "S82",
+                    "906",
+                    "Rslt",
+                    "import",
+                    "MAY"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0069",
+                      "0075"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Через UI создать yr_CmmGr_New и залить MAY красные *_new, сверить с 905",
+                    "details": "Группа 906. Импорт 175/175. Куратор/мероприятия/код vs 905: CHANGE=0 на пересечении; 905 шире (зелёные + не-QIV). yr_CmmGr=905 сохранён.",
+                    "outcome": "Красные MAY в 906; импортёр возврата совпадает с 905 там, где красное было заполнено.",
+                    "references": [
+                      "docs/development/notes/sql/26-0917-sudz-rslt-cmm-from-may/artifacts/ags_Yr_DbtChangesRslt_901_asOf903_may_red_return_26-0917.xlsx",
+                      "docs/development/notes/sql/26-0917-sudz-rslt-cmm-from-may/artifacts/compare_906_may_red_vs_905.json"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S82cmm: Rslt asOf903 с группой 905, сверка MAY (success). № log-2026-09-17-002",
+                "log-attributes": {
+                  "id": "log-2026-09-17-002",
+                  "timestamp": "2026-09-17T14:46:00+03:00",
+                  "level": "success",
+                  "effort": "20m",
+                  "status": "completed",
+                  "tags": [
+                    "S82",
+                    "905",
+                    "Rslt",
+                    "export"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0069",
+                      "0075"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Выгрузить Rslt сбор asOf903 с yr_CmmGr=905 и сверить зелёные с MAY-рассылкой",
+                    "details": "rslt-sborn yr=901 asOfUpl=903. dbt 2134/2134. Куратор/мероприятия/код CHANGE=0. Имя: 10 орфографий ags.cst vs Excel. *_new пустые.",
+                    "outcome": "Зелёные группы 905 воспроизводятся в Rslt; расхождение только в написании 10 наименований.",
+                    "references": [
+                      "docs/development/notes/sql/26-0917-sudz-rslt-cmm-from-may/artifacts/ags_Yr_DbtChangesRslt_901_asOf903_s82cmm_905_26-0917.xlsx",
+                      "docs/development/notes/sql/26-0917-sudz-rslt-cmm-from-may/04_COMPARE_GREEN_VS_MAY_MAILING.mjs"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S82cmm: группа 905 из зелёных полей рассылки (success). № log-2026-09-17-001",
+                "log-attributes": {
+                  "id": "log-2026-09-17-001",
+                  "timestamp": "2026-09-17T14:40:00+03:00",
+                  "level": "success",
+                  "effort": "30m",
+                  "status": "completed",
+                  "tags": [
+                    "S82",
+                    "cnInvCmmGr",
+                    "905",
+                    "Rslt",
+                    "cmm"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0069",
+                      "0075"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Создать cnInvCmmGr по зелёным полям итогового файла рассылки и указать yr_CmmGr",
+                    "details": "Новая группа 905 S82cmm из ags_Yr_DbtChangesRslt_26-0917_cmm_from_may.xlsx (dbtKey). cnInvCmm 8/1 = 131/180, cnInvCmmCst тип 2 = 1815 unresolved 0. yr=901 yr_CmmGr 903→905; 903 и 904 не перезаписывались.",
+                    "outcome": "Зелёные поля рассылки доступны как yr_CmmGr=905.",
+                    "references": [
+                      "docs/development/notes/sql/26-0917-sudz-rslt-cmm-from-may/README.md",
+                      "docs/development/notes/sql/26-0917-sudz-rslt-cmm-from-may/03_LOAD_CMM_FROM_MAILING_GREEN.mjs"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "S82 asOf903: фикс 28469 + сопроводиловка (success). № log-2026-09-16-002",
+                "log-attributes": {
+                  "id": "log-2026-09-16-002",
+                  "timestamp": "2026-09-16T17:55:00+03:00",
+                  "level": "success",
+                  "effort": "40m",
+                  "status": "completed",
+                  "tags": [
+                    "S82",
+                    "1.1.1.3",
+                    "28469",
+                    "Rslt",
+                    "mailing"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0069",
+                      "0075"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Перед рассылкой asOf903 сшить канон 28469 и выдать файл сбор",
+                    "details": "Merge 3399→3398 + Value@901 на survivor; dry@903 без разъезда; re-export s81_cmm_28469fix; verify PASS FAIL=0 ∑Δ=0; 28469=1 строка dbt 3398. Known: P1 open 364; A45 две строки. Сопроводиловка mailing_asOf903_cover_26-0916.md.",
+                    "outcome": "Готово к 1.1.1.3: отдать …s81_cmm_28469fix_26-0916.xlsx специалистам.",
+                    "references": [
+                      "docs/development/notes/sql/26-0831-sudz-dbt-slot-link/artifacts/ags_Yr_DbtChangesRslt_901_asOf903_s81_cmm_28469fix_26-0916.xlsx",
+                      "docs/development/notes/sql/26-0831-sudz-dbt-slot-link/artifacts/stage2_s80_qiv_qi_vs_access_28469fix_26-0916.json",
+                      "docs/development/notes/sql/26-0831-sudz-dbt-slot-link/artifacts/mailing_asOf903_cover_26-0916.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                    ]
+                  }
+                ]
+              }
+            },
             {
               "log": {
                 "displayName": "S79 зафиксирован в плане и docs (success). № log-2026-09-16-001",

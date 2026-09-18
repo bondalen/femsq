@@ -120,3 +120,6 @@ code/femsq-backend/femsq-web/temp/
 **/temp/**/*.jasper
 # Исходники отчётов только в femsq-reports/src/main/resources/reports/embedded/ (не дублировать в temp/)
 **/temp/**/*.jrxml
+
+# Local SheetJS tooling for Rslt verify (S79)
+.cursor/rslt-tools/

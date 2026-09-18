@@ -47,6 +47,15 @@ import com.femsq.database.model.sudz.SudzPmLink;
 import com.femsq.database.model.sudz.SudzPmUplLookup;
 import com.femsq.database.model.sudz.SudzPmtUplFile;
 import com.femsq.database.model.sudz.SudzPmtUplLauncher;
+import com.femsq.database.model.sudz.SudzPmtUplAgNotLoad;
+import com.femsq.database.model.sudz.SudzPmtUplAgNotLoadApplyResult;
+import com.femsq.database.model.sudz.SudzPmtUplInvNotResult;
+import com.femsq.database.model.sudz.SudzPmtUplAcNotLoad;
+import com.femsq.database.model.sudz.SudzPmtUplDocNotApplyResult;
+import com.femsq.database.model.sudz.SudzPmtUplInsPmNotApplyResult;
+import com.femsq.database.model.sudz.SudzPmtUplInsPmNotResult;
+import com.femsq.database.model.sudz.SudzPmtUplCnNotLoad;
+import com.femsq.database.model.sudz.SudzPmtUplLogOnlyResult;
 import com.femsq.database.model.sudz.SudzPmtUplTblRow;
 import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
@@ -280,6 +289,185 @@ public interface SudzDao {
      * @return число вставленных строк
      */
     int replacePmtUplTbl(int unloadKey, List<SudzPmtUplTblRow> rows);
+
+    /**
+     * Число строк staging {@code CnInvPmtUplTbl} для пакета.
+     *
+     * @param unloadKey {@code ciputUnloadKey}
+     * @return COUNT(*)
+     */
+    int countPmtUplTbl(int unloadKey);
+
+    /**
+     * H2 шаг 1: контрагент/агент Excel без {@code ags.org_id} type=1 (LEFT JOIN).
+     *
+     * @param unloadKey пакет
+     * @param sampleLimit максимум образцов
+     * @return N + samples
+     */
+    SudzPmtUplLogOnlyResult findPmtUplOidNot(int unloadKey, int sampleLimit);
+
+    /**
+     * H2 шаг 2: САК ({@code cacOrNull}) без пары в {@code ags.cstAgPn}.
+     *
+     * @param unloadKey пакет
+     * @param sampleLimit максимум образцов
+     * @return N + samples
+     */
+    SudzPmtUplLogOnlyResult findPmtUplCacNot(int unloadKey, int sampleLimit);
+
+    /**
+     * H2 шаг 4: пара договор+исполнитель &gt;1 в БД.
+     *
+     * @param unloadKey пакет
+     * @param sampleLimit максимум образцов
+     * @return N + samples
+     */
+    SudzPmtUplLogOnlyResult findPmtUplCnTwo(int unloadKey, int sampleLimit);
+
+    /**
+     * H2 шаг 6: агент (cn_s_type=1) более одного раза на договоре из Tbl.
+     *
+     * @param unloadKey пакет
+     * @param sampleLimit максимум образцов
+     * @return N + samples
+     */
+    SudzPmtUplLogOnlyResult findPmtUplAgTwo(int unloadKey, int sampleLimit);
+
+    /**
+     * H2 шаг 8: СФ Excel, уже &gt;1 раз в {@code ags.cnInv} (по номеру).
+     *
+     * @param unloadKey пакет
+     * @param sampleLimit максимум образцов
+     * @return N + samples
+     */
+    SudzPmtUplLogOnlyResult findPmtUplInvTwo(int unloadKey, int sampleLimit);
+
+    /**
+     * H2 шаг 11: коды платёжных документов Excel без {@code ags.cn_inv_doc}.
+     *
+     * @param unloadKey пакет
+     * @param sampleLimit максимум образцов
+     * @return N + samples
+     */
+    SudzPmtUplLogOnlyResult findPmtUplDocNot(int unloadKey, int sampleLimit);
+
+    /**
+     * H2 шаг 13 (срез): платежи уже в {@code ags.cn_inv_pm} для этого upl (без полного MainTest).
+     *
+     * @param unloadKey пакет
+     * @param sampleLimit максимум образцов
+     * @return N + samples
+     */
+    SudzPmtUplLogOnlyResult findPmtUplInsPmExt(int unloadKey, int sampleLimit);
+
+    /**
+     * H3 шаг 3: пары БУиРГ+№ из Tbl без исполнителя (smpl type=2) в БД + {@code countCn}.
+     *
+     * @param unloadKey пакет
+     * @return строки к показу / apply
+     */
+    List<SudzPmtUplCnNotLoad> findPmtUplCnNotLoad(int unloadKey);
+
+    /**
+     * H3 шаг 3 apply: INSERT цепочки cn при {@code countCn == 0} и валидном org_id.
+     *
+     * @param rows результат find
+     * @param cnMark метка Access {@code strMark}
+     * @param note заметка в cn_note / cnnNote
+     * @return итог INSERT
+     */
+    SudzDbtUplCnNotLoadApplyResult applyPmtUplCnNotLoad(
+            List<SudzPmtUplCnNotLoad> rows,
+            int cnMark,
+            String note
+    );
+
+    /**
+     * H3 шаг 5: договоры Tbl без данного агента (smpl type=1) в БД.
+     *
+     * @param unloadKey пакет
+     * @return строки к показу / apply
+     */
+    List<SudzPmtUplAgNotLoad> findPmtUplAgNotLoad(int unloadKey);
+
+    /**
+     * H3 шаг 5 apply: {@code cn_s} type=1 + smpl + {@code cn_s_org} при валидном org_id агента.
+     *
+     * @param rows результат find
+     * @param note заметка
+     * @return итог INSERT
+     */
+    SudzPmtUplAgNotLoadApplyResult applyPmtUplAgNotLoad(
+            List<SudzPmtUplAgNotLoad> rows,
+            String note
+    );
+
+    /**
+     * H3 шаг 7: пересобирает {@code CnInvPmtUplTblCnInv} — новые СФ для договоров
+     * с ровно одной парой исполнитель+№ ({@code cipuCn_CtptCnOneInvNot}).
+     *
+     * @param unloadKey пакет
+     * @return число строк буфера + договоры для лога
+     */
+    SudzPmtUplInvNotResult rebuildPmtUplInvNot(int unloadKey);
+
+    /**
+     * H3 шаг 7 apply: {@code inv} → {@code invNum} → {@code cnInv} по буферу
+     * где {@code ciputciCnInvNumCount IS NULL} (как dbt; Access создаёт все строки).
+     *
+     * @param unloadKey пакет (для лога; буфер общий)
+     * @return число созданных троек
+     */
+    SudzDbtUplCnCtptExistInvApplyResult applyPmtUplInvNotLoad(int unloadKey);
+
+    /**
+     * H3 шаг 9: СФ без пары СФ+счёт ГК ({@code cipuCn_CtptCnOneInvOneAcNot}).
+     *
+     * @param unloadKey пакет
+     * @return строки к показу / apply
+     */
+    List<SudzPmtUplAcNotLoad> findPmtUplAcNotLoad(int unloadKey);
+
+    /**
+     * H3 шаг 9 apply: INSERT {@code ags.cnInvAccntSmpl} ({@code …AcNotIns}).
+     *
+     * @param unloadKey пакет
+     * @return число INSERT
+     */
+    SudzDbtUplAccSmplNotApplyResult applyPmtUplAcNotLoad(int unloadKey);
+
+    /**
+     * H3 шаг 10: коды ПД Excel без {@code ags.cn_inv_doc} ({@code cipuDocNot}).
+     *
+     * @param unloadKey пакет
+     * @return коды (нормализованные строки)
+     */
+    List<String> findPmtUplDocNotLoad(int unloadKey);
+
+    /**
+     * H3 шаг 10 apply: INSERT {@code cn_inv_doc_kod} ({@code cipuDocNotIns}).
+     *
+     * @param unloadKey пакет
+     * @return число INSERT
+     */
+    SudzPmtUplDocNotApplyResult applyPmtUplDocNotLoad(int unloadKey);
+
+    /**
+     * H3 шаг 12: готовые платежи без {@code cn_inv_pm} ({@code cipuInsPmNot}).
+     *
+     * @param unloadKey пакет
+     * @return число строк к INSERT
+     */
+    SudzPmtUplInsPmNotResult findPmtUplInsPmNotLoad(int unloadKey);
+
+    /**
+     * H3 шаг 12 apply: INSERT {@code ags.cn_inv_pm} ({@code cipuInsPmNotIns}).
+     *
+     * @param unloadKey пакет
+     * @return число INSERT
+     */
+    SudzPmtUplInsPmNotApplyResult applyPmtUplInsPmNotLoad(int unloadKey);
 
     /**
      * Связывает выгрузку ДЗ с выгрузкой платежей ({@code cn_inv_dbt_upl_g_p}).

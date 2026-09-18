@@ -3,13 +3,50 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2026-09-16T14:15:00+03:00",
+      "lastUpdated": "2026-09-18T11:22:00+03:00",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0076",
+      "nextTaskId": "0077",
       "items": {
+        "0076": {
+          "task": {
+            "displayName": "🔶 СУДЗ: канон 1.1.1.2 apply→cn_inv_pm→g_p→Rslt (in_progress, high). № 0076",
+            "task-attributes": {
+              "status": "in_progress",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "5× export_* через экран D → CnInvPmtUplTbl → apply cipu* → cn_inv_pm",
+                "Мост sudz.cn_inv_dbt_upl_g_p к upl 902 (и база года для fn)",
+                "DbtUplCstAg через fn+g_p (не Excel-бэкфилл S80)",
+                "Rslt asOf QI ↔ ags_Yr_DbtChangesRslt_26-0505.xlsx по колонкам строек; 762210 без pm — ок",
+                "План 0819 §4.3 + журнал"
+              ],
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.web",
+                  "module:frontend",
+                  "module:backend.database"
+                ],
+                "journalRefs": [
+                  "chat:chat-2026-09-18-001"
+                ],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md",
+                "domainPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+                "vbaCipu": "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/",
+                "dependsOnTasks": [
+                  "0074"
+                ]
+              },
+              "created": "2026-09-18",
+              "lastUpdated": "2026-09-18",
+              "description": "Канонический БП 1.1.1.2 после Excel→Tbl. Не бэкфилл S80; не дерево 0918; не 0069. Срезы H1–H7 в плане 0819 §4.3."
+            }
+          }
+        },
         "0075": {
           "task": {
             "displayName": "СУДЗ: gate ложных погашений перед Rslt сбор (pending, high). № 0075",
@@ -2752,9 +2789,9 @@
         },
         "0074": {
           "task": {
-            "displayName": "🔶 СУДЗ: воронка загрузки платежей Excel→Tbl + stub cipu* (in_progress, high). № 0074",
+            "displayName": "✅ СУДЗ: воронка загрузки платежей Excel→Tbl + stub cipu* (completed, high). № 0074",
             "task-attributes": {
-              "status": "in_progress",
+              "status": "completed",
               "priority": "high",
               "owner": "Александр",
               "completionCriteria": [
@@ -2771,7 +2808,8 @@
                   "module:backend.database"
                 ],
                 "journalRefs": [
-                  "chat:chat-2026-09-14-001"
+                  "chat:chat-2026-09-14-001",
+                  "chat:chat-2026-09-18-001"
                 ],
                 "aiRuleRefs": [],
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md",
@@ -2782,8 +2820,9 @@
                 ]
               },
               "created": "2026-09-14",
-              "lastUpdated": "2026-09-14",
-              "description": "Этап 2b плана 26-0819 §4.2. Код G1–G5: runSudzPmtUplFunnel, Excel→CnInvPmtUplTbl (Offset A–Z), stub cipu*, UI. Осталось G6 UAT на export_*.xlsx. Не полный apply. Не 0069."
+              "lastUpdated": "2026-09-18",
+              "completed": "2026-09-18",
+              "description": "Этап 2b плана 0819 §4.2. G1–G6 ✅ (UAT export_606012 → Tbl 4909, JAR 285). Apply — задача 0076."
             }
           }
         }
@@ -3626,12 +3665,24 @@
                     },
                     {
                       "task-item": {
-                        "displayName": "🔶 Загрузка платежей → воронка Excel→Tbl (in_progress, high). № 02.03.10 → 0074",
+                        "displayName": "✅ Загрузка платежей → воронка Excel→Tbl (completed, high). № 02.03.10 → 0074",
                         "item-attributes": {
                           "structureId": "02.03.10",
                           "taskId": "0074",
                           "positionInParent": 10,
-                          "comment": "2b; export_offset-map; stub cipu*; chat-plan-26-0819 §4.2"
+                          "comment": "2b G6 2026-09-18; export_606012→Tbl 4909; apply → 0076"
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "🔶 Загрузка платежей → apply cn_inv_pm / g_p / Rslt (in_progress, high). № 02.03.12 → 0076",
+                        "item-attributes": {
+                          "structureId": "02.03.12",
+                          "taskId": "0076",
+                          "positionInParent": 12,
+                          "comment": "канон 1.1.1.2; план 0819 §4.3; не бэкфилл S80; не 0918"
                         },
                         "task-items": []
                       }
