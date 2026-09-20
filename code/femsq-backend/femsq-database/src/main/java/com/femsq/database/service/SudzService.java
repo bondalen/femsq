@@ -44,6 +44,7 @@ import com.femsq.database.model.sudz.SudzDbtUplLauncher;
 import com.femsq.database.model.sudz.SudzDbtUplOrgNotInBuirg;
 import com.femsq.database.model.sudz.SudzDbtUplTblRow;
 import com.femsq.database.model.sudz.SudzDebtCollection;
+import com.femsq.database.model.sudz.SudzDbtUplCstAgRebuildResult;
 import com.femsq.database.model.sudz.SudzPmLink;
 import com.femsq.database.model.sudz.SudzPmUplLookup;
 import com.femsq.database.model.sudz.SudzPmtUplFile;
@@ -413,6 +414,14 @@ public interface SudzService {
      * @return true
      */
     boolean removePmLink(int gPKey);
+
+    /**
+     * H6: пересчёт {@code DbtUplCstAg} из pm+g_p (сброс строк @upl).
+     *
+     * @param dbtUplKey ключ выгрузки ДЗ
+     * @return счётчики
+     */
+    SudzDbtUplCstAgRebuildResult rebuildDbtUplCstAg(int dbtUplKey);
 
     /**
      * Портфель года (структура Rslt).

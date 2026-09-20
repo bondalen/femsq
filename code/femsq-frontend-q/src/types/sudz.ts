@@ -90,6 +90,16 @@ export interface SudzPmLink {
   dbtUplDate: string | null;
 }
 
+/** Итог H6: пересчёт DbtUplCstAg из pm+g_p. */
+export interface SudzDbtUplCstAgRebuildResult {
+  dbtUplKey: number;
+  deletedCount: number;
+  insertedCount: number;
+  multiCount: number;
+  emptyCount: number;
+  opsProgress?: string | null;
+}
+
 export interface SudzYearUpl {
   yrUplPKey: number;
   yrKey: number;
@@ -98,6 +108,8 @@ export interface SudzYearUpl {
   uplDate: string | null;
   uplStatusOnDate: string | null;
   pmLinks: SudzPmLink[];
+  /** HTML-журнал операций File (cidufOpsProgress). */
+  opsProgress?: string | null;
 }
 
 export interface SudzYearDetail {
@@ -151,6 +163,7 @@ export interface SudzDbtUplFile {
   cidufFlLoad: boolean;
   cidufFlTbl: boolean;
   cidufLoadingProgress: string | null;
+  cidufOpsProgress?: string | null;
 }
 
 /** Лист CnInvDbtUplFileSh. */

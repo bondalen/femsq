@@ -1,11 +1,11 @@
 # План: экран загрузки платежей (`CnInvPmtUpl` → FEMSQ)
 
 **Дата создания:** 2026-08-19  
-**Последнее обновление:** 2026-09-18  
+**Последнее обновление:** 2026-09-20  
 **Проект:** FEMSQ  
-**Версия плана:** 0.8.0 (0074 ✅ G6; цель чата → канон 1.1.1.2 до cn_inv_pm / g_p / Rslt)  
-**Задачи:** [0072](../../../project-development.json) ✅ · [0073](../../../project-development.json) ✅ · [0074](../../../project-development.json) ✅ · [0076](../../../project-development.json) 🔶 apply→pm→g_p→Rslt  
-**Статус плана:** ✅ F1 + Excel→Tbl; **активно:** этап **2c** / 0076 (канонический БП 1.1.1.2)  
+**Версия плана:** 0.8.6 (0072–0074 ✅; **0076 ✅** закрыта; H4–H7 ✅; §0a.1–5 ✅)  
+**Задачи:** [0072](../../../project-development.json) ✅ · [0073](../../../project-development.json) ✅ · [0074](../../../project-development.json) ✅ · [0076](../../../project-development.json) ✅  
+**Статус плана:** ✅ **закрыт** (цель чата 2026-09-18): канон 1.1.1.2 → `cn_inv_pm` / `g_p` / Rslt vs Access FAIL=0 (C' 2026-09-20, JAR **304**). Вне scope later: §4 этапы 3–4 (вкладка g_p на C, КСДСФ).  
 **Резюме visual v1:** [chat-resume-26-0819-cn-inv-pmt-upl.md](../chat-resume/chat-resume-26-0819-cn-inv-pmt-upl.md)  
 **Процесс:** [03 §1.1.1.2](../../domain/sudz/03-processes.md)  
 **Паспорт Access:** [02-11](../../UI/02-11_cn-inv-pmt-upl-access.md) (S69, закрыт)  
@@ -25,17 +25,17 @@
 
 **Данные QI (шара):** `/mnt/nb-win-share/femsq/excel/2026_03/debit/` — свод→upl **902**; 5× `export_*_26-0422`; эталон Rslt `ags_Yr_DbtChangesRslt_26-0505.xlsx`; **762210 без export — ок**.
 
-**Факт DEV 2026-09-18:** `sudz.cn_inv_dbt_upl_g_p` = **0**; `DbtUplCstAg` @901/902 — бэкфилл (неканон). G6: pmKey=1 Tbl **4909** из `export_606012`. **UI A:** pm **3/4/5/6/8** = `export_*_26-0422` → Tbl **4909/721/990/7481/583** (JAR **286**). Fix: `createPmUpl` reuse/reset orphan `CnInvPmtUplFile` (UNIQUE `cipufUpload`). **H2 ✅** UI pm=8 (JAR **287**): log-only OIdNot/CacNot, сжатый лог в `<details>`.
+**Факт DEV 2026-09-18…20:** G6: pmKey=1 Tbl **4909** из `export_606012`. **UI A:** pm **3/4/5/6/8** = `export_*_26-0422` → Tbl **4909/721/990/7481/583**. **H2–H6 ✅** (JAR **287…302**). **H7 ✅** 2026-09-20 C': FAIL=**0** vs `26-0505`; cia→smpl + link `LEN≥8`; JAR **304**; закрытие **0076** / chat-2026-09-18-001.
 
 ### 0a. Критерий закрытия чата
 
 | # | Критерий | Статус |
 |---|----------|--------|
-| 1 | 5× `export_*` → Tbl → apply → `cn_inv_pm` | ◐ Tbl×5 ✅; apply ☐ |
-| 2 | Мост `g_p` к **902** | ☐ |
-| 3 | Стройки через fn+g_p → `DbtUplCstAg` (не Excel-бэкфилл) | ☐ |
-| 4 | Rslt QI ↔ `26-0505` по стройкам; 762210 без pm — ок | ☐ |
-| 5 | План 0819 + журнал; apply/g_p/verify in scope | 🔶 §4.3 |
+| 1 | 5× `export_*` → Tbl → apply → `cn_inv_pm` | ✅ Tbl×5; apply UI dry→apply→dry pm **3/4/5/6/8** (JAR **300**, nb-win 2026-09-19) |
+| 2 | Мост `g_p` к **902** | ✅ 5 связей 902↔pm **3/4/5/6/8** (UI Портфель года «Связать», JAR **300**, 2026-09-19; после отката mutation) |
+| 3 | Стройки через fn+g_p → `DbtUplCstAg` (не Excel-бэкфилл) | ✅ @902: −1637 бэкфилл / +732 канон (UI Портфель, JAR **301**, 2026-09-19) |
+| 4 | Rslt QI ↔ `26-0505` по стройкам; 762210 без pm — ок | ✅ FAIL=**0** (C' 2026-09-20); суммы PASS |
+| 5 | План 0819 + журнал; apply/g_p/verify in scope | ✅ 2026-09-20: §4.3 H0–H7; journal `log-2026-09-20-002`; задача **0076** completed |
 
 Не смешивать с: **0069** как планом UI D; бэкфиллом S80 вместо fn; деревом **0918**; КСДСФ pmt; картой [0802](./chat-plan-26-0802-sudz.md) как единственным планом платежей.
 
@@ -130,10 +130,10 @@
 | **2** | Лаунчер File (0073) | Мероприятия §4.1; GraphQL + UI ↔ `CnInvPmtUplFile` | ✅ UAT владельца 2026-09-14 |
 | **2a** | Fix пути | Ведущий `/` у Windows-пути (`normalizeExplorerPath`) | ✅ 2026-09-14 |
 | **2b** | Воронка (0074) | Excel→Tbl + оркестратор `cipu*` (узкий первый срез §4.2) | ✅ G6 2026-09-18 |
-| **2c** | Apply → pm (0076) | Живые `cipu*` → `cn_inv_pm` (§4.3 H) | 🔶 план |
-| **2d** | Мост g_p | `sudz.cn_inv_dbt_upl_g_p` → 902 (+ база года) | ☐ |
-| **2e** | Стройки канон | fn+g_p → `DbtUplCstAg` (не Excel-бэкфилл) | ☐ |
-| **2f** | Rslt verify | asOf QI ↔ `26-0505` колонки строек | ☐ |
+| **2c** | Apply → pm (0076) | Живые `cipu*` → `cn_inv_pm` (§4.3 H) | ✅ H4 |
+| **2d** | Мост g_p | `sudz.cn_inv_dbt_upl_g_p` → 902 (+ база года) | ✅ H5 UI: 5× g_p @902 |
+| **2e** | Стройки канон | fn+g_p → `DbtUplCstAg` (не Excel-бэкфилл) | ✅ H6 @902 |
+| **2f** | Rslt verify | asOf QI ↔ `26-0505` колонки строек | ✅ **H7** FAIL=0 (2026-09-20 C') |
 | **3** | (позже) | Вкладка `g_p` на экране C; переход к D по `pmKey` | ☐ |
 | **4** | (позже) | Адаптер КСДСФ под pmt | ☐ |
 
@@ -247,10 +247,10 @@
 | **H1** | Каркас apply: снять «один stub на всё»; каждый stepId — свой блок лога; flLoad в логе | Без записи домена | ✅ 2026-09-18 (код) |
 | **H2** | Log-only шаги 1–2, 4, 6, 8, 11, 13 (сжатый лог: сводка N + первые K) | Оператору видно объём внимания | ✅ 2026-09-18 UAT UI pm=8: OIdNot N=1 + sample; CacNot N=0; flTbl=0; 266 мс; JAR **287** |
 | **H3** | Apply-шаги с записью (3, 5, 7, 9, 10, **12** `cipuInsPmNotLoad` → `cn_inv_pm`) при `flLoad` | Домен `sudz`/`ags` по правилам DEV | ✅ шаг **3/5/7/9/10/12**; **12** UI dry(303)→apply(**303** `cn_inv_pm`)→dry(0); JAR **297** |
-| **H4** | 5 пакетов / 5 `export_*` → Tbl → apply → `cn_inv_pm` | Критерий закрытия §0a.1 | ◐ 2026-09-18: UI 5× upl+path; Excel→Tbl ✅ (pm 3/4/5/6/8 = 4909/721/990/7481/583); apply → pm ещё ☐ |
-| **H5** | `g_p`: связь pm_upl ↔ **902** (UI C и/или mutation; seed DEV) | §0a.2; `sudz.g_p` > 0 | ☐ |
-| **H6** | Пересчёт `DbtUplCstAg` через fn+g_p (сброс бэкфилла при необходимости) | §0a.3 канон | ☐ |
-| **H7** | Rslt asOf QI ↔ `26-0505` колонки строек; 762210 без pm — ок | §0a.4 | ☐ |
+| **H4** | 5 пакетов / 5 `export_*` → Tbl → apply → `cn_inv_pm` | Критерий закрытия §0a.1 | ✅ 2026-09-19 nb-win UI: pm8 ранее; pm3/4/5/6 dry→apply→dry; InsPm timeout select **300**/insert **600** с; JAR **300** |
+| **H5** | `g_p`: связь pm_upl ↔ **902** (UI C и/или mutation; seed DEV) | §0a.2; `sudz.g_p` > 0 | ✅ 2026-09-19 nb-win UI Портфель: yr2026 / upl **902** → «Связать» pm **3/4/5/6/8** (gPKey **6–10**); `sudz.g_p`=**5**; JAR **300**. Предшествующий seed mutation откатан (`removeSudzPmLink` 1–5) |
+| **H6** | Пересчёт `DbtUplCstAg` через fn+g_p (сброс бэкфилла при необходимости) | §0a.3 канон | ✅ 2026-09-19 nb-win UI Портфель «Пересчитать стройки» @902: deleted=**1637**, inserted=**732**, multi=**12**, empty=**1013**; JAR **301**; mutation `rebuildSudzDbtUplCstAg` |
+| **H7** | Rslt asOf QI ↔ `26-0505` колонки строек; 762210 без pm — ок | §0a.4 | ✅ **2026-09-20** C': FAIL **0**; cia→smpl join + link `LEN>=8`; `49786`=`051-2005850`; verify `h7_…fixC_26-0920-1348`; sql `26-0920-…/03_REBUILD…` |
 
 **Решение владельца (2026-09-18):** для QI с несколькими `export_{счёт}_*` — **вариант A**: отдельный `cn_inv_pm_upl` (+ File) на каждый файл. UNIQUE `cipufUpload`; Access/`g_p` = 1 dbt → N pm. Не один пакет с сменой path; не N File на upl.
 

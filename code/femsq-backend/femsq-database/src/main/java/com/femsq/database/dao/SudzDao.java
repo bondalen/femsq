@@ -43,6 +43,7 @@ import com.femsq.database.model.sudz.SudzDbtCanonSearchFilter;
 import com.femsq.database.model.sudz.SudzDbtSplitCommand;
 import com.femsq.database.model.sudz.SudzDbtSplitResult;
 import com.femsq.database.model.sudz.SudzDebtCollection;
+import com.femsq.database.model.sudz.SudzDbtUplCstAgRebuildResult;
 import com.femsq.database.model.sudz.SudzPmLink;
 import com.femsq.database.model.sudz.SudzPmUplLookup;
 import com.femsq.database.model.sudz.SudzPmtUplFile;
@@ -484,6 +485,14 @@ public interface SudzDao {
      * @param gPKey ключ связи ({@code [key]})
      */
     void removePmLink(int gPKey);
+
+    /**
+     * H6: пересчёт {@code DbtUplCstAg} из {@code ags.cn_inv_pm}+{@code g_p} (сброс строк @upl).
+     *
+     * @param dbtUplKey ключ выгрузки ДЗ
+     * @return счётчики delete/insert/multi/empty
+     */
+    SudzDbtUplCstAgRebuildResult rebuildDbtUplCstAg(int dbtUplKey);
 
     /**
      * Портфель года в структуре Rslt (зерно {@code dbtKey}, срезы по дате выгрузки).

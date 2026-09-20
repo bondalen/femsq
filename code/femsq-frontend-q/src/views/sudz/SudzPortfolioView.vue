@@ -197,6 +197,31 @@
                                 @click="onLinkPm(upl.uplKey)"
                               />
                               <QBtn flat dense no-caps label="Новая pm…" @click="openPmDialog(upl.uplKey)" />
+                              <QBtn
+                                flat
+                                dense
+                                no-caps
+                                color="secondary"
+                                label="Пересчитать стройки"
+                                data-test="sudz-yr-rebuild-cst-ag"
+                                :disable="store.saving || (upl.pmLinks?.length ?? 0) === 0"
+                                :loading="rebuildBusy[upl.uplKey] === true"
+                                @click="onRebuildCstAg(upl.uplKey)"
+                              />
+                            </div>
+                            <div
+                              class="sudz-ops-progress q-mt-sm"
+                              data-test="sudz-yr-ops-progress"
+                            >
+                              <div class="text-caption text-grey-6 q-mb-xs">операции (File)</div>
+                              <div
+                                v-if="upl.opsProgress?.trim()"
+                                class="sudz-ops-progress__body"
+                                v-html="upl.opsProgress"
+                              />
+                              <div v-else class="text-grey-7 text-caption q-pa-xs">
+                                Лог операций пуст (заполнится при «Пересчитать стройки»).
+                              </div>
                             </div>
                           </td>
                         </tr>
@@ -646,6 +671,7 @@ const store = useSudzPortfolioStore();
 const $q = useQuasar();
 
 const tab = ref<'upls' | 'progress'>('upls');
+const rebuildBusy = reactive<Record<number, boolean>>({});
 const selectedYearRows = ref<SudzYear[]>([]);
 const addUplKey = ref<number | null>(null);
 const pmPick = reactive<Record<number, number | null>>({});
@@ -1386,6 +1412,34 @@ async function onLinkPm(dbtUplKey: number): Promise<void> {
   }
 }
 
+/** H6: сброс бэкфилла и пересчёт DbtUplCstAg из pm+g_p. */
+async function onRebuildCstAg(dbtUplKey: number): Promise<void> {
+  rebuildBusy[dbtUplKey] = true;
+  try {
+    const result = await store.rebuildCstAg(dbtUplKey);
+    if (result == null) {
+      $q.notify({
+        type: 'negative',
+        message: store.error ?? 'Не удалось пересчитать стройки',
+        timeout: 4000
+      });
+      return;
+    }
+    if (store.selectedYrKey != null) {
+      await store.refreshDetail();
+    }
+    $q.notify({
+      type: 'positive',
+      message:
+        `DbtUplCstAg @${result.dbtUplKey}: −${result.deletedCount} / +${result.insertedCount}` +
+        ` (multi=${result.multiCount}, empty=${result.emptyCount})`,
+      timeout: 5000
+    });
+  } finally {
+    rebuildBusy[dbtUplKey] = false;
+  }
+}
+
 async function onCreatePm(): Promise<void> {
   if (pmDialog.dbtUplKey == null || !pmDialog.date) {
     $q.notify({ type: 'warning', message: 'Укажите дату платёжной выгрузки' });
@@ -1409,6 +1463,37 @@ function onUnlinkPm(gPKey: number): void {
 <style scoped>
 .sudz-yr-page {
   overflow: hidden;
+}
+
+.sudz-ops-progress {
+  max-width: 100%;
+}
+
+.sudz-ops-progress__body {
+  max-height: 9rem;
+  overflow: auto;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.sudz-ops-progress__body :deep(pre) {
+  margin: 0.25rem 0 0;
+  white-space: pre-wrap;
+  font-size: 0.72rem;
+}
+
+.sudz-ops-progress__body :deep(hr) {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 0.4rem 0;
+}
+
+.sudz-ops-progress__body :deep(details) {
+  margin-top: 0.25rem;
 }
 
 .sudz-yr-view {

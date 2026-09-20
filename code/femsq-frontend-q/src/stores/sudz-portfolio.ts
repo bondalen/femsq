@@ -18,6 +18,7 @@ import {
   getSudzUplLookups,
   getSudzYear,
   getSudzYears,
+  rebuildSudzDbtUplCstAg,
   getSudzYyyyLookups,
   removeSudzPmLink,
   removeSudzYearUpl,
@@ -29,6 +30,7 @@ import type {
   CreateSudzUplInput,
   CreateSudzYearInput,
   SudzCmmGrLookup,
+  SudzDbtUplCstAgRebuildResult,
   SudzPmUplLookup,
   SudzUplLookup,
   SudzYear,
@@ -116,6 +118,12 @@ export const useSudzPortfolioStore = defineStore('sudz-portfolio', () => {
   async function selectYear(yrKey: number): Promise<void> {
     expandedUplKeys.value = new Set();
     await loadDetail(yrKey);
+  }
+
+  /** Перечитать карточку года без сброса разворота upl. */
+  async function refreshDetail(): Promise<void> {
+    if (selectedYrKey.value == null) return;
+    await loadDetail(selectedYrKey.value);
   }
 
   async function saveYear(input: UpdateSudzYearInput): Promise<boolean> {
@@ -286,6 +294,20 @@ export const useSudzPortfolioStore = defineStore('sudz-portfolio', () => {
     }
   }
 
+  /** H6: пересчёт DbtUplCstAg для выгрузки ДЗ (сброс + pm+g_p). */
+  async function rebuildCstAg(dbtUplKey: number): Promise<SudzDbtUplCstAgRebuildResult | null> {
+    saving.value = true;
+    error.value = null;
+    try {
+      return await rebuildSudzDbtUplCstAg(dbtUplKey);
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Не удалось пересчитать стройки';
+      return null;
+    } finally {
+      saving.value = false;
+    }
+  }
+
   return {
     years,
     selectedYrKey,
@@ -303,6 +325,7 @@ export const useSudzPortfolioStore = defineStore('sudz-portfolio', () => {
     toggleUplExpanded,
     loadYears,
     selectYear,
+    refreshDetail,
     saveYear,
     createYear,
     removeYear,
@@ -312,6 +335,7 @@ export const useSudzPortfolioStore = defineStore('sudz-portfolio', () => {
     removeUpl,
     linkPm,
     createAndLinkPm,
-    unlinkPm
+    unlinkPm,
+    rebuildCstAg
   };
 });

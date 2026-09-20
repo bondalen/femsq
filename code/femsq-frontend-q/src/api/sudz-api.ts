@@ -31,6 +31,7 @@ import type {
   SudzDbtSplitResult,
   SudzDbtUplFile,
   SudzDbtUplLauncher,
+  SudzDbtUplCstAgRebuildResult,
   SudzDebtCollectionInput,
   SudzDebtCollectionResult,
   SudzPmLink,
@@ -97,6 +98,7 @@ const YEAR_DETAIL_FIELDS = `
     uplName
     uplDate
     uplStatusOnDate
+    opsProgress
     pmLinks {
       gPKey
       dbtUpl
@@ -143,6 +145,7 @@ const DBT_UPL_FILE_FIELDS = `
   cidufFlLoad
   cidufFlTbl
   cidufLoadingProgress
+  cidufOpsProgress
 `;
 
 const PMT_UPL_FILE_FIELDS = `
@@ -938,6 +941,19 @@ const ADD_PM_LINK = gql`
 const REMOVE_PM_LINK = gql`
   mutation RemoveSudzPmLink($gPKey: Int!) {
     removeSudzPmLink(gPKey: $gPKey)
+  }
+`;
+
+const REBUILD_DBT_UPL_CST_AG = gql`
+  mutation RebuildSudzDbtUplCstAg($dbtUplKey: Int!) {
+    rebuildSudzDbtUplCstAg(dbtUplKey: $dbtUplKey) {
+      dbtUplKey
+      deletedCount
+      insertedCount
+      multiCount
+      emptyCount
+      opsProgress
+    }
   }
 `;
 
@@ -1977,6 +1993,27 @@ export async function removeSudzPmLink(gPKey: number): Promise<boolean> {
     return Boolean(result.data?.removeSudzPmLink);
   } catch (error) {
     throw wrapApolloError(error, 'RemoveSudzPmLink');
+  }
+}
+
+/**
+ * H6: пересчёт DbtUplCstAg из pm+g_p (сброс строк @dbtUplKey).
+ */
+export async function rebuildSudzDbtUplCstAg(
+  dbtUplKey: number
+): Promise<SudzDbtUplCstAgRebuildResult> {
+  try {
+    const result = await apolloClient.mutate<{
+      rebuildSudzDbtUplCstAg: SudzDbtUplCstAgRebuildResult;
+    }>({
+      mutation: REBUILD_DBT_UPL_CST_AG,
+      variables: { dbtUplKey }
+    });
+    const data = result.data?.rebuildSudzDbtUplCstAg;
+    if (!data) throw new Error('Пустой ответ rebuildSudzDbtUplCstAg');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'RebuildSudzDbtUplCstAg');
   }
 }
 

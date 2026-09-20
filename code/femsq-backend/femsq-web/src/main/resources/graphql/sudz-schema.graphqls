@@ -109,6 +109,11 @@ extend type Mutation {
   """Удалить связь выгрузки ДЗ с платежами."""
   removeSudzPmLink(gPKey: Int!): Boolean!
 
+  """
+  H6: пересчёт DbtUplCstAg по канону pm+g_p (сброс строк @dbtUplKey, затем INSERT однозначных).
+  """
+  rebuildSudzDbtUplCstAg(dbtUplKey: Int!): SudzDbtUplCstAgRebuildResult!
+
   """Сохранить куратора / мероприятия / код стройки в yr.yr_CmmGr."""
   updateSudzDebtCollection(input: SudzDebtCollectionInput!): SudzDebtCollectionResult!
 
@@ -218,6 +223,8 @@ type SudzYearUpl {
   uplDate: Date
   uplStatusOnDate: Date
   pmLinks: [SudzPmLink!]!
+  """HTML-журнал операций File (cidufOpsProgress)."""
+  opsProgress: String
 }
 
 """Связь выгрузки ДЗ с выгрузкой платежей (cn_inv_dbt_upl_g_p)."""
@@ -229,6 +236,17 @@ type SudzPmLink {
   pmDate: Date
   dbtUplName: String
   dbtUplDate: Date
+}
+
+"""Итог H6: пересчёт DbtUplCstAg из pm+g_p."""
+type SudzDbtUplCstAgRebuildResult {
+  dbtUplKey: Int!
+  deletedCount: Int!
+  insertedCount: Int!
+  multiCount: Int!
+  emptyCount: Int!
+  """Актуальный cidufOpsProgress после записи блока."""
+  opsProgress: String
 }
 
 """Lookup выгрузки ДЗ."""
@@ -451,6 +469,8 @@ type SudzDbtUplFile {
   cidufFlLoad: Boolean!
   cidufFlTbl: Boolean!
   cidufLoadingProgress: String
+  """Журнал операций шапки (не воронка)."""
+  cidufOpsProgress: String
 }
 
 """Лист файла (CnInvDbtUplFileSh)."""

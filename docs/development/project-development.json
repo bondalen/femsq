@@ -3,7 +3,7 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2026-09-18T11:22:00+03:00",
+      "lastUpdated": "2026-09-20T22:53:00+03:00",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     "tasks": {
@@ -12,9 +12,9 @@
       "items": {
         "0076": {
           "task": {
-            "displayName": "🔶 СУДЗ: канон 1.1.1.2 apply→cn_inv_pm→g_p→Rslt (in_progress, high). № 0076",
+            "displayName": "✅ СУДЗ: канон 1.1.1.2 apply→cn_inv_pm→g_p→Rslt (completed, high). № 0076",
             "task-attributes": {
-              "status": "in_progress",
+              "status": "completed",
               "priority": "high",
               "owner": "Александр",
               "completionCriteria": [
@@ -31,7 +31,8 @@
                   "module:backend.database"
                 ],
                 "journalRefs": [
-                  "chat:chat-2026-09-18-001"
+                  "chat:chat-2026-09-18-001",
+                  "log:log-2026-09-20-002"
                 ],
                 "aiRuleRefs": [],
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md",
@@ -42,8 +43,9 @@
                 ]
               },
               "created": "2026-09-18",
-              "lastUpdated": "2026-09-18",
-              "description": "Канонический БП 1.1.1.2 после Excel→Tbl. Не бэкфилл S80; не дерево 0918; не 0069. Срезы H1–H7 в плане 0819 §4.3."
+              "lastUpdated": "2026-09-20",
+              "completed": "2026-09-20",
+              "description": "Канон 1.1.1.2 после Excel→Tbl. H1–H7 ✅. H7 C' 2026-09-20: FAIL=0 vs 26-0505; idcCia→cnInvAccnt→smpl + link LEN≥8; JAR 304. Вне scope: вкладка g_p на C, КСДСФ pmt, дерево 0918."
             }
           }
         },
@@ -3677,12 +3679,12 @@
                     },
                     {
                       "task-item": {
-                        "displayName": "🔶 Загрузка платежей → apply cn_inv_pm / g_p / Rslt (in_progress, high). № 02.03.12 → 0076",
+                        "displayName": "✅ Загрузка платежей → apply cn_inv_pm / g_p / Rslt (completed, high). № 02.03.12 → 0076",
                         "item-attributes": {
                           "structureId": "02.03.12",
                           "taskId": "0076",
                           "positionInParent": 12,
-                          "comment": "канон 1.1.1.2; план 0819 §4.3; не бэкфилл S80; не 0918"
+                          "comment": "H7 FAIL=0 2026-09-20 C'; JAR 304; план 0819 §0a/§4.3 закрыт"
                         },
                         "task-items": []
                       }

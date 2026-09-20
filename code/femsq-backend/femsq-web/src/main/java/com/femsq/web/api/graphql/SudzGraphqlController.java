@@ -23,6 +23,7 @@ import com.femsq.database.model.sudz.SudzDbtUplFileSh;
 import com.femsq.database.model.sudz.SudzDbtUplFunnelResult;
 import com.femsq.database.model.sudz.SudzDbtUplLauncher;
 import com.femsq.database.model.sudz.SudzDebtCollection;
+import com.femsq.database.model.sudz.SudzDbtUplCstAgRebuildResult;
 import com.femsq.database.model.sudz.SudzPmLink;
 import com.femsq.database.model.sudz.SudzPmUplLookup;
 import com.femsq.database.model.sudz.SudzPmtUplFile;
@@ -444,6 +445,25 @@ public class SudzGraphqlController {
     public boolean removeSudzPmLink(@Argument int gPKey) {
         try {
             return sudzService.removePmLink(gPKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * H6: пересчёт DbtUplCstAg из pm+g_p.
+     *
+     * @param dbtUplKey выгрузка ДЗ
+     * @return счётчики
+     */
+    @MutationMapping
+    public SudzDbtUplCstAgRebuildResult rebuildSudzDbtUplCstAg(@Argument int dbtUplKey) {
+        try {
+            return sudzService.rebuildDbtUplCstAg(dbtUplKey);
         } catch (IllegalArgumentException exception) {
             throw badRequest(exception);
         } catch (MissingConfigurationException exception) {

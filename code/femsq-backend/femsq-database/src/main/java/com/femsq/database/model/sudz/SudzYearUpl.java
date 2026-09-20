@@ -13,6 +13,7 @@ import java.util.List;
  * @param uplDate дата выгрузки
  * @param uplStatusOnDate дата состояния
  * @param pmLinks связи с выгрузками платежей
+ * @param opsProgress HTML-лог операций File ({@code cidufOpsProgress}), nullable
  */
 public record SudzYearUpl(
         int yrUplPKey,
@@ -21,6 +22,7 @@ public record SudzYearUpl(
         String uplName,
         LocalDate uplDate,
         LocalDate uplStatusOnDate,
-        List<SudzPmLink> pmLinks
+        List<SudzPmLink> pmLinks,
+        String opsProgress
 ) {
 }

@@ -48,6 +48,7 @@ import com.femsq.database.model.sudz.SudzDbtUplLauncher;
 import com.femsq.database.model.sudz.SudzDbtUplOrgNotInBuirg;
 import com.femsq.database.model.sudz.SudzDbtUplTblRow;
 import com.femsq.database.model.sudz.SudzDebtCollection;
+import com.femsq.database.model.sudz.SudzDbtUplCstAgRebuildResult;
 import com.femsq.database.model.sudz.SudzPmLink;
 import com.femsq.database.model.sudz.SudzPmUplLookup;
 import com.femsq.database.model.sudz.SudzPmtUplFile;
@@ -476,6 +477,14 @@ public class DefaultSudzService implements SudzService {
         }
         sudzDao.removePmLink(gPKey);
         return true;
+    }
+
+    @Override
+    public SudzDbtUplCstAgRebuildResult rebuildDbtUplCstAg(int dbtUplKey) {
+        if (dbtUplKey <= 0) {
+            throw new IllegalArgumentException("dbtUplKey должен быть положительным: " + dbtUplKey);
+        }
+        return sudzDao.rebuildDbtUplCstAg(dbtUplKey);
     }
 
     @Override

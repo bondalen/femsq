@@ -63,6 +63,7 @@ import com.femsq.database.model.sudz.SudzDbtUplCnNotLoadInserted;
 import com.femsq.database.model.sudz.SudzDbtUplOrgNotInBuirg;
 import com.femsq.database.model.sudz.SudzDbtUplTblRow;
 import com.femsq.database.model.sudz.SudzDebtCollection;
+import com.femsq.database.model.sudz.SudzDbtUplCstAgRebuildResult;
 import com.femsq.database.model.sudz.SudzPmLink;
 import com.femsq.database.model.sudz.SudzPmUplLookup;
 import com.femsq.database.model.sudz.SudzPmtUplFile;
@@ -701,9 +702,20 @@ public class JdbcSudzDao implements SudzDao {
         String fileSql = "INSERT INTO " + q("CnInvPmtUplFile")
                 + " (cipufUpload, cipufPath, cipufFlLoad, cipufLoadingProgress, cipufFlTbl, cipufSheet)"
                 + " VALUES (?, N'', 0, NULL, 0, NULL)";
+        // Не пересекаться с ags.cn_inv_pm_upl (коллизия ключей → чужие pm в H6).
+        String reseedSql = ""
+                + "DECLARE @m int; "
+                + "SELECT @m = MAX(v) FROM (VALUES "
+                + "  ((SELECT ISNULL(MAX(cn_inv_pm_key),0) FROM " + q("cn_inv_pm_upl") + ")),"
+                + "  ((SELECT ISNULL(MAX(cn_inv_pm_key),0) FROM ags.cn_inv_pm_upl))"
+                + ") AS t(v); "
+                + "DBCC CHECKIDENT ('" + schema + ".cn_inv_pm_upl', RESEED, @m);";
         try (Connection connection = connectionFactory.createConnection()) {
             connection.setAutoCommit(false);
             try {
+                try (java.sql.Statement reseed = connection.createStatement()) {
+                    reseed.execute(reseedSql);
+                }
                 int pmKey;
                 try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
                     statement.setDate(1, Date.valueOf(date));
@@ -1424,7 +1436,8 @@ public class JdbcSudzDao implements SudzDao {
                 + "SELECT COUNT(*) AS n FROM missingKeys OPTION (RECOMPILE)";
         try (Connection connection = connectionFactory.createConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setQueryTimeout(60);
+            // H4: на пакетах ~5k Tbl select InsPm часто 45–160 с (после Doc apply дольше).
+            statement.setQueryTimeout(300);
             statement.setInt(1, unloadKey);
             statement.setInt(2, unloadKey);
             try (ResultSet rs = statement.executeQuery()) {
@@ -1477,7 +1490,8 @@ public class JdbcSudzDao implements SudzDao {
             try {
                 int inserted;
                 try (PreparedStatement statement = connection.prepareStatement(sql)) {
-                    statement.setQueryTimeout(90);
+                    // H4: INSERT InsPm ~1k строк на 5k Tbl превышал 180 с на DEV.
+                    statement.setQueryTimeout(600);
                     statement.setInt(1, unloadKey);
                     statement.setInt(2, unloadKey);
                     inserted = statement.executeUpdate();
@@ -2297,6 +2311,181 @@ public class JdbcSudzDao implements SudzDao {
         }
     }
 
+    /**
+     * H6: сброс {@code DbtUplCstAg} @upl и заполнение из {@code ags.cn_inv_pm}+{@code g_p}
+     * (логика как {@code ags.fnCiasDbtUplCst}, мост — {@code sudz.cn_inv_dbt_upl_g_p}).
+     * <p>Пути cst: (1) {@code invDbtCia.idcCia} → {@code cnInvAccnt} → smpl → pm
+     * пакетов {@code g_p}; (2) pm {@code g_p}, где {@code invNum} или
+     * {@code cn_inv_doc_link} = {@code dvDocBase} (QI часто пишет в docBase «Ссылку»).
+     * Важно: {@code idcCia} — это {@code ciaKey}, не {@code ciasKey}; прямой join
+     * {@code pm.ciaCnInvAccntSmpl = idcCia} даёт ложные совпадения ключей.
+     * Пишет блок в {@code cidufOpsProgress}.
+     */
+    @Override
+    public SudzDbtUplCstAgRebuildResult rebuildDbtUplCstAg(int dbtUplKey) {
+        log.log(Level.INFO, "Rebuilding DbtUplCstAg for dbtUpl={0}", dbtUplKey);
+        String duca = q("DbtUplCstAg");
+        String gP = q("cn_inv_dbt_upl_g_p");
+        long t0 = System.currentTimeMillis();
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                ensureUplExists(connection, dbtUplKey);
+                ensureDbtUplFileKey(connection, dbtUplKey);
+
+                int gpLinks;
+                try (PreparedStatement gpSt = connection.prepareStatement(
+                        "SELECT COUNT(*) FROM " + gP + " WHERE cn_inv_dbt_upl = ?")) {
+                    gpSt.setInt(1, dbtUplKey);
+                    try (ResultSet rs = gpSt.executeQuery()) {
+                        rs.next();
+                        gpLinks = rs.getInt(1);
+                    }
+                }
+
+                int deleted;
+                try (PreparedStatement del = connection.prepareStatement(
+                        "DELETE FROM " + duca + " WHERE ducaUpl = ?")) {
+                    del.setInt(1, dbtUplKey);
+                    deleted = del.executeUpdate();
+                }
+
+                String insertSql = sqlDbtUplCstAgRawCte()
+                        + "agg AS ( "
+                        + "  SELECT dbtKey, femsqUpl, "
+                        + "    COUNT(DISTINCT cstapKey) AS nCst, "
+                        + "    MIN(cstapKey) AS cstapKey "
+                        + "  FROM raw "
+                        + "  GROUP BY dbtKey, femsqUpl "
+                        + "), "
+                        + "ok AS ( "
+                        + "  SELECT dbtKey, femsqUpl, cstapKey FROM agg WHERE nCst = 1 "
+                        + ") "
+                        + "INSERT INTO " + duca + " (ducaDbt, ducaUpl, ducaCstAgPn) "
+                        + "SELECT dbtKey, femsqUpl, cstapKey FROM ok";
+
+                int inserted;
+                try (PreparedStatement ins = connection.prepareStatement(insertSql)) {
+                    ins.setQueryTimeout(300);
+                    ins.setInt(1, dbtUplKey);
+                    ins.setInt(2, dbtUplKey);
+                    inserted = ins.executeUpdate();
+                }
+
+                String statsSql = sqlDbtUplCstAgRawCte()
+                        + "agg AS ( "
+                        + "  SELECT dbtKey, COUNT(DISTINCT cstapKey) AS nCst FROM raw GROUP BY dbtKey "
+                        + "), "
+                        + "valued AS ( "
+                        + "  SELECT DISTINCT idd.iddDbt AS dbtKey "
+                        + "  FROM " + q("DbtValue") + " dv "
+                        + "  JOIN " + q("invDbtDbt") + " idd ON idd.iddInvDbt = dv.dvInvDbt "
+                        + "  WHERE dv.dvUpl = ? AND idd.iddDbt IS NOT NULL "
+                        + ") "
+                        + "SELECT "
+                        + "  (SELECT COUNT(*) FROM agg WHERE nCst > 1) AS multiCnt, "
+                        + "  (SELECT COUNT(*) FROM valued v "
+                        + "    WHERE NOT EXISTS (SELECT 1 FROM agg a WHERE a.dbtKey = v.dbtKey AND a.nCst = 1)"
+                        + "  ) AS emptyCnt";
+
+                int multi = 0;
+                int empty = 0;
+                try (PreparedStatement st = connection.prepareStatement(statsSql)) {
+                    st.setQueryTimeout(300);
+                    st.setInt(1, dbtUplKey);
+                    st.setInt(2, dbtUplKey);
+                    st.setInt(3, dbtUplKey);
+                    try (ResultSet rs = st.executeQuery()) {
+                        if (rs.next()) {
+                            multi = rs.getInt("multiCnt");
+                            empty = rs.getInt("emptyCnt");
+                        }
+                    }
+                }
+
+                List<String> multiSamples = loadCstAgSampleLines(connection, dbtUplKey, true, 8);
+                List<String> emptySamples = loadCstAgSampleLines(connection, dbtUplKey, false, 8);
+                long elapsedMs = System.currentTimeMillis() - t0;
+                String block = buildDbtUplCstAgOpsHtml(
+                        dbtUplKey, gpLinks, deleted, inserted, multi, empty,
+                        elapsedMs, multiSamples, emptySamples);
+                String opsProgress = appendDbtUplFileOpsProgressOn(connection, dbtUplKey, block);
+
+                connection.commit();
+                log.log(Level.INFO,
+                        "rebuildDbtUplCstAg dbtUpl={0} deleted={1} inserted={2} multi={3} empty={4}",
+                        new Object[]{dbtUplKey, deleted, inserted, multi, empty});
+                return new SudzDbtUplCstAgRebuildResult(
+                        dbtUplKey, deleted, inserted, multi, empty, opsProgress);
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось пересчитать DbtUplCstAg для upl=" + dbtUplKey, exception);
+        }
+    }
+
+    /**
+     * CTE {@code raw} для H6: pm только из пакетов {@code g_p}@upl;
+     * путь cia ({@code invDbtCia.idcCia}→{@code cnInvAccnt.ciaCnInvAccntSmpl})
+     * ∪ путь по {@code dvDocBase} = {@code invNum} или {@code cn_inv_doc_link}.
+     * Параметры: {@code ?} = dbtUpl (дважды — для обоих путей).
+     */
+    private String sqlDbtUplCstAgRawCte() {
+        String dbtValue = q("DbtValue");
+        String invDbtDbt = q("invDbtDbt");
+        String invDbtCia = q("invDbtCia");
+        String gP = q("cn_inv_dbt_upl_g_p");
+        return ""
+                + "WITH raw_cia AS ( "
+                + "  SELECT idd.iddDbt AS dbtKey, dv.dvUpl AS femsqUpl, p.cnipCstAgPn AS cstapKey "
+                + "  FROM " + dbtValue + " dv "
+                + "  JOIN " + invDbtDbt + " idd ON idd.iddInvDbt = dv.dvInvDbt "
+                + "  JOIN " + invDbtCia + " c ON c.idcInvDbt = dv.dvInvDbt "
+                + "  JOIN ags.cnInvAccnt cia ON cia.ciaKey = c.idcCia "
+                + "  JOIN ags.cn_inv_pm p ON p.ciaCnInvAccntSmpl = cia.ciaCnInvAccntSmpl "
+                + "    AND p.cnipCstAgPn IS NOT NULL "
+                + "  JOIN " + gP + " g ON g.cn_inv_pm_upl = p.cn_inv_pm_upl "
+                + "    AND g.cn_inv_dbt_upl = dv.dvUpl "
+                + "  WHERE dv.dvUpl = ? AND idd.iddDbt IS NOT NULL "
+                + "  GROUP BY idd.iddDbt, dv.dvUpl, p.cnipCstAgPn "
+                + "), "
+                + "raw_doc AS ( "
+                + "  SELECT idd.iddDbt AS dbtKey, dv.dvUpl AS femsqUpl, p.cnipCstAgPn AS cstapKey "
+                + "  FROM " + dbtValue + " dv "
+                + "  JOIN " + invDbtDbt + " idd ON idd.iddInvDbt = dv.dvInvDbt "
+                + "  JOIN " + gP + " g ON g.cn_inv_dbt_upl = dv.dvUpl "
+                + "  JOIN ags.cn_inv_pm p ON p.cn_inv_pm_upl = g.cn_inv_pm_upl "
+                + "    AND p.cnipCstAgPn IS NOT NULL "
+                + "  JOIN ags.cnInvAccntSmpl s ON s.ciasKey = p.ciaCnInvAccntSmpl "
+                + "  JOIN ags.cnInv ci ON ci.ciKey = s.ciasCnInv "
+                + "  JOIN ags.invNum n ON n.inInv = ci.ciInv "
+                + "  WHERE dv.dvUpl = ? AND idd.iddDbt IS NOT NULL "
+                + "    AND dv.dvDocBase IS NOT NULL AND LTRIM(RTRIM(dv.dvDocBase)) <> N'' "
+                + "    AND ( "
+                + "      n.inNumNull = LTRIM(RTRIM(dv.dvDocBase)) "
+                + "      OR ( "
+                + "        LEN(LTRIM(RTRIM(dv.dvDocBase))) >= 8 "
+                + "        AND LTRIM(RTRIM(ISNULL(p.cn_inv_doc_link, N''))) "
+                + "          = LTRIM(RTRIM(dv.dvDocBase)) "
+                + "      ) "
+                + "    ) "
+                + "  GROUP BY idd.iddDbt, dv.dvUpl, p.cnipCstAgPn "
+                + "), "
+                + "raw AS ( "
+                + "  SELECT dbtKey, femsqUpl, cstapKey FROM raw_cia "
+                + "  UNION "
+                + "  SELECT dbtKey, femsqUpl, cstapKey FROM raw_doc "
+                + "), ";
+    }
+
     @Override
     public List<SudzRsltDebt> findYrDbtChanges(int yrKey, Integer asOfUpl) {
         String sql = ""
@@ -2601,8 +2790,8 @@ public class JdbcSudzDao implements SudzDao {
                     boolean newFlLoad = flLoad != null && flLoad;
                     boolean newFlTbl = flTbl != null && flTbl;
                     String sql = "INSERT INTO " + q("CnInvDbtUplFile")
-                            + " (cidufUpload, cidufPath, cidufFlLoad, cidufLoadingProgress, cidufFlTbl)"
-                            + " VALUES (?, ?, ?, NULL, ?)";
+                            + " (cidufUpload, cidufPath, cidufFlLoad, cidufLoadingProgress, cidufFlTbl, cidufOpsProgress)"
+                            + " VALUES (?, ?, ?, NULL, ?, NULL)";
                     try (PreparedStatement statement = connection.prepareStatement(sql)) {
                         statement.setInt(1, uplKey);
                         statement.setString(2, newPath);
@@ -2641,8 +2830,8 @@ public class JdbcSudzDao implements SudzDao {
                 Optional<SudzDbtUplFile> existing = findDbtUplFileByUpload(connection, uplKey);
                 if (existing.isEmpty()) {
                     String sql = "INSERT INTO " + q("CnInvDbtUplFile")
-                            + " (cidufUpload, cidufPath, cidufFlLoad, cidufLoadingProgress, cidufFlTbl)"
-                            + " VALUES (?, N'', 0, ?, 0)";
+                            + " (cidufUpload, cidufPath, cidufFlLoad, cidufLoadingProgress, cidufFlTbl, cidufOpsProgress)"
+                            + " VALUES (?, N'', 0, ?, 0, NULL)";
                     try (PreparedStatement statement = connection.prepareStatement(sql)) {
                         statement.setInt(1, uplKey);
                         statement.setString(2, progressHtml);
@@ -10287,7 +10476,8 @@ public class JdbcSudzDao implements SudzDao {
 
     private Optional<SudzDbtUplFile> findDbtUplFileByUpload(Connection connection, int uplKey)
             throws SQLException {
-        String sql = "SELECT cidufKey, cidufUpload, cidufPath, cidufFlLoad, cidufFlTbl, cidufLoadingProgress"
+        String sql = "SELECT cidufKey, cidufUpload, cidufPath, cidufFlLoad, cidufFlTbl,"
+                + " cidufLoadingProgress, cidufOpsProgress"
                 + " FROM " + q("CnInvDbtUplFile") + " WHERE cidufUpload = ?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, uplKey);
@@ -10459,8 +10649,8 @@ public class JdbcSudzDao implements SudzDao {
             return existing.get().cidufKey();
         }
         String sql = "INSERT INTO " + q("CnInvDbtUplFile")
-                + " (cidufUpload, cidufPath, cidufFlLoad, cidufLoadingProgress, cidufFlTbl)"
-                + " VALUES (?, N'', 0, NULL, 0)";
+                + " (cidufUpload, cidufPath, cidufFlLoad, cidufLoadingProgress, cidufFlTbl, cidufOpsProgress)"
+                + " VALUES (?, N'', 0, NULL, 0, NULL)";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, uplKey);
             statement.executeUpdate();
@@ -10469,6 +10659,138 @@ public class JdbcSudzDao implements SudzDao {
                 .orElseThrow(() -> new IllegalStateException(
                         "CnInvDbtUplFile не найден после insert: uplKey=" + uplKey))
                 .cidufKey();
+    }
+
+    /** Лимит журнала операций File (символы); новые блоки сверху. */
+    private static final int CIDUF_OPS_PROGRESS_MAX_CHARS = 50_000;
+
+    /**
+     * Append HTML-блока в {@code cidufOpsProgress} (новые сверху, обрезка хвоста).
+     *
+     * @return актуальный журнал
+     */
+    private String appendDbtUplFileOpsProgressOn(Connection connection, int uplKey, String blockHtml)
+            throws SQLException {
+        int cidufKey = ensureDbtUplFileKey(connection, uplKey);
+        Optional<SudzDbtUplFile> file = findDbtUplFileByUpload(connection, uplKey);
+        String prev = file.map(SudzDbtUplFile::cidufOpsProgress).orElse(null);
+        if (prev == null) {
+            prev = "";
+        }
+        String combined = blockHtml + (prev.isBlank() ? "" : prev);
+        if (combined.length() > CIDUF_OPS_PROGRESS_MAX_CHARS) {
+            combined = combined.substring(0, CIDUF_OPS_PROGRESS_MAX_CHARS);
+        }
+        String sql = "UPDATE " + q("CnInvDbtUplFile")
+                + " SET cidufOpsProgress = ? WHERE cidufKey = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, combined);
+            statement.setInt(2, cidufKey);
+            statement.executeUpdate();
+        }
+        return combined;
+    }
+
+    /**
+     * Sample-строки multi ({@code nCst&gt;1}) или empty (нет однозначного cst) для лога H6.
+     */
+    private List<String> loadCstAgSampleLines(
+            Connection connection, int dbtUplKey, boolean multi, int limit
+    ) throws SQLException {
+        String sql = sqlDbtUplCstAgRawCte()
+                + "agg AS ( "
+                + "  SELECT dbtKey, COUNT(DISTINCT cstapKey) AS nCst FROM raw GROUP BY dbtKey "
+                + "), "
+                + "valued AS ( "
+                + "  SELECT DISTINCT idd.iddDbt AS dbtKey "
+                + "  FROM " + q("DbtValue") + " dv "
+                + "  JOIN " + q("invDbtDbt") + " idd ON idd.iddInvDbt = dv.dvInvDbt "
+                + "  WHERE dv.dvUpl = ? AND idd.iddDbt IS NOT NULL "
+                + ") "
+                + (multi
+                ? "SELECT TOP (" + limit + ") a.dbtKey, a.nCst "
+                + "FROM agg a WHERE a.nCst > 1 ORDER BY a.dbtKey"
+                : "SELECT TOP (" + limit + ") v.dbtKey, a.nCst "
+                + "FROM valued v "
+                + "LEFT JOIN agg a ON a.dbtKey = v.dbtKey "
+                + "WHERE a.dbtKey IS NULL OR a.nCst <> 1 "
+                + "ORDER BY v.dbtKey");
+        List<String> lines = new ArrayList<>();
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, dbtUplKey);
+            st.setInt(2, dbtUplKey);
+            st.setInt(3, dbtUplKey);
+            try (ResultSet rs = st.executeQuery()) {
+                while (rs.next()) {
+                    int dbtKey = rs.getInt("dbtKey");
+                    int nCst = rs.getInt("nCst");
+                    boolean nCstNull = rs.wasNull();
+                    if (multi) {
+                        lines.add("dbtKey=" + dbtKey + " · nCst=" + nCst);
+                    } else if (nCstNull) {
+                        lines.add("dbtKey=" + dbtKey + " · нет pm-cst");
+                    } else {
+                        lines.add("dbtKey=" + dbtKey + " · nCst=" + nCst);
+                    }
+                }
+            }
+        }
+        return lines;
+    }
+
+    private static String buildDbtUplCstAgOpsHtml(
+            int dbtUplKey,
+            int gpLinks,
+            int deleted,
+            int inserted,
+            int multi,
+            int empty,
+            long elapsedMs,
+            List<String> multiSamples,
+            List<String> emptySamples
+    ) {
+        String ts = java.time.LocalDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        StringBuilder sb = new StringBuilder(512);
+        sb.append("<div class=\"sudz-ops-block\">");
+        sb.append("<div><b>").append(escapeHtml(ts)).append("</b>")
+                .append(" · Пересчёт DbtUplCstAg · upl=").append(dbtUplKey)
+                .append(" · ").append(elapsedMs).append(" мс</div>");
+        sb.append("<div>источник: ags.cn_inv_pm + sudz.g_p (")
+                .append(gpLinks).append(" связей)</div>");
+        sb.append("<div>итог: −").append(deleted).append(" / +").append(inserted)
+                .append(" · multi=").append(multi)
+                .append(" · empty=").append(empty).append("</div>");
+        if (multi > 0) {
+            sb.append("<details><summary>multi (первые ")
+                    .append(multiSamples.size()).append(" из ").append(multi)
+                    .append(")</summary><pre>");
+            for (String line : multiSamples) {
+                sb.append(escapeHtml(line)).append('\n');
+            }
+            sb.append("</pre></details>");
+        }
+        if (empty > 0) {
+            sb.append("<details><summary>без однозначного cst (первые ")
+                    .append(emptySamples.size()).append(" из ").append(empty)
+                    .append(")</summary><pre>");
+            for (String line : emptySamples) {
+                sb.append(escapeHtml(line)).append('\n');
+            }
+            sb.append("</pre></details>");
+        }
+        sb.append("</div><hr/>\n");
+        return sb.toString();
+    }
+
+    private static String escapeHtml(String raw) {
+        if (raw == null || raw.isEmpty()) {
+            return "";
+        }
+        return raw.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;");
     }
 
     /**
@@ -11746,7 +12068,8 @@ public class JdbcSudzDao implements SudzDao {
                 rs.getString("cidufPath"),
                 rs.getBoolean("cidufFlLoad"),
                 rs.getBoolean("cidufFlTbl"),
-                rs.getString("cidufLoadingProgress")
+                rs.getString("cidufLoadingProgress"),
+                rs.getString("cidufOpsProgress")
         );
     }
 
@@ -11778,9 +12101,10 @@ public class JdbcSudzDao implements SudzDao {
 
     private List<SudzYearUpl> loadYearUpls(Connection connection, int yrKey) throws SQLException {
         String sql = "SELECT yp.yr_upl_p_key, yp.yr_upl_p_yr, yp.cn_inv_dbt_upl, "
-                + "u.upl_name, u.upl_date, u.uplStatusOnDate "
+                + "u.upl_name, u.upl_date, u.uplStatusOnDate, f.cidufOpsProgress "
                 + "FROM " + q("yr_upl_p") + " yp "
                 + "JOIN " + q("cn_inv_dbt_upl") + " u ON u.upl_key = yp.cn_inv_dbt_upl "
+                + "LEFT JOIN " + q("CnInvDbtUplFile") + " f ON f.cidufUpload = yp.cn_inv_dbt_upl "
                 + "WHERE yp.yr_upl_p_yr = ? "
                 + "ORDER BY u.upl_date, yp.cn_inv_dbt_upl";
         List<SudzYearUpl> bare = new ArrayList<>();
@@ -11795,7 +12119,8 @@ public class JdbcSudzDao implements SudzDao {
                             rs.getString("upl_name"),
                             getLocalDate(rs, "upl_date"),
                             getLocalDate(rs, "uplStatusOnDate"),
-                            List.of()
+                            List.of(),
+                            rs.getString("cidufOpsProgress")
                     ));
                 }
             }
@@ -11811,7 +12136,8 @@ public class JdbcSudzDao implements SudzDao {
             result.add(new SudzYearUpl(
                     upl.yrUplPKey(), upl.yrKey(), upl.uplKey(),
                     upl.uplName(), upl.uplDate(), upl.uplStatusOnDate(),
-                    List.copyOf(links)
+                    List.copyOf(links),
+                    upl.opsProgress()
             ));
         }
         return List.copyOf(result);
@@ -11844,9 +12170,10 @@ public class JdbcSudzDao implements SudzDao {
 
     private SudzYearUpl loadYearUpl(Connection connection, int yrUplPKey) throws SQLException {
         String sql = "SELECT yp.yr_upl_p_key, yp.yr_upl_p_yr, yp.cn_inv_dbt_upl, "
-                + "u.upl_name, u.upl_date, u.uplStatusOnDate "
+                + "u.upl_name, u.upl_date, u.uplStatusOnDate, f.cidufOpsProgress "
                 + "FROM " + q("yr_upl_p") + " yp "
                 + "JOIN " + q("cn_inv_dbt_upl") + " u ON u.upl_key = yp.cn_inv_dbt_upl "
+                + "LEFT JOIN " + q("CnInvDbtUplFile") + " f ON f.cidufUpload = yp.cn_inv_dbt_upl "
                 + "WHERE yp.yr_upl_p_key = ?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, yrUplPKey);
@@ -11865,7 +12192,8 @@ public class JdbcSudzDao implements SudzDao {
                         rs.getString("upl_name"),
                         getLocalDate(rs, "upl_date"),
                         getLocalDate(rs, "uplStatusOnDate"),
-                        List.copyOf(links)
+                        List.copyOf(links),
+                        rs.getString("cidufOpsProgress")
                 );
             }
         }

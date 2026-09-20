@@ -3,18 +3,18 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-09-18"
+      "lastUpdated": "2026-09-20"
     },
     "sessions": [
       {
         "chat": {
-          "displayName": "СУДЗ: канон 1.1.1.2 apply/g_p/Rslt (active, high). № chat-2026-09-18-001",
+          "displayName": "СУДЗ: канон 1.1.1.2 apply/g_p/Rslt (completed, high). № chat-2026-09-18-001",
           "chat-attributes": {
             "id": "chat-2026-09-18-001",
             "created": "2026-09-18",
-            "lastUpdated": "2026-09-18",
+            "lastUpdated": "2026-09-20",
             "owner": "Александр",
-            "status": "active",
+            "status": "completed",
             "priority": "high",
             "tags": [
               "sudz",
@@ -41,6 +41,359 @@
             }
           },
           "entries": [
+            {
+              "log": {
+                "displayName": "H7 C' FAIL=0; закрытие 0076 и плана 0819 (success). № log-2026-09-20-002",
+                "log-attributes": {
+                  "id": "log-2026-09-20-002",
+                  "timestamp": "2026-09-20T22:53:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "tags": [
+                    "H7",
+                    "0076",
+                    "DbtUplCstAg",
+                    "close"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0076"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "C': raw_cia idcCia→cnInvAccnt→smpl; raw_doc link LEN≥8; rebuild @902; verify FAIL=0; закрытие задачи/чата",
+                    "details": "Корень 9469: idcCia=16284 уже верный cia→smpl 68548; ломал join idcCia как ciasKey. DbtUplCstAg@902=1580; 49786→051-2005850. S80 pass=true FAIL=0. JAR 304. §0a.1–5 ✅; этапы §4.3/4 later вне scope.",
+                    "outcome": "Задача 0076 и chat-2026-09-18-001 completed; план 0819 §0a закрыт.",
+                    "references": [
+                      "docs/development/notes/sql/26-0920-sudz-pm-upl-key-decollide/03_REBUILD_DbtUplCstAg_902_cia_link.sql",
+                      "docs/development/notes/sql/26-0831-sudz-dbt-slot-link/artifacts/h7_s80_qiv_qi_vs_access_fixC_26-0920-1348.json",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Fix A/B/C pm keys + H6; Rslt FAIL 729→1 (success). № log-2026-09-20-001",
+                "log-attributes": {
+                  "id": "log-2026-09-20-001",
+                  "timestamp": "2026-09-20T13:12:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "tags": [
+                    "H7",
+                    "0076",
+                    "pm_upl",
+                    "DbtUplCstAg",
+                    "fix"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0076"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "A: remap QI pm 3–8→47–51; B/C: H6 g_p-only + dvDocBase path; rebuild @902; verify vs 26-0505",
+                    "details": "Коллизия ключей снята; createPmUpl reseed vs ags. DbtUplCstAg @902 =1215. 0620CR000043 QI=051-2005183. S80 FAIL 729→1 (остаток dbt9469). JAR 303.",
+                    "outcome": "§0a.4 почти закрыт; один unaccounted later.",
+                    "references": [
+                      "docs/development/notes/sql/26-0920-sudz-pm-upl-key-decollide/README.md",
+                      "docs/development/notes/sql/26-0831-sudz-dbt-slot-link/artifacts/h7_s80_after_fixABC_26-0920-1311.json"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Объективная стройка: pm-история vs Access/H6 (success). № log-2026-09-19-007",
+                "log-attributes": {
+                  "id": "log-2026-09-19-007",
+                  "timestamp": "2026-09-19T12:05:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": [
+                    "H7",
+                    "0076",
+                    "cn_inv_pm",
+                    "objective-cst"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0076"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "5 bothDiff-долгов с длинной ags.cn_inv_pm историей vs Access/GEN",
+                    "details": "dbtKey 94/2192/3919/4249/4734: Access-код в pm =0; H6-код = стабильный pm (до 17 upl). Access-коды есть в cnInvCmmCst. Коллизия ключей sudz/ags pm_upl 3–8 (H6 читает пакеты 2020–22) — для выборки код совпадает с полной историей.",
+                    "outcome": "Истина по платежам = H6/GEN QI; Access QI = cmm/base, не pm. §0a.4: не гнаться за кодом Access.",
+                    "references": [
+                      "docs/development/notes/sql/26-0831-sudz-dbt-slot-link/artifacts/h7_objective_cst_vs_pm_26-0919.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "H7 bothDiff rootcause: Access QI≡base vs канон @902 (success). № log-2026-09-19-006",
+                "log-attributes": {
+                  "id": "log-2026-09-19-006",
+                  "timestamp": "2026-09-19T11:48:00+03:00",
+                  "level": "success",
+                  "effort": "45m",
+                  "status": "completed",
+                  "tags": [
+                    "H7",
+                    "0076",
+                    "bothDiff",
+                    "DbtUplCstAg",
+                    "rootcause"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0076"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Разбор 697 bothDiff q_cstCode GEN↔Access 26-0505",
+                    "details": "Excel: 697/697 refQi=genBase=refBase; genQi≠base. БД: among duca@902 filled 732 — same_901_902=3 (=bothSame), diff_901_902=697 (=bothDiff). Пример dbtKey=94: pmUpl8→051-2000860 (=GEN QI); Access/duca@901→051-2005183. Access QI filled: 93.8% QI=base, 0 QI≠base.",
+                    "outcome": "H6 корректен; эталон QI=base-carry. §0a.4 — вердикт владельца (учесть E-Access-QiEqualsBase / не бэкфиллить S80).",
+                    "references": [
+                      "docs/development/notes/sql/26-0831-sudz-dbt-slot-link/artifacts/h7_bothdiff_ROOTCAUSE_26-0919.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "H7 Rslt QI asOf902 ↔ 26-0505 стройки (warning). № log-2026-09-19-005",
+                "log-attributes": {
+                  "id": "log-2026-09-19-005",
+                  "timestamp": "2026-09-19T11:42:37+03:00",
+                  "level": "warning",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": [
+                    "H7",
+                    "0076",
+                    "Rslt",
+                    "verify",
+                    "cst"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend.web",
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0076"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Export Rslt yr901 asOf902 + verify_s80 vs Access 26-0505",
+                    "details": "GEN artifacts/ags_Yr_DbtChangesRslt_901_asOf902_h7_canon_26-0919-1139.xlsx (HTTP 200). REF WG 2026_03/debit/ags_Yr_DbtChangesRslt_26-0505.xlsx. sumDelta=0; onlyGen/onlyRef=0 (+E-Split-A45). QI q_cstCode: bothSame=3, bothDiff=697, genEmptyRefFilled=835, genFilledRefEmpty=30. 762210: Access QI cst пусто×66 — ок. Установлен .cursor/rslt-tools (xlsx).",
+                    "outcome": "H7 🔶: суммы и 762210 OK; построчные коды строек ≠ Access — §0a.4 не закрыт. Далее: разбор bothDiff или решение владельца.",
+                    "references": [
+                      "docs/development/notes/sql/26-0831-sudz-dbt-slot-link/artifacts/h7_README_26-0919.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "cidufOpsProgress + UI панель операций (success). № log-2026-09-19-004",
+                "log-attributes": {
+                  "id": "log-2026-09-19-004",
+                  "timestamp": "2026-09-19T11:26:06+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": [
+                    "H6",
+                    "0076",
+                    "cidufOpsProgress",
+                    "UI"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend.web",
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0076"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "DDL cidufOpsProgress; append из rebuildDbtUplCstAg; панель в Портфеле",
+                    "details": "Отдельный журнал File свода (не затирает cidufLoadingProgress). UI под командами upl. UAT @902: блок HTML в cidufOpsProgress, JAR 302. SQL: docs/.../26-0919-sudz-ciduf-ops-progress/.",
+                    "outcome": "Оператор видит лог H6 в Портфеле; cipufOpsProgress на D — later.",
+                    "references": [
+                      "docs/development/notes/sql/26-0919-sudz-ciduf-ops-progress/README.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "H6 DbtUplCstAg rebuild UI @902 (success). № log-2026-09-19-003",
+                "log-attributes": {
+                  "id": "log-2026-09-19-003",
+                  "timestamp": "2026-09-19T10:45:07+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "tags": [
+                    "H6",
+                    "0076",
+                    "DbtUplCstAg",
+                    "UI",
+                    "fn+g_p"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend.web",
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0076"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "rebuildSudzDbtUplCstAg + UI «Пересчитать стройки» @902",
+                    "details": "Канон: ags.cn_inv_pm + sudz.g_p → sudz.DbtUplCstAg (логика fnCiasDbtUplCst). Сброс бэкфилла S80 @902 (−1637). INSERT однозначных +732; multi=12; empty=1013. JAR 301.",
+                    "outcome": "H6 ✅; далее H7 — Rslt vs 26-0505 по стройкам.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "H5 g_p через UI Портфель (после отката mutation) (success). № log-2026-09-19-002",
+                "log-attributes": {
+                  "id": "log-2026-09-19-002",
+                  "timestamp": "2026-09-19T10:29:43+03:00",
+                  "level": "success",
+                  "effort": "0.4h",
+                  "status": "completed",
+                  "tags": [
+                    "H5",
+                    "0076",
+                    "g_p",
+                    "UI",
+                    "portfolio"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend.web",
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0076"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Откат removeSudzPmLink 1–5; UI Портфель yr2026 / upl 902 → Связать pm 3/4/5/6/8",
+                    "details": "Вкладка g_p на C disabled — линк на экране Портфель года (как рабочий UI). gPKey 6–10; sudz.g_p=5. JAR 300.",
+                    "outcome": "H5 ✅ через UI; далее H6.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "H5 g_p мост 902↔pm 3/4/5/6/8 (success). № log-2026-09-19-001",
+                "log-attributes": {
+                  "id": "log-2026-09-19-001",
+                  "timestamp": "2026-09-19T10:20:49+03:00",
+                  "level": "success",
+                  "effort": "0.3h",
+                  "status": "completed",
+                  "tags": [
+                    "H5",
+                    "0076",
+                    "g_p",
+                    "addSudzPmLink"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0076"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "addSudzPmLink ×5: dbt 902 ↔ pm 3/4/5/6/8",
+                    "details": "nb-win JAR 300. Mutation GraphQL (вкладка g_p на C disabled; API уже был). gPKey 1–5; sudz.cn_inv_dbt_upl_g_p COUNT=5. Критерий §0a.2 закрыт.",
+                    "outcome": "H5 ✅; далее H6 — DbtUplCstAg через fn+g_p.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md"
+                    ]
+                  }
+                ]
+              }
+            },
             {
               "log": {
                 "displayName": "H3 шаг 9 AcNotLoad UI UAT (success). № log-2026-09-18-008",
