@@ -912,16 +912,22 @@ public class JdbcSudzDao implements SudzDao {
         if (unloadKey <= 0) {
             throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
         }
-        log.log(Level.INFO, "Replace CnInvPmtUplTbl unloadKey={0}, rows={1}",
+        log.log(Level.INFO, "Replace CnInvPmtUplTbl unloadKey={0}, rows={1} — start",
                 new Object[]{unloadKey, rows.size()});
+        long t0 = System.currentTimeMillis();
         try (Connection connection = connectionFactory.createConnection()) {
             connection.setAutoCommit(false);
             try {
+                log.log(Level.INFO, "Replace CnInvPmtUplTbl unloadKey={0} — clear dependents",
+                        unloadKey);
                 clearPmtUplTblDependents(connection, unloadKey);
                 String deleteSql = "DELETE FROM " + q("CnInvPmtUplTbl") + " WHERE ciputUnloadKey = ?";
                 try (PreparedStatement delete = connection.prepareStatement(deleteSql)) {
                     delete.setInt(1, unloadKey);
-                    delete.executeUpdate();
+                    int deleted = delete.executeUpdate();
+                    log.log(Level.INFO,
+                            "Replace CnInvPmtUplTbl unloadKey={0} — deleted={1} ms={2}",
+                            new Object[]{unloadKey, deleted, System.currentTimeMillis() - t0});
                 }
                 if (!rows.isEmpty()) {
                     String insertSql = "INSERT INTO " + q("CnInvPmtUplTbl") + " ("
@@ -941,12 +947,20 @@ public class JdbcSudzDao implements SudzDao {
                             batch++;
                             if (batch % 500 == 0) {
                                 insert.executeBatch();
+                                if (batch % 2_500 == 0 || batch == rows.size()) {
+                                    log.log(Level.INFO,
+                                            "Replace CnInvPmtUplTbl unloadKey={0} — insert {1}/{2} ms={3}",
+                                            new Object[]{unloadKey, batch, rows.size(),
+                                                    System.currentTimeMillis() - t0});
+                                }
                             }
                         }
                         insert.executeBatch();
                     }
                 }
                 connection.commit();
+                log.log(Level.INFO, "Replace CnInvPmtUplTbl unloadKey={0} — done rows={1} ms={2}",
+                        new Object[]{unloadKey, rows.size(), System.currentTimeMillis() - t0});
                 return rows.size();
             } catch (RuntimeException | SQLException exception) {
                 connection.rollback();
@@ -1436,8 +1450,8 @@ public class JdbcSudzDao implements SudzDao {
                 + "SELECT COUNT(*) AS n FROM missingKeys OPTION (RECOMPILE)";
         try (Connection connection = connectionFactory.createConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
-            // H4: на пакетах ~5k Tbl select InsPm часто 45–160 с (после Doc apply дольше).
-            statement.setQueryTimeout(300);
+            // H4/QII: ~5k Tbl → 45–160 с; ~11k Tbl (767501) SELECT превышал 300 с.
+            statement.setQueryTimeout(1_200);
             statement.setInt(1, unloadKey);
             statement.setInt(2, unloadKey);
             try (ResultSet rs = statement.executeQuery()) {
@@ -1485,20 +1499,24 @@ public class JdbcSudzDao implements SudzDao {
                 + "FROM insPmNot AS m "
                 + "WHERE m.rn = 1 "
                 + "OPTION (RECOMPILE)";
+        log.log(Level.INFO, "applyPmtUplInsPmNotLoad unloadKey={0} — start (timeout=1800s)",
+                unloadKey);
+        long t0 = System.currentTimeMillis();
         try (Connection connection = connectionFactory.createConnection()) {
             connection.setAutoCommit(false);
             try {
                 int inserted;
                 try (PreparedStatement statement = connection.prepareStatement(sql)) {
-                    // H4: INSERT InsPm ~1k строк на 5k Tbl превышал 180 с на DEV.
-                    statement.setQueryTimeout(600);
+                    // H4/QII: INSERT InsPm на ~11k Tbl — запас выше 600 с.
+                    statement.setQueryTimeout(1_800);
                     statement.setInt(1, unloadKey);
                     statement.setInt(2, unloadKey);
                     inserted = statement.executeUpdate();
                 }
                 connection.commit();
-                log.log(Level.INFO, "applyPmtUplInsPmNotLoad unloadKey={0} inserted={1}",
-                        new Object[]{unloadKey, inserted});
+                log.log(Level.INFO,
+                        "applyPmtUplInsPmNotLoad unloadKey={0} inserted={1} ms={2}",
+                        new Object[]{unloadKey, inserted, System.currentTimeMillis() - t0});
                 return new SudzPmtUplInsPmNotApplyResult(inserted);
             } catch (RuntimeException | SQLException exception) {
                 connection.rollback();
@@ -1526,10 +1544,13 @@ public class JdbcSudzDao implements SudzDao {
                 + "WHERE p.cn_inv_pm_upl = ? "
                 + "ORDER BY p.cn_inv_pm_key";
         return queryLogOnly(sql, unloadKey, null, sampleLimit,
-                rs -> "pm_key=" + rs.getInt("cn_inv_pm_key")
-                        + " · sheet/number=" + rs.getObject("number")
-                        + " · doc=" + (rs.getNString("cn_inv_doc_kod") == null
-                        ? "—" : rs.getNString("cn_inv_doc_kod").trim()),
+                rs -> {
+                    Object number = rs.getObject("number");
+                    Object docKod = rs.getObject("cn_inv_doc_kod");
+                    return "pm_key=" + rs.getInt("cn_inv_pm_key")
+                            + " · sheet/number=" + (number == null ? "—" : number)
+                            + " · doc=" + (docKod == null ? "—" : String.valueOf(docKod).trim());
+                },
                 "InsPmExt unloadKey=" + unloadKey);
     }
 
@@ -2144,25 +2165,63 @@ public class JdbcSudzDao implements SudzDao {
             }
         }
         int csosKey;
-        try (PreparedStatement statement = connection.prepareStatement(
-                "INSERT INTO ags.cn_s_org_smpl (csosCn_s, csosOrgId, csosTimeOfEntry) VALUES (?, ?, ?)",
-                Statement.RETURN_GENERATED_KEYS)) {
-            statement.setInt(1, cnSKey);
-            statement.setInt(2, row.orgIdKey());
-            statement.setTimestamp(3, now);
-            statement.executeUpdate();
-            csosKey = readGeneratedKey(statement, "Не удалось получить csosKey агента");
+        Integer existingCsos = findCnSOrgSmplKey(connection, cnSKey, row.orgIdKey());
+        if (existingCsos != null) {
+            csosKey = existingCsos;
+        } else {
+            try (PreparedStatement statement = connection.prepareStatement(
+                    "INSERT INTO ags.cn_s_org_smpl (csosCn_s, csosOrgId, csosTimeOfEntry) VALUES (?, ?, ?)",
+                    Statement.RETURN_GENERATED_KEYS)) {
+                statement.setInt(1, cnSKey);
+                statement.setInt(2, row.orgIdKey());
+                statement.setTimestamp(3, now);
+                statement.executeUpdate();
+                csosKey = readGeneratedKey(statement, "Не удалось получить csosKey агента");
+            }
         }
         int cnSOrgKey;
-        try (PreparedStatement statement = connection.prepareStatement(
-                "INSERT INTO ags.cn_s_org (csoCn_s_org_smpl, csoTimeOfEntry) VALUES (?, ?)",
-                Statement.RETURN_GENERATED_KEYS)) {
-            statement.setInt(1, csosKey);
-            statement.setTimestamp(2, now);
-            statement.executeUpdate();
-            cnSOrgKey = readGeneratedKey(statement, "Не удалось получить cn_s_org_key агента");
+        Integer existingCnSOrg = findCnSOrgKeyBySmpl(connection, csosKey);
+        if (existingCnSOrg != null) {
+            cnSOrgKey = existingCnSOrg;
+        } else {
+            try (PreparedStatement statement = connection.prepareStatement(
+                    "INSERT INTO ags.cn_s_org (csoCn_s_org_smpl, csoTimeOfEntry) VALUES (?, ?)",
+                    Statement.RETURN_GENERATED_KEYS)) {
+                statement.setInt(1, csosKey);
+                statement.setTimestamp(2, now);
+                statement.executeUpdate();
+                cnSOrgKey = readGeneratedKey(statement, "Не удалось получить cn_s_org_key агента");
+            }
         }
         return new SudzPmtUplAgNotLoadInserted(cnSKey, csosKey, cnSOrgKey, createdCnS);
+    }
+
+    private static Integer findCnSOrgSmplKey(Connection connection, int cnSKey, int orgIdKey)
+            throws SQLException {
+        try (PreparedStatement find = connection.prepareStatement(
+                "SELECT csosKey FROM ags.cn_s_org_smpl WHERE csosCn_s = ? AND csosOrgId = ?")) {
+            find.setInt(1, cnSKey);
+            find.setInt(2, orgIdKey);
+            try (ResultSet rs = find.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return null;
+    }
+
+    private static Integer findCnSOrgKeyBySmpl(Connection connection, int csosKey) throws SQLException {
+        try (PreparedStatement find = connection.prepareStatement(
+                "SELECT cn_s_org_key FROM ags.cn_s_org WHERE csoCn_s_org_smpl = ?")) {
+            find.setInt(1, csosKey);
+            try (ResultSet rs = find.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return null;
     }
 
     private static Integer findAgentCnSKey(Connection connection, int cnKey) throws SQLException {
@@ -2240,14 +2299,14 @@ public class JdbcSudzDao implements SudzDao {
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, unloadKey);
             int deleted = ps.executeUpdate();
-            if (deleted > 0) {
-                log.log(Level.INFO, "clearPmtUplTblDependents unloadKey={0} sfDeleted={1}",
-                        new Object[]{unloadKey, deleted});
-            }
+            log.log(Level.INFO, "clearPmtUplTblDependents unloadKey={0} sfDeleted={1}",
+                    new Object[]{unloadKey, deleted});
         } catch (SQLException exception) {
             if (!isMissingTable(exception, "CnInvUplSfDouble")) {
                 throw exception;
             }
+            log.log(Level.INFO, "clearPmtUplTblDependents unloadKey={0} — CnInvUplSfDouble отсутствует",
+                    unloadKey);
         }
     }
 
@@ -2312,18 +2371,17 @@ public class JdbcSudzDao implements SudzDao {
     }
 
     /**
-     * H6: сброс {@code DbtUplCstAg} @upl и заполнение из {@code ags.cn_inv_pm}+{@code g_p}
-     * (логика как {@code ags.fnCiasDbtUplCst}, мост — {@code sudz.cn_inv_dbt_upl_g_p}).
-     * <p>Пути cst: (1) {@code invDbtCia.idcCia} → {@code cnInvAccnt} → smpl → pm
-     * пакетов {@code g_p}; (2) pm {@code g_p}, где {@code invNum} или
-     * {@code cn_inv_doc_link} = {@code dvDocBase} (QI часто пишет в docBase «Ссылку»).
-     * Важно: {@code idcCia} — это {@code ciaKey}, не {@code ciasKey}; прямой join
-     * {@code pm.ciaCnInvAccntSmpl = idcCia} даёт ложные совпадения ключей.
-     * Пишет блок в {@code cidufOpsProgress}.
+     * H6 / P1: сброс {@code DbtUplCstAg} @upl и заполнение через
+     * {@code sudz.usp_RebuildDbtUplCstAg} (только pm ∩ {@code g_p}@upl).
+     * <p>Корзины: A — однозначный / агент (FK+code+name); B — multi
+     * ({@code кодов - N: …}); C — {@code не обнаружена в платежах}.
+     * Вне {@code g_p} (бывш. 1.3) в канон не входит. Пишет блок в
+     * {@code cidufOpsProgress}. {@code multiCount}/{@code emptyCount} =
+     * cntB / cntC.
      */
     @Override
     public SudzDbtUplCstAgRebuildResult rebuildDbtUplCstAg(int dbtUplKey) {
-        log.log(Level.INFO, "Rebuilding DbtUplCstAg for dbtUpl={0}", dbtUplKey);
+        log.log(Level.INFO, "Rebuilding DbtUplCstAg P1 for dbtUpl={0}", dbtUplKey);
         String duca = q("DbtUplCstAg");
         String gP = q("cn_inv_dbt_upl_g_p");
         long t0 = System.currentTimeMillis();
@@ -2343,68 +2401,40 @@ public class JdbcSudzDao implements SudzDao {
                     }
                 }
 
-                int deleted;
-                try (PreparedStatement del = connection.prepareStatement(
-                        "DELETE FROM " + duca + " WHERE ducaUpl = ?")) {
-                    del.setInt(1, dbtUplKey);
-                    deleted = del.executeUpdate();
-                }
-
-                String insertSql = sqlDbtUplCstAgRawCte()
-                        + "agg AS ( "
-                        + "  SELECT dbtKey, femsqUpl, "
-                        + "    COUNT(DISTINCT cstapKey) AS nCst, "
-                        + "    MIN(cstapKey) AS cstapKey "
-                        + "  FROM raw "
-                        + "  GROUP BY dbtKey, femsqUpl "
-                        + "), "
-                        + "ok AS ( "
-                        + "  SELECT dbtKey, femsqUpl, cstapKey FROM agg WHERE nCst = 1 "
-                        + ") "
-                        + "INSERT INTO " + duca + " (ducaDbt, ducaUpl, ducaCstAgPn) "
-                        + "SELECT dbtKey, femsqUpl, cstapKey FROM ok";
-
-                int inserted;
-                try (PreparedStatement ins = connection.prepareStatement(insertSql)) {
-                    ins.setQueryTimeout(300);
-                    ins.setInt(1, dbtUplKey);
-                    ins.setInt(2, dbtUplKey);
-                    inserted = ins.executeUpdate();
-                }
-
-                String statsSql = sqlDbtUplCstAgRawCte()
-                        + "agg AS ( "
-                        + "  SELECT dbtKey, COUNT(DISTINCT cstapKey) AS nCst FROM raw GROUP BY dbtKey "
-                        + "), "
-                        + "valued AS ( "
-                        + "  SELECT DISTINCT idd.iddDbt AS dbtKey "
-                        + "  FROM " + q("DbtValue") + " dv "
-                        + "  JOIN " + q("invDbtDbt") + " idd ON idd.iddInvDbt = dv.dvInvDbt "
-                        + "  WHERE dv.dvUpl = ? AND idd.iddDbt IS NOT NULL "
-                        + ") "
-                        + "SELECT "
-                        + "  (SELECT COUNT(*) FROM agg WHERE nCst > 1) AS multiCnt, "
-                        + "  (SELECT COUNT(*) FROM valued v "
-                        + "    WHERE NOT EXISTS (SELECT 1 FROM agg a WHERE a.dbtKey = v.dbtKey AND a.nCst = 1)"
-                        + "  ) AS emptyCnt";
-
+                int deleted = 0;
+                int inserted = 0;
                 int multi = 0;
                 int empty = 0;
-                try (PreparedStatement st = connection.prepareStatement(statsSql)) {
-                    st.setQueryTimeout(300);
-                    st.setInt(1, dbtUplKey);
-                    st.setInt(2, dbtUplKey);
-                    st.setInt(3, dbtUplKey);
-                    try (ResultSet rs = st.executeQuery()) {
-                        if (rs.next()) {
-                            multi = rs.getInt("multiCnt");
-                            empty = rs.getInt("emptyCnt");
+                String call = "{call " + q("usp_RebuildDbtUplCstAg") + "(?)}";
+                try (CallableStatement cs = connection.prepareCall(call)) {
+                    cs.setQueryTimeout(300);
+                    cs.setInt(1, dbtUplKey);
+                    boolean hasRs = cs.execute();
+                    while (true) {
+                        if (hasRs) {
+                            try (ResultSet rs = cs.getResultSet()) {
+                                if (rs != null && rs.next()) {
+                                    deleted = rs.getInt("deletedCnt");
+                                    inserted = rs.getInt("insertedCnt");
+                                    multi = rs.getInt("cntB");
+                                    empty = rs.getInt("cntC");
+                                }
+                            }
+                        }
+                        if (cs.getMoreResults()) {
+                            hasRs = true;
+                        } else if (cs.getUpdateCount() == -1) {
+                            break;
+                        } else {
+                            hasRs = false;
                         }
                     }
                 }
 
-                List<String> multiSamples = loadCstAgSampleLines(connection, dbtUplKey, true, 8);
-                List<String> emptySamples = loadCstAgSampleLines(connection, dbtUplKey, false, 8);
+                List<String> multiSamples = loadCstAgBasketSampleLines(
+                        connection, duca, dbtUplKey, true, 8);
+                List<String> emptySamples = loadCstAgBasketSampleLines(
+                        connection, duca, dbtUplKey, false, 8);
                 long elapsedMs = System.currentTimeMillis() - t0;
                 String block = buildDbtUplCstAgOpsHtml(
                         dbtUplKey, gpLinks, deleted, inserted, multi, empty,
@@ -2413,7 +2443,7 @@ public class JdbcSudzDao implements SudzDao {
 
                 connection.commit();
                 log.log(Level.INFO,
-                        "rebuildDbtUplCstAg dbtUpl={0} deleted={1} inserted={2} multi={3} empty={4}",
+                        "rebuildDbtUplCstAg P1 dbtUpl={0} deleted={1} inserted={2} B={3} C={4}",
                         new Object[]{dbtUplKey, deleted, inserted, multi, empty});
                 return new SudzDbtUplCstAgRebuildResult(
                         dbtUplKey, deleted, inserted, multi, empty, opsProgress);
@@ -10692,46 +10722,26 @@ public class JdbcSudzDao implements SudzDao {
     }
 
     /**
-     * Sample-строки multi ({@code nCst&gt;1}) или empty (нет однозначного cst) для лога H6.
+     * Sample-строки корзин B ({@code кодов -%}) или C («не обнаружена…») после P1 rebuild.
      */
-    private List<String> loadCstAgSampleLines(
-            Connection connection, int dbtUplKey, boolean multi, int limit
+    private List<String> loadCstAgBasketSampleLines(
+            Connection connection,
+            String ducaTable,
+            int dbtUplKey,
+            boolean basketB,
+            int limit
     ) throws SQLException {
-        String sql = sqlDbtUplCstAgRawCte()
-                + "agg AS ( "
-                + "  SELECT dbtKey, COUNT(DISTINCT cstapKey) AS nCst FROM raw GROUP BY dbtKey "
-                + "), "
-                + "valued AS ( "
-                + "  SELECT DISTINCT idd.iddDbt AS dbtKey "
-                + "  FROM " + q("DbtValue") + " dv "
-                + "  JOIN " + q("invDbtDbt") + " idd ON idd.iddInvDbt = dv.dvInvDbt "
-                + "  WHERE dv.dvUpl = ? AND idd.iddDbt IS NOT NULL "
-                + ") "
-                + (multi
-                ? "SELECT TOP (" + limit + ") a.dbtKey, a.nCst "
-                + "FROM agg a WHERE a.nCst > 1 ORDER BY a.dbtKey"
-                : "SELECT TOP (" + limit + ") v.dbtKey, a.nCst "
-                + "FROM valued v "
-                + "LEFT JOIN agg a ON a.dbtKey = v.dbtKey "
-                + "WHERE a.dbtKey IS NULL OR a.nCst <> 1 "
-                + "ORDER BY v.dbtKey");
+        String sql = basketB
+                ? "SELECT TOP (" + limit + ") ducaDbt, ducaCode FROM " + ducaTable
+                + " WHERE ducaUpl = ? AND ducaCode LIKE N'кодов -%' ORDER BY ducaDbt"
+                : "SELECT TOP (" + limit + ") ducaDbt, ducaCode FROM " + ducaTable
+                + " WHERE ducaUpl = ? AND ducaCode = N'не обнаружена в платежах' ORDER BY ducaDbt";
         List<String> lines = new ArrayList<>();
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setInt(1, dbtUplKey);
-            st.setInt(2, dbtUplKey);
-            st.setInt(3, dbtUplKey);
             try (ResultSet rs = st.executeQuery()) {
                 while (rs.next()) {
-                    int dbtKey = rs.getInt("dbtKey");
-                    int nCst = rs.getInt("nCst");
-                    boolean nCstNull = rs.wasNull();
-                    if (multi) {
-                        lines.add("dbtKey=" + dbtKey + " · nCst=" + nCst);
-                    } else if (nCstNull) {
-                        lines.add("dbtKey=" + dbtKey + " · нет pm-cst");
-                    } else {
-                        lines.add("dbtKey=" + dbtKey + " · nCst=" + nCst);
-                    }
+                    lines.add("dbtKey=" + rs.getInt("ducaDbt") + " · " + rs.getString("ducaCode"));
                 }
             }
         }
@@ -10756,13 +10766,13 @@ public class JdbcSudzDao implements SudzDao {
         sb.append("<div><b>").append(escapeHtml(ts)).append("</b>")
                 .append(" · Пересчёт DbtUplCstAg · upl=").append(dbtUplKey)
                 .append(" · ").append(elapsedMs).append(" мс</div>");
-        sb.append("<div>источник: ags.cn_inv_pm + sudz.g_p (")
+        sb.append("<div>источник: P1 g_p only · ags.cn_inv_pm + sudz.g_p (")
                 .append(gpLinks).append(" связей)</div>");
         sb.append("<div>итог: −").append(deleted).append(" / +").append(inserted)
-                .append(" · multi=").append(multi)
-                .append(" · empty=").append(empty).append("</div>");
+                .append(" · B(multi)=").append(multi)
+                .append(" · C(нет)=").append(empty).append("</div>");
         if (multi > 0) {
-            sb.append("<details><summary>multi (первые ")
+            sb.append("<details><summary>B multi (первые ")
                     .append(multiSamples.size()).append(" из ").append(multi)
                     .append(")</summary><pre>");
             for (String line : multiSamples) {
@@ -10771,7 +10781,7 @@ public class JdbcSudzDao implements SudzDao {
             sb.append("</pre></details>");
         }
         if (empty > 0) {
-            sb.append("<details><summary>без однозначного cst (первые ")
+            sb.append("<details><summary>C не обнаружена (первые ")
                     .append(emptySamples.size()).append(" из ").append(empty)
                     .append(")</summary><pre>");
             for (String line : emptySamples) {

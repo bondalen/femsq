@@ -1,18 +1,19 @@
 # План: аналог «системы управления дебиторской задолженностью» (СУДЗ) из MS Access
 
 **Дата создания:** 2026-08-02  
-**Последнее обновление:** 2026-09-16  
+**Последнее обновление:** 2026-09-21  
 **Проект:** FEMSQ  
-**Версия плана:** 0.99.52 (S82 asOf903 mailing: 28469 fixed ✅; cover note)
+**Версия плана:** 0.99.53 (S83 указатель: эксперимент `DbtUplCstAgExp`)
 **Задача:** 0065–0075 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md); **активно: 1.1.1.3** файл `…28469fix…`; **S82** ✅; **S81** ✅; **S80** ✅; **0075 / S79** шаг 1 ✅; **0069** C.10.6 ✅; **S77.9** ✅; **S78** ✅; **0071** 🔶
-**Статус плана:** ✅ 0070; **S75** ✅; **S76** ✅ C.10.6 D0–D4; **S77** ✅ .1–.9; **S78.1–.4+.6** ✅ **S78.5** ☐; **S79** ✅ шаг 1; **S80** ✅ .0–.2b; **S81** ✅ .1–.2 cmm; **S82** ✅; **S74 M1–M5** ✅; **0071** 🔶; **0075** 🔶
+**Статус плана:** ✅ 0070; **S75** ✅; **S76** ✅ C.10.6 D0–D4; **S77** ✅ .1–.9; **S78.1–.4+.6** ✅ **S78.5** ☐; **S79** ✅ шаг 1; **S80** ✅ .0–.2b; **S81** ✅ .1–.2 cmm; **S82** ✅; **S83** ☐ эксп.; **S74 M1–M5** ✅; **0071** 🔶; **0075** 🔶
 **Cutover prod/DEV:** [db-upgrade-sudz-invdbt-cutover.md](../../../../deployment/db-upgrade-sudz-invdbt-cutover.md) · §5.6 [S74](#s74--трек-cutover-m1m6--2026-08-27) · D1: [04-5](../../domain/sudz/04-5_dbt-invdbt-cardinality-d1.md)
 **Паспорт pmt:** [02-11_cn-inv-pmt-upl-access.md](../../UI/02-11_cn-inv-pmt-upl-access.md) · §5.7  
 **План UI pmt:** [chat-plan-26-0819-cn-inv-pmt-upl.md](./chat-plan-26-0819-cn-inv-pmt-upl.md) · §5.8  
+**Эксперимент строек (CstAgExp):** [chat-plan-26-0921-dbt-upl-cst-ag-exp.md](./chat-plan-26-0921-dbt-upl-cst-ag-exp.md) · **S83**  
 **План UI Договоры / СФ (T7):** [chat-plan-26-0826-contracts-inv.md](./chat-plan-26-0826-contracts-inv.md) · 0071  
 **Резюме UI pmt (S70):** [chat-resume-26-0819-cn-inv-pmt-upl.md](../chat-resume/chat-resume-26-0819-cn-inv-pmt-upl.md)  
 **Резюме pmt (S69):** [chat-resume-26-0817-cn-inv-pmt-upl.md](../chat-resume/chat-resume-26-0817-cn-inv-pmt-upl.md)  
-**WBS цели «P1 контур B на проде»:** [chat-plan-26-0918-sudz-rslt-prod-mailing.md](./chat-plan-26-0918-sudz-rslt-prod-mailing.md) (2026-09-18; v0.3.0 — оборот 1.1.* + исходящие 1.2.1)
+**WBS цели «P1 контур B на проде»:** [chat-plan-26-0918-sudz-rslt-prod-mailing.md](./chat-plan-26-0918-sudz-rslt-prod-mailing.md) (v0.3.8 — канон b ✅; **1.1.1.2.5** эксп.)
 
 
 **Доменные доки:** [01-overview](../../domain/sudz/01-overview.md) · [02-glossary](../../domain/sudz/02-glossary.md) · [03-processes](../../domain/sudz/03-processes.md) · [04-data-model](../../domain/sudz/04-data-model.md) · [04-1 MS_Description](../../domain/sudz/04-1_ms-descriptions.md) · [04-3 проблемы](../../domain/sudz/04-3_problems-solutions.md) · [04-4 зерно/счёт долгов](../../domain/sudz/04-4_legacy-debt-grain.md) · [04-5 D1 кардинальность Dbt↔invDbt](../../domain/sudz/04-5_dbt-invdbt-cardinality-d1.md) · [04-6 multi-Dbt P1 три пути](../../domain/sudz/04-6_multi-dbt-p1-three-paths.md) · [07-readiness (покрытие/готовность)](../../domain/sudz/07-readiness.md) · [08-target-schema (физ. схема + ER)](../../domain/sudz/08-target-schema.md)  
@@ -215,6 +216,7 @@
 | S80 | 2026-09-16 | **Бэкфилл строек** в `DbtUplCstAg` (QIV/QI[/QII]) → затем cmm | [§5.6 S80](#s80--бэкфилл-строек-dbtuplcstag--после-s79-суммы-2026-09-16); [26-0915](../../sql/26-0915-sudz-rslt-cst-backfill/) | ✅ .0–.2b DEV; ☐ .3 prod fn |
 | S81 | 2026-09-16 | **Бэкфилл cmm** (куратор/мероприятия/год.код) из Access → `cnInvCmm*` | [§5.6 S81](#s81--бэкфилл-комментариев-cmm-из-access-2026-09-16); [26-0916](../../sql/26-0916-sudz-rslt-cmm-backfill/) | ✅ .1–.2 DEV |
 | S82 | 2026-09-16 | **Рассылка asOf903:** re-fix 28469 + cover note | [§5.6 S82](#s82--рассылка-asof903--фикс-зерна-28469-2026-09-16) | ✅ .1–.5 |
+| S83 | 2026-09-21 | **Эксперимент CstAgExp:** каскад 1.1–1.4 (агент / вне `g_p` / без пустых); канон `DbtUplCstAg` не трогать | [chat-plan-26-0921](./chat-plan-26-0921-dbt-upl-cst-ag-exp.md); [0918 §1.1.1.2.5](./chat-plan-26-0918-sudz-rslt-prod-mailing.md); [§5.6 S83](#s83--эксперимент-dbtuplcstagexp-каскад-1114-2026-09-21) | ☐ |
 | S73 | 2026-08-26 | **0071 T7:** отдельный план вкладки «Счета-фактуры» (слева `cnInv`, справа `contracts-inv`); interim = `cn-picker` | [chat-plan-26-0826-contracts-inv.md](./chat-plan-26-0826-contracts-inv.md) | 🔄 план |
 | S67 | 2026-08-16 | UAT 910 dry: **128** дог. / **705** СФ ✅, но rebuild **~3m14s** (CTE). Перепись на `#temp`+индексы; лог СФ усечён (8+…) | JAR **0.1.0.196** | ✅ via S67a |
 | S67a | 2026-08-16 | `#temp` без COLLATE → conflict Latin1 vs Cyrillic на JOIN `cnnNumNull`. Колонки `#cidu*` → `Cyrillic_General_CI_AS` | JAR **0.1.0.197** | ✅ UAT: sqlMs=241, 128/705 |
@@ -1931,10 +1933,18 @@ Rslt(QIV) ≡ Excel_эталон
 | **S80.1** | DEV backfill из Access Excel | `26-0505` `*_CstAgPnKey` → softBase/softQi + QI-inv match GEN → INSERT `DbtUplCstAg` @901/@902; @903 = carry; stub `cst`/`cstAg`/`cstAgPn` для Access keys вне DEV | покрытие витрины ≈ Access QI/QIV | ✅ **2026-09-16** итог duca 901=**1660** / 902=**1636** / 903=**1446**; скрипт [`03_…FROM_ACCESS_EXCEL.mjs`](../../sql/26-0915-sudz-rslt-cst-backfill/03_BACKFILL_DbtUplCstAg_FROM_ACCESS_EXCEL.mjs) + patch miss47/remain11 |
 | **S80.2** | Verify Rslt | `vw_Yr_DbtFact` yr=901: CstAgPnKey filled | N filled | ✅ **2026-09-16** (см. .2b) |
 | **S80.2b** | Row QIV+QI ↔ Access | `verify_s80_qiv_qi_vs_access.mjs` excl. comments/QII | PASS; only accounted (multi-cst / CnDate / Ctpt form / grain 28469 / Split A45) | ✅ **2026-09-16** FAIL=0; **E-S80-cst-backfill-miss=0**; арт. [`…s80_cst_final_26-0916.xlsx`](../../sql/26-0831-sudz-dbt-slot-link/artifacts/ags_Yr_DbtChangesRslt_901_asOf903_s80_cst_final_26-0916.xlsx), [`stage2_s80_qiv_qi_vs_access_final_26-0916.json`](../../sql/26-0831-sudz-dbt-slot-link/artifacts/stage2_s80_qiv_qi_vs_access_final_26-0916.json) |
-| **S80.3** | Prod path (later) | `00`→`01`→`02` через `fn`+`g_p` когда DEV/prod имеют upl | COMMIT после ревью | ☐ |
+| **S80.3** | Prod path (later) | `00`→`01`→`02` через `fn`+`g_p` когда DEV/prod имеют upl | COMMIT после ревью | ☐ (на DEV канон H6 после 0819 — отдельно; см. **S83** эксп.) |
 | **S80.4** | QII / export_* | при появлении g_p или отдельного эталона QII — добить 903 не только carry | ☐ | ☐ |
 
-**Следом (не S80):** ✅ **S81** cmm; ✅ **S82** 28469 + cover — см. [§5.6 S82](#s82--рассылка-asof903--фикс-зерна-28469-2026-09-16). Далее **1.1.1.3**.
+**Следом (не S80):** ✅ **S81** cmm; ✅ **S82** 28469 + cover — см. [§5.6 S82](#s82--рассылка-asof903--фикс-зерна-28469-2026-09-16). Эксперимент без пустых / multi по агенту — **[S83](#s83--эксперимент-dbtuplcstagexp-каскад-1114-2026-09-21)**. Далее **1.1.1.3**.
+
+##### S83 — эксперимент `DbtUplCstAgExp` (каскад 1.1–1.4) (2026-09-21)
+
+**Указатель:** полный порядок работ и спека — [chat-plan-26-0921-dbt-upl-cst-ag-exp.md](./chat-plan-26-0921-dbt-upl-cst-ag-exp.md). WBS: [0918 §1.1.1.2.5](./chat-plan-26-0918-sudz-rslt-prod-mailing.md).
+
+**Суть:** рядом с каноном `DbtUplCstAg` (`nCst=1` only) — таблица Exp + SQL-proc: 1.1 однозначный `g_p` → 1.2 разведение multi по агенту pm (иначе склейка) → 1.3 поиск вне `g_p` только если в `g_p` 0 кандидатов → 1.4 явный текст «не обнаружена в платежах»; в имени на период эксперимента — метка правила.
+
+**Не делает:** замену канона H6 / Access `fnCiasDbtUplCst` до решения по результатам прогона @901–903.
 
 ##### S81 — бэкфилл комментариев (cmm) из Access (2026-09-16)
 

@@ -81,7 +81,20 @@ public final class SudzPmtUplFunnelSteps {
     }
 
     /**
-     * Проверяет префикс цепочки среди enabled-шагов.
+     * Повтор только {@code cipuInsPmNotLoad} (после timeout SELECT/INSERT на крупном Tbl).
+     *
+     * @param requested запрошенные id
+     * @return true если ровно один шаг — InsPmNotLoad
+     */
+    public static boolean isSingleTailRetry(List<String> requested) {
+        return requested != null
+                && requested.size() == 1
+                && "cipuInsPmNotLoad".equals(requested.get(0));
+    }
+
+    /**
+     * Проверяет префикс цепочки среди enabled-шагов
+     * (либо одиночный retry {@link #isSingleTailRetry}).
      *
      * @param requested запрошенные id
      */
@@ -90,6 +103,9 @@ public final class SudzPmtUplFunnelSteps {
             throw new IllegalArgumentException("Список шагов не задан");
         }
         if (requested.isEmpty()) {
+            return;
+        }
+        if (isSingleTailRetry(requested)) {
             return;
         }
         List<String> chain = enabledIds();

@@ -3,6 +3,8 @@ package com.femsq.database.model.sudz;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -38,5 +40,12 @@ class SudzPmtUplFunnelStepsTest {
     void fullPrefixAllowed() {
         assertDoesNotThrow(() -> SudzPmtUplFunnelSteps.requirePrefixOfEnabled(
                 SudzPmtUplFunnelSteps.enabledIds()));
+    }
+
+    @Test
+    void singleInsPmNotLoadRetryAllowed() {
+        assertDoesNotThrow(() -> SudzPmtUplFunnelSteps.requirePrefixOfEnabled(
+                List.of("cipuInsPmNotLoad")));
+        assertTrue(SudzPmtUplFunnelSteps.isSingleTailRetry(List.of("cipuInsPmNotLoad")));
     }
 }

@@ -10,7 +10,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import org.apache.poi.ss.usermodel.Cell;
@@ -21,10 +24,12 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.springframework.stereotype.Component;
 
 /**
- * Excel → {@code CnInvPmtUplTbl}: якорь VBA {@code Find("№ докум.")}, Offset A–Z
- * ({@code export_offset-map.md}).
+ * Excel → {@code CnInvPmtUplTbl}: якорь «№ докум.» + колонки по ключевым словам заголовков.
  * <p>
- * Лог — сжатый (0074): блокеры и сводка листа; без построчного «добавлено».
+ * VBA Access использовал фиксированные {@code Offset} от «№ докум.» (см. export_offset-map).
+ * Выгрузки 26-0817 (счета 767501/767502) пришли с другим набором/порядком колонок —
+ * Offset ломается. Разрешение по нормализованным ключевым словам покрывает канон QI
+ * и новый layout; отсутствующие поля (срок оплаты, просрочки, баз.дата, сумма) → null.
  * </p>
  */
 @Component
@@ -33,33 +38,35 @@ public class SudzPmtUplExcelToTblImporter {
     /** Точный заголовок якоря (xlWhole). */
     static final String ANCHOR_DOC_NUM = "№ докум.";
 
-    /** Offset 0 = колонка U относительно якоря; A = −20 … Z = +5. */
-    private static final int OFF_BE = -20;
-    private static final int OFF_ACCOUNT = -19;
-    private static final int OFF_CTPT_NUM = -18;
-    private static final int OFF_CTPT_NAME = -17;
-    private static final int OFF_CAC = -16;
-    private static final int OFF_AGENT_NUM = -15;
-    private static final int OFF_AGENT_NAME = -14;
-    private static final int OFF_CN_NAME = -13;
-    private static final int OFF_LINK = -12;
-    private static final int OFF_CN_INV = -11;
-    private static final int OFF_ENTRY = -10;
-    private static final int OFF_DOC_DATE = -9;
-    private static final int OFF_DUE = -8;
-    private static final int OFF_DBT = -7;
-    private static final int OFF_DBT_OVERD = -6;
-    private static final int OFF_DBT_OVERD_NOT = -5;
-    private static final int OFF_CDT = -4;
-    private static final int OFF_CDT_OVERD = -3;
-    private static final int OFF_CDT_OVERD_NOT = -2;
-    private static final int OFF_BLNS = -1;
-    private static final int OFF_DOC_CODE = 0;
-    private static final int OFF_ALIGN = 1;
-    private static final int OFF_BASE = 2;
-    private static final int OFF_DOC_SUM = 3;
-    private static final int OFF_STORNO_REASON = 4;
-    private static final int OFF_STORNO_DOC = 5;
+    /** Поля staging, сопоставляемые с заголовками. */
+    enum Col {
+        BE,
+        ACCOUNT,
+        CTPT_NUM,
+        CTPT_NAME,
+        CAC,
+        AGENT_NUM,
+        AGENT_NAME,
+        CN_NAME,
+        LINK,
+        CN_INV,
+        ENTRY,
+        DOC_DATE,
+        DUE,
+        DBT,
+        DBT_OVERD,
+        DBT_OVERD_NOT,
+        CDT,
+        CDT_OVERD,
+        CDT_OVERD_NOT,
+        BLNS,
+        DOC_CODE,
+        ALIGN,
+        BASE,
+        DOC_SUM,
+        STORNO_REASON,
+        STORNO_DOC
+    }
 
     private final AuditExcelCellReader cellReader;
 
@@ -146,33 +153,36 @@ public class SudzPmtUplExcelToTblImporter {
                     + "» (поиск xlWhole в первых строках).");
             return;
         }
-        int headerRow = anchor.get()[0];
+        int headerRowIdx = anchor.get()[0];
         int anchorCol = anchor.get()[1];
-        if (anchorCol + OFF_BE < 0) {
-            log.line("<font color=\"red\">якорь «"
-                    + SudzDbtUplProgressLog.escape(ANCHOR_DOC_NUM)
-                    + "» слишком близко к левому краю</font> (нужна колонка U / индекс ≥ 20)"
-                    + " на листе «"
-                    + SudzDbtUplProgressLog.escape(sheet.getSheetName()) + "».");
+        Row headerRow = sheet.getRow(headerRowIdx);
+        Map<Col, Integer> cols = resolveColumns(headerRow, anchorCol, log);
+        if (!cols.containsKey(Col.DOC_CODE)) {
+            log.line("<font color=\"red\">не разрешена колонка «№ докум.»</font>.");
+            return;
+        }
+        if (!cols.containsKey(Col.BE) && !cols.containsKey(Col.ACCOUNT)) {
+            log.line("<font color=\"red\">не найдены обязательные колонки БЕ / Счет ГК</font>"
+                    + " по ключевым словам заголовков.");
             return;
         }
 
         int lastRow = sheet.getLastRowNum();
         int added = 0;
         int weakWithoutDoc = 0;
-        for (int r = headerRow + 1; r <= lastRow; r++) {
+        for (int r = headerRowIdx + 1; r <= lastRow; r++) {
             Row row = sheet.getRow(r);
             if (row == null) {
                 continue;
             }
-            if (!rowLooksLikePayment(row, anchorCol)) {
+            if (!rowLooksLikePayment(row, cols)) {
                 continue;
             }
-            String doc = cellReader.readString(row.getCell(anchorCol + OFF_DOC_CODE));
+            String doc = cellString(row, cols, Col.DOC_CODE);
             if (!notBlank(doc)) {
                 weakWithoutDoc++;
             }
-            rows.add(mapRow(row, anchorCol, sheetNum, unloadKey));
+            rows.add(mapRow(row, cols, sheetNum, unloadKey));
             added++;
         }
 
@@ -180,6 +190,8 @@ public class SudzPmtUplExcelToTblImporter {
         summary.append("лист <font color=\"Teal\"><b>")
                 .append(SudzDbtUplProgressLog.escape(sheet.getSheetName()))
                 .append("</b></font>: подготовлено <b>").append(added).append("</b> строк");
+        summary.append(" · колонки по заголовкам (найдено ")
+                .append(cols.size()).append("/").append(Col.values().length).append(")");
         if (weakWithoutDoc > 0) {
             summary.append(" · <font color=\"DarkOrange\">без «№ докум.»: ")
                     .append(weakWithoutDoc)
@@ -215,47 +227,227 @@ public class SudzPmtUplExcelToTblImporter {
         return Optional.empty();
     }
 
-    private boolean rowLooksLikePayment(Row row, int anchorCol) {
-        if (notBlank(cellReader.readString(row.getCell(anchorCol + OFF_DOC_CODE)))) {
-            return true;
+    /**
+     * Нормализация заголовка: lower, ё→е, только буквы/цифры/№.
+     *
+     * @param raw заголовок
+     * @return нормализованная строка
+     */
+    static String normalizeHeader(String raw) {
+        if (raw == null) {
+            return "";
         }
-        if (notBlank(cellReader.readString(row.getCell(anchorCol + OFF_BE)))) {
-            return true;
+        String s = raw.trim().toLowerCase(Locale.ROOT).replace('ё', 'е');
+        StringBuilder sb = new StringBuilder(s.length());
+        for (int i = 0; i < s.length(); i++) {
+            char ch = s.charAt(i);
+            if (Character.isLetterOrDigit(ch) || ch == '№') {
+                sb.append(ch);
+            }
         }
-        return softInt(row.getCell(anchorCol + OFF_ACCOUNT)) != null;
+        return sb.toString();
     }
 
-    private SudzPmtUplTblRow mapRow(Row row, int anchorCol, int sheetNum, int unloadKey) {
+    /**
+     * Разрешает индексы колонок по ключевым словам строки заголовков.
+     * Два «Агент» подряд → номер, затем имя (как VBA F/G).
+     *
+     * @param headerRow строка заголовков
+     * @param anchorCol индекс «№ докум.»
+     * @param log лог (предупреждения о пропусках)
+     * @return карта Col → индекс колонки
+     */
+    Map<Col, Integer> resolveColumns(Row headerRow, int anchorCol, SudzDbtUplProgressLog log) {
+        Map<Col, Integer> cols = new EnumMap<>(Col.class);
+        cols.put(Col.DOC_CODE, anchorCol);
+
+        short lastCell = headerRow == null ? -1 : headerRow.getLastCellNum();
+        List<Integer> agentCols = new ArrayList<>();
+        if (headerRow != null && lastCell > 0) {
+            for (int c = 0; c < lastCell; c++) {
+                if (c == anchorCol) {
+                    continue;
+                }
+                String norm = normalizeHeader(cellReader.readString(headerRow.getCell(c)));
+                if (norm.isEmpty()) {
+                    continue;
+                }
+                if ("агент".equals(norm)) {
+                    agentCols.add(c);
+                    continue;
+                }
+                Col matched = matchSingle(norm);
+                if (matched != null && !cols.containsKey(matched)) {
+                    cols.put(matched, c);
+                }
+            }
+        }
+        if (!agentCols.isEmpty()) {
+            cols.put(Col.AGENT_NUM, agentCols.get(0));
+            if (agentCols.size() >= 2) {
+                cols.put(Col.AGENT_NAME, agentCols.get(1));
+            }
+        }
+
+        List<String> missing = new ArrayList<>();
+        for (Col required : List.of(Col.BE, Col.ACCOUNT, Col.CTPT_NUM, Col.CTPT_NAME, Col.CN_NAME)) {
+            if (!cols.containsKey(required)) {
+                missing.add(required.name());
+            }
+        }
+        if (!missing.isEmpty()) {
+            log.line("<font color=\"DarkOrange\">заголовки не покрыли</font>: "
+                    + SudzDbtUplProgressLog.escape(String.join(", ", missing))
+                    + " (поля → null).");
+        }
+        return cols;
+    }
+
+    /**
+     * Сопоставление одного нормализованного заголовка полю (кроме пары «Агент»).
+     *
+     * @param norm нормализованный заголовок
+     * @return Col или null
+     */
+    static Col matchSingle(String norm) {
+        if ("бе".equals(norm)) {
+            return Col.BE;
+        }
+        if (norm.contains("счет") && norm.contains("гк")) {
+            return Col.ACCOUNT;
+        }
+        if ("кредитор".equals(norm)) {
+            return Col.CTPT_NUM;
+        }
+        if (norm.contains("наименован") && norm.contains("кредитор")) {
+            return Col.CTPT_NAME;
+        }
+        if (norm.contains("код") && norm.contains("стройк")) {
+            return Col.CAC;
+        }
+        if ("договор".equals(norm) || (norm.startsWith("договор") && !norm.contains("вид"))) {
+            return Col.CN_NAME;
+        }
+        if (norm.contains("ссылк")) {
+            return Col.LINK;
+        }
+        if (norm.contains("присвоен")) {
+            return Col.CN_INV;
+        }
+        if (norm.contains("проводк")) {
+            return Col.ENTRY;
+        }
+        // «Д/документ» / «ддокумент», не «№ докум.»
+        if (norm.contains("ддокумент")
+                || (norm.contains("документ") && norm.startsWith("д") && !norm.contains("№")
+                && !norm.contains("сумм") && !norm.contains("сторн"))) {
+            return Col.DOC_DATE;
+        }
+        if (norm.contains("срок") && norm.contains("оплат")) {
+            return Col.DUE;
+        }
+        if (norm.contains("сальдо") && norm.contains("конечн") && !norm.contains("начальн")) {
+            boolean overd = norm.contains("просроч");
+            boolean notOverd = norm.contains("непросроч");
+            boolean dt = norm.contains("дт");
+            boolean kt = norm.contains("кт");
+            if (dt && notOverd) {
+                return Col.DBT_OVERD_NOT;
+            }
+            if (dt && overd) {
+                return Col.DBT_OVERD;
+            }
+            if (kt && notOverd) {
+                return Col.CDT_OVERD_NOT;
+            }
+            if (kt && overd) {
+                return Col.CDT_OVERD;
+            }
+            if (dt && !kt) {
+                return Col.DBT;
+            }
+            if (kt && (norm.contains("покт") || norm.contains("пок"))) {
+                return Col.CDT;
+            }
+            if (kt) {
+                return Col.CDT;
+            }
+            if (!dt && !kt && !overd) {
+                return Col.BLNS;
+            }
+        }
+        if (norm.contains("выравн") && !norm.contains("частичн")) {
+            return Col.ALIGN;
+        }
+        if (norm.contains("баздат") || (norm.contains("баз") && norm.contains("дат"))) {
+            return Col.BASE;
+        }
+        if (norm.contains("сумм") && norm.contains("документ")) {
+            return Col.DOC_SUM;
+        }
+        if (norm.contains("прич") && norm.contains("сторн")) {
+            return Col.STORNO_REASON;
+        }
+        if ((norm.contains("доксторн") || (norm.contains("док") && norm.contains("сторн")))
+                && !norm.contains("прич")) {
+            return Col.STORNO_DOC;
+        }
+        return null;
+    }
+
+    private boolean rowLooksLikePayment(Row row, Map<Col, Integer> cols) {
+        if (notBlank(cellString(row, cols, Col.DOC_CODE))) {
+            return true;
+        }
+        if (notBlank(cellString(row, cols, Col.BE))) {
+            return true;
+        }
+        return softInt(cellAt(row, cols, Col.ACCOUNT)) != null;
+    }
+
+    private SudzPmtUplTblRow mapRow(Row row, Map<Col, Integer> cols, int sheetNum, int unloadKey) {
         return new SudzPmtUplTblRow(
-                truncate(cellReader.readString(row.getCell(anchorCol + OFF_BE)), 50),
-                softInt(row.getCell(anchorCol + OFF_ACCOUNT)),
-                softInt(row.getCell(anchorCol + OFF_CTPT_NUM)),
-                truncate(cellReader.readString(row.getCell(anchorCol + OFF_CTPT_NAME)), 255),
-                truncate(cellReader.readString(row.getCell(anchorCol + OFF_CAC)), 50),
-                softInt(row.getCell(anchorCol + OFF_AGENT_NUM)),
-                truncate(cellReader.readString(row.getCell(anchorCol + OFF_AGENT_NAME)), 255),
-                truncate(cellReader.readString(row.getCell(anchorCol + OFF_CN_NAME)), 255),
-                truncate(cellReader.readString(row.getCell(anchorCol + OFF_LINK)), 255),
-                truncate(cellReader.readString(row.getCell(anchorCol + OFF_CN_INV)), 255),
-                toDateTime(cellReader.readDate(row.getCell(anchorCol + OFF_ENTRY))),
-                toDateTime(cellReader.readDate(row.getCell(anchorCol + OFF_DOC_DATE))),
-                toDateTime(cellReader.readDate(row.getCell(anchorCol + OFF_DUE))),
-                softDecimal(row.getCell(anchorCol + OFF_DBT)),
-                softDecimal(row.getCell(anchorCol + OFF_DBT_OVERD)),
-                softDecimal(row.getCell(anchorCol + OFF_DBT_OVERD_NOT)),
-                softDecimal(row.getCell(anchorCol + OFF_CDT)),
-                softDecimal(row.getCell(anchorCol + OFF_CDT_OVERD)),
-                softDecimal(row.getCell(anchorCol + OFF_CDT_OVERD_NOT)),
-                softDecimal(row.getCell(anchorCol + OFF_BLNS)),
-                truncate(cellReader.readString(row.getCell(anchorCol + OFF_DOC_CODE)), 50),
-                toDateTime(cellReader.readDate(row.getCell(anchorCol + OFF_ALIGN))),
-                toDateTime(cellReader.readDate(row.getCell(anchorCol + OFF_BASE))),
-                softDecimal(row.getCell(anchorCol + OFF_DOC_SUM)),
-                truncate(cellReader.readString(row.getCell(anchorCol + OFF_STORNO_REASON)), 255),
-                truncate(cellReader.readString(row.getCell(anchorCol + OFF_STORNO_DOC)), 50),
+                truncate(cellString(row, cols, Col.BE), 50),
+                softInt(cellAt(row, cols, Col.ACCOUNT)),
+                softInt(cellAt(row, cols, Col.CTPT_NUM)),
+                truncate(cellString(row, cols, Col.CTPT_NAME), 255),
+                truncate(cellString(row, cols, Col.CAC), 50),
+                softInt(cellAt(row, cols, Col.AGENT_NUM)),
+                truncate(cellString(row, cols, Col.AGENT_NAME), 255),
+                truncate(cellString(row, cols, Col.CN_NAME), 255),
+                truncate(cellString(row, cols, Col.LINK), 255),
+                truncate(cellString(row, cols, Col.CN_INV), 255),
+                toDateTime(cellReader.readDate(cellAt(row, cols, Col.ENTRY))),
+                toDateTime(cellReader.readDate(cellAt(row, cols, Col.DOC_DATE))),
+                toDateTime(cellReader.readDate(cellAt(row, cols, Col.DUE))),
+                softDecimal(cellAt(row, cols, Col.DBT)),
+                softDecimal(cellAt(row, cols, Col.DBT_OVERD)),
+                softDecimal(cellAt(row, cols, Col.DBT_OVERD_NOT)),
+                softDecimal(cellAt(row, cols, Col.CDT)),
+                softDecimal(cellAt(row, cols, Col.CDT_OVERD)),
+                softDecimal(cellAt(row, cols, Col.CDT_OVERD_NOT)),
+                softDecimal(cellAt(row, cols, Col.BLNS)),
+                truncate(cellString(row, cols, Col.DOC_CODE), 50),
+                toDateTime(cellReader.readDate(cellAt(row, cols, Col.ALIGN))),
+                toDateTime(cellReader.readDate(cellAt(row, cols, Col.BASE))),
+                softDecimal(cellAt(row, cols, Col.DOC_SUM)),
+                truncate(cellString(row, cols, Col.STORNO_REASON), 255),
+                truncate(cellString(row, cols, Col.STORNO_DOC), 50),
                 sheetNum,
                 unloadKey
         );
+    }
+
+    private Cell cellAt(Row row, Map<Col, Integer> cols, Col col) {
+        Integer idx = cols.get(col);
+        if (idx == null || row == null) {
+            return null;
+        }
+        return row.getCell(idx);
+    }
+
+    private String cellString(Row row, Map<Col, Integer> cols, Col col) {
+        return cellReader.readString(cellAt(row, cols, col));
     }
 
     private Integer softInt(Cell cell) {

@@ -2,6 +2,7 @@ package com.femsq.web.api.sudz;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.femsq.database.model.sudz.SudzPmtUplTblRow;
@@ -17,7 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * Excel→Tbl платежей: якорь «№ докум.», Offset A–Z, сжатый лог.
+ * Excel→Tbl платежей: якорь «№ докум.» + колонки по ключевым словам заголовков.
  */
 class SudzPmtUplExcelToTblImporterTest {
 
@@ -29,8 +30,8 @@ class SudzPmtUplExcelToTblImporterTest {
     }
 
     @Test
-    void parseOffsetMapProducesTblRows() throws IOException {
-        byte[] bytes = offsetWorkbookBytes();
+    void parseCanonLayoutProducesTblRows() throws IOException {
+        byte[] bytes = canonWorkbookBytes();
         SudzDbtUplProgressLog log = new SudzDbtUplProgressLog();
 
         List<SudzPmtUplTblRow> rows = importer.parse(bytes, "export_test.xlsx", "Sheet1", 2, log);
@@ -51,14 +52,40 @@ class SudzPmtUplExcelToTblImporterTest {
         String html = log.toHtml();
         assertTrue(html.contains("Sheet1"));
         assertTrue(html.contains("подготовлено"));
+        assertTrue(html.contains("колонки по заголовкам"));
         assertFalse(html.contains("книга Excel открыта"));
         assertFalse(html.contains("добавлено"));
-        assertFalse(html.contains("файл *"));
+    }
+
+    @Test
+    void parseNew767LayoutResolvesByHeaderKeywords() throws IOException {
+        byte[] bytes = new767WorkbookBytes();
+        SudzDbtUplProgressLog log = new SudzDbtUplProgressLog();
+
+        List<SudzPmtUplTblRow> rows = importer.parse(bytes, "export_767501.xlsx", "Sheet1", 55, log);
+
+        assertEquals(1, rows.size());
+        SudzPmtUplTblRow row = rows.get(0);
+        assertEquals("0001", row.ciputBE());
+        assertEquals(767501, row.ciputAccount());
+        assertEquals(28, row.ciputCntrPrtNum());
+        assertEquals("Кредитор ВГ", row.ciputCntrPrtName());
+        assertEquals("CST-9", row.ciputCAC());
+        assertEquals("CN-77", row.ciputCnName());
+        assertEquals(100, row.ciputAgentNum());
+        assertEquals("Агент Имя", row.ciputAgentName());
+        assertEquals("LINK-1", row.ciputLink());
+        assertEquals("INV-9", row.ciputCnInv());
+        assertEquals("PD-55", row.ciputCnInvDocCode());
+        assertNull(row.ciputDueDate());
+        assertNull(row.ciputCnInvDocSum());
+        assertTrue(log.toHtml().contains("колонки по заголовкам"));
+        assertFalse(log.toHtml().contains("слишком близко к левому краю"));
     }
 
     @Test
     void missingSheetYieldsEmpty() throws IOException {
-        byte[] bytes = offsetWorkbookBytes();
+        byte[] bytes = canonWorkbookBytes();
         SudzDbtUplProgressLog log = new SudzDbtUplProgressLog();
         List<SudzPmtUplTblRow> rows = importer.parse(bytes, "export_test.xlsx", "Other", 2, log);
         assertEquals(0, rows.size());
@@ -77,10 +104,17 @@ class SudzPmtUplExcelToTblImporterTest {
         assertFalse(html.contains("добавлено"));
     }
 
-    private static byte[] offsetWorkbookBytes() throws IOException {
+    @Test
+    void normalizeHeaderStripsPunctuation() {
+        assertEquals("№докум", SudzPmtUplExcelToTblImporter.normalizeHeader("№ докум."));
+        assertEquals("сальдоконечноедт", SudzPmtUplExcelToTblImporter.normalizeHeader("Сальдо конечное Дт"));
+        assertEquals("дпроводки", SudzPmtUplExcelToTblImporter.normalizeHeader("Д/проводки"));
+    }
+
+    private static byte[] canonWorkbookBytes() throws IOException {
         try (XSSFWorkbook wb = new XSSFWorkbook()) {
             Sheet sheet = wb.createSheet("Sheet1");
-            writeHeader(sheet.createRow(0));
+            writeCanonHeader(sheet.createRow(0));
             Row data = sheet.createRow(1);
             data.createCell(0).setCellValue("BE01");
             data.createCell(1).setCellValue(606012);
@@ -94,10 +128,48 @@ class SudzPmtUplExcelToTblImporterTest {
         }
     }
 
+    /** Layout как export_767501_26-0817.raw (якорь «№ докум.» @ col 18). */
+    private static byte[] new767WorkbookBytes() throws IOException {
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            Sheet sheet = wb.createSheet("Sheet1");
+            String[] titles = {
+                    "БЕ", "Опер.сегмент", "Код стройки", "Счет ГК", "Вид контрагента",
+                    "Кредитор", "Наименование кредитора", "Договор", "Агент", "Агент",
+                    "Сальдо начальное Дт", "Сальдо начальное по Кт", "Сальдо начальное",
+                    "Дебетовый оборот", "Кредитовый оборот",
+                    "Сальдо конечное Дт", "Сальдо конечное по Кт", "Сальдо конечное",
+                    SudzPmtUplExcelToTblImporter.ANCHOR_DOC_NUM,
+                    "Д/проводки", "Д/документ", "Д/выравн.", "Ссылка", "Присвоение",
+                    "Д/К", "КС", "Нулевые показатели", "Частичное выравнивание",
+                    "ПричСторн", "ДокСторно"
+            };
+            Row header = sheet.createRow(0);
+            for (int c = 0; c < titles.length; c++) {
+                header.createCell(c).setCellValue(titles[c]);
+            }
+            Row data = sheet.createRow(1);
+            data.createCell(0).setCellValue("0001");
+            data.createCell(2).setCellValue("CST-9");
+            data.createCell(3).setCellValue(767501);
+            data.createCell(5).setCellValue(28);
+            data.createCell(6).setCellValue("Кредитор ВГ");
+            data.createCell(7).setCellValue("CN-77");
+            data.createCell(8).setCellValue(100);
+            data.createCell(9).setCellValue("Агент Имя");
+            data.createCell(15).setCellValue(10.0);
+            data.createCell(16).setCellValue(0.0);
+            data.createCell(17).setCellValue(10.0);
+            data.createCell(18).setCellValue("PD-55");
+            data.createCell(22).setCellValue("LINK-1");
+            data.createCell(23).setCellValue("INV-9");
+            return toBytes(wb);
+        }
+    }
+
     private static byte[] workbookWithWeakRow() throws IOException {
         try (XSSFWorkbook wb = new XSSFWorkbook()) {
             Sheet sheet = wb.createSheet("Sheet1");
-            writeHeader(sheet.createRow(0));
+            writeCanonHeader(sheet.createRow(0));
             Row ok = sheet.createRow(1);
             ok.createCell(0).setCellValue("BE01");
             ok.createCell(1).setCellValue(606012);
@@ -109,7 +181,7 @@ class SudzPmtUplExcelToTblImporterTest {
         }
     }
 
-    private static void writeHeader(Row header) {
+    private static void writeCanonHeader(Row header) {
         String[] titles = {
                 "БЕ", "Счет ГК", "Кредитор", "Наименование кредитора", "Код стройки",
                 "Агент", "Агент", "Договор", "Ссылка", "Присвоение",

@@ -1,13 +1,13 @@
 package com.femsq.database.model.sudz;
 
 /**
- * Итог пересчёта {@code sudz.DbtUplCstAg} по канону fn+g_p (H6).
+ * Итог пересчёта {@code sudz.DbtUplCstAg} по политике P1 (H6 / usp).
  *
  * @param dbtUplKey выгрузка ДЗ ({@code ducaUpl})
- * @param deletedCount сколько строк бэкфилла/старых снято
- * @param insertedCount сколько однозначных (dbt,upl)→cstAgPn вставлено
- * @param multiCount сколько dbt с &gt;1 кодом стройки (пропущены)
- * @param emptyCount сколько dbt@upl без однозначного cst из pm+g_p
+ * @param deletedCount сколько строк снято перед пересчётом
+ * @param insertedCount сколько строк A+B+C вставлено (все Value@upl)
+ * @param multiCount корзина B ({@code кодов - N})
+ * @param emptyCount корзина C («не обнаружена в платежах»)
  * @param opsProgress актуальный {@code cidufOpsProgress} после append
  */
 public record SudzDbtUplCstAgRebuildResult(

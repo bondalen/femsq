@@ -3,9 +3,326 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-09-20"
+      "lastUpdated": "2026-09-21"
     },
     "sessions": [
+      {
+        "chat": {
+          "displayName": "Эксперимент CstAgExp (1.1–1.4) (active, medium). № chat-2026-09-21-001",
+          "chat-attributes": {
+            "id": "chat-2026-09-21-001",
+            "created": "2026-09-21",
+            "lastUpdated": "2026-09-21",
+            "owner": "Александр",
+            "status": "active",
+            "priority": "medium",
+            "tags": [
+              "sudz",
+              "cst",
+              "DbtUplCstAgExp",
+              "1.1.1.2",
+              "experiment"
+            ],
+            "links": {
+              "projectDocsRefs": [
+                "module:backend.database"
+              ],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0921-dbt-upl-cst-ag-exp.md",
+              "wbs": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+              "domainPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Спека + якоря планов CstAgExp (success). № log-2026-09-21-001",
+                "log-attributes": {
+                  "id": "log-2026-09-21-001",
+                  "timestamp": "2026-09-21T13:10:53+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": [
+                    "docs",
+                    "S83",
+                    "0921"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксирован эксперимент резолва строек вне канона 0819",
+                    "details": "Создан chat-plan-26-0921-dbt-upl-cst-ag-exp.md (каскад 1.1–1.4, DbtUplCstAgExp, usp, порядок работ). В 0918 v0.3.8: узел 1.1.1.2.5 + синхрон канона .1–.4 ✅ DEV. В 0819 v0.8.7: указатель вне scope. В 0802 v0.99.53: S83 указатель. Канон DbtUplCstAg / H6 не менялся.",
+                    "outcome": "Документация готова; следующий шаг плана 0921 §3.1 — DDL Exp на DEV.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0921-dbt-upl-cst-ag-exp.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "DEV DDL Exp + usp §3.2a smoke @903 (success). № log-2026-09-21-002",
+                "log-attributes": {
+                  "id": "log-2026-09-21-002",
+                  "timestamp": "2026-09-21T13:19:34+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": [
+                    "DDL",
+                    "usp",
+                    "smoke",
+                    "903"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Пакет 26-0921 + DDL/usp на DEV, smoke @903",
+                    "details": "Созданы DbtUplCstAgExp и usp_RebuildDbtUplCstAgExp (1.1+1.4). Smoke: cnt_11=1670 ≡ канон DbtUplCstAg@903; cnt_14=132 (multi временно в 1.4, 8655 nCst=2 в Detail). Канон не менялся.",
+                    "outcome": "§3.1 и §3.2a ✅; следующий §3.2b (агент/склейка).",
+                    "references": [
+                      "docs/development/notes/sql/26-0921-sudz-dbt-upl-cst-ag-exp/",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0921-dbt-upl-cst-ag-exp.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "§3.2b агент/склейка usp; smoke @903 (success). № log-2026-09-21-003",
+                "log-attributes": {
+                  "id": "log-2026-09-21-003",
+                  "timestamp": "2026-09-21T13:27:37+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": [
+                    "1.2",
+                    "agent",
+                    "multi",
+                    "903"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "usp: 1.2 agent / 1.2 multi; smoke @903",
+                    "details": "Фильтр БУиРГ pm.cso↔cstAg. @903: 11=1670≡канон; 12_agent=0; 12_multi=6 (склейки, agentHits=2, коды 051-*); 14=126. 8655: 051-1004659; 051-2005067. Multi на срезе — разные стройки одного агента, не передача 023→051.",
+                    "outcome": "§3.2b ✅; следующий §3.2c (1.3 вне g_p).",
+                    "references": [
+                      "docs/development/notes/sql/26-0921-sudz-dbt-upl-cst-ag-exp/02_CREATE_usp_RebuildDbtUplCstAgExp.sql",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0921-dbt-upl-cst-ag-exp.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "§3.2c правило 1.3 вне g_p; smoke @903 (success). № log-2026-09-21-004",
+                "log-attributes": {
+                  "id": "log-2026-09-21-004",
+                  "timestamp": "2026-09-21T13:32:00+03:00",
+                  "level": "success",
+                  "effort": "0.75h",
+                  "status": "completed",
+                  "tags": [
+                    "1.3",
+                    "out-gp",
+                    "903"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "usp: 1.3 year→all; smoke @903",
+                    "details": "Empty после g_p: сначала pm пакетов года (yr_upl_p), затем all-time cia∪doc. @903: 11=1670; 12=0/6; 13=3+2+8 (все horizon=all); 14=113. Year-horizon прироста 0. Канон не менялся.",
+                    "outcome": "Каскад 1.1–1.4 в usp ✅; далее прогон @901/@902 или view Exp.",
+                    "references": [
+                      "docs/development/notes/sql/26-0921-sudz-dbt-upl-cst-ag-exp/02_CREATE_usp_RebuildDbtUplCstAgExp.sql",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0921-dbt-upl-cst-ag-exp.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "§3–§4 прогон 901–903 + view/xlsx Exp (success). № log-2026-09-21-005",
+                "log-attributes": {
+                  "id": "log-2026-09-21-005",
+                  "timestamp": "2026-09-21T13:42:18+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": [
+                    "§3",
+                    "§4",
+                    "view",
+                    "export"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Rebuild Exp @901/@902/@903; vw_Yr_DbtFactExp; xlsx",
+                    "details": "902/903: 1.1≡канон (1580/1670). 901: g_p нет → 1.1=0, 1.3≈1614, канон=S80 бэкфилл. Artifacts: cstExp_rebuild_report_26-0921.json, cstExp_yr901_asOf903_26-0921.xlsx (2146 rows).",
+                    "outcome": "§3–§4 ✅; остаётся §5 решение владельца по канону.",
+                    "references": [
+                      "docs/development/notes/sql/26-0921-sudz-dbt-upl-cst-ag-exp/",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0921-dbt-upl-cst-ag-exp.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "§5a горизонт 1.3: год → all-time (info). № log-2026-09-21-006",
+                "log-attributes": {
+                  "id": "log-2026-09-21-006",
+                  "timestamp": "2026-09-21T15:59:00+03:00",
+                  "level": "info",
+                  "effort": "0.1h",
+                  "status": "completed",
+                  "tags": [
+                    "policy",
+                    "1.3",
+                    "horizon"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксирован горизонт поиска вне g_p",
+                    "details": "Владелец: сначала pm того же года; если не нашлось — брать всё. Совпадает с уже реализованным usp (horizon=year → all). Код не менялся.",
+                    "outcome": "План 0921 v0.5.1 §5a; README пакета обновлён.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0921-dbt-upl-cst-ag-exp.md",
+                      "docs/development/notes/sql/26-0921-sudz-dbt-upl-cst-ag-exp/README.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "§5a политика P1 + форматы A/B/C (info). № log-2026-09-21-007",
+                "log-attributes": {
+                  "id": "log-2026-09-21-007",
+                  "timestamp": "2026-09-21T16:02:00+03:00",
+                  "level": "info",
+                  "effort": "0.2h",
+                  "status": "completed",
+                  "tags": [
+                    "policy",
+                    "P1",
+                    "cst-ag"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксирована прод-политика строек P1",
+                    "details": "A=1.1+1.2a; B=1.2 multi (кодов - N); C=1.4+бывший 1.3. P2/1.3 отложен. Форматы полей и черновик хранения (nullable FK + nvarchar 500). Код/канон не менялись.",
+                    "outcome": "План 0921 v0.6.0; 0918 v0.3.9; README пакета.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0921-dbt-upl-cst-ag-exp.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "§5 канон P1 DDL/usp/view/H6 на DEV (info). № log-2026-09-21-008",
+                "log-attributes": {
+                  "id": "log-2026-09-21-008",
+                  "timestamp": "2026-09-21T16:20:00+03:00",
+                  "level": "info",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "tags": [
+                    "P1",
+                    "DbtUplCstAg",
+                    "H6"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Канон строек P1 на DEV",
+                    "details": "ALTER nullable FK+ducaCode/Name; usp_RebuildDbtUplCstAg (A/B/C, без 1.3; no-op без g_p); vw_Yr_DbtFact denorm; Java H6→EXEC usp. @903 A1670/B6/C126. @901 восстановлен S80 после ошибочного wipe.",
+                    "outcome": "План 0921 v0.7.0; 0918 v0.3.10; пакет 08–11. JAR не собирался.",
+                    "references": [
+                      "docs/development/notes/sql/26-0921-sudz-dbt-upl-cst-ag-exp/",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
       {
         "chat": {
           "displayName": "СУДЗ: канон 1.1.1.2 apply/g_p/Rslt (completed, high). № chat-2026-09-18-001",
@@ -1728,7 +2045,13 @@
             "owner": "Александр",
             "status": "completed",
             "priority": "medium",
-            "tags": ["environment", "kubuntu", "asus-kubuntu", "remote-dev", "setup"],
+            "tags": [
+              "environment",
+              "kubuntu",
+              "asus-kubuntu",
+              "remote-dev",
+              "setup"
+            ],
             "links": {
               "projectDocsRefs": [
                 "project.development.environments.machines.asus-kubuntu"
@@ -1750,7 +2073,10 @@
                   "level": "info",
                   "effort": "0.5h",
                   "status": "completed",
-                  "tags": ["audit", "chat-plan"]
+                  "tags": [
+                    "audit",
+                    "chat-plan"
+                  ]
                 },
                 "entries": [
                   {
@@ -1774,7 +2100,12 @@
                   "level": "success",
                   "effort": "0.5h",
                   "status": "completed",
-                  "tags": ["machines", "mcp", "1.1", "1.2"]
+                  "tags": [
+                    "machines",
+                    "mcp",
+                    "1.1",
+                    "1.2"
+                  ]
                 },
                 "entries": [
                   {
@@ -1806,7 +2137,13 @@
                   "level": "success",
                   "effort": "1h",
                   "status": "completed",
-                  "tags": ["toolchain", "java", "maven", "node", "2"]
+                  "tags": [
+                    "toolchain",
+                    "java",
+                    "maven",
+                    "node",
+                    "2"
+                  ]
                 },
                 "entries": [
                   {
@@ -1832,7 +2169,13 @@
                   "level": "success",
                   "effort": "0.5h",
                   "status": "completed",
-                  "tags": ["database.properties", "mcp", "feQuLib", "3", "4"]
+                  "tags": [
+                    "database.properties",
+                    "mcp",
+                    "feQuLib",
+                    "3",
+                    "4"
+                  ]
                 },
                 "entries": [
                   {
@@ -1865,7 +2208,14 @@
                   "level": "success",
                   "effort": "1.5h",
                   "status": "completed",
-                  "tags": ["docs", "build", "acceptance", "5", "6", "echarts"]
+                  "tags": [
+                    "docs",
+                    "build",
+                    "acceptance",
+                    "5",
+                    "6",
+                    "echarts"
+                  ]
                 },
                 "entries": [
                   {
@@ -1903,10 +2253,22 @@
             "owner": "Александр",
             "status": "active",
             "priority": "high",
-            "tags": ["sudz", "split", "merge", "0069", "S77", "S78", "implementation"],
+            "tags": [
+              "sudz",
+              "split",
+              "merge",
+              "0069",
+              "S77",
+              "S78",
+              "implementation"
+            ],
             "links": {
-              "projectDocsRefs": ["module:backend.database"],
-              "developmentTasks": ["0069"],
+              "projectDocsRefs": [
+                "module:backend.database"
+              ],
+              "developmentTasks": [
+                "0069"
+              ],
               "aiRuleRefs": [],
               "sqlNote": "docs/development/notes/sql/26-0908-sudz-split-merge-dev/README.md",
               "sandboxChat": "chat-2026-09-08-001",
@@ -1923,7 +2285,11 @@
                   "level": "success",
                   "effort": "1h",
                   "status": "completed",
-                  "tags": ["S77", "invariants", "ddl-draft"]
+                  "tags": [
+                    "S77",
+                    "invariants",
+                    "ddl-draft"
+                  ]
                 },
                 "entry": "План 0.99.23: секция S77; C.10.3/C.10.5 помечены блокером S77; G4 2807/2808 — фикстура UAT. Текст замены инвариантов I1–I5 (UNIQUE/п.4–5/cmm *Dv/погашено/D4). Черновик docs/development/notes/sql/26-0908-sudz-split-merge-dev/ с THROW-guard, на sudz не применялся. Песочница остаётся chat-2026-09-08-001. Next: согласие владельца на запреты S77.1."
               }
@@ -1937,7 +2303,11 @@
                   "level": "success",
                   "effort": "0.7h",
                   "status": "completed",
-                  "tags": ["S77", "cmm", "ddl"]
+                  "tags": [
+                    "S77",
+                    "cmm",
+                    "ddl"
+                  ]
                 },
                 "entry": "Уточнено зерно: «старые» cmm = DbtValue предшествующего среза (QIV при крайней QI); *_new на рассылке пустые, после импорта Excel — текущий раунд (QI). Согласованы I1–I6. На DEV sudz применён 01: UX_invDbtDbt_InvDbt снят, п.5 убран, п.4 с исключением того же Dbt; test_sudz UNIQUE на месте; UX(slot) и UX(dvInvDbt,dvUpl) живы. 02 *Dv не применялся. Next: S77.3 GraphQL Split/Merge."
               }
@@ -1951,7 +2321,12 @@
                   "level": "success",
                   "effort": "1.2h",
                   "status": "completed",
-                  "tags": ["S77", "graphql", "split", "merge"]
+                  "tags": [
+                    "S77",
+                    "graphql",
+                    "split",
+                    "merge"
+                  ]
                 },
                 "entry": "JdbcSudzDao.splitDbt/mergeDbt: доли на одной upl, история предыдущих upl цела; Split вставляет invDbtDbt с тем же dbtKey (не ensureInvDbtDbtBridgeForSlot). Merge CANONS = UPDATE iddDbt (Dbt не удаляется); SHARES_ON_UPL = снять Value долей и восстановить одну на survivor-слоте. GraphQL splitSudzDbt/mergeSudzDbt + Apollo sudz-api. Кнопки КСДД, экспортёр, 02 *Dv, UAT 85166 не трогались. Next: S77.4 советник КСДД."
               }
@@ -1965,7 +2340,12 @@
                   "level": "success",
                   "effort": "1.5h",
                   "status": "completed",
-                  "tags": ["S77", "ksdd", "advisor", "split"]
+                  "tags": [
+                    "S77",
+                    "ksdd",
+                    "advisor",
+                    "split"
+                  ]
                 },
                 "entry": "S77.4+S77.6: советник action=split (N строк свода, ∑ = Value слота, каждая ≠ целому). КСДД: «Split на доли»; Create/Link при split выкл. UAT 85166 @901: Split → слоты 13041/13042 Values 2×18000 @901, история 11897 на 28/803/910 цела, ciud 2807/2808 created, G4 open=0. Create/Link не вызывались. Next: S77.5 экспортёр A/C; S77.7 остаток 901→902."
               }
@@ -1979,7 +2359,12 @@
                   "level": "success",
                   "effort": "2h",
                   "status": "completed",
-                  "tags": ["S77", "rslt", "exporter", "grain"]
+                  "tags": [
+                    "S77",
+                    "rslt",
+                    "exporter",
+                    "grain"
+                  ]
                 },
                 "entry": "S77.5: collapseRsltPeriods оставляет доли одной СФ (N Value на upl); L* по-прежнему 1×upl. SudzRsltExcelExporter пишет полосу высотой max(Value): факты по строкам, dbtKey/account/погашено merge. погашено = NULLIF(∑Overd_база−∑Overd_срез,0), не 18000×2. Предпросмотр N строк + rowKey. Тесты: JdbcSudzDaoRsltCollapseTest, SudzRsltExcelExporterTest, sudz-rslt-preview.spec. 02 *Dv не применялся; C.10.3/C.10.5 не снимались. Next: S77.7 901→902."
               }
@@ -1993,7 +2378,13 @@
                   "level": "success",
                   "effort": "1.5h",
                   "status": "completed",
-                  "tags": ["S77", "C.10.2", "P3", "902", "G5"]
+                  "tags": [
+                    "S77",
+                    "C.10.2",
+                    "P3",
+                    "902",
+                    "G5"
+                  ]
                 },
                 "entry": "Коммит/пуш: working tree уже clean на e481b40. G5: dbtValueLoad только с yrKey=900 (base 801). P3: 7×КС-51 — DELETE мостов invDbtDbtVar на sentinel cn_s_org=2115 (дата Tbl=2014-10-01 → 307); dbtValueLoad tail=7. 105449 (15-ЗБС/21-АС): AccSmpl+Var без слота → ciud 3786 reason=none → createSudzInvDbtFromDouble → slot 13043 + Value@901. C.10.2 = 9/9. Tbl=1774 DV=1309 (хвост ambiguous ~sentinel). 902: premature G4=9 сброшен скриптом 12_RESET_upl902_clean_apply.sql (Tbl/DV/G4=0, path НОВЫЙ). 901 не тронут. B-seed/02/full funnel не применялись. Next: UI 902 G0…G5; опц. bulk sentinel 2115 для G5; S77.8 после того."
               }
@@ -2007,7 +2398,11 @@
                   "level": "success",
                   "effort": "2h",
                   "status": "completed",
-                  "tags": ["S78", "dbt-canon", "ops-guide"]
+                  "tags": [
+                    "S78",
+                    "dbt-canon",
+                    "ops-guide"
+                  ]
                 },
                 "entry": "S78 MVP: ops guide; GraphQL searchSudzDbtCanons / sudzDbtCanon / linkSudzInvDbtToDbt / unlinkSudzInvDbtFromDbt; UI СУДЗ→«Долг (канон)» (поиск СФ/дог./БУиРГ/дата/idNum/dbtKey → кандидаты → слоты; привязать/отвязать). Отвязка при Value — отказ. Next: UAT экрана; S78.4 Value/связки; S77.7 G5@901."
               }
@@ -2021,7 +2416,11 @@
                   "level": "success",
                   "effort": "0.5h",
                   "status": "completed",
-                  "tags": ["S78", "dbt-canon", "FemsqTable"]
+                  "tags": [
+                    "S78",
+                    "dbt-canon",
+                    "FemsqTable"
+                  ]
                 },
                 "entry": "Экран «Долг (канон)»: убраны форма поиска и QMarkupTable. Сверху FemsqTable mode=server, критерии в фильтрах колонок (без API при пустых). Весь низ — карточка Dbt, слоты тоже FemsqTable. GraphQL не менялся. Next: UAT; S78.4 Value/связки."
               }
@@ -2035,7 +2434,12 @@
                   "level": "success",
                   "effort": "2h",
                   "status": "completed",
-                  "tags": ["S78.4", "dbt-canon", "FemsqTree", "FemsqChart"]
+                  "tags": [
+                    "S78.4",
+                    "dbt-canon",
+                    "FemsqTree",
+                    "FemsqChart"
+                  ]
                 },
                 "entry": "S78.4A–E: feQuLib FemsqChart area/stack 0.1.5; GraphQL uplName/uplDate/uplStatusOnDate на SudzDbtCanonValue + upsert/delete Value; карточка — QSplitter FemsqTree (слот→var→Value) / FemsqChart (две области на слот, цвета --femsq-chart-*); модалки Value и Split/Merge. Не RelationTree inv-dbt-slots и не sudzInvDbtSlotTimeline. Next: UAT мутаций на DEV осторожно; S78.5 later."
               }
@@ -2049,7 +2453,11 @@
                   "level": "success",
                   "effort": "0.7h",
                   "status": "completed",
-                  "tags": ["S78", "dbt-canon", "FemsqChart"]
+                  "tags": [
+                    "S78",
+                    "dbt-canon",
+                    "FemsqChart"
+                  ]
                 },
                 "entry": "Ось X канона: tickFormat yy-MM (25-12); ступенька step=end; после последней DbtValue точка +1 календарный месяц и padEndDays=20, чтобы доли split были полосой, не вертикалью. История графика = все DbtValue слота (не csoDate 2018). feQuLib: step, tickFormat, padEndDays. Next: S78.5 later."
               }
@@ -2063,7 +2471,12 @@
                   "level": "success",
                   "effort": "0.8h",
                   "status": "completed",
-                  "tags": ["S78", "dbt-canon", "tabs", "orgName"]
+                  "tags": [
+                    "S78",
+                    "dbt-canon",
+                    "tabs",
+                    "orgName"
+                  ]
                 },
                 "entry": "Карточка канона: вкладки Долг (дерево+график) / Слоты (таблица связи) / Комментарии (макет дерево|текст, CRUD cnInvCmm пока не подключён). Поиск: колонка Организация (og.ogNm) + фильтр LIKE. Next: согласовать CRUD комментариев; GraphQL групп/типов."
               }
@@ -2077,7 +2490,12 @@
                   "level": "success",
                   "effort": "0.6h",
                   "status": "completed",
-                  "tags": ["S78", "dbt-canon", "cnInvCmm", "DbtValue"]
+                  "tags": [
+                    "S78",
+                    "dbt-canon",
+                    "cnInvCmm",
+                    "DbtValue"
+                  ]
                 },
                 "entry": "Вкладка Комментарии: корень Dbt → слоты → DbtValue → листья cmm на Value; добавление через модалку группы (yr_CmmGr / New) и типа. Локальный макет, в БД не пишем (cnicDv / I4). Next: GraphQL cmm по dvKey после I4."
               }
@@ -2091,7 +2509,12 @@
                   "level": "success",
                   "effort": "0.5h",
                   "status": "completed",
-                  "tags": ["S78", "dbt-canon", "search", "invNum"]
+                  "tags": [
+                    "S78",
+                    "dbt-canon",
+                    "search",
+                    "invNum"
+                  ]
                 },
                 "entry": "Поиск № СФ сворачивает кириллицу/латиницу (А56 vs A56). FemsqTable передаёт свежие columnFilters в @request. Next: CRUD cmm на DbtValue."
               }
@@ -2105,7 +2528,12 @@
                   "level": "success",
                   "effort": "0.3h",
                   "status": "completed",
-                  "tags": ["S77", "I4", "cnicDv", "DbtValue"]
+                  "tags": [
+                    "S77",
+                    "I4",
+                    "cnicDv",
+                    "DbtValue"
+                  ]
                 },
                 "entry": "Применён 02_DRAFT_cmm_D3double_Dv.sql на FishEye.sudz (не ags/test_sudz/prod): nullable cnicDv/cicaDv/ciccDv/cnicdDv/cnicfDv/cnigDv + FK на DbtValue. *Dbt/*InvAccnt без изменений. Backfill и GraphQL CRUD — next."
               }
@@ -2119,7 +2547,13 @@
                   "level": "success",
                   "effort": "1.5h",
                   "status": "completed",
-                  "tags": ["S78", "S77", "cnicDv", "graphql", "comments"]
+                  "tags": [
+                    "S78",
+                    "S77",
+                    "cnicDv",
+                    "graphql",
+                    "comments"
+                  ]
                 },
                 "entry": "Backfill 04: 4+2+2 stage1 на dv 100276/100233 (срез группы 805 = upl 901 yr900). GraphQL upsert/deleteSudzDbtCanonComment по dvKey; вкладка Комментарии без stubs. Split/Merge переносят *Dv; delete Value отказ при cmm. UNIQUE (группа,тип,dv) и полоса C экспортёра — next. Не 85166."
               }
@@ -2133,7 +2567,12 @@
                   "level": "info",
                   "effort": "0.5h",
                   "status": "completed",
-                  "tags": ["S77.7b", "invDbtLoad", "dry-log", "902"]
+                  "tags": [
+                    "S77.7b",
+                    "invDbtLoad",
+                    "dry-log",
+                    "902"
+                  ]
                 },
                 "entry": "План 0.99.33: секция S77.7b. Диагноз 4×no_candidate_slot @902 — обрыв на чекбоксе 7 (var есть, слотов/КСДД нет; 2026-09-04: 12 var / 0 слотов). Мероприятия B0–B5: сначала dry-лог Calm Create на invDbtLoad (как missing у varEnsure), затем UAT dry-7 → apply-7 → dry-9=0 → Value. Запрет apply Value при дыре. Next: B0/B1 код лога."
               }
@@ -2151,10 +2590,20 @@
             "owner": "Александр",
             "status": "active",
             "priority": "high",
-            "tags": ["sudz", "split", "merge", "test_sudz_sm", "0069"],
+            "tags": [
+              "sudz",
+              "split",
+              "merge",
+              "test_sudz_sm",
+              "0069"
+            ],
             "links": {
-              "projectDocsRefs": ["module:backend.database"],
-              "developmentTasks": ["0069"],
+              "projectDocsRefs": [
+                "module:backend.database"
+              ],
+              "developmentTasks": [
+                "0069"
+              ],
               "aiRuleRefs": [],
               "sqlNote": "docs/development/notes/sql/26-0908-sudz-split-merge-sandbox/README.md",
               "domainPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
@@ -2170,7 +2619,9 @@
                   "level": "success",
                   "effort": "1.5h",
                   "status": "completed",
-                  "tags": ["sandbox"]
+                  "tags": [
+                    "sandbox"
+                  ]
                 },
                 "entry": "Изолированная схема test_sudz_sm на FishEye: 10 выгрузок 201–210 и 10 долгов 111–120. Strict-зонды подтвердили UX(inv,dbt) и sibling same-ttl. После relax выполнен split 111 (201=36000, далее 2×18000) и merge моста 113→112 (две Value на срезе, ∑=30000). sudz.* не менялся."
               }
@@ -2184,7 +2635,11 @@
                   "level": "success",
                   "effort": "0.5h",
                   "status": "completed",
-                  "tags": ["sandbox", "cmm", "rslt"]
+                  "tags": [
+                    "sandbox",
+                    "cmm",
+                    "rslt"
+                  ]
                 },
                 "entry": "На test_sudz_sm: 12_MERGEBACK_111 возвращает срез 210 к одной Value 36000@311 (202–209 остаются 2×18000). Комментарии 209 — две доли, 210 — целый. apply_sm.py --cmm пишет SKETCH.md (полосы A/B/C вместо кортежей в консоли). sudz.* не менялся."
               }
@@ -2198,7 +2653,11 @@
                   "level": "success",
                   "effort": "0.7h",
                   "status": "completed",
-                  "tags": ["sandbox", "rslt", "excel"]
+                  "tags": [
+                    "sandbox",
+                    "rslt",
+                    "excel"
+                  ]
                 },
                 "entry": "write_sm_xlsx.py собирает ags_Yr_DbtChangesRslt_sm_sandbox.xlsx из test_sudz_sm: листы A/B/C/112/111_timeline. Merge по зерну Value; погашено на зерне Dbt. SudzRsltExcelExporter и sudz.* не менялись."
               }
@@ -2212,7 +2671,11 @@
                   "level": "success",
                   "effort": "0.4h",
                   "status": "completed",
-                  "tags": ["sandbox", "c10", "canon"]
+                  "tags": [
+                    "sandbox",
+                    "c10",
+                    "canon"
+                  ]
                 },
                 "entry": "08_CMM_AND_RSLT.md: канон Rslt = листы A и C (B/timeline/112 — справка). Экспортёр, D3″ и live-split 85166 отложены. Снимок C.10.1: G3@901 open=0; G4 open=2 (ciud 2807/2808, iKey=85166, 2×18000, reason=multi); DV=12 / Tbl=1774. Следующий шаг — UI КСДД без модели песочницы."
               }
@@ -2407,7 +2870,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s76-c10--ui-gate-uat-901x--902--rslt-qi-2026-09-07"
                   }
@@ -2438,7 +2903,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
                   }
@@ -2468,7 +2935,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
                   }
@@ -2498,7 +2967,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s76-c9--казус-full-apply-без-gateов-902-2026-09-02"
                   }
@@ -2528,7 +2999,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
                   }
@@ -2558,7 +3031,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
                   }
@@ -2587,7 +3062,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
                   }
@@ -2616,7 +3093,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
                   }
@@ -2645,7 +3124,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
                   }
@@ -2674,7 +3155,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
                   }
@@ -2704,7 +3187,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
                   }
@@ -2731,7 +3216,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
                   }
@@ -2758,7 +3245,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
                   }
@@ -2786,7 +3275,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
                   }
@@ -2814,7 +3305,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
                   }
@@ -2841,7 +3334,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
                   }
@@ -2869,7 +3364,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
                   }
@@ -2897,7 +3394,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
                   }
@@ -2925,7 +3424,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
                   }
@@ -2953,7 +3454,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
                   }
@@ -2981,7 +3484,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
                   }
@@ -3008,7 +3513,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
                   }
@@ -3035,7 +3542,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
                   }
@@ -3062,7 +3571,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
                   }
@@ -3090,7 +3601,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s74--трек-cutover-m1m6--2026-08-27"
                   }
@@ -3118,7 +3631,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
                   }
@@ -3145,7 +3660,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
                   }
@@ -3173,7 +3690,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
                   }
@@ -3201,7 +3720,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
                   }
@@ -3228,7 +3749,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25"
                   }
@@ -3256,7 +3779,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25"
                   }
@@ -3283,7 +3808,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25"
                   }
@@ -3310,7 +3837,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25"
                   }
@@ -3337,7 +3866,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25"
                   }
@@ -3365,7 +3896,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25"
                   }
@@ -3394,7 +3927,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25"
                   }
@@ -3421,7 +3956,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25"
                   }
@@ -3449,7 +3986,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25"
                   }
@@ -3476,7 +4015,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25"
                   }
@@ -3503,7 +4044,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25"
                   }
@@ -3530,7 +4073,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25"
                   }
@@ -3557,7 +4102,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": [],
                     "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md#s72--дорожная-карта-реализации-слоя-i--m2--канон-2026-08-25"
                   }
@@ -3584,7 +4131,9 @@
                   "status": "completed",
                   "links": {
                     "projectDocsRefs": [],
-                    "developmentTasks": ["0069"],
+                    "developmentTasks": [
+                      "0069"
+                    ],
                     "aiRuleRefs": []
                   }
                 },

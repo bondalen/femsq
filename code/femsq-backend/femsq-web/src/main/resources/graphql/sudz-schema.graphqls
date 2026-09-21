@@ -110,7 +110,7 @@ extend type Mutation {
   removeSudzPmLink(gPKey: Int!): Boolean!
 
   """
-  H6: пересчёт DbtUplCstAg по канону pm+g_p (сброс строк @dbtUplKey, затем INSERT однозначных).
+  H6: пересчёт DbtUplCstAg по политике P1 (g_p only → A/B/C через usp_RebuildDbtUplCstAg).
   """
   rebuildSudzDbtUplCstAg(dbtUplKey: Int!): SudzDbtUplCstAgRebuildResult!
 

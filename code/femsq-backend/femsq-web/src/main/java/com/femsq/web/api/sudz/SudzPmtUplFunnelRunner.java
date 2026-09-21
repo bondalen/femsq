@@ -100,6 +100,8 @@ public class SudzPmtUplFunnelRunner {
 
         if (flTbl) {
             ran.add(SudzPmtUplFunnelSteps.EXCEL_TO_TBL);
+            log.log(Level.INFO, "pmt funnel start {0} pmKey={1}",
+                    new Object[]{SudzPmtUplFunnelSteps.EXCEL_TO_TBL, pmKey});
             long stepT0 = System.currentTimeMillis();
             runExcelToTbl(pmKey, progress);
             long ms = System.currentTimeMillis() - stepT0;
@@ -126,6 +128,8 @@ public class SudzPmtUplFunnelRunner {
                 // Как свод: блоки развёрнуты — оператор сразу видит N / образцы (H2/H3).
                 progress.open("<b>" + SudzDbtUplProgressLog.escape(stepId) + "</b> — "
                         + SudzDbtUplProgressLog.escape(title), true);
+                log.log(Level.INFO, "pmt funnel start {0} pmKey={1} flLoad={2}",
+                        new Object[]{stepId, pmKey, flLoad});
                 long stepT0 = System.currentTimeMillis();
                 if (SudzPmtUplFunnelSteps.isLogOnly(stepId)) {
                     runLogOnlyStep(pmKey, stepId, progress);
