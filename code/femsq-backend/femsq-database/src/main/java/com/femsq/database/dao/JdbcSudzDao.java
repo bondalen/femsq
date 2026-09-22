@@ -80,6 +80,10 @@ import com.femsq.database.model.sudz.SudzPmtUplInsPmNotApplyResult;
 import com.femsq.database.model.sudz.SudzPmtUplInsPmNotResult;
 import com.femsq.database.model.sudz.SudzPmtUplLogOnlyResult;
 import com.femsq.database.model.sudz.SudzPmtUplTblRow;
+import com.femsq.database.model.sudz.SudzPmtUplTblWriteProgress;
+import com.microsoft.sqlserver.jdbc.SQLServerBulkCopy;
+import com.microsoft.sqlserver.jdbc.SQLServerBulkCopyOptions;
+import com.microsoft.sqlserver.jdbc.SQLServerConnection;
 import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzRsltPeriod;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
@@ -907,14 +911,19 @@ public class JdbcSudzDao implements SudzDao {
     }
 
     @Override
-    public int replacePmtUplTbl(int unloadKey, List<SudzPmtUplTblRow> rows) {
+    public int replacePmtUplTbl(
+            int unloadKey,
+            List<SudzPmtUplTblRow> rows,
+            SudzPmtUplTblWriteProgress progress
+    ) {
         Objects.requireNonNull(rows, "rows");
         if (unloadKey <= 0) {
             throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
         }
-        log.log(Level.INFO, "Replace CnInvPmtUplTbl unloadKey={0}, rows={1} — start",
+        log.log(Level.INFO, "Replace CnInvPmtUplTbl unloadKey={0}, rows={1} — start (BulkCopy)",
                 new Object[]{unloadKey, rows.size()});
         long t0 = System.currentTimeMillis();
+        final int chunkSize = 5_000;
         try (Connection connection = connectionFactory.createConnection()) {
             connection.setAutoCommit(false);
             try {
@@ -930,32 +939,32 @@ public class JdbcSudzDao implements SudzDao {
                             new Object[]{unloadKey, deleted, System.currentTimeMillis() - t0});
                 }
                 if (!rows.isEmpty()) {
-                    String insertSql = "INSERT INTO " + q("CnInvPmtUplTbl") + " ("
-                            + "ciputBE, ciputAccount, ciputCntrPrtNum, ciputCntrPrtName, ciputCAC,"
-                            + " ciputAgentNum, ciputAgentName, ciputCnName, ciputLink, ciputCnInv,"
-                            + " ciputEntryDate, ciputDocDate, ciputDueDate,"
-                            + " ciputDbtBlns, ciputDbtBlnsOverd, ciputDbtBlnsOverdNot,"
-                            + " ciputCdtBlns, ciputCdtBlnsOverd, ciputCdtBlnsOverdNot, ciputBlns,"
-                            + " ciputCnInvDocCode, ciputAlligmentDate, ciputBaseDate, ciputCnInvDocSum,"
-                            + " ciputStornoReason, ciputStornoDocCode, ciputSheetNum, ciputUnloadKey"
-                            + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-                    try (PreparedStatement insert = connection.prepareStatement(insertSql)) {
-                        int batch = 0;
-                        for (SudzPmtUplTblRow row : rows) {
-                            bindPmtTblRow(insert, row);
-                            insert.addBatch();
-                            batch++;
-                            if (batch % 500 == 0) {
-                                insert.executeBatch();
-                                if (batch % 2_500 == 0 || batch == rows.size()) {
-                                    log.log(Level.INFO,
-                                            "Replace CnInvPmtUplTbl unloadKey={0} — insert {1}/{2} ms={3}",
-                                            new Object[]{unloadKey, batch, rows.size(),
-                                                    System.currentTimeMillis() - t0});
-                                }
-                            }
+                    notifyTblProgress(progress, 0, rows.size(), t0);
+                    SQLServerBulkCopyOptions options = new SQLServerBulkCopyOptions();
+                    options.setBatchSize(chunkSize);
+                    options.setKeepNulls(true);
+                    options.setTableLock(false);
+                    options.setUseInternalTransaction(false);
+                    options.setBulkCopyTimeout(0);
+                    Connection bulkConn = unwrapSqlServerConnection(connection);
+                    try (SQLServerBulkCopy bulkCopy = new SQLServerBulkCopy(bulkConn)) {
+                        bulkCopy.setDestinationTableName(q("CnInvPmtUplTbl"));
+                        bulkCopy.setBulkCopyOptions(options);
+                        for (String name : SudzPmtUplTblBulkData.columnNames()) {
+                            bulkCopy.addColumnMapping(name, name);
                         }
-                        insert.executeBatch();
+                        int done = 0;
+                        while (done < rows.size()) {
+                            int end = Math.min(done + chunkSize, rows.size());
+                            List<SudzPmtUplTblRow> chunk = rows.subList(done, end);
+                            bulkCopy.writeToServer(new SudzPmtUplTblBulkData(chunk));
+                            done = end;
+                            log.log(Level.INFO,
+                                    "Replace CnInvPmtUplTbl unloadKey={0} — bulk {1}/{2} ms={3}",
+                                    new Object[]{unloadKey, done, rows.size(),
+                                            System.currentTimeMillis() - t0});
+                            notifyTblProgress(progress, done, rows.size(), t0);
+                        }
                     }
                 }
                 connection.commit();
@@ -975,6 +984,45 @@ public class JdbcSudzDao implements SudzDao {
         } catch (SQLException exception) {
             throw wrap("Не удалось заменить CnInvPmtUplTbl unloadKey=" + unloadKey, exception);
         }
+    }
+
+    private static void notifyTblProgress(
+            SudzPmtUplTblWriteProgress progress,
+            int done,
+            int total,
+            long t0
+    ) {
+        if (progress == null) {
+            return;
+        }
+        try {
+            progress.onProgress(done, total, System.currentTimeMillis() - t0);
+        } catch (RuntimeException ignored) {
+            // mid-flush не должен ронять replace
+        }
+    }
+
+    /**
+     * Hikari / proxy → нативное {@link SQLServerConnection} для BulkCopy.
+     *
+     * @param connection JDBC (возможно обёртка)
+     * @return SQL Server connection
+     * @throws SQLException если unwrap невозможен
+     */
+    private static Connection unwrapSqlServerConnection(Connection connection) throws SQLException {
+        if (connection.isWrapperFor(SQLServerConnection.class)) {
+            return connection.unwrap(SQLServerConnection.class);
+        }
+        Connection unwrapped = connection.unwrap(Connection.class);
+        if (unwrapped instanceof SQLServerConnection) {
+            return unwrapped;
+        }
+        if (unwrapped != null && unwrapped.isWrapperFor(SQLServerConnection.class)) {
+            return unwrapped.unwrap(SQLServerConnection.class);
+        }
+        throw new SQLException(
+                "BulkCopy требует SQLServerConnection; получено "
+                        + connection.getClass().getName());
     }
 
     @Override
@@ -1314,131 +1362,148 @@ public class JdbcSudzDao implements SudzDao {
     }
 
     /**
-     * CTE {@code cipuInsPmNot}: oneCn+oneInv+cias+doc, без уже существующих pm
-     * (inline ExtPm; {@code EXCEPT} по cias/doc/sheet для upl).
-     * Два {@code ?} = unloadKey (stg + EXCEPT).
+     * Staged InsPm (не монолитный CTE): {@code #stg→…→#ready}.
+     * DBHub 2026-09-22: монолит &gt;900 с @59; staged wall &lt;1 с.
+     * {@code uk} вшит литералом — {@code PreparedStatement}/{@code sp_executesql}
+     * уничтожает локальные {@code #tmp} в конце батча (Invalid object name '#ready').
      *
      * @param tbl квалифицированное {@code CnInvPmtUplTbl}
-     * @return CTE до {@code missingKeys} / {@code cand} / {@code agOne} / {@code insPmNot}
+     * @param unloadKey {@code ciputUnloadKey}
+     * @return batch до {@code #ready}
      */
-    private static String sqlPmtUplInsPmNot(String tbl) {
-        return ";WITH stg AS ( "
-                + "  SELECT "
-                + "    a.ciputCntrPrtNum AS CntrPrtNum, "
-                + "    CASE WHEN a.ciputCnName IS NULL OR LTRIM(RTRIM(a.ciputCnName)) = N'' "
-                + "         THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(a.ciputCnName)) END AS CnName, "
-                + "    CASE WHEN a.ciputCnInv IS NULL OR LTRIM(RTRIM(a.ciputCnInv)) = N'' "
-                + "         THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(a.ciputCnInv)) END AS ciputCnInv, "
-                + "    a.ciputAccount, "
-                + "    LTRIM(RTRIM(a.ciputCnInvDocCode)) AS ciputCnInvDocCode, "
-                + "    a.ciputSheetNum, a.ciputUnloadKey, "
-                + "    ISNULL(a.ciputAgentNum, 9999999) AS ciputAgentNum, "
-                + "    a.ciputAgentName, a.ciputLink, a.ciputCAC, "
-                + "    a.ciputEntryDate, a.ciputDocDate, a.ciputDueDate, "
-                + "    a.ciputDbtBlns, a.ciputDbtBlnsOverd, a.ciputDbtBlnsOverdNot, "
-                + "    a.ciputCdtBlns, a.ciputCdtBlnsOverd, a.ciputCdtBlnsOverdNot, a.ciputBlns, "
-                + "    a.ciputAlligmentDate, a.ciputBaseDate, a.ciputCnInvDocSum, "
-                + "    a.ciputStornoReason, a.ciputStornoDocCode, "
-                + "    CASE "
-                + "      WHEN a.ciputCAC IS NULL OR a.ciputCAC = N'' THEN "
-                + "        CASE WHEN SUBSTRING(a.ciputLink, 4, 1) = N'-' AND LEN(a.ciputLink) > 10 "
-                + "             THEN LEFT(a.ciputLink, 11) ELSE NULL END "
-                + "      ELSE "
-                + "        CASE WHEN SUBSTRING(a.ciputCAC, 4, 1) = N'-' AND LEN(a.ciputCAC) > 10 "
-                + "             THEN LEFT(a.ciputCAC, 11) ELSE NULL END "
-                + "    END AS cacOrNull "
-                + "  FROM " + tbl + " AS a "
-                + "  WHERE a.ciputUnloadKey = ? "
-                + "), "
-                + "ctpt AS ( "
-                + "  SELECT CntrPrtNum, CnName, ciputCnInv, ciputAccount "
-                + "  FROM stg "
-                + "  WHERE CntrPrtNum IS NOT NULL AND ciputAccount IS NOT NULL "
-                + "    AND ciputCnInvDocCode IS NOT NULL AND ciputCnInvDocCode <> N'' "
-                + "  GROUP BY CntrPrtNum, CnName, ciputCnInv, ciputAccount "
-                + "), "
-                + "oneCn AS ( "
-                + "  SELECT z.CntrPrtNum, z.CnName, z.ciputCnInv, z.ciputAccount, "
-                + "         MIN(c.cn_key) AS cn_key, MIN(os.csosKey) AS csosKey "
-                + "  FROM ctpt AS z "
-                + "  INNER JOIN ags.org_id AS i "
-                + "    ON z.CntrPrtNum = i.org_id_value_l AND i.org_id_type = 1 "
-                + "  INNER JOIN ags.cn_s_org_smpl AS os ON os.csosOrgId = i.org_id_key "
-                + "  INNER JOIN ags.cn_s AS s ON s.cn_s_key = os.csosCn_s AND s.cn_s_type = 2 "
-                + "  INNER JOIN ags.cn AS c ON c.cn_key = s.cn_key "
-                + "  INNER JOIN ags.cnNum AS num "
-                + "    ON num.cnnCn = c.cn_key AND num.cnnNumNull = z.CnName "
-                + "  GROUP BY z.CntrPrtNum, z.CnName, z.ciputCnInv, z.ciputAccount "
-                + "  HAVING COUNT(DISTINCT c.cn_key) = 1 "
-                + "), "
-                + "oneInv AS ( "
-                + "  SELECT o.CntrPrtNum, o.CnName, o.ciputCnInv, o.ciputAccount, "
-                + "         o.cn_key, o.csosKey, MIN(ci.ciKey) AS ciKey "
-                + "  FROM oneCn AS o "
-                + "  INNER JOIN ags.cnInv AS ci ON ci.ciCn = o.cn_key "
-                + "  INNER JOIN ags.invNum AS n "
-                + "    ON n.inInv = ci.ciInv AND n.inNumNull = o.ciputCnInv "
-                + "  GROUP BY o.CntrPrtNum, o.CnName, o.ciputCnInv, o.ciputAccount, "
-                + "           o.cn_key, o.csosKey "
-                + "  HAVING COUNT(DISTINCT ci.ciKey) = 1 "
-                + "), "
-                + "cand AS ( "
-                + "  SELECT "
-                + "    f.ciasKey, d.cn_inv_doc_key, o.cn_key, o.ciKey, o.csosKey, a.account_key, "
-                + "    s.CntrPrtNum, s.CnName, s.ciputCnInv, s.ciputAccount, s.ciputCnInvDocCode, "
-                + "    s.ciputSheetNum, s.ciputUnloadKey, s.ciputAgentNum, s.ciputAgentName, "
-                + "    s.cacOrNull, s.ciputLink, "
-                + "    s.ciputEntryDate, s.ciputDocDate, s.ciputDueDate, "
-                + "    s.ciputDbtBlns, s.ciputDbtBlnsOverd, s.ciputDbtBlnsOverdNot, "
-                + "    s.ciputCdtBlns, s.ciputCdtBlnsOverd, s.ciputCdtBlnsOverdNot, s.ciputBlns, "
-                + "    s.ciputAlligmentDate, s.ciputBaseDate, s.ciputCnInvDocSum, "
-                + "    s.ciputStornoReason, s.ciputStornoDocCode, "
-                + "    p.cstapKey "
-                + "  FROM oneInv AS o "
-                + "  INNER JOIN ags.accnt AS a ON a.account_num = o.ciputAccount "
-                + "  INNER JOIN ags.cnInvAccntSmpl AS f "
-                + "    ON f.ciasCnInv = o.ciKey "
-                + "   AND f.ciasCn_s_org_smpl = o.csosKey "
-                + "   AND f.ciasAccnt = a.account_key "
-                + "  INNER JOIN stg AS s "
-                + "    ON s.CntrPrtNum = o.CntrPrtNum AND s.CnName = o.CnName "
-                + "   AND s.ciputCnInv = o.ciputCnInv AND s.ciputAccount = o.ciputAccount "
-                + "  INNER JOIN ags.cn_inv_doc AS d "
-                + "    ON TRY_CAST(s.ciputCnInvDocCode AS decimal(18, 0)) = d.cn_inv_doc_kod "
-                + "  LEFT JOIN ags.cstAgPn AS p ON s.cacOrNull = p.cstapIpgPnN "
-                + "), "
-                + "missingKeys AS ( "
-                + "  SELECT ciasKey, cn_inv_doc_key, ciputSheetNum FROM cand "
+    private static String sqlPmtUplInsPmStagedBuild(String tbl, int unloadKey) {
+        return "DECLARE @uk int = " + unloadKey + "; "
+                + "IF OBJECT_ID('tempdb..#stg') IS NOT NULL DROP TABLE #stg; "
+                + "IF OBJECT_ID('tempdb..#ctpt') IS NOT NULL DROP TABLE #ctpt; "
+                + "IF OBJECT_ID('tempdb..#oneCn') IS NOT NULL DROP TABLE #oneCn; "
+                + "IF OBJECT_ID('tempdb..#oneInv') IS NOT NULL DROP TABLE #oneInv; "
+                + "IF OBJECT_ID('tempdb..#cand') IS NOT NULL DROP TABLE #cand; "
+                + "IF OBJECT_ID('tempdb..#missing') IS NOT NULL DROP TABLE #missing; "
+                + "IF OBJECT_ID('tempdb..#ready') IS NOT NULL DROP TABLE #ready; "
+                + "IF OBJECT_ID('tempdb..#docmap') IS NOT NULL DROP TABLE #docmap; "
+                + "SELECT "
+                + "  a.ciputCntrPrtNum AS CntrPrtNum, "
+                + "  CASE WHEN a.ciputCnName IS NULL OR LTRIM(RTRIM(a.ciputCnName)) = N'' "
+                + "       THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(a.ciputCnName)) END AS CnName, "
+                + "  CASE WHEN a.ciputCnInv IS NULL OR LTRIM(RTRIM(a.ciputCnInv)) = N'' "
+                + "       THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(a.ciputCnInv)) END AS ciputCnInv, "
+                + "  a.ciputAccount, "
+                + "  LTRIM(RTRIM(a.ciputCnInvDocCode)) AS ciputCnInvDocCode, "
+                + "  TRY_CAST(LTRIM(RTRIM(a.ciputCnInvDocCode)) AS decimal(18, 0)) AS docKod, "
+                + "  a.ciputSheetNum, a.ciputUnloadKey, "
+                + "  ISNULL(a.ciputAgentNum, 9999999) AS ciputAgentNum, "
+                + "  CASE "
+                + "    WHEN a.ciputCAC IS NULL OR a.ciputCAC = N'' THEN "
+                + "      CASE WHEN SUBSTRING(a.ciputLink, 4, 1) = N'-' AND LEN(a.ciputLink) > 10 "
+                + "           THEN LEFT(a.ciputLink, 11) ELSE NULL END "
+                + "    ELSE "
+                + "      CASE WHEN SUBSTRING(a.ciputCAC, 4, 1) = N'-' AND LEN(a.ciputCAC) > 10 "
+                + "           THEN LEFT(a.ciputCAC, 11) ELSE NULL END "
+                + "  END AS cacOrNull, "
+                + "  a.ciputLink, a.ciputEntryDate, a.ciputDocDate, a.ciputDueDate, "
+                + "  a.ciputDbtBlns, a.ciputDbtBlnsOverd, a.ciputDbtBlnsOverdNot, "
+                + "  a.ciputCdtBlns, a.ciputCdtBlnsOverd, a.ciputCdtBlnsOverdNot, a.ciputBlns, "
+                + "  a.ciputAlligmentDate, a.ciputBaseDate, a.ciputCnInvDocSum, "
+                + "  a.ciputStornoReason, a.ciputStornoDocCode "
+                + "INTO #stg FROM " + tbl + " AS a WHERE a.ciputUnloadKey = @uk; "
+                + "SELECT CntrPrtNum, CnName, ciputCnInv, ciputAccount "
+                + "INTO #ctpt FROM #stg "
+                + "WHERE CntrPrtNum IS NOT NULL AND ciputAccount IS NOT NULL "
+                + "  AND ciputCnInvDocCode IS NOT NULL AND ciputCnInvDocCode <> N'' "
+                + "GROUP BY CntrPrtNum, CnName, ciputCnInv, ciputAccount; "
+                + "SELECT z.CntrPrtNum, z.CnName, z.ciputCnInv, z.ciputAccount, "
+                + "       MIN(c.cn_key) AS cn_key, MIN(os.csosKey) AS csosKey "
+                + "INTO #oneCn FROM #ctpt AS z "
+                + "INNER JOIN ags.org_id AS i "
+                + "  ON z.CntrPrtNum = i.org_id_value_l AND i.org_id_type = 1 "
+                + "INNER JOIN ags.cn_s_org_smpl AS os ON os.csosOrgId = i.org_id_key "
+                + "INNER JOIN ags.cn_s AS s ON s.cn_s_key = os.csosCn_s AND s.cn_s_type = 2 "
+                + "INNER JOIN ags.cn AS c ON c.cn_key = s.cn_key "
+                + "INNER JOIN ags.cnNum AS num "
+                + "  ON num.cnnCn = c.cn_key AND num.cnnNumNull = z.CnName "
+                + "GROUP BY z.CntrPrtNum, z.CnName, z.ciputCnInv, z.ciputAccount "
+                + "HAVING COUNT(DISTINCT c.cn_key) = 1; "
+                + "SELECT o.CntrPrtNum, o.CnName, o.ciputCnInv, o.ciputAccount, "
+                + "       o.cn_key, o.csosKey, MIN(ci.ciKey) AS ciKey "
+                + "INTO #oneInv FROM #oneCn AS o "
+                + "INNER JOIN ags.cnInv AS ci ON ci.ciCn = o.cn_key "
+                + "INNER JOIN ags.invNum AS n "
+                + "  ON n.inInv = ci.ciInv AND n.inNumNull = o.ciputCnInv "
+                + "GROUP BY o.CntrPrtNum, o.CnName, o.ciputCnInv, o.ciputAccount, "
+                + "         o.cn_key, o.csosKey "
+                + "HAVING COUNT(DISTINCT ci.ciKey) = 1; "
+                + "SELECT d.cn_inv_doc_kod AS docKod, MIN(d.cn_inv_doc_key) AS cn_inv_doc_key "
+                + "INTO #docmap "
+                + "FROM (SELECT DISTINCT docKod FROM #stg WHERE docKod IS NOT NULL) AS x "
+                + "INNER JOIN ags.cn_inv_doc AS d ON d.cn_inv_doc_kod = x.docKod "
+                + "GROUP BY d.cn_inv_doc_kod; "
+                + "SELECT "
+                + "  f.ciasKey, dm.cn_inv_doc_key, o.cn_key, o.ciKey, o.csosKey, a.account_key, "
+                + "  s.CntrPrtNum, s.CnName, s.ciputCnInv, s.ciputAccount, s.ciputCnInvDocCode, "
+                + "  s.ciputSheetNum, s.ciputUnloadKey, s.ciputAgentNum, "
+                + "  s.cacOrNull, s.ciputLink, "
+                + "  s.ciputEntryDate, s.ciputDocDate, s.ciputDueDate, "
+                + "  s.ciputDbtBlns, s.ciputDbtBlnsOverd, s.ciputDbtBlnsOverdNot, "
+                + "  s.ciputCdtBlns, s.ciputCdtBlnsOverd, s.ciputCdtBlnsOverdNot, s.ciputBlns, "
+                + "  s.ciputAlligmentDate, s.ciputBaseDate, s.ciputCnInvDocSum, "
+                + "  s.ciputStornoReason, s.ciputStornoDocCode, p.cstapKey "
+                + "INTO #cand FROM #oneInv AS o "
+                + "INNER JOIN ags.accnt AS a ON a.account_num = o.ciputAccount "
+                + "INNER JOIN ags.cnInvAccntSmpl AS f "
+                + "  ON f.ciasCnInv = o.ciKey AND f.ciasCn_s_org_smpl = o.csosKey "
+                + " AND f.ciasAccnt = a.account_key "
+                + "INNER JOIN #stg AS s "
+                + "  ON s.CntrPrtNum = o.CntrPrtNum AND s.CnName = o.CnName "
+                + " AND s.ciputCnInv = o.ciputCnInv AND s.ciputAccount = o.ciputAccount "
+                + "INNER JOIN #docmap AS dm ON dm.docKod = s.docKod "
+                + "LEFT JOIN ags.cstAgPn AS p ON s.cacOrNull = p.cstapIpgPnN; "
+                + "SELECT ciasKey, cn_inv_doc_key, ciputSheetNum INTO #missing "
+                + "FROM ( "
+                + "  SELECT ciasKey, cn_inv_doc_key, ciputSheetNum FROM #cand "
                 + "  GROUP BY ciasKey, cn_inv_doc_key, ciputSheetNum "
                 + "  EXCEPT "
                 + "  SELECT ciaCnInvAccntSmpl, cn_inv_doc, [number] "
-                + "  FROM ags.cn_inv_pm "
-                + "  WHERE cn_inv_pm_upl = ? "
-                + "), "
-                + "agOne AS ( "
+                + "  FROM ags.cn_inv_pm WHERE cn_inv_pm_upl = @uk "
+                + ") AS x; "
+                + ";WITH agOne AS ( "
                 + "  SELECT s.cn_key, i.org_id_value_l, MIN(os.csosKey) AS AgCsosKey "
-                + "  FROM (SELECT DISTINCT cn_key FROM cand) AS k "
+                + "  FROM (SELECT DISTINCT cn_key FROM #cand) AS k "
                 + "  INNER JOIN ags.cn_s AS s ON s.cn_key = k.cn_key AND s.cn_s_type = 1 "
                 + "  INNER JOIN ags.cn_s_org_smpl AS os ON os.csosCn_s = s.cn_s_key "
                 + "  INNER JOIN ags.org_id AS i "
                 + "    ON i.org_id_key = os.csosOrgId AND i.org_id_type = 1 "
                 + "  GROUP BY s.cn_key, i.org_id_value_l "
                 + "  HAVING COUNT(DISTINCT os.csosKey) = 1 "
-                + "), "
-                + "insPmNot AS ( "
+                + "), ranked AS ( "
                 + "  SELECT c.*, ag.AgCsosKey, "
                 + "         ROW_NUMBER() OVER ( "
                 + "           PARTITION BY c.ciasKey, c.cn_inv_doc_key, c.ciputSheetNum "
                 + "           ORDER BY c.ciputUnloadKey "
                 + "         ) AS rn "
-                + "  FROM cand AS c "
-                + "  INNER JOIN missingKeys AS m "
-                + "    ON c.ciasKey = m.ciasKey "
-                + "   AND c.cn_inv_doc_key = m.cn_inv_doc_key "
+                + "  FROM #cand AS c "
+                + "  INNER JOIN #missing AS m "
+                + "    ON c.ciasKey = m.ciasKey AND c.cn_inv_doc_key = m.cn_inv_doc_key "
                 + "   AND c.ciputSheetNum = m.ciputSheetNum "
                 + "  LEFT JOIN agOne AS ag "
                 + "    ON c.cn_key = ag.cn_key AND c.ciputAgentNum = ag.org_id_value_l "
-                + ") ";
+                + ") "
+                + "SELECT * INTO #ready FROM ranked WHERE rn = 1";
+    }
+
+    /**
+     * Выполнить staged build на сессии (не через {@code PreparedStatement}/sp_executesql).
+     *
+     * @param connection сессия
+     * @param unloadKey пакет
+     * @throws SQLException ошибка SQL
+     */
+    private void execPmtUplInsPmStagedBuild(Connection connection, int unloadKey)
+            throws SQLException {
+        String sql = sqlPmtUplInsPmStagedBuild(q("CnInvPmtUplTbl"), unloadKey);
+        try (Statement build = connection.createStatement()) {
+            build.setQueryTimeout(180);
+            build.execute(sql);
+        }
     }
 
     @Override
@@ -1446,21 +1511,32 @@ public class JdbcSudzDao implements SudzDao {
         if (unloadKey <= 0) {
             throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
         }
-        String sql = sqlPmtUplInsPmNot(q("CnInvPmtUplTbl"))
-                + "SELECT COUNT(*) AS n FROM missingKeys OPTION (RECOMPILE)";
-        try (Connection connection = connectionFactory.createConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            // H4/QII: ~5k Tbl → 45–160 с; ~11k Tbl (767501) SELECT превышал 300 с.
-            statement.setQueryTimeout(1_200);
-            statement.setInt(1, unloadKey);
-            statement.setInt(2, unloadKey);
-            try (ResultSet rs = statement.executeQuery()) {
+        log.log(Level.INFO, "findPmtUplInsPmNotLoad unloadKey={0} — start (staged)",
+                unloadKey);
+        long t0 = System.currentTimeMillis();
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                execPmtUplInsPmStagedBuild(connection, unloadKey);
                 int n = 0;
-                if (rs.next()) {
-                    n = rs.getInt("n");
+                try (Statement cnt = connection.createStatement();
+                     ResultSet rs = cnt.executeQuery("SELECT COUNT(*) AS n FROM #ready")) {
+                    if (rs.next()) {
+                        n = rs.getInt("n");
+                    }
                 }
+                connection.commit();
+                log.log(Level.INFO, "findPmtUplInsPmNotLoad unloadKey={0} ready={1} ms={2}",
+                        new Object[]{unloadKey, n, System.currentTimeMillis() - t0});
                 return new SudzPmtUplInsPmNotResult(n);
+            } catch (RuntimeException | SQLException exception) {
+                connection.rollback();
+                throw exception;
+            } finally {
+                connection.setAutoCommit(true);
             }
+        } catch (IllegalArgumentException exception) {
+            throw exception;
         } catch (MissingConfigurationException exception) {
             throw exception;
         } catch (SQLException exception) {
@@ -1473,45 +1549,55 @@ public class JdbcSudzDao implements SudzDao {
         if (unloadKey <= 0) {
             throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
         }
-        String sql = sqlPmtUplInsPmNot(q("CnInvPmtUplTbl"))
-                + "INSERT INTO ags.cn_inv_pm ( "
-                + "  csoCn_s_org_smpl, cn_inv_doc, constract_code, cn_inv_pm_due, "
-                + "  dbt_blns, dbt_blns_overd, dbt_blns_not_overd, "
-                + "  cdt_blns, cdt_blns_overd, cdt_blns_not_overd, blns, "
-                + "  alignment_date, base_date, storno_reason, storno_doc, "
-                + "  cn_inv_pm_upl, [number], mark, cnipCstAgPn, "
-                + "  cn_inv_doc_date, cn_inv_doc_date_entry, cn_inv_doc_sum, cn_inv_doc_link, "
-                + "  ciaCnInvAccntSmpl, cipTimeOfEntry "
-                + ") "
-                + "SELECT "
-                + "  m.AgCsosKey, m.cn_inv_doc_key, m.cacOrNull, m.ciputDueDate, "
-                + "  ISNULL(m.ciputDbtBlns, 0), ISNULL(m.ciputDbtBlnsOverd, 0), "
-                + "  ISNULL(m.ciputDbtBlnsOverdNot, 0), "
-                + "  ISNULL(m.ciputCdtBlns, 0), ISNULL(m.ciputCdtBlnsOverd, 0), "
-                + "  ISNULL(m.ciputCdtBlnsOverdNot, 0), ISNULL(m.ciputBlns, 0), "
-                + "  m.ciputAlligmentDate, m.ciputBaseDate, m.ciputStornoReason, "
-                + "  TRY_CAST(m.ciputStornoDocCode AS decimal(28, 8)), "
-                + "  m.ciputUnloadKey, m.ciputSheetNum, "
-                + "  CAST(FORMAT(SYSDATETIME(), 'MddHHmm') AS int), "
-                + "  m.cstapKey, "
-                + "  m.ciputDocDate, m.ciputEntryDate, m.ciputCnInvDocSum, m.ciputLink, "
-                + "  m.ciasKey, SYSDATETIME() "
-                + "FROM insPmNot AS m "
-                + "WHERE m.rn = 1 "
-                + "OPTION (RECOMPILE)";
-        log.log(Level.INFO, "applyPmtUplInsPmNotLoad unloadKey={0} — start (timeout=1800s)",
+        log.log(Level.INFO, "applyPmtUplInsPmNotLoad unloadKey={0} — start (staged #tmp)",
                 unloadKey);
         long t0 = System.currentTimeMillis();
         try (Connection connection = connectionFactory.createConnection()) {
             connection.setAutoCommit(false);
             try {
+                execPmtUplInsPmStagedBuild(connection, unloadKey);
+                int ready = 0;
+                try (Statement cnt = connection.createStatement();
+                     ResultSet rs = cnt.executeQuery("SELECT COUNT(*) AS n FROM #ready")) {
+                    if (rs.next()) {
+                        ready = rs.getInt("n");
+                    }
+                }
+                log.log(Level.INFO,
+                        "applyPmtUplInsPmNotLoad unloadKey={0} — ready={1} ms={2}",
+                        new Object[]{unloadKey, ready, System.currentTimeMillis() - t0});
+                if (ready == 0) {
+                    connection.commit();
+                    return new SudzPmtUplInsPmNotApplyResult(0);
+                }
+                String insertSql = ""
+                        + "INSERT INTO ags.cn_inv_pm ( "
+                        + "  csoCn_s_org_smpl, cn_inv_doc, constract_code, cn_inv_pm_due, "
+                        + "  dbt_blns, dbt_blns_overd, dbt_blns_not_overd, "
+                        + "  cdt_blns, cdt_blns_overd, cdt_blns_not_overd, blns, "
+                        + "  alignment_date, base_date, storno_reason, storno_doc, "
+                        + "  cn_inv_pm_upl, [number], mark, cnipCstAgPn, "
+                        + "  cn_inv_doc_date, cn_inv_doc_date_entry, cn_inv_doc_sum, cn_inv_doc_link, "
+                        + "  ciaCnInvAccntSmpl, cipTimeOfEntry "
+                        + ") "
+                        + "SELECT "
+                        + "  m.AgCsosKey, m.cn_inv_doc_key, m.cacOrNull, m.ciputDueDate, "
+                        + "  ISNULL(m.ciputDbtBlns, 0), ISNULL(m.ciputDbtBlnsOverd, 0), "
+                        + "  ISNULL(m.ciputDbtBlnsOverdNot, 0), "
+                        + "  ISNULL(m.ciputCdtBlns, 0), ISNULL(m.ciputCdtBlnsOverd, 0), "
+                        + "  ISNULL(m.ciputCdtBlnsOverdNot, 0), ISNULL(m.ciputBlns, 0), "
+                        + "  m.ciputAlligmentDate, m.ciputBaseDate, m.ciputStornoReason, "
+                        + "  TRY_CAST(m.ciputStornoDocCode AS decimal(28, 8)), "
+                        + "  m.ciputUnloadKey, m.ciputSheetNum, "
+                        + "  CAST(FORMAT(SYSDATETIME(), 'MddHHmm') AS int), "
+                        + "  m.cstapKey, "
+                        + "  m.ciputDocDate, m.ciputEntryDate, m.ciputCnInvDocSum, m.ciputLink, "
+                        + "  m.ciasKey, SYSDATETIME() "
+                        + "FROM #ready AS m";
                 int inserted;
-                try (PreparedStatement statement = connection.prepareStatement(sql)) {
-                    // H4/QII: INSERT InsPm на ~11k Tbl — запас выше 600 с.
-                    statement.setQueryTimeout(1_800);
-                    statement.setInt(1, unloadKey);
-                    statement.setInt(2, unloadKey);
-                    inserted = statement.executeUpdate();
+                try (Statement statement = connection.createStatement()) {
+                    statement.setQueryTimeout(120);
+                    inserted = statement.executeUpdate(insertSql);
                 }
                 connection.commit();
                 log.log(Level.INFO,
@@ -1842,18 +1928,18 @@ public class JdbcSudzDao implements SudzDao {
                         + "SELECT o.CntrPrtNum, o.CntrPrtName, o.CnName, o.cn_key, o.csosKey, "
                         + "       o.ciputCnInv, cnt.inNumCount "
                         + "FROM oneCn AS o "
-                        + "LEFT JOIN ( "
-                        + "  SELECT ci.ciCn, n.inNumNull "
+                        // O2: count и anti-join только по кандидатам oneCn — не полный скан invNum.
+                        + "OUTER APPLY ( "
+                        + "  SELECT COUNT(DISTINCT n.inInv) AS inNumCount "
+                        + "  FROM ags.invNum AS n "
+                        + "  WHERE n.inNumNull = o.ciputCnInv "
+                        + ") AS cnt "
+                        + "WHERE NOT EXISTS ( "
+                        + "  SELECT 1 "
                         + "  FROM ags.cnInv AS ci "
                         + "  INNER JOIN ags.invNum AS n ON n.inInv = ci.ciInv "
-                        + "  GROUP BY ci.ciCn, n.inNumNull "
-                        + ") AS g ON g.ciCn = o.cn_key AND g.inNumNull = o.ciputCnInv "
-                        + "LEFT JOIN ( "
-                        + "  SELECT n.inNumNull, COUNT(DISTINCT n.inInv) AS inNumCount "
-                        + "  FROM ags.invNum AS n "
-                        + "  GROUP BY n.inNumNull "
-                        + ") AS cnt ON cnt.inNumNull = o.ciputCnInv "
-                        + "WHERE g.ciCn IS NULL";
+                        + "  WHERE ci.ciCn = o.cn_key AND n.inNumNull = o.ciputCnInv "
+                        + ")";
                 int inserted;
                 try (PreparedStatement ps = connection.prepareStatement(insert)) {
                     ps.setInt(1, unloadKey);
@@ -1886,59 +1972,20 @@ public class JdbcSudzDao implements SudzDao {
         if (unloadKey <= 0) {
             throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
         }
-        String buf = q("CnInvPmtUplTblCnInv");
-        String select = "SELECT ciputciCn_key, ciputciCnInv FROM " + buf
-                + " WHERE ciputciCnInvNumCount IS NULL"
-                + " ORDER BY ciputciCn_key, ciputciRow";
-        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
         try (Connection connection = connectionFactory.createConnection()) {
             connection.setAutoCommit(false);
             try {
-                int inserted = 0;
-                int aliasOnly = 0;
-                try (PreparedStatement statement = connection.prepareStatement(select);
-                     ResultSet rs = statement.executeQuery()) {
-                    while (rs.next()) {
-                        int cnKey = rs.getInt("ciputciCn_key");
-                        String cnInv = rs.getNString("ciputciCnInv");
-                        if (tryInsertInvNumAliasOnCn(connection, cnKey, cnInv, now)) {
-                            aliasOnly++;
-                            continue;
-                        }
-                        int invKey;
-                        try (PreparedStatement inv = connection.prepareStatement(
-                                "INSERT INTO ags.inv (iTimeOfEntry) VALUES (?)",
-                                Statement.RETURN_GENERATED_KEYS)) {
-                            inv.setTimestamp(1, now);
-                            inv.executeUpdate();
-                            invKey = readGeneratedKey(inv, "Не удалось получить iKey");
-                        }
-                        try (PreparedStatement invNum = connection.prepareStatement(
-                                "INSERT INTO ags.invNum (inNum, inInv, inTimeOfEntry) VALUES (?, ?, ?)")) {
-                            if (cnInv == null || cnInv.isBlank() || "NullИлиПусто".equals(cnInv)) {
-                                invNum.setNull(1, Types.NVARCHAR);
-                            } else {
-                                invNum.setNString(1, cnInv);
-                            }
-                            invNum.setInt(2, invKey);
-                            invNum.setTimestamp(3, now);
-                            invNum.executeUpdate();
-                        }
-                        try (PreparedStatement cnInvPs = connection.prepareStatement(
-                                "INSERT INTO ags.cnInv (ciInv, ciCn, ciTimeOfEntry) VALUES (?, ?, ?)")) {
-                            cnInvPs.setInt(1, invKey);
-                            cnInvPs.setInt(2, cnKey);
-                            cnInvPs.setTimestamp(3, now);
-                            cnInvPs.executeUpdate();
-                        }
-                        inserted++;
-                    }
-                }
+                InvNotApplyCounts counts = applyInvNotLoadSetBased(
+                        connection,
+                        unloadKey,
+                        q("CnInvPmtUplTblCnInv"),
+                        "ciputciCn_key",
+                        "ciputciCnInv",
+                        "ciputciCnInvNumCount",
+                        "ciputciRow",
+                        "applyPmtUplInvNotLoad");
                 connection.commit();
-                log.log(Level.INFO,
-                        "applyPmtUplInvNotLoad unloadKey={0} inserted={1} aliasOnly={2}",
-                        new Object[]{unloadKey, inserted, aliasOnly});
-                return new SudzDbtUplCnCtptExistInvApplyResult(inserted);
+                return new SudzDbtUplCnCtptExistInvApplyResult(counts.inserted());
             } catch (RuntimeException | SQLException exception) {
                 connection.rollback();
                 throw exception;
@@ -4028,14 +4075,189 @@ public class JdbcSudzDao implements SudzDao {
     }
 
     /**
+     * Счётчики set-based apply InvNotLoad (O1).
+     *
+     * @param inserted новые {@code inv}+{@code invNum}+{@code cnInv}
+     * @param aliasOnly строки буфера, закрытые hist-alias (без нового inv)
+     * @param srcRows всего строк буфера с {@code count IS NULL}
+     */
+    private record InvNotApplyCounts(int inserted, int aliasOnly, int srcRows) {
+    }
+
+    /**
+     * O1: set-based apply новых СФ из буфера TblCnInv (pm или dbt).
+     * Alias-path одним INSERT; новые inv/invNum/cnInv через {@code MERGE…OUTPUT}
+     * (без N× round-trip JDBC по VPN).
+     *
+     * @param connection открытая транзакция
+     * @param unloadKey пакет (для лога)
+     * @param buf квалифицированное имя буфера
+     * @param colCn колонка cn_key
+     * @param colInv колонка номера СФ
+     * @param colCount колонка count (NULL = ещё нет СФ)
+     * @param colRow колонка row id буфера
+     * @param opName имя операции в логе
+     * @return счётчики inserted / aliasOnly
+     * @throws SQLException при ошибке SQL
+     */
+    private InvNotApplyCounts applyInvNotLoadSetBased(
+            Connection connection,
+            int unloadKey,
+            String buf,
+            String colCn,
+            String colInv,
+            String colCount,
+            String colRow,
+            String opName
+    ) throws SQLException {
+        long t0 = System.currentTimeMillis();
+        log.log(Level.INFO, "{0} unloadKey={1} — set-based start",
+                new Object[]{opName, unloadKey});
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+        try (Statement drop = connection.createStatement()) {
+            drop.execute("IF OBJECT_ID('tempdb..#invNotSrc') IS NOT NULL DROP TABLE #invNotSrc");
+            drop.execute("IF OBJECT_ID('tempdb..#invNotAlias') IS NOT NULL DROP TABLE #invNotAlias");
+            drop.execute("IF OBJECT_ID('tempdb..#invNotNeed') IS NOT NULL DROP TABLE #invNotNeed");
+            drop.execute("IF OBJECT_ID('tempdb..#invNotMap') IS NOT NULL DROP TABLE #invNotMap");
+        }
+        String loadSrc = ""
+                + "SELECT "
+                + "  CAST(b." + colRow + " AS int) AS rowId, "
+                + "  b." + colCn + " AS cnKey, "
+                + "  b." + colInv + " AS cnInvRaw, "
+                + "  CASE WHEN b." + colInv + " IS NULL "
+                + "            OR LTRIM(RTRIM(b." + colInv + ")) = N'' "
+                + "            OR LTRIM(RTRIM(b." + colInv + ")) = N'NullИлиПусто' "
+                + "       THEN CAST(1 AS bit) ELSE CAST(0 AS bit) END AS isBlank, "
+                + "  LTRIM(RTRIM(b." + colInv + ")) AS trimmed "
+                + "INTO #invNotSrc "
+                + "FROM " + buf + " AS b "
+                + "WHERE b." + colCount + " IS NULL";
+        int srcRows;
+        try (Statement st = connection.createStatement()) {
+            srcRows = st.executeUpdate(loadSrc);
+        }
+        log.log(Level.INFO, "{0} unloadKey={1} — srcRows={2} ms={3}",
+                new Object[]{opName, unloadKey, srcRows, System.currentTimeMillis() - t0});
+        if (srcRows == 0) {
+            return new InvNotApplyCounts(0, 0, 0);
+        }
+        // Пустая #invNotAlias нужна для NOT EXISTS в needNew, даже если кандидатов 0.
+        try (Statement st = connection.createStatement()) {
+            st.execute("CREATE TABLE #invNotAlias ("
+                    + "rowId int NOT NULL, cnKey int NOT NULL, "
+                    + "trimmed nvarchar(4000) NOT NULL, histIKey int NOT NULL)");
+        }
+        int aliasOnly = 0;
+        String loadAliasExact = ""
+                + "INSERT INTO #invNotAlias (rowId, cnKey, trimmed, histIKey) "
+                + "SELECT s.rowId, s.cnKey, s.trimmed, MIN(ci.ciInv) "
+                + "FROM #invNotSrc AS s "
+                + "INNER JOIN ags.cnInv AS ci ON ci.ciCn = s.cnKey "
+                + "INNER JOIN ags.invNum AS n ON n.inInv = ci.ciInv AND n.inNumNull = s.trimmed "
+                + "WHERE s.isBlank = 0 "
+                + "GROUP BY s.rowId, s.cnKey, s.trimmed";
+        try (Statement st = connection.createStatement()) {
+            aliasOnly += st.executeUpdate(loadAliasExact);
+        }
+        String loadAliasLike = ""
+                + "INSERT INTO #invNotAlias (rowId, cnKey, trimmed, histIKey) "
+                + "SELECT s.rowId, s.cnKey, s.trimmed, MIN(ci.ciInv) "
+                + "FROM #invNotSrc AS s "
+                + "INNER JOIN ags.cnInv AS ci ON ci.ciCn = s.cnKey "
+                + "INNER JOIN ags.invNum AS n "
+                + "  ON n.inInv = ci.ciInv AND n.inNum LIKE s.trimmed + N' %' "
+                + "WHERE s.isBlank = 0 "
+                + "  AND NOT EXISTS (SELECT 1 FROM #invNotAlias AS a WHERE a.rowId = s.rowId) "
+                + "GROUP BY s.rowId, s.cnKey, s.trimmed";
+        try (Statement st = connection.createStatement()) {
+            aliasOnly += st.executeUpdate(loadAliasLike);
+        }
+        log.log(Level.INFO, "{0} unloadKey={1} — aliasCandidates={2} ms={3}",
+                new Object[]{opName, unloadKey, aliasOnly, System.currentTimeMillis() - t0});
+        if (aliasOnly > 0) {
+            String insAlias = ""
+                    + "INSERT INTO ags.invNum (inNum, inInv, inTimeOfEntry) "
+                    + "SELECT DISTINCT a.trimmed, a.histIKey, ? "
+                    + "FROM #invNotAlias AS a "
+                    + "WHERE NOT EXISTS ( "
+                    + "  SELECT 1 FROM ags.invNum AS n "
+                    + "  WHERE n.inInv = a.histIKey "
+                    + "    AND LTRIM(RTRIM(ISNULL(n.inNum, N''))) = a.trimmed "
+                    + ")";
+            try (PreparedStatement ps = connection.prepareStatement(insAlias)) {
+                ps.setTimestamp(1, now);
+                int aliasInserted = ps.executeUpdate();
+                log.log(Level.INFO, "{0} unloadKey={1} — aliasInserted={2} ms={3}",
+                        new Object[]{opName, unloadKey, aliasInserted, System.currentTimeMillis() - t0});
+            }
+        }
+        String loadNeed = ""
+                + "SELECT ROW_NUMBER() OVER (ORDER BY s.rowId) AS seq, "
+                + "       s.rowId, s.cnKey, s.cnInvRaw, s.isBlank, s.trimmed "
+                + "INTO #invNotNeed "
+                + "FROM #invNotSrc AS s "
+                + "WHERE NOT EXISTS ( "
+                + "  SELECT 1 FROM #invNotAlias AS a WHERE a.rowId = s.rowId "
+                + ")";
+        int needRows;
+        try (Statement st = connection.createStatement()) {
+            needRows = st.executeUpdate(loadNeed);
+        }
+        log.log(Level.INFO, "{0} unloadKey={1} — needNew={2} ms={3}",
+                new Object[]{opName, unloadKey, needRows, System.currentTimeMillis() - t0});
+        if (needRows > 0) {
+            try (Statement st = connection.createStatement()) {
+                st.execute("CREATE TABLE #invNotMap (invKey int NOT NULL, seq int NOT NULL)");
+            }
+            String mergeInv = ""
+                    + "MERGE ags.inv AS t "
+                    + "USING #invNotNeed AS s ON 1 = 0 "
+                    + "WHEN NOT MATCHED THEN INSERT (iTimeOfEntry) VALUES (?) "
+                    + "OUTPUT INSERTED.iKey, s.seq INTO #invNotMap (invKey, seq);";
+            try (PreparedStatement ps = connection.prepareStatement(mergeInv)) {
+                ps.setTimestamp(1, now);
+                ps.executeUpdate();
+            }
+            log.log(Level.INFO, "{0} unloadKey={1} — inv MERGE done need={2} ms={3}",
+                    new Object[]{opName, unloadKey, needRows, System.currentTimeMillis() - t0});
+            String insInvNum = ""
+                    + "INSERT INTO ags.invNum (inNum, inInv, inTimeOfEntry) "
+                    + "SELECT CASE WHEN n.isBlank = 1 THEN NULL ELSE n.trimmed END, "
+                    + "       m.invKey, ? "
+                    + "FROM #invNotNeed AS n "
+                    + "INNER JOIN #invNotMap AS m ON m.seq = n.seq";
+            try (PreparedStatement ps = connection.prepareStatement(insInvNum)) {
+                ps.setTimestamp(1, now);
+                ps.executeUpdate();
+            }
+            String insCnInv = ""
+                    + "INSERT INTO ags.cnInv (ciInv, ciCn, ciTimeOfEntry) "
+                    + "SELECT m.invKey, n.cnKey, ? "
+                    + "FROM #invNotNeed AS n "
+                    + "INNER JOIN #invNotMap AS m ON m.seq = n.seq";
+            try (PreparedStatement ps = connection.prepareStatement(insCnInv)) {
+                ps.setTimestamp(1, now);
+                ps.executeUpdate();
+            }
+        }
+        log.log(Level.INFO,
+                "{0} unloadKey={1} — done inserted={2} aliasOnly={3} src={4} ms={5}",
+                new Object[]{opName, unloadKey, needRows, aliasOnly, srcRows,
+                        System.currentTimeMillis() - t0});
+        return new InvNotApplyCounts(needRows, aliasOnly, srcRows);
+    }
+
+    /**
      * A2.1c: alias {@code invNum} на hist-iKey договора вместо нового {@code ags.inv},
      * если на {@code cn_key} уже есть СФ с extended/prefix совпадением.
+     * Сохранено для точечных вызовов; массовый apply — {@link #applyInvNotLoadSetBased}.
      *
      * @param connection JDBC
      * @param cnKey ключ договора
      * @param cnInv номер СФ из Tbl
      * @param now метка времени
-     * @return {@code true} если alias добавлен (новый inv не нужен)
+     * @return {@code true} если alias-path (новый inv не нужен)
      * @throws SQLException при ошибке SQL
      */
     private boolean tryInsertInvNumAliasOnCn(
@@ -4098,59 +4320,20 @@ public class JdbcSudzDao implements SudzDao {
         if (unloadKey <= 0) {
             throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
         }
-        String buf = q("CnInvDbtUplTblCnInv");
-        String select = "SELECT cidutciCn_key, cidutciCnInv FROM " + buf
-                + " WHERE inNumCount IS NULL"
-                + " ORDER BY cidutciCn_key, cidutciRow";
-        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
         try (Connection connection = connectionFactory.createConnection()) {
             connection.setAutoCommit(false);
             try {
-                int inserted = 0;
-                int aliasOnly = 0;
-                try (PreparedStatement statement = connection.prepareStatement(select);
-                     ResultSet rs = statement.executeQuery()) {
-                    while (rs.next()) {
-                        int cnKey = rs.getInt("cidutciCn_key");
-                        String cnInv = rs.getNString("cidutciCnInv");
-                        if (tryInsertInvNumAliasOnCn(connection, cnKey, cnInv, now)) {
-                            aliasOnly++;
-                            continue;
-                        }
-                        int invKey;
-                        try (PreparedStatement inv = connection.prepareStatement(
-                                "INSERT INTO ags.inv (iTimeOfEntry) VALUES (?)",
-                                Statement.RETURN_GENERATED_KEYS)) {
-                            inv.setTimestamp(1, now);
-                            inv.executeUpdate();
-                            invKey = readGeneratedKey(inv, "Не удалось получить iKey");
-                        }
-                        try (PreparedStatement invNum = connection.prepareStatement(
-                                "INSERT INTO ags.invNum (inNum, inInv, inTimeOfEntry) VALUES (?, ?, ?)")) {
-                            if (cnInv == null || cnInv.isBlank() || "NullИлиПусто".equals(cnInv)) {
-                                invNum.setNull(1, Types.NVARCHAR);
-                            } else {
-                                invNum.setNString(1, cnInv);
-                            }
-                            invNum.setInt(2, invKey);
-                            invNum.setTimestamp(3, now);
-                            invNum.executeUpdate();
-                        }
-                        try (PreparedStatement cnInvPs = connection.prepareStatement(
-                                "INSERT INTO ags.cnInv (ciInv, ciCn, ciTimeOfEntry) VALUES (?, ?, ?)")) {
-                            cnInvPs.setInt(1, invKey);
-                            cnInvPs.setInt(2, cnKey);
-                            cnInvPs.setTimestamp(3, now);
-                            cnInvPs.executeUpdate();
-                        }
-                        inserted++;
-                    }
-                }
+                InvNotApplyCounts counts = applyInvNotLoadSetBased(
+                        connection,
+                        unloadKey,
+                        q("CnInvDbtUplTblCnInv"),
+                        "cidutciCn_key",
+                        "cidutciCnInv",
+                        "inNumCount",
+                        "cidutciRow",
+                        "applyDbtUplCnCtptExistInvNotLoad");
                 connection.commit();
-                log.log(Level.INFO,
-                        "applyDbtUplCnCtptExistInvNotLoad unloadKey={0} inserted={1} aliasOnly={2}",
-                        new Object[]{unloadKey, inserted, aliasOnly});
-                return new SudzDbtUplCnCtptExistInvApplyResult(inserted);
+                return new SudzDbtUplCnCtptExistInvApplyResult(counts.inserted());
             } catch (RuntimeException | SQLException exception) {
                 connection.rollback();
                 throw exception;
@@ -10766,7 +10949,7 @@ public class JdbcSudzDao implements SudzDao {
         sb.append("<div><b>").append(escapeHtml(ts)).append("</b>")
                 .append(" · Пересчёт DbtUplCstAg · upl=").append(dbtUplKey)
                 .append(" · ").append(elapsedMs).append(" мс</div>");
-        sb.append("<div>источник: P1 g_p only · ags.cn_inv_pm + sudz.g_p (")
+        sb.append("<div>источник: P2 g_p + 1.3 year→all · ags.cn_inv_pm + sudz.g_p (")
                 .append(gpLinks).append(" связей)</div>");
         sb.append("<div>итог: −").append(deleted).append(" / +").append(inserted)
                 .append(" · B(multi)=").append(multi)

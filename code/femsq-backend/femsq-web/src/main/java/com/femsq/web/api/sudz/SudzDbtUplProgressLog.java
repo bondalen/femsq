@@ -105,6 +105,24 @@ public final class SudzDbtUplProgressLog {
     }
 
     /**
+     * Снимок HTML для mid-flush: незакрытые {@code <details>} временно закрываются
+     * в копии (состояние лога не меняется).
+     *
+     * @return фрагмент, пригодный для записи в Progress
+     */
+    public String toHtmlSnapshot() {
+        if (openBlocks == 0) {
+            return html.toString();
+        }
+        StringBuilder snap = new StringBuilder(html.length() + openBlocks * 20);
+        snap.append(html);
+        for (int i = 0; i < openBlocks; i++) {
+            snap.append("</div></details>\n");
+        }
+        return snap.toString();
+    }
+
+    /**
      * Проверяет, что лог не пуст.
      *
      * @return true если есть содержимое

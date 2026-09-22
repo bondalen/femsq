@@ -3,13 +3,53 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2026-09-20T22:53:00+03:00",
+      "lastUpdated": "2026-09-22T17:32:00+03:00",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0077",
+      "nextTaskId": "0078",
       "items": {
+        "0077": {
+          "task": {
+            "displayName": "СУДЗ: полный UI экрана D (CstNew / СФ+КСДСФ / Sum_t / g_p) (pending, high). № 0077",
+            "task-attributes": {
+              "status": "pending",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "1.1.1.2.7.1: CstNew live + бейджи N на вкладках D",
+                "1.1.1.2.7.2: грид повторов/InvNot + адаптер КСДСФ ciusCiput; UAT @59 (left=8 / TwoLoad=13 из UI)",
+                "1.1.1.2.7.3: вкладка Sum_t («счета, сумма») включена и заполняется",
+                "1.1.1.2.7.4: статус g_p на D + переход; InsPmExt просмотр",
+                "1.1.1.2.7.5: UX лаунчера + чеклист UAT vs 02-11",
+                "План 0922 + WBS 0918 узел 1.1.1.2.7; работа в новом чате Cursor"
+              ],
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.web",
+                  "module:frontend",
+                  "module:backend.database"
+                ],
+                "journalRefs": [
+                  "chat:chat-2026-09-22-001",
+                  "log:log-2026-09-22-001"
+                ],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                "wbs": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                "accessPassport": "docs/development/notes/UI/02-11_cn-inv-pmt-upl-access.md",
+                "uiNote": "docs/development/notes/UI/02-9_sudz-mvp-screens.md",
+                "dependsOnTasks": [
+                  "0076"
+                ]
+              },
+              "created": "2026-09-22",
+              "lastUpdated": "2026-09-22",
+              "description": "Доводка UI экрана D после канона 0076: живые вкладки Access File_f, КСДСФ pmt, Sum_t, g_p-статус. Старт в новом чате; не смешивать с UAT-чатом воронки."
+            }
+          }
+        },
         "0076": {
           "task": {
             "displayName": "✅ СУДЗ: канон 1.1.1.2 apply→cn_inv_pm→g_p→Rslt (completed, high). № 0076",

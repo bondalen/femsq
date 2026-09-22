@@ -97,6 +97,7 @@ public class SudzPmtUplFunnelRunner {
         List<String> ran = new ArrayList<>();
         boolean anyStub = false;
         long funnelT0 = System.currentTimeMillis();
+        flushProgress(pmKey, progress);
 
         if (flTbl) {
             ran.add(SudzPmtUplFunnelSteps.EXCEL_TO_TBL);
@@ -108,6 +109,7 @@ public class SudzPmtUplFunnelRunner {
             progress.line("excelToTbl: <b>" + ms + "</b> мс");
             log.log(Level.INFO, "pmt funnel step {0} ms={1}",
                     new Object[]{SudzPmtUplFunnelSteps.EXCEL_TO_TBL, ms});
+            flushProgress(pmKey, progress);
         }
 
         if (!ordered.isEmpty()) {
@@ -118,6 +120,7 @@ public class SudzPmtUplFunnelRunner {
                 progress.line("<font color=\"Salmon\">буфер пуст</font> — сначала «обнов. по исх?»"
                         + " (Excel→Tbl) либо выберите пакет с уже загруженным Tbl.");
             }
+            flushProgress(pmKey, progress);
             for (String stepId : ordered) {
                 ran.add(stepId);
                 String title = SudzPmtUplFunnelSteps.ALL.stream()
@@ -128,6 +131,7 @@ public class SudzPmtUplFunnelRunner {
                 // Как свод: блоки развёрнуты — оператор сразу видит N / образцы (H2/H3).
                 progress.open("<b>" + SudzDbtUplProgressLog.escape(stepId) + "</b> — "
                         + SudzDbtUplProgressLog.escape(title), true);
+                flushProgress(pmKey, progress);
                 log.log(Level.INFO, "pmt funnel start {0} pmKey={1} flLoad={2}",
                         new Object[]{stepId, pmKey, flLoad});
                 long stepT0 = System.currentTimeMillis();
@@ -181,6 +185,7 @@ public class SudzPmtUplFunnelRunner {
                             + " — запись в домен не выполняется.");
                 }
                 progress.close();
+                flushProgress(pmKey, progress);
             }
         }
 
@@ -191,9 +196,23 @@ public class SudzPmtUplFunnelRunner {
         log.log(Level.INFO, "runPmtUplFunnel done pmKey={0} totalMs={1} steps={2}",
                 new Object[]{pmKey, funnelMs, ran});
 
-        sudzService.setPmtUplFileProgress(pmKey, progress.toHtml());
+        flushProgress(pmKey, progress);
         SudzPmtUplLauncher after = sudzService.getPmtUplLauncher(pmKey);
         return new SudzPmtUplFunnelResult(after, List.copyOf(ran), anyStub);
+    }
+
+    /**
+     * L1: записать текущий HTML Progress в БД (UI poll видит mid-flight).
+     *
+     * @param pmKey пакет
+     * @param progress лог
+     */
+    private void flushProgress(int pmKey, SudzDbtUplProgressLog progress) {
+        try {
+            sudzService.setPmtUplFileProgress(pmKey, progress.toHtmlSnapshot());
+        } catch (RuntimeException exception) {
+            log.log(Level.WARNING, "flushProgress pmKey=" + pmKey + " failed", exception);
+        }
     }
 
     /**
@@ -305,8 +324,11 @@ public class SudzPmtUplFunnelRunner {
             applyResult = sudzService.applyPmtUplInvNotLoad(pmKey);
             progress.line("Внесено счетов-фактур (строк) в БД: <b><font color=\"DarkGreen\">"
                     + applyResult.insertedCount() + "</font></b>");
-            prepared = sudzService.rebuildPmtUplInvNot(pmKey);
-            SudzPmtUplInvNotLoadLog.append(progress, prepared, null);
+            // Не гонять rebuild повторно, если apply ничего не вставил (O2/хвост).
+            if (applyResult.insertedCount() > 0) {
+                prepared = sudzService.rebuildPmtUplInvNot(pmKey);
+                SudzPmtUplInvNotLoadLog.append(progress, prepared, null);
+            }
             log.log(Level.INFO, "pmt InvNotLoad apply pmKey={0} inserted={1} left={2}",
                     new Object[]{pmKey, applyResult.insertedCount(), prepared.invoiceRowCount()});
         }
@@ -364,18 +386,22 @@ public class SudzPmtUplFunnelRunner {
      * @param progress лог
      */
     private void runInsPmNotLoadStep(int pmKey, boolean flLoad, SudzDbtUplProgressLog progress) {
-        SudzPmtUplInsPmNotResult find = sudzService.listPmtUplInsPmNotLoad(pmKey);
-        SudzPmtUplInsPmNotApplyResult applyResult = null;
-        SudzPmtUplInsPmNotLoadLog.append(progress, find, null);
-        if (flLoad && find.readyCount() > 0) {
-            applyResult = sudzService.applyPmtUplInsPmNotLoad(pmKey);
+        // O4b: при flLoad не делать COUNT(missingKeys) — на 23k Tbl find >600 с
+        // (timeout), apply даже не стартует. Пишем сразу через #tmp.
+        if (flLoad) {
+            progress.line("InsPmNotLoad: apply напрямую (без предварительного find)…");
+            SudzPmtUplInsPmNotApplyResult applyResult = sudzService.applyPmtUplInsPmNotLoad(pmKey);
             progress.line("Внесено платежи в количестве: <font color=\"DarkGreen\"><b>"
                     + applyResult.insertedCount() + "</b></font> записей.");
-            find = sudzService.listPmtUplInsPmNotLoad(pmKey);
-            SudzPmtUplInsPmNotLoadLog.append(progress, find, null);
-            log.log(Level.INFO, "pmt InsPmNotLoad apply pmKey={0} inserted={1} left={2}",
-                    new Object[]{pmKey, applyResult.insertedCount(), find.readyCount()});
+            SudzPmtUplInsPmNotResult after =
+                    new SudzPmtUplInsPmNotResult(0);
+            SudzPmtUplInsPmNotLoadLog.append(progress, after, applyResult);
+            log.log(Level.INFO, "pmt InsPmNotLoad apply-only pmKey={0} inserted={1}",
+                    new Object[]{pmKey, applyResult.insertedCount()});
+            return;
         }
+        SudzPmtUplInsPmNotResult find = sudzService.listPmtUplInsPmNotLoad(pmKey);
+        SudzPmtUplInsPmNotLoadLog.append(progress, find, null);
     }
 
     /**
@@ -429,7 +455,13 @@ public class SudzPmtUplFunnelRunner {
                     pmKey,
                     progress
             );
-            int written = sudzService.replacePmtUplTbl(pmKey, rows);
+            progress.line("запись Tbl (BulkCopy): <b>0</b>/" + rows.size() + "…");
+            flushProgress(pmKey, progress);
+            int written = sudzService.replacePmtUplTbl(pmKey, rows, (done, total, ms) -> {
+                progress.line("Tbl BulkCopy: <b>" + done + "</b>/" + total
+                        + " · " + ms + " мс");
+                flushProgress(pmKey, progress);
+            });
             progress.line("<b>excelToTbl</b>: "
                     + SudzDbtUplProgressLog.escape(fileName)
                     + " → " + sheetLabel

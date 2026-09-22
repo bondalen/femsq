@@ -1,12 +1,13 @@
 # СУДЗ — эскизы экранов MVP (G4)
 
 **Дата создания:** 2026-08-07  
-**Последнее обновление:** 2026-09-16 (S79: двушаговый Rslt сбор — проверить погашения / выгрузить)  
-**Статус:** экран A0 = yr; Progress — лаунчер **операций**; бывший Rslt → «Долги / мероприятия»; **C — лаунчер загрузки свода**; **D — лаунчер загрузки платежей (visual v1)**; КСДСФ — `SudzSfDoubleView` (**S68u** UAT 910 ✅: двоящих № нет) + **S68h**/**S68v**; для `CnExistCtptNotLoad` — TopBar **Договоры** ([02-10](./02-10_contracts-cnNum-access.md)); **S79** ☐ двухкнопочный Rslt сбор
+**Последнее обновление:** 2026-09-22 (указатель UI D complete → 0922 / 0077; ранее S79 2026-09-16)  
+**Статус:** экран A0 = yr; Progress — лаунчер **операций**; бывший Rslt → «Долги / мероприятия»; **C — лаунчер загрузки свода**; **D — лаунчер загрузки платежей** (канон воронки ✅ 0076; полный UI вкладок → **0077**); КСДСФ — `SudzSfDoubleView` (**S68u** UAT 910 ✅: двоящих № нет) + **S68h**/**S68v**; для `CnExistCtptNotLoad` — TopBar **Договоры** ([02-10](./02-10_contracts-cnNum-access.md)); **S79** ☐ двухкнопочный Rslt сбор
 **Домен:** [01-overview](../domain/sudz/01-overview.md) · процесс [03-processes](../domain/sudz/03-processes.md) · витрина [08-target-schema §3.6](../domain/sudz/08-target-schema.md) · алгоритм Access [04 §2.7](../domain/sudz/04-data-model.md#27-полный-алгоритм-btncidufload_click--цепочка-сопоставления-подтверждено-s29) · платежи [04 §2.9](../domain/sudz/04-data-model.md#29-алгоритм-btnupload_click--cninvpmtupl-процесс-1112-каркас-s69)  
 **IA:** [02-4_app-forms-ia.md](./02-4_app-forms-ia.md)  
 **План СУДЗ:** [chat-plan-26-0802-sudz.md](../chats/chat-plan/chat-plan-26-0802-sudz.md) §5.6  
-**План экрана платежей:** [chat-plan-26-0819-cn-inv-pmt-upl.md](../chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md)  
+**План экрана платежей (канон):** [chat-plan-26-0819-cn-inv-pmt-upl.md](../chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md)  
+**План UI D полный:** [chat-plan-26-0922-pmt-upl-ui-complete.md](../chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md) (WBS **1.1.1.2.7**)  
 **Резюме экрана D:** [chat-resume-26-0819-cn-inv-pmt-upl.md](../chats/chat-resume/chat-resume-26-0819-cn-inv-pmt-upl.md)  
 **Дерево КСДСФ:** [ksdsf-inv-num.tree.md](./02-12_femsq-tree/ksdsf-inv-num.tree.md) · правила [relation-tree.md](./02-12_femsq-tree/relation-tree.md)  
 **Задачи:** 0065–0075 (СУДЗ); **активно: 0075 / S79** (шаг 1); **0072** visual v1 ✅  
@@ -396,10 +397,11 @@ Access: **список сверху / детали снизу** (не master с�
 
 ### Вне v1 экрана D / 0072
 
-- Воронка `btnUpload` / запись в `ags_cn_inv_pm`.
-- Живые InvDouble, CstNew, Sum_t.
-- Наполнение вкладки `g_p` на экране C; переход C→D по `pmKey`.
-- Адаптер КСДСФ под pmt.
+- ~~Воронка `btnUpload` / запись в `ags_cn_inv_pm`.~~ → ✅ **0076** / [0819](../chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md)
+- Живые InvDouble, CstNew, Sum_t; адаптер КСДСФ под pmt; g_p-статус на D / InsPmExt / UX → план **[0922](../chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md)** (WBS **1.1.1.2.7.1–.5**, задача **0077**; **новый чат**).
+- Наполнение вкладки `g_p` на экране C; переход C→D по `pmKey` — **1.1.1.2.7.4** в 0922 (вкладка остаётся на C).
+
+**Последнее обновление §4b:** 2026-09-22 (указатель на 0922).
 
 ---
 

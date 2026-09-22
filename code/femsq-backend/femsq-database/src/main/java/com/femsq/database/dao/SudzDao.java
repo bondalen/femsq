@@ -58,6 +58,7 @@ import com.femsq.database.model.sudz.SudzPmtUplInsPmNotResult;
 import com.femsq.database.model.sudz.SudzPmtUplCnNotLoad;
 import com.femsq.database.model.sudz.SudzPmtUplLogOnlyResult;
 import com.femsq.database.model.sudz.SudzPmtUplTblRow;
+import com.femsq.database.model.sudz.SudzPmtUplTblWriteProgress;
 import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
@@ -282,14 +283,19 @@ public interface SudzDao {
     SudzPmtUplFile setPmtUplFileProgress(int pmKey, String progressHtml);
 
     /**
-     * Заменяет буфер {@code CnInvPmtUplTbl} для пакета (DELETE по unload + INSERT).
+     * Заменяет буфер {@code CnInvPmtUplTbl} для пакета (DELETE по unload + BulkCopy/INSERT).
      * Перед DELETE очищает {@code CnInvUplSfDouble}, ссылающиеся на строки Tbl.
      *
      * @param unloadKey {@code cn_inv_pm_key} / {@code ciputUnloadKey}
      * @param rows строки из Excel
+     * @param progress опциональный mid-progress (O3/L1); null — только server log
      * @return число вставленных строк
      */
-    int replacePmtUplTbl(int unloadKey, List<SudzPmtUplTblRow> rows);
+    int replacePmtUplTbl(
+            int unloadKey,
+            List<SudzPmtUplTblRow> rows,
+            SudzPmtUplTblWriteProgress progress
+    );
 
     /**
      * Число строк staging {@code CnInvPmtUplTbl} для пакета.

@@ -5,7 +5,7 @@
 **Проект:** FEMSQ  
 **Версия плана:** 0.8.7 (0072–0074 ✅; **0076 ✅** закрыта; H4–H7 ✅; §0a.1–5 ✅)  
 **Задачи:** [0072](../../../project-development.json) ✅ · [0073](../../../project-development.json) ✅ · [0074](../../../project-development.json) ✅ · [0076](../../../project-development.json) ✅  
-**Статус плана:** ✅ **закрыт** (цель чата 2026-09-18): канон 1.1.1.2 → `cn_inv_pm` / `g_p` / Rslt vs Access FAIL=0 (C' 2026-09-20, JAR **304**). Вне scope later: §4 этапы 3–4 (вкладка g_p на C, КСДСФ).  
+**Статус плана:** ✅ **закрыт** (цель чата 2026-09-18): канон 1.1.1.2 → `cn_inv_pm` / `g_p` / Rslt vs Access FAIL=0 (C' 2026-09-20, JAR **304**). Вне scope later: §4 этапы 3–4 (вкладка g_p на C, КСДСФ) → **перенесены** в [0922](./chat-plan-26-0922-pmt-upl-ui-complete.md) / WBS [0918 **1.1.1.2.7**](./chat-plan-26-0918-sudz-rslt-prod-mailing.md) / задача **0077**.  
 **Эксперимент строек (вне scope этого плана):** [chat-plan-26-0921-dbt-upl-cst-ag-exp.md](./chat-plan-26-0921-dbt-upl-cst-ag-exp.md) · WBS [0918 §1.1.1.2.5](./chat-plan-26-0918-sudz-rslt-prod-mailing.md)  
 **Резюме visual v1:** [chat-resume-26-0819-cn-inv-pmt-upl.md](../chat-resume/chat-resume-26-0819-cn-inv-pmt-upl.md)  
 **Процесс:** [03 §1.1.1.2](../../domain/sudz/03-processes.md)  
@@ -135,8 +135,8 @@
 | **2d** | Мост g_p | `sudz.cn_inv_dbt_upl_g_p` → 902 (+ база года) | ✅ H5 UI: 5× g_p @902 |
 | **2e** | Стройки канон | fn+g_p → `DbtUplCstAg` (не Excel-бэкфилл) | ✅ H6 @902 |
 | **2f** | Rslt verify | asOf QI ↔ `26-0505` колонки строек | ✅ **H7** FAIL=0 (2026-09-20 C') |
-| **3** | (позже) | Вкладка `g_p` на экране C; переход к D по `pmKey` | ☐ |
-| **4** | (позже) | Адаптер КСДСФ под pmt | ☐ |
+| **3** | (позже → **0077**) | Вкладка `g_p` на экране C; переход к D по `pmKey` | ☐ → [0922](./chat-plan-26-0922-pmt-upl-ui-complete.md) **1.1.1.2.7.4** |
+| **4** | (позже → **0077**) | Адаптер КСДСФ под pmt; живые CstNew / InvDouble / Sum_t | ☐ → [0922](./chat-plan-26-0922-pmt-upl-ui-complete.md) **`.7.1`…`.7.3`** |
 
 Код v1 — `SudzPmtUplView` / `sudz-pmt-upl`; резюме [chat-resume-26-0819](../chat-resume/chat-resume-26-0819-cn-inv-pmt-upl.md). Воронка — отдельный чат после File, не 0802.
 
@@ -314,4 +314,4 @@
 
 **Автор плана:** Cursor AI Assistant + Александр  
 **Создано:** 2026-08-19  
-**Обновлено:** 2026-09-21 — указатель на эксперимент CstAgExp [0921](./chat-plan-26-0921-dbt-upl-cst-ag-exp.md) (вне scope; v0.8.7)
+**Обновлено:** 2026-09-22 — этапы 3–4 → [0922](./chat-plan-26-0922-pmt-upl-ui-complete.md) / **0077**; ранее 2026-09-21 — указатель CstAgExp [0921](./chat-plan-26-0921-dbt-upl-cst-ag-exp.md) (вне scope; v0.8.7)

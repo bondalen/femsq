@@ -162,32 +162,39 @@ export const useSudzPmtUplStore = defineStore('sudz-pmt-upl', () => {
 
   /**
    * Прогон воронки (excelToTbl при cipufFlTbl; cipu* — stub в логе).
+   * L1: пока идёт mutation, опрашиваем launcher — mid Progress в UI.
    */
   async function runFunnel(steps: string[], flLoad: boolean): Promise<SudzPmtUplFunnelResult | null> {
     if (selectedPmKey.value == null) {
       return null;
     }
+    const pmKey = selectedPmKey.value;
     funnelRunning.value = true;
     error.value = null;
+    const pollMs = 2000;
+    const pollTimer = window.setInterval(() => {
+      void loadLauncher(pmKey).catch(() => {
+        /* mid-poll: не ронять воронку */
+      });
+    }, pollMs);
     try {
       const result = await runSudzPmtUplFunnel({
-        pmKey: selectedPmKey.value,
+        pmKey,
         steps,
         flLoad
       });
-      await loadLauncher(selectedPmKey.value);
+      await loadLauncher(pmKey);
       return result;
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e);
-      if (selectedPmKey.value != null) {
-        try {
-          await loadLauncher(selectedPmKey.value);
-        } catch {
-          // progress мог обновиться на сервере до ошибки ответа
-        }
+      try {
+        await loadLauncher(pmKey);
+      } catch {
+        // progress мог обновиться на сервере до ошибки ответа
       }
       return null;
     } finally {
+      window.clearInterval(pollTimer);
       funnelRunning.value = false;
     }
   }

@@ -3,9 +3,83 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-09-21"
+      "lastUpdated": "2026-09-22"
     },
     "sessions": [
+      {
+        "chat": {
+          "displayName": "UI D полный (CstNew / КСДСФ pmt / Sum_t) (pending, high). № chat-2026-09-22-001",
+          "chat-attributes": {
+            "id": "chat-2026-09-22-001",
+            "created": "2026-09-22",
+            "lastUpdated": "2026-09-22",
+            "owner": "Александр",
+            "status": "pending",
+            "priority": "high",
+            "tags": [
+              "sudz",
+              "pmt-upl",
+              "UI-D",
+              "1.1.1.2.7",
+              "0077"
+            ],
+            "links": {
+              "projectDocsRefs": [
+                "module:frontend",
+                "module:backend.web"
+              ],
+              "developmentTasks": [
+                "0077"
+              ],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+              "wbs": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+              "canonPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "План 0922 + WBS 1.1.1.2.7 + задача 0077 (success). № log-2026-09-22-001",
+                "log-attributes": {
+                  "id": "log-2026-09-22-001",
+                  "timestamp": "2026-09-22T17:32:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": [
+                    "docs",
+                    "0922",
+                    "0077"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксирована доводка UI экрана D после канона воронки",
+                    "details": "Создан chat-plan-26-0922-pmt-upl-ui-complete.md (листья 1.1.1.2.7.1–.5). В 0918: узел 1.1.1.2.7 + фокус на новый чат. Указатели в 0819 (этапы 3–4), 02-9 §4b, 02-11. Задача 0077 pending. Код не начат — старт в новом чате Cursor с 1.1.1.2.7.1.",
+                    "outcome": "Документация готова; следующий шаг — новый чат + 1.1.1.2.7.1 (CstNew + бейджи).",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md",
+                      "docs/development/project-development.json"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
       {
         "chat": {
           "displayName": "Эксперимент CstAgExp (1.1–1.4) (active, medium). № chat-2026-09-21-001",

@@ -1,8 +1,8 @@
 # Платежи — эталон Access `CnInvPmtUpl*` (процесс 1.1.1.2)
 
 **Дата создания:** 2026-08-17  
-**Последнее обновление:** 2026-08-19 (S70: visual v1 экрана D принят / 0072)  
-**Статус:** ✅ паспорт Access закрыт. Шаг 8 (`cipuCn_CtptCnOneInvTwoLoad`) — только показ; запись/перепривязка двоящих СФ — вручную оператором. Java UI — [chat-plan-26-0819-cn-inv-pmt-upl.md](../chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md) (задача **0072**, visual v1 ✅ UAT).  
+**Последнее обновление:** 2026-08-19 (S70: visual v1 экрана D принят / 0072); **указатель 2026-09-22:** полный UI вкладок D → [chat-plan-26-0922-pmt-upl-ui-complete.md](../chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md)  
+**Статус:** ✅ паспорт Access закрыт. Шаг 8 (`cipuCn_CtptCnOneInvTwoLoad`) — только показ; запись/перепривязка двоящих СФ — вручную оператором. Java UI канон — [chat-plan-26-0819-cn-inv-pmt-upl.md](../chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md) (**0076** ✅). Доводка живых вкладок D — **0077** / [0922](../chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md).  
 **Резюме FEMSQ UI:** [chat-resume-26-0819-cn-inv-pmt-upl.md](../chats/chat-resume/chat-resume-26-0819-cn-inv-pmt-upl.md)  
 **Скрины Design/SQL/Runtime:** [assets/26-0817-cn-inv-pmt-upl/README.md](./assets/26-0817-cn-inv-pmt-upl/README.md)  
 **Съём таблиц:** [26-0813_CnInvPmtUpl_/](../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/)  

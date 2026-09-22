@@ -64,6 +64,7 @@ import com.femsq.database.model.sudz.SudzPmtUplFunnelSteps;
 import com.femsq.database.model.sudz.SudzPmtUplLauncher;
 import com.femsq.database.model.sudz.SudzPmtUplLogOnlyResult;
 import com.femsq.database.model.sudz.SudzPmtUplTblRow;
+import com.femsq.database.model.sudz.SudzPmtUplTblWriteProgress;
 import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
@@ -326,13 +327,22 @@ public class DefaultSudzService implements SudzService {
 
     @Override
     public int replacePmtUplTbl(int unloadKey, List<SudzPmtUplTblRow> rows) {
+        return replacePmtUplTbl(unloadKey, rows, null);
+    }
+
+    @Override
+    public int replacePmtUplTbl(
+            int unloadKey,
+            List<SudzPmtUplTblRow> rows,
+            SudzPmtUplTblWriteProgress progress
+    ) {
         if (unloadKey <= 0) {
             throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
         }
         Objects.requireNonNull(rows, "rows");
-        log.log(Level.INFO, "replacePmtUplTbl unloadKey={0}, rows={1}",
+        log.log(Level.INFO, "replacePmtUplTbl unloadKey={0}, rows={1}, bulk=true",
                 new Object[]{unloadKey, rows.size()});
-        return sudzDao.replacePmtUplTbl(unloadKey, rows);
+        return sudzDao.replacePmtUplTbl(unloadKey, rows, progress);
     }
 
     @Override

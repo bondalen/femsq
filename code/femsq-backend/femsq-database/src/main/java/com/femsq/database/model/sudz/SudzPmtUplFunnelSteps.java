@@ -81,6 +81,31 @@ public final class SudzPmtUplFunnelSteps {
     }
 
     /**
+     * Повтор хвоста цепочки: суффикс enabled-шагов (с любой позиции) или одиночный InsPm.
+     * Позволяет не гонять заново InvNot/rebuild при догрузке Ac→Doc→InsPm.
+     *
+     * @param requested запрошенные id
+     * @return true если допустимый суффикс / одиночный InsPm
+     */
+    public static boolean isSuffixRetry(List<String> requested) {
+        if (requested == null || requested.isEmpty()) {
+            return false;
+        }
+        if (isSingleTailRetry(requested)) {
+            return true;
+        }
+        List<String> chain = enabledIds();
+        for (int start = 1; start < chain.size(); start++) {
+            for (int end = start + 1; end <= chain.size(); end++) {
+                if (chain.subList(start, end).equals(requested)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * Повтор только {@code cipuInsPmNotLoad} (после timeout SELECT/INSERT на крупном Tbl).
      *
      * @param requested запрошенные id
@@ -94,7 +119,7 @@ public final class SudzPmtUplFunnelSteps {
 
     /**
      * Проверяет префикс цепочки среди enabled-шагов
-     * (либо одиночный retry {@link #isSingleTailRetry}).
+     * (либо суффикс / одиночный retry {@link #isSuffixRetry}).
      *
      * @param requested запрошенные id
      */
@@ -105,7 +130,7 @@ public final class SudzPmtUplFunnelSteps {
         if (requested.isEmpty()) {
             return;
         }
-        if (isSingleTailRetry(requested)) {
+        if (isSuffixRetry(requested)) {
             return;
         }
         List<String> chain = enabledIds();

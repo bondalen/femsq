@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -47,5 +46,26 @@ class SudzPmtUplFunnelStepsTest {
         assertDoesNotThrow(() -> SudzPmtUplFunnelSteps.requirePrefixOfEnabled(
                 List.of("cipuInsPmNotLoad")));
         assertTrue(SudzPmtUplFunnelSteps.isSingleTailRetry(List.of("cipuInsPmNotLoad")));
+    }
+
+    @Test
+    void suffixFromAcNotLoadAllowed() {
+        assertDoesNotThrow(() -> SudzPmtUplFunnelSteps.requirePrefixOfEnabled(List.of(
+                "cipuCn_CtptCnOneInvOneAcNotLoad",
+                "cipuDocNotLoad",
+                "cipuCn_CtptCnOneInvOneAcDcNot",
+                "cipuInsPmNotLoad",
+                "cipuInsPmExt")));
+        assertTrue(SudzPmtUplFunnelSteps.isSuffixRetry(List.of(
+                "cipuCn_CtptCnOneInvOneAcNotLoad",
+                "cipuDocNotLoad")));
+    }
+
+    @Test
+    void midChainGapRejected() {
+        assertThrows(IllegalArgumentException.class,
+                () -> SudzPmtUplFunnelSteps.requirePrefixOfEnabled(List.of(
+                        "cipuDocNotLoad",
+                        "cipuInsPmNotLoad")));
     }
 }

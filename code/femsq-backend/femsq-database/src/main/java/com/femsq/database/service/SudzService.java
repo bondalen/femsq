@@ -60,6 +60,7 @@ import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotApplyResult;
 import com.femsq.database.model.sudz.SudzPmtUplCnNotLoad;
 import com.femsq.database.model.sudz.SudzPmtUplLogOnlyResult;
 import com.femsq.database.model.sudz.SudzPmtUplTblRow;
+import com.femsq.database.model.sudz.SudzPmtUplTblWriteProgress;
 import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
@@ -276,13 +277,29 @@ public interface SudzService {
     SudzPmtUplFile setPmtUplFileProgress(int pmKey, String progressHtml);
 
     /**
-     * Заменяет staging {@code CnInvPmtUplTbl} для пакета.
+     * Заменяет staging {@code CnInvPmtUplTbl} для пакета (BulkCopy).
      *
      * @param unloadKey {@code cn_inv_pm_key}
      * @param rows строки Excel→Tbl
      * @return число вставленных строк
      */
-    int replacePmtUplTbl(int unloadKey, List<SudzPmtUplTblRow> rows);
+    default int replacePmtUplTbl(int unloadKey, List<SudzPmtUplTblRow> rows) {
+        return replacePmtUplTbl(unloadKey, rows, null);
+    }
+
+    /**
+     * Заменяет staging {@code CnInvPmtUplTbl} с mid-progress (O3/L1).
+     *
+     * @param unloadKey {@code cn_inv_pm_key}
+     * @param rows строки Excel→Tbl
+     * @param progress колбэк хода; null — только server log
+     * @return число вставленных строк
+     */
+    int replacePmtUplTbl(
+            int unloadKey,
+            List<SudzPmtUplTblRow> rows,
+            SudzPmtUplTblWriteProgress progress
+    );
 
     /**
      * Число строк staging {@code CnInvPmtUplTbl}.
