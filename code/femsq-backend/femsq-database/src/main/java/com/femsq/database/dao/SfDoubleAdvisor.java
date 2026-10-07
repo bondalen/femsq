@@ -7,6 +7,7 @@ import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
 import com.femsq.database.model.sudz.SudzSfDoubleHintItem;
 import com.femsq.database.model.sudz.SudzSfDoubleHintSection;
 import com.femsq.database.model.sudz.SudzSfDoubleHints;
+import com.femsq.database.model.sudz.SfDecisionCompareUtil;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -45,25 +46,57 @@ final class SfDoubleAdvisor {
                 + " «" + nullToDash(row.ciusCnNum()) + "» · СФ «" + nullToDash(row.ciusInvNum()) + "»");
         if (excel != null && excel.cidutDebt() != null) {
             appendLine(msg, "Якорь Excel: сумма " + excel.cidutDebt());
+        } else if (excel != null && "pmt".equals(excel.source()) && excel.pmtCdtBlns() != null) {
+            appendLine(msg, "Якорь Excel (платёж): кредит " + excel.pmtCdtBlns()
+                    + (excel.pmtDocSum() != null ? " · док " + excel.pmtDocSum() : ""));
         }
 
         if (row.ciusCnKey() == null || row.ciusCnKey() <= 0) {
+            SudzSfDoubleHintSection sfEarly = hints.sfByNum();
+            if ("yes".equals(sfEarly.status())
+                    && sfEarly.totalCount() == 1
+                    && !sfEarly.items().isEmpty()
+                    && !SfDecisionCompareUtil.isSuspiciousInvNum(row.ciusInvNum())) {
+                SudzSfDoubleHintItem item = sfEarly.items().get(0);
+                boolean excelCnCompatible = excelCnCompatibleWithItem(excel, item);
+                if (excelCnCompatible) {
+                    appendLine(msg, "На очереди нет ciusCnKey, но один СФ с номером и исполнителем Excel"
+                            + " (executor_unique_no_queue_cn)");
+                    if (excel != null && excel.cidutCnName() != null && !excel.cidutCnName().isBlank()) {
+                        appendLine(msg, "Договор Excel «" + excel.cidutCnName() + "» ↔ cn="
+                                + item.cnKey() + " «" + nullToDash(item.cnNum()) + "»");
+                    }
+                    return linkAdvice(msg, "high", item, item.cnKey());
+                }
+            }
+            if (SfDecisionCompareUtil.isSuspiciousInvNum(row.ciusInvNum())) {
+                appendLine(msg, "Номер Excel «" + nullToDash(row.ciusInvNum())
+                        + "» подозрительный — без договора очереди авто-link запрещён (suspicious_inv)");
+            }
             appendLine(msg, "На строке нет договора (ciusCnKey) — «Создать СФ по Excel» недоступно");
-            appendLine(msg, "→ Ручной разбор: привязать договор на предыдущих шагах воронки");
+            appendLine(msg, "→ Ручной разбор: привязать договор на предыдущих шагах воронки"
+                    + " или выбрать СФ в списке совпадений");
             return finish(msg, "high", "manual", null, null);
         }
 
         SudzSfDoubleHintSection sfByNum = hints.sfByNum();
         appendLine(msg, "СФ по номеру: " + sfByNum.message());
 
+        boolean suspiciousInv = SfDecisionCompareUtil.isSuspiciousInvNum(row.ciusInvNum());
+        if (suspiciousInv) {
+            appendLine(msg, "Номер Excel «" + nullToDash(row.ciusInvNum())
+                    + "» подозрительный (б/н, Б/С, «-», …) — совпадение только по номеру не доказательство"
+                    + " (suspicious_inv)");
+        }
+
         if ("yes".equals(sfByNum.status())) {
             if (sfByNum.totalCount() == 1 && !sfByNum.items().isEmpty()) {
                 SudzSfDoubleHintItem item = sfByNum.items().get(0);
-                if (Objects.equals(item.cnKey(), row.ciusCnKey())) {
+                if (!suspiciousInv && Objects.equals(item.cnKey(), row.ciusCnKey())) {
                     appendLine(msg, "Один СФ с этим номером и исполнителем Excel на договоре очереди (executor_unique)");
                     return linkAdvice(msg, "high", item, row.ciusCnKey());
                 }
-                if (cnNumbersAreVariants(row.ciusCnNum(), item.cnNum())) {
+                if (!suspiciousInv && cnNumbersAreVariants(row.ciusCnNum(), item.cnNum())) {
                     Integer canonicalCn = item.cnKey();
                     Integer invKey = item.invKey();
                     boolean invOnCanonical = invKey != null && domain.stream()
@@ -90,54 +123,59 @@ final class SfDoubleAdvisor {
                     }
                     return linkAdvice(msg, confidence, item, item.cnKey());
                 }
-                Optional<SudzSfDoubleAdvice> sumLink = tryLinkByUniqueSumOnExcelCn(msg, hints, row);
-                if (sumLink.isPresent()) {
-                    return sumLink.get();
+                if (!suspiciousInv) {
+                    Optional<SudzSfDoubleAdvice> sumLink = tryLinkByUniqueSumOnExcelCn(msg, hints, row);
+                    if (sumLink.isPresent()) {
+                        return sumLink.get();
+                    }
+                    appendLine(msg, "СФ с номером и исполнителем Excel найден на другом договоре (cn_homonym)");
+                    appendRecommendCreate(msg, "high");
+                    appendLine(msg, "Причина: inv=" + (item.invKey() != null ? item.invKey() : item.pickValue())
+                            + " на cn=" + (item.cnKey() != null ? item.cnKey() : "—")
+                            + " «" + nullToDash(item.cnNum()) + "», очередь cn=" + row.ciusCnKey()
+                            + " «" + nullToDash(row.ciusCnNum()) + "»");
+                    return finish(msg, "high", "create", null, row.ciusCnKey());
                 }
-                appendLine(msg, "СФ с номером и исполнителем Excel найден на другом договоре (cn_homonym)");
-                appendRecommendCreate(msg, "high");
-                appendLine(msg, "Причина: inv=" + (item.invKey() != null ? item.invKey() : item.pickValue())
-                        + " на cn=" + (item.cnKey() != null ? item.cnKey() : "—")
-                        + " «" + nullToDash(item.cnNum()) + "», очередь cn=" + row.ciusCnKey()
-                        + " «" + nullToDash(row.ciusCnNum()) + "»");
-                return finish(msg, "high", "create", null, row.ciusCnKey());
+                // suspicious + sfByNum yes: ниже sum_same_cn или create
             }
             if (sfByNum.totalCount() > 1) {
                 List<SudzSfDoubleHintItem> onCn = sfByNum.items().stream()
                         .filter(it -> Objects.equals(it.cnKey(), row.ciusCnKey()))
                         .toList();
-                if (onCn.size() == 1) {
+                if (!suspiciousInv && onCn.size() == 1) {
                     appendLine(msg, "Среди совпадений по исполнителю один СФ на договоре Excel (cn_exact)");
                     return linkAdvice(msg, "high", onCn.get(0), row.ciusCnKey());
                 }
-                List<SudzSfDoubleHintItem> onVariant = sfByNum.items().stream()
-                        .filter(it -> cnNumbersAreVariants(row.ciusCnNum(), it.cnNum()))
-                        .toList();
-                if (onVariant.size() == 1) {
-                    SudzSfDoubleHintItem item = onVariant.get(0);
-                    Integer invKey = item.invKey();
-                    boolean invOnCanonical = invKey != null && domain.stream()
-                            .anyMatch(m -> invKey.equals(m.invKey())
-                                    && Objects.equals(m.cnKey(), item.cnKey()));
-                    if (invOnCanonical && !Objects.equals(row.ciusCnKey(), item.cnKey())) {
-                        appendLine(msg, "Среди совпадений один СФ на варианте номера — cn_num_alias");
-                        appendRecommendAliasCnNum(msg, row, item, confidenceForVariantLink(hints, row));
-                        return finish(msg, confidenceForVariantLink(hints, row), "alias_cn_num",
-                                invKey, item.cnKey());
+                if (!suspiciousInv) {
+                    List<SudzSfDoubleHintItem> onVariant = sfByNum.items().stream()
+                            .filter(it -> cnNumbersAreVariants(row.ciusCnNum(), it.cnNum()))
+                            .toList();
+                    if (onVariant.size() == 1) {
+                        SudzSfDoubleHintItem item = onVariant.get(0);
+                        Integer invKey = item.invKey();
+                        boolean invOnCanonical = invKey != null && domain.stream()
+                                .anyMatch(m -> invKey.equals(m.invKey())
+                                        && Objects.equals(m.cnKey(), item.cnKey()));
+                        if (invOnCanonical && !Objects.equals(row.ciusCnKey(), item.cnKey())) {
+                            appendLine(msg, "Среди совпадений один СФ на варианте номера — cn_num_alias");
+                            appendRecommendAliasCnNum(msg, row, item, confidenceForVariantLink(hints, row));
+                            return finish(msg, confidenceForVariantLink(hints, row), "alias_cn_num",
+                                    invKey, item.cnKey());
+                        }
+                        appendLine(msg, "Среди совпадений один СФ на варианте номера договора (cn_num_variant)");
+                        String confidence = confidenceForVariantLink(hints, row);
+                        if ("high".equals(confidence)) {
+                            appendLine(msg, "Уникальное совпадение суммы с исполнителем Excel — уверенность повышена");
+                        }
+                        return linkAdvice(msg, confidence, item, item.cnKey());
                     }
-                    appendLine(msg, "Среди совпадений один СФ на варианте номера договора (cn_num_variant)");
-                    String confidence = confidenceForVariantLink(hints, row);
-                    if ("high".equals(confidence)) {
-                        appendLine(msg, "Уникальное совпадение суммы с исполнителем Excel — уверенность повышена");
+                    if (onCn.size() > 1) {
+                        appendLine(msg, "Несколько СФ с номером на договоре Excel — выберите вручную");
+                        appendSumHints(msg, hints);
+                        return finish(msg, "medium", "manual", null, row.ciusCnKey());
                     }
-                    return linkAdvice(msg, confidence, item, item.cnKey());
+                    appendLine(msg, "Совпадения по исполнителю на других договорах — не связывать вслепую");
                 }
-                if (onCn.size() > 1) {
-                    appendLine(msg, "Несколько СФ с номером на договоре Excel — выберите вручную");
-                    appendSumHints(msg, hints);
-                    return finish(msg, "medium", "manual", null, row.ciusCnKey());
-                }
-                appendLine(msg, "Совпадения по исполнителю на других договорах — не связывать вслепую");
             }
         }
 
@@ -171,6 +209,13 @@ final class SfDoubleAdvisor {
         Optional<SudzSfDoubleAdvice> sumLink = tryLinkByUniqueSumOnExcelCn(msg, hints, row);
         if (sumLink.isPresent()) {
             return sumLink.get();
+        }
+        if (suspiciousInv) {
+            appendRecommendCreate(msg, "high");
+            appendLine(msg, "Причина: подозрительный номер — без уникальной суммы (sum_same_cn) создавать новый СФ,"
+                    + " не цеплять к legacy «б/н» на договоре");
+            appendLine(msg, "Примечание: советник не заменяет первичку");
+            return finish(msg, "high", "create", null, row.ciusCnKey());
         }
         Optional<SudzSfDoubleHintItem> sumItem = uniqueSumHintForRow(hints, row);
         if (sumItem.isPresent()) {
@@ -266,6 +311,31 @@ final class SfDoubleAdvisor {
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * Совместимость текста договора Excel с найденным СФ (пусто Excel — ок; иначе совпадение/вариант).
+     *
+     * @param excel кандидат
+     * @param item подсказка sfByNum
+     * @return true если можно рекомендовать link
+     */
+    private static boolean excelCnCompatibleWithItem(
+            SudzSfDoubleExcelCandidate excel,
+            SudzSfDoubleHintItem item
+    ) {
+        if (excel == null) {
+            return true;
+        }
+        String excelCn = excel.cidutCnName();
+        if (excelCn == null || excelCn.isBlank() || "NullИлиПусто".equals(excelCn.trim())) {
+            return true;
+        }
+        if (item.cnNum() == null) {
+            return true;
+        }
+        return normalizeCnNum(excelCn).equals(normalizeCnNum(item.cnNum()))
+                || cnNumbersAreVariants(excelCn, item.cnNum());
     }
 
     private static SudzSfDoubleAdvice linkAdvice(

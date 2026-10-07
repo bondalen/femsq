@@ -551,9 +551,133 @@ export async function deleteCn(id: number): Promise<boolean> {
   }
 }
 
+const CN_INVS_BY_CN_QUERY = gql`
+  query CnInvsByCn(
+    $cnKey: Int!
+    $page: Int
+    $rowsPerPage: Int
+    $filter: String
+    $columnFilters: CnInvColumnFilters
+    $sortBy: String
+    $descending: Boolean
+  ) {
+    cnInvsByCn(
+      cnKey: $cnKey
+      page: $page
+      rowsPerPage: $rowsPerPage
+      filter: $filter
+      columnFilters: $columnFilters
+      sortBy: $sortBy
+      descending: $descending
+    ) {
+      totalCount
+      page
+      rowsPerPage
+      items {
+        ciKey
+        ciInv
+        ciCn
+        ciTimeOfEntry
+        iNum
+      }
+    }
+  }
+`;
+
+/** Параметры страницы списка СФ договора. */
+export interface CnInvPageQuery {
+  page: number;
+  rowsPerPage: number;
+  filter: string;
+  /** Непустые фильтры колонок: iNum, ciInv, ciKey, ciTimeOfEntry. */
+  columnFilters: Record<string, string>;
+  sortBy: string;
+  descending: boolean;
+}
+
+/** Страница связей договора и счетов-фактур с номером iNum. */
+export interface CnInvListPage {
+  items: CnInvListRow[];
+  totalCount: number;
+  page: number;
+  rowsPerPage: number;
+}
+
+/**
+ * Пустой набор колоночных фильтров GraphQL не отправляет.
+ *
+ * @param filters значения FemsqTable
+ */
+function columnFiltersVariable(
+  filters: Record<string, string> | undefined
+): Record<string, string> | null {
+  if (filters == null) {
+    return null;
+  }
+  const next: Record<string, string> = {};
+  for (const [key, value] of Object.entries(filters)) {
+    const trimmed = (value ?? '').trim();
+    if (trimmed !== '') {
+      next[key] = trimmed;
+    }
+  }
+  return Object.keys(next).length === 0 ? null : next;
+}
+
+/**
+ * Страница связей {@code cnInv} договора с номером СФ.
+ * Номер берётся из {@code inv.iNum} на сервере, без отдельных запросов на каждую строку.
+ *
+ * @param cnKey {@code ags.cn.cn_key}
+ * @param query страница, фильтр (номер СФ или ключ) и сортировка
+ */
+export async function fetchCnInvPage(cnKey: number, query: CnInvPageQuery): Promise<CnInvListPage> {
+  try {
+    const result = await apolloClient.query<{
+      cnInvsByCn: {
+        totalCount: number;
+        page: number;
+        rowsPerPage: number;
+        items: CnInvListRow[];
+      };
+    }>({
+      query: CN_INVS_BY_CN_QUERY,
+      variables: {
+        cnKey,
+        page: query.page,
+        rowsPerPage: query.rowsPerPage,
+        filter: query.filter,
+        columnFilters: columnFiltersVariable(query.columnFilters),
+        sortBy: query.sortBy,
+        descending: query.descending
+      },
+      fetchPolicy: 'network-only'
+    });
+    const page = result.data?.cnInvsByCn;
+    if (!page) {
+      throw new RequestError('Пустой ответ cnInvsByCn');
+    }
+    return {
+      items: page.items.map((item) => ({
+        ciKey: item.ciKey,
+        ciInv: item.ciInv,
+        ciCn: item.ciCn,
+        ciTimeOfEntry: item.ciTimeOfEntry,
+        iNum: item.iNum
+      })),
+      totalCount: page.totalCount,
+      page: page.page,
+      rowsPerPage: page.rowsPerPage
+    };
+  } catch (error) {
+    throw toRequestError(error, 'Не удалось загрузить счета-фактуры договора');
+  }
+}
+
 /**
  * Связи {@code cnInv} выбранного договора (ребро {@code cn.cnInv}).
  * Для списков ≤ {@link CN_INV_INUM_ENRICH_LIMIT} дополнительно читает {@code inv.iNum}.
+ * Вкладка «Счета-фактуры» этот путь не использует: там {@link fetchCnInvPage}.
  *
  * @param cnKey {@code ags.cn.cn_key}
  */

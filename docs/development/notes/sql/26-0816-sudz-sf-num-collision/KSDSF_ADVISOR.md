@@ -1,7 +1,7 @@
 # КСДСФ — советник (S68+)
 
 **Дата:** 2026-09-02  
-**Последнее обновление:** 2026-09-08 (`sum_same_cn`, UAT C.10 / СГМ14-234)  
+**Последнее обновление:** 2026-10-06 (`suspicious_inv` + кейс 1313 / 6884)  
 **Зеркало:** [KSDD_ADVISOR.md](../26-0827-sudz-m2-seed/KSDD_ADVISOR.md) (сегм. 22c)
 
 ## API (GraphQL)
@@ -15,17 +15,35 @@
 
 | check | Рекомендация |
 |-------|--------------|
-| `executor_unique` | link (high) — один СФ с номером и исполнителем Excel |
-| `cn_exact` | link (high) — один такой СФ на договоре Excel |
+| `executor_unique` | link (high) — один СФ с номером и исполнителем Excel (**не** для подозрительного №) |
+| `cn_exact` | link (high) — один такой СФ на договоре Excel (**не** для подозрительного №) |
 | `cn_homonym` | create (high) — однофамильцы на **несвязанном** договоре (**после** `sum_same_cn`) |
 | `cn_num_variant` | link на **канонический** cn (где уже inv), не на cn очереди |
 | `cn_num_alias` | inv уже на cn «711113884/ЯРЭС» → добавить «711113884» как второй cnNum; удалить дубль cn из воронки |
 | `executor_none` | create (high) — нет СФ с номером и исполнителем Excel (**после** `sum_same_cn`) |
 | **`sum_same_cn`** | link (high) — уникальная сумма (old/new) с исполнителем Excel на договоре очереди и известным `invKey` (номер Excel может отличаться) |
+| **`suspicious_inv`** | номер ∈ {`б/н`, `Б/С`, `-`, `*`, пусто, …}: **запрет** link high из `executor_unique`/`cn_exact`; без `sum_same_cn` → **create** high |
 | sum unique + один СФ **того же номера** на cn | link (medium) |
 | иначе | manual |
 
 `confidence`: high | medium | low | none. Не заменяет первичку.
+
+### `suspicious_inv` (2026-10-05)
+
+**Зачем:** «б/н» на договоре — часто свалка разных строек/пакетов (cius=1310 → legacy inv 40729 с 2023). Совпадение только по номеру даёт ложный **link**.
+
+**Правило:** `SfDecisionCompareUtil.isSuspiciousInvNum` — общий список с шапкой decision-TreeList. При подозрительном № Excel:
+1. не рекомендовать link из уникальности номера на cn;
+2. если есть `sum_same_cn` — link (как Б/С→настоящий номер, UAT C.10);
+3. иначе — **create** high на договоре очереди.
+
+**Кейсы:**
+- pm=59 · cius=**1310** · КС-14 «б/н» · advice был link→**40729** → **create** (apply: 106724, moved=3).
+- pm=59 · cius=**1313** · КС-51 «б/н» · Σ0 · матрица 1.9.6 была link→**6884** → **create** (свалка на cn 308; 2×pm59 уже там по InsPm — не доказательство link).
+
+**InsPm (2026-10-05):** `#oneInv` / AcNot не матчат подозрительный № к существующему СФ — иначе платежи снова сядут на свалку «б/н».
+
+**create СФ (2026-10-05):** после inv/cnInv — cias + перенос pm текущего пакета с legacy того же № на договоре; при пустом — вставка из Tbl. Repair: повтор `createSudzSfFromDouble` при status=created.
 
 ### `sum_same_cn` (2026-09-08)
 

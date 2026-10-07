@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -21,6 +22,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.springframework.stereotype.Component;
 
 /**
@@ -30,6 +32,11 @@ import org.springframework.stereotype.Component;
  * Выгрузки 26-0817 (счета 767501/767502) пришли с другим набором/порядком колонок —
  * Offset ломается. Разрешение по нормализованным ключевым словам покрывает канон QI
  * и новый layout; отсутствующие поля (срок оплаты, просрочки, баз.дата, сумма) → null.
+ * </p>
+ * <p>
+ * Для традиционной раскладки (outline 3/4) на белых строках проставляются staging-ключи
+ * СФ файла / отрезка стройки / жёлтого итога / {@code due_grp} (правило B, 1.13.1).
+ * Жёлтые строки в Tbl не пишутся. Цвет заливки не используется.
  * </p>
  */
 @Component
@@ -167,22 +174,18 @@ public class SudzPmtUplExcelToTblImporter {
             return;
         }
 
-        int lastRow = sheet.getLastRowNum();
+        List<DraftRow> drafts = readDrafts(sheet, headerRowIdx, cols);
+        boolean traditional = hasTraditionalOutline(drafts);
+        if (traditional) {
+            assignStagingKeys(drafts);
+        }
+
         int added = 0;
-        int weakWithoutDoc = 0;
-        for (int r = headerRowIdx + 1; r <= lastRow; r++) {
-            Row row = sheet.getRow(r);
-            if (row == null) {
+        for (DraftRow draft : drafts) {
+            if (!draft.white) {
                 continue;
             }
-            if (!rowLooksLikePayment(row, cols)) {
-                continue;
-            }
-            String doc = cellString(row, cols, Col.DOC_CODE);
-            if (!notBlank(doc)) {
-                weakWithoutDoc++;
-            }
-            rows.add(mapRow(row, cols, sheetNum, unloadKey));
+            rows.add(toTblRow(draft, sheetNum, unloadKey, traditional));
             added++;
         }
 
@@ -192,10 +195,14 @@ public class SudzPmtUplExcelToTblImporter {
                 .append("</b></font>: подготовлено <b>").append(added).append("</b> строк");
         summary.append(" · колонки по заголовкам (найдено ")
                 .append(cols.size()).append("/").append(Col.values().length).append(")");
-        if (weakWithoutDoc > 0) {
-            summary.append(" · <font color=\"DarkOrange\">без «№ докум.»: ")
-                    .append(weakWithoutDoc)
-                    .append("</font> (счётчик; список — не в логе)");
+        summary.append(" · только строки с «№ докум.» (как Access)");
+        if (traditional) {
+            long dueKeys = drafts.stream()
+                    .filter(d -> d.white && d.dueKey != null)
+                    .map(d -> d.dueKey)
+                    .distinct()
+                    .count();
+            summary.append(" · staging outline: жёлтых ключей <b>").append(dueKeys).append("</b>");
         }
         log.line(summary.toString());
     }
@@ -395,46 +402,205 @@ public class SudzPmtUplExcelToTblImporter {
         return null;
     }
 
-    private boolean rowLooksLikePayment(Row row, Map<Col, Integer> cols) {
-        if (notBlank(cellString(row, cols, Col.DOC_CODE))) {
-            return true;
+    private List<DraftRow> readDrafts(Sheet sheet, int headerRowIdx, Map<Col, Integer> cols) {
+        List<DraftRow> drafts = new ArrayList<>();
+        int lastRow = sheet.getLastRowNum();
+        for (int r = headerRowIdx + 1; r <= lastRow; r++) {
+            Row row = sheet.getRow(r);
+            if (row == null) {
+                continue;
+            }
+            String docCode = cellString(row, cols, Col.DOC_CODE);
+            boolean white = notBlank(docCode);
+            int level = outlineLevel(row);
+            if (!white && level == 0 && !rowHasAnyMappedValue(row, cols)) {
+                continue;
+            }
+            DraftRow draft = new DraftRow();
+            draft.excelRow = r + 1;
+            draft.outlineLevel = level;
+            draft.white = white;
+            draft.be = truncate(cellString(row, cols, Col.BE), 50);
+            draft.account = softInt(cellAt(row, cols, Col.ACCOUNT));
+            draft.ctptNum = softInt(cellAt(row, cols, Col.CTPT_NUM));
+            draft.ctptName = truncate(cellString(row, cols, Col.CTPT_NAME), 255);
+            draft.cac = truncate(cellString(row, cols, Col.CAC), 50);
+            draft.agentNum = softInt(cellAt(row, cols, Col.AGENT_NUM));
+            draft.agentName = truncate(cellString(row, cols, Col.AGENT_NAME), 255);
+            draft.cnName = truncate(cellString(row, cols, Col.CN_NAME), 255);
+            draft.link = truncate(cellString(row, cols, Col.LINK), 255);
+            draft.cnInv = truncate(cellString(row, cols, Col.CN_INV), 255);
+            draft.entryDate = toDateTime(cellReader.readDate(cellAt(row, cols, Col.ENTRY)));
+            draft.docDate = toDateTime(cellReader.readDate(cellAt(row, cols, Col.DOC_DATE)));
+            draft.dueDate = toDateTime(cellReader.readDate(cellAt(row, cols, Col.DUE)));
+            draft.dbt = softDecimal(cellAt(row, cols, Col.DBT));
+            draft.dbtOverd = softDecimal(cellAt(row, cols, Col.DBT_OVERD));
+            draft.dbtOverdNot = softDecimal(cellAt(row, cols, Col.DBT_OVERD_NOT));
+            draft.cdt = softDecimal(cellAt(row, cols, Col.CDT));
+            draft.cdtOverd = softDecimal(cellAt(row, cols, Col.CDT_OVERD));
+            draft.cdtOverdNot = softDecimal(cellAt(row, cols, Col.CDT_OVERD_NOT));
+            draft.blns = softDecimal(cellAt(row, cols, Col.BLNS));
+            draft.docCode = truncate(docCode, 50);
+            draft.align = toDateTime(cellReader.readDate(cellAt(row, cols, Col.ALIGN)));
+            draft.base = toDateTime(cellReader.readDate(cellAt(row, cols, Col.BASE)));
+            draft.docSum = softDecimal(cellAt(row, cols, Col.DOC_SUM));
+            draft.stornoReason = truncate(cellString(row, cols, Col.STORNO_REASON), 255);
+            draft.stornoDoc = truncate(cellString(row, cols, Col.STORNO_DOC), 50);
+            drafts.add(draft);
         }
-        if (notBlank(cellString(row, cols, Col.BE))) {
-            return true;
-        }
-        return softInt(cellAt(row, cols, Col.ACCOUNT)) != null;
+        return drafts;
     }
 
-    private SudzPmtUplTblRow mapRow(Row row, Map<Col, Integer> cols, int sheetNum, int unloadKey) {
+    private boolean rowHasAnyMappedValue(Row row, Map<Col, Integer> cols) {
+        for (Integer idx : cols.values()) {
+            if (idx == null) {
+                continue;
+            }
+            String text = cellReader.readString(row.getCell(idx));
+            if (notBlank(text)) {
+                return true;
+            }
+            BigDecimal dec = softDecimal(row.getCell(idx));
+            if (dec != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Традиционная раскладка: на листе есть строки outline 3 или 4.
+     *
+     * @param drafts черновики строк
+     * @return true если ключи staging нужно назначать
+     */
+    static boolean hasTraditionalOutline(List<DraftRow> drafts) {
+        for (DraftRow d : drafts) {
+            if (d.outlineLevel >= 3) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Назначает {@code sfKey}/{@code cacSpanKey}/{@code dueKey}/{@code dueGrp} белым строкам
+     * по дереву outline: L4 — документ, L3 — жёлтый итог, L&lt;3 — сброс открытой группы.
+     *
+     * @param drafts черновики (мутируются)
+     */
+    static void assignStagingKeys(List<DraftRow> drafts) {
+        StagingState state = new StagingState();
+        List<DraftRow> open = new ArrayList<>();
+
+        for (DraftRow d : drafts) {
+            if (d.outlineLevel == 4 && d.white) {
+                open.add(d);
+                continue;
+            }
+            if (d.outlineLevel == 3 && !d.white) {
+                state.close(open);
+                open.clear();
+                continue;
+            }
+            if (d.outlineLevel < 3 && !open.isEmpty()) {
+                state.close(open);
+                open.clear();
+            }
+        }
+        if (!open.isEmpty()) {
+            state.close(open);
+        }
+    }
+
+    /** Счётчики суррогатных ключей в пределах одного листа/пакета. */
+    private static final class StagingState {
+        private final Map<String, Integer> sfKeys = new HashMap<>();
+        private final Map<String, Integer> dueGrpSeq = new HashMap<>();
+        private int nextSf = 1;
+        private int nextCacSpan = 1;
+        private int nextDue = 1;
+        private Integer lastSf;
+        private String lastCac;
+        private Integer openCacSpan;
+
+        private void close(List<DraftRow> open) {
+            if (open.isEmpty()) {
+                return;
+            }
+            int dueKey = nextDue++;
+            for (DraftRow w : open) {
+                String sfNat = sfNaturalKey(w);
+                Integer sfKey = sfKeys.get(sfNat);
+                if (sfKey == null) {
+                    sfKey = nextSf++;
+                    sfKeys.put(sfNat, sfKey);
+                }
+                String cacNorm = normalizeKeyPart(w.cac);
+                if (!Objects.equals(lastSf, sfKey) || !Objects.equals(lastCac, cacNorm)) {
+                    openCacSpan = nextCacSpan++;
+                    lastSf = sfKey;
+                    lastCac = cacNorm;
+                }
+                w.sfKey = sfKey;
+                w.cacSpanKey = openCacSpan;
+                w.dueKey = dueKey;
+            }
+            DraftRow first = open.get(0);
+            LocalDate dueDay = first.dueDate == null ? null : first.dueDate.toLocalDate();
+            String grpNat = first.sfKey + "|" + normalizeKeyPart(first.cac)
+                    + "|" + (dueDay == null ? "" : dueDay);
+            int dueGrp = dueGrpSeq.merge(grpNat, 1, Integer::sum);
+            for (DraftRow w : open) {
+                w.dueGrp = dueGrp;
+            }
+        }
+    }
+
+    private static String sfNaturalKey(DraftRow w) {
+        return Objects.toString(w.ctptNum, "")
+                + "|" + normalizeKeyPart(w.cnName)
+                + "|" + normalizeKeyPart(w.cnInv);
+    }
+
+    private static String normalizeKeyPart(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    private SudzPmtUplTblRow toTblRow(DraftRow d, int sheetNum, int unloadKey, boolean traditional) {
         return new SudzPmtUplTblRow(
-                truncate(cellString(row, cols, Col.BE), 50),
-                softInt(cellAt(row, cols, Col.ACCOUNT)),
-                softInt(cellAt(row, cols, Col.CTPT_NUM)),
-                truncate(cellString(row, cols, Col.CTPT_NAME), 255),
-                truncate(cellString(row, cols, Col.CAC), 50),
-                softInt(cellAt(row, cols, Col.AGENT_NUM)),
-                truncate(cellString(row, cols, Col.AGENT_NAME), 255),
-                truncate(cellString(row, cols, Col.CN_NAME), 255),
-                truncate(cellString(row, cols, Col.LINK), 255),
-                truncate(cellString(row, cols, Col.CN_INV), 255),
-                toDateTime(cellReader.readDate(cellAt(row, cols, Col.ENTRY))),
-                toDateTime(cellReader.readDate(cellAt(row, cols, Col.DOC_DATE))),
-                toDateTime(cellReader.readDate(cellAt(row, cols, Col.DUE))),
-                softDecimal(cellAt(row, cols, Col.DBT)),
-                softDecimal(cellAt(row, cols, Col.DBT_OVERD)),
-                softDecimal(cellAt(row, cols, Col.DBT_OVERD_NOT)),
-                softDecimal(cellAt(row, cols, Col.CDT)),
-                softDecimal(cellAt(row, cols, Col.CDT_OVERD)),
-                softDecimal(cellAt(row, cols, Col.CDT_OVERD_NOT)),
-                softDecimal(cellAt(row, cols, Col.BLNS)),
-                truncate(cellString(row, cols, Col.DOC_CODE), 50),
-                toDateTime(cellReader.readDate(cellAt(row, cols, Col.ALIGN))),
-                toDateTime(cellReader.readDate(cellAt(row, cols, Col.BASE))),
-                softDecimal(cellAt(row, cols, Col.DOC_SUM)),
-                truncate(cellString(row, cols, Col.STORNO_REASON), 255),
-                truncate(cellString(row, cols, Col.STORNO_DOC), 50),
+                d.be,
+                d.account,
+                d.ctptNum,
+                d.ctptName,
+                d.cac,
+                d.agentNum,
+                d.agentName,
+                d.cnName,
+                d.link,
+                d.cnInv,
+                d.entryDate,
+                d.docDate,
+                d.dueDate,
+                d.dbt,
+                d.dbtOverd,
+                d.dbtOverdNot,
+                d.cdt,
+                d.cdtOverd,
+                d.cdtOverdNot,
+                d.blns,
+                d.docCode,
+                d.align,
+                d.base,
+                d.docSum,
+                d.stornoReason,
+                d.stornoDoc,
                 sheetNum,
-                unloadKey
+                unloadKey,
+                traditional ? d.sfKey : null,
+                traditional ? d.cacSpanKey : null,
+                traditional ? d.dueKey : null,
+                traditional ? d.dueGrp : null
         );
     }
 
@@ -476,5 +642,57 @@ public class SudzPmtUplExcelToTblImporter {
             return value;
         }
         return value.substring(0, max);
+    }
+
+    /**
+     * Уровень группировки строки Excel (outline). Для не-XSSF — 0.
+     *
+     * @param row строка
+     * @return outlineLevel
+     */
+    static int outlineLevel(Row row) {
+        if (row instanceof XSSFRow xssfRow) {
+            return xssfRow.getCTRow().getOutlineLevel();
+        }
+        return 0;
+    }
+
+    /**
+     * Черновик строки листа до фильтра «только белые».
+     */
+    static final class DraftRow {
+        int excelRow;
+        int outlineLevel;
+        boolean white;
+        String be;
+        Integer account;
+        Integer ctptNum;
+        String ctptName;
+        String cac;
+        Integer agentNum;
+        String agentName;
+        String cnName;
+        String link;
+        String cnInv;
+        LocalDateTime entryDate;
+        LocalDateTime docDate;
+        LocalDateTime dueDate;
+        BigDecimal dbt;
+        BigDecimal dbtOverd;
+        BigDecimal dbtOverdNot;
+        BigDecimal cdt;
+        BigDecimal cdtOverd;
+        BigDecimal cdtOverdNot;
+        BigDecimal blns;
+        String docCode;
+        LocalDateTime align;
+        LocalDateTime base;
+        BigDecimal docSum;
+        String stornoReason;
+        String stornoDoc;
+        Integer sfKey;
+        Integer cacSpanKey;
+        Integer dueKey;
+        Integer dueGrp;
     }
 }

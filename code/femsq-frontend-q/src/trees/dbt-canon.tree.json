@@ -1,0 +1,126 @@
+{
+  "id": "dbt-canon",
+  "version": 1,
+  "view": "list",
+  "root": {
+    "table": "invDbt",
+    "pk": "idKey",
+    "queryId": "sudz.dbtCanon.slots",
+    "level": "slot"
+  },
+  "title": ["title"],
+  "detail": ["title", "idNum", "iKey"],
+  "actions": [
+    {
+      "id": "dbt.canon.split",
+      "kind": "open-form",
+      "label": "Split",
+      "scope": "record"
+    },
+    {
+      "id": "dbt.canon.merge",
+      "kind": "open-form",
+      "label": "Merge",
+      "scope": "record"
+    }
+  ],
+  "columnSets": [
+    {
+      "level": "slot",
+      "columns": [
+        { "label": "Подпись", "field": "title" },
+        { "label": "№ слота", "field": "idNum" },
+        { "label": "iKey", "field": "iKey" }
+      ]
+    },
+    {
+      "level": "var",
+      "columns": [
+        { "label": "Подпись", "field": "title" },
+        { "label": "var", "field": "varKey" },
+        { "label": "СФ / договор", "field": "context" }
+      ]
+    },
+    {
+      "level": "value",
+      "columns": [
+        { "label": "Подпись", "field": "title" },
+        { "label": "Ключ", "field": "valueKey" },
+        { "label": "Сумма", "field": "ttl" },
+        { "label": "Просрочка", "field": "overd" },
+        { "label": "Выгрузка", "field": "uplName" },
+        { "label": "Дата", "field": "uplDate" },
+        { "label": "Портфели", "field": "portfolios" }
+      ]
+    },
+    {
+      "level": "comment",
+      "columns": [
+        { "label": "Подпись", "field": "title" },
+        { "label": "Группа", "field": "groupLabel" },
+        { "label": "Тип", "field": "typeLabel" },
+        { "label": "Текст", "field": "text" }
+      ]
+    }
+  ],
+  "children": [
+    {
+      "queryId": "sudz.dbtCanon.var",
+      "to": "invDbtVar",
+      "card": "1:N",
+      "level": "var",
+      "folder": "Контекст",
+      "title": ["title"],
+      "detail": ["title", "varKey", "context"],
+      "children": []
+    },
+    {
+      "queryId": "sudz.dbtCanon.values",
+      "to": "DbtValue",
+      "card": "1:N",
+      "level": "value",
+      "folder": "DbtValue",
+      "title": ["title"],
+      "detail": ["title", "valueKey", "ttl", "overd", "uplName", "uplDate", "portfolios"],
+      "valueKinds": { "ttl": "money", "overd": "money" },
+      "actions": [
+        {
+          "id": "dbt.canon.value.add",
+          "kind": "create-child",
+          "label": "Добавить Value",
+          "scope": "folder"
+        },
+        {
+          "id": "dbt.canon.value.edit",
+          "kind": "open-form",
+          "label": "Править Value",
+          "scope": "record"
+        },
+        {
+          "id": "dbt.canon.value.delete",
+          "kind": "delete-record",
+          "label": "Снять Value",
+          "scope": "record"
+        },
+        {
+          "id": "dbt.canon.comment.add",
+          "kind": "create-child",
+          "label": "Комментарий",
+          "scope": "record"
+        }
+      ],
+      "children": [
+        {
+          "queryId": "sudz.dbtCanon.comments",
+          "to": "cnInvCmm",
+          "card": "1:N",
+          "level": "comment",
+          "folder": "Комментарии",
+          "title": ["title"],
+          "detail": ["title", "groupLabel", "typeLabel", "text"],
+          "children": []
+        }
+      ]
+    }
+  ]
+}

@@ -26,11 +26,20 @@ import com.femsq.database.model.sudz.SudzDebtCollection;
 import com.femsq.database.model.sudz.SudzDbtUplCstAgRebuildResult;
 import com.femsq.database.model.sudz.SudzPmLink;
 import com.femsq.database.model.sudz.SudzPmUplLookup;
+import com.femsq.database.model.sudz.SudzPmtUplCstMatch;
+import com.femsq.database.model.sudz.SudzPmtUplCstNew;
 import com.femsq.database.model.sudz.SudzPmtUplFile;
+import com.femsq.database.model.sudz.SudzPmtUplInvNot;
+import com.femsq.database.model.sudz.SudzPmtUplTabBadges;
+import com.femsq.database.model.sudz.SudzPmtUplTwoLoad;
 import com.femsq.database.model.sudz.SudzPmtUplFunnelResult;
 import com.femsq.database.model.sudz.SudzPmtUplLauncher;
 import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
+import com.femsq.database.model.sudz.SudzPmDocForest;
+import com.femsq.database.model.sudz.SudzSfDecisionProfile;
+import com.femsq.database.model.sudz.SudzPmtExcelCaseRow;
+import com.femsq.database.model.sudz.SudzPmtSfSumCompare;
 import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
 import com.femsq.database.model.sudz.SudzSfDoubleAdvice;
 import com.femsq.database.model.sudz.SudzSfDoubleHints;
@@ -595,6 +604,121 @@ public class SudzGraphqlController {
     }
 
     /**
+     * Очередь «стройки новые» по пакету.
+     *
+     * @param pmKey ключ пакета
+     * @return строки cipuCacNot
+     */
+    @QueryMapping
+    public List<SudzPmtUplCstNew> sudzPmtUplCstNew(@Argument int pmKey) {
+        try {
+            return sudzService.listPmtUplCstNew(pmKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Дерево строек по хвосту из 6 символов выбранной строки очереди.
+     * Новую стройку запрос не создаёт: пустой список значит, что такого хвоста в каталоге нет.
+     *
+     * @param codeSuffix {@code sh} строки {@code cipuCacNot}
+     * @return {@code cst} с агентами и кодами
+     */
+    @QueryMapping
+    public List<SudzPmtUplCstMatch> sudzPmtUplCstMatch(@Argument String codeSuffix) {
+        try {
+            return sudzService.listPmtUplCstMatch(codeSuffix);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Бейджи вкладок D для пакета.
+     *
+     * @param pmKey ключ пакета
+     * @return CstNew / InvNot / TwoLoad / open КСДСФ
+     */
+    @QueryMapping
+    public SudzPmtUplTabBadges sudzPmtUplTabBadges(@Argument int pmKey) {
+        try {
+            return sudzService.findPmtUplTabBadges(pmKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Хвост InvNot для панели грида D.
+     *
+     * @param pmKey ключ пакета
+     * @return строки live
+     */
+    @QueryMapping
+    public List<SudzPmtUplInvNot> sudzPmtUplInvNot(@Argument int pmKey) {
+        try {
+            return sudzService.listPmtUplInvNot(pmKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * TwoLoad для панели грида D.
+     *
+     * @param pmKey ключ пакета
+     * @return строки live
+     */
+    @QueryMapping
+    public List<SudzPmtUplTwoLoad> sudzPmtUplTwoLoad(@Argument int pmKey) {
+        try {
+            return sudzService.listPmtUplTwoLoad(pmKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Очередь КСДСФ пакета платежей.
+     *
+     * @param pmKey ключ пакета
+     * @return строки с {@code ciusCiput}
+     */
+    @QueryMapping
+    public List<SudzCnInvUplSfDouble> sudzPmtUplSfDoubles(@Argument int pmKey) {
+        try {
+            return sudzService.listPmtUplSfDoubles(pmKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
      * Excel-кандидат КСДСФ.
      *
      * @param ciusKey ключ очереди
@@ -604,6 +728,116 @@ public class SudzGraphqlController {
     public SudzSfDoubleExcelCandidate sudzSfDoubleExcelCandidate(@Argument int ciusKey) {
         try {
             return sudzService.findSfDoubleExcelCandidate(ciusKey).orElse(null);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Белые строки Tbl кейса очереди pmt (кредитор+договор+номер).
+     *
+     * @param ciusKey ключ очереди
+     * @return строки кейса; пусто для dbt
+     */
+    @QueryMapping
+    public List<SudzPmtExcelCaseRow> sudzPmtSfExcelCaseRows(@Argument int ciusKey) {
+        try {
+            return sudzService.listPmtSfExcelCaseRows(ciusKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Сверка итога сальдо платежей по СФ со связанным сводом.
+     *
+     * @param ciusKey ключ очереди
+     * @return сверка или null, если строка не платёжная
+     */
+    @QueryMapping
+    public SudzPmtSfSumCompare sudzPmtSfSumCompare(@Argument int ciusKey) {
+        try {
+            return sudzService.findPmtSfSumCompare(ciusKey).orElse(null);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Лес платёжных документов по кодам строки очереди.
+     *
+     * @param ciusKey ключ очереди
+     * @return лес
+     */
+    @QueryMapping
+    public SudzPmDocForest sudzPmDocForestByCius(@Argument int ciusKey) {
+        try {
+            return sudzService.findPmDocForestByCius(ciusKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Лес платёжных документов выбранной счёт-фактуры.
+     *
+     * @param invKey ключ inv
+     * @return лес
+     */
+    @QueryMapping
+    public SudzPmDocForest sudzPmDocForestByInv(@Argument int invKey) {
+        try {
+            return sudzService.findPmDocForestByInv(invKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Профиль кандидата СФ для decision-TreeList.
+     *
+     * @param invKey ключ inv
+     * @param currentUplKey пакет экрана
+     * @param excelCnText договор Excel
+     * @param excelInvNum номер Excel
+     * @param excelCntrPrtNum БУиРГ Excel
+     * @param excelBlnsSum Σ сальдо Excel
+     * @param excelCac код стройки Excel (CAC)
+     * @return профиль
+     */
+    @QueryMapping
+    public SudzSfDecisionProfile sudzSfDecisionProfile(
+            @Argument int invKey,
+            @Argument Integer currentUplKey,
+            @Argument String excelCnText,
+            @Argument String excelInvNum,
+            @Argument Integer excelCntrPrtNum,
+            @Argument BigDecimal excelBlnsSum,
+            @Argument String excelCac
+    ) {
+        try {
+            return sudzService.findSfDecisionProfile(
+                    invKey, currentUplKey, excelCnText, excelInvNum, excelCntrPrtNum, excelBlnsSum, excelCac);
         } catch (IllegalArgumentException exception) {
             throw badRequest(exception);
         } catch (MissingConfigurationException exception) {
@@ -1194,6 +1428,25 @@ public class SudzGraphqlController {
     public SudzPmtUplFunnelResult runSudzPmtUplFunnel(@Argument RunSudzPmtUplFunnelInput input) {
         try {
             return pmtUplFunnelRunner.run(input.pmKey(), input.steps(), input.flLoad());
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Пересборка очереди КСДСФ платежей из InvNot + TwoLoad.
+     *
+     * @param pmKey ключ пакета
+     * @return число строк очереди
+     */
+    @MutationMapping
+    public int rebuildSudzPmtUplSfDouble(@Argument int pmKey) {
+        try {
+            return sudzService.rebuildPmtUplSfDouble(pmKey);
         } catch (IllegalArgumentException exception) {
             throw badRequest(exception);
         } catch (MissingConfigurationException exception) {

@@ -140,7 +140,7 @@
                   <div v-if="picker.treeSpec == null || picker.treeRootId == null" class="text-grey-6">
                     Выберите строку в таблице.
                   </div>
-                  <RelationTree
+                  <FemsqWalkTree
                     v-else
                     class="col"
                     :spec="picker.treeSpec"
@@ -176,10 +176,9 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 
-import { FemsqTable } from 'fequlib';
+import { FemsqTable, FemsqWalkTree } from 'fequlib';
 import { QBanner, QBtn, QCard, QCardActions, QCardSection, QDialog, QInput, QSeparator, QSpace, QSplitter, QTab, QTabPanel, QTabPanels, QTabs } from 'quasar';
 
-import RelationTree from '@/components/relation/RelationTree.vue';
 import type { RelationFetchExpand, RelationFetchNode } from '@/trees/relation-tree';
 import type { RelationFormFieldState, RelationFormState, RelationPickerState } from '@/trees/relation-forms';
 

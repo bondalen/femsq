@@ -50,18 +50,27 @@ import com.femsq.database.model.sudz.SudzPmtUplFile;
 import com.femsq.database.model.sudz.SudzPmtUplLauncher;
 import com.femsq.database.model.sudz.SudzPmtUplAgNotLoad;
 import com.femsq.database.model.sudz.SudzPmtUplAgNotLoadApplyResult;
+import com.femsq.database.model.sudz.SudzPmtUplInvNot;
 import com.femsq.database.model.sudz.SudzPmtUplInvNotResult;
+import com.femsq.database.model.sudz.SudzPmtUplTwoLoad;
 import com.femsq.database.model.sudz.SudzPmtUplAcNotLoad;
 import com.femsq.database.model.sudz.SudzPmtUplDocNotApplyResult;
 import com.femsq.database.model.sudz.SudzPmtUplInsPmNotApplyResult;
 import com.femsq.database.model.sudz.SudzPmtUplInsPmNotResult;
 import com.femsq.database.model.sudz.SudzPmtUplCnNotLoad;
+import com.femsq.database.model.sudz.SudzPmtUplCstMatch;
+import com.femsq.database.model.sudz.SudzPmtUplCstNew;
 import com.femsq.database.model.sudz.SudzPmtUplLogOnlyResult;
+import com.femsq.database.model.sudz.SudzPmtUplTabBadges;
 import com.femsq.database.model.sudz.SudzPmtUplTblRow;
 import com.femsq.database.model.sudz.SudzPmtUplTblWriteProgress;
 import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
+import com.femsq.database.model.sudz.SudzPmDocForest;
+import com.femsq.database.model.sudz.SudzSfDecisionProfile;
+import com.femsq.database.model.sudz.SudzPmtExcelCaseRow;
+import com.femsq.database.model.sudz.SudzPmtSfSumCompare;
 import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
 import com.femsq.database.model.sudz.SudzSfDoubleAdvice;
 import com.femsq.database.model.sudz.SudzSfDoubleHints;
@@ -322,6 +331,64 @@ public interface SudzDao {
      * @return N + samples
      */
     SudzPmtUplLogOnlyResult findPmtUplCacNot(int unloadKey, int sampleLimit);
+
+    /**
+     * Очередь вкладки «стройки новые»: {@code cipuCacNot} плюс суффикс {@code sh}/{@code ipCode}.
+     *
+     * @param unloadKey пакет {@code pmKey}
+     * @return строки, упорядоченные по {@code sh}
+     */
+    List<SudzPmtUplCstNew> listPmtUplCstNew(int unloadKey);
+
+    /**
+     * Стройки, у которых есть {@code cstAgPn} с хвостом {@code codeSuffix},
+     * и все их {@code cstAg} / {@code cstAgPn}.
+     *
+     * @param codeSuffix ровно 6 символов ({@code sh} строки очереди)
+     * @return корни {@code cst}; пустой список, если такого хвоста в каталоге нет
+     */
+    List<SudzPmtUplCstMatch> listPmtUplCstMatch(String codeSuffix);
+
+    /**
+     * Счётчики вкладок D: CstNew, хвост InvNot, TwoLoad, open КСДСФ этого пакета.
+     *
+     * @param unloadKey пакет {@code pmKey}
+     * @return четыре числа
+     */
+    SudzPmtUplTabBadges findPmtUplTabBadges(int unloadKey);
+
+    /**
+     * Хвост InvNot пакета: live-список (не буфер {@code TblCnInv}).
+     *
+     * @param unloadKey пакет {@code pmKey}
+     * @return строки для панели грида
+     */
+    List<SudzPmtUplInvNot> listPmtUplInvNot(int unloadKey);
+
+    /**
+     * TwoLoad пакета: СФ с {@code ci×>1} (live, не буфер).
+     *
+     * @param unloadKey пакет {@code pmKey}
+     * @return строки для панели грида
+     */
+    List<SudzPmtUplTwoLoad> listPmtUplTwoLoad(int unloadKey);
+
+    /**
+     * Пересборка очереди КСДСФ платежей: InvNot + TwoLoad → {@code ciusCiput}.
+     * Удаляет прежние pmt-строки пакета; 1 Excel-строка → 1 очередь.
+     *
+     * @param unloadKey пакет {@code pmKey}
+     * @return число вставленных строк
+     */
+    int rebuildPmtUplSfDouble(int unloadKey);
+
+    /**
+     * Очередь КСДСФ пакета платежей ({@code ciusCiput IS NOT NULL}).
+     *
+     * @param unloadKey пакет {@code pmKey}
+     * @return строки очереди
+     */
+    List<SudzCnInvUplSfDouble> listPmtUplSfDoubles(int unloadKey);
 
     /**
      * H2 шаг 4: пара договор+исполнитель &gt;1 в БД.
@@ -1006,6 +1073,60 @@ public interface SudzDao {
      * @return карточка или empty
      */
     Optional<SudzSfDoubleExcelCandidate> findSfDoubleExcelCandidate(int ciusKey);
+
+    /**
+     * Все белые строки Tbl кейса очереди pmt (кредитор+договор+номер).
+     *
+     * @param ciusKey ключ очереди с {@code ciusCiput}
+     * @return строки; пусто для dbt / без якоря
+     */
+    List<SudzPmtExcelCaseRow> listPmtSfExcelCaseRows(int ciusKey);
+
+    /**
+     * Сверка итога сальдо платежей по присвоению с долгом связанного свода.
+     *
+     * @param ciusKey ключ очереди с {@code ciusCiput}
+     * @return сверка или empty, если строка не платёжная
+     */
+    Optional<SudzPmtSfSumCompare> findPmtSfSumCompare(int ciusKey);
+
+    /**
+     * Лес платёжных документов по кодам строки очереди КСДСФ.
+     *
+     * @param ciusKey ключ очереди
+     * @return лес; пустой, если строка не платёжная
+     */
+    SudzPmDocForest findPmDocForestByCius(int ciusKey);
+
+    /**
+     * Лес платёжных документов, уже привязанных к счёту-фактуре.
+     *
+     * @param invKey {@code ags.inv.iKey}
+     * @return лес
+     */
+    SudzPmDocForest findPmDocForestByInv(int invKey);
+
+    /**
+     * Профиль кандидата СФ для decision-TreeList (платежи / документы / cias).
+     *
+     * @param invKey {@code ags.inv.iKey}
+     * @param currentUplKey пакет экрана (подсветка); может быть null
+     * @param excelCnText договор Excel для сверки; может быть null
+     * @param excelInvNum номер СФ Excel; может быть null
+     * @param excelCntrPrtNum БУиРГ Excel для сверки исполнителя; может быть null
+     * @param excelBlnsSum Σ сальдо Excel-кейса; может быть null
+     * @param excelCac код стройки Excel (CAC); может быть null
+     * @return профиль; если inv нет — IllegalArgumentException
+     */
+    SudzSfDecisionProfile findSfDecisionProfile(
+            int invKey,
+            Integer currentUplKey,
+            String excelCnText,
+            String excelInvNum,
+            Integer excelCntrPrtNum,
+            BigDecimal excelBlnsSum,
+            String excelCac
+    );
 
     /**
      * Доменные СФ с тем же номером.

@@ -18,7 +18,7 @@ import {
   deleteCnSOrgSmpl,
   fetchCn,
   fetchCnContractIdentityMatch,
-  fetchCnInvsByCn,
+  fetchCnInvPage,
   fetchCnNums,
   fetchCnNumsByCn,
   fetchCnNumDuplicateCount,
@@ -30,6 +30,7 @@ import {
   updateCnSOrg,
   updateCnSOrgSmpl
 } from '@/api/contracts-api';
+import type { CnInvPageQuery } from '@/api/contracts-api';
 import { RequestError } from '@/api/http';
 import { getSudzSfDoubleDomainMatches } from '@/api/sudz-api';
 import type {
@@ -82,7 +83,18 @@ export const useContractsStore = defineStore('contracts', () => {
   const cnNumsForCn = ref<CnNumDto[]>([]);
   const sides = ref<CnSideDto[]>([]);
   const cnInvs = ref<CnInvListRow[]>([]);
+  const cnInvTotal = ref(0);
+  const cnInvQuery = ref<CnInvPageQuery>({
+    page: 1,
+    rowsPerPage: 25,
+    filter: '',
+    columnFilters: {},
+    sortBy: 'ciKey',
+    descending: false
+  });
   const selectedCiKey = ref<number | null>(null);
+  /** Строка выбора, пока её нет на текущей странице списка. */
+  const selectedCnInvHold = ref<CnInvListRow | null>(null);
   const orgIdLookups = ref<CnSOrgIdLookupDto[]>([]);
   const numTypes = ref<CnNumTypeLookupDto[]>([]);
   const expandedSides = ref<Set<number>>(new Set());
@@ -98,9 +110,15 @@ export const useContractsStore = defineStore('contracts', () => {
   const selectedCnNum = computed(
     () => cnNums.value.find((row) => row.cnnKey === selectedCnnKey.value) ?? null
   );
-  const selectedCnInv = computed(
-    () => cnInvs.value.find((row) => row.ciKey === selectedCiKey.value) ?? null
-  );
+  const selectedCnInv = computed(() => {
+    if (selectedCiKey.value == null) {
+      return null;
+    }
+    return (
+      cnInvs.value.find((row) => row.ciKey === selectedCiKey.value)
+      ?? (selectedCnInvHold.value?.ciKey === selectedCiKey.value ? selectedCnInvHold.value : null)
+    );
+  });
   const activeCnLookupKey = computed(() => String(selectedCn.value?.cnKey ?? '0'));
   const currentCnInvLookup = computed(() => {
     const key = activeCnLookupKey.value;
@@ -209,35 +227,65 @@ export const useContractsStore = defineStore('contracts', () => {
     }
   }
 
+  let cnInvLoadSeq = 0;
+
   /**
-   * Загружает связи cnInv выбранного договора (вкладка «Счета-фактуры»).
+   * Страница связей cnInv выбранного договора.
+   * Номер СФ приходит в {@code iNum} с сервера.
+   *
+   * @param cnKey договор
+   * @param query страница, фильтр и сортировка; пропущенные поля берутся из прошлого запроса
    */
-  async function loadCnInvs(cnKey: number): Promise<void> {
+  async function loadCnInvs(cnKey: number, query?: Partial<CnInvPageQuery>): Promise<void> {
+    const next: CnInvPageQuery = { ...cnInvQuery.value, ...query };
+    cnInvQuery.value = next;
+    const seq = ++cnInvLoadSeq;
     loadingCnInvs.value = true;
     error.value = null;
     try {
-      const rows = await fetchCnInvsByCn(cnKey);
-      cnInvs.value = rows;
-      if (selectedCiKey.value != null && !rows.some((row) => row.ciKey === selectedCiKey.value)) {
-        selectedCiKey.value = null;
+      const page = await fetchCnInvPage(cnKey, next);
+      if (seq !== cnInvLoadSeq) {
+        return;
       }
-      if (selectedCiKey.value == null && rows.length > 0) {
-        selectedCiKey.value = rows[0].ciKey;
+      cnInvs.value = page.items;
+      cnInvTotal.value = page.totalCount;
+      const onPage = page.items.find((row) => row.ciKey === selectedCiKey.value);
+      if (onPage) {
+        selectedCnInvHold.value = onPage;
+      } else if (
+        selectedCiKey.value == null
+        || selectedCnInvHold.value?.ciCn !== cnKey
+      ) {
+        selectedCiKey.value = page.items[0]?.ciKey ?? null;
+        selectedCnInvHold.value = page.items[0] ?? null;
       }
     } catch (err) {
+      if (seq !== cnInvLoadSeq) {
+        return;
+      }
       error.value = err instanceof RequestError ? err.message : 'Ошибка загрузки СФ договора';
       cnInvs.value = [];
+      cnInvTotal.value = 0;
       selectedCiKey.value = null;
+      selectedCnInvHold.value = null;
     } finally {
-      loadingCnInvs.value = false;
+      if (seq === cnInvLoadSeq) {
+        loadingCnInvs.value = false;
+      }
     }
   }
 
   /**
    * Выбор связи cnInv в списке вкладки СФ.
+   *
+   * @param ciKey ключ связи
+   * @param row строка страницы, чтобы дерево не теряло номер
    */
-  function selectCnInv(ciKey: number): void {
+  function selectCnInv(ciKey: number, row?: CnInvListRow): void {
     selectedCiKey.value = ciKey;
+    if (row && row.ciKey === ciKey) {
+      selectedCnInvHold.value = row;
+    }
   }
 
   /**
@@ -599,6 +647,8 @@ export const useContractsStore = defineStore('contracts', () => {
     sides,
     displaySides,
     cnInvs,
+    cnInvTotal,
+    cnInvQuery,
     selectedCiKey,
     selectedCnInv,
     orgIdLookups,

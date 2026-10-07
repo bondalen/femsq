@@ -1,22 +1,5 @@
 <template>
   <QPage class="sudz-dbt-canon-view q-pa-md column no-wrap" data-test="sudz-dbt-canon-view">
-    <div class="row items-center q-mb-sm shrink-0">
-      <div class="col">
-        <div class="femsq-page-title">Долг (канон)</div>
-        <div class="femsq-page-subtitle">
-          СУДЗ · фильтр колонок → карточка Dbt · Долг / Слоты / Комментарии
-        </div>
-      </div>
-      <QBtn
-        flat
-        dense
-        no-caps
-        label="Сброс"
-        data-test="sudz-dbt-canon-reset"
-        @click="onReset"
-      />
-    </div>
-
     <QBanner v-if="store.error" class="bg-negative text-white q-mb-sm" rounded>
       {{ store.error }}
     </QBanner>
@@ -36,12 +19,15 @@
             class="col"
             mode="server"
             row-key="dbtKey"
+            title="Долг (канон)"
+            caption="СУДЗ · фильтр колонок → карточка Dbt · Долг / Слоты / Комментарии"
             :rows="store.candidates"
             :columns="candidateColumns"
             :loading="store.loading"
             :show-filter="false"
             :show-filter-count="true"
             show-column-filters
+            v-model:filters-visible="candidatesFiltersVisible"
             column-filter-placeholder=""
             v-model:column-filters="columnFilters"
             v-model:pagination="pagination"
@@ -51,6 +37,16 @@
             @request="onTableRequest"
             @row-click="onCandidateClick"
           >
+            <template #actions>
+              <QBtn
+                flat
+                dense
+                no-caps
+                label="Сброс"
+                data-test="sudz-dbt-canon-reset"
+                @click="onReset"
+              />
+            </template>
             <template #no-data>
               <div class="text-grey-7 q-pa-md">
                 Задайте фильтр в шапке колонки (обычно № СФ) — поиск на сервере
@@ -92,81 +88,55 @@
               >
                 <template #before>
                   <div class="tree-pane fill-pane">
-                    <FemsqTree
-                      fill
-                      :nodes="treeNodes"
-                      node-key="id"
-                      v-model:expanded-keys="expandedKeys"
+                    <FemsqWalkTree
+                      v-if="store.detail"
+                      class="fit"
+                      :spec="canonWalkSpec"
+                      :root-id="null"
+                      :roots-token="canonRootsToken"
+                      :fetch-node="fetchCanonNode"
+                      :fetch-expand="fetchCanonExpand"
+                      :fetch-query="fetchCanonQuery"
+                      :fetch-roots="fetchCanonRoots"
                       v-model:selected-key="selectedTreeKey"
                       data-test="sudz-dbt-canon-tree"
+                      root-class="sudz-dbt-canon-walk"
+                      @action="onCanonWalkAction"
                       @update:selected-key="onTreeSelect"
-                    >
-                      <template #header="{ node }">
-                        <span>{{ node.title }}</span>
-                      </template>
-                      <template #detail="{ node }">
-                        <div class="row q-gutter-xs q-mt-xs">
-                          <QBtn
-                            v-if="node.kind === 'slot'"
-                            dense
-                            flat
-                            no-caps
-                            size="sm"
-                            label="Split"
-                            @click.stop="openSplit(node.slotKey)"
-                          />
-                          <QBtn
-                            v-if="node.kind === 'slot'"
-                            dense
-                            flat
-                            no-caps
-                            size="sm"
-                            label="Merge"
-                            @click.stop="openMerge()"
-                          />
-                          <QBtn
-                            v-if="node.kind === 'value' && node.valueKey == null"
-                            dense
-                            flat
-                            no-caps
-                            size="sm"
-                            label="Добавить Value"
-                            @click.stop="openNewValue(node.slotKey)"
-                          />
-                          <QBtn
-                            v-if="node.kind === 'value' && node.valueKey != null"
-                            dense
-                            flat
-                            no-caps
-                            size="sm"
-                            label="Править Value"
-                            @click.stop="openEditValue(node)"
-                          />
-                          <QBtn
-                            v-if="node.kind === 'value' && node.valueKey != null"
-                            dense
-                            flat
-                            no-caps
-                            size="sm"
-                            color="negative"
-                            label="Снять Value"
-                            @click.stop="onDeleteValue(node.valueKey)"
-                          />
-                        </div>
-                      </template>
-                    </FemsqTree>
+                    />
                   </div>
                 </template>
                 <template #after>
                   <div class="chart-pane fill-pane">
                     <FemsqChart
-                      :key="'dbt-chart-' + store.detail.dbtKey"
+                      :key="'dbt-chart-' + store.detail.dbtKey + '-' + (selectedPortfolioChain?.id ?? '')"
                       fill
                       class="fit"
                       :spec="chartSpec"
                       empty-label="Нет Value с датой выгрузки"
                       data-test="sudz-dbt-canon-chart"
-                    />
+                    >
+                      <template v-if="portfolioChains.length" #zoom-extra>
+                        <QSelect
+                          v-model="selectedPortfolioChainId"
+                          dense
+                          outlined
+                          emit-value
+                          map-options
+                          options-dense
+                          :options="
+                            portfolioChains.map((c) => ({
+                              label: c.label,
+                              value: c.id
+                            }))
+                          "
+                          class="col"
+                          style="min-width: 200px; max-width: 100%"
+                          label="Цепь портфелей"
+                          data-test="sudz-dbt-canon-chain-select"
+                        />
+                      </template>
+                    </FemsqChart>
                   </div>
                 </template>
               </QSplitter>
@@ -230,6 +200,12 @@
                     <div class="text-grey-7 q-pa-sm">У канона нет слотов</div>
                   </template>
                 </FemsqTable>
+                <PmDocForest
+                  v-if="selectedSlotRows[0]"
+                  class="pm-doc-forest-pane"
+                  :inv-key="selectedSlotRows[0].iKey"
+                  @open-inv="onPmDocOpenInv"
+                />
               </div>
             </QTabPanel>
             <QTabPanel name="comments" class="q-pa-none fill-pane">
@@ -242,30 +218,21 @@
               >
                 <template #before>
                   <div class="tree-pane fill-pane">
-                    <FemsqTree
-                      fill
-                      :nodes="commentTreeNodes"
-                      node-key="id"
-                      v-model:expanded-keys="commentExpandedKeys"
+                    <FemsqWalkTree
+                      v-if="store.detail"
+                      class="fit"
+                      :spec="canonWalkSpec"
+                      :root-id="null"
+                      :roots-token="canonRootsToken"
+                      :fetch-node="fetchCanonNode"
+                      :fetch-expand="fetchCanonExpand"
+                      :fetch-query="fetchCanonQuery"
+                      :fetch-roots="fetchCanonRoots"
                       v-model:selected-key="commentSelectedKey"
                       data-test="sudz-dbt-canon-comment-tree"
-                    >
-                      <template #header="{ node }">
-                        <span>{{ node.title }}</span>
-                      </template>
-                      <template #detail="{ node }">
-                        <div v-if="isCommentValueNode(node)" class="q-mt-xs">
-                          <QBtn
-                            dense
-                            flat
-                            no-caps
-                            size="sm"
-                            label="Добавить комментарий"
-                            @click.stop="openAddComment(node.valueKey)"
-                          />
-                        </div>
-                      </template>
-                    </FemsqTree>
+                      root-class="sudz-dbt-canon-walk-cmm"
+                      @action="onCanonWalkAction"
+                    />
                   </div>
                 </template>
                 <template #after>
@@ -473,50 +440,72 @@ import {
   QTabPanel,
   QTabPanels,
   QTabs,
-  QTd
+  QTd,
+  useQuasar
 } from 'quasar';
 import {
   FemsqChart,
   FemsqTable,
-  FemsqTree,
+  FemsqWalkTree,
   actionsColumn,
   formatMoney,
   moneyColumn,
   type FemsqTableColumn,
-  type FemsqTableRequest
+  type FemsqTableRequest,
+  type FemsqWalkActionContext,
+  type FemsqWalkTreeSpec
 } from 'fequlib';
 
 import { useSudzDbtCanonStore } from '@/stores/sudz-dbt-canon';
+import PmDocForest from '@/components/sudz/PmDocForest.vue';
 import type {
   SudzDbtCanonCandidate,
   SudzDbtCanonSlot,
   SudzDbtMergeMode
 } from '@/types/sudz';
 import {
-  buildCanonSlotAreasSpec,
+  commentStubFromWalkNodeId,
+  dbtCanonQueryRows,
+  dbtCanonRootRows,
+  dbtCanonRootsToken,
+  slotKeyFromWalkNodeId,
+  valueKeyFromWalkNodeId
+} from '@/sudz/dbt-canon-tree';
+import * as dbtCanonSpecJson from '@/trees/dbt-canon.tree.json';
+import {
+  buildCanonPortfolioChartSpec,
   readCanonChartColors
 } from '@/utils/sudz-canon-chart';
+import type { SudzDbtCanonPortfolioChain } from '@/types/sudz';
 import {
-  buildCanonCommentTreeNodes,
-  buildCanonTreeNodes,
-  commentTreeExpandedKeys,
-  defaultExpandedKeys,
   commentsFromSlots,
   type CanonCommentGroupKind,
-  type CanonCommentTypeKind,
-  type CanonTreeNode
+  type CanonCommentTypeKind
 } from '@/utils/sudz-canon-tree';
+
+const canonWalkSpec = dbtCanonSpecJson as FemsqWalkTreeSpec;
 
 const vClosePopup = ClosePopup;
 
 const store = useSudzDbtCanonStore();
 
 const columnFilters = ref<Record<string, string>>({});
+/** Поколоночный поиск кандидатов открыт по умолчанию (server-criteria). */
+const candidatesFiltersVisible = ref(true);
 const selectedRows = ref<SudzDbtCanonCandidate[]>([]);
 const selectedSlotRows = ref<SudzDbtCanonSlot[]>([]);
 const selectedSlotKey = ref<number | null>(null);
+const $q = useQuasar();
+
+/**
+ * На карточке долга отдельного дерева СФ нет: сообщаем ключ.
+ */
+function onPmDocOpenInv(invKey: number): void {
+  $q.notify({ type: 'info', message: `Счёт-фактура inv=${invKey}` });
+}
 const selectedTreeKey = ref<string | number | null>(null);
-const expandedKeys = ref<(string | number)[]>([]);
+/** Выбранная цепь портфелей для графика (id из portfolioChains). */
+const selectedPortfolioChainId = ref<string | null>(null);
 const pagination = ref({ page: 1, rowsPerPage: 0, sortBy: 'dbtKey', descending: false });
 /** Верх: таблица канонов ≈ три строки. */
 const mainSplit = ref(32);
@@ -528,7 +517,6 @@ const cardSplit = ref(42);
 const commentsSplit = ref(34);
 const commentDraft = ref('');
 const commentSelectedKey = ref<string | number | null>(null);
-const commentExpandedKeys = ref<(string | number)[]>([]);
 const commentDeleteDlg = ref(false);
 
 const valueDlg = reactive({
@@ -578,18 +566,14 @@ const commentTypeOptions = [
   { label: 'Куратор (тип 8)', value: 'curator' }
 ];
 
-const treeNodes = computed(() => buildCanonTreeNodes(store.detail?.slots ?? []));
-
-const commentTreeNodes = computed(() =>
-  store.detail
-    ? buildCanonCommentTreeNodes(store.detail.dbtKey, store.detail.slots)
-    : []
+const canonRootsToken = computed(() =>
+  dbtCanonRootsToken(store.detail?.dbtKey, store.detail?.slots)
 );
 
 const canonComments = computed(() => commentsFromSlots(store.detail?.slots ?? []));
 
 const selectedCommentStub = computed(() =>
-  canonComments.value.find((stub) => stub.id === String(commentSelectedKey.value ?? ''))
+  commentStubFromWalkNodeId(commentSelectedKey.value, store.detail?.slots ?? [])
 );
 
 const commentDlgYearOptions = computed(() => {
@@ -619,10 +603,9 @@ const commentDlgYearOptions = computed(() => {
 const commentLeafSelected = computed(() => selectedCommentStub.value != null);
 
 const selectedCommentValueKey = computed(() => {
-  const key = String(commentSelectedKey.value ?? '');
-  const valMatch = /^val:(\d+)$/.exec(key);
-  if (valMatch) {
-    return Number(valMatch[1]);
+  const fromValue = valueKeyFromWalkNodeId(commentSelectedKey.value);
+  if (fromValue != null) {
+    return fromValue;
   }
   return selectedCommentStub.value?.valueKey ?? null;
 });
@@ -632,14 +615,113 @@ const commentEditorPlaceholder = computed(() => {
     return 'Текст комментария';
   }
   if (selectedCommentValueKey.value != null) {
-    return 'Выделите DbtValue и нажмите «Добавить комментарий» — группа выбирается в модалке';
+    return 'Выделите DbtValue и нажмите «Комментарий» — группа выбирается в модалке';
   }
-  return 'Выберите DbtValue в дереве (не группу года)';
+  return 'Выберите DbtValue в дереве';
 });
+
+/**
+ * Лес слотов из карточки.
+ */
+async function fetchCanonRoots(queryId: string) {
+  if (queryId !== 'sudz.dbtCanon.slots') {
+    return [];
+  }
+  return dbtCanonRootRows(store.detail?.slots ?? []);
+}
+
+/**
+ * Запись по таблице (лес не использует).
+ */
+async function fetchCanonNode(_table: string, _id: number) {
+  return null;
+}
+
+/**
+ * Рёбра не используются — только queryId.
+ */
+async function fetchCanonExpand(_edge: string, _fromId: number) {
+  return [];
+}
+
+/**
+ * Дети папок var / values / comments.
+ */
+async function fetchCanonQuery(queryId: string, fromId: number) {
+  return dbtCanonQueryRows(queryId, fromId, store.detail?.slots ?? []);
+}
+
+/**
+ * Действия WalkTree: Split / Merge / Value / комментарий.
+ */
+function onCanonWalkAction(context: FemsqWalkActionContext): void {
+  const slotKey =
+    context.node.table === 'invDbt'
+      ? context.node.rowKey
+      : slotKeyFromWalkNodeId(
+          context.node.table && context.node.rowKey != null
+            ? `${context.node.table}:${context.node.rowKey}`
+            : null,
+          store.detail?.slots ?? []
+        );
+  if (context.actionId === 'dbt.canon.split' && slotKey != null) {
+    openSplit(slotKey);
+    return;
+  }
+  if (context.actionId === 'dbt.canon.merge') {
+    openMerge();
+    return;
+  }
+  if (context.actionId === 'dbt.canon.value.add') {
+    const fromFolder = context.node.fromId ?? slotKey;
+    if (fromFolder != null) {
+      openNewValue(fromFolder);
+    }
+    return;
+  }
+  if (context.actionId === 'dbt.canon.value.edit' && context.node.rowKey != null) {
+    openEditValue(context.node.rowKey);
+    return;
+  }
+  if (context.actionId === 'dbt.canon.value.delete' && context.node.rowKey != null) {
+    onDeleteValue(context.node.rowKey);
+    return;
+  }
+  if (context.actionId === 'dbt.canon.comment.add') {
+    const vk = context.node.table === 'DbtValue' ? context.node.rowKey : null;
+    openAddComment(vk ?? undefined);
+  }
+}
+
+const portfolioChains = computed((): SudzDbtCanonPortfolioChain[] => {
+  return store.detail?.portfolioChains ?? [];
+});
+
+const selectedPortfolioChain = computed((): SudzDbtCanonPortfolioChain | null => {
+  const chains = portfolioChains.value;
+  if (!chains.length) {
+    return null;
+  }
+  const id = selectedPortfolioChainId.value;
+  return chains.find((c) => c.id === id) ?? chains[0] ?? null;
+});
+
+watch(
+  () => store.detail?.dbtKey,
+  () => {
+    const top = store.detail?.portfolioChains?.[0];
+    selectedPortfolioChainId.value = top?.id ?? null;
+  }
+);
 
 const chartSpec = computed(() =>
   store.detail
-    ? buildCanonSlotAreasSpec(store.detail.slots, readCanonChartColors(), selectedSlotKey.value)
+    ? buildCanonPortfolioChartSpec(
+        store.detail.slots,
+        selectedPortfolioChain.value,
+        readCanonChartColors(),
+        selectedSlotKey.value
+      )
     : null
 );
 
@@ -794,11 +876,19 @@ function formatSlotValues(slot: SudzDbtCanonSlot): string {
 
 /**
  * Серверный запрос по фильтрам колонок.
+ * Дедуп одинаковых columnFilters — защита от цикла QTable @request ↔ pagination.
  *
  * @param request контракт FemsqTable
  */
+let lastSearchFiltersKey = '';
 function onTableRequest(request: FemsqTableRequest): void {
-  void store.searchByColumnFilters(request.columnFilters ?? {});
+  const filters = request.columnFilters ?? {};
+  const key = JSON.stringify(filters);
+  if (key === lastSearchFiltersKey) {
+    return;
+  }
+  lastSearchFiltersKey = key;
+  void store.searchByColumnFilters(filters);
 }
 
 /**
@@ -821,41 +911,30 @@ function onCandidateClick(_evt: Event, row: SudzDbtCanonCandidate): void {
 function onSlotRowClick(_evt: Event, row: SudzDbtCanonSlot): void {
   selectedSlotRows.value = [row];
   selectedSlotKey.value = row.slotKey;
-  selectedTreeKey.value = `slot:${row.slotKey}`;
+  selectedTreeKey.value = `invDbt:${row.slotKey}`;
 }
 
 /**
  * Выбор узла дерева → подсветка серии.
  *
- * @param key ключ узла
+ * @param key ключ узла WalkTree
  */
 function onTreeSelect(key: string | number | null): void {
-  if (key == null) {
+  const slots = store.detail?.slots ?? [];
+  const slotKey = slotKeyFromWalkNodeId(key, slots);
+  if (slotKey == null) {
     return;
   }
-  const text = String(key);
-  const slotMatch = /^slot:(\d+)$/.exec(text) ?? /^var:(\d+)$/.exec(text) ?? /^vals:(\d+)$/.exec(text);
-  if (slotMatch) {
-    selectedSlotKey.value = Number(slotMatch[1]);
-    const slot = store.detail?.slots.find((s) => s.slotKey === selectedSlotKey.value);
-    selectedSlotRows.value = slot ? [slot] : [];
-    return;
-  }
-  const valMatch = /^val:(\d+)$/.exec(text);
-  if (valMatch && store.detail) {
-    const vk = Number(valMatch[1]);
-    const slot = store.detail.slots.find((s) => s.values.some((v) => v.valueKey === vk));
-    if (slot) {
-      selectedSlotKey.value = slot.slotKey;
-      selectedSlotRows.value = [slot];
-    }
-  }
+  selectedSlotKey.value = slotKey;
+  const slot = slots.find((item) => item.slotKey === slotKey);
+  selectedSlotRows.value = slot ? [slot] : [];
 }
 
 /**
  * Сброс фильтров таблицы и карточки.
  */
 function onReset(): void {
+  lastSearchFiltersKey = '';
   columnFilters.value = {};
   selectedRows.value = [];
   selectedSlotRows.value = [];
@@ -863,7 +942,6 @@ function onReset(): void {
   selectedTreeKey.value = null;
   commentDraft.value = '';
   commentSelectedKey.value = null;
-  commentExpandedKeys.value = [];
   store.resetFilters();
 }
 
@@ -886,18 +964,23 @@ function openNewValue(slotKey: number): void {
 /**
  * Модалка правки Value.
  *
- * @param node узел дерева
+ * @param valueKey ключ DbtValue
  */
-function openEditValue(node: CanonTreeNode): void {
-  if (node.value == null || node.slotKey == null) {
+function openEditValue(valueKey: number): void {
+  const slots = store.detail?.slots ?? [];
+  for (const slot of slots) {
+    const value = slot.values.find((item) => item.valueKey === valueKey);
+    if (!value) {
+      continue;
+    }
+    valueDlg.slotKey = slot.slotKey;
+    valueDlg.valueKey = value.valueKey;
+    valueDlg.uplKey = value.uplKey;
+    valueDlg.ttl = value.ttl != null ? String(value.ttl) : '';
+    valueDlg.overd = value.overd != null ? String(value.overd) : '';
+    valueDlg.open = true;
     return;
   }
-  valueDlg.slotKey = node.slotKey;
-  valueDlg.valueKey = node.value.valueKey;
-  valueDlg.uplKey = node.value.uplKey;
-  valueDlg.ttl = node.value.ttl != null ? String(node.value.ttl) : '';
-  valueDlg.overd = node.value.overd != null ? String(node.value.overd) : '';
-  valueDlg.open = true;
 }
 
 /**
@@ -1015,6 +1098,14 @@ watch(
   }
 );
 
+/** Выбор чекбоксом не вызывает @row-click — открываем карточку по v-model:selected. */
+watch(selectedRows, (rows) => {
+  const row = rows[0];
+  if (row != null && row.dbtKey !== store.selectedDbtKey) {
+    void store.openCanon(row.dbtKey);
+  }
+});
+
 /**
  * Снять Value (кнопка дерева).
  *
@@ -1035,19 +1126,12 @@ watch(
       commentSelectedKey.value = null;
       selectedSlotKey.value = null;
       selectedTreeKey.value = null;
-      expandedKeys.value = [];
-      commentExpandedKeys.value = [];
       selectedSlotRows.value = [];
       return;
     }
-    const nodes = buildCanonTreeNodes(detail.slots);
-    expandedKeys.value = defaultExpandedKeys(nodes);
-    const commentNodes = buildCanonCommentTreeNodes(detail.dbtKey, detail.slots);
-    commentExpandedKeys.value = commentTreeExpandedKeys(commentNodes);
     const keepSelected = commentSelectedKey.value;
     const stillThere =
-      keepSelected != null &&
-      commentsFromSlots(detail.slots).some((item) => item.id === String(keepSelected));
+      keepSelected != null && commentStubFromWalkNodeId(keepSelected, detail.slots) != null;
     if (!stillThere) {
       commentSelectedKey.value = null;
       commentDraft.value = '';
@@ -1059,23 +1143,14 @@ watch(
     const first = keep ?? detail.slots[0];
     selectedSlotKey.value = first?.slotKey ?? null;
     selectedSlotRows.value = first ? [first] : [];
-    selectedTreeKey.value = first ? `slot:${first.slotKey}` : null;
+    selectedTreeKey.value = first ? `invDbt:${first.slotKey}` : null;
   }
 );
 
 watch(commentSelectedKey, (key) => {
-  const stub = canonComments.value.find((item) => item.id === String(key ?? ''));
+  const stub = commentStubFromWalkNodeId(key, store.detail?.slots ?? []);
   commentDraft.value = stub?.text ?? '';
 });
-
-/**
- * Узел DbtValue (не папка vals:), к которому можно повесить cmm.
- *
- * @param node узел дерева комментариев
- */
-function isCommentValueNode(node: CanonTreeNode): boolean {
-  return node.kind === 'value' && node.valueKey != null;
-}
 
 /**
  * Модалка: группа года + тип для выбранного DbtValue.

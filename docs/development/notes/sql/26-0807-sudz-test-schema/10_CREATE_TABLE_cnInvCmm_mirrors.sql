@@ -213,8 +213,11 @@ BEGIN
         yr_upl_p_key   int NOT NULL IDENTITY(1, 1),
         yr_upl_p_yr    int NOT NULL,
         cn_inv_dbt_upl int NOT NULL,
+        yr_upl_p_q     tinyint NOT NULL,
         CONSTRAINT PK_yr_upl_p PRIMARY KEY CLUSTERED (yr_upl_p_key),
         CONSTRAINT UX_yr_upl_p_YrUpl UNIQUE (yr_upl_p_yr, cn_inv_dbt_upl),
+        CONSTRAINT UX_yr_upl_p_YrQ UNIQUE (yr_upl_p_yr, yr_upl_p_q),
+        CONSTRAINT CK_yr_upl_p_q CHECK (yr_upl_p_q BETWEEN 0 AND 4),
         CONSTRAINT FK_yr_upl_p_yr FOREIGN KEY (yr_upl_p_yr)
             REFERENCES test_sudz.yr (yr_key),
         CONSTRAINT FK_yr_upl_p_cn_inv_dbt_upl FOREIGN KEY (cn_inv_dbt_upl)

@@ -8,13 +8,16 @@ extend type Query {
   """
   Страница связей cnInv договора (T7 P1).
   page с 1; rowsPerPage default 25 (max 200);
-  sortBy: ciKey|ciInv|iNum|ciTimeOfEntry; filter — подстрока iNum (+ число → ciInv/ciKey).
+  sortBy: ciKey|ciInv|iNum|ciTimeOfEntry.
+  filter — подстрока номера в invNum (+ целое → ciInv/ciKey).
+  columnFilters — AND по отдельным колонкам, номер тоже по invNum.
   """
   cnInvsByCn(
     cnKey: Int!
     page: Int = 1
     rowsPerPage: Int = 25
     filter: String
+    columnFilters: CnInvColumnFilters
     sortBy: String
     descending: Boolean = false
   ): CnInvPage!
@@ -177,6 +180,17 @@ input CnUpdateRequest {
   cnDate: Date
   cnNote: String
   cnMark: Int
+}
+
+input CnInvColumnFilters {
+  """Подстрока номера СФ (ags.invNum.inNum)."""
+  iNum: String
+  """Подстрока ключа СФ ciInv."""
+  ciInv: String
+  """Подстрока ключа связи ciKey."""
+  ciKey: String
+  """Подстрока даты ввода (ISO)."""
+  ciTimeOfEntry: String
 }
 
 input CnInvCreateRequest {

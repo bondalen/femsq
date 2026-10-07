@@ -39,6 +39,9 @@ html[data-femsq-theme='kimbie-dark'] {
   --femsq-chip-type-bg: rgba(209, 154, 102, 0.18);
   --femsq-chip-type-text: #f0d0a8;
   --femsq-table-stripe-bg: rgba(211, 175, 134, 0.04);
+  /* fequlib FemsqTable sticky header (0011) */
+  --fequlib-table-header-bg: var(--femsq-bg-elevated);
+  --fequlib-table-header-color: var(--femsq-text);
   --femsq-banner-warning-bg: rgba(229, 192, 123, 0.16);
   --femsq-banner-warning-text: #e5c07b;
   --femsq-banner-error-bg: rgba(244, 71, 71, 0.12);
@@ -113,6 +116,9 @@ html[data-femsq-theme='vs-light'] {
   --femsq-chip-type-bg: #deecf9;
   --femsq-chip-type-text: #004275;
   --femsq-table-stripe-bg: rgba(0, 0, 0, 0.02);
+  /* fequlib FemsqTable sticky header — surface for max contrast with dark text */
+  --fequlib-table-header-bg: var(--femsq-bg-surface);
+  --fequlib-table-header-color: var(--femsq-text);
   --femsq-banner-warning-bg: #fff4ce;
   --femsq-banner-warning-text: #5c4b00;
   --femsq-banner-error-bg: #fde7e9;

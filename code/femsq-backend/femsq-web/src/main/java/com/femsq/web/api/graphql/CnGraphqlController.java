@@ -5,6 +5,7 @@ import com.femsq.database.exception.DaoException;
 import com.femsq.database.model.CnContractCreate;
 import com.femsq.database.model.CnNumCreate;
 import com.femsq.database.model.CnInv;
+import com.femsq.database.model.CnInvColumnFilters;
 import com.femsq.database.model.CnInvListItem;
 import com.femsq.database.model.CnInvPage;
 import com.femsq.database.model.CnS;
@@ -128,6 +129,7 @@ public class CnGraphqlController {
             @Argument("page") Integer page,
             @Argument("rowsPerPage") Integer rowsPerPage,
             @Argument("filter") String filter,
+            @Argument("columnFilters") CnInvColumnFilters columnFilters,
             @Argument("sortBy") String sortBy,
             @Argument("descending") Boolean descending
     ) {
@@ -135,9 +137,11 @@ public class CnGraphqlController {
         int safeRows = rowsPerPage == null ? 25 : rowsPerPage;
         boolean desc = Boolean.TRUE.equals(descending);
         log.info(() -> "GraphQL query cnInvsByCn cnKey=" + cnKey
-                + " page=" + safePage + " rowsPerPage=" + safeRows);
+                + " page=" + safePage + " rowsPerPage=" + safeRows
+                + " filter=" + (filter == null || filter.isBlank() ? "no" : "yes"));
         return mutate(() -> {
-            CnInvPage result = cnInvService.listByCn(cnKey, safePage, safeRows, filter, sortBy, desc);
+            CnInvPage result = cnInvService.listByCn(
+                    cnKey, safePage, safeRows, filter, columnFilters, sortBy, desc);
             return new CnInvPageDto(
                     result.items().stream().map(CnGraphqlController::toCnInvDto).toList(),
                     result.totalCount(),

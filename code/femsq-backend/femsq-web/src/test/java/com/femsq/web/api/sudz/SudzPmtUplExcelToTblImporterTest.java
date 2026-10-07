@@ -2,17 +2,30 @@ package com.femsq.web.api.sudz;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.femsq.database.model.sudz.SudzPmtUplTblRow;
 import com.femsq.web.audit.excel.AuditExcelCellReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,6 +61,9 @@ class SudzPmtUplExcelToTblImporterTest {
         assertEquals(0, new BigDecimal("100.50").compareTo(row.ciputCnInvDocSum()));
         assertEquals(2, row.ciputUnloadKey());
         assertEquals(1, row.ciputSheetNum());
+        assertNull(row.ciputSfKey());
+        assertNull(row.ciputDueKey());
+        assertNull(row.ciputDueGrp());
 
         String html = log.toHtml();
         assertTrue(html.contains("Sheet1"));
@@ -55,6 +71,7 @@ class SudzPmtUplExcelToTblImporterTest {
         assertTrue(html.contains("колонки по заголовкам"));
         assertFalse(html.contains("книга Excel открыта"));
         assertFalse(html.contains("добавлено"));
+        assertFalse(html.contains("staging outline"));
     }
 
     @Test
@@ -79,8 +96,90 @@ class SudzPmtUplExcelToTblImporterTest {
         assertEquals("PD-55", row.ciputCnInvDocCode());
         assertNull(row.ciputDueDate());
         assertNull(row.ciputCnInvDocSum());
+        assertNull(row.ciputSfKey());
         assertTrue(log.toHtml().contains("колонки по заголовкам"));
         assertFalse(log.toHtml().contains("слишком близко к левому краю"));
+    }
+
+    @Test
+    void traditionalOutlineAssignsDueGrpForRepeatedDue() throws IOException {
+        byte[] bytes = traditionalOutlineWorkbookBytes();
+        SudzDbtUplProgressLog log = new SudzDbtUplProgressLog();
+
+        List<SudzPmtUplTblRow> rows = importer.parse(bytes, "export_trad.xlsx", "Sheet1", 59, log);
+
+        assertEquals(5, rows.size());
+        assertTrue(log.toHtml().contains("staging outline"));
+        assertTrue(log.toHtml().contains("жёлтых ключей <b>4</b>"));
+
+        // один СФ файла + один отрезок стройки
+        assertEquals(1, rows.stream().map(SudzPmtUplTblRow::ciputSfKey).distinct().count());
+        assertEquals(1, rows.stream().map(SudzPmtUplTblRow::ciputCacSpanKey).distinct().count());
+
+        Set<Integer> dueKeys = rows.stream()
+                .map(SudzPmtUplTblRow::ciputDueKey)
+                .collect(Collectors.toSet());
+        assertEquals(4, dueKeys.size());
+
+        List<SudzPmtUplTblRow> due2802 = rows.stream()
+                .filter(r -> r.ciputDueDate() != null
+                        && r.ciputDueDate().toLocalDate().equals(LocalDate.of(2026, 2, 28)))
+                .toList();
+        assertEquals(3, due2802.size()); // D1 + D4 + D5
+        Set<Integer> grps = due2802.stream()
+                .map(SudzPmtUplTblRow::ciputDueGrp)
+                .collect(Collectors.toSet());
+        assertEquals(Set.of(1, 2), grps);
+        assertEquals(2, due2802.stream().map(SudzPmtUplTblRow::ciputDueKey).distinct().count());
+    }
+
+    @Test
+    void traditionalOutlineSuspiciousBnThreeYellowKeys() throws IOException {
+        byte[] bytes = traditionalBnWorkbookBytes();
+        SudzDbtUplProgressLog log = new SudzDbtUplProgressLog();
+        List<SudzPmtUplTblRow> rows = importer.parse(bytes, "export_bn.xlsx", "Sheet1", 59, log);
+
+        assertEquals(3, rows.size());
+        assertEquals(1, rows.stream().map(SudzPmtUplTblRow::ciputSfKey).distinct().count());
+        assertEquals(3, rows.stream().map(SudzPmtUplTblRow::ciputDueKey).distinct().count());
+        assertTrue(rows.stream().allMatch(r -> Objects.equals(r.ciputDueGrp(), 1)));
+    }
+
+    @Test
+    void smokeExport59StagingKeys() throws IOException {
+        Path path = Path.of(
+                "/mnt/d/wire-guard-share-nb-win/femsq/excel/2025-12/debit/export_26-0130_767501.XLSX");
+        assumeTrue(Files.isRegularFile(path), "эталонный export_26-0130_767501 недоступен");
+
+        byte[] bytes = Files.readAllBytes(path);
+        SudzDbtUplProgressLog log = new SudzDbtUplProgressLog();
+        List<SudzPmtUplTblRow> rows = importer.parse(bytes, path.getFileName().toString(), "Sheet1", 59, log);
+
+        assertEquals(15942, rows.size());
+        long dueKeys = rows.stream().map(SudzPmtUplTblRow::ciputDueKey).filter(Objects::nonNull).distinct().count();
+        assertEquals(7575, dueKeys);
+
+        List<SudzPmtUplTblRow> case0620 = rows.stream()
+                .filter(r -> "0620CR000478".equals(r.ciputCnInv()))
+                .filter(r -> "051-2004018".equals(r.ciputCAC()))
+                .filter(r -> r.ciputDueDate() != null
+                        && r.ciputDueDate().toLocalDate().equals(LocalDate.of(2026, 2, 28)))
+                .toList();
+        assertFalse(case0620.isEmpty());
+        Set<Integer> grps = case0620.stream()
+                .map(SudzPmtUplTblRow::ciputDueGrp)
+                .collect(Collectors.toSet());
+        assertEquals(Set.of(1, 2), grps);
+        assertEquals(2, case0620.stream().map(SudzPmtUplTblRow::ciputDueKey).distinct().count());
+
+        List<SudzPmtUplTblRow> bnKs14 = rows.stream()
+                .filter(r -> "КС-14".equals(r.ciputCnName()))
+                .filter(r -> "б/н".equals(r.ciputCnInv()))
+                .toList();
+        assertEquals(3, bnKs14.size());
+        assertEquals(1, bnKs14.stream().map(SudzPmtUplTblRow::ciputSfKey).distinct().count());
+        assertEquals(3, bnKs14.stream().map(SudzPmtUplTblRow::ciputDueKey).distinct().count());
+        assertNotNull(bnKs14.get(0).ciputDueKey());
     }
 
     @Test
@@ -94,14 +193,15 @@ class SudzPmtUplExcelToTblImporterTest {
     }
 
     @Test
-    void weakRowsCountedWithoutPerLineNoise() throws IOException {
+    void subtotalRowWithoutDocCodeIsSkipped() throws IOException {
         byte[] bytes = workbookWithWeakRow();
         SudzDbtUplProgressLog log = new SudzDbtUplProgressLog();
         List<SudzPmtUplTblRow> rows = importer.parse(bytes, "export_test.xlsx", "Sheet1", 2, log);
-        assertEquals(2, rows.size());
+        assertEquals(1, rows.size());
+        assertEquals("DOC-1", rows.get(0).ciputCnInvDocCode());
         String html = log.toHtml();
-        assertTrue(html.contains("без «№ докум.»: 1"));
-        assertFalse(html.contains("добавлено"));
+        assertTrue(html.contains("только строки с «№ докум.»"));
+        assertFalse(html.contains("без «№ докум.»"));
     }
 
     @Test
@@ -179,6 +279,106 @@ class SudzPmtUplExcelToTblImporterTest {
             weak.createCell(3).setCellValue("Без номера документа");
             return toBytes(wb);
         }
+    }
+
+    /**
+     * Мини-дерево как у {@code 0620CR000478}: два жёлтых итога с одним сроком 28.02
+     * и два других срока между ними.
+     */
+    private static byte[] traditionalOutlineWorkbookBytes() throws IOException {
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            Sheet sheet = wb.createSheet("Sheet1");
+            CellStyle dateStyle = dateStyle(wb);
+            writeCanonHeader(sheet.createRow(0));
+            int r = 1;
+            r = addWhite(sheet, dateStyle, r, 51, "КС-51", "0620CR000478", "051-2004018",
+                    LocalDate.of(2026, 2, 28), "D1", 10);
+            r = addYellow(sheet, dateStyle, r, LocalDate.of(2026, 2, 28), 10);
+            r = addWhite(sheet, dateStyle, r, 51, "КС-51", "0620CR000478", "051-2004018",
+                    LocalDate.of(2025, 12, 31), "D2", 20);
+            r = addYellow(sheet, dateStyle, r, LocalDate.of(2025, 12, 31), 20);
+            r = addWhite(sheet, dateStyle, r, 51, "КС-51", "0620CR000478", "051-2004018",
+                    LocalDate.of(2026, 1, 28), "D3", 30);
+            r = addYellow(sheet, dateStyle, r, LocalDate.of(2026, 1, 28), 30);
+            r = addWhite(sheet, dateStyle, r, 51, "КС-51", "0620CR000478", "051-2004018",
+                    LocalDate.of(2026, 2, 28), "D4", 15);
+            r = addWhite(sheet, dateStyle, r, 51, "КС-51", "0620CR000478", "051-2004018",
+                    LocalDate.of(2026, 2, 28), "D5", 25);
+            addYellow(sheet, dateStyle, r, LocalDate.of(2026, 2, 28), 40);
+            return toBytes(wb);
+        }
+    }
+
+    /** Три белых «б/н» КС-14 под тремя жёлтыми — три dueKey, один sfKey. */
+    private static byte[] traditionalBnWorkbookBytes() throws IOException {
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            Sheet sheet = wb.createSheet("Sheet1");
+            CellStyle dateStyle = dateStyle(wb);
+            writeCanonHeader(sheet.createRow(0));
+            int r = 1;
+            r = addWhite(sheet, dateStyle, r, 14, "КС-14", "б/н", "051-1",
+                    LocalDate.of(2026, 1, 15), "5900202347", 0);
+            r = addYellow(sheet, dateStyle, r, LocalDate.of(2026, 1, 15), 0);
+            r = addWhite(sheet, dateStyle, r, 14, "КС-14", "б/н", "051-1",
+                    LocalDate.of(2026, 1, 20), "5400199014", 0);
+            r = addYellow(sheet, dateStyle, r, LocalDate.of(2026, 1, 20), 0);
+            r = addWhite(sheet, dateStyle, r, 14, "КС-14", "б/н", "051-1",
+                    LocalDate.of(2026, 2, 1), "5400224218", -10);
+            addYellow(sheet, dateStyle, r, LocalDate.of(2026, 2, 1), -10);
+            return toBytes(wb);
+        }
+    }
+
+    private static CellStyle dateStyle(XSSFWorkbook wb) {
+        CreationHelper helper = wb.getCreationHelper();
+        CellStyle style = wb.createCellStyle();
+        style.setDataFormat(helper.createDataFormat().getFormat("dd.mm.yyyy"));
+        return style;
+    }
+
+    private static int addWhite(
+            Sheet sheet,
+            CellStyle dateStyle,
+            int rowIdx,
+            int ctpt,
+            String cn,
+            String inv,
+            String cac,
+            LocalDate due,
+            String doc,
+            double blns
+    ) {
+        XSSFRow row = (XSSFRow) sheet.createRow(rowIdx);
+        row.getCTRow().setOutlineLevel((short) 4);
+        row.createCell(0).setCellValue("BE01");
+        row.createCell(1).setCellValue(767501);
+        row.createCell(2).setCellValue(ctpt);
+        row.createCell(3).setCellValue("Кредитор");
+        row.createCell(4).setCellValue(cac);
+        row.createCell(7).setCellValue(cn);
+        row.createCell(9).setCellValue(inv);
+        var dueCell = row.createCell(12);
+        dueCell.setCellValue(toDate(due));
+        dueCell.setCellStyle(dateStyle);
+        row.createCell(19).setCellValue(blns);
+        row.createCell(20).setCellValue(doc);
+        return rowIdx + 1;
+    }
+
+    private static int addYellow(
+            Sheet sheet, CellStyle dateStyle, int rowIdx, LocalDate due, double blns
+    ) {
+        XSSFRow row = (XSSFRow) sheet.createRow(rowIdx);
+        row.getCTRow().setOutlineLevel((short) 3);
+        var dueCell = row.createCell(12);
+        dueCell.setCellValue(toDate(due));
+        dueCell.setCellStyle(dateStyle);
+        row.createCell(19).setCellValue(blns);
+        return rowIdx + 1;
+    }
+
+    private static Date toDate(LocalDate due) {
+        return Date.from(due.atStartOfDay(ZoneId.systemDefault()).toInstant());
     }
 
     private static void writeCanonHeader(Row header) {

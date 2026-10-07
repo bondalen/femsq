@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>FEMSQ H4 — готовность</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 42rem;
+      margin: 3rem auto;
+      padding: 0 1.5rem;
+      line-height: 1.5;
+      color: #1a1a1a;
+      background: #f7f5f2;
+    }
+    h1 { font-size: 1.35rem; margin-bottom: 0.5rem; }
+    .ok { color: #0a7a3e; font-weight: 600; }
+    .box {
+      background: #fff;
+      border: 1px solid #ddd;
+      padding: 1rem 1.25rem;
+      margin-top: 1rem;
+    }
+    code { font-size: 0.9em; }
+    ul { padding-left: 1.2rem; }
+  </style>
+</head>
+<body>
+  <h1><span class="ok">✓ Готов продолжать</span></h1>
+  <p>
+    CnInvPmtUpl §4.3 — следующий срез <strong>H4</strong>
+    (apply на pm 3/4/5/6) через UI браузера Cursor.
+  </p>
+  <div class="box">
+    <ul>
+      <li>Pull: <code>899b480</code> (feat H3 apply 3–12)</li>
+      <li>Handoff изучен; код и БД не менялись</li>
+      <li>Машина: <code>nb-win</code>; SQL <code>femsq-mssql</code> Up; DBHub OK; mcp DSN localhost</li>
+      <li>Стоп-точка: H3 pm=8 закрыт; H4 Excel→Tbl уже есть</li>
+      <li>Приложение :8080 сейчас не запущено (локальный JAR 0.1.0.265; в handoff 0.1.0.297)</li>
+    </ul>
+  </div>
+</body>
+</html>

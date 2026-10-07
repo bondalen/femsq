@@ -60,6 +60,11 @@ import com.femsq.database.model.sudz.SudzPmtUplDocNotApplyResult;
 import com.femsq.database.model.sudz.SudzPmtUplInsPmNotApplyResult;
 import com.femsq.database.model.sudz.SudzPmtUplInsPmNotResult;
 import com.femsq.database.model.sudz.SudzPmtUplCnNotLoad;
+import com.femsq.database.model.sudz.SudzPmtUplCstMatch;
+import com.femsq.database.model.sudz.SudzPmtUplCstNew;
+import com.femsq.database.model.sudz.SudzPmtUplInvNot;
+import com.femsq.database.model.sudz.SudzPmtUplTabBadges;
+import com.femsq.database.model.sudz.SudzPmtUplTwoLoad;
 import com.femsq.database.model.sudz.SudzPmtUplFunnelSteps;
 import com.femsq.database.model.sudz.SudzPmtUplLauncher;
 import com.femsq.database.model.sudz.SudzPmtUplLogOnlyResult;
@@ -68,6 +73,10 @@ import com.femsq.database.model.sudz.SudzPmtUplTblWriteProgress;
 import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
+import com.femsq.database.model.sudz.SudzPmDocForest;
+import com.femsq.database.model.sudz.SudzSfDecisionProfile;
+import com.femsq.database.model.sudz.SudzPmtExcelCaseRow;
+import com.femsq.database.model.sudz.SudzPmtSfSumCompare;
 import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
 import com.femsq.database.model.sudz.SudzSfDoubleAdvice;
 import com.femsq.database.model.sudz.SudzSfDoubleHints;
@@ -372,6 +381,60 @@ public class DefaultSudzService implements SudzService {
             case "cipuInsPmExt" -> sudzDao.findPmtUplInsPmExt(unloadKey, limit);
             default -> throw new IllegalArgumentException("Не log-only шаг H2: " + stepId);
         };
+    }
+
+    @Override
+    public List<SudzPmtUplCstNew> listPmtUplCstNew(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.listPmtUplCstNew(unloadKey);
+    }
+
+    @Override
+    public List<SudzPmtUplCstMatch> listPmtUplCstMatch(String codeSuffix) {
+        String suffix = SudzPmtUplCstMatch.requireCodeSuffix(codeSuffix);
+        return sudzDao.listPmtUplCstMatch(suffix);
+    }
+
+    @Override
+    public SudzPmtUplTabBadges findPmtUplTabBadges(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.findPmtUplTabBadges(unloadKey);
+    }
+
+    @Override
+    public List<SudzPmtUplInvNot> listPmtUplInvNot(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.listPmtUplInvNot(unloadKey);
+    }
+
+    @Override
+    public List<SudzPmtUplTwoLoad> listPmtUplTwoLoad(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.listPmtUplTwoLoad(unloadKey);
+    }
+
+    @Override
+    public int rebuildPmtUplSfDouble(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.rebuildPmtUplSfDouble(unloadKey);
+    }
+
+    @Override
+    public List<SudzCnInvUplSfDouble> listPmtUplSfDoubles(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.listPmtUplSfDoubles(unloadKey);
     }
 
     @Override
@@ -1119,6 +1182,55 @@ public class DefaultSudzService implements SudzService {
             throw new IllegalArgumentException("ciusKey должен быть положительным: " + ciusKey);
         }
         return sudzDao.findSfDoubleExcelCandidate(ciusKey);
+    }
+
+    @Override
+    public List<SudzPmtExcelCaseRow> listPmtSfExcelCaseRows(int ciusKey) {
+        if (ciusKey <= 0) {
+            throw new IllegalArgumentException("ciusKey должен быть положительным: " + ciusKey);
+        }
+        return sudzDao.listPmtSfExcelCaseRows(ciusKey);
+    }
+
+    @Override
+    public Optional<SudzPmtSfSumCompare> findPmtSfSumCompare(int ciusKey) {
+        if (ciusKey <= 0) {
+            throw new IllegalArgumentException("ciusKey должен быть положительным: " + ciusKey);
+        }
+        return sudzDao.findPmtSfSumCompare(ciusKey);
+    }
+
+    @Override
+    public SudzPmDocForest findPmDocForestByCius(int ciusKey) {
+        if (ciusKey <= 0) {
+            throw new IllegalArgumentException("ciusKey должен быть положительным: " + ciusKey);
+        }
+        return sudzDao.findPmDocForestByCius(ciusKey);
+    }
+
+    @Override
+    public SudzPmDocForest findPmDocForestByInv(int invKey) {
+        if (invKey <= 0) {
+            throw new IllegalArgumentException("invKey должен быть положительным: " + invKey);
+        }
+        return sudzDao.findPmDocForestByInv(invKey);
+    }
+
+    @Override
+    public SudzSfDecisionProfile findSfDecisionProfile(
+            int invKey,
+            Integer currentUplKey,
+            String excelCnText,
+            String excelInvNum,
+            Integer excelCntrPrtNum,
+            BigDecimal excelBlnsSum,
+            String excelCac
+    ) {
+        if (invKey <= 0) {
+            throw new IllegalArgumentException("invKey должен быть положительным: " + invKey);
+        }
+        return sudzDao.findSfDecisionProfile(
+                invKey, currentUplKey, excelCnText, excelInvNum, excelCntrPrtNum, excelBlnsSum, excelCac);
     }
 
     @Override

@@ -42,7 +42,8 @@ SELECT
   a.ciputDbtBlns, a.ciputDbtBlnsOverd, a.ciputDbtBlnsOverdNot,
   a.ciputCdtBlns, a.ciputCdtBlnsOverd, a.ciputCdtBlnsOverdNot, a.ciputBlns,
   a.ciputAlligmentDate, a.ciputBaseDate, a.ciputCnInvDocSum,
-  a.ciputStornoReason, a.ciputStornoDocCode
+  a.ciputStornoReason, a.ciputStornoDocCode,
+  a.ciputDueGrp
 INTO #stg
 FROM sudz.CnInvPmtUplTbl AS a
 WHERE a.ciputUnloadKey = @uk;
@@ -97,7 +98,7 @@ SELECT
   s.ciputDbtBlns, s.ciputDbtBlnsOverd, s.ciputDbtBlnsOverdNot,
   s.ciputCdtBlns, s.ciputCdtBlnsOverd, s.ciputCdtBlnsOverdNot, s.ciputBlns,
   s.ciputAlligmentDate, s.ciputBaseDate, s.ciputCnInvDocSum,
-  s.ciputStornoReason, s.ciputStornoDocCode, p.cstapKey
+  s.ciputStornoReason, s.ciputStornoDocCode, s.ciputDueGrp, p.cstapKey
 INTO #cand FROM #oneInv AS o
 INNER JOIN ags.accnt AS a ON a.account_num = o.ciputAccount
 INNER JOIN ags.cnInvAccntSmpl AS f
@@ -151,6 +152,7 @@ SET @t0 = SYSDATETIME();
 BEGIN TRAN;
 INSERT INTO ags.cn_inv_pm (
   csoCn_s_org_smpl, cn_inv_doc, constract_code, cn_inv_pm_due,
+  cn_inv_pm_due_grp,
   dbt_blns, dbt_blns_overd, dbt_blns_not_overd,
   cdt_blns, cdt_blns_overd, cdt_blns_not_overd, blns,
   alignment_date, base_date, storno_reason, storno_doc,
@@ -160,6 +162,7 @@ INSERT INTO ags.cn_inv_pm (
 )
 SELECT
   m.AgCsosKey, m.cn_inv_doc_key, m.cacOrNull, m.ciputDueDate,
+  m.ciputDueGrp,
   ISNULL(m.ciputDbtBlns, 0), ISNULL(m.ciputDbtBlnsOverd, 0), ISNULL(m.ciputDbtBlnsOverdNot, 0),
   ISNULL(m.ciputCdtBlns, 0), ISNULL(m.ciputCdtBlnsOverd, 0), ISNULL(m.ciputCdtBlnsOverdNot, 0), ISNULL(m.ciputBlns, 0),
   m.ciputAlligmentDate, m.ciputBaseDate, m.ciputStornoReason,

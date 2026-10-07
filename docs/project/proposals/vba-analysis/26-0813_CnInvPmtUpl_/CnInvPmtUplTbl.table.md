@@ -50,5 +50,6 @@
 - DocCode/Storno → `nvarchar(50)` (по факту CSV, не uniqueidentifier).
 - Currency → `decimal(19,4)`.
 - `ciputAccount`: уточнить при воронке — num vs key.
+- Staging-ключи традиционной раскладки (**1.13.1**, пакет `26-1003`): nullable `ciputSfKey`, `ciputCacSpanKey`, `ciputDueKey` (int), `ciputDueGrp` (smallint). Жёлтые строки по-прежнему не пишутся.
 
-**lastUpdated:** 2026-08-13
+**lastUpdated:** 2026-10-03

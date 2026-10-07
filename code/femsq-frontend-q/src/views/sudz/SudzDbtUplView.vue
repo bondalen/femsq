@@ -534,6 +534,7 @@ import { FemsqTable, type FemsqTableColumn } from 'fequlib';
 import { useConnectionStore } from '@/stores/connection';
 import { useSudzPortfolioStore } from '@/stores/sudz-portfolio';
 import { useSudzDbtUplStore } from '@/stores/sudz-dbt-upl';
+import { useSudzSfDoubleSessionStore } from '@/stores/sudz-sf-double-session';
 import { normalizeExplorerPath } from '@/utils/explorer-path';
 import {
   SUDZ_DBT_UPL_FUNNEL_ENABLED_IDS,
@@ -552,6 +553,7 @@ import type {
 const $q = useQuasar();
 const store = useSudzDbtUplStore();
 const portfolioStore = useSudzPortfolioStore();
+const sfSession = useSudzSfDoubleSessionStore();
 const connection = useConnectionStore();
 
 /** Доля высоты списка выгрузок (%). */
@@ -748,6 +750,7 @@ async function onDeleteSheet(): Promise<void> {
  * Открывает экран КСДСФ для текущей выгрузки.
  */
 function openSfDouble(): void {
+  sfSession.openFromDbt();
   connection.navigate('sudz-sf-double');
 }
 

@@ -1,0 +1,78 @@
+{
+  "id": "pmt-cst-match",
+  "version": 1,
+  "view": "list",
+  "root": {
+    "table": "cst",
+    "pk": "cstKey",
+    "queryId": "sudz.pmtUpl.cstMatch",
+    "level": "cst"
+  },
+  "title": ["label"],
+  "detail": ["label", "keyText", "extra"],
+  "actions": [
+    {
+      "id": "pmt.cst.agent",
+      "kind": "create-child",
+      "label": "Агент",
+      "scope": "record"
+    }
+  ],
+  "columnSets": [
+    {
+      "level": "cst",
+      "columns": [
+        { "label": "Подпись", "field": "title" },
+        { "label": "Ключ", "field": "keyText" },
+        { "label": "Дополнение", "field": "extra" }
+      ]
+    },
+    {
+      "level": "csta",
+      "columns": [
+        { "label": "Подпись", "field": "title" },
+        { "label": "Ключ", "field": "keyText" },
+        { "label": "Дополнение", "field": "extra" }
+      ]
+    },
+    {
+      "level": "cstap",
+      "columns": [
+        { "label": "Подпись", "field": "title" },
+        { "label": "Ключ", "field": "keyText" },
+        { "label": "Дополнение", "field": "extra" }
+      ]
+    }
+  ],
+  "children": [
+    {
+      "queryId": "sudz.pmtUpl.cstAgents",
+      "to": "cstAg",
+      "card": "1:N",
+      "level": "csta",
+      "folder": "Агенты",
+      "title": ["label"],
+      "detail": ["label", "keyText", "extra"],
+      "actions": [
+        {
+          "id": "pmt.cst.code",
+          "kind": "create-child",
+          "label": "Код",
+          "scope": "record"
+        }
+      ],
+      "children": [
+        {
+          "queryId": "sudz.pmtUpl.cstAgPoints",
+          "to": "cstAgPn",
+          "card": "1:N",
+          "level": "cstap",
+          "folder": "Коды",
+          "title": ["label"],
+          "detail": ["label", "keyText", "extra"],
+          "children": []
+        }
+      ]
+    }
+  ]
+}

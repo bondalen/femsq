@@ -190,6 +190,16 @@ public class SudzPmtUplFunnelRunner {
         }
 
         long funnelMs = System.currentTimeMillis() - funnelT0;
+        try {
+            int sfN = sudzService.rebuildPmtUplSfDouble(pmKey);
+            progress.line("КСДСФ (ciusCiput): очередь <b>" + sfN + "</b> строк (InvNot+TwoLoad).");
+            log.log(Level.INFO, "pmt funnel SfDouble rebuild pmKey={0} rows={1}",
+                    new Object[]{pmKey, sfN});
+        } catch (RuntimeException exception) {
+            progress.line("<font color=\"Salmon\">КСДСФ rebuild</font>: "
+                    + SudzDbtUplProgressLog.escape(exception.getMessage()));
+            log.log(Level.WARNING, "pmt funnel SfDouble rebuild failed pmKey=" + pmKey, exception);
+        }
         progress.line("<font color=\"blue\">Воронка OK</font> — "
                 + SudzDbtUplProgressLog.now()
                 + " (всего <b>" + funnelMs + "</b> мс)");

@@ -9,17 +9,17 @@
           dense
           no-caps
           icon="arrow_back"
-          label="К загрузке свода"
+          :label="backLabel"
           data-test="sudz-sf-double-back"
           @click="goBack"
         />
         <div class="text-h6 col">Разбор СФ с совпадающими номерами</div>
         <div class="text-caption text-grey-6 shrink-0">
-          upl={{ uplKey ?? '—' }} · очередь {{ rows.length }} · open {{ openCount }}
+          {{ unloadLabel }}={{ unloadKey ?? '—' }} · очередь {{ rows.length }} · open {{ openCount }}
         </div>
       </div>
 
-      <div v-if="!uplKey" class="text-grey-6">Выберите выгрузку на экране «Загрузка свода».</div>
+      <div v-if="!unloadKey" class="text-grey-6">{{ emptyUnloadHint }}</div>
       <div v-else-if="error" class="text-negative">{{ error }}</div>
 
       <!-- Вариант A: слева очередь+Excel столбиком; справа СФ и Суммы рядом (без вкладок) -->
@@ -86,34 +86,96 @@
               </div>
             </template>
             <template #after>
-              <div class="column fill-pane no-wrap q-pa-sm" data-test="sudz-sf-excel-pane">
-                <div class="text-subtitle2 q-mb-sm shrink-0">Excel · кандидат</div>
-                <div v-if="!selected" class="text-grey-6">Выберите строку очереди.</div>
-                <div v-else-if="excelLoading" class="text-grey-6">Загрузка…</div>
-                <div v-else-if="!excel" class="text-grey-6">Строка Tbl не найдена.</div>
-                <QMarkupTable v-else dense flat bordered class="col overflow-auto">
-                  <tbody>
-                    <tr v-for="row in excelRows" :key="row.label">
-                      <td class="text-grey-6" style="width: 40%">{{ row.label }}</td>
-                      <td>{{ row.value }}</td>
-                    </tr>
-                  </tbody>
-                </QMarkupTable>
-                <div
-                  class="sudz-sf-messages shrink-0 q-mt-sm q-pa-sm"
-                  data-test="sudz-sf-messages"
-                >
-                  <div class="text-caption text-grey-6 q-mb-xs">
-                    Сообщения
-                    <span v-if="advisorLoading" class="q-ml-xs">· советник…</span>
+              <QSplitter
+                v-model="excelAdvisorSplit"
+                horizontal
+                :limits="[25, 75]"
+                separator-class="sudz-split-sep"
+                class="fit sudz-sf-splitter"
+                data-test="sudz-sf-excel-advisor-split"
+              >
+                <template #before>
+                  <div class="column fill-pane no-wrap q-pa-sm" data-test="sudz-sf-excel-pane">
+                    <div class="text-subtitle2 q-mb-sm shrink-0">Excel · кандидат</div>
+                    <div v-if="!selected" class="text-grey-6">Выберите строку очереди.</div>
+                    <div v-else-if="excelLoading" class="text-grey-6">Загрузка…</div>
+                    <div v-else-if="!excel" class="text-grey-6">Строка Tbl не найдена.</div>
+                    <QSplitter
+                      v-else-if="excel.source === 'pmt' && pmtCaseRows.length"
+                      v-model="excelCaseSplit"
+                      horizontal
+                      :limits="[20, 80]"
+                      separator-class="sudz-split-sep"
+                      class="col sudz-sf-splitter"
+                      data-test="sudz-sf-excel-case-split"
+                    >
+                      <template #before>
+                        <div
+                          class="sudz-sf-excel-fields q-pr-xs"
+                          data-test="sudz-sf-excel-fields"
+                        >
+                          <QMarkupTable dense flat bordered>
+                            <tbody>
+                              <tr v-for="row in excelRows" :key="row.label">
+                                <td class="text-grey-6" style="width: 40%">{{ row.label }}</td>
+                                <td>{{ row.value }}</td>
+                              </tr>
+                            </tbody>
+                          </QMarkupTable>
+                        </div>
+                      </template>
+                      <template #after>
+                        <div class="column fill-pane no-wrap q-pt-xs" data-test="sudz-sf-excel-case-pane">
+                          <div class="text-caption text-grey-6 q-mb-xs shrink-0">
+                            Белые строки кейса ({{ pmtCaseRows.length }})
+                          </div>
+                          <FemsqTable
+                            class="col"
+                            :rows="pmtCaseRows"
+                            :columns="pmtCaseColumns"
+                            row-key="ciputKey"
+                            dense
+                            flat
+                            selection="single"
+                            v-model:selected="selectedCaseRows"
+                            data-test="sudz-sf-excel-case-rows"
+                          />
+                        </div>
+                      </template>
+                    </QSplitter>
+                    <div
+                      v-else
+                      class="col sudz-sf-excel-fields"
+                      data-test="sudz-sf-excel-fields"
+                    >
+                      <QMarkupTable dense flat bordered>
+                        <tbody>
+                          <tr v-for="row in excelRows" :key="row.label">
+                            <td class="text-grey-6" style="width: 40%">{{ row.label }}</td>
+                            <td>{{ row.value }}</td>
+                          </tr>
+                        </tbody>
+                      </QMarkupTable>
+                    </div>
                   </div>
-                  <pre
-                    v-if="messagesText"
-                    class="sudz-sf-messages-body"
-                  >{{ messagesText }}</pre>
-                  <div v-else class="text-grey-6">Выберите строку очереди.</div>
-                </div>
-              </div>
+                </template>
+                <template #after>
+                  <div
+                    class="column fill-pane no-wrap q-pa-sm sudz-sf-messages"
+                    data-test="sudz-sf-messages"
+                  >
+                    <div class="text-caption text-grey-6 q-mb-xs shrink-0">
+                      Сообщения
+                      <span v-if="advisorLoading" class="q-ml-xs">· советник…</span>
+                    </div>
+                    <pre
+                      v-if="messagesText"
+                      class="sudz-sf-messages-body col"
+                    >{{ messagesText }}</pre>
+                    <div v-else class="text-grey-6">Выберите строку очереди.</div>
+                  </div>
+                </template>
+              </QSplitter>
             </template>
           </QSplitter>
         </template>
@@ -155,7 +217,44 @@
                       <div v-if="!selectedDomain[0]" class="text-grey-6">
                         Выберите СФ в списке совпадений.
                       </div>
-                      <RelationTree
+                      <template v-else-if="sumsPaneMode === 'pmt'">
+                        <div class="row items-center q-mb-xs shrink-0 q-gutter-sm">
+                          <div class="text-caption text-grey-7">Профиль кандидата СФ</div>
+                          <QBtn
+                            flat
+                            dense
+                            no-caps
+                            size="sm"
+                            color="primary"
+                            :label="showPmtOutline ? 'Скрыть контур' : 'Техн. каталог'"
+                            data-test="sudz-sf-decision-outline-toggle"
+                            @click="showPmtOutline = !showPmtOutline"
+                          />
+                        </div>
+                        <SfDecisionTree
+                          class="col"
+                          :inv-key="selectedDomain[0].invKey"
+                          :current-upl-key="unloadKey"
+                          :excel-cn-text="excel?.cidutCnName ?? null"
+                          :excel-inv-num="excel?.cidutCnInv ?? null"
+                          :excel-cntr-prt-num="excel?.cidutCntrPrtNum ?? null"
+                          :excel-blns-sum="excel?.pmtSfBlnsSum ?? null"
+                          :excel-cac="excel?.pmtCac ?? null"
+                        />
+                        <FemsqWalkTree
+                          v-if="showPmtOutline"
+                          :key="`outline-${relationTreeKey}`"
+                          class="col q-mt-sm"
+                          :spec="relationSpec"
+                          :root-id="selectedDomain[0].invNumKey"
+                          :fetch-node="fetchRelationNode"
+                          :fetch-expand="fetchRelationExpand"
+                          @action="onRelationAction"
+                          data-test="sf-double-tree-outline"
+                          root-class="sudz-sf-double-tree"
+                        />
+                      </template>
+                      <FemsqWalkTree
                         v-else
                         :key="relationTreeKey"
                         class="col"
@@ -210,7 +309,68 @@
             </template>
 
             <template #after>
+              <QSplitter
+                v-if="sumsPaneMode === 'pmt'"
+                v-model="sumsForestSplit"
+                horizontal
+                :limits="[20, 80]"
+                separator-class="sudz-split-sep"
+                class="fit sudz-sf-splitter"
+                data-test="sudz-sf-sums-forest-split"
+              >
+                <template #before>
+                  <div
+                    class="column fill-pane no-wrap q-pa-sm"
+                    data-test="sudz-sf-sums-tab"
+                  >
+                    <div class="text-subtitle2 q-mb-xs shrink-0">Суммы</div>
+                    <div
+                      class="text-caption text-grey-6 q-mb-sm shrink-0"
+                      data-test="sudz-sf-sums-pmt"
+                    >
+                      Итог сальдо по СФ
+                      {{ formatMoneyOrDash(pmtSumCompare?.anchorSum ?? excel?.pmtSfBlnsSum ?? null) }}
+                      · строк {{ pmtSumCompare?.anchorRows ?? excel?.pmtSfBlnsRows ?? '—' }}.
+                      Сверка с долгом связанного свода (ε=0.01).
+                    </div>
+                    <div
+                      class="col column no-wrap overflow-auto"
+                      data-test="sudz-sf-sums-pmt-body"
+                    >
+                      <div class="text-body2 q-mb-sm" data-test="sudz-sf-sums-pmt-outcome">
+                        {{ pmtSumOutcome }}
+                      </div>
+                      <div
+                        v-for="match in pmtSumCompare?.matches ?? []"
+                        :key="match.cidutKey"
+                        class="text-caption q-mb-xs"
+                        data-test="sudz-sf-sums-pmt-match"
+                      >
+                        свод {{ match.dbtUplKey }} · cidut {{ match.cidutKey }}
+                        · {{ match.cnName ?? '—' }}
+                        · долг {{ formatMoneyOrDash(match.debt) }}
+                        · просрочка {{ formatMoneyOrDash(match.debtOverdue) }}
+                        · разность {{ formatMoneyOrDash(pmtSumDiff(match.debt)) }}
+                      </div>
+                    </div>
+                  </div>
+                </template>
+                <template #after>
+                  <div class="column fill-pane no-wrap q-pa-sm" data-test="sudz-sf-pm-doc-pane">
+                    <PmDocForest
+                      v-if="selected"
+                      class="col"
+                      :cius-key="selected.ciusKey"
+                      :doc-focus="caseDocFocus"
+                      :doc-code="caseDocCode"
+                      @open-inv="onPmDocOpenInv"
+                    />
+                    <div v-else class="text-grey-6">Выберите строку очереди.</div>
+                  </div>
+                </template>
+              </QSplitter>
               <div
+                v-else
                 class="column fill-pane no-wrap q-pa-sm"
                 data-test="sudz-sf-sums-tab"
               >
@@ -259,7 +419,7 @@
                             <div v-if="!selectedOldSumRow" class="text-grey-6">
                               Выберите сумму в таблице (старая структура).
                             </div>
-                            <RelationTree
+                            <FemsqWalkTree
                               v-else
                               :key="`cid-sum-${selectedOldSumRow.cidKey}`"
                               class="col"
@@ -308,7 +468,7 @@
                             <div v-if="!selectedNewSumRow" class="text-grey-6">
                               Выберите сумму в таблице (новая структура).
                             </div>
-                            <RelationTree
+                            <FemsqWalkTree
                               v-else
                               :key="`dv-sum-${selectedNewSumRow.dvKey}`"
                               class="col"
@@ -351,24 +511,31 @@
  */
 import { computed, onMounted, ref, watch } from 'vue';
 
-import { FemsqTable, formatMoneyOrDash, moneyColumn, type FemsqTableColumn } from 'fequlib';
+import { FemsqTable, FemsqWalkTree, formatMoneyOrDash, moneyColumn, type FemsqTableColumn } from 'fequlib';
 import { deleteCnInv, fetchCnNums, updateCnInv } from '@/api/contracts-api';
 import RecordModal from '@/components/relation/RecordModal.vue';
-import RelationTree from '@/components/relation/RelationTree.vue';
 import {
   createSudzSfFromDouble,
   getSudzSfDoubleDomainMatches,
   getSudzSfDoubleExcelCandidate,
+  getSudzPmtSfExcelCaseRows,
+  getSudzPmtSfSumCompare,
   getSudzSfDoubleAdvice,
   getSudzSfDoubleHints,
   getSudzSfDoubleSumMatches,
   linkSudzSfDoubleToCn
 } from '@/api/sudz-api';
+import PmDocForest from '@/components/sudz/PmDocForest.vue';
+import SfDecisionTree from '@/components/sudz/SfDecisionTree.vue';
 import { fetchRelationExpand, fetchRelationNode } from '@/api/relation-api';
 import { useConnectionStore } from '@/stores/connection';
 import { useSudzDbtUplStore } from '@/stores/sudz-dbt-upl';
+import { useSudzPmtUplStore } from '@/stores/sudz-pmt-upl';
+import { useSudzSfDoubleSessionStore } from '@/stores/sudz-sf-double-session';
 import type {
   SudzCnInvUplSfDouble,
+  SudzPmtExcelCaseRow,
+  SudzPmtSfSumCompare,
   SudzSfDoubleDomainMatch,
   SudzSfDoubleExcelCandidate,
   SudzSfDoubleAdvice,
@@ -427,13 +594,21 @@ const dvSumSpec = dvSumSpecJson as RelationTreeSpec;
 const sumMatchEpsilon = 0.01;
 
 const connection = useConnectionStore();
-const store = useSudzDbtUplStore();
+const dbtStore = useSudzDbtUplStore();
+const pmtStore = useSudzPmtUplStore();
+const session = useSudzSfDoubleSessionStore();
 const $q = useQuasar();
 
 /** Ширина левой колонки (очередь + Excel), %. */
 const queueSplit = ref(22);
 /** Высота очереди внутри левой колонки, % (Excel — остаток снизу). */
 const queueExcelSplit = ref(55);
+/** Высота Excel относительно советника, % — и в платежах, и в своде. */
+const excelAdvisorSplit = ref(58);
+/** Сводка Excel / белые строки кейса (pmt), %. */
+const excelCaseSplit = ref(42);
+/** Высота блока «Суммы» относительно леса документов, %. */
+const sumsForestSplit = ref(38);
 /** Ширина панели «СФ» относительно «Суммы», %. */
 const sfSumsSplit = ref(50);
 const domainSplit = ref(45);
@@ -448,7 +623,59 @@ const domainLoading = ref(false);
 const error = ref<string | null>(null);
 const selectedRows = ref<SudzCnInvUplSfDouble[]>([]);
 const excel = ref<SudzSfDoubleExcelCandidate | null>(null);
+const pmtCaseRows = ref<SudzPmtExcelCaseRow[]>([]);
+/** Выбранная белая строка кейса → фокус леса документов. */
+const selectedCaseRows = ref<SudzPmtExcelCaseRow[]>([]);
+const pmtSumCompare = ref<SudzPmtSfSumCompare | null>(null);
+
+/** Фокус леса на белой строке (не весь кейс). */
+const caseDocFocus = computed(
+  () => excel.value?.source === 'pmt' && selectedCaseRows.value.length > 0
+);
+
+/** «№ докум.» выбранной белой строки; null если пусто. */
+const caseDocCode = computed(() => {
+  const raw = selectedCaseRows.value[0]?.docCode;
+  if (raw == null || String(raw).trim() === '') {
+    return null;
+  }
+  return String(raw).trim();
+});
+
+/**
+ * Строка по умолчанию: якорь очереди (ciput) или первая белая.
+ *
+ * @param rows белые строки кейса
+ * @param anchorCiput ciputKey якоря карточки
+ */
+function pickDefaultCaseRows(
+  rows: SudzPmtExcelCaseRow[],
+  anchorCiput: number | null | undefined
+): SudzPmtExcelCaseRow[] {
+  if (!rows.length) {
+    return [];
+  }
+  const hit = anchorCiput != null
+    ? rows.find((row) => row.ciputKey === anchorCiput)
+    : undefined;
+  return [hit ?? rows[0]];
+}
 const domainMatches = ref<DomainRow[]>([]);
+
+/**
+ * «Открыть дерево СФ» из леса документов: выбрать эту inv в списке совпадений.
+ */
+function onPmDocOpenInv(invKey: number): void {
+  const row = domainMatches.value.find((item) => item.invKey === invKey);
+  if (!row) {
+    $q.notify({
+      type: 'info',
+      message: `СФ inv=${invKey} нет среди совпадений по номеру файла`
+    });
+    return;
+  }
+  selectedDomain.value = [row];
+}
 const selectedDomain = ref<DomainRow[]>([]);
 const oldSumRows = ref<OldSumRow[]>([]);
 const newSumRows = ref<NewSumRow[]>([]);
@@ -466,6 +693,8 @@ const selectedCnCandidate = ref<PickerCandidateRow | null>(null);
 const linkSaveError = ref<string | null>(null);
 const linkSaveLoading = ref(false);
 const relationTreeKey = ref(0);
+/** Техн. outline ksdsf-inv-num под decision-TreeList (только pmt). */
+const showPmtOutline = ref(false);
 const cnInvFormMode = computed<'create' | 'edit'>(() =>
   relationAction.value?.actionId === 'cnInv.link.edit' ? 'edit' : 'create'
 );
@@ -473,8 +702,21 @@ const cnInvFormMode = computed<'create' | 'edit'>(() =>
 const cnAllRows = ref<PickerCandidateRow[]>([]);
 const cnAllLoading = ref(false);
 
-const uplKey = computed(() => store.selectedUplKey);
-const rows = computed(() => store.sfDoubles);
+const unloadKey = computed(() =>
+  session.source === 'pmt' ? pmtStore.selectedPmKey : dbtStore.selectedUplKey
+);
+const unloadLabel = computed(() => (session.source === 'pmt' ? 'pm' : 'upl'));
+const backLabel = computed(() =>
+  session.source === 'pmt' ? 'К загрузке платежей' : 'К загрузке свода'
+);
+const emptyUnloadHint = computed(() =>
+  session.source === 'pmt'
+    ? 'Выберите пакет на экране «Загрузка платежей».'
+    : 'Выберите выгрузку на экране «Загрузка свода».'
+);
+const rows = computed(() =>
+  session.source === 'pmt' ? pmtStore.sfDoubles : dbtStore.sfDoubles
+);
 const openCount = computed(() => rows.value.filter((r) => r.ciusStatus === 'open').length);
 const selected = computed(() => selectedRows.value[0] ?? null);
 const canCreate = computed(
@@ -513,16 +755,60 @@ const selectedDomainRow = computed(() => selectedDomain.value[0] ?? null);
 const selectedOldSumRow = computed(() => selectedOldSum.value[0] ?? null);
 const selectedNewSumRow = computed(() => selectedNewSum.value[0] ?? null);
 const excelDebtLabel = computed(() => {
-  const debt = excel.value?.cidutDebt;
+  const e = excel.value;
+  if (!e) {
+    return 'сумма не загружена';
+  }
+  if (e.source === 'pmt') {
+    return `платёж · итог сальдо ${formatMoneyOrDash(e.pmtSfBlnsSum)} · строк ${e.pmtSfBlnsRows ?? '—'}`;
+  }
+  const debt = e.cidutDebt;
   if (debt == null) {
     return 'сумма не загружена';
   }
   return String(debt);
 });
 
+/** Режим панели сумм: dbt — долг; pmt — итог сальдо против связанного свода. */
+const sumsPaneMode = computed<'dbt' | 'pmt'>(() =>
+  excel.value?.source === 'pmt' || session.source === 'pmt' ? 'pmt' : 'dbt'
+);
+
+const pmtSumOutcome = computed(() => {
+  const compare = pmtSumCompare.value;
+  if (!compare) {
+    return 'Сверка со сводом не загружена.';
+  }
+  if (!compare.linked) {
+    return 'Нет связи g_p пакета со сводом.';
+  }
+  if (compare.matches.length === 0) {
+    return 'Строки свода нет.';
+  }
+  if (compare.matches.length > 1) {
+    return 'Несколько строк свода — без автовыбора.';
+  }
+  const diff = pmtSumDiff(compare.matches[0].debt);
+  if (diff != null && Math.abs(diff) <= 0.01) {
+    return 'Совпало.';
+  }
+  return `Разошлось на ${formatMoneyOrDash(diff)}.`;
+});
+
+function pmtSumDiff(debt: number | null): number | null {
+  const anchor = pmtSumCompare.value?.anchorSum ?? excel.value?.pmtSfBlnsSum ?? null;
+  if (anchor == null || debt == null) {
+    return null;
+  }
+  return Math.round((debt - anchor) * 100) / 100;
+}
+
 const hintSections = computed(() => {
   const data = hints.value;
   if (!data) return [];
+  if (sumsPaneMode.value === 'pmt') {
+    return [{ key: 'sfByNum', data: data.sfByNum }];
+  }
   return [
     { key: 'sfByNum', data: data.sfByNum },
     { key: 'sumsOld', data: data.sumsOld },
@@ -535,14 +821,25 @@ const queueColumns: FemsqTableColumn<SudzCnInvUplSfDouble>[] = [
   { name: 'ciusCnNum', label: 'Договор', field: 'ciusCnNum', align: 'left' },
   { name: 'ciusInvNum', label: 'СФ', field: 'ciusInvNum', align: 'left' },
   { name: 'ciusInvNumCount', label: 'совпад.', field: 'ciusInvNumCount', align: 'right' },
-  { name: 'ciusCidut', label: 'Tbl', field: 'ciusCidut', align: 'right' }
+  {
+    name: 'tblKey',
+    label: 'Tbl',
+    field: (row) => row.ciusCiput ?? row.ciusCidut,
+    align: 'right'
+  }
 ];
 
 const domainColumns: FemsqTableColumn<DomainRow>[] = [
   { name: 'invKey', label: 'inv', field: 'invKey', align: 'right' },
   { name: 'invNum', label: 'номер', field: 'invNum', align: 'left' },
   { name: 'cnNum', label: 'договор', field: 'cnNum', align: 'left' },
-  { name: 'cnKey', label: 'cn', field: 'cnKey', align: 'right' }
+  { name: 'cnKey', label: 'cn', field: 'cnKey', align: 'right' },
+  {
+    name: 'party',
+    label: 'исполнители',
+    field: (row) => row.cntrPrtName ?? '—',
+    align: 'left'
+  }
 ];
 
 const oldSumColumns: FemsqTableColumn<OldSumRow>[] = [
@@ -570,10 +867,49 @@ const pickerColumns: FemsqTableColumn<PickerCandidateRow>[] = [
   { name: 'invNum', label: 'СФ', field: 'invNum', align: 'left' }
 ];
 
+const pmtCaseColumns: FemsqTableColumn<SudzPmtExcelCaseRow>[] = [
+  { name: 'ciputKey', label: 'ciput', field: 'ciputKey', align: 'right' },
+  { name: 'docCode', label: '№ докум.', field: 'docCode', align: 'left' },
+  { name: 'link', label: 'Ссылка', field: 'link', align: 'left' },
+  { name: 'cac', label: 'стройка', field: 'cac', align: 'left' },
+  { name: 'entryDate', label: 'проводка', field: 'entryDate', align: 'left' },
+  { name: 'dueDate', label: 'срок', field: 'dueDate', align: 'left' },
+  moneyColumn({ name: 'blns', label: 'сальдо', field: 'blns' }),
+  moneyColumn({ name: 'cdtBlns', label: 'кредит', field: 'cdtBlns' }),
+  moneyColumn({ name: 'docSum', label: 'сумма док.', field: 'docSum' }),
+  { name: 'dueGrp', label: 'due_grp', field: 'dueGrp', align: 'right' }
+];
+
 const excelRows = computed(() => {
   const e = excel.value;
   if (!e) return [];
+  if (e.source === 'pmt') {
+    return [
+      { label: 'источник', value: 'платежи (ciput)' },
+      { label: 'якорь ciputKey', value: String(e.cidutKey) },
+      { label: 'лист', value: String(e.cidutSheetNum ?? '—') },
+      { label: 'БЕ', value: e.pmtBe ?? '—' },
+      { label: 'стройка (CAC)', value: e.pmtCac ?? '—' },
+      { label: 'БУиРГ', value: String(e.cidutCntrPrtNum ?? '—') },
+      { label: 'счёт ГК', value: e.cidutAccntNum ?? e.cidutAccount ?? '—' },
+      {
+        label: 'агент',
+        value:
+          e.pmtAgentNum != null || e.pmtAgentName
+            ? `${e.pmtAgentNum ?? '—'} · ${e.pmtAgentName ?? '—'}`
+            : '—'
+      },
+      { label: 'контрагент', value: e.cidutCntrPrtName ?? '—' },
+      { label: 'договор (Excel)', value: e.cidutCnName ?? '—' },
+      { label: 'СФ (присвоение)', value: e.cidutCnInv ?? '—' },
+      {
+        label: 'итог сальдо по СФ',
+        value: `${formatMoneyOrDash(e.pmtSfBlnsSum)} · строк ${e.pmtSfBlnsRows ?? '—'}`
+      }
+    ];
+  }
   return [
+    { label: 'источник', value: 'свод (cidut)' },
     { label: 'FindDbtNum / cidutKey', value: `${e.findDbtNum ?? '—'} / ${e.cidutKey}` },
     { label: 'лист / строка', value: `${e.cidutSheet ?? '—'} / ${e.cidutSheetNum ?? '—'}` },
     { label: 'БУиРГ', value: String(e.cidutCntrPrtNum ?? '—') },
@@ -584,9 +920,16 @@ const excelRows = computed(() => {
     { label: 'дата договора', value: e.cidutCnDate ?? '—' },
     { label: 'СФ', value: e.cidutCnInv ?? '—' },
     { label: 'имя СФ', value: e.cidutCnInvName ?? '—' },
-    { label: 'дата обр. / погаш.', value: `${e.cidutFormtnDate ?? '—'} / ${e.cidutMatrtyDate ?? '—'}` },
-    { label: 'долг / просрочка', value: `${formatMoneyOrDash(e.cidutDebt)} / ${formatMoneyOrDash(e.cidutDebtOverdue)}` },
-    { label: 'doc / link', value: `${e.cidutDoc ?? '—'} / ${e.cidutLink ?? '—'}` }
+    {
+      label: 'дата обр. / погаш.',
+      value: `${e.cidutFormtnDate ?? '—'} / ${e.cidutMatrtyDate ?? '—'}`
+    },
+    {
+      label: 'долг / просрочка',
+      value: `${formatMoneyOrDash(e.cidutDebt)} / ${formatMoneyOrDash(e.cidutDebtOverdue)}`
+    },
+    { label: '№ докум.', value: e.cidutDoc ?? '—' },
+    { label: 'Ссылка', value: e.cidutLink ?? '—' }
   ];
 });
 
@@ -613,6 +956,7 @@ const cnPickerRowsFromDomainMatches = computed<PickerCandidateRow[]>(() => {
 });
 
 onMounted(async () => {
+  applyAnchorSelection();
   if (cnAllRows.value.length > 0 || cnAllLoading.value) {
     return;
   }
@@ -640,6 +984,34 @@ onMounted(async () => {
   }
 });
 
+/**
+ * Выделяет строку очереди по якорю из session (вход с D / C).
+ */
+function applyAnchorSelection(): void {
+  const key = session.anchorCiusKey;
+  if (key == null) {
+    return;
+  }
+  const row = rows.value.find((r) => r.ciusKey === key);
+  if (row) {
+    selectedRows.value = [row];
+  }
+  session.clearAnchor();
+}
+
+/**
+ * Перечитывает очередь КСДСФ у источника (dbt launcher / pmt list).
+ */
+async function refreshQueue(): Promise<void> {
+  if (session.source === 'pmt') {
+    await pmtStore.refreshSfDoubles();
+    return;
+  }
+  if (dbtStore.selectedUplKey != null) {
+    await dbtStore.selectUpl(dbtStore.selectedUplKey);
+  }
+}
+
 const linkForm = computed<RelationFormState | null>(() => {
   const action = relationAction.value;
   const domain = selectedDomainRow.value;
@@ -664,6 +1036,9 @@ watch(
   selected,
   async (row) => {
     excel.value = null;
+    pmtCaseRows.value = [];
+    selectedCaseRows.value = [];
+    pmtSumCompare.value = null;
     domainMatches.value = [];
     selectedDomain.value = [];
     oldSumRows.value = [];
@@ -685,6 +1060,18 @@ watch(
     error.value = null;
     try {
       excel.value = await getSudzSfDoubleExcelCandidate(row.ciusKey);
+      if (excel.value?.source === 'pmt') {
+        pmtCaseRows.value = await getSudzPmtSfExcelCaseRows(row.ciusKey);
+        selectedCaseRows.value = pickDefaultCaseRows(
+          pmtCaseRows.value,
+          excel.value.cidutKey
+        );
+        pmtSumCompare.value = await getSudzPmtSfSumCompare(row.ciusKey);
+      } else {
+        pmtCaseRows.value = [];
+        selectedCaseRows.value = [];
+        pmtSumCompare.value = null;
+      }
       const inv = row.ciusInvNum ?? '';
       const matches = inv ? await getSudzSfDoubleDomainMatches(inv) : [];
       domainMatches.value = matches.map((m, i) => ({
@@ -816,10 +1203,10 @@ function onHintPick(item: SudzSfDoubleHintItem): void {
 }
 
 /**
- * Возврат на экран загрузки свода.
+ * Возврат на экран-источник (свод или платежи).
  */
 function goBack(): void {
-  connection.navigate('sudz-dbt-upl');
+  connection.navigate(session.source === 'pmt' ? 'sudz-pmt-upl' : 'sudz-dbt-upl');
 }
 
 function cnCandidateFromContext(context: RelationTreeActionContext): PickerCandidateRow | null {
@@ -860,10 +1247,8 @@ async function onAdvisorLink(): Promise<void> {
   error.value = null;
   try {
     const updated = await linkSudzSfDoubleToCn({ ciusKey: row.ciusKey, invKey, cnKey });
-    if (store.selectedUplKey != null) {
-      await store.selectUpl(store.selectedUplKey);
-    }
-    const refreshed = store.sfDoubles.find((r) => r.ciusKey === updated.ciusKey) ?? updated;
+    await refreshQueue();
+    const refreshed = rows.value.find((r) => r.ciusKey === updated.ciusKey) ?? updated;
     selectedRows.value = [refreshed];
     $q.notify({
       type: 'positive',
@@ -887,10 +1272,8 @@ async function onCreate(): Promise<void> {
   error.value = null;
   try {
     const updated = await createSudzSfFromDouble(row.ciusKey);
-    if (store.selectedUplKey != null) {
-      await store.selectUpl(store.selectedUplKey);
-    }
-    const refreshed = store.sfDoubles.find((r) => r.ciusKey === updated.ciusKey) ?? updated;
+    await refreshQueue();
+    const refreshed = rows.value.find((r) => r.ciusKey === updated.ciusKey) ?? updated;
     selectedRows.value = [refreshed];
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
@@ -989,10 +1372,8 @@ async function onLinkSave(): Promise<void> {
       return;
     }
     const updated = await linkSudzSfDoubleToCn({ ciusKey, invKey, cnKey });
-    if (store.selectedUplKey != null) {
-      await store.selectUpl(store.selectedUplKey);
-    }
-    const refreshed = store.sfDoubles.find((r) => r.ciusKey === updated.ciusKey) ?? updated;
+    await refreshQueue();
+    const refreshed = rows.value.find((r) => r.ciusKey === updated.ciusKey) ?? updated;
     selectedRows.value = [refreshed];
     linkModalOpen.value = false;
     relationAction.value = null;
@@ -1056,6 +1437,15 @@ async function onDeleteCnInv(context: RelationTreeActionContext): Promise<void> 
   min-height: 0;
   overflow: hidden;
 }
+/** Поля Excel-кандидата: вертикальный скролл (flex-col или панель splitter). */
+.sudz-sf-excel-fields {
+  min-height: 0;
+  overflow: auto;
+}
+.sudz-sf-splitter :deep(> .q-splitter__panel) > .sudz-sf-excel-fields {
+  height: 100%;
+  box-sizing: border-box;
+}
 .sudz-sf-double-tree {
   min-height: 0;
 }
@@ -1065,15 +1455,15 @@ async function onDeleteCnInv(context: RelationTreeActionContext): Promise<void> 
   border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 .sudz-sf-messages {
-  max-height: 35%;
-  overflow: auto;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  overflow: hidden;
 }
 .sudz-sf-queue-actions {
   flex-wrap: wrap;
 }
 .sudz-sf-messages-body {
   margin: 0;
+  min-height: 0;
+  overflow: auto;
   white-space: pre-wrap;
   word-break: break-word;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;

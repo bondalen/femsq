@@ -1,0 +1,77 @@
+{
+  "id": "pm-doc-forest",
+  "version": 2,
+  "view": "list",
+  "root": {
+    "table": "cn_inv_doc",
+    "pk": "docKey",
+    "queryId": "sudz.pmDoc.roots",
+    "level": "doc"
+  },
+  "title": ["title"],
+  "detail": ["title", "docKod", "docDate", "docSum"],
+  "columnSets": [
+    {
+      "level": "doc",
+      "columns": [
+        { "label": "Документ", "field": "title" },
+        { "label": "Код", "field": "docKod" },
+        { "label": "Дата", "field": "docDate" },
+        { "label": "Сумма", "field": "docSum" }
+      ]
+    },
+    {
+      "level": "pm",
+      "columns": [
+        { "label": "Платёж", "field": "title" },
+        { "label": "Пакет", "field": "uplName" },
+        { "label": "Дата", "field": "uplDate" },
+        { "label": "Сальдо", "field": "blns" },
+        { "label": "Дебет", "field": "dbt" },
+        { "label": "Кредит", "field": "cdt" },
+        { "label": "Стройка", "field": "cstCode" }
+      ]
+    },
+    {
+      "level": "link",
+      "columns": [
+        { "label": "Счёт-фактура", "field": "title" },
+        { "label": "Договор", "field": "contract" },
+        { "label": "Контрагент", "field": "counterparty" },
+        { "label": "Счёт ГК", "field": "accountNum" },
+        { "label": "Стройка", "field": "cstCode" }
+      ]
+    }
+  ],
+  "children": [
+    {
+      "queryId": "sudz.pmDoc.payments",
+      "to": "cn_inv_pm",
+      "card": "1:N",
+      "level": "pm",
+      "folder": "Платежи",
+      "title": ["title"],
+      "detail": ["title", "uplName", "uplDate", "blns", "dbt", "cdt", "cstCode"],
+      "children": [
+        {
+          "queryId": "sudz.pmDoc.link",
+          "to": "inv",
+          "card": "1:N",
+          "level": "link",
+          "folder": "Счёт-фактура",
+          "title": ["title"],
+          "detail": ["title", "contract", "counterparty", "accountNum", "cstCode"],
+          "actions": [
+            {
+              "id": "pm.doc.openInv",
+              "kind": "open-form",
+              "label": "Открыть дерево СФ",
+              "scope": "record"
+            }
+          ],
+          "children": []
+        }
+      ]
+    }
+  ]
+}

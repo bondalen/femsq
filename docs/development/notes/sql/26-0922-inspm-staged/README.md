@@ -37,3 +37,8 @@ uk=1: ready=3769 — хвост InsPm (pm сейчас 472); build быстры�
 
 - `inspm-staged-build.sql` / `inspm-staged-insert.sql` — со стадией `#docmap`
 - Java WC: `sqlPmtUplInsPmStagedBuild` (+ docmap)
+
+## 1.13.3 (2026-10-03)
+
+В `#stg`/`#cand`/`INSERT` добавлен `ciputDueGrp` → `ags.cn_inv_pm.cn_inv_pm_due_grp` (DDL: [`26-1003-sudz-cn-inv-pm-due-grp`](../26-1003-sudz-cn-inv-pm-due-grp/)).  
+Перезалив @59: DELETE→INSERT **15873**; у `0620CR000478` / `051-2004018` / 28.02 — due_grp **1** и **2**.

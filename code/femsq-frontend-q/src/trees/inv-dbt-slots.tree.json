@@ -1,17 +1,67 @@
 {
   "id": "inv-dbt-slots",
-  "version": 3,
+  "version": 4,
+  "view": "list",
   "root": {
     "table": "inv",
-    "pk": "iKey"
+    "pk": "iKey",
+    "level": "inv"
   },
   "title": ["iKey", "iTimeOfEntry"],
   "detail": "*",
+  "columnSets": [
+    {
+      "level": "inv",
+      "columns": [
+        { "label": "Ключ", "field": "iKey" },
+        { "label": "Время", "field": "iTimeOfEntry" }
+      ]
+    },
+    {
+      "level": "slot",
+      "columns": [
+        { "label": "Подпись", "field": "title" },
+        { "label": "Ключ", "field": "idKey" },
+        { "label": "Номер", "field": "idNum" },
+        { "label": "Примечание", "field": "idNote" }
+      ]
+    },
+    {
+      "level": "var",
+      "columns": [
+        { "label": "Подпись", "field": "title" },
+        { "label": "Контекст", "field": "summaryLine" }
+      ]
+    },
+    {
+      "level": "value",
+      "columns": [
+        { "label": "Подпись", "field": "title" },
+        { "label": "Ключ", "field": "dvKey" },
+        { "label": "Сумма", "field": "dvTtl" },
+        { "label": "Просрочка", "field": "dvOverd" },
+        { "label": "Выгрузка", "field": "uplName" },
+        { "label": "Статус", "field": "uplStatusOnDate" },
+        { "label": "Дата выгрузки", "field": "uplDate" },
+        { "label": "Начало", "field": "dvDateStart" },
+        { "label": "Срок", "field": "dvDateMaturity" }
+      ]
+    },
+    {
+      "level": "link",
+      "columns": [
+        { "label": "Подпись", "field": "title" },
+        { "label": "Ключ", "field": "iddKey" },
+        { "label": "Долг", "field": "iddDbt" }
+      ]
+    }
+  ],
   "children": [
     {
       "edge": "inv.invDbt",
       "to": "invDbt",
       "card": "1:N",
+      "level": "slot",
       "folder": "Слоты долгов",
       "title": ["idKey", "idNum", "idNote"],
       "detail": "*",
@@ -20,6 +70,7 @@
           "queryId": "sudz.invDbtVar.contextBySlot",
           "to": "idvvCtx",
           "card": "1:N",
+          "level": "var",
           "folder": "invDbtVar (контекст)",
           "title": ["summaryLine"],
           "detail": [
@@ -38,9 +89,10 @@
               "queryId": "sudz.DbtValue.bySlotVarBridge",
               "to": "dv",
               "card": "1:N",
+              "level": "value",
               "folder": "DbtValue",
               "title": ["dvKey", "dvTtl", "uplName", "uplStatusOnDate"],
-              "valueKinds": { "dvTtl": "money" },
+              "valueKinds": { "dvTtl": "money", "dvOverd": "money" },
               "detail": [
                 "dvKey",
                 "dvInvDbt",
@@ -62,6 +114,7 @@
           "edge": "invDbt.idd",
           "to": "idd",
           "card": "1:N",
+          "level": "link",
           "folder": "invDbtDbt",
           "title": ["iddKey", "iddDbt"],
           "detail": "*",

@@ -4,6 +4,7 @@ import com.femsq.database.config.DatabaseConfigurationService;
 import com.femsq.database.connection.ConnectionFactory;
 import com.femsq.database.exception.DaoException;
 import com.femsq.database.model.CnInv;
+import com.femsq.database.model.CnInvColumnFilters;
 import com.femsq.database.model.CnInvListItem;
 import com.femsq.database.model.CnInvPage;
 import java.sql.Connection;
@@ -50,6 +51,7 @@ public class DefaultCnInvService implements CnInvService {
             int page,
             int rowsPerPage,
             String filter,
+            CnInvColumnFilters columnFilters,
             String sortBy,
             boolean descending
     ) {
@@ -57,19 +59,18 @@ public class DefaultCnInvService implements CnInvService {
         int safePage = page < 1 ? 1 : page;
         int safeRows = rowsPerPage < 1 ? DEFAULT_ROWS : Math.min(rowsPerPage, MAX_ROWS);
         int offset = (safePage - 1) * safeRows;
-        String orderCol = resolveSortColumn(sortBy);
-        String orderDir = descending ? "DESC" : "ASC";
         String schema = schemaPrefix();
+        String orderCol = resolveSortColumn(sortBy, schema);
+        String orderDir = descending ? "DESC" : "ASC";
         String trimmedFilter = filter == null ? "" : filter.trim();
         Integer numericFilter = parsePositiveInt(trimmedFilter);
 
-        String fromJoin = " FROM " + schema + "cnInv ci LEFT JOIN " + schema + "inv i ON i.iKey = ci.ciInv"
-                + " WHERE ci.ciCn = ?";
+        String fromJoin = " FROM " + schema + "cnInv ci WHERE ci.ciCn = ?";
         StringBuilder whereExtra = new StringBuilder();
         List<Object> filterParams = new ArrayList<>();
         if (!trimmedFilter.isEmpty()) {
-            whereExtra.append(" AND (LOWER(CAST(i.iNum AS nvarchar(200))) LIKE ?");
-            filterParams.add("%" + trimmedFilter.toLowerCase(Locale.ROOT) + "%");
+            whereExtra.append(" AND (");
+            appendInvNumContains(whereExtra, filterParams, schema, trimmedFilter);
             if (numericFilter != null) {
                 whereExtra.append(" OR ci.ciInv = ? OR ci.ciKey = ?");
                 filterParams.add(numericFilter);
@@ -77,9 +78,13 @@ public class DefaultCnInvService implements CnInvService {
             }
             whereExtra.append(')');
         }
+        appendColumnFilters(whereExtra, filterParams, schema, columnFilters);
 
         String countSql = "SELECT COUNT(*)" + fromJoin + whereExtra;
-        String dataSql = "SELECT ci.ciKey, ci.ciInv, ci.ciCn, ci.ciTimeOfEntry, i.iNum"
+        String iNumExpr = "(SELECT CASE WHEN COUNT(*) <= 1 THEN MIN(n.inNum) "
+                + "ELSE MIN(n.inNum) + N' (номеров: ' + CAST(COUNT(*) AS nvarchar(20)) + N')' END "
+                + "FROM " + schema + "invNum n WHERE n.inInv = ci.ciInv)";
+        String dataSql = "SELECT ci.ciKey, ci.ciInv, ci.ciCn, ci.ciTimeOfEntry, " + iNumExpr + " AS iNum"
                 + fromJoin + whereExtra
                 + " ORDER BY " + orderCol + ' ' + orderDir
                 + " OFFSET " + offset + " ROWS FETCH NEXT " + safeRows + " ROWS ONLY";
@@ -589,15 +594,122 @@ public class DefaultCnInvService implements CnInvService {
     }
 
     /**
-     * Whitelist колонки ORDER BY (с префиксом таблицы).
+     * Фильтры колонок через AND. Номер СФ — по сохранённому {@code invNum.inNum}.
+     *
+     * @param where хвост WHERE
+     * @param params параметры после cnKey
+     * @param schema префикс схемы с точкой
+     * @param filters колонки; {@code null} пропускается
      */
-    private static String resolveSortColumn(String sortBy) {
+    private static void appendColumnFilters(
+            StringBuilder where,
+            List<Object> params,
+            String schema,
+            CnInvColumnFilters filters
+    ) {
+        if (filters == null) {
+            return;
+        }
+        String iNum = blankToNull(filters.iNum());
+        if (iNum != null) {
+            where.append(" AND ");
+            appendInvNumContains(where, params, schema, iNum);
+        }
+        appendTextLike(where, params, "CAST(ci.ciInv AS nvarchar(20))", filters.ciInv());
+        appendTextLike(where, params, "CAST(ci.ciKey AS nvarchar(20))", filters.ciKey());
+        appendTextLike(
+                where,
+                params,
+                "CONVERT(nvarchar(23), ci.ciTimeOfEntry, 126)",
+                filters.ciTimeOfEntry()
+        );
+    }
+
+    /**
+     * Подстрока номера СФ по {@code invNum}, без вычисляемого {@code inv.iNum}.
+     *
+     * @param where фрагмент, куда вставляется EXISTS
+     * @param params параметры запроса
+     * @param schema префикс схемы с точкой
+     * @param raw текст пользователя, уже не пустой
+     */
+    private static void appendInvNumContains(
+            StringBuilder where,
+            List<Object> params,
+            String schema,
+            String raw
+    ) {
+        where.append("EXISTS (SELECT 1 FROM ")
+                .append(schema)
+                .append("invNum n WHERE n.inInv = ci.ciInv AND LOWER(n.inNum) LIKE ?)");
+        params.add(likeContains(raw));
+    }
+
+    /**
+     * AND + подстрока по выражению колонки.
+     *
+     * @param where хвост WHERE
+     * @param params параметры запроса
+     * @param expression SQL-выражение колонки
+     * @param raw текст фильтра; пустой не добавляет условие
+     */
+    private static void appendTextLike(
+            StringBuilder where,
+            List<Object> params,
+            String expression,
+            String raw
+    ) {
+        String trimmed = blankToNull(raw);
+        if (trimmed == null) {
+            return;
+        }
+        where.append(" AND LOWER(").append(expression).append(") LIKE ?");
+        params.add(likeContains(trimmed));
+    }
+
+    /**
+     * Шаблон LIKE «содержит», с экранированием {@code %}, {@code _} и {@code [}.
+     *
+     * @param raw текст фильтра
+     * @return шаблон в нижнем регистре
+     */
+    private static String likeContains(String raw) {
+        String escaped = raw.trim().toLowerCase(Locale.ROOT)
+                .replace("[", "[[]")
+                .replace("%", "[%]")
+                .replace("_", "[_]");
+        return "%" + escaped + "%";
+    }
+
+    /**
+     * Пустая и пробельная строка как отсутствие фильтра.
+     *
+     * @param raw исходный текст
+     * @return обрезанный текст или {@code null}
+     */
+    private static String blankToNull(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String trimmed = raw.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    /**
+     * Whitelist колонки ORDER BY.
+     * Номер СФ сортируется по {@code MIN(invNum.inNum)}, не по {@code inv.iNum}.
+     *
+     * @param sortBy имя колонки с клиента
+     * @param schema префикс схемы с точкой
+     * @return выражение ORDER BY
+     */
+    private static String resolveSortColumn(String sortBy, String schema) {
         String key = sortBy == null || sortBy.isBlank() ? "ciKey" : sortBy.trim();
         if (!SORT_WHITELIST.contains(key)) {
             key = "ciKey";
         }
         return switch (key) {
-            case "iNum" -> "i.iNum";
+            case "iNum" -> "(SELECT MIN(n.inNum) FROM " + schema + "invNum n WHERE n.inInv = ci.ciInv)";
             case "ciInv" -> "ci.ciInv";
             case "ciTimeOfEntry" -> "ci.ciTimeOfEntry";
             default -> "ci.ciKey";

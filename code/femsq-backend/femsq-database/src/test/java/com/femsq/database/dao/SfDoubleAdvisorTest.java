@@ -2,6 +2,7 @@ package com.femsq.database.dao;
 
 import com.femsq.database.model.sudz.SudzCnInvUplSfDouble;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
+import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
 import com.femsq.database.model.sudz.SudzSfDoubleHintItem;
 import com.femsq.database.model.sudz.SudzSfDoubleHintSection;
 import com.femsq.database.model.sudz.SudzSfDoubleHints;
@@ -35,7 +36,7 @@ class SfDoubleAdvisorTest {
                 sectionNa(),
                 new SudzSfDoubleHintSection("yes", "sum new", 1, List.of(sumItem)));
         var domain = List.of(
-                new SudzSfDoubleDomainMatch(91604, "Б/С", 91614, null, 94467, 308, "КС-51"));
+                new SudzSfDoubleDomainMatch(91604, "Б/С", 91614, null, 94467, 308, "КС-51", null, null));
         var advice = SfDoubleAdvisor.advise(row, null, hints, domain);
         assertEquals("link", advice.action());
         assertEquals("high", advice.confidence());
@@ -59,7 +60,7 @@ class SfDoubleAdvisorTest {
                 sectionNa(),
                 sectionNa());
         var domain = List.of(
-                new SudzSfDoubleDomainMatch(500, "1025", 1, null, 10, 999, "26/0215/20"));
+                new SudzSfDoubleDomainMatch(500, "1025", 1, null, 10, 999, "26/0215/20", null, null));
         var advice = SfDoubleAdvisor.advise(row, null, hints, domain);
         assertTrue(advice.messageText().contains("[советник]"));
         assertEquals("create", advice.action());
@@ -101,7 +102,7 @@ class SfDoubleAdvisorTest {
                 sectionNa(),
                 sectionNa());
         var domain = List.of(
-                new SudzSfDoubleDomainMatch(54330, "27185", 55, null, 57170, 2044, "711113884/ЯРЭС"));
+                new SudzSfDoubleDomainMatch(54330, "27185", 55, null, 57170, 2044, "711113884/ЯРЭС", null, null));
         var advice = SfDoubleAdvisor.advise(row, null, hints, domain);
         assertEquals("alias_cn_num", advice.action());
         assertEquals(2044, advice.recommendCnKey());
@@ -126,7 +127,7 @@ class SfDoubleAdvisorTest {
                 sectionNa(),
                 sectionNa());
         var domain = List.of(
-                new SudzSfDoubleDomainMatch(54330, "27185", 55, null, 1, 999, "711113884/ЯРЭС"));
+                new SudzSfDoubleDomainMatch(54330, "27185", 55, null, 1, 999, "711113884/ЯРЭС", null, null));
         var advice = SfDoubleAdvisor.advise(row, null, hints, domain);
         assertEquals("link", advice.action());
         assertEquals("medium", advice.confidence());
@@ -175,6 +176,79 @@ class SfDoubleAdvisorTest {
         var advice = SfDoubleAdvisor.advise(row, null, hints, List.of());
         assertEquals("create", advice.action());
         assertEquals("high", advice.confidence());
+    }
+
+    @Test
+    void executorUniqueWithoutQueueCnRecommendsLink() {
+        var row = new SudzCnInvUplSfDouble(
+                1210, null, 114195, null, 45, 59, null, null,
+                null, null, "94", 2, "open", null, null);
+        var excel = new SudzSfDoubleExcelCandidate(
+                114195, null, 767501, 767501, 1009345, "ГАЗПРОМ ИНВЕСТ", null,
+                "КС-51", null, "94", null, null, null, null, null, "5400217611", null, null, 1, 59,
+                "pmt", new java.math.BigDecimal("259158.76"), null,
+                new java.math.BigDecimal("259158.76"), new java.math.BigDecimal("-259158.76"),
+                null, null, null, null, null, null);
+        var item = new SudzSfDoubleHintItem(
+                "sf", "inKey", 23791, 23785, 308, "КС-51", "BUIRG", "inKey=23791");
+        var hints = new SudzSfDoubleHints(
+                new SudzSfDoubleHintSection("yes", "match", 1, List.of(item)),
+                sectionNa(),
+                sectionNa());
+        var advice = SfDoubleAdvisor.advise(row, excel, hints, List.of());
+        assertEquals("link", advice.action());
+        assertEquals("high", advice.confidence());
+        assertEquals(23785, advice.recommendInvKey());
+        assertEquals(308, advice.recommendCnKey());
+        assertTrue(advice.messageText().contains("executor_unique_no_queue_cn"));
+    }
+
+    @Test
+    void suspiciousInvBnDoesNotLinkByNumberAlone() {
+        // cius=1310: «б/н» на КС-14 совпал с legacy 40729 — не link high
+        var row = new SudzCnInvUplSfDouble(
+                1310, null, 157379, null, null, 59, null, null,
+                877, "КС-14", "б/н", 11, "open", null, null);
+        var item = new SudzSfDoubleHintItem(
+                "sf", "inKey", 40737, 40729, 877, "КС-14", "BUIRG", "inv=40729");
+        var hints = new SudzSfDoubleHints(
+                new SudzSfDoubleHintSection(
+                        "yes",
+                        "В СФ с совпадающими номерами есть совпадающий контрагент (исполнитель).",
+                        1,
+                        List.of(item)),
+                sectionNa(),
+                sectionNa());
+        var advice = SfDoubleAdvisor.advise(row, null, hints, List.of());
+        assertEquals("create", advice.action());
+        assertEquals("high", advice.confidence());
+        assertTrue(advice.messageText().contains("suspicious_inv"));
+        assertTrue(advice.messageText().contains("Создать СФ по Excel"));
+        assertFalse(advice.messageText().contains("executor_unique"));
+        assertEquals(null, advice.recommendInvKey());
+    }
+
+    @Test
+    void suspiciousInvStillLinksViaSumSameCn() {
+        // Б/С + уникальная сумма → link (UAT C.10 путь), не create из suspicious
+        var row = new SudzCnInvUplSfDouble(
+                169, 43903, null, null, null, 901, null, null,
+                1312, "СГМ14-234", "Б/С", 1, "open", null, null);
+        var sumItem = new SudzSfDoubleHintItem(
+                "sumsNew", "dvKey", 43672, 91249, 1312, "СГМ14-234", "BUIRG",
+                "dvKey=43672 · inv=91249");
+        var hints = new SudzSfDoubleHints(
+                new SudzSfDoubleHintSection(
+                        "no",
+                        "В СФ с совпадающими номерами совпадающего контрагента (исполнитель) нет.",
+                        0,
+                        List.of()),
+                sectionNa(),
+                new SudzSfDoubleHintSection("yes", "sum new", 1, List.of(sumItem)));
+        var advice = SfDoubleAdvisor.advise(row, null, hints, List.of());
+        assertEquals("link", advice.action());
+        assertEquals(91249, advice.recommendInvKey());
+        assertTrue(advice.messageText().contains("sum_same_cn"));
     }
 
     private static SudzSfDoubleHintSection sectionNa() {

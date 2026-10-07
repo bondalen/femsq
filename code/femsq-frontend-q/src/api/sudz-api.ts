@@ -36,10 +36,20 @@ import type {
   SudzDebtCollectionResult,
   SudzPmLink,
   SudzPmUplLookup,
+  SudzPmtUplCstNew,
+  SudzPmtUplCstMatch,
   SudzPmtUplFile,
+  SudzPmtUplInvNot,
   SudzPmtUplLauncher,
+  SudzPmtUplTabBadges,
+  SudzPmtUplTwoLoad,
   SudzRsltDebt,
   SudzRsltReturnImportResult,
+  SudzPmtExcelCaseRow,
+  SudzPmtSfSumCompare,
+  SudzPmDocForest,
+  SudzSfDecisionProfile,
+  SudzSfDecisionProfileArgs,
   SudzSfDoubleDomainMatch,
   SudzSfDoubleExcelCandidate,
   SudzSfDoubleHints,
@@ -292,6 +302,86 @@ const SUDZ_PMT_UPL_LAUNCHER = gql`
   }
 `;
 
+const SUDZ_PMT_UPL_CST_NEW = gql`
+  query SudzPmtUplCstNew($pmKey: Int!) {
+    sudzPmtUplCstNew(pmKey: $pmKey) {
+      cacOrNull
+      sh
+      ipCode
+      pirIDnew
+      pirName
+    }
+  }
+`;
+
+const SUDZ_PMT_UPL_CST_MATCH = gql`
+  query SudzPmtUplCstMatch($codeSuffix: String!) {
+    sudzPmtUplCstMatch(codeSuffix: $codeSuffix) {
+      cstKey
+      cstName
+      agents {
+        cstaKey
+        agentLabel
+        ogaCode
+        points {
+          cstapKey
+          cstapIpgPnN
+          sameSuffix
+        }
+      }
+    }
+  }
+`;
+
+const SUDZ_PMT_UPL_TAB_BADGES = gql`
+  query SudzPmtUplTabBadges($pmKey: Int!) {
+    sudzPmtUplTabBadges(pmKey: $pmKey) {
+      cstNew
+      invNot
+      twoLoad
+      sfOpen
+    }
+  }
+`;
+
+const SUDZ_PMT_UPL_INV_NOT = gql`
+  query SudzPmtUplInvNot($pmKey: Int!) {
+    sudzPmtUplInvNot(pmKey: $pmKey) {
+      cntrPrtNum
+      cntrPrtName
+      cnName
+      cnKey
+      cnInv
+      invNumCount
+    }
+  }
+`;
+
+const SUDZ_PMT_UPL_TWO_LOAD = gql`
+  query SudzPmtUplTwoLoad($pmKey: Int!) {
+    sudzPmtUplTwoLoad(pmKey: $pmKey) {
+      cnInv
+      cntrPrtNum
+      cntrPrtName
+      ciCount
+    }
+  }
+`;
+
+const SUDZ_PMT_UPL_SF_DOUBLES = gql`
+  query SudzPmtUplSfDoubles($pmKey: Int!) {
+    sudzPmtUplSfDoubles(pmKey: $pmKey) {
+      ${SF_DOUBLE_FIELDS}
+    }
+  }
+`;
+
+const REBUILD_SUDZ_PMT_UPL_SF_DOUBLE = gql`
+  mutation RebuildSudzPmtUplSfDouble($pmKey: Int!) {
+    rebuildSudzPmtUplSfDouble(pmKey: $pmKey)
+  }
+`;
+
 const UPDATE_PMT_UPL_FILE = gql`
   mutation UpdateSudzPmUplFile($input: UpdateSudzPmUplFileInput!) {
     updateSudzPmUplFile(input: $input) {
@@ -402,6 +492,177 @@ const RUN_DBT_UPL_FUNNEL = gql`
   }
 `;
 
+const SUDZ_PM_DOC_LINK_FIELDS = `
+  docKey
+  docKod
+  docDate
+  docSum
+  pmKey
+  uplKey
+  uplName
+  uplDate
+  blns
+  dbtBlns
+  cdtBlns
+  invKey
+  invNum
+  cnKey
+  cnNumber
+  cnName
+  counterparty
+  accountNum
+  cstKey
+  cstCode
+  cstName
+`;
+
+const SUDZ_PM_DOC_FOREST_BY_CIUS = gql`
+  query SudzPmDocForestByCius($ciusKey: Int!) {
+    sudzPmDocForestByCius(ciusKey: $ciusKey) {
+      fileCodes
+      matchedDocs
+      currentUplKey
+      links { ${SUDZ_PM_DOC_LINK_FIELDS} }
+    }
+  }
+`;
+
+const SUDZ_PM_DOC_FOREST_BY_INV = gql`
+  query SudzPmDocForestByInv($invKey: Int!) {
+    sudzPmDocForestByInv(invKey: $invKey) {
+      fileCodes
+      matchedDocs
+      currentUplKey
+      links { ${SUDZ_PM_DOC_LINK_FIELDS} }
+    }
+  }
+`;
+
+const SUDZ_SF_DECISION_PROFILE = gql`
+  query SudzSfDecisionProfile(
+    $invKey: Int!
+    $currentUplKey: Int
+    $excelCnText: String
+    $excelInvNum: String
+    $excelCntrPrtNum: Int
+    $excelBlnsSum: Float
+    $excelCac: String
+  ) {
+    sudzSfDecisionProfile(
+      invKey: $invKey
+      currentUplKey: $currentUplKey
+      excelCnText: $excelCnText
+      excelInvNum: $excelInvNum
+      excelCntrPrtNum: $excelCntrPrtNum
+      excelBlnsSum: $excelBlnsSum
+      excelCac: $excelCac
+    ) {
+      invKey
+      invNum
+      invEntered
+      preferredCiKey
+      preferredCnKey
+      contract
+      cntrPrtNum
+      cntrPrtName
+      note
+      pmCount
+      blnsSum
+      currentUplBlnsSum
+      currentUplKey
+      compare {
+        invNumVerdict
+        cnVerdict
+        executorVerdict
+        sumVerdict
+        cstVerdict
+      }
+      cnInvs {
+        ciKey
+        cnKey
+        contract
+        note
+        executors {
+          csosKey
+          cnSType
+          buirg
+          name
+          hitExcel
+        }
+        agents {
+          csosKey
+          cnSType
+          buirg
+          name
+          hitExcel
+        }
+      }
+      payments {
+        pmKey
+        uplKey
+        uplName
+        uplDate
+        docKey
+        docKod
+        docDate
+        dbt
+        cdt
+        blns
+        accountNum
+        ciKey
+        ciasKey
+        cnKey
+        contract
+        legacyPmInv
+        cnInvKey
+        hlCurrentUpl
+        hlOrphanLink
+        hlContractDiff
+        cstKey
+        cstCode
+        cstName
+        hlCstDiff
+        hlCstSuffix
+      }
+      docSums {
+        docKod
+        pmCount
+        blnsSum
+        uplNames
+      }
+      cias {
+        ciasKey
+        ciKey
+        accountNum
+        pmCount
+        blnsSum
+      }
+      debts {
+        title
+      }
+    }
+  }
+`;
+
+const SUDZ_PMT_SF_SUM_COMPARE = gql`
+  query SudzPmtSfSumCompare($ciusKey: Int!) {
+    sudzPmtSfSumCompare(ciusKey: $ciusKey) {
+      anchorSum
+      anchorRows
+      linked
+      matches {
+        dbtUplKey
+        cidutKey
+        invNum
+        accountNum
+        debt
+        debtOverdue
+        cnName
+      }
+    }
+  }
+`;
+
 const SUDZ_SF_DOUBLE_EXCEL = gql`
   query SudzSfDoubleExcelCandidate($ciusKey: Int!) {
     sudzSfDoubleExcelCandidate(ciusKey: $ciusKey) {
@@ -425,6 +686,36 @@ const SUDZ_SF_DOUBLE_EXCEL = gql`
       cidutSheet
       cidutSheetNum
       cidutUnloadKey
+      source
+      pmtCdtBlns
+      pmtCdtBlnsOverd
+      pmtDocSum
+      pmtBlns
+      pmtBe
+      pmtCac
+      pmtAgentNum
+      pmtAgentName
+      pmtSfBlnsSum
+      pmtSfBlnsRows
+    }
+  }
+`;
+
+const SUDZ_PMT_SF_EXCEL_CASE_ROWS = gql`
+  query SudzPmtSfExcelCaseRows($ciusKey: Int!) {
+    sudzPmtSfExcelCaseRows(ciusKey: $ciusKey) {
+      ciputKey
+      sheetNum
+      docCode
+      link
+      entryDate
+      dueDate
+      cac
+      be
+      blns
+      cdtBlns
+      docSum
+      dueGrp
     }
   }
 `;
@@ -452,6 +743,17 @@ const SUDZ_INV_DBT_DOUBLE_EXCEL = gql`
       cidutSheet
       cidutSheetNum
       cidutUnloadKey
+      source
+      pmtCdtBlns
+      pmtCdtBlnsOverd
+      pmtDocSum
+      pmtBlns
+      pmtBe
+      pmtCac
+      pmtAgentNum
+      pmtAgentName
+      pmtSfBlnsSum
+      pmtSfBlnsRows
     }
   }
 `;
@@ -569,6 +871,18 @@ const SUDZ_DBT_CANON_DETAIL_FIELDS = `
     cmmGrNewName
     uplKeys
   }
+  portfolioChains {
+    id
+    label
+    yrKeys
+    coverage
+    upls {
+      uplKey
+      uplName
+      uplDate
+      uplStatusOnDate
+    }
+  }
   slots {
     slotKey
     iKey
@@ -588,6 +902,7 @@ const SUDZ_DBT_CANON_DETAIL_FIELDS = `
       uplName
       uplDate
       uplStatusOnDate
+      portfolioLabels
       comments {
         cmmKey
         valueKey
@@ -717,6 +1032,8 @@ const SUDZ_SF_DOUBLE_DOMAIN = gql`
       ciKey
       cnKey
       cnNum
+      cntrPrtNum
+      cntrPrtName
     }
   }
 `;
@@ -1130,6 +1447,104 @@ export async function getSudzSfDoubleExcelCandidate(
     return result.data?.sudzSfDoubleExcelCandidate ?? null;
   } catch (error) {
     throw wrapApolloError(error, 'SudzSfDoubleExcelCandidate');
+  }
+}
+
+/**
+ * Белые строки Excel кейса КСДСФ pmt (кредитор+договор+номер).
+ */
+export async function getSudzPmtSfExcelCaseRows(
+  ciusKey: number
+): Promise<SudzPmtExcelCaseRow[]> {
+  try {
+    const result = await apolloClient.query<{
+      sudzPmtSfExcelCaseRows: SudzPmtExcelCaseRow[];
+    }>({
+      query: SUDZ_PMT_SF_EXCEL_CASE_ROWS,
+      variables: { ciusKey },
+      fetchPolicy: 'network-only'
+    });
+    return result.data?.sudzPmtSfExcelCaseRows ?? [];
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzPmtSfExcelCaseRows');
+  }
+}
+
+/**
+ * Лес платёжных документов по кодам строки очереди КСДСФ.
+ */
+export async function getSudzPmDocForestByCius(ciusKey: number): Promise<SudzPmDocForest> {
+  try {
+    const result = await apolloClient.query<{ sudzPmDocForestByCius: SudzPmDocForest }>({
+      query: SUDZ_PM_DOC_FOREST_BY_CIUS,
+      variables: { ciusKey },
+      fetchPolicy: 'network-only'
+    });
+    return result.data.sudzPmDocForestByCius;
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzPmDocForestByCius');
+  }
+}
+
+/**
+ * Лес платёжных документов выбранной счёт-фактуры.
+ */
+export async function getSudzPmDocForestByInv(invKey: number): Promise<SudzPmDocForest> {
+  try {
+    const result = await apolloClient.query<{ sudzPmDocForestByInv: SudzPmDocForest }>({
+      query: SUDZ_PM_DOC_FOREST_BY_INV,
+      variables: { invKey },
+      fetchPolicy: 'network-only'
+    });
+    return result.data.sudzPmDocForestByInv;
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzPmDocForestByInv');
+  }
+}
+
+/**
+ * Профиль кандидата СФ для decision-TreeList (платежи / документы / cias).
+ */
+export async function getSudzSfDecisionProfile(
+  args: SudzSfDecisionProfileArgs
+): Promise<SudzSfDecisionProfile> {
+  try {
+    const result = await apolloClient.query<{ sudzSfDecisionProfile: SudzSfDecisionProfile }>({
+      query: SUDZ_SF_DECISION_PROFILE,
+      variables: {
+        invKey: args.invKey,
+        currentUplKey: args.currentUplKey ?? null,
+        excelCnText: args.excelCnText ?? null,
+        excelInvNum: args.excelInvNum ?? null,
+        excelCntrPrtNum: args.excelCntrPrtNum ?? null,
+        excelBlnsSum: args.excelBlnsSum ?? null,
+        excelCac: args.excelCac ?? null
+      },
+      fetchPolicy: 'network-only'
+    });
+    return result.data.sudzSfDecisionProfile;
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzSfDecisionProfile');
+  }
+}
+
+/**
+ * Сверка итога сальдо платежей по СФ со связанным сводом.
+ */
+export async function getSudzPmtSfSumCompare(
+  ciusKey: number
+): Promise<SudzPmtSfSumCompare | null> {
+  try {
+    const result = await apolloClient.query<{
+      sudzPmtSfSumCompare: SudzPmtSfSumCompare | null;
+    }>({
+      query: SUDZ_PMT_SF_SUM_COMPARE,
+      variables: { ciusKey },
+      fetchPolicy: 'network-only'
+    });
+    return result.data?.sudzPmtSfSumCompare ?? null;
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzPmtSfSumCompare');
   }
 }
 
@@ -1821,6 +2236,120 @@ export async function getSudzPmUplLauncher(pmKey: number): Promise<SudzPmtUplLau
     return data;
   } catch (error) {
     throw wrapApolloError(error, 'SudzPmUplLauncher');
+  }
+}
+
+/**
+ * Очередь «стройки новые» выбранного пакета.
+ */
+export async function getSudzPmtUplCstNew(pmKey: number): Promise<SudzPmtUplCstNew[]> {
+  try {
+    const result = await apolloClient.query<{ sudzPmtUplCstNew: SudzPmtUplCstNew[] }>({
+      query: SUDZ_PMT_UPL_CST_NEW,
+      variables: { pmKey },
+      fetchPolicy: 'network-only'
+    });
+    return result.data?.sudzPmtUplCstNew ?? [];
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzPmtUplCstNew');
+  }
+}
+
+/**
+ * Дерево строек по хвосту из 6 символов выбранной строки очереди.
+ * Пустой массив — такого хвоста в каталоге нет.
+ */
+export async function getSudzPmtUplCstMatch(codeSuffix: string): Promise<SudzPmtUplCstMatch[]> {
+  try {
+    const result = await apolloClient.query<{ sudzPmtUplCstMatch: SudzPmtUplCstMatch[] }>({
+      query: SUDZ_PMT_UPL_CST_MATCH,
+      variables: { codeSuffix },
+      fetchPolicy: 'network-only'
+    });
+    return result.data?.sudzPmtUplCstMatch ?? [];
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzPmtUplCstMatch');
+  }
+}
+
+/**
+ * Бейджи вкладок D: CstNew / InvNot / TwoLoad / open КСДСФ.
+ */
+export async function getSudzPmtUplTabBadges(pmKey: number): Promise<SudzPmtUplTabBadges> {
+  try {
+    const result = await apolloClient.query<{ sudzPmtUplTabBadges: SudzPmtUplTabBadges }>({
+      query: SUDZ_PMT_UPL_TAB_BADGES,
+      variables: { pmKey },
+      fetchPolicy: 'network-only'
+    });
+    const data = result.data?.sudzPmtUplTabBadges;
+    if (!data) throw new Error('Пустой ответ sudzPmtUplTabBadges');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzPmtUplTabBadges');
+  }
+}
+
+/**
+ * Хвост InvNot выбранного пакета (live-список).
+ */
+export async function getSudzPmtUplInvNot(pmKey: number): Promise<SudzPmtUplInvNot[]> {
+  try {
+    const result = await apolloClient.query<{ sudzPmtUplInvNot: SudzPmtUplInvNot[] }>({
+      query: SUDZ_PMT_UPL_INV_NOT,
+      variables: { pmKey },
+      fetchPolicy: 'network-only'
+    });
+    return result.data?.sudzPmtUplInvNot ?? [];
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzPmtUplInvNot');
+  }
+}
+
+/**
+ * TwoLoad выбранного пакета (live-список).
+ */
+export async function getSudzPmtUplTwoLoad(pmKey: number): Promise<SudzPmtUplTwoLoad[]> {
+  try {
+    const result = await apolloClient.query<{ sudzPmtUplTwoLoad: SudzPmtUplTwoLoad[] }>({
+      query: SUDZ_PMT_UPL_TWO_LOAD,
+      variables: { pmKey },
+      fetchPolicy: 'network-only'
+    });
+    return result.data?.sudzPmtUplTwoLoad ?? [];
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzPmtUplTwoLoad');
+  }
+}
+
+/**
+ * Пересборка очереди КСДСФ платежей (InvNot + TwoLoad → ciusCiput).
+ */
+export async function rebuildSudzPmtUplSfDouble(pmKey: number): Promise<number> {
+  try {
+    const result = await apolloClient.mutate<{ rebuildSudzPmtUplSfDouble: number }>({
+      mutation: REBUILD_SUDZ_PMT_UPL_SF_DOUBLE,
+      variables: { pmKey }
+    });
+    return result.data?.rebuildSudzPmtUplSfDouble ?? 0;
+  } catch (error) {
+    throw wrapApolloError(error, 'RebuildSudzPmtUplSfDouble');
+  }
+}
+
+/**
+ * Очередь КСДСФ пакета платежей.
+ */
+export async function getSudzPmtUplSfDoubles(pmKey: number): Promise<SudzCnInvUplSfDouble[]> {
+  try {
+    const result = await apolloClient.query<{ sudzPmtUplSfDoubles: SudzCnInvUplSfDouble[] }>({
+      query: SUDZ_PMT_UPL_SF_DOUBLES,
+      variables: { pmKey },
+      fetchPolicy: 'network-only'
+    });
+    return result.data?.sudzPmtUplSfDoubles ?? [];
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzPmtUplSfDoubles');
   }
 }
 

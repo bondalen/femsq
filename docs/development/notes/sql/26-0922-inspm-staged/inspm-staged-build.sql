@@ -43,7 +43,8 @@ SELECT
   a.ciputDbtBlns, a.ciputDbtBlnsOverd, a.ciputDbtBlnsOverdNot,
   a.ciputCdtBlns, a.ciputCdtBlnsOverd, a.ciputCdtBlnsOverdNot, a.ciputBlns,
   a.ciputAlligmentDate, a.ciputBaseDate, a.ciputCnInvDocSum,
-  a.ciputStornoReason, a.ciputStornoDocCode
+  a.ciputStornoReason, a.ciputStornoDocCode,
+  a.ciputDueGrp
 INTO #stg
 FROM sudz.CnInvPmtUplTbl AS a
 WHERE a.ciputUnloadKey = @uk;
@@ -106,7 +107,7 @@ SELECT
   s.ciputDbtBlns, s.ciputDbtBlnsOverd, s.ciputDbtBlnsOverdNot,
   s.ciputCdtBlns, s.ciputCdtBlnsOverd, s.ciputCdtBlnsOverdNot, s.ciputBlns,
   s.ciputAlligmentDate, s.ciputBaseDate, s.ciputCnInvDocSum,
-  s.ciputStornoReason, s.ciputStornoDocCode,
+  s.ciputStornoReason, s.ciputStornoDocCode, s.ciputDueGrp,
   p.cstapKey
 INTO #cand
 FROM #oneInv AS o

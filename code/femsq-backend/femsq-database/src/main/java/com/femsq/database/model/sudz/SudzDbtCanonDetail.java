@@ -10,11 +10,13 @@ import java.util.List;
  * @param dbtKey ключ канона
  * @param slots слоты с мостом на канон
  * @param cmmYears год-варианты, в которые входят upl карточки
+ * @param portfolioChains вычислимые цепи портфелей для графика (1.7.6)
  */
 public record SudzDbtCanonDetail(
         int dbtKey,
         List<SudzDbtCanonSlot> slots,
-        List<SudzDbtCanonCmmYear> cmmYears
+        List<SudzDbtCanonCmmYear> cmmYears,
+        List<SudzDbtCanonPortfolioChain> portfolioChains
 ) {
     /**
      * Слот канона.
@@ -57,6 +59,7 @@ public record SudzDbtCanonDetail(
      * @param uplDate дата выгрузки
      * @param uplStatusOnDate дата статуса среза
      * @param comments тексты {@code cnInvCmm} на этой Value (типы 1 и 8)
+     * @param portfolioLabels имена портфелей года ({@code yr_variant}); пусто = вне портфеля
      */
     public record SudzDbtCanonValue(
             int valueKey,
@@ -66,7 +69,8 @@ public record SudzDbtCanonDetail(
             String uplName,
             LocalDate uplDate,
             LocalDate uplStatusOnDate,
-            List<SudzDbtCanonComment> comments
+            List<SudzDbtCanonComment> comments,
+            List<String> portfolioLabels
     ) {
     }
 
@@ -111,6 +115,40 @@ public record SudzDbtCanonDetail(
             Integer cmmGrNew,
             String cmmGrNewName,
             List<Integer> uplKeys
+    ) {
+    }
+
+    /**
+     * Цепь портфелей для комбобокса графика (не сущность БД).
+     *
+     * @param id стабильный id ({@code yrKey} через {@code +})
+     * @param label подпись для UI
+     * @param yrKeys годы цепи по возрастанию
+     * @param upls выгрузки цепи по дате среза (дедуп)
+     * @param coverage число Value канона на upl цепи
+     */
+    public record SudzDbtCanonPortfolioChain(
+            String id,
+            String label,
+            List<Integer> yrKeys,
+            List<SudzDbtCanonChainUpl> upls,
+            int coverage
+    ) {
+    }
+
+    /**
+     * Точка оси X цепи.
+     *
+     * @param uplKey выгрузка
+     * @param uplName имя
+     * @param uplDate дата выгрузки
+     * @param uplStatusOnDate дата среза
+     */
+    public record SudzDbtCanonChainUpl(
+            int uplKey,
+            String uplName,
+            LocalDate uplDate,
+            LocalDate uplStatusOnDate
     ) {
     }
 }

@@ -3,7 +3,7 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2026-09-22T17:32:00+03:00",
+      "lastUpdated": "2026-09-30T12:06:22+03:00",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     "tasks": {
@@ -45,8 +45,8 @@
                 ]
               },
               "created": "2026-09-22",
-              "lastUpdated": "2026-09-22",
-              "description": "Доводка UI экрана D после канона 0076: живые вкладки Access File_f, КСДСФ pmt, Sum_t, g_p-статус. Старт в новом чате; не смешивать с UAT-чатом воронки."
+              "lastUpdated": "2026-09-30",
+              "description": "Доводка UI экрана D после канона 0076: живые вкладки Access File_f, КСДСФ pmt, Sum_t, g_p-статус. 2026-09-30: 1.10.0–1.10.2 ✅ JAR 321. 1.11.0–1.11.3 ✅ JAR 323 (лес документов; советник только строкой). ★ UAT 1.9.6 читает этот лес и строку."
             }
           }
         },
@@ -2857,6 +2857,7 @@
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md",
                 "domainPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
                 "offsetMap": "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/export_offset-map.md",
+                "exportRowTree": "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/export-row-tree-structure.md",
                 "dependsOnTasks": [
                   "0073"
                 ]

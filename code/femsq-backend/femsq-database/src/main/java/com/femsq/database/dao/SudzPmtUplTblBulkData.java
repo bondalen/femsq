@@ -23,7 +23,8 @@ final class SudzPmtUplTblBulkData implements ISQLServerBulkData {
             "ciputDbtBlns", "ciputDbtBlnsOverd", "ciputDbtBlnsOverdNot",
             "ciputCdtBlns", "ciputCdtBlnsOverd", "ciputCdtBlnsOverdNot", "ciputBlns",
             "ciputCnInvDocCode", "ciputAlligmentDate", "ciputBaseDate", "ciputCnInvDocSum",
-            "ciputStornoReason", "ciputStornoDocCode", "ciputSheetNum", "ciputUnloadKey"
+            "ciputStornoReason", "ciputStornoDocCode", "ciputSheetNum", "ciputUnloadKey",
+            "ciputSfKey", "ciputCacSpanKey", "ciputDueKey", "ciputDueGrp"
     };
 
     /**
@@ -42,7 +43,8 @@ final class SudzPmtUplTblBulkData implements ISQLServerBulkData {
             Types.DECIMAL, Types.DECIMAL, Types.DECIMAL,
             Types.DECIMAL, Types.DECIMAL, Types.DECIMAL, Types.DECIMAL,
             Types.NVARCHAR, Types.TIMESTAMP, Types.TIMESTAMP, Types.DECIMAL,
-            Types.NVARCHAR, Types.NVARCHAR, Types.INTEGER, Types.INTEGER
+            Types.NVARCHAR, Types.NVARCHAR, Types.INTEGER, Types.INTEGER,
+            Types.INTEGER, Types.INTEGER, Types.INTEGER, Types.SMALLINT
     };
 
     /** Длина nvarchar в символах (sys.columns.max_length/2). */
@@ -53,7 +55,8 @@ final class SudzPmtUplTblBulkData implements ISQLServerBulkData {
             19, 19, 19,
             19, 19, 19, 19,
             50, 0, 0, 19,
-            255, 50, 0, 0
+            255, 50, 0, 0,
+            0, 0, 0, 0
     };
 
     private static final int[] SCALES = {
@@ -63,6 +66,7 @@ final class SudzPmtUplTblBulkData implements ISQLServerBulkData {
             4, 4, 4,
             4, 4, 4, 4,
             0, 0, 0, 4,
+            0, 0, 0, 0,
             0, 0, 0, 0
     };
 
@@ -135,7 +139,11 @@ final class SudzPmtUplTblBulkData implements ISQLServerBulkData {
                 row.ciputStornoReason(),
                 row.ciputStornoDocCode(),
                 row.ciputSheetNum(),
-                row.ciputUnloadKey()
+                row.ciputUnloadKey(),
+                row.ciputSfKey(),
+                row.ciputCacSpanKey(),
+                row.ciputDueKey(),
+                row.ciputDueGrp()
         };
     }
 

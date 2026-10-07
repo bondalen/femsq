@@ -12,6 +12,8 @@ import java.time.OffsetDateTime;
  * @param ciKey связь cnInv (может быть несколько — одна строка на связь)
  * @param cnKey договор
  * @param cnNum номер договора (если есть)
+ * @param cntrPrtNum первый БУиРГ исполнителя (type=2); может быть null
+ * @param cntrPrtName склейка исполнителей {@code «БУиРГ · имя; …»}; может быть null
  */
 public record SudzSfDoubleDomainMatch(
         int invKey,
@@ -20,6 +22,8 @@ public record SudzSfDoubleDomainMatch(
         OffsetDateTime invEntered,
         Integer ciKey,
         Integer cnKey,
-        String cnNum
+        String cnNum,
+        Integer cntrPrtNum,
+        String cntrPrtName
 ) {
 }

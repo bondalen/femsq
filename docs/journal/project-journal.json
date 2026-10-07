@@ -3,7 +3,7 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-09-22"
+      "lastUpdated": "2026-10-06"
     },
     "sessions": [
       {
@@ -12,7 +12,7 @@
           "chat-attributes": {
             "id": "chat-2026-09-22-001",
             "created": "2026-09-22",
-            "lastUpdated": "2026-09-22",
+            "lastUpdated": "2026-10-06",
             "owner": "Александр",
             "status": "pending",
             "priority": "high",
@@ -34,10 +34,999 @@
               "aiRuleRefs": [],
               "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
               "wbs": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
-              "canonPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md"
+              "canonPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md",
+              "exportRowTree": "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/export-row-tree-structure.md"
             }
           },
           "entries": [
+            {
+              "log": {
+                "displayName": "1.14.7E+ стройка в pm-doc-forest (success). № log-2026-10-06-006",
+                "log-attributes": {
+                  "id": "log-2026-10-06-006",
+                  "timestamp": "2026-10-06T21:55:00+03:00",
+                  "level": "success",
+                  "effort": "0.4h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "0077",
+                    "ksdsf",
+                    "1.14.7",
+                    "pm-doc-forest"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Стройка в правом лесе документов",
+                    "details": "SudzPmDocLink: cstKey/cstCode/cstName из cnipCstAgPn. Колонка «Стройка» на платеже и узле СФ. JAR 0.1.0.338-SNAPSHOT. План 0922 v0.5.40.",
+                    "outcome": "У doc 5400208040 видны коды строек по каждому pm (история + текущий).",
+                    "references": [
+                      "code/femsq-frontend-q/src/trees/pm-doc-forest.tree.json",
+                      "code/femsq-frontend-q/src/sudz/pm-doc-forest.ts",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/model/sudz/SudzPmDocLink.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.14.7E стройка/хвост в decision (success). № log-2026-10-06-005",
+                "log-attributes": {
+                  "id": "log-2026-10-06-005",
+                  "timestamp": "2026-10-06T21:50:00+03:00",
+                  "level": "success",
+                  "effort": "1.0h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "0077",
+                    "ksdsf",
+                    "1.14.7"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "1.14.7E: стройка на pm + чип сверки",
+                    "details": "excelCac → compare.cstVerdict (yes|suffix|no|na); RIGHT(code,6) как 1.6.2. Payment: cstCode/cstName, hlCstDiff/hlCstSuffix. Колонка «Стройка» в TreeList. JAR 0.1.0.337-SNAPSHOT. План 0922 v0.5.39.",
+                    "outcome": "UAT @1319/34021: ожидается чип стройка·нет (051-2001439 vs 051-2002160).",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/model/sudz/SfDecisionCompareUtil.java",
+                      "code/femsq-frontend-q/src/components/sudz/SfDecisionTree.vue",
+                      "docs/development/notes/UI/02-12_femsq-tree/ksdsf-inv-decision.tree.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.14.7D Договоры/Исполнители/Агенты в decision (success). № log-2026-10-06-004",
+                "log-attributes": {
+                  "id": "log-2026-10-06-004",
+                  "timestamp": "2026-10-06T12:22:00+03:00",
+                  "level": "success",
+                  "effort": "1.0h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "0077",
+                    "ksdsf",
+                    "1.14.7"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "1.14.7D: узлы Договоры→стороны",
+                    "details": "Profile.cnInvs + Party (type 1/2, hitExcel). TreeList: папка Договоры → Исполнители / Агенты. Список совпадений ранее — склейка. JAR 0.1.0.336-SNAPSHOT. План 0922 v0.5.38.",
+                    "outcome": "Перезапуск 336; smoke @1315/23470: оба исполнителя КС-51 в узле.",
+                    "references": [
+                      "code/femsq-frontend-q/src/trees/ksdsf-inv-decision.tree.json",
+                      "code/femsq-frontend-q/src/sudz/ksdsf-inv-decision.ts",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.14.7A контрагент в decision-profile (success). № log-2026-10-06-003",
+                "log-attributes": {
+                  "id": "log-2026-10-06-003",
+                  "timestamp": "2026-10-06T11:50:00+03:00",
+                  "level": "success",
+                  "effort": "1.2h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "0077",
+                    "ksdsf",
+                    "1.14.7"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "1.14.7A: контрагент в списке и шапке",
+                    "details": "DomainMatch/DecisionProfile: cntrPrtNum/Name (cn_s_type=2→org_id→og). Compare.executorVerdict по БУиРГ Excel. UI: чип исполнитель, колонка контрагент, корень TreeList party. Unit SfDecisionCompareUtil/Advisor/PmDocHistory. План 0922 v0.5.36. JAR 0.1.0.334-SNAPSHOT. B/C (алиасы / переезды doc) — next.",
+                    "outcome": "Перезапуск JAR 334 + Vite; smoke @1315: в списке/шапке виден контрагент.",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java",
+                      "code/femsq-frontend-q/src/components/sudz/SfDecisionTree.vue",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1313 create OK; 1314 link; excel scroll (success). № log-2026-10-06-002",
+                "log-attributes": {
+                  "id": "log-2026-10-06-002",
+                  "timestamp": "2026-10-06T08:54:00+03:00",
+                  "level": "success",
+                  "effort": "0.4h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "0077",
+                    "ksdsf",
+                    "UI"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Verify 1313/1314 + excel scroll",
+                    "details": "@1313 create inv 106726 cn 308 cias 113263: pm 606262/606263 (docs 5400200664/5900210215) перенесены с 6884, leftOn6884=0. @1314 open «14»: advice link→3611 cn 308; 2×pm59 уже на 3611 (5400172962/5900208419). SudzSfDoubleView: .sudz-sf-excel-fields height:100% overflow:auto. План 0.5.35.",
+                    "outcome": "Рекомендация: Связать @1314. Vite HMR для скролла.",
+                    "references": [
+                      "code/femsq-frontend-q/src/views/sudz/SudzSfDoubleView.vue",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Rev 1313 б/н: create не link→6884 (success). № log-2026-10-06-001",
+                "log-attributes": {
+                  "id": "log-2026-10-06-001",
+                  "timestamp": "2026-10-06T08:47:00+03:00",
+                  "level": "success",
+                  "effort": "0.3h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "0077",
+                    "ksdsf",
+                    "suspicious_inv",
+                    "docs"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Документировать rev advice @1313",
+                    "details": "UAT smoke: 1312 link→3932 created ✅ (5 pm59 Σ −190713.93). 1313 open «б/н» КС-51: советник create (suspicious_inv, Σ0); legacy 6884 — свалка; 2×pm59 уже на 6884 по InsPm. Матрица 1.9.6 link→6884 устарела. Обновлены план 0922 v0.5.34 (§2.4.5 / §2.8.1) и KSDSF_ADVISOR. Код не менялся — create+перенос уже в 1.14.6.",
+                    "outcome": "Apply create @1313 — по команде. ★ next = 1.10.3 / разбор очереди.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                      "docs/development/notes/sql/26-0816-sudz-sf-num-collision/KSDSF_ADVISOR.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.14.6 create+pm reclaim / InsPm suspicious (success). № log-2026-10-05-009",
+                "log-attributes": {
+                  "id": "log-2026-10-05-009",
+                  "timestamp": "2026-10-05T12:38:15+03:00",
+                  "level": "success",
+                  "effort": "1.0h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "1.14.6",
+                    "0077",
+                    "ksdsf",
+                    "inspm"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "create reclaim pm + InsPm skip б/н",
+                    "details": "createSfFromDouble: после inv/cnInv — cias + UPDATE pm текущего upl с legacy того же № на cn; иначе INSERT из Tbl. Repair при status=created. InsPm/AcNot #oneInv исключает подозрительные номера. Smoke repair @1310: inv 106724, cias 113261, moved=3 inserted=0; профиль Σ −10427623.46 sum=yes; на 50319 остались 3 hist pm. JAR 0.1.0.332-SNAPSHOT. План 0922 v0.5.33.",
+                    "outcome": "Ветка 1.14 закрыта. ★ next = 1.10.3 / 1.10.4 / 1.12.",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java",
+                      "docs/development/notes/sql/26-0816-sudz-sf-num-collision/KSDSF_ADVISOR.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.14.5a suspicious_inv + подписи папок (success). № log-2026-10-05-008",
+                "log-attributes": {
+                  "id": "log-2026-10-05-008",
+                  "timestamp": "2026-10-05T12:22:21+03:00",
+                  "level": "success",
+                  "effort": "0.6h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "1.14.5a",
+                    "0077",
+                    "ksdsf",
+                    "advisor"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Советник suspicious_inv + папки decision",
+                    "details": "SfDoubleAdvisor: б/н/Б/С/- не дают link high из executor_unique/cn_exact; без sum_same_cn → create high. SfDecisionCompareUtil.isSuspiciousInvNum общий список. Unit: б/н→create; Б/С+sum_same_cn→link. GraphQL smoke @cius=1310: action=create. TreeList: папки Документы/Счета ГК через поле title в columnSets. JAR 0.1.0.331-SNAPSHOT. План 0922 v0.5.32; KSDSF_ADVISOR.",
+                    "outcome": "★ next = 1.14.6 apply create+перенос pm по команде владельца.",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/SfDoubleAdvisor.java",
+                      "code/femsq-frontend-q/src/trees/ksdsf-inv-decision.tree.json",
+                      "docs/development/notes/sql/26-0816-sudz-sf-num-collision/KSDSF_ADVISOR.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.14.5 rev: create вместо link @1310 (success). № log-2026-10-05-007",
+                "log-attributes": {
+                  "id": "log-2026-10-05-007",
+                  "timestamp": "2026-10-05T12:11:41+03:00",
+                  "level": "success",
+                  "effort": "0.3h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "1.14.5",
+                    "0077",
+                    "ksdsf",
+                    "decision"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Пересмотр B @cius=1310: create",
+                    "details": "Владелец оспорил link→40729. Факты: inv 40729 создан 2023-10-25 note «для б/н»; на cias 50319 смешаны CAC 014-2000156/630/137 (upl 15–16) и CAC 014-2000186 (3×pm=59, Excel дек 2025 −10.4M). «Уже висят» = круговой эффект InsPm/advice по «б/н», не тождество. Решение: create новый СФ на cn 877; при apply перенести 610538–610540; 40729 оставить с историей. План 0922 v0.5.31; §2.8.1 rev; KSDSF_CONTEXTS.",
+                    "outcome": "★ next = 1.14.6 apply create+перенос pm только по команде владельца.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                      "docs/development/notes/sql/26-0816-sudz-sf-num-collision/KSDSF_CONTEXTS.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.14.5 решение link→40729 @1310 (success). № log-2026-10-05-006",
+                "log-attributes": {
+                  "id": "log-2026-10-05-006",
+                  "timestamp": "2026-10-05T11:26:59+03:00",
+                  "level": "success",
+                  "effort": "0.3h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "1.14.5",
+                    "0077",
+                    "ksdsf",
+                    "decision"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Решение B create|link @cius=1310",
+                    "details": "После smoke 1.14.4: на cias 50319 (cnInv 43566→inv 40729, cn 877) уже 6 pm, из них 3×upl=59 (610538 −10427623.46 + два нуля), cn_inv_key/cnInvKey NULL. Шапка сверки: номер подбор / договор да / сумма да. Лес 5400224218→КС-51 — история кода, не Excel-операция. Решение: link → 40729/877 (закрепить InsPm). Create отклонён (дубль + перенос pm). Apply не выполнялся. Матрица §2.8.1; план 0922 v0.5.30; KSDSF_CONTEXTS.",
+                    "outcome": "★ next = 1.14.6 apply linkSudzSfDoubleToCn(1310, 40729, 877) только по команде владельца.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                      "docs/development/notes/sql/26-0816-sudz-sf-num-collision/KSDSF_CONTEXTS.md",
+                      "docs/development/notes/UI/02-12_femsq-tree/ksdsf-inv-decision.tree.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.14.4 browser smoke decision @1310 (success). № log-2026-10-05-005",
+                "log-attributes": {
+                  "id": "log-2026-10-05-005",
+                  "timestamp": "2026-10-05T11:14:02+03:00",
+                  "level": "success",
+                  "effort": "0.4h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "1.14.4",
+                    "0077",
+                    "ksdsf",
+                    "smoke"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Smoke КСДСФ decision @cius=1310",
+                    "details": "Перезапуск femsq-web-0.1.0.330-SNAPSHOT (:8080) + Vite (:5175). Browser @cius=1310 / inv 40729 / белая строка 5400224218: центр SfDecisionTree — pm=59 «этот пакет» Σ −10427623.46, исторические pm, шапка сверки (номер/договор/сумма), cnInv 43566. Правый PmDocForest: платежи → СФ 12-05/07-31 · КС-51 (не регресс). Apply не выполнялся. План 0922 v0.5.29; KSDSF_CONTEXTS; спека §8.",
+                    "outcome": "★ next = 1.14.5 решение create|link по 1310 (без apply).",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                      "docs/development/notes/UI/02-12_femsq-tree/ksdsf-inv-decision.tree.md",
+                      "docs/development/notes/sql/26-0816-sudz-sf-num-collision/KSDSF_CONTEXTS.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.14.3 UI SfDecisionTree в центре pmt (success). № log-2026-10-05-004",
+                "log-attributes": {
+                  "id": "log-2026-10-05-004",
+                  "timestamp": "2026-10-05T11:05:44+03:00",
+                  "level": "success",
+                  "effort": "0.7h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "1.14.3",
+                    "0077",
+                    "ksdsf",
+                    "ui"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Центр КСДСФ pmt → decision-TreeList",
+                    "details": "Компонент SfDecisionTree + хост ksdsf-inv-decision.ts: загрузка sudzSfDecisionProfile, шапка сверки (чипы), FemsqWalkTree list (платежи/документы/cias). SudzSfDoubleView: pmt — decision; outline по кнопке «Техн. каталог»; dbt без изменений. Правый PmDocForest не тронут. Thin JAR 0.1.0.330-SNAPSHOT. План 0922 v0.5.28.",
+                    "outcome": "★ next = 1.14.4 browser smoke @cius=1310.",
+                    "references": [
+                      "code/femsq-frontend-q/src/components/sudz/SfDecisionTree.vue",
+                      "code/femsq-frontend-q/src/sudz/ksdsf-inv-decision.ts",
+                      "code/femsq-frontend-q/src/views/sudz/SudzSfDoubleView.vue",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.14.2 API sudzSfDecisionProfile (success). № log-2026-10-05-003",
+                "log-attributes": {
+                  "id": "log-2026-10-05-003",
+                  "timestamp": "2026-10-05T11:01:20+03:00",
+                  "level": "success",
+                  "effort": "0.8h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "1.14.2",
+                    "0077",
+                    "ksdsf",
+                    "graphql"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "GraphQL sudzSfDecisionProfile + Apollo клиент",
+                    "details": "DAO findSfDecisionProfile: inv→cnInv→cias→cn_inv_pm; payments/docSums/cias; compare (SfDecisionCompareUtil) + hlCurrentUpl/orphan/contractDiff. Schema/controller/service; frontend types + getSudzSfDecisionProfile. Unit SfDecisionCompareUtilTest. SQL smoke @inv=40729: 6 pm, cias 50319/ciKey 43566, upl59 Σ −10427623.46, doc 5400224218 orphan. Compile femsq-web OK. UI не подключался (1.14.3). План 0922 v0.5.27.",
+                    "outcome": "★ next = 1.14.3 wiring центра КСДСФ pmt на decision-TreeList.",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java",
+                      "code/femsq-backend/femsq-web/src/main/resources/graphql/sudz-schema.graphqls",
+                      "code/femsq-frontend-q/src/api/sudz-api.ts",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.14.1 спека decision-TreeList (success). № log-2026-10-05-002",
+                "log-attributes": {
+                  "id": "log-2026-10-05-002",
+                  "timestamp": "2026-10-05T10:56:02+03:00",
+                  "level": "success",
+                  "effort": "0.4h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "1.14.1",
+                    "0077",
+                    "ksdsf",
+                    "spec"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Спека ksdsf-inv-decision + черновик JSON",
+                    "details": "Конспект 02-12/ksdsf-inv-decision.tree.md: корень inv.iKey (domain.invKey), блоки Платежи/Документы/cias/Задолженности, шапка сверки Excel на хосте, подсветка hlCurrentUpl/hlOrphanLink/hlContractDiff, отличие от pm-doc-forest и ksdsf-inv-num. Черновик trees/ksdsf-inv-decision.tree.json (view list, columnSets). Обновлены relation-tree.md, KSDSF_CONTEXTS, план 0922 v0.5.26. GraphQL/UI не писались.",
+                    "outcome": "★ next = 1.14.2 API по queryId спеки §6.",
+                    "references": [
+                      "docs/development/notes/UI/02-12_femsq-tree/ksdsf-inv-decision.tree.md",
+                      "code/femsq-frontend-q/src/trees/ksdsf-inv-decision.tree.json",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.14 план decision-TreeList A→B→C (success). № log-2026-10-05-001",
+                "log-attributes": {
+                  "id": "log-2026-10-05-001",
+                  "timestamp": "2026-10-05T10:52:50+03:00",
+                  "level": "success",
+                  "effort": "0.3h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "1.14",
+                    "0077",
+                    "ksdsf",
+                    "plan"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "План 0922 v0.5.25: ветка 1.14 decision-TreeList",
+                    "details": "Листья 1.14.0✅–1.14.6☐. Порядок A UX → B create|link → C apply. Диагноз @cius=1310: док 5400224218 — история КС-51 ≠ Excel КС-14; link→40729 слаб; cias 50319 → cnInv 43566 (ciInv=40729) уже держит 3 pm=59, cn_inv_key пуст. §2.8; KSDSF_CONTEXTS — центр кандидата. Код не менялся. ★ next = 1.14.1 спека.",
+                    "outcome": "Apply по 1310 запрещён до 1.14.5; следующий шаг — спека TreeList.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                      "docs/development/notes/sql/26-0816-sudz-sf-num-collision/KSDSF_CONTEXTS.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.13.5a сплиттер Excel/белые + лес по строке (success). № log-2026-10-03-009",
+                "log-attributes": {
+                  "id": "log-2026-10-03-009",
+                  "timestamp": "2026-10-03T13:10:06+03:00",
+                  "level": "success",
+                  "effort": "0.4h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "1.13.5a",
+                    "0077",
+                    "ksdsf",
+                    "ui"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "UX: сплиттер Excel↔белые строки и фокус леса на «№ докум.»",
+                    "details": "SudzSfDoubleView: QSplitter excelCaseSplit + selection белых строк (автовыбор якоря ciput). PmDocForest: props docFocus/docCode; filterPmDocForestByDocCode. Подписи: «В строке нет кода», «Документ X: совпадающих платежей в базе нет», «Документ X: с платежами в базе N». Vite smoke @cius=1310: 5900202347/5400199014 — нет; 5400224218 — дерево. JAR не пересобирался (только frontend).",
+                    "outcome": "Можно продолжать ручной разбор open @59 по одной карточке.",
+                    "references": [
+                      "code/femsq-frontend-q/src/views/sudz/SudzSfDoubleView.vue",
+                      "code/femsq-frontend-q/src/components/sudz/PmDocForest.vue",
+                      "code/femsq-frontend-q/src/sudz/pm-doc-forest.ts",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.9.6 UAT КСДСФ pmt 18× (success). № log-2026-10-03-008",
+                "log-attributes": {
+                  "id": "log-2026-10-03-008",
+                  "timestamp": "2026-10-03T12:36:22+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "1.9.6",
+                    "0077",
+                    "uat",
+                    "ksdsf"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.database",
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Закрыт лист 1.9.6 — UAT КСДСФ pmt после 1.13",
+                    "details": "Чеклист §2.4.5 на open=18 @pm=59 (JAR 329, Vite :5175). GraphQL 18/18: source=pmt, сверка (все «строки свода нет» — ожидаемо), лес, advice (link×10 create×8), строка «Документы:», traps=0. Browser: cius 1310 б/н КС-14 — 3 белые строки / Σ −10427623.46 / лес кодов 3 с pm 1 / link→40729; cius 1327 «94» — Σ −259158.76 / link→23785. Apply не выполнялся. План 0922 v0.5.23.",
+                    "outcome": "Следующий шаг — 1.10.3 (состав ненулевых) / 1.10.4 / 1.12 / 1.9.7.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                      "docs/development/notes/sql/26-0816-sudz-sf-num-collision/KSDSF_CONTEXTS.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.13.5 Excel-кандидат: все белые строки (success). № log-2026-10-03-007",
+                "log-attributes": {
+                  "id": "log-2026-10-03-007",
+                  "timestamp": "2026-10-03T12:32:00+03:00",
+                  "level": "success",
+                  "effort": "0.6h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "1.13.5",
+                    "0077",
+                    "ksdsf",
+                    "graphql"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.database",
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Закрыт лист 1.13.5 — Excel-кандидат со всеми белыми строками кейса",
+                    "details": "GraphQL sudzPmtSfExcelCaseRows(ciusKey): строки Tbl по кредитор+договор+номер с «№ докум.»/«Ссылка»/стройка/срок/сальдо/due_grp. UI SudzSfDoubleView: сводка кейса + FemsqTable белых строк (без сдвоенного doc/link). Smoke @59: cius 1310 → 3 строки (5900202347, 5400199014, 5400224218); cius 1313 → 2. JAR 0.1.0.329-SNAPSHOT. План 0922 v0.5.22.",
+                    "outcome": "Следующий шаг — 1.9.6 UAT КСДСФ pmt (и/или 1.12).",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/model/sudz/SudzPmtExcelCaseRow.java",
+                      "code/femsq-frontend-q/src/views/sudz/SudzSfDoubleView.vue",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.13.4 свёртка КСДСФ Access (success). № log-2026-10-03-006",
+                "log-attributes": {
+                  "id": "log-2026-10-03-006",
+                  "timestamp": "2026-10-03T12:28:08+03:00",
+                  "level": "success",
+                  "effort": "0.7h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "1.13.4",
+                    "0077",
+                    "ksdsf"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Закрыт лист 1.13.4 — свёртка очереди/агрегатов/леса с договором",
+                    "details": "JdbcSudzDao: #pmtTwoLoad по кредитор+договор+номер при глобальном ciCount>1; pick TwoLoad MIN(ciputKey) в той же группе; sqlPmtSfBlnsAggregates и findPmDocForestByCius — тот же ключ. rebuild @59: invNot=8 twoExtra=10 inserted=18; open «б/н» КС-14 (cius 1310, Σ −10427623.46×3, fileCodes=3) и КС-51 (cius 1313, Σ 0×2, fileCodes=2). JAR 0.1.0.328-SNAPSHOT. План 0922 v0.5.21; KSDSF_CONTEXTS обновлён.",
+                    "outcome": "Следующий шаг — 1.13.5 (Excel-кандидат: все белые строки кейса).",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java",
+                      "docs/development/notes/sql/26-0816-sudz-sf-num-collision/KSDSF_CONTEXTS.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.13.2–1.13.3 due_grp DDL + InsPm (success). № log-2026-10-03-005",
+                "log-attributes": {
+                  "id": "log-2026-10-03-005",
+                  "timestamp": "2026-10-03T12:22:04+03:00",
+                  "level": "success",
+                  "effort": "0.8h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "1.13.2",
+                    "1.13.3",
+                    "0077",
+                    "ddl",
+                    "inspm"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Закрыты листья 1.13.2 и 1.13.3",
+                    "details": "DDL ags.cn_inv_pm.cn_inv_pm_due_grp smallint NULL (пакет 26-1003-sudz-cn-inv-pm-due-grp, DEV). InsPm staged: ciputDueGrp → cn_inv_pm_due_grp (Java + inspm-staged-*.sql). Перезалив @59: DELETE 15873 → INSERT 15873 (~1.5 с); due_grp 1 и 2 у 0620CR000478/051-2004018/28.02; прочие пакеты без due_grp. Собран JAR 0.1.0.327-SNAPSHOT. План 0922 v0.5.20.",
+                    "outcome": "Следующий шаг — 1.13.4 (свёртка КСДСФ Access).",
+                    "references": [
+                      "docs/development/notes/sql/26-1003-sudz-cn-inv-pm-due-grp/",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.13.1 staging-ключи Excel→Tbl (success). № log-2026-10-03-004",
+                "log-attributes": {
+                  "id": "log-2026-10-03-004",
+                  "timestamp": "2026-10-03T12:11:12+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "1.13.1",
+                    "0077",
+                    "ddl"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.database",
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Закрыт лист 1.13.1",
+                    "details": "DDL sudz.CnInvPmtUplTbl ADD ciputSfKey/ciputCacSpanKey/ciputDueKey/ciputDueGrp (пакет 26-1003, применён на DEV). SudzPmtUplExcelToTblImporter: ключи по outline 3/4 без цвета; жёлтые не в Tbl. Unit + smoke export_26-0130_767501: 15942 строк, 7575 dueKey, due_grp 1+2 у 0620CR000478/28.02, б/н КС-14 — 3 dueKey. План 0922 v0.5.19. InsPm/домен due_grp — 1.13.2–1.13.3.",
+                    "outcome": "Следующий шаг — 1.13.2 (ADD cn_inv_pm_due_grp).",
+                    "references": [
+                      "docs/development/notes/sql/26-1003-sudz-pmt-upl-tbl-staging-keys/",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/SudzPmtUplExcelToTblImporter.java",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.13.0 правила A–C (success). № log-2026-10-03-003",
+                "log-attributes": {
+                  "id": "log-2026-10-03-003",
+                  "timestamp": "2026-10-03T12:03:07+03:00",
+                  "level": "success",
+                  "effort": "0.2h",
+                  "status": "completed",
+                  "tags": [
+                    "docs",
+                    "pmt-upl",
+                    "1.13.0",
+                    "0077"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Закрыт лист 1.13.0",
+                    "details": "Приняты правила A (свёртка Access), B (staging-ключи), C (ADD cn_inv_pm_due_grp). Зафиксированы в export-row-tree-structure §7.0 и KSDSF_CONTEXTS. План 0922 v0.5.18. Код и DDL не менялись.",
+                    "outcome": "Следующий шаг — 1.13.1 (импортёр + колонки Tbl).",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/export-row-tree-structure.md",
+                      "docs/development/notes/sql/26-0816-sudz-sf-num-collision/KSDSF_CONTEXTS.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "План 0922 ветка 1.13 (success). № log-2026-10-03-002",
+                "log-attributes": {
+                  "id": "log-2026-10-03-002",
+                  "timestamp": "2026-10-03T11:57:00+03:00",
+                  "level": "success",
+                  "effort": "0.3h",
+                  "status": "completed",
+                  "tags": [
+                    "docs",
+                    "pmt-upl",
+                    "plan",
+                    "1.13",
+                    "0077"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "В план 0922 внесена ветка 1.13",
+                    "details": "v0.5.17: листья 1.13.0–1.13.7 (правила → staging → due_grp DDL/InsPm → свёртка Access → Excel-кандидат → б/н → QII отложено). §2.7 критерии @59. ★ first = 1.13.0. 1.9.6 и 1.12 после 1.13.4. export-row-tree-structure §7 синхронизирован. Код не менялся.",
+                    "outcome": "Следующий исполняемый шаг — 1.13.0 (док без кода).",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                      "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/export-row-tree-structure.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Дерево строк export_* + глоссарий (success). № log-2026-10-03-001",
+                "log-attributes": {
+                  "id": "log-2026-10-03-001",
+                  "timestamp": "2026-10-03T11:36:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "tags": [
+                    "docs",
+                    "pmt-upl",
+                    "glossary",
+                    "export",
+                    "0077"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": [],
+                    "journalRefs": [
+                      "chat:chat-2026-09-22-001"
+                    ]
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Систематизирован разбор структуры строк выгрузки платежей",
+                    "details": "Документ export-row-tree-structure.md: doc/link Excel-кандидата, свёртка Access vs FEMSQ, дерево outline традиционной раскладки (СФ файла / группа стройки / группа срока), сверка файлов периодов, QII-раскладка 767501/767502, подозрительные номера, неуникальность № докум. Ссылки в README CnInvPmtUpl, offset-map, 02-11, план 0922 v0.5.16, KSDSF_CONTEXTS, project-docs.json, project-development.json. Глоссарий 1.9.0: семь статей. Код не менялся.",
+                    "outcome": "Опора для staging-ключей и свёртки КСДСФ зафиксирована в документации.",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/export-row-tree-structure.md",
+                      "docs/project/glossary.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
             {
               "log": {
                 "displayName": "План 0922 + WBS 1.1.1.2.7 + задача 0077 (success). № log-2026-09-22-001",
@@ -72,6 +1061,1497 @@
                       "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
                       "docs/development/notes/chats/chat-plan/chat-plan-26-0819-cn-inv-pmt-upl.md",
                       "docs/development/project-development.json"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "CstNew live + бейджи вкладок D (success). № log-2026-09-26-001",
+                "log-attributes": {
+                  "id": "log-2026-09-26-001",
+                  "timestamp": "2026-09-26T15:37:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "cst-new",
+                    "1.1.1.2.7.1"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend.web",
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Очередь «стройки новые» и бейджи N на экране D",
+                    "details": "GraphQL sudzPmtUplCstNew(pmKey) — cipuCacNot плюс sh/ipCode (pirIDnew/pirName пустые: tblPIR нет в FishEye). sudzPmtUplTabBadges: cstNew, хвост InvNot, TwoLoad, open КСДСФ по ciusCiput. Грид SudzPmtUplView вместо каркаса. Вкладка «повторяющиеся СФ» остаётся каркасом; Sum_t disabled; адаптер КСДСФ не менялся. DEV pm=59: CstNew=5, InvNot=8, TwoLoad=13, sfOpen=0.",
+                    "outcome": "Лист 1.1.1.2.7.1 закрыт в коде. Дальше 1.1.1.2.7.2 (грид СФ и КСДСФ pmt).",
+                    "references": [
+                      "code/femsq-frontend-q/src/views/sudz/SudzPmtUplView.vue",
+                      "code/femsq-backend/femsq-web/src/main/resources/graphql/sudz-schema.graphqls",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "check-fequlib.sh: экспорт FemsqTreeList (success). № log-2026-09-26-002",
+                "log-attributes": {
+                  "id": "log-2026-09-26-002",
+                  "timestamp": "2026-09-26T19:00:00+03:00",
+                  "level": "success",
+                  "effort": "0.2h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "fequlib",
+                    "1.6.1"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Сборка FEMSQ сторожит экспорт FemsqTreeList",
+                    "details": "check-fequlib.sh проверяет src/components/tree/FemsqTreeList.vue и строку export { default as FemsqTreeList } в src/index.ts соседнего клона. Компонент в FEMSQ не копируется. Ожидаемый срез feQuLib: f0ce77b, пакет 0.1.5.",
+                    "outcome": "Лист плана 0922 1.6.1 закрыт. Дальше 1.6.2 — GraphQL дерева по хвосту из шести цифр.",
+                    "references": [
+                      "code/scripts/check-fequlib.sh",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "GraphQL дерева строек по хвосту кода (success). № log-2026-09-26-003",
+                "log-attributes": {
+                  "id": "log-2026-09-26-003",
+                  "timestamp": "2026-09-26T19:08:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "cst-new",
+                    "1.6.2"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:backend.database",
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Запрос sudzPmtUplCstMatch по хвосту из 6 символов",
+                    "details": "Аргумент codeSuffix — sh строки очереди. Ответ: стройки, у которых есть код с этим хвостом, все их cstAg (подпись ogAgCs, код ogAg) и все cstAgPn с sameSuffix. Пустой список — хвоста в каталоге нет. Новую cst не создаёт. Клиент: getSudzPmtUplCstMatch. Вкладка ещё не рисует дерево.",
+                    "outcome": "Лист плана 0922 1.6.2 закрыт. Дальше 1.6.3 — обходчик view list.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/resources/graphql/sudz-schema.graphqls",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/model/sudz/SudzPmtUplCstMatch.java",
+                      "code/femsq-frontend-q/src/api/sudz-api.ts",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "RelationTree: view list рисует FemsqTreeList (success). № log-2026-09-26-004",
+                "log-attributes": {
+                  "id": "log-2026-09-26-004",
+                  "timestamp": "2026-09-26T19:20:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "relation-tree",
+                    "1.6.3"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Обходчик выбирает renderer по view",
+                    "details": "usesWalkList(spec): нет view или outline — прежний FemsqTree. Явный list — FemsqTreeList и колонки walkColumnsToTreeList. Поля строки на узле через assignWalkListFields. fetchNode и fetchExpand не менялись. JSON КСДСФ и канона без view не трогались.",
+                    "outcome": "Лист плана 0922 1.6.3 закрыт. Дальше 1.6.4 — сплиттер и дерево на вкладке.",
+                    "references": [
+                      "code/femsq-frontend-q/src/components/relation/RelationTree.vue",
+                      "code/femsq-frontend-q/src/trees/relation-tree.ts",
+                      "docs/development/notes/UI/02-12_femsq-tree/relation-tree.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Вкладка «стройки новые»: очередь и дерево хвоста (success). № log-2026-09-26-005",
+                "log-attributes": {
+                  "id": "log-2026-09-26-005",
+                  "timestamp": "2026-09-26T19:25:00+03:00",
+                  "level": "success",
+                  "effort": "0.6h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "cst-new",
+                    "1.6.4"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Сплиттер очереди и FemsqTreeList по хвосту строки",
+                    "details": "Колонки pirIDnew и pirName сняты. Слева САК, sh, ipCode. Справа FemsqTreeList по sudzPmtUplCstMatch выбранного sh: подпись, ключ, дополнение; у совпавшего кода отметка «тот же хвост». Пустой каталог — текст создать стройку на экране «Стройки» и переход туда. Действия создания cstAg ещё нет.",
+                    "outcome": "Лист плана 0922 1.6.4 закрыт. Дальше 1.6.5 — слот действий.",
+                    "references": [
+                      "code/femsq-frontend-q/src/views/sudz/SudzPmtUplView.vue",
+                      "code/femsq-frontend-q/src/sudz/pmt-cst-match-tree.ts",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Вкладка «стройки новые»: агент и код САК (success). № log-2026-09-26-006",
+                "log-attributes": {
+                  "id": "log-2026-09-26-006",
+                  "timestamp": "2026-09-26T19:35:00+03:00",
+                  "level": "success",
+                  "effort": "0.6h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "cst-new",
+                    "1.6.5"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Действия дерева: cstAg и cstAgPn без новой cst",
+                    "details": "На стройке кнопка «Агент»: существующий ogAg, подсказка — первые три символа cacOrNull; если такого нет, отказ, ogAg не создаётся. На агенте кнопка «Код»: cstapIpgPnN зафиксирован кодом строки очереди. После кода refreshQueues снимает строку и обновляет бейдж.",
+                    "outcome": "Лист плана 0922 1.6.5 закрыт. Ветка 1.6 оператора «стройки новые» в коде.",
+                    "references": [
+                      "code/femsq-frontend-q/src/views/sudz/SudzPmtUplView.vue",
+                      "code/femsq-frontend-q/src/sudz/pmt-cst-match-tree.ts"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Повтор кода САК: текст и снятие строки (success). № log-2026-09-26-007",
+                "log-attributes": {
+                  "id": "log-2026-09-26-007",
+                  "timestamp": "2026-09-26T19:45:00+03:00",
+                  "level": "success",
+                  "effort": "0.4h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "cst-new",
+                    "1.6.5"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend.web"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Уникальный IX_cstAgPn больше не маскируется как INTERNAL_ERROR",
+                    "details": "Код 051-2006707 записан (cstapKey 4577, агент 2974). Повтор дал SQL 2601, Spring GraphQL скрыл текст. 4xx ResponseStatusException теперь уходит клиенту как сообщение. Если кода уже нет в очереди, диалог закрывается и очередь перечитывается.",
+                    "outcome": "Повторное «Добавить» не оставляет строку в гриде и не показывает идентификатор запроса.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/graphql/CstGraphqlController.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/graphql/ClientStatusGraphqlExceptionResolver.java",
+                      "code/femsq-frontend-q/src/views/sudz/SudzPmtUplView.vue"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "План 1.7: один FemsqWalkTree (info). № log-2026-09-26-008",
+                "log-attributes": {
+                  "id": "log-2026-09-26-008",
+                  "timestamp": "2026-09-26T20:18:00+03:00",
+                  "level": "info",
+                  "effort": "0.3h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "fequlib",
+                    "1.7"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "В план 0922 внесена ветка 1.7",
+                    "details": "FemsqWalkTree выносится в feQuLib: один корень и лес queryId. Экраны КСДСФ, договоров, двойных слотов и RecordModal переходят на него, RelationTree снимается. Вкладка «стройки новые» уходит с прямого FemsqTreeList. Прямой FemsqTree остаётся только у канона долга.",
+                    "outcome": "План 0.2.0. Код не менялся.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "План 1.7: канон долга тоже WalkTree (info). № log-2026-09-26-009",
+                "log-attributes": {
+                  "id": "log-2026-09-26-009",
+                  "timestamp": "2026-09-26T20:26:00+03:00",
+                  "level": "info",
+                  "effort": "0.2h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "fequlib",
+                    "1.7"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Уточнён лист 1.7.4 и правило list/outline",
+                    "details": "Канон долга — лес слотов на FemsqWalkTree с view list. List также у inv-dbt-slots. Глубокие деревья КСДСФ, договоров и выбора договора остаются outline.",
+                    "outcome": "План 0.2.1. Код не менялся.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "План 1.7.1: запрос FemsqWalkTree (info). № log-2026-09-26-010",
+                "log-attributes": {
+                  "id": "log-2026-09-26-010",
+                  "timestamp": "2026-09-26T21:38:00+03:00",
+                  "level": "info",
+                  "effort": "0.3h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "fequlib",
+                    "1.7"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Заказан FemsqWalkTree и поправлено правило колонок",
+                    "details": "Запрос feQuLib на обходчик: один rootId, лес queryId и fetchRoots, list с columnSets поверх пакета 0.1.6 (d224aed). Публикация и экраны FEMSQ в этот срез не входят. В плане 0922 метка ветви — любая строка, table и edge остаются для узлов без метки.",
+                    "outcome": "План 0.2.2. Код FEMSQ не менялся. Ответ библиотеки ещё не пришёл.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "check-fequlib.sh: экспорт FemsqWalkTree (success). № log-2026-09-26-011",
+                "log-attributes": {
+                  "id": "log-2026-09-26-011",
+                  "timestamp": "2026-09-26T22:17:00+03:00",
+                  "level": "success",
+                  "effort": "0.2h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "fequlib",
+                    "1.7.1"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Сборка FEMSQ сторожит экспорт FemsqWalkTree",
+                    "details": "check-fequlib.sh проверяет src/components/tree/FemsqWalkTree.vue и строку export { default as FemsqWalkTree } в src/index.ts соседнего клона. Обходчик в FEMSQ не копируется. Ожидаемый срез feQuLib: bfbe6fb, пакет 0.1.7.",
+                    "outcome": "Лист плана 0922 1.7.1 закрыт. Экраны на FemsqWalkTree ещё не переведены.",
+                    "references": [
+                      "code/scripts/check-fequlib.sh",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Экраны одного корня на FemsqWalkTree (success). № log-2026-09-26-012",
+                "log-attributes": {
+                  "id": "log-2026-09-26-012",
+                  "timestamp": "2026-09-26T22:20:00+03:00",
+                  "level": "success",
+                  "effort": "0.8h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "fequlib",
+                    "1.7.2"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "RelationTree снят, однокорневые экраны ходят в FemsqWalkTree",
+                    "details": "КСДСФ, договоры, суммы cid/dv и RecordModal остаются outline. inv-dbt-slots — view list с columnSets: у DbtValue сумма, просрочка и даты. fetchQuery передаёт только дерево слотов. Типы JSON хоста остаются в relation-tree.ts.",
+                    "outcome": "Лист плана 0922 1.7.2 закрыт. Вкладка «стройки новые» и канон долга не переводились.",
+                    "references": [
+                      "code/femsq-frontend-q/src/views/sudz/SudzSfDoubleView.vue",
+                      "code/femsq-frontend-q/src/views/sudz/SudzInvDbtDoubleView.vue",
+                      "code/femsq-frontend-q/src/views/contracts/ContractsView.vue",
+                      "code/femsq-frontend-q/src/components/relation/RecordModal.vue",
+                      "code/femsq-frontend-q/src/trees/inv-dbt-slots.tree.json",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Браузер: деревья листа 1.7.2 (success). № log-2026-09-26-013",
+                "log-attributes": {
+                  "id": "log-2026-09-26-013",
+                  "timestamp": "2026-09-26T22:45:00+03:00",
+                  "level": "success",
+                  "effort": "0.6h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "fequlib",
+                    "1.7.2"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Проверены деревья FemsqWalkTree на экранах листа 1.7.2",
+                    "details": "На upl 910 временно вставлена очередь по СФ А19-16352/2021 (inv 12033) и удалена: две строки staging и две очереди. КСДСФ раскрылся до папки связи, диалог «Добавить связь» открылся и закрыт отменой. Суммы cid и dv на КСДСФ и на КСДД остались контуром. Список слотов показал подписи комплектов; у DbtValue видны сумма, просрочка и даты. Договор КС-51: контур СФ и диалог «Перенести» с деревом, отмена без записи.",
+                    "outcome": "Лист плана 0922 1.7.2.1 закрыт. Очередь upl 910 снова пустая.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Стройки новые на FemsqWalkTree (success). № log-2026-09-26-014",
+                "log-attributes": {
+                  "id": "log-2026-09-26-014",
+                  "timestamp": "2026-09-26T22:57:00+03:00",
+                  "level": "success",
+                  "effort": "0.7h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "fequlib",
+                    "1.7.3"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Вкладка «стройки новые» ушла с прямого FemsqTreeList",
+                    "details": "Лес FemsqWalkTree по JSON pmt-cst-match: view list и columnSets cst/csta/cstap. Корни и дети из кэша sudzPmtUplCstMatch; хвост — rootsToken, «тот же хвост» — поле хоста. Папки «Агенты» и «Коды». Кнопки Агент/Код — actions обходчика.",
+                    "outcome": "Лист плана 0922 1.7.3 закрыт. Канон долга не переводился.",
+                    "references": [
+                      "code/femsq-frontend-q/src/views/sudz/SudzPmtUplView.vue",
+                      "code/femsq-frontend-q/src/trees/pmt-cst-match.tree.json",
+                      "code/femsq-frontend-q/src/sudz/pmt-cst-match-tree.ts",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Запрос: подписи в строке папки (info). № log-2026-09-26-015",
+                "log-attributes": {
+                  "id": "log-2026-09-26-015",
+                  "timestamp": "2026-09-26T23:06:00+03:00",
+                  "level": "info",
+                  "effort": "0.2h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "fequlib",
+                    "1.7.3"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Заказаны подписи columnSets в строке папки FemsqTreeList",
+                    "details": "Отдельная caption-строка убирается. У folder дорожки 1…N показывают имена полей комплекта; дорожка 0 — только подпись группы. Запись-родитель подписями не заполняется. Пуш и экраны FEMSQ в этот срез не входят.",
+                    "outcome": "План 0.2.7, лист 1.7.3.1. Ответ библиотеки ещё не пришёл.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Подписи в строке папки на origin (success). № log-2026-09-26-016",
+                "log-attributes": {
+                  "id": "log-2026-09-26-016",
+                  "timestamp": "2026-09-26T23:19:00+03:00",
+                  "level": "success",
+                  "effort": "0.3h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "fequlib",
+                    "1.7.3"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Проверены подписи columnSets в строке папки",
+                    "details": "feQuLib 370fb26, пакет 0.1.8. На вкладке «стройки новые» caption-строк 0; у «Агенты» и «Коды» приглушённые «Ключ» и «Дополнение». На слотах долга то же у папок «Слоты долгов», контекста и DbtValue. Временные строки теста удалены.",
+                    "outcome": "Лист плана 0922 1.7.3.1 закрыт.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "План: две зоны FemsqTreeList (info). № log-2026-09-27-001",
+                "log-attributes": {
+                  "id": "log-2026-09-27-001",
+                  "timestamp": "2026-09-27T07:37:00+03:00",
+                  "level": "info",
+                  "effort": "0.2h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "fequlib",
+                    "1.7.3"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксированы решения по читаемости list",
+                    "details": "Лист 1.7.3.2 до 1.7.4: левая зона toggle+подпись (indent 8px, sticky X), правая min-width 96px с H-scroll, resize зон и полей, стиль folder через токены. Код не менялся.",
+                    "outcome": "План 0922 версия 0.2.9.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Запрос: две зоны FemsqTreeList (info). № log-2026-09-27-002",
+                "log-attributes": {
+                  "id": "log-2026-09-27-002",
+                  "timestamp": "2026-09-27T07:40:00+03:00",
+                  "level": "info",
+                  "effort": "0.2h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "fequlib",
+                    "1.7.3"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Отправлен запрос feQuLib на две зоны list",
+                    "details": "Файл 2026-09-27_0740_femsq_to_fequlib_tree-list-two-zones-request.md в inbox feQuLib и на шаре. База 370fb26 / 0.1.8. Пуш и пакет не просили. Лист плана 1.7.3.2.",
+                    "outcome": "Ждём ответ библиотеки.",
+                    "references": [
+                      "/home/alex/projects/feQuLib/docs/agent-exchange-inbox/2026-09-27_0740_femsq_to_fequlib_tree-list-two-zones-request.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Приёмка двух зон list на локальном f3d4d97 (success). № log-2026-09-27-003",
+                "log-attributes": {
+                  "id": "log-2026-09-27-003",
+                  "timestamp": "2026-09-27T08:16:00+03:00",
+                  "level": "success",
+                  "effort": "0.4h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "fequlib",
+                    "1.7.3"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Браузерная приёмка FemsqTreeList две зоны",
+                    "details": "Локальный feQuLib f3d4d97 (пакет ещё 0.1.8). КСДД upl 910 / iKey 12033: indent 8px, nav sticky, gap toggle→data ~160px, поля data min 96px, overflow-x и scrollWidth>client, folder bg/weight. Очередь «стройки новые» пуста (бейдж 0) — дерево не открывалось. Временные ciud/cidut удалены. Publish ещё не заказывали.",
+                    "outcome": "Локальная приёмка ОК; следующий шаг — publish-запрос.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                      "/home/alex/projects/feQuLib/docs/agent-exchange-inbox/2026-09-27_0748_fequlib_to_femsq_tree-list-two-zones-response.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Запрос: publish двух зон FemsqTreeList (info). № log-2026-09-27-004",
+                "log-attributes": {
+                  "id": "log-2026-09-27-004",
+                  "timestamp": "2026-09-27T09:50:00+03:00",
+                  "level": "info",
+                  "effort": "0.1h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "fequlib",
+                    "1.7.3"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Отправлен publish-запрос двух зон list",
+                    "details": "Файл 2026-09-27_0950_femsq_to_fequlib_tree-list-two-zones-publish.md. Фича f3d4d97 поверх 370fb26; bump 0.1.8→0.1.9 отдельным коммитом; пуш на origin/main без force.",
+                    "outcome": "Ждём publish-response.",
+                    "references": [
+                      "/home/alex/projects/feQuLib/docs/agent-exchange-inbox/2026-09-27_0950_femsq_to_fequlib_tree-list-two-zones-publish.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Две зоны FemsqTreeList на origin (success). № log-2026-09-27-005",
+                "log-attributes": {
+                  "id": "log-2026-09-27-005",
+                  "timestamp": "2026-09-27T09:52:00+03:00",
+                  "level": "success",
+                  "effort": "0.2h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "fequlib",
+                    "1.7.3"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Закрыт лист 1.7.3.2 после publish",
+                    "details": "feQuLib origin/main f870227, пакет 0.1.9 (фича f3d4d97). check-fequlib.sh OK. Локальная приёмка КСДД ранее подтвердила две зоны.",
+                    "outcome": "План 0922 версия 0.3.0; следующий ★ — 1.7.4.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                      "/home/alex/projects/feQuLib/docs/agent-exchange-inbox/2026-09-27_0952_fequlib_to_femsq_tree-list-two-zones-publish-response.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Канон долга на FemsqWalkTree list (success). № log-2026-09-27-006",
+                "log-attributes": {
+                  "id": "log-2026-09-27-006",
+                  "timestamp": "2026-09-27T10:00:00+03:00",
+                  "level": "success",
+                  "effort": "1.0h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "fequlib",
+                    "1.7.4"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Переведён экран канона долга на лес WalkTree",
+                    "details": "JSON dbt-canon.tree.json, хост sudz/dbt-canon-tree.ts, SudzDbtCanonView без FemsqTree. Actions Split/Merge/Value/Комментарий. В feQuLib локально добавлен v-model:selected-key у WalkTree (запрос 1000 на publish 0.1.10). Тесты dbt-canon-tree зелёные. Ветка 1.7 закрыта.",
+                    "outcome": "План 0922 версия 0.3.1; лист 1.7.4 ✅.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                      "code/femsq-frontend-q/src/trees/dbt-canon.tree.json"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "WalkTree selectedKey на origin (success). № log-2026-09-27-007",
+                "log-attributes": {
+                  "id": "log-2026-09-27-007",
+                  "timestamp": "2026-09-27T10:03:00+03:00",
+                  "level": "success",
+                  "effort": "0.1h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "fequlib",
+                    "1.7.4"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Подтверждён publish WalkTree selectedKey",
+                    "details": "feQuLib origin/main 3785c1b, пакет 0.1.10. check-fequlib.sh OK. Канон долга (1.7.4) опирается на v-model:selected-key.",
+                    "outcome": "План 0922 версия 0.3.2.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                      "/home/alex/projects/feQuLib/docs/agent-exchange-inbox/2026-09-27_1002_fequlib_to_femsq_walk-tree-selected-key-publish-response.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Браузер: канон долга WalkTree (success). № log-2026-09-27-008",
+                "log-attributes": {
+                  "id": "log-2026-09-27-008",
+                  "timestamp": "2026-09-27T10:07:00+03:00",
+                  "level": "success",
+                  "effort": "0.4h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "uat",
+                    "1.7.4"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Полная браузер-проверка экрана «Долг (канон)»",
+                    "details": "Dbt 11897, 3 слота. WalkTree list: две зоны, indent 8, Split/Merge/Добавить Value/Править/Снять/Комментарий. Раскрытие Контекст+DbtValue — суммы и даты. Split и Merge модалки открылись, Отмена. Вкладки Слоты и Комментарии (лес). FemsqTree outline нет. Дефект: авто-expand корней леса (0.1.10) иногда оставляет «пока нет дочерних узлов» до повторного свернуть/развернуть.",
+                    "outcome": "1.7.4 подтверждён в UI; нужен фикс feQuLib auto-expand+load.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Маска кварталов + DDL yr_upl_p_q (success). № log-2026-09-28-001",
+                "log-attributes": {
+                  "id": "log-2026-09-28-001",
+                  "timestamp": "2026-09-28T13:05:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "1.7.6.8",
+                    "1.7.6.9",
+                    "ddl"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Пунктир графика по маске кварталов; UNIQUE один свод на q в портфеле",
+                    "details": "План 0922 v0.3.9: листья 1.7.6.8/.9. Хост: убран CANON_CHAIN_GAP_DAYS; hasQuarterMaskGap / expectedQuarterEndsBetween; Vitest 9/9. DDL: sudz.yr_upl_p.yr_upl_p_q + CK + UX_yr_upl_p_YrQ; пакет 26-0928-yr-upl-p-q (+MSSQL2012); DEV applied (8 строк backfill). DAO insertYearUplIfAbsent пишет q. UAT UNIQUE: INSERT (900,910,q=2) → 2627. Глоссарий/ops/04-data-model.",
+                    "outcome": "1.7.6.8 и 1.7.6.9 закрыты; 1.7.6.1/браузер UAT ещё ждут feQuLib 0.1.16.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                      "docs/development/notes/sql/26-0928-yr-upl-p-q/",
+                      "code/femsq-frontend-q/src/utils/sudz-canon-chart.ts",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "План 1.7.7 + inbox 1402 TreeList/Chart UX (info). № log-2026-09-28-002",
+                "log-attributes": {
+                  "id": "log-2026-09-28-002",
+                  "timestamp": "2026-09-28T14:05:00+03:00",
+                  "level": "info",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "1.7.7",
+                    "fequlib",
+                    "inbox"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Мероприятия TreeList UX в планах + запрос агенту feQuLib",
+                    "details": "0922 v0.4.0: ветка 1.7.7 (auto-expand/empty, корневая шапка columnSet, one-line) + уточнение 1.7.6.1. Планы feQuLib TreeList L5 / WalkTree auto-expand. Inbox 2026-09-28_1402 объединяет 1455 (zoom-extra, lineDash) и TreeList UX → пакет 0.1.16.",
+                    "outcome": "Запрос готов к вставке в окно Cursor AI feQuLib; ждать publish-response + SHA 0.1.16.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                      "/home/alex/projects/feQuLib/docs/agent-exchange-inbox/2026-09-28_1402_femsq_to_fequlib_chart-zoom-and-tree-list-ux-request.md",
+                      "/home/alex/projects/feQuLib/docs/development/notes/chats/chat-plan/chat-plan-26-0926-femsq-tree-list.md",
+                      "/home/alex/projects/feQuLib/docs/development/notes/chats/chat-plan/chat-plan-26-0926-femsq-walk-tree.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Приёмка feQuLib 0.1.16 (zoom-extra + TreeList UX) (success). № log-2026-09-28-003",
+                "log-attributes": {
+                  "id": "log-2026-09-28-003",
+                  "timestamp": "2026-09-28T14:20:00+03:00",
+                  "level": "success",
+                  "effort": "0.4h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "1.7.6.1",
+                    "1.7.7",
+                    "fequlib",
+                    "uat"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Принят ответ 1416; UAT канон @11897",
+                    "details": "feQuLib 0.1.16 (cb5b936 / docs cc2cbe4). check-fequlib OK. Хост уже в #zoom-extra. Браузер: нет «пока нет дочерних»; шапка Подпись/№ слота/iKey; Контекст+DbtValue после auto-expand; комбо цепи с +/−/1:1. План 0922 v0.4.1: 1.7.6.1/.6/.7 ✅.",
+                    "outcome": "1.7.6 и 1.7.7 закрыты по UAT канона.",
+                    "references": [
+                      "/home/alex/projects/feQuLib/docs/agent-exchange-inbox/2026-09-28_1416_fequlib_to_femsq_chart-zoom-and-tree-list-ux-publish-response.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Inbox 1439 TreeList node-line flex → 0.1.17 (info). № log-2026-09-28-004",
+                "log-attributes": {
+                  "id": "log-2026-09-28-004",
+                  "timestamp": "2026-09-28T14:40:00+03:00",
+                  "level": "info",
+                  "effort": "0.3h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "1.7.8",
+                    "fequlib",
+                    "inbox"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Запрос feQuLib: flex на строке узла TreeList",
+                    "details": "UAT @11897 после 0.1.16: labels/values визуально на втором этаже. CDP: узловой .femsq-tree-list__line display:block; nav.top≠data.top. Причина: scoped CSS .__line в FemsqTreeList.vue без :deep, строки в FemsqTreeListNode. План 0922 v0.4.2 лист 1.7.8 ★. Inbox 2026-09-28_1439 → пакет 0.1.17.",
+                    "outcome": "Запрос в inbox feQuLib (+ зеркало шары); ждать publish-response + SHA 0.1.17.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                      "/home/alex/projects/feQuLib/docs/agent-exchange-inbox/2026-09-28_1439_femsq_to_fequlib_tree-list-node-line-flex-request.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Приёмка feQuLib 0.1.17 TreeList node-line flex (success). № log-2026-09-28-005",
+                "log-attributes": {
+                  "id": "log-2026-09-28-005",
+                  "timestamp": "2026-09-28T14:56:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "1.7.8",
+                    "fequlib",
+                    "uat"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Принят ответ 1442; поднят стек; UAT @11897 one-line",
+                    "details": "feQuLib 0.1.17 (7014681 / docs 7f5c2f8). Backend 0.1.0.317 + Vite 5175. Браузер: узлы display:flex; DbtValue labels и Value values на одной линии с title (не stack +28px). План 0922 v0.4.3: 1.7.8 ✅.",
+                    "outcome": "1.7.8 закрыт.",
+                    "references": [
+                      "/home/alex/projects/feQuLib/docs/agent-exchange-inbox/2026-09-28_1442_fequlib_to_femsq_tree-list-node-line-flex-publish-response.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Inbox 1510 TreeList nav zone resize → 0.1.18 (info). № log-2026-09-28-006",
+                "log-attributes": {
+                  "id": "log-2026-09-28-006",
+                  "timestamp": "2026-09-28T15:10:00+03:00",
+                  "level": "info",
+                  "effort": "0.2h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "1.7.9",
+                    "fequlib",
+                    "inbox"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Запрос feQuLib: hit-area resize левой зоны TreeList",
+                    "details": "CDP: .femsq-tree-list__resize--zone height=0 (база height:100% + nav align-items:center). Data-resize OK. План 0922 v0.4.4 лист 1.7.9. Inbox 2026-09-28_1510 → пакет 0.1.18.",
+                    "outcome": "Запрос в inbox; ждать publish-response + SHA 0.1.18.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                      "/home/alex/projects/feQuLib/docs/agent-exchange-inbox/2026-09-28_1510_femsq_to_fequlib_tree-list-nav-zone-resize-request.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Приёмка feQuLib 0.1.18 nav-zone resize (success). № log-2026-09-28-007",
+                "log-attributes": {
+                  "id": "log-2026-09-28-007",
+                  "timestamp": "2026-09-28T15:18:00+03:00",
+                  "level": "success",
+                  "effort": "0.3h",
+                  "status": "completed",
+                  "tags": [
+                    "0077",
+                    "1.7.9",
+                    "fequlib",
+                    "uat"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Принят ответ 1515; UAT resize левой зоны @11897",
+                    "details": "feQuLib 0.1.18 (6ab6f6e / docs 8e00e1a). CDP: zone h=28 w=8 (было 0). beginResizeNav+move: --fequlib-tree-list-nav-width 284→404. План 0922 v0.4.5: 1.7.9 ✅.",
+                    "outcome": "1.7.9 закрыт.",
+                    "references": [
+                      "/home/alex/projects/feQuLib/docs/agent-exchange-inbox/2026-09-28_1515_fequlib_to_femsq_tree-list-nav-zone-resize-publish-response.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "План 1.9: Excel-итоги / очистка / browser воронка (info). № log-2026-09-29-001",
+                "log-attributes": {
+                  "id": "log-2026-09-29-001",
+                  "timestamp": "2026-09-29T22:26:32+03:00",
+                  "level": "info",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": [
+                    "docs",
+                    "pmt-upl",
+                    "excel",
+                    "1.9",
+                    "0077"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "В план 0922 внесена ветка 1.9 по жёлтым итогам Excel",
+                    "details": "Диагноз: Access фильтрует по непустому «№ докум.»; FEMSQ rowLooksLikePayment пускал БЕ/счёт ГК → ~7579 итогов в Tbl @pm=59; TwoLoad→NullИлиПусто→ghost КСДСФ. Листья 1.9.0–1.9.7: фильтр DOC, SQL-страховка, поля кандидата, очистка cn_inv_pm+Tbl, Cursor browser Excel→Tbl и воронка, UAT КСДСФ, док. §2.4. 1.8.6 отложен после 1.9. WBS 0918 v0.3.23.",
+                    "outcome": "План 0.5.7; первый шаг ★ 1.9.0 (фильтр импортёра). Код не менялся.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/SudzPmtUplExcelToTblImporter.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.9.0–1.9.5 Excel-фильтр и re-import pm=59 (success). № log-2026-09-29-002",
+                "log-attributes": {
+                  "id": "log-2026-09-29-002",
+                  "timestamp": "2026-09-29T22:45:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "tags": [
+                    "pmt-upl",
+                    "excel",
+                    "1.9",
+                    "0077",
+                    "backend"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.web",
+                      "module:backend.database",
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Реализованы 1.9.0–1.9.5 и перезаливка pm=59",
+                    "details": "Фильтр DOC в SudzPmtUplExcelToTblImporter; sqlPmtTblHasDocCode в InvNot/TwoLoad/rebuild/enrich; pmtBe/pmtCac/pmtAgent* в SudzSfDoubleExcelCandidate и UI. JAR 0.1.0.320. Очистка ags.cn_inv_pm@59; Excel→Tbl 15942 (0 без DOC); воронка dry+InsPm apply; open КСДСФ 17 (без NullИлиПустo); TwoLoad 12. Browser @59: Tbl 15942, badges 17/8/12.",
+                    "outcome": "План 0.5.8; дальше 1.9.6 UAT 17× и 1.9.7 док.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/SudzPmtUplExcelToTblImporter.java",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Якорь сальдо КСДСФ pmt: план 1.10 (info). № log-2026-09-30-001",
+                "log-attributes": {
+                  "id": "log-2026-09-30-001",
+                  "timestamp": "2026-09-30T08:31:58+03:00",
+                  "level": "info",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "tags": [
+                    "docs",
+                    "pmt-upl",
+                    "ksdsf",
+                    "1.10",
+                    "0077"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Сверка долгов свода 901 с платежами 57/58/59/60; ветка 1.10 в плане 0922",
+                    "details": "Портфель yr 901, свод на 31.12.2025. Σ ciputBlns по присвоению = cidutDebt: 767501 7/7, 606022 327/327, 761010 9/9 (сумма документа 0/9), 767502 237/238. Исключение СФ 90621: свод 3000000, Σ сальдо 2500000, |кредит|=долг (ложный якорь). Просрочка Tbl пустая; на 767502 просрочка свода = весь долг при сроке раньше даты статуса (39, частичных нет). g_p 59→901 отсутствует. 1.8.5a снят. План 0922 v0.5.9, WBS 0918 v0.3.24, KSDSF_CONTEXTS. Код не менялся.",
+                    "outcome": "Дальше ★ 1.9.6 UAT. Первый код 1.10 — лист 1.10.1 (итог сальдо на карточке Excel), после решения владельца по 1.10.0.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                      "docs/development/notes/sql/26-0816-sudz-sf-num-collision/KSDSF_CONTEXTS.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.10.0–1.10.2 перед UAT 1.9.6 (info). № log-2026-09-30-002",
+                "log-attributes": {
+                  "id": "log-2026-09-30-002",
+                  "timestamp": "2026-09-30T08:42:00+03:00",
+                  "level": "info",
+                  "effort": "0.3h",
+                  "status": "completed",
+                  "tags": [
+                    "docs",
+                    "pmt-upl",
+                    "ksdsf",
+                    "1.10",
+                    "1.9.6",
+                    "0077"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Приёмка 17 строк включает сверку со сводом; листья 1.10.0–1.10.2 перенесены перед 1.9.6",
+                    "details": "Чеклист §2.4.5: итог Σ ciputBlns на карточке и панель против свода 901 (счёт 767501). Исходы совпало / разошлось / строки свода нет — все допустимы. Семь долгов счёта в своде — другие номера СФ, чем 17 open. Советник на этом проходе по sfByNum; 1.10.3 и 1.10.4 после 1.9.6. План 0922 v0.5.10, WBS 0918 v0.3.25.",
+                    "outcome": "Фокус ★ 1.10.0 (g_p 59→901), затем код 1.10.1 и 1.10.2.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.10.0–1.10.2 сверка сальдо со сводом (info). № log-2026-09-30-003",
+                "log-attributes": {
+                  "id": "log-2026-09-30-003",
+                  "timestamp": "2026-09-30T09:13:45+03:00",
+                  "level": "info",
+                  "effort": "2h",
+                  "status": "completed",
+                  "tags": [
+                    "code",
+                    "pmt-upl",
+                    "ksdsf",
+                    "1.10",
+                    "0077"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:backend.database",
+                      "module:backend.web",
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Карточка «итог сальдо по СФ» и панель сверки со связанным сводом (JAR 321)",
+                    "details": "g_p key 20 уже связывал pm=59 со сводом 901, INSERT не делался. GraphQL sudzPmtSfSumCompare и поля pmtSfBlnsSum/pmtSfBlnsRows. Панель pmt-na снята: итог Σ ciputBlns, исход совпало / разошлось / строки свода нет, несколько строк без автовыбора. GraphQL @cius=1275: anchorSum −259158.76, anchorRows 1, linked true, matches []. SQL 22CR0308 @59 → cidut 47609, долг 4791602.22 = Σ сальдо. Browser Vite :5175, СФ «94»: подпись «Строки свода нет.», карточка −259 158,76 · 1 строка. Apply link/create не выполнялся. План 0922 v0.5.11, WBS 0918 v0.3.26.",
+                    "outcome": "1.10.0–1.10.2 закрыты. Дальше ★ 1.9.6: UAT 17 open @59 со сверкой. Советник на этом проходе по sfByNum; 1.10.3 и 1.10.4 после.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                      "docs/development/notes/sql/26-0816-sudz-sf-num-collision/KSDSF_CONTEXTS.md",
+                      "code/femsq-frontend-q/src/views/sudz/SudzSfDoubleView.vue"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Ветка 1.11: лес платёжных документов (info). № log-2026-09-30-004",
+                "log-attributes": {
+                  "id": "log-2026-09-30-004",
+                  "timestamp": "2026-09-30T11:17:52+03:00",
+                  "level": "info",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "tags": [
+                    "docs",
+                    "pmt-upl",
+                    "ksdsf",
+                    "1.11",
+                    "0077"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "История платёжного документа: проверка и ветка 1.11 в плане 0922",
+                    "details": "Код № докум. находит прежнюю карточку ciaCnInvAccntSmpl → cnInv → inv. Очередь 17: 9 строк с одним прежним документом, но номер СФ другой (94 → ГИ241227-0009-36); 93 — две прежние СФ; б/н КС-14 раньше на КС-51; шесть строк без истории. По всей базе 35191 документ с несколькими inv, 1359 из них уже внутри одной выгрузки. Пакет 59 против июля: 554 кода с тем же номером СФ, 49 с другим. Спокойная запись не ставится. План 0922 v0.5.12, WBS 0918 v0.3.27, KSDSF_CONTEXTS. Код не менялся.",
+                    "outcome": "Фокус по-прежнему ★ 1.9.6. Первый код ветки 1.11 — лист 1.11.0 (GraphQL и спека леса) после этой приёмки. 1.11.3 не меняет action советника.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                      "docs/development/notes/sql/26-0816-sudz-sf-num-collision/KSDSF_CONTEXTS.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Лес платёжных документов 1.11 (info). № log-2026-09-30-005",
+                "log-attributes": {
+                  "id": "log-2026-09-30-005",
+                  "timestamp": "2026-09-30T11:43:58+03:00",
+                  "level": "info",
+                  "effort": "2h",
+                  "status": "completed",
+                  "tags": [
+                    "code",
+                    "pmt-upl",
+                    "ksdsf",
+                    "1.11",
+                    "0077"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "1.11.0–1.11.3: лес документов и строка советника, приёмка 1.9.6 после них",
+                    "details": "GraphQL sudzPmDocForestByCius и ByInv. FemsqWalkTree: документ → платёж → СФ, договор, контрагент, счёт ГК (папка связи card 1:N). Советник дописывает «Документы:» после advise(), action и confidence не меняются. JAR 323. GraphQL @cius=1275: документ 5400217611, export_767501_25-0124, ГИ241227-0009-36, КС-51, 767501; action link inv=23785. Vite :5175: СФ «94» лес раскрыт; «Открыть дерево СФ» — inv=78052 нет среди совпадений по номеру. СФ «108» (cius=1264): совпадающих документов нет. СФ «93» (cius=1271): расходятся, автовыбор не делается. Панель сумм «94»: «Строки свода нет.», −259 158,76. Договор КС-51, ciInv 78052: «Платёжные документы этой СФ: 1». Вкладку слотов карточки долга в браузере не открывали. Apply link/create не выполнялся. План 0922 v0.5.13, WBS 0918 v0.3.28.",
+                    "outcome": "1.11.0–1.11.3 закрыты. Дальше ★ 1.9.6: UAT 17 open @59 по экрану, где уже есть лес и строка «Документы:». Действие советника на этой приёмке по sfByNum. Затем 1.9.7, 1.10.3, 1.10.4.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                      "docs/development/notes/sql/26-0816-sudz-sf-num-collision/KSDSF_CONTEXTS.md",
+                      "code/femsq-frontend-q/src/components/sudz/PmDocForest.vue"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Лес КСДСФ в колонке Суммы (info). № log-2026-09-30-006",
+                "log-attributes": {
+                  "id": "log-2026-09-30-006",
+                  "timestamp": "2026-09-30T12:06:22+03:00",
+                  "level": "info",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": [
+                    "code",
+                    "pmt-upl",
+                    "ksdsf",
+                    "1.11",
+                    "0077"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Лес документов перенесён вниз колонки Суммы, Excel и советник разведены сплиттером",
+                    "details": "КСДСФ платежей: сплиттер между сверкой сумм и лесом документов. Между карточкой Excel и блоком Сообщения сплиттер и в платежах, и в своде. Vite :5175, pm=59, СФ «94»: лес в правой колонке под «Строки свода нет.», подпись «Кодов в файле 1, с платежами в базе 1». Свод upl=901: тот же сплиттер Excel/советник, леса в колонке сумм нет (старая и новая структура). JAR не пересобирался. План 0922 v0.5.14.",
+                    "outcome": "Место леса на экране КСДСФ платежей — низ колонки Суммы. Приёмка 1.9.6 смотрит его там.",
+                    "references": [
+                      "code/femsq-frontend-q/src/views/sudz/SudzSfDoubleView.vue",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
                     ]
                   }
                 ]

@@ -19,6 +19,9 @@
 
 **Паспорт формы (S69):** [02-11_cn-inv-pmt-upl-access.md](../../../../development/notes/UI/02-11_cn-inv-pmt-upl-access.md) — UI/VBA/запросы; не переснимать эти 4 таблицы вслепую. QueryDef `cipu*` + helper `agsCnCtpt*` сняты. Буфер шага 12: [`cipuCn_CtptCnOneInvOneAcDcExtPmTbl.table.md`](./cipuCn_CtptCnOneInvOneAcDcExtPmTbl.table.md). Apply: INSERT **`ags_cn_inv_pm`**.
 
+**Карта колонок Excel:** [`export_offset-map.md`](./export_offset-map.md).  
+**Дерево строк / группы стройки и срока / традиционная vs QII раскладка:** [`export-row-tree-structure.md`](./export-row-tree-structure.md) (2026-10-03). Термины — [глоссарий](../../../glossary.md).
+
 **Дыра съёма:** нет. VBA pmt в VBE = `File_f` + `cnInv` (уже в `VBA-Code-Export`). Архив `…ExtPmTblOld` не снимать.
 
 

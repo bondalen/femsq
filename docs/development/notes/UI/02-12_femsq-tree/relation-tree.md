@@ -1,12 +1,12 @@
 # Relation tree: карта экземпляра (JSON) + каталог рёбер
 
-**Дата:** 2026-08-18 · **обновлено:** 2026-08-19  
+**Дата:** 2026-08-18 · **обновлено:** 2026-09-26  
 **Статус:** **T1** ✅; **T4b** ✅; **T5** ✅; **T6** ✅ (S68u 2026-08-24); T6a/T6b в коде; **T7** — [chat-plan-26-0826-contracts-inv.md](../../chats/chat-plan/chat-plan-26-0826-contracts-inv.md)  
 **План:** [chat-plan-26-0802-sudz.md](../../chats/chat-plan/chat-plan-26-0802-sudz.md) S68t  
 **ADR:** [Решение 009](../../../../project/decisions/009-femsq-walk-tree.md)  
-**Конспекты:** [ksdsf-inv-num.tree.md](./ksdsf-inv-num.tree.md) · [contracts-inv.tree.md](./contracts-inv.tree.md) · [ksdsf-cid-sum.tree.md](./ksdsf-cid-sum.tree.md) · [ksdsf-dv-sum.tree.md](./ksdsf-dv-sum.tree.md)  
-**JSON:** [`ksdsf-inv-num.tree.json`](../../../../code/femsq-frontend-q/src/trees/ksdsf-inv-num.tree.json) · [`contracts-inv.tree.json`](../../../../code/femsq-frontend-q/src/trees/contracts-inv.tree.json) · [`ksdsf-cid-sum.tree.json`](../../../../code/femsq-frontend-q/src/trees/ksdsf-cid-sum.tree.json) · [`ksdsf-dv-sum.tree.json`](../../../../code/femsq-frontend-q/src/trees/ksdsf-dv-sum.tree.json)  
-**Renderer:** FemsqTree v1 (feQuLib **0016** done) · не путать с [FemsqTable](../02-8_femsq-table-component.md) · обходник — не `FemsqTree`
+**Конспекты:** [ksdsf-inv-num.tree.md](./ksdsf-inv-num.tree.md) · [ksdsf-inv-decision.tree.md](./ksdsf-inv-decision.tree.md) · [contracts-inv.tree.md](./contracts-inv.tree.md) · [ksdsf-cid-sum.tree.md](./ksdsf-cid-sum.tree.md) · [ksdsf-dv-sum.tree.md](./ksdsf-dv-sum.tree.md)  
+**JSON:** [`ksdsf-inv-num.tree.json`](../../../../code/femsq-frontend-q/src/trees/ksdsf-inv-num.tree.json) · [`ksdsf-inv-decision.tree.json`](../../../../code/femsq-frontend-q/src/trees/ksdsf-inv-decision.tree.json) · [`contracts-inv.tree.json`](../../../../code/femsq-frontend-q/src/trees/contracts-inv.tree.json) · [`ksdsf-cid-sum.tree.json`](../../../../code/femsq-frontend-q/src/trees/ksdsf-cid-sum.tree.json) · [`ksdsf-dv-sum.tree.json`](../../../../code/femsq-frontend-q/src/trees/ksdsf-dv-sum.tree.json)  
+**Renderer:** нет `view` или `outline` — `FemsqTree` v1. Явный `"view": "list"` — `FemsqTreeList`. С листа **1.7.2** экраны зовут `FemsqWalkTree` (feQuLib **0.1.7**). JSON КСДСФ outline, договоров и сумм cid/dv без `view` остаются контуром. `inv-dbt-slots` / `pm-doc-forest` / **`ksdsf-inv-decision`** — list. Канон долга ещё на прямом `FemsqTree`.
 
 ## 0. Решение
 
@@ -14,8 +14,8 @@
 
 | Слой | Сейчас | Правило |
 |---|---|---|
-| Renderer | `FemsqTree` | только `nodes` / слоты / `@load`; не знать JSON, рёбра, GraphQL |
-| Walker | `RelationTree.vue` + `relation-tree.ts` | JSON экземпляра → узлы; **без** импорта API хоста (после **T4b**); кандидат в feQuLib как `FemsqWalkTree` (**T9**) |
+| Renderer | `FemsqTree` или `FemsqTreeList` | `usesWalkList(spec)` → колоночный список; иначе контур. Renderer не знает JSON |
+| Walker | `FemsqWalkTree` в feQuLib | JSON экземпляра → узлы. Хост передаёт `fetchNode` / `fetchExpand` / `fetchQuery`. Типы экранов пока в `relation-tree.ts`. `RelationTree.vue` снят (**1.7.2**) |
 | Хост | каталог, SQL, `relation-api.ts`, JSON экранов | навсегда в FEMSQ |
 
 1. **`FemsqTree` ничего не знает** о СУДЗ, Excel, вкладках, рёбрах. Только `nodes` / слоты.
@@ -31,7 +31,8 @@
 
 | Экземпляр | Экран | Корень | JSON | Конспект |
 |---|---|---|---|---|
-| КСДСФ, низ вкладки «Счета-фактуры» | выбранная строка верхнего списка | `invNum` / `inKey` | [`ksdsf-inv-num.tree.json`](../../../../code/femsq-frontend-q/src/trees/ksdsf-inv-num.tree.json) | [ksdsf-inv-num.tree.md](./ksdsf-inv-num.tree.md) |
+| КСДСФ, низ вкладки «Счета-фактуры» (outline / dbt) | выбранная строка верхнего списка | `invNum` / `inKey` | [`ksdsf-inv-num.tree.json`](../../../../code/femsq-frontend-q/src/trees/ksdsf-inv-num.tree.json) | [ksdsf-inv-num.tree.md](./ksdsf-inv-num.tree.md) |
+| КСДСФ pmt, центр — decision-TreeList | выбранная строка списка совпадений | `inv` / `iKey` | [`ksdsf-inv-decision.tree.json`](../../../../code/femsq-frontend-q/src/trees/ksdsf-inv-decision.tree.json) | [ksdsf-inv-decision.tree.md](./ksdsf-inv-decision.tree.md) |
 | Договоры, вкладка «Счета-фактуры» | выбранный `cnInv` → `ciInv` | `inv` / `iKey` | [`contracts-inv.tree.json`](../../../../code/femsq-frontend-q/src/trees/contracts-inv.tree.json) | [contracts-inv.tree.md](./contracts-inv.tree.md) |
 
 ## 1. Что общее, что нет

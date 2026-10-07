@@ -56,6 +56,11 @@ BEGIN
         ciputStornoDocCode     nvarchar(50)    NULL,
         ciputSheetNum          int             NULL,
         ciputUnloadKey         int             NULL,
+        -- 1.13.1 / 26-1003: staging-ключи традиционной раскладки (nullable)
+        ciputSfKey             int             NULL,
+        ciputCacSpanKey        int             NULL,
+        ciputDueKey            int             NULL,
+        ciputDueGrp            smallint        NULL,
         CONSTRAINT PK_CnInvPmtUplTbl PRIMARY KEY CLUSTERED (ciputKey)
     );
     CREATE NONCLUSTERED INDEX IX_CnInvPmtUplTbl_Unload

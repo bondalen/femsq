@@ -1,9 +1,10 @@
 /**
- * Типы JSON экземпляра дерева и чистые функции обходника.
+ * Типы JSON экземпляра, которые ещё читает хост, и прежние чистые функции сборки.
+ * Экранный обход с листа 1.7.2 — FemsqWalkTree из fequlib. RelationTree.vue снят.
  * Без каталога рёбер и без API хоста.
  */
 
-import { formatMoney } from 'fequlib';
+import { assignWalkListFields, formatMoney, type FemsqWalkListColumn } from 'fequlib';
 
 /** Как рисовать ребёнка: сразу запись или папка. */
 export type RelationCard = 'N:1' | '1:1' | '1:N';
@@ -69,7 +70,7 @@ export interface RelationTreeChildSpec {
   children: RelationTreeChildSpec[];
 }
 
-/** JSON экземпляра. */
+/** JSON экземпляра. Нет `view` или `outline` — контур FemsqTree. `list` — FemsqTreeList. */
 export interface RelationTreeSpec {
   id: string;
   version: number;
@@ -77,6 +78,10 @@ export interface RelationTreeSpec {
   title: string[];
   detail: string[] | '*';
   valueKinds?: RelationValueKinds;
+  /** Нет поля — outline. `list` включает колоночное дерево. */
+  view?: 'outline' | 'list';
+  /** Колонки представления list: подпись, имя поля узла, необязательный уровень. */
+  columns?: FemsqWalkListColumn[];
   children: RelationTreeChildSpec[];
 }
 
@@ -293,10 +298,11 @@ export function buildRecordNode(
   table: string,
   rowKey: number,
   fields: Record<string, string | null>,
-  spec: Pick<RelationTreeChildSpec, 'title' | 'detail' | 'children' | 'actions' | 'valueKinds'>
+  spec: Pick<RelationTreeChildSpec, 'title' | 'detail' | 'children' | 'actions' | 'valueKinds'>,
+  listColumns?: FemsqWalkListColumn[]
 ): RelationTreeNode {
   const hasChildren = spec.children.length > 0;
-  return {
+  const node: RelationTreeNode = {
     id: `${table}:${rowKey}`,
     kind: 'record',
     title: formatRelationTitle(spec.title, fields, spec.valueKinds),
@@ -307,6 +313,7 @@ export function buildRecordNode(
     childSpecs: spec.children,
     ...(hasChildren ? { children: undefined } : { leaf: true, children: [] })
   };
+  return applyRelationWalkListFields(node, fields, listColumns);
 }
 
 /**
@@ -315,15 +322,17 @@ export function buildRecordNode(
  * @param parentId ключ родителя
  * @param fromId PK записи-родителя
  * @param spec ребёнок JSON
+ * @param listColumns колонки view list; без них узел остаётся outline
  * @return узел-папка
  */
 export function buildFolderNode(
   parentId: string,
   fromId: number,
-  spec: RelationTreeChildSpec
+  spec: RelationTreeChildSpec,
+  listColumns?: FemsqWalkListColumn[]
 ): RelationTreeNode {
   const expandKey = childExpandKeyOf(spec);
-  return {
+  const node: RelationTreeNode = {
     id: `${parentId}/${expandKey}`,
     kind: 'folder',
     title: spec.folder || spec.queryId || spec.edge || expandKey,
@@ -336,6 +345,7 @@ export function buildFolderNode(
     table: childTableOf(spec),
     children: undefined
   };
+  return applyRelationWalkListFields(node, { title: node.title }, listColumns);
 }
 
 /**
@@ -343,24 +353,26 @@ export function buildFolderNode(
  *
  * @param parent запись
  * @param loaded по ребру → строки
+ * @param listColumns колонки view list
  * @return дети
  */
 export function childrenAfterRecordLoad(
   parent: RelationTreeNode,
-  loaded: Record<string, Array<{ key: number; fields: Record<string, string | null> }>>
+  loaded: Record<string, Array<{ key: number; fields: Record<string, string | null> }>>,
+  listColumns?: FemsqWalkListColumn[]
 ): RelationTreeNode[] {
   const specs = parent.childSpecs ?? [];
   const out: RelationTreeNode[] = [];
   for (const spec of specs) {
     if (spec.card === '1:N') {
       if (parent.rowKey == null) continue;
-      out.push(buildFolderNode(parent.id, parent.rowKey, spec));
+      out.push(buildFolderNode(parent.id, parent.rowKey, spec, listColumns));
       continue;
     }
     const rows = loaded[spec.edge] ?? [];
     const to = childTableOf(spec);
     for (const row of rows) {
-      out.push(buildRecordNode(to, row.key, row.fields, spec));
+      out.push(buildRecordNode(to, row.key, row.fields, spec, listColumns));
     }
   }
   return out;
@@ -371,18 +383,20 @@ export function childrenAfterRecordLoad(
  *
  * @param folder папка
  * @param rows expand
+ * @param listColumns колонки view list
  * @return дети-записи
  */
 export function childrenAfterFolderLoad(
   folder: RelationTreeNode,
-  rows: Array<{ key: number; fields: Record<string, string | null> }>
+  rows: Array<{ key: number; fields: Record<string, string | null> }>,
+  listColumns?: FemsqWalkListColumn[]
 ): RelationTreeNode[] {
   const spec = folder.folderSpec;
   if (!spec) {
     return [];
   }
   const to = childTableOf(spec);
-  return rows.map((row) => buildRecordNode(to, row.key, row.fields, spec));
+  return rows.map((row) => buildRecordNode(to, row.key, row.fields, spec, listColumns));
 }
 
 /**
@@ -440,4 +454,24 @@ export function patchRelationChildren(
     }
     return { ...node, children: patchRelationChildren(node.children, id, children) };
   });
+}
+
+/**
+ * Кладёт на узел поля колонок list. Без колонок узел не меняется: outline остаётся прежним.
+ * `kind` запись/папка уже стоит на узле — колонка с `level` гаснет на чужом уровне в FemsqTreeList.
+ *
+ * @param node запись или папка
+ * @param fields карта полей строки; у папки достаточно `title`
+ * @param listColumns колонки JSON или undefined
+ * @return узел для FemsqTreeList либо исходный
+ */
+export function applyRelationWalkListFields(
+  node: RelationTreeNode,
+  fields: Record<string, string | null>,
+  listColumns?: FemsqWalkListColumn[]
+): RelationTreeNode {
+  if (!listColumns?.length) {
+    return node;
+  }
+  return assignWalkListFields(node, fields, listColumns);
 }

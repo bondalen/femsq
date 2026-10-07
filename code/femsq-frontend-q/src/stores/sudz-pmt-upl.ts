@@ -10,15 +10,28 @@ import {
   createSudzPmUpl,
   getSudzPmUplLauncher,
   getSudzPmUplLookups,
+  getSudzPmtUplCstMatch,
+  getSudzPmtUplCstNew,
+  getSudzPmtUplInvNot,
+  getSudzPmtUplSfDoubles,
+  getSudzPmtUplTabBadges,
+  getSudzPmtUplTwoLoad,
+  rebuildSudzPmtUplSfDouble,
   runSudzPmtUplFunnel,
   updateSudzPmUplFile
 } from '@/api/sudz-api';
 import type {
   CreateSudzPmUplInput,
+  SudzCnInvUplSfDouble,
   SudzPmUplLookup,
+  SudzPmtUplCstMatch,
+  SudzPmtUplCstNew,
   SudzPmtUplFile,
   SudzPmtUplFunnelResult,
+  SudzPmtUplInvNot,
   SudzPmtUplLauncher,
+  SudzPmtUplTabBadges,
+  SudzPmtUplTwoLoad,
   UpdateSudzPmUplFileInput
 } from '@/types/sudz';
 
@@ -39,6 +52,19 @@ export const useSudzPmtUplStore = defineStore('sudz-pmt-upl', () => {
   const saving = ref(false);
   const funnelRunning = ref(false);
   const error = ref<string | null>(null);
+  const cstNew = ref<SudzPmtUplCstNew[]>([]);
+  const cstNewLoading = ref(false);
+  const invNot = ref<SudzPmtUplInvNot[]>([]);
+  const invNotLoading = ref(false);
+  const twoLoad = ref<SudzPmtUplTwoLoad[]>([]);
+  const twoLoadLoading = ref(false);
+  const sfDoubles = ref<SudzCnInvUplSfDouble[]>([]);
+  const sfDoublesLoading = ref(false);
+  const badges = ref<SudzPmtUplTabBadges | null>(null);
+  const badgesLoading = ref(false);
+  const cstMatch = ref<SudzPmtUplCstMatch[]>([]);
+  const cstMatchSuffix = ref<string | null>(null);
+  const cstMatchLoading = ref(false);
 
   const selectedUpl = computed(() => {
     if (selectedPmKey.value == null) {
@@ -75,12 +101,14 @@ export const useSudzPmtUplStore = defineStore('sudz-pmt-upl', () => {
         if (!still) {
           selectedPmKey.value = null;
           launcher.value = null;
+          clearQueues();
         }
       }
       if (selectedPmKey.value == null && upls.value.length > 0) {
         await selectUpl(upls.value[0].pmKey);
       } else if (selectedPmKey.value != null) {
         await loadLauncher(selectedPmKey.value);
+        await refreshQueues();
       }
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e);
@@ -96,10 +124,210 @@ export const useSudzPmtUplStore = defineStore('sudz-pmt-upl', () => {
     selectedPmKey.value = pmKey;
     loading.value = true;
     error.value = null;
+    const queues = refreshQueues();
     try {
       await loadLauncher(pmKey);
     } finally {
       loading.value = false;
+    }
+    await queues;
+  }
+
+  /**
+   * Сбрасывает гриды очередей и бейджи.
+   */
+  function clearQueues(): void {
+    cstNew.value = [];
+    invNot.value = [];
+    twoLoad.value = [];
+    sfDoubles.value = [];
+    badges.value = null;
+    cstNewLoading.value = false;
+    invNotLoading.value = false;
+    twoLoadLoading.value = false;
+    sfDoublesLoading.value = false;
+    badgesLoading.value = false;
+    clearCstMatch();
+  }
+
+  /**
+   * Сбрасывает дерево строек выбранной строки очереди.
+   */
+  function clearCstMatch(): void {
+    cstMatch.value = [];
+    cstMatchSuffix.value = null;
+    cstMatchLoading.value = false;
+  }
+
+  /**
+   * Стройки каталога с тем же хвостом из 6 символов, что у выбранной строки очереди.
+   * Ответ устаревшего хвоста отбрасывается. Пустой список — такого хвоста нет.
+   *
+   * @param codeSuffix sh строки очереди
+   */
+  async function loadCstMatch(codeSuffix: string): Promise<void> {
+    const suffix = codeSuffix.trim();
+    cstMatchSuffix.value = suffix;
+    if (suffix.length !== 6) {
+      cstMatch.value = [];
+      cstMatchLoading.value = false;
+      return;
+    }
+    cstMatchLoading.value = true;
+    try {
+      const rows = await getSudzPmtUplCstMatch(suffix);
+      if (cstMatchSuffix.value === suffix) {
+        cstMatch.value = rows;
+      }
+    } catch (e) {
+      if (cstMatchSuffix.value === suffix) {
+        cstMatch.value = [];
+        error.value = e instanceof Error ? e.message : String(e);
+      }
+    } finally {
+      if (cstMatchSuffix.value === suffix) {
+        cstMatchLoading.value = false;
+      }
+    }
+  }
+
+  /**
+   * Очереди вкладок D и бейджи для выбранного пакета.
+   * Ответ устаревшего pmKey отбрасывается.
+   */
+  async function refreshQueues(): Promise<void> {
+    const pmKey = selectedPmKey.value;
+    if (pmKey == null) {
+      clearQueues();
+      return;
+    }
+    cstNew.value = [];
+    invNot.value = [];
+    twoLoad.value = [];
+    sfDoubles.value = [];
+    badges.value = null;
+    cstNewLoading.value = true;
+    invNotLoading.value = true;
+    twoLoadLoading.value = true;
+    sfDoublesLoading.value = true;
+    badgesLoading.value = true;
+    const rebuildTask = (async () => {
+      try {
+        let rows = await getSudzPmtUplSfDoubles(pmKey);
+        // Пустая очередь при живом хвосте — один sync; не пересобирать, если уже есть строки
+        // (иначе сбросятся status created/deferred после разбора в КСДСФ).
+        if (rows.length === 0) {
+          await rebuildSudzPmtUplSfDouble(pmKey);
+          rows = await getSudzPmtUplSfDoubles(pmKey);
+        }
+        if (selectedPmKey.value === pmKey) {
+          sfDoubles.value = rows;
+        }
+      } catch (e: unknown) {
+        if (selectedPmKey.value === pmKey) {
+          sfDoubles.value = [];
+          error.value = e instanceof Error ? e.message : String(e);
+        }
+      } finally {
+        if (selectedPmKey.value === pmKey) {
+          sfDoublesLoading.value = false;
+        }
+      }
+    })();
+    const cstTask = getSudzPmtUplCstNew(pmKey)
+      .then((rows) => {
+        if (selectedPmKey.value === pmKey) {
+          cstNew.value = rows;
+        }
+      })
+      .catch((e: unknown) => {
+        if (selectedPmKey.value === pmKey) {
+          cstNew.value = [];
+          error.value = e instanceof Error ? e.message : String(e);
+        }
+      })
+      .finally(() => {
+        if (selectedPmKey.value === pmKey) {
+          cstNewLoading.value = false;
+        }
+      });
+    const invNotTask = getSudzPmtUplInvNot(pmKey)
+      .then((rows) => {
+        if (selectedPmKey.value === pmKey) {
+          invNot.value = rows;
+        }
+      })
+      .catch((e: unknown) => {
+        if (selectedPmKey.value === pmKey) {
+          invNot.value = [];
+          error.value = e instanceof Error ? e.message : String(e);
+        }
+      })
+      .finally(() => {
+        if (selectedPmKey.value === pmKey) {
+          invNotLoading.value = false;
+        }
+      });
+    const twoLoadTask = getSudzPmtUplTwoLoad(pmKey)
+      .then((rows) => {
+        if (selectedPmKey.value === pmKey) {
+          twoLoad.value = rows;
+        }
+      })
+      .catch((e: unknown) => {
+        if (selectedPmKey.value === pmKey) {
+          twoLoad.value = [];
+          error.value = e instanceof Error ? e.message : String(e);
+        }
+      })
+      .finally(() => {
+        if (selectedPmKey.value === pmKey) {
+          twoLoadLoading.value = false;
+        }
+      });
+    const badgeTask = getSudzPmtUplTabBadges(pmKey)
+      .then((value) => {
+        if (selectedPmKey.value === pmKey) {
+          badges.value = value;
+        }
+      })
+      .catch((e: unknown) => {
+        if (selectedPmKey.value === pmKey) {
+          badges.value = null;
+          error.value = e instanceof Error ? e.message : String(e);
+        }
+      })
+      .finally(() => {
+        if (selectedPmKey.value === pmKey) {
+          badgesLoading.value = false;
+        }
+      });
+    await Promise.all([cstTask, invNotTask, twoLoadTask, badgeTask, rebuildTask]);
+  }
+
+  /**
+   * Перечитывает очередь КСДСФ пакета без rebuild (после разбора на экране КСДСФ).
+   */
+  async function refreshSfDoubles(): Promise<void> {
+    const pmKey = selectedPmKey.value;
+    if (pmKey == null) {
+      sfDoubles.value = [];
+      return;
+    }
+    sfDoublesLoading.value = true;
+    try {
+      const rows = await getSudzPmtUplSfDoubles(pmKey);
+      if (selectedPmKey.value === pmKey) {
+        sfDoubles.value = rows;
+      }
+    } catch (e: unknown) {
+      if (selectedPmKey.value === pmKey) {
+        error.value = e instanceof Error ? e.message : String(e);
+      }
+    } finally {
+      if (selectedPmKey.value === pmKey) {
+        sfDoublesLoading.value = false;
+      }
     }
   }
 
@@ -184,11 +412,13 @@ export const useSudzPmtUplStore = defineStore('sudz-pmt-upl', () => {
         flLoad
       });
       await loadLauncher(pmKey);
+      await refreshQueues();
       return result;
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e);
       try {
         await loadLauncher(pmKey);
+        await refreshQueues();
       } catch {
         // progress мог обновиться на сервере до ошибки ответа
       }
@@ -231,6 +461,23 @@ export const useSudzPmtUplStore = defineStore('sudz-pmt-upl', () => {
     error,
     selectedUpl,
     file,
+    cstNew,
+    cstNewLoading,
+    invNot,
+    invNotLoading,
+    twoLoad,
+    twoLoadLoading,
+    sfDoubles,
+    sfDoublesLoading,
+    badges,
+    badgesLoading,
+    cstMatch,
+    cstMatchSuffix,
+    cstMatchLoading,
+    loadCstMatch,
+    clearCstMatch,
+    refreshQueues,
+    refreshSfDoubles,
     loadUpls,
     loadLauncher,
     selectUpl,

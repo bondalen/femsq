@@ -151,7 +151,7 @@
                           <div class="row items-center q-gutter-xs q-pb-xs shrink-0">
                             <div class="col text-caption text-grey-7">
                               Связи cnInv договора
-                              <span v-if="store.cnInvs.length"> · {{ store.cnInvs.length }}</span>
+                              <span v-if="store.cnInvTotal"> · {{ store.cnInvTotal }}</span>
                             </div>
                             <QBtn
                               flat
@@ -190,47 +190,82 @@
                             />
                           </div>
                           <FemsqTable
+                            fill
                             class="col cn-inv-table"
                             root-class="cn-inv-table"
+                            mode="server"
                             row-key="ciKey"
                             :rows="store.cnInvs"
                             :columns="cnInvColumns"
                             :loading="store.loadingCnInvs"
                             :show-filter="true"
+                            show-column-filters
+                            v-model:filters-visible="cnInvFiltersVisible"
+                            column-filter-placeholder=""
+                            v-model:column-filters="cnInvColumnFilters"
+                            v-model:filter="cnInvFilter"
                             v-model:pagination="cnInvPagination"
                             selection="single"
                             v-model:selected="selectedCnInvRows"
                             dense
+                            data-test="cn-inv-table"
+                            @request="onCnInvRequest"
                             @row-click="onCnInvRowClick"
                           />
                         </div>
                       </template>
                       <template #after>
-                        <div class="column fill-pane no-wrap" data-test="cn-inv-tree">
-                          <div class="text-caption text-grey-7 q-pb-xs shrink-0">
-                            Дерево СФ (<code>contracts-inv</code>)
-                          </div>
-                          <RelationTree
-                            v-if="store.selectedCnInv"
-                            :key="`inv-${store.selectedCnInv.ciInv}-${relationTreeKey}`"
-                            class="col"
-                            :spec="contractsInvSpec"
-                            :root-id="store.selectedCnInv.ciInv"
-                            :fetch-node="fetchRelationNode"
-                            :fetch-expand="fetchRelationExpand"
-                            root-class="contracts-relation-tree"
-                            @action="onRelationAction"
-                          />
-                          <div v-else class="text-grey-7 q-pa-sm">
-                            {{
-                              store.loadingCnInvs
-                                ? 'Загрузка связей…'
-                                : store.cnInvs.length === 0
-                                  ? 'У договора нет связей cnInv'
-                                  : 'Выберите связь слева'
-                            }}
-                          </div>
-                        </div>
+                        <QSplitter
+                          v-model="cnInvTreeForestSplit"
+                          horizontal
+                          :limits="[25, 75]"
+                          separator-class="cn-split-sep"
+                          class="fit"
+                          data-test="cn-inv-tree-forest-split"
+                        >
+                          <template #before>
+                            <div class="column fill-pane no-wrap q-pa-xs" data-test="cn-inv-tree">
+                              <div class="text-caption text-grey-7 q-pb-xs shrink-0">
+                                Дерево СФ (<code>contracts-inv</code>)
+                              </div>
+                              <FemsqWalkTree
+                                v-if="store.selectedCnInv"
+                                :key="`inv-${store.selectedCnInv.ciInv}-${relationTreeKey}`"
+                                class="col"
+                                :spec="contractsInvSpec"
+                                :root-id="store.selectedCnInv.ciInv"
+                                :fetch-node="fetchRelationNode"
+                                :fetch-expand="fetchRelationExpand"
+                                root-class="contracts-relation-tree"
+                                @action="onRelationAction"
+                              />
+                              <div v-else class="text-grey-7 q-pa-sm">
+                                {{
+                                  store.loadingCnInvs
+                                    ? 'Загрузка связей…'
+                                    : store.error
+                                      ? store.error
+                                      : store.cnInvTotal === 0
+                                        ? 'У договора нет связей cnInv'
+                                        : 'Выберите связь слева'
+                                }}
+                              </div>
+                            </div>
+                          </template>
+                          <template #after>
+                            <div class="column fill-pane no-wrap q-pa-xs" data-test="cn-inv-doc-forest">
+                              <PmDocForest
+                                v-if="store.selectedCnInv"
+                                class="col"
+                                :inv-key="store.selectedCnInv.ciInv"
+                                @open-inv="onPmDocOpenInv"
+                              />
+                              <div v-else class="text-grey-7 q-pa-sm">
+                                Выберите счёт-фактуру, чтобы увидеть её платёжные документы.
+                              </div>
+                            </div>
+                          </template>
+                        </QSplitter>
                       </template>
                     </QSplitter>
                   </QTabPanel>
@@ -415,12 +450,12 @@ import {
   QTabs,
   useQuasar
 } from 'quasar';
-import { FemsqTable, type FemsqTableColumn } from 'fequlib';
+import { FemsqTable, FemsqWalkTree, type FemsqTableColumn, type FemsqTableRequest } from 'fequlib';
 
-import { createCnInv, updateCnInv } from '@/api/contracts-api';
+import { createCnInv, fetchCnInvPage, updateCnInv } from '@/api/contracts-api';
 import { fetchRelationExpand, fetchRelationNode } from '@/api/relation-api';
 import RecordModal from '@/components/relation/RecordModal.vue';
-import RelationTree from '@/components/relation/RelationTree.vue';
+import PmDocForest from '@/components/sudz/PmDocForest.vue';
 import * as cnPickerSpecJson from '@/trees/cn-picker.tree.json';
 import * as contractsInvSpecJson from '@/trees/contracts-inv.tree.json';
 import { buildCnInvLinkForm, type RelationPickerCandidateRow } from '@/trees/relation-form-registry';
@@ -457,10 +492,21 @@ const masterSplit = ref(36);
 const detailSplit = ref(32);
 /** Доля ширины списка cnInv на вкладке СФ. */
 const sfSplit = ref(36);
+/** Высота дерева СФ относительно леса документов, %. */
+const cnInvTreeForestSplit = ref(55);
 const detailTab = ref<'parties' | 'sf'>('parties');
 const cnNumPagination = ref({ page: 1, rowsPerPage: 25 });
 const nestedPagination = ref({ page: 1, rowsPerPage: 10 });
-const cnInvPagination = ref({ page: 1, rowsPerPage: 25 });
+const cnInvFilter = ref('');
+const cnInvColumnFilters = ref<Record<string, string>>({});
+const cnInvFiltersVisible = ref(true);
+const cnInvPagination = ref({
+  page: 1,
+  rowsPerPage: 25,
+  rowsNumber: 0,
+  sortBy: 'ciKey',
+  descending: false
+});
 const orgIdFilter = ref('');
 const relationTreeKey = ref(0);
 const relationAction = ref<RelationTreeActionContext | null>(null);
@@ -625,13 +671,13 @@ const nestedSelectedRows = computed({
 
 const selectedCnInvRows = computed({
   get: () => {
-    const row = store.selectedCnInv;
+    const row = store.cnInvs.find((item) => item.ciKey === store.selectedCiKey);
     return row ? [row] : [];
   },
   set: (rows: CnInvListRow[]) => {
     const first = rows[0];
     if (first) {
-      store.selectCnInv(first.ciKey);
+      store.selectCnInv(first.ciKey, first);
     }
   }
 });
@@ -734,7 +780,36 @@ function onNestedCnNumClick(_evt: Event, row: CnNumDto): void {
  * Выбор связи cnInv на вкладке «Счета-фактуры».
  */
 function onCnInvRowClick(_evt: Event, row: CnInvListRow): void {
-  store.selectCnInv(row.ciKey);
+  store.selectCnInv(row.ciKey, row);
+}
+
+/**
+ * Страница списка СФ: фильтр и сортировка уходят в cnInvsByCn.
+ */
+async function onCnInvRequest(request: FemsqTableRequest): Promise<void> {
+  const cnKey = store.selectedCn?.cnKey;
+  if (cnKey == null) {
+    return;
+  }
+  const rowsPerPage = request.rowsPerPage >= 1 && request.rowsPerPage <= 200
+    ? request.rowsPerPage
+    : 25;
+  cnInvPagination.value = {
+    page: request.page,
+    rowsPerPage,
+    rowsNumber: cnInvPagination.value.rowsNumber,
+    sortBy: request.sortBy ?? 'ciKey',
+    descending: request.descending
+  };
+  await store.loadCnInvs(cnKey, {
+    page: request.page,
+    rowsPerPage,
+    filter: request.filter,
+    columnFilters: request.columnFilters ?? {},
+    sortBy: request.sortBy || 'ciKey',
+    descending: request.descending
+  });
+  cnInvPagination.value.rowsNumber = store.cnInvTotal;
 }
 
 /**
@@ -786,6 +861,57 @@ function openEditCnInvDialog(): void {
   cnPickerQuery.value = store.selectedCnNum?.cnnNum ?? store.selectedCn?.cnNumber ?? '';
   relationAction.value = cnInvActionContext('cnInv.link.edit', row.ciKey, row.ciInv);
   linkModalOpen.value = true;
+}
+
+/**
+ * «Открыть дерево СФ»: на этом экране дерево contracts-inv уже показывает выбранную СФ.
+ */
+async function onPmDocOpenInv(invKey: number): Promise<void> {
+  const current = store.selectedCnInv?.ciInv;
+  if (current === invKey) {
+    $q.notify({
+      type: 'info',
+      message: 'Дерево этой счёт-фактуры уже открыто выше'
+    });
+    return;
+  }
+  const cnKey = store.selectedCn?.cnKey;
+  if (cnKey == null) {
+    return;
+  }
+  const page = await fetchCnInvPage(cnKey, {
+    page: 1,
+    rowsPerPage: 100,
+    filter: String(invKey),
+    sortBy: 'ciInv',
+    descending: false
+  });
+  const hit = page.items.find((row) => row.ciInv === invKey);
+  if (!hit) {
+    $q.notify({
+      type: 'info',
+      message: `Счёт-фактура inv=${invKey} не связана с этим договором`
+    });
+    return;
+  }
+  cnInvFilter.value = String(invKey);
+  cnInvPagination.value = {
+    ...cnInvPagination.value,
+    page: 1,
+    sortBy: 'ciInv',
+    descending: false,
+    rowsNumber: page.totalCount
+  };
+  await store.loadCnInvs(cnKey, {
+    page: 1,
+    rowsPerPage: cnInvPagination.value.rowsPerPage,
+    filter: String(invKey),
+    columnFilters: cnInvColumnFilters.value,
+    sortBy: 'ciInv',
+    descending: false
+  });
+  const row = store.cnInvs.find((item) => item.ciKey === hit.ciKey) ?? hit;
+  store.selectCnInv(row.ciKey, row);
 }
 
 /**
@@ -944,11 +1070,17 @@ async function confirmDeleteCn(): Promise<void> {
   if (cn == null) {
     return;
   }
-  await store.loadCnInvs(cn.cnKey);
-  if (store.cnInvs.length > 0) {
+  await store.loadCnInvs(cn.cnKey, {
+    page: 1,
+    filter: '',
+    columnFilters: {},
+    sortBy: 'ciKey',
+    descending: false
+  });
+  if (store.cnInvTotal > 0) {
     $q.notify({
       type: 'warning',
-      message: `У договора cn=${cn.cnKey} есть ${store.cnInvs.length} связей cnInv — сначала удалите их на вкладке «Счета-фактуры».`
+      message: `У договора cn=${cn.cnKey} есть ${store.cnInvTotal} связей cnInv — сначала удалите их на вкладке «Счета-фактуры».`
     });
     return;
   }
@@ -1227,9 +1359,30 @@ onMounted(() => {
  */
 watch(
   [() => store.selectedCn?.cnKey ?? null, detailTab],
-  ([cnKey, tab]) => {
-    if (tab === 'sf' && cnKey != null) {
-      void store.loadCnInvs(cnKey);
+  ([cnKey, tab], previous) => {
+    if (tab !== 'sf' || cnKey == null) {
+      return;
+    }
+    const previousKey = previous?.[0] ?? null;
+    if (previousKey !== cnKey) {
+      cnInvFilter.value = '';
+      cnInvColumnFilters.value = {};
+      cnInvPagination.value = {
+        ...cnInvPagination.value,
+        page: 1,
+        sortBy: 'ciKey',
+        descending: false
+      };
+      void store.loadCnInvs(cnKey, {
+        page: 1,
+        filter: '',
+        columnFilters: {},
+        sortBy: 'ciKey',
+        descending: false,
+        rowsPerPage: cnInvPagination.value.rowsPerPage
+      }).then(() => {
+        cnInvPagination.value.rowsNumber = store.cnInvTotal;
+      });
     }
   }
 );

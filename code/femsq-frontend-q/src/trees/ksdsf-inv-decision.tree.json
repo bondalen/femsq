@@ -1,0 +1,193 @@
+{
+  "id": "ksdsf-inv-decision",
+  "version": 3,
+  "view": "list",
+  "root": {
+    "table": "inv",
+    "pk": "iKey",
+    "queryId": "sudz.ksdsf.decision.root",
+    "level": "inv"
+  },
+  "title": ["title"],
+  "detail": ["title", "invNum", "invEntered", "contract", "party", "pmCount", "blnsSum", "note"],
+  "columnSets": [
+    {
+      "level": "inv",
+      "columns": [
+        { "label": "СФ", "field": "title" },
+        { "label": "Номер", "field": "invNum" },
+        { "label": "Дата", "field": "invEntered" },
+        { "label": "Договор", "field": "contract" },
+        { "label": "Контрагент", "field": "party" },
+        { "label": "N pm", "field": "pmCount" },
+        { "label": "Σ сальдо", "field": "blnsSum" }
+      ]
+    },
+    {
+      "level": "cnInv",
+      "columns": [
+        { "label": "Договор", "field": "title" },
+        { "label": "cn", "field": "cnKey" },
+        { "label": "cnInv", "field": "ciKey" },
+        { "label": "N исп.", "field": "executorCount" },
+        { "label": "N аг.", "field": "agentCount" },
+        { "label": "Note", "field": "note" }
+      ]
+    },
+    {
+      "level": "party",
+      "columns": [
+        { "label": "Сторона", "field": "title" },
+        { "label": "БУиРГ", "field": "buirg" },
+        { "label": "Имя", "field": "name" },
+        { "label": "Excel", "field": "hitExcel" }
+      ]
+    },
+    {
+      "level": "pm",
+      "columns": [
+        { "label": "Платёж", "field": "title" },
+        { "label": "Пакет", "field": "uplName" },
+        { "label": "Дата", "field": "uplDate" },
+        { "label": "№ докум.", "field": "docKod" },
+        { "label": "Дата док.", "field": "docDate" },
+        { "label": "Дебет", "field": "dbt" },
+        { "label": "Кредит", "field": "cdt" },
+        { "label": "Сальдо", "field": "blns" },
+        { "label": "Счёт ГК", "field": "accountNum" },
+        { "label": "Стройка", "field": "cstCode" },
+        { "label": "cnInv", "field": "ciKey" },
+        { "label": "Договор", "field": "contract" }
+      ]
+    },
+    {
+      "level": "docSum",
+      "columns": [
+        { "label": "Документ", "field": "title" },
+        { "label": "№ докум.", "field": "docKod" },
+        { "label": "N pm", "field": "pmCount" },
+        { "label": "Σ сальдо", "field": "blnsSum" },
+        { "label": "Пакеты", "field": "uplNames" }
+      ]
+    },
+    {
+      "level": "cias",
+      "columns": [
+        { "label": "Счёт ГК", "field": "title" },
+        { "label": "cias", "field": "ciasKey" },
+        { "label": "cnInv", "field": "ciKey" },
+        { "label": "Номер счёта", "field": "accountNum" },
+        { "label": "N pm", "field": "pmCount" },
+        { "label": "Σ сальдо", "field": "blnsSum" }
+      ]
+    },
+    {
+      "level": "debt",
+      "columns": [
+        { "label": "Задолженность", "field": "title" }
+      ]
+    }
+  ],
+  "children": [
+    {
+      "queryId": "sudz.ksdsf.decision.cnInvs",
+      "to": "cnInv",
+      "card": "1:N",
+      "level": "cnInv",
+      "folder": "Договоры",
+      "title": ["title"],
+      "detail": ["title", "cnKey", "ciKey", "executorCount", "agentCount", "note"],
+      "children": [
+        {
+          "queryId": "sudz.ksdsf.decision.executors",
+          "to": "cn_s_org_smpl",
+          "card": "1:N",
+          "level": "party",
+          "folder": "Исполнители",
+          "title": ["title"],
+          "detail": ["title", "buirg", "name", "hitExcel"],
+          "children": []
+        },
+        {
+          "queryId": "sudz.ksdsf.decision.agents",
+          "to": "cn_s_org_smpl",
+          "card": "1:N",
+          "level": "party",
+          "folder": "Агенты",
+          "title": ["title"],
+          "detail": ["title", "buirg", "name", "hitExcel"],
+          "children": []
+        }
+      ]
+    },
+    {
+      "queryId": "sudz.ksdsf.decision.payments",
+      "to": "cn_inv_pm",
+      "card": "1:N",
+      "level": "pm",
+      "folder": "Платежи",
+      "title": ["title"],
+      "detail": [
+        "title",
+        "uplName",
+        "uplDate",
+        "docKod",
+        "docDate",
+        "dbt",
+        "cdt",
+        "blns",
+        "accountNum",
+        "cstCode",
+        "ciKey",
+        "contract",
+        "hlCurrentUpl",
+        "hlOrphanLink",
+        "hlContractDiff",
+        "hlCstDiff",
+        "hlCstSuffix"
+      ],
+      "valueKinds": {
+        "dbt": "money",
+        "cdt": "money",
+        "blns": "money"
+      },
+      "children": []
+    },
+    {
+      "queryId": "sudz.ksdsf.decision.docSums",
+      "to": "cn_inv_doc",
+      "card": "1:N",
+      "level": "docSum",
+      "folder": "Документы",
+      "title": ["title"],
+      "detail": ["title", "docKod", "pmCount", "blnsSum", "uplNames"],
+      "valueKinds": {
+        "blnsSum": "money"
+      },
+      "children": []
+    },
+    {
+      "queryId": "sudz.ksdsf.decision.cias",
+      "to": "cnInvAccntSmpl",
+      "card": "1:N",
+      "level": "cias",
+      "folder": "Счета ГК",
+      "title": ["title"],
+      "detail": ["title", "ciasKey", "ciKey", "accountNum", "pmCount", "blnsSum"],
+      "valueKinds": {
+        "blnsSum": "money"
+      },
+      "children": []
+    },
+    {
+      "queryId": "sudz.ksdsf.decision.debts",
+      "to": "cn_inv_dbt",
+      "card": "1:N",
+      "level": "debt",
+      "folder": "Задолженности",
+      "title": ["title"],
+      "detail": ["title"],
+      "children": []
+    }
+  ]
+}

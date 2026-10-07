@@ -29,7 +29,7 @@ class InvDbtDoubleAdvisorTest {
         var row = new com.femsq.database.model.sudz.SudzCnInvUplInvDbtDouble(
                 1, 1, null, 910, 329, null, null, new BigDecimal("30404.40"),
                 6766, "multi", null, "open", null, null);
-        var excel = new com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate(
+        var excel = com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate.dbt(
                 1, null, 23, 761010, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("30404.40"), null, null, null, null, null, 910);
         var slot = new com.femsq.database.model.sudz.SudzInvDbtSlot(42, 329, 1, "ciaName=1");
@@ -65,7 +65,7 @@ class InvDbtDoubleAdvisorTest {
         var split = InvDbtDoubleAdvisor.detectSplit(
                 row, shares, canons, 901, new BigDecimal("0.01"));
         assertTrue(split.isPresent());
-        var excel = new com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate(
+        var excel = com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate.dbt(
                 1, null, 23, 761010, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("18000"), null, null, null, null, null, 901);
         var slot = new com.femsq.database.model.sudz.SudzInvDbtSlot(11897, 85166, 1, "ciaName=1");
@@ -142,7 +142,7 @@ class InvDbtDoubleAdvisorTest {
                 row, shares, canons, new BigDecimal("0.01"));
         assertEquals(Optional.of(13041), shareLink);
 
-        var excel = new com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate(
+        var excel = com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate.dbt(
                 1, null, 23, 761010, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("18000"), null, null, null, null, null, 902);
         var slots = List.of(
@@ -218,7 +218,7 @@ class InvDbtDoubleAdvisorTest {
                 row, shares, canons, new BigDecimal("0.01"));
         assertEquals(Optional.of(13042), shareLink);
 
-        var excel = new com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate(
+        var excel = com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate.dbt(
                 1, null, 23, 761010, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("18000"), null, null, null, null, null, 902);
         var slots = List.of(
@@ -250,7 +250,7 @@ class InvDbtDoubleAdvisorTest {
                 3796, 1, null, 902, 85166, "32-425/05-18", "А45-19974/2024",
                 new BigDecimal("18000"),
                 15629, "multi", null, "created", null, 13042);
-        var excel = new com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate(
+        var excel = com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate.dbt(
                 1, null, 24, 761010, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("18000"), null, null, null, null, null, 902);
         var slots = List.of(
@@ -282,7 +282,7 @@ class InvDbtDoubleAdvisorTest {
                 3796, 1, null, 902, 85166, "32-425/05-18", "А45-19974/2024",
                 new BigDecimal("18000"),
                 15629, "multi", null, "open", null, null);
-        var excel = new com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate(
+        var excel = com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate.dbt(
                 1, null, 24, 761010, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("18000"), null, null, null, null, null, 902);
         var slots = List.of(
@@ -314,7 +314,7 @@ class InvDbtDoubleAdvisorTest {
                 3792, 1, null, 902, 91637, "КС-51", "25456",
                 new BigDecimal("183104935.38"),
                 15390, "multi", null, "open", null, null);
-        var excel = new com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate(
+        var excel = com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate.dbt(
                 1, null, 21, 761010, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("183104935.38"), null, null, null, null, null, 902);
         var slot = new com.femsq.database.model.sudz.SudzInvDbtSlot(13044, 91637, 1, null);
@@ -359,7 +359,7 @@ class InvDbtDoubleAdvisorTest {
                 3791, 1, null, 902, 91637, "КС-51", "25456",
                 new BigDecimal("3051748.93"),
                 15390, "multi", null, "open", null, null);
-        var excel = new com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate(
+        var excel = com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate.dbt(
                 1, null, 21, 761010, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("3051748.93"), null, null, null, null, null, 902);
         var openShares = List.of(
@@ -415,7 +415,7 @@ class InvDbtDoubleAdvisorTest {
                 3794, 1, null, 902, 5130, "КС-51", "3616 CR 0005",
                 new BigDecimal("500.58"),
                 10549, "multi", null, "open", null, null);
-        var excel = new com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate(
+        var excel = com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate.dbt(
                 1, null, 23, 761010, null, null, null, null, null, null, null, null, null,
                 new BigDecimal("500.58"), null, null, null, null, null, 902);
         var slots = List.of(

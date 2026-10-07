@@ -54,4 +54,6 @@ VBA (`PaymentUnloadTest`): фиксированные `Offset(0, n)` от яче
 
 Оригинал сырого layout на шаре: `*.raw_layout.XLSX`.
 
-**lastUpdated:** 2026-09-21
+**Дерево строк и уровни outline** (жёлтый итог срока, группа стройки, сверка файлов периодов, предложения по staging-ключам): [`export-row-tree-structure.md`](./export-row-tree-structure.md).
+
+**lastUpdated:** 2026-10-03

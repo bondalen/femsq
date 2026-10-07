@@ -2,6 +2,7 @@
 # Проверка локального клона feQuLib перед сборкой FEMSQ.
 # FEMSQ зависит от fequlib через file:../../../feQuLib — устаревший клон
 # даёт ошибку сборки frontend («FemsqTree is not exported» и аналоги).
+# Проверяемые экспорты: FemsqTree, FemsqChart, FemsqTreeList, FemsqWalkTree.
 #
 # Использование: ./code/scripts/check-fequlib.sh
 # Пропуск (только по явной просьбе): FEQULIB_SKIP_SYNC=1
@@ -53,13 +54,43 @@ if ! grep -q "export { default as FemsqChart }" "$INDEX_TS"; then
   exit 1
 fi
 
+TREE_LIST_VUE="$FEQULIB_DIR/src/components/tree/FemsqTreeList.vue"
+
+if [ ! -f "$TREE_LIST_VUE" ]; then
+  echo -e "${RED}ERROR: нет $TREE_LIST_VUE${NC}"
+  echo "Локальный feQuLib не содержит FemsqTreeList. Выполнить git pull в $FEQULIB_DIR."
+  echo "Не копировать FemsqTreeList в FEMSQ."
+  exit 1
+fi
+
+if ! grep -q "export { default as FemsqTreeList }" "$INDEX_TS"; then
+  echo -e "${RED}ERROR: FemsqTreeList не экспортируется из $INDEX_TS${NC}"
+  echo "Синхронизировать feQuLib с origin/main (срез f0ce77b / пакет 0.1.5), не патчить экспорт в FEMSQ."
+  exit 1
+fi
+
+WALK_TREE_VUE="$FEQULIB_DIR/src/components/tree/FemsqWalkTree.vue"
+
+if [ ! -f "$WALK_TREE_VUE" ]; then
+  echo -e "${RED}ERROR: нет $WALK_TREE_VUE${NC}"
+  echo "Локальный feQuLib не содержит FemsqWalkTree. Выполнить git pull в $FEQULIB_DIR."
+  echo "Не копировать обходчик в FEMSQ."
+  exit 1
+fi
+
+if ! grep -q "export { default as FemsqWalkTree }" "$INDEX_TS"; then
+  echo -e "${RED}ERROR: FemsqWalkTree не экспортируется из $INDEX_TS${NC}"
+  echo "Синхронизировать feQuLib с origin/main (срез bfbe6fb / пакет 0.1.7), не патчить экспорт в FEMSQ."
+  exit 1
+fi
+
 cd "$FEQULIB_DIR"
 BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 HEAD="$(git rev-parse HEAD)"
 
 if ! git fetch origin >/dev/null 2>&1; then
   echo -e "${YELLOW}⚠ git fetch origin не удался — удалённая сверка пропущена.${NC}"
-  echo "Локально: ветка $BRANCH, HEAD ${HEAD:0:7}, FemsqTree на месте."
+  echo "Локально: ветка $BRANCH, HEAD ${HEAD:0:7}, FemsqTree, FemsqTreeList и FemsqWalkTree на месте."
   echo -e "${GREEN}✓ Локальный feQuLib пригоден для сборки (без сверки с GitHub)${NC}"
   exit 0
 fi
@@ -85,4 +116,4 @@ if [ "$AHEAD" -gt 0 ]; then
   echo -e "${YELLOW}⚠ Локальный feQuLib опережает $REMOTE_REF на $AHEAD коммит(ов).${NC}"
 fi
 
-echo -e "${GREEN}✓ feQuLib синхронизирован с GitHub, FemsqTree экспортируется${NC}"
+echo -e "${GREEN}✓ feQuLib синхронизирован с GitHub, FemsqTree, FemsqTreeList и FemsqWalkTree экспортируются${NC}"

@@ -1,6 +1,7 @@
 package com.femsq.database.service;
 
 import com.femsq.database.model.CnInv;
+import com.femsq.database.model.CnInvColumnFilters;
 import com.femsq.database.model.CnInvPage;
 
 /**
@@ -14,7 +15,8 @@ public interface CnInvService {
      * @param cnKey {@code ags.cn.cn_key}
      * @param page номер страницы (≥1)
      * @param rowsPerPage размер страницы
-     * @param filter опциональный текст (iNum / число → ciInv|ciKey)
+     * @param filter общий текст: подстрока номера СФ; целое ещё совпадает с ciInv и ciKey
+     * @param columnFilters фильтры отдельных колонок; {@code null} — без них
      * @param sortBy whitelist: ciKey, ciInv, iNum, ciTimeOfEntry
      * @param descending true → DESC
      * @return страница с totalCount
@@ -24,6 +26,7 @@ public interface CnInvService {
             int page,
             int rowsPerPage,
             String filter,
+            CnInvColumnFilters columnFilters,
             String sortBy,
             boolean descending
     );

@@ -185,7 +185,7 @@
                           <div v-if="!selected?.ciudIKey" class="text-grey-6">
                             Выберите строку с iKey.
                           </div>
-                          <RelationTree
+                          <FemsqWalkTree
                             v-else
                             :key="`inv-${selected.ciudIKey}-${treeTick}`"
                             class="col"
@@ -193,6 +193,7 @@
                             :root-id="selected.ciudIKey"
                             :fetch-node="fetchRelationNode"
                             :fetch-expand="fetchRelationExpand"
+                            :fetch-query="fetchRelationQuery"
                             data-test="sudz-inv-dbt-tree"
                             root-class="sudz-sf-double-tree"
                           />
@@ -293,7 +294,7 @@
                             <div v-if="!selectedOldSumRow" class="text-grey-6">
                               Выберите сумму (старая).
                             </div>
-                            <RelationTree
+                            <FemsqWalkTree
                               v-else
                               :key="`cid-sum-${selectedOldSumRow.cidKey}`"
                               class="col"
@@ -341,7 +342,7 @@
                             <div v-if="!selectedNewSumRow" class="text-grey-6">
                               Выберите сумму (новая).
                             </div>
-                            <RelationTree
+                            <FemsqWalkTree
                               v-else
                               :key="`dv-sum-${selectedNewSumRow.dvKey}`"
                               class="col"
@@ -432,7 +433,6 @@
 </template>
 
 <script setup lang="ts">
-import RelationTree from '@/components/relation/RelationTree.vue';
 import {
   createSudzInvDbtFromDouble,
   ensureSudzInvDbtVarForDouble,
@@ -445,7 +445,7 @@ import {
   linkSudzInvDbtDouble,
   splitSudzDbt
 } from '@/api/sudz-api';
-import { fetchRelationExpand, fetchRelationNode } from '@/api/relation-api';
+import { fetchRelationExpand, fetchRelationNode, fetchRelationQuery } from '@/api/relation-api';
 import { useConnectionStore } from '@/stores/connection';
 import { useSudzDbtUplStore } from '@/stores/sudz-dbt-upl';
 import type {
@@ -459,12 +459,13 @@ import type {
   SudzSfDoubleExcelCandidate
 } from '@/types/sudz';
 import type { RelationTreeSpec } from '@/trees/relation-tree';
-import invSlotsSpecJson from '@/trees/inv-dbt-slots.tree.json';
+import * as invSlotsSpecJson from '@/trees/inv-dbt-slots.tree.json';
 import * as cidSumSpecJson from '@/trees/ksdsf-cid-sum.tree.json';
 import * as dvSumSpecJson from '@/trees/ksdsf-dv-sum.tree.json';
 import {
   FemsqChart,
   FemsqTable,
+  FemsqWalkTree,
   buildSlotDynamicsChartSpec,
   formatMoneyOrDash,
   moneyColumn,

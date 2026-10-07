@@ -43,10 +43,61 @@ extend type Query {
   sudzDbtUplLauncher(uplKey: Int!): SudzDbtUplLauncher!
   """Лаунчер загрузки платежей (пакет + CnInvPmtUplFile; ensure File при отсутствии)."""
   sudzPmUplLauncher(pmKey: Int!): SudzPmtUplLauncher!
+  """
+  Очередь «стройки новые» пакета: cipuCacNot (cacOrNull без пары в cstAgPn)
+  плюс суффикс sh / ipCode. pirIDnew и pirName пустые — tblPIR нет в FishEye.
+  """
+  sudzPmtUplCstNew(pmKey: Int!): [SudzPmtUplCstNew!]!
+  """
+  Стройки каталога с кодом cstAgPn, чей хвост совпал с codeSuffix (6 символов),
+  и все их cstAg / cstAgPn. Пустой список — такого хвоста в каталоге нет.
+  Новую стройку не создаёт.
+  """
+  sudzPmtUplCstMatch(codeSuffix: String!): [SudzPmtUplCstMatch!]!
+  """
+  Бейджи вкладок D: CstNew, хвост InvNot, TwoLoad, open КСДСФ этого пакета.
+  Не наполняет грид КСДСФ и вкладку Sum_t.
+  """
+  sudzPmtUplTabBadges(pmKey: Int!): SudzPmtUplTabBadges!
+  """
+  Хвост InvNot пакета: live-список (ровно один договор, нет cnInv).
+  Не читает буфер TblCnInv; не создаёт СФ.
+  """
+  sudzPmtUplInvNot(pmKey: Int!): [SudzPmtUplInvNot!]!
+  """
+  TwoLoad пакета: СФ с ci×>1 (live). Apply воронки закрыт — разбор через КСДСФ.
+  """
+  sudzPmtUplTwoLoad(pmKey: Int!): [SudzPmtUplTwoLoad!]!
+  """
+  Очередь КСДСФ пакета платежей ({@code ciusCiput}). После rebuildSudzPmtUplSfDouble.
+  """
+  sudzPmtUplSfDoubles(pmKey: Int!): [SudzCnInvUplSfDouble!]!
   """Года-портфели, в которых upl входит в yr_upl_p (для контекста воронки)."""
   sudzYearKeysForUpl(uplKey: Int!): [Int!]!
   """Excel-кандидат КСДСФ по ключу очереди."""
   sudzSfDoubleExcelCandidate(ciusKey: Int!): SudzSfDoubleExcelCandidate
+  """
+  Белые строки Tbl кейса КСДСФ pmt (кредитор+договор+номер) — все, не только якорь очереди.
+  Для dbt / без ciput — пустой список.
+  """
+  sudzPmtSfExcelCaseRows(ciusKey: Int!): [SudzPmtExcelCaseRow!]!
+  """Сверка итога сальдо платежей по СФ с долгом связанного свода. Null, если строка не платёжная."""
+  sudzPmtSfSumCompare(ciusKey: Int!): SudzPmtSfSumCompare
+  """Платёжные документы, чей код совпал с документами строки очереди КСДСФ."""
+  sudzPmDocForestByCius(ciusKey: Int!): SudzPmDocForest!
+  """Платёжные документы, уже привязанные к счёту-фактуре."""
+  sudzPmDocForestByInv(invKey: Int!): SudzPmDocForest!
+  """Профиль кандидата СФ для decision-TreeList (платежи/документы/cias)."""
+  sudzSfDecisionProfile(
+    invKey: Int!
+    currentUplKey: Int
+    excelCnText: String
+    excelInvNum: String
+    excelCntrPrtNum: Int
+    excelBlnsSum: Float
+    """Код стройки Excel (CAC / ciputCAC)."""
+    excelCac: String
+  ): SudzSfDecisionProfile!
   """Excel-кандидат очереди двоящих долгов по ciudKey."""
   sudzInvDbtDoubleExcelCandidate(ciudKey: Int!): SudzSfDoubleExcelCandidate
   """Слоты invDbt по iKey (экран двоящих долгов)."""
@@ -133,6 +184,12 @@ extend type Mutation {
   Прогон воронки платежей (0074): Excel→Tbl при cipufFlTbl + stub cipu*; пишет HTML в лог.
   """
   runSudzPmtUplFunnel(input: RunSudzPmtUplFunnelInput!): SudzPmtUplFunnelResult!
+
+  """
+  Пересборка очереди КСДСФ платежей: InvNot + TwoLoad → ciusCiput.
+  Возвращает число строк open-очереди пакета.
+  """
+  rebuildSudzPmtUplSfDouble(pmKey: Int!): Int!
 
   """Создать лист Excel для выгрузки (CnInvDbtUplFileSh)."""
   createSudzDbtUplFileSh(input: CreateSudzDbtUplFileShInput!): SudzDbtUplFileSh!
@@ -282,6 +339,70 @@ type SudzPmtUplLauncher {
   upl: SudzPmUplLookup!
   """Шапка File (после ensure всегда есть)."""
   file: SudzPmtUplFile!
+}
+
+"""Строка вкладки «стройки новые» (cipuCacNot)."""
+type SudzPmtUplCstNew {
+  cacOrNull: String!
+  """Правые 6 символов cacOrNull."""
+  sh: String!
+  """Совпавший суффикс cstapIpgPnN или null."""
+  ipCode: String
+  """Ключ PIR; в FishEye нет tblPIR — null."""
+  pirIDnew: String
+  """Имя PIR; в FishEye нет tblPIR — null."""
+  pirName: String
+}
+
+"""Стройка, у которой есть код с заданным хвостом, и все её агенты и коды."""
+type SudzPmtUplCstMatch {
+  cstKey: Int!
+  cstName: String!
+  agents: [SudzPmtUplCstMatchAgent!]!
+}
+
+"""Агент стройки в дереве совпадения хвоста."""
+type SudzPmtUplCstMatchAgent {
+  cstaKey: Int!
+  """Подпись ogAgCs.ogaNm."""
+  agentLabel: String
+  """Код агента ogAg.ogaCode."""
+  ogaCode: String
+  points: [SudzPmtUplCstMatchPoint!]!
+}
+
+"""Код САК. sameSuffix — правые 6 символов равны аргументу запроса."""
+type SudzPmtUplCstMatchPoint {
+  cstapKey: Int!
+  cstapIpgPnN: String!
+  sameSuffix: Boolean!
+}
+
+"""Счётчики вкладок экрана D для одного pmKey."""
+type SudzPmtUplTabBadges {
+  cstNew: Int!
+  invNot: Int!
+  twoLoad: Int!
+  sfOpen: Int!
+}
+
+"""Хвост InvNot: один договор, нет cnInv, номер уже в invNum."""
+type SudzPmtUplInvNot {
+  cntrPrtNum: Int
+  cntrPrtName: String
+  cnName: String
+  cnKey: Int!
+  cnInv: String
+  """Число различных inv с этим номером в ags.invNum."""
+  invNumCount: Int
+}
+
+"""TwoLoad: номер СФ пакета с более чем одним cnInv."""
+type SudzPmtUplTwoLoad {
+  cnInv: String
+  cntrPrtNum: Int
+  cntrPrtName: String
+  ciCount: Int!
 }
 
 """Шапка лаунчера платежей (CnInvPmtUplFile)."""
@@ -678,6 +799,8 @@ type SudzDbtCanonDetail {
   slots: [SudzDbtCanonSlot!]!
   """Год-варианты, пересекающие upl карточки (для выбора yr_CmmGr / New)."""
   cmmYears: [SudzDbtCanonCmmYear!]!
+  """Цепи портфелей для графика (комбинации yr; coverage ↓)."""
+  portfolioChains: [SudzDbtCanonPortfolioChain!]!
 }
 
 """Слот канона."""
@@ -705,6 +828,26 @@ type SudzDbtCanonValue {
   uplDate: Date
   uplStatusOnDate: Date
   comments: [SudzDbtCanonComment!]!
+  """Имена портфелей года (yr_variant); пустой список = вне портфеля."""
+  portfolioLabels: [String!]!
+}
+
+"""Цепь портфелей выгрузок (не сущность БД)."""
+type SudzDbtCanonPortfolioChain {
+  id: String!
+  label: String!
+  yrKeys: [Int!]!
+  upls: [SudzDbtCanonChainUpl!]!
+  """Число DbtValue канона на upl этой цепи."""
+  coverage: Int!
+}
+
+"""Выгрузка на оси цепи."""
+type SudzDbtCanonChainUpl {
+  uplKey: Int!
+  uplName: String
+  uplDate: Date
+  uplStatusOnDate: Date
 }
 
 """Комментарий cnInvCmm на DbtValue (типы 1 и 8)."""
@@ -785,8 +928,9 @@ type SudzInvDbtVarInvNumCandidate {
   inNumNull: String
 }
 
-"""Excel-кандидат (строка CnInvDbtUplTbl)."""
+"""Excel-кандидат КСДСФ: свод (CnInvDbtUplTbl) или платежи (CnInvPmtUplTbl). source=dbt|pmt."""
 type SudzSfDoubleExcelCandidate {
+  """Ключ строки Tbl: cidutKey (dbt) или ciputKey (pmt)."""
   cidutKey: Int!
   findDbtNum: Int
   cidutAccount: Int
@@ -799,8 +943,11 @@ type SudzSfDoubleExcelCandidate {
   cidutCnDate: Date
   cidutCnInv: String
   cidutCnInvName: String
+  """dbt: дата обр.; pmt: дата проводки (ciputEntryDate)."""
   cidutFormtnDate: Date
+  """dbt: дата погаш.; pmt: срок (ciputDueDate)."""
   cidutMatrtyDate: Date
+  """Долг свода (только dbt). Для pmt всегда null — не алиас с дебета."""
   cidutDebt: Float
   cidutDebtOverdue: Float
   cidutDoc: String
@@ -808,6 +955,210 @@ type SudzSfDoubleExcelCandidate {
   cidutSheet: Int
   cidutSheetNum: Int
   cidutUnloadKey: Int
+  """dbt | pmt"""
+  source: String!
+  """Кредит платежа (pmt)."""
+  pmtCdtBlns: Float
+  pmtCdtBlnsOverd: Float
+  """Сумма документа СФ из Excel (pmt)."""
+  pmtDocSum: Float
+  """Баланс строки платежа (pmt)."""
+  pmtBlns: Float
+  """БЕ (pmt)."""
+  pmtBe: String
+  """Код стройки (pmt)."""
+  pmtCac: String
+  pmtAgentNum: Int
+  pmtAgentName: String
+  """Итог сальдо по присвоению СФ (Σ ciputBlns пакета)."""
+  pmtSfBlnsSum: Float
+  """Число строк Tbl в группе сальдо."""
+  pmtSfBlnsRows: Int
+}
+
+"""Белая строка Excel кейса КСДСФ pmt (колонки как в файле)."""
+type SudzPmtExcelCaseRow {
+  ciputKey: Int!
+  """Индекс листа книги (1-based)."""
+  sheetNum: Int
+  """Колонка «№ докум.»."""
+  docCode: String
+  """Колонка «Ссылка»."""
+  link: String
+  entryDate: Date
+  dueDate: Date
+  cac: String
+  be: String
+  blns: Float
+  cdtBlns: Float
+  docSum: Float
+  dueGrp: Int
+}
+
+"""Строка свода для сверки итога сальдо платежей."""
+type SudzPmtSfSumMatch {
+  dbtUplKey: Int!
+  cidutKey: Int!
+  invNum: String
+  accountNum: Int
+  debt: Float
+  debtOverdue: Float
+  cnName: String
+}
+
+"""Итог сальдо по присвоению и строки связанного свода с тем же СФ и счётом."""
+type SudzPmtSfSumCompare {
+  anchorSum: Float
+  anchorRows: Int!
+  linked: Boolean!
+  matches: [SudzPmtSfSumMatch!]!
+}
+
+"""Один платёж каталожного документа и его счёт-фактура."""
+type SudzPmDocLink {
+  docKey: Int!
+  docKod: String!
+  docDate: Date
+  docSum: Float
+  pmKey: Int!
+  uplKey: Int!
+  uplName: String
+  uplDate: Date
+  blns: Float
+  dbtBlns: Float
+  cdtBlns: Float
+  invKey: Int
+  invNum: String
+  cnKey: Int
+  cnNumber: String
+  cnName: String
+  counterparty: String
+  accountNum: String
+  """Ключ cstAgPn."""
+  cstKey: Int
+  """Полный код САК."""
+  cstCode: String
+  """Имя стройки / пункта."""
+  cstName: String
+}
+
+"""Лес платёжных документов."""
+type SudzPmDocForest {
+  fileCodes: Int!
+  matchedDocs: Int!
+  currentUplKey: Int
+  links: [SudzPmDocLink!]!
+}
+
+"""Исходы шапки сверки Excel ↔ кандидат (yes|no|suspicious|na; стройка ещё suffix)."""
+type SudzSfDecisionCompare {
+  invNumVerdict: String!
+  cnVerdict: String!
+  executorVerdict: String!
+  sumVerdict: String!
+  """Стройка: yes|suffix|no|na (suffix = совпал хвост из 6 символов кода САК)."""
+  cstVerdict: String!
+}
+
+"""Платёж профиля кандидата СФ."""
+type SudzSfDecisionPayment {
+  pmKey: Int!
+  uplKey: Int!
+  uplName: String
+  uplDate: Date
+  docKey: Int
+  docKod: String
+  docDate: Date
+  dbt: Float
+  cdt: Float
+  blns: Float
+  accountNum: String
+  ciKey: Int!
+  ciasKey: Int
+  cnKey: Int
+  contract: String
+  legacyPmInv: Int
+  cnInvKey: Int
+  hlCurrentUpl: Boolean!
+  hlOrphanLink: Boolean!
+  hlContractDiff: Boolean!
+  """Ключ cstAgPn."""
+  cstKey: Int
+  """Полный код САК."""
+  cstCode: String
+  """Имя стройки / пункта."""
+  cstName: String
+  """Код ≠ Excel (ни полный, ни хвост)."""
+  hlCstDiff: Boolean!
+  """Полный код ≠ Excel, но совпал хвост из 6 символов."""
+  hlCstSuffix: Boolean!
+}
+
+"""Сводка документа кандидата СФ."""
+type SudzSfDecisionDocSum {
+  docKod: String!
+  pmCount: Int!
+  blnsSum: Float
+  uplNames: String
+}
+
+"""Счёт ГК (cias) кандидата СФ."""
+type SudzSfDecisionCias {
+  ciasKey: Int!
+  ciKey: Int!
+  accountNum: String
+  pmCount: Int!
+  blnsSum: Float
+}
+
+"""Заготовка задолженности (stub)."""
+type SudzSfDecisionDebt {
+  title: String!
+}
+
+"""Сторона договора кандидата СФ."""
+type SudzSfDecisionParty {
+  csosKey: Int!
+  """1=агент, 2=исполнитель."""
+  cnSType: Int!
+  buirg: Int
+  name: String
+  hitExcel: Boolean!
+}
+
+"""Связь СФ с договором и стороны."""
+type SudzSfDecisionCnInv {
+  ciKey: Int!
+  cnKey: Int
+  contract: String
+  note: String
+  executors: [SudzSfDecisionParty!]!
+  agents: [SudzSfDecisionParty!]!
+}
+
+"""Профиль кандидата СФ для decision-TreeList."""
+type SudzSfDecisionProfile {
+  invKey: Int!
+  invNum: String
+  invEntered: DateTime
+  preferredCiKey: Int
+  preferredCnKey: Int
+  contract: String
+  """БУиРГ исполнителя preferred договора."""
+  cntrPrtNum: Int
+  """Имя исполнителя preferred договора."""
+  cntrPrtName: String
+  note: String
+  pmCount: Int!
+  blnsSum: Float
+  currentUplBlnsSum: Float
+  currentUplKey: Int
+  compare: SudzSfDecisionCompare!
+  cnInvs: [SudzSfDecisionCnInv!]!
+  payments: [SudzSfDecisionPayment!]!
+  docSums: [SudzSfDecisionDocSum!]!
+  cias: [SudzSfDecisionCias!]!
+  debts: [SudzSfDecisionDebt!]!
 }
 
 """Существующий СФ в домене с тем же номером."""
@@ -819,6 +1170,10 @@ type SudzSfDoubleDomainMatch {
   ciKey: Int
   cnKey: Int
   cnNum: String
+  """БУиРГ исполнителя договора (cn_s_type=2)."""
+  cntrPrtNum: Int
+  """Имя исполнителя."""
+  cntrPrtName: String
 }
 
 """Совпадение суммы в старой структуре (ags.cn_inv_dbt)."""

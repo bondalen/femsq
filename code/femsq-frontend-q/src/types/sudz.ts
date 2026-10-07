@@ -60,6 +60,63 @@ export interface SudzPmtUplLauncher {
   file: SudzPmtUplFile;
 }
 
+/** Строка вкладки «стройки новые» (cipuCacNot). */
+export interface SudzPmtUplCstNew {
+  cacOrNull: string;
+  sh: string;
+  ipCode: string | null;
+  pirIDnew: string | null;
+  pirName: string | null;
+}
+
+/** Код САК в дереве совпадения хвоста. */
+export interface SudzPmtUplCstMatchPoint {
+  cstapKey: number;
+  cstapIpgPnN: string;
+  sameSuffix: boolean;
+}
+
+/** Агент стройки в дереве совпадения хвоста. */
+export interface SudzPmtUplCstMatchAgent {
+  cstaKey: number;
+  agentLabel: string | null;
+  ogaCode: string | null;
+  points: SudzPmtUplCstMatchPoint[];
+}
+
+/** Стройка с тем же хвостом кода и все её агенты и коды. */
+export interface SudzPmtUplCstMatch {
+  cstKey: number;
+  cstName: string;
+  agents: SudzPmtUplCstMatchAgent[];
+}
+
+/** Счётчики вкладок экрана D. */
+export interface SudzPmtUplTabBadges {
+  cstNew: number;
+  invNot: number;
+  twoLoad: number;
+  sfOpen: number;
+}
+
+/** Хвост InvNot пакета (live). */
+export interface SudzPmtUplInvNot {
+  cntrPrtNum: number | null;
+  cntrPrtName: string | null;
+  cnName: string | null;
+  cnKey: number;
+  cnInv: string | null;
+  invNumCount: number | null;
+}
+
+/** TwoLoad пакета: СФ с ci×>1 (live). */
+export interface SudzPmtUplTwoLoad {
+  cnInv: string | null;
+  cntrPrtNum: number | null;
+  cntrPrtName: string | null;
+  ciCount: number;
+}
+
 export interface UpdateSudzPmUplFileInput {
   pmKey: number;
   path?: string | null;
@@ -422,6 +479,24 @@ export interface SudzDbtCanonValue {
   uplDate: string | null;
   uplStatusOnDate: string | null;
   comments?: SudzDbtCanonComment[];
+  /** Имена портфелей года; [] = вне портфеля. */
+  portfolioLabels?: string[];
+}
+
+export interface SudzDbtCanonChainUpl {
+  uplKey: number;
+  uplName: string | null;
+  uplDate: string | null;
+  uplStatusOnDate: string | null;
+}
+
+/** Цепь портфелей для комбо графика. */
+export interface SudzDbtCanonPortfolioChain {
+  id: string;
+  label: string;
+  yrKeys: number[];
+  upls: SudzDbtCanonChainUpl[];
+  coverage: number;
 }
 
 export interface SudzDbtCanonSlot {
@@ -442,9 +517,10 @@ export interface SudzDbtCanonDetail {
   dbtKey: number;
   slots: SudzDbtCanonSlot[];
   cmmYears?: SudzDbtCanonCmmYear[];
+  portfolioChains?: SudzDbtCanonPortfolioChain[];
 }
 
-/** Excel-кандидат КСДСФ. */
+/** Excel-кандидат КСДСФ (свод или платежи). */
 export interface SudzSfDoubleExcelCandidate {
   cidutKey: number;
   findDbtNum: number | null;
@@ -467,6 +543,208 @@ export interface SudzSfDoubleExcelCandidate {
   cidutSheet: number | null;
   cidutSheetNum: number | null;
   cidutUnloadKey: number | null;
+  /** dbt | pmt */
+  source: string;
+  pmtCdtBlns: number | null;
+  pmtCdtBlnsOverd: number | null;
+  pmtDocSum: number | null;
+  pmtBlns: number | null;
+  pmtBe: string | null;
+  pmtCac: string | null;
+  pmtAgentNum: number | null;
+  pmtAgentName: string | null;
+  /** Σ ciputBlns по присвоению СФ в пакете. */
+  pmtSfBlnsSum: number | null;
+  /** Число строк Tbl в группе сальдо. */
+  pmtSfBlnsRows: number | null;
+}
+
+/** Белая строка Excel кейса КСДСФ pmt (колонки как в файле). */
+export interface SudzPmtExcelCaseRow {
+  ciputKey: number;
+  sheetNum: number | null;
+  /** Колонка «№ докум.» */
+  docCode: string | null;
+  /** Колонка «Ссылка» */
+  link: string | null;
+  entryDate: string | null;
+  dueDate: string | null;
+  cac: string | null;
+  be: string | null;
+  blns: number | null;
+  cdtBlns: number | null;
+  docSum: number | null;
+  dueGrp: number | null;
+}
+
+/** Строка свода в сверке итога сальдо. */
+export interface SudzPmtSfSumMatch {
+  dbtUplKey: number;
+  cidutKey: number;
+  invNum: string | null;
+  accountNum: number | null;
+  debt: number | null;
+  debtOverdue: number | null;
+  cnName: string | null;
+}
+
+/** Итог сальдо по СФ и строки связанного свода. */
+export interface SudzPmtSfSumCompare {
+  anchorSum: number | null;
+  anchorRows: number;
+  linked: boolean;
+  matches: SudzPmtSfSumMatch[];
+}
+
+/** Платёж каталожного документа и его счёт-фактура. */
+export interface SudzPmDocLink {
+  docKey: number;
+  docKod: string;
+  docDate: string | null;
+  docSum: number | null;
+  pmKey: number;
+  uplKey: number;
+  uplName: string | null;
+  uplDate: string | null;
+  blns: number | null;
+  dbtBlns: number | null;
+  cdtBlns: number | null;
+  invKey: number | null;
+  invNum: string | null;
+  cnKey: number | null;
+  cnNumber: string | null;
+  cnName: string | null;
+  counterparty: string | null;
+  accountNum: string | null;
+  cstKey: number | null;
+  cstCode: string | null;
+  cstName: string | null;
+}
+
+/** Лес платёжных документов. */
+export interface SudzPmDocForest {
+  fileCodes: number;
+  matchedDocs: number;
+  currentUplKey: number | null;
+  links: SudzPmDocLink[];
+}
+
+/** Исход сверки Excel ↔ кандидат (yes|no|suspicious|na; стройка ещё suffix). */
+export type SudzSfDecisionVerdict = 'yes' | 'no' | 'suspicious' | 'na' | 'suffix' | string;
+
+/** Шапка сверки decision-TreeList. */
+export interface SudzSfDecisionCompare {
+  invNumVerdict: SudzSfDecisionVerdict;
+  cnVerdict: SudzSfDecisionVerdict;
+  executorVerdict: SudzSfDecisionVerdict;
+  sumVerdict: SudzSfDecisionVerdict;
+  /** Стройка: yes|suffix|no|na. */
+  cstVerdict: SudzSfDecisionVerdict;
+}
+
+/** Платёж профиля кандидата СФ. */
+export interface SudzSfDecisionPayment {
+  pmKey: number;
+  uplKey: number;
+  uplName: string | null;
+  uplDate: string | null;
+  docKey: number | null;
+  docKod: string | null;
+  docDate: string | null;
+  dbt: number | null;
+  cdt: number | null;
+  blns: number | null;
+  accountNum: string | null;
+  ciKey: number;
+  ciasKey: number | null;
+  cnKey: number | null;
+  contract: string | null;
+  legacyPmInv: number | null;
+  cnInvKey: number | null;
+  hlCurrentUpl: boolean;
+  hlOrphanLink: boolean;
+  hlContractDiff: boolean;
+  cstKey: number | null;
+  cstCode: string | null;
+  cstName: string | null;
+  hlCstDiff: boolean;
+  hlCstSuffix: boolean;
+}
+
+/** Сводка документа кандидата СФ. */
+export interface SudzSfDecisionDocSum {
+  docKod: string;
+  pmCount: number;
+  blnsSum: number | null;
+  uplNames: string | null;
+}
+
+/** Счёт ГК кандидата СФ. */
+export interface SudzSfDecisionCias {
+  ciasKey: number;
+  ciKey: number;
+  accountNum: string | null;
+  pmCount: number;
+  blnsSum: number | null;
+}
+
+/** Stub задолженности. */
+export interface SudzSfDecisionDebt {
+  title: string;
+}
+
+/** Сторона договора кандидата СФ. */
+export interface SudzSfDecisionParty {
+  csosKey: number;
+  cnSType: number;
+  buirg: number | null;
+  name: string | null;
+  hitExcel: boolean;
+}
+
+/** Связь СФ с договором и стороны. */
+export interface SudzSfDecisionCnInv {
+  ciKey: number;
+  cnKey: number | null;
+  contract: string | null;
+  note: string | null;
+  executors: SudzSfDecisionParty[];
+  agents: SudzSfDecisionParty[];
+}
+
+/** Профиль кандидата СФ для decision-TreeList. */
+export interface SudzSfDecisionProfile {
+  invKey: number;
+  invNum: string | null;
+  invEntered: string | null;
+  preferredCiKey: number | null;
+  preferredCnKey: number | null;
+  contract: string | null;
+  cntrPrtNum: number | null;
+  cntrPrtName: string | null;
+  note: string | null;
+  pmCount: number;
+  blnsSum: number | null;
+  currentUplBlnsSum: number | null;
+  currentUplKey: number | null;
+  compare: SudzSfDecisionCompare;
+  cnInvs: SudzSfDecisionCnInv[];
+  payments: SudzSfDecisionPayment[];
+  docSums: SudzSfDecisionDocSum[];
+  cias: SudzSfDecisionCias[];
+  debts: SudzSfDecisionDebt[];
+}
+
+/** Аргументы запроса профиля decision-TreeList. */
+export interface SudzSfDecisionProfileArgs {
+  invKey: number;
+  currentUplKey?: number | null;
+  excelCnText?: string | null;
+  excelInvNum?: string | null;
+  excelCntrPrtNum?: number | null;
+  excelBlnsSum?: number | null;
+  /** Код стройки Excel (CAC). */
+  excelCac?: string | null;
 }
 
 /** Доменный СФ с совпадающим номером. */
@@ -478,6 +756,8 @@ export interface SudzSfDoubleDomainMatch {
   ciKey: number | null;
   cnKey: number | null;
   cnNum: string | null;
+  cntrPrtNum: number | null;
+  cntrPrtName: string | null;
 }
 
 /** Совпадение суммы в старой структуре (cn_inv_dbt). */

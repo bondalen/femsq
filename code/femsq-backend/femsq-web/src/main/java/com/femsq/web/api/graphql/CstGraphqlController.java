@@ -193,7 +193,22 @@ public class CstGraphqlController {
     @MutationMapping
     public CstAgPnDto createCstAgPoint(@Argument("input") CstAgPnCreateRequest input) {
         log.info("GraphQL mutation createCstAgPoint");
-        return mutate(() -> cstAgPnMapper.toDto(cstAgPnService.create(cstAgPnMapper.toDomain(input))));
+        try {
+            return cstAgPnMapper.toDto(cstAgPnService.create(cstAgPnMapper.toDomain(input)));
+        } catch (DaoException exception) {
+            if (SqlDuplicateKey.matches(exception)) {
+                String code = input.cstapIpgPnN() == null ? "" : input.cstapIpgPnN().trim();
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "Код САК уже есть в каталоге: " + code,
+                        exception);
+            }
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage(), exception);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        }
     }
 
     @MutationMapping

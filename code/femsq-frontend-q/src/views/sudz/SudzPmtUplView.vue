@@ -234,8 +234,42 @@
                 align="left"
               >
                 <QTab name="progress" label="ход загрузки" data-test="sudz-pmt-upl-tab-progress" />
-                <QTab name="doubles" label="повторяющиеся СФ" data-test="sudz-pmt-upl-tab-doubles" />
-                <QTab name="cst-new" label="стройки новые" data-test="sudz-pmt-upl-tab-cst-new" />
+                <QTab name="doubles" data-test="sudz-pmt-upl-tab-doubles">
+                  <div class="row items-center no-wrap">
+                  <span>повторяющиеся СФ</span>
+                  <QBadge
+                    class="q-ml-xs"
+                    :color="badgeColor(sfWorkOpenCount)"
+                    :label="badgeText(sfWorkOpenCount, store.sfDoublesLoading && store.badges == null)"
+                    data-test="sudz-pmt-upl-badge-sf-open"
+                  />
+                  <QBadge
+                    class="q-ml-xs"
+                    outline
+                    :color="badgeColor(store.badges?.invNot)"
+                    :label="'Inv ' + badgeText(store.badges?.invNot, store.badgesLoading)"
+                    data-test="sudz-pmt-upl-badge-inv-not"
+                  />
+                  <QBadge
+                    class="q-ml-xs"
+                    outline
+                    :color="badgeColor(store.badges?.twoLoad)"
+                    :label="'Two ' + badgeText(store.badges?.twoLoad, store.badgesLoading)"
+                    data-test="sudz-pmt-upl-badge-two-load"
+                  />
+                  </div>
+                </QTab>
+                <QTab name="cst-new" data-test="sudz-pmt-upl-tab-cst-new">
+                  <div class="row items-center no-wrap">
+                  <span>стройки новые</span>
+                  <QBadge
+                    class="q-ml-xs"
+                    :color="badgeColor(cstNewCount)"
+                    :label="badgeText(cstNewCount, store.cstNewLoading && store.badges == null)"
+                    data-test="sudz-pmt-upl-badge-cst-new"
+                  />
+                  </div>
+                </QTab>
               </QTabs>
               <QSeparator />
 
@@ -258,33 +292,142 @@
                 </QTabPanel>
 
                 <QTabPanel name="doubles" class="q-pa-none fill-pane column no-wrap">
+                  <div class="row items-center q-px-sm q-py-xs q-gutter-sm shrink-0">
+                    <QBtnToggle
+                      v-model="doublesFilter"
+                      dense
+                      unelevated
+                      toggle-color="primary"
+                      :options="doublesFilterOptions"
+                      data-test="sudz-pmt-upl-doubles-filter"
+                    />
+                    <div class="text-caption text-grey-7">
+                      {{ sfWorkFilteredRows.length }} из {{ sfWorkRows.length }}
+                      · Inv {{ store.badges?.invNot ?? store.invNot.length }}
+                      · Two {{ store.badges?.twoLoad ?? store.twoLoad.length }}
+                    </div>
+                    <QSpace />
+                    <QBtn
+                      flat
+                      dense
+                      no-caps
+                      color="primary"
+                      label="Разбор повторяющихся СФ…"
+                      :disable="!sfWorkOpenCount"
+                      :loading="store.sfDoublesLoading"
+                      data-test="sudz-pmt-upl-open-sf-double"
+                      @click="openSfDouble"
+                    />
+                  </div>
                   <FemsqTable
                     class="col"
-                    :rows="invDoubleRows"
-                    :columns="invDoubleColumns"
-                    row-key="rowKey"
+                    :rows="sfWorkFilteredRows"
+                    :columns="sfWorkColumns"
+                    row-key="ciusKey"
                     dense
                     flat
-                    data-test="sudz-pmt-upl-doubles"
+                    :loading="
+                      store.sfDoublesLoading || store.invNotLoading || store.twoLoadLoading
+                    "
+                    selection="single"
+                    v-model:selected="sfWorkSelected"
+                    data-test="sudz-pmt-upl-sf-work"
                   />
-                  <div class="text-grey-6 q-pa-sm shrink-0">
-                    Каркас (данные появятся после шага cipuCn_CtptCnOneInvTwoLoad).
+                  <div
+                    v-if="!sfWorkRows.length && !store.sfDoublesLoading"
+                    class="text-grey-6 q-pa-sm shrink-0"
+                    data-test="sudz-pmt-upl-sf-work-empty"
+                  >
+                    Очередь пуста (InvNot/TwoLoad → sync при выборе пакета).
                   </div>
                 </QTabPanel>
 
                 <QTabPanel name="cst-new" class="q-pa-none fill-pane column no-wrap">
-                  <FemsqTable
-                    class="col"
-                    :rows="cstNewRows"
-                    :columns="cstNewColumns"
-                    row-key="rowKey"
-                    dense
-                    flat
-                    data-test="sudz-pmt-upl-cst-new"
-                  />
-                  <div class="text-grey-6 q-pa-sm shrink-0">
-                    Каркас (данные появятся после шага cipuCacNot).
-                  </div>
+                  <QSplitter
+                    v-model="cstSplit"
+                    :limits="[25, 70]"
+                    separator-class="sudz-split-sep"
+                    class="sudz-cst-splitter"
+                    data-test="sudz-pmt-upl-cst-split"
+                  >
+                    <template #before>
+                      <div class="fill-pane column no-wrap">
+                        <FemsqTable
+                          class="col"
+                          :rows="store.cstNew"
+                          :columns="cstNewColumns"
+                          row-key="cacOrNull"
+                          dense
+                          flat
+                          :loading="store.cstNewLoading"
+                          selection="single"
+                          v-model:selected="cstSelected"
+                          hide-bottom
+                          :rows-per-page-options="[0]"
+                          data-test="sudz-pmt-upl-cst-new"
+                        />
+                        <div
+                          v-if="!store.cstNewLoading && store.cstNew.length === 0"
+                          class="text-grey-6 q-pa-sm shrink-0"
+                          data-test="sudz-pmt-upl-cst-new-empty"
+                        >
+                          Новых строек нет.
+                        </div>
+                      </div>
+                    </template>
+                    <template #after>
+                      <div class="fill-pane column no-wrap" data-test="sudz-pmt-upl-cst-tree-pane">
+                        <div
+                          v-if="!selectedCst"
+                          class="text-grey-6 q-pa-sm"
+                          data-test="sudz-pmt-upl-cst-tree-pick"
+                        >
+                          Выберите строку очереди.
+                        </div>
+                        <div
+                          v-else-if="store.cstMatchLoading"
+                          class="text-grey-6 q-pa-sm"
+                          data-test="sudz-pmt-upl-cst-tree-loading"
+                        >
+                          Ищем стройки с хвостом {{ selectedCst.sh }}…
+                        </div>
+                        <div
+                          v-else-if="store.cstMatch.length === 0"
+                          class="q-pa-sm"
+                          data-test="sudz-pmt-upl-cst-tree-empty"
+                        >
+                          <div class="text-grey-8">
+                            Стройки с хвостом {{ selectedCst.sh }} в каталоге нет.
+                            Создайте стройку на экране «Стройки».
+                          </div>
+                          <QBtn
+                            class="q-mt-sm"
+                            flat
+                            dense
+                            no-caps
+                            color="primary"
+                            label="Стройки"
+                            data-test="sudz-pmt-upl-cst-open-sites"
+                            @click="openConstructionSites"
+                          />
+                        </div>
+                        <FemsqWalkTree
+                          v-else
+                          class="col"
+                          :spec="cstMatchSpec"
+                          :root-id="null"
+                          :roots-token="cstRootsToken"
+                          :fetch-node="fetchCstMatchNode"
+                          :fetch-expand="fetchCstMatchExpand"
+                          :fetch-query="fetchCstMatchQuery"
+                          :fetch-roots="fetchCstMatchRoots"
+                          data-test="sudz-pmt-upl-cst-tree"
+                          root-class="sudz-pmt-upl-cst-walk"
+                          @action="onCstWalkAction"
+                        />
+                      </div>
+                    </template>
+                  </QSplitter>
                 </QTabPanel>
               </QTabPanels>
             </QCard>
@@ -315,14 +458,83 @@
         </QCardActions>
       </QCard>
     </QDialog>
+
+    <QDialog v-model="agentDialog.open" persistent>
+      <QCard style="min-width: 420px">
+        <QCardSection class="text-subtitle1">Агент стройки</QCardSection>
+        <QCardSection class="q-gutter-sm">
+          <div>{{ agentDialog.cstName }}</div>
+          <div v-if="agentDialog.options.length === 0" class="text-negative" data-test="sudz-pmt-upl-agent-missing">
+            Агента с кодом {{ agentDialog.code }} в каталоге нет. Нового агента здесь не создают.
+          </div>
+          <QSelect
+            v-else
+            v-model="agentDialog.cstaAg"
+            dense
+            outlined
+            emit-value
+            map-options
+            label="агент"
+            :options="agentDialog.options"
+            :hint="`подсказка по коду ${agentDialog.code}`"
+            data-test="sudz-pmt-upl-agent-select"
+          />
+        </QCardSection>
+        <QCardActions align="right">
+          <QBtn flat no-caps label="Отмена" v-close-popup />
+          <QBtn
+            color="primary"
+            unelevated
+            no-caps
+            label="Добавить"
+            :disable="agentDialog.cstaAg == null"
+            :loading="cstActionBusy"
+            data-test="sudz-pmt-upl-agent-submit"
+            @click="saveAgent"
+          />
+        </QCardActions>
+      </QCard>
+    </QDialog>
+
+    <QDialog v-model="pointDialog.open" persistent>
+      <QCard style="min-width: 420px">
+        <QCardSection class="text-subtitle1">Код САК</QCardSection>
+        <QCardSection class="q-gutter-sm">
+          <div>{{ pointDialog.agentLabel }}</div>
+          <QInput
+            :model-value="pointDialog.code"
+            dense
+            outlined
+            readonly
+            label="код"
+            data-test="sudz-pmt-upl-point-code"
+          />
+        </QCardSection>
+        <QCardActions align="right">
+          <QBtn flat no-caps label="Отмена" v-close-popup />
+          <QBtn
+            color="primary"
+            unelevated
+            no-caps
+            label="Добавить"
+            :disable="!pointDialog.code || cstActionBusy"
+            :loading="cstActionBusy"
+            data-test="sudz-pmt-upl-point-submit"
+            @click="savePoint"
+          />
+        </QCardActions>
+      </QCard>
+    </QDialog>
   </QPage>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
 import {
+  QBadge,
   QBanner,
   QBtn,
+  QBtnToggle,
   QCard,
   QCardActions,
   QCardSection,
@@ -330,7 +542,9 @@ import {
   QDialog,
   QInput,
   QPage,
+  QSelect,
   QSeparator,
+  QSpace,
   QSplitter,
   QTab,
   QTabPanel,
@@ -339,27 +553,50 @@ import {
   QToggle,
   useQuasar
 } from 'quasar';
-import { FemsqTable, type FemsqTableColumn } from 'fequlib';
+import { FemsqTable, FemsqWalkTree, type FemsqTableColumn, type FemsqWalkActionContext, type FemsqWalkTreeSpec } from 'fequlib';
 
+import { createCstAgent, createCstAgPoint, getOgAgCsLookups } from '@/api/construction-sites-api';
+import { useConnectionStore } from '@/stores/connection';
 import { useSudzPmtUplStore } from '@/stores/sudz-pmt-upl';
+import { useSudzSfDoubleSessionStore } from '@/stores/sudz-sf-double-session';
+import {
+  lookupsForAgentCode,
+  pmtCstMatchQueryRows,
+  pmtCstMatchRootRows,
+  pmtCstMatchRootsToken,
+  queueAgentCode
+} from '@/sudz/pmt-cst-match-tree';
+import * as cstMatchSpecJson from '@/trees/pmt-cst-match.tree.json';
 import {
   SUDZ_PMT_UPL_FUNNEL_ENABLED_IDS,
   SUDZ_PMT_UPL_FUNNEL_STEPS,
   pmtFunnelPrefixIds
 } from '@/sudz/pmt-upl-funnel-steps';
+import { buildPmtSfWorklist, type SudzPmtSfWorkRow } from '@/sudz/pmt-sf-worklist';
 import { normalizeExplorerPath } from '@/utils/explorer-path';
-import type { SudzPmUplLookup } from '@/types/sudz';
+import type { SudzPmUplLookup, SudzPmtUplCstNew } from '@/types/sudz';
 
 const $q = useQuasar();
 const store = useSudzPmtUplStore();
+const sfSession = useSudzSfDoubleSessionStore();
+const connection = useConnectionStore();
 
 /** Доля высоты списка выгрузок (%). */
 const listSplit = ref(28);
 /** Доля высоты панели «загрузка» внутри деталей (%). */
 const detailSplit = ref(34);
+/** Доля ширины очереди «стройки новые» (%). */
+const cstSplit = ref(40);
 
 const mainTab = ref('load');
 const subTab = ref('progress');
+/** Фильтр единого грида повторов: все / только InvNot / только TwoLoad. */
+const doublesFilter = ref<'all' | 'invNot' | 'twoLoad'>('all');
+const doublesFilterOptions = [
+  { label: 'Все', value: 'all' },
+  { label: 'InvNot', value: 'invNot' },
+  { label: 'TwoLoad', value: 'twoLoad' }
+];
 /** Черновик пути Excel; в БД — по blur / Enter. */
 const pathDraft = ref('');
 /** Черновик cipufSheet (у pmt нет FileSh). */
@@ -396,12 +633,52 @@ watch(progressHtml, async () => {
   }
 });
 
-interface EmptyGridRow {
-  rowKey: number;
+const sfWorkRows = computed<SudzPmtSfWorkRow[]>(() =>
+  buildPmtSfWorklist(store.sfDoubles, store.invNot, store.twoLoad)
+);
+
+const sfWorkFilteredRows = computed<SudzPmtSfWorkRow[]>(() => {
+  const rows = sfWorkRows.value;
+  if (doublesFilter.value === 'invNot') {
+    return rows.filter((r) => r.fromInvNot);
+  }
+  if (doublesFilter.value === 'twoLoad') {
+    return rows.filter((r) => r.fromTwoLoad);
+  }
+  return rows;
+});
+
+const sfWorkSelected = ref<SudzPmtSfWorkRow[]>([]);
+
+const sfWorkOpenCount = computed(
+  () => sfWorkRows.value.filter((r) => r.ciusStatus === 'open').length
+);
+
+/**
+ * Якорь КСДСФ: выбранная строка worklist → ciusKey (зерно = очередь).
+ */
+function resolveSfDoubleAnchor(): number | null {
+  return sfWorkSelected.value[0]?.ciusKey ?? null;
 }
 
-const invDoubleRows = ref<EmptyGridRow[]>([]);
-const cstNewRows = ref<EmptyGridRow[]>([]);
+/**
+ * Открывает экран КСДСФ для текущего пакета платежей.
+ */
+function openSfDouble(): void {
+  sfSession.openFromPmt(resolveSfDoubleAnchor());
+  connection.navigate('sudz-sf-double');
+}
+
+/** Число строек: бейдж API, пока он не пришёл — длина грида. */
+const cstNewCount = computed<number | null>(() => {
+  if (store.badges) {
+    return store.badges.cstNew;
+  }
+  if (store.cstNewLoading) {
+    return null;
+  }
+  return store.cstNew.length;
+});
 
 const createDialog = reactive({
   open: false,
@@ -421,15 +698,259 @@ const uplColumns: FemsqTableColumn<SudzPmUplLookup>[] = [
   { name: 'pmKey', label: 'pm_key', field: 'pmKey', align: 'right' }
 ];
 
-const invDoubleColumns: FemsqTableColumn<EmptyGridRow>[] = [
-  { name: 'cnNum', label: 'Договор', field: 'rowKey', align: 'left' },
-  { name: 'invNum', label: 'СФ', field: 'rowKey', align: 'left' }
+const sfWorkColumns: FemsqTableColumn<SudzPmtSfWorkRow>[] = [
+  {
+    name: 'fromInvNot',
+    label: 'Inv',
+    field: 'fromInvNot',
+    align: 'center',
+    format: (v) => ((v as boolean) ? '✓' : '')
+  },
+  {
+    name: 'fromTwoLoad',
+    label: 'Two',
+    field: 'fromTwoLoad',
+    align: 'center',
+    format: (v) => ((v as boolean) ? '✓' : '')
+  },
+  { name: 'ciusStatus', label: 'статус', field: 'ciusStatus', align: 'left' },
+  { name: 'ciusCnNum', label: 'Договор', field: 'ciusCnNum', align: 'left' },
+  { name: 'ciusCnKey', label: 'cn', field: 'ciusCnKey', align: 'right' },
+  { name: 'ciusInvNum', label: 'СФ', field: 'ciusInvNum', align: 'left' },
+  {
+    name: 'ciusInvNumCount',
+    label: 'совпад.',
+    field: 'ciusInvNumCount',
+    align: 'right'
+  },
+  {
+    name: 'twoLoadCiCount',
+    label: 'ci×',
+    field: 'twoLoadCiCount',
+    align: 'right'
+  }
 ];
 
-const cstNewColumns: FemsqTableColumn<EmptyGridRow>[] = [
-  { name: 'cstCode', label: 'Код', field: 'rowKey', align: 'left' },
-  { name: 'cstName', label: 'Имя', field: 'rowKey', align: 'left' }
+const cstNewColumns: FemsqTableColumn<SudzPmtUplCstNew>[] = [
+  { name: 'cacOrNull', label: 'САК', field: 'cacOrNull', align: 'left' },
+  { name: 'sh', label: 'sh', field: 'sh', align: 'left' },
+  {
+    name: 'ipCode',
+    label: 'ipCode',
+    field: 'ipCode',
+    align: 'left',
+    format: (value) => (value ? String(value) : '—')
+  }
 ];
+
+const cstSelected = ref<SudzPmtUplCstNew[]>([]);
+
+const selectedCst = computed(() => cstSelected.value[0] ?? null);
+
+const cstMatchSpec = cstMatchSpecJson as FemsqWalkTreeSpec;
+
+const cstRootsToken = computed(() =>
+  pmtCstMatchRootsToken(selectedCst.value?.sh, store.cstMatch)
+);
+
+/**
+ * Лес не зовёт fetchNode; заглушка для обязательного пропа.
+ */
+async function fetchCstMatchNode(): Promise<null> {
+  return null;
+}
+
+/**
+ * Рёбра каталога на этой вкладке не используются.
+ */
+async function fetchCstMatchExpand(): Promise<[]> {
+  return [];
+}
+
+/**
+ * Корни леса из кэша sudzPmtUplCstMatch (хвост — у хоста).
+ */
+async function fetchCstMatchRoots(): Promise<ReturnType<typeof pmtCstMatchRootRows>> {
+  return pmtCstMatchRootRows(store.cstMatch);
+}
+
+/**
+ * Агенты стройки или коды агента из того же кэша.
+ */
+async function fetchCstMatchQuery(
+  queryId: string,
+  fromId: number
+): Promise<ReturnType<typeof pmtCstMatchQueryRows>> {
+  return pmtCstMatchQueryRows(queryId, fromId, store.cstMatch);
+}
+
+watch(selectedCst, (row) => {
+  if (!row?.sh) {
+    store.clearCstMatch();
+    return;
+  }
+  void store.loadCstMatch(row.sh);
+});
+
+watch(
+  () => store.cstNew,
+  (rows) => {
+    const current = selectedCst.value;
+    if (!current) {
+      return;
+    }
+    if (!rows.some((row) => row.cacOrNull === current.cacOrNull)) {
+      cstSelected.value = [];
+    }
+  }
+);
+
+/**
+ * Переход на экран «Стройки», где создаётся новая cst.
+ */
+function openConstructionSites(): void {
+  connection.navigate('construction-sites');
+}
+
+const cstActionBusy = ref(false);
+const agentLookups = ref<Array<{ ogaKey: number; ogaNm: string }>>([]);
+const agentDialog = reactive({
+  open: false,
+  cstKey: 0,
+  cstName: '',
+  code: '',
+  cstaAg: null as number | null,
+  options: [] as Array<{ label: string; value: number }>
+});
+const pointDialog = reactive({
+  open: false,
+  cstaKey: 0,
+  agentLabel: '',
+  code: ''
+});
+
+/**
+ * Кнопки обходчика: агент у стройки, код у агента.
+ */
+function onCstWalkAction(context: FemsqWalkActionContext): void {
+  if (context.actionId === 'pmt.cst.agent') {
+    void openAgentDialog(context);
+    return;
+  }
+  if (context.actionId === 'pmt.cst.code') {
+    openPointDialog(context);
+  }
+}
+
+/**
+ * Агент существующего ogAg с тем же трёхсимвольным кодом, что в начале cacOrNull.
+ */
+async function openAgentDialog(context: FemsqWalkActionContext): Promise<void> {
+  const row = selectedCst.value;
+  const cstKey = context.node.rowKey;
+  if (!row || cstKey == null || context.node.table !== 'cst') {
+    return;
+  }
+  const code = queueAgentCode(row.cacOrNull);
+  try {
+    if (agentLookups.value.length === 0) {
+      agentLookups.value = await getOgAgCsLookups();
+    }
+  } catch (e) {
+    $q.notify({ type: 'negative', message: e instanceof Error ? e.message : String(e) });
+    return;
+  }
+  const matches = lookupsForAgentCode(agentLookups.value, code);
+  agentDialog.cstKey = cstKey;
+  agentDialog.cstName = context.node.fields.label ?? context.node.title;
+  agentDialog.code = code;
+  agentDialog.options = matches.map((item) => ({ label: item.ogaNm, value: item.ogaKey }));
+  agentDialog.cstaAg = matches.length === 1 ? matches[0].ogaKey : null;
+  agentDialog.open = true;
+}
+
+/**
+ * Код САК фиксирован кодом выбранной строки очереди.
+ */
+function openPointDialog(context: FemsqWalkActionContext): void {
+  const row = selectedCst.value;
+  const cstaKey = context.node.rowKey;
+  if (!row || cstaKey == null || context.node.table !== 'cstAg') {
+    return;
+  }
+  pointDialog.cstaKey = cstaKey;
+  pointDialog.agentLabel = context.node.fields.label || context.node.title || `агент ${cstaKey}`;
+  pointDialog.code = row.cacOrNull;
+  pointDialog.open = true;
+}
+
+/**
+ * Добавляет cstAg и оставляет строку в очереди: кода САК ещё нет.
+ */
+async function saveAgent(): Promise<void> {
+  const row = selectedCst.value;
+  if (agentDialog.cstaAg == null || !row) {
+    return;
+  }
+  cstActionBusy.value = true;
+  try {
+    await createCstAgent({ cstaAg: agentDialog.cstaAg, cstaCst: agentDialog.cstKey });
+    agentDialog.open = false;
+    await store.loadCstMatch(row.sh);
+    $q.notify({ type: 'positive', message: 'Агент добавлен. Строка очереди ждёт код САК.' });
+  } catch (e) {
+    $q.notify({ type: 'negative', message: e instanceof Error ? e.message : String(e) });
+  } finally {
+    cstActionBusy.value = false;
+  }
+}
+
+/**
+ * Добавляет cstAgPn с кодом очереди. После этого строка уходит из cipuCacNot.
+ */
+async function savePoint(): Promise<void> {
+  const row = selectedCst.value;
+  const code = pointDialog.code;
+  if (!row || !code || cstActionBusy.value) {
+    return;
+  }
+  cstActionBusy.value = true;
+  try {
+    await createCstAgPoint({ cstapCsta: pointDialog.cstaKey, cstapIpgPnN: code });
+    pointDialog.open = false;
+    await store.refreshQueues();
+    $q.notify({ type: 'positive', message: 'Код добавлен. Строка ушла из очереди.' });
+  } catch (e) {
+    await store.refreshQueues();
+    const stillQueued = store.cstNew.some((item) => item.cacOrNull === code);
+    if (!stillQueued) {
+      pointDialog.open = false;
+      await store.loadCstMatch(row.sh);
+      $q.notify({ type: 'positive', message: 'Код уже в каталоге. Строка ушла из очереди.' });
+      return;
+    }
+    $q.notify({ type: 'negative', message: e instanceof Error ? e.message : String(e) });
+  } finally {
+    cstActionBusy.value = false;
+  }
+}
+
+/**
+ * Подпись бейджа: число или многоточие, пока счётчик грузится.
+ */
+function badgeText(value: number | null | undefined, loading: boolean): string {
+  if (value == null) {
+    return loading ? '…' : '0';
+  }
+  return String(value);
+}
+
+/**
+ * Цвет бейджа: акцент, если очередь не пуста.
+ */
+function badgeColor(value: number | null | undefined): string {
+  return value != null && value > 0 ? 'primary' : 'grey-7';
+}
 
 const selectedRows = ref<SudzPmUplLookup[]>([]);
 
@@ -649,16 +1170,27 @@ onMounted(() => {
 }
 
 .sudz-main-splitter,
-.sudz-detail-splitter {
+.sudz-detail-splitter,
+.sudz-cst-splitter {
   flex: 1 1 auto;
   min-height: 0;
   width: 100%;
 }
 
 .sudz-main-splitter :deep(> .q-splitter__panel),
-.sudz-detail-splitter :deep(> .q-splitter__panel) {
+.sudz-detail-splitter :deep(> .q-splitter__panel),
+.sudz-cst-splitter :deep(> .q-splitter__panel) {
   overflow: hidden;
   width: 100%;
+}
+
+.sudz-cst-splitter {
+  height: 100%;
+}
+
+.sudz-cst-splitter :deep(.q-splitter__separator) {
+  width: 5px;
+  background: transparent;
 }
 
 .fill-pane {

@@ -217,6 +217,8 @@ CnInvPmtUpl                            ← RS = ags_cn_inv_pm_upl; Order By cn_i
 
 **Карта Offset (2026-08-18):** пять файлов `export_{счётГК}_26-0422.XLSX` в `D:\wire-guard-share-nb-win\femsq\excel\2026_03\debit` — лист `Sheet1`, якорь **U1**, колонки **A–Z**, заголовки **совпадают** между счетами. Полная таблица: [`export_offset-map.md`](../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/export_offset-map.md). F и G оба подписаны «Агент» (номер / имя). Другие годы не сверялись. Закомментированные Offset в VBA — другая раскладка; живой код = эта A–Z.
 
+**Структура строк файла (2026-10-03):** группировка Excel (документ / жёлтый итог срока / группа стройки), сверка традиционной и QII-раскладок, промежуточные ключи staging — [`export-row-tree-structure.md`](../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/export-row-tree-structure.md).
+
 ### 6.2. Воронка (всегда, даже если Excel не перечитывали)
 
 Порядок в `btnUpload_Click` (после блока `cipufFlTbl`):

@@ -13,6 +13,7 @@ import {
   relationRootToken,
   shouldRebuildRelationTree
 } from '@/trees/relation-tree';
+import { usesWalkList } from 'fequlib';
 
 describe('relation-tree walker', () => {
   it('rebuild только при смене (таблица, ключ)', () => {
@@ -241,4 +242,56 @@ describe('relation-tree walker', () => {
     expect(kids[0].kind).toBe('record');
     expect(kids[0].actions).toEqual([]);
   });
+
+  it('без view узел outline не получает поля колонок list', () => {
+    expect(usesWalkList({ view: undefined })).toBe(false);
+    expect(usesWalkList({ view: 'outline' })).toBe(false);
+    const node = buildRecordNode('cst', 10, { cstName: 'Север', cstKey: '10' }, {
+      title: ['cstName'],
+      detail: '*',
+      children: []
+    });
+    expect(node.title).toBe('Север');
+    expect(node.kind).toBe('record');
+    expect(listCell(node, 'cstName')).toBeUndefined();
+  });
+
+  it('колонки list кладёт поля записи и не копирует их на папку', () => {
+    expect(usesWalkList({ view: 'list' })).toBe(true);
+    const columns = [
+      { label: 'Подпись', field: 'title' },
+      { label: 'Имя', field: 'cstName', level: 'table' as const }
+    ];
+    const parent = buildRecordNode('cst', 10, { cstName: 'Север' }, {
+      title: ['cstName'],
+      detail: '*',
+      children: [
+        {
+          edge: 'cst.cstAg',
+          to: 'cstAg',
+          card: '1:N',
+          folder: 'агенты',
+          title: ['cstaKey'],
+          detail: '*',
+          children: []
+        }
+      ]
+    }, columns);
+    expect(listCell(parent, 'cstName')).toBe('Север');
+    expect(parent.kind).toBe('record');
+    const folder = childrenAfterRecordLoad(parent, {}, columns)[0];
+    expect(folder.kind).toBe('folder');
+    expect(folder.title).toBe('агенты');
+    expect(listCell(folder, 'cstName')).toBeUndefined();
+    const point = childrenAfterFolderLoad(
+      folder,
+      [{ key: 3, fields: { cstaKey: '3', cstName: 'агент' } }],
+      columns
+    )[0];
+    expect(listCell(point, 'cstName')).toBe('агент');
+  });
 });
+
+function listCell(node: object, field: string): unknown {
+  return (node as Record<string, unknown>)[field];
+}
