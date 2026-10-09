@@ -3,7 +3,7 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-10-06"
+      "lastUpdated": "2026-10-09"
     },
     "sessions": [
       {
@@ -12,7 +12,7 @@
           "chat-attributes": {
             "id": "chat-2026-09-22-001",
             "created": "2026-09-22",
-            "lastUpdated": "2026-10-06",
+            "lastUpdated": "2026-10-09",
             "owner": "Александр",
             "status": "pending",
             "priority": "high",
@@ -39,6 +39,51 @@
             }
           },
           "entries": [
+            {
+              "log": {
+                "displayName": "1.14.7.2–.3 алиасы invNum и переезды docKod (success). № log-2026-10-09-001",
+                "log-attributes": {
+                  "id": "log-2026-10-09-001",
+                  "timestamp": "2026-10-09T10:10:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "0077",
+                    "ksdsf",
+                    "1.14.7",
+                    "1.14.7.2",
+                    "1.14.7.3"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend.web",
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "1.14.7 A–E → листья .1–.5; реализованы .2 и .3",
+                    "details": "Папка «Номера» (ags.invNum); invNumVerdict по любому алиасу. Документы: otherInv/Cn + transferHint; чип docTransferVerdict. Unit SfDecisionCompareUtil; SQL smoke @106724 doc 5400224218 → КС-51 · 12-05/07-31. JAR 0.1.0.340-SNAPSHOT. План 0922 v0.5.42.",
+                    "outcome": "1.14.7 закрыт. ★ next = операторский разбор open @59.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                      "docs/development/notes/UI/02-12_femsq-tree/ksdsf-inv-decision.tree.md",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java",
+                      "code/femsq-frontend-q/src/trees/ksdsf-inv-decision.tree.json"
+                    ]
+                  }
+                ]
+              }
+            },
             {
               "log": {
                 "displayName": "1.14.7E+ стройка в pm-doc-forest (success). № log-2026-10-06-006",

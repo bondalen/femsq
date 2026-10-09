@@ -5,7 +5,7 @@
 **Корень данных:** `inv.iKey` = `selectedDomain[0].invKey` выбранной строки **верхнего списка** совпадений  
 **Правила:** [relation-tree.md](./relation-tree.md) · [Решение 009](../../../../project/decisions/009-femsq-walk-tree.md) · план [0922 §1.14 / §2.8](../../chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md)  
 **Контракт:** [KSDSF_CONTEXTS](../../sql/26-0816-sudz-sf-num-collision/KSDSF_CONTEXTS.md)  
-**Дата спеки:** 2026-10-05 · лист **1.14.1** · enrichment **1.14.7A** 2026-10-06 · **1.14.7E** стройка/хвост 2026-10-06
+**Дата спеки:** 2026-10-05 · лист **1.14.1** · enrichment **1.14.7.1** (контрагент) / **1.14.7.5** (стройка) 2026-10-06 · **1.14.7.2–.3** (алиасы / переезды) 2026-10-09
 
 ## 0. Зачем
 
@@ -48,9 +48,11 @@ Outline [`ksdsf-inv-num`](./ksdsf-inv-num.tree.md) показывает ката
 |----------|-------|----------|-------|
 | Номер СФ | текст Tbl / «б/н» | `inv.iNum` | да \| нет \| подозрительный |
 | Договор | текст Tbl | `cn` через `cnInv` строки списка / pm | да \| нет |
-| Исполнитель | БУиРГ Excel | сторона договора кандидата (`cn_s_type=2`) | да \| нет \| н/д (**1.14.7A**) |
+| Исполнитель | БУиРГ Excel | сторона договора кандидата (`cn_s_type=2`) | да \| нет \| н/д (**1.14.7.1**) |
 | Сумма | Σ сальдо кейса / строка | Σ `blns` pm кандидата (или pm текущего пакета) | да \| нет \| н/д |
-| Стройка | CAC Excel (`pmtCac`) | коды `cnipCstAgPn` → `cstapIpgPnN` на pm | да \| **хвост** \| нет \| н/д (**1.14.7E**) |
+| Стройка | CAC Excel (`pmtCac`) | коды `cnipCstAgPn` → `cstapIpgPnN` на pm | да \| **хвост** \| нет \| н/д (**1.14.7.5**) |
+| Номер (алиасы) | текст Tbl / «б/н» | `inv.iNum` **и** все `ags.invNum.inNum` | да \| нет \| подозрительный (**1.14.7.2**) |
+| Документы | — | коды на pm кандидата; переезд = тот же код на **другом** inv/cn | н/д \| **переезд** (**1.14.7.3**) |
 
 **Стройка / хвост:** полный код Excel среди кодов кандидата → **да**; иначе `RIGHT(TRIM(code), 6)` совпал (код переходит между агентами, как **1.6.2**) → **хвост**; иначе **нет**. Нормализация та же, что `SudzPmtUplCstMatch.CODE_SUFFIX_LENGTH`.
 
@@ -60,12 +62,13 @@ Outline [`ksdsf-inv-num`](./ksdsf-inv-num.tree.md) показывает ката
 
 ```text
 inv · номер · дата · note
-├─ Договоры         ← cnInv 1:N (**1.14.7D**)
+├─ Номера           ← ags.invNum (**1.14.7.2**); hitExcel при совпадении с Excel
+├─ Договоры         ← cnInv 1:N (**1.14.7.4**)
 │   └─ cn · номер
 │       ├─ Исполнители   cn_s_type=2 (· Excel при hit)
 │       └─ Агенты        cn_s_type=1
 ├─ Платежи          ← главный блок (раскрыт по умолчанию)
-├─ Документы        сводка distinct № докум.
+├─ Документы        сводка + переезды других inv/cn (**1.14.7.3**)
 ├─ Счета ГК (cias)
 └─ Задолженности    вторично (можно пустая папка / позже)
 ```
@@ -74,9 +77,22 @@ inv · номер · дата · note
 
 ### 4.1. Корень `inv` (level `inv`)
 
-- Заголовок: `iKey`, `iNum`, `iTimeOfEntry` (или `invEntered`), краткий `ciCn`/`cn_number` из preferred cnInv если однозначен, **контрагент** (`cntrPrtNum · cntrPrtName`, **1.14.7A**).
+- Заголовок: `iKey`, `iNum`, `iTimeOfEntry` (или `invEntered`), краткий `ciCn`/`cn_number` из preferred cnInv если однозначен, **контрагент** (`cntrPrtNum · cntrPrtName`, **1.14.7.1**), склейка алиасов при N>1 (**1.14.7.2**).
 - Деталь: `ciNote` preferred cnInv (если один), число pm / Σ сальдо, число cias.
 - Preferred cnInv: при одном `cnInv` с `ciInv=iKey` — он; при нескольких — тот, что в строке списка совпадений (`domain.ciKey`), иначе не подставлять договор в заголовок.
+
+### 4.1a. Папка «Номера» (level `invNum`, **1.14.7.2**)
+
+Все строки `ags.invNum` с `inInv = root`. Primary = `inNum` совпадает с `inv.iNum` (или единственная).
+
+| Колонка | Поле |
+|---------|------|
+| Номер | `inNum` (+ «· Excel» при hit) |
+| inKey | `inKey` |
+| Primary | да / пусто |
+| Excel | hitExcel |
+
+Сверка шапки: `invNumVerdict` = yes, если Excel совпал с **любым** алиасом (нормализация как раньше).
 
 ### 4.2. Папка «Платежи» (level `pm`) — главный блок
 
@@ -94,7 +110,7 @@ inv · номер · дата · note
 | Кредит | `cdt` | money |
 | Сальдо | `blns` | money |
 | Счёт ГК | `accountNum` | |
-| Стройка | `cstCode` (+ имя) | **1.14.7E**; метки `≠стройка` / `хвост` |
+| Стройка | `cstCode` (+ имя) | **1.14.7.5**; метки `≠стройка` / `хвост` |
 | cnInv | `ciKey` | карта домена (43566) |
 | Договор | `contract` | `cn_number` / имя |
 | cn_inv_key | `legacyPmInv` | пуст → «через cias» |
@@ -113,7 +129,7 @@ inv · номер · дата · note
 
 ### 4.3. Папка «Документы» (level `docSum`)
 
-Сводка **по платежам этого СФ** (не история чужих договоров по коду):
+Сводка **по платежам этого СФ** (не замена правого `pm-doc-forest`):
 
 | Колонка | Поле |
 |---------|------|
@@ -121,8 +137,11 @@ inv · номер · дата · note
 | N pm | `pmCount` |
 | Σ сальдо | `blnsSum` |
 | Пакеты | `uplNames` (кратко) |
+| Чужие inv | `otherInvCount` (**1.14.7.3**) |
+| Чужие cn | `otherCnCount` |
+| Переезд | `transferHint` / `hlDocTransfer` |
 
-Клик по строке — опционально позже: фильтр папки «Платежи» / подсветка. В **1.14.2–1.14.3** достаточно списка без навигации.
+**Переезд:** тот же `cn_inv_doc_kod` встречается на платежах **другого** `ciInv` (и/или другого `ciCn`). Подсказка — краткий текст чужого договора/номера СФ (не полный лес). Чип шапки: `docTransferVerdict` = `transfer` \| `na`.
 
 ### 4.4. Папка «Счета ГК» (level `cias`)
 
@@ -157,8 +176,9 @@ GraphQL `sudzSfDecisionProfile(invKey, currentUplKey?, excelCnText?, excelInvNum
 
 - корень inv + preferred cnInv (если однозначен) + агрегаты;
 - `payments` / `docSums` / `cias` / `debts` (debts stub пустой);
-- `compare` (yes|no|suspicious|na|**suffix**) и флаги строк `hlCurrentUpl` / `hlOrphanLink` / `hlContractDiff` / `hlCstDiff` / `hlCstSuffix`.
-- на платеже: `cstKey` / `cstCode` / `cstName` из `cnipCstAgPn`.
+- `compare` (yes|no|suspicious|na|**suffix**|**transfer**) и флаги строк `hlCurrentUpl` / `hlOrphanLink` / `hlContractDiff` / `hlCstDiff` / `hlCstSuffix` / `hlDocTransfer`.
+- `invNums` — алиасы (**1.14.7.2**); на платеже: `cstKey` / `cstCode` / `cstName` из `cnipCstAgPn`.
+- на `docSums`: `otherInvCount` / `otherCnCount` / `transferHint` / `hlDocTransfer` (**1.14.7.3**).
 
 Путь данных: `cn_inv_pm → cias → cnInv.ciInv = invKey`.  
 Клиент: `getSudzSfDecisionProfile` в `sudz-api.ts`.  

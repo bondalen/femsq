@@ -576,6 +576,13 @@ const SUDZ_SF_DECISION_PROFILE = gql`
         executorVerdict
         sumVerdict
         cstVerdict
+        docTransferVerdict
+      }
+      invNums {
+        inKey
+        inNum
+        primary
+        hitExcel
       }
       cnInvs {
         ciKey
@@ -629,6 +636,10 @@ const SUDZ_SF_DECISION_PROFILE = gql`
         pmCount
         blnsSum
         uplNames
+        otherInvCount
+        otherCnCount
+        transferHint
+        hlDocTransfer
       }
       cias {
         ciasKey

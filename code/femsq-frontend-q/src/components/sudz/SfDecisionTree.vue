@@ -46,11 +46,22 @@
         :label="`стройка · ${decisionVerdictLabel(profile.compare.cstVerdict)}`"
         data-test="sudz-sf-decision-cmp-cst"
       />
+      <QChip
+        dense
+        size="sm"
+        :color="decisionVerdictColor(profile.compare.docTransferVerdict)"
+        text-color="white"
+        :label="`доки · ${decisionVerdictLabel(profile.compare.docTransferVerdict)}`"
+        data-test="sudz-sf-decision-cmp-docxfer"
+      />
       <span class="text-caption text-grey-6">
         inv {{ profile.invKey }}
         · cnInv {{ profile.preferredCiKey ?? '—' }}
         · pm {{ profile.pmCount }}
         · Σ {{ formatMoneyOrDash(profile.blnsSum) }}
+        <template v-if="(profile.invNums?.length ?? 0) > 1">
+          · номеров {{ profile.invNums.length }}
+        </template>
         <template v-if="profile.currentUplKey != null">
           · пакет {{ profile.currentUplKey }} Σ
           {{ formatMoneyOrDash(profile.currentUplBlnsSum) }}

@@ -1,6 +1,6 @@
 {
   "id": "ksdsf-inv-decision",
-  "version": 3,
+  "version": 4,
   "view": "list",
   "root": {
     "table": "inv",
@@ -9,7 +9,7 @@
     "level": "inv"
   },
   "title": ["title"],
-  "detail": ["title", "invNum", "invEntered", "contract", "party", "pmCount", "blnsSum", "note"],
+  "detail": ["title", "invNum", "invEntered", "contract", "party", "aliases", "pmCount", "blnsSum", "note"],
   "columnSets": [
     {
       "level": "inv",
@@ -19,8 +19,18 @@
         { "label": "Дата", "field": "invEntered" },
         { "label": "Договор", "field": "contract" },
         { "label": "Контрагент", "field": "party" },
+        { "label": "Алиасы", "field": "aliases" },
         { "label": "N pm", "field": "pmCount" },
         { "label": "Σ сальдо", "field": "blnsSum" }
+      ]
+    },
+    {
+      "level": "invNum",
+      "columns": [
+        { "label": "Номер", "field": "title" },
+        { "label": "inKey", "field": "inKey" },
+        { "label": "Primary", "field": "primary" },
+        { "label": "Excel", "field": "hitExcel" }
       ]
     },
     {
@@ -67,7 +77,10 @@
         { "label": "№ докум.", "field": "docKod" },
         { "label": "N pm", "field": "pmCount" },
         { "label": "Σ сальдо", "field": "blnsSum" },
-        { "label": "Пакеты", "field": "uplNames" }
+        { "label": "Пакеты", "field": "uplNames" },
+        { "label": "Чужие inv", "field": "otherInvCount" },
+        { "label": "Чужие cn", "field": "otherCnCount" },
+        { "label": "Переезд", "field": "transferHint" }
       ]
     },
     {
@@ -89,6 +102,16 @@
     }
   ],
   "children": [
+    {
+      "queryId": "sudz.ksdsf.decision.invNums",
+      "to": "invNum",
+      "card": "1:N",
+      "level": "invNum",
+      "folder": "Номера",
+      "title": ["title"],
+      "detail": ["title", "inKey", "primary", "hitExcel"],
+      "children": []
+    },
     {
       "queryId": "sudz.ksdsf.decision.cnInvs",
       "to": "cnInv",
@@ -160,7 +183,17 @@
       "level": "docSum",
       "folder": "Документы",
       "title": ["title"],
-      "detail": ["title", "docKod", "pmCount", "blnsSum", "uplNames"],
+      "detail": [
+        "title",
+        "docKod",
+        "pmCount",
+        "blnsSum",
+        "uplNames",
+        "otherInvCount",
+        "otherCnCount",
+        "transferHint",
+        "hlDocTransfer"
+      ],
       "valueKinds": {
         "blnsSum": "money"
       },

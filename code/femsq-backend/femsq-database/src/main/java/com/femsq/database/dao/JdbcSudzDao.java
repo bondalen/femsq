@@ -103,6 +103,7 @@ import com.femsq.database.model.sudz.SudzSfDecisionCias;
 import com.femsq.database.model.sudz.SudzSfDecisionCnInv;
 import com.femsq.database.model.sudz.SudzSfDecisionCompare;
 import com.femsq.database.model.sudz.SudzSfDecisionDocSum;
+import com.femsq.database.model.sudz.SudzSfDecisionInvNum;
 import com.femsq.database.model.sudz.SudzSfDecisionParty;
 import com.femsq.database.model.sudz.SudzSfDecisionPayment;
 import com.femsq.database.model.sudz.SudzSfDecisionProfile;
@@ -12873,12 +12874,24 @@ public class JdbcSudzDao implements SudzDao {
                     }
                 }
             }
-            List<SudzSfDecisionDocSum> docSums = aggregateDecisionDocSums(payments);
+            List<SudzSfDecisionInvNum> invNums = loadDecisionInvNums(connection, invKey, invNum, excelInvNum);
+            List<String> candidateInvNums = new ArrayList<>();
+            if (invNum != null && !invNum.isBlank()) {
+                candidateInvNums.add(invNum);
+            }
+            for (SudzSfDecisionInvNum alias : invNums) {
+                if (alias.inNum() != null && !alias.inNum().isBlank()) {
+                    candidateInvNums.add(alias.inNum());
+                }
+            }
+            List<SudzSfDecisionDocSum> docSums = enrichDecisionDocTransfers(
+                    connection, invKey, aggregateDecisionDocSums(payments));
             List<SudzSfDecisionCias> cias = aggregateDecisionCias(payments);
+            boolean anyDocTransfer = docSums.stream().anyMatch(SudzSfDecisionDocSum::hlDocTransfer);
             BigDecimal sumForCompare = currentUplKey != null ? currentUplBlnsSum : blnsSum;
             SudzSfDecisionCompare compare = SfDecisionCompareUtil.build(
                     excelInvNum,
-                    invNum,
+                    candidateInvNums,
                     excelCnText,
                     contract,
                     excelCntrPrtNum,
@@ -12886,16 +12899,19 @@ public class JdbcSudzDao implements SudzDao {
                     excelBlnsSum,
                     excelBlnsSum == null ? null : sumForCompare,
                     excelCac,
-                    candidateCstCodes
+                    candidateCstCodes,
+                    anyDocTransfer
             );
             log.info("findSfDecisionProfile invKey=" + invKey
                     + " pm=" + payments.size()
                     + " docs=" + docSums.size()
+                    + " aliases=" + invNums.size()
                     + " cias=" + cias.size()
                     + " cnInvs=" + cnInvs.size()
                     + " currentUpl=" + currentUplKey
                     + " party=" + cntrPrtNum
-                    + " cst=" + compare.cstVerdict());
+                    + " cst=" + compare.cstVerdict()
+                    + " docXfer=" + compare.docTransferVerdict());
             return new SudzSfDecisionProfile(
                     invKey,
                     invNum,
@@ -12911,6 +12927,7 @@ public class JdbcSudzDao implements SudzDao {
                     currentUplBlnsSum,
                     currentUplKey,
                     compare,
+                    invNums,
                     cnInvs,
                     List.copyOf(payments),
                     docSums,
@@ -13099,9 +13116,160 @@ public class JdbcSudzDao implements SudzDao {
             if (names.length() > 120) {
                 names = names.substring(0, 117) + "…";
             }
-            result.add(new SudzSfDecisionDocSum(e.getKey(), acc.count, acc.sum, names));
+            result.add(new SudzSfDecisionDocSum(
+                    e.getKey(), acc.count, acc.sum, names, 0, 0, null, false));
         }
         return List.copyOf(result);
+    }
+
+    /**
+     * Алиасы {@code ags.invNum} кандидата СФ.
+     *
+     * @param connection соединение
+     * @param invKey inv
+     * @param primaryNum {@code inv.iNum}
+     * @param excelInvNum номер Excel для hitExcel
+     * @return алиасы
+     * @throws SQLException ошибка SQL
+     */
+    private static List<SudzSfDecisionInvNum> loadDecisionInvNums(
+            Connection connection,
+            int invKey,
+            String primaryNum,
+            String excelInvNum
+    ) throws SQLException {
+        String sql = ""
+                + "SELECT n.inKey, n.inNum"
+                + " FROM ags.invNum AS n"
+                + " WHERE n.inInv = ?"
+                + " ORDER BY n.inKey";
+        List<SudzSfDecisionInvNum> rows = new ArrayList<>();
+        String primaryNorm = SfDecisionCompareUtil.normalize(primaryNum);
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, invKey);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int inKey = rs.getInt("inKey");
+                    String inNum = rs.getNString("inNum");
+                    boolean primary = primaryNorm.isEmpty()
+                            ? rows.isEmpty()
+                            : primaryNorm.equals(SfDecisionCompareUtil.normalize(inNum));
+                    boolean hit = excelInvNum != null
+                            && !excelInvNum.isBlank()
+                            && "yes".equals(SfDecisionCompareUtil.invNumVerdict(excelInvNum, inNum));
+                    // suspicious match тоже hit для подсветки
+                    if (!hit && excelInvNum != null && !excelInvNum.isBlank()) {
+                        hit = "suspicious".equals(SfDecisionCompareUtil.invNumVerdict(excelInvNum, inNum));
+                    }
+                    rows.add(new SudzSfDecisionInvNum(inKey, inNum, primary, hit));
+                }
+            }
+        }
+        if (!rows.isEmpty() && rows.stream().noneMatch(SudzSfDecisionInvNum::primary)) {
+            SudzSfDecisionInvNum first = rows.get(0);
+            rows.set(0, new SudzSfDecisionInvNum(first.inKey(), first.inNum(), true, first.hitExcel()));
+        }
+        return List.copyOf(rows);
+    }
+
+    /**
+     * Дополняет сводку документов счётчиками переездов на другие inv/cn.
+     *
+     * @param connection соединение
+     * @param invKey текущий кандидат
+     * @param base сводка без переездов
+     * @return сводка с переездами
+     * @throws SQLException ошибка SQL
+     */
+    private static List<SudzSfDecisionDocSum> enrichDecisionDocTransfers(
+            Connection connection,
+            int invKey,
+            List<SudzSfDecisionDocSum> base
+    ) throws SQLException {
+        if (base.isEmpty()) {
+            return base;
+        }
+        List<String> codes = base.stream()
+                .map(SudzSfDecisionDocSum::docKod)
+                .filter(kod -> kod != null && !kod.isBlank() && !"—".equals(kod))
+                .distinct()
+                .toList();
+        if (codes.isEmpty()) {
+            return base;
+        }
+        StringBuilder inList = new StringBuilder();
+        for (int i = 0; i < codes.size(); i++) {
+            if (i > 0) {
+                inList.append(',');
+            }
+            inList.append('?');
+        }
+        String sql = ""
+                + "SELECT CONVERT(nvarchar(40), CAST(d.cn_inv_doc_kod AS decimal(18, 0))) AS docKod,"
+                + " COUNT(DISTINCT CASE WHEN ci.ciInv <> ? THEN ci.ciInv END) AS otherInv,"
+                + " COUNT(DISTINCT CASE WHEN ci.ciInv <> ? THEN ci.ciCn END) AS otherCn,"
+                + " MIN(CASE WHEN ci.ciInv <> ? THEN"
+                + "   COALESCE(NULLIF(LTRIM(RTRIM(cn.cn_number)), N''), CAST(ci.ciCn AS nvarchar(20)))"
+                + " END) AS sampleCn,"
+                + " MIN(CASE WHEN ci.ciInv <> ? THEN"
+                + "   COALESCE(NULLIF(LTRIM(RTRIM(inv.iNum)), N''), CAST(ci.ciInv AS nvarchar(20)))"
+                + " END) AS sampleInv"
+                + " FROM ags.cn_inv_doc AS d"
+                + " INNER JOIN ags.cn_inv_pm AS pm ON pm.cn_inv_doc = d.cn_inv_doc_key"
+                + " INNER JOIN ags.cnInvAccntSmpl AS s ON s.ciasKey = pm.ciaCnInvAccntSmpl"
+                + " INNER JOIN ags.cnInv AS ci ON ci.ciKey = s.ciasCnInv"
+                + " LEFT JOIN ags.cn AS cn ON cn.cn_key = ci.ciCn"
+                + " LEFT JOIN ags.inv AS inv ON inv.iKey = ci.ciInv"
+                + " WHERE CONVERT(nvarchar(40), CAST(d.cn_inv_doc_kod AS decimal(18, 0))) IN ("
+                + inList + ")"
+                + " GROUP BY d.cn_inv_doc_kod";
+        Map<String, int[]> counts = new HashMap<>();
+        Map<String, String> hints = new HashMap<>();
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            int idx = 1;
+            ps.setInt(idx++, invKey);
+            ps.setInt(idx++, invKey);
+            ps.setInt(idx++, invKey);
+            ps.setInt(idx++, invKey);
+            for (String code : codes) {
+                ps.setNString(idx++, code);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String kod = rs.getNString("docKod");
+                    int otherInv = rs.getInt("otherInv");
+                    int otherCn = rs.getInt("otherCn");
+                    counts.put(kod, new int[] {otherInv, otherCn});
+                    if (otherInv > 0 || otherCn > 0) {
+                        String sampleCn = rs.getNString("sampleCn");
+                        String sampleInv = rs.getNString("sampleInv");
+                        String hint = (sampleCn == null ? "—" : sampleCn)
+                                + " · "
+                                + (sampleInv == null ? "—" : sampleInv);
+                        if (otherInv > 1 || otherCn > 1) {
+                            hint = hint + " (+)";
+                        }
+                        hints.put(kod, hint);
+                    }
+                }
+            }
+        }
+        List<SudzSfDecisionDocSum> enriched = new ArrayList<>(base.size());
+        for (SudzSfDecisionDocSum row : base) {
+            int[] c = counts.getOrDefault(row.docKod(), new int[] {0, 0});
+            boolean transfer = c[0] > 0 || c[1] > 0;
+            enriched.add(new SudzSfDecisionDocSum(
+                    row.docKod(),
+                    row.pmCount(),
+                    row.blnsSum(),
+                    row.uplNames(),
+                    c[0],
+                    c[1],
+                    transfer ? hints.get(row.docKod()) : null,
+                    transfer
+            ));
+        }
+        return List.copyOf(enriched);
     }
 
     /**

@@ -8,14 +8,16 @@ import type {
   SudzSfDecisionCias,
   SudzSfDecisionCnInv,
   SudzSfDecisionDocSum,
+  SudzSfDecisionInvNum,
   SudzSfDecisionParty,
   SudzSfDecisionPayment,
   SudzSfDecisionProfile,
   SudzSfDecisionVerdict
 } from '@/types/sudz';
 
-/** Корень / договоры / стороны / платежи / сводки — queryId из JSON. */
+/** Корень / номера / договоры / стороны / платежи / сводки — queryId из JSON. */
 export const DECISION_ROOT = 'sudz.ksdsf.decision.root';
+export const DECISION_INV_NUMS = 'sudz.ksdsf.decision.invNums';
 export const DECISION_CN_INVS = 'sudz.ksdsf.decision.cnInvs';
 export const DECISION_EXECUTORS = 'sudz.ksdsf.decision.executors';
 export const DECISION_AGENTS = 'sudz.ksdsf.decision.agents';
@@ -50,7 +52,13 @@ export function decisionRootsToken(profile: SudzSfDecisionProfile | null): strin
           .join('+')}`
     )
     .join(';');
-  return `${profile.invKey}|${profile.pmCount}|${pm}|${cn}`;
+  const aliases = (profile.invNums ?? [])
+    .map((a) => `${a.inKey}:${a.inNum ?? ''}:${a.hitExcel ? 1 : 0}`)
+    .join(';');
+  const docs = (profile.docSums ?? [])
+    .map((d) => `${d.docKod}:${d.otherInvCount}:${d.otherCnCount}:${d.hlDocTransfer ? 1 : 0}`)
+    .join(';');
+  return `${profile.invKey}|${profile.pmCount}|${pm}|${cn}|${aliases}|${docs}|${profile.compare.docTransferVerdict}`;
 }
 
 /**
@@ -68,6 +76,8 @@ export function decisionVerdictLabel(verdict: SudzSfDecisionVerdict): string {
       return 'подозр.';
     case 'suffix':
       return 'хвост';
+    case 'transfer':
+      return 'переезд';
     case 'na':
       return 'н/д';
     default:
@@ -88,6 +98,7 @@ export function decisionVerdictColor(verdict: SudzSfDecisionVerdict): string {
       return 'negative';
     case 'suspicious':
     case 'suffix':
+    case 'transfer':
       return 'warning';
     default:
       return 'grey-6';
@@ -104,6 +115,12 @@ export function decisionRootRow(profile: SudzSfDecisionProfile): FemsqWalkFetchR
     profile.cntrPrtNum != null || profile.cntrPrtName
       ? `${profile.cntrPrtNum ?? '—'} · ${profile.cntrPrtName ?? '—'}`
       : null;
+  const aliases = (profile.invNums ?? [])
+    .map((a) => a.inNum?.trim())
+    .filter((n): n is string => !!n)
+    .filter((n, i, arr) => arr.indexOf(n) === i);
+  const aliasesText =
+    aliases.length > 1 ? aliases.join(' · ') : aliases.length === 1 ? null : null;
   return {
     key: profile.invKey,
     fields: [
@@ -112,6 +129,7 @@ export function decisionRootRow(profile: SudzSfDecisionProfile): FemsqWalkFetchR
       { name: 'invEntered', value: profile.invEntered },
       { name: 'contract', value: profile.contract },
       { name: 'party', value: party },
+      { name: 'aliases', value: aliases.length > 1 ? aliasesText : null },
       { name: 'pmCount', value: String(profile.pmCount) },
       { name: 'blnsSum', value: numberField(profile.blnsSum) },
       { name: 'note', value: profile.note }
@@ -131,6 +149,12 @@ export function decisionQueryRows(
   fromId: number,
   profile: SudzSfDecisionProfile
 ): FemsqWalkFetchRow[] {
+  if (queryId === DECISION_INV_NUMS) {
+    if (fromId !== profile.invKey) {
+      return [];
+    }
+    return (profile.invNums ?? []).map(invNumRow);
+  }
   if (queryId === DECISION_CN_INVS) {
     if (fromId !== profile.invKey) {
       return [];
@@ -164,6 +188,21 @@ export function decisionQueryRows(
     }));
   }
   return [];
+}
+
+function invNumRow(row: SudzSfDecisionInvNum): FemsqWalkFetchRow {
+  const mark = row.hitExcel ? ' · Excel' : '';
+  const primary = row.primary ? ' · primary' : '';
+  const num = row.inNum?.trim() ? row.inNum : '—';
+  return {
+    key: row.inKey,
+    fields: [
+      { name: 'title', value: `${num}${primary}${mark}` },
+      { name: 'inKey', value: String(row.inKey) },
+      { name: 'primary', value: row.primary ? 'да' : '' },
+      { name: 'hitExcel', value: row.hitExcel ? 'да' : '' }
+    ]
+  };
 }
 
 function cnInvRow(row: SudzSfDecisionCnInv): FemsqWalkFetchRow {
@@ -240,14 +279,19 @@ function paymentRow(pm: SudzSfDecisionPayment): FemsqWalkFetchRow {
 
 function docSumRow(row: SudzSfDecisionDocSum, index: number): FemsqWalkFetchRow {
   const kod = row.docKod?.trim() ? row.docKod : '—';
+  const mark = row.hlDocTransfer ? ' · переезд' : '';
   return {
     key: DOC_KEY_BASE - index,
     fields: [
-      { name: 'title', value: kod },
+      { name: 'title', value: `${kod}${mark}` },
       { name: 'docKod', value: kod },
       { name: 'pmCount', value: String(row.pmCount) },
       { name: 'blnsSum', value: numberField(row.blnsSum) },
-      { name: 'uplNames', value: row.uplNames }
+      { name: 'uplNames', value: row.uplNames },
+      { name: 'otherInvCount', value: String(row.otherInvCount ?? 0) },
+      { name: 'otherCnCount', value: String(row.otherCnCount ?? 0) },
+      { name: 'transferHint', value: row.transferHint },
+      { name: 'hlDocTransfer', value: row.hlDocTransfer ? 'да' : '' }
     ]
   };
 }

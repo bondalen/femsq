@@ -1058,6 +1058,18 @@ type SudzSfDecisionCompare {
   sumVerdict: String!
   """Стройка: yes|suffix|no|na (suffix = совпал хвост из 6 символов кода САК)."""
   cstVerdict: String!
+  """Переезды docKod: transfer|na (код встречался на другом inv/cn)."""
+  docTransferVerdict: String!
+}
+
+"""Алиас номера СФ (ags.invNum) для decision-TreeList."""
+type SudzSfDecisionInvNum {
+  inKey: Int!
+  inNum: String
+  """Совпадает с inv.iNum (или единственный)."""
+  primary: Boolean!
+  """Совпал с номером Excel кейса."""
+  hitExcel: Boolean!
 }
 
 """Платёж профиля кандидата СФ."""
@@ -1100,6 +1112,14 @@ type SudzSfDecisionDocSum {
   pmCount: Int!
   blnsSum: Float
   uplNames: String
+  """Число других inv с тем же кодом документа."""
+  otherInvCount: Int!
+  """Число других договоров с тем же кодом."""
+  otherCnCount: Int!
+  """Краткая подсказка чужого договора/СФ."""
+  transferHint: String
+  """Код встречался на другом inv/cn."""
+  hlDocTransfer: Boolean!
 }
 
 """Счёт ГК (cias) кандидата СФ."""
@@ -1154,6 +1174,8 @@ type SudzSfDecisionProfile {
   currentUplBlnsSum: Float
   currentUplKey: Int
   compare: SudzSfDecisionCompare!
+  """Алиасы ags.invNum (1.14.7.2)."""
+  invNums: [SudzSfDecisionInvNum!]!
   cnInvs: [SudzSfDecisionCnInv!]!
   payments: [SudzSfDecisionPayment!]!
   docSums: [SudzSfDecisionDocSum!]!

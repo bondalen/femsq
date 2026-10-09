@@ -629,8 +629,15 @@ export interface SudzPmDocForest {
   links: SudzPmDocLink[];
 }
 
-/** Исход сверки Excel ↔ кандидат (yes|no|suspicious|na; стройка ещё suffix). */
-export type SudzSfDecisionVerdict = 'yes' | 'no' | 'suspicious' | 'na' | 'suffix' | string;
+/** Исход сверки Excel ↔ кандидат (yes|no|suspicious|na; стройка ещё suffix; доки — transfer). */
+export type SudzSfDecisionVerdict =
+  | 'yes'
+  | 'no'
+  | 'suspicious'
+  | 'na'
+  | 'suffix'
+  | 'transfer'
+  | string;
 
 /** Шапка сверки decision-TreeList. */
 export interface SudzSfDecisionCompare {
@@ -640,6 +647,16 @@ export interface SudzSfDecisionCompare {
   sumVerdict: SudzSfDecisionVerdict;
   /** Стройка: yes|suffix|no|na. */
   cstVerdict: SudzSfDecisionVerdict;
+  /** Переезды docKod: transfer|na. */
+  docTransferVerdict: SudzSfDecisionVerdict;
+}
+
+/** Алиас номера СФ (ags.invNum). */
+export interface SudzSfDecisionInvNum {
+  inKey: number;
+  inNum: string | null;
+  primary: boolean;
+  hitExcel: boolean;
 }
 
 /** Платёж профиля кандидата СФ. */
@@ -677,6 +694,10 @@ export interface SudzSfDecisionDocSum {
   pmCount: number;
   blnsSum: number | null;
   uplNames: string | null;
+  otherInvCount: number;
+  otherCnCount: number;
+  transferHint: string | null;
+  hlDocTransfer: boolean;
 }
 
 /** Счёт ГК кандидата СФ. */
@@ -728,6 +749,7 @@ export interface SudzSfDecisionProfile {
   currentUplBlnsSum: number | null;
   currentUplKey: number | null;
   compare: SudzSfDecisionCompare;
+  invNums: SudzSfDecisionInvNum[];
   cnInvs: SudzSfDecisionCnInv[];
   payments: SudzSfDecisionPayment[];
   docSums: SudzSfDecisionDocSum[];

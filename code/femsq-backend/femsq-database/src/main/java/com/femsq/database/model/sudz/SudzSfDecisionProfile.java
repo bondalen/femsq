@@ -8,7 +8,7 @@ import java.util.List;
  * Профиль кандидата СФ для decision-TreeList (КСДСФ pmt).
  *
  * @param invKey {@code ags.inv.iKey}
- * @param invNum номер СФ
+ * @param invNum номер СФ ({@code inv.iNum})
  * @param invEntered дата/время создания
  * @param preferredCiKey cnInv (если однозначен)
  * @param preferredCnKey договор preferred cnInv
@@ -21,6 +21,7 @@ import java.util.List;
  * @param currentUplBlnsSum Σ сальдо текущего пакета (0 если upl не задан)
  * @param currentUplKey пакет экрана
  * @param compare шапка сверки
+ * @param invNums алиасы {@code ags.invNum}
  * @param cnInvs договоры (cnInv) и стороны
  * @param payments платежи
  * @param docSums сводка документов
@@ -42,6 +43,7 @@ public record SudzSfDecisionProfile(
         BigDecimal currentUplBlnsSum,
         Integer currentUplKey,
         SudzSfDecisionCompare compare,
+        List<SudzSfDecisionInvNum> invNums,
         List<SudzSfDecisionCnInv> cnInvs,
         List<SudzSfDecisionPayment> payments,
         List<SudzSfDecisionDocSum> docSums,

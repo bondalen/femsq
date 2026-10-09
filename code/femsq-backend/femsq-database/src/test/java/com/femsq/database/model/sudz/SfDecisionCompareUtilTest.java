@@ -17,6 +17,31 @@ class SfDecisionCompareUtilTest {
     }
 
     @Test
+    void invNumMatchesAnyAlias() {
+        assertEquals(
+                "yes",
+                SfDecisionCompareUtil.invNumVerdict(
+                        "0818 CR 0096/AA01/",
+                        java.util.List.of("0818 CR 0096/AA01/ (номеров: 2)", "0818 CR 0096/AA01/")
+                )
+        );
+        assertEquals(
+                "no",
+                SfDecisionCompareUtil.invNumVerdict("94", java.util.List.of("93", "92"))
+        );
+        assertEquals(
+                "suspicious",
+                SfDecisionCompareUtil.invNumVerdict("б/н", java.util.List.of("б/н", "94"))
+        );
+    }
+
+    @Test
+    void docTransferChip() {
+        assertEquals("transfer", SfDecisionCompareUtil.docTransferVerdict(true));
+        assertEquals("na", SfDecisionCompareUtil.docTransferVerdict(false));
+    }
+
+    @Test
     void cnMatchesKs14() {
         assertEquals("yes", SfDecisionCompareUtil.cnVerdict("КС-14", "КС-14"));
         assertEquals("yes", SfDecisionCompareUtil.cnVerdict("кс-14", "КС-14, дата не известна"));

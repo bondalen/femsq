@@ -3,6 +3,7 @@ package com.femsq.database.model.sudz;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Collection;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
@@ -54,25 +55,71 @@ public final class SfDecisionCompareUtil {
     }
 
     /**
-     * Исход по номеру СФ.
+     * Исход по номеру СФ (один кандидат — обычно {@code inv.iNum}).
      *
      * @param excelNum номер Excel
      * @param candidateNum номер кандидата
      * @return yes|no|suspicious|na
      */
     public static String invNumVerdict(String excelNum, String candidateNum) {
+        return invNumVerdict(excelNum, candidateNum == null ? List.of() : List.of(candidateNum));
+    }
+
+    /**
+     * Исход по номеру СФ с учётом алиасов {@code ags.invNum}.
+     * Совпадение с любым алиасом = yes (или suspicious для б/н).
+     *
+     * @param excelNum номер Excel
+     * @param candidateNums {@code inv.iNum} и/или алиасы
+     * @return yes|no|suspicious|na
+     */
+    public static String invNumVerdict(String excelNum, Collection<String> candidateNums) {
         String e = normalize(excelNum);
-        String c = normalize(candidateNum);
-        if (e.isEmpty() && c.isEmpty()) {
+        List<String> nums = new java.util.ArrayList<>();
+        if (candidateNums != null) {
+            for (String raw : candidateNums) {
+                if (raw == null || raw.isBlank()) {
+                    continue;
+                }
+                nums.add(raw);
+            }
+        }
+        if (e.isEmpty() && nums.isEmpty()) {
             return "na";
         }
-        if (e.isEmpty() || c.isEmpty()) {
+        if (e.isEmpty() || nums.isEmpty()) {
             return "no";
         }
-        if (isSuspiciousInvNum(excelNum) || isSuspiciousInvNum(candidateNum)) {
-            return Objects.equals(e, c) ? "suspicious" : "no";
+        boolean excelSuspicious = isSuspiciousInvNum(excelNum);
+        boolean anyHit = false;
+        boolean anySuspiciousHit = false;
+        for (String cand : nums) {
+            String c = normalize(cand);
+            if (c.isEmpty()) {
+                continue;
+            }
+            if (!Objects.equals(e, c)) {
+                continue;
+            }
+            anyHit = true;
+            if (excelSuspicious || isSuspiciousInvNum(cand)) {
+                anySuspiciousHit = true;
+            }
         }
-        return Objects.equals(e, c) ? "yes" : "no";
+        if (!anyHit) {
+            return "no";
+        }
+        return anySuspiciousHit ? "suspicious" : "yes";
+    }
+
+    /**
+     * Есть ли переезд кода документа на другой inv/cn.
+     *
+     * @param anyTransfer хотя бы один docSum с чужим inv/cn
+     * @return transfer|na
+     */
+    public static String docTransferVerdict(boolean anyTransfer) {
+        return anyTransfer ? "transfer" : "na";
     }
 
     /**
@@ -203,7 +250,7 @@ public final class SfDecisionCompareUtil {
     }
 
     /**
-     * Собирает compare.
+     * Собирает compare (номер — один текст или primary).
      *
      * @param excelInvNum номер Excel
      * @param invNum номер кандидата
@@ -229,12 +276,57 @@ public final class SfDecisionCompareUtil {
             String excelCac,
             Collection<String> candidateCstCodes
     ) {
+        return build(
+                excelInvNum,
+                invNum == null ? List.of() : List.of(invNum),
+                excelCnText,
+                contract,
+                excelBuirg,
+                candidateBuirg,
+                excelBlnsSum,
+                sumForCompare,
+                excelCac,
+                candidateCstCodes,
+                false
+        );
+    }
+
+    /**
+     * Собирает compare с алиасами номера и флагом переездов документов.
+     *
+     * @param excelInvNum номер Excel
+     * @param candidateInvNums primary + алиасы
+     * @param excelCnText договор Excel
+     * @param contract договор кандидата
+     * @param excelBuirg БУиРГ Excel
+     * @param candidateBuirg БУиРГ кандидата
+     * @param excelBlnsSum сумма Excel
+     * @param sumForCompare сумма для сверки
+     * @param excelCac код стройки Excel
+     * @param candidateCstCodes коды САК на платежах кандидата
+     * @param anyDocTransfer есть ли переезд docKod
+     * @return compare
+     */
+    public static SudzSfDecisionCompare build(
+            String excelInvNum,
+            Collection<String> candidateInvNums,
+            String excelCnText,
+            String contract,
+            Integer excelBuirg,
+            Integer candidateBuirg,
+            BigDecimal excelBlnsSum,
+            BigDecimal sumForCompare,
+            String excelCac,
+            Collection<String> candidateCstCodes,
+            boolean anyDocTransfer
+    ) {
         return new SudzSfDecisionCompare(
-                invNumVerdict(excelInvNum, invNum),
+                invNumVerdict(excelInvNum, candidateInvNums),
                 cnVerdict(excelCnText, contract),
                 executorVerdict(excelBuirg, candidateBuirg),
                 sumVerdict(excelBlnsSum, sumForCompare),
-                cstVerdict(excelCac, candidateCstCodes)
+                cstVerdict(excelCac, candidateCstCodes),
+                docTransferVerdict(anyDocTransfer)
         );
     }
 }
