@@ -588,12 +588,24 @@ export interface SudzPmtSfSumMatch {
   cnName: string | null;
 }
 
+/** Строка состава итога сальдо (Tbl с |сальдо| > 0.01). */
+export interface SudzPmtSfSumLine {
+  ciputKey: number;
+  docCode: string | null;
+  docDate: string | null;
+  dbtBlns: number | null;
+  cdtBlns: number | null;
+  blns: number | null;
+}
+
 /** Итог сальдо по СФ и строки связанного свода. */
 export interface SudzPmtSfSumCompare {
   anchorSum: number | null;
   anchorRows: number;
   linked: boolean;
   matches: SudzPmtSfSumMatch[];
+  /** Состав: белые строки кейса с ненулевым сальдо (1.10.3). */
+  nonZeroLines: SudzPmtSfSumLine[];
 }
 
 /** Платёж каталожного документа и его счёт-фактура. */

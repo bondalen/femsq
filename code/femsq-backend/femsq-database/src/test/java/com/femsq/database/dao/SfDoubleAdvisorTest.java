@@ -1,11 +1,14 @@
 package com.femsq.database.dao;
 
 import com.femsq.database.model.sudz.SudzCnInvUplSfDouble;
+import com.femsq.database.model.sudz.SudzPmtSfSumCompare;
+import com.femsq.database.model.sudz.SudzPmtSfSumMatch;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
 import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
 import com.femsq.database.model.sudz.SudzSfDoubleHintItem;
 import com.femsq.database.model.sudz.SudzSfDoubleHintSection;
 import com.femsq.database.model.sudz.SudzSfDoubleHints;
+import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -249,6 +252,80 @@ class SfDoubleAdvisorTest {
         assertEquals("link", advice.action());
         assertEquals(91249, advice.recommendInvKey());
         assertTrue(advice.messageText().contains("sum_same_cn"));
+    }
+
+    @Test
+    void pmtBlnsSameCnRecommendsLinkHigh() {
+        // pm=60 · cius=1224: Σ сальдо = долг свода, один inv на cn очереди
+        var row = new SudzCnInvUplSfDouble(
+                1224, null, 100, null, null, 60, null, null,
+                2330, "1385/24", "6714", 2, "open", null, null);
+        var hints = new SudzSfDoubleHints(
+                new SudzSfDoubleHintSection("unknown", "без проверки исполнителя", 0, List.of()),
+                sectionNa(),
+                sectionNa());
+        var domain = List.of(
+                new SudzSfDoubleDomainMatch(41255, "6714", 1, null, 10, 1897, "ГПИ", null, null),
+                new SudzSfDoubleDomainMatch(79701, "6714", 2, null, 20, 2330, "1385/24", null, null));
+        var pmtSum = new SudzPmtSfSumCompare(
+                new BigDecimal("5536204.57"),
+                1,
+                true,
+                List.of(new SudzPmtSfSumMatch(
+                        901, 47912, "6714", 767502,
+                        new BigDecimal("5536204.57"), BigDecimal.ZERO, "1385/24")),
+                List.of());
+        var advice = SfDoubleAdvisor.advise(row, null, hints, domain, pmtSum);
+        assertEquals("link", advice.action());
+        assertEquals("high", advice.confidence());
+        assertEquals(79701, advice.recommendInvKey());
+        assertEquals(2330, advice.recommendCnKey());
+        assertTrue(advice.messageText().contains("pmt_blns_same_cn"));
+    }
+
+    @Test
+    void pmtBlnsSameCnSkippedForSuspiciousInv() {
+        var row = new SudzCnInvUplSfDouble(
+                1310, null, 157379, null, null, 59, null, null,
+                877, "КС-14", "б/н", 11, "open", null, null);
+        var item = new SudzSfDoubleHintItem(
+                "sf", "inKey", 40737, 40729, 877, "КС-14", "BUIRG", "inv=40729");
+        var hints = new SudzSfDoubleHints(
+                new SudzSfDoubleHintSection("yes", "match", 1, List.of(item)),
+                sectionNa(),
+                sectionNa());
+        var domain = List.of(
+                new SudzSfDoubleDomainMatch(40729, "б/н", 40737, null, 1, 877, "КС-14", null, null));
+        var pmtSum = new SudzPmtSfSumCompare(
+                BigDecimal.ZERO,
+                2,
+                true,
+                List.of(new SudzPmtSfSumMatch(
+                        901, 1, "б/н", 767501, BigDecimal.ZERO, BigDecimal.ZERO, "КС-14")),
+                List.of());
+        var advice = SfDoubleAdvisor.advise(row, null, hints, domain, pmtSum);
+        assertEquals("create", advice.action());
+        assertFalse(advice.messageText().contains("pmt_blns_same_cn"));
+    }
+
+    @Test
+    void pmtBlnsSameCnSkippedWhenDebtDiffers() {
+        var row = new SudzCnInvUplSfDouble(
+                1224, null, 100, null, null, 60, null, null,
+                2330, "1385/24", "6714", 1, "open", null, null);
+        var hints = new SudzSfDoubleHints(sectionNa(), sectionNa(), sectionNa());
+        var domain = List.of(
+                new SudzSfDoubleDomainMatch(79701, "6714", 2, null, 20, 2330, "1385/24", null, null));
+        var pmtSum = new SudzPmtSfSumCompare(
+                new BigDecimal("5536204.57"),
+                1,
+                true,
+                List.of(new SudzPmtSfSumMatch(
+                        901, 47912, "6714", 767502,
+                        new BigDecimal("100.00"), BigDecimal.ZERO, "1385/24")),
+                List.of());
+        var advice = SfDoubleAdvisor.advise(row, null, hints, domain, pmtSum);
+        assertFalse(advice.messageText().contains("pmt_blns_same_cn"));
     }
 
     private static SudzSfDoubleHintSection sectionNa() {

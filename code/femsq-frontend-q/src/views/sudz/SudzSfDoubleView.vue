@@ -330,7 +330,9 @@
                     >
                       Итог сальдо по СФ
                       {{ formatMoneyOrDash(pmtSumCompare?.anchorSum ?? excel?.pmtSfBlnsSum ?? null) }}
-                      · строк {{ pmtSumCompare?.anchorRows ?? excel?.pmtSfBlnsRows ?? '—' }}.
+                      · строк {{ pmtSumCompare?.anchorRows ?? excel?.pmtSfBlnsRows ?? '—' }}
+                      · ненулевых
+                      {{ pmtSumCompare?.nonZeroLines?.length ?? '—' }}.
                       Сверка с долгом связанного свода (ε=0.01).
                     </div>
                     <div
@@ -351,6 +353,29 @@
                         · долг {{ formatMoneyOrDash(match.debt) }}
                         · просрочка {{ formatMoneyOrDash(match.debtOverdue) }}
                         · разность {{ formatMoneyOrDash(pmtSumDiff(match.debt)) }}
+                      </div>
+                      <div
+                        class="text-caption text-grey-7 q-mt-sm q-mb-xs shrink-0"
+                        data-test="sudz-sf-sums-pmt-nz-caption"
+                      >
+                        Состав (строки Tbl с |сальдо| &gt; 0,01)
+                      </div>
+                      <FemsqTable
+                        v-if="(pmtSumCompare?.nonZeroLines?.length ?? 0) > 0"
+                        class="col"
+                        dense
+                        flat
+                        :rows="pmtSumCompare?.nonZeroLines ?? []"
+                        :columns="pmtSumNzColumns"
+                        row-key="ciputKey"
+                        data-test="sudz-sf-sums-pmt-nz"
+                      />
+                      <div
+                        v-else
+                        class="text-caption text-grey-6"
+                        data-test="sudz-sf-sums-pmt-nz-empty"
+                      >
+                        Нет строк с ненулевым сальдо.
                       </div>
                     </div>
                   </div>
@@ -536,6 +561,7 @@ import type {
   SudzCnInvUplSfDouble,
   SudzPmtExcelCaseRow,
   SudzPmtSfSumCompare,
+  SudzPmtSfSumLine,
   SudzSfDoubleDomainMatch,
   SudzSfDoubleExcelCandidate,
   SudzSfDoubleAdvice,
@@ -878,6 +904,16 @@ const pmtCaseColumns: FemsqTableColumn<SudzPmtExcelCaseRow>[] = [
   moneyColumn({ name: 'cdtBlns', label: 'кредит', field: 'cdtBlns' }),
   moneyColumn({ name: 'docSum', label: 'сумма док.', field: 'docSum' }),
   { name: 'dueGrp', label: 'due_grp', field: 'dueGrp', align: 'right' }
+];
+
+/** Состав итога сальдо в панели «Суммы» (1.10.3). */
+const pmtSumNzColumns: FemsqTableColumn<SudzPmtSfSumLine>[] = [
+  { name: 'docCode', label: 'документ', field: 'docCode', align: 'left' },
+  { name: 'docDate', label: 'дата', field: 'docDate', align: 'left' },
+  moneyColumn({ name: 'dbtBlns', label: 'дебет', field: 'dbtBlns' }),
+  moneyColumn({ name: 'cdtBlns', label: 'кредит', field: 'cdtBlns' }),
+  moneyColumn({ name: 'blns', label: 'сальдо', field: 'blns' }),
+  { name: 'ciputKey', label: 'ciput', field: 'ciputKey', align: 'right' }
 ];
 
 const excelRows = computed(() => {

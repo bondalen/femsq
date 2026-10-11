@@ -1,6 +1,8 @@
 package com.femsq.database.dao;
 
 import com.femsq.database.model.sudz.SudzCnInvUplSfDouble;
+import com.femsq.database.model.sudz.SudzPmtSfSumCompare;
+import com.femsq.database.model.sudz.SudzPmtSfSumMatch;
 import com.femsq.database.model.sudz.SudzSfDoubleAdvice;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
 import com.femsq.database.model.sudz.SudzSfDoubleExcelCandidate;
@@ -8,6 +10,7 @@ import com.femsq.database.model.sudz.SudzSfDoubleHintItem;
 import com.femsq.database.model.sudz.SudzSfDoubleHintSection;
 import com.femsq.database.model.sudz.SudzSfDoubleHints;
 import com.femsq.database.model.sudz.SfDecisionCompareUtil;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -20,6 +23,9 @@ final class SfDoubleAdvisor {
 
     private SfDoubleAdvisor() {
     }
+
+    /** ε сравнения долга свода с итогом сальдо (1.10.4). */
+    private static final BigDecimal PMT_BLNS_EPS = new BigDecimal("0.01");
 
     /**
      * Сформировать совет по строке очереди КСДСФ.
@@ -36,6 +42,26 @@ final class SfDoubleAdvisor {
             SudzSfDoubleHints hints,
             List<SudzSfDoubleDomainMatch> domainMatches
     ) {
+        return advise(row, excel, hints, domainMatches, null);
+    }
+
+    /**
+     * Сформировать совет по строке очереди КСДСФ (с сверкой сальдо pmt).
+     *
+     * @param row строка очереди
+     * @param excel Excel-кандидат (может быть null)
+     * @param hints подсказки по исполнителю
+     * @param domainMatches все СФ с тем же номером в ags
+     * @param pmtSum сверка Σ сальдо ↔ долг свода (pmt; может быть null)
+     * @return совет
+     */
+    static SudzSfDoubleAdvice advise(
+            SudzCnInvUplSfDouble row,
+            SudzSfDoubleExcelCandidate excel,
+            SudzSfDoubleHints hints,
+            List<SudzSfDoubleDomainMatch> domainMatches,
+            SudzPmtSfSumCompare pmtSum
+    ) {
         Objects.requireNonNull(row, "row");
         Objects.requireNonNull(hints, "hints");
         List<SudzSfDoubleDomainMatch> domain = domainMatches == null ? List.of() : domainMatches;
@@ -46,9 +72,14 @@ final class SfDoubleAdvisor {
                 + " «" + nullToDash(row.ciusCnNum()) + "» · СФ «" + nullToDash(row.ciusInvNum()) + "»");
         if (excel != null && excel.cidutDebt() != null) {
             appendLine(msg, "Якорь Excel: сумма " + excel.cidutDebt());
-        } else if (excel != null && "pmt".equals(excel.source()) && excel.pmtCdtBlns() != null) {
-            appendLine(msg, "Якорь Excel (платёж): кредит " + excel.pmtCdtBlns()
-                    + (excel.pmtDocSum() != null ? " · док " + excel.pmtDocSum() : ""));
+        } else if (excel != null && "pmt".equals(excel.source())) {
+            if (excel.pmtSfBlnsSum() != null) {
+                appendLine(msg, "Якорь Excel (платёж): итог сальдо " + excel.pmtSfBlnsSum()
+                        + (excel.pmtSfBlnsRows() != null ? " · строк " + excel.pmtSfBlnsRows() : ""));
+            } else if (excel.pmtCdtBlns() != null) {
+                appendLine(msg, "Якорь Excel (платёж): кредит " + excel.pmtCdtBlns()
+                        + (excel.pmtDocSum() != null ? " · док " + excel.pmtDocSum() : ""));
+            }
         }
 
         if (row.ciusCnKey() == null || row.ciusCnKey() <= 0) {
@@ -87,6 +118,13 @@ final class SfDoubleAdvisor {
             appendLine(msg, "Номер Excel «" + nullToDash(row.ciusInvNum())
                     + "» подозрительный (б/н, Б/С, «-», …) — совпадение только по номеру не доказательство"
                     + " (suspicious_inv)");
+        }
+
+        if (!suspiciousInv) {
+            Optional<SudzSfDoubleAdvice> pmtBlns = tryLinkByPmtBlnsSameCn(msg, row, domain, pmtSum);
+            if (pmtBlns.isPresent()) {
+                return pmtBlns.get();
+            }
         }
 
         if ("yes".equals(sfByNum.status())) {
@@ -240,6 +278,75 @@ final class SfDoubleAdvisor {
         }
         appendLine(msg, "Примечание: советник не заменяет первичку");
         return finish(msg, "none", "manual", null, row.ciusCnKey());
+    }
+
+    /**
+     * Итог сальдо платежей = долг связанного свода и ровно один inv на договоре очереди (1.10.4).
+     * <p>
+     * Не применяется к подозрительным номерам (свалка «б/н»). Не использует orphan {@code cn_inv_pm}.
+     *
+     * @param msg накопленный текст
+     * @param row строка очереди
+     * @param domain совпадения по номеру СФ
+     * @param pmtSum сверка панели «Суммы» (может быть null)
+     * @return link-совет или empty
+     */
+    private static Optional<SudzSfDoubleAdvice> tryLinkByPmtBlnsSameCn(
+            StringBuilder msg,
+            SudzCnInvUplSfDouble row,
+            List<SudzSfDoubleDomainMatch> domain,
+            SudzPmtSfSumCompare pmtSum
+    ) {
+        if (pmtSum == null || !pmtSum.linked() || pmtSum.anchorSum() == null) {
+            return Optional.empty();
+        }
+        if (row.ciusCnKey() == null || row.ciusCnKey() <= 0) {
+            return Optional.empty();
+        }
+        List<SudzPmtSfSumMatch> debtEqual = pmtSum.matches().stream()
+                .filter(m -> amountsClose(m.debt(), pmtSum.anchorSum(), PMT_BLNS_EPS))
+                .toList();
+        if (debtEqual.size() != 1) {
+            return Optional.empty();
+        }
+        List<Integer> invOnCn = domain.stream()
+                .filter(m -> Objects.equals(m.cnKey(), row.ciusCnKey()))
+                .map(SudzSfDoubleDomainMatch::invKey)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (invOnCn.size() != 1) {
+            return Optional.empty();
+        }
+        SudzPmtSfSumMatch match = debtEqual.get(0);
+        Integer invKey = invOnCn.get(0);
+        appendLine(msg, "Уникальный СФ на договоре очереди; долг свода = итог сальдо (pmt_blns_same_cn)");
+        appendLine(msg, "Сверка: Σ сальдо " + pmtSum.anchorSum()
+                + " = cidutDebt " + match.debt()
+                + " (cidutKey=" + match.cidutKey() + ")");
+        appendLine(msg, "→ Связать с inv=" + invKey
+                + " · cn=" + row.ciusCnKey()
+                + " (уверенность: " + confidenceRu("high") + ")");
+        appendLine(msg, "Примечание: советник не заменяет первичку");
+        return Optional.of(finish(msg, "high", "link", invKey, row.ciusCnKey()));
+    }
+
+    /**
+     * Долг свода совпадает с итогом сальдо (знак или модуль) в пределах ε.
+     *
+     * @param debt долг свода
+     * @param anchor Σ ciputBlns
+     * @param epsilon допуск
+     * @return true если совпало
+     */
+    static boolean amountsClose(BigDecimal debt, BigDecimal anchor, BigDecimal epsilon) {
+        if (debt == null || anchor == null || epsilon == null) {
+            return false;
+        }
+        if (debt.subtract(anchor).abs().compareTo(epsilon) <= 0) {
+            return true;
+        }
+        return debt.subtract(anchor.abs()).abs().compareTo(epsilon) <= 0;
     }
 
     /**

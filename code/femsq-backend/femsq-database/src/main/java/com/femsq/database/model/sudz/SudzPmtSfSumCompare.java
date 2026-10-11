@@ -10,11 +10,13 @@ import java.util.List;
  * @param anchorRows число строк Tbl в группе
  * @param linked есть строка {@code cn_inv_dbt_upl_g_p} у пакета
  * @param matches строки свода с тем же номером СФ и счётом ГК
+ * @param nonZeroLines состав: строки Tbl с |сальдо| &gt; ε (1.10.3)
  */
 public record SudzPmtSfSumCompare(
         BigDecimal anchorSum,
         int anchorRows,
         boolean linked,
-        List<SudzPmtSfSumMatch> matches
+        List<SudzPmtSfSumMatch> matches,
+        List<SudzPmtSfSumLine> nonZeroLines
 ) {
 }

@@ -97,6 +97,7 @@ import com.femsq.database.model.sudz.SudzPmDocForest;
 import com.femsq.database.model.sudz.SudzPmDocLink;
 import com.femsq.database.model.sudz.SudzPmtExcelCaseRow;
 import com.femsq.database.model.sudz.SudzPmtSfSumCompare;
+import com.femsq.database.model.sudz.SudzPmtSfSumLine;
 import com.femsq.database.model.sudz.SudzPmtSfSumMatch;
 import com.femsq.database.model.sudz.SfDecisionCompareUtil;
 import com.femsq.database.model.sudz.SudzSfDecisionCias;
@@ -12385,14 +12386,61 @@ public class JdbcSudzDao implements SudzDao {
             if (linked && invNum != null && !invNum.isBlank() && account != null) {
                 matches = loadPmtSfSumMatches(connection, unloadKey, invNum.trim(), account);
             }
+            List<SudzPmtSfSumLine> nonZeroLines = loadPmtSfSumNonZeroLines(connection, ciusKey);
             log.log(Level.INFO,
-                    "findPmtSfSumCompare ciusKey={0} unload={1} linked={2} rows={3} matches={4}",
-                    new Object[] {ciusKey, unloadKey, linked, anchorRows, matches.size()});
-            return Optional.of(new SudzPmtSfSumCompare(anchorSum, anchorRows, linked, matches));
+                    "findPmtSfSumCompare ciusKey={0} unload={1} linked={2} rows={3} matches={4} nz={5}",
+                    new Object[] {ciusKey, unloadKey, linked, anchorRows, matches.size(), nonZeroLines.size()});
+            return Optional.of(new SudzPmtSfSumCompare(
+                    anchorSum, anchorRows, linked, matches, nonZeroLines));
         } catch (MissingConfigurationException exception) {
             throw exception;
         } catch (SQLException exception) {
             throw wrap("Не удалось сверить итог сальдо со сводом ciusKey=" + ciusKey, exception);
+        }
+    }
+
+    /**
+     * Состав итога сальдо (1.10.3): белые строки кейса с |ciputBlns| &gt; 0.01.
+     *
+     * @param connection соединение вызывающего
+     * @param ciusKey ключ очереди
+     * @return строки документа / даты / дебет / кредит / сальдо
+     * @throws SQLException JDBC
+     */
+    private List<SudzPmtSfSumLine> loadPmtSfSumNonZeroLines(
+            Connection connection,
+            int ciusKey
+    ) throws SQLException {
+        String sql = ""
+                + "SELECT g.ciputKey, g.ciputCnInvDocCode AS docCode, g.ciputDocDate,"
+                + " g.ciputDbtBlns, g.ciputCdtBlns, g.ciputBlns"
+                + " FROM " + q("CnInvUplSfDouble") + " AS q"
+                + " INNER JOIN " + q("CnInvPmtUplTbl") + " AS t ON t.ciputKey = q.ciusCiput"
+                + " INNER JOIN " + q("CnInvPmtUplTbl") + " AS g"
+                + "   ON g.ciputUnloadKey = t.ciputUnloadKey"
+                + "  AND g.ciputCntrPrtNum = t.ciputCntrPrtNum"
+                + "  AND " + sqlPmtNormCnName("g") + " = " + sqlPmtNormCnName("t")
+                + "  AND " + sqlPmtNormCnInv("g") + " = " + sqlPmtNormCnInv("t")
+                + sqlPmtTblHasDocCode("g")
+                + " WHERE q.ciusKey = ?"
+                + "   AND ABS(CAST(ISNULL(g.ciputBlns, 0) AS decimal(19,4))) > 0.01"
+                + " ORDER BY g.ciputDueKey, g.ciputKey";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, ciusKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                List<SudzPmtSfSumLine> result = new ArrayList<>();
+                while (rs.next()) {
+                    result.add(new SudzPmtSfSumLine(
+                            rs.getInt("ciputKey"),
+                            rs.getNString("docCode"),
+                            getLocalDate(rs, "ciputDocDate"),
+                            rs.getBigDecimal("ciputDbtBlns"),
+                            rs.getBigDecimal("ciputCdtBlns"),
+                            rs.getBigDecimal("ciputBlns")
+                    ));
+                }
+                return List.copyOf(result);
+            }
         }
     }
 
@@ -12613,7 +12661,10 @@ public class JdbcSudzDao implements SudzDao {
         List<SudzSfDoubleDomainMatch> domain = (invNum != null && !invNum.isBlank())
                 ? findSfDoubleDomainMatches(invNum)
                 : List.of();
-        SudzSfDoubleAdvice advice = SfDoubleAdvisor.advise(row, excel, hints, domain);
+        SudzPmtSfSumCompare pmtSum = row.ciusCiput() != null
+                ? findPmtSfSumCompare(ciusKey).orElse(null)
+                : null;
+        SudzSfDoubleAdvice advice = SfDoubleAdvisor.advise(row, excel, hints, domain, pmtSum);
         if (row.ciusCiput() == null) {
             return advice;
         }

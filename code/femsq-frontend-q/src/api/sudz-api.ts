@@ -671,6 +671,14 @@ const SUDZ_PMT_SF_SUM_COMPARE = gql`
         debtOverdue
         cnName
       }
+      nonZeroLines {
+        ciputKey
+        docCode
+        docDate
+        dbtBlns
+        cdtBlns
+        blns
+      }
     }
   }
 `;

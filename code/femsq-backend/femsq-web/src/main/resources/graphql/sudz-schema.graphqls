@@ -1006,12 +1006,24 @@ type SudzPmtSfSumMatch {
   cnName: String
 }
 
+"""Строка состава итога сальдо (Tbl с |сальдо| > 0.01)."""
+type SudzPmtSfSumLine {
+  ciputKey: Int!
+  docCode: String
+  docDate: Date
+  dbtBlns: Float
+  cdtBlns: Float
+  blns: Float
+}
+
 """Итог сальдо по присвоению и строки связанного свода с тем же СФ и счётом."""
 type SudzPmtSfSumCompare {
   anchorSum: Float
   anchorRows: Int!
   linked: Boolean!
   matches: [SudzPmtSfSumMatch!]!
+  """Состав: белые строки кейса с ненулевым сальдо (1.10.3)."""
+  nonZeroLines: [SudzPmtSfSumLine!]!
 }
 
 """Один платёж каталожного документа и его счёт-фактура."""

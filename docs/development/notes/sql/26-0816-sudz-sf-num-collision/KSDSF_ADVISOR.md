@@ -1,7 +1,7 @@
 # КСДСФ — советник (S68+)
 
 **Дата:** 2026-09-02  
-**Последнее обновление:** 2026-10-06 (`suspicious_inv` + кейс 1313 / 6884)  
+**Последнее обновление:** 2026-10-11 (`pmt_blns_same_cn` / 1.10.4)  
 **Зеркало:** [KSDD_ADVISOR.md](../26-0827-sudz-m2-seed/KSDD_ADVISOR.md) (сегм. 22c)
 
 ## API (GraphQL)
@@ -22,7 +22,8 @@
 | `cn_num_alias` | inv уже на cn «711113884/ЯРЭС» → добавить «711113884» как второй cnNum; удалить дубль cn из воронки |
 | `executor_none` | create (high) — нет СФ с номером и исполнителем Excel (**после** `sum_same_cn`) |
 | **`sum_same_cn`** | link (high) — уникальная сумма (old/new) с исполнителем Excel на договоре очереди и известным `invKey` (номер Excel может отличаться) |
-| **`suspicious_inv`** | номер ∈ {`б/н`, `Б/С`, `-`, `*`, пусто, …}: **запрет** link high из `executor_unique`/`cn_exact`; без `sum_same_cn` → **create** high |
+| **`pmt_blns_same_cn`** | link (high, pmt) — ровно одна строка связанного свода с `cidutDebt` = Σ `ciputBlns` и ровно один inv с этим номером на договоре очереди; не для `suspicious_inv`; orphan `cn_inv_pm` не использовать |
+| **`suspicious_inv`** | номер ∈ {`б/н`, `Б/С`, `-`, `*`, пусто, …}: **запрет** link high из `executor_unique`/`cn_exact`/`pmt_blns_same_cn`; без `sum_same_cn` → **create** high |
 | sum unique + один СФ **того же номера** на cn | link (medium) |
 | иначе | manual |
 
@@ -44,6 +45,16 @@
 **InsPm (2026-10-05):** `#oneInv` / AcNot не матчат подозрительный № к существующему СФ — иначе платежи снова сядут на свалку «б/н».
 
 **create СФ (2026-10-05):** после inv/cnInv — cias + перенос pm текущего пакета с legacy того же № на договоре; при пустом — вставка из Tbl. Repair: повтор `createSudzSfFromDouble` при status=created.
+
+### `pmt_blns_same_cn` (2026-10-11, лист 1.10.4)
+
+**Зачем:** в контексте платежей якорь суммы — Σ `ciputBlns` по присвоению, а не `cidutDebt` Excel и не orphan `cn_inv_pm`. Если связанный свод (`g_p`) даёт ровно одну строку с тем же номером СФ/счётом и долгом = итог сальдо, а на договоре очереди ровно один такой inv — link high надёжнее, чем одно только `sfByNum`.
+
+**Условие:** `sudzPmtSfSumCompare` linked; среди `matches` ровно одна с `|debt − Σ| ≤ 0.01` или `|debt − |Σ|| ≤ 0.01`; среди domain-совпадений ровно один `invKey` на `ciusCnKey`; номер не `suspicious_inv`.
+
+**Действие:** `link` на этот `invKey`. Текст помечает `pmt_blns_same_cn` и cidutKey сверки.
+
+**Кейс smoke:** pm=60 · cius=**1224** · «6714» / cn 2330 · Σ = debt 5 536 204,57 → inv **79701**.
 
 ### `sum_same_cn` (2026-09-08)
 
