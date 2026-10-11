@@ -46,6 +46,14 @@ class SfDecisionCompareUtilTest {
         assertEquals("yes", SfDecisionCompareUtil.cnVerdict("КС-14", "КС-14"));
         assertEquals("yes", SfDecisionCompareUtil.cnVerdict("кс-14", "КС-14, дата не известна"));
         assertEquals("no", SfDecisionCompareUtil.cnVerdict("КС-14", "КС-51"));
+        assertEquals(
+                "yes",
+                SfDecisionCompareUtil.cnVerdict("КС-51", java.util.List.of("КС-01", "КС-51"))
+        );
+        assertEquals(
+                "no",
+                SfDecisionCompareUtil.cnVerdict("КС-51", java.util.List.of("КС-01", "2657"))
+        );
     }
 
     @Test
@@ -107,5 +115,46 @@ class SfDecisionCompareUtilTest {
                 )
         );
         assertEquals("na", SfDecisionCompareUtil.cstVerdict("051-2001439", java.util.List.of()));
+    }
+
+    @Test
+    void cstPackageVsHistory() {
+        assertEquals(
+                "yes",
+                SfDecisionCompareUtil.cstVerdict(
+                        "051-2001439",
+                        java.util.List.of("051-2001439")
+                )
+        );
+        assertEquals(
+                "other",
+                SfDecisionCompareUtil.cstHistVerdict(
+                        "051-2001439",
+                        java.util.List.of("051-2002339")
+                )
+        );
+        assertEquals(
+                "na",
+                SfDecisionCompareUtil.cstHistVerdict(
+                        "051-2001439",
+                        java.util.List.of("051-2001439", "062-2001439")
+                )
+        );
+        assertEquals("na", SfDecisionCompareUtil.cstHistVerdict("051-2001439", java.util.List.of()));
+        SudzSfDecisionCompare cmp = SfDecisionCompareUtil.build(
+                "88",
+                "88",
+                "КС-51",
+                java.util.List.of("КС-51"),
+                1009345,
+                1009345,
+                new BigDecimal("-631200.16"),
+                new BigDecimal("-631200.16"),
+                "051-2001439",
+                java.util.List.of("051-2001439"),
+                java.util.List.of("051-2002339")
+        );
+        assertEquals("yes", cmp.cstVerdict());
+        assertEquals("other", cmp.cstHistVerdict());
     }
 }

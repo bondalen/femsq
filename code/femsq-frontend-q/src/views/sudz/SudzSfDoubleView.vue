@@ -1130,7 +1130,11 @@ watch(
 function applyAdvisorInvPick(adv: SudzSfDoubleAdvice | null): void {
   const invKey = adv?.recommendInvKey;
   if (invKey == null) return;
-  const row = domainMatches.value.find((m) => m.invKey === invKey);
+  const cnKey = adv.recommendCnKey;
+  const row =
+    (cnKey != null
+      ? domainMatches.value.find((m) => m.invKey === invKey && m.cnKey === cnKey)
+      : undefined) ?? domainMatches.value.find((m) => m.invKey === invKey);
   if (row) {
     selectedDomain.value = [row];
   }

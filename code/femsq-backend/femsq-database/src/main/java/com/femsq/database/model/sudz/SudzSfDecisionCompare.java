@@ -4,13 +4,15 @@ package com.femsq.database.model.sudz;
  * Исходы шапки сверки Excel ↔ кандидат СФ.
  * Значения: {@code yes} | {@code no} | {@code suspicious} | {@code na};
  * для стройки также {@code suffix} (совпал хвост из 6 символов кода САК);
+ * для истории строек также {@code other};
  * для документов также {@code transfer} (код ездил на другой inv/cn).
  *
  * @param invNumVerdict номер СФ (с учётом алиасов {@code invNum})
  * @param cnVerdict договор
  * @param executorVerdict исполнитель (БУиРГ Excel ↔ preferred cn)
  * @param sumVerdict сумма
- * @param cstVerdict стройка (полный код / хвост 6 / нет)
+ * @param cstVerdict стройка <b>этого пакета</b> (полный код / хвост 6 / нет)
+ * @param cstHistVerdict другие стройки в истории pm: {@code other} | {@code na}
  * @param docTransferVerdict переезды docKod: {@code transfer} | {@code na}
  */
 public record SudzSfDecisionCompare(
@@ -19,6 +21,7 @@ public record SudzSfDecisionCompare(
         String executorVerdict,
         String sumVerdict,
         String cstVerdict,
+        String cstHistVerdict,
         String docTransferVerdict
 ) {
 }

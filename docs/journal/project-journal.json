@@ -3,7 +3,7 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-10-09"
+      "lastUpdated": "2026-10-11"
     },
     "sessions": [
       {
@@ -12,7 +12,7 @@
           "chat-attributes": {
             "id": "chat-2026-09-22-001",
             "created": "2026-09-22",
-            "lastUpdated": "2026-10-09",
+            "lastUpdated": "2026-10-11",
             "owner": "Александр",
             "status": "pending",
             "priority": "high",
@@ -39,6 +39,50 @@
             }
           },
           "entries": [
+            {
+              "log": {
+                "displayName": "1.14.7.6 стройка пакета vs история (success). № log-2026-10-11-001",
+                "log-attributes": {
+                  "id": "log-2026-10-11-001",
+                  "timestamp": "2026-10-11T09:30:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "0077",
+                    "ksdsf",
+                    "1.14.7",
+                    "1.14.7.6"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend.web",
+                      "module:backend.database"
+                    ],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": []
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Разделить чип стройки: пакет vs история",
+                    "details": "cstVerdict ← коды pm currentUpl; cstHistVerdict other|na по pm прочих upl. Чипы «стройка(пакет)» / «ист. стройки · другие|нет». Unit SfDecisionCompareUtil.cstPackageVsHistory. Спека ksdsf-inv-decision §3; план 0922 v0.5.43. JAR 0.1.0.342-SNAPSHOT.",
+                    "outcome": "На @88/6551 пакет да + ист. другие (051-2002339) без ложного «стройка да» по истории. ★ next = link @1321 по команде.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                      "docs/development/notes/UI/02-12_femsq-tree/ksdsf-inv-decision.tree.md",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/model/sudz/SfDecisionCompareUtil.java",
+                      "code/femsq-frontend-q/src/components/sudz/SfDecisionTree.vue"
+                    ]
+                  }
+                ]
+              }
+            },
             {
               "log": {
                 "displayName": "1.14.7.2–.3 алиасы invNum и переезды docKod (success). № log-2026-10-09-001",

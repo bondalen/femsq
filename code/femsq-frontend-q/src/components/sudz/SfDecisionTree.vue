@@ -43,8 +43,16 @@
         size="sm"
         :color="decisionVerdictColor(profile.compare.cstVerdict)"
         text-color="white"
-        :label="`стройка · ${decisionVerdictLabel(profile.compare.cstVerdict)}`"
+        :label="`стройка(пакет) · ${decisionVerdictLabel(profile.compare.cstVerdict)}`"
         data-test="sudz-sf-decision-cmp-cst"
+      />
+      <QChip
+        dense
+        size="sm"
+        :color="decisionVerdictColor(profile.compare.cstHistVerdict)"
+        text-color="white"
+        :label="`ист. стройки · ${cstHistChipLabel(profile.compare.cstHistVerdict)}`"
+        data-test="sudz-sf-decision-cmp-cst-hist"
       />
       <QChip
         dense
@@ -105,6 +113,7 @@ import { QChip } from 'quasar';
 
 import { getSudzSfDecisionProfile } from '@/api/sudz-api';
 import {
+  cstHistChipLabel,
   decisionQueryRows,
   decisionRootRow,
   decisionRootsToken,

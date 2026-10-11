@@ -130,15 +130,40 @@ public final class SfDecisionCompareUtil {
      * @return yes|no|na
      */
     public static String cnVerdict(String excelCn, String candidateCn) {
+        return cnVerdict(excelCn, candidateCn == null ? List.of() : List.of(candidateCn));
+    }
+
+    /**
+     * Исход по договору: совпадение Excel с <b>любым</b> cnInv кандидата
+     * (один inv может быть на нескольких договорах).
+     *
+     * @param excelCn договор Excel
+     * @param candidateCns номера/имена cn через cnInv
+     * @return yes|no|na
+     */
+    public static String cnVerdict(String excelCn, Collection<String> candidateCns) {
         String e = normalize(excelCn);
-        String c = normalize(candidateCn);
-        if (e.isEmpty() || c.isEmpty()) {
+        if (e.isEmpty()) {
             return "na";
         }
-        if (Objects.equals(e, c) || c.contains(e) || e.contains(c)) {
-            return "yes";
+        if (candidateCns == null || candidateCns.isEmpty()) {
+            return "na";
         }
-        return "no";
+        boolean any = false;
+        for (String raw : candidateCns) {
+            if (raw == null || raw.isBlank()) {
+                continue;
+            }
+            String c = normalize(raw);
+            if (c.isEmpty()) {
+                continue;
+            }
+            any = true;
+            if (Objects.equals(e, c) || c.contains(e) || e.contains(c)) {
+                return "yes";
+            }
+        }
+        return any ? "no" : "na";
     }
 
     /**
@@ -212,11 +237,11 @@ public final class SfDecisionCompareUtil {
     }
 
     /**
-     * Исход по стройке: полный код среди pm кандидата, иначе хвост из 6 символов
+     * Исход по стройке: полный код среди переданных pm, иначе хвост из 6 символов
      * (код может переходить между агентами).
      *
      * @param excelCac CAC Excel
-     * @param candidateCodes коды САК на платежах кандидата (null/пусто пропускаются)
+     * @param candidateCodes коды САК (обычно pm <b>текущего</b> пакета)
      * @return yes|suffix|no|na
      */
     public static String cstVerdict(String excelCac, Collection<String> candidateCodes) {
@@ -250,43 +275,70 @@ public final class SfDecisionCompareUtil {
     }
 
     /**
+     * Есть ли в истории (pm не текущего пакета) стройки, не совпадающие с Excel.
+     * Совпадение yes/suffix не считается «другой» стройкой.
+     *
+     * @param excelCac CAC Excel
+     * @param histCodes коды САК на исторических pm
+     * @return other|na
+     */
+    public static String cstHistVerdict(String excelCac, Collection<String> histCodes) {
+        String e = excelCac == null ? "" : excelCac.trim();
+        if (e.isEmpty() || histCodes == null || histCodes.isEmpty()) {
+            return "na";
+        }
+        for (String raw : histCodes) {
+            if (raw == null || raw.isBlank()) {
+                continue;
+            }
+            if ("no".equals(cstCodeMatch(e, raw))) {
+                return "other";
+            }
+        }
+        return "na";
+    }
+
+    /**
      * Собирает compare (номер — один текст или primary).
      *
      * @param excelInvNum номер Excel
      * @param invNum номер кандидата
      * @param excelCnText договор Excel
-     * @param contract договор кандидата
+     * @param candidateContracts договоры кандидата (все cnInv)
      * @param excelBuirg БУиРГ Excel
      * @param candidateBuirg БУиРГ кандидата
      * @param excelBlnsSum сумма Excel
      * @param sumForCompare сумма для сверки
      * @param excelCac код стройки Excel
-     * @param candidateCstCodes коды САК на платежах кандидата
+     * @param packageCstCodes коды САК на pm текущего пакета (или все, если пакет не задан)
+     * @param histCstCodes коды САК на pm других пакетов
      * @return compare
      */
     public static SudzSfDecisionCompare build(
             String excelInvNum,
             String invNum,
             String excelCnText,
-            String contract,
+            Collection<String> candidateContracts,
             Integer excelBuirg,
             Integer candidateBuirg,
             BigDecimal excelBlnsSum,
             BigDecimal sumForCompare,
             String excelCac,
-            Collection<String> candidateCstCodes
+            Collection<String> packageCstCodes,
+            Collection<String> histCstCodes
     ) {
         return build(
                 excelInvNum,
                 invNum == null ? List.of() : List.of(invNum),
                 excelCnText,
-                contract,
+                candidateContracts,
                 excelBuirg,
                 candidateBuirg,
                 excelBlnsSum,
                 sumForCompare,
                 excelCac,
-                candidateCstCodes,
+                packageCstCodes,
+                histCstCodes,
                 false
         );
     }
@@ -297,13 +349,14 @@ public final class SfDecisionCompareUtil {
      * @param excelInvNum номер Excel
      * @param candidateInvNums primary + алиасы
      * @param excelCnText договор Excel
-     * @param contract договор кандидата
+     * @param candidateContracts договоры кандидата (все cnInv)
      * @param excelBuirg БУиРГ Excel
      * @param candidateBuirg БУиРГ кандидата
      * @param excelBlnsSum сумма Excel
      * @param sumForCompare сумма для сверки
      * @param excelCac код стройки Excel
-     * @param candidateCstCodes коды САК на платежах кандидата
+     * @param packageCstCodes коды САК на pm текущего пакета (или все, если пакет не задан)
+     * @param histCstCodes коды САК на pm других пакетов
      * @param anyDocTransfer есть ли переезд docKod
      * @return compare
      */
@@ -311,21 +364,23 @@ public final class SfDecisionCompareUtil {
             String excelInvNum,
             Collection<String> candidateInvNums,
             String excelCnText,
-            String contract,
+            Collection<String> candidateContracts,
             Integer excelBuirg,
             Integer candidateBuirg,
             BigDecimal excelBlnsSum,
             BigDecimal sumForCompare,
             String excelCac,
-            Collection<String> candidateCstCodes,
+            Collection<String> packageCstCodes,
+            Collection<String> histCstCodes,
             boolean anyDocTransfer
     ) {
         return new SudzSfDecisionCompare(
                 invNumVerdict(excelInvNum, candidateInvNums),
-                cnVerdict(excelCnText, contract),
+                cnVerdict(excelCnText, candidateContracts),
                 executorVerdict(excelBuirg, candidateBuirg),
                 sumVerdict(excelBlnsSum, sumForCompare),
-                cstVerdict(excelCac, candidateCstCodes),
+                cstVerdict(excelCac, packageCstCodes),
+                cstHistVerdict(excelCac, histCstCodes),
                 docTransferVerdict(anyDocTransfer)
         );
     }

@@ -58,13 +58,13 @@ export function decisionRootsToken(profile: SudzSfDecisionProfile | null): strin
   const docs = (profile.docSums ?? [])
     .map((d) => `${d.docKod}:${d.otherInvCount}:${d.otherCnCount}:${d.hlDocTransfer ? 1 : 0}`)
     .join(';');
-  return `${profile.invKey}|${profile.pmCount}|${pm}|${cn}|${aliases}|${docs}|${profile.compare.docTransferVerdict}`;
+  return `${profile.invKey}|${profile.pmCount}|${pm}|${cn}|${aliases}|${docs}|${profile.compare.docTransferVerdict}|${profile.compare.cstHistVerdict}`;
 }
 
 /**
  * Подпись исхода сверки.
  *
- * @param verdict yes|no|suspicious|na
+ * @param verdict yes|no|suspicious|na|suffix|transfer|other
  */
 export function decisionVerdictLabel(verdict: SudzSfDecisionVerdict): string {
   switch (verdict) {
@@ -78,6 +78,8 @@ export function decisionVerdictLabel(verdict: SudzSfDecisionVerdict): string {
       return 'хвост';
     case 'transfer':
       return 'переезд';
+    case 'other':
+      return 'другие';
     case 'na':
       return 'н/д';
     default:
@@ -99,10 +101,20 @@ export function decisionVerdictColor(verdict: SudzSfDecisionVerdict): string {
     case 'suspicious':
     case 'suffix':
     case 'transfer':
+    case 'other':
       return 'warning';
     default:
       return 'grey-6';
   }
+}
+
+/**
+ * Подпись чипа «ист. стройки»: other → другие, иначе нет (нет конфликтующей истории).
+ *
+ * @param verdict cstHistVerdict
+ */
+export function cstHistChipLabel(verdict: SudzSfDecisionVerdict): string {
+  return verdict === 'other' ? 'другие' : 'нет';
 }
 
 /**

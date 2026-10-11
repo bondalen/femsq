@@ -12762,32 +12762,50 @@ public class JdbcSudzDao implements SudzDao {
                     invEntered = toOffsetDateTime(rs.getTimestamp("iTimeOfEntry"));
                 }
             }
-            Integer preferredCiKey = null;
-            Integer preferredCnKey = null;
-            String contract = null;
-            String note = null;
-            int cnInvCount = 0;
+            List<int[]> cnInvKeys = new ArrayList<>();
+            List<String> candidateContracts = new ArrayList<>();
+            List<String> cnInvNotes = new ArrayList<>();
             try (PreparedStatement ps = connection.prepareStatement(cnInvSql)) {
                 ps.setInt(1, invKey);
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
-                        cnInvCount++;
-                        if (cnInvCount == 1) {
-                            preferredCiKey = rs.getInt("ciKey");
-                            preferredCnKey = getInteger(rs, "ciCn");
-                            note = rs.getNString("ciNote");
-                            String cnNumber = rs.getNString("cn_number");
-                            String cnName = rs.getNString("cnName");
-                            contract = cnNumber != null && !cnNumber.isBlank() ? cnNumber : cnName;
-                        }
+                        int ciKey = rs.getInt("ciKey");
+                        Integer cnKey = getInteger(rs, "ciCn");
+                        String cnNumber = rs.getNString("cn_number");
+                        String cnName = rs.getNString("cnName");
+                        String cnText = cnNumber != null && !cnNumber.isBlank() ? cnNumber : cnName;
+                        cnInvKeys.add(new int[]{ciKey, cnKey == null ? 0 : cnKey});
+                        candidateContracts.add(cnText == null ? "" : cnText);
+                        cnInvNotes.add(rs.getNString("ciNote"));
                     }
                 }
             }
-            if (cnInvCount != 1) {
-                preferredCiKey = null;
-                preferredCnKey = null;
-                note = null;
-                contract = cnInvCount == 0 ? null : ("связей cnInv: " + cnInvCount);
+            int cnInvCount = cnInvKeys.size();
+            Integer preferredCiKey = null;
+            Integer preferredCnKey = null;
+            String contract = null;
+            String note = null;
+            if (cnInvCount == 1) {
+                preferredCiKey = cnInvKeys.get(0)[0];
+                preferredCnKey = cnInvKeys.get(0)[1] == 0 ? null : cnInvKeys.get(0)[1];
+                contract = candidateContracts.get(0);
+                note = cnInvNotes.get(0);
+            } else if (cnInvCount > 1) {
+                int excelHit = -1;
+                for (int i = 0; i < candidateContracts.size(); i++) {
+                    if ("yes".equals(SfDecisionCompareUtil.cnVerdict(excelCnText, candidateContracts.get(i)))) {
+                        excelHit = i;
+                        break;
+                    }
+                }
+                if (excelHit >= 0) {
+                    preferredCiKey = cnInvKeys.get(excelHit)[0];
+                    preferredCnKey = cnInvKeys.get(excelHit)[1] == 0 ? null : cnInvKeys.get(excelHit)[1];
+                    contract = candidateContracts.get(excelHit);
+                    note = cnInvNotes.get(excelHit);
+                } else {
+                    contract = "связей cnInv: " + cnInvCount;
+                }
             }
             List<SudzSfDecisionCnInv> cnInvs = loadDecisionCnInvs(connection, invKey, excelCntrPrtNum);
             Integer cntrPrtNum = null;
@@ -12807,7 +12825,8 @@ public class JdbcSudzDao implements SudzDao {
                 }
             }
             List<SudzSfDecisionPayment> payments = new ArrayList<>();
-            List<String> candidateCstCodes = new ArrayList<>();
+            List<String> packageCstCodes = new ArrayList<>();
+            List<String> histCstCodes = new ArrayList<>();
             try (PreparedStatement ps = connection.prepareStatement(pmSql)) {
                 ps.setInt(1, invKey);
                 try (ResultSet rs = ps.executeQuery()) {
@@ -12829,7 +12848,14 @@ public class JdbcSudzDao implements SudzDao {
                         String cstCode = rs.getNString("cstCode");
                         String cstName = rs.getNString("cstName");
                         if (cstCode != null && !cstCode.isBlank()) {
-                            candidateCstCodes.add(cstCode.trim());
+                            String code = cstCode.trim();
+                            if (currentUplKey == null) {
+                                packageCstCodes.add(code);
+                            } else if (hlCurrent) {
+                                packageCstCodes.add(code);
+                            } else {
+                                histCstCodes.add(code);
+                            }
                         }
                         String cstMatch = SfDecisionCompareUtil.cstCodeMatch(excelCac, cstCode);
                         boolean hlCstDiff = "no".equals(cstMatch);
@@ -12893,13 +12919,14 @@ public class JdbcSudzDao implements SudzDao {
                     excelInvNum,
                     candidateInvNums,
                     excelCnText,
-                    contract,
+                    candidateContracts,
                     excelCntrPrtNum,
                     cntrPrtNum,
                     excelBlnsSum,
                     excelBlnsSum == null ? null : sumForCompare,
                     excelCac,
-                    candidateCstCodes,
+                    packageCstCodes,
+                    histCstCodes,
                     anyDocTransfer
             );
             log.info("findSfDecisionProfile invKey=" + invKey
@@ -12911,6 +12938,7 @@ public class JdbcSudzDao implements SudzDao {
                     + " currentUpl=" + currentUplKey
                     + " party=" + cntrPrtNum
                     + " cst=" + compare.cstVerdict()
+                    + " cstHist=" + compare.cstHistVerdict()
                     + " docXfer=" + compare.docTransferVerdict());
             return new SudzSfDecisionProfile(
                     invKey,

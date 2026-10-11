@@ -629,7 +629,7 @@ export interface SudzPmDocForest {
   links: SudzPmDocLink[];
 }
 
-/** Исход сверки Excel ↔ кандидат (yes|no|suspicious|na; стройка ещё suffix; доки — transfer). */
+/** Исход сверки Excel ↔ кандидат (yes|no|suspicious|na; стройка suffix/other; доки — transfer). */
 export type SudzSfDecisionVerdict =
   | 'yes'
   | 'no'
@@ -637,6 +637,7 @@ export type SudzSfDecisionVerdict =
   | 'na'
   | 'suffix'
   | 'transfer'
+  | 'other'
   | string;
 
 /** Шапка сверки decision-TreeList. */
@@ -645,8 +646,10 @@ export interface SudzSfDecisionCompare {
   cnVerdict: SudzSfDecisionVerdict;
   executorVerdict: SudzSfDecisionVerdict;
   sumVerdict: SudzSfDecisionVerdict;
-  /** Стройка: yes|suffix|no|na. */
+  /** Стройка этого пакета (pm текущего upl): yes|suffix|no|na. */
   cstVerdict: SudzSfDecisionVerdict;
+  /** Другие стройки в истории pm: other|na. */
+  cstHistVerdict: SudzSfDecisionVerdict;
   /** Переезды docKod: transfer|na. */
   docTransferVerdict: SudzSfDecisionVerdict;
 }

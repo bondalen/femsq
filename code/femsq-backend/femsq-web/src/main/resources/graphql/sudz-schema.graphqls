@@ -1050,14 +1050,16 @@ type SudzPmDocForest {
   links: [SudzPmDocLink!]!
 }
 
-"""Исходы шапки сверки Excel ↔ кандидат (yes|no|suspicious|na; стройка ещё suffix)."""
+"""Исходы шапки сверки Excel ↔ кандидат (yes|no|suspicious|na; стройка ещё suffix/other)."""
 type SudzSfDecisionCompare {
   invNumVerdict: String!
   cnVerdict: String!
   executorVerdict: String!
   sumVerdict: String!
-  """Стройка: yes|suffix|no|na (suffix = совпал хвост из 6 символов кода САК)."""
+  """Стройка этого пакета: yes|suffix|no|na (suffix = хвост из 6 символов кода САК)."""
   cstVerdict: String!
+  """Другие стройки в истории pm (не текущий upl): other|na."""
+  cstHistVerdict: String!
   """Переезды docKod: transfer|na (код встречался на другом inv/cn)."""
   docTransferVerdict: String!
 }

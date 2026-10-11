@@ -576,6 +576,7 @@ const SUDZ_SF_DECISION_PROFILE = gql`
         executorVerdict
         sumVerdict
         cstVerdict
+        cstHistVerdict
         docTransferVerdict
       }
       invNums {
