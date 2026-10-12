@@ -171,6 +171,9 @@ extend type Mutation {
   """Дописать строку в yr_Progress (лог формирования документов)."""
   appendSudzYearProgress(yrKey: Int!, line: String!): String!
 
+  """Заменить yr_Progress протоколом одного прогона."""
+  replaceSudzYearProgress(yrKey: Int!, text: String!): String!
+
   """Создать группу комментариев (для yr_CmmGr_New)."""
   createSudzCmmGr(input: CreateSudzCmmGrInput!): SudzCmmGrLookup!
 
@@ -555,6 +558,8 @@ input SudzDebtCollectionInput {
   mery: String
   """Код стройки (cstAgPn.cstapIpgPnN). Пусто — снять привязку."""
   cstCode: String
+  """Писать в yr_CmmGr_New. Без флага или false — в yr_CmmGr."""
+  writeToNew: Boolean
 }
 
 """Результат сохранения сбора."""

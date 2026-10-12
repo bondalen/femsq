@@ -215,6 +215,16 @@ public interface SudzDao {
     String appendYearProgress(int yrKey, String line);
 
     /**
+     * Заменяет {@code yr_Progress} протоколом одного прогона.
+     * Прежние строки лога не сохраняются.
+     *
+     * @param yrKey ключ года
+     * @param text полный текст протокола
+     * @return записанный текст
+     */
+    String replaceYearProgress(int yrKey, String text);
+
+    /**
      * Удаляет год: сначала {@code yr_upl_p}, затем {@code yr}.
      *
      * @param yrKey ключ года
@@ -595,13 +605,14 @@ public interface SudzDao {
     SudzSvodResult findD644Svod(int yrKey, int currUpl);
 
     /**
-     * Сохраняет куратора, мероприятия и код стройки в группу {@code yr.yr_CmmGr}.
+     * Сохраняет куратора, мероприятия и код стройки в группу года.
      *
      * @param yrKey ключ года
      * @param dbtKey ключ долга
      * @param curator куратор (type=8); blank → удалить
      * @param mery мероприятия (type=1); blank → удалить
      * @param cstCode код {@code cstAgPn.cstapIpgPnN}; blank → удалить привязку type=2
+     * @param writeToNew {@code true} — {@code yr_CmmGr_New}, иначе {@code yr_CmmGr}
      * @return актуальные значения после записи
      */
     SudzDebtCollection saveDebtCollection(
@@ -609,7 +620,8 @@ public interface SudzDao {
             int dbtKey,
             String curator,
             String mery,
-            String cstCode
+            String cstCode,
+            boolean writeToNew
     );
 
     /**

@@ -64,8 +64,17 @@
       </div>
       <div v-if="store.selectedYear" class="col-12 text-caption text-grey-7">
         База upl {{ store.selectedYear.baseUpl ?? '—' }}
-        · группа комментариев {{ store.selectedYear.cmmGr ?? '—' }}
+        · официальная группа {{ store.selectedYear.cmmGr ?? '—' }}
+        · группа новых {{ store.selectedYear.cmmGrNew ?? '—' }}
         · yyyy {{ store.selectedYear.yyyy ?? '—' }}
+      </div>
+      <div v-if="splitGroups" class="col-12">
+        <QCheckbox
+          v-model="store.onlyNew"
+          dense
+          label="Только долги с текстом в группе новых"
+          data-test="sudz-only-new"
+        />
       </div>
     </div>
 
@@ -127,13 +136,16 @@
           </QCardSection>
           <QSeparator />
           <QCardSection>
-            <div class="text-subtitle2 q-mb-sm">Сбор на дату отчёта</div>
+            <div class="text-subtitle2 q-mb-sm">
+              {{ splitGroups ? 'Официальная группа (только чтение)' : 'Сбор на дату отчёта' }}
+            </div>
             <QInput
               v-model="form.curator"
               dense
               outlined
               class="q-mb-sm"
               label="Куратор"
+              :readonly="splitGroups"
               data-test="sudz-curator"
             />
             <QInput
@@ -144,6 +156,7 @@
               autogrow
               class="q-mb-sm"
               label="Мероприятия"
+              :readonly="splitGroups"
               data-test="sudz-mery"
             />
             <QInput
@@ -153,9 +166,10 @@
               class="q-mb-sm"
               label="Код стройки (cstAgPn)"
               hint="Напр. 051-2001061"
+              :readonly="splitGroups"
               data-test="sudz-cst-code"
             />
-            <div class="row items-center q-gutter-sm">
+            <div v-if="!splitGroups" class="row items-center q-gutter-sm">
               <QBtn
                 color="primary"
                 unelevated
@@ -163,11 +177,60 @@
                 label="Сохранить"
                 :loading="store.saving"
                 data-test="sudz-save"
-                @click="onSave"
+                @click="onSave(false)"
               />
               <span v-if="store.saveStatus" class="text-caption text-positive">{{ store.saveStatus }}</span>
             </div>
           </QCardSection>
+          <template v-if="splitGroups">
+            <QSeparator />
+            <QCardSection>
+              <div class="text-subtitle2 q-mb-sm">
+                Группа новых {{ store.selectedYear?.cmmGrNew }}
+              </div>
+              <div class="text-caption text-grey-7 q-mb-sm">
+                Пустое поле снимает эту строку только в группе новых. Официальная группа не меняется.
+              </div>
+              <QInput
+                v-model="form.curatorNew"
+                dense
+                outlined
+                class="q-mb-sm"
+                label="Куратор, новый"
+                data-test="sudz-curator-new"
+              />
+              <QInput
+                v-model="form.meryNew"
+                dense
+                outlined
+                type="textarea"
+                autogrow
+                class="q-mb-sm"
+                label="Мероприятия, новые"
+                data-test="sudz-mery-new"
+              />
+              <QInput
+                v-model="form.cstCodeNew"
+                dense
+                outlined
+                class="q-mb-sm"
+                label="Код стройки, новый"
+                data-test="sudz-cst-code-new"
+              />
+              <div class="row items-center q-gutter-sm">
+                <QBtn
+                  color="primary"
+                  unelevated
+                  no-caps
+                  label="Сохранить в группу новых"
+                  :loading="store.saving"
+                  data-test="sudz-save-new"
+                  @click="onSave(true)"
+                />
+                <span v-if="store.saveStatus" class="text-caption text-positive">{{ store.saveStatus }}</span>
+              </div>
+            </QCardSection>
+          </template>
           <QSeparator />
           <QCardSection>
             <div class="row items-center q-gutter-sm q-mb-sm">
@@ -213,6 +276,7 @@ import {
   QBtn,
   QCard,
   QCardSection,
+  QCheckbox,
   QInput,
   QPage,
   QSelect,
@@ -236,7 +300,16 @@ const currUpl = ref(902);
 const form = reactive({
   curator: '',
   mery: '',
-  cstCode: ''
+  cstCode: '',
+  curatorNew: '',
+  meryNew: '',
+  cstCodeNew: ''
+});
+
+/** Официальная группа и группа новых — разные ключи: править можно только новые. */
+const splitGroups = computed(() => {
+  const year = store.selectedYear;
+  return year?.cmmGrNew != null && year.cmmGrNew !== year.cmmGr;
 });
 
 const columns: FemsqTableColumn<SudzPortfolioRow>[] = [
@@ -314,6 +387,9 @@ watch(
     form.curator = debt?.curator ?? '';
     form.mery = debt?.mery ?? '';
     form.cstCode = debt?.cstCode ?? '';
+    form.curatorNew = debt?.curatorNew ?? '';
+    form.meryNew = debt?.meryNew ?? '';
+    form.cstCodeNew = debt?.cstCodeNew ?? '';
   },
   { immediate: true }
 );
@@ -340,14 +416,19 @@ function onRowClick(_evt: Event, row: SudzPortfolioRow): void {
 /**
  * Сохраняет сбор.
  */
-async function onSave(): Promise<void> {
+async function onSave(writeToNew: boolean): Promise<void> {
   const ok = await store.saveCollection({
-    curator: form.curator,
-    mery: form.mery,
-    cstCode: form.cstCode
+    curator: writeToNew ? form.curatorNew : form.curator,
+    mery: writeToNew ? form.meryNew : form.mery,
+    cstCode: writeToNew ? form.cstCodeNew : form.cstCode,
+    writeToNew
   });
   if (ok) {
-    $q.notify({ type: 'positive', message: 'Сбор сохранён', timeout: 1500 });
+    $q.notify({
+      type: 'positive',
+      message: writeToNew ? 'Записано в группу новых' : 'Сбор сохранён',
+      timeout: 1500
+    });
   }
 }
 

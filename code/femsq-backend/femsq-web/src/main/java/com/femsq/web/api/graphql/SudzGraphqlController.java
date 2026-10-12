@@ -496,7 +496,8 @@ public class SudzGraphqlController {
                     input.dbtKey(),
                     input.curator(),
                     input.mery(),
-                    input.cstCode()
+                    input.cstCode(),
+                    Boolean.TRUE.equals(input.writeToNew())
             );
         } catch (IllegalArgumentException exception) {
             throw badRequest(exception);
@@ -518,6 +519,26 @@ public class SudzGraphqlController {
     public String appendSudzYearProgress(@Argument int yrKey, @Argument String line) {
         try {
             return sudzService.appendYearProgress(yrKey, line);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Заменяет {@code yr_Progress} протоколом одного прогона.
+     *
+     * @param yrKey ключ года
+     * @param text полный текст протокола
+     * @return записанный текст
+     */
+    @MutationMapping
+    public String replaceSudzYearProgress(@Argument int yrKey, @Argument String text) {
+        try {
+            return sudzService.replaceYearProgress(yrKey, text);
         } catch (IllegalArgumentException exception) {
             throw badRequest(exception);
         } catch (MissingConfigurationException exception) {

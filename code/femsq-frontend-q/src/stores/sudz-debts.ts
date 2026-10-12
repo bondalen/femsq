@@ -45,7 +45,7 @@ export const useSudzDebtsStore = defineStore('sudz-debts', () => {
   const error = ref<string | null>(null);
   const saveStatus = ref<string | null>(null);
   const accountFilter = ref<string | null>(null);
-  const searchTerm = ref('');
+  const onlyNew = ref(false);
   const d644Preview = ref<SudzD644Row | null>(null);
   const d644Loading = ref(false);
 
@@ -58,6 +58,15 @@ export const useSudzDebtsStore = defineStore('sudz-debts', () => {
     return portfolioRows.value.filter((row) => {
       if (accountFilter.value && String(row.accountNum ?? '') !== accountFilter.value) {
         return false;
+      }
+      if (onlyNew.value) {
+        const fresh = row.debt;
+        const hasNew = [fresh.curatorNew, fresh.meryNew, fresh.cstCodeNew].some(
+          (value) => value != null && String(value).trim() !== ''
+        );
+        if (!hasNew) {
+          return false;
+        }
       }
       if (!term) {
         return true;
@@ -176,6 +185,7 @@ export const useSudzDebtsStore = defineStore('sudz-debts', () => {
     curator: string;
     mery: string;
     cstCode: string;
+    writeToNew: boolean;
   }): Promise<boolean> {
     if (selectedYr.value == null || selectedDbtKey.value == null) {
       return false;
@@ -188,18 +198,26 @@ export const useSudzDebtsStore = defineStore('sudz-debts', () => {
         dbtKey: selectedDbtKey.value,
         curator: payload.curator,
         mery: payload.mery,
-        cstCode: payload.cstCode
+        cstCode: payload.cstCode,
+        writeToNew: payload.writeToNew
       });
       const idx = debts.value.findIndex((d) => d.dbtKey === result.dbtKey);
       if (idx >= 0) {
         const current = debts.value[idx];
-        debts.value[idx] = {
-          ...current,
-          curator: result.curator,
-          mery: result.mery,
-          cstCode: result.cstCode,
-          cstName: result.cstName
-        };
+        debts.value[idx] = payload.writeToNew
+          ? {
+              ...current,
+              curatorNew: result.curator,
+              meryNew: result.mery,
+              cstCodeNew: result.cstCode
+            }
+          : {
+              ...current,
+              curator: result.curator,
+              mery: result.mery,
+              cstCode: result.cstCode,
+              cstName: result.cstName
+            };
       }
       saveStatus.value = `Записано в группу комментариев ${result.cmmGr}`;
       return true;
@@ -235,6 +253,7 @@ export const useSudzDebtsStore = defineStore('sudz-debts', () => {
   function resetFilters(): void {
     accountFilter.value = null;
     searchTerm.value = '';
+    onlyNew.value = false;
   }
 
   return {
@@ -254,6 +273,7 @@ export const useSudzDebtsStore = defineStore('sudz-debts', () => {
     saveStatus,
     accountFilter,
     searchTerm,
+    onlyNew,
     d644Preview,
     d644Loading,
     loadYears,

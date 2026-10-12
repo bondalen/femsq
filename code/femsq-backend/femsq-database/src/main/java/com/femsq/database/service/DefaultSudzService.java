@@ -248,6 +248,17 @@ public class DefaultSudzService implements SudzService {
     }
 
     @Override
+    public String replaceYearProgress(int yrKey, String text) {
+        requireYear(yrKey);
+        String protocol = text == null ? "" : text.trim();
+        if (protocol.isEmpty()) {
+            throw new IllegalArgumentException("Протокол progress не должен быть пустым");
+        }
+        log.log(Level.INFO, "replaceYearProgress yr={0}", yrKey);
+        return sudzDao.replaceYearProgress(yrKey, protocol);
+    }
+
+    @Override
     public boolean deleteYear(int yrKey) {
         requireYear(yrKey);
         log.log(Level.INFO, "deleteYear yr={0}", yrKey);
@@ -596,14 +607,16 @@ public class DefaultSudzService implements SudzService {
             int dbtKey,
             String curator,
             String mery,
-            String cstCode
+            String cstCode,
+            boolean writeToNew
     ) {
         requireYear(yrKey);
         if (dbtKey <= 0) {
             throw new IllegalArgumentException("dbtKey должен быть положительным: " + dbtKey);
         }
-        log.log(Level.INFO, "updateDebtCollection yr={0}, dbtKey={1}", new Object[]{yrKey, dbtKey});
-        return sudzDao.saveDebtCollection(yrKey, dbtKey, curator, mery, cstCode);
+        log.log(Level.INFO, "updateDebtCollection yr={0}, dbtKey={1}, writeToNew={2}",
+                new Object[]{yrKey, dbtKey, writeToNew});
+        return sudzDao.saveDebtCollection(yrKey, dbtKey, curator, mery, cstCode, writeToNew);
     }
 
     @Override

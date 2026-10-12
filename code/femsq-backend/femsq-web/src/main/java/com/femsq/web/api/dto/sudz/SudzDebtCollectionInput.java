@@ -8,12 +8,14 @@ package com.femsq.web.api.dto.sudz;
  * @param curator куратор
  * @param mery мероприятия
  * @param cstCode код стройки
+ * @param writeToNew {@code true} — писать в {@code yr_CmmGr_New}
  */
 public record SudzDebtCollectionInput(
         int yr,
         int dbtKey,
         String curator,
         String mery,
-        String cstCode
+        String cstCode,
+        Boolean writeToNew
 ) {
 }

@@ -4,12 +4,13 @@ import com.femsq.database.config.DatabaseConfigurationService.MissingConfigurati
 import com.femsq.database.exception.DaoException;
 import com.femsq.database.model.sudz.SudzD644Row;
 import com.femsq.database.model.sudz.SudzRsltDebt;
-import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSvodResult;
 import com.femsq.database.service.SudzService;
 import com.femsq.web.api.sudz.SudzD644ExcelExporter;
 import com.femsq.web.api.sudz.SudzRsltExcelExporter;
 import com.femsq.web.api.sudz.SudzRsltReturnImporter;
+import com.femsq.web.api.sudz.SudzRsltReturnParse;
+import com.femsq.web.api.sudz.SudzRsltReturnProgress;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -115,6 +116,7 @@ public class SudzExportRestController {
 
     /**
      * Rslt (повтор): «старые» из {@code yr_CmmGr}, колонки {@code *_new} из {@code yr_CmmGr_New}.
+     * Протокол прогона пишет экран через {@code replaceSudzYearProgress}, этот ответ лог не меняет.
      *
      * @param yr ключ год-варианта
      * @param asOfUpl выгрузка «срезы до …»
@@ -130,19 +132,6 @@ public class SudzExportRestController {
             byte[] body = SudzRsltExcelExporter.exportRsltPovtor(debts);
             String stamp = LocalDateTime.now().format(FILE_STAMP);
             String fileName = "ags_Yr_DbtChangesRslt_" + yr + "_" + asOfUpl + "_povtor_" + stamp + ".xlsx";
-            String line = String.format(
-                    "[%s] Rslt повтор · Excel | yr=%d | asOfUpl=%d | долгов=%d | файл=%s | ok",
-                    progressTimestamp(),
-                    yr,
-                    asOfUpl,
-                    debts.size(),
-                    fileName
-            );
-            try {
-                sudzService.appendYearProgress(yr, line);
-            } catch (RuntimeException progressError) {
-                log.log(Level.WARNING, "Не удалось дописать yr_Progress: {0}", progressError.getMessage());
-            }
             log.log(Level.INFO, "Rslt повтор Excel yr={0}, asOfUpl={1}, rows={2}, bytes={3}",
                     new Object[]{yr, asOfUpl, debts.size(), body.length});
             return ResponseEntity.ok()
@@ -179,19 +168,6 @@ public class SudzExportRestController {
             byte[] body = SudzD644ExcelExporter.exportD644(rows);
             String stamp = LocalDateTime.now().format(FILE_STAMP);
             String fileName = "ags_Yr_DbtChangesRsltD644_" + yr + "_" + currUpl + "_" + stamp + ".xlsx";
-            String line = String.format(
-                    "[%s] D644 · Excel | yr=%d | currUpl=%d | строк=%d | файл=%s | ok",
-                    progressTimestamp(),
-                    yr,
-                    currUpl,
-                    rows.size(),
-                    fileName
-            );
-            try {
-                sudzService.appendYearProgress(yr, line);
-            } catch (RuntimeException progressError) {
-                log.log(Level.WARNING, "Не удалось дописать yr_Progress: {0}", progressError.getMessage());
-            }
             log.log(Level.INFO, "D644 Excel yr={0}, currUpl={1}, rows={2}, bytes={3}",
                     new Object[]{yr, currUpl, rows.size(), body.length});
             return ResponseEntity.ok()
@@ -276,46 +252,59 @@ public class SudzExportRestController {
         if (file == null || file.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Файл возврата пуст");
         }
+        String fileName = file.getOriginalFilename() != null ? file.getOriginalFilename() : "return.xlsx";
+        SudzRsltReturnParse parse = null;
         try {
-            List<SudzRsltReturnRow> rows = SudzRsltReturnImporter.parse(file.getInputStream());
-            if (rows.isEmpty()) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "В файле нет строк с заполненными *_new"
-                );
+            parse = SudzRsltReturnImporter.parse(file.getInputStream());
+            if (parse.rows().isEmpty()) {
+                String reason = "В файле нет строк с заполненными *_new";
+                rememberReturnProgress(yr, SudzRsltReturnProgress.failure(
+                        fileName, yr, parse, reason, LocalDateTime.now()));
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, reason);
             }
-            int imported = sudzService.importRsltReturn(yr, rows);
-            String fileName = file.getOriginalFilename() != null ? file.getOriginalFilename() : "return.xlsx";
-            String line = String.format(
-                    "[%s] Rslt повтор · Загрузить | yr=%d | долгов=%d | файл=%s | ok",
-                    progressTimestamp(),
-                    yr,
-                    imported,
-                    fileName
-            );
-            try {
-                sudzService.appendYearProgress(yr, line);
-            } catch (RuntimeException progressError) {
-                log.log(Level.WARNING, "Не удалось дописать yr_Progress: {0}", progressError.getMessage());
-            }
+            int imported = sudzService.importRsltReturn(yr, parse.rows());
+            rememberReturnProgress(yr, SudzRsltReturnProgress.success(
+                    fileName, yr, parse, imported, LocalDateTime.now()));
             log.log(Level.INFO, "Rslt return import yr={0}, imported={1}, file={2}",
                     new Object[]{yr, imported, fileName});
             return Map.of(
                     "yr", yr,
                     "imported", imported,
-                    "parsed", rows.size(),
+                    "parsed", parse.sourceRows(),
                     "fileName", fileName
             );
         } catch (ResponseStatusException exception) {
             throw exception;
         } catch (IllegalArgumentException exception) {
+            rememberReturnProgress(yr, SudzRsltReturnProgress.failure(
+                    fileName, yr, parse, exception.getMessage(), LocalDateTime.now()));
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage(), exception);
         } catch (MissingConfigurationException exception) {
+            rememberReturnProgress(yr, SudzRsltReturnProgress.failure(
+                    fileName, yr, parse, exception.getMessage(), LocalDateTime.now()));
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage(), exception);
         } catch (DaoException exception) {
+            rememberReturnProgress(yr, SudzRsltReturnProgress.failure(
+                    fileName, yr, parse, exception.getMessage(), LocalDateTime.now()));
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage(), exception);
         } catch (IOException exception) {
+            rememberReturnProgress(yr, SudzRsltReturnProgress.failure(
+                    fileName, yr, null, "Не удалось прочитать Excel", LocalDateTime.now()));
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Не удалось прочитать Excel", exception);
+        }
+    }
+
+    /**
+     * Пишет протокол прогона в {@code yr_Progress}. Сбой записи лога не скрывает результат импорта.
+     *
+     * @param yr ключ года
+     * @param protocol текст протокола
+     */
+    private void rememberReturnProgress(int yr, String protocol) {
+        try {
+            sudzService.replaceYearProgress(yr, protocol);
+        } catch (RuntimeException progressError) {
+            log.log(Level.WARNING, "Не удалось записать протокол yr_Progress: {0}", progressError.getMessage());
         }
     }
 }

@@ -156,7 +156,8 @@ class SudzDaoSmokeIT {
                         82,
                         debt82.curator(),
                         newMery,
-                        debt82.cstCode()
+                        debt82.cstCode(),
+                        false
                 );
                 assertTrue(saved.mery() != null && saved.mery().contains(marker));
 
@@ -167,7 +168,7 @@ class SudzDaoSmokeIT {
                 assertTrue(row.comment644() != null && row.comment644().contains(marker),
                         "D644 comment644 должен содержать marker после save");
             } finally {
-                service.updateDebtCollection(901, 82, debt82.curator(), originalMery, debt82.cstCode());
+                service.updateDebtCollection(901, 82, debt82.curator(), originalMery, debt82.cstCode(), false);
             }
         }
     }

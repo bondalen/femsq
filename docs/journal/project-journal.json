@@ -3,9 +3,354 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-10-11"
+      "lastUpdated": "2026-10-12"
     },
     "sessions": [
+      {
+        "chat": {
+          "displayName": "Группа комментариев QII 2026 и Д644 (active, high). № chat-2026-10-12-001",
+          "chat-attributes": {
+            "id": "chat-2026-10-12-001",
+            "created": "2026-10-12",
+            "lastUpdated": "2026-10-12",
+            "owner": "Александр",
+            "status": "active",
+            "priority": "high",
+            "tags": [
+              "sudz",
+              "cmm",
+              "d644",
+              "qii-2026",
+              "yr-901"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md",
+              "wbs": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+              "process": "docs/development/notes/domain/sudz/03-processes.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "План группы QII 2026 и уточнение БП 1.1.3 (success). № log-2026-10-12-001",
+                "log-attributes": {
+                  "id": "log-2026-10-12-001",
+                  "timestamp": "2026-10-12T12:55:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "cmm",
+                    "d644",
+                    "qii-2026"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Разобран возврат специалистов и зафиксирован порядок группы и Д644",
+                    "details": "Файл comm_26-1012.xlsx: 179 строк *_new, 178 долгов, ключ 11897 дважды, 29 строк без «Проверено», код стройки меняется только у долга 3672. Год 901: yr_CmmGr=905, yr_CmmGr_New=906; файл в 906 не грузить. Access и Yr_DbtChangesD644 читают одну группу указателя yr_CmmGr; копирование 905 не требуется. План 0.1.0: новая группа → импорт → качество → переключение yr_CmmGr → Д644 со среза 903.",
+                    "outcome": "План chat-plan-26-1012 готов к исполнению. В 03-processes §1.1.3 записана самодостаточность группы. В WBS 0918 узлы 1.1.1.3.3–.4 ссылаются на план.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md",
+                      "docs/development/notes/domain/sudz/03-processes.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Экран A пишет в группу новых (success). № log-2026-10-12-002",
+                "log-attributes": {
+                  "id": "log-2026-10-12-002",
+                  "timestamp": "2026-10-12T13:10:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "cmm",
+                    "ui"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "module:frontend",
+                      "module:backend"
+                    ],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Правка yr_CmmGr_New на экране «Долги / мероприятия»",
+                    "details": "Пока yr_CmmGr и yr_CmmGr_New различаются, официальные поля только для чтения. Блок «Группа новых» сохраняет куратора, мероприятия и код через updateSudzDebtCollection.writeToNew. Пустое поле снимает строку только в New. Фильтр «Только долги с текстом в группе новых». Создание группы, импорт xlsx, переключение yr_CmmGr и выгрузка Д644 уже были в UI Progress и карточки года. План 1012 v0.2.0, узел 1.0.",
+                    "outcome": "Оператор может загрузить группу и получить Д644 только кнопками UI. Шаги 1.1–1.5 в плане остаются к прогону в браузере.",
+                    "references": [
+                      "code/femsq-frontend-q/src/views/sudz/SudzDebtsView.vue",
+                      "code/femsq-backend/femsq-web/src/main/resources/graphql/sudz-schema.graphqls",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md",
+                      "docs/development/notes/UI/02-9_sudz-mvp-screens.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Группа 907 и импорт comm_26-1012 (success). № log-2026-10-12-003",
+                "log-attributes": {
+                  "id": "log-2026-10-12-003",
+                  "timestamp": "2026-10-12T13:26:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": ["sudz", "cmm", "qii-2026"],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Создана группа 907 и загружен возврат QII",
+                    "details": "В UI года 901 создана группа «[sudz] Ответы специалистов QII 2026 (comm_26-1012)», yr_CmmGr_New=907, yr_CmmGr=905. Первый POST откатился: формулы кода (=AW27) читались как текст AW27. Импортёр считает формулу. Повтор: parsed=179, imported=179. Группа 907: мероприятия 178, куратор 170, код 157, долгов 178. 905 и 906 без изменений. Прогон 0.1.0.346-SNAPSHOT.",
+                    "outcome": "Шаги 1.1–1.2 закрыты. Д644 ещё смотрит группу 905.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/SudzRsltReturnImporter.java",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Протокол лога, склейка Rslt и диалог файла (success). № log-2026-10-12-004",
+                "log-attributes": {
+                  "id": "log-2026-10-12-004",
+                  "timestamp": "2026-10-12T14:45:00+03:00",
+                  "level": "success",
+                  "effort": "30m",
+                  "status": "completed",
+                  "tags": ["sudz", "cmm", "ui", "rslt"],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксирован целевой лог Progress и чтение полос Rslt",
+                    "details": "Лог операции — только протокол текущего прогона, без архива. Первой командой станет «Rslt повтор · Загрузить»; со временем тот же порядок у остальных команд экрана «Портфель года». Пока комментарий на каноне dbtKey, разбор возврата сводит одиночную строку и оба вида склейки полосы к одной записи на долг. Диалог файла в браузере Cursor открывает агент, файл выбирает оператор.",
+                    "outcome": "02-9, 08_CMM §6 и план 1012 v0.2.3 обновлены. Код лога и чтение верхней ячейки склейки ещё не сделаны.",
+                    "references": [
+                      "docs/development/notes/UI/02-9_sudz-mvp-screens.md",
+                      "docs/development/notes/sql/26-0908-sudz-split-merge-sandbox/08_CMM_AND_RSLT.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Протокол загрузки Rslt и чтение склейки (success). № log-2026-10-12-005",
+                "log-attributes": {
+                  "id": "log-2026-10-12-005",
+                  "timestamp": "2026-10-12T15:00:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": ["sudz", "cmm", "rslt", "ui"],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "«Rslt повтор · Загрузить» пишет протокол прогона и читает верхнюю ячейку склейки",
+                    "details": "yr_Progress года 901 заменён протоколом: файл comm_26-1012.xlsx, строк 179, долгов 178, полоса 11897 с тем же текстом, записано 178. Архив однострочных отметок не сохранён. Повторный импорт в группу 907. yr_CmmGr=905, yr_CmmGr_New=907. Счётчики 905 и 906 прежние. Сборка 0.1.0.347-SNAPSHOT.",
+                    "outcome": "Узел 1.6 плана закрыт. Остальные команды экрана по-прежнему дописывают архив. Переключение года не делалось.",
+                    "references": [
+                      "docs/development/notes/UI/02-9_sudz-mvp-screens.md",
+                      "docs/development/notes/sql/26-0908-sudz-split-merge-sandbox/08_CMM_AND_RSLT.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Год 901 на группу 907 и предпросмотр Д644 (success). № log-2026-10-12-006",
+                "log-attributes": {
+                  "id": "log-2026-10-12-006",
+                  "timestamp": "2026-10-12T15:15:00+03:00",
+                  "level": "success",
+                  "effort": "30m",
+                  "status": "completed",
+                  "tags": ["sudz", "d644", "qii-2026"],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "На карточке года 901 включена группа 907 и снят предпросмотр Д644",
+                    "details": "В браузере yr_CmmGr переключён с 905 на 907 и сохранён. yr_CmmGr_New остался 907. Группа 905 не копировалась. «D644 · Выгрузить», срез 903, предпросмотр: 178 строк, счета 606012/762210/767502 (74/65/39). Комментарий долга 11897 совпадает с мероприятием группы 907. Долг 3672 показывает код 051-1001888. Пустых комментариев нет.",
+                    "outcome": "Узлы 1.4 и 1.5 закрыты. Годовой свод не выгружался.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Протокол прогона Д644 на вкладке Лог (success). № log-2026-10-12-007",
+                "log-attributes": {
+                  "id": "log-2026-10-12-007",
+                  "timestamp": "2026-10-12T16:30:00+03:00",
+                  "level": "success",
+                  "effort": "40m",
+                  "status": "completed",
+                  "tags": ["sudz", "d644", "ui"],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "«D644 · Выгрузить» заменяет yr_Progress протоколом прогона",
+                    "details": "Предпросмотр среза 903 по-прежнему открывается сам. На вкладке Лог: группа 907, состояние 2026-06-30, 178 строк, счета 606012/762210/767502 (74/65/39), комментарий заполнен 178, итог «показано 178». Прежний протокол загрузки не остаётся. Excel пишет имя файла и место сохранения; ошибка открывает Лог с «показано 0». Rslt и Свод по-прежнему дописывают одну строку.",
+                    "outcome": "Узел 1.7 закрыт.",
+                    "references": [
+                      "docs/development/notes/UI/02-9_sudz-mvp-screens.md",
+                      "docs/development/notes/sql/26-0908-sudz-split-merge-sandbox/08_CMM_AND_RSLT.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Сверка группы 907 с файлом comm_26-1012 (success). № log-2026-10-12-008",
+                "log-attributes": {
+                  "id": "log-2026-10-12-008",
+                  "timestamp": "2026-10-12T16:40:00+03:00",
+                  "level": "success",
+                  "effort": "30m",
+                  "status": "completed",
+                  "tags": ["sudz", "cmm", "rslt"],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Сверены написания кураторов, код долга 3672 и предпросмотр Rslt повтор",
+                    "details": "Кураторы группы 907 совпали с файлом, включая «Дедова И.В», «Галеев Р.ф.» (долг 12278) и «И.В. Купро» (долг 3672); тексты не переписывались. Повтор ключа 11897 схлопнут: Дедова 58 физических строк и 57 долгов. В файле строка 68: зелёный код 056-1001888, cstAgPn_new 051-1001888; в группе 905 код остался 056-1001888. Предпросмотр «Rslt повтор · Выгрузить», срез 903: 2135 строк, yr_CmmGr и yr_CmmGr_New равны 907. Все 178 долгов *_new совпали с curatorNew, meryNew и cstCodeNew; зелёные колонки тоже из 907.",
+                    "outcome": "Узел 1.3 закрыт. План 0.2.9. Команда Rslt дописала одну строку над протоколом Д644; это исправлено в log-2026-10-12-009.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Протокол выгрузки Rslt повтор (success). № log-2026-10-12-009",
+                "log-attributes": {
+                  "id": "log-2026-10-12-009",
+                  "timestamp": "2026-10-12T17:05:00+03:00",
+                  "level": "success",
+                  "effort": "30m",
+                  "status": "completed",
+                  "tags": ["sudz", "rslt", "ui"],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "«Rslt повтор · Выгрузить» заменяет yr_Progress протоколом прогона",
+                    "details": "Предпросмотр и Excel больше не дописывают однострочную отметку. Протокол: год, группа и группа новых, срез и дата состояния, режим, долги, строки, срезы, заполненность *_new, итог. Ошибка открывает Лог с «показано 0». Файл rslt-povtor.xlsx лог не меняет. «Rslt сбор» и Свод по-прежнему дописывают строку.",
+                    "outcome": "Узел 1.8. План 0.2.10.",
+                    "references": [
+                      "docs/development/notes/UI/02-9_sudz-mvp-screens.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Excel Д644 и сверка со сводами (success). № log-2026-10-12-010",
+                "log-attributes": {
+                  "id": "log-2026-10-12-010",
+                  "timestamp": "2026-10-12T17:30:00+03:00",
+                  "level": "success",
+                  "effort": "40m",
+                  "status": "completed",
+                  "tags": ["sudz", "d644", "qii-2026"],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Сформирован Excel Д644 среза 903 и сверен с комментариями и двумя сводами",
+                    "details": "Файл ags_Yr_DbtChangesRsltD644_901_903_2026-10-12_172435.xlsx: 178 строк, счета 606012/762210/767502 (74/65/39). Комментарии совпали с mery_new. У 21 долга код в файле специалистов пуст, в Д644 стоит «не обнаружена в платежах». Долги 6530, 6634 и 6635 в Д644 нет: просрочка на 31.12.2025 и на 30.06.2026 равна 0. Строки сводов по счёту, контрагенту, договору и счёту-фактуре совпали с суммами Д644, кроме долга 11897: в своде две строки по 18 000 (договоры 32-426/05-18 и 32-425/05-18), в Д644 четыре одинаковые строки по 18 000 с договором 32-426/05-18.",
+                    "outcome": "Книга лежит в excel/2026-06/debit. Расхождение 11897 не исправлялось.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
       {
         "chat": {
           "displayName": "UI D полный (CstNew / КСДСФ pmt / Sum_t) (pending, high). № chat-2026-09-22-001",

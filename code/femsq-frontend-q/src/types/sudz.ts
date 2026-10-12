@@ -1026,6 +1026,8 @@ export interface SudzDebtCollectionInput {
   curator?: string | null;
   mery?: string | null;
   cstCode?: string | null;
+  /** Писать в yr_CmmGr_New. Иначе — в yr_CmmGr. */
+  writeToNew?: boolean | null;
 }
 
 export interface SudzDebtCollectionResult {

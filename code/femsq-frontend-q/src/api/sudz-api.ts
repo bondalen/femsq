@@ -2723,6 +2723,12 @@ const APPEND_PROGRESS = gql`
   }
 `;
 
+const REPLACE_PROGRESS = gql`
+  mutation ReplaceSudzYearProgress($yrKey: Int!, $text: String!) {
+    replaceSudzYearProgress(yrKey: $yrKey, text: $text)
+  }
+`;
+
 /**
  * Дописывает строку в yr_Progress.
  */
@@ -2735,6 +2741,21 @@ export async function appendSudzYearProgress(yrKey: number, line: string): Promi
     return result.data?.appendSudzYearProgress ?? '';
   } catch (error) {
     throw wrapApolloError(error, 'AppendSudzYearProgress');
+  }
+}
+
+/**
+ * Заменяет yr_Progress протоколом одного прогона.
+ */
+export async function replaceSudzYearProgress(yrKey: number, text: string): Promise<string> {
+  try {
+    const result = await apolloClient.mutate<{ replaceSudzYearProgress: string }>({
+      mutation: REPLACE_PROGRESS,
+      variables: { yrKey, text }
+    });
+    return result.data?.replaceSudzYearProgress ?? '';
+  } catch (error) {
+    throw wrapApolloError(error, 'ReplaceSudzYearProgress');
   }
 }
 

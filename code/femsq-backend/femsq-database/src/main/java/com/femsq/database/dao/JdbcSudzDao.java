@@ -582,6 +582,30 @@ public class JdbcSudzDao implements SudzDao {
         }
     }
 
+    @Override
+    public String replaceYearProgress(int yrKey, String text) {
+        log.log(Level.INFO, "Replacing yr_Progress yr={0}", yrKey);
+        String updateSql = "UPDATE " + q("yr") + " SET yr_Progress = ? WHERE yr_key = ?";
+        try (Connection connection = connectionFactory.createConnection()) {
+            if (findYearOn(connection, yrKey).isEmpty()) {
+                throw new IllegalArgumentException("Год-вариант СУДЗ не найден: yr=" + yrKey);
+            }
+            String protocol = text == null ? "" : text;
+            try (PreparedStatement statement = connection.prepareStatement(updateSql)) {
+                statement.setString(1, protocol);
+                statement.setInt(2, yrKey);
+                statement.executeUpdate();
+            }
+            return protocol;
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось заменить yr_Progress yr=" + yrKey, exception);
+        }
+    }
+
     /**
      * Новая строка в начало лога; не больше {@code maxLines} строк.
      *
@@ -3606,7 +3630,8 @@ public class JdbcSudzDao implements SudzDao {
             int dbtKey,
             String curator,
             String mery,
-            String cstCode
+            String cstCode,
+            boolean writeToNew
     ) {
         String curatorNorm = normalizeText(curator);
         String meryNorm = normalizeText(mery);
@@ -3618,9 +3643,11 @@ public class JdbcSudzDao implements SudzDao {
             try {
                 SudzYear year = findYearOn(connection, yrKey)
                         .orElseThrow(() -> new IllegalArgumentException("Год-вариант СУДЗ не найден: yr=" + yrKey));
-                Integer cmmGr = year.cmmGr();
+                Integer cmmGr = writeToNew ? year.cmmGrNew() : year.cmmGr();
                 if (cmmGr == null || cmmGr <= 0) {
-                    throw new IllegalArgumentException("У года yr=" + yrKey + " не задана yr_CmmGr");
+                    throw new IllegalArgumentException(writeToNew
+                            ? "У года yr=" + yrKey + " не задана yr_CmmGr_New"
+                            : "У года yr=" + yrKey + " не задана yr_CmmGr");
                 }
 
                 upsertComment(connection, cmmGr, dbtKey, CNIC_TYPE_CURATOR, curatorNorm);

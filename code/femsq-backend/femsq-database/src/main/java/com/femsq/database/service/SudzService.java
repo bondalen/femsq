@@ -206,6 +206,15 @@ public interface SudzService {
     String appendYearProgress(int yrKey, String line);
 
     /**
+     * Заменяет лог года протоколом одного прогона.
+     *
+     * @param yrKey ключ года
+     * @param text полный текст протокола
+     * @return записанный текст
+     */
+    String replaceYearProgress(int yrKey, String text);
+
+    /**
      * Удаляет год.
      *
      * @param yrKey ключ
@@ -543,6 +552,7 @@ public interface SudzService {
      * @param curator куратор
      * @param mery мероприятия
      * @param cstCode код стройки
+     * @param writeToNew {@code true} — группа {@code yr_CmmGr_New}, иначе {@code yr_CmmGr}
      * @return актуальные значения
      * @throws IllegalArgumentException при неверных аргументах / неизвестном коде стройки
      */
@@ -551,7 +561,8 @@ public interface SudzService {
             int dbtKey,
             String curator,
             String mery,
-            String cstCode
+            String cstCode,
+            boolean writeToNew
     );
 
     /**
