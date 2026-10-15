@@ -1324,6 +1324,14 @@ const SUDZ_YR_DBT_CHANGES = gql`
         cstAgPnName
         agOrg
         pogasheno
+        dvKey
+        curator
+        mery
+        cstCode
+        cstName
+        curatorNew
+        meryNew
+        cstCodeNew
       }
     }
   }

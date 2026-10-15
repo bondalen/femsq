@@ -39,21 +39,8 @@ public class SudzExportRestController {
 
     private static final Logger log = Logger.getLogger(SudzExportRestController.class.getName());
 
-    /** Метка времени в {@code yr_Progress}: локальное время, без {@code T}. */
-    private static final DateTimeFormatter PROGRESS_TS =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
     private static final DateTimeFormatter FILE_STAMP =
             DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss");
-
-    /**
-     * Текущая метка для строки лога Progress.
-     *
-     * @return {@code yyyy-MM-dd HH:mm:ss}
-     */
-    private static String progressTimestamp() {
-        return LocalDateTime.now().format(PROGRESS_TS);
-    }
 
     private final SudzService sudzService;
 
@@ -66,6 +53,7 @@ public class SudzExportRestController {
 
     /**
      * Rslt (сбор): Excel со срезами до {@code asOfUpl} и пустыми колонками {@code *_new}.
+     * Протокол прогона пишет экран через {@code replaceSudzYearProgress}.
      *
      * @param yr ключ год-варианта
      * @param asOfUpl выгрузка «срезы до …» (обязательна)
@@ -82,19 +70,6 @@ public class SudzExportRestController {
             // Дата-время в имени: повторное «Сформировать» не перезаписывает тот же файл (FSA).
             String stamp = LocalDateTime.now().format(FILE_STAMP);
             String fileName = "ags_Yr_DbtChangesRslt_" + yr + "_" + asOfUpl + "_" + stamp + ".xlsx";
-            String line = String.format(
-                    "[%s] Rslt сбор · Excel | yr=%d | asOfUpl=%d | долгов=%d | файл=%s | ok",
-                    progressTimestamp(),
-                    yr,
-                    asOfUpl,
-                    debts.size(),
-                    fileName
-            );
-            try {
-                sudzService.appendYearProgress(yr, line);
-            } catch (RuntimeException progressError) {
-                log.log(Level.WARNING, "Не удалось дописать yr_Progress: {0}", progressError.getMessage());
-            }
             log.log(Level.INFO, "Rslt сбор Excel yr={0}, asOfUpl={1}, rows={2}, bytes={3}",
                     new Object[]{yr, asOfUpl, debts.size(), body.length});
             return ResponseEntity.ok()
@@ -189,6 +164,7 @@ public class SudzExportRestController {
 
     /**
      * Годовой свод по субсчетам Д644.
+     * Протокол прогона пишет экран через {@code replaceSudzYearProgress}.
      *
      * @param yr ключ год-варианта
      * @param currUpl текущий срез
@@ -205,19 +181,6 @@ public class SudzExportRestController {
             String stamp = LocalDateTime.now().format(FILE_STAMP);
             String fileName = "ags_Yr_DbtChangesD644Svod_" + yr + "_" + currUpl + "_" + stamp + ".xlsx";
             int accounts = svod.accounts() != null ? svod.accounts().size() : 0;
-            String line = String.format(
-                    "[%s] Свод · Excel | yr=%d | currUpl=%d | счетов=%d | файл=%s | ok",
-                    progressTimestamp(),
-                    yr,
-                    currUpl,
-                    accounts,
-                    fileName
-            );
-            try {
-                sudzService.appendYearProgress(yr, line);
-            } catch (RuntimeException progressError) {
-                log.log(Level.WARNING, "Не удалось дописать yr_Progress: {0}", progressError.getMessage());
-            }
             log.log(Level.INFO, "D644Svod Excel yr={0}, currUpl={1}, accounts={2}, bytes={3}",
                     new Object[]{yr, currUpl, accounts, body.length});
             return ResponseEntity.ok()
@@ -262,14 +225,19 @@ public class SudzExportRestController {
                         fileName, yr, parse, reason, LocalDateTime.now()));
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, reason);
             }
-            int imported = sudzService.importRsltReturn(yr, parse.rows());
+            var imported = sudzService.importRsltReturn(yr, parse.rows());
             rememberReturnProgress(yr, SudzRsltReturnProgress.success(
                     fileName, yr, parse, imported, LocalDateTime.now()));
-            log.log(Level.INFO, "Rslt return import yr={0}, imported={1}, file={2}",
-                    new Object[]{yr, imported, fileName});
+            log.log(Level.INFO,
+                    "Rslt return import yr={0}, imported={1}, extreme={2}, walkBack={3}, acc={4}, file={5}",
+                    new Object[]{yr, imported.importedDebts(), imported.boundExtreme(),
+                            imported.boundWalkBack(), imported.boundAcc(), fileName});
             return Map.of(
                     "yr", yr,
-                    "imported", imported,
+                    "imported", imported.importedDebts(),
+                    "boundExtreme", imported.boundExtreme(),
+                    "boundWalkBack", imported.boundWalkBack(),
+                    "boundAcc", imported.boundAcc(),
                     "parsed", parse.sourceRows(),
                     "fileName", fileName
             );

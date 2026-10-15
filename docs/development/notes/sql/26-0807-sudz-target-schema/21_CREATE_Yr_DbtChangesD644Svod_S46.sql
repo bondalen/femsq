@@ -7,6 +7,8 @@
 --   гр.3 = SUM(Overd base) по долгам портфеля (Overd base > 0)
 --   гр.4 = SUM(NULLIF(Overd base − Overd curr, 0))  — погашено с начала года
 --   гр.5 = SUM(Overd curr) по тем же долгам         — остаток просрочки портфеля
+-- Суммы долей одного dbtKey складываются до вычитания (2026-10-13):
+-- JOIN base×curr по одному ключу удваивал долг с двумя долями (11897: 72 000 вместо 36 000).
 --   гр.6 = гр.4 / гр.3 * 100                        — % погашения
 -- Имена счетов — ags.accnt.
 --
@@ -86,13 +88,24 @@ BEGIN
           AND f.upl_date = @curr_date
     ),
     by_dbt AS (
+        /* Сумма долей долга, без декартова произведения base×curr. */
         SELECT
             b.account_num,
-            b.dvOverd AS overd_base,
-            ISNULL(c.dvOverd, 0) AS overd_curr,
-            NULLIF(CONVERT(money, b.dvOverd - ISNULL(c.dvOverd, 0)), 0) AS pogasheno
+            b.dbtKey,
+            SUM(b.dvOverd) AS overd_base,
+            ISNULL((
+                SELECT SUM(c.dvOverd) FROM curr c WHERE c.dbtKey = b.dbtKey
+            ), 0) AS overd_curr
         FROM base b
-        LEFT JOIN curr c ON c.dbtKey = b.dbtKey
+        GROUP BY b.account_num, b.dbtKey
+    ),
+    by_dbt_pog AS (
+        SELECT
+            account_num,
+            overd_base,
+            overd_curr,
+            NULLIF(CONVERT(money, overd_base - overd_curr), 0) AS pogasheno
+        FROM by_dbt
     ),
     agg AS (
         SELECT
@@ -100,7 +113,7 @@ BEGIN
             SUM(overd_base) AS overd_base_sum,
             SUM(ISNULL(pogasheno, 0)) AS pogasheno_sum,
             SUM(overd_curr) AS overd_curr_sum
-        FROM by_dbt
+        FROM by_dbt_pog
         GROUP BY account_num
     )
     SELECT
@@ -135,11 +148,20 @@ BEGIN
     ),
     by_dbt AS (
         SELECT
-            b.dvOverd AS overd_base,
-            ISNULL(c.dvOverd, 0) AS overd_curr,
-            ISNULL(NULLIF(CONVERT(money, b.dvOverd - ISNULL(c.dvOverd, 0)), 0), 0) AS pogasheno
+            b.dbtKey,
+            SUM(b.dvOverd) AS overd_base,
+            ISNULL((
+                SELECT SUM(c.dvOverd) FROM curr c WHERE c.dbtKey = b.dbtKey
+            ), 0) AS overd_curr
         FROM base b
-        LEFT JOIN curr c ON c.dbtKey = b.dbtKey
+        GROUP BY b.dbtKey
+    ),
+    by_dbt_pog AS (
+        SELECT
+            overd_base,
+            overd_curr,
+            ISNULL(NULLIF(CONVERT(money, overd_base - overd_curr), 0), 0) AS pogasheno
+        FROM by_dbt
     )
     SELECT
         N'ВСЕГО' AS [Наименование],
@@ -150,6 +172,6 @@ BEGIN
             WHEN SUM(overd_base) = 0 THEN CONVERT(float, 0)
             ELSE CONVERT(float, SUM(pogasheno)) / CONVERT(float, SUM(overd_base)) * 100.0
         END AS [Погашено в %]
-    FROM by_dbt;
+    FROM by_dbt_pog;
 END
 GO

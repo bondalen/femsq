@@ -850,10 +850,16 @@ function openCreateDialog(): void {
  * Создаёт выгрузку и выбирает её.
  */
 async function onCreateUpl(): Promise<void> {
+  const name = createDialog.name.trim();
+  const statusOnDate = createDialog.statusOnDate;
+  if (!name || !statusOnDate) {
+    $q.notify({ type: 'warning', message: 'Укажите имя выгрузки и дату состояния' });
+    return;
+  }
   const created = await store.createUpl({
-    uplName: createDialog.name.trim() || null,
+    name,
     uplDate: createDialog.uplDate || null,
-    uplStatusOnDate: createDialog.statusOnDate || null
+    statusOnDate
   });
   if (created) {
     createDialog.open = false;

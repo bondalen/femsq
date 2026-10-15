@@ -643,7 +643,6 @@ import {
 import { FemsqTable, type FemsqTableColumn } from 'fequlib';
 
 import {
-  appendSudzYearProgress,
   replaceSudzYearProgress,
   downloadSudzD644Excel,
   downloadSudzD644SvodExcel,
@@ -664,6 +663,8 @@ import {
 import { buildSudzD644Preview } from '@/utils/sudz-d644-preview';
 import { formatSudzD644Progress } from '@/utils/sudz-d644-progress';
 import { formatSudzRsltPovtorProgress } from '@/utils/sudz-rslt-povtor-progress';
+import { formatSudzRsltSbornProgress } from '@/utils/sudz-rslt-sborn-progress';
+import { formatSudzSvodProgress } from '@/utils/sudz-svod-progress';
 import {
   buildSudzRsltPreview,
   type SudzRsltPreviewRow
@@ -727,15 +728,6 @@ const protoCell = reactive({
 });
 
 const protoScrollFrameEl = ref<HTMLElement | null>(null);
-
-/**
- * Метка времени для yr_Progress: локальное время, формат как у backend Excel.
- */
-function progressTimestamp(): string {
-  const d = new Date();
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-}
 
 const operationOptions = [
   { label: 'Rslt сбор · Выгрузить', value: 'rslt_sborn_export' },
@@ -1077,51 +1069,56 @@ async function runD644OrSvodExport(yr: number, currUpl: number): Promise<void> {
     return;
   }
 
-  if (progress.resultMode === 'proto') {
-    const svod = await getSudzD644Svod(yr, currUpl);
-    const preview = buildSudzSvodPreview(svod);
-    progress.protoRows = preview.rows as unknown as SudzRsltPreviewRow[];
-    progress.protoColumns = preview.columns as unknown as FemsqTableColumn<SudzRsltPreviewRow>[];
-    progress.protoFillNew = false;
-    progress.protoSliceCount = 0;
-    progress.protoFilter = '';
-    progress.protoColumnFilters = Object.fromEntries(preview.columns.map((c) => [c.name, '']));
-    clearProtoCell();
-    progress.subTab = 'proto';
-    await nextTick();
-    const scrollRoot = protoScrollFrameEl.value?.querySelector('.progress-proto-scroll');
-    if (scrollRoot instanceof HTMLElement) {
-      scrollRoot.scrollLeft = 0;
-      scrollRoot.scrollTop = 0;
+  const excel = progress.resultMode === 'excel';
+  try {
+    if (!excel) {
+      const svod = await getSudzD644Svod(yr, currUpl);
+      const preview = buildSudzSvodPreview(svod);
+      progress.protoRows = preview.rows as unknown as SudzRsltPreviewRow[];
+      progress.protoColumns = preview.columns as unknown as FemsqTableColumn<SudzRsltPreviewRow>[];
+      progress.protoFillNew = false;
+      progress.protoSliceCount = 0;
+      progress.protoFilter = '';
+      progress.protoColumnFilters = Object.fromEntries(preview.columns.map((c) => [c.name, '']));
+      clearProtoCell();
+      progress.subTab = 'proto';
+      await nextTick();
+      const scrollRoot = protoScrollFrameEl.value?.querySelector('.progress-proto-scroll');
+      if (scrollRoot instanceof HTMLElement) {
+        scrollRoot.scrollLeft = 0;
+        scrollRoot.scrollTop = 0;
+      }
+      await rememberSvodProgress(yr, currUpl, preview.rows.length, 'preview');
+      $q.notify({
+        type: 'positive',
+        message: `Предпросмотр Свод: ${preview.rows.length} строк(и)`,
+        timeout: 1500
+      });
+      return;
     }
-    const line = `[${progressTimestamp()}] Свод · предпросмотр | yr=${yr} | currUpl=${currUpl} | счетов=${preview.rows.length} | ok`;
-    await appendSudzYearProgress(yr, line);
-    await store.selectYear(yr);
-    $q.notify({
-      type: 'positive',
-      message: `Предпросмотр Свод: ${preview.rows.length} строк(и)`,
-      timeout: 1500
-    });
-    return;
-  }
 
-  const { blob, fileName } = await downloadSudzD644SvodExcel(yr, currUpl);
-  const saved = await saveBlobToExportFolder(blob, fileName);
-  await store.selectYear(yr);
-  progress.subTab = 'log';
-  if (saved.method === 'directory') {
-    exportFolderName.value = saved.folderName;
+    const svod = await getSudzD644Svod(yr, currUpl);
+    const accounts = svod.accounts?.length ?? 0;
+    const { blob, fileName } = await downloadSudzD644SvodExcel(yr, currUpl);
+    const saved = await saveBlobToExportFolder(blob, fileName);
+    const savedWhere = saved.method === 'directory' ? `папка «${saved.folderName}»` : 'скачан через браузер';
+    if (saved.method === 'directory') {
+      exportFolderName.value = saved.folderName;
+    }
+    await rememberSvodProgress(yr, currUpl, accounts, 'excel', fileName, savedWhere);
+    progress.subTab = 'log';
     $q.notify({
       type: 'positive',
-      message: `${label}: сохранён в «${saved.folderName}»`,
+      message: saved.method === 'directory'
+        ? `${label}: сохранён в «${saved.folderName}»`
+        : `${label}: скачан через браузер`,
       timeout: 2000
     });
-  } else {
-    $q.notify({
-      type: 'positive',
-      message: `${label}: скачан через браузер`,
-      timeout: 2000
-    });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    await rememberSvodProgress(yr, currUpl, null, excel ? 'excel' : 'preview', null, null, reason);
+    progress.subTab = 'log';
+    throw error;
   }
 }
 
@@ -1217,50 +1214,55 @@ async function runRsltExport(yr: number, asOfUpl: number, isPovtor: boolean): Pr
     await runRsltPovtorExport(yr, asOfUpl);
     return;
   }
-  const label = 'Rslt сбор · Выгрузить';
-  if (progress.resultMode === 'proto') {
+  const excel = progress.resultMode === 'excel';
+  try {
     const debts = await getSudzYrDbtChanges(yr, asOfUpl);
-    const preview = buildSudzRsltPreview(debts, isPovtor);
-    progress.protoRows = preview.rows;
-    progress.protoColumns = preview.columns;
-    progress.protoFillNew = isPovtor;
-    progress.protoSliceCount = preview.sliceDates.length;
-    progress.protoFilter = '';
-    progress.protoColumnFilters = Object.fromEntries(preview.columns.map((c) => [c.name, '']));
-    clearProtoCell();
-    progress.subTab = 'proto';
-    await nextTick();
-    const scrollRoot = protoScrollFrameEl.value?.querySelector('.progress-proto-scroll');
-    if (scrollRoot instanceof HTMLElement) {
-      scrollRoot.scrollLeft = 0;
-      scrollRoot.scrollTop = 0;
+    const preview = buildSudzRsltPreview(debts, false);
+    if (!excel) {
+      applyRsltPreview(preview, false);
+      await nextTick();
+      const scrollRoot = protoScrollFrameEl.value?.querySelector('.progress-proto-scroll');
+      if (scrollRoot instanceof HTMLElement) {
+        scrollRoot.scrollLeft = 0;
+        scrollRoot.scrollTop = 0;
+      }
+      await rememberRsltSbornProgress(yr, asOfUpl, debts, preview.rows.length, preview.sliceDates.length, 'preview');
+      $q.notify({
+        type: 'positive',
+        message: `Предпросмотр Rslt сбор · Выгрузить: ${preview.rows.length} долг(ов)`,
+        timeout: 1500
+      });
+      return;
     }
-    const line = `[${progressTimestamp()}] ${label} · предпросмотр | yr=${yr} | asOfUpl=${asOfUpl} | долгов=${preview.rows.length} | срезов=${preview.sliceDates.length} | ok`;
-    await appendSudzYearProgress(yr, line);
-    await store.selectYear(yr);
+    const { blob, fileName } = await downloadSudzRsltExcel(yr, asOfUpl, 'sborn');
+    const saved = await saveBlobToExportFolder(blob, fileName);
+    const savedWhere = saved.method === 'directory' ? `папка «${saved.folderName}»` : 'скачан через браузер';
+    if (saved.method === 'directory') {
+      exportFolderName.value = saved.folderName;
+    }
+    await rememberRsltSbornProgress(
+      yr,
+      asOfUpl,
+      debts,
+      preview.rows.length,
+      preview.sliceDates.length,
+      'excel',
+      fileName,
+      savedWhere
+    );
+    progress.subTab = 'log';
     $q.notify({
       type: 'positive',
-      message: `Предпросмотр ${label}: ${preview.rows.length} долг(ов)`,
-      timeout: 1500
-    });
-    return;
-  }
-  const { blob, fileName } = await downloadSudzRsltExcel(yr, asOfUpl, isPovtor ? 'povtor' : 'sborn');
-  const saved = await saveBlobToExportFolder(blob, fileName);
-  await store.selectYear(yr);
-  if (saved.method === 'directory') {
-    exportFolderName.value = saved.folderName;
-    $q.notify({
-      type: 'positive',
-      message: `Excel сохранён в «${saved.folderName}»`,
+      message: saved.method === 'directory'
+        ? `Rslt сбор · Выгрузить: сохранён в «${saved.folderName}»`
+        : 'Rslt сбор · Выгрузить: скачан через браузер',
       timeout: 2000
     });
-  } else {
-    $q.notify({
-      type: 'positive',
-      message: 'Excel скачан через браузер (Загрузки / Сохранить как)',
-      timeout: 2000
-    });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    await rememberRsltSbornProgress(yr, asOfUpl, null, null, null, excel ? 'excel' : 'preview', null, null, reason);
+    progress.subTab = 'log';
+    throw error;
   }
 }
 
@@ -1332,6 +1334,67 @@ function applyRsltPreview(preview: ReturnType<typeof buildSudzRsltPreview>, fill
   progress.protoColumnFilters = Object.fromEntries(preview.columns.map((c) => [c.name, '']));
   clearProtoCell();
   progress.subTab = 'proto';
+}
+
+/**
+ * Пишет протокол «Rslt сбор · Выгрузить» в yr_Progress и обновляет карточку года.
+ */
+async function rememberRsltSbornProgress(
+  yr: number,
+  asOfUpl: number,
+  debts: SudzRsltDebt[] | null,
+  rowCount: number | null,
+  sliceCount: number | null,
+  mode: 'preview' | 'excel',
+  fileName?: string | null,
+  savedWhere?: string | null,
+  failureReason?: string | null
+): Promise<void> {
+  const upl = (store.yearUpls ?? []).find((item) => item.uplKey === asOfUpl);
+  const text = formatSudzRsltSbornProgress({
+    now: new Date(),
+    yr,
+    cmmGr: store.selectedYear?.cmmGr ?? null,
+    asOfUpl,
+    statusOnDate: upl?.uplStatusOnDate ?? null,
+    mode,
+    debts,
+    rowCount,
+    sliceCount,
+    fileName,
+    savedWhere,
+    failureReason
+  });
+  await replaceSudzYearProgress(yr, text);
+  await store.refreshDetail();
+}
+
+/**
+ * Пишет протокол «Свод · Выгрузить» в yr_Progress и обновляет карточку года.
+ */
+async function rememberSvodProgress(
+  yr: number,
+  currUpl: number,
+  accountCount: number | null,
+  mode: 'preview' | 'excel',
+  fileName?: string | null,
+  savedWhere?: string | null,
+  failureReason?: string | null
+): Promise<void> {
+  const upl = (store.yearUpls ?? []).find((item) => item.uplKey === currUpl);
+  const text = formatSudzSvodProgress({
+    now: new Date(),
+    yr,
+    currUpl,
+    statusOnDate: upl?.uplStatusOnDate ?? null,
+    mode,
+    accountCount,
+    fileName,
+    savedWhere,
+    failureReason
+  });
+  await replaceSudzYearProgress(yr, text);
+  await store.refreshDetail();
 }
 
 /**

@@ -91,6 +91,7 @@ import com.microsoft.sqlserver.jdbc.SQLServerBulkCopyOptions;
 import com.microsoft.sqlserver.jdbc.SQLServerConnection;
 import com.femsq.database.model.sudz.SudzRsltDebt;
 import com.femsq.database.model.sudz.SudzRsltPeriod;
+import com.femsq.database.model.sudz.SudzRsltReturnImportResult;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
 import com.femsq.database.model.sudz.SudzPmDocForest;
@@ -493,7 +494,7 @@ public class JdbcSudzDao implements SudzDao {
     }
 
     @Override
-    public int importRsltReturn(int yrKey, List<SudzRsltReturnRow> rows) {
+    public SudzRsltReturnImportResult importRsltReturn(int yrKey, List<SudzRsltReturnRow> rows) {
         log.log(Level.INFO, "Import Rslt return yr={0}, rows={1}", new Object[]{yrKey, rows.size()});
         try (Connection connection = connectionFactory.createConnection()) {
             connection.setAutoCommit(false);
@@ -505,33 +506,63 @@ public class JdbcSudzDao implements SudzDao {
                     throw new IllegalArgumentException(
                             "У года yr=" + yrKey + " не задана yr_CmmGr_New — укажите группу новых на Progress");
                 }
-                int imported = 0;
+                Map<Integer, List<SudzRsltReturnRow>> byDebt = new LinkedHashMap<>();
                 for (SudzRsltReturnRow row : rows) {
                     if (row == null || row.dbtKey() <= 0) {
                         continue;
                     }
+                    byDebt.computeIfAbsent(row.dbtKey(), key -> new ArrayList<>()).add(row);
+                }
+                int imported = 0;
+                int boundExtreme = 0;
+                int boundWalkBack = 0;
+                int boundAcc = 0;
+                for (Map.Entry<Integer, List<SudzRsltReturnRow>> entry : byDebt.entrySet()) {
+                    int dbtKey = entry.getKey();
+                    List<SudzRsltReturnRow> band = entry.getValue();
+                    band.sort(Comparator.comparingInt(SudzRsltReturnRow::bandOrdinal));
+                    YearValueBind bind = findValueBindOnYearWalkBack(connection, yrKey, dbtKey);
+                    List<Integer> valueKeys = bind.valueKeys();
                     boolean any = false;
-                    String curator = normalizeText(row.curatorNew());
-                    String mery = normalizeText(row.meryNew());
-                    String cst = normalizeText(row.cstCodeNew());
-                    if (curator != null) {
-                        upsertComment(connection, cmmGrNew, row.dbtKey(), CNIC_TYPE_CURATOR, curator);
-                        any = true;
-                    }
-                    if (mery != null) {
-                        upsertComment(connection, cmmGrNew, row.dbtKey(), CNIC_TYPE_MERY, mery);
-                        any = true;
-                    }
-                    if (cst != null) {
-                        upsertCst(connection, cmmGrNew, row.dbtKey(), cst);
-                        any = true;
+                    if (valueKeys.isEmpty()) {
+                        SudzRsltReturnRow last = band.get(band.size() - 1);
+                        any = writeRsltReturnTexts(
+                                connection, cmmGrNew, null, dbtKey, last);
+                        if (any) {
+                            boundAcc++;
+                        }
+                    } else if (band.size() == 1) {
+                        SudzRsltReturnRow only = band.get(0);
+                        for (Integer valueKey : valueKeys) {
+                            any |= writeRsltReturnTexts(
+                                    connection, cmmGrNew, valueKey, dbtKey, only);
+                        }
+                    } else {
+                        int n = Math.min(band.size(), valueKeys.size());
+                        for (int i = 0; i < n; i++) {
+                            any |= writeRsltReturnTexts(
+                                    connection, cmmGrNew, valueKeys.get(i), dbtKey, band.get(i));
+                        }
                     }
                     if (any) {
                         imported++;
+                        if (!valueKeys.isEmpty()) {
+                            if (bind.kind() == ValueBindKind.EXTREME) {
+                                boundExtreme++;
+                            } else {
+                                boundWalkBack++;
+                            }
+                        }
                     }
                 }
                 connection.commit();
-                return imported;
+                log.log(Level.INFO,
+                        "importRsltReturn yr={0} debts={1} bandRows={2} "
+                                + "boundExtreme={3} boundWalkBack={4} boundAcc={5}",
+                        new Object[]{yrKey, imported, rows.size(),
+                                boundExtreme, boundWalkBack, boundAcc});
+                return new SudzRsltReturnImportResult(
+                        imported, boundExtreme, boundWalkBack, boundAcc);
             } catch (RuntimeException | SQLException exception) {
                 connection.rollback();
                 throw exception;
@@ -545,6 +576,156 @@ public class JdbcSudzDao implements SudzDao {
         } catch (SQLException exception) {
             throw wrap("Не удалось импортировать возврат Rslt yr=" + yrKey, exception);
         }
+    }
+
+    /**
+     * Как комментарий сел на Value года: крайняя upl, walk-back или нигде.
+     */
+    private enum ValueBindKind {
+        EXTREME,
+        WALK_BACK,
+        NONE
+    }
+
+    /**
+     * Результат поиска Value для записи cmm на году.
+     *
+     * @param valueKeys ключи Value (порядок idNum)
+     * @param kind      крайняя / предшествующая / пусто
+     */
+    private record YearValueBind(List<Integer> valueKeys, ValueBindKind kind) {
+        static YearValueBind none() {
+            return new YearValueBind(List.of(), ValueBindKind.NONE);
+        }
+    }
+
+    /**
+     * Value года для канона: крайняя upl, иначе первая предшествующая с долями
+     * (walk-back по {@code uplStatusOnDate DESC}). Порядок как в полосе Rslt ({@code idNum}).
+     */
+    private YearValueBind findValueBindOnYearWalkBack(
+            Connection connection,
+            int yrKey,
+            int dbtKey
+    ) throws SQLException {
+        Integer extremeUpl = findYearExtremeUplKey(connection, yrKey);
+        String sql = ""
+                + "WITH ranked AS ( "
+                + "  SELECT u.upl_key, "
+                + "    ROW_NUMBER() OVER ( "
+                + "      ORDER BY COALESCE(u.uplStatusOnDate, u.upl_date) DESC, u.upl_key DESC "
+                + "    ) AS rn "
+                + "  FROM " + q("yr_upl_p") + " AS yp "
+                + "  INNER JOIN " + q("cn_inv_dbt_upl") + " AS u ON u.upl_key = yp.cn_inv_dbt_upl "
+                + "  WHERE yp.yr_upl_p_yr = ? "
+                + "), picked AS ( "
+                + "  SELECT TOP 1 r.upl_key "
+                + "  FROM ranked AS r "
+                + "  WHERE EXISTS ( "
+                + "    SELECT 1 "
+                + "    FROM " + q("invDbtDbt") + " AS idd "
+                + "    INNER JOIN " + q("DbtValue") + " AS dv "
+                + "      ON dv.dvInvDbt = idd.iddInvDbt AND dv.dvUpl = r.upl_key "
+                + "    WHERE idd.iddDbt = ? "
+                + "  ) "
+                + "  ORDER BY r.rn "
+                + ") "
+                + "SELECT dv.dvKey, p.upl_key "
+                + "FROM picked AS p "
+                + "INNER JOIN " + q("invDbtDbt") + " AS idd ON idd.iddDbt = ? "
+                + "INNER JOIN " + q("DbtValue") + " AS dv "
+                + "  ON dv.dvInvDbt = idd.iddInvDbt AND dv.dvUpl = p.upl_key "
+                + "INNER JOIN " + q("invDbt") + " AS s ON s.idKey = dv.dvInvDbt "
+                + "ORDER BY s.idNum, s.idKey, dv.dvKey";
+        List<Integer> keys = new ArrayList<>();
+        Integer pickedUpl = null;
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, yrKey);
+            ps.setInt(2, dbtKey);
+            ps.setInt(3, dbtKey);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    keys.add(rs.getInt(1));
+                    if (pickedUpl == null) {
+                        pickedUpl = rs.getInt(2);
+                    }
+                }
+            }
+        }
+        if (keys.isEmpty()) {
+            return YearValueBind.none();
+        }
+        ValueBindKind kind = (extremeUpl != null && extremeUpl.equals(pickedUpl))
+                ? ValueBindKind.EXTREME
+                : ValueBindKind.WALK_BACK;
+        return new YearValueBind(keys, kind);
+    }
+
+    /**
+     * Ключ крайней upl года или {@code null}, если выгрузок нет.
+     */
+    private Integer findYearExtremeUplKey(Connection connection, int yrKey) throws SQLException {
+        String sql = ""
+                + "SELECT TOP 1 u.upl_key "
+                + "FROM " + q("yr_upl_p") + " AS yp "
+                + "INNER JOIN " + q("cn_inv_dbt_upl") + " AS u ON u.upl_key = yp.cn_inv_dbt_upl "
+                + "WHERE yp.yr_upl_p_yr = ? "
+                + "ORDER BY COALESCE(u.uplStatusOnDate, u.upl_date) DESC, u.upl_key DESC";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, yrKey);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+                return rs.getInt(1);
+            }
+        }
+    }
+
+    /**
+     * Пишет непустые {@code *_new} на Value или (если {@code valueKey == null}) legacy по {@code dbtKey}.
+     *
+     * @return {@code true}, если что-то записано
+     */
+    private boolean writeRsltReturnTexts(
+            Connection connection,
+            int cmmGrNew,
+            Integer valueKey,
+            int dbtKey,
+            SudzRsltReturnRow row
+    ) throws SQLException {
+        boolean any = false;
+        String curator = normalizeText(row.curatorNew());
+        String mery = normalizeText(row.meryNew());
+        String cst = normalizeText(row.cstCodeNew());
+        if (valueKey != null) {
+            if (curator != null) {
+                upsertCommentOnValue(connection, cmmGrNew, valueKey, CNIC_TYPE_CURATOR, curator);
+                any = true;
+            }
+            if (mery != null) {
+                upsertCommentOnValue(connection, cmmGrNew, valueKey, CNIC_TYPE_MERY, mery);
+                any = true;
+            }
+            if (cst != null) {
+                upsertCstOnValue(connection, cmmGrNew, valueKey, cst);
+                any = true;
+            }
+            return any;
+        }
+        if (curator != null) {
+            upsertComment(connection, cmmGrNew, dbtKey, CNIC_TYPE_CURATOR, curator);
+            any = true;
+        }
+        if (mery != null) {
+            upsertComment(connection, cmmGrNew, dbtKey, CNIC_TYPE_MERY, mery);
+            any = true;
+        }
+        if (cst != null) {
+            upsertCst(connection, cmmGrNew, dbtKey, cst);
+            any = true;
+        }
+        return any;
     }
 
     @Override
@@ -3423,6 +3604,7 @@ public class JdbcSudzDao implements SudzDao {
 
     @Override
     public List<SudzRsltDebt> findYrDbtChanges(int yrKey, Integer asOfUpl) {
+        // *Dv на периоде; InvAccnt — только на каноне (fallback до миграции 3.5).
         String sql = ""
                 + "SELECT f.dbtKey, f.upl_key, f.upl_date, f.as_of, "
                 + "       f.invNumEnum, f.idNum, f.cnNumEnum, f.csoCnDate, "
@@ -3430,10 +3612,33 @@ public class JdbcSudzDao implements SudzDao {
                 + "       f.dvDateMaturity, f.dvTtl, f.dvOverd, "
                 + "       f.CstAgPnCode, f.CstAgPnName, f.AgOrg, "
                 + "       CAST(f.account_num AS nvarchar(32)) AS account_num, "
-                + "       cm.curator, cm.mery, "
-                + "       cy.cst_code, cy.cst_name, "
-                + "       cmn.curator_new, cmn.mery_new, cyn.cst_code_new "
+                + "       dv.dvKey, "
+                + "       cm_dv.curator AS curator_dv, cm_dv.mery AS mery_dv, "
+                + "       cy_dv.cst_code AS cst_code_dv, cy_dv.cst_name AS cst_name_dv, "
+                + "       cmn_dv.curator_new AS curator_new_dv, cmn_dv.mery_new AS mery_new_dv, "
+                + "       cyn_dv.cst_code_new AS cst_code_new_dv, "
+                + "       cm_acc.curator, cm_acc.mery, "
+                + "       cy_acc.cst_code, cy_acc.cst_name, "
+                + "       cmn_acc.curator_new, cmn_acc.mery_new, cyn_acc.cst_code_new "
                 + "FROM " + q("vw_Yr_DbtFact") + " f "
+                + "OUTER APPLY ( "
+                + "  SELECT TOP (1) dv.dvKey "
+                + "  FROM " + q("DbtValue") + " dv "
+                + "  INNER JOIN " + q("invDbt") + " slot ON slot.idKey = dv.dvInvDbt "
+                + "  INNER JOIN " + q("invDbtDbt") + " idd "
+                + "    ON idd.iddInvDbt = dv.dvInvDbt AND idd.iddDbt = f.dbtKey "
+                + "  WHERE dv.dvUpl = f.upl_key AND slot.idNum = f.idNum "
+                + "  ORDER BY dv.dvKey "
+                + ") dv "
+                + "LEFT JOIN ( "
+                + "  SELECT cm.cnicDv AS dvKey, "
+                + "         MAX(CASE WHEN cm.cnicType = 8 THEN cm.cnicText END) AS curator, "
+                + "         MAX(CASE WHEN cm.cnicType = 1 THEN cm.cnicText END) AS mery "
+                + "  FROM " + q("yr") + " y "
+                + "  JOIN " + q("cnInvCmm") + " cm ON cm.cnicGroup = y.yr_CmmGr AND cm.cnicDv IS NOT NULL "
+                + "  WHERE y.yr_key = ? "
+                + "  GROUP BY cm.cnicDv "
+                + ") cm_dv ON cm_dv.dvKey = dv.dvKey "
                 + "LEFT JOIN ( "
                 + "  SELECT cm.cnicInvAccnt AS dbtKey, "
                 + "         MAX(CASE WHEN cm.cnicType = 8 THEN cm.cnicText END) AS curator, "
@@ -3442,7 +3647,20 @@ public class JdbcSudzDao implements SudzDao {
                 + "  JOIN " + q("cnInvCmm") + " cm ON cm.cnicGroup = y.yr_CmmGr "
                 + "  WHERE y.yr_key = ? "
                 + "  GROUP BY cm.cnicInvAccnt "
-                + ") cm ON cm.dbtKey = f.dbtKey "
+                + ") cm_acc ON cm_acc.dbtKey = f.dbtKey "
+                + "LEFT JOIN ( "
+                + "  SELECT cs.ciccDv AS dvKey, "
+                + "         MAX(pn.cstapIpgPnN) AS cst_code, "
+                + "         MAX(c.cstName) AS cst_name "
+                + "  FROM " + q("yr") + " y "
+                + "  JOIN " + q("cnInvCmmCst") + " cs "
+                + "    ON cs.ciccCmmGr = y.yr_CmmGr AND cs.ciccType = 2 AND cs.ciccDv IS NOT NULL "
+                + "  JOIN ags.cstAgPn pn ON pn.cstapKey = cs.ciccCstAgPn "
+                + "  JOIN ags.cstAg ca ON ca.cstaKey = pn.cstapCsta "
+                + "  JOIN ags.cst c ON c.cstKey = ca.cstaCst "
+                + "  WHERE y.yr_key = ? "
+                + "  GROUP BY cs.ciccDv "
+                + ") cy_dv ON cy_dv.dvKey = dv.dvKey "
                 + "LEFT JOIN ( "
                 + "  SELECT cs.ciccInvAccnt AS dbtKey, "
                 + "         MAX(pn.cstapIpgPnN) AS cst_code, "
@@ -3454,7 +3672,17 @@ public class JdbcSudzDao implements SudzDao {
                 + "  JOIN ags.cst c ON c.cstKey = ca.cstaCst "
                 + "  WHERE y.yr_key = ? "
                 + "  GROUP BY cs.ciccInvAccnt "
-                + ") cy ON cy.dbtKey = f.dbtKey "
+                + ") cy_acc ON cy_acc.dbtKey = f.dbtKey "
+                + "LEFT JOIN ( "
+                + "  SELECT cm.cnicDv AS dvKey, "
+                + "         MAX(CASE WHEN cm.cnicType = 8 THEN cm.cnicText END) AS curator_new, "
+                + "         MAX(CASE WHEN cm.cnicType = 1 THEN cm.cnicText END) AS mery_new "
+                + "  FROM " + q("yr") + " y "
+                + "  JOIN " + q("cnInvCmm") + " cm "
+                + "    ON cm.cnicGroup = y.yr_CmmGr_New AND cm.cnicDv IS NOT NULL "
+                + "  WHERE y.yr_key = ? AND y.yr_CmmGr_New IS NOT NULL "
+                + "  GROUP BY cm.cnicDv "
+                + ") cmn_dv ON cmn_dv.dvKey = dv.dvKey "
                 + "LEFT JOIN ( "
                 + "  SELECT cm.cnicInvAccnt AS dbtKey, "
                 + "         MAX(CASE WHEN cm.cnicType = 8 THEN cm.cnicText END) AS curator_new, "
@@ -3463,7 +3691,17 @@ public class JdbcSudzDao implements SudzDao {
                 + "  JOIN " + q("cnInvCmm") + " cm ON cm.cnicGroup = y.yr_CmmGr_New "
                 + "  WHERE y.yr_key = ? AND y.yr_CmmGr_New IS NOT NULL "
                 + "  GROUP BY cm.cnicInvAccnt "
-                + ") cmn ON cmn.dbtKey = f.dbtKey "
+                + ") cmn_acc ON cmn_acc.dbtKey = f.dbtKey "
+                + "LEFT JOIN ( "
+                + "  SELECT cs.ciccDv AS dvKey, "
+                + "         MAX(pn.cstapIpgPnN) AS cst_code_new "
+                + "  FROM " + q("yr") + " y "
+                + "  JOIN " + q("cnInvCmmCst") + " cs "
+                + "    ON cs.ciccCmmGr = y.yr_CmmGr_New AND cs.ciccType = 2 AND cs.ciccDv IS NOT NULL "
+                + "  JOIN ags.cstAgPn pn ON pn.cstapKey = cs.ciccCstAgPn "
+                + "  WHERE y.yr_key = ? AND y.yr_CmmGr_New IS NOT NULL "
+                + "  GROUP BY cs.ciccDv "
+                + ") cyn_dv ON cyn_dv.dvKey = dv.dvKey "
                 + "LEFT JOIN ( "
                 + "  SELECT cs.ciccInvAccnt AS dbtKey, "
                 + "         MAX(pn.cstapIpgPnN) AS cst_code_new "
@@ -3472,7 +3710,7 @@ public class JdbcSudzDao implements SudzDao {
                 + "  JOIN ags.cstAgPn pn ON pn.cstapKey = cs.ciccCstAgPn "
                 + "  WHERE y.yr_key = ? AND y.yr_CmmGr_New IS NOT NULL "
                 + "  GROUP BY cs.ciccInvAccnt "
-                + ") cyn ON cyn.dbtKey = f.dbtKey "
+                + ") cyn_acc ON cyn_acc.dbtKey = f.dbtKey "
                 + "WHERE f.yr_key = ? "
                 + "  AND (? IS NULL OR f.upl_date <= ( "
                 + "        SELECT u.upl_date FROM " + q("cn_inv_dbt_upl") + " u WHERE u.upl_key = ? "
@@ -3483,17 +3721,16 @@ public class JdbcSudzDao implements SudzDao {
                 new Object[]{yrKey, asOfUpl});
         try (Connection connection = connectionFactory.createConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, yrKey);
-            statement.setInt(2, yrKey);
-            statement.setInt(3, yrKey);
-            statement.setInt(4, yrKey);
-            statement.setInt(5, yrKey);
+            for (int i = 1; i <= 8; i++) {
+                statement.setInt(i, yrKey);
+            }
+            statement.setInt(9, yrKey);
             if (asOfUpl == null) {
-                statement.setNull(6, Types.INTEGER);
-                statement.setNull(7, Types.INTEGER);
+                statement.setNull(10, Types.INTEGER);
+                statement.setNull(11, Types.INTEGER);
             } else {
-                statement.setInt(6, asOfUpl);
-                statement.setInt(7, asOfUpl);
+                statement.setInt(10, asOfUpl);
+                statement.setInt(11, asOfUpl);
             }
             try (ResultSet rs = statement.executeQuery()) {
                 Map<Integer, Builder> builders = new LinkedHashMap<>();
@@ -3535,7 +3772,15 @@ public class JdbcSudzDao implements SudzDao {
                             rs.getString("CstAgPnCode"),
                             rs.getString("CstAgPnName"),
                             rs.getString("AgOrg"),
-                            null
+                            null,
+                            getInteger(rs, "dvKey"),
+                            rs.getString("curator_dv"),
+                            rs.getString("mery_dv"),
+                            rs.getString("cst_code_dv"),
+                            rs.getString("cst_name_dv"),
+                            rs.getString("curator_new_dv"),
+                            rs.getString("mery_new_dv"),
+                            rs.getString("cst_code_new_dv")
                     ));
                 }
                 List<SudzRsltDebt> debts = new ArrayList<>(builders.size());
@@ -5665,7 +5910,9 @@ public class JdbcSudzDao implements SudzDao {
                             + "IF OBJECT_ID('tempdb..#calmOne') IS NOT NULL DROP TABLE #calmOne; "
                             + "IF OBJECT_ID('tempdb..#f1One') IS NOT NULL DROP TABLE #f1One; "
                             + "IF OBJECT_ID('tempdb..#rowMatch') IS NOT NULL DROP TABLE #rowMatch; "
-                            + "IF OBJECT_ID('tempdb..#invDbtQDetail') IS NOT NULL DROP TABLE #invDbtQDetail");
+                            + "IF OBJECT_ID('tempdb..#invDbtQDetail') IS NOT NULL DROP TABLE #invDbtQDetail; "
+                            + "IF OBJECT_ID('tempdb..#autoShare') IS NOT NULL DROP TABLE #autoShare; "
+                            + "IF OBJECT_ID('tempdb..#autoAmountPair') IS NOT NULL DROP TABLE #autoAmountPair");
         }
     }
 
@@ -6574,11 +6821,17 @@ public class JdbcSudzDao implements SudzDao {
                 + "  LEFT JOIN currentMulti AS cur ON cur.iKey = k.iKey "
                 + "  LEFT JOIN currentTblCnt AS ctc ON ctc.iKey = k.iKey "
                 + "), "
+                + sqlAutoDistinctShareCte(invDbt, q("invDbtDbtVar"))
+                + ", "
+                + sqlAutoSameCardAmountCte(invDbt, q("invDbtDbtVar"), dbtValue, unloadKey)
+                + ", "
                 + "needQueueBest AS ( "
                 + "  SELECT n.iKey, MIN(n.reason) AS reason "
                 + "  FROM needQueue AS n "
                 + "  WHERE NOT EXISTS (SELECT 1 FROM valuedIKeys v WHERE v.iKey = n.iKey) "
                 + "    AND NOT EXISTS (SELECT 1 FROM f1Eligible f WHERE f.iKey = n.iKey) "
+                + "    AND NOT EXISTS (SELECT 1 FROM autoShare s WHERE s.iKey = n.iKey) "
+                + "    AND NOT EXISTS (SELECT 1 FROM amountShare a WHERE a.iKey = n.iKey) "
                 + "  GROUP BY n.iKey "
                 + "), "
                 + "rowMatch AS ( "
@@ -6976,13 +7229,21 @@ public class JdbcSudzDao implements SudzDao {
         try (Statement ps = connection.createStatement()) {
             insertedValuesF1 = ps.executeUpdate(insertValueF1);
         }
+        int insertedValuesShare = applyAutoDistinctShares(
+                connection, unloadKey, now, tbl, invDbt, bridge, dbtValue);
+        int insertedValuesAmount = applyAutoSameCardAmountShares(
+                connection, unloadKey, now, tbl, invDbt, bridge, dbtValue);
         insertedBridges += insertedBridgesF1;
-        insertedValues += insertedValuesF1;
+        insertedValues += insertedValuesF1 + insertedValuesShare + insertedValuesAmount;
         try (PreparedStatement del = connection.prepareStatement(
                 "DELETE q FROM " + queue + " AS q "
-                        + "INNER JOIN " + invDbt + " AS slot ON slot.idInv = q.ciudIKey "
-                        + "INNER JOIN " + dbtValue + " AS dv ON dv.dvInvDbt = slot.idKey "
-                        + "WHERE q.ciudUnloadKey = ? AND dv.dvUpl = ?")) {
+                        + "WHERE q.ciudUnloadKey = ? "
+                        + "  AND (SELECT COUNT(*) FROM " + dbtValue + " AS dv "
+                        + "       INNER JOIN " + invDbt + " AS slot ON slot.idKey = dv.dvInvDbt "
+                        + "       WHERE dv.dvUpl = ? AND slot.idInv = q.ciudIKey) "
+                        + "      >= (SELECT COUNT(*) FROM " + queue + " AS q2 "
+                        + "          WHERE q2.ciudUnloadKey = q.ciudUnloadKey "
+                        + "            AND q2.ciudIKey = q.ciudIKey)")) {
             del.setInt(1, unloadKey);
             del.setInt(2, unloadKey);
             del.executeUpdate();
@@ -7159,6 +7420,367 @@ public class JdbcSudzDao implements SudzDao {
     }
 
     /** CROSS APPLY одной Tbl-строки по {@code iKey}. */
+    /**
+     * Строки свода, которые загрузчик проводит сам: на одной счёт-фактуре несколько строк,
+     * у каждой ровно один договор и своя карточка, число карточек равно числу строк,
+     * и ни у одной карточки нет двух слотов. КСДСФ и очередь двоящих долгов для них не нужны.
+     * Ожидает в том же запросе CTE {@code ctx} и {@code tblRows} и временную таблицу {@code #sudzEia}.
+     *
+     * @param invDbt квалифицированное имя {@code invDbt}
+     * @param bridge квалифицированное имя {@code invDbtDbtVar}
+     * @return фрагмент {@code shareReady AS …, autoShare AS (…)}
+     */
+    private static String sqlAutoDistinctShareCte(String invDbt, String bridge) {
+        return ""
+                + "shareReady AS ( "
+                + "  SELECT iKey, idvvKey FROM ctx "
+                + "  WHERE cnnKey IS NOT NULL AND invNumKey IS NOT NULL AND idvvKey IS NOT NULL "
+                + "), shareBad AS ( "
+                + "  SELECT DISTINCT iKey FROM ctx "
+                + "  WHERE cnnKey IS NULL OR invNumKey IS NULL OR idvvKey IS NULL "
+                + "), shareVarCnt AS ( "
+                + "  SELECT iKey, COUNT(DISTINCT idvvKey) AS varCnt FROM shareReady GROUP BY iKey "
+                + "), shareRowCnt AS ( "
+                + "  SELECT e.iKey, COUNT(DISTINCT t.cidutKey) AS rowCnt "
+                + "  FROM tblRows AS t "
+                + "  INNER JOIN #sudzEia AS e "
+                + "    ON e.cidutCntrPrtNum = t.cidutCntrPrtNum "
+                + "   AND e.cidutCnNameNull = t.cidutCnNameNull "
+                + "   AND e.cidutCnDateNull = t.cidutCnDateNull "
+                + "   AND e.cidutCnInvNull = t.cidutCnInvNull "
+                + "  WHERE e.iKey IS NOT NULL "
+                + "  GROUP BY e.iKey "
+                + "), distinctShare AS ( "
+                + "  SELECT r.iKey, r.idvvKey "
+                + "  FROM shareReady AS r "
+                + "  INNER JOIN shareVarCnt AS v ON v.iKey = r.iKey "
+                + "  INNER JOIN shareRowCnt AS n ON n.iKey = r.iKey "
+                + "   AND n.rowCnt > 1 AND n.rowCnt = v.varCnt "
+                + "  WHERE NOT EXISTS (SELECT 1 FROM shareBad AS b WHERE b.iKey = r.iKey) "
+                + "  GROUP BY r.iKey, r.idvvKey "
+                + "), shareSlotCnt AS ( "
+                + "  SELECT d.iKey, d.idvvKey, "
+                + "    (SELECT COUNT(*) FROM " + invDbt + " AS s "
+                + "     INNER JOIN " + bridge + " AS b "
+                + "       ON b.iddvInvDbt = s.idKey AND b.iddvInvDbtVar = d.idvvKey "
+                + "     WHERE s.idInv = d.iKey) AS slotCnt "
+                + "  FROM distinctShare AS d "
+                + "), autoShare AS ( "
+                + "  SELECT s.iKey, s.idvvKey, s.slotCnt "
+                + "  FROM shareSlotCnt AS s "
+                + "  WHERE NOT EXISTS ( "
+                + "    SELECT 1 FROM shareSlotCnt AS x "
+                + "    WHERE x.iKey = s.iKey AND x.slotCnt > 1) "
+                + ") ";
+    }
+
+    /**
+     * Пишет слот, мост и {@code DbtValue} для {@link #sqlAutoDistinctShareCte}.
+     * Сумма берётся из строки файла с тем же договором, а не из соседней строки счёт-фактуры.
+     *
+     * @return число вставленных {@code DbtValue}
+     */
+    private int applyAutoDistinctShares(
+            Connection connection,
+            int unloadKey,
+            Timestamp now,
+            String tbl,
+            String invDbt,
+            String bridge,
+            String dbtValue
+    ) throws SQLException {
+        String tsLit = "'" + now.toLocalDateTime() + "'";
+        String prep = ""
+                + "IF OBJECT_ID('tempdb..#autoShare') IS NOT NULL DROP TABLE #autoShare; "
+                + "WITH ctx AS ( "
+                + "  SELECT cidutCntrPrtNum, cidutCnName, cidutCnInv, iKey, account_key, "
+                + "         cnnKey, invNumKey, idvvKey "
+                + "  FROM #invDbtCtx "
+                + "), tblRows AS ( "
+                + "  SELECT a.cidutKey, a.cidutCntrPrtNum, "
+                + "         CASE WHEN a.cidutCnDate IS NULL THEN CAST('19000101' AS date) "
+                + "              ELSE CAST(a.cidutCnDate AS date) END AS cidutCnDateNull, "
+                + "         CASE WHEN a.cidutCnName IS NULL OR LTRIM(RTRIM(a.cidutCnName)) = N'' "
+                + "              THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(a.cidutCnName)) END AS cidutCnNameNull, "
+                + "         CASE WHEN a.cidutCnInv IS NULL OR LTRIM(RTRIM(a.cidutCnInv)) = N'' "
+                + "              THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(a.cidutCnInv)) END AS cidutCnInvNull "
+                + "  FROM " + tbl + " AS a WHERE a.cidutUnloadKey = " + unloadKey
+                + "), "
+                + sqlAutoDistinctShareCte(invDbt, bridge)
+                + "SELECT iKey, idvvKey, slotCnt INTO #autoShare FROM autoShare";
+        try (Statement statement = connection.createStatement()) {
+            statement.executeUpdate(prep);
+        }
+        String insertSlots = ""
+                + "INSERT INTO " + invDbt + " (idInv, idNum, idTimeOfEntry) "
+                + "SELECT a.iKey, "
+                + "  ISNULL((SELECT MAX(d.idNum) FROM " + invDbt + " AS d WHERE d.idInv = a.iKey), 0) "
+                + "    + ROW_NUMBER() OVER (PARTITION BY a.iKey ORDER BY a.idvvKey), "
+                + "  CAST(" + tsLit + " AS datetime2) "
+                + "FROM #autoShare AS a "
+                + "WHERE a.slotCnt = 0";
+        int slots;
+        try (Statement statement = connection.createStatement()) {
+            slots = statement.executeUpdate(insertSlots);
+        }
+        String insertBridge = ""
+                + "WITH newSlots AS ( "
+                + "  SELECT d.idKey, d.idInv, "
+                + "    ROW_NUMBER() OVER (PARTITION BY d.idInv ORDER BY d.idNum) AS rn "
+                + "  FROM " + invDbt + " AS d "
+                + "  WHERE EXISTS (SELECT 1 FROM #autoShare AS a WHERE a.iKey = d.idInv AND a.slotCnt = 0) "
+                + "    AND NOT EXISTS (SELECT 1 FROM " + bridge + " AS b WHERE b.iddvInvDbt = d.idKey) "
+                + "), shareRn AS ( "
+                + "  SELECT iKey, idvvKey, "
+                + "    ROW_NUMBER() OVER (PARTITION BY iKey ORDER BY idvvKey) AS rn "
+                + "  FROM #autoShare WHERE slotCnt = 0 "
+                + ") "
+                + "INSERT INTO " + bridge + " (iddvInvDbt, iddvInvDbtVar, iddvTimeOfEntry) "
+                + "SELECT n.idKey, s.idvvKey, CAST(" + tsLit + " AS datetime2) "
+                + "FROM newSlots AS n "
+                + "INNER JOIN shareRn AS s ON s.iKey = n.idInv AND s.rn = n.rn";
+        int bridges;
+        try (Statement statement = connection.createStatement()) {
+            bridges = statement.executeUpdate(insertBridge);
+        }
+        String insertValues = ""
+                + "INSERT INTO " + dbtValue
+                + " (dvInvDbt, dvInvDbtVar, dvUpl, dvTtl, dvOverd, "
+                + "  dvDateStart, dvDateMaturity, dvDocBase, dvTimeOfEntry) "
+                + "SELECT slot.idKey, a.idvvKey, " + unloadKey + ", "
+                + " COALESCE(t.cidutDebt, CAST(0 AS money)), "
+                + " COALESCE(t.cidutDebtOverdue, CAST(0 AS money)), "
+                + " CAST(t.cidutFormtnDate AS date), CAST(t.cidutMatrtyDate AS date), "
+                + " COALESCE(NULLIF(LTRIM(RTRIM(t.cidutDoc)), N''), t.cidutCnInv), "
+                + " CAST(" + tsLit + " AS datetime2) "
+                + "FROM #autoShare AS a "
+                + "INNER JOIN " + invDbt + " AS slot ON slot.idInv = a.iKey "
+                + "INNER JOIN " + bridge + " AS b "
+                + "  ON b.iddvInvDbt = slot.idKey AND b.iddvInvDbtVar = a.idvvKey "
+                + "CROSS APPLY ( "
+                + "  SELECT TOP 1 r.cidutDebt, r.cidutDebtOverdue, r.cidutFormtnDate, "
+                + "         r.cidutMatrtyDate, r.cidutDoc, r.cidutCnInv "
+                + "  FROM #invDbtCtx AS c "
+                + "  INNER JOIN " + tbl + " AS r "
+                + "    ON r.cidutUnloadKey = " + unloadKey
+                + "   AND r.cidutAccount = c.account_key "
+                + "   AND (CASE WHEN r.cidutCnName IS NULL OR LTRIM(RTRIM(r.cidutCnName)) = N'' "
+                + "             THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(r.cidutCnName)) END) "
+                + "       = (CASE WHEN c.cidutCnName IS NULL OR LTRIM(RTRIM(c.cidutCnName)) = N'' "
+                + "               THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(c.cidutCnName)) END) "
+                + "   AND (CASE WHEN r.cidutCnInv IS NULL OR LTRIM(RTRIM(r.cidutCnInv)) = N'' "
+                + "             THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(r.cidutCnInv)) END) "
+                + "       = (CASE WHEN c.cidutCnInv IS NULL OR LTRIM(RTRIM(c.cidutCnInv)) = N'' "
+                + "               THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(c.cidutCnInv)) END) "
+                + "  WHERE c.iKey = a.iKey AND c.idvvKey = a.idvvKey "
+                + "  ORDER BY r.cidutKey "
+                + ") AS t "
+                + "WHERE (SELECT COUNT(*) FROM " + invDbt + " AS s "
+                + "       INNER JOIN " + bridge + " AS b2 "
+                + "         ON b2.iddvInvDbt = s.idKey AND b2.iddvInvDbtVar = a.idvvKey "
+                + "       WHERE s.idInv = a.iKey) = 1 "
+                + "  AND NOT EXISTS ( "
+                + "    SELECT 1 FROM " + dbtValue + " AS dv "
+                + "    WHERE dv.dvInvDbt = slot.idKey AND dv.dvUpl = " + unloadKey
+                + "  )";
+        int values;
+        try (Statement statement = connection.createStatement()) {
+            values = statement.executeUpdate(insertValues);
+        }
+        log.log(Level.INFO,
+                "applyAutoDistinctShares unloadKey={0} slots={1} bridges={2} values={3}",
+                new Object[]{unloadKey, slots, bridges, values});
+        return values;
+    }
+
+    /**
+     * CTE: на карточке ({@code idvvKey}) число строк Tbl = числу слотов (&gt;1),
+     * однозначный матч строки со слотом по сумме ±0.01 с последнего полного
+     * чужого {@code dvUpl} (не текущая выгрузка). СФ может иметь другие карточки.
+     *
+     * @param invDbt    квалифицированное имя {@code invDbt}
+     * @param bridge    квалифицированное имя {@code invDbtDbtVar}
+     * @param dbtValue  квалифицированное имя {@code DbtValue}
+     * @param unloadKey текущая выгрузка (исключается из эталона сумм)
+     * @return фрагмент {@code amountCard AS …, amountShare AS (…)}
+     */
+    private static String sqlAutoSameCardAmountCte(
+            String invDbt, String bridge, String dbtValue, int unloadKey) {
+        String uplLit = Integer.toString(unloadKey);
+        return ""
+                + "amountCard AS ( "
+                + "  SELECT DISTINCT c.iKey, c.idvvKey, "
+                + "    CASE WHEN c.cidutCnName IS NULL OR LTRIM(RTRIM(c.cidutCnName)) = N'' "
+                + "         THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(c.cidutCnName)) END AS cnNameNull, "
+                + "    CASE WHEN c.cidutCnInv IS NULL OR LTRIM(RTRIM(c.cidutCnInv)) = N'' "
+                + "         THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(c.cidutCnInv)) END AS cnInvNull "
+                + "  FROM ctx AS c "
+                + "  WHERE c.cnnKey IS NOT NULL AND c.invNumKey IS NOT NULL AND c.idvvKey IS NOT NULL "
+                + "), amountRowCnt AS ( "
+                + "  SELECT ac.iKey, ac.idvvKey, COUNT(DISTINCT t.cidutKey) AS rowCnt "
+                + "  FROM tblRows AS t "
+                + "  INNER JOIN #sudzEia AS e "
+                + "    ON e.cidutCntrPrtNum = t.cidutCntrPrtNum "
+                + "   AND e.cidutCnNameNull = t.cidutCnNameNull "
+                + "   AND e.cidutCnDateNull = t.cidutCnDateNull "
+                + "   AND e.cidutCnInvNull = t.cidutCnInvNull "
+                + "  INNER JOIN amountCard AS ac "
+                + "    ON ac.iKey = e.iKey "
+                + "   AND ac.cnNameNull = t.cidutCnNameNull "
+                + "   AND ac.cnInvNull = t.cidutCnInvNull "
+                + "  WHERE e.iKey IS NOT NULL "
+                + "  GROUP BY ac.iKey, ac.idvvKey "
+                + "), amountEligible AS ( "
+                + "  SELECT r.iKey, r.idvvKey, n.rowCnt, "
+                + "    (SELECT COUNT(*) FROM " + invDbt + " AS s "
+                + "     INNER JOIN " + bridge + " AS b "
+                + "       ON b.iddvInvDbt = s.idKey AND b.iddvInvDbtVar = r.idvvKey "
+                + "     WHERE s.idInv = r.iKey) AS slotCnt "
+                + "  FROM amountCard AS r "
+                + "  INNER JOIN amountRowCnt AS n "
+                + "    ON n.iKey = r.iKey AND n.idvvKey = r.idvvKey "
+                + "  WHERE n.rowCnt > 1 "
+                + "), amountPriorUpl AS ( "
+                + "  SELECT e.iKey, e.idvvKey, dv.dvUpl, e.slotCnt, "
+                + "    COUNT(DISTINCT s.idKey) AS valuedSlots "
+                + "  FROM amountEligible AS e "
+                + "  INNER JOIN " + invDbt + " AS s ON s.idInv = e.iKey "
+                + "  INNER JOIN " + bridge + " AS b "
+                + "    ON b.iddvInvDbt = s.idKey AND b.iddvInvDbtVar = e.idvvKey "
+                + "  INNER JOIN " + dbtValue + " AS dv "
+                + "    ON dv.dvInvDbt = s.idKey AND dv.dvInvDbtVar = e.idvvKey "
+                + "  WHERE e.slotCnt = e.rowCnt AND dv.dvUpl <> " + uplLit
+                + "  GROUP BY e.iKey, e.idvvKey, dv.dvUpl, e.slotCnt "
+                + "  HAVING COUNT(DISTINCT s.idKey) = e.slotCnt "
+                + "), amountBestPrior AS ( "
+                + "  SELECT iKey, idvvKey, MAX(dvUpl) AS priorUpl "
+                + "  FROM amountPriorUpl "
+                + "  GROUP BY iKey, idvvKey "
+                + "), amountSlotAmt AS ( "
+                + "  SELECT e.iKey, e.idvvKey, s.idKey AS slotKey, "
+                + "    CAST(dv.dvTtl AS decimal(19,4)) AS amt "
+                + "  FROM amountEligible AS e "
+                + "  INNER JOIN amountBestPrior AS p "
+                + "    ON p.iKey = e.iKey AND p.idvvKey = e.idvvKey "
+                + "  INNER JOIN " + invDbt + " AS s ON s.idInv = e.iKey "
+                + "  INNER JOIN " + bridge + " AS b "
+                + "    ON b.iddvInvDbt = s.idKey AND b.iddvInvDbtVar = e.idvvKey "
+                + "  INNER JOIN " + dbtValue + " AS dv "
+                + "    ON dv.dvInvDbt = s.idKey AND dv.dvInvDbtVar = e.idvvKey "
+                + "   AND dv.dvUpl = p.priorUpl "
+                + "  WHERE e.slotCnt = e.rowCnt "
+                + "), amountTblDebt AS ( "
+                + "  SELECT e.iKey, el.idvvKey, t.cidutKey, "
+                + "    CAST(COALESCE(t.cidutDebt, 0) AS decimal(19,4)) AS debt "
+                + "  FROM tblRows AS t "
+                + "  INNER JOIN #sudzEia AS e "
+                + "    ON e.cidutCntrPrtNum = t.cidutCntrPrtNum "
+                + "   AND e.cidutCnNameNull = t.cidutCnNameNull "
+                + "   AND e.cidutCnDateNull = t.cidutCnDateNull "
+                + "   AND e.cidutCnInvNull = t.cidutCnInvNull "
+                + "  INNER JOIN amountEligible AS el "
+                + "    ON el.iKey = e.iKey AND el.slotCnt = el.rowCnt "
+                + "  INNER JOIN amountCard AS ac "
+                + "    ON ac.iKey = el.iKey AND ac.idvvKey = el.idvvKey "
+                + "   AND ac.cnNameNull = t.cidutCnNameNull "
+                + "   AND ac.cnInvNull = t.cidutCnInvNull "
+                + "), amountHit AS ( "
+                + "  SELECT d.iKey, d.idvvKey, d.cidutKey, d.debt, s.slotKey, "
+                + "    COUNT(*) OVER (PARTITION BY d.iKey, d.cidutKey) AS rowHits, "
+                + "    COUNT(*) OVER (PARTITION BY d.iKey, s.slotKey) AS slotHits "
+                + "  FROM amountTblDebt AS d "
+                + "  INNER JOIN amountSlotAmt AS s "
+                + "    ON s.iKey = d.iKey AND s.idvvKey = d.idvvKey "
+                + "   AND ABS(d.debt - s.amt) <= CAST(0.01 AS decimal(19,4)) "
+                + "), amountGood AS ( "
+                + "  SELECT iKey, idvvKey, cidutKey, slotKey "
+                + "  FROM amountHit "
+                + "  WHERE rowHits = 1 AND slotHits = 1 "
+                + "), amountTblTotal AS ( "
+                + "  SELECT e.iKey, COUNT(DISTINCT t.cidutKey) AS rowCnt "
+                + "  FROM tblRows AS t "
+                + "  INNER JOIN #sudzEia AS e "
+                + "    ON e.cidutCntrPrtNum = t.cidutCntrPrtNum "
+                + "   AND e.cidutCnNameNull = t.cidutCnNameNull "
+                + "   AND e.cidutCnDateNull = t.cidutCnDateNull "
+                + "   AND e.cidutCnInvNull = t.cidutCnInvNull "
+                + "  WHERE e.iKey IS NOT NULL "
+                + "  GROUP BY e.iKey "
+                + "), amountShare AS ( "
+                + "  SELECT g.iKey "
+                + "  FROM amountGood AS g "
+                + "  INNER JOIN amountTblTotal AS tot ON tot.iKey = g.iKey "
+                + "  GROUP BY g.iKey, tot.rowCnt "
+                + "  HAVING COUNT(*) = tot.rowCnt "
+                + ") ";
+    }
+
+    /**
+     * Пишет только {@code DbtValue} для {@link #sqlAutoSameCardAmountCte}:
+     * слоты и мосты уже есть; сумма строки файла стыкуется со слотом по историческим Value.
+     *
+     * @return число вставленных {@code DbtValue}
+     */
+    private int applyAutoSameCardAmountShares(
+            Connection connection,
+            int unloadKey,
+            Timestamp now,
+            String tbl,
+            String invDbt,
+            String bridge,
+            String dbtValue
+    ) throws SQLException {
+        String tsLit = "'" + now.toLocalDateTime() + "'";
+        String prep = ""
+                + "IF OBJECT_ID('tempdb..#autoAmountPair') IS NOT NULL DROP TABLE #autoAmountPair; "
+                + "WITH ctx AS ( "
+                + "  SELECT cidutCntrPrtNum, cidutCnName, cidutCnInv, iKey, account_key, "
+                + "         cnnKey, invNumKey, idvvKey "
+                + "  FROM #invDbtCtx "
+                + "), tblRows AS ( "
+                + "  SELECT a.cidutKey, a.cidutCntrPrtNum, a.cidutDebt, "
+                + "         CASE WHEN a.cidutCnDate IS NULL THEN CAST('19000101' AS date) "
+                + "              ELSE CAST(a.cidutCnDate AS date) END AS cidutCnDateNull, "
+                + "         CASE WHEN a.cidutCnName IS NULL OR LTRIM(RTRIM(a.cidutCnName)) = N'' "
+                + "              THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(a.cidutCnName)) END AS cidutCnNameNull, "
+                + "         CASE WHEN a.cidutCnInv IS NULL OR LTRIM(RTRIM(a.cidutCnInv)) = N'' "
+                + "              THEN N'NullИлиПусто' ELSE LTRIM(RTRIM(a.cidutCnInv)) END AS cidutCnInvNull "
+                + "  FROM " + tbl + " AS a WHERE a.cidutUnloadKey = " + unloadKey
+                + "), "
+                + sqlAutoSameCardAmountCte(invDbt, bridge, dbtValue, unloadKey)
+                + "SELECT g.iKey, g.idvvKey, g.cidutKey, g.slotKey "
+                + "INTO #autoAmountPair "
+                + "FROM amountGood AS g "
+                + "WHERE EXISTS (SELECT 1 FROM amountShare AS s WHERE s.iKey = g.iKey)";
+        try (Statement statement = connection.createStatement()) {
+            statement.executeUpdate(prep);
+        }
+        String insertValues = ""
+                + "INSERT INTO " + dbtValue
+                + " (dvInvDbt, dvInvDbtVar, dvUpl, dvTtl, dvOverd, "
+                + "  dvDateStart, dvDateMaturity, dvDocBase, dvTimeOfEntry) "
+                + "SELECT p.slotKey, p.idvvKey, " + unloadKey + ", "
+                + " COALESCE(t.cidutDebt, CAST(0 AS money)), "
+                + " COALESCE(t.cidutDebtOverdue, CAST(0 AS money)), "
+                + " CAST(t.cidutFormtnDate AS date), CAST(t.cidutMatrtyDate AS date), "
+                + " COALESCE(NULLIF(LTRIM(RTRIM(t.cidutDoc)), N''), t.cidutCnInv), "
+                + " CAST(" + tsLit + " AS datetime2) "
+                + "FROM #autoAmountPair AS p "
+                + "INNER JOIN " + tbl + " AS t ON t.cidutKey = p.cidutKey "
+                + "WHERE NOT EXISTS ( "
+                + "  SELECT 1 FROM " + dbtValue + " AS dv "
+                + "  WHERE dv.dvInvDbt = p.slotKey AND dv.dvUpl = " + unloadKey
+                + ")";
+        int values;
+        try (Statement statement = connection.createStatement()) {
+            values = statement.executeUpdate(insertValues);
+        }
+        log.log(Level.INFO,
+                "applyAutoSameCardAmountShares unloadKey={0} values={1}",
+                new Object[]{unloadKey, values});
+        return values;
+    }
+
     private static String sqlTblDebtCrossApply(String tbl, int unloadKey, String iKeyCol) {
         return " CROSS APPLY ( "
                 + "   SELECT TOP 1 a.cidutDebt, a.cidutDebtOverdue, a.cidutFormtnDate,"
@@ -7250,9 +7872,16 @@ public class JdbcSudzDao implements SudzDao {
                 + "  SELECT iKey, N'multi' FROM multiCtxIKeys UNION SELECT iKey, N'multi' FROM histInvDbtMulti UNION "
                 + "  SELECT iKey, N'multi' FROM histNamedAccMulti UNION SELECT iKey, N'multi' FROM histCidMulti UNION "
                 + "  SELECT iKey, N'multi' FROM currentMulti ), "
+                + sqlAutoDistinctShareCte(invDbt, q("invDbtDbtVar"))
+                + ", "
+                + sqlAutoSameCardAmountCte(invDbt, q("invDbtDbtVar"), dbtValue, unloadKey)
+                + ", "
                 + "needQueueBest AS ( SELECT n.iKey, MIN(n.reason) AS reason FROM needQueue AS n "
                 + "  WHERE NOT EXISTS (SELECT 1 FROM valuedIKeys v WHERE v.iKey = n.iKey) "
-                + "    AND NOT EXISTS (SELECT 1 FROM f1Eligible f WHERE f.iKey = n.iKey) GROUP BY n.iKey ), "
+                + "    AND NOT EXISTS (SELECT 1 FROM f1Eligible f WHERE f.iKey = n.iKey) "
+                + "    AND NOT EXISTS (SELECT 1 FROM autoShare s WHERE s.iKey = n.iKey) "
+                + "    AND NOT EXISTS (SELECT 1 FROM amountShare a WHERE a.iKey = n.iKey) "
+                + "  GROUP BY n.iKey ), "
                 + "rowMatch AS ( SELECT t.cidutKey, t.cidutCnName, t.cidutCnInv, t.cidutDebt, e.iKey, c.idvvKey, "
                 + "  n.reason, CAST(N'[queue.build]' AS nvarchar(max)) AS detailText "
                 + "  FROM tblRows AS t INNER JOIN #sudzEia AS e "
@@ -10308,37 +10937,11 @@ public class JdbcSudzDao implements SudzDao {
             try {
                 dbtKey = resolveDbtKeyForValue(connection, valueKey);
                 ensureCmmGrExists(connection, cmmGrKey);
-                String updateSql = "UPDATE " + q("cnInvCmm")
-                        + " SET cnicText = ?, cnicDbt = ?, cnicInvAccnt = ? "
-                        + " WHERE cnicGroup = ? AND cnicType = ? AND cnicDv = ?";
-                int updated;
-                try (PreparedStatement statement = connection.prepareStatement(updateSql)) {
-                    statement.setNString(1, body);
-                    statement.setInt(2, dbtKey);
-                    statement.setInt(3, dbtKey);
-                    statement.setInt(4, cmmGrKey);
-                    statement.setInt(5, cnicType);
-                    statement.setInt(6, valueKey);
-                    updated = statement.executeUpdate();
-                }
-                if (updated == 0) {
-                    String insertSql = "INSERT INTO " + q("cnInvCmm")
-                            + " (cnicType, cnicGroup, cnicInv, cnicText, cnicInvAccnt, cnicDbt, cnicDv) "
-                            + " VALUES (?, ?, NULL, ?, ?, ?, ?)";
-                    try (PreparedStatement statement = connection.prepareStatement(insertSql)) {
-                        statement.setInt(1, cnicType);
-                        statement.setInt(2, cmmGrKey);
-                        statement.setNString(3, body);
-                        statement.setInt(4, dbtKey);
-                        statement.setInt(5, dbtKey);
-                        statement.setInt(6, valueKey);
-                        statement.executeUpdate();
-                    }
-                }
+                upsertCommentOnValue(connection, cmmGrKey, valueKey, cnicType, body);
                 connection.commit();
                 log.log(Level.INFO,
-                        "upsertDbtCanonComment value={0} gr={1} type={2} updated={3}",
-                        new Object[]{valueKey, cmmGrKey, cnicType, updated});
+                        "upsertDbtCanonComment value={0} gr={1} type={2}",
+                        new Object[]{valueKey, cmmGrKey, cnicType});
             } catch (RuntimeException | SQLException exception) {
                 connection.rollback();
                 throw exception;
@@ -15520,6 +16123,162 @@ public class JdbcSudzDao implements SudzDao {
         return "other";
     }
 
+    /**
+     * Value для канона {@code dbtKey} в группе: сначала срез по дате группы,
+     * иначе walk-back по upl каждого года, ссылающегося на группу
+     * (крайняя → предшествующие с долями). Пустой список — Value нет;
+     * несколько — доли split на выбранной upl.
+     */
+    private List<Integer> findValueKeysForDbtOnGroupUpl(
+            Connection connection,
+            int dbtKey,
+            int cmmGr
+    ) throws SQLException {
+        String byDateSql = ""
+                + "SELECT DISTINCT dv.dvKey "
+                + "FROM " + q("cnInvCmmGr") + " AS g "
+                + "INNER JOIN ( "
+                + "  SELECT yr_key, yr_CmmGr AS cmmg FROM " + q("yr") + " WHERE yr_CmmGr = ? "
+                + "  UNION "
+                + "  SELECT yr_key, yr_CmmGr_New FROM " + q("yr") + " WHERE yr_CmmGr_New = ? "
+                + ") AS gy ON gy.cmmg = g.cnicgKey "
+                + "INNER JOIN " + q("yr_upl_p") + " AS yp ON yp.yr_upl_p_yr = gy.yr_key "
+                + "INNER JOIN " + q("cn_inv_dbt_upl") + " AS u "
+                + "  ON u.upl_key = yp.cn_inv_dbt_upl "
+                + " AND CAST(u.uplStatusOnDate AS date) = CAST(g.cnicgDate AS date) "
+                + "INNER JOIN " + q("invDbtDbt") + " AS idd ON idd.iddDbt = ? "
+                + "INNER JOIN " + q("DbtValue") + " AS dv "
+                + "  ON dv.dvInvDbt = idd.iddInvDbt AND dv.dvUpl = u.upl_key "
+                + "WHERE g.cnicgKey = ? "
+                + "ORDER BY dv.dvKey";
+        List<Integer> keys = loadIntList(connection, byDateSql, cmmGr, cmmGr, dbtKey, cmmGr);
+        if (!keys.isEmpty()) {
+            return keys;
+        }
+        // Walk-back: у каждого года — первая upl (с крайней) с Value долга.
+        String walkBackSql = ""
+                + "WITH yrs AS ( "
+                + "  SELECT yr_key FROM " + q("yr") + " WHERE yr_CmmGr = ? OR yr_CmmGr_New = ? "
+                + "), ranked AS ( "
+                + "  SELECT yrs.yr_key, u.upl_key, "
+                + "    ROW_NUMBER() OVER ( "
+                + "      PARTITION BY yrs.yr_key "
+                + "      ORDER BY COALESCE(u.uplStatusOnDate, u.upl_date) DESC, u.upl_key DESC "
+                + "    ) AS rn "
+                + "  FROM yrs "
+                + "  INNER JOIN " + q("yr_upl_p") + " AS yp ON yp.yr_upl_p_yr = yrs.yr_key "
+                + "  INNER JOIN " + q("cn_inv_dbt_upl") + " AS u ON u.upl_key = yp.cn_inv_dbt_upl "
+                + "), picked AS ( "
+                + "  SELECT r.yr_key, r.upl_key, "
+                + "    ROW_NUMBER() OVER (PARTITION BY r.yr_key ORDER BY r.rn) AS pick_ord "
+                + "  FROM ranked AS r "
+                + "  WHERE EXISTS ( "
+                + "    SELECT 1 "
+                + "    FROM " + q("invDbtDbt") + " AS idd "
+                + "    INNER JOIN " + q("DbtValue") + " AS dv "
+                + "      ON dv.dvInvDbt = idd.iddInvDbt AND dv.dvUpl = r.upl_key "
+                + "    WHERE idd.iddDbt = ? "
+                + "  ) "
+                + ") "
+                + "SELECT DISTINCT dv.dvKey "
+                + "FROM picked AS p "
+                + "INNER JOIN " + q("invDbtDbt") + " AS idd ON idd.iddDbt = ? "
+                + "INNER JOIN " + q("DbtValue") + " AS dv "
+                + "  ON dv.dvInvDbt = idd.iddInvDbt AND dv.dvUpl = p.upl_key "
+                + "WHERE p.pick_ord = 1 "
+                + "ORDER BY dv.dvKey";
+        return loadIntList(connection, walkBackSql, cmmGr, cmmGr, dbtKey, dbtKey);
+    }
+
+    private static List<Integer> loadIntList(
+            Connection connection,
+            String sql,
+            int... params
+    ) throws SQLException {
+        List<Integer> keys = new ArrayList<>();
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            for (int i = 0; i < params.length; i++) {
+                ps.setInt(i + 1, params[i]);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    keys.add(rs.getInt(1));
+                }
+            }
+        }
+        return keys;
+    }
+
+    /**
+     * Пишет {@code cnInvCmm} с якорем {@code cnicDv}; {@code cnicDbt}/{@code cnicInvAccnt}
+     * выводятся из Value → слот → {@code invDbtDbt}.
+     */
+    private void upsertCommentOnValue(
+            Connection connection,
+            int cmmGr,
+            int valueKey,
+            int cnicType,
+            String text
+    ) throws SQLException {
+        int dbtKey = resolveDbtKeyForValue(connection, valueKey);
+        if (text == null) {
+            try (PreparedStatement del = connection.prepareStatement(
+                    "DELETE FROM " + q("cnInvCmm")
+                            + " WHERE cnicGroup = ? AND cnicType = ? AND cnicDv = ?")) {
+                del.setInt(1, cmmGr);
+                del.setInt(2, cnicType);
+                del.setInt(3, valueKey);
+                del.executeUpdate();
+            }
+            return;
+        }
+        String updateByDv = "UPDATE " + q("cnInvCmm")
+                + " SET cnicText = ?, cnicDbt = ?, cnicInvAccnt = ? "
+                + " WHERE cnicGroup = ? AND cnicType = ? AND cnicDv = ?";
+        try (PreparedStatement statement = connection.prepareStatement(updateByDv)) {
+            statement.setNString(1, text);
+            statement.setInt(2, dbtKey);
+            statement.setInt(3, dbtKey);
+            statement.setInt(4, cmmGr);
+            statement.setInt(5, cnicType);
+            statement.setInt(6, valueKey);
+            if (statement.executeUpdate() > 0) {
+                return;
+            }
+        }
+        String adoptLegacy = "UPDATE " + q("cnInvCmm")
+                + " SET cnicText = ?, cnicDv = ?, cnicDbt = ?, cnicInvAccnt = ? "
+                + " WHERE cnicGroup = ? AND cnicType = ? AND cnicInvAccnt = ? AND cnicDv IS NULL";
+        try (PreparedStatement statement = connection.prepareStatement(adoptLegacy)) {
+            statement.setNString(1, text);
+            statement.setInt(2, valueKey);
+            statement.setInt(3, dbtKey);
+            statement.setInt(4, dbtKey);
+            statement.setInt(5, cmmGr);
+            statement.setInt(6, cnicType);
+            statement.setInt(7, dbtKey);
+            if (statement.executeUpdate() > 0) {
+                return;
+            }
+        }
+        String insertSql = "INSERT INTO " + q("cnInvCmm")
+                + " (cnicType, cnicGroup, cnicInv, cnicText, cnicInvAccnt, cnicDbt, cnicDv) "
+                + " VALUES (?, ?, NULL, ?, ?, ?, ?)";
+        try (PreparedStatement statement = connection.prepareStatement(insertSql)) {
+            statement.setInt(1, cnicType);
+            statement.setInt(2, cmmGr);
+            statement.setNString(3, text);
+            statement.setInt(4, dbtKey);
+            statement.setInt(5, dbtKey);
+            statement.setInt(6, valueKey);
+            statement.executeUpdate();
+        }
+    }
+
+    /**
+     * Пишет комментарий на все Value среза группы для {@code dbtKey};
+     * если Value нет — legacy-строка с {@code cnicDbt} без {@code cnicDv}.
+     */
     private void upsertComment(
             Connection connection,
             int cmmGr,
@@ -15527,56 +16286,82 @@ public class JdbcSudzDao implements SudzDao {
             int cnicType,
             String text
     ) throws SQLException {
-        if (text == null) {
-            String deleteSql = "DELETE FROM " + q("cnInvCmm")
-                    + " WHERE cnicGroup = ? AND cnicInvAccnt = ? AND cnicType = ?";
-            try (PreparedStatement statement = connection.prepareStatement(deleteSql)) {
-                statement.setInt(1, cmmGr);
-                statement.setInt(2, dbtKey);
-                statement.setInt(3, cnicType);
-                statement.executeUpdate();
+        List<Integer> valueKeys = findValueKeysForDbtOnGroupUpl(connection, dbtKey, cmmGr);
+        if (!valueKeys.isEmpty()) {
+            for (Integer valueKey : valueKeys) {
+                upsertCommentOnValue(connection, cmmGr, valueKey, cnicType, text);
+            }
+            if (text == null) {
+                try (PreparedStatement del = connection.prepareStatement(
+                        "DELETE FROM " + q("cnInvCmm")
+                                + " WHERE cnicGroup = ? AND cnicType = ? "
+                                + "  AND cnicInvAccnt = ? AND cnicDv IS NULL")) {
+                    del.setInt(1, cmmGr);
+                    del.setInt(2, cnicType);
+                    del.setInt(3, dbtKey);
+                    del.executeUpdate();
+                }
             }
             return;
         }
-
+        if (text == null) {
+            try (PreparedStatement del = connection.prepareStatement(
+                    "DELETE FROM " + q("cnInvCmm")
+                            + " WHERE cnicGroup = ? AND cnicType = ? AND cnicInvAccnt = ?")) {
+                del.setInt(1, cmmGr);
+                del.setInt(2, cnicType);
+                del.setInt(3, dbtKey);
+                del.executeUpdate();
+            }
+            return;
+        }
         String updateSql = "UPDATE " + q("cnInvCmm")
-                + " SET cnicText = ? WHERE cnicGroup = ? AND cnicInvAccnt = ? AND cnicType = ?";
+                + " SET cnicText = ?, cnicDbt = ? "
+                + " WHERE cnicGroup = ? AND cnicInvAccnt = ? AND cnicType = ?";
         try (PreparedStatement statement = connection.prepareStatement(updateSql)) {
-            statement.setString(1, text);
-            statement.setInt(2, cmmGr);
-            statement.setInt(3, dbtKey);
-            statement.setInt(4, cnicType);
-            int updated = statement.executeUpdate();
-            if (updated > 0) {
+            statement.setNString(1, text);
+            statement.setInt(2, dbtKey);
+            statement.setInt(3, cmmGr);
+            statement.setInt(4, dbtKey);
+            statement.setInt(5, cnicType);
+            if (statement.executeUpdate() > 0) {
                 return;
             }
         }
-
         String insertSql = "INSERT INTO " + q("cnInvCmm")
-                + " (cnicType, cnicGroup, cnicInv, cnicText, cnicInvAccnt) VALUES (?, ?, NULL, ?, ?)";
+                + " (cnicType, cnicGroup, cnicInv, cnicText, cnicInvAccnt, cnicDbt) "
+                + " VALUES (?, ?, NULL, ?, ?, ?)";
         try (PreparedStatement statement = connection.prepareStatement(insertSql)) {
             statement.setInt(1, cnicType);
             statement.setInt(2, cmmGr);
-            statement.setString(3, text);
+            statement.setNString(3, text);
             statement.setInt(4, dbtKey);
+            statement.setInt(5, dbtKey);
             statement.executeUpdate();
         }
     }
 
-    private String upsertCst(Connection connection, int cmmGr, int dbtKey, String cstCode)
-            throws SQLException {
+    /**
+     * Пишет {@code cnInvCmmCst} с якорем {@code ciccDv}; канон выводится из Value.
+     */
+    private String upsertCstOnValue(
+            Connection connection,
+            int cmmGr,
+            int valueKey,
+            String cstCode
+    ) throws SQLException {
+        int dbtKey = resolveDbtKeyForValue(connection, valueKey);
         if (cstCode == null) {
-            String deleteSql = "DELETE FROM " + q("cnInvCmmCst")
-                    + " WHERE ciccCmmGr = ? AND ciccInvAccnt = ? AND ciccType = ?";
-            try (PreparedStatement statement = connection.prepareStatement(deleteSql)) {
-                statement.setInt(1, cmmGr);
-                statement.setInt(2, dbtKey);
-                statement.setInt(3, CICC_TYPE_CST);
-                statement.executeUpdate();
+            try (PreparedStatement del = connection.prepareStatement(
+                    "DELETE FROM " + q("cnInvCmmCst")
+                            + " WHERE ciccCmmGr = ? AND ciccType = ? AND ciccDv = ?")) {
+                del.setInt(1, cmmGr);
+                del.setInt(2, CICC_TYPE_CST);
+                del.setInt(3, valueKey);
+                del.executeUpdate();
             }
             return null;
         }
-
         Integer cstapKey;
         String cstName;
         String lookupSql = "SELECT TOP (1) pn.cstapKey, cst.cstName "
@@ -15595,27 +16380,121 @@ public class JdbcSudzDao implements SudzDao {
                 cstName = rs.getString("cstName");
             }
         }
-
-        String updateSql = "UPDATE " + q("cnInvCmmCst")
-                + " SET ciccCstAgPn = ? WHERE ciccCmmGr = ? AND ciccInvAccnt = ? AND ciccType = ?";
-        try (PreparedStatement statement = connection.prepareStatement(updateSql)) {
+        String updateByDv = "UPDATE " + q("cnInvCmmCst")
+                + " SET ciccCstAgPn = ?, ciccDbt = ?, ciccInvAccnt = ? "
+                + " WHERE ciccCmmGr = ? AND ciccType = ? AND ciccDv = ?";
+        try (PreparedStatement statement = connection.prepareStatement(updateByDv)) {
             statement.setInt(1, cstapKey);
-            statement.setInt(2, cmmGr);
+            statement.setInt(2, dbtKey);
             statement.setInt(3, dbtKey);
-            statement.setInt(4, CICC_TYPE_CST);
-            int updated = statement.executeUpdate();
-            if (updated > 0) {
+            statement.setInt(4, cmmGr);
+            statement.setInt(5, CICC_TYPE_CST);
+            statement.setInt(6, valueKey);
+            if (statement.executeUpdate() > 0) {
                 return cstName;
             }
         }
-
+        String adoptLegacy = "UPDATE " + q("cnInvCmmCst")
+                + " SET ciccCstAgPn = ?, ciccDv = ?, ciccDbt = ?, ciccInvAccnt = ? "
+                + " WHERE ciccCmmGr = ? AND ciccType = ? AND ciccInvAccnt = ? AND ciccDv IS NULL";
+        try (PreparedStatement statement = connection.prepareStatement(adoptLegacy)) {
+            statement.setInt(1, cstapKey);
+            statement.setInt(2, valueKey);
+            statement.setInt(3, dbtKey);
+            statement.setInt(4, dbtKey);
+            statement.setInt(5, cmmGr);
+            statement.setInt(6, CICC_TYPE_CST);
+            statement.setInt(7, dbtKey);
+            if (statement.executeUpdate() > 0) {
+                return cstName;
+            }
+        }
         String insertSql = "INSERT INTO " + q("cnInvCmmCst")
-                + " (ciccCmmGr, ciccType, ciccCstAgPn, ciccInvAccnt) VALUES (?, ?, ?, ?)";
+                + " (ciccCmmGr, ciccType, ciccCstAgPn, ciccInvAccnt, ciccDbt, ciccDv) "
+                + " VALUES (?, ?, ?, ?, ?, ?)";
         try (PreparedStatement statement = connection.prepareStatement(insertSql)) {
             statement.setInt(1, cmmGr);
             statement.setInt(2, CICC_TYPE_CST);
             statement.setInt(3, cstapKey);
             statement.setInt(4, dbtKey);
+            statement.setInt(5, dbtKey);
+            statement.setInt(6, valueKey);
+            statement.executeUpdate();
+        }
+        return cstName;
+    }
+
+    private String upsertCst(Connection connection, int cmmGr, int dbtKey, String cstCode)
+            throws SQLException {
+        List<Integer> valueKeys = findValueKeysForDbtOnGroupUpl(connection, dbtKey, cmmGr);
+        if (!valueKeys.isEmpty()) {
+            String cstName = null;
+            for (Integer valueKey : valueKeys) {
+                cstName = upsertCstOnValue(connection, cmmGr, valueKey, cstCode);
+            }
+            if (cstCode == null) {
+                try (PreparedStatement del = connection.prepareStatement(
+                        "DELETE FROM " + q("cnInvCmmCst")
+                                + " WHERE ciccCmmGr = ? AND ciccType = ? "
+                                + "  AND ciccInvAccnt = ? AND ciccDv IS NULL")) {
+                    del.setInt(1, cmmGr);
+                    del.setInt(2, CICC_TYPE_CST);
+                    del.setInt(3, dbtKey);
+                    del.executeUpdate();
+                }
+            }
+            return cstName;
+        }
+        if (cstCode == null) {
+            try (PreparedStatement del = connection.prepareStatement(
+                    "DELETE FROM " + q("cnInvCmmCst")
+                            + " WHERE ciccCmmGr = ? AND ciccInvAccnt = ? AND ciccType = ?")) {
+                del.setInt(1, cmmGr);
+                del.setInt(2, dbtKey);
+                del.setInt(3, CICC_TYPE_CST);
+                del.executeUpdate();
+            }
+            return null;
+        }
+        Integer cstapKey;
+        String cstName;
+        String lookupSql = "SELECT TOP (1) pn.cstapKey, cst.cstName "
+                + "FROM ags.cstAgPn pn "
+                + "JOIN ags.cstAg ca ON ca.cstaKey = pn.cstapCsta "
+                + "JOIN ags.cst cst ON cst.cstKey = ca.cstaCst "
+                + "WHERE pn.cstapIpgPnN = ? "
+                + "ORDER BY pn.cstapKey";
+        try (PreparedStatement statement = connection.prepareStatement(lookupSql)) {
+            statement.setString(1, cstCode);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    throw new IllegalArgumentException("Код стройки не найден в ags.cstAgPn: " + cstCode);
+                }
+                cstapKey = rs.getInt("cstapKey");
+                cstName = rs.getString("cstName");
+            }
+        }
+        String updateSql = "UPDATE " + q("cnInvCmmCst")
+                + " SET ciccCstAgPn = ?, ciccDbt = ? "
+                + " WHERE ciccCmmGr = ? AND ciccInvAccnt = ? AND ciccType = ?";
+        try (PreparedStatement statement = connection.prepareStatement(updateSql)) {
+            statement.setInt(1, cstapKey);
+            statement.setInt(2, dbtKey);
+            statement.setInt(3, cmmGr);
+            statement.setInt(4, dbtKey);
+            statement.setInt(5, CICC_TYPE_CST);
+            if (statement.executeUpdate() > 0) {
+                return cstName;
+            }
+        }
+        String insertSql = "INSERT INTO " + q("cnInvCmmCst")
+                + " (ciccCmmGr, ciccType, ciccCstAgPn, ciccInvAccnt, ciccDbt) VALUES (?, ?, ?, ?, ?)";
+        try (PreparedStatement statement = connection.prepareStatement(insertSql)) {
+            statement.setInt(1, cmmGr);
+            statement.setInt(2, CICC_TYPE_CST);
+            statement.setInt(3, cstapKey);
+            statement.setInt(4, dbtKey);
+            statement.setInt(5, dbtKey);
             statement.executeUpdate();
         }
         return cstName;
@@ -15680,8 +16559,21 @@ public class JdbcSudzDao implements SudzDao {
                 getLocalDate(rs, "_base_upl_date"),
                 getLocalDate(rs, "_curr_upl_date"),
                 getInteger(rs, "_base_upl"),
-                getInteger(rs, "_curr_upl")
+                getInteger(rs, "_curr_upl"),
+                spanOrOne(rs, "_band_rn"),
+                spanOrOne(rs, "_base_span"),
+                spanOrOne(rs, "_curr_span"),
+                spanOrOne(rs, "_cmm_span"),
+                spanOrOne(rs, "_repaid_span")
         );
+    }
+
+    /**
+     * Высота склейки полосы Д644. Нет колонки — строка сама по себе.
+     */
+    private static int spanOrOne(ResultSet rs, String column) throws SQLException {
+        Integer value = getInteger(rs, column);
+        return value == null ? 1 : value;
     }
 
     private static Integer getInteger(ResultSet rs, String column) throws SQLException {
@@ -15803,7 +16695,10 @@ public class JdbcSudzDao implements SudzDao {
                 template.orgIdValueL(), template.itn(), template.ctptOrg(),
                 template.maturity(), template.ttl(), template.overd(),
                 template.cstAgPnCode(), template.cstAgPnName(), template.agOrg(),
-                template.pogasheno()
+                template.pogasheno(),
+                template.dvKey(), template.curator(), template.mery(),
+                template.cstCode(), template.cstName(),
+                template.curatorNew(), template.meryNew(), template.cstCodeNew()
         );
     }
 

@@ -9,6 +9,15 @@
 --   3) фильтр: Overd(base) > 0
 --   4) шапка письма / длинные подписи «по состоянию на…» — слой отчёта, не SQL
 --
+-- Полоса (2026-10-13): ось — доли базового свода. Высота = max(доли базы, доли среза).
+-- Стыковка: общий слот dvInvDbt, затем оставшиеся доли по порядку idNum.
+-- Одна доля базы и одна доля среза — одна строка, даже если ключ invDbt между
+-- выгрузками сменился. Декартова произведения по dbtKey нет.
+-- Зерно 1 сливается (_*_span > 1, значение в верхней строке).
+-- Комментарий / код / агент (2026-10-15, walk-back): *Dv среза, иначе *Dv базы,
+-- иначе Acc; _cmm_span = зерно фактического якоря (curr_span или base_span).
+-- «Погашено» — канон долга: NULLIF(∑Overd базы − ∑Overd среза, 0).
+--
 -- Параметры: @yr; base = yr.cn_inv_dbt_upl; curr = MAX(upl_date) фактов года
 --   (опционально @curr_upl — зафиксировать срез)
 -- DEV only. sqlcmd -I
@@ -90,8 +99,20 @@ BEGIN
             f.dvTtl,
             f.dvOverd,
             f.CstAgPnCode,
-            f.CstAgPnName
+            f.CstAgPnName,
+            f.idNum,
+            sk.slotKey,
+            sk.dvKey
         FROM sudz.vw_Yr_DbtFact f
+        CROSS APPLY (
+            SELECT TOP (1) dv.dvInvDbt AS slotKey, dv.dvKey AS dvKey
+            FROM sudz.DbtValue dv
+            INNER JOIN sudz.invDbt slot ON slot.idKey = dv.dvInvDbt
+            INNER JOIN sudz.invDbtDbt idd
+                ON idd.iddInvDbt = dv.dvInvDbt AND idd.iddDbt = f.dbtKey
+            WHERE dv.dvUpl = f.upl_key AND slot.idNum = f.idNum
+            ORDER BY dv.dvKey
+        ) sk
         WHERE f.yr_key = @yr
           AND f.upl_date = @base_date
           AND f.dvOverd > 0
@@ -102,20 +123,61 @@ BEGIN
             f.dvDateMaturity,
             f.dvOverd,
             f.CstAgPnCode,
-            f.CstAgPnName
+            f.CstAgPnName,
+            f.idNum,
+            sk.slotKey,
+            sk.dvKey
         FROM sudz.vw_Yr_DbtFact f
+        CROSS APPLY (
+            SELECT TOP (1) dv.dvInvDbt AS slotKey, dv.dvKey AS dvKey
+            FROM sudz.DbtValue dv
+            INNER JOIN sudz.invDbt slot ON slot.idKey = dv.dvInvDbt
+            INNER JOIN sudz.invDbtDbt idd
+                ON idd.iddInvDbt = dv.dvInvDbt AND idd.iddDbt = f.dbtKey
+            WHERE dv.dvUpl = f.upl_key AND slot.idNum = f.idNum
+            ORDER BY dv.dvKey
+        ) sk
         WHERE f.yr_key = @yr
           AND f.upl_date = @curr_date
+          AND EXISTS (
+              SELECT 1 FROM base b WHERE b.dbtKey = f.dbtKey
+          )
     ),
-    cmm AS (
+    -- Комментарий по *Dv (срез или база / walk-back); legacy InvAccnt — запасной путь.
+    cmm_dv AS (
+        SELECT
+            cm.cnicDv AS dvKey,
+            MAX(CASE WHEN cm.cnicType = 1 THEN cm.cnicText END) AS mery
+        FROM sudz.cnInvCmm cm
+        WHERE cm.cnicGroup = @cmm_gr
+          AND cm.cnicDv IS NOT NULL
+          AND cm.cnicType = 1
+        GROUP BY cm.cnicDv
+    ),
+    cmm_acc AS (
         SELECT
             cm.cnicInvAccnt AS dbtKey,
             MAX(CASE WHEN cm.cnicType = 1 THEN cm.cnicText END) AS mery
         FROM sudz.cnInvCmm cm
         WHERE cm.cnicGroup = @cmm_gr
+          AND cm.cnicType = 1
         GROUP BY cm.cnicInvAccnt
     ),
-    cst_yr AS (
+    cst_dv AS (
+        SELECT
+            cs.ciccDv AS dvKey,
+            MAX(pn.cstapIpgPnN) AS cst_code,
+            MAX(c.cstName) AS cst_name
+        FROM sudz.cnInvCmmCst cs
+        JOIN ags.cstAgPn pn ON pn.cstapKey = cs.ciccCstAgPn
+        JOIN ags.cstAg ca ON ca.cstaKey = pn.cstapCsta
+        JOIN ags.cst c ON c.cstKey = ca.cstaCst
+        WHERE cs.ciccCmmGr = @cmm_gr
+          AND cs.ciccType = 2
+          AND cs.ciccDv IS NOT NULL
+        GROUP BY cs.ciccDv
+    ),
+    cst_acc AS (
         SELECT
             cs.ciccInvAccnt AS dbtKey,
             MAX(pn.cstapIpgPnN) AS cst_code,
@@ -128,36 +190,188 @@ BEGIN
           AND cs.ciccType = 2
         GROUP BY cs.ciccInvAccnt
     ),
-    resolved AS (
+    base_n AS (
+        SELECT
+            b.*,
+            ROW_NUMBER() OVER (PARTITION BY b.dbtKey ORDER BY b.idNum, b.slotKey) AS rb,
+            COUNT(*) OVER (PARTITION BY b.dbtKey) AS n_base
+        FROM base b
+    ),
+    curr_n AS (
+        SELECT
+            c.*,
+            ROW_NUMBER() OVER (PARTITION BY c.dbtKey ORDER BY c.idNum, c.slotKey) AS rc,
+            COUNT(*) OVER (PARTITION BY c.dbtKey) AS n_curr
+        FROM curr c
+    ),
+    paired AS (
+        SELECT b.dbtKey, b.rb, c.rc
+        FROM base_n b
+        INNER JOIN curr_n c ON c.dbtKey = b.dbtKey AND c.slotKey = b.slotKey
+    ),
+    base_free AS (
         SELECT
             b.dbtKey,
-            b.account_num,
+            b.rb,
+            ROW_NUMBER() OVER (PARTITION BY b.dbtKey ORDER BY b.rb) AS free_ord
+        FROM base_n b
+        WHERE NOT EXISTS (
+            SELECT 1 FROM paired p WHERE p.dbtKey = b.dbtKey AND p.rb = b.rb
+        )
+    ),
+    curr_free AS (
+        SELECT
+            c.dbtKey,
+            c.rc,
+            ROW_NUMBER() OVER (PARTITION BY c.dbtKey ORDER BY c.rc) AS free_ord
+        FROM curr_n c
+        WHERE NOT EXISTS (
+            SELECT 1 FROM paired p WHERE p.dbtKey = c.dbtKey AND p.rc = c.rc
+        )
+    ),
+    zipped AS (
+        SELECT
+            COALESCE(b.dbtKey, c.dbtKey) AS dbtKey,
+            b.rb,
+            c.rc
+        FROM base_free b
+        FULL OUTER JOIN curr_free c
+            ON c.dbtKey = b.dbtKey AND c.free_ord = b.free_ord
+    ),
+    links AS (
+        SELECT dbtKey, rb, rc FROM paired
+        UNION ALL
+        SELECT dbtKey, rb, rc FROM zipped
+    ),
+    numbered AS (
+        SELECT
+            l.dbtKey,
+            l.rb,
+            l.rc,
+            CASE WHEN l.rb IS NOT NULL THEN 1 ELSE 0 END AS has_base,
+            CASE WHEN l.rc IS NOT NULL THEN 1 ELSE 0 END AS has_curr,
+            ROW_NUMBER() OVER (
+                PARTITION BY l.dbtKey
+                ORDER BY CASE WHEN l.rb IS NULL THEN 1 ELSE 0 END, l.rb, l.rc
+            ) AS rn,
+            COUNT(*) OVER (PARTITION BY l.dbtKey) AS band_n,
+            bn.n_base,
+            cn.n_curr
+        FROM links l
+        LEFT JOIN (
+            SELECT dbtKey, MAX(n_base) AS n_base FROM base_n GROUP BY dbtKey
+        ) bn ON bn.dbtKey = l.dbtKey
+        LEFT JOIN (
+            SELECT dbtKey, MAX(n_curr) AS n_curr FROM curr_n GROUP BY dbtKey
+        ) cn ON cn.dbtKey = l.dbtKey
+    ),
+    sums AS (
+        SELECT
+            b.dbtKey,
+            SUM(b.dvOverd) AS overd_base,
+            (
+                SELECT SUM(c.dvOverd) FROM curr c WHERE c.dbtKey = b.dbtKey
+            ) AS overd_curr
+        FROM base b
+        GROUP BY b.dbtKey
+    ),
+    resolved AS (
+        SELECT
+            n.dbtKey,
+            n.rn,
+            n.band_n,
+            COALESCE(b.account_num, hb.account_num) AS account_num,
             b.org_id_value_l,
             b.ITN,
             b.CtptOrg,
             b.cnNumEnum,
             b.csoCnDate,
-            b.invNumEnum,          -- база года (решение владельца)
+            b.invNumEnum,
             b.dvDateStart,
             b.dvDateMaturity AS base_Maturity,
             b.dvTtl AS base_Ttl,
             b.dvOverd AS base_Overd,
-            c.dvDateMaturity AS curr_Maturity,
-            c.dvOverd AS curr_Overd,
-            NULLIF(CONVERT(money, b.dvOverd - c.dvOverd), 0) AS pogasheno,
-            /* Access Rslt: IIf(IsNull(коммент), IIf(IsNull(curr), base, curr), коммент) */
-            COALESCE(cy.cst_code, c.CstAgPnCode, b.CstAgPnCode) AS cst_code,
-            COALESCE(cy.cst_name, c.CstAgPnName, b.CstAgPnName) AS cst_name,
-            cm.mery
-        FROM base b
-        LEFT JOIN curr c ON c.dbtKey = b.dbtKey
-        LEFT JOIN cmm cm ON cm.dbtKey = b.dbtKey
-        LEFT JOIN cst_yr cy ON cy.dbtKey = b.dbtKey
+            CASE
+                WHEN n.n_curr = 1 AND n.rn = 1 THEN cone.dvDateMaturity
+                WHEN n.n_curr > 1 AND n.has_curr = 1 THEN c.dvDateMaturity
+            END AS curr_Maturity,
+            CASE
+                WHEN n.n_curr = 1 AND n.rn = 1 THEN cone.dvOverd
+                WHEN n.n_curr > 1 AND n.has_curr = 1 THEN c.dvOverd
+            END AS curr_Overd,
+            CASE
+                WHEN n.rn = 1 THEN NULLIF(CONVERT(money, sm.overd_base - ISNULL(sm.overd_curr, 0)), 0)
+            END AS pogasheno,
+            COALESCE(
+                cyd_curr.cst_code, cyd_base.cst_code, cya.cst_code,
+                ISNULL(c.CstAgPnCode, cone.CstAgPnCode), b.CstAgPnCode
+            ) AS cst_code,
+            COALESCE(
+                cyd_curr.cst_name, cyd_base.cst_name, cya.cst_name,
+                ISNULL(c.CstAgPnName, cone.CstAgPnName), b.CstAgPnName
+            ) AS cst_name,
+            COALESCE(cmd_curr.mery, cmd_base.mery, cma.mery) AS mery,
+            CASE
+                WHEN n.n_base = 1 AND n.has_base = 1 THEN n.band_n
+                WHEN n.n_base > 1 AND n.has_base = 1 THEN 1
+                ELSE 0
+            END AS base_span,
+            CASE
+                WHEN n.n_curr = 1 AND n.rn = 1 THEN n.band_n
+                WHEN n.n_curr > 1 AND n.has_curr = 1 THEN 1
+                ELSE 0
+            END AS curr_span,
+            -- cmm_span = зерно фактического якоря комментария (срез → база → Acc).
+            CASE
+                WHEN cmd_curr.mery IS NOT NULL THEN
+                    CASE
+                        WHEN n.n_curr = 1 AND n.rn = 1 THEN n.band_n
+                        WHEN n.n_curr > 1 AND n.has_curr = 1 THEN 1
+                        ELSE 0
+                    END
+                WHEN cmd_base.mery IS NOT NULL THEN
+                    CASE
+                        WHEN n.n_base = 1 AND n.has_base = 1 THEN n.band_n
+                        WHEN n.n_base > 1 AND n.has_base = 1 THEN 1
+                        ELSE 0
+                    END
+                WHEN cma.mery IS NOT NULL AND n.has_curr = 1 THEN
+                    CASE
+                        WHEN n.n_curr = 1 AND n.rn = 1 THEN n.band_n
+                        WHEN n.n_curr > 1 THEN 1
+                        ELSE 0
+                    END
+                WHEN cma.mery IS NOT NULL THEN
+                    CASE
+                        WHEN n.n_base = 1 AND n.has_base = 1 THEN n.band_n
+                        WHEN n.n_base > 1 AND n.has_base = 1 THEN 1
+                        ELSE 0
+                    END
+                ELSE 0
+            END AS cmm_span,
+            CASE WHEN n.rn = 1 THEN n.band_n ELSE 0 END AS repaid_span
+        FROM numbered n
+        OUTER APPLY (
+            SELECT TOP (1) bx.account_num
+            FROM base bx
+            WHERE bx.dbtKey = n.dbtKey
+        ) hb
+        LEFT JOIN base_n b ON b.dbtKey = n.dbtKey AND b.rb = n.rb
+        LEFT JOIN curr_n c ON c.dbtKey = n.dbtKey AND c.rc = n.rc
+        LEFT JOIN curr cone ON cone.dbtKey = n.dbtKey AND n.n_curr = 1
+        LEFT JOIN base bone ON bone.dbtKey = n.dbtKey AND n.n_base = 1
+        LEFT JOIN sums sm ON sm.dbtKey = n.dbtKey
+        LEFT JOIN cmm_dv cmd_curr ON cmd_curr.dvKey = COALESCE(c.dvKey, cone.dvKey)
+        LEFT JOIN cmm_dv cmd_base ON cmd_base.dvKey = COALESCE(b.dvKey, bone.dvKey)
+        LEFT JOIN cmm_acc cma ON cma.dbtKey = n.dbtKey
+        LEFT JOIN cst_dv cyd_curr ON cyd_curr.dvKey = COALESCE(c.dvKey, cone.dvKey)
+        LEFT JOIN cst_dv cyd_base ON cyd_base.dvKey = COALESCE(b.dvKey, bone.dvKey)
+        LEFT JOIN cst_acc cya ON cya.dbtKey = n.dbtKey
     )
     SELECT
         r.dbtKey,
         r.account_num AS [Счёт Главной книги],
-        ag.cstapOgName AS [Агент],
+        CASE WHEN r.cmm_span > 0 THEN ag.cstapOgName END AS [Агент],
         r.org_id_value_l AS [№ контрагента],
         r.ITN AS [ИНН контрагента],
         r.CtptOrg AS [Контрагент],
@@ -171,22 +385,25 @@ BEGIN
         r.curr_Maturity AS [Срок погашения curr],
         r.curr_Overd AS [Просроченная задолженность curr],
         r.pogasheno AS [Погашено проср задолженности с начала года],
-        r.cst_code AS [Код стройки],
-        r.cst_name AS [Наименование стройки],
-        r.mery AS [Комментарий Филиала 644],
-        /* служебные — для отладки / smoke; отчётный слой может отбросить */
+        CASE WHEN r.cmm_span > 0 THEN r.cst_code END AS [Код стройки],
+        CASE WHEN r.cmm_span > 0 THEN r.cst_name END AS [Наименование стройки],
+        CASE WHEN r.cmm_span > 0 THEN r.mery END AS [Комментарий Филиала 644],
         @base_date AS [_base_upl_date],
         @curr_date AS [_curr_upl_date],
         @base_upl  AS [_base_upl],
-        @curr_upl  AS [_curr_upl]
+        @curr_upl  AS [_curr_upl],
+        r.rn AS [_band_rn],
+        r.base_span AS [_base_span],
+        r.curr_span AS [_curr_span],
+        r.cmm_span AS [_cmm_span],
+        r.repaid_span AS [_repaid_span]
     FROM resolved r
     LEFT JOIN ags.cstAgPn ag ON ag.cstapIpgPnN = r.cst_code
     ORDER BY
         r.account_num,
-        ag.cstapOgName,
         r.CtptOrg,
-        r.cnNumEnum,
-        r.invNumEnum;
+        r.dbtKey,
+        r.rn;
 END
 GO
 

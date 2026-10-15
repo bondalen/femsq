@@ -3,25 +3,26 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-10-12"
+      "lastUpdated": "2026-10-15"
     },
     "sessions": [
       {
         "chat": {
-          "displayName": "Группа комментариев QII 2026 и Д644 (active, high). № chat-2026-10-12-001",
+          "displayName": "Группа комментариев QII 2026 и Д644 (active, medium). № chat-2026-10-12-001",
           "chat-attributes": {
             "id": "chat-2026-10-12-001",
             "created": "2026-10-12",
-            "lastUpdated": "2026-10-12",
+            "lastUpdated": "2026-10-15",
             "owner": "Александр",
             "status": "active",
-            "priority": "high",
+            "priority": "medium",
             "tags": [
               "sudz",
               "cmm",
               "d644",
               "qii-2026",
-              "yr-901"
+              "yr-901",
+              "qa-node-3"
             ],
             "links": {
               "projectDocsRefs": [],
@@ -117,7 +118,11 @@
                   "level": "success",
                   "effort": "1h",
                   "status": "completed",
-                  "tags": ["sudz", "cmm", "qii-2026"],
+                  "tags": [
+                    "sudz",
+                    "cmm",
+                    "qii-2026"
+                  ],
                   "links": {
                     "projectDocsRefs": [],
                     "developmentTasks": [],
@@ -147,7 +152,12 @@
                   "level": "success",
                   "effort": "30m",
                   "status": "completed",
-                  "tags": ["sudz", "cmm", "ui", "rslt"],
+                  "tags": [
+                    "sudz",
+                    "cmm",
+                    "ui",
+                    "rslt"
+                  ],
                   "links": {
                     "projectDocsRefs": [],
                     "developmentTasks": [],
@@ -178,7 +188,12 @@
                   "level": "success",
                   "effort": "1h",
                   "status": "completed",
-                  "tags": ["sudz", "cmm", "rslt", "ui"],
+                  "tags": [
+                    "sudz",
+                    "cmm",
+                    "rslt",
+                    "ui"
+                  ],
                   "links": {
                     "projectDocsRefs": [],
                     "developmentTasks": [],
@@ -209,7 +224,11 @@
                   "level": "success",
                   "effort": "30m",
                   "status": "completed",
-                  "tags": ["sudz", "d644", "qii-2026"],
+                  "tags": [
+                    "sudz",
+                    "d644",
+                    "qii-2026"
+                  ],
                   "links": {
                     "projectDocsRefs": [],
                     "developmentTasks": [],
@@ -238,7 +257,11 @@
                   "level": "success",
                   "effort": "40m",
                   "status": "completed",
-                  "tags": ["sudz", "d644", "ui"],
+                  "tags": [
+                    "sudz",
+                    "d644",
+                    "ui"
+                  ],
                   "links": {
                     "projectDocsRefs": [],
                     "developmentTasks": [],
@@ -269,7 +292,11 @@
                   "level": "success",
                   "effort": "30m",
                   "status": "completed",
-                  "tags": ["sudz", "cmm", "rslt"],
+                  "tags": [
+                    "sudz",
+                    "cmm",
+                    "rslt"
+                  ],
                   "links": {
                     "projectDocsRefs": [],
                     "developmentTasks": [],
@@ -298,7 +325,11 @@
                   "level": "success",
                   "effort": "30m",
                   "status": "completed",
-                  "tags": ["sudz", "rslt", "ui"],
+                  "tags": [
+                    "sudz",
+                    "rslt",
+                    "ui"
+                  ],
                   "links": {
                     "projectDocsRefs": [],
                     "developmentTasks": [],
@@ -328,7 +359,11 @@
                   "level": "success",
                   "effort": "40m",
                   "status": "completed",
-                  "tags": ["sudz", "d644", "qii-2026"],
+                  "tags": [
+                    "sudz",
+                    "d644",
+                    "qii-2026"
+                  ],
                   "links": {
                     "projectDocsRefs": [],
                     "developmentTasks": [],
@@ -343,6 +378,974 @@
                     "outcome": "Книга лежит в excel/2026-06/debit. Расхождение 11897 не исправлялось.",
                     "references": [
                       "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Полоса Д644 по долям базы и среза (success). № log-2026-10-13-001",
+                "log-attributes": {
+                  "id": "log-2026-10-13-001",
+                  "timestamp": "2026-10-13T10:20:00+03:00",
+                  "level": "success",
+                  "effort": "50m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "d644",
+                    "qii-2026"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "В Д644 высота полосы равна максимуму долей базы и среза",
+                    "details": "Правило записано в 08 §7, процессы §1.2.1 и экран Progress. Процедуры sudz.Yr_DbtChangesD644 и sudz.Yr_DbtChangesD644Svod применены на FishEye. Стыковка: общий слот dvInvDbt, затем порядок idNum. Одна доля с каждой стороны остаётся одной строкой. Комментарий следует зерну базы. Погашено — одна ячейка на полосу.",
+                    "outcome": "Год 901, срез 903: 176 строк (606012 — 74, 762210 — 63, 767502 — 39). Долг 11897: две строки по 18 000, сумма 36 000, два комментария. Счёт 762210 в сводке: 1 524 411 350,58. SudzD644ExcelExporterTest: 3 теста, успешно. Книга от 2026-10-12 на диске ещё со старыми четырьмя строками 11897.",
+                    "references": [
+                      "docs/development/notes/sql/26-0908-sudz-split-merge-sandbox/08_CMM_AND_RSLT.md",
+                      "docs/development/notes/sql/26-0807-sudz-target-schema/19_CREATE_Yr_DbtChangesD644_S44.sql",
+                      "docs/development/notes/sql/26-0807-sudz-target-schema/21_CREATE_Yr_DbtChangesD644Svod_S46.sql",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Сверка Excel Д644 после полосы (success). № log-2026-10-13-002",
+                "log-attributes": {
+                  "id": "log-2026-10-13-002",
+                  "timestamp": "2026-10-13T10:48:00+03:00",
+                  "level": "success",
+                  "effort": "20m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "d644",
+                    "qii-2026"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Книга Д644 среза 903 сверена со сводами и файлом специалистов",
+                    "details": "Файл ags_Yr_DbtChangesRsltD644_901_903_2026-10-13_103922.xlsx на шаре excel/2026-06/debit: 176 строк. Комментарии совпали с mery_new; у 24 долгов в файле специалистов лишний пробел или перевод строки в конце. Коды совпали, 21 пустой код стал «не обнаружена в платежах». Долги 6530, 6634, 6635 в Д644 нет. Декабрьский свод: 175 из 176. Вторая строка 11897 в своде — договор 32-425/05-18, в Д644 обе строки 32-426/05-18 по 18 000.",
+                    "outcome": "Сумма долга 11897 в Д644 — 36 000. Расхождение договора второй доли со сводом остаётся в данных базы.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "План загрузки договора строки свода (success). № log-2026-10-13-003",
+                "log-attributes": {
+                  "id": "log-2026-10-13-003",
+                  "timestamp": "2026-10-13T12:10:00+03:00",
+                  "level": "success",
+                  "effort": "40m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "dbt-upl",
+                    "qii-2026"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "В план добавлен узел 2 и собран путь автоматических долей",
+                    "details": "11897 не относится к КСДСФ: счёт-фактура однозначна. В calmOne (одна строка и одна карточка на счёт-фактуру) её класть нельзя. JdbcSudzDao.applyAutoDistinctShares пишет слот, мост и DbtValue, когда у каждой строки свой договор и у карточки не больше одного слота. Очередь снимается только если значений на выгрузке не меньше строк очереди. Живой 11897 в этот путь не входит: оба слота 13041 и 13042 смотрят на карточку 15629. Выгрузки 901 и 903 не менялись. Модуль femsq-database собран.",
+                    "outcome": "Узел 2.1 в коде. Проверка новой выгрузкой — узлы 2.2 и 2.3, ещё не выполнены.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Короткий свод новой выгрузкой 912 (success). № log-2026-10-13-004",
+                "log-attributes": {
+                  "id": "log-2026-10-13-004",
+                  "timestamp": "2026-10-13T12:42:00+03:00",
+                  "level": "success",
+                  "effort": "50m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "dbt-upl",
+                    "qii-2026"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Короткий файл загружен новой выгрузкой вне года 901",
+                    "details": "Экран «Загрузка свода»: upl 912 «проверка долей договора 2026-10-13», срез 31.12.2026. Год 908 с базой 912; год 901 не менялся (база 901, группа 907). Лист 761010: КС-51 и КС-23 на счёт-фактуре 2916 CR 0017 и одна строка КС-01. Воронка до invDbtLoad записала 3 DbtValue. КС-23 → карточка 9604, слот 1645; КС-51 → карточка 1571, слот 1646; КС-01 → карточка 1980. Очередь двоящих долгов пуста. Пустая upl 911 ни к какому году не привязана. Диалог создания выгрузки передавал в GraphQL поля uplName вместо name.",
+                    "outcome": "Номера договоров строк совпали с карточками. Узел 2.4, полный Свод, не выполнялся.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Декабрьский Свод новой выгрузкой 913 (success). № log-2026-10-13-005",
+                "log-attributes": {
+                  "id": "log-2026-10-13-005",
+                  "timestamp": "2026-10-13T13:10:00+03:00",
+                  "level": "success",
+                  "effort": "20m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "dbt-upl",
+                    "qii-2026"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Полный декабрьский Свод загружен новой выгрузкой вне года 901",
+                    "details": "Экран «Загрузка свода»: upl 913 «декабрьский Свод 31.12.2025, проверка договоров», срез 31.12.2025, дата выгрузки 15.01.2026. Год 909, календарный 2026 (yyyy 28), база 913, группа комментариев пустая. Файл «Дт Задолженность на 31.12.2025 (Общий свод) -НОВЫЙ.xlsx», шесть стандартных листов. Воронка до invDbtLoad: Tbl 1774, DbtValue 1760, новых слотов и мостов 0. У всех 1760 значений номер договора карточки совпал со строкой файла, суммой и документом. Очередь КСДД: 14 открытых строк (А19-16343/2021 — 7, А19-16352/2021 — 5, А45-19974/2024 — обе доли 18000). На 913 значений по А45-19974/2024 нет. Доли 901 и 903 по этой счёт-фактуре по-прежнему на карточке 15629. Год 901: база 901, группа 907, DbtValue 1774.",
+                    "outcome": "Узел 2.4 выполнен. Живой 11897 остался в очереди: у карточки 15629 два слота, загрузчик её не угадывает.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Мосты А45-19974/2024 и повтор выгрузки 913 (success). № log-2026-10-13-006",
+                "log-attributes": {
+                  "id": "log-2026-10-13-006",
+                  "timestamp": "2026-10-13T14:16:00+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "dbt-upl",
+                    "qii-2026"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Сняты лишние мосты слотов счёт-фактуры А45-19974/2024 и повторно загружена выгрузка 913",
+                    "details": "Удалён мост iddvKey 14265: слот 11897 (доля 0) больше не смотрит на карточку 15629, остался мост 8412 на карточку 1064, договор «Б/Н». Мост 14272 слота 13042 перенесён с карточки 15629 на 15634, договор 32-425/05-18. Слот 13041 остался на 15629, договор 32-426/05-18. DbtValue выгрузок 901, 902 и 903 не менялись: обе доли по-прежнему на карточке 15629. Повтор воронки экрана «Загрузка свода» для upl 913 и года 909: applyAutoDistinctShares записал 2 DbtValue, новых слотов и мостов 0. На 913 слот 13041 — 18000 и 32-426/05-18, слот 13042 — 18000 и 32-425/05-18. Очередь КСДД: 12 строк, А19-16343/2021 — 7, А19-16352/2021 — 5.",
+                    "outcome": "Узел 2.5 выполнен. Следующая выгрузка этой счёт-фактуры пишет договоры в уже существующие слоты.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Июньский Свод новой выгрузкой 914 (success). № log-2026-10-13-007",
+                "log-attributes": {
+                  "id": "log-2026-10-13-007",
+                  "timestamp": "2026-10-13T14:29:00+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "dbt-upl",
+                    "qii-2026"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Июньский Свод загружен новой выгрузкой и привязан к году 909 как II квартал",
+                    "details": "Экран «Загрузка свода»: upl 914 «июньский Свод 30.06.2026, проверка договоров», срез 30.06.2026, дата выгрузки 15.07.2026. Файл «Дт Задолженность на 30.06.2026 (Общий свод) -НОВЫЙ.xlsx», шесть стандартных листов. Год 909: база 913 (q=0), срез 914 (q=2). Год 901 не менялся: база 901, срезы 902 и 903, группа 907. Воронка: Tbl 1803, DbtValue 1797, новых слотов и мостов 0, из них автоматические доли 2. А45-19974/2024 на 914: слот 13041 — 18000 и 32-426/05-18, слот 13042 — 18000 и 32-425/05-18. Доли 901 и 903 по этой счёт-фактуре остались на карточке 15629. В июньском файле А19-16343/2021 и А19-16352/2021 по одной строке и записаны на свои карточки. Очередь КСДД: 6 строк, счёт-фактуры 25454, 25455 и 25456, договор КС-51.",
+                    "outcome": "Узел 2.6 выполнен. Июнь повторил договоры декабря на новых слотах не создавая.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Проверочный Д644 года 909 (success). № log-2026-10-13-008",
+                "log-attributes": {
+                  "id": "log-2026-10-13-008",
+                  "timestamp": "2026-10-13T14:48:00+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "d644",
+                    "qii-2026"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Снят проверочный Д644 года 909 со срезом 914",
+                    "details": "На экране портфеля году 909 назначена группа 907. Год 901 не менялся: база 901, группа 907. Предпросмотр D644 года 909, срез 914: 164 строки, база 913. Файл ags_Yr_DbtChangesRsltD644_909_914_2026-10-13_144737.xlsx в каталоге июньских выгрузок. А45-19974/2024: две строки по 18000, договоры 32-426/05-18 и 32-425/05-18, просрочка декабря и июня по 18000, комментарий филиала из группы 907 на обеих. А19-16343/2021 и А19-16352/2021 в этой книге нет. Книга года 901 не заменялась.",
+                    "outcome": "Узел 2.7 выполнен. Договоры 11897 в проверочном Д644 совпали со сводами декабря и июня.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md",
+                      "/mnt/nb-win-share/femsq/excel/2026-06/debit/ags_Yr_DbtChangesRsltD644_909_914_2026-10-13_144737.xlsx"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Доли А19 на выгрузке 913 и повтор Д644 909 (success). № log-2026-10-13-009",
+                "log-attributes": {
+                  "id": "log-2026-10-13-009",
+                  "timestamp": "2026-10-13T15:15:00+03:00",
+                  "level": "success",
+                  "effort": "20m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "d644",
+                    "qii-2026"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "На выгрузку 913 записаны двенадцать долей А19 и заново снят Д644 года 909",
+                    "details": "Сервер FishEye снова отвечает. Семь строк А19-16343/2021 записаны на карточку 7043, пять строк А19-16352/2021 на карточку 12455. Слот взят у доли выгрузки 901 с той же суммой, даты и просрочка — из строки файла 913. Новых слотов нет. Суммы: 108263847.03 и 77951751.17, как у базы 901. Доли 901 и 903 не менялись. Очередь этих двенадцати строк на выгрузке 913 снята. Файл ags_Yr_DbtChangesRsltD644_909_914_2026-10-13_151402.xlsx: 179 строк, столько же в книге года 901 тем же подсчётом. А45-19974/2024 по-прежнему два договора, 32-426/05-18 и 32-425/05-18.",
+                    "outcome": "Узел 2.8 выполнен. Проверочный Д644 года 909 содержит доли А19 и оба договора 11897.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md",
+                      "/mnt/nb-win-share/femsq/excel/2026-06/debit/ags_Yr_DbtChangesRsltD644_909_914_2026-10-13_151402.xlsx"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Сверка Д644 909 со сводами и комментариями (success). № log-2026-10-13-010",
+                "log-attributes": {
+                  "id": "log-2026-10-13-010",
+                  "timestamp": "2026-10-13T15:25:00+03:00",
+                  "level": "success",
+                  "effort": "20m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "d644",
+                    "qii-2026"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Д644 года 909 сверен с декабрьским сводом, июньским сводом и файлом комментариев",
+                    "details": "176 строк, 175 долгов. Декабрь, счета 606012, 762210, 767502: 176 из 176, договор и просрочка. А45-19974/2024: 32-426/05-18 и 32-425/05-18. Июнь: 132 строки совпали полностью, 10 долей А19 совпали по договору и сумме, а в колонке счёт-фактуры июньского файла короткий номер. 33 строки погашены и в июньском файле их нет. Соглашение №2: в Д644 договор «158 03», в своде «158». Комментарии: 152 текста равны mery_new, 24 отличаются пробелом или переводом строки. Коды: 155 равны cstAgPn_new, 21 пустой код файла заменён фразой «не обнаружена в платежах». Расхождений текстов и кодов нет.",
+                    "outcome": "Проверочный Д644 года 909 совпал с базовым сводом. Июнь и комментарии совпали с известными оговорками.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md",
+                      "/mnt/nb-win-share/femsq/excel/2026-06/debit/ags_Yr_DbtChangesRsltD644_909_914_2026-10-13_151402.xlsx"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "План узел 3 и канон зерна комментария Д644 (success). № log-2026-10-14-001",
+                "log-attributes": {
+                  "id": "log-2026-10-14-001",
+                  "timestamp": "2026-10-14T11:40:00+03:00",
+                  "level": "success",
+                  "effort": "40m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "cmm",
+                    "d644",
+                    "qii-2026"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "В план добавлен узел 3; обновлён канон зерна комментария",
+                    "details": "Д644 QII отправлен. Узел 2 закрыт. Узел 3: загрузчик нескольких слотов по сумме; cmm на DbtValue; импорт и чтение *Dv; миграция 907 на DEV и пакет исторических комментариев на прод; лог Rslt сбор и Свод — часть 3.4. Канон 08 §7: cmm_span, код и агент = Value группы раунда (обычно срез); 1+2 → два комментария; 2+1 → один слит; одинаковый текст — две ячейки. До кода 3.4 процедура ещё на зерне базы. Обновлены 03-processes и 02-9.",
+                    "outcome": "Документация и план готовы к разработке узла 3.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md",
+                      "docs/development/notes/sql/26-0908-sudz-split-merge-sandbox/08_CMM_AND_RSLT.md",
+                      "docs/development/notes/domain/sudz/03-processes.md",
+                      "docs/development/notes/UI/02-9_sudz-mvp-screens.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Загрузчик нескольких слотов одной карточки по сумме (success). № log-2026-10-14-002",
+                "log-attributes": {
+                  "id": "log-2026-10-14-002",
+                  "timestamp": "2026-10-14T11:51:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "invDbtLoad",
+                    "dbt-upl",
+                    "qii-2026"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Реализован applyAutoSameCardAmountShares в invDbtLoad",
+                    "details": "На карточке (idvvKey) при rowCnt=slotCnt>1 стыковка строк Tbl со слотами по сумме ±0.01; эталон — последний полный чужой dvUpl (не MIN/MAX по всей истории). СФ с несколькими карточками допускается. Слоты не создаются. Исключение iKey из очереди через amountShare. Smoke: InvDbtLoadSameCardAmountIT — после DELETE Values А19 на 913 повтор invDbtLoad вставил 12 долей (7+5), очередь 0.",
+                    "outcome": "Узел плана 3.1 закрыт. Далее 3.2 (схема cmm → DbtValue).",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java",
+                      "code/femsq-backend/femsq-database/src/test/java/com/femsq/database/dao/InvDbtLoadSameCardAmountIT.java",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Схема cmm → DbtValue: писать/читать *Dv (success). № log-2026-10-14-003",
+                "log-attributes": {
+                  "id": "log-2026-10-14-003",
+                  "timestamp": "2026-10-14T12:05:00+03:00",
+                  "level": "success",
+                  "effort": "45m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "cmm",
+                    "DbtValue",
+                    "qii-2026"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Якорь записи cmm на *Dv; UNIQUE на DEV",
+                    "details": "upsertCommentOnValue / upsertCstOnValue: cnicDv/ciccDv обязателен при наличии Value; cnicDbt/InvAccnt выводятся из Value→слот→invDbtDbt. Путь по dbtKey раскладывает текст на Value среза группы (дата) или крайней upl годов группы. DDL 05_UX_cmm_Dv: filtered UNIQUE на sudz. Smoke CmmDvWriteIT @907. Исторические строки 907 без *Dv — узел 3.5; построчный импорт полосы — 3.3.",
+                    "outcome": "Узел плана 3.2 закрыт. Далее 3.3 (импорт Rslt на Value).",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java",
+                      "code/femsq-backend/femsq-database/src/test/java/com/femsq/database/dao/CmmDvWriteIT.java",
+                      "docs/development/notes/sql/26-0908-sudz-split-merge-dev/05_UX_cmm_Dv.sql",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Импорт Rslt повтор на Value крайней upl (success). № log-2026-10-14-004",
+                "log-attributes": {
+                  "id": "log-2026-10-14-004",
+                  "timestamp": "2026-10-14T12:30:00+03:00",
+                  "level": "success",
+                  "effort": "50m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "cmm",
+                    "rslt",
+                    "DbtValue",
+                    "qii-2026"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Полоса *_new пишется на Value крайней upl по bandOrdinal",
+                    "details": "SudzRsltReturnRow.bandOrdinal; importer сохраняет строки полосы (склейка сверху вниз). importRsltReturn: Value крайней upl года ORDER BY idNum; 1 строка → все Value; N строк → пары по ординалу; разные тексты — разные cnicDv. Протокол: «запись по долям Value». Unit SudzRsltReturnImporterTest; smoke RsltReturnImportDvIT @901/907.",
+                    "outcome": "Узел плана 3.3 закрыт. Далее 3.4 (Rslt и Д644 читают *Dv).",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/SudzRsltReturnImporter.java",
+                      "code/femsq-backend/femsq-database/src/test/java/com/femsq/database/dao/RsltReturnImportDvIT.java",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Rslt и Д644 читают *Dv; протоколы сбор/Свод (success). № log-2026-10-14-005",
+                "log-attributes": {
+                  "id": "log-2026-10-14-005",
+                  "timestamp": "2026-10-14T13:30:00+03:00",
+                  "level": "success",
+                  "effort": "90m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "cmm",
+                    "rslt",
+                    "D644",
+                    "DbtValue",
+                    "qii-2026"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "cmm_span = зерно среза; Rslt *Dv; протоколы сбор/Свод",
+                    "details": "Yr_DbtChangesD644: cmm/cst по *Dv Value среза + fallback InvAccnt; cmm_span как curr_span. findYrDbtChanges: *Dv на SudzRsltPeriod, Acc на каноне. Exporter/preview: старые с предшествующего, *_new с крайней; пустые *_new без merge. Протоколы replace yr_Progress для Rslt сбор и Свод (UI). Unit SudzRsltExcelExporterTest / SudzD644ExcelExporterTest.",
+                    "outcome": "Узел плана 3.4 закрыт. Далее 3.5 (миграция комментариев на *Dv).",
+                    "references": [
+                      "docs/development/notes/sql/26-0807-sudz-target-schema/19_CREATE_Yr_DbtChangesD644_S44.sql",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/SudzRsltExcelExporter.java",
+                      "code/femsq-frontend-q/src/views/sudz/SudzPortfolioView.vue",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Миграция группы 907 Acc→*Dv (success). № log-2026-10-14-006",
+                "log-attributes": {
+                  "id": "log-2026-10-14-006",
+                  "timestamp": "2026-10-14T13:15:00+03:00",
+                  "level": "success",
+                  "effort": "45m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "cmm",
+                    "DbtValue",
+                    "migration",
+                    "qii-2026"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Группа 907: Acc→*Dv на Value крайних upl 901/909",
+                    "details": "06_MIGRATE_cmm_Dv_group_907: цель — крайняя upl каждого года с указателем на 907 (не cnicgDate). Expand полосы (UPDATE+INSERT). Итог: cmm 572 with_dv / 62 Acc без Value; Cst 262 / 27. DAO findValueKeysForDbtOnGroupUpl — extreme per year. Smoke CmmDvMigrate907IT. 905/906 и прод не трогались.",
+                    "outcome": "Узел плана 3.5 и весь узел 3 закрыты. Прод-миграция исторических групп — отдельный пакет.",
+                    "references": [
+                      "docs/development/notes/sql/26-0908-sudz-split-merge-dev/06_MIGRATE_cmm_Dv_group_907.sql",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java",
+                      "code/femsq-backend/femsq-database/src/test/java/com/femsq/database/dao/CmmDvMigrate907IT.java",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "QA узел 3: UI Progress + сверка эталонов (success). № log-2026-10-14-007",
+                "log-attributes": {
+                  "id": "log-2026-10-14-007",
+                  "timestamp": "2026-10-14T13:35:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "qa",
+                    "d644",
+                    "rslt",
+                    "svod",
+                    "progress",
+                    "qii-2026"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Прогон QA узла 3: Progress UI, D644/Rslt/Свод, регрессия 905/906",
+                    "details": "DEV asus-kubuntu, JAR 0.1.0.347 :8080, год 901 / yr_CmmGr=yr_CmmGr_New=907. Артефакты /tmp/femsq-qa/: d644_901_903.xlsx, d644_909_914.xlsx, rslt_sborn_901_903.xlsx, svod_901_903.xlsx. Эталоны: …/D644_901_903_…103922.xlsx, …/D644_909_914_…151402.xlsx. D644 gen=ref по полосе: 176 строк данных, счета 74/63/39, 11897 две×18000 без merge комментария, нет 6530/6634/6635; 909/914 — 179 строк тела (176+3 итога), два договора А45. Комментарии филиала: gen filled 141 vs ref 176 — у 11897 в 907 только куратор type8 на *Dv (4 строки), type1 mery нет (известное зерно после Acc→*Dv, не регресс полосы). Rslt сбор: 2134 долга / 2135 строк, *_new пустые без merge (норма); практический полный эталон Rslt на шаре вне test/ не найден. Свод: состав счетов и база/остаток 606012/762210/767502 согласованы UI-предпросмотр↔REST; августовский test/Svod — другая величина факта (песочница). «Погашено» / % — вне scope (незавершённый pmt). Progress: replaceSudzYearProgress smoke OK; UI предпросмотр D644=176, Rslt=2135, Свод=13 строк; Excel UI упёрся в showDirectoryPicker (автобраузер) — протокол всё равно replace. 905: cmm 180/131, cst 1815; 906: 138/126, cst 152 — без прироста. Мини-импорт возврата в боевую 907 не выполнялся.",
+                    "outcome": "Критерий приёмки узла 3 в UI выполнен с зафиксированными оговорками: gap комментариев 907 vs эталон Acc-эпохи; pmt-колонки не блокер; Excel folder picker только в автобраузере.",
+                    "references": [
+                      "/tmp/femsq-qa/d644_901_903.xlsx",
+                      "/tmp/femsq-qa/d644_909_914.xlsx",
+                      "/tmp/femsq-qa/rslt_sborn_901_903.xlsx",
+                      "/tmp/femsq-qa/svod_901_903.xlsx",
+                      "/mnt/nb-win-share/femsq/excel/2026-06/debit/ags_Yr_DbtChangesRsltD644_901_903_2026-10-13_103922.xlsx",
+                      "/mnt/nb-win-share/femsq/excel/2026-06/debit/ags_Yr_DbtChangesRsltD644_909_914_2026-10-13_151402.xlsx",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "QA 3.6.1.1–.2 вариант A: песочница New 1907 (success). № log-2026-10-14-008",
+                "log-attributes": {
+                  "id": "log-2026-10-14-008",
+                  "timestamp": "2026-10-14T14:20:00+03:00",
+                  "level": "success",
+                  "effort": "45m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "qa",
+                    "cmm",
+                    "DbtValue",
+                    "rslt-return",
+                    "qii-2026"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Smoke *Dv запись/снятие и мини-импорт Rslt повтор на throwaway New",
+                    "details": "Группа 1907 «[sudz] QA smoke *Dv / Rslt return 3.6.1»; yr 901: CmmGr=907, New=1907. 3.6.1.1: updateSudzDebtCollection writeToNew — 11897 куратор/mery на dv 103826 и 103827 с cnicDv; clear снял 4 строки; 907 type8×4 на 11897 без изменений. 3.6.1.2: mini_rslt_return_11897.xlsx → POST rslt-return parsed=2 imported=1; протокол «запись по долям Value: 11897»; БД A/B на двух Value; Rslt повтор Excel — две разные mery_new без merge. Откат: clear 1907 (0 строк), New→907. 905/906 без прироста. Боевую 907 текстами QA не писали.",
+                    "outcome": "Пункты 3.6.1.0–.2 в chat-plan закрыты вариантом A; узел 3.6 smoke UI полный.",
+                    "references": [
+                      "/tmp/femsq-qa/mini_rslt_return_11897.xlsx",
+                      "/tmp/femsq-qa/rslt_povtor_901_903.xlsx",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Закрытие чата QII/Д644 и уборка 1907 (success). № log-2026-10-14-009",
+                "log-attributes": {
+                  "id": "log-2026-10-14-009",
+                  "timestamp": "2026-10-14T14:45:00+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "qa",
+                    "chat-close",
+                    "qii-2026"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Узел 4.1: чат completed, удалена пустая группа 1907, оговорки → 4.2–4.6",
+                    "details": "chat-2026-10-12-001: status completed, priority medium. DELETE sudz.cnInvCmmGr WHERE cnicgKey=1907 (дочерних cmm/cst/ag/dt/fn/gr и указателей yr не было). В план добавлен узел 4 (4.1✅; 4.2 gap комментариев; 4.3 прод *Dv; 4.4 pmt/S79; 4.5 Excel оператором; 4.6 WBS 0918). Узел 3 принят с оговорками, вынесенными в 4.2–4.6.",
+                    "outcome": "Чат QII/Д644 закрыт; хвосты после QA зафиксированы в дереве 4.x.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "4.2.1 Создана группа re-import *Dv 1908 (success). № log-2026-10-14-010",
+                "log-attributes": {
+                  "id": "log-2026-10-14-010",
+                  "timestamp": "2026-10-14T15:15:00+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "cmm",
+                    "re-import",
+                    "qii-2026"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "План 4.2.1–4.2.7 вместо 4.2a/b; создана группа 1908",
+                    "details": "В chat-plan: сценарий чистого re-import comm_26-1012 в новую группу + сверка Д644 (4.2.1–7). createSudzCmmGr → cmmGrKey=1908, name «[sudz] QII 2026 re-import *Dv (comm_26-1012)», date 2026-10-14. Указатели yr 901 не менялись (CmmGr/New=907). Чат снова active. Следующий шаг: 4.2.2 New→1908.",
+                    "outcome": "4.2.1 ✅; группа-кандидат для re-import готова.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "4.2.1–4.2.2 Группа 1909 через Cursor browser (success). № log-2026-10-14-011",
+                "log-attributes": {
+                  "id": "log-2026-10-14-011",
+                  "timestamp": "2026-10-14T15:20:00+03:00",
+                  "level": "success",
+                  "effort": "20m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "cmm",
+                    "ui",
+                    "re-import",
+                    "qii-2026"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Удалена API-группа 1908; создана 1909 в Progress UI браузера",
+                    "details": "DELETE cnInvCmmGr 1908 (пустая). Cursor browser: год 901 → Progress → Rslt повтор · Загрузить → Создать → имя «[sudz] QII 2026 re-import *Dv (comm_26-1012)», дата 2026-10-14 → cmmGrKey=1909. UI onCreateCmmGr сразу saveYear: yr_CmmGr_New=1909, yr_CmmGr=907. Комбо New в Progress показывает 1909.",
+                    "outcome": "4.2.1 и 4.2.2 закрыты видимым UI-прогоном; далее 4.2.3 импорт файла.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "4.2.3 Импорт comm_26-1012 в группу 1909 (success). № log-2026-10-14-012",
+                "log-attributes": {
+                  "id": "log-2026-10-14-012",
+                  "timestamp": "2026-10-14T16:15:00+03:00",
+                  "level": "success",
+                  "effort": "30m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "cmm",
+                    "rslt-return",
+                    "re-import",
+                    "qii-2026"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "После рестарта: env check + POST rslt-return в New=1909",
+                    "details": "Машина asus-kubuntu; DBHub ok; SQL 10.7.0.3:1433 open; mcp DSN nb-win; JAR 0.1.0.347 поднят на :8080. Шара не смонтирована (sudo) — файл снят smbclient → /tmp/femsq-qa/comm_26-1012.xlsx. Import: parsed=179 imported=178 (~233с). Протокол replace: полоса 11897 один текст. Группа 1909: type1=179 (withDv=144), type8=171, cst=158; у 11897 type1 на dv 103826/103827. Указатели 901: CmmGr=907 New=1909. 905/906/907 без прироста.",
+                    "outcome": "4.2.3 ✅; следующий 4.2.4 — yr_CmmGr→1909 перед сверкой Д644.",
+                    "references": [
+                      "/tmp/femsq-qa/comm_26-1012.xlsx",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "4.2.4 yr_CmmGr года 901 → 1909 (success). № log-2026-10-15-001",
+                "log-attributes": {
+                  "id": "log-2026-10-15-001",
+                  "timestamp": "2026-10-15T15:41:00+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "cmm",
+                    "year",
+                    "re-import",
+                    "qii-2026"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "updateSudzYear: официальный указатель 901 → группа 1909",
+                    "details": "После рестарта JAR 0.1.0.347 на :8080. До: yr_CmmGr=907, yr_CmmGr_New=1909. Mutation updateSudzYear(yrKey=901, variant без изменений, baseUplKey=901, yKey=28, cmmGrKey=1909, cmmGrNewKey=1909). После: sudz.yr и GraphQL sudzYear — CmmGr=New=1909, имя «[sudz] QII 2026 re-import *Dv (comm_26-1012)». Артефакты /tmp/femsq-qa/yr901-before.json, yr901-after-424.json.",
+                    "outcome": "4.2.4 ✅; следующий 4.2.5 — D644 · Выгрузить / сверка со среза 903.",
+                    "references": [
+                      "/tmp/femsq-qa/yr901-after-424.json",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "4.2.5 D644 предпросмотр 901/903 через Cursor browser (success). № log-2026-10-15-002",
+                "log-attributes": {
+                  "id": "log-2026-10-15-002",
+                  "timestamp": "2026-10-15T15:57:00+03:00",
+                  "level": "success",
+                  "effort": "25m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "d644",
+                    "ui",
+                    "re-import",
+                    "qii-2026"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Cursor browser: D644 · Выгрузить предпросмотр, срез 903, группа 1909",
+                    "details": "Портфель года 901 (yr_CmmGr=1909) → Ход (Progress) → операция D644 · Выгрузить, срез 903, режим Предпросмотр → Выполнить. Протокол yr_Progress: строк 176; счета 606012/762210/767502 = 74/63/39; комментарий филиала заполнено 143 / пусто 33; итог показано 176. GraphQL sudzD644: 11897 две×18000 с текстом type1; долгов 6530/6634/6635 нет. Эталон …103922.xlsx: полоса/счета совпали; filled эталона 176 vs gen 143. В группе 1909 type1=179 (withDv=144 / Acc 35) — пустые комментарии Д644 соответствуют отсутствию *Dv на зерне среза. REST /tmp/femsq-qa/d644_901_903_ui.xlsx.",
+                    "outcome": "4.2.5 ✅ выполнен UI; критерий комментариев не снят → следующий 4.2.7 (ветка FAIL), не 4.2.6.",
+                    "references": [
+                      "/tmp/femsq-qa/d644_901_903_ui.xlsx",
+                      "/tmp/femsq-qa/ref_D644_901_903_103922.xlsx",
+                      "/tmp/femsq-qa/d644_425_compare.json",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "4.2.5a Walk-back привязки cmm (success). № log-2026-10-15-003",
+                "log-attributes": {
+                  "id": "log-2026-10-15-003",
+                  "timestamp": "2026-10-15T16:55:00+03:00",
+                  "level": "success",
+                  "effort": "90m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "cmm",
+                    "DbtValue",
+                    "walk-back",
+                    "d644",
+                    "qii-2026"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Walk-back записи/чтения cmm; migrate 1909; filled Д644 = 176",
+                    "details": "Диагноз 4.2.5: 33 пустых — Acc type1 без Value на 903 (есть на базе 901); cmm_span=curr скрывал Acc. DAO: findValueBindOnYearWalkBack + findValueKeysForDbtOnGroupUpl walk-back; SudzRsltReturnImportResult (boundExtreme/WalkBack/Acc) в протоколе. Yr_DbtChangesD644: dvKey на base; COALESCE(cmd_curr, cmd_base, cma); _cmm_span по фактическому якорю — применено на DEV. Rslt Excel/preview: *_new = walkBackPeriods. Миграция 07_MIGRATE_cmm_Dv_group_1909_walkback: cmm 350 with_dv / Acc 0. Smoke GraphQL sudzD644 901/903: 176 строк, filled 176, счета 74/63/39, 11897 две×18000. IT CmmDvWalkBackIT. 08 §7 и план v0.4.6.",
+                    "outcome": "4.2.5a ✅; критерий комментариев снят → следующий 4.2.6 (OK), не 4.2.7.",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java",
+                      "docs/development/notes/sql/26-0807-sudz-target-schema/19_CREATE_Yr_DbtChangesD644_S44.sql",
+                      "docs/development/notes/sql/26-0908-sudz-split-merge-dev/07_MIGRATE_cmm_Dv_group_1909_walkback.sql",
+                      "docs/development/notes/sql/26-0908-sudz-split-merge-sandbox/08_CMM_AND_RSLT.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "4.2.6 Ветка OK: 1909 официальная, 907 SUPERSEDED (success). № log-2026-10-15-004",
+                "log-attributes": {
+                  "id": "log-2026-10-15-004",
+                  "timestamp": "2026-10-15T17:04:51+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "cmm",
+                    "cutover",
+                    "qii-2026"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Cutover указателей на 1909; 907 superseded без drop",
+                    "details": "a) Официальная группа раунда: cnInvCmmGr **1909** «[sudz] QII 2026 re-import *Dv (comm_26-1012)». b) Год 909: updateSudzYear cmmGrKey 907→1909 (baseUpl 913, New null). c) Указатели на 907: ни у 901, ни у 909; группа 907 переименована в «[sudz] SUPERSEDED QII 2026 (was 907; use 1909) (comm_26-1012)», строки cmm не удалялись. d) DELETE 907 — отдельное решение позже. Итог: 901 CmmGr=New=1909; 909 CmmGr=1909.",
+                    "outcome": "4.2.6 ✅; 4.2 закрыт по ветке OK. Далее 4.3–4.6 по приоритету.",
+                    "references": [
+                      "/tmp/femsq-qa/yr909-cmm-1909.json",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Rslt: «старые» cmm после предшествующего среза (success). № log-2026-10-15-005",
+                "log-attributes": {
+                  "id": "log-2026-10-15-005",
+                  "timestamp": "2026-10-15T17:24:34+03:00",
+                  "level": "success",
+                  "effort": "25m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "rslt",
+                    "cmm",
+                    "excel"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Порядок колонок Rslt: зерно cmm без отрыва от квартала",
+                    "details": "SudzRsltExcelExporter + sudz-rslt-preview: блок «старых» (куратор/мероприятия/код/имя) сразу после фактов предшествующего среза; *_new — в конце после крайней группы. Заливка «старых» — цвет предшествующего квартала. Access-хвост сознательно не копируем. Тесты по техн. именам; 08 §3 и 03 §1.1.1.3 обновлены.",
+                    "outcome": "Коллизия merge соседних блоков устранена раскладкой; импорт *_new по именам не затронут.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/SudzRsltExcelExporter.java",
+                      "code/femsq-frontend-q/src/utils/sudz-rslt-preview.ts",
+                      "docs/development/notes/sql/26-0908-sudz-split-merge-sandbox/08_CMM_AND_RSLT.md"
                     ]
                   }
                 ]

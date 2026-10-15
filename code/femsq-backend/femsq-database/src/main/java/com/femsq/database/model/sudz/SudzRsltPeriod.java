@@ -5,6 +5,8 @@ import java.time.LocalDate;
 
 /**
  * Срез долга в портфеле года (строка {@code sudz.vw_Yr_DbtFact}).
+ * Комментарии на Value ({@code *Dv}): «старые» — с предшествующего среза группы;
+ * {@code *New} — с крайней upl ({@code yr_CmmGr_New}).
  */
 public record SudzRsltPeriod(
         int uplKey,
@@ -23,6 +25,14 @@ public record SudzRsltPeriod(
         String cstAgPnCode,
         String cstAgPnName,
         String agOrg,
-        BigDecimal pogasheno
+        BigDecimal pogasheno,
+        Integer dvKey,
+        String curator,
+        String mery,
+        String cstCode,
+        String cstName,
+        String curatorNew,
+        String meryNew,
+        String cstCodeNew
 ) {
 }

@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Чтение полосы возврата Rslt: склейка ячеек и один долг на ключ.
+ * Чтение полосы возврата Rslt: склейка ячеек и ординалы для Value.
  */
 class SudzRsltReturnImporterTest {
 
@@ -39,15 +39,15 @@ class SudzRsltReturnImporterTest {
         assertEquals(2, parse.sourceRows());
         assertEquals(List.of(11897), parse.sameTextKeys());
         assertTrue(parse.differentTextKeys().isEmpty());
-        assertEquals(1, parse.rows().size());
-        SudzRsltReturnRow row = parse.rows().get(0);
-        assertEquals(11897, row.dbtKey());
-        assertEquals("Дедова И.В", row.curatorNew());
-        assertEquals("решение суда", row.meryNew());
+        assertEquals(2, parse.rows().size());
+        assertEquals(0, parse.rows().get(0).bandOrdinal());
+        assertEquals(1, parse.rows().get(1).bandOrdinal());
+        assertEquals("Дедова И.В", parse.rows().get(0).curatorNew());
+        assertEquals("решение суда", parse.rows().get(1).meryNew());
     }
 
     @Test
-    void differentTextsOnOneDebtKeepTheLowerRow() {
+    void differentTextsOnOneDebtKeepBothRows() {
         SudzRsltReturnParse parse = SudzRsltReturnImporter.collapse(List.of(
                 new SudzRsltReturnRow(42, "А", "первое", null),
                 new SudzRsltReturnRow(42, "Б", "второе", "051-1001888")
@@ -55,10 +55,14 @@ class SudzRsltReturnImporterTest {
 
         assertEquals(List.of(42), parse.differentTextKeys());
         assertTrue(parse.sameTextKeys().isEmpty());
-        SudzRsltReturnRow row = parse.rows().get(0);
-        assertEquals("Б", row.curatorNew());
-        assertEquals("второе", row.meryNew());
-        assertEquals("051-1001888", row.cstCodeNew());
+        assertEquals(2, parse.rows().size());
+        assertEquals("А", parse.rows().get(0).curatorNew());
+        assertEquals("первое", parse.rows().get(0).meryNew());
+        assertEquals(0, parse.rows().get(0).bandOrdinal());
+        assertEquals("Б", parse.rows().get(1).curatorNew());
+        assertEquals("второе", parse.rows().get(1).meryNew());
+        assertEquals("051-1001888", parse.rows().get(1).cstCodeNew());
+        assertEquals(1, parse.rows().get(1).bandOrdinal());
     }
 
     @Test
@@ -79,18 +83,27 @@ class SudzRsltReturnImporterTest {
     @Test
     void progressReplacesArchiveWithThisRun() {
         SudzRsltReturnParse parse = new SudzRsltReturnParse(
-                List.of(new SudzRsltReturnRow(11897, "А", "текст", null)),
+                List.of(
+                        new SudzRsltReturnRow(11897, "А", "текст", null, 0),
+                        new SudzRsltReturnRow(11897, "А", "текст", null, 1)
+                ),
                 2,
                 List.of(11897),
                 List.of()
         );
         String text = SudzRsltReturnProgress.success(
-                "comm.xlsx", 901, parse, 1, LocalDateTime.of(2026, 10, 12, 14, 50, 0));
+                "comm.xlsx",
+                901,
+                parse,
+                new com.femsq.database.model.sudz.SudzRsltReturnImportResult(1, 1, 0, 0),
+                LocalDateTime.of(2026, 10, 12, 14, 50, 0));
 
         assertTrue(text.startsWith("Rslt повтор · Загрузить\n"));
         assertTrue(text.contains("Прочитано строк с заполненными *_new: 2"));
         assertTrue(text.contains("Полоса, один и тот же текст: 11897"));
-        assertTrue(text.contains("Итог: записано 1"));
+        assertTrue(text.contains("Строк полосы к записи: 2"));
+        assertTrue(text.contains("Итог: записано долгов 1"));
+        assertTrue(text.contains("Привязка Value: крайняя 1, walk-back 0, Acc 0"));
 
         String failed = SudzRsltReturnProgress.failure(
                 "comm.xlsx",

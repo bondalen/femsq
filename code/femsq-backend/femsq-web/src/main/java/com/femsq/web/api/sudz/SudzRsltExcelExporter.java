@@ -42,6 +42,9 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  *
  * <p>S77.5 полосы A/C: число строк канона = max(число {@code DbtValue} по срезам).
  * Колонка с зерном 1 (канон, «погашено» на ∑ Overd, cmm на {@code Dbt}) сливается.
+ *
+ * <p>Порядок cmm (FEMSQ, не Access-хвост): «старые» сразу после фактов предшествующего
+ * среза; {@code *_new} — в конце после крайней группы.
  */
 public final class SudzRsltExcelExporter {
 
@@ -172,6 +175,7 @@ public final class SudzRsltExcelExporter {
         cols.add(new ColumnDef("", "dbtKey", ColKind.KEY, StyleBand.KEY));
         cols.add(new ColumnDef("Счет Главной книги", "account_num", ColKind.SIDE, StyleBand.BASE));
 
+        int precedingIndex = precedingSliceIndex(slices.size());
         for (int s = 0; s < slices.size(); s++) {
             SliceMeta slice = slices.get(s);
             String q = quarterLabel(slice.labelDate());
@@ -200,17 +204,15 @@ public final class SudzRsltExcelExporter {
                 cols.add(new ColumnDef(
                         q + ". Погашенная задолженность", p + "_погашено", ColKind.SUM, band));
             }
+            // «Старые» cmm — сразу после фактов предшествующего среза (зерно без отрыва).
+            if (s == precedingIndex) {
+                cols.addAll(oldCommentColumns(StyleBand.quarter(precedingIndex)));
+            }
+        }
+        if (precedingIndex < 0) {
+            cols.addAll(oldCommentColumns(StyleBand.CURATOR));
         }
 
-        cols.add(new ColumnDef(
-                "Куратор от Управления", "Куратор от Управления", ColKind.TEXT, StyleBand.CURATOR));
-        cols.add(new ColumnDef(
-                "Мероприятия по погашению дебиторской задолженности",
-                "Мероприятия по погашению дебиторской задолженности",
-                ColKind.TEXT,
-                StyleBand.CURATOR));
-        cols.add(new ColumnDef("Код стройки", "Код стройки", ColKind.TEXT, StyleBand.CURATOR));
-        cols.add(new ColumnDef("Наименование стройки", "Код стройкиN", ColKind.TEXT, StyleBand.CURATOR));
         cols.add(new ColumnDef("Куратор от Управления, " + newSuffix, "cur_new", ColKind.EMPTY, StyleBand.NEW));
         cols.add(new ColumnDef(
                 "Мероприятия по погашению дебиторской задолженности, " + newSuffix,
@@ -223,7 +225,39 @@ public final class SudzRsltExcelExporter {
     }
 
     /**
-     * Число строк полосы канона: max числа Value по срезам (cmm пока зерно {@code Dbt} = 1).
+     * Индекс среза, чьё зерно читают «старые» cmm: предшествующий к крайней, иначе единственный.
+     *
+     * @param sliceCount число срезов книги
+     * @return индекс или -1, если срезов нет
+     */
+    static int precedingSliceIndex(int sliceCount) {
+        if (sliceCount <= 0) {
+            return -1;
+        }
+        return sliceCount >= 2 ? sliceCount - 2 : 0;
+    }
+
+    /**
+     * Четыре колонки «старых» комментариев ({@code yr_CmmGr}).
+     *
+     * @param band заливка row2 (цвет предшествующего квартала)
+     * @return определения колонок
+     */
+    private static List<ColumnDef> oldCommentColumns(StyleBand band) {
+        return List.of(
+                new ColumnDef(
+                        "Куратор от Управления", "Куратор от Управления", ColKind.TEXT, band),
+                new ColumnDef(
+                        "Мероприятия по погашению дебиторской задолженности",
+                        "Мероприятия по погашению дебиторской задолженности",
+                        ColKind.TEXT,
+                        band),
+                new ColumnDef("Код стройки", "Код стройки", ColKind.TEXT, band),
+                new ColumnDef("Наименование стройки", "Код стройкиN", ColKind.TEXT, band));
+    }
+
+    /**
+     * Число строк полосы канона: max числа Value по срезам.
      *
      * @param debt канон
      * @param slices срезы книги
@@ -235,6 +269,27 @@ public final class SudzRsltExcelExporter {
             n = Math.max(n, periodsOn(debt, slice.uplDate()).size());
         }
         return n;
+    }
+
+    /**
+     * Периоды для {@code *_new}: с крайней upl назад, пока не найдутся доли
+     * (тот же walk-back, что при записи cmm).
+     *
+     * @param debt канон
+     * @param slices срезы книги (от базы к крайней)
+     * @return периоды выбранной upl или пустой список
+     */
+    static List<SudzRsltPeriod> walkBackPeriods(SudzRsltDebt debt, List<SliceMeta> slices) {
+        if (slices == null || slices.isEmpty()) {
+            return List.of();
+        }
+        for (int i = slices.size() - 1; i >= 0; i--) {
+            List<SudzRsltPeriod> periods = periodsOn(debt, slices.get(i).uplDate());
+            if (!periods.isEmpty()) {
+                return periods;
+            }
+        }
+        return List.of();
     }
 
     /**
@@ -269,6 +324,11 @@ public final class SudzRsltExcelExporter {
                 ? List.of()
                 : periodsOn(debt, slices.get(0).uplDate());
         BigDecimal baseOverd = sumOverd(basePeriods);
+        int precedingIndex = precedingSliceIndex(slices.size());
+        SliceMeta preceding = precedingIndex >= 0 ? slices.get(precedingIndex) : null;
+        List<SudzRsltPeriod> oldPeriods = preceding == null
+                ? List.of()
+                : periodsOn(debt, preceding.uplDate());
         for (int s = 0; s < slices.size(); s++) {
             SliceMeta slice = slices.get(s);
             boolean first = s == 0;
@@ -295,20 +355,99 @@ public final class SudzRsltExcelExporter {
                         styles,
                         true);
             }
+            // «Старые»: Value предшествующего среза (*Dv); иначе зерно InvAccnt канона.
+            if (s == precedingIndex) {
+                c = writeOldCommentCols(sheet, firstRow, nRows, c, oldPeriods, debt, styles);
+            }
         }
-        c = writeBandCol(sheet, firstRow, nRows, c, one(debt.curator()), styles, false);
-        c = writeBandCol(sheet, firstRow, nRows, c, one(debt.mery()), styles, false);
-        c = writeBandCol(sheet, firstRow, nRows, c, one(debt.cstCode()), styles, false);
-        c = writeBandCol(sheet, firstRow, nRows, c, one(debt.cstName()), styles, false);
+        if (precedingIndex < 0) {
+            c = writeOldCommentCols(sheet, firstRow, nRows, c, oldPeriods, debt, styles);
+        }
+        // *_new: Value крайней upl, иначе walk-back на предшествующую с долями.
+        List<SudzRsltPeriod> newPeriods = walkBackPeriods(debt, slices);
         if (fillNew) {
-            c = writeBandCol(sheet, firstRow, nRows, c, one(debt.curatorNew()), styles, false);
-            c = writeBandCol(sheet, firstRow, nRows, c, one(debt.meryNew()), styles, false);
-            c = writeBandCol(sheet, firstRow, nRows, c, one(debt.cstCodeNew()), styles, false);
+            c = writeBandCol(sheet, firstRow, nRows, c,
+                    commentBand(newPeriods, SudzRsltPeriod::curatorNew, debt.curatorNew()), styles, false);
+            c = writeBandCol(sheet, firstRow, nRows, c,
+                    commentBand(newPeriods, SudzRsltPeriod::meryNew, debt.meryNew()), styles, false);
+            c = writeBandCol(sheet, firstRow, nRows, c,
+                    commentBand(newPeriods, SudzRsltPeriod::cstCodeNew, debt.cstCodeNew()), styles, false);
+        } else {
+            int emptyGrain = Math.max(1, newPeriods.size());
+            List<Object> emptyCells = new ArrayList<>(emptyGrain);
+            for (int i = 0; i < emptyGrain; i++) {
+                emptyCells.add(null);
+            }
+            c = writeBandCol(sheet, firstRow, nRows, c, emptyCells, styles, false);
+            c = writeBandCol(sheet, firstRow, nRows, c, emptyCells, styles, false);
+            c = writeBandCol(sheet, firstRow, nRows, c, emptyCells, styles, false);
         }
         while (c < columns.size()) {
             c = writeBandCol(sheet, firstRow, nRows, c, List.of(), styles, false);
         }
         return nRows;
+    }
+
+    /**
+     * Пишет четыре колонки «старых» комментариев.
+     *
+     * @param sheet лист
+     * @param firstRow первая строка полосы
+     * @param nRows высота полосы
+     * @param col индекс колонки
+     * @param oldPeriods периоды предшествующего среза
+     * @param debt канон (fallback Acc)
+     * @param styles стили
+     * @return следующий индекс колонки
+     */
+    private static int writeOldCommentCols(
+            Sheet sheet,
+            int firstRow,
+            int nRows,
+            int col,
+            List<SudzRsltPeriod> oldPeriods,
+            SudzRsltDebt debt,
+            Styles styles
+    ) {
+        int c = col;
+        c = writeBandCol(sheet, firstRow, nRows, c,
+                commentBand(oldPeriods, SudzRsltPeriod::curator, debt.curator()), styles, false);
+        c = writeBandCol(sheet, firstRow, nRows, c,
+                commentBand(oldPeriods, SudzRsltPeriod::mery, debt.mery()), styles, false);
+        c = writeBandCol(sheet, firstRow, nRows, c,
+                commentBand(oldPeriods, SudzRsltPeriod::cstCode, debt.cstCode()), styles, false);
+        c = writeBandCol(sheet, firstRow, nRows, c,
+                commentBand(oldPeriods, SudzRsltPeriod::cstName, debt.cstName()), styles, false);
+        return c;
+    }
+
+    /**
+     * Зерно комментария полосы: при наличии *Dv на периодах — по Value; иначе одна ячейка канона.
+     *
+     * @param periods периоды среза группы
+     * @param getter поле комментария
+     * @param debtFallback значение с канона ({@code InvAccnt})
+     * @return список значений для {@link #writeBandCol}
+     */
+    static List<Object> commentBand(
+            List<SudzRsltPeriod> periods,
+            java.util.function.Function<SudzRsltPeriod, String> getter,
+            String debtFallback
+    ) {
+        if (periods == null || periods.isEmpty()) {
+            return one(debtFallback);
+        }
+        boolean anyDv = false;
+        for (SudzRsltPeriod period : periods) {
+            if (getter.apply(period) != null) {
+                anyDv = true;
+                break;
+            }
+        }
+        if (!anyDv) {
+            return one(debtFallback);
+        }
+        return mapPeriod(periods, getter);
     }
 
     private static <T> List<Object> mapPeriod(

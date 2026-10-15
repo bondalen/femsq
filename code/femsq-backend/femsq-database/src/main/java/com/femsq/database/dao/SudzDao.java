@@ -65,6 +65,7 @@ import com.femsq.database.model.sudz.SudzPmtUplTabBadges;
 import com.femsq.database.model.sudz.SudzPmtUplTblRow;
 import com.femsq.database.model.sudz.SudzPmtUplTblWriteProgress;
 import com.femsq.database.model.sudz.SudzRsltDebt;
+import com.femsq.database.model.sudz.SudzRsltReturnImportResult;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
 import com.femsq.database.model.sudz.SudzPmDocForest;
@@ -200,9 +201,9 @@ public interface SudzDao {
      *
      * @param yrKey год
      * @param rows строки с dbtKey и новыми полями
-     * @return число обработанных долгов
+     * @return итог записи и счётчики привязки Value
      */
-    int importRsltReturn(int yrKey, List<SudzRsltReturnRow> rows);
+    SudzRsltReturnImportResult importRsltReturn(int yrKey, List<SudzRsltReturnRow> rows);
 
     /**
      * Дописывает строку в начало {@code yr_Progress} (лог формирования документов).

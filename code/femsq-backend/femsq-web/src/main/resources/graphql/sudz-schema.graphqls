@@ -497,6 +497,22 @@ type SudzRsltPeriod {
   cstAgPnName: String
   agOrg: String
   pogasheno: Float
+  """Ключ DbtValue (якорь *Dv)."""
+  dvKey: Int
+  """Куратор с *Dv этой Value (yr_CmmGr)."""
+  curator: String
+  """Мероприятие с *Dv этой Value (yr_CmmGr)."""
+  mery: String
+  """Код стройки с *Dv (yr_CmmGr)."""
+  cstCode: String
+  """Наименование стройки с *Dv (yr_CmmGr)."""
+  cstName: String
+  """Куратор *_new с *Dv (yr_CmmGr_New)."""
+  curatorNew: String
+  """Мероприятие *_new с *Dv (yr_CmmGr_New)."""
+  meryNew: String
+  """Код стройки *_new с *Dv (yr_CmmGr_New)."""
+  cstCodeNew: String
 }
 
 """Строка итогового документа D644."""

@@ -958,6 +958,14 @@ export interface SudzRsltPeriod {
   cstAgPnName: string | null;
   agOrg: string | null;
   pogasheno: number | null;
+  dvKey?: number | null;
+  curator?: string | null;
+  mery?: string | null;
+  cstCode?: string | null;
+  cstName?: string | null;
+  curatorNew?: string | null;
+  meryNew?: string | null;
+  cstCodeNew?: string | null;
 }
 
 export interface SudzRsltDebt {

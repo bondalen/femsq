@@ -71,6 +71,7 @@ import com.femsq.database.model.sudz.SudzPmtUplLogOnlyResult;
 import com.femsq.database.model.sudz.SudzPmtUplTblRow;
 import com.femsq.database.model.sudz.SudzPmtUplTblWriteProgress;
 import com.femsq.database.model.sudz.SudzRsltDebt;
+import com.femsq.database.model.sudz.SudzRsltReturnImportResult;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
 import com.femsq.database.model.sudz.SudzPmDocForest;
@@ -227,7 +228,7 @@ public class DefaultSudzService implements SudzService {
     }
 
     @Override
-    public int importRsltReturn(int yrKey, java.util.List<SudzRsltReturnRow> rows) {
+    public SudzRsltReturnImportResult importRsltReturn(int yrKey, java.util.List<SudzRsltReturnRow> rows) {
         requireYear(yrKey);
         if (rows == null || rows.isEmpty()) {
             throw new IllegalArgumentException("Нет строк для импорта возврата Rslt");

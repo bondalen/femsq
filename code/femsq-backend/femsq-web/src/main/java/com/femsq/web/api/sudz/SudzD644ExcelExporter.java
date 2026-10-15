@@ -110,7 +110,8 @@ public final class SudzD644ExcelExporter {
         sorted.sort(Comparator
                 .comparing((SudzD644Row r) -> r.accountNum() == null ? Integer.MAX_VALUE : r.accountNum())
                 .thenComparing(r -> Objects.toString(r.counterpart(), ""))
-                .thenComparing(SudzD644Row::dbtKey));
+                .thenComparing(SudzD644Row::dbtKey)
+                .thenComparing(SudzD644Row::bandRn));
 
         Map<Integer, List<SudzD644Row>> byAccount = new LinkedHashMap<>();
         for (SudzD644Row row : sorted) {
@@ -168,9 +169,21 @@ public final class SudzD644ExcelExporter {
             for (Map.Entry<Integer, List<SudzD644Row>> entry : byAccount.entrySet()) {
                 List<SudzD644Row> group = entry.getValue();
                 int firstDataExcelRow = excelRowIdx + 1; // 1-based for formulas
-                for (SudzD644Row row : group) {
-                    Row excelRow = sheet.createRow(excelRowIdx++);
-                    writeD644DataRow(excelRow, row, styles);
+                int offset = 0;
+                while (offset < group.size()) {
+                    int debtKey = group.get(offset).dbtKey();
+                    int bandEnd = offset + 1;
+                    while (bandEnd < group.size() && group.get(bandEnd).dbtKey() == debtKey) {
+                        bandEnd++;
+                    }
+                    List<Integer> written = new ArrayList<>();
+                    for (int i = offset; i < bandEnd; i++) {
+                        written.add(excelRowIdx);
+                        Row excelRow = sheet.createRow(excelRowIdx++);
+                        writeD644DataRow(excelRow, group.get(i), styles);
+                    }
+                    mergeD644Band(sheet, written, group.subList(offset, bandEnd));
+                    offset = bandEnd;
                 }
                 int lastDataExcelRow = excelRowIdx; // 1-based inclusive (last written)
                 Row totalRow = sheet.createRow(excelRowIdx++);
@@ -198,25 +211,82 @@ public final class SudzD644ExcelExporter {
 
     private static void writeD644DataRow(Row excelRow, SudzD644Row row, Styles styles) {
         int c = 0;
-        writeNumber(excelRow, c++, row.accountNum(), styles.numberRight());
-        writeText(excelRow, c++, row.agent(), styles.text());
-        writeNumber(excelRow, c++, row.orgId(), styles.numberRight());
-        writeText(excelRow, c++, row.itn(), styles.text());
-        writeText(excelRow, c++, row.counterpart(), styles.text());
-        writeText(excelRow, c++, row.contract(), styles.text());
-        writeDate(excelRow, c++, row.contractDate(), styles.date());
-        writeText(excelRow, c++, row.invoice(), styles.text());
-        writeDate(excelRow, c++, row.dateStart(), styles.date());
-        writeDate(excelRow, c++, row.maturityBase(), styles.date());
-        writeMoney(excelRow, c++, row.ttlBase(), styles.money());
-        writeMoney(excelRow, c++, row.overdBase(), styles.moneyHighlight());
-        writeDate(excelRow, c++, row.maturityCurr(), styles.date());
-        writeMoney(excelRow, c++, row.overdCurr(), styles.moneyHighlight());
-        writeMoney(excelRow, c++, row.repaid(), styles.money());
-        writeText(excelRow, c++, row.cstCode(), styles.text());
-        writeText(excelRow, c++, row.cstName(), styles.text());
-        writeText(excelRow, c, row.comment644(), styles.text());
-        excelRow.setHeightInPoints(rowHeightForComment(row.comment644()));
+        writeSpanNumber(excelRow, c++, row.baseSpan(), row.accountNum(), styles.numberRight());
+        writeSpanText(excelRow, c++, row.commentSpan(), row.agent(), styles.text());
+        writeSpanNumber(excelRow, c++, row.baseSpan(), row.orgId(), styles.numberRight());
+        writeSpanText(excelRow, c++, row.baseSpan(), row.itn(), styles.text());
+        writeSpanText(excelRow, c++, row.baseSpan(), row.counterpart(), styles.text());
+        writeSpanText(excelRow, c++, row.baseSpan(), row.contract(), styles.text());
+        writeSpanDate(excelRow, c++, row.baseSpan(), row.contractDate(), styles.date());
+        writeSpanText(excelRow, c++, row.baseSpan(), row.invoice(), styles.text());
+        writeSpanDate(excelRow, c++, row.baseSpan(), row.dateStart(), styles.date());
+        writeSpanDate(excelRow, c++, row.baseSpan(), row.maturityBase(), styles.date());
+        writeSpanMoney(excelRow, c++, row.baseSpan(), row.ttlBase(), styles.money());
+        writeSpanMoney(excelRow, c++, row.baseSpan(), row.overdBase(), styles.moneyHighlight());
+        writeSpanDate(excelRow, c++, row.currSpan(), row.maturityCurr(), styles.date());
+        writeSpanMoney(excelRow, c++, row.currSpan(), row.overdCurr(), styles.moneyHighlight());
+        writeSpanMoney(excelRow, c++, row.repaidSpan(), row.repaid(), styles.money());
+        writeSpanText(excelRow, c++, row.commentSpan(), row.cstCode(), styles.text());
+        writeSpanText(excelRow, c++, row.commentSpan(), row.cstName(), styles.text());
+        writeSpanText(excelRow, c, row.commentSpan(), row.comment644(), styles.text());
+        excelRow.setHeightInPoints(rowHeightForComment(row.commentSpan() > 0 ? row.comment644() : null));
+    }
+
+    /**
+     * Склеивает колонки полосы: база, срез, комментарий и «погашено» — каждое своим зерном.
+     */
+    private static void mergeD644Band(Sheet sheet, List<Integer> writtenRows, List<SudzD644Row> band) {
+        int[] baseCols = {0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+        int[] currCols = {12, 13};
+        int[] commentCols = {1, 15, 16, 17};
+        for (int i = 0; i < band.size(); i++) {
+            SudzD644Row row = band.get(i);
+            mergeSpan(sheet, writtenRows.get(i), row.baseSpan(), baseCols);
+            mergeSpan(sheet, writtenRows.get(i), row.currSpan(), currCols);
+            mergeSpan(sheet, writtenRows.get(i), row.commentSpan(), commentCols);
+            mergeSpan(sheet, writtenRows.get(i), row.repaidSpan(), new int[] {COL_REPAID});
+        }
+    }
+
+    private static void mergeSpan(Sheet sheet, int startRow, int span, int[] columns) {
+        if (span <= 1) {
+            return;
+        }
+        for (int column : columns) {
+            sheet.addMergedRegion(new CellRangeAddress(startRow, startRow + span - 1, column, column));
+        }
+    }
+
+    private static void writeSpanText(Row row, int column, int span, String value, CellStyle style) {
+        if (span > 0) {
+            writeText(row, column, value, style);
+        } else {
+            writeText(row, column, null, style);
+        }
+    }
+
+    private static void writeSpanNumber(Row row, int column, int span, Number value, CellStyle style) {
+        if (span > 0) {
+            writeNumber(row, column, value, style);
+        } else {
+            writeNumber(row, column, null, style);
+        }
+    }
+
+    private static void writeSpanDate(Row row, int column, int span, LocalDate value, CellStyle style) {
+        if (span > 0) {
+            writeDate(row, column, value, style);
+        } else {
+            writeDate(row, column, null, style);
+        }
+    }
+
+    private static void writeSpanMoney(Row row, int column, int span, BigDecimal value, CellStyle style) {
+        if (span > 0) {
+            writeMoney(row, column, value, style);
+        } else {
+            writeMoney(row, column, null, style);
+        }
     }
 
     /**

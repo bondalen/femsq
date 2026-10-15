@@ -1,5 +1,7 @@
 /**
  * Предпросмотр Rslt в колонках, совпадающих с Excel-выгрузкой ({@link SudzRsltExcelExporter}).
+ *
+ * Порядок cmm: «старые» сразу после фактов предшествующего среза; {@code *_new} — в конце.
  */
 
 import type { FemsqTableColumn } from 'fequlib';
@@ -89,12 +91,34 @@ interface ColumnDef {
   money?: boolean;
 }
 
+/** Индекс среза «старых» cmm: предшествующий к крайней, иначе единственный. */
+function precedingSliceIndex(sliceCount: number): number {
+  if (sliceCount <= 0) {
+    return -1;
+  }
+  return sliceCount >= 2 ? sliceCount - 2 : 0;
+}
+
+function oldCommentColumnDefs(): ColumnDef[] {
+  return [
+    { name: 'Куратор от Управления', label: 'Куратор от Управления', band: 'curator' },
+    {
+      name: 'Мероприятия по погашению дебиторской задолженности',
+      label: 'Мероприятия по погашению…',
+      band: 'curator'
+    },
+    { name: 'Код стройки', label: 'Код стройки', band: 'curator' },
+    { name: 'Код стройкиN', label: 'Наименование стройки', band: 'curator' }
+  ];
+}
+
 function buildColumnDefs(slices: SliceMeta[], newSuffix: string): ColumnDef[] {
   const cols: ColumnDef[] = [
     { name: 'dbtKey', label: 'dbtKey', band: 'key' },
     { name: 'account_num', label: 'Счет Главной книги', band: 'base' }
   ];
 
+  const precedingIndex = precedingSliceIndex(slices.length);
   slices.forEach((slice, index) => {
     const q = quarterLabel(slice.labelDate);
     const p = slice.uplDate;
@@ -132,17 +156,15 @@ function buildColumnDefs(slices: SliceMeta[], newSuffix: string): ColumnDef[] {
         money: true
       });
     }
+    if (index === precedingIndex) {
+      cols.push(...oldCommentColumnDefs());
+    }
   });
+  if (precedingIndex < 0) {
+    cols.push(...oldCommentColumnDefs());
+  }
 
   cols.push(
-    { name: 'Куратор от Управления', label: 'Куратор от Управления', band: 'curator' },
-    {
-      name: 'Мероприятия по погашению дебиторской задолженности',
-      label: 'Мероприятия по погашению…',
-      band: 'curator'
-    },
-    { name: 'Код стройки', label: 'Код стройки', band: 'curator' },
-    { name: 'Код стройкиN', label: 'Наименование стройки', band: 'curator' },
     { name: 'cur_new', label: `Куратор…, ${newSuffix}`, band: 'new' },
     { name: 'mery_new', label: `Мероприятия…, ${newSuffix}`, band: 'new' },
     { name: 'cstAgPn_new', label: `Код стройки, кратко, ${newSuffix}`, band: 'new' }
@@ -234,16 +256,73 @@ function flattenDebt(
         row[`${p}_погашено`] = pick([pogashenoAccess(baseOverd, curr)], r, nRows);
       }
     });
-    row['Куратор от Управления'] = debt.curator;
-    row['Мероприятия по погашению дебиторской задолженности'] = debt.mery;
-    row['Код стройки'] = debt.cstCode;
-    row['Код стройкиN'] = debt.cstName;
-    row.cur_new = fillNew ? (debt.curatorNew ?? null) : null;
-    row.mery_new = fillNew ? (debt.meryNew ?? null) : null;
-    row.cstAgPn_new = fillNew ? (debt.cstCodeNew ?? null) : null;
+    const preceding = slices.length >= 2 ? slices[slices.length - 2] : slices[0];
+    const oldPeriods = preceding ? periodsOn(debt, preceding.uplDate) : [];
+    const newPeriods = walkBackPeriods(debt, slices);
+    row['Куратор от Управления'] = pick(
+      commentBand(oldPeriods, (p) => p.curator ?? null, debt.curator),
+      r,
+      nRows
+    );
+    row['Мероприятия по погашению дебиторской задолженности'] = pick(
+      commentBand(oldPeriods, (p) => p.mery ?? null, debt.mery),
+      r,
+      nRows
+    );
+    row['Код стройки'] = pick(
+      commentBand(oldPeriods, (p) => p.cstCode ?? null, debt.cstCode),
+      r,
+      nRows
+    );
+    row['Код стройкиN'] = pick(
+      commentBand(oldPeriods, (p) => p.cstName ?? null, debt.cstName),
+      r,
+      nRows
+    );
+    if (fillNew) {
+      row.cur_new = pick(
+        commentBand(newPeriods, (p) => p.curatorNew ?? null, debt.curatorNew ?? null),
+        r,
+        nRows
+      );
+      row.mery_new = pick(
+        commentBand(newPeriods, (p) => p.meryNew ?? null, debt.meryNew ?? null),
+        r,
+        nRows
+      );
+      row.cstAgPn_new = pick(
+        commentBand(newPeriods, (p) => p.cstCodeNew ?? null, debt.cstCodeNew ?? null),
+        r,
+        nRows
+      );
+    } else {
+      const emptyGrain = Math.max(1, newPeriods.length);
+      const empty = Array.from({ length: emptyGrain }, () => null);
+      row.cur_new = pick(empty, r, nRows);
+      row.mery_new = pick(empty, r, nRows);
+      row.cstAgPn_new = pick(empty, r, nRows);
+    }
     rows.push(row);
   }
   return rows;
+}
+
+/**
+ * Зерно комментария: *Dv на периодах → по Value; иначе одна ячейка канона.
+ */
+function commentBand(
+  periods: SudzRsltPeriod[],
+  getter: (period: SudzRsltPeriod) => string | null,
+  debtFallback: string | null | undefined
+): Array<string | null> {
+  if (!periods.length) {
+    return [debtFallback ?? null];
+  }
+  const anyDv = periods.some((period) => getter(period) != null);
+  if (!anyDv) {
+    return [debtFallback ?? null];
+  }
+  return periods.map((period) => getter(period));
 }
 
 function bandRowCount(debt: SudzRsltDebt, slices: SliceMeta[]): number {
@@ -252,6 +331,20 @@ function bandRowCount(debt: SudzRsltDebt, slices: SliceMeta[]): number {
     n = Math.max(n, periodsOn(debt, slice.uplDate).length);
   }
   return n;
+}
+
+/** Периоды *_new: с крайней upl назад до первой с долями (walk-back записи cmm). */
+function walkBackPeriods(debt: SudzRsltDebt, slices: SliceMeta[]): SudzRsltPeriod[] {
+  if (!slices.length) {
+    return [];
+  }
+  for (let i = slices.length - 1; i >= 0; i--) {
+    const periods = periodsOn(debt, slices[i].uplDate);
+    if (periods.length) {
+      return periods;
+    }
+  }
+  return [];
 }
 
 function periodsOn(debt: SudzRsltDebt, uplDate: string): SudzRsltPeriod[] {

@@ -67,6 +67,7 @@ import com.femsq.database.model.sudz.SudzPmtUplLogOnlyResult;
 import com.femsq.database.model.sudz.SudzPmtUplTblRow;
 import com.femsq.database.model.sudz.SudzPmtUplTblWriteProgress;
 import com.femsq.database.model.sudz.SudzRsltDebt;
+import com.femsq.database.model.sudz.SudzRsltReturnImportResult;
 import com.femsq.database.model.sudz.SudzRsltReturnRow;
 import com.femsq.database.model.sudz.SudzSfDoubleDomainMatch;
 import com.femsq.database.model.sudz.SudzPmDocForest;
@@ -192,9 +193,9 @@ public interface SudzService {
      *
      * @param yrKey год
      * @param rows строки *_new
-     * @return число долгов
+     * @return итог записи и счётчики привязки Value
      */
-    int importRsltReturn(int yrKey, java.util.List<SudzRsltReturnRow> rows);
+    SudzRsltReturnImportResult importRsltReturn(int yrKey, java.util.List<SudzRsltReturnRow> rows);
 
     /**
      * Дописывает строку в лог {@code yr_Progress}.

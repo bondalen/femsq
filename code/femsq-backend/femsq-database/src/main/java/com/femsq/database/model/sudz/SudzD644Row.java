@@ -29,6 +29,16 @@ public record SudzD644Row(
         LocalDate baseUplDate,
         LocalDate currUplDate,
         Integer baseUpl,
-        Integer currUpl
+        Integer currUpl,
+        /** Порядковый номер строки внутри полосы долга, с 1. */
+        int bandRn,
+        /** Сколько строк вниз сливает колонки базы. 0 — ячейка пустая, она внутри чужой склейки. */
+        int baseSpan,
+        /** Сколько строк вниз сливает колонки среза. */
+        int currSpan,
+        /** Сколько строк вниз сливает комментарий, код и агента. Зерно — Value среза ({@code yr_CmmGr}). */
+        int commentSpan,
+        /** Сколько строк вниз сливает «погашено» (канон долга). */
+        int repaidSpan
 ) {
 }

@@ -42,6 +42,7 @@ class JdbcSudzDaoRsltCollapseTest {
         BigDecimal value = new BigDecimal(ttl);
         return new SudzRsltPeriod(
                 upl, parsed, parsed, inv, idNum, null, null, null, null, null,
-                null, value, value, null, null, null, null);
+                null, value, value, null, null, null, null,
+                null, null, null, null, null, null, null, null);
     }
 }

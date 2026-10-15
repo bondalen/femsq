@@ -20,9 +20,9 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 /**
  * Разбор Excel возврата Rslt: колонки {@code dbtKey} + {@code *_new} (строка 3 — техн. имена).
  *
- * <p>Полоса долга схлопывается в одну строку на {@code dbtKey}. Пустая ячейка внутри слитой
- * области берёт значение верхней ячейки. Пустая ячейка вне склейки поле не затирает.
- * Разные непустые тексты одной колонки не отклоняются: остаётся нижняя строка файла.
+ * <p>Полоса долга сохраняет строки с ординалом для стыковки с {@code DbtValue} крайней upl.
+ * Пустая ячейка внутри слитой области берёт значение верхней ячейки. Пустая ячейка вне
+ * склейки поле не затирает. Разные непустые тексты одной колонки остаются на разных строках полосы.
  */
 public final class SudzRsltReturnImporter {
 
@@ -30,7 +30,8 @@ public final class SudzRsltReturnImporter {
     }
 
     /**
-     * Читает строки с непустыми {@code *_new} и схлопывает полосу по {@code dbtKey}.
+     * Читает строки с непустыми {@code *_new}; полоса одного {@code dbtKey} даёт несколько
+     * записей с {@code bandOrdinal}.
      *
      * @param input поток xlsx
      * @return разбор для записи и протокола
@@ -95,42 +96,74 @@ public final class SudzRsltReturnImporter {
     }
 
     /**
-     * Одна запись на долг. Непустое значение нижних строк заменяет верхнее.
+     * Сохраняет строки полосы с ординалом; отмечает долги с одинаковым / разным текстом.
      *
      * @param physical строки листа сверху вниз
      * @return разбор
      */
     static SudzRsltReturnParse collapse(List<SudzRsltReturnRow> physical) {
-        Map<Integer, Draft> byDebt = new LinkedHashMap<>();
+        Map<Integer, List<SudzRsltReturnRow>> byDebt = new LinkedHashMap<>();
         for (SudzRsltReturnRow row : physical) {
-            Draft draft = byDebt.computeIfAbsent(row.dbtKey(), Draft::new);
-            draft.parts++;
-            draft.curator = mergeField(draft.curator, row.curatorNew(), draft);
-            draft.mery = mergeField(draft.mery, row.meryNew(), draft);
-            draft.cst = mergeField(draft.cst, row.cstCodeNew(), draft);
+            byDebt.computeIfAbsent(row.dbtKey(), key -> new ArrayList<>()).add(row);
         }
         List<SudzRsltReturnRow> rows = new ArrayList<>();
         List<Integer> same = new ArrayList<>();
         List<Integer> different = new ArrayList<>();
-        for (Draft draft : byDebt.values()) {
-            rows.add(new SudzRsltReturnRow(draft.dbtKey, draft.curator, draft.mery, draft.cst));
-            if (draft.parts > 1 && draft.different) {
-                different.add(draft.dbtKey);
-            } else if (draft.parts > 1) {
-                same.add(draft.dbtKey);
+        for (Map.Entry<Integer, List<SudzRsltReturnRow>> entry : byDebt.entrySet()) {
+            int dbtKey = entry.getKey();
+            List<SudzRsltReturnRow> band = entry.getValue();
+            boolean differs = bandDiffers(band);
+            if (band.size() > 1) {
+                if (differs) {
+                    different.add(dbtKey);
+                } else {
+                    same.add(dbtKey);
+                }
+            }
+            for (int i = 0; i < band.size(); i++) {
+                SudzRsltReturnRow part = band.get(i);
+                rows.add(new SudzRsltReturnRow(
+                        dbtKey,
+                        part.curatorNew(),
+                        part.meryNew(),
+                        part.cstCodeNew(),
+                        i));
             }
         }
         return new SudzRsltReturnParse(List.copyOf(rows), physical.size(), List.copyOf(same), List.copyOf(different));
     }
 
-    private static String mergeField(String current, String incoming, Draft draft) {
-        if (incoming == null) {
-            return current;
+    private static boolean bandDiffers(List<SudzRsltReturnRow> band) {
+        String curator = null;
+        String mery = null;
+        String cst = null;
+        boolean seenCurator = false;
+        boolean seenMery = false;
+        boolean seenCst = false;
+        for (SudzRsltReturnRow row : band) {
+            if (row.curatorNew() != null) {
+                if (seenCurator && !row.curatorNew().equals(curator)) {
+                    return true;
+                }
+                curator = row.curatorNew();
+                seenCurator = true;
+            }
+            if (row.meryNew() != null) {
+                if (seenMery && !row.meryNew().equals(mery)) {
+                    return true;
+                }
+                mery = row.meryNew();
+                seenMery = true;
+            }
+            if (row.cstCodeNew() != null) {
+                if (seenCst && !row.cstCodeNew().equals(cst)) {
+                    return true;
+                }
+                cst = row.cstCodeNew();
+                seenCst = true;
+            }
         }
-        if (current != null && !current.equals(incoming)) {
-            draft.different = true;
-        }
-        return incoming;
+        return false;
     }
 
     /**
@@ -185,18 +218,5 @@ public final class SudzRsltReturnImporter {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
-    }
-
-    private static final class Draft {
-        private final int dbtKey;
-        private String curator;
-        private String mery;
-        private String cst;
-        private int parts;
-        private boolean different;
-
-        private Draft(int dbtKey) {
-            this.dbtKey = dbtKey;
-        }
     }
 }
