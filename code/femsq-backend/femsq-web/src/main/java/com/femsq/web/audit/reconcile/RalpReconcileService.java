@@ -56,6 +56,12 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
     private static final Logger log = Logger.getLogger(RalpReconcileService.class.getName());
     private static final int TYPE_RALP = 3;
 
+    /**
+     * Максимум ключей в одном {@code IN (...)} / размер JDBC batch-флэша.
+     * SQL Server допускает не более 2100 параметров на запрос; запас как у type=5 ({@code BULK_IN_CHUNK}).
+     */
+    static final int BULK_IN_CHUNK = 500;
+
     /** Шаблон для извлечения даты в формате {@code dd.mm.yyyy} из строкового поля письма (аналог VBA {@code ParseDate}). */
     private static final Pattern DATE_PATTERN = Pattern.compile("\\b(\\d{2})\\.(\\d{2})\\.(\\d{4})\\b");
 
@@ -90,7 +96,8 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
         for (DomainRa r : domainRa.values()) {
             domainRaKeySet.add(r.key);
         }
-        Map<RaAuKey, DomainRaAu> domainRaAu = loadDomainRaAu(conn, domainRaKeySet);
+        // JOIN по году — без IN(?×N): при ralpRa_year > 2100 SQL Server отвергает запрос (prod 2026-10-14).
+        Map<RaAuKey, DomainRaAu> domainRaAu = loadDomainRaAu(conn, year);
 
         log.info("[RALP] domain loaded: ralpRa=%d ralpRaAu=%d (year=%d)"
                 .formatted(domainRa.size(), domainRaAu.size(), year));
@@ -352,52 +359,57 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
         return map;
     }
 
-    private Map<RaAuKey, DomainRaAu> loadDomainRaAu(Connection conn, Set<Integer> raKeys) throws SQLException {
-        if (raKeys.isEmpty()) {
-            return new HashMap<>();
-        }
-        String inClause = String.join(",", Collections.nCopies(raKeys.size(), "?"));
+    /**
+     * Загружает все {@code ralpRaAu} за год ревизии через JOIN (один параметр {@code year}).
+     * Не использует {@code IN (...)} по ключам {@code ralpRa} — иначе при &gt;2100 ключей SQL Server
+     * возвращает error 8003 («too many parameters»).
+     */
+    private Map<RaAuKey, DomainRaAu> loadDomainRaAu(Connection conn, int year) throws SQLException {
         String sql = """
-                SELECT ralpraKey, ralpraRa, ralpraArrived,
-                       ralpraArrivedDate, ralpraSentDate, ralpraReturnedDate,
-                       ralpraCostAndVat, ralpraSent, ralpraReturned,
-                       ralpraNote, ralpraStatus, ralpraTestStartDate
-                FROM ags.ralpRaAu
-                WHERE ralpraRa IN (""" + inClause + ")";
+                SELECT au.ralpraKey, au.ralpraRa, au.ralpraArrived,
+                       au.ralpraArrivedDate, au.ralpraSentDate, au.ralpraReturnedDate,
+                       au.ralpraCostAndVat, au.ralpraSent, au.ralpraReturned,
+                       au.ralpraNote, au.ralpraStatus, au.ralpraTestStartDate
+                FROM ags.ralpRaAu au
+                INNER JOIN ags.ralpRa ra ON au.ralpraRa = ra.ralprKey
+                WHERE ra.ralprY = ?
+                """;
         Map<RaAuKey, DomainRaAu> map = new LinkedHashMap<>();
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            int idx = 1;
-            for (int key : raKeys) {
-                ps.setInt(idx++, key);
-            }
+            ps.setInt(1, year);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    DomainRaAu au = new DomainRaAu();
-                    au.key = rs.getInt("ralpraKey");
-                    au.ralpraRa = rs.getInt("ralpraRa");
-                    au.arrived = rs.getString("ralpraArrived");
-                    Date arrivedD = rs.getDate("ralpraArrivedDate");
-                    au.arrivedDate = (arrivedD != null) ? arrivedD.toLocalDate() : null;
-                    au.costAndVat = rs.getBigDecimal("ralpraCostAndVat");
-                    if (rs.wasNull()) {
-                        au.costAndVat = null;
-                    }
-                    au.sent = rs.getString("ralpraSent");
-                    Date sentD = rs.getDate("ralpraSentDate");
-                    au.sentDate = (sentD != null) ? sentD.toLocalDate() : null;
-                    au.returned = rs.getString("ralpraReturned");
-                    Date returnedD = rs.getDate("ralpraReturnedDate");
-                    au.returnedDate = (returnedD != null) ? returnedD.toLocalDate() : null;
-                    au.note = rs.getString("ralpraNote");
-                    au.status = rs.getInt("ralpraStatus");
-                    Date tsd = rs.getDate("ralpraTestStartDate");
-                    au.testStartDate = (tsd != null) ? tsd.toLocalDate() : null;
+                    DomainRaAu au = mapRowToDomainRaAu(rs);
                     String arrivedKey = (au.arrived != null) ? au.arrived.trim() : "";
                     map.put(new RaAuKey(au.ralpraRa, arrivedKey), au);
                 }
             }
         }
         return map;
+    }
+
+    private static DomainRaAu mapRowToDomainRaAu(ResultSet rs) throws SQLException {
+        DomainRaAu au = new DomainRaAu();
+        au.key = rs.getInt("ralpraKey");
+        au.ralpraRa = rs.getInt("ralpraRa");
+        au.arrived = rs.getString("ralpraArrived");
+        Date arrivedD = rs.getDate("ralpraArrivedDate");
+        au.arrivedDate = (arrivedD != null) ? arrivedD.toLocalDate() : null;
+        au.costAndVat = rs.getBigDecimal("ralpraCostAndVat");
+        if (rs.wasNull()) {
+            au.costAndVat = null;
+        }
+        au.sent = rs.getString("ralpraSent");
+        Date sentD = rs.getDate("ralpraSentDate");
+        au.sentDate = (sentD != null) ? sentD.toLocalDate() : null;
+        au.returned = rs.getString("ralpraReturned");
+        Date returnedD = rs.getDate("ralpraReturnedDate");
+        au.returnedDate = (returnedD != null) ? returnedD.toLocalDate() : null;
+        au.note = rs.getString("ralpraNote");
+        au.status = rs.getInt("ralpraStatus");
+        Date tsd = rs.getDate("ralpraTestStartDate");
+        au.testStartDate = (tsd != null) ? tsd.toLocalDate() : null;
+        return au;
     }
 
     // -------------------------------------------------------------------------
@@ -610,21 +622,27 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
         if (keys.isEmpty()) {
             return 0;
         }
-        String inClause = String.join(",", Collections.nCopies(keys.size(), "?"));
-        String sql = sqlTemplate.formatted(inClause);
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            int idx = 1;
-            for (int k : keys) {
-                ps.setInt(idx++, k);
+        List<Integer> list = new ArrayList<>(keys);
+        int deleted = 0;
+        for (List<Integer> chunk : partitionForInClause(list, BULK_IN_CHUNK)) {
+            String inClause = String.join(",", Collections.nCopies(chunk.size(), "?"));
+            String sql = sqlTemplate.formatted(inClause);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                int idx = 1;
+                for (int k : chunk) {
+                    ps.setInt(idx++, k);
+                }
+                deleted += ps.executeUpdate();
             }
-            return ps.executeUpdate();
         }
+        return deleted;
     }
 
     private int updateStagingRefs(Connection conn, List<StgRow> staging) throws SQLException {
         String sql = "UPDATE ags.ra_stg_ralp SET ralprtRaKey = ?, ralprtRaAuKey = ? WHERE ralprt_key = ?";
         int linked = 0;
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            int batchCount = 0;
             for (StgRow row : staging) {
                 if (row.resolvedRaKey != null) {
                     ps.setInt(1, row.resolvedRaKey);
@@ -639,10 +657,35 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
                 }
                 ps.setLong(3, row.stgKey);
                 ps.addBatch();
+                batchCount++;
+                if (batchCount >= BULK_IN_CHUNK) {
+                    ps.executeBatch();
+                    batchCount = 0;
+                }
             }
-            ps.executeBatch();
+            if (batchCount > 0) {
+                ps.executeBatch();
+            }
         }
         return linked;
+    }
+
+    /**
+     * Режет список ключей на чанки для {@code IN (...)} / batch (лимит SQL Server — 2100 параметров).
+     * Package-visible для unit-теста.
+     */
+    static <T> List<List<T>> partitionForInClause(List<T> keys, int chunkSize) {
+        if (keys == null || keys.isEmpty()) {
+            return List.of();
+        }
+        if (chunkSize < 1) {
+            throw new IllegalArgumentException("chunkSize must be >= 1");
+        }
+        List<List<T>> chunks = new ArrayList<>();
+        for (int offset = 0; offset < keys.size(); offset += chunkSize) {
+            chunks.add(List.copyOf(keys.subList(offset, Math.min(offset + chunkSize, keys.size()))));
+        }
+        return chunks;
     }
 
     // -------------------------------------------------------------------------
@@ -929,21 +972,25 @@ public class RalpReconcileService extends AbstractTransactionalReconcileService 
         if (raKeys.isEmpty()) {
             return List.of();
         }
-        String inClause = String.join(",", Collections.nCopies(raKeys.size(), "?"));
-        String sql = "SELECT ralprNum FROM ags.ralpRa WHERE ralprKey IN (" + inClause + ") ORDER BY ralprNum";
+        List<Integer> list = new ArrayList<>(raKeys);
         List<String> nums = new ArrayList<>();
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            int idx = 1;
-            for (int key : raKeys) {
-                ps.setInt(idx++, key);
-            }
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    String num = rs.getString(1);
-                    nums.add(num == null ? "" : num);
+        for (List<Integer> chunk : partitionForInClause(list, BULK_IN_CHUNK)) {
+            String inClause = String.join(",", Collections.nCopies(chunk.size(), "?"));
+            String sql = "SELECT ralprNum FROM ags.ralpRa WHERE ralprKey IN (" + inClause + ")";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                int idx = 1;
+                for (int key : chunk) {
+                    ps.setInt(idx++, key);
+                }
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        String num = rs.getString(1);
+                        nums.add(num == null ? "" : num);
+                    }
                 }
             }
         }
+        nums.sort(String::compareTo);
         return nums;
     }
 
