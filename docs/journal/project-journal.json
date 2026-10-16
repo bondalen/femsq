@@ -3,7 +3,7 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-10-15"
+      "lastUpdated": "2026-10-16"
     },
     "sessions": [
       {
@@ -12,7 +12,7 @@
           "chat-attributes": {
             "id": "chat-2026-10-12-001",
             "created": "2026-10-12",
-            "lastUpdated": "2026-10-15",
+            "lastUpdated": "2026-10-16",
             "owner": "Александр",
             "status": "active",
             "priority": "medium",
@@ -1346,6 +1346,257 @@
                       "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/SudzRsltExcelExporter.java",
                       "code/femsq-frontend-q/src/utils/sudz-rslt-preview.ts",
                       "docs/development/notes/sql/26-0908-sudz-split-merge-sandbox/08_CMM_AND_RSLT.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "4.3 Пакет MSSQL2012 walk-back *Dv (success). № log-2026-10-16-001",
+                "log-attributes": {
+                  "id": "log-2026-10-16-001",
+                  "timestamp": "2026-10-16T11:20:35+03:00",
+                  "level": "success",
+                  "effort": "40m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "cmm",
+                    "mssql2012",
+                    "deploy"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Пакет миграции Acc→*Dv для групп с указателем года",
+                    "details": "Каталог docs/development/notes/sql/26-1016-cmm-dv-prod/MSSQL2012 (00–04) и runbook docs/deployment/db-upgrade-cmm-dv-walkback.md. Скрипт 02 сажает текст только если yr_CmmGr или yr_CmmGr_New смотрит на группу; walk-back как в 07. На DEV FishEye 00: package_compat OK, major 16, UX cnInvCmm/Cst yes, gate на sudz. 01: группы 903, 904, 905, 906, 907 — would_bind 0, stay_no_year на все null_dv (106/13/311/264/62). 02 не запускался: связывать нечего, 905/906 не переписывались. ags.cnInvCmm без cnicDv не изменялся. SPB-05-NV-SQL1 не трогали.",
+                    "outcome": "4.3 как пакет и репетиция ворот закрыт. Применение на проде — отдельное окно после бэкапа и 00/01 на боевой схеме sudz.",
+                    "references": [
+                      "docs/development/notes/sql/26-1016-cmm-dv-prod/README.md",
+                      "docs/deployment/db-upgrade-cmm-dv-walkback.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "День walk-back *Dv в каркасе cutover (success). № log-2026-10-16-002",
+                "log-attributes": {
+                  "id": "log-2026-10-16-002",
+                  "timestamp": "2026-10-16T13:06:38+03:00",
+                  "level": "success",
+                  "effort": "20m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "cmm",
+                    "deploy",
+                    "docs"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "database.production_upgrade_docs"
+                    ],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Порядок пакета 4.3 вписан в документацию окна",
+                    "details": "cutover v0.3.11 §1.3.1 и шаг D5a: после DDL *Dv день бэкап → 00 → 01 → 02 → 03. D3′ (*Dbt) остаётся отдельным шагом D5. Чеклист дня: пакет на носителе, пункт окна, откат restore. Реестр production_upgrade_docs, environments.related_documents и sql-server-deployment-rules ссылаются на db-upgrade-cmm-dv-walkback.md. SQL 02 не запускался.",
+                    "outcome": "Окно cutover содержит явный день walk-back; на SPB-05-NV-SQL1 пакет по-прежнему не применялся.",
+                    "references": [
+                      "docs/deployment/db-upgrade-sudz-invdbt-cutover.md",
+                      "docs/deployment/db-upgrade-sudz-invdbt-cutover-deploy-day-checklist.md",
+                      "docs/deployment/db-upgrade-cmm-dv-walkback.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "4.2.7 снята, статус раунда в WBS 0918 (success). № log-2026-10-16-003",
+                "log-attributes": {
+                  "id": "log-2026-10-16-003",
+                  "timestamp": "2026-10-16T13:43:33+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "cmm",
+                    "wbs",
+                    "docs"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md",
+                    "wbs": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Ветка FAIL закрыта учётом; родительский WBS получил статус DEV",
+                    "details": "4.2.7 снята: сверка 4.2.6 совпала, откат yr_CmmGr на 907 не делался. chat-plan-26-0918 v0.3.30: узлы 1.1.1.3.3 и 1.1.1.3.4 — ✅ DEV (группа 1909, годы 901 и 909), на проде ☐. Узел 4.6 плана 1012 — 🔶: перенос статуса сделан, следующая веха рассылки остаётся вне этого файла. SQL и прод не трогались.",
+                    "outcome": "Учёт раунда QII на DEV совпадает в обоих планах. 4.4 и 4.5 открыты.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "4.5 Excel в папку оператора (success). № log-2026-10-16-004",
+                "log-attributes": {
+                  "id": "log-2026-10-16-004",
+                  "timestamp": "2026-10-16T14:13:54+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "rslt",
+                    "excel",
+                    "ui"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Оператор сохранил Rslt сбор в выбранную папку",
+                    "details": "Обычный Chrome, JAR 0.1.0.348, год 901, срез 903, Rslt сбор · Excel. Выполнить без папки: showDirectoryPicker user gesture. Значок папки выбрал /home/alex/Downloads/26-1016. Повторное Выполнить: лог «Куда: папка 26-1016», файл ags_Yr_DbtChangesRslt_901_903_2026-10-16_141238.xlsx, 466137 байт, долгов 2134, строк 2135.",
+                    "outcome": "Узел 4.5 закрыт. Путь оператора: сначала папка, затем Выполнить.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md",
+                      "/home/alex/Downloads/26-1016/ags_Yr_DbtChangesRslt_901_903_2026-10-16_141238.xlsx"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Сообщение, если Excel без папки (success). № log-2026-10-16-005",
+                "log-attributes": {
+                  "id": "log-2026-10-16-005",
+                  "timestamp": "2026-10-16T14:21:17+03:00",
+                  "level": "success",
+                  "effort": "20m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "rslt",
+                    "excel",
+                    "ui"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Убрано обещание диалога папки при Выполнить",
+                    "details": "Подпись поля: «Не выбрана» и подсказка выбрать значком. rejectExcelWithoutFolder до запроса к серверу пишет EXPORT_FOLDER_MISSING_MESSAGE в красную строку. saveBlobToExportFolder больше не вызывает showDirectoryPicker. JAR 0.1.0.349-SNAPSHOT на :8080.",
+                    "outcome": "«Выполнить» без папки не открывает диалог и не показывает ошибку браузера про user gesture.",
+                    "references": [
+                      "code/femsq-frontend-q/src/utils/export-folder.ts",
+                      "code/femsq-frontend-q/src/views/sudz/SudzPortfolioView.vue"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "4.4 перенесён в S79 (success). № log-2026-10-16-006",
+                "log-attributes": {
+                  "id": "log-2026-10-16-006",
+                  "timestamp": "2026-10-16T15:04:13+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "s79",
+                    "wbs",
+                    "docs"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md",
+                    "wbs": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Узел погашений снят с плана QII",
+                    "details": "chat-plan-26-1012 v0.4.10: узел 4.4 помечен перенесённым. Объём экрана «Проверить погашения» остаётся в S79 плана 0802 и в узле 1.1.1.1.3 плана 0918 v0.3.31. Оговорка сверки (колонка погашено и процент Свода не блокер) в 1012 сохранена. Новый план не создавался.",
+                    "outcome": "В плане 1012 из открытых дел остаётся 4.6. Экран погашений ведётся в S79.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "4.6 передача статуса в WBS исполнена (success). № log-2026-10-16-007",
+                "log-attributes": {
+                  "id": "log-2026-10-16-007",
+                  "timestamp": "2026-10-16T15:14:26+03:00",
+                  "level": "success",
+                  "effort": "10m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "wbs",
+                    "docs"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md",
+                    "wbs": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Узел 4.6 отмечен исполненным",
+                    "details": "chat-plan-26-1012 v0.4.11: 4.6 ✅. Дело узла — передача статуса DEV в 0918 (1.1.1.3.3 и 1.1.1.3.4, группа 1909). Отметка не закрывает на проде 1.1.1.3.3–.4, 1.1.1.4.3, окно 1.1.2 и приёмку 1.3.",
+                    "outcome": "В плане 1012 открытых узлов работ не осталось. Прод-рассылка ведётся в родительском плане.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
                     ]
                   }
                 ]

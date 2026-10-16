@@ -2,14 +2,15 @@
 
 **Файл:** `docs/deployment/db-upgrade-sudz-invdbt-cutover.md`  
 **Дата создания:** 2026-08-27  
-**lastUpdated:** 2026-09-18  
-**Версия:** 0.3.10 (политика Access↔FEMSQ + smoke D644/контур B в чеклисте)  
+**lastUpdated:** 2026-10-16  
+**Версия:** 0.3.11 (walk-back текста cmm на `*Dv` в окне после DDL)  
 **Автор:** Александр  
 **Статус:** черновик — наполнение по мере обсуждения `Dbt`, DEV-репетиции и обследования prod
 
 **Краткий чеклист дня деплоя:** [`db-upgrade-sudz-invdbt-cutover-deploy-day-checklist.md`](db-upgrade-sudz-invdbt-cutover-deploy-day-checklist.md) *(контур B smoke + cutover)*  
 **Политика Access ↔ FEMSQ (R3):** [`sudz-access-femsq-write-policy.md`](sudz-access-femsq-write-policy.md)  
 **Smoke исходящих D644/Свод:** [`sudz-outgoing-d644-smoke.md`](sudz-outgoing-d644-smoke.md)  
+**Текст cmm на `*Dv`:** [`db-upgrade-cmm-dv-walkback.md`](db-upgrade-cmm-dv-walkback.md) · пакет [`26-1016-cmm-dv-prod/MSSQL2012`](../development/notes/sql/26-1016-cmm-dv-prod/MSSQL2012/README.md)  
 
 **Реестр продуктивного сервера:** `docs/project/project-docs.json` → `development.environments.machines.prod-fisheye`  
 **Общие правила SQL:** [`sql-server-deployment-rules.md`](sql-server-deployment-rules.md)  
@@ -139,6 +140,24 @@ M6  Prod survey → MSSQL2012 → окно H
 
 Песочница `test_sudz` (имя `*InvAccnt`, FK уже на `Dbt`) — лабораторный упрощённый вариант; **на живых `ags`/`sudz` для cutover — модель D3′**.
 
+#### 1.3.1. Текст комментария на `*Dv` (walk-back, 2026-10-16)
+
+Колонки `cnicDv` / `ciccDv` и перенос текста со счёта на доли — шаг после DDL `*Dv`. Он стоит рядом с D3′ (`*Dbt`) и его не заменяет: D3′ добавляет якорь долга, walk-back заполняет `*Dv` у групп, на которые смотрит `yr.yr_CmmGr` или `yr_CmmGr_New`.
+
+На целевой схеме, где DDL `*Dv` уже есть, день применения такой (runbook §3):
+
+| # | Скрипт | Смысл |
+|---|--------|--------|
+| 1 | бэкап базы | единственный откат |
+| 2 | `00_VERIFY_before.sql` | `package_compat` и `gate OK` (колонки `*Dv`, `DbtValue`, `yr`) |
+| 3 | `01_DRYCHECK_cmm_Dv_walkback.sql` | `would_bind` / `stay_no_year`, данные не меняет |
+| 4 | `02_MIGRATE_cmm_Dv_walkback.sql` | посадка текста, одна транзакция |
+| 5 | `03_VERIFY_after.sql` | остаток `null_dv` только без Value в году |
+
+`00` на схеме без `cnicDv` (сейчас так у `ags.cnInvCmm`) печатает отказ и `02` не запускают. Группы без указателя года скрипт не трогает. `04_ROLLBACK.sql` строки не чистит: откат — восстановление бэкапа.
+
+Канон дня: [db-upgrade-cmm-dv-walkback.md](db-upgrade-cmm-dv-walkback.md). Скрипты FishEye: `docs/development/notes/sql/26-1016-cmm-dv-prod/MSSQL2012/`. На `SPB-05-NV-SQL1` пакет не применялся (2026-10-16).
+
 ### 1.4. Резолв `cnNum` / `invNum` для `invDbtVar` при историческом seed (2026-08-27)
 
 **Проблема:** у `cia` однозначны `cn_s_org` и `accnt` (`cias`); `cn`/`inv` — тоже; но **`cnnKey` / `inKey`** среди нескольких номеров у того же `cn`/`inv` из строки `cn_inv_dbt` **не** выводятся (десяток фактов на DEV: варианты написания / смена № во времени).
@@ -199,7 +218,7 @@ N_slots_plan / N_Dbt_plan; **сверить** очередь §1.2 (10 `iKey`) �
 
 ### C — DDL
 
-Объекты 08 в `ags` через `MSSQL2012/` (включая `Dbt`, `invDbtDbt`); для cmm — **ADD** nullable `*Dbt` (§1.3), не rewrite `*InvAccnt`.
+Объекты 08 в `ags` через `MSSQL2012/` (включая `Dbt`, `invDbtDbt`); для cmm — **ADD** nullable `*Dbt` (§1.3). DDL колонок `*Dv` — до шага §1.3.1; пока `00` пакета walk-back не печатает `gate OK`, `02` не запускать.
 
 ### D — Seed с `Dbt`
 
@@ -211,6 +230,7 @@ N_slots_plan / N_Dbt_plan; **сверить** очередь §1.2 (10 `iKey`) �
 | D4 | Мост cia ↔ слот (`UNIQUE(ciaKey)`) |
 | **D4a** | **Concurrent multi-cia split (§1.5)** — доп. `invDbt`/`Dbt` до E1 |
 | D5 | Cmm **D3′:** ADD `*Dbt` + backfill (не затирать `*InvAccnt`) |
+| **D5a** | **Текст на `*Dv` (§1.3.1):** бэкап → `00` → `01` → `02` → `03` пакета `26-1016-cmm-dv-prod/MSSQL2012` |
 | D6 | VERIFY: `DbtValue` count = `cn_inv_dbt`; нет коллизий `(slot,upl)` |
 
 Репетиция сначала на **DEV (`sudz`)**. Пакет: `docs/development/notes/sql/26-0827-sudz-m2-seed/` (шаг `06a_SPLIT_concurrent_cia_slots.sql`).
@@ -311,6 +331,7 @@ Backup → DDL → seed D(+E) → JAR → smoke → режим Access.
 | R5 | Время окна | Замер на DEV |
 | R6 | Collation prod | MSSQL2012 |
 | R7 | Cmm: ADD `*Dbt` (D3′), не rewrite | ✅ |
+| R8 | Walk-back `*Dv` до `gate OK` или на `ags` без `cnicDv` | ☐ пакет готов; день — §1.3.1 |
 
 ---
 
@@ -344,6 +365,7 @@ Backup → DDL → seed D(+E) → JAR → smoke → режим Access.
 | 0.3.8 | 2026-08-31 | **E1′** PIT для паритета Rslt; gate verify_rslt_stage1; запрет last-asOf-any |
 | 0.3.9 | 2026-09-15 | **§1.6 S77.9 M5:** не схлопывать `первая`/`вторая`; отчёт `99b_REPORT_multi_slot_iKeys.sql` |
 | 0.3.10 | 2026-09-18 | Ссылки: политика Access↔FEMSQ (R3), smoke D644/Свод, расширенный чеклист дня (контур B) |
+| 0.3.11 | 2026-10-16 | **§1.3.1 / D5a:** после DDL `*Dv` — бэкап → `00` → `01` → `02` → `03`; ворота на схеме без `cnicDv` |
 
 ### 6.1. Результат M2 на DEV (`sudz`, 2026-08-27; после 06a)
 

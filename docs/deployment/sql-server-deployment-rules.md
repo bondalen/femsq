@@ -14,7 +14,8 @@
 | `docs/project/extensions/database/compatibility.json` | Ограничения 2012, workarounds |
 | `docs/project/extensions/deployment/environments.json` | Краткий реестр dev/prod |
 | `docs/deployment/db-upgrade-*.md` | Порядок работ по конкретной задаче |
-| `docs/deployment/db-upgrade-sudz-invdbt-cutover.md` | Каркас раскатки СУДЗ (`invDbt` / Value) на prod |
+| `docs/deployment/db-upgrade-sudz-invdbt-cutover.md` | Каркас раскатки СУДЗ (`invDbt` / Value) на prod; §1.3.1 — день walk-back `*Dv` |
+| `docs/deployment/db-upgrade-cmm-dv-walkback.md` | Текст cmm Acc→`*Dv`: бэкап → `00` → `01` → `02` → `03` |
 | `docs/deployment/sql-flash-drive-packaging.md` | **Формирование флеш-носителя** для офлайн-деплоя |
 
 ---

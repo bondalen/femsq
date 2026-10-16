@@ -2,9 +2,19 @@
  * Сохранение Blob в выбранную пользователем папку (Windows / Linux).
  *
  * Использует File System Access API ({@code showDirectoryPicker}) — Chrome / Edge / Chromium.
- * Если API недоступен или пользователь отменил выбор — fallback: обычная загрузка браузера
- * (папка «Загрузки» или диалог «Сохранить как», если включён в настройках браузера).
+ * Выбор папки — только из обработчика клика ({@link pickExportDirectory}).
+ * Сохранение без уже выбранной папки не вызывает {@code showDirectoryPicker}:
+ * после ожидания ответа сервера браузер отклоняет диалог.
+ * Если API недоступен — обычная загрузка браузера.
  */
+
+/** Текст, когда Excel запрошен, а папка ещё не выбрана значком. */
+export const EXPORT_FOLDER_MISSING_MESSAGE =
+  'Папка выгрузки не выбрана. Нажмите значок папки справа от поля «Папка выгрузки Excel» и повторите «Выполнить».';
+
+/** Текст, когда выбранная папка есть, а права записи нет. */
+export const EXPORT_FOLDER_DENIED_MESSAGE =
+  'Нет права записи в выбранную папку. Нажмите значок папки и выберите её снова.';
 
 const IDB_NAME = 'femsq-export';
 const IDB_STORE = 'handles';
@@ -51,37 +61,24 @@ export async function getRememberedDirectoryName(): Promise<string | null> {
 }
 
 /**
- * Сохраняет blob в запомненную папку или предлагает выбрать; иначе — download.
+ * Сохраняет blob в ранее выбранную папку. Без папки — ошибка с просьбой нажать значок.
+ * Если выбор папки в браузере недоступен — обычная загрузка.
  *
  * @param blob содержимое файла
  * @param fileName имя файла (без пути)
- * @param options.forcePick всегда показать диалог выбора папки
  */
 export async function saveBlobToExportFolder(
   blob: Blob,
-  fileName: string,
-  options?: { forcePick?: boolean }
+  fileName: string
 ): Promise<SaveBlobResult> {
   if (supportsDirectoryPicker()) {
-    let dirHandle = options?.forcePick ? null : await loadDirectoryHandle();
-    if (dirHandle) {
-      const ok = await ensureWritePermission(dirHandle);
-      if (!ok) {
-        dirHandle = null;
-      }
-    }
+    const dirHandle = await loadDirectoryHandle();
     if (!dirHandle) {
-      try {
-        dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
-        await persistDirectoryHandle(dirHandle);
-      } catch (error) {
-        if (isAbortError(error)) {
-          // пользователь отменил — fallback на download
-          triggerBrowserDownload(blob, fileName);
-          return { method: 'download' };
-        }
-        throw error;
-      }
+      throw new Error(EXPORT_FOLDER_MISSING_MESSAGE);
+    }
+    const ok = await ensureWritePermission(dirHandle);
+    if (!ok) {
+      throw new Error(EXPORT_FOLDER_DENIED_MESSAGE);
     }
     const fileHandle = await dirHandle.getFileHandle(fileName, { create: true });
     // keepExistingData: false — полная перезапись; иначе Chrome FSA падает при повторной записи

@@ -1,13 +1,14 @@
 # Чеклист дня деплоя: СУДЗ invDbt cutover (+ контур B)
 
-**Связанный порядок работ:** [`db-upgrade-sudz-invdbt-cutover.md`](db-upgrade-sudz-invdbt-cutover.md)  
+**Связанный порядок работ:** [`db-upgrade-sudz-invdbt-cutover.md`](db-upgrade-sudz-invdbt-cutover.md) §1.3.1  
+**Walk-back cmm на `*Dv`:** [`db-upgrade-cmm-dv-walkback.md`](db-upgrade-cmm-dv-walkback.md)  
 **Политика Access ↔ FEMSQ:** [`sudz-access-femsq-write-policy.md`](sudz-access-femsq-write-policy.md)  
 **Smoke исходящих:** [`sudz-outgoing-d644-smoke.md`](sudz-outgoing-d644-smoke.md)  
 **Краткий отчёт (UAT-эталон):** [`../development/notes/domain/sudz/03-1_brief-report-pre-load.md`](../development/notes/domain/sudz/03-1_brief-report-pre-load.md) §7  
 **Контур B / WBS:** [`../development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md`](../development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md)  
 
 **Дата создания:** 2026-08-27  
-**lastUpdated:** 2026-09-18  
+**lastUpdated:** 2026-10-16  
 **Статус:** заготовка — заполняется после фаз A–G; gate Rslt (E1′) есть; добавлены smoke контура B (дока)
 
 **Сервер:** `prod-fisheye` (`SPB-05-NV-SQL1` / FishEye / `ags`)  
@@ -32,7 +33,7 @@
 
 ### Контур B — готовность пакетов / продукта (без GO на prod до зелёного DEV)
 
-- [ ] Опись `MSSQL2012/` включает нужные пакеты (в т.ч. `26-0918-sudz-brief-report-fio-dict/MSSQL2012/` при выкладке словаря)
+- [ ] Опись `MSSQL2012/` включает нужные пакеты (в т.ч. `26-0918-sudz-brief-report-fio-dict/MSSQL2012/` при выкладке словаря и `26-1016-cmm-dv-prod/MSSQL2012/` для текста cmm)
 - [ ] DEV: контур **b** закрыт по канону 0076 (pm / `g_p` / стройки), не только бэкфилл S80
 - [ ] DEV: краткий отчёт `.3.2–.5` зелёный **или** осознанный перенос на следующий релиз (тогда smoke §«Краткий отчёт» ниже — N/A)
 - [ ] Регламент исходящих прочитан: [sudz-outgoing-d644-smoke.md](sudz-outgoing-d644-smoke.md)
@@ -44,7 +45,8 @@
 ### Cutover
 
 - [ ] `00_VERIFY_before` — PASS
-- [ ] DDL C — PASS
+- [ ] DDL C — PASS (в том числе колонки `*Dv`, если этот релиз их добавляет)
+- [ ] **D5a / §1.3.1:** бэкап → `00_VERIFY_before` (`gate OK`) → `01_DRYCHECK` → `02_MIGRATE` → `03_VERIFY_after` по [walk-back](db-upgrade-cmm-dv-walkback.md). Если `00` отказывает (на `ags` нет `cnicDv`) — `02` не запускать
 - [ ] Seed D — rowcount = N_slots_plan
 - [ ] Seed E (E1) — VERIFY; **не** last-asOf-any для исторических срезов Rslt
 - [ ] L* Apply — PASS
@@ -101,4 +103,5 @@
 
 - [ ] Критерий отката согласован заранее
 - [ ] `05_ROLLBACK` / restore backup — только по решению владельца
+- [ ] Откат walk-back `*Dv` — restore бэкапа, снятого до `02`; `04_ROLLBACK.sql` пакета `26-1016` строки не чистит
 - [ ] Access write: не «возвращать запись Access» без явного отзыва политики R3

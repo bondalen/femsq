@@ -289,6 +289,7 @@
                     outlined
                     readonly
                     label="Папка выгрузки Excel"
+                    :hint="exportFolderHint"
                     data-test="sudz-progress-export-folder"
                   >
                     <template #append>
@@ -656,6 +657,7 @@ import { useSudzPortfolioStore } from '@/stores/sudz-portfolio';
 import type { SudzRsltDebt, SudzYear } from '@/types/sudz';
 import {
   getRememberedDirectoryName,
+  EXPORT_FOLDER_MISSING_MESSAGE,
   pickExportDirectory,
   saveBlobToExportFolder,
   supportsDirectoryPicker
@@ -687,9 +689,14 @@ const exportFolderLabel = computed(() => {
   if (!directoryPickerSupported) {
     return 'Загрузки браузера (выбор папки недоступен)';
   }
-  return exportFolderName.value
-    ? exportFolderName.value
-    : 'Не выбрана — спросим при первой выгрузке Excel';
+  return exportFolderName.value ? exportFolderName.value : 'Не выбрана';
+});
+
+const exportFolderHint = computed(() => {
+  if (!directoryPickerSupported || exportFolderName.value) {
+    return '';
+  }
+  return 'Выберите папку значком справа. «Выполнить» само окно папки не открывает.';
 });
 
 type ProgressOperation =
@@ -933,6 +940,7 @@ async function onPickExportFolder(): Promise<void> {
     const name = await pickExportDirectory();
     if (name) {
       exportFolderName.value = name;
+      progress.error = '';
       $q.notify({ type: 'positive', message: `Папка выгрузки: ${name}`, timeout: 1500 });
     }
   } catch (error) {
@@ -988,11 +996,31 @@ async function onCreateCmmGr(): Promise<void> {
 }
 
 /**
+ * Excel в браузере с выбором папки требует уже выбранный каталог.
+ * Диалог папки из «Выполнить» не вызывается: жест клика к этому моменту потерян.
+ *
+ * @returns true, если папки нет и выгрузку начинать нельзя
+ */
+function rejectExcelWithoutFolder(): boolean {
+  if (!directoryPickerSupported || progress.resultMode !== 'excel' || isImportOp.value) {
+    return false;
+  }
+  if (exportFolderName.value) {
+    return false;
+  }
+  progress.error = EXPORT_FOLDER_MISSING_MESSAGE;
+  return true;
+}
+
+/**
  * Запуск лаунчера Progress: выгрузка или загрузка возврата.
  */
 async function onRunProgress(): Promise<void> {
   const yr = store.selectedYear?.yrKey;
   if (yr == null || !canRunProgress.value) {
+    return;
+  }
+  if (rejectExcelWithoutFolder()) {
     return;
   }
   progress.busy = true;
@@ -1510,10 +1538,13 @@ async function onProtoToExcel(): Promise<void> {
   if (!isRsltExport.value && !isD644OrSvodExport.value) {
     return;
   }
+  progress.resultMode = 'excel';
+  if (rejectExcelWithoutFolder()) {
+    return;
+  }
   progress.busy = true;
   progress.error = '';
   try {
-    progress.resultMode = 'excel';
     if (isRsltExport.value) {
       await runRsltExport(yr, progress.asOfUpl, progress.operation === 'rslt_povtor_export');
     } else {
