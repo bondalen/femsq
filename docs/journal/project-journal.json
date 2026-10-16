@@ -1645,7 +1645,7 @@
           "chat-attributes": {
             "id": "chat-2026-09-22-001",
             "created": "2026-09-22",
-            "lastUpdated": "2026-10-11",
+            "lastUpdated": "2026-10-16",
             "owner": "Александр",
             "status": "pending",
             "priority": "high",
@@ -1672,6 +1672,42 @@
             }
           },
           "entries": [
+            {
+              "log": {
+                "displayName": "1.12 номера СФ договора: сортировка и страница (success). № log-2026-10-16-009",
+                "log-attributes": {
+                  "id": "log-2026-10-16-009",
+                  "timestamp": "2026-10-16T16:40:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "contracts",
+                    "fequlib",
+                    "1.12"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Клик «№ СФ» и следующая страница шлют cnInvsByCn",
+                    "details": "FemsqTable в feQuLib: @request в режиме server вызывал имя onQuasarRequest без ($event), обработчик не запускался. Шаблон исправлен на onQuasarRequest($event). Браузер КС-14 cn=877: sortBy=iNum, page=2, подвал 26-50 of 2415. «Открыть дерево СФ» на inv 4088: «Дерево этой счёт-фактуры уже открыто выше». План 0922 0.5.47, листья 1.12.0–1.12.2.",
+                    "outcome": "Ветка 1.12 закрыта. Следующий лист плана — 1.9.7.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
             {
               "log": {
                 "displayName": "1.10.4 советник pmt_blns_same_cn (success). № log-2026-10-11-003",
