@@ -301,6 +301,8 @@ const SUDZ_PMT_UPL_LAUNCHER = gql`
       file {
         ${PMT_UPL_FILE_FIELDS}
       }
+      tblRows
+      pmRows
     }
   }
 `;
@@ -470,6 +472,8 @@ const RUN_PMT_UPL_FUNNEL = gql`
         file {
           ${PMT_UPL_FILE_FIELDS}
         }
+        tblRows
+        pmRows
       }
     }
   }
@@ -2534,17 +2538,22 @@ export async function updateSudzPmUplFile(
  * Прогон воронки платежей (0074): Excel→Tbl + stub cipu*.
  */
 export async function runSudzPmtUplFunnel(
-  input: RunSudzPmtUplFunnelInput
+  input: RunSudzPmtUplFunnelInput,
+  signal?: AbortSignal
 ): Promise<SudzPmtUplFunnelResult> {
   try {
     const result = await apolloClient.mutate<{ runSudzPmtUplFunnel: SudzPmtUplFunnelResult }>({
       mutation: RUN_PMT_UPL_FUNNEL,
-      variables: { input }
+      variables: { input },
+      context: signal ? { fetchOptions: { signal } } : undefined
     });
     const data = result.data?.runSudzPmtUplFunnel;
     if (!data) throw new Error('Пустой ответ runSudzPmtUplFunnel');
     return data;
   } catch (error) {
+    if (signal?.aborted || (error instanceof DOMException && error.name === 'AbortError')) {
+      throw error;
+    }
     throw wrapApolloError(error, 'RunSudzPmtUplFunnel');
   }
 }

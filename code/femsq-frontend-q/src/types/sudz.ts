@@ -58,6 +58,10 @@ export interface SudzPmtUplFile {
 export interface SudzPmtUplLauncher {
   upl: SudzPmUplLookup;
   file: SudzPmtUplFile;
+  /** Строк staging Tbl. */
+  tblRows: number;
+  /** Платежей cn_inv_pm пакета. */
+  pmRows: number;
 }
 
 /** Строка вкладки «счета, сумма» (ags.q_cn_inv_pm_upl_sum). */

@@ -57,6 +57,8 @@ export const useSudzPmtUplStore = defineStore('sudz-pmt-upl', () => {
   const loading = ref(false);
   const saving = ref(false);
   const funnelRunning = ref(false);
+  /** Отмена текущего HTTP-запроса воронки (сервер может доработать шаг). */
+  let funnelAbort: AbortController | null = null;
   const error = ref<string | null>(null);
   const cstNew = ref<SudzPmtUplCstNew[]>([]);
   const cstNewLoading = ref(false);
@@ -467,6 +469,9 @@ export const useSudzPmtUplStore = defineStore('sudz-pmt-upl', () => {
       return null;
     }
     const pmKey = selectedPmKey.value;
+    funnelAbort?.abort();
+    funnelAbort = new AbortController();
+    const signal = funnelAbort.signal;
     funnelRunning.value = true;
     error.value = null;
     const pollMs = 2000;
@@ -476,16 +481,23 @@ export const useSudzPmtUplStore = defineStore('sudz-pmt-upl', () => {
       });
     }, pollMs);
     try {
-      const result = await runSudzPmtUplFunnel({
-        pmKey,
-        steps,
-        flLoad
-      });
+      const result = await runSudzPmtUplFunnel(
+        {
+          pmKey,
+          steps,
+          flLoad
+        },
+        signal
+      );
       await loadLauncher(pmKey);
       await refreshQueues();
       return result;
     } catch (e) {
-      error.value = e instanceof Error ? e.message : String(e);
+      if (signal.aborted || (e instanceof DOMException && e.name === 'AbortError')) {
+        error.value = 'Воронка отменена (ответ сервера прерван; лог мог частично обновиться).';
+      } else {
+        error.value = e instanceof Error ? e.message : String(e);
+      }
       try {
         await loadLauncher(pmKey);
         await refreshQueues();
@@ -496,7 +508,15 @@ export const useSudzPmtUplStore = defineStore('sudz-pmt-upl', () => {
     } finally {
       window.clearInterval(pollTimer);
       funnelRunning.value = false;
+      funnelAbort = null;
     }
+  }
+
+  /**
+   * Прерывает ожидание ответа воронки в UI (1.5.1).
+   */
+  function cancelFunnel(): void {
+    funnelAbort?.abort();
   }
 
   /**
@@ -533,6 +553,7 @@ export const useSudzPmtUplStore = defineStore('sudz-pmt-upl', () => {
     loading,
     saving,
     funnelRunning,
+    cancelFunnel,
     error,
     selectedUpl,
     file,

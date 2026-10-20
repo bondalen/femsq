@@ -385,6 +385,10 @@ type SudzPmtUplLauncher {
   upl: SudzPmUplLookup!
   """Шапка File (после ensure всегда есть)."""
   file: SudzPmtUplFile!
+  """Число строк staging Tbl пакета."""
+  tblRows: Int!
+  """Число платежей cn_inv_pm пакета."""
+  pmRows: Int!
 }
 
 """Строка вкладки «счета, сумма» (ags.q_cn_inv_pm_upl_sum)."""

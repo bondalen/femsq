@@ -174,6 +174,25 @@
                         @click="onRunLoad"
                       />
                     </div>
+                    <div v-if="store.funnelRunning" class="col-auto">
+                      <QBtn
+                        color="negative"
+                        outline
+                        no-caps
+                        dense
+                        label="отмена"
+                        data-test="sudz-pmt-upl-cancel"
+                        @click="store.cancelFunnel()"
+                      />
+                    </div>
+                    <div
+                      v-if="store.launcher"
+                      class="col-auto text-caption text-grey-8"
+                      data-test="sudz-pmt-upl-row-counts"
+                    >
+                      Tbl {{ store.launcher.tblRows.toLocaleString('ru-RU') }}
+                      · pm {{ store.launcher.pmRows.toLocaleString('ru-RU') }}
+                    </div>
                   </div>
 
                   <div class="q-mb-sm shrink-0" data-test="sudz-pmt-upl-gp">
