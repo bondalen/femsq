@@ -1005,8 +1005,10 @@ public class JdbcSudzDao implements SudzDao {
                     return Optional.empty();
                 }
                 SudzPmtUplFile file = ensurePmtUplFile(connection, pmKey);
+                int tblRows = countPmtUplTblOn(connection, pmKey);
+                int pmRows = countPmtUplPmOn(connection, pmKey);
                 connection.commit();
-                return Optional.of(new SudzPmtUplLauncher(upl.get(), file));
+                return Optional.of(new SudzPmtUplLauncher(upl.get(), file, tblRows, pmRows));
             } catch (RuntimeException | SQLException exception) {
                 connection.rollback();
                 throw exception;
@@ -1261,9 +1263,16 @@ public class JdbcSudzDao implements SudzDao {
         if (unloadKey <= 0) {
             throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
         }
+        try (Connection connection = connectionFactory.createConnection()) {
+            return countPmtUplTblOn(connection, unloadKey);
+        } catch (SQLException exception) {
+            throw wrap("Не удалось посчитать CnInvPmtUplTbl unloadKey=" + unloadKey, exception);
+        }
+    }
+
+    private int countPmtUplTblOn(Connection connection, int unloadKey) throws SQLException {
         String sql = "SELECT COUNT(*) FROM " + q("CnInvPmtUplTbl") + " WHERE ciputUnloadKey = ?";
-        try (Connection connection = connectionFactory.createConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, unloadKey);
             try (ResultSet rs = statement.executeQuery()) {
                 if (!rs.next()) {
@@ -1271,8 +1280,19 @@ public class JdbcSudzDao implements SudzDao {
                 }
                 return rs.getInt(1);
             }
-        } catch (SQLException exception) {
-            throw wrap("Не удалось посчитать CnInvPmtUplTbl unloadKey=" + unloadKey, exception);
+        }
+    }
+
+    private int countPmtUplPmOn(Connection connection, int unloadKey) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM ags.cn_inv_pm WHERE cn_inv_pm_upl = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, unloadKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    return 0;
+                }
+                return rs.getInt(1);
+            }
         }
     }
 
@@ -13769,7 +13789,21 @@ public class JdbcSudzDao implements SudzDao {
         SudzPmtSfSumCompare pmtSum = row.ciusCiput() != null
                 ? findPmtSfSumCompare(ciusKey).orElse(null)
                 : null;
-        SudzSfDoubleAdvice advice = SfDoubleAdvisor.advise(row, excel, hints, domain, pmtSum);
+        List<Integer> suspiciousCacDueHits = null;
+        if (SfDecisionCompareUtil.isSuspiciousInvNum(invNum)
+                && row.ciusCnKey() != null
+                && row.ciusCnKey() > 0
+                && excel != null
+                && excel.pmtCac() != null
+                && !excel.pmtCac().isBlank()) {
+            suspiciousCacDueHits = findSuspiciousInvKeysMatchingCacDue(
+                    row.ciusCnKey(),
+                    invNum,
+                    excel.pmtCac(),
+                    excel.cidutMatrtyDate());
+        }
+        SudzSfDoubleAdvice advice = SfDoubleAdvisor.advise(
+                row, excel, hints, domain, pmtSum, suspiciousCacDueHits);
         if (row.ciusCiput() == null) {
             return advice;
         }
@@ -15087,6 +15121,86 @@ public class JdbcSudzDao implements SudzDao {
                 + "N'б/н', N'бн', N'б/с', N'бс', N'-', N'—', N'*',"
                 + " N'nullилипусто', N'безномера')"
                 + ")";
+    }
+
+    /**
+     * Inv с подозрительным номером на договоре под стройку Excel (1.13.6).
+     * Срок — уточнение, только если по стройке уже &gt;1: новый срок сам по себе
+     * не доказывает другой СФ.
+     *
+     * @param cnKey договор очереди
+     * @param invNum номер СФ Excel
+     * @param excelCac код стройки Excel
+     * @param excelDue срок Excel (может быть null)
+     * @return invKey по возрастанию
+     */
+    List<Integer> findSuspiciousInvKeysMatchingCacDue(
+            int cnKey,
+            String invNum,
+            String excelCac,
+            java.time.LocalDate excelDue
+    ) {
+        List<Integer> byCac = querySuspiciousInvKeysByCacDue(cnKey, invNum, excelCac, null);
+        if (byCac.size() <= 1 || excelDue == null) {
+            return byCac;
+        }
+        List<Integer> byDue = querySuspiciousInvKeysByCacDue(cnKey, invNum, excelCac, excelDue);
+        return byDue.isEmpty() ? byCac : byDue;
+    }
+
+    private List<Integer> querySuspiciousInvKeysByCacDue(
+            int cnKey,
+            String invNum,
+            String excelCac,
+            java.time.LocalDate excelDue
+    ) {
+        if (cnKey <= 0 || invNum == null || invNum.isBlank()
+                || excelCac == null || excelCac.isBlank()) {
+            return List.of();
+        }
+        String cac = excelCac.trim();
+        String suffix = cac.length() >= 6 ? cac.substring(cac.length() - 6) : cac;
+        String sql = ""
+                + "SELECT DISTINCT ci.ciInv AS invKey"
+                + " FROM ags.cnInv AS ci"
+                + " INNER JOIN ags.invNum AS n ON n.inInv = ci.ciInv AND n.inNumNull = ?"
+                + " INNER JOIN ags.cnInvAccntSmpl AS f ON f.ciasCnInv = ci.ciKey"
+                + " INNER JOIN ags.cn_inv_pm AS p ON p.ciaCnInvAccntSmpl = f.ciasKey"
+                + " WHERE ci.ciCn = ?"
+                + "   AND p.constract_code IS NOT NULL"
+                + "   AND LTRIM(RTRIM(p.constract_code)) <> N''"
+                + "   AND ("
+                + "     LTRIM(RTRIM(p.constract_code)) = ?"
+                + "     OR (LEN(LTRIM(RTRIM(p.constract_code))) >= 6"
+                + "         AND RIGHT(LTRIM(RTRIM(p.constract_code)), 6) = ?)"
+                + "   )"
+                + (excelDue != null
+                ? "   AND p.cn_inv_pm_due IS NOT NULL"
+                  + "   AND CONVERT(date, p.cn_inv_pm_due) = ?"
+                : "")
+                + " ORDER BY ci.ciInv";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            int i = 1;
+            statement.setNString(i++, invNum.trim());
+            statement.setInt(i++, cnKey);
+            statement.setNString(i++, cac);
+            statement.setNString(i++, suffix);
+            if (excelDue != null) {
+                statement.setDate(i, java.sql.Date.valueOf(excelDue));
+            }
+            try (ResultSet rs = statement.executeQuery()) {
+                List<Integer> result = new ArrayList<>();
+                while (rs.next()) {
+                    result.add(rs.getInt("invKey"));
+                }
+                return List.copyOf(result);
+            }
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось отфильтровать СФ по стройке/сроку", exception);
+        }
     }
 
     /**

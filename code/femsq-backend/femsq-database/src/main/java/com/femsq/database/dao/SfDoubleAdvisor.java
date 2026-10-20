@@ -11,10 +11,13 @@ import com.femsq.database.model.sudz.SudzSfDoubleHintSection;
 import com.femsq.database.model.sudz.SudzSfDoubleHints;
 import com.femsq.database.model.sudz.SfDecisionCompareUtil;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Эвристики советника КСДСФ: текст {@code [советник]} для оператора.
@@ -42,7 +45,7 @@ final class SfDoubleAdvisor {
             SudzSfDoubleHints hints,
             List<SudzSfDoubleDomainMatch> domainMatches
     ) {
-        return advise(row, excel, hints, domainMatches, null);
+        return advise(row, excel, hints, domainMatches, null, null);
     }
 
     /**
@@ -61,6 +64,30 @@ final class SfDoubleAdvisor {
             SudzSfDoubleHints hints,
             List<SudzSfDoubleDomainMatch> domainMatches,
             SudzPmtSfSumCompare pmtSum
+    ) {
+        return advise(row, excel, hints, domainMatches, pmtSum, null);
+    }
+
+    /**
+     * Сформировать совет по строке очереди КСДСФ.
+     *
+     * @param row строка очереди
+     * @param excel Excel-кандидат (может быть null)
+     * @param hints подсказки по исполнителю
+     * @param domainMatches все СФ с тем же номером в ags
+     * @param pmtSum сверка Σ сальдо ↔ долг свода (pmt; может быть null)
+     * @param suspiciousCacDueHits inv на договоре очереди с тем же подозрительным №,
+     *        у которых в {@code cn_inv_pm} есть стройка/срок Excel (1.13.6);
+     *        {@code null} — фильтр не применялся (нет CAC в Excel)
+     * @return совет
+     */
+    static SudzSfDoubleAdvice advise(
+            SudzCnInvUplSfDouble row,
+            SudzSfDoubleExcelCandidate excel,
+            SudzSfDoubleHints hints,
+            List<SudzSfDoubleDomainMatch> domainMatches,
+            SudzPmtSfSumCompare pmtSum,
+            List<Integer> suspiciousCacDueHits
     ) {
         Objects.requireNonNull(row, "row");
         Objects.requireNonNull(hints, "hints");
@@ -249,8 +276,14 @@ final class SfDoubleAdvisor {
             return sumLink.get();
         }
         if (suspiciousInv) {
+            Optional<SudzSfDoubleAdvice> cacDue = trySuspiciousCacDueFilter(
+                    msg, row, domain, suspiciousCacDueHits);
+            if (cacDue.isPresent()) {
+                return cacDue.get();
+            }
             appendRecommendCreate(msg, "high");
-            appendLine(msg, "Причина: подозрительный номер — без уникальной суммы (sum_same_cn) создавать новый СФ,"
+            appendLine(msg, "Причина: подозрительный номер — без уникальной суммы (sum_same_cn) и без"
+                    + " единственного СФ по стройке/сроку создавать новый СФ,"
                     + " не цеплять к legacy «б/н» на договоре");
             appendLine(msg, "Примечание: советник не заменяет первичку");
             return finish(msg, "high", "create", null, row.ciusCnKey());
@@ -278,6 +311,67 @@ final class SfDoubleAdvisor {
         }
         appendLine(msg, "Примечание: советник не заменяет первичку");
         return finish(msg, "none", "manual", null, row.ciusCnKey());
+    }
+
+    /**
+     * Подозрительный №: стройка/срок Excel — фильтр среди существующих СФ на договоре (1.13.6).
+     * <p>
+     * Ровно один inv → link; несколько → manual (очередь); ноль / нет фильтра → empty
+     * (вызывающий даст create). Жёлтая граница / due_grp сами по себе новый СФ не создают.
+     *
+     * @param msg накопленный текст
+     * @param row строка очереди
+     * @param domain совпадения по номеру
+     * @param hits inv с pm под стройку/срок Excel на договоре очереди; {@code null} — нет CAC
+     * @return совет или empty
+     */
+    private static Optional<SudzSfDoubleAdvice> trySuspiciousCacDueFilter(
+            StringBuilder msg,
+            SudzCnInvUplSfDouble row,
+            List<SudzSfDoubleDomainMatch> domain,
+            List<Integer> hits
+    ) {
+        if (hits == null) {
+            return Optional.empty();
+        }
+        Set<Integer> onCn = new LinkedHashSet<>();
+        for (SudzSfDoubleDomainMatch m : domain) {
+            if (Objects.equals(m.cnKey(), row.ciusCnKey()) && m.invKey() > 0) {
+                onCn.add(m.invKey());
+            }
+        }
+        List<Integer> filtered;
+        if (onCn.isEmpty()) {
+            // domain без строк на cn (юнит-тест) — доверяем hits с DAO
+            filtered = hits.stream().filter(k -> k != null && k > 0).distinct().toList();
+        } else {
+            Set<Integer> seen = new LinkedHashSet<>();
+            for (Integer invKey : hits) {
+                if (invKey != null && invKey > 0 && onCn.contains(invKey)) {
+                    seen.add(invKey);
+                }
+            }
+            filtered = new ArrayList<>(seen);
+        }
+        appendLine(msg, "Фильтр стройка/срок среди СФ «" + nullToDash(row.ciusInvNum())
+                + "» на cn=" + row.ciusCnKey() + ": подходящих " + filtered.size()
+                + " (suspicious_cac_due)");
+        if (filtered.size() == 1) {
+            Integer invKey = filtered.get(0);
+            appendLine(msg, "Ровно один СФ с этой стройкой/сроком на договоре — не плодить новый");
+            appendLine(msg, "→ Связать с inv=" + invKey
+                    + " · cn=" + row.ciusCnKey()
+                    + " (уверенность: " + confidenceRu("high") + ")");
+            appendLine(msg, "Примечание: советник не заменяет первичку");
+            return Optional.of(finish(msg, "high", "link", invKey, row.ciusCnKey()));
+        }
+        if (filtered.size() > 1) {
+            appendLine(msg, "Несколько СФ с этим номером и стройкой/сроком — оставить в очереди");
+            appendLine(msg, "→ Ручной разбор: выберите СФ в списке (не create по жёлтой границе)");
+            appendLine(msg, "Примечание: советник не заменяет первичку");
+            return Optional.of(finish(msg, "medium", "manual", null, row.ciusCnKey()));
+        }
+        return Optional.empty();
     }
 
     /**

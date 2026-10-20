@@ -232,6 +232,74 @@ class SfDoubleAdvisorTest {
     }
 
     @Test
+    void suspiciousInvUniqueCacDueLinksExisting() {
+        // 1.13.6: ровно один СФ на cn с этой стройкой → link, не create
+        var row = new SudzCnInvUplSfDouble(
+                1310, null, 157379, null, null, 59, null, null,
+                877, "КС-14", "б/н", 11, "open", null, null);
+        var hints = new SudzSfDoubleHints(
+                new SudzSfDoubleHintSection("yes", "match", 2, List.of(
+                        new SudzSfDoubleHintItem(
+                                "sf", "inKey", 40737, 40729, 877, "КС-14", "BUIRG", "inv=40729"),
+                        new SudzSfDoubleHintItem(
+                                "sf", "inKey", 1, 106724, 877, "КС-14", "BUIRG", "inv=106724"))),
+                sectionNa(),
+                sectionNa());
+        var domain = List.of(
+                new SudzSfDoubleDomainMatch(40729, "б/н", 40737, null, 1, 877, "КС-14", null, null),
+                new SudzSfDoubleDomainMatch(106724, "б/н", 1, null, 2, 877, "КС-14", null, null));
+        var advice = SfDoubleAdvisor.advise(
+                row, null, hints, domain, null, List.of(106724));
+        assertEquals("link", advice.action());
+        assertEquals("high", advice.confidence());
+        assertEquals(106724, advice.recommendInvKey());
+        assertTrue(advice.messageText().contains("suspicious_cac_due"));
+        assertFalse(advice.messageText().contains("Создать СФ по Excel"));
+    }
+
+    @Test
+    void suspiciousInvMultipleCacDueStaysManual() {
+        // 1.13.6: >1 СФ с той же стройкой → очередь (manual), не create
+        var row = new SudzCnInvUplSfDouble(
+                1310, null, 157379, null, null, 59, null, null,
+                877, "КС-14", "б/н", 11, "open", null, null);
+        var hints = new SudzSfDoubleHints(sectionNa(), sectionNa(), sectionNa());
+        var domain = List.of(
+                new SudzSfDoubleDomainMatch(40729, "б/н", 1, null, 1, 877, "КС-14", null, null),
+                new SudzSfDoubleDomainMatch(106724, "б/н", 2, null, 2, 877, "КС-14", null, null));
+        var advice = SfDoubleAdvisor.advise(
+                row, null, hints, domain, null, List.of(40729, 106724));
+        assertEquals("manual", advice.action());
+        assertEquals("medium", advice.confidence());
+        assertEquals(null, advice.recommendInvKey());
+        assertTrue(advice.messageText().contains("suspicious_cac_due"));
+    }
+
+    @Test
+    void suspiciousInvNoCacDueHitCreates() {
+        // 1.13.6: стройка Excel ни на одном legacy → create (как 1310 до apply)
+        var row = new SudzCnInvUplSfDouble(
+                1310, null, 157379, null, null, 59, null, null,
+                877, "КС-14", "б/н", 11, "open", null, null);
+        var hints = new SudzSfDoubleHints(
+                new SudzSfDoubleHintSection(
+                        "yes",
+                        "match",
+                        1,
+                        List.of(new SudzSfDoubleHintItem(
+                                "sf", "inKey", 40737, 40729, 877, "КС-14", "BUIRG", "inv=40729"))),
+                sectionNa(),
+                sectionNa());
+        var domain = List.of(
+                new SudzSfDoubleDomainMatch(40729, "б/н", 40737, null, 1, 877, "КС-14", null, null));
+        var advice = SfDoubleAdvisor.advise(
+                row, null, hints, domain, null, List.of());
+        assertEquals("create", advice.action());
+        assertTrue(advice.messageText().contains("suspicious_cac_due"));
+        assertTrue(advice.messageText().contains("Создать СФ по Excel"));
+    }
+
+    @Test
     void suspiciousInvStillLinksViaSumSameCn() {
         // Б/С + уникальная сумма → link (UAT C.10 путь), не create из suspicious
         var row = new SudzCnInvUplSfDouble(

@@ -23,7 +23,8 @@
 | `executor_none` | create (high) — нет СФ с номером и исполнителем Excel (**после** `sum_same_cn`) |
 | **`sum_same_cn`** | link (high) — уникальная сумма (old/new) с исполнителем Excel на договоре очереди и известным `invKey` (номер Excel может отличаться) |
 | **`pmt_blns_same_cn`** | link (high, pmt) — ровно одна строка связанного свода с `cidutDebt` = Σ `ciputBlns` и ровно один inv с этим номером на договоре очереди; не для `suspicious_inv`; orphan `cn_inv_pm` не использовать |
-| **`suspicious_inv`** | номер ∈ {`б/н`, `Б/С`, `-`, `*`, пусто, …}: **запрет** link high из `executor_unique`/`cn_exact`/`pmt_blns_same_cn`; без `sum_same_cn` → **create** high |
+| **`suspicious_inv`** | номер ∈ {`б/н`, `Б/С`, `-`, `*`, пусто, …}: **запрет** link high из `executor_unique`/`cn_exact`/`pmt_blns_same_cn`; далее `sum_same_cn` → link; иначе **`suspicious_cac_due`** (1.13.6) |
+| **`suspicious_cac_due`** | (1.13.6) среди СФ с тем же № на договоре очереди: фильтр по стройке Excel (срок — уточнение при &gt;1); ровно 1 → **link** high; &gt;1 → **manual**; 0 / нет CAC → **create** high |
 | sum unique + один СФ **того же номера** на cn | link (medium) |
 | иначе | manual |
 
@@ -34,9 +35,12 @@
 **Зачем:** «б/н» на договоре — часто свалка разных строек/пакетов (cius=1310 → legacy inv 40729 с 2023). Совпадение только по номеру даёт ложный **link**.
 
 **Правило:** `SfDecisionCompareUtil.isSuspiciousInvNum` — общий список с шапкой decision-TreeList. При подозрительном № Excel:
-1. не рекомендовать link из уникальности номера на cn;
+1. не рекомендовать link из уникальности номера на cn / `pmt_blns_same_cn`;
 2. если есть `sum_same_cn` — link (как Б/С→настоящий номер, UAT C.10);
-3. иначе — **create** high на договоре очереди.
+3. иначе **`suspicious_cac_due`** (0922 **1.13.6**): стройка Excel (и срок при неоднозначности) — фильтр среди существующих СФ на договоре; 1 → link; &gt;1 → manual; 0 → create;
+4. иначе — **create** high на договоре очереди (нет CAC в Excel или фильтр пуст).
+
+Жёлтая граница / `due_grp` сами по себе новый СФ не создают.
 
 **Кейсы:**
 - pm=59 · cius=**1310** · КС-14 «б/н» · advice был link→**40729** → **create** (apply: 106724, moved=3).
