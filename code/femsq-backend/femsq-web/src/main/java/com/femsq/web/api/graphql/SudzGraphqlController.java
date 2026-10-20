@@ -28,6 +28,10 @@ import com.femsq.database.model.sudz.SudzPmLink;
 import com.femsq.database.model.sudz.SudzPmUplLookup;
 import com.femsq.database.model.sudz.SudzPmtUplCstMatch;
 import com.femsq.database.model.sudz.SudzPmtUplCstNew;
+import com.femsq.database.model.sudz.SudzPmtUplExtDiff;
+import com.femsq.database.model.sudz.SudzPmtUplGp;
+import com.femsq.database.model.sudz.SudzPmtUplSum;
+import com.femsq.web.api.sudz.PmtUplExtDiff;
 import com.femsq.database.model.sudz.SudzPmtUplFile;
 import com.femsq.database.model.sudz.SudzPmtUplInvNot;
 import com.femsq.database.model.sudz.SudzPmtUplTabBadges;
@@ -634,6 +638,84 @@ public class SudzGraphqlController {
     public List<SudzPmtUplCstNew> sudzPmtUplCstNew(@Argument int pmKey) {
         try {
             return sudzService.listPmtUplCstNew(pmKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Итоги вкладки «счета, сумма» по пакету. Запись не выполняет.
+     *
+     * @param pmKey ключ пакета
+     * @return строки представления {@code ags.q_cn_inv_pm_upl_sum}
+     */
+    @QueryMapping
+    public List<SudzPmtUplSum> sudzPmtUplSums(@Argument int pmKey) {
+        try {
+            return sudzService.listPmtUplSums(pmKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Связи g_p пакета и соседние пакеты тех же сводов. Запись не выполняет.
+     *
+     * @param pmKey пакет платежей
+     * @return свои связи и когорта
+     */
+    @QueryMapping
+    public SudzPmtUplGp sudzPmtUplGp(@Argument int pmKey) {
+        try {
+            return sudzService.loadPmtUplGp(pmKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Пакеты платежей, уже связанные со сводом. Запись не выполняет.
+     *
+     * @param dbtUplKey свод
+     * @return строки g_p
+     */
+    @QueryMapping
+    public List<SudzPmLink> sudzPmLinks(@Argument int dbtUplKey) {
+        try {
+            return sudzService.listPmLinksForDbt(dbtUplKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Отличия книги Tbl и платежей. Excel не перечитывает, {@code cn_inv_pm} не меняет.
+     *
+     * @param pmKey пакет
+     * @return счётчики и первые отличия
+     */
+    @QueryMapping
+    public SudzPmtUplExtDiff sudzPmtUplExtDiff(@Argument int pmKey) {
+        try {
+            return PmtUplExtDiff.compare(
+                    sudzService.listPmtUplBookExtLines(pmKey),
+                    sudzService.listPmtUplPayExtLines(pmKey));
         } catch (IllegalArgumentException exception) {
             throw badRequest(exception);
         } catch (MissingConfigurationException exception) {

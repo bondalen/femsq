@@ -78,6 +78,21 @@ export const useSudzDbtUplStore = defineStore('sudz-dbt-upl', () => {
   const saving = ref(false);
   const funnelRunning = ref(false);
   const error = ref<string | null>(null);
+  const pendingPmTab = ref(false);
+
+  /**
+   * Просит экран свода открыть вкладку связанных пакетов платежей.
+   */
+  function requestPmTab(): void {
+    pendingPmTab.value = true;
+  }
+
+  /**
+   * Сбрасывает просьбу после того, как экран переключил вкладку.
+   */
+  function clearPmTabRequest(): void {
+    pendingPmTab.value = false;
+  }
 
   const selectedUpl = computed(() => {
     if (selectedUplKey.value == null) {
@@ -437,6 +452,9 @@ export const useSudzDbtUplStore = defineStore('sudz-dbt-upl', () => {
     saving,
     funnelRunning,
     error,
+    pendingPmTab,
+    requestPmTab,
+    clearPmTabRequest,
     selectedUpl,
     file,
     sheets,

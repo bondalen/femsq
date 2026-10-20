@@ -102,12 +102,12 @@
                 align="left"
               >
                 <QTab name="load" label="загрузка" data-test="sudz-pmt-upl-tab-load" />
-                <QTab name="acc" label="счета, сумма" disable data-test="sudz-pmt-upl-tab-acc" />
+                <QTab name="acc" label="счета, сумма" data-test="sudz-pmt-upl-tab-acc" />
               </QTabs>
               <QSeparator />
 
               <QTabPanels v-model="mainTab" animated class="col min-h-0 sudz-tab-panels">
-                <QTabPanel name="load" class="q-pa-sm column no-wrap fill-pane">
+                <QTabPanel name="load" class="q-pa-sm column no-wrap fill-pane sudz-load-scroll">
                   <div class="row q-col-gutter-sm items-center q-mb-xs shrink-0">
                     <div class="col">
                       <QInput
@@ -176,6 +176,49 @@
                     </div>
                   </div>
 
+                  <div class="q-mb-sm shrink-0" data-test="sudz-pmt-upl-gp">
+                    <FemsqTable
+                      title="связь g_p"
+                      :rows="gpRows"
+                      :columns="gpColumns"
+                      row-key="gPKey"
+                      dense
+                      flat
+                      hide-pagination
+                      :rows-per-page-options="[0]"
+                      v-model:pagination="gpPagination"
+                      :loading="store.gpLoading"
+                      data-test="sudz-pmt-upl-gp-table"
+                    >
+                      <template #caption>
+                        <span v-if="gpCohortText" data-test="sudz-pmt-upl-gp-cohort">
+                          другие пакеты этого свода: {{ gpCohortText }}
+                        </span>
+                      </template>
+                      <template #body-cell-dbtUpl="slotProps">
+                        <QTd :props="slotProps" data-test="sudz-pmt-upl-gp-row">
+                          {{ slotProps.row.dbtUpl }}
+                        </QTd>
+                      </template>
+                      <template #body-cell-actions="slotProps">
+                        <QTd :props="slotProps" auto-width>
+                          <QBtn
+                            flat
+                            dense
+                            no-caps
+                            color="primary"
+                            label="открыть свод"
+                            data-test="sudz-pmt-upl-open-dbt"
+                            @click.stop="openDbt(slotProps.row.dbtUpl)"
+                          />
+                        </QTd>
+                      </template>
+                      <template #no-data>
+                        <div class="full-width text-center" data-test="sudz-pmt-upl-gp-empty">связи нет</div>
+                      </template>
+                    </FemsqTable>
+                  </div>
+
                   <QSeparator class="q-mb-sm shrink-0" />
 
                   <div class="text-subtitle2 q-mb-xs shrink-0">Шаги (префикс цепочки)</div>
@@ -219,6 +262,25 @@
                     процедуры.
                   </div>
                 </QTabPanel>
+                <QTabPanel name="acc" class="q-pa-sm column no-wrap fill-pane">
+                  <FemsqTable
+                    class="col"
+                    :rows="sumRows"
+                    :columns="sumColumns"
+                    row-key="rowKey"
+                    dense
+                    flat
+                    :loading="store.sumsLoading"
+                    data-test="sudz-pmt-upl-sum"
+                  />
+                  <div
+                    v-if="!sumRows.length && !store.sumsLoading"
+                    class="text-grey-6 q-pa-sm shrink-0"
+                    data-test="sudz-pmt-upl-sum-empty"
+                  >
+                    По пакету нет строк cn_inv_pm.
+                  </div>
+                </QTabPanel>
               </QTabPanels>
             </QCard>
           </template>
@@ -234,6 +296,7 @@
                 align="left"
               >
                 <QTab name="progress" label="ход загрузки" data-test="sudz-pmt-upl-tab-progress" />
+                <QTab name="ext" label="отличия" data-test="sudz-pmt-upl-tab-ext" />
                 <QTab name="doubles" data-test="sudz-pmt-upl-tab-doubles">
                   <div class="row items-center no-wrap">
                   <span>повторяющиеся СФ</span>
@@ -289,6 +352,48 @@
                   >
                     Лог хода пуст (заполнится при «загрузка» / воронке).
                   </div>
+                </QTabPanel>
+
+                <QTabPanel name="ext" class="q-pa-sm column no-wrap fill-pane" data-test="sudz-pmt-upl-ext">
+                  <FemsqTable
+                    class="col"
+                    fill
+                    :rows="extRows"
+                    :columns="extColumns"
+                    row-key="rowKey"
+                    dense
+                    flat
+                    hide-pagination
+                    :rows-per-page-options="[0]"
+                    v-model:pagination="extPagination"
+                    :loading="store.extLoading"
+                    data-test="sudz-pmt-upl-ext-table"
+                  >
+                    <template #caption>
+                      <span data-test="sudz-pmt-upl-ext-caption">{{ extCaption }}</span>
+                    </template>
+                    <template #actions>
+                      <QBtn
+                        flat
+                        dense
+                        no-caps
+                        color="primary"
+                        label="сверить"
+                        :loading="store.extLoading"
+                        :disable="!store.selectedUpl"
+                        data-test="sudz-pmt-upl-ext-refresh"
+                        @click="store.loadExtDiff()"
+                      />
+                    </template>
+                    <template #body-cell-docCode="slotProps">
+                      <QTd :props="slotProps" data-test="sudz-pmt-upl-ext-row">
+                        {{ slotProps.row.docCode }}
+                      </QTd>
+                    </template>
+                    <template #no-data>
+                      <div class="full-width text-center" data-test="sudz-pmt-upl-ext-empty">отличий нет</div>
+                    </template>
+                  </FemsqTable>
                 </QTabPanel>
 
                 <QTabPanel name="doubles" class="q-pa-none fill-pane column no-wrap">
@@ -550,13 +655,15 @@ import {
   QTabPanel,
   QTabPanels,
   QTabs,
+  QTd,
   QToggle,
   useQuasar
 } from 'quasar';
-import { FemsqTable, FemsqWalkTree, type FemsqTableColumn, type FemsqWalkActionContext, type FemsqWalkTreeSpec } from 'fequlib';
+import { FemsqTable, FemsqWalkTree, actionsColumn, type FemsqTableColumn, type FemsqWalkActionContext, type FemsqWalkTreeSpec } from 'fequlib';
 
 import { createCstAgent, createCstAgPoint, getOgAgCsLookups } from '@/api/construction-sites-api';
 import { useConnectionStore } from '@/stores/connection';
+import { useSudzDbtUplStore } from '@/stores/sudz-dbt-upl';
 import { useSudzPmtUplStore } from '@/stores/sudz-pmt-upl';
 import { useSudzSfDoubleSessionStore } from '@/stores/sudz-sf-double-session';
 import {
@@ -574,7 +681,7 @@ import {
 } from '@/sudz/pmt-upl-funnel-steps';
 import { buildPmtSfWorklist, type SudzPmtSfWorkRow } from '@/sudz/pmt-sf-worklist';
 import { normalizeExplorerPath } from '@/utils/explorer-path';
-import type { SudzPmUplLookup, SudzPmtUplCstNew } from '@/types/sudz';
+import type { SudzPmLink, SudzPmUplLookup, SudzPmtUplCstNew, SudzPmtUplExtGap, SudzPmtUplSum } from '@/types/sudz';
 
 const $q = useQuasar();
 const store = useSudzPmtUplStore();
@@ -590,6 +697,15 @@ const cstSplit = ref(40);
 
 const mainTab = ref('load');
 const subTab = ref('progress');
+
+watch(
+  () => [subTab.value, store.selectedPmKey] as const,
+  () => {
+    if (subTab.value === 'ext' && store.extDiff == null && !store.extLoading) {
+      void store.loadExtDiff();
+    }
+  }
+);
 /** Фильтр единого грида повторов: все / только InvNot / только TwoLoad. */
 const doublesFilter = ref<'all' | 'invNot' | 'twoLoad'>('all');
 const doublesFilterOptions = [
@@ -731,6 +847,74 @@ const sfWorkColumns: FemsqTableColumn<SudzPmtSfWorkRow>[] = [
   }
 ];
 
+/** Строка Sum_t с устойчивым ключом: итог ROLLUP не имеет счёта. */
+interface SumRow extends SudzPmtUplSum {
+  rowKey: string;
+}
+
+/**
+ * Деньги вкладки «счета, сумма» в виде Access (два знака).
+ */
+function formatSumMoney(value: unknown): string {
+  if (value == null || value === '') {
+    return '—';
+  }
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) {
+    return '—';
+  }
+  return amount.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+const sumRows = computed<SumRow[]>(() =>
+  store.sums.map((row) => ({
+    ...row,
+    rowKey: row.accountNum == null ? 'total' : String(row.accountNum)
+  }))
+);
+
+const sumColumns: FemsqTableColumn<SumRow>[] = [
+  { name: 'pmKey', label: 'пакет', field: 'pmKey', align: 'right' },
+  {
+    name: 'accountNum',
+    label: 'счёт',
+    field: 'accountNum',
+    align: 'left',
+    format: (value) => (value == null ? 'итого' : String(value))
+  },
+  { name: 'dbtBlns', label: 'дебет', field: 'dbtBlns', align: 'right', format: formatSumMoney },
+  {
+    name: 'dbtBlnsOverd',
+    label: 'дебет проср.',
+    field: 'dbtBlnsOverd',
+    align: 'right',
+    format: formatSumMoney
+  },
+  {
+    name: 'dbtBlnsNotOverd',
+    label: 'дебет не проср.',
+    field: 'dbtBlnsNotOverd',
+    align: 'right',
+    format: formatSumMoney
+  },
+  { name: 'cdtBlns', label: 'кредит', field: 'cdtBlns', align: 'right', format: formatSumMoney },
+  {
+    name: 'cdtBlnsOverd',
+    label: 'кредит проср.',
+    field: 'cdtBlnsOverd',
+    align: 'right',
+    format: formatSumMoney
+  },
+  {
+    name: 'cdtBlnsNotOverd',
+    label: 'кредит не проср.',
+    field: 'cdtBlnsNotOverd',
+    align: 'right',
+    format: formatSumMoney
+  },
+  { name: 'blns', label: 'сальдо', field: 'blns', align: 'right', format: formatSumMoney }
+];
+
 const cstNewColumns: FemsqTableColumn<SudzPmtUplCstNew>[] = [
   { name: 'cacOrNull', label: 'САК', field: 'cacOrNull', align: 'left' },
   { name: 'sh', label: 'sh', field: 'sh', align: 'left' },
@@ -804,6 +988,72 @@ watch(
     }
   }
 );
+
+const gpCohortText = computed(() =>
+  (store.gp?.cohort ?? [])
+    .map((link) => `${link.pmKey} ${link.pmName || ''}`.trim())
+    .join(', ')
+);
+
+const gpRows = computed(() => store.gp?.links ?? []);
+const gpPagination = ref({ page: 1, rowsPerPage: 0, sortBy: null, descending: false });
+const gpColumns: FemsqTableColumn<SudzPmLink>[] = [
+  { name: 'gPKey', label: 'ключ', field: 'gPKey', align: 'right' },
+  { name: 'dbtUpl', label: 'свод', field: 'dbtUpl', align: 'right' },
+  { name: 'dbtUplName', label: 'имя', field: 'dbtUplName', align: 'left' },
+  { name: 'dbtUplDate', label: 'дата', field: 'dbtUplDate', align: 'left' },
+  actionsColumn<SudzPmLink>({ label: '' })
+];
+
+interface ExtGapRow extends SudzPmtUplExtGap {
+  rowKey: string;
+}
+
+const extRows = computed<ExtGapRow[]>(() =>
+  (store.extDiff?.gaps ?? []).map((gap, index) => ({
+    ...gap,
+    rowKey: `${gap.docCode}|${gap.sheet ?? ''}|${gap.due ?? ''}|${gap.field}|${index}`
+  }))
+);
+const extPagination = ref({ page: 1, rowsPerPage: 0, sortBy: null, descending: false });
+const extCaption = computed(() => {
+  const diff = store.extDiff;
+  const head = 'Книга — уже загруженный Tbl. Платежи не меняются.';
+  if (!diff) {
+    return head;
+  }
+  return `${head} книга ${diff.bookRows}, база ${diff.dbRows}, отличий ${diff.gapCount}`;
+});
+const extColumns: FemsqTableColumn<ExtGapRow>[] = [
+  { name: 'docCode', label: 'документ', field: 'docCode', align: 'left' },
+  { name: 'sheet', label: 'лист', field: 'sheet', align: 'right' },
+  { name: 'due', label: 'срок', field: 'due', align: 'left' },
+  { name: 'field', label: 'поле', field: 'field', align: 'left' },
+  {
+    name: 'bookValue',
+    label: 'книга',
+    field: 'bookValue',
+    align: 'left',
+    format: (value) => (value == null || value === '' ? 'пусто' : String(value))
+  },
+  {
+    name: 'dbValue',
+    label: 'база',
+    field: 'dbValue',
+    align: 'left',
+    format: (value) => (value == null || value === '' ? 'пусто' : String(value))
+  }
+];
+
+/**
+ * Открывает свод по связи g_p и вкладку уже связанных пакетов. Связь не создаёт.
+ */
+async function openDbt(dbtUpl: number): Promise<void> {
+  const dbt = useSudzDbtUplStore();
+  dbt.requestPmTab();
+  connection.navigate('sudz-dbt-upl');
+  await dbt.selectUpl(dbtUpl);
+}
 
 /**
  * Переход на экран «Стройки», где создаётся новая cst.
@@ -1227,6 +1477,10 @@ onMounted(() => {
 .sudz-tab-panels {
   min-height: 0;
   overflow: hidden;
+}
+
+.sudz-tab-panels :deep(.q-tab-panel.sudz-load-scroll) {
+  overflow-y: auto;
 }
 
 .sudz-tab-panels :deep(.q-panel),

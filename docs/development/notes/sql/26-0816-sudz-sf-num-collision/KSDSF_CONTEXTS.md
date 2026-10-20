@@ -1,7 +1,7 @@
 # КСДСФ — контракт контекстов свод | платежи
 
-**Дата:** 2026-09-30 · доп. 2026-10-03 (правила **1.13.0**; свёртка **1.13.4** / Excel-кейсы **1.13.5** ✅ JAR **329**) · доп. 2026-10-05 (план **1.14** decision-TreeList)  
-**План:** [0922 §1.8](../../chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md) · лист **1.8.0**; якорь сумм pmt — [0922 §1.10 / §2.5](../../chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md); центр кандидата СФ — [0922 §1.14 / §2.8](../../chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md)  
+**Дата:** 2026-09-30 · доп. 2026-10-03 (правила **1.13.0**; свёртка **1.13.4** / Excel-кейсы **1.13.5** ✅ JAR **329**) · доп. 2026-10-05 (план **1.14** decision-TreeList) · доп. 2026-10-19 (отбор строки Tbl, **1.9.7**) · доп. 2026-10-20 (идемпотентный pick **1.15**)  
+**План:** [0922 §1.8](../../chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md) · лист **1.8.0**; якорь сумм pmt — [0922 §1.10 / §2.5](../../chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md); центр кандидата СФ — [0922 §1.14 / §2.8](../../chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md); идемпотентность pick — [0922 §1.15](../../chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md)  
 **Связь:** [KSDSF_ADVISOR.md](./KSDSF_ADVISOR.md) (правила советника; изначально под **свод**)
 
 ## Цель
@@ -31,12 +31,31 @@
 
 | Слой | Правда |
 |------|--------|
-| Excel Tbl | `CnInvPmtUplTbl` (`ciput*`) |
+| Excel Tbl | `CnInvPmtUplTbl` (`ciput*`). В Tbl — строка с непустым «№ докум.»; цвет заливки не фильтр. До 1.9.0 туда же попадали итоги с БЕ или счётом ГК. [export_offset-map](../../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/export_offset-map.md) · [0922 §2.4](../../chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md) |
 | Карточка UI | Сводка кейса + **все белые строки** (`sudzPmtSfExcelCaseRows`, **1.13.5**): колонки «№ докум.» / «Ссылка» / стройка / срок / сальдо. Якорь очереди = один `ciputKey`; **нет** FindDbtNum. Договор/СФ Excel — текст Tbl ≠ `ciusCnKey`. ([export-row-tree-structure](../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/export-row-tree-structure.md) §1.1, §8) |
 | Якорь суммы | Σ `ciputBlns` по `(пакет, кредитор, договор, номер)` (**1.13.4**). Исторически сверка 2026-09-30 группировала только по номеру — на уникальных номерах совпадает. Колонки overdue в Tbl платежей пустые; просрочку брать из строки свода. С **1.10.1–1.10.2** (JAR **321**) карточка «итог сальдо по СФ», панель сверяет с `cidutDebt` свода из `g_p`. Приёмка **1.9.6** — с этой панелью |
 | Свёртка очереди (**1.13.4** ✅) | **кредитор + договор + номер** (не номер в одиночку). TwoLoad: глобальный `ciCount>1`, строки очереди — по ключу из Tbl. Σ сальдо / `fileCodes` леса — тот же ключ. @59: КС-14 «б/н» ≠ КС-51 «б/н». Карточки не плодить на `due_grp`. Правила A–C: [export-row-tree-structure §7.0](../../../project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/export-row-tree-structure.md#70-принято-лист-1130-2026-10-03) |
 | `ciusCnKey` | может быть пуст (TwoLoad-rebuild); текст договора Excel ≠ договор очереди; **1.8.3** fillCn/enrich при однозначном BUIRG+имени |
 | Советник | **1.8.4**: `executor_unique_no_queue_cn` при пустом `ciusCnKey` + уникальном `sfByNum` |
+| Идемпотентный pick (**1.15**) | Очередь = эфемерный worklist незакрытых дыр Excel↔домен **этой** выгрузки. `rebuildPmtUplSfDouble` = пересчёт множества, не журнал. Статус `created` / `ciusCreatedInvKey` — кэш UI до следующего rebuild, не источник истины. InvNot/TwoLoad outline остаются диагностикой («номер уже не один» ≠ «надо снова разбирать»). |
+
+### Контракт «судьба решена» (pmt, unloadKey) — **1.15.0**
+
+Ключ Excel как в pick (**1.13.4**): кредитор + договор + № СФ. После набора InvNot∪TwoLoad → `#pmtSfPick` кандидат **не** попадает в `INSERT … open`, если для строки с известным `cnKey` верно:
+
+1. **Ровно один carrier-inv** на договоре: `ciCn = cnKey`, номер `inNumNull = invNum`, и на нём есть ≥1 `cn_inv_pm` с `cn_inv_pm_upl = unloadKey` (через `ciaCnInvAccntSmpl`). Не «ровно один inv с номером вообще»: legacy без pm пакета (как «732» + новый create) carrier’ом не считается. Carrier считается **от pm пакета**, не от глобального `invNum` (иначе TwoLoad/«б/н» раздувает join).
+2. **Покрытие Tbl:** `COUNT` белых строк Tbl пакета по договору+номеру = `COUNT` pm unload на carrier, и COUNT Tbl > 0. (Построчный матч doc+sheet как в `insertMissing…` семантически тот же; на @62 равенство счётчиков совпало для всех 40 ключей и не даёт ~180 с VPN-скана.)
+3. Без `cnKey` (TwoLoad до fillCn) критерий не применяется — строка остаётся кандидатом.
+
+| Исход | В домене | В очередь |
+|-------|----------|-----------|
+| A/B Link/Create (и ручной фикс таблиц) | carrier=1 и Tbl покрыт | нет |
+| C Не решено | нет carrier / pm «висят» / покрытие неполное | да, `open` |
+| D Link без переноса pm («732» до repair) | inv есть, carrier=0 или покрытие дырявое | да |
+
+**Не делать:** merge/`DELETE` только `open`, «не трогать created», запрет повторного funnel как защиту разбора.
+
+**UAT:** [0922 **1.15.5**](../../chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md) @62/@59.
 
 ## Суммы pmt (исследование до 1.8.5, 2026-09-28)
 

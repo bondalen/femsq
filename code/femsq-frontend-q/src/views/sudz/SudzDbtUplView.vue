@@ -102,7 +102,7 @@
                 align="left"
               >
                 <QTab name="load" label="загрузка" data-test="sudz-dbt-upl-tab-load" />
-                <QTab name="pm" label="выгрузки платежей" disable />
+                <QTab name="pm" label="выгрузки платежей" data-test="sudz-dbt-upl-tab-pm" />
                 <QTab name="acc" label="счета, сумма" disable />
                 <QTab name="debt-edit" label="задолженности, правка" disable />
                 <QTab name="debt-read" label="задолженности, чтение" disable />
@@ -261,6 +261,43 @@
                     Включён префикс из {{ selectedStepIds.length }} шагов · Excel→Tbl — «обнов. по исх?».
                     Stub не пишет в домен. Наведите на ячейку — id процедуры.
                   </div>
+                </QTabPanel>
+                <QTabPanel name="pm" class="q-pa-sm column no-wrap fill-pane">
+                  <FemsqTable
+                    class="col"
+                    fill
+                    title="пакеты платежей"
+                    caption="Новую связь здесь не создаём."
+                    :rows="pmLinks"
+                    :columns="pmLinkColumns"
+                    row-key="gPKey"
+                    dense
+                    flat
+                    hide-pagination
+                    :rows-per-page-options="[0]"
+                    v-model:pagination="pmPagination"
+                    data-test="sudz-dbt-upl-pm-links"
+                  >
+                    <template #body-cell-gPKey="slotProps">
+                      <QTd :props="slotProps" data-test="sudz-dbt-upl-pm-row">
+                        {{ slotProps.row.gPKey }}
+                      </QTd>
+                    </template>
+                    <template #no-data>
+                      <div class="full-width text-center" data-test="sudz-dbt-upl-pm-empty">связей нет</div>
+                    </template>
+                    <template #actions>
+                      <QBtn
+                        flat
+                        dense
+                        no-caps
+                        color="primary"
+                        label="портфель, связать"
+                        data-test="sudz-dbt-upl-open-portfolio"
+                        @click="openPortfolio"
+                      />
+                    </template>
+                  </FemsqTable>
                 </QTabPanel>
               </QTabPanels>
             </QCard>
@@ -526,11 +563,13 @@ import {
   QTabPanel,
   QTabPanels,
   QTabs,
+  QTd,
   QToggle,
   useQuasar
 } from 'quasar';
 import { FemsqTable, type FemsqTableColumn } from 'fequlib';
 
+import { getSudzPmLinks } from '@/api/sudz-api';
 import { useConnectionStore } from '@/stores/connection';
 import { useSudzPortfolioStore } from '@/stores/sudz-portfolio';
 import { useSudzDbtUplStore } from '@/stores/sudz-dbt-upl';
@@ -543,6 +582,7 @@ import {
   funnelPresetPrefixCount,
   type FunnelPresetId
 } from '@/sudz/dbt-upl-funnel-steps';
+import type { SudzPmLink } from '@/types/sudz';
 import type {
   SudzCnInvUplInvDbtDouble,
   SudzCnInvUplSfDouble,
@@ -563,6 +603,49 @@ const detailSplit = ref(34);
 
 const mainTab = ref('load');
 const subTab = ref('progress');
+const pmLinks = ref<SudzPmLink[]>([]);
+const pmPagination = ref({ page: 1, rowsPerPage: 0, sortBy: null, descending: false });
+const pmLinkColumns: FemsqTableColumn<SudzPmLink>[] = [
+  { name: 'gPKey', label: 'ключ', field: 'gPKey', align: 'right' },
+  { name: 'pmKey', label: 'пакет', field: 'pmKey', align: 'right' },
+  { name: 'pmName', label: 'имя', field: 'pmName', align: 'left' },
+  { name: 'pmDate', label: 'дата', field: 'pmDate', align: 'left' }
+];
+
+watch(
+  () => store.pendingPmTab,
+  (pending) => {
+    if (pending) {
+      mainTab.value = 'pm';
+      store.clearPmTabRequest();
+    }
+  },
+  { immediate: true }
+);
+
+watch(
+  () => store.selectedUplKey,
+  async (uplKey) => {
+    if (uplKey == null) {
+      pmLinks.value = [];
+      return;
+    }
+    try {
+      pmLinks.value = await getSudzPmLinks(uplKey);
+    } catch (e) {
+      pmLinks.value = [];
+      store.error = e instanceof Error ? e.message : String(e);
+    }
+  },
+  { immediate: true }
+);
+
+/**
+ * Открывает портфель, где уже есть «Связать». Новую связь отсюда не создаёт.
+ */
+function openPortfolio(): void {
+  connection.navigate('sudz-portfolio');
+}
 const progressPane = ref<HTMLElement | null>(null);
 /** Черновик cidufPath (как в Проводнике); в БД — по blur / Enter / «загрузка». */
 const pathDraft = ref('');

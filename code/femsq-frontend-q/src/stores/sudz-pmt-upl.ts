@@ -12,6 +12,9 @@ import {
   getSudzPmUplLookups,
   getSudzPmtUplCstMatch,
   getSudzPmtUplCstNew,
+  getSudzPmtUplExtDiff,
+  getSudzPmtUplGp,
+  getSudzPmtUplSums,
   getSudzPmtUplInvNot,
   getSudzPmtUplSfDoubles,
   getSudzPmtUplTabBadges,
@@ -26,6 +29,9 @@ import type {
   SudzPmUplLookup,
   SudzPmtUplCstMatch,
   SudzPmtUplCstNew,
+  SudzPmtUplExtDiff,
+  SudzPmtUplGp,
+  SudzPmtUplSum,
   SudzPmtUplFile,
   SudzPmtUplFunnelResult,
   SudzPmtUplInvNot,
@@ -54,6 +60,8 @@ export const useSudzPmtUplStore = defineStore('sudz-pmt-upl', () => {
   const error = ref<string | null>(null);
   const cstNew = ref<SudzPmtUplCstNew[]>([]);
   const cstNewLoading = ref(false);
+  const sums = ref<SudzPmtUplSum[]>([]);
+  const sumsLoading = ref(false);
   const invNot = ref<SudzPmtUplInvNot[]>([]);
   const invNotLoading = ref(false);
   const twoLoad = ref<SudzPmtUplTwoLoad[]>([]);
@@ -65,6 +73,10 @@ export const useSudzPmtUplStore = defineStore('sudz-pmt-upl', () => {
   const cstMatch = ref<SudzPmtUplCstMatch[]>([]);
   const cstMatchSuffix = ref<string | null>(null);
   const cstMatchLoading = ref(false);
+  const gp = ref<SudzPmtUplGp | null>(null);
+  const gpLoading = ref(false);
+  const extDiff = ref<SudzPmtUplExtDiff | null>(null);
+  const extLoading = ref(false);
 
   const selectedUpl = computed(() => {
     if (selectedPmKey.value == null) {
@@ -120,13 +132,51 @@ export const useSudzPmtUplStore = defineStore('sudz-pmt-upl', () => {
   /**
    * Выбор строки списка и загрузка лаунчера.
    */
+  /**
+   * Связи g_p выбранного пакета. Запись не выполняет.
+   */
+  async function loadGp(pmKey: number): Promise<void> {
+    gpLoading.value = true;
+    try {
+      gp.value = await getSudzPmtUplGp(pmKey);
+    } catch (e) {
+      gp.value = null;
+      error.value = e instanceof Error ? e.message : String(e);
+    } finally {
+      gpLoading.value = false;
+    }
+  }
+
+  /**
+   * Отличия книги и платежей. Книгу из Excel не перечитывает.
+   */
+  async function loadExtDiff(): Promise<void> {
+    const pmKey = selectedPmKey.value;
+    if (pmKey == null) {
+      extDiff.value = null;
+      return;
+    }
+    extLoading.value = true;
+    try {
+      extDiff.value = await getSudzPmtUplExtDiff(pmKey);
+    } catch (e) {
+      extDiff.value = null;
+      error.value = e instanceof Error ? e.message : String(e);
+    } finally {
+      extLoading.value = false;
+    }
+  }
+
   async function selectUpl(pmKey: number): Promise<void> {
     selectedPmKey.value = pmKey;
     loading.value = true;
     error.value = null;
+    gp.value = null;
+    extDiff.value = null;
     const queues = refreshQueues();
     try {
       await loadLauncher(pmKey);
+      await loadGp(pmKey);
     } finally {
       loading.value = false;
     }
@@ -138,11 +188,15 @@ export const useSudzPmtUplStore = defineStore('sudz-pmt-upl', () => {
    */
   function clearQueues(): void {
     cstNew.value = [];
+    sums.value = [];
     invNot.value = [];
     twoLoad.value = [];
     sfDoubles.value = [];
     badges.value = null;
+    gp.value = null;
+    extDiff.value = null;
     cstNewLoading.value = false;
+    sumsLoading.value = false;
     invNotLoading.value = false;
     twoLoadLoading.value = false;
     sfDoublesLoading.value = false;
@@ -202,24 +256,23 @@ export const useSudzPmtUplStore = defineStore('sudz-pmt-upl', () => {
       return;
     }
     cstNew.value = [];
+    sums.value = [];
     invNot.value = [];
     twoLoad.value = [];
     sfDoubles.value = [];
     badges.value = null;
     cstNewLoading.value = true;
+    sumsLoading.value = true;
     invNotLoading.value = true;
     twoLoadLoading.value = true;
     sfDoublesLoading.value = true;
     badgesLoading.value = true;
     const rebuildTask = (async () => {
       try {
-        let rows = await getSudzPmtUplSfDoubles(pmKey);
-        // Пустая очередь при живом хвосте — один sync; не пересобирать, если уже есть строки
-        // (иначе сбросятся status created/deferred после разбора в КСДСФ).
-        if (rows.length === 0) {
-          await rebuildSudzPmtUplSfDouble(pmKey);
-          rows = await getSudzPmtUplSfDoubles(pmKey);
-        }
+        // 1.15: очередь эфемерна — всегда пересчёт из домена (anti-join «судьба решена»).
+        // Не опираться на «rebuild только если пусто» как защиту created.
+        await rebuildSudzPmtUplSfDouble(pmKey);
+        const rows = await getSudzPmtUplSfDoubles(pmKey);
         if (selectedPmKey.value === pmKey) {
           sfDoubles.value = rows;
         }
@@ -249,6 +302,23 @@ export const useSudzPmtUplStore = defineStore('sudz-pmt-upl', () => {
       .finally(() => {
         if (selectedPmKey.value === pmKey) {
           cstNewLoading.value = false;
+        }
+      });
+    const sumsTask = getSudzPmtUplSums(pmKey)
+      .then((rows) => {
+        if (selectedPmKey.value === pmKey) {
+          sums.value = rows;
+        }
+      })
+      .catch((e: unknown) => {
+        if (selectedPmKey.value === pmKey) {
+          sums.value = [];
+          error.value = e instanceof Error ? e.message : String(e);
+        }
+      })
+      .finally(() => {
+        if (selectedPmKey.value === pmKey) {
+          sumsLoading.value = false;
         }
       });
     const invNotTask = getSudzPmtUplInvNot(pmKey)
@@ -302,7 +372,7 @@ export const useSudzPmtUplStore = defineStore('sudz-pmt-upl', () => {
           badgesLoading.value = false;
         }
       });
-    await Promise.all([cstTask, invNotTask, twoLoadTask, badgeTask, rebuildTask]);
+    await Promise.all([cstTask, sumsTask, invNotTask, twoLoadTask, badgeTask, rebuildTask]);
   }
 
   /**
@@ -445,10 +515,15 @@ export const useSudzPmtUplStore = defineStore('sudz-pmt-upl', () => {
       wroteExcel ? 'Excel→Tbl' : '',
       result.stub ? 'stub cipu*' : ''
     ].filter(Boolean);
-    const message = result.stub
-      ? `Воронка: ${extras.join(', ') || 'шаги'} (лог обновлён)`
-      : `Воронка завершена: ${extras.join(', ') || result.ranSteps.join(', ')}`;
-    return { ...result, ok: true, message };
+    const ok = result.sumsMatched && result.rowsMatched;
+    const message = ok
+      ? result.stub
+        ? `Воронка: ${extras.join(', ') || 'шаги'} (лог обновлён)`
+        : `Воронка завершена: ${extras.join(', ') || result.ranSteps.join(', ')}`
+      : result.sumsMatched
+        ? 'Воронка не завершена: строки книги и базы не совпали (лог обновлён)'
+        : 'Воронка не завершена: суммы книги и базы не совпали (лог обновлён)';
+    return { ...result, ok, message };
   }
 
   return {
@@ -463,6 +538,8 @@ export const useSudzPmtUplStore = defineStore('sudz-pmt-upl', () => {
     file,
     cstNew,
     cstNewLoading,
+    sums,
+    sumsLoading,
     invNot,
     invNotLoading,
     twoLoad,
@@ -474,6 +551,12 @@ export const useSudzPmtUplStore = defineStore('sudz-pmt-upl', () => {
     cstMatch,
     cstMatchSuffix,
     cstMatchLoading,
+    gp,
+    gpLoading,
+    extDiff,
+    extLoading,
+    loadGp,
+    loadExtDiff,
     loadCstMatch,
     clearCstMatch,
     refreshQueues,

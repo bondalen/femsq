@@ -60,6 +60,20 @@ export interface SudzPmtUplLauncher {
   file: SudzPmtUplFile;
 }
 
+/** Строка вкладки «счета, сумма» (ags.q_cn_inv_pm_upl_sum). */
+export interface SudzPmtUplSum {
+  pmKey: number;
+  /** Счёт ГК. Null — итог пакета. */
+  accountNum: number | null;
+  dbtBlns: number | null;
+  dbtBlnsOverd: number | null;
+  dbtBlnsNotOverd: number | null;
+  cdtBlns: number | null;
+  cdtBlnsOverd: number | null;
+  cdtBlnsNotOverd: number | null;
+  blns: number | null;
+}
+
 /** Строка вкладки «стройки новые» (cipuCacNot). */
 export interface SudzPmtUplCstNew {
   cacOrNull: string;
@@ -135,6 +149,8 @@ export interface SudzPmtUplFunnelResult {
   launcher: SudzPmtUplLauncher;
   ranSteps: string[];
   stub: boolean;
+  sumsMatched: boolean;
+  rowsMatched: boolean;
 }
 
 export interface SudzPmLink {
@@ -145,6 +161,30 @@ export interface SudzPmLink {
   pmDate: string | null;
   dbtUplName: string | null;
   dbtUplDate: string | null;
+}
+
+/** Связи пакета и соседние пакеты тех же сводов. */
+export interface SudzPmtUplGp {
+  links: SudzPmLink[];
+  cohort: SudzPmLink[];
+}
+
+/** Одно отличие книги и платежа. */
+export interface SudzPmtUplExtGap {
+  docCode: string;
+  sheet: number | null;
+  due: string | null;
+  field: string;
+  bookValue: string | null;
+  dbValue: string | null;
+}
+
+/** Построчное отличие книги Tbl и cn_inv_pm. */
+export interface SudzPmtUplExtDiff {
+  bookRows: number;
+  dbRows: number;
+  gapCount: number;
+  gaps: SudzPmtUplExtGap[];
 }
 
 /** Итог H6: пересчёт DbtUplCstAg из pm+g_p. */

@@ -3,9 +3,566 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-10-16"
+      "lastUpdated": "2026-10-20"
     },
     "sessions": [
+      {
+        "chat": {
+          "displayName": "Выгрузки платежей и сверка Rslt (pending, medium). № chat-2026-10-19-001",
+          "chat-attributes": {
+            "id": "chat-2026-10-19-001",
+            "created": "2026-10-19",
+            "lastUpdated": "2026-10-20",
+            "owner": "Александр",
+            "status": "pending",
+            "priority": "medium",
+            "tags": [
+              "sudz",
+              "pmt-upl",
+              "rslt",
+              "qiv",
+              "qi",
+              "qii"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1019-qii-pmt-rslt.md",
+              "wbs": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+              "s80": "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "1.6.1 все 7 остатков DBHub + пакет приёмки (success). № log-2026-10-20-014",
+                "log-attributes": {
+                  "id": "log-2026-10-20-014",
+                  "timestamp": "2026-10-20T17:05:00+03:00",
+                  "level": "success",
+                  "effort": "25m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "rslt",
+                    "acceptance",
+                    "qiv"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1019-qii-pmt-rslt.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "DBHub все 7 остатков classify после 1.8",
+                    "details": "2031: cia→pm58/49 оба кода 0707+0714; Access «строек:2»; cmm@1909 нет — formal OK. GEN 4400/04/07/09/10: @901 судебное А19-… → empty; @902 CnInv=90/32/89/33/20 → all-time invNum nCst=1 → gen; все cmm=051-2000707 ≠ gen; Access пуст. H2soft короткий+multi не срабатывает при nCst=1.",
+                    "outcome": "План 1019 0.1.19. ★ подпись владельца на 5 GEN → закрытие 1.6.1. P2 не меняем.",
+                    "references": [
+                      "docs/development/notes/sql/26-0831-sudz-dbt-slot-link/artifacts/1019_1_6_1_acceptance_residual_7_26-1020.json"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.8 dvDocBase CnInv≻Doc: conflict 44→0 (success). № log-2026-10-20-013",
+                "log-attributes": {
+                  "id": "log-2026-10-20-013",
+                  "timestamp": "2026-10-20T16:45:00+03:00",
+                  "level": "success",
+                  "effort": "35m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "dbt-value",
+                    "docBase",
+                    "qiv"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1019-qii-pmt-rslt.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "CnInv ≻ Doc при записи DbtValue + backfill",
+                    "details": "Остаток 44 P2-empty-vs-Access-code (только QI): cidutDoc=счёт/А109 при верном cidutCnInv. JdbcSudzDao 7 INSERT: COALESCE(CnInv, Doc). Backfill 760 строк @901/902/903. Rebuild 14g: @902 A1641/C103. Classify conflict 44→0, bothOk 3286→3330; 11925/11932/12407 QI=Access.",
+                    "outcome": "1.8 ✅. План 1019 0.1.17. ★ приёмка 1.6.1 (GEN-code-Access-empty 5).",
+                    "references": [
+                      "docs/development/notes/sql/26-0921-sudz-dbt-upl-cst-ag-exp/15_BACKFILL_DbtValue_dvDocBase_CnInv_first.sql",
+                      "docs/development/notes/sql/26-0831-sudz-dbt-slot-link/artifacts/1019_1_8_4_cst_qiv_qi_classify_docBaseCnInv_26-1020.json",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.7.9–.12: H1+H2soft+H3soft2 → 14g на DEV (success). № log-2026-10-20-012",
+                "log-attributes": {
+                  "id": "log-2026-10-20-012",
+                  "timestamp": "2026-10-20T15:34:00+03:00",
+                  "level": "success",
+                  "effort": "40m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "cst",
+                    "p2strict",
+                    "qiv"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1019-qii-pmt-rslt.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "H1-only, затем точечные H2soft/H3soft2 и combo 14g",
+                    "details": "14c H1: conflict 47→44, 8655✓. 14e H2soft (короткий doc multi→drop): 4086 empty, conflict 44. 14f H3soft2 (all-time unique только на пике overd): 3672 empty, conflict 44; rebuild ~3–4.5 мин/upl. 14g combo: A1660/B1/C112 @901; overdue residual 0; 3672/4086 empty, 8655=051-2005067.",
+                    "outcome": "1.7.10–.12 ✅. usp 14g на DEV. План 1019 0.1.15. ★ next — приёмка 1.6.1.",
+                    "references": [
+                      "docs/development/notes/sql/26-0921-sudz-dbt-upl-cst-ag-exp/14g_CREATE_usp_RebuildDbtUplCstAg_P2_H1_H2soft_H3soft2.sql",
+                      "docs/development/notes/sql/26-0831-sudz-dbt-slot-link/artifacts/1019_1_7_12_cst_qiv_qi_classify_H1_H2soft_H3soft2_26-1020.json"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.7 P2strict: 3 кейса ✓, overall FAIL, откат 13 (success). № log-2026-10-20-011",
+                "log-attributes": {
+                  "id": "log-2026-10-20-011",
+                  "timestamp": "2026-10-20T14:46:00+03:00",
+                  "level": "success",
+                  "effort": "50m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "cst",
+                    "p2strict",
+                    "qiv"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1019-qii-pmt-rslt.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "P2strict H1–H3 и H3soft",
+                    "details": "H1 cia≻doc+max overd; H2 LEN(docBase)≥8; H3/H3soft режут all-time doc. 3672/4086→empty, 8655→051-2005067 (=специалисты@1909 и Access). Overall: conflictN 47→1180, A@901 1659→994. H3soft ≡ H3 по метрикам.",
+                    "outcome": "FAIL к эталону 26-0505. usp и Duca @901/@902 откат на 13 (A1659/B7/C107).",
+                    "references": [
+                      "docs/development/notes/sql/26-0921-sudz-dbt-upl-cst-ag-exp/14_CREATE_usp_RebuildDbtUplCstAg_P2strict.sql",
+                      "docs/development/notes/sql/26-0831-sudz-dbt-slot-link/artifacts/1019_1_7_cst_qiv_qi_classify_p2strict_26-1020.json",
+                      "docs/development/notes/sql/26-0831-sudz-dbt-slot-link/artifacts/1019_1_7_8_cst_qiv_qi_classify_H1H2soft_26-1020.json"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Вариант A: QIV ExtDiff gap=0; 1.6.1 conflict 47 (success). № log-2026-10-20-010",
+                "log-attributes": {
+                  "id": "log-2026-10-20-010",
+                  "timestamp": "2026-10-20T13:12:00+03:00",
+                  "level": "success",
+                  "effort": "45m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "ext-diff",
+                    "qiv"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1019-qii-pmt-rslt.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Выравнивание QIV 57/58/60",
+                    "details": "Исходно gap 605/6/21. Полный funnel удвоил 58 (2690→5386) и 60 (270→561): старый dbt_blns_not_overd=0 ≠ новый Excel. Удалены старые pm (cipTimeOfEntry<2026-10-20), оставлены свежие → ExtDiff 0. @57 wipe 1180 + reload → 587=книга, sums/rows OK. КСДСФ open=0 на всех пяти QIV (TwoLoad диагностический).",
+                    "outcome": "Вход QIV кондиционен: gap=0 @57/58/60/61/62.",
+                    "references": []
+                  },
+                  {
+                    "action": "H6 @901 + 1.6.1 повтор",
+                    "details": "rebuild 901 emptyCount 125→107. Rslt …_after_qiv_fix_….xlsx. classify: conflictN 65→47 (P2-empty-vs-Access-code 62→44).",
+                    "outcome": "План 0.1.10. Приёмка 1.6.1 — по новому файлу after_fix.",
+                    "references": [
+                      "docs/development/notes/sql/26-0831-sudz-dbt-slot-link/artifacts/1019_1_6_1_cst_qiv_qi_classify_after_fix_26-1020.json"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.6 сверка строек: QII ✅, QIV/QI список (success). № log-2026-10-20-009",
+                "log-attributes": {
+                  "id": "log-2026-10-20-009",
+                  "timestamp": "2026-10-20T12:35:00+03:00",
+                  "level": "success",
+                  "effort": "40m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "rslt",
+                    "cst",
+                    "qiv",
+                    "qi",
+                    "qii"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1019-qii-pmt-rslt.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "1.6.1 QIV/QI ↔ 26-0505 (cst-only)",
+                    "details": "verify_s80: FAIL=191, byField только b_cstCode/q_cstCode; sumDelta все 0. Classify: P2-empty-vs-Access-empty 194, P2-multi-vs-Access-fn 13, GEN-code-Access-empty 7, P2-multi-vs-Access-code 3, P2-empty-vs-Access-code 62; code-conflict 0. Артефакт 1019_1_6_1_cst_qiv_qi_classify_26-1020.json — ждёт приёмки.",
+                    "outcome": "1.6.1 🔶 список готов.",
+                    "references": [
+                      "docs/development/notes/sql/26-0831-sudz-dbt-slot-link/artifacts/1019_1_6_1_cst_qiv_qi_classify_26-1020.json",
+                      "docs/development/notes/sql/26-0831-sudz-dbt-slot-link/artifacts/stage2_s80_qiv_qi_vs_access_g_p_rebuild_26-1020.json"
+                    ]
+                  },
+                  {
+                    "action": "1.4 QII pm52–56 уже в БД",
+                    "details": "Все пять export_*_26-0817: Воронка OK, g_p→903. Повторная загрузка не нужна.",
+                    "outcome": "1.4 ✅.",
+                    "references": []
+                  },
+                  {
+                    "action": "H6 @903 + Rslt + 1.6.2",
+                    "details": "rebuild 903: −1802/+1802 multi13 empty113. Rslt …_g_p_rebuild_qii_….xlsx. QII ↔ s81_cmm_28469fix: дефект 0, поправка 242, пусто 12, P2-form 114.",
+                    "outcome": "1.6.2 ✅. План 1019 0.1.9. ★ next — приёмка 1.6.1.",
+                    "references": [
+                      "docs/development/notes/sql/26-0831-sudz-dbt-slot-link/artifacts/1019_1_6_2_cst_qii_classify_26-1020.json",
+                      "docs/development/notes/sql/26-0831-sudz-dbt-slot-link/artifacts/ags_Yr_DbtChangesRslt_901_903_g_p_rebuild_qii_26-1020_2026-10-20_123401.xlsx"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.5: DbtUplCstAg из g_p + Rslt asOf903 (success). № log-2026-10-20-008",
+                "log-attributes": {
+                  "id": "log-2026-10-20-008",
+                  "timestamp": "2026-10-20T12:24:32+03:00",
+                  "level": "success",
+                  "effort": "25m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "rslt",
+                    "dbt-upl-cst-ag",
+                    "g_p"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1019-qii-pmt-rslt.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "UI @62: подтверждён актуальный progress",
+                    "details": "После «Обновить»: Воронка OK 12:09:22, КСДСФ open 0, Two 38 (диагностика TwoLoad). Снимок a11y мог показывать устаревший лог 10:29 — DOM/API уже OK.",
+                    "outcome": "Идемпотентность визуально подтверждена; Two не разбираем.",
+                    "references": []
+                  },
+                  {
+                    "action": "H6 rebuild DbtUplCstAg @901 и @902",
+                    "details": "mutation rebuildSudzDbtUplCstAg: 901 deleted=1773 inserted=1773 multi=7 empty=125; 902 deleted=1745 inserted=1745 multi=9 empty=148. 903 не трогали (QII 1.4).",
+                    "outcome": "Канон строек QIV/QI из g_p вместо S80.1 backfill.",
+                    "references": []
+                  },
+                  {
+                    "action": "Rslt сбор yr901 asOf903",
+                    "details": "GET /api/v1/sudz/rslt-sborn.xlsx?yr=901&asOfUpl=903 → 465259 байт. Файл: docs/.../artifacts/ags_Yr_DbtChangesRslt_901_903_g_p_rebuild_2026-10-20_122348.xlsx",
+                    "outcome": "1.5 ✅. План 1019 0.1.8. ★ next 1.6 сверка ↔ 26-0505.",
+                    "references": [
+                      "docs/development/notes/sql/26-0831-sudz-dbt-slot-link/artifacts/ags_Yr_DbtChangesRslt_901_903_g_p_rebuild_2026-10-20_122348.xlsx",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1019-qii-pmt-rslt.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Пауза 1019 до 0922 1.15 (success). № log-2026-10-20-006",
+                "log-attributes": {
+                  "id": "log-2026-10-20-006",
+                  "timestamp": "2026-10-20T10:56:00+03:00",
+                  "level": "success",
+                  "effort": "5m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "rslt",
+                    "ksdsf",
+                    "docs"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1019-qii-pmt-rslt.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "План 1019 0.1.6: пауза перед 1.5",
+                    "details": "Сначала закрыть 0922 ★ 1.15 (идемпотентность КСДСФ). QIV на 901 уже в g_p. Rebuild DbtUplCstAg / Rslt / сверка 26-0505 — после UAT 1.15.5.",
+                    "outcome": "Порядок работ согласован с владельцем.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1019-qii-pmt-rslt.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "КСДСФ pm62 разобран; gate 12099=12099 (success). № log-2026-10-20-004",
+                "log-attributes": {
+                  "id": "log-2026-10-20-004",
+                  "timestamp": "2026-10-20T10:32:00+03:00",
+                  "level": "success",
+                  "effort": "25m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "ksdsf",
+                    "606012"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1019-qii-pmt-rslt.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Разбор хвоста КСДСФ пакета 62",
+                    "details": "Стройки-заглушки 051-1006267 / 051-1007114 (Газпром инвест). Advisor: link×39 + «732»→inv 54310; repair create дописал pm. Итог: open 0, status created×40, pm 12099 = Tbl, семь сумм совпали. Повторный funnel rebuild снова открывает очередь — после разбора не запускать.",
+                    "outcome": "1.2.1 закрыт. Дальше по 1019 — остальные книги QIV уже в g_p или 1.5.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1019-qii-pmt-rslt.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.1 / 1.2.1: платёжный 606012 → pm 62 (success, gate fail). № log-2026-10-20-003",
+                "log-attributes": {
+                  "id": "log-2026-10-20-003",
+                  "timestamp": "2026-10-20T10:20:00+03:00",
+                  "level": "warning",
+                  "effort": "40m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "rslt",
+                    "606012"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1019-qii-pmt-rslt.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Догрузка QIV 606012 и сверка имени 767502",
+                    "details": "Свод на шаре убран в SVOD_was_on_share; платёжная книга из 2026-1019.zip. pm 62: Excel→Tbl 12099, DocNot +4803 (~14,5 мин), InsPm 12092. Gate суммы/строк — расхождение (7 строк книги без pm). g_p key 22 (62→901). Форма 26-0202_767502 ↔ pm 60 26-0211 уже в g_p. КСДСФ open 40.",
+                    "outcome": "Пакет в своде 901 есть; «Воронка OK» нет — нужен разбор хвоста КСДСФ / 7 строк.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1019-qii-pmt-rslt.md",
+                      "/mnt/nb-win-share/femsq/excel/2025-12/debit/export_26-0130_606012.XLSX"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.2.3–1.2.4: стройки, cnipCstAgPn×18, g_p 61→901 (success). № log-2026-10-20-002",
+                "log-attributes": {
+                  "id": "log-2026-10-20-002",
+                  "timestamp": "2026-10-20T09:55:00+03:00",
+                  "level": "success",
+                  "effort": "30m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "rslt",
+                    "g_p",
+                    "cst"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1019-qii-pmt-rslt.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Закрыты листья 1.2.3 и 1.2.4 плана 1019",
+                    "details": "Имена из 26-1020.txt.zip (аутентичны четырём кодам). Карточки cst 900031–34, SAK 4583–86 (информ 014 / инвест 051). UPDATE cnipCstAgPn у 18 pm пакета 61 по ключу книга↔pm. GraphQL: removeSudzPmLink(20), addSudzPmLink(901,61) → key 21. Свод 901: 57,58,60,61. ExtDiff @61 gapCount=0. Пакет 59 без g_p.",
+                    "outcome": "Для Rslt QIV по 767501 источник — pm 61. Дальше комплект 1.1 и загрузка 606012 (1.2.1). DbtUplCstAg не пересобирали.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1019-qii-pmt-rslt.md",
+                      "/home/alex/Downloads/продОбмен/26-1015_09-30/отПрод/26-1020.txt.zip"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "План 1019: pm 61 и четыре стройки; кодов нет в эталоне (success). № log-2026-10-20-001",
+                "log-attributes": {
+                  "id": "log-2026-10-20-001",
+                  "timestamp": "2026-10-20T09:25:00+03:00",
+                  "level": "success",
+                  "effort": "20m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "rslt",
+                    "docs"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1019-qii-pmt-rslt.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "В план 1019 внесены pm 61 и проверка кодов в Rslt",
+                    "details": "Версия 0.1.2. Для QIV 767501 эталон загрузки — pm 61; в g_p свода 901 — 61 вместо 59. Лист 1.2.4: четыре стройки. В ags_Yr_DbtChangesRslt_26-0505 (копия с шары; архив AES) колонок QII нет, четырёх кодов нет. Во временном QII asOf903 колонки QII есть, тех же кодов и имён нет. В платежной книге коды есть, имён строек нет.",
+                    "outcome": "Сборка DbtUplCstAg ждёт смены g_p и внесения строек. Имена каталога эталон Rslt не подсказал.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1019-qii-pmt-rslt.md",
+                      "/mnt/nb-win-share/femsq/excel/2026_03/debit/ags_Yr_DbtChangesRslt_26-0505.xlsx",
+                      "docs/development/notes/sql/26-0831-sudz-dbt-slot-link/artifacts/ags_Yr_DbtChangesRslt_901_asOf903_s81_cmm_28469fix_26-0916.xlsx"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Дерево работ плана 1019 (success). № log-2026-10-19-003",
+                "log-attributes": {
+                  "id": "log-2026-10-19-003",
+                  "timestamp": "2026-10-19T12:28:00+03:00",
+                  "level": "success",
+                  "effort": "20m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "rslt",
+                    "docs"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1019-qii-pmt-rslt.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "В план 1019 добавлено дерево работ",
+                    "details": "Версия 0.1.1, §2. Ветви: комплект QIV, догрузка QIV, QI уже сделан, QII, сборка DbtUplCstAg из g_p, сверка. Прежние разделы сдвинуты: комплект §3, эталон §4, листья §5.",
+                    "outcome": "Порядок исполнения читается из дерева. Номера WBS 1.1.1.2.8.1–.9 не менялись.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1019-qii-pmt-rslt.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "План загрузки платежей и сверки Rslt (success). № log-2026-10-19-002",
+                "log-attributes": {
+                  "id": "log-2026-10-19-002",
+                  "timestamp": "2026-10-19T12:22:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "rslt",
+                    "docs"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1019-qii-pmt-rslt.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Заведён план выгрузок платежей и сверки Rslt",
+                    "details": "chat-plan-26-1019 0.1.0: 15 книг. QIV и QI сверяются с эталоном ags_Yr_DbtChangesRslt_26-0505 из архива 2026-1019.zip. QII сверяется с временным Rslt asOf903 (s81_cmm_28469fix) и разбирается по трём классам. Платёжный 606012 берётся из архива, шаровой свод с тем же именем не грузится. Excel pm 59 и пять книг QI не перезаливаются. 767501/767502 QII ждут 0922 1.13.7.",
+                    "outcome": "WBS 0918 1.1.1.2.8 (.1–.9) и S80.4 указывают на план. Приёмка 1.3.1 и лист 1.8.6 не сменены.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1019-qii-pmt-rslt.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
       {
         "chat": {
           "displayName": "Группа комментариев QII 2026 и Д644 (active, medium). № chat-2026-10-12-001",
@@ -1645,7 +2202,7 @@
           "chat-attributes": {
             "id": "chat-2026-09-22-001",
             "created": "2026-09-22",
-            "lastUpdated": "2026-10-16",
+            "lastUpdated": "2026-10-20",
             "owner": "Александр",
             "status": "pending",
             "priority": "high",
@@ -1672,6 +2229,479 @@
             }
           },
           "entries": [
+            {
+              "log": {
+                "displayName": "1.15 идемпотентность КСДСФ закрыта UAT @62 (success). № log-2026-10-20-007",
+                "log-attributes": {
+                  "id": "log-2026-10-20-007",
+                  "timestamp": "2026-10-20T11:36:00+03:00",
+                  "level": "success",
+                  "effort": "90m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "ksdsf",
+                    "idempotency",
+                    "pmt-upl"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Anti-join «судьба решена» в rebuildPmtUplSfDouble",
+                    "details": "Контракт в KSDSF_CONTEXTS: carrier от pm пакета + COUNT Tbl = COUNT pm. refreshQueues всегда rebuild. JAR 360–361. UAT @62: rebuild×2 → inserted=0, sfOpen=0, TwoLoad=40. Покрытие COUNT вместо построчного doc-join (было ~180 с).",
+                    "outcome": "1.15 ✅. План 0.5.65. 1019 пауза снята → 1.5.",
+                    "references": [
+                      "docs/development/notes/sql/26-0816-sudz-sf-num-collision/KSDSF_CONTEXTS.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "План 1.15: идемпотентность КСДСФ через домен (success). № log-2026-10-20-005",
+                "log-attributes": {
+                  "id": "log-2026-10-20-005",
+                  "timestamp": "2026-10-20T10:56:00+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "ksdsf",
+                    "idempotency",
+                    "docs"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "В план 0922 внесена ветка ★ 1.15",
+                    "details": "Версия 0.5.64. Листья 1.15.0–1.15.5: контракт «судьба решена» Excel↔домен выгрузки; диагностика ≠ очередь; anti-join в rebuildPmtUplSfDouble; конец воронки без костыля статусов; UAT @62. Не merge/защита created. ★ next 1.15.0. 1019 1.5 ждёт 1.15.5.",
+                    "outcome": "Сначала закрыть 1.15, затем продолжить 1019 (DbtUplCstAg/Rslt) и/или 1.5 UX.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1019-qii-pmt-rslt.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.8.6 регресс свода упёрся в пустую очередь (warning). № log-2026-10-19-004",
+                "log-attributes": {
+                  "id": "log-2026-10-19-004",
+                  "timestamp": "2026-10-19T12:45:00+03:00",
+                  "level": "warning",
+                  "effort": "40m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "ksdsf",
+                    "dbt",
+                    "1.8.6"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Регресс КСДСФ по своду 901 не закрыл 1.8.6",
+                    "details": "JAR 349, Vite 5175. Сухой префикс воронки до CnCtptExistInvNotLoad, flLoad=false, flTbl=false, Tbl 1774. Очередь КСДСФ 0: новых СФ вне БД нет. Экран: вкладка пуста, «Разбор…» выключен. СГМ14-234 / Б/С остаётся в Tbl (cidut 47677). Своды 902 и 903 не прогонялись: P1 193 и 364 стираются стартом воронки. Apply не было.",
+                    "outcome": "Лист 1.8.6 остаётся открытым. Для R4 нужна непустая очередь dbt, которую нельзя собрать, стерев P1.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Гриды 1.4 переведены на FemsqTable (success). № log-2026-10-19-013",
+                "log-attributes": {
+                  "id": "log-2026-10-19-013",
+                  "timestamp": "2026-10-19T17:25:00+03:00",
+                  "level": "success",
+                  "effort": "20m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "fequlib",
+                    "1.4"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Связь, пакеты свода и отличия книги показаны гридом FemsqTable",
+                    "details": "Vite 5175. Пакет 59: свод 901, ключ 20, соседи 57, 58, 60 в подписи. «Открыть свод» в колонке действий открывает свод 901 со списком 57, 58, 59, 60. Пакет 61: «связи нет». Отличия пакета 61: книга 15942, база 15942, 18 пустых строек. «Связать» не нажималась. Полоса шагов воронки не менялась.",
+                    "outcome": "Три списка 1.4 читаются через feQuLib. Записи g_p и платежей не было.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.4 связь g_p и отличия книги без записи (success). № log-2026-10-19-012",
+                "log-attributes": {
+                  "id": "log-2026-10-19-012",
+                  "timestamp": "2026-10-19T16:00:00+03:00",
+                  "level": "success",
+                  "effort": "25m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "g-p",
+                    "1.4"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Связь g_p и отличия книги показаны без записи",
+                    "details": "JAR 355, Vite 5175. Пакет 59: свод 901, ключ связи 20, соседние пакеты 57, 58 и 60. Пакет 61: «связи нет». Кнопка «открыть свод» открывает свод 901 со списком 57, 58, 59, 60. «Связать» не нажималась. Вкладка «отличия»: книга 15942, база 15942, отличий 18 — пустой код стройки 014-2007423 (11), 014-2007424 (3), 051-2007134 (2), 051-2007135 (2). Платежи и g_p не менялись.",
+                    "outcome": "1.4.1, 1.4.2 и 1.4.3 закрыты. Дальше 1.5.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.3.12 четыре стройки оставляет оператору (success). № log-2026-10-19-011",
+                "log-attributes": {
+                  "id": "log-2026-10-19-011",
+                  "timestamp": "2026-10-19T15:42:00+03:00",
+                  "level": "success",
+                  "effort": "5m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "cst",
+                    "1.3"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Четыре стройки пакета 61 не создаём из воронки",
+                    "details": "014-2007423, 014-2007424, 051-2007134, 051-2007135 вносит оператор через экран строек. Воронка платежей карточки не создаёт, cnipCstAgPn у 18 платежей пакета 61 не заполняет. Каталог и пакет 59 не менялись.",
+                    "outcome": "1.3.12 закрыт. Ветвь 1.3 закрыта. Дальше 1.4.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.3.8–1.3.11 набор строк пакета 61 совпал с книгой (success). № log-2026-10-19-010",
+                "log-attributes": {
+                  "id": "log-2026-10-19-010",
+                  "timestamp": "2026-10-19T15:30:00+03:00",
+                  "level": "success",
+                  "effort": "40m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "sum-t",
+                    "1.3"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Платежи пакета 61 догнаны до строк книги",
+                    "details": "1.3.8: очередь КС-51 привязана к счёту 106726, в пакет 61 дописаны документы 5400200664 и 5900210215. 1.3.10: удалены шесть нулевых платежей на втором образце организации. 1.3.9: ключ InsPm включает семь сумм и дату выравнивания, число копий догоняет книгу; вставлено 5. Повтор: вставок 0. 1.3.11: сверка строк совпала, 15942, семь сумм совпали, лог «Воронка OK» 15:28:31. Пакет 59: 15887, КСДСФ 18. g_p не менялся. Четыре стройки 014-2007423, 014-2007424, 051-2007134, 051-2007135 без пары в каталоге: 18 платежей есть, ссылка на стройку пустая. JAR 354. Браузер: вкладка счета, сумма и обе строки сверки.",
+                    "outcome": "1.3.8–1.3.11 закрыты. 1.3.12 открыт: стройки не меняют число строк и суммы.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.3.6–1.3.7 воронка пакета 61 совпала с книгой (success). № log-2026-10-19-009",
+                "log-attributes": {
+                  "id": "log-2026-10-19-009",
+                  "timestamp": "2026-10-19T14:55:00+03:00",
+                  "level": "success",
+                  "effort": "20m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "sum-t",
+                    "1.3"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Документ 5400224218 дописан в пакет 61 на существующий счёт",
+                    "details": "Очередь 1386 привязана к счёту 106724 договора КС-14 (cn 877): на нём пакет 59 уже держит этот документ, кредит 10427623.46, срок 2026-03-01. Новый «б/н» не создавался. Дозапись платежей пакета 61 вставила этот документ и два нулевых соседа. cn_inv_pm пакета 61: 15941. Семь сумм совпали с книгой, кредит 15540551711.72. Повтор InsPm без чтения Excel: вставок 0, sumsMatched true, лог «Воронка OK» 14:52:15. Конец воронки пересобрал очередь; привязка повторена на строке 1404. Строка 1407 (КС-51, нули) осталась open. Пакет 59: 15887 платежей, КСДСФ 18. g_p не менялся. Браузер: вкладка счета, сумма и «Воронка OK».",
+                    "outcome": "1.3.6 и 1.3.7 закрыты. Ветвь 1.3 закрыта. Дальше 1.4.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.3.6 добор строк пакета 61 (warning). № log-2026-10-19-008",
+                "log-attributes": {
+                  "id": "log-2026-10-19-008",
+                  "timestamp": "2026-10-19T14:45:00+03:00",
+                  "level": "warning",
+                  "effort": "40m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "sum-t",
+                    "1.3"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Вставка платежей различает срок и ту же организацию",
+                    "details": "1.3.6.1: ключ InsPm включает срок оплаты. Повтор пакета 61 без Excel вставил 50 платежей. Дебет совпал с книгой: −3924426.13. 1.3.6.2: договор с другим org_id той же организации находится. Счета 1231239 и 1231240 созданы (договоры 2402 и 2403), вставлено 6 платежей. «б/н» не выбирался: на КС-14 таких счетов 2, в очереди номер ×13, строки 1386 и 1389 open. Остаток сверки — документ 5400224218, кредит 10427623.46. Пакет 59 не менялся: 15887 платежей, КСДСФ 18. g_p не переключался. JAR 353. Браузер: вкладка счета, сумма и отказ сверки.",
+                    "outcome": "1.3.6.1 и 1.3.6.2 закрыты. 1.3.6 открыт, пока «б/н» не разобран. 1.3.7 не запускался.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.3 сверка книги и пакета 61 (warning). № log-2026-10-19-007",
+                "log-attributes": {
+                  "id": "log-2026-10-19-007",
+                  "timestamp": "2026-10-19T14:10:00+03:00",
+                  "level": "warning",
+                  "effort": "50m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "sum-t",
+                    "1.3"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Конец воронки платежей сверяет суммы книги и базы",
+                    "details": "1.3.3: заголовок Сальдо кон. читается как конечное сальдо. 1.3.4: пакет 61, сухое чтение export_26-0130_767501, Tbl 15942, семь сумм как в книге, счёт 767501. КСДСФ пакета 59 осталась 18, cn_inv_pm 59 — 15887. 1.3.5: полная воронка flLoad вставила 15882 платежа только в пакет 61. g_p на 61 нет, свод 901 по-прежнему на 59. 1.3.6: лог «Воронка не завершена». Дебет просроченный совпал 1512236.75. Дебет короче книги на 446781.46, кредит больше на 71260658.32. В книге 51 повтор документа на листе; 11 строк в cn_inv_pm не попали. Браузер: вкладка счета, сумма пакета 61 и отказ в ходе загрузки. JAR 351.",
+                    "outcome": "1.3.3–1.3.5 закрыты. 1.3.6 открыт: суммы не совпали, поэтому 1.3.7 не запускался. Связь g_p не переключалась.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.3 вкладка счета, сумма (success). № log-2026-10-19-006",
+                "log-attributes": {
+                  "id": "log-2026-10-19-006",
+                  "timestamp": "2026-10-19T13:25:00+03:00",
+                  "level": "success",
+                  "effort": "40m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "sum-t",
+                    "1.3"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Включена вкладка счета, сумма на экране загрузки платежей",
+                    "details": "1.3.1: девять полей Access Sum_t = ags.q_cn_inv_pm_upl_sum, ROLLUP по пакету и счёту ГК; итог пакета — account_num null. 1.3.2: GraphQL sudzPmtUplSums, вкладка на SudzPmtUplView. JAR 350. Браузер pm=59: счёт 767501 и итого, дебет −3477644.67, кредит 15581077341.42, сальдо −15575003627.34. Запись не выполнялась.",
+                    "outcome": "Лист 1.3 закрыт. Следующий лист плана — 1.4, статус g_p и просмотр InsPmExt.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                      "docs/development/notes/UI/02-11_cn-inv-pmt-upl-access.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.8.6 регресс свода на фикстуре 915 (success). № log-2026-10-19-005",
+                "log-attributes": {
+                  "id": "log-2026-10-19-005",
+                  "timestamp": "2026-10-19T13:20:00+03:00",
+                  "level": "success",
+                  "effort": "50m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "ksdsf",
+                    "dbt",
+                    "1.8.6"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Закрыт регресс КСДСФ свода на отдельной фикстуре",
+                    "details": "Листья 1.8.6.1–.4. Год 1907, свод 915, срез 31.12.2025, не квартал года 901. Excel из двух строк договора 03-652/07-18-534-АУ/ (cn 410). Сухой префикс до CnCtptExistInvNotLoad, flLoad=false. Очередь open 2: cius 1331 link high на inv 7271, cius 1330 create high. Браузер: FindDbtNum, долг, даты, суммы при ε=0.01, возврат на загрузку свода. Apply не было. P1 902=193, 903=364, Tbl 901=1774.",
+                    "outcome": "Лист 1.8.6 закрыт. Следующий лист плана — 1.3 Sum_t.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.9.7 отбор строки Tbl в карте колонок (success). № log-2026-10-19-001",
+                "log-attributes": {
+                  "id": "log-2026-10-19-001",
+                  "timestamp": "2026-10-19T10:22:00+03:00",
+                  "level": "success",
+                  "effort": "30m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "docs",
+                    "1.9.7"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксирован критерий строки CnInvPmtUplTbl",
+                    "details": "export_offset-map: Access и FEMSQ с 1.9.0 пишут в Tbl только непустой «№ докум.»; цвет заливки не фильтр. До 1.9.0 rowLooksLikePayment пускал ещё БЕ или числовой счёт ГК, и жёлтые итоги (~7579 на pm=59) попадали в Tbl. Страховка sqlPmtTblHasDocCode. KSDSF_CONTEXTS: одна строка отбора со ссылкой на карту и §2.4. Якорь 580/581 не повторялся. План 0922 0.5.48.",
+                    "outcome": "Лист 1.9.7 закрыт. Следующий лист плана — 1.8.6, регресс свода.",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/export_offset-map.md",
+                      "docs/development/notes/sql/26-0816-sudz-sf-num-collision/KSDSF_CONTEXTS.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
             {
               "log": {
                 "displayName": "1.12 номера СФ договора: сортировка и страница (success). № log-2026-10-16-009",

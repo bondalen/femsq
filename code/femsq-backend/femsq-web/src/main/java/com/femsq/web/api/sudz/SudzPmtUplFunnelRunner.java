@@ -200,15 +200,54 @@ public class SudzPmtUplFunnelRunner {
                     + SudzDbtUplProgressLog.escape(exception.getMessage()));
             log.log(Level.WARNING, "pmt funnel SfDouble rebuild failed pmKey=" + pmKey, exception);
         }
-        progress.line("<font color=\"blue\">Воронка OK</font> — "
-                + SudzDbtUplProgressLog.now()
-                + " (всего <b>" + funnelMs + "</b> мс)");
-        log.log(Level.INFO, "runPmtUplFunnel done pmKey={0} totalMs={1} steps={2}",
-                new Object[]{pmKey, funnelMs, ran});
+        boolean sumsMatched = false;
+        try {
+            PmtUplSumGate.Verdict verdict = PmtUplSumGate.compare(
+                    sudzService.listPmtUplTblSums(pmKey),
+                    sudzService.listPmtUplSums(pmKey));
+            sumsMatched = verdict.matched();
+            for (String line : verdict.lines()) {
+                progress.line(line);
+            }
+        } catch (RuntimeException exception) {
+            progress.line("<font color=\"Salmon\">Сверка сумм</font>: "
+                    + SudzDbtUplProgressLog.escape(exception.getMessage()));
+            log.log(Level.WARNING, "pmt funnel sum gate failed pmKey=" + pmKey, exception);
+        }
+        boolean rowsMatched = false;
+        try {
+            PmtUplRowGate.Verdict rowVerdict = PmtUplRowGate.compare(
+                    sudzService.listPmtUplBookLines(pmKey),
+                    sudzService.listPmtUplPayLines(pmKey));
+            rowsMatched = rowVerdict.matched();
+            for (String line : rowVerdict.lines()) {
+                progress.line(line);
+            }
+        } catch (RuntimeException exception) {
+            progress.line("<font color=\"Salmon\">Сверка строк</font>: "
+                    + SudzDbtUplProgressLog.escape(exception.getMessage()));
+            log.log(Level.WARNING, "pmt funnel row gate failed pmKey=" + pmKey, exception);
+        }
+        if (sumsMatched && rowsMatched) {
+            progress.line("<font color=\"blue\">Воронка OK</font> — "
+                    + SudzDbtUplProgressLog.now()
+                    + " (всего <b>" + funnelMs + "</b> мс)");
+        } else if (!sumsMatched) {
+            progress.line("<font color=\"Salmon\">Воронка не завершена</font> — "
+                    + SudzDbtUplProgressLog.now()
+                    + " (всего <b>" + funnelMs + "</b> мс): суммы книги и базы не совпали");
+        } else {
+            progress.line("<font color=\"Salmon\">Воронка не завершена</font> — "
+                    + SudzDbtUplProgressLog.now()
+                    + " (всего <b>" + funnelMs + "</b> мс): строки книги и базы не совпали");
+        }
+        log.log(Level.INFO,
+                "runPmtUplFunnel done pmKey={0} totalMs={1} steps={2} sumsMatched={3} rowsMatched={4}",
+                new Object[]{pmKey, funnelMs, ran, sumsMatched, rowsMatched});
 
         flushProgress(pmKey, progress);
         SudzPmtUplLauncher after = sudzService.getPmtUplLauncher(pmKey);
-        return new SudzPmtUplFunnelResult(after, List.copyOf(ran), anyStub);
+        return new SudzPmtUplFunnelResult(after, List.copyOf(ran), anyStub, sumsMatched, rowsMatched);
     }
 
     /**

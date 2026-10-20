@@ -353,7 +353,10 @@ public class SudzPmtUplExcelToTblImporter {
         if (norm.contains("срок") && norm.contains("оплат")) {
             return Col.DUE;
         }
-        if (norm.contains("сальдо") && norm.contains("конечн") && !norm.contains("начальн")) {
+        boolean closingBalance = norm.contains("конечн")
+                || norm.contains("кондт")
+                || norm.contains("конкт");
+        if (norm.contains("сальдо") && closingBalance && !norm.contains("начальн")) {
             boolean overd = norm.contains("просроч");
             boolean notOverd = norm.contains("непросроч");
             boolean dt = norm.contains("дт");

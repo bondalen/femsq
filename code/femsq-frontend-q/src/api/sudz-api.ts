@@ -35,8 +35,11 @@ import type {
   SudzDebtCollectionInput,
   SudzDebtCollectionResult,
   SudzPmLink,
+  SudzPmtUplExtDiff,
+  SudzPmtUplGp,
   SudzPmUplLookup,
   SudzPmtUplCstNew,
+  SudzPmtUplSum,
   SudzPmtUplCstMatch,
   SudzPmtUplFile,
   SudzPmtUplInvNot,
@@ -302,6 +305,67 @@ const SUDZ_PMT_UPL_LAUNCHER = gql`
   }
 `;
 
+const PM_LINK_FIELDS = `
+  gPKey
+  dbtUpl
+  pmKey
+  pmName
+  pmDate
+  dbtUplName
+  dbtUplDate
+`;
+
+const SUDZ_PMT_UPL_GP = gql`
+  query SudzPmtUplGp($pmKey: Int!) {
+    sudzPmtUplGp(pmKey: $pmKey) {
+      links { ${PM_LINK_FIELDS} }
+      cohort { ${PM_LINK_FIELDS} }
+    }
+  }
+`;
+
+const SUDZ_PM_LINKS = gql`
+  query SudzPmLinks($dbtUplKey: Int!) {
+    sudzPmLinks(dbtUplKey: $dbtUplKey) {
+      ${PM_LINK_FIELDS}
+    }
+  }
+`;
+
+const SUDZ_PMT_UPL_EXT_DIFF = gql`
+  query SudzPmtUplExtDiff($pmKey: Int!) {
+    sudzPmtUplExtDiff(pmKey: $pmKey) {
+      bookRows
+      dbRows
+      gapCount
+      gaps {
+        docCode
+        sheet
+        due
+        field
+        bookValue
+        dbValue
+      }
+    }
+  }
+`;
+
+const SUDZ_PMT_UPL_SUMS = gql`
+  query SudzPmtUplSums($pmKey: Int!) {
+    sudzPmtUplSums(pmKey: $pmKey) {
+      pmKey
+      accountNum
+      dbtBlns
+      dbtBlnsOverd
+      dbtBlnsNotOverd
+      cdtBlns
+      cdtBlnsOverd
+      cdtBlnsNotOverd
+      blns
+    }
+  }
+`;
+
 const SUDZ_PMT_UPL_CST_NEW = gql`
   query SudzPmtUplCstNew($pmKey: Int!) {
     sudzPmtUplCstNew(pmKey: $pmKey) {
@@ -394,6 +458,8 @@ const RUN_PMT_UPL_FUNNEL = gql`
   mutation RunSudzPmtUplFunnel($input: RunSudzPmtUplFunnelInput!) {
     runSudzPmtUplFunnel(input: $input) {
       stub
+      sumsMatched
+      rowsMatched
       ranSteps
       launcher {
         upl {
@@ -2264,6 +2330,70 @@ export async function getSudzPmUplLauncher(pmKey: number): Promise<SudzPmtUplLau
     return data;
   } catch (error) {
     throw wrapApolloError(error, 'SudzPmUplLauncher');
+  }
+}
+
+/**
+ * Итоги вкладки «счета, сумма» выбранного пакета.
+ */
+/**
+ * Связи g_p пакета и соседние пакеты тех же сводов. Запись не выполняет.
+ */
+export async function getSudzPmtUplGp(pmKey: number): Promise<SudzPmtUplGp> {
+  try {
+    const result = await apolloClient.query<{ sudzPmtUplGp: SudzPmtUplGp }>({
+      query: SUDZ_PMT_UPL_GP,
+      variables: { pmKey },
+      fetchPolicy: 'network-only'
+    });
+    return result.data?.sudzPmtUplGp ?? { links: [], cohort: [] };
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzPmtUplGp');
+  }
+}
+
+/**
+ * Пакеты платежей, уже связанные со сводом. Запись не выполняет.
+ */
+export async function getSudzPmLinks(dbtUplKey: number): Promise<SudzPmLink[]> {
+  try {
+    const result = await apolloClient.query<{ sudzPmLinks: SudzPmLink[] }>({
+      query: SUDZ_PM_LINKS,
+      variables: { dbtUplKey },
+      fetchPolicy: 'network-only'
+    });
+    return result.data?.sudzPmLinks ?? [];
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzPmLinks');
+  }
+}
+
+/**
+ * Отличия книги Tbl и платежей. Excel не перечитывает, платежи не меняет.
+ */
+export async function getSudzPmtUplExtDiff(pmKey: number): Promise<SudzPmtUplExtDiff> {
+  try {
+    const result = await apolloClient.query<{ sudzPmtUplExtDiff: SudzPmtUplExtDiff }>({
+      query: SUDZ_PMT_UPL_EXT_DIFF,
+      variables: { pmKey },
+      fetchPolicy: 'network-only'
+    });
+    return result.data?.sudzPmtUplExtDiff ?? { bookRows: 0, dbRows: 0, gapCount: 0, gaps: [] };
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzPmtUplExtDiff');
+  }
+}
+
+export async function getSudzPmtUplSums(pmKey: number): Promise<SudzPmtUplSum[]> {
+  try {
+    const result = await apolloClient.query<{ sudzPmtUplSums: SudzPmtUplSum[] }>({
+      query: SUDZ_PMT_UPL_SUMS,
+      variables: { pmKey },
+      fetchPolicy: 'network-only'
+    });
+    return result.data?.sudzPmtUplSums ?? [];
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzPmtUplSums');
   }
 }
 

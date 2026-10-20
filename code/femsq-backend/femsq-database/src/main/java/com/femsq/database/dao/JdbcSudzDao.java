@@ -74,6 +74,9 @@ import com.femsq.database.model.sudz.SudzPmtUplAgNotLoadInserted;
 import com.femsq.database.model.sudz.SudzPmtUplCnNotLoad;
 import com.femsq.database.model.sudz.SudzPmtUplCstMatch;
 import com.femsq.database.model.sudz.SudzPmtUplCstNew;
+import com.femsq.database.model.sudz.SudzPmtUplExtLine;
+import com.femsq.database.model.sudz.SudzPmtUplLine;
+import com.femsq.database.model.sudz.SudzPmtUplSum;
 import com.femsq.database.model.sudz.SudzPmtUplInvNot;
 import com.femsq.database.model.sudz.SudzPmtUplTabBadges;
 import com.femsq.database.model.sudz.SudzPmtUplTwoLoad;
@@ -1384,6 +1387,286 @@ public class JdbcSudzDao implements SudzDao {
     }
 
     @Override
+    public List<SudzPmtUplSum> listPmtUplSums(int unloadKey) {
+        requirePositiveUnload(unloadKey);
+        String sql = ""
+                + "SELECT cn_inv_pm_upl, account_num, dbt_blns, dbt_blns_overd, dbt_blns_not_overd,"
+                + " cdt_blns, cdt_blns_overd, cdt_blns_not_overd, blns"
+                + " FROM ags.q_cn_inv_pm_upl_sum"
+                + " WHERE cn_inv_pm_upl = ?"
+                + " ORDER BY CASE WHEN account_num IS NULL THEN 1 ELSE 0 END, account_num";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, unloadKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                List<SudzPmtUplSum> rows = new ArrayList<>();
+                while (rs.next()) {
+                    rows.add(new SudzPmtUplSum(
+                            rs.getInt("cn_inv_pm_upl"),
+                            getInteger(rs, "account_num"),
+                            getBigDecimal(rs, "dbt_blns"),
+                            getBigDecimal(rs, "dbt_blns_overd"),
+                            getBigDecimal(rs, "dbt_blns_not_overd"),
+                            getBigDecimal(rs, "cdt_blns"),
+                            getBigDecimal(rs, "cdt_blns_overd"),
+                            getBigDecimal(rs, "cdt_blns_not_overd"),
+                            getBigDecimal(rs, "blns")));
+                }
+                log.log(Level.INFO, "listPmtUplSums unloadKey={0} rows={1}",
+                        new Object[]{unloadKey, rows.size()});
+                return List.copyOf(rows);
+            }
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось выбрать суммы пакета unloadKey=" + unloadKey, exception);
+        }
+    }
+
+    @Override
+    public List<SudzPmtUplSum> listPmtUplTblSums(int unloadKey) {
+        requirePositiveUnload(unloadKey);
+        String sql = ""
+                + "SELECT ciputAccount AS account_num,"
+                + " SUM(ciputDbtBlns) AS dbt_blns,"
+                + " SUM(ciputDbtBlnsOverd) AS dbt_blns_overd,"
+                + " SUM(ciputDbtBlnsOverdNot) AS dbt_blns_not_overd,"
+                + " SUM(ciputCdtBlns) AS cdt_blns,"
+                + " SUM(ciputCdtBlnsOverd) AS cdt_blns_overd,"
+                + " SUM(ciputCdtBlnsOverdNot) AS cdt_blns_not_overd,"
+                + " SUM(ciputBlns) AS blns"
+                + " FROM sudz.CnInvPmtUplTbl"
+                + " WHERE ciputUnloadKey = ?"
+                + " AND ciputCnInvDocCode IS NOT NULL"
+                + " AND LTRIM(RTRIM(ciputCnInvDocCode)) <> N''"
+                + " GROUP BY ciputAccount"
+                + " ORDER BY CASE WHEN ciputAccount IS NULL THEN 1 ELSE 0 END, ciputAccount";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, unloadKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                List<SudzPmtUplSum> rows = new ArrayList<>();
+                while (rs.next()) {
+                    rows.add(new SudzPmtUplSum(
+                            unloadKey,
+                            getInteger(rs, "account_num"),
+                            getBigDecimal(rs, "dbt_blns"),
+                            getBigDecimal(rs, "dbt_blns_overd"),
+                            getBigDecimal(rs, "dbt_blns_not_overd"),
+                            getBigDecimal(rs, "cdt_blns"),
+                            getBigDecimal(rs, "cdt_blns_overd"),
+                            getBigDecimal(rs, "cdt_blns_not_overd"),
+                            getBigDecimal(rs, "blns")));
+                }
+                log.log(Level.INFO, "listPmtUplTblSums unloadKey={0} rows={1}",
+                        new Object[]{unloadKey, rows.size()});
+                return List.copyOf(rows);
+            }
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось выбрать суммы книги unloadKey=" + unloadKey, exception);
+        }
+    }
+
+    @Override
+    public List<SudzPmtUplLine> listPmtUplBookLines(int unloadKey) {
+        requirePositiveUnload(unloadKey);
+        String sql = ""
+                + "SELECT LTRIM(RTRIM(ciputCnInvDocCode)) AS docCode, ciputSheetNum AS sheetNum, "
+                + "       ciputDueDate AS dueAt, ciputAlligmentDate AS alignAt, "
+                + "       ciputDbtBlns, ciputDbtBlnsOverd, ciputDbtBlnsOverdNot, "
+                + "       ciputCdtBlns, ciputCdtBlnsOverd, ciputCdtBlnsOverdNot, ciputBlns "
+                + "FROM " + q("CnInvPmtUplTbl") + " AS t "
+                + "WHERE t.ciputUnloadKey = ?"
+                + sqlPmtTblHasDocCode("t");
+        return listPmtUplLines(sql, unloadKey, "книги");
+    }
+
+    @Override
+    public List<SudzPmtUplLine> listPmtUplPayLines(int unloadKey) {
+        requirePositiveUnload(unloadKey);
+        String sql = ""
+                + "SELECT CONVERT(varchar(40), d.cn_inv_doc_kod) AS docCode, p.[number] AS sheetNum, "
+                + "       p.cn_inv_pm_due AS dueAt, p.alignment_date AS alignAt, "
+                + "       p.dbt_blns AS ciputDbtBlns, p.dbt_blns_overd AS ciputDbtBlnsOverd, "
+                + "       p.dbt_blns_not_overd AS ciputDbtBlnsOverdNot, "
+                + "       p.cdt_blns AS ciputCdtBlns, p.cdt_blns_overd AS ciputCdtBlnsOverd, "
+                + "       p.cdt_blns_not_overd AS ciputCdtBlnsOverdNot, p.blns AS ciputBlns "
+                + "FROM ags.cn_inv_pm AS p "
+                + "INNER JOIN ags.cn_inv_doc AS d ON d.cn_inv_doc_key = p.cn_inv_doc "
+                + "WHERE p.cn_inv_pm_upl = ?";
+        return listPmtUplLines(sql, unloadKey, "базы");
+    }
+
+    @Override
+    public List<SudzPmtUplExtLine> listPmtUplBookExtLines(int unloadKey) {
+        requirePositiveUnload(unloadKey);
+        String sql = ""
+                + "SELECT LTRIM(RTRIM(ciputCnInvDocCode)) AS docCode, ciputSheetNum AS sheetNum, "
+                + "       ciputDueDate AS dueAt, ciputAlligmentDate AS alignAt, "
+                + "       ciputDbtBlns, ciputDbtBlnsOverd, ciputDbtBlnsOverdNot, "
+                + "       ciputCdtBlns, ciputCdtBlnsOverd, ciputCdtBlnsOverdNot, ciputBlns, "
+                + "       CASE "
+                + "         WHEN t.ciputCAC IS NULL OR LTRIM(RTRIM(t.ciputCAC)) = N'' THEN "
+                + "           CASE WHEN t.ciputLink IS NOT NULL AND LEN(t.ciputLink) > 10 "
+                + "                     AND SUBSTRING(t.ciputLink, 4, 1) = N'-' "
+                + "                THEN LEFT(t.ciputLink, 11) ELSE NULL END "
+                + "         WHEN LEN(t.ciputCAC) > 10 AND SUBSTRING(t.ciputCAC, 4, 1) = N'-' "
+                + "              THEN LEFT(t.ciputCAC, 11) "
+                + "         ELSE NULL END AS cac "
+                + "FROM " + q("CnInvPmtUplTbl") + " AS t "
+                + "WHERE t.ciputUnloadKey = ?"
+                + sqlPmtTblHasDocCode("t");
+        return listPmtUplExtLines(sql, unloadKey, "книги");
+    }
+
+    @Override
+    public List<SudzPmtUplExtLine> listPmtUplPayExtLines(int unloadKey) {
+        requirePositiveUnload(unloadKey);
+        String sql = ""
+                + "SELECT CONVERT(varchar(40), d.cn_inv_doc_kod) AS docCode, p.[number] AS sheetNum, "
+                + "       p.cn_inv_pm_due AS dueAt, p.alignment_date AS alignAt, "
+                + "       p.dbt_blns AS ciputDbtBlns, p.dbt_blns_overd AS ciputDbtBlnsOverd, "
+                + "       p.dbt_blns_not_overd AS ciputDbtBlnsOverdNot, "
+                + "       p.cdt_blns AS ciputCdtBlns, p.cdt_blns_overd AS ciputCdtBlnsOverd, "
+                + "       p.cdt_blns_not_overd AS ciputCdtBlnsOverdNot, p.blns AS ciputBlns, "
+                + "       LTRIM(RTRIM(pn.cstapIpgPnN)) AS cac "
+                + "FROM ags.cn_inv_pm AS p "
+                + "INNER JOIN ags.cn_inv_doc AS d ON d.cn_inv_doc_key = p.cn_inv_doc "
+                + "LEFT JOIN ags.cstAgPn AS pn ON pn.cstapKey = p.cnipCstAgPn "
+                + "WHERE p.cn_inv_pm_upl = ?";
+        return listPmtUplExtLines(sql, unloadKey, "базы");
+    }
+
+    @Override
+    public List<SudzPmLink> listPmLinks(Integer pmKey, Integer dbtUplKey) {
+        boolean byPm = pmKey != null;
+        boolean byDbt = dbtUplKey != null;
+        if (byPm == byDbt) {
+            throw new IllegalArgumentException("Нужен ровно один фильтр связи: пакет или свод");
+        }
+        int filter = byPm ? pmKey : dbtUplKey;
+        if (filter <= 0) {
+            throw new IllegalArgumentException("Ключ связи должен быть положительным: " + filter);
+        }
+        String sql = "SELECT gp.[key] AS g_p_key, gp.cn_inv_dbt_upl, gp.cn_inv_pm_upl, "
+                + "pm.cn_inv_pm_name, pm.cn_inv_pm_date, "
+                + "u.upl_name, u.upl_date "
+                + "FROM " + q("cn_inv_dbt_upl_g_p") + " gp "
+                + "JOIN " + q("cn_inv_pm_upl") + " pm ON pm.cn_inv_pm_key = gp.cn_inv_pm_upl "
+                + "JOIN " + q("cn_inv_dbt_upl") + " u ON u.upl_key = gp.cn_inv_dbt_upl "
+                + "WHERE " + (byPm ? "gp.cn_inv_pm_upl = ?" : "gp.cn_inv_dbt_upl = ?")
+                + " ORDER BY gp.[key]";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, filter);
+            try (ResultSet rs = statement.executeQuery()) {
+                List<SudzPmLink> rows = new ArrayList<>();
+                while (rs.next()) {
+                    rows.add(mapPmLink(rs));
+                }
+                log.log(Level.INFO, "listPmLinks byPm={0} filter={1} rows={2}",
+                        new Object[]{byPm, filter, rows.size()});
+                return List.copyOf(rows);
+            }
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось выбрать связи g_p filter=" + filter, exception);
+        }
+    }
+
+    /**
+     * Читает строки сверки.
+     *
+     * @param sql запрос с параметром пакета
+     * @param unloadKey пакет
+     * @param side подпись для ошибки
+     * @return строки
+     */
+    private List<SudzPmtUplLine> listPmtUplLines(String sql, int unloadKey, String side) {
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setQueryTimeout(120);
+            statement.setInt(1, unloadKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                List<SudzPmtUplLine> rows = new ArrayList<>();
+                while (rs.next()) {
+                    int sheetRaw = rs.getInt("sheetNum");
+                    Integer sheet = rs.wasNull() ? null : sheetRaw;
+                    Timestamp due = rs.getTimestamp("dueAt");
+                    Timestamp align = rs.getTimestamp("alignAt");
+                    rows.add(new SudzPmtUplLine(
+                            rs.getString("docCode"),
+                            sheet,
+                            due == null ? null : due.toLocalDateTime(),
+                            align == null ? null : align.toLocalDateTime(),
+                            getBigDecimal(rs, "ciputDbtBlns"),
+                            getBigDecimal(rs, "ciputDbtBlnsOverd"),
+                            getBigDecimal(rs, "ciputDbtBlnsOverdNot"),
+                            getBigDecimal(rs, "ciputCdtBlns"),
+                            getBigDecimal(rs, "ciputCdtBlnsOverd"),
+                            getBigDecimal(rs, "ciputCdtBlnsOverdNot"),
+                            getBigDecimal(rs, "ciputBlns")));
+                }
+                log.log(Level.INFO, "listPmtUplLines side={0} unloadKey={1} rows={2}",
+                        new Object[]{side, unloadKey, rows.size()});
+                return List.copyOf(rows);
+            }
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось выбрать строки " + side + " unloadKey=" + unloadKey, exception);
+        }
+    }
+
+    /**
+     * Читает строки InsPmExt вместе с кодом стройки.
+     *
+     * @param sql запрос с параметром пакета
+     * @param unloadKey пакет
+     * @param side подпись для ошибки
+     * @return строки
+     */
+    private List<SudzPmtUplExtLine> listPmtUplExtLines(String sql, int unloadKey, String side) {
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setQueryTimeout(120);
+            statement.setInt(1, unloadKey);
+            try (ResultSet rs = statement.executeQuery()) {
+                List<SudzPmtUplExtLine> rows = new ArrayList<>();
+                while (rs.next()) {
+                    int sheetRaw = rs.getInt("sheetNum");
+                    Integer sheet = rs.wasNull() ? null : sheetRaw;
+                    Timestamp due = rs.getTimestamp("dueAt");
+                    Timestamp align = rs.getTimestamp("alignAt");
+                    rows.add(new SudzPmtUplExtLine(
+                            rs.getString("docCode"),
+                            sheet,
+                            due == null ? null : due.toLocalDateTime(),
+                            align == null ? null : align.toLocalDateTime(),
+                            getBigDecimal(rs, "ciputDbtBlns"),
+                            getBigDecimal(rs, "ciputDbtBlnsOverd"),
+                            getBigDecimal(rs, "ciputDbtBlnsOverdNot"),
+                            getBigDecimal(rs, "ciputCdtBlns"),
+                            getBigDecimal(rs, "ciputCdtBlnsOverd"),
+                            getBigDecimal(rs, "ciputCdtBlnsOverdNot"),
+                            getBigDecimal(rs, "ciputBlns"),
+                            rs.getString("cac")));
+                }
+                log.log(Level.INFO, "listPmtUplExtLines side={0} unloadKey={1} rows={2}",
+                        new Object[]{side, unloadKey, rows.size()});
+                return List.copyOf(rows);
+            }
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось выбрать строки " + side + " unloadKey=" + unloadKey, exception);
+        }
+    }
+
+    @Override
     public List<SudzPmtUplCstMatch> listPmtUplCstMatch(String codeSuffix) {
         String suffix = SudzPmtUplCstMatch.requireCodeSuffix(codeSuffix);
         String sql = ""
@@ -1552,9 +1835,16 @@ public class JdbcSudzDao implements SudzDao {
                             new Object[]{unloadKey, deleted});
                 }
                 try (Statement statement = connection.createStatement()) {
-                    statement.setQueryTimeout(60);
+                    // 0 = без лимита: InvNot/TwoLoad @62 по VPN уже >180 с; anti-join 1.15 ~0,2 с
+                    statement.setQueryTimeout(0);
+                    long phaseT0 = System.nanoTime();
                     executeBatch(statement, sqlPmtInvNotListBuild(tbl, unloadKey));
+                    log.log(Level.INFO, "rebuildPmtUplSfDouble phase invNotBuild unloadKey={0} ms={1}",
+                            new Object[]{unloadKey, (System.nanoTime() - phaseT0) / 1_000_000L});
+                    phaseT0 = System.nanoTime();
                     executeBatch(statement, sqlPmtTwoLoadListBuild(tbl, unloadKey));
+                    log.log(Level.INFO, "rebuildPmtUplSfDouble phase twoLoadBuild unloadKey={0} ms={1}",
+                            new Object[]{unloadKey, (System.nanoTime() - phaseT0) / 1_000_000L});
                     statement.execute(
                             "IF OBJECT_ID('tempdb..#pmtSfPick') IS NOT NULL DROP TABLE #pmtSfPick");
                     statement.execute("CREATE TABLE #pmtSfPick ("
@@ -1624,9 +1914,23 @@ public class JdbcSudzDao implements SudzDao {
                             + ") AS r ON r.ciputKey = p.ciputKey "
                             + "WHERE p.cnKey IS NULL";
                     int filledCn = statement.executeUpdate(fillCn);
+                    // 1.15: anti-join — не класть в очередь ключи, чья судьба уже видна в домене
+                    phaseT0 = System.nanoTime();
+                    int stepIdx = 0;
+                    for (String step : sqlPmtSfPickExcludeResolvedSteps(tbl, unloadKey)) {
+                        long stepT0 = System.nanoTime();
+                        statement.execute(step);
+                        log.log(Level.INFO,
+                                "rebuildPmtUplSfDouble phase antiJoin step={0} unloadKey={1} ms={2}",
+                                new Object[]{stepIdx++, unloadKey,
+                                        (System.nanoTime() - stepT0) / 1_000_000L});
+                    }
+                    int skippedResolved = statement.executeUpdate(sqlPmtSfPickExcludeResolvedDelete());
                     log.log(Level.INFO,
-                            "rebuildPmtUplSfDouble pick unloadKey={0} invNot={1} twoExtra={2} filledCn={3}",
-                            new Object[]{unloadKey, fromInvNot, fromTwo, filledCn});
+                            "rebuildPmtUplSfDouble pick unloadKey={0} invNot={1} twoExtra={2}"
+                                    + " filledCn={3} skippedResolved={4} antiJoinMs={5}",
+                            new Object[]{unloadKey, fromInvNot, fromTwo, filledCn, skippedResolved,
+                                    (System.nanoTime() - phaseT0) / 1_000_000L});
                 }
                 String insertSf = ""
                         + "INSERT INTO " + sf
@@ -1746,6 +2050,65 @@ public class JdbcSudzDao implements SudzDao {
         String a = tableAlias == null || tableAlias.isBlank() ? "t" : tableAlias;
         return " AND " + a + ".ciputCnInvDocCode IS NOT NULL"
                 + " AND LTRIM(RTRIM(" + a + ".ciputCnInvDocCode)) <> N'' ";
+    }
+
+    /**
+     * Anti-join **1.15** (подготовка): carrier-inv + покрытие Tbl → {@code #pmtSfCarrier}.
+     * Отдельные шаги (не один multi-statement batch) — надёжнее на JDBC/VPN.
+     * См. KSDSF_CONTEXTS.
+     *
+     * @param tbl квалифицированное {@code CnInvPmtUplTbl}
+     * @param unloadKey пакет
+     * @return шаги до финального DELETE из {@code #pmtSfPick}
+     */
+    private static List<String> sqlPmtSfPickExcludeResolvedSteps(String tbl, int unloadKey) {
+        // Покрытие: COUNT белых Tbl по ключу = COUNT pm на carrier (без построчного
+        // JOIN к cn_inv_doc — на @62 тот шаг давал ~180 с по VPN).
+        String tblMatch = ""
+                + "FROM " + tbl + " AS t "
+                + "WHERE t.ciputUnloadKey = " + unloadKey + " "
+                + "  AND " + sqlPmtNormCnInv("t") + " = c.invNum "
+                + sqlPmtTblHasDocCode("t")
+                + "  AND EXISTS ( "
+                + "    SELECT 1 FROM ags.cnNum AS num "
+                + "    WHERE num.cnnCn = c.cnKey AND num.cnnNumNull = " + sqlPmtNormCnName("t") + " "
+                + "  )";
+        String pmOnCarrier = ""
+                + "FROM ags.cnInv AS ci "
+                + "INNER JOIN ags.cnInvAccntSmpl AS cias ON cias.ciasCnInv = ci.ciKey "
+                + "INNER JOIN ags.cn_inv_pm AS pm "
+                + "  ON pm.ciaCnInvAccntSmpl = cias.ciasKey AND pm.cn_inv_pm_upl = " + unloadKey + " "
+                + "WHERE ci.ciCn = c.cnKey AND ci.ciInv = c.carrierInv";
+        return List.of(
+                "IF OBJECT_ID('tempdb..#pmtSfCarrier') IS NOT NULL DROP TABLE #pmtSfCarrier",
+                // От pm пакета (не от глобального invNum): иначе «б/н»/TwoLoad раздувает join.
+                ""
+                        + "SELECT p.ciputKey, p.cnKey, p.invNum, MIN(ci.ciInv) AS carrierInv "
+                        + "INTO #pmtSfCarrier "
+                        + "FROM #pmtSfPick AS p "
+                        + "INNER JOIN ags.cn_inv_pm AS pm ON pm.cn_inv_pm_upl = " + unloadKey + " "
+                        + "INNER JOIN ags.cnInvAccntSmpl AS cias ON cias.ciasKey = pm.ciaCnInvAccntSmpl "
+                        + "INNER JOIN ags.cnInv AS ci ON ci.ciKey = cias.ciasCnInv AND ci.ciCn = p.cnKey "
+                        + "INNER JOIN ags.invNum AS n ON n.inInv = ci.ciInv AND n.inNumNull = p.invNum "
+                        + "WHERE p.cnKey IS NOT NULL AND p.invNum IS NOT NULL "
+                        + "GROUP BY p.ciputKey, p.cnKey, p.invNum "
+                        + "HAVING COUNT(DISTINCT ci.ciInv) = 1",
+                ""
+                        + "DELETE c FROM #pmtSfCarrier AS c "
+                        + "WHERE (SELECT COUNT(*) " + tblMatch + ") = 0 "
+                        + "   OR (SELECT COUNT(*) " + tblMatch + ") "
+                        + "    <> (SELECT COUNT(*) " + pmOnCarrier + ")"
+        );
+    }
+
+    /**
+     * Anti-join **1.15** (финал): удалить из pick строки с carrier в {@code #pmtSfCarrier}.
+     *
+     * @return {@code DELETE} из {@code #pmtSfPick}
+     */
+    private static String sqlPmtSfPickExcludeResolvedDelete() {
+        return "DELETE p FROM #pmtSfPick AS p "
+                + "WHERE EXISTS (SELECT 1 FROM #pmtSfCarrier AS c WHERE c.ciputKey = p.ciputKey)";
     }
 
     /**
@@ -2394,6 +2757,63 @@ public class JdbcSudzDao implements SudzDao {
     }
 
     /**
+     * Образец исполнителя: {@code org_id} номера из книги, если он уже есть на договоре.
+     * Иначе любой {@code org_id} той же организации. Алиасы {@code i} / {@code iSame} / {@code os}
+     * задаёт {@link #sqlPmtSameOrgExecutor(String)}.
+     *
+     * @return выражение агрегата для столбца {@code csosKey}
+     */
+    private static String sqlPmtPreferredCsos() {
+        return "COALESCE(MIN(CASE WHEN iSame.org_id_key = i.org_id_key THEN os.csosKey END),"
+                + " MIN(os.csosKey))";
+    }
+
+    /**
+     * Ключ копии строки: срок, дата выравнивания и семь сумм.
+     * Одинаковые строки книги остаются разными копиями одного ключа.
+     *
+     * @param due выражение срока
+     * @param align выражение даты выравнивания
+     * @param dbt дебет
+     * @param dbtOver дебет просроченный
+     * @param dbtNot дебет не просроченный
+     * @param cdt кредит
+     * @param cdtOver кредит просроченный
+     * @param cdtNot кредит не просроченный
+     * @param blns сальдо
+     * @return список выражений для SELECT/GROUP BY
+     */
+    private static String sqlPmtAmountKey(
+            String due, String align,
+            String dbt, String dbtOver, String dbtNot,
+            String cdt, String cdtOver, String cdtNot,
+            String blns) {
+        return "CONVERT(datetime2(0), " + due + "), CONVERT(datetime2(0), " + align + "), "
+                + "CONVERT(decimal(19, 4), ISNULL(" + dbt + ", 0)), "
+                + "CONVERT(decimal(19, 4), ISNULL(" + dbtOver + ", 0)), "
+                + "CONVERT(decimal(19, 4), ISNULL(" + dbtNot + ", 0)), "
+                + "CONVERT(decimal(19, 4), ISNULL(" + cdt + ", 0)), "
+                + "CONVERT(decimal(19, 4), ISNULL(" + cdtOver + ", 0)), "
+                + "CONVERT(decimal(19, 4), ISNULL(" + cdtNot + ", 0)), "
+                + "CONVERT(decimal(19, 4), ISNULL(" + blns + ", 0))";
+    }
+
+    /**
+     * Сторона исполнителя (type=2) той же организации, что БУиРГ Excel.
+     * Договор может ссылаться на другой {@code org_id} этой организации, не только type=1.
+     *
+     * @param partyNumExpr номер контрагента из книги ({@code z.CntrPrtNum})
+     * @return фрагмент JOIN с алиасами {@code i}, {@code iSame}, {@code os}, {@code s}
+     */
+    private static String sqlPmtSameOrgExecutor(String partyNumExpr) {
+        return "INNER JOIN ags.org_id AS i "
+                + " ON " + partyNumExpr + " = i.org_id_value_l AND i.org_id_type = 1 "
+                + "INNER JOIN ags.org_id AS iSame ON iSame.org = i.org "
+                + "INNER JOIN ags.cn_s_org_smpl AS os ON os.csosOrgId = iSame.org_id_key "
+                + "INNER JOIN ags.cn_s AS s ON s.cn_s_key = os.csosCn_s AND s.cn_s_type = 2 ";
+    }
+
+    /**
      * Staged InsPm (не монолитный CTE): {@code #stg→…→#ready}.
      * DBHub 2026-09-22: монолит &gt;900 с @59; staged wall &lt;1 с.
      * {@code uk} вшит литералом — {@code PreparedStatement}/{@code sp_executesql}
@@ -2411,6 +2831,8 @@ public class JdbcSudzDao implements SudzDao {
                 + "IF OBJECT_ID('tempdb..#oneInv') IS NOT NULL DROP TABLE #oneInv; "
                 + "IF OBJECT_ID('tempdb..#cand') IS NOT NULL DROP TABLE #cand; "
                 + "IF OBJECT_ID('tempdb..#missing') IS NOT NULL DROP TABLE #missing; "
+                + "IF OBJECT_ID('tempdb..#bookN') IS NOT NULL DROP TABLE #bookN; "
+                + "IF OBJECT_ID('tempdb..#payN') IS NOT NULL DROP TABLE #payN; "
                 + "IF OBJECT_ID('tempdb..#ready') IS NOT NULL DROP TABLE #ready; "
                 + "IF OBJECT_ID('tempdb..#docmap') IS NOT NULL DROP TABLE #docmap; "
                 + "SELECT "
@@ -2447,12 +2869,9 @@ public class JdbcSudzDao implements SudzDao {
                 + "  AND ciputCnInvDocCode IS NOT NULL AND ciputCnInvDocCode <> N'' "
                 + "GROUP BY CntrPrtNum, CnName, ciputCnInv, ciputAccount; "
                 + "SELECT z.CntrPrtNum, z.CnName, z.ciputCnInv, z.ciputAccount, "
-                + "       MIN(c.cn_key) AS cn_key, MIN(os.csosKey) AS csosKey "
+                + "       MIN(c.cn_key) AS cn_key, " + sqlPmtPreferredCsos() + " AS csosKey "
                 + "INTO #oneCn FROM #ctpt AS z "
-                + "INNER JOIN ags.org_id AS i "
-                + "  ON z.CntrPrtNum = i.org_id_value_l AND i.org_id_type = 1 "
-                + "INNER JOIN ags.cn_s_org_smpl AS os ON os.csosOrgId = i.org_id_key "
-                + "INNER JOIN ags.cn_s AS s ON s.cn_s_key = os.csosCn_s AND s.cn_s_type = 2 "
+                + sqlPmtSameOrgExecutor("z.CntrPrtNum")
                 + "INNER JOIN ags.cn AS c ON c.cn_key = s.cn_key "
                 + "INNER JOIN ags.cnNum AS num "
                 + "  ON num.cnnCn = c.cn_key AND num.cnnNumNull = z.CnName "
@@ -2493,14 +2912,58 @@ public class JdbcSudzDao implements SudzDao {
                 + " AND s.ciputCnInv = o.ciputCnInv AND s.ciputAccount = o.ciputAccount "
                 + "INNER JOIN #docmap AS dm ON dm.docKod = s.docKod "
                 + "LEFT JOIN ags.cstAgPn AS p ON s.cacOrNull = p.cstapIpgPnN; "
-                + "SELECT ciasKey, cn_inv_doc_key, ciputSheetNum INTO #missing "
-                + "FROM ( "
-                + "  SELECT ciasKey, cn_inv_doc_key, ciputSheetNum FROM #cand "
-                + "  GROUP BY ciasKey, cn_inv_doc_key, ciputSheetNum "
-                + "  EXCEPT "
-                + "  SELECT ciaCnInvAccntSmpl, cn_inv_doc, [number] "
-                + "  FROM ags.cn_inv_pm WHERE cn_inv_pm_upl = @uk "
-                + ") AS x; "
+                + "SELECT ciasKey, cn_inv_doc_key, ciputSheetNum, "
+                + "       CONVERT(datetime2(0), ciputDueDate) AS dueAt, "
+                + "       CONVERT(datetime2(0), ciputAlligmentDate) AS alignAt, "
+                + "       CONVERT(decimal(19, 4), ISNULL(ciputDbtBlns, 0)) AS dbt, "
+                + "       CONVERT(decimal(19, 4), ISNULL(ciputDbtBlnsOverd, 0)) AS dbtOver, "
+                + "       CONVERT(decimal(19, 4), ISNULL(ciputDbtBlnsOverdNot, 0)) AS dbtNot, "
+                + "       CONVERT(decimal(19, 4), ISNULL(ciputCdtBlns, 0)) AS cdt, "
+                + "       CONVERT(decimal(19, 4), ISNULL(ciputCdtBlnsOverd, 0)) AS cdtOver, "
+                + "       CONVERT(decimal(19, 4), ISNULL(ciputCdtBlnsOverdNot, 0)) AS cdtNot, "
+                + "       CONVERT(decimal(19, 4), ISNULL(ciputBlns, 0)) AS blns, "
+                + "       COUNT(*) AS bookN "
+                + "INTO #bookN FROM #cand "
+                + "GROUP BY ciasKey, cn_inv_doc_key, ciputSheetNum, "
+                + sqlPmtAmountKey(
+                        "ciputDueDate", "ciputAlligmentDate",
+                        "ciputDbtBlns", "ciputDbtBlnsOverd", "ciputDbtBlnsOverdNot",
+                        "ciputCdtBlns", "ciputCdtBlnsOverd", "ciputCdtBlnsOverdNot",
+                        "ciputBlns")
+                + "; "
+                + "SELECT ciaCnInvAccntSmpl AS ciasKey, cn_inv_doc AS cn_inv_doc_key, "
+                + "       [number] AS sheetNum, "
+                + "       CONVERT(datetime2(0), cn_inv_pm_due) AS dueAt, "
+                + "       CONVERT(datetime2(0), alignment_date) AS alignAt, "
+                + "       CONVERT(decimal(19, 4), ISNULL(dbt_blns, 0)) AS dbt, "
+                + "       CONVERT(decimal(19, 4), ISNULL(dbt_blns_overd, 0)) AS dbtOver, "
+                + "       CONVERT(decimal(19, 4), ISNULL(dbt_blns_not_overd, 0)) AS dbtNot, "
+                + "       CONVERT(decimal(19, 4), ISNULL(cdt_blns, 0)) AS cdt, "
+                + "       CONVERT(decimal(19, 4), ISNULL(cdt_blns_overd, 0)) AS cdtOver, "
+                + "       CONVERT(decimal(19, 4), ISNULL(cdt_blns_not_overd, 0)) AS cdtNot, "
+                + "       CONVERT(decimal(19, 4), ISNULL(blns, 0)) AS blns, "
+                + "       COUNT(*) AS payN "
+                + "INTO #payN FROM ags.cn_inv_pm WHERE cn_inv_pm_upl = @uk "
+                + "GROUP BY ciaCnInvAccntSmpl, cn_inv_doc, [number], "
+                + sqlPmtAmountKey(
+                        "cn_inv_pm_due", "alignment_date",
+                        "dbt_blns", "dbt_blns_overd", "dbt_blns_not_overd",
+                        "cdt_blns", "cdt_blns_overd", "cdt_blns_not_overd",
+                        "blns")
+                + "; "
+                + "SELECT b.ciasKey, b.cn_inv_doc_key, b.ciputSheetNum, b.dueAt, b.alignAt, "
+                + "       b.dbt, b.dbtOver, b.dbtNot, b.cdt, b.cdtOver, b.cdtNot, b.blns, "
+                + "       b.bookN - ISNULL(p.payN, 0) AS need "
+                + "INTO #missing FROM #bookN AS b "
+                + "LEFT JOIN #payN AS p "
+                + "  ON p.ciasKey = b.ciasKey AND p.cn_inv_doc_key = b.cn_inv_doc_key "
+                + " AND EXISTS (SELECT b.ciputSheetNum INTERSECT SELECT p.sheetNum) "
+                + " AND EXISTS (SELECT b.dueAt INTERSECT SELECT p.dueAt) "
+                + " AND EXISTS (SELECT b.alignAt INTERSECT SELECT p.alignAt) "
+                + " AND p.dbt = b.dbt AND p.dbtOver = b.dbtOver AND p.dbtNot = b.dbtNot "
+                + " AND p.cdt = b.cdt AND p.cdtOver = b.cdtOver AND p.cdtNot = b.cdtNot "
+                + " AND p.blns = b.blns "
+                + "WHERE b.bookN > ISNULL(p.payN, 0); "
                 + ";WITH agOne AS ( "
                 + "  SELECT s.cn_key, i.org_id_value_l, MIN(os.csosKey) AS AgCsosKey "
                 + "  FROM (SELECT DISTINCT cn_key FROM #cand) AS k "
@@ -2511,19 +2974,37 @@ public class JdbcSudzDao implements SudzDao {
                 + "  GROUP BY s.cn_key, i.org_id_value_l "
                 + "  HAVING COUNT(DISTINCT os.csosKey) = 1 "
                 + "), ranked AS ( "
-                + "  SELECT c.*, ag.AgCsosKey, "
+                + "  SELECT c.*, m.need, ag.AgCsosKey, "
                 + "         ROW_NUMBER() OVER ( "
-                + "           PARTITION BY c.ciasKey, c.cn_inv_doc_key, c.ciputSheetNum "
+                + "           PARTITION BY c.ciasKey, c.cn_inv_doc_key, c.ciputSheetNum, "
+                + sqlPmtAmountKey(
+                        "c.ciputDueDate", "c.ciputAlligmentDate",
+                        "c.ciputDbtBlns", "c.ciputDbtBlnsOverd", "c.ciputDbtBlnsOverdNot",
+                        "c.ciputCdtBlns", "c.ciputCdtBlnsOverd", "c.ciputCdtBlnsOverdNot",
+                        "c.ciputBlns")
                 + "           ORDER BY c.ciputUnloadKey "
                 + "         ) AS rn "
                 + "  FROM #cand AS c "
                 + "  INNER JOIN #missing AS m "
                 + "    ON c.ciasKey = m.ciasKey AND c.cn_inv_doc_key = m.cn_inv_doc_key "
-                + "   AND c.ciputSheetNum = m.ciputSheetNum "
+                + "   AND EXISTS (SELECT c.ciputSheetNum INTERSECT SELECT m.ciputSheetNum) "
+                + "   AND EXISTS (SELECT CONVERT(datetime2(0), c.ciputDueDate) "
+                + "               INTERSECT SELECT m.dueAt) "
+                + "   AND EXISTS (SELECT CONVERT(datetime2(0), c.ciputAlligmentDate) "
+                + "               INTERSECT SELECT m.alignAt) "
+                + "   AND CONVERT(decimal(19, 4), ISNULL(c.ciputDbtBlns, 0)) = m.dbt "
+                + "   AND CONVERT(decimal(19, 4), ISNULL(c.ciputDbtBlnsOverd, 0)) = m.dbtOver "
+                + "   AND CONVERT(decimal(19, 4), ISNULL(c.ciputDbtBlnsOverdNot, 0)) = m.dbtNot "
+                + "   AND CONVERT(decimal(19, 4), ISNULL(c.ciputCdtBlns, 0)) = m.cdt "
+                + "   AND CONVERT(decimal(19, 4), ISNULL(c.ciputCdtBlnsOverd, 0)) = m.cdtOver "
+                + "   AND CONVERT(decimal(19, 4), ISNULL(c.ciputCdtBlnsOverdNot, 0)) = m.cdtNot "
+                + "   AND CONVERT(decimal(19, 4), ISNULL(c.ciputBlns, 0)) = m.blns "
                 + "  LEFT JOIN agOne AS ag "
                 + "    ON c.cn_key = ag.cn_key AND c.ciputAgentNum = ag.org_id_value_l "
                 + ") "
-                + "SELECT * INTO #ready FROM ranked WHERE rn = 1";
+                + "SELECT r.* INTO #ready FROM ranked AS r "
+                + "CROSS APPLY (SELECT TOP (r.need) 1 AS copyIx FROM sys.all_objects) AS copies "
+                + "WHERE r.rn = 1";
     }
 
     /**
@@ -2948,12 +3429,9 @@ public class JdbcSudzDao implements SudzDao {
                         + "oneCn AS ( "
                         + "  SELECT z.CntrPrtNum, z.CntrPrtName, z.CnName, z.ciputCnInv, "
                         + "         MIN(c.cn_key) AS cn_key, "
-                        + "         MIN(os.csosKey) AS csosKey "
+                        + "         " + sqlPmtPreferredCsos() + " AS csosKey "
                         + "  FROM ctpt AS z "
-                        + "  INNER JOIN ags.org_id AS i "
-                        + "    ON z.CntrPrtNum = i.org_id_value_l AND i.org_id_type = 1 "
-                        + "  INNER JOIN ags.cn_s_org_smpl AS os ON os.csosOrgId = i.org_id_key "
-                        + "  INNER JOIN ags.cn_s AS s ON s.cn_s_key = os.csosCn_s AND s.cn_s_type = 2 "
+                        + sqlPmtSameOrgExecutor("z.CntrPrtNum")
                         + "  INNER JOIN ags.cn AS c ON c.cn_key = s.cn_key "
                         + "  INNER JOIN ags.cnNum AS num "
                         + "    ON num.cnnCn = c.cn_key AND num.cnnNumNull = z.CnName "
@@ -2964,7 +3442,7 @@ public class JdbcSudzDao implements SudzDao {
                         + " (ciputciCntrPrtNum, ciputciCntrPrtName, ciputciCnName,"
                         + "  ciputciCn_key, ciputciCsosKey, ciputciCnInv, ciputciCnInvNumCount) "
                         + "SELECT o.CntrPrtNum, o.CntrPrtName, o.CnName, o.cn_key, o.csosKey, "
-                        + "       o.ciputCnInv, cnt.inNumCount "
+                        + "       o.ciputCnInv, NULLIF(cnt.inNumCount, 0) "
                         + "FROM oneCn AS o "
                         // O2: count и anti-join только по кандидатам oneCn — не полный скан invNum.
                         + "OUTER APPLY ( "
@@ -3109,12 +3587,9 @@ public class JdbcSudzDao implements SudzDao {
                 + "), "
                 + "oneCn AS ( "
                 + "  SELECT z.CntrPrtNum, z.CntrPrtName, z.CnName, z.ciputCnInv, z.ciputAccount, "
-                + "         MIN(c.cn_key) AS cn_key, MIN(os.csosKey) AS csosKey "
+                + "         MIN(c.cn_key) AS cn_key, " + sqlPmtPreferredCsos() + " AS csosKey "
                 + "  FROM ctpt AS z "
-                + "  INNER JOIN ags.org_id AS i "
-                + "    ON z.CntrPrtNum = i.org_id_value_l AND i.org_id_type = 1 "
-                + "  INNER JOIN ags.cn_s_org_smpl AS os ON os.csosOrgId = i.org_id_key "
-                + "  INNER JOIN ags.cn_s AS s ON s.cn_s_key = os.csosCn_s AND s.cn_s_type = 2 "
+                + sqlPmtSameOrgExecutor("z.CntrPrtNum")
                 + "  INNER JOIN ags.cn AS c ON c.cn_key = s.cn_key "
                 + "  INNER JOIN ags.cnNum AS num "
                 + "    ON num.cnnCn = c.cn_key AND num.cnnNumNull = z.CnName "
@@ -7162,7 +7637,7 @@ public class JdbcSudzDao implements SudzDao {
                         + " COALESCE(t.cidutDebt, CAST(0 AS money)),"
                         + " COALESCE(t.cidutDebtOverdue, CAST(0 AS money)),"
                         + " CAST(t.cidutFormtnDate AS date), CAST(t.cidutMatrtyDate AS date),"
-                        + " COALESCE(NULLIF(LTRIM(RTRIM(t.cidutDoc)), N''), t.cidutCnInv), CAST("
+                        + " COALESCE(NULLIF(LTRIM(RTRIM(t.cidutCnInv)), N''), NULLIF(LTRIM(RTRIM(t.cidutDoc)), N'')), CAST("
                         + tsLit + " AS datetime2) "
                         + "FROM #calmOne AS c "
                         + "INNER JOIN " + invDbt + " AS d ON d.idInv = c.iKey "
@@ -7195,7 +7670,7 @@ public class JdbcSudzDao implements SudzDao {
                         + " COALESCE(t.cidutDebt, CAST(0 AS money)),"
                         + " COALESCE(t.cidutDebtOverdue, CAST(0 AS money)),"
                         + " CAST(t.cidutFormtnDate AS date), CAST(t.cidutMatrtyDate AS date),"
-                        + " COALESCE(NULLIF(LTRIM(RTRIM(t.cidutDoc)), N''), t.cidutCnInv), CAST("
+                        + " COALESCE(NULLIF(LTRIM(RTRIM(t.cidutCnInv)), N''), NULLIF(LTRIM(RTRIM(t.cidutDoc)), N'')), CAST("
                         + tsLit + " AS datetime2) "
                         + "FROM #f1One AS f "
                         + "INNER JOIN " + bridge + " AS b "
@@ -7551,7 +8026,7 @@ public class JdbcSudzDao implements SudzDao {
                 + " COALESCE(t.cidutDebt, CAST(0 AS money)), "
                 + " COALESCE(t.cidutDebtOverdue, CAST(0 AS money)), "
                 + " CAST(t.cidutFormtnDate AS date), CAST(t.cidutMatrtyDate AS date), "
-                + " COALESCE(NULLIF(LTRIM(RTRIM(t.cidutDoc)), N''), t.cidutCnInv), "
+                + " COALESCE(NULLIF(LTRIM(RTRIM(t.cidutCnInv)), N''), NULLIF(LTRIM(RTRIM(t.cidutDoc)), N'')), "
                 + " CAST(" + tsLit + " AS datetime2) "
                 + "FROM #autoShare AS a "
                 + "INNER JOIN " + invDbt + " AS slot ON slot.idInv = a.iKey "
@@ -7763,7 +8238,7 @@ public class JdbcSudzDao implements SudzDao {
                 + " COALESCE(t.cidutDebt, CAST(0 AS money)), "
                 + " COALESCE(t.cidutDebtOverdue, CAST(0 AS money)), "
                 + " CAST(t.cidutFormtnDate AS date), CAST(t.cidutMatrtyDate AS date), "
-                + " COALESCE(NULLIF(LTRIM(RTRIM(t.cidutDoc)), N''), t.cidutCnInv), "
+                + " COALESCE(NULLIF(LTRIM(RTRIM(t.cidutCnInv)), N''), NULLIF(LTRIM(RTRIM(t.cidutDoc)), N'')), "
                 + " CAST(" + tsLit + " AS datetime2) "
                 + "FROM #autoAmountPair AS p "
                 + "INNER JOIN " + tbl + " AS t ON t.cidutKey = p.cidutKey "
@@ -8783,7 +9258,7 @@ public class JdbcSudzDao implements SudzDao {
                 + " COALESCE(a.cidutDebt, CAST(0 AS money)),"
                 + " COALESCE(a.cidutDebtOverdue, CAST(0 AS money)),"
                 + " CAST(a.cidutFormtnDate AS date), CAST(a.cidutMatrtyDate AS date),"
-                + " COALESCE(NULLIF(LTRIM(RTRIM(a.cidutDoc)), N''), a.cidutCnInv),"
+                + " COALESCE(NULLIF(LTRIM(RTRIM(a.cidutCnInv)), N''), NULLIF(LTRIM(RTRIM(a.cidutDoc)), N'')),"
                 + " CAST(" + tsLit + " AS datetime2) "
                 + "FROM tailReady AS tr "
                 + "INNER JOIN " + tbl + " AS a ON a.cidutKey = tr.cidutKey "
@@ -9346,7 +9821,7 @@ public class JdbcSudzDao implements SudzDao {
                 + " COALESCE(a.cidutDebt, CAST(0 AS money)),"
                 + " COALESCE(a.cidutDebtOverdue, CAST(0 AS money)),"
                 + " CAST(a.cidutFormtnDate AS date), CAST(a.cidutMatrtyDate AS date),"
-                + " COALESCE(NULLIF(LTRIM(RTRIM(a.cidutDoc)), N''), a.cidutCnInv),"
+                + " COALESCE(NULLIF(LTRIM(RTRIM(a.cidutCnInv)), N''), NULLIF(LTRIM(RTRIM(a.cidutDoc)), N'')),"
                 + " CAST(" + tsLit + " AS datetime2) "
                 + "FROM #dvTailReady AS tr "
                 + "INNER JOIN " + tbl + " AS a ON a.cidutKey = tr.cidutKey "
@@ -11835,7 +12310,7 @@ public class JdbcSudzDao implements SudzDao {
                                 + " COALESCE(t.cidutDebt, CAST(0 AS money)),"
                                 + " COALESCE(t.cidutDebtOverdue, CAST(0 AS money)),"
                                 + " CAST(t.cidutFormtnDate AS date), CAST(t.cidutMatrtyDate AS date),"
-                                + " COALESCE(NULLIF(LTRIM(RTRIM(t.cidutDoc)), N''), t.cidutCnInv), ?"
+                                + " COALESCE(NULLIF(LTRIM(RTRIM(t.cidutCnInv)), N''), NULLIF(LTRIM(RTRIM(t.cidutDoc)), N'')), ?"
                                 + " FROM " + tbl + " AS t WHERE t.cidutKey = ?")) {
                     ins.setInt(1, slotKey);
                     ins.setInt(2, idvvKey);

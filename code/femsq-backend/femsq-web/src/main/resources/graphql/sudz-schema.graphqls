@@ -49,6 +49,25 @@ extend type Query {
   """
   sudzPmtUplCstNew(pmKey: Int!): [SudzPmtUplCstNew!]!
   """
+  Вкладка «счета, сумма» (Access Sum_t): строки ags.q_cn_inv_pm_upl_sum
+  выбранного пакета. accountNum null — итог ROLLUP. Запись не выполняет.
+  """
+  sudzPmtUplSums(pmKey: Int!): [SudzPmtUplSum!]!
+  """
+  Связи g_p выбранного пакета платежей и остальные пакеты тех же сводов.
+  Запись связи не выполняет.
+  """
+  sudzPmtUplGp(pmKey: Int!): SudzPmtUplGp!
+  """
+  Пакеты платежей, уже связанные со сводом. Запись связи не выполняет.
+  """
+  sudzPmLinks(dbtUplKey: Int!): [SudzPmLink!]!
+  """
+  Отличия уже загруженной книги Tbl и cn_inv_pm: суммы, срок, выравнивание, код стройки.
+  Книгу заново из Excel не читает и платежи не меняет.
+  """
+  sudzPmtUplExtDiff(pmKey: Int!): SudzPmtUplExtDiff!
+  """
   Стройки каталога с кодом cstAgPn, чей хвост совпал с codeSuffix (6 символов),
   и все их cstAg / cstAgPn. Пустой список — такого хвоста в каталоге нет.
   Новую стройку не создаёт.
@@ -298,6 +317,30 @@ type SudzPmLink {
   dbtUplDate: Date
 }
 
+"""Связи пакета платежей и соседние пакеты тех же сводов."""
+type SudzPmtUplGp {
+  links: [SudzPmLink!]!
+  cohort: [SudzPmLink!]!
+}
+
+"""Одно отличие книги и платежа. Запись не выполняет."""
+type SudzPmtUplExtGap {
+  docCode: String!
+  sheet: Int
+  due: String
+  field: String!
+  bookValue: String
+  dbValue: String
+}
+
+"""Построчное отличие книги и cn_inv_pm. gaps обрезан, gapCount полный."""
+type SudzPmtUplExtDiff {
+  bookRows: Int!
+  dbRows: Int!
+  gapCount: Int!
+  gaps: [SudzPmtUplExtGap!]!
+}
+
 """Итог H6: пересчёт DbtUplCstAg из pm+g_p."""
 type SudzDbtUplCstAgRebuildResult {
   dbtUplKey: Int!
@@ -342,6 +385,20 @@ type SudzPmtUplLauncher {
   upl: SudzPmUplLookup!
   """Шапка File (после ensure всегда есть)."""
   file: SudzPmtUplFile!
+}
+
+"""Строка вкладки «счета, сумма» (ags.q_cn_inv_pm_upl_sum)."""
+type SudzPmtUplSum {
+  pmKey: Int!
+  """Счёт ГК. Null — итог пакета (GROUP BY ROLLUP)."""
+  accountNum: Int
+  dbtBlns: Float
+  dbtBlnsOverd: Float
+  dbtBlnsNotOverd: Float
+  cdtBlns: Float
+  cdtBlnsOverd: Float
+  cdtBlnsNotOverd: Float
+  blns: Float
 }
 
 """Строка вкладки «стройки новые» (cipuCacNot)."""
@@ -1385,6 +1442,10 @@ type SudzPmtUplFunnelResult {
   ranSteps: [String!]!
   """true — тело cipu* ещё stub."""
   stub: Boolean!
+  """true — суммы книги и вкладки «счета, сумма» совпали (ε=0,01)."""
+  sumsMatched: Boolean!
+  """true — набор строк книги и платежей совпал."""
+  rowsMatched: Boolean!
 }
 
 """Вход создания листа CnInvDbtUplFileSh."""

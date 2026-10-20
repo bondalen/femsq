@@ -60,6 +60,10 @@ import com.femsq.database.model.sudz.SudzDbtUplAccSmplNotApplyResult;
 import com.femsq.database.model.sudz.SudzPmtUplCnNotLoad;
 import com.femsq.database.model.sudz.SudzPmtUplCstMatch;
 import com.femsq.database.model.sudz.SudzPmtUplCstNew;
+import com.femsq.database.model.sudz.SudzPmtUplExtLine;
+import com.femsq.database.model.sudz.SudzPmtUplGp;
+import com.femsq.database.model.sudz.SudzPmtUplLine;
+import com.femsq.database.model.sudz.SudzPmtUplSum;
 import com.femsq.database.model.sudz.SudzPmtUplInvNot;
 import com.femsq.database.model.sudz.SudzPmtUplTabBadges;
 import com.femsq.database.model.sudz.SudzPmtUplTwoLoad;
@@ -345,6 +349,70 @@ public interface SudzService {
      * @return строки грида
      */
     List<SudzPmtUplCstNew> listPmtUplCstNew(int unloadKey);
+
+    /**
+     * Итоги вкладки «счета, сумма» по пакету.
+     *
+     * @param unloadKey {@code pmKey}
+     * @return строки {@code ags.q_cn_inv_pm_upl_sum}
+     */
+    List<SudzPmtUplSum> listPmtUplSums(int unloadKey);
+
+    /**
+     * Суммы прочитанной книги (Tbl, строки с «№ докум.») по счетам ГК.
+     *
+     * @param unloadKey {@code pmKey}
+     * @return суммы по счетам
+     */
+    List<SudzPmtUplSum> listPmtUplTblSums(int unloadKey);
+
+    /**
+     * Строки книги с «№ докум.» для сверки набора.
+     *
+     * @param unloadKey {@code pmKey}
+     * @return строки Tbl
+     */
+    List<SudzPmtUplLine> listPmtUplBookLines(int unloadKey);
+
+    /**
+     * Платежи пакета для сверки набора.
+     *
+     * @param unloadKey {@code pmKey}
+     * @return строки {@code cn_inv_pm}
+     */
+    List<SudzPmtUplLine> listPmtUplPayLines(int unloadKey);
+
+    /**
+     * Книга пакета с кодом стройки. Запись не выполняет.
+     *
+     * @param unloadKey пакет
+     * @return строки Tbl
+     */
+    List<SudzPmtUplExtLine> listPmtUplBookExtLines(int unloadKey);
+
+    /**
+     * Платежи пакета с кодом стройки. Запись не выполняет.
+     *
+     * @param unloadKey пакет
+     * @return строки {@code cn_inv_pm}
+     */
+    List<SudzPmtUplExtLine> listPmtUplPayExtLines(int unloadKey);
+
+    /**
+     * Связи g_p пакета и остальные пакеты тех же сводов. Запись не выполняет.
+     *
+     * @param pmKey пакет платежей
+     * @return свои связи и соседние пакеты
+     */
+    SudzPmtUplGp loadPmtUplGp(int pmKey);
+
+    /**
+     * Связи g_p выбранного свода. Запись не выполняет.
+     *
+     * @param dbtUplKey свод
+     * @return пакеты платежей этого свода
+     */
+    List<SudzPmLink> listPmLinksForDbt(int dbtUplKey);
 
     /**
      * Дерево строек по хвосту кода очереди «стройки новые».

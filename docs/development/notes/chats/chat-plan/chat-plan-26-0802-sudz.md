@@ -1,9 +1,9 @@
 # План: аналог «системы управления дебиторской задолженностью» (СУДЗ) из MS Access
 
 **Дата создания:** 2026-08-02  
-**Последнее обновление:** 2026-10-16  
+**Последнее обновление:** 2026-10-19  
 **Проект:** FEMSQ  
-**Версия плана:** 0.99.53 (S83 указатель: эксперимент `DbtUplCstAgExp`)
+**Версия плана:** 0.99.54 (S80.4 указатель: план 1019)
 **Задача:** 0065–0075 (дерево features **02.03**); эскизы [02-9](../../UI/02-9_sudz-mvp-screens.md); **активно: 1.1.1.3** файл `…28469fix…`; **S82** ✅; **S81** ✅; **S80** ✅; **0075 / S79** шаг 1 ✅; **0069** C.10.6 ✅; **S77.9** ✅; **S78** ✅; **0071** 🔶
 **Статус плана:** ✅ 0070; **S75** ✅; **S76** ✅ C.10.6 D0–D4; **S77** ✅ .1–.9; **S78.1–.4+.4F+.6** ✅ **S78.5** ☐; **S79** ✅ шаг 1; **S80** ✅ .0–.2b; **S81** ✅ .1–.2 cmm; **S82** ✅; **S83** ☐ эксп.; **S74 M1–M5** ✅; **0071** 🔶; **0075** 🔶
 **Cutover prod/DEV:** [db-upgrade-sudz-invdbt-cutover.md](../../../../deployment/db-upgrade-sudz-invdbt-cutover.md) · §5.6 [S74](#s74--трек-cutover-m1m6--2026-08-27) · D1: [04-5](../../domain/sudz/04-5_dbt-invdbt-cardinality-d1.md)
@@ -13,7 +13,8 @@
 **План UI Договоры / СФ (T7):** [chat-plan-26-0826-contracts-inv.md](./chat-plan-26-0826-contracts-inv.md) · 0071  
 **Резюме UI pmt (S70):** [chat-resume-26-0819-cn-inv-pmt-upl.md](../chat-resume/chat-resume-26-0819-cn-inv-pmt-upl.md)  
 **Резюме pmt (S69):** [chat-resume-26-0817-cn-inv-pmt-upl.md](../chat-resume/chat-resume-26-0817-cn-inv-pmt-upl.md)  
-**WBS цели «P1 контур B на проде»:** [chat-plan-26-0918-sudz-rslt-prod-mailing.md](./chat-plan-26-0918-sudz-rslt-prod-mailing.md) (v0.3.8 — канон b ✅; **1.1.1.2.5** эксп.)
+**WBS цели «P1 контур B на проде»:** [chat-plan-26-0918-sudz-rslt-prod-mailing.md](./chat-plan-26-0918-sudz-rslt-prod-mailing.md) (v0.3.32 — узел **1.1.1.2.8**)  
+**Выгрузки платежей и сверка Rslt:** [chat-plan-26-1019-qii-pmt-rslt.md](./chat-plan-26-1019-qii-pmt-rslt.md) · **S80.4**
 
 
 **Доменные доки:** [01-overview](../../domain/sudz/01-overview.md) · [02-glossary](../../domain/sudz/02-glossary.md) · [03-processes](../../domain/sudz/03-processes.md) · [04-data-model](../../domain/sudz/04-data-model.md) · [04-1 MS_Description](../../domain/sudz/04-1_ms-descriptions.md) · [04-3 проблемы](../../domain/sudz/04-3_problems-solutions.md) · [04-4 зерно/счёт долгов](../../domain/sudz/04-4_legacy-debt-grain.md) · [04-5 D1 кардинальность Dbt↔invDbt](../../domain/sudz/04-5_dbt-invdbt-cardinality-d1.md) · [04-6 multi-Dbt P1 три пути](../../domain/sudz/04-6_multi-dbt-p1-three-paths.md) · [07-readiness (покрытие/готовность)](../../domain/sudz/07-readiness.md) · [08-target-schema (физ. схема + ER)](../../domain/sudz/08-target-schema.md)  
@@ -1937,7 +1938,7 @@ Rslt(QIV) ≡ Excel_эталон
 | **S80.2** | Verify Rslt | `vw_Yr_DbtFact` yr=901: CstAgPnKey filled | N filled | ✅ **2026-09-16** (см. .2b) |
 | **S80.2b** | Row QIV+QI ↔ Access | `verify_s80_qiv_qi_vs_access.mjs` excl. comments/QII | PASS; only accounted (multi-cst / CnDate / Ctpt form / grain 28469 / Split A45) | ✅ **2026-09-16** FAIL=0; **E-S80-cst-backfill-miss=0**; арт. [`…s80_cst_final_26-0916.xlsx`](../../sql/26-0831-sudz-dbt-slot-link/artifacts/ags_Yr_DbtChangesRslt_901_asOf903_s80_cst_final_26-0916.xlsx), [`stage2_s80_qiv_qi_vs_access_final_26-0916.json`](../../sql/26-0831-sudz-dbt-slot-link/artifacts/stage2_s80_qiv_qi_vs_access_final_26-0916.json) |
 | **S80.3** | Prod path (later) | `00`→`01`→`02` через `fn`+`g_p` когда DEV/prod имеют upl | COMMIT после ревью | ☐ (на DEV канон H6 после 0819 — отдельно; см. **S83** эксп.) |
-| **S80.4** | QII / export_* | при появлении g_p или отдельного эталона QII — добить 903 не только carry | ☐ | ☐ |
+| **S80.4** | QII / export_* | указатель: загрузка книг QIV/QI/QII и сверка строек итогового Rslt. QIV/QI — эталон `26-0505`; QII — разбор против временного Rslt asOf903 | [1019](./chat-plan-26-1019-qii-pmt-rslt.md); WBS **1.1.1.2.8** | ☐ |
 
 **Следом (не S80):** ✅ **S81** cmm; ✅ **S82** 28469 + cover — см. [§5.6 S82](#s82--рассылка-asof903--фикс-зерна-28469-2026-09-16). Эксперимент без пустых / multi по агенту — **[S83](#s83--эксперимент-dbtuplcstagexp-каскад-1114-2026-09-21)**. Далее **1.1.1.3**.
 

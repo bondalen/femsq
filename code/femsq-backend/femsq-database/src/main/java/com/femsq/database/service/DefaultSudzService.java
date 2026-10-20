@@ -62,6 +62,10 @@ import com.femsq.database.model.sudz.SudzPmtUplInsPmNotResult;
 import com.femsq.database.model.sudz.SudzPmtUplCnNotLoad;
 import com.femsq.database.model.sudz.SudzPmtUplCstMatch;
 import com.femsq.database.model.sudz.SudzPmtUplCstNew;
+import com.femsq.database.model.sudz.SudzPmtUplExtLine;
+import com.femsq.database.model.sudz.SudzPmtUplGp;
+import com.femsq.database.model.sudz.SudzPmtUplLine;
+import com.femsq.database.model.sudz.SudzPmtUplSum;
 import com.femsq.database.model.sudz.SudzPmtUplInvNot;
 import com.femsq.database.model.sudz.SudzPmtUplTabBadges;
 import com.femsq.database.model.sudz.SudzPmtUplTwoLoad;
@@ -401,6 +405,83 @@ public class DefaultSudzService implements SudzService {
             throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
         }
         return sudzDao.listPmtUplCstNew(unloadKey);
+    }
+
+    @Override
+    public List<SudzPmtUplSum> listPmtUplSums(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.listPmtUplSums(unloadKey);
+    }
+
+    @Override
+    public List<SudzPmtUplSum> listPmtUplTblSums(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.listPmtUplTblSums(unloadKey);
+    }
+
+    @Override
+    public List<SudzPmtUplLine> listPmtUplBookLines(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        log.log(java.util.logging.Level.INFO, "listPmtUplBookLines unloadKey={0}", unloadKey);
+        return sudzDao.listPmtUplBookLines(unloadKey);
+    }
+
+    @Override
+    public List<SudzPmtUplLine> listPmtUplPayLines(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        log.log(java.util.logging.Level.INFO, "listPmtUplPayLines unloadKey={0}", unloadKey);
+        return sudzDao.listPmtUplPayLines(unloadKey);
+    }
+
+    @Override
+    public List<SudzPmtUplExtLine> listPmtUplBookExtLines(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.listPmtUplBookExtLines(unloadKey);
+    }
+
+    @Override
+    public List<SudzPmtUplExtLine> listPmtUplPayExtLines(int unloadKey) {
+        if (unloadKey <= 0) {
+            throw new IllegalArgumentException("unloadKey должен быть положительным: " + unloadKey);
+        }
+        return sudzDao.listPmtUplPayExtLines(unloadKey);
+    }
+
+    @Override
+    public SudzPmtUplGp loadPmtUplGp(int pmKey) {
+        if (pmKey <= 0) {
+            throw new IllegalArgumentException("pmKey должен быть положительным: " + pmKey);
+        }
+        List<SudzPmLink> links = sudzDao.listPmLinks(pmKey, null);
+        java.util.LinkedHashMap<Integer, SudzPmLink> cohort = new java.util.LinkedHashMap<>();
+        for (SudzPmLink link : links) {
+            for (SudzPmLink other : sudzDao.listPmLinks(null, link.dbtUpl())) {
+                if (other.pmKey() != pmKey) {
+                    cohort.putIfAbsent(other.gPKey(), other);
+                }
+            }
+        }
+        log.log(java.util.logging.Level.INFO, "loadPmtUplGp pmKey={0} links={1} cohort={2}",
+                new Object[]{pmKey, links.size(), cohort.size()});
+        return new SudzPmtUplGp(links, java.util.List.copyOf(cohort.values()));
+    }
+
+    @Override
+    public List<SudzPmLink> listPmLinksForDbt(int dbtUplKey) {
+        if (dbtUplKey <= 0) {
+            throw new IllegalArgumentException("dbtUplKey должен быть положительным: " + dbtUplKey);
+        }
+        return sudzDao.listPmLinks(null, dbtUplKey);
     }
 
     @Override

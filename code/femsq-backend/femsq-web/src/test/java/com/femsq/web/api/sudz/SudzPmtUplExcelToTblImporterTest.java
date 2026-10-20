@@ -211,6 +211,38 @@ class SudzPmtUplExcelToTblImporterTest {
         assertEquals("дпроводки", SudzPmtUplExcelToTblImporter.normalizeHeader("Д/проводки"));
     }
 
+    @Test
+    void abbreviatedClosingBalanceHeadersMapToOverdueColumns() {
+        assertEquals(
+                SudzPmtUplExcelToTblImporter.Col.DBT_OVERD,
+                SudzPmtUplExcelToTblImporter.matchSingle(
+                        SudzPmtUplExcelToTblImporter.normalizeHeader("Сальдо кон.Дт просроченное")));
+        assertEquals(
+                SudzPmtUplExcelToTblImporter.Col.DBT_OVERD_NOT,
+                SudzPmtUplExcelToTblImporter.matchSingle(
+                        SudzPmtUplExcelToTblImporter.normalizeHeader("Сальдо кон.Дт непросроченн.")));
+        assertEquals(
+                SudzPmtUplExcelToTblImporter.Col.CDT_OVERD,
+                SudzPmtUplExcelToTblImporter.matchSingle(
+                        SudzPmtUplExcelToTblImporter.normalizeHeader("Сальдо кон.Кт просроченное")));
+        assertEquals(
+                SudzPmtUplExcelToTblImporter.Col.CDT_OVERD_NOT,
+                SudzPmtUplExcelToTblImporter.matchSingle(
+                        SudzPmtUplExcelToTblImporter.normalizeHeader("Сальдо кон.Кт непросроченн.")));
+        assertEquals(
+                SudzPmtUplExcelToTblImporter.Col.DBT,
+                SudzPmtUplExcelToTblImporter.matchSingle(
+                        SudzPmtUplExcelToTblImporter.normalizeHeader("Сальдо конечное Дт")));
+        assertEquals(
+                SudzPmtUplExcelToTblImporter.Col.CDT,
+                SudzPmtUplExcelToTblImporter.matchSingle(
+                        SudzPmtUplExcelToTblImporter.normalizeHeader("Сальдо конечное по Кт")));
+        assertEquals(
+                SudzPmtUplExcelToTblImporter.Col.BLNS,
+                SudzPmtUplExcelToTblImporter.matchSingle(
+                        SudzPmtUplExcelToTblImporter.normalizeHeader("Сальдо конечное")));
+    }
+
     private static byte[] canonWorkbookBytes() throws IOException {
         try (XSSFWorkbook wb = new XSSFWorkbook()) {
             Sheet sheet = wb.createSheet("Sheet1");
