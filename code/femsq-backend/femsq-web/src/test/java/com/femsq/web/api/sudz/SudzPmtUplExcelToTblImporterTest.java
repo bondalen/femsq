@@ -2,6 +2,7 @@ package com.femsq.web.api.sudz;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -143,6 +144,61 @@ class SudzPmtUplExcelToTblImporterTest {
         assertEquals(1, rows.stream().map(SudzPmtUplTblRow::ciputSfKey).distinct().count());
         assertEquals(3, rows.stream().map(SudzPmtUplTblRow::ciputDueKey).distinct().count());
         assertTrue(rows.stream().allMatch(r -> Objects.equals(r.ciputDueGrp(), 1)));
+    }
+
+    /**
+     * QII 1.13.7: два разных СФ под одним L6 — разные sfKey; один СФ в двух L6 —
+     * тот же sfKey и разные cacSpan; dueKey/dueGrp пусты.
+     */
+    @Test
+    void qiiOutlineSfFromDocNotL6Boundary() throws IOException {
+        byte[] bytes = qiiOutlineWorkbookBytes();
+        SudzDbtUplProgressLog log = new SudzDbtUplProgressLog();
+        List<SudzPmtUplTblRow> rows = importer.parse(bytes, "export_qii.xlsx", "Sheet1", 55, log);
+
+        assertEquals(3, rows.size());
+        assertTrue(log.toHtml().contains("staging QII"));
+        assertTrue(rows.stream().allMatch(r -> r.ciputDueKey() == null && r.ciputDueGrp() == null));
+        assertTrue(rows.stream().allMatch(r -> r.ciputDueDate() == null));
+
+        SudzPmtUplTblRow a1 = rows.get(0);
+        SudzPmtUplTblRow b1 = rows.get(1);
+        SudzPmtUplTblRow a2 = rows.get(2);
+
+        assertEquals("INV-A", a1.ciputCnInv());
+        assertEquals("INV-B", b1.ciputCnInv());
+        assertEquals("INV-A", a2.ciputCnInv());
+        assertNotNull(a1.ciputSfKey());
+        assertNotEquals(a1.ciputSfKey(), b1.ciputSfKey());
+        assertEquals(a1.ciputSfKey(), a2.ciputSfKey());
+        assertEquals(a1.ciputCacSpanKey(), b1.ciputCacSpanKey());
+        assertNotEquals(a1.ciputCacSpanKey(), a2.ciputCacSpanKey());
+        assertEquals(2, rows.stream().map(SudzPmtUplTblRow::ciputSfKey).distinct().count());
+        assertEquals(2, rows.stream().map(SudzPmtUplTblRow::ciputCacSpanKey).distinct().count());
+    }
+
+    @Test
+    void smokeExportQii767501StagingKeys() throws IOException {
+        Path path = Path.of("/mnt/nb-win-share/femsq/excel/2026-06/debit/export_767501_26-0817.XLSX");
+        assumeTrue(Files.isRegularFile(path), "QII export_767501_26-0817 недоступен");
+
+        byte[] bytes = Files.readAllBytes(path);
+        SudzDbtUplProgressLog log = new SudzDbtUplProgressLog();
+        List<SudzPmtUplTblRow> rows = importer.parse(bytes, path.getFileName().toString(), "Sheet1", 55, log);
+
+        assertEquals(9806, rows.size());
+        assertTrue(log.toHtml().contains("staging QII"));
+        assertTrue(rows.stream().allMatch(r -> r.ciputDueKey() == null && r.ciputDueGrp() == null));
+        assertTrue(rows.stream().allMatch(r -> r.ciputSfKey() != null));
+        long sfKeys = rows.stream().map(SudzPmtUplTblRow::ciputSfKey).distinct().count();
+        assertEquals(2698, sfKeys);
+        // L6 не граница СФ: номер разнесён по двум отрезкам стройки — один sfKey
+        List<SudzPmtUplTblRow> multiSpan = rows.stream()
+                .filter(r -> "2011/002019".equals(r.ciputCnInv()))
+                .toList();
+        assumeTrue(multiSpan.size() >= 2, "эталонный номер СФ в файле");
+        assertEquals(1, multiSpan.stream().map(SudzPmtUplTblRow::ciputSfKey).distinct().count());
+        assertTrue(multiSpan.stream().map(SudzPmtUplTblRow::ciputCacSpanKey).distinct().count() > 1);
     }
 
     @Test
@@ -339,6 +395,63 @@ class SudzPmtUplExcelToTblImporterTest {
             addYellow(sheet, dateStyle, r, LocalDate.of(2026, 2, 28), 40);
             return toBytes(wb);
         }
+    }
+
+    /**
+     * Мини-дерево QII: два СФ под одним L6, затем тот же INV-A под другим L6.
+     * Колонки как export_767501_26-0817.
+     */
+    private static byte[] qiiOutlineWorkbookBytes() throws IOException {
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            Sheet sheet = wb.createSheet("Sheet1");
+            String[] titles = {
+                    "БЕ", "Опер.сегмент", "Код стройки", "Счет ГК", "Вид контрагента",
+                    "Кредитор", "Наименование кредитора", "Договор", "Агент", "Агент",
+                    "Сальдо начальное Дт", "Сальдо начальное по Кт", "Сальдо начальное",
+                    "Дебетовый оборот", "Кредитовый оборот",
+                    "Сальдо конечное Дт", "Сальдо конечное по Кт", "Сальдо конечное",
+                    SudzPmtUplExcelToTblImporter.ANCHOR_DOC_NUM,
+                    "Д/проводки", "Д/документ", "Д/выравн.", "Ссылка", "Присвоение",
+                    "Д/К", "КС", "Нулевые показатели", "Частичное выравнивание",
+                    "ПричСторн", "ДокСторно"
+            };
+            Row header = sheet.createRow(0);
+            for (int c = 0; c < titles.length; c++) {
+                header.createCell(c).setCellValue(titles[c]);
+            }
+            int r = 1;
+            r = addQiiWhite(sheet, r, 1001, "КС-51", "INV-A", "CAC-1", "D1");
+            r = addQiiWhite(sheet, r, 1001, "КС-51", "INV-B", "CAC-1", "D2");
+            r = addQiiYellow(sheet, r, 6, "CAC-1");
+            // тот же INV-A в другом отрезке стройки (L6 не граница СФ)
+            r = addQiiWhite(sheet, r, 1001, "КС-51", "INV-A", "CAC-2", "D3");
+            addQiiYellow(sheet, r, 6, "CAC-2");
+            return toBytes(wb);
+        }
+    }
+
+    private static int addQiiWhite(
+            Sheet sheet, int rowIdx, int ctpt, String cn, String inv, String cac, String doc
+    ) {
+        XSSFRow row = (XSSFRow) sheet.createRow(rowIdx);
+        row.getCTRow().setOutlineLevel((short) 7);
+        row.createCell(0).setCellValue("0001");
+        row.createCell(2).setCellValue(cac);
+        row.createCell(3).setCellValue(767501);
+        row.createCell(5).setCellValue(ctpt);
+        row.createCell(6).setCellValue("Кредитор");
+        row.createCell(7).setCellValue(cn);
+        row.createCell(18).setCellValue(doc);
+        row.createCell(23).setCellValue(inv);
+        return rowIdx + 1;
+    }
+
+    private static int addQiiYellow(Sheet sheet, int rowIdx, int level, String cac) {
+        XSSFRow row = (XSSFRow) sheet.createRow(rowIdx);
+        row.getCTRow().setOutlineLevel((short) level);
+        row.createCell(2).setCellValue(cac);
+        row.createCell(3).setCellValue(767501);
+        return rowIdx + 1;
     }
 
     /** Три белых «б/н» КС-14 под тремя жёлтыми — три dueKey, один sfKey. */

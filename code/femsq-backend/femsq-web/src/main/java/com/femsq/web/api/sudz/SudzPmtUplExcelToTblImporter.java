@@ -34,13 +34,25 @@ import org.springframework.stereotype.Component;
  * и новый layout; отсутствующие поля (срок оплаты, просрочки, баз.дата, сумма) → null.
  * </p>
  * <p>
- * Для традиционной раскладки (outline 3/4) на белых строках проставляются staging-ключи
+ * Для традиционной раскладки (outline 4/3) на белых строках проставляются staging-ключи
  * СФ файла / отрезка стройки / жёлтого итога / {@code due_grp} (правило B, 1.13.1).
+ * Для QII (outline 7/6, без срока) — ключ СФ с строки документа; L6 закрывает отрезок
+ * стройки, но не границу СФ; {@code dueKey}/{@code dueGrp} не пишутся (1.13.7).
  * Жёлтые строки в Tbl не пишутся. Цвет заливки не используется.
  * </p>
  */
 @Component
 public class SudzPmtUplExcelToTblImporter {
+
+    /** Вид дерева outline на листе выгрузки. */
+    enum OutlineKind {
+        /** Нет уровней документа (L4/L7) — ключи staging не назначаются. */
+        NONE,
+        /** Классика: документ L4, жёлтый итог срока L3. */
+        TRADITIONAL,
+        /** QII 767501/767502 @26-0817: документ L7, итог стройки L6, без срока. */
+        QII
+    }
 
     /** Точный заголовок якоря (xlWhole). */
     static final String ANCHOR_DOC_NUM = "№ докум.";
@@ -175,9 +187,11 @@ public class SudzPmtUplExcelToTblImporter {
         }
 
         List<DraftRow> drafts = readDrafts(sheet, headerRowIdx, cols);
-        boolean traditional = hasTraditionalOutline(drafts);
-        if (traditional) {
+        OutlineKind outline = detectOutlineKind(drafts);
+        if (outline == OutlineKind.TRADITIONAL) {
             assignStagingKeys(drafts);
+        } else if (outline == OutlineKind.QII) {
+            assignQiiStagingKeys(drafts);
         }
 
         int added = 0;
@@ -185,7 +199,7 @@ public class SudzPmtUplExcelToTblImporter {
             if (!draft.white) {
                 continue;
             }
-            rows.add(toTblRow(draft, sheetNum, unloadKey, traditional));
+            rows.add(toTblRow(draft, sheetNum, unloadKey, outline));
             added++;
         }
 
@@ -196,13 +210,26 @@ public class SudzPmtUplExcelToTblImporter {
         summary.append(" · колонки по заголовкам (найдено ")
                 .append(cols.size()).append("/").append(Col.values().length).append(")");
         summary.append(" · только строки с «№ докум.» (как Access)");
-        if (traditional) {
+        if (outline == OutlineKind.TRADITIONAL) {
             long dueKeys = drafts.stream()
                     .filter(d -> d.white && d.dueKey != null)
                     .map(d -> d.dueKey)
                     .distinct()
                     .count();
             summary.append(" · staging outline: жёлтых ключей <b>").append(dueKeys).append("</b>");
+        } else if (outline == OutlineKind.QII) {
+            long sfKeys = drafts.stream()
+                    .filter(d -> d.white && d.sfKey != null)
+                    .map(d -> d.sfKey)
+                    .distinct()
+                    .count();
+            long cacSpans = drafts.stream()
+                    .filter(d -> d.white && d.cacSpanKey != null)
+                    .map(d -> d.cacSpanKey)
+                    .distinct()
+                    .count();
+            summary.append(" · staging QII: СФ ключей <b>").append(sfKeys).append("</b>")
+                    .append(", отрезков стройки <b>").append(cacSpans).append("</b>");
         }
         log.line(summary.toString());
     }
@@ -472,18 +499,43 @@ public class SudzPmtUplExcelToTblImporter {
     }
 
     /**
-     * Традиционная раскладка: на листе есть строки outline 3 или 4.
+     * Определяет вид outline: QII (L7) имеет приоритет над традиционной (L4).
+     * Уровни ≥3 сами по себе не считаются традиционными — иначе QII ошибочно
+     * получал бы ветку L4/L3 и нулевые ключи.
      *
      * @param drafts черновики строк
-     * @return true если ключи staging нужно назначать
+     * @return вид дерева
      */
-    static boolean hasTraditionalOutline(List<DraftRow> drafts) {
+    static OutlineKind detectOutlineKind(List<DraftRow> drafts) {
+        boolean hasL7White = false;
+        boolean hasL4White = false;
         for (DraftRow d : drafts) {
-            if (d.outlineLevel >= 3) {
-                return true;
+            if (!d.white) {
+                continue;
+            }
+            if (d.outlineLevel == 7) {
+                hasL7White = true;
+            } else if (d.outlineLevel == 4) {
+                hasL4White = true;
             }
         }
-        return false;
+        if (hasL7White) {
+            return OutlineKind.QII;
+        }
+        if (hasL4White) {
+            return OutlineKind.TRADITIONAL;
+        }
+        return OutlineKind.NONE;
+    }
+
+    /**
+     * Традиционная раскладка: белые документы на outline 4.
+     *
+     * @param drafts черновики строк
+     * @return true если ключи staging нужно назначать по L4/L3
+     */
+    static boolean hasTraditionalOutline(List<DraftRow> drafts) {
+        return detectOutlineKind(drafts) == OutlineKind.TRADITIONAL;
     }
 
     /**
@@ -502,17 +554,47 @@ public class SudzPmtUplExcelToTblImporter {
                 continue;
             }
             if (d.outlineLevel == 3 && !d.white) {
-                state.close(open);
+                state.closeTraditional(open);
                 open.clear();
                 continue;
             }
             if (d.outlineLevel < 3 && !open.isEmpty()) {
-                state.close(open);
+                state.closeTraditional(open);
                 open.clear();
             }
         }
         if (!open.isEmpty()) {
-            state.close(open);
+            state.closeTraditional(open);
+        }
+    }
+
+    /**
+     * QII: ключ СФ с строки документа (кредитор+договор+присвоение); L6 закрывает
+     * отрезок стройки, но не границу СФ; {@code dueKey}/{@code dueGrp} не ставятся.
+     *
+     * @param drafts черновики (мутируются)
+     */
+    static void assignQiiStagingKeys(List<DraftRow> drafts) {
+        StagingState state = new StagingState();
+        List<DraftRow> open = new ArrayList<>();
+
+        for (DraftRow d : drafts) {
+            if (d.outlineLevel == 7 && d.white) {
+                open.add(d);
+                continue;
+            }
+            if (d.outlineLevel == 6 && !d.white) {
+                state.closeQii(open);
+                open.clear();
+                continue;
+            }
+            if (d.outlineLevel < 6 && !open.isEmpty()) {
+                state.closeQii(open);
+                open.clear();
+            }
+        }
+        if (!open.isEmpty()) {
+            state.closeQii(open);
         }
     }
 
@@ -527,11 +609,44 @@ public class SudzPmtUplExcelToTblImporter {
         private String lastCac;
         private Integer openCacSpan;
 
-        private void close(List<DraftRow> open) {
+        private void closeTraditional(List<DraftRow> open) {
             if (open.isEmpty()) {
                 return;
             }
             int dueKey = nextDue++;
+            assignSfAndCac(open);
+            for (DraftRow w : open) {
+                w.dueKey = dueKey;
+            }
+            DraftRow first = open.get(0);
+            LocalDate dueDay = first.dueDate == null ? null : first.dueDate.toLocalDate();
+            String grpNat = first.sfKey + "|" + normalizeKeyPart(first.cac)
+                    + "|" + (dueDay == null ? "" : dueDay);
+            int dueGrp = dueGrpSeq.merge(grpNat, 1, Integer::sum);
+            for (DraftRow w : open) {
+                w.dueGrp = dueGrp;
+            }
+        }
+
+        private void closeQii(List<DraftRow> open) {
+            if (open.isEmpty()) {
+                return;
+            }
+            // L6 закрывает один отрезок стройки целиком (внутри могут быть разные СФ).
+            int span = nextCacSpan++;
+            for (DraftRow w : open) {
+                String sfNat = sfNaturalKey(w);
+                Integer sfKey = sfKeys.get(sfNat);
+                if (sfKey == null) {
+                    sfKey = nextSf++;
+                    sfKeys.put(sfNat, sfKey);
+                }
+                w.sfKey = sfKey;
+                w.cacSpanKey = span;
+            }
+        }
+
+        private void assignSfAndCac(List<DraftRow> open) {
             for (DraftRow w : open) {
                 String sfNat = sfNaturalKey(w);
                 Integer sfKey = sfKeys.get(sfNat);
@@ -547,15 +662,6 @@ public class SudzPmtUplExcelToTblImporter {
                 }
                 w.sfKey = sfKey;
                 w.cacSpanKey = openCacSpan;
-                w.dueKey = dueKey;
-            }
-            DraftRow first = open.get(0);
-            LocalDate dueDay = first.dueDate == null ? null : first.dueDate.toLocalDate();
-            String grpNat = first.sfKey + "|" + normalizeKeyPart(first.cac)
-                    + "|" + (dueDay == null ? "" : dueDay);
-            int dueGrp = dueGrpSeq.merge(grpNat, 1, Integer::sum);
-            for (DraftRow w : open) {
-                w.dueGrp = dueGrp;
             }
         }
     }
@@ -570,7 +676,9 @@ public class SudzPmtUplExcelToTblImporter {
         return value == null ? "" : value.trim();
     }
 
-    private SudzPmtUplTblRow toTblRow(DraftRow d, int sheetNum, int unloadKey, boolean traditional) {
+    private SudzPmtUplTblRow toTblRow(DraftRow d, int sheetNum, int unloadKey, OutlineKind outline) {
+        boolean writeSf = outline != OutlineKind.NONE;
+        boolean writeDue = outline == OutlineKind.TRADITIONAL;
         return new SudzPmtUplTblRow(
                 d.be,
                 d.account,
@@ -600,10 +708,10 @@ public class SudzPmtUplExcelToTblImporter {
                 d.stornoDoc,
                 sheetNum,
                 unloadKey,
-                traditional ? d.sfKey : null,
-                traditional ? d.cacSpanKey : null,
-                traditional ? d.dueKey : null,
-                traditional ? d.dueGrp : null
+                writeSf ? d.sfKey : null,
+                writeSf ? d.cacSpanKey : null,
+                writeDue ? d.dueKey : null,
+                writeDue ? d.dueGrp : null
         );
     }
 
