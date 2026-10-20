@@ -2231,6 +2231,157 @@
           "entries": [
             {
               "log": {
+                "displayName": "1.14 закрыт: операторский разбор @59 (success). № log-2026-10-20-018",
+                "log-attributes": {
+                  "id": "log-2026-10-20-018",
+                  "timestamp": "2026-10-20T17:55:00+03:00",
+                  "level": "success",
+                  "effort": "40m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "ksdsf",
+                    "decision-tree"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Операторский разбор 1.14 @pm59 + закрытие ветки",
+                    "details": "Листья 1.14.0–1.14.7 уже ✅. Browser: open 0, кнопка «Разбор…» disabled, Two 17 diag. GraphQL decision profile inv 106724: 6 pm, currentUpl Σ −10.4M ×3, cias 113261. WBS 1.1.1.2.7 ✅. План 0.5.70.",
+                    "outcome": "1.14 ✅. ★ next 1.8.7 (опц.) / 0918 .6.4/.6.5.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                      "code/femsq-frontend-q/src/components/sudz/SfDecisionTree.vue"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.5 UX лаунчера + UAT @59 browser (success). № log-2026-10-20-017",
+                "log-attributes": {
+                  "id": "log-2026-10-20-017",
+                  "timestamp": "2026-10-20T17:48:00+03:00",
+                  "level": "success",
+                  "effort": "50m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "uat",
+                    "launcher"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "1.5.1 счётчики + отмена; 1.5.2 UAT Cursor browser",
+                    "details": "Launcher: tblRows/pmRows. UI: «отмена» AbortController. JAR 362. Browser @59: Tbl 15942 · pm 15887; Sum_t 767501+итого; Inv0/Two17/open0; g_p пусто на DEV; префикс шагов. §2.9.",
+                    "outcome": "0922 1.5 / WBS .7.5 ✅, план 0.5.69. ★ next 1.14.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md",
+                      "code/femsq-frontend-q/src/views/sudz/SudzPmtUplView.vue",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/model/sudz/SudzPmtUplLauncher.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.13.6 фильтр стройка/срок для б/н (success). № log-2026-10-20-016",
+                "log-attributes": {
+                  "id": "log-2026-10-20-016",
+                  "timestamp": "2026-10-20T17:40:00+03:00",
+                  "level": "success",
+                  "effort": "35m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "ksdsf",
+                    "suspicious_inv",
+                    "pmt-upl"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "suspicious_cac_due в SfDoubleAdvisor + DAO",
+                    "details": "После sum_same_cn: среди СФ с тем же подозрительным № на cn фильтр по стройке Excel (срок уточняет при >1). 1→link, >1→manual, 0/нет CAC→create. Жёлтая граница СФ не плодит. Unit×3; DBHub cn877 CAC 014-2000186 → 106724.",
+                    "outcome": "0922 1.13.6 ✅, план 0.5.68. Ветка 1.13 закрыта. ★ next 1.5.",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/SfDoubleAdvisor.java",
+                      "docs/development/notes/sql/26-0816-sudz-sf-num-collision/KSDSF_ADVISOR.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.13.7 QII staging без срока (success). № log-2026-10-20-015",
+                "log-attributes": {
+                  "id": "log-2026-10-20-015",
+                  "timestamp": "2026-10-20T17:30:00+03:00",
+                  "level": "success",
+                  "effort": "45m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "qii",
+                    "staging"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "OutlineKind QII + assignQiiStagingKeys в Excel→Tbl",
+                    "details": "Л7 белые / L6 жёлтые; sfKey = кредитор+договор+присвоение с документа; L6 → один cacSpan (не граница СФ); dueKey/dueGrp null. Исправлено ложное traditional при outline≥3. Unit + smoke export_767501_26-0817: 9806 / 2698 sfKey / 279 cacSpan.",
+                    "outcome": "0922 1.13.7 ✅, план 0.5.67. ★ next 1.13.6. Перезалив Tbl@55/56 — при следующей flLoad.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/SudzPmtUplExcelToTblImporter.java",
+                      "docs/project/proposals/vba-analysis/26-0813_CnInvPmtUpl_/export-row-tree-structure.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
                 "displayName": "1.15 идемпотентность КСДСФ закрыта UAT @62 (success). № log-2026-10-20-007",
                 "log-attributes": {
                   "id": "log-2026-10-20-007",
