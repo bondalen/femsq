@@ -3,7 +3,7 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-10-20"
+      "lastUpdated": "2026-10-21"
     },
     "sessions": [
       {
@@ -2229,6 +2229,43 @@
             }
           },
           "entries": [
+            {
+              "log": {
+                "displayName": "0918 1.1.1.2.6/.6.4/.6.5 закрыты browser (success). № log-2026-10-21-019",
+                "log-attributes": {
+                  "id": "log-2026-10-21-019",
+                  "timestamp": "2026-10-21T09:55:00+03:00",
+                  "level": "success",
+                  "effort": "45m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "pmt-upl",
+                    "uat",
+                    "g_p"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0077"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Browser UAT .6.4/.6.5 @59 и @61",
+                    "details": "JAR 362 + Vite :5175. @59: open 0, Two 17 diag, «Разбор…» disabled, g_p «связи нет» (эталон 767501 = pm 61 по 1019). @61: g_p key 21→901, cohort 57/58/60/62, Tbl=pm 15942. 0918 0.3.38; 0922 0.5.71.",
+                    "outcome": "1.1.1.2.6 и 1.1.1.2.7 ✅ DEV. ★ next 1.1.1.0.3 / прод 14g.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0922-pmt-upl-ui-complete.md"
+                    ]
+                  }
+                ]
+              }
+            },
             {
               "log": {
                 "displayName": "1.14 закрыт: операторский разбор @59 (success). № log-2026-10-20-018",
@@ -20216,6 +20253,511 @@
                     "references": [
                       "docs/development/notes/UI/02-12_femsq-tree/relation-tree.md",
                       "docs/development/notes/chats/chat-plan/chat-plan-26-0802-sudz.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "Краткий отчёт 1.1.1.0.3 (active, high). № chat-2026-10-21-001",
+          "chat-attributes": {
+            "id": "chat-2026-10-21-001",
+            "created": "2026-10-21",
+            "lastUpdated": "2026-10-21",
+            "owner": "Александр",
+            "status": "active",
+            "priority": "high",
+            "tags": [
+              "sudz",
+              "brief-report",
+              "1.1.1.0.3",
+              "fio"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+              "spec": "docs/development/notes/domain/sudz/03-1_brief-report-pre-load.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "1.1.1.0.3.2 backend path→Excel + GraphQL (success). № log-2026-10-21-001",
+                "log-attributes": {
+                  "id": "log-2026-10-21-001",
+                  "timestamp": "2026-10-21T10:30:00+03:00",
+                  "level": "success",
+                  "effort": "90m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "brief-report",
+                    "graphql",
+                    "poi"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                    "spec": "docs/development/notes/domain/sudz/03-1_brief-report-pre-load.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Реализован backend краткого отчёта (.3.2)",
+                    "details": "FioByDictionary + SudzBriefReportBuilder/Service; DAO listFioDictWords; GraphQL prepareSudzBriefReport. Фильтр свода A=D (без него суммы ×3). Unit + QI smoke vs 2_ready: ВСЕГО H/I/K и 6 ФИО.",
+                    "outcome": "1.1.1.0.3.2 ✅ DEV. ★ next 1.1.1.0.3.3 UI.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/brief/",
+                      "code/femsq-backend/femsq-web/src/main/resources/graphql/sudz-schema.graphqls"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.1.1.0.3.3 UI путь/Подготовить/лог (success). № log-2026-10-21-002",
+                "log-attributes": {
+                  "id": "log-2026-10-21-002",
+                  "timestamp": "2026-10-21T10:35:00+03:00",
+                  "level": "success",
+                  "effort": "35m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "brief-report",
+                    "ui"
+                  ],
+                  "links": {
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                    "spec": "docs/development/notes/domain/sudz/03-1_brief-report-pre-load.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Экран краткого отчёта в TopBar СУДЗ",
+                    "details": "SudzBriefReportView + store + prepareSudzBriefReport API; вкладка словарь disable (.3.4).",
+                    "outcome": "1.1.1.0.3.3 ✅ DEV. ★ next 1.1.1.0.3.4.",
+                    "references": [
+                      "code/femsq-frontend-q/src/views/sudz/SudzBriefReportView.vue",
+                      "code/femsq-frontend-q/src/stores/sudz-brief-report.ts"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Оформление краткого Excel ≈ 2_ready P0/P1 (success). № log-2026-10-21-003",
+                "log-attributes": {
+                  "id": "log-2026-10-21-003",
+                  "timestamp": "2026-10-21T10:50:00+03:00",
+                  "level": "success",
+                  "effort": "40m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "brief-report",
+                    "poi",
+                    "excel"
+                  ],
+                  "links": {
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                    "spec": "docs/development/notes/domain/sudz/03-1_brief-report-pre-load.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Стили краткого отчёта по эталону 2_ready",
+                    "details": "Ширины A–L, шапка, деньги #,##0.00, merge A3:K3, K1 Приложение, ИТОГО/ВСЕГО; J без max(0). JAR 364; unit+QI smoke OK.",
+                    "outcome": "Файл рядом со сводом читается как витрина. ★ next 1.1.1.0.3.4.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/brief/SudzBriefReportBuilder.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "I/J как 2_ready: без минусов (success). № log-2026-10-21-004",
+                "log-attributes": {
+                  "id": "log-2026-10-21-004",
+                  "timestamp": "2026-10-21T11:30:00+03:00",
+                  "level": "success",
+                  "effort": "25m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "brief-report"
+                  ],
+                  "links": {
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "I пусто при 0; J только при days>0",
+                    "details": "Согласовано с 2_ready (~830 J>0, 0 отрицательных). JAR 365.",
+                    "outcome": "Excel пересобран.",
+                    "references": [
+                      "SudzBriefReportBuilder.copyDebtRow"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.1.1.0.3.4 CRUD словаря fioDict (success). № log-2026-10-21-005",
+                "log-attributes": {
+                  "id": "log-2026-10-21-005",
+                  "timestamp": "2026-10-21T11:45:00+03:00",
+                  "level": "success",
+                  "effort": "50m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "brief-report",
+                    "fioDict",
+                    "graphql"
+                  ],
+                  "links": {
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                    "spec": "docs/development/notes/domain/sudz/03-1_brief-report-pre-load.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "CRUD ags.fioDict end-to-end",
+                    "details": "SudzFioDict model; DAO list/create/update/delete; GraphQL sudzFioDict + mutations; вкладка «словарь» FemsqTable + диалоги. compile database+web OK.",
+                    "outcome": "1.1.1.0.3.4 ✅ DEV. ★ next 1.1.1.0.3.5 UAT (U12–U13).",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/model/sudz/SudzFioDict.java",
+                      "code/femsq-frontend-q/src/views/sudz/SudzBriefReportView.vue"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.1.1.0.3.5 UAT vs 2_ready U1–U15 (success). № log-2026-10-21-006",
+                "log-attributes": {
+                  "id": "log-2026-10-21-006",
+                  "timestamp": "2026-10-21T11:55:00+03:00",
+                  "level": "success",
+                  "effort": "40m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "brief-report",
+                    "uat"
+                  ],
+                  "links": {
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                    "spec": "docs/development/notes/domain/sudz/03-1_brief-report-pre-load.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "UAT .3.5 QI 2026_03",
+                    "details": "JAR 366 prepareSudzBriefReport: U1–U11 PASS (12 СГК, ВСЕГО, 6 ФИО, J=830/0, L6=46112). U12–U13: delete Равза/Сабержановна → полный «Павлова…»; recreate → «Павлова Р.С.». U14–U15 PASS. Словарь 211/460 восстановлен.",
+                    "outcome": "1.1.1.0.3.5 ✅ DEV; узел 1.1.1.0.3 закрыт на DEV. ★ next прод 14g / 1.1.1.1.",
+                    "references": [
+                      "docs/development/notes/domain/sudz/03-1_brief-report-pre-load.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "FIO: повтор в ячейке, ИП/КФХ, Фамилия И. (success). № log-2026-10-21-007",
+                "log-attributes": {
+                  "id": "log-2026-10-21-007",
+                  "timestamp": "2026-10-21T13:20:00+03:00",
+                  "level": "success",
+                  "effort": "40m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "brief-report",
+                    "fio"
+                  ],
+                  "links": {
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                    "spec": "docs/development/notes/domain/sudz/03-1_brief-report-pre-load.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Правила FioByDictionary без чистки словаря",
+                    "details": "Повтор фамилии (в том числе усечённый хвост, длина ≥ 5) отбрасывается. ИП/КФХ/«КРЕСТЬЯНСКОЕ ХОЗЯЙСТВО» сохраняют префикс, ФИО в конце → «Фамилия И.О.» (родительный падеж принимается). Ровно два слова и имя в словаре → «Фамилия И.». JAR 367: fio transformed 1333→1380. Столбец C vs 2_ready: 50→8.",
+                    "outcome": "47 из 50 ячеек совпали. Остаток: 3 нет в словаре (Каренович; Магомедсалам, Магомедович) и 5 пробелов в инициалах эталона («А. Ю.»). Словарь не менялся.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/brief/FioByDictionary.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.1.1.1.1 ExistCtpt: лог пуст (success). № log-2026-10-21-008",
+                "log-attributes": {
+                  "id": "log-2026-10-21-008",
+                  "timestamp": "2026-10-21T14:05:00+03:00",
+                  "level": "success",
+                  "effort": "20m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "0071",
+                    "exist-ctpt"
+                  ],
+                  "links": {
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Проверка очереди CnExistCtptNotLoad",
+                    "details": "Формула ciduCnExistCtptNot на upl 910, 902, 913, 914: 0 групп. Договоры 188 (cn 2196) и 203 (cn 2198) у БУиРГ 1074001 уже имеют даты стороны. Домен не менялся.",
+                    "outcome": "Ручной добор сторон не требуется: расхождений нет. Лист 1.1.1.1.1 остаётся 🔶 из‑за P2 вкладки СФ.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0826-contracts-inv.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.1.1.1.1 P2 СФ + cnNumsPage + счётчик N из M (success). № log-2026-10-21-009",
+                "log-attributes": {
+                  "id": "log-2026-10-21-009",
+                  "timestamp": "2026-10-21T14:30:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "0071",
+                    "contracts"
+                  ],
+                  "links": {
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                    "sfPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0826-contracts-inv.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Закрытие остатка 1.1.1.1.1",
+                    "details": "Браузер: cn 877 страница 26–50 из 2415, фильтр ПВ21-180 пересобрал дерево; cn 419 — 25 из 2516; cn 221 — 5 из 5, стороны на месте. Master cnNumsPage: 25 из 2555, фильтр КС-14. Счётчик FemsqTable в server-режиме берёт rowsNumber. Связь 15CR0279 на cn 221 создана (ciKey 110677) и удалена. JAR 369.",
+                    "outcome": "1.1.1.1.1 ✅ DEV. ★ next 1.1.1.1.2.",
+                    "references": [
+                      "code/femsq-frontend-q/src/views/contracts/ContractsView.vue",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcCnNumDao.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.1.1.1.2 обход КСДД/КСДСФ/канон (success). № log-2026-10-21-010",
+                "log-attributes": {
+                  "id": "log-2026-10-21-010",
+                  "timestamp": "2026-10-21T15:00:00+03:00",
+                  "level": "success",
+                  "effort": "40m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "ksdd",
+                    "ksdsf"
+                  ],
+                  "links": {
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                    "ops": "docs/development/notes/ops/sudz-operator-guide.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Обход операторской инструкции в браузере",
+                    "details": "Канон 11897: фильтр 1 из 1, цепь портфелей, Split подставил upl 910 и доли 18000, Merge — слоты 11897/13041/13042. Отвязать закрыта при Value. КСДД 914: 6 open multi, советник связать 13044, Link загорается, Create тоже доступен. КСДСФ 915: 2 open, советник создать СФ. Диалоги закрыты отменой, домен не менялся.",
+                    "outcome": "1.1.1.1.2 остаётся 🔶. Остаток: поиск слота вместо slotKey, человеческие подписи Split/Merge, не давать Create когда советник говорит Link.",
+                    "references": [
+                      "code/femsq-frontend-q/src/views/sudz/SudzDbtCanonView.vue",
+                      "code/femsq-frontend-q/src/views/sudz/SudzInvDbtDoubleView.vue",
+                      "code/femsq-frontend-q/src/views/sudz/SudzSfDoubleView.vue"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.1.1.1.2 подписи канона и КСДД (success). № log-2026-10-21-011",
+                "log-attributes": {
+                  "id": "log-2026-10-21-011",
+                  "timestamp": "2026-10-21T15:10:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "ksdd",
+                    "canon"
+                  ],
+                  "links": {
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Закрытие остатка операторского контура зерна",
+                    "details": "Поиск слота searchSudzInvDbtSlots. Split/Merge: подписи слота и выгрузки, по умолчанию выгрузка из портфеля. На 11897 это 803, не 910. КСДД: Create выключен, пока советник говорит связать; панель сообщений без [queue.build]. Подсказка комментария без имени колонки. Браузер: поиск А45-19974/2024 + 32-426 не привязывал слот; диалоги закрыты отменой. JAR 370.",
+                    "outcome": "1.1.1.1.2 ✅ DEV. ★ next 1.1.1.1.3.",
+                    "references": [
+                      "code/femsq-frontend-q/src/views/sudz/SudzDbtCanonView.vue",
+                      "code/femsq-frontend-q/src/views/sudz/SudzInvDbtDoubleView.vue"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.1.1.1.3 проверка погашений (success). № log-2026-10-21-012",
+                "log-attributes": {
+                  "id": "log-2026-10-21-012",
+                  "timestamp": "2026-10-21T15:30:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "s79",
+                    "rslt"
+                  ],
+                  "links": {
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Проверка погашений перед выгрузкой сбора",
+                    "details": "S79.5: открытый P1 @902=193, @903=364; с 52 кандидатами пересекаются 50 и 68 строк, из них не-likely только долг 8624. Порог — suspect, не P1. GraphQL checkSudzRsltRepayments и операция «Rslt сбор · Проверить погашения». Браузер yr 901 до upl 903: кандидатов 52, likely-true 49, suspect 0, ambiguous 7757 и 8624, documented 1. Excel не строился. JAR 372.",
+                    "outcome": "1.1.1.1.3 ✅ DEV. Статусы разбора не сохраняются. ★ next прод 14g.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/repay/SudzRsltRepaymentChecker.java",
+                      "code/femsq-frontend-q/src/views/sudz/SudzPortfolioView.vue"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Фокус плана 0918 на 1.1.2 (success). № log-2026-10-21-013",
+                "log-attributes": {
+                  "id": "log-2026-10-21-013",
+                  "timestamp": "2026-10-21T16:22:00+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "wbs",
+                    "1.1.2"
+                  ],
+                  "links": {
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Уточнён критический путь контура B",
+                    "details": "План 0918 версия 0.3.51. Узел 1.1.1 отмечен ✅ DEV: 0, a, b, c, d. Звезда снята с оборота Rslt и исходящих. Фокус — 1.1.2. Пакет 14g (1.1.1.2.5.p) остаётся параллельно подготовке и применяется после окна M6. Выкладка 1.2 после закрытия 1.1. Сводная таблица §5 приведена к дереву.",
+                    "outcome": "★ next 1.1.2. Релиз на FishEye после «релиз умеет контур B».",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Прогон чеклиста дня по DEV (success). № log-2026-10-21-014",
+                "log-attributes": {
+                  "id": "log-2026-10-21-014",
+                  "timestamp": "2026-10-21T16:26:00+03:00",
+                  "level": "success",
+                  "effort": "30m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "cutover",
+                    "1.1.2.3"
+                  ],
+                  "links": {
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                    "checklist": "docs/deployment/db-upgrade-sudz-invdbt-cutover-deploy-day-checklist.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Сверка чеклиста дня деплоя с DEV",
+                    "details": "Prod-fisheye не открывался. Отмечены E1, N слотов ~11907 как ожидание, dry seed M3/M4, stage1 по README 26-0831, контур b и краткий отчёт .3.5. На диске есть MSSQL2012 словаря FIO, walk-back *Dv и пакет 14g. Нет SURVEY_RESULT.md, подписи R3, бэкапа, скриптов cutover в схеме ags (26-0807/MSSQL2012 пуст). Версия JAR дня не назначена; на DEV 0.1.0.372-SNAPSHOT. Разделы окна и отката пустые.",
+                    "outcome": "1.1.2.3 🔶. Окно H держат survey, R3, бэкап, пакет ags и JAR дня.",
+                    "references": [
+                      "docs/deployment/db-upgrade-sudz-invdbt-cutover-deploy-day-checklist.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Подпись R3 Access и FEMSQ (success). № log-2026-10-21-015",
+                "log-attributes": {
+                  "id": "log-2026-10-21-015",
+                  "timestamp": "2026-10-21T16:34:00+03:00",
+                  "level": "success",
+                  "effort": "30m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "cutover",
+                    "r3"
+                  ],
+                  "links": {
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                    "policy": "docs/deployment/sudz-access-femsq-write-policy.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Подписана политика записи Access и FEMSQ",
+                    "details": "R3 2026-10-21: запрета Access нет, инструмент шага на переходный период выбирает оператор. Модули вне контура B остаются в Access. Проверка структуры: Access по-прежнему пишет ags.cn_inv_pm и не заполняет g_p/DbtUplCstAg; свод после карточки, yr_CmmGr_New, якорь *Dbt/*Dv и витрина D644 ему недоступны.",
+                    "outcome": "1.1.2.2 ✅. ★ next 1.1.2.1 обследование прода.",
+                    "references": [
+                      "docs/deployment/sudz-access-femsq-write-policy.md",
+                      "docs/deployment/db-upgrade-sudz-invdbt-cutover.md"
                     ]
                   }
                 ]

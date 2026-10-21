@@ -12,6 +12,7 @@ import {
   linkSudzInvDbtToDbt,
   mergeSudzDbt,
   searchSudzDbtCanons,
+  searchSudzInvDbtSlots,
   splitSudzDbt,
   unlinkSudzInvDbtFromDbt,
   upsertSudzDbtCanonComment,
@@ -23,6 +24,7 @@ import type {
   SudzDbtCanonCandidate,
   SudzDbtCanonDetail,
   SudzDbtCanonSearchInput,
+  SudzInvDbtSlotPick,
   UpsertSudzDbtCanonCommentInput,
   UpsertSudzDbtCanonValueInput
 } from '@/types/sudz';
@@ -128,7 +130,7 @@ export const useSudzDbtCanonStore = defineStore('sudz-dbt-canon', () => {
   const candidates = ref<SudzDbtCanonCandidate[]>([]);
   const detail = ref<SudzDbtCanonDetail | null>(null);
   const selectedDbtKey = ref<number | null>(null);
-  const linkSlotKey = ref<string>('');
+  const slotSearchLoading = ref(false);
 
   const loading = ref(false);
   const error = ref<string | null>(null);
@@ -199,23 +201,47 @@ export const useSudzDbtCanonStore = defineStore('sudz-dbt-canon', () => {
   }
 
   /**
-   * Привязать слот к открытому канону.
+   * Ищет слоты по номеру СФ и необязательному номеру договора.
+   *
+   * @param invNum номер СФ
+   * @param cnNum номер договора
    */
-  async function linkSlot(): Promise<void> {
+  async function findSlots(invNum: string, cnNum: string): Promise<SudzInvDbtSlotPick[]> {
+    const inv = invNum.trim();
+    if (!inv) {
+      error.value = 'Укажите номер СФ';
+      return [];
+    }
+    slotSearchLoading.value = true;
+    error.value = null;
+    try {
+      return await searchSudzInvDbtSlots(inv, cnNum.trim() || null);
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : String(e);
+      return [];
+    } finally {
+      slotSearchLoading.value = false;
+    }
+  }
+
+  /**
+   * Привязать выбранный слот к открытому канону.
+   *
+   * @param slotKey слот из поиска
+   */
+  async function linkSlot(slotKey: number): Promise<void> {
     if (selectedDbtKey.value == null) {
       error.value = 'Сначала выберите канон';
       return;
     }
-    const sk = Number(linkSlotKey.value);
-    if (!sk || Number.isNaN(sk)) {
-      error.value = 'Укажите slotKey (idKey слота)';
+    if (!slotKey) {
+      error.value = 'Выберите слот из списка';
       return;
     }
     loading.value = true;
     error.value = null;
     try {
-      detail.value = acceptDetail(await linkSudzInvDbtToDbt(sk, selectedDbtKey.value));
-      linkSlotKey.value = '';
+      detail.value = acceptDetail(await linkSudzInvDbtToDbt(slotKey, selectedDbtKey.value));
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e);
     } finally {
@@ -356,18 +382,18 @@ export const useSudzDbtCanonStore = defineStore('sudz-dbt-canon', () => {
     detail.value = null;
     selectedDbtKey.value = null;
     error.value = null;
-    linkSlotKey.value = '';
   }
 
   return {
     candidates,
     detail,
     selectedDbtKey,
-    linkSlotKey,
+    slotSearchLoading,
     loading,
     error,
     searchByColumnFilters,
     openCanon,
+    findSlots,
     linkSlot,
     unlinkSlot,
     upsertValue,

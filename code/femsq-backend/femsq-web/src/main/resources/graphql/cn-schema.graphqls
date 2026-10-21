@@ -3,6 +3,20 @@ extend type Query {
   cnNums: [CnNum!]!
   """Номера, привязанные к договору."""
   cnNumsByCn(cnKey: Int!): [CnNum!]!
+  """
+  Страница master-списка номеров (экран Договоры).
+  page с 1; rowsPerPage default 25 (max 200);
+  sortBy: cnnNum|cnnTypeName|cnnKey|cnnCn.
+  filter — подстрока номера или типа; точное совпадение также по cnnKey и cnnCn.
+  """
+  cnNumsPage(
+    page: Int = 1
+    rowsPerPage: Int = 25
+    filter: String
+    columnFilters: CnNumColumnFilters
+    sortBy: String
+    descending: Boolean = false
+  ): CnNumPage!
   """Карточка договора."""
   cn(cnKey: Int!): Cn
   """
@@ -67,6 +81,20 @@ extend type Mutation {
   createCnSOrg(input: CnSOrgCreateRequest!): CnSOrg!
   updateCnSOrg(id: Int!, input: CnSOrgUpdateRequest!): CnSOrg!
   deleteCnSOrg(id: Int!): Boolean!
+}
+
+type CnNumPage {
+  items: [CnNum!]!
+  totalCount: Int!
+  page: Int!
+  rowsPerPage: Int!
+}
+
+input CnNumColumnFilters {
+  """Подстрока номера договора."""
+  cnnNum: String
+  """Подстрока имени типа номера."""
+  cnnTypeName: String
 }
 
 type CnNum {

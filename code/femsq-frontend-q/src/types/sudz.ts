@@ -501,6 +501,16 @@ export interface SudzDbtCanonSearchInput {
   limit?: number | null;
 }
 
+/** Слот в поиске для привязки к канону. */
+export interface SudzInvDbtSlotPick {
+  slotKey: number;
+  iKey: number;
+  idNum: number;
+  invNum: string | null;
+  cnNum: string | null;
+  dbtKey: number | null;
+}
+
 export interface SudzDbtCanonCandidate {
   dbtKey: number;
   slotCount: number;
@@ -979,6 +989,52 @@ export interface SudzDbtUplFunnelResult {
   stub: boolean;
 }
 
+/** Вход краткого отчёта по своду (1.1.1.0.3.2). */
+export interface PrepareSudzBriefReportInput {
+  svodPath: string;
+  /** Дата отчёта (L6), ISO yyyy-MM-dd. */
+  asOf: string;
+}
+
+/** Результат prepareSudzBriefReport. */
+export interface SudzBriefReportResult {
+  outputPath: string;
+  logLines: string[];
+  fioTransformed: number;
+  fioSkipWordcount: number;
+  fioSkipDict: number;
+  totalDebtH: number;
+  totalOverdueI: number;
+  totalNotOverdueK: number;
+  accountBlocks: string[];
+}
+
+/** Строка словаря FIO (ags.fioDict). */
+export interface SudzFioDict {
+  fioDictKey: number;
+  fdName: string | null;
+  fdNameF: string | null;
+  fdPatrM: string | null;
+  fdPatrM2: string | null;
+  fdPatrF2: string | null;
+  fdPatrF: string | null;
+}
+
+/** Вход создания строки словаря FIO. */
+export interface CreateSudzFioDictInput {
+  fdName?: string | null;
+  fdNameF?: string | null;
+  fdPatrM?: string | null;
+  fdPatrM2?: string | null;
+  fdPatrF2?: string | null;
+  fdPatrF?: string | null;
+}
+
+/** Вход обновления строки словаря FIO. */
+export interface UpdateSudzFioDictInput extends CreateSudzFioDictInput {
+  fioDictKey: number;
+}
+
 export interface CreateSudzPmUplInput {
   name?: string | null;
   date: string;
@@ -1103,4 +1159,29 @@ export interface SudzPortfolioRow {
   mery: string | null;
   cstName: string | null;
   debt: SudzRsltDebt;
+}
+
+/** Строка разбора погашения (S79). */
+export interface SudzRsltRepaymentCase {
+  dbtKey: number;
+  accountNum: string | null;
+  invNum: string | null;
+  cnNum: string | null;
+  kind: string;
+  clazz: string;
+  reason: string;
+  pogasheno: number | null;
+}
+
+/** Протокол «Проверить погашения». */
+export interface SudzRsltRepaymentCheck {
+  yrKey: number;
+  asOfUpl: number;
+  candidateCount: number;
+  likelyTrueCount: number;
+  suspectCount: number;
+  ambiguousCount: number;
+  documentedCount: number;
+  logText: string;
+  openCases: SudzRsltRepaymentCase[];
 }

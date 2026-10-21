@@ -105,7 +105,8 @@
             activeView === 'sudz-debts' ||
             activeView === 'sudz-dbt-canon' ||
             activeView === 'sudz-dbt-upl' ||
-            activeView === 'sudz-pmt-upl'
+            activeView === 'sudz-pmt-upl' ||
+            activeView === 'sudz-brief-report'
         }"
         :disable="!sudzEnabled"
         label="СУДЗ"
@@ -143,6 +144,15 @@
             </QItem>
             <QItem clickable disable>
               <QItemSection>Исходящие документы</QItemSection>
+            </QItem>
+            <QItem
+              clickable
+              v-close-popup
+              :active="activeView === 'sudz-brief-report'"
+              data-test="nav-sudz-brief-report"
+              @click="handleNavigate('sudz-brief-report')"
+            >
+              <QItemSection>Краткий отчёт</QItemSection>
             </QItem>
             <QItem
               clickable
@@ -271,6 +281,15 @@
             @click="handleNavigate('sudz-debts')"
           >
             <QItemSection>СУДЗ · Долги / мероприятия</QItemSection>
+          </QItem>
+          <QItem
+            clickable
+            v-close-popup
+            :disable="!sudzEnabled"
+            data-test="nav-sudz-brief-report-xs"
+            @click="handleNavigate('sudz-brief-report')"
+          >
+            <QItemSection>СУДЗ · Краткий отчёт</QItemSection>
           </QItem>
           <QItem
             clickable

@@ -25,6 +25,7 @@ import type {
   SudzDbtMergeResult,
   SudzDbtCanonCandidate,
   SudzDbtCanonDetail,
+  SudzInvDbtSlotPick,
   SudzDbtCanonSearchInput,
   UpsertSudzDbtCanonCommentInput,
   UpsertSudzDbtCanonValueInput,
@@ -47,6 +48,7 @@ import type {
   SudzPmtUplTabBadges,
   SudzPmtUplTwoLoad,
   SudzRsltDebt,
+  SudzRsltRepaymentCheck,
   SudzRsltReturnImportResult,
   SudzPmtExcelCaseRow,
   SudzPmtSfSumCompare,
@@ -68,7 +70,12 @@ import type {
   UpdateSudzDbtUplFileShInput,
   UpdateSudzPmUplFileInput,
   SudzDbtUplFileSh,
+  CreateSudzFioDictInput,
+  PrepareSudzBriefReportInput,
   RunSudzDbtUplFunnelInput,
+  SudzBriefReportResult,
+  SudzFioDict,
+  UpdateSudzFioDictInput,
   SudzDbtUplFunnelResult,
   RunSudzPmtUplFunnelInput,
   SudzPmtUplFunnelResult,
@@ -512,6 +519,62 @@ const SEED_DBT_UPL_STANDARD_SHEETS = gql`
 const SUDZ_YEAR_KEYS_FOR_UPL = gql`
   query SudzYearKeysForUpl($uplKey: Int!) {
     sudzYearKeysForUpl(uplKey: $uplKey)
+  }
+`;
+
+const PREPARE_SUDZ_BRIEF_REPORT = gql`
+  mutation PrepareSudzBriefReport($input: PrepareSudzBriefReportInput!) {
+    prepareSudzBriefReport(input: $input) {
+      outputPath
+      logLines
+      fioTransformed
+      fioSkipWordcount
+      fioSkipDict
+      totalDebtH
+      totalOverdueI
+      totalNotOverdueK
+      accountBlocks
+    }
+  }
+`;
+
+const SUDZ_FIO_DICT_FIELDS = `
+  fioDictKey
+  fdName
+  fdNameF
+  fdPatrM
+  fdPatrM2
+  fdPatrF2
+  fdPatrF
+`;
+
+const SUDZ_FIO_DICT = gql`
+  query SudzFioDict {
+    sudzFioDict {
+      ${SUDZ_FIO_DICT_FIELDS}
+    }
+  }
+`;
+
+const CREATE_SUDZ_FIO_DICT = gql`
+  mutation CreateSudzFioDict($input: CreateSudzFioDictInput!) {
+    createSudzFioDict(input: $input) {
+      ${SUDZ_FIO_DICT_FIELDS}
+    }
+  }
+`;
+
+const UPDATE_SUDZ_FIO_DICT = gql`
+  mutation UpdateSudzFioDict($input: UpdateSudzFioDictInput!) {
+    updateSudzFioDict(input: $input) {
+      ${SUDZ_FIO_DICT_FIELDS}
+    }
+  }
+`;
+
+const DELETE_SUDZ_FIO_DICT = gql`
+  mutation DeleteSudzFioDict($fioDictKey: Int!) {
+    deleteSudzFioDict(fioDictKey: $fioDictKey)
   }
 `;
 
@@ -1019,6 +1082,19 @@ const SEARCH_SUDZ_DBT_CANONS = gql`
       idNumMin
       idNumMax
       lastTtlSum
+    }
+  }
+`;
+
+const SEARCH_SUDZ_INV_DBT_SLOTS = gql`
+  query SearchSudzInvDbtSlots($invNum: String!, $cnNum: String) {
+    searchSudzInvDbtSlots(invNum: $invNum, cnNum: $cnNum) {
+      slotKey
+      iKey
+      idNum
+      invNum
+      cnNum
+      dbtKey
     }
   }
 `;
@@ -1971,6 +2047,30 @@ export async function getSudzDbtCanon(dbtKey: number): Promise<SudzDbtCanonDetai
   }
 }
 
+/**
+ * Ищет слоты по номеру СФ и необязательному номеру договора.
+ *
+ * @param invNum фрагмент номера СФ
+ * @param cnNum фрагмент номера договора
+ */
+export async function searchSudzInvDbtSlots(
+  invNum: string,
+  cnNum: string | null
+): Promise<SudzInvDbtSlotPick[]> {
+  try {
+    const result = await apolloClient.query<{
+      searchSudzInvDbtSlots: SudzInvDbtSlotPick[];
+    }>({
+      query: SEARCH_SUDZ_INV_DBT_SLOTS,
+      variables: { invNum, cnNum },
+      fetchPolicy: 'network-only'
+    });
+    return result.data?.searchSudzInvDbtSlots ?? [];
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzInvDbtSlots');
+  }
+}
+
 /** Привязать слот к канону (S78). */
 export async function linkSudzInvDbtToDbt(
   slotKey: number,
@@ -2253,6 +2353,89 @@ export async function getSudzYearKeysForUpl(uplKey: number): Promise<number[]> {
     return result.data.sudzYearKeysForUpl ?? [];
   } catch (error) {
     throw wrapApolloError(error, 'SudzYearKeysForUpl');
+  }
+}
+
+/**
+ * Краткий отчёт по входящему своду (до БД): путь → …_краткий_отчёт.xlsx.
+ */
+export async function prepareSudzBriefReport(
+  input: PrepareSudzBriefReportInput
+): Promise<SudzBriefReportResult> {
+  try {
+    const result = await apolloClient.mutate<{ prepareSudzBriefReport: SudzBriefReportResult }>({
+      mutation: PREPARE_SUDZ_BRIEF_REPORT,
+      variables: { input }
+    });
+    const data = result.data?.prepareSudzBriefReport;
+    if (!data) throw new Error('Пустой ответ prepareSudzBriefReport');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'PrepareSudzBriefReport');
+  }
+}
+
+/**
+ * Список строк словаря FIO (ags.fioDict).
+ */
+export async function fetchSudzFioDict(): Promise<SudzFioDict[]> {
+  try {
+    const result = await apolloClient.query<{ sudzFioDict: SudzFioDict[] }>({
+      query: SUDZ_FIO_DICT,
+      fetchPolicy: 'network-only'
+    });
+    return result.data?.sudzFioDict ?? [];
+  } catch (error) {
+    throw wrapApolloError(error, 'SudzFioDict');
+  }
+}
+
+/**
+ * Создать строку словаря FIO.
+ */
+export async function createSudzFioDict(input: CreateSudzFioDictInput): Promise<SudzFioDict> {
+  try {
+    const result = await apolloClient.mutate<{ createSudzFioDict: SudzFioDict }>({
+      mutation: CREATE_SUDZ_FIO_DICT,
+      variables: { input }
+    });
+    const data = result.data?.createSudzFioDict;
+    if (!data) throw new Error('Пустой ответ createSudzFioDict');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'CreateSudzFioDict');
+  }
+}
+
+/**
+ * Обновить строку словаря FIO.
+ */
+export async function updateSudzFioDict(input: UpdateSudzFioDictInput): Promise<SudzFioDict> {
+  try {
+    const result = await apolloClient.mutate<{ updateSudzFioDict: SudzFioDict }>({
+      mutation: UPDATE_SUDZ_FIO_DICT,
+      variables: { input }
+    });
+    const data = result.data?.updateSudzFioDict;
+    if (!data) throw new Error('Пустой ответ updateSudzFioDict');
+    return data;
+  } catch (error) {
+    throw wrapApolloError(error, 'UpdateSudzFioDict');
+  }
+}
+
+/**
+ * Удалить строку словаря FIO.
+ */
+export async function deleteSudzFioDict(fioDictKey: number): Promise<boolean> {
+  try {
+    const result = await apolloClient.mutate<{ deleteSudzFioDict: boolean }>({
+      mutation: DELETE_SUDZ_FIO_DICT,
+      variables: { fioDictKey }
+    });
+    return result.data?.deleteSudzFioDict === true;
+  } catch (error) {
+    throw wrapApolloError(error, 'DeleteSudzFioDict');
   }
 }
 
@@ -2710,6 +2893,47 @@ export async function rebuildSudzDbtUplCstAg(
     return data;
   } catch (error) {
     throw wrapApolloError(error, 'RebuildSudzDbtUplCstAg');
+  }
+}
+
+const CHECK_SUDZ_RSLT_REPAYMENTS = gql`
+  query CheckSudzRsltRepayments($yr: Int!, $asOfUpl: Int!) {
+    checkSudzRsltRepayments(yr: $yr, asOfUpl: $asOfUpl) {
+      yrKey
+      asOfUpl
+      candidateCount
+      likelyTrueCount
+      suspectCount
+      ambiguousCount
+      documentedCount
+      logText
+      openCases {
+        dbtKey
+        accountNum
+        invNum
+        cnNum
+        kind
+        clazz
+        reason
+        pogasheno
+      }
+    }
+  }
+`;
+
+/**
+ * Разбор погашений портфеля. Excel не запрашивается.
+ */
+export async function checkSudzRsltRepayments(yr: number, asOfUpl: number): Promise<SudzRsltRepaymentCheck> {
+  try {
+    const result = await apolloClient.query<{ checkSudzRsltRepayments: SudzRsltRepaymentCheck }>({
+      query: CHECK_SUDZ_RSLT_REPAYMENTS,
+      variables: { yr, asOfUpl },
+      fetchPolicy: 'network-only'
+    });
+    return result.data.checkSudzRsltRepayments;
+  } catch (error) {
+    throw wrapApolloError(error, 'CheckSudzRsltRepayments');
   }
 }
 

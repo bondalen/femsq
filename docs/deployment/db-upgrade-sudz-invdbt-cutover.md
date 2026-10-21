@@ -2,7 +2,7 @@
 
 **Файл:** `docs/deployment/db-upgrade-sudz-invdbt-cutover.md`  
 **Дата создания:** 2026-08-27  
-**lastUpdated:** 2026-10-16  
+**lastUpdated:** 2026-10-21  
 **Версия:** 0.3.11 (walk-back текста cmm на `*Dv` в окне после DDL)  
 **Автор:** Александр  
 **Статус:** черновик — наполнение по мере обсуждения `Dbt`, DEV-репетиции и обследования prod
@@ -208,9 +208,9 @@ I  Dual-read off
 
 ### A — Обследование БД прода
 
-Способ: флешка → SSMS → result sets → Cursor.  
-Скрипты TBD: `docs/development/notes/sql/26-08xx-sudz-prod-survey/`  
-(`00_VERSION`, counts, grain S73, named/TmpCiaRel, upl horizon, existing objects).
+Способ: SSMS на машине, где открыт `SPB-05-NV-SQL1` → сетки результата → Cursor. С asus-kubuntu и nb-win хост не резолвится.  
+Скрипт: [`00_SURVEY_readonly.sql`](../development/notes/sql/26-1021-sudz-prod-survey/MSSQL2012/00_SURVEY_readonly.sql)  
+(версия, объекты `ags`/`sudz`, зерно S73, 10 `iKey` §1.2, горизонт выгрузок).
 
 ### B — Пересчёт зерна
 
@@ -326,7 +326,7 @@ Backup → DDL → seed D(+E) → JAR → smoke → режим Access.
 |---|------|--------|
 | R1 | S73 prod ≠ dev | Фаза A |
 | R2 | E0/E1/E2 | ✅ **E1** (вся история; сегм. 34) |
-| R3 | Access write после H | ☐ черновик политики: [sudz-access-femsq-write-policy.md](sudz-access-femsq-write-policy.md) — подпись владельца до окна H |
+| R3 | Access write после H | ✅ 2026-10-21: запрета нет, инструмент шага выбирает оператор. [политика](sudz-access-femsq-write-policy.md) |
 | R4 | Повестка D1–D7 | ✅ M1 закрыт 2026-08-27 |
 | R5 | Время окна | Замер на DEV |
 | R6 | Collation prod | MSSQL2012 |

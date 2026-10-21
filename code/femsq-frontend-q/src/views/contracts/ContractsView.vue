@@ -43,14 +43,21 @@
           <FemsqTable
             class="master-table"
             root-class="master-table"
+            mode="server"
             row-key="cnnKey"
             :rows="store.cnNums"
             :columns="masterColumns"
             :loading="store.loadingList"
             :show-filter="true"
+            show-column-filters
+            v-model:filters-visible="cnNumFiltersVisible"
+            v-model:column-filters="cnNumColumnFilters"
+            v-model:filter="cnNumFilter"
             v-model:pagination="cnNumPagination"
             selection="single"
             v-model:selected="selectedRows"
+            data-test="cn-num-table"
+            @request="onCnNumRequest"
             @row-click="onCnNumRowClick"
           />
         </section>
@@ -432,7 +439,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import {
   QBanner,
   QBtn,
@@ -495,7 +502,16 @@ const sfSplit = ref(36);
 /** Высота дерева СФ относительно леса документов, %. */
 const cnInvTreeForestSplit = ref(55);
 const detailTab = ref<'parties' | 'sf'>('parties');
-const cnNumPagination = ref({ page: 1, rowsPerPage: 25 });
+const cnNumFilter = ref('');
+const cnNumColumnFilters = ref<Record<string, string>>({});
+const cnNumFiltersVisible = ref(true);
+const cnNumPagination = ref({
+  page: 1,
+  rowsPerPage: 25,
+  rowsNumber: 0,
+  sortBy: 'cnnNum',
+  descending: false
+});
 const nestedPagination = ref({ page: 1, rowsPerPage: 10 });
 const cnInvFilter = ref('');
 const cnInvColumnFilters = ref<Record<string, string>>({});
@@ -768,6 +784,31 @@ const linkForm = computed<RelationFormState | null>(() => {
   });
 });
 
+/**
+ * Страница master-списка номеров: фильтр и сортировка уходят в cnNumsPage.
+ */
+async function onCnNumRequest(request: FemsqTableRequest): Promise<void> {
+  const rowsPerPage = request.rowsPerPage >= 1 && request.rowsPerPage <= 200
+    ? request.rowsPerPage
+    : 25;
+  cnNumPagination.value = {
+    page: request.page,
+    rowsPerPage,
+    rowsNumber: cnNumPagination.value.rowsNumber,
+    sortBy: request.sortBy ?? 'cnnNum',
+    descending: request.descending
+  };
+  await store.loadCnNums({
+    page: request.page,
+    rowsPerPage,
+    filter: request.filter,
+    columnFilters: request.columnFilters ?? {},
+    sortBy: request.sortBy || 'cnnNum',
+    descending: request.descending
+  });
+  cnNumPagination.value.rowsNumber = store.cnNumTotal;
+}
+
 function onCnNumRowClick(_evt: Event, row: CnNumDto): void {
   void store.selectCnNum(row.cnnKey);
 }
@@ -1005,6 +1046,7 @@ async function onLinkSave(): Promise<void> {
     if (currentCnKey != null && currentCnKey !== cnKey) {
       await store.loadCnInvs(currentCnKey);
     }
+    cnInvPagination.value.rowsNumber = store.cnInvTotal;
     $q.notify({
       type: 'positive',
       message: mode === 'edit' ? 'Связь cnInv обновлена' : 'Связь cnInv сохранена'
@@ -1048,6 +1090,7 @@ async function confirmDeleteCnInv(
   }
   try {
     await store.removeCnInv(ciKey);
+    cnInvPagination.value.rowsNumber = store.cnInvTotal;
     relationTreeKey.value += 1;
     $q.notify({ type: 'positive', message: 'Связь cnInv удалена' });
   } catch {
@@ -1350,9 +1393,14 @@ async function saveAddNum(): Promise<void> {
   await doAdd();
 }
 
-onMounted(() => {
-  void store.loadCnNums();
-});
+watch(
+  () => store.cnNumQuery.filter,
+  (filter) => {
+    if (cnNumFilter.value !== filter) {
+      cnNumFilter.value = filter;
+    }
+  }
+);
 
 /**
  * Список cnInv грузим лениво при открытии вкладки СФ (массовые договоры могут быть большими).

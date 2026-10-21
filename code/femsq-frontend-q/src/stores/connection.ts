@@ -15,6 +15,7 @@ export type ActiveView =
   | 'sudz-dbt-canon'
   | 'sudz-dbt-upl'
   | 'sudz-pmt-upl'
+  | 'sudz-brief-report'
   | 'sudz-sf-double'
   | 'sudz-inv-dbt-double'
   | 'contracts'

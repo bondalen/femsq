@@ -145,13 +145,42 @@
               <div class="fill-pane slots-pane">
                 <div class="row q-gutter-sm q-mb-sm items-end shrink-0">
                   <QInput
-                    v-model="store.linkSlotKey"
+                    v-model="linkInvNum"
                     dense
                     outlined
                     clearable
-                    label="slotKey (idKey) для привязки"
-                    style="min-width: 200px"
-                    data-test="sudz-dbt-canon-link-slot"
+                    label="№ СФ"
+                    style="min-width: 160px"
+                    data-test="sudz-dbt-canon-link-inv"
+                  />
+                  <QInput
+                    v-model="linkCnNum"
+                    dense
+                    outlined
+                    clearable
+                    label="№ договора"
+                    style="min-width: 160px"
+                    data-test="sudz-dbt-canon-link-cn"
+                  />
+                  <QBtn
+                    outline
+                    no-caps
+                    label="Найти"
+                    :loading="store.slotSearchLoading"
+                    data-test="sudz-dbt-canon-link-find"
+                    @click="onFindLinkSlots"
+                  />
+                  <QSelect
+                    v-model="linkPickKey"
+                    dense
+                    outlined
+                    emit-value
+                    map-options
+                    clearable
+                    :options="linkHitOptions"
+                    label="Слот"
+                    style="min-width: 280px"
+                    data-test="sudz-dbt-canon-link-pick"
                   />
                   <QBtn
                     color="primary"
@@ -159,8 +188,10 @@
                     no-caps
                     label="Привязать слот"
                     :loading="store.loading"
+                    :disable="!canLinkPick"
+                    :title="linkPickTitle"
                     data-test="sudz-dbt-canon-link-btn"
-                    @click="store.linkSlot()"
+                    @click="onLinkPick"
                   />
                 </div>
                 <FemsqTable
@@ -238,9 +269,9 @@
                 <template #after>
                   <div class="comment-pane fill-pane q-pa-sm">
                     <div class="text-caption text-grey-7 q-mb-sm">
-                      Дерево — тот же канон, что вкладка «Долг»: Dbt → слот → DbtValue, комментарий
-                      висит на Value (не на группе года). Добавление: выделить Value → группа в
-                      модалке. Save пишет в <code>cnInvCmm.cnicDv</code>; пустой текст не удаляет строку.
+                      Дерево то же, что на вкладке «Долг»: слот и сумма выгрузки. Комментарий
+                      относится к сумме. Выделите сумму и укажите группу в окне. Пустой текст строку
+                      не удаляет.
                     </div>
                     <div v-if="selectedCommentValueKey != null" class="row q-mb-sm shrink-0">
                       <QBtn
@@ -314,28 +345,38 @@
     </QDialog>
 
     <QDialog v-model="splitDlg.open">
-      <QCard style="min-width: 420px">
-        <QCardSection class="text-subtitle1">Split на доли (эта upl)</QCardSection>
+      <QCard style="min-width: 480px" data-test="sudz-dbt-canon-split-dlg">
+        <QCardSection class="text-subtitle1">Разделить сумму выгрузки</QCardSection>
         <QCardSection class="q-gutter-sm">
-          <QInput v-model.number="splitDlg.sourceSlotKey" dense outlined type="number" label="Исходный slotKey" />
-          <QInput v-model.number="splitDlg.uplKey" dense outlined type="number" label="uplKey" />
+          <div class="text-body2" data-test="sudz-dbt-canon-split-slot">{{ splitSlotLabel }}</div>
+          <QSelect
+            :model-value="splitDlg.uplKey"
+            dense
+            outlined
+            emit-value
+            map-options
+            :options="splitUplOptions"
+            label="Выгрузка"
+            data-test="sudz-dbt-canon-split-upl"
+            @update:model-value="applySplitUpl"
+          />
           <div v-for="(part, idx) in splitDlg.parts" :key="idx" class="row q-gutter-sm items-center">
-            <QInput v-model="part.ttl" dense outlined label="ttl доли" class="col" />
-            <QInput v-model="part.overd" dense outlined label="overd" class="col" />
+            <QInput v-model="part.ttl" dense outlined label="Сумма доли" class="col" />
+            <QInput v-model="part.overd" dense outlined label="Просрочено" class="col" />
             <QBtn flat dense icon="remove" :disable="splitDlg.parts.length < 2" @click="splitDlg.parts.splice(idx, 1)" />
           </div>
           <QBtn flat dense no-caps label="Добавить долю" @click="splitDlg.parts.push({ ttl: '', overd: '' })" />
         </QCardSection>
         <QCardSection align="right">
-          <QBtn flat no-caps label="Отмена" v-close-popup />
-          <QBtn unelevated no-caps color="primary" label="Split" @click="submitSplit" />
+          <QBtn flat no-caps label="Отмена" v-close-popup data-test="sudz-dbt-canon-split-cancel" />
+          <QBtn unelevated no-caps color="primary" label="Разделить" @click="submitSplit" />
         </QCardSection>
       </QCard>
     </QDialog>
 
     <QDialog v-model="mergeDlg.open">
-      <QCard style="min-width: 420px">
-        <QCardSection class="text-subtitle1">Merge</QCardSection>
+      <QCard style="min-width: 480px" data-test="sudz-dbt-canon-merge-dlg">
+        <QCardSection class="text-subtitle1">Слить</QCardSection>
         <QCardSection class="q-gutter-sm">
           <QSelect
             v-model="mergeDlg.mode"
@@ -344,21 +385,65 @@
             emit-value
             map-options
             :options="mergeModeOptions"
-            label="Режим"
+            label="Что слить"
+            data-test="sudz-dbt-canon-merge-mode"
           />
-          <QInput
-            v-model="mergeDlg.slotKeysText"
-            dense
-            outlined
-            label="slotKeys через запятую"
-            hint="CANONS: слоты чужих канонов. SHARES: доли этой СФ"
-          />
-          <QInput v-model.number="mergeDlg.survivorSlotKey" dense outlined type="number" label="survivorSlotKey (для SHARES)" />
-          <QInput v-model.number="mergeDlg.uplKey" dense outlined type="number" label="uplKey (для SHARES)" />
+          <template v-if="mergeDlg.mode === 'SHARES_ON_UPL'">
+            <QSelect
+              :model-value="mergeDlg.survivorSlotKey"
+              dense
+              outlined
+              emit-value
+              map-options
+              :options="mergeSlotOptions"
+              label="Слот, который остаётся"
+              data-test="sudz-dbt-canon-merge-survivor"
+              @update:model-value="applyMergeSurvivor"
+            />
+            <QSelect
+              v-model="mergeDlg.slotKeys"
+              dense
+              outlined
+              multiple
+              emit-value
+              map-options
+              :options="mergeShareOptions"
+              label="Доли этой СФ"
+              data-test="sudz-dbt-canon-merge-shares"
+            />
+            <QSelect
+              v-model="mergeDlg.uplKey"
+              dense
+              outlined
+              emit-value
+              map-options
+              :options="mergeUplOptions"
+              label="Выгрузка"
+              data-test="sudz-dbt-canon-merge-upl"
+            />
+          </template>
+          <template v-else>
+            <div class="row q-gutter-sm items-end">
+              <QInput v-model="mergeFindInv" dense outlined label="№ СФ" class="col" />
+              <QInput v-model="mergeFindCn" dense outlined label="№ договора" class="col" />
+              <QBtn outline no-caps label="Найти" :loading="store.slotSearchLoading" @click="onFindMergeSlots" />
+            </div>
+            <QSelect
+              v-model="mergeDlg.slotKeys"
+              dense
+              outlined
+              multiple
+              emit-value
+              map-options
+              :options="mergeForeignOptions"
+              label="Слоты других канонов"
+              data-test="sudz-dbt-canon-merge-foreign"
+            />
+          </template>
         </QCardSection>
         <QCardSection align="right">
-          <QBtn flat no-caps label="Отмена" v-close-popup />
-          <QBtn unelevated no-caps color="primary" label="Merge" @click="submitMerge" />
+          <QBtn flat no-caps label="Отмена" v-close-popup data-test="sudz-dbt-canon-merge-cancel" />
+          <QBtn unelevated no-caps color="primary" label="Слить" @click="submitMerge" />
         </QCardSection>
       </QCard>
     </QDialog>
@@ -461,7 +546,9 @@ import PmDocForest from '@/components/sudz/PmDocForest.vue';
 import type {
   SudzDbtCanonCandidate,
   SudzDbtCanonSlot,
-  SudzDbtMergeMode
+  SudzDbtCanonValue,
+  SudzDbtMergeMode,
+  SudzInvDbtSlotPick
 } from '@/types/sudz';
 import {
   commentStubFromWalkNodeId,
@@ -488,6 +575,14 @@ const canonWalkSpec = dbtCanonSpecJson as FemsqWalkTreeSpec;
 const vClosePopup = ClosePopup;
 
 const store = useSudzDbtCanonStore();
+
+const linkInvNum = ref('');
+const linkCnNum = ref('');
+const linkHits = ref<SudzInvDbtSlotPick[]>([]);
+const linkPickKey = ref<number | null>(null);
+const mergeFindInv = ref('');
+const mergeFindCn = ref('');
+const mergeHits = ref<SudzInvDbtSlotPick[]>([]);
 
 const columnFilters = ref<Record<string, string>>({});
 /** Поколоночный поиск кандидатов открыт по умолчанию (server-criteria). */
@@ -538,14 +633,14 @@ const splitDlg = reactive({
 const mergeDlg = reactive({
   open: false,
   mode: 'SHARES_ON_UPL' as SudzDbtMergeMode,
-  slotKeysText: '',
+  slotKeys: [] as number[],
   survivorSlotKey: 0,
   uplKey: 0
 });
 
 const mergeModeOptions = [
-  { label: 'Доли на upl (SHARES_ON_UPL)', value: 'SHARES_ON_UPL' },
-  { label: 'Каноны (CANONS)', value: 'CANONS' }
+  { label: 'Доли одной выгрузки', value: 'SHARES_ON_UPL' },
+  { label: 'Несколько канонов', value: 'CANONS' }
 ];
 
 const commentDlg = reactive({
@@ -1005,21 +1100,176 @@ function submitValue(): void {
 }
 
 /**
- * Модалка Split.
+ * Подпись слота для оператора: номер на СФ, номер СФ, договор.
  *
- * @param slotKey исходный слот
+ * @param slot слот канона
  */
-function openSplit(slotKey: number): void {
-  const slot = store.detail?.slots.find((s) => s.slotKey === slotKey);
-  const last = slot?.values[0];
-  const half = last?.ttl != null ? String(last.ttl / 2) : '';
-  splitDlg.sourceSlotKey = slotKey;
-  splitDlg.uplKey = last?.uplKey ?? 0;
+function slotCaption(slot: SudzDbtCanonSlot): string {
+  return `№ ${slot.idNum} · СФ ${slot.invNum ?? '—'} · ${slot.cnNum ?? '—'}`;
+}
+
+/**
+ * Подпись выгрузки: имя, дата и место относительно портфеля.
+ *
+ * @param value сумма слота
+ */
+function uplCaption(value: SudzDbtCanonValue): string {
+  const name = value.uplName?.trim() || 'без имени';
+  const date = value.uplStatusOnDate || value.uplDate || 'без даты';
+  const place = value.portfolioLabels?.length
+    ? value.portfolioLabels.join(', ')
+    : 'вне портфеля';
+  return `${value.uplKey} · ${name} · ${date} · ${place}`;
+}
+
+/**
+ * Выгрузка слота из выбранной цепи портфелей, иначе любая внутри портфеля.
+ *
+ * @param slot слот
+ */
+function defaultUplKey(slot: SudzDbtCanonSlot | undefined): number {
+  const values = slot?.values ?? [];
+  if (!values.length) {
+    return 0;
+  }
+  const chain = selectedPortfolioChain.value ?? portfolioChains.value[0];
+  const chainKeys = new Set((chain?.upls ?? []).map((upl) => upl.uplKey));
+  const inChain = values.find((value) => chainKeys.has(value.uplKey));
+  if (inChain) {
+    return inChain.uplKey;
+  }
+  const inPortfolio = values.find((value) => (value.portfolioLabels?.length ?? 0) > 0);
+  return (inPortfolio ?? values[0]).uplKey;
+}
+
+/**
+ * Делит сумму выбранной выгрузки пополам в поля долей.
+ *
+ * @param uplKey выгрузка
+ */
+function applySplitUpl(uplKey: number): void {
+  splitDlg.uplKey = uplKey;
+  const slot = store.detail?.slots.find((item) => item.slotKey === splitDlg.sourceSlotKey);
+  const value = slot?.values.find((item) => item.uplKey === uplKey);
+  const half = value?.ttl != null ? String(value.ttl / 2) : '';
   splitDlg.parts = [
     { ttl: half, overd: '' },
     { ttl: half, overd: '' }
   ];
+}
+
+const splitSlotLabel = computed(() => {
+  const slot = store.detail?.slots.find((item) => item.slotKey === splitDlg.sourceSlotKey);
+  return slot ? slotCaption(slot) : '';
+});
+
+const splitUplOptions = computed(() => {
+  const slot = store.detail?.slots.find((item) => item.slotKey === splitDlg.sourceSlotKey);
+  return (slot?.values ?? []).map((value) => ({ label: uplCaption(value), value: value.uplKey }));
+});
+
+const mergeSlotOptions = computed(() =>
+  (store.detail?.slots ?? []).map((slot) => ({ label: slotCaption(slot), value: slot.slotKey }))
+);
+
+const mergeShareOptions = computed(() =>
+  mergeSlotOptions.value.filter((option) => option.value !== mergeDlg.survivorSlotKey)
+);
+
+const mergeUplOptions = computed(() => {
+  const slot = store.detail?.slots.find((item) => item.slotKey === mergeDlg.survivorSlotKey);
+  return (slot?.values ?? []).map((value) => ({ label: uplCaption(value), value: value.uplKey }));
+});
+
+/**
+ * Подпись найденного слота, с каноном, если мост уже есть.
+ *
+ * @param hit строка поиска
+ */
+function hitCaption(hit: SudzInvDbtSlotPick): string {
+  const canon = hit.dbtKey != null ? ` · канон ${hit.dbtKey}` : '';
+  return `№ ${hit.idNum} · СФ ${hit.invNum ?? '—'} · ${hit.cnNum ?? '—'}${canon}`;
+}
+
+const linkHitOptions = computed(() =>
+  linkHits.value.map((hit) => ({ label: hitCaption(hit), value: hit.slotKey }))
+);
+
+const linkPick = computed(
+  () => linkHits.value.find((hit) => hit.slotKey === linkPickKey.value) ?? null
+);
+
+const canLinkPick = computed(
+  () => linkPick.value != null && linkPick.value.dbtKey !== store.detail?.dbtKey
+);
+
+const linkPickTitle = computed(() => {
+  if (!linkPick.value) {
+    return 'Сначала найдите слот';
+  }
+  if (linkPick.value.dbtKey === store.detail?.dbtKey) {
+    return 'Слот уже на этом каноне';
+  }
+  return 'Привязать выбранный слот';
+});
+
+const mergeForeignOptions = computed(() =>
+  mergeHits.value
+    .filter((hit) => hit.dbtKey != null && hit.dbtKey !== store.detail?.dbtKey)
+    .map((hit) => ({ label: hitCaption(hit), value: hit.slotKey }))
+);
+
+/**
+ * Ищет слоты для привязки и оставляет выбор, если он ещё в списке.
+ */
+async function onFindLinkSlots(): Promise<void> {
+  linkHits.value = await store.findSlots(linkInvNum.value, linkCnNum.value);
+  if (!linkHits.value.some((hit) => hit.slotKey === linkPickKey.value)) {
+    linkPickKey.value = linkHits.value[0]?.slotKey ?? null;
+  }
+}
+
+/**
+ * Привязывает выбранный слот. Уже стоящий на этом каноне не отправляет.
+ */
+function onLinkPick(): void {
+  if (!canLinkPick.value || linkPickKey.value == null) {
+    return;
+  }
+  void store.linkSlot(linkPickKey.value);
+}
+
+/**
+ * Ищет чужие слоты для слияния канонов.
+ */
+async function onFindMergeSlots(): Promise<void> {
+  mergeHits.value = await store.findSlots(mergeFindInv.value, mergeFindCn.value);
+  const allowed = new Set(mergeForeignOptions.value.map((option) => option.value));
+  mergeDlg.slotKeys = mergeDlg.slotKeys.filter((key) => allowed.has(key));
+}
+
+/**
+ * Меняет остающийся слот и подставляет выгрузку из цепи портфелей.
+ *
+ * @param slotKey слот
+ */
+function applyMergeSurvivor(slotKey: number): void {
+  mergeDlg.survivorSlotKey = slotKey;
+  mergeDlg.slotKeys = mergeDlg.slotKeys.filter((key) => key !== slotKey);
+  const slot = store.detail?.slots.find((item) => item.slotKey === slotKey);
+  mergeDlg.uplKey = defaultUplKey(slot);
+}
+
+/**
+ * Модалка разделения суммы выбранного слота.
+ *
+ * @param slotKey исходный слот
+ */
+function openSplit(slotKey: number): void {
+  const slot = store.detail?.slots.find((item) => item.slotKey === slotKey);
+  splitDlg.sourceSlotKey = slotKey;
   splitDlg.open = true;
+  applySplitUpl(defaultUplKey(slot));
 }
 
 /**
@@ -1041,7 +1291,7 @@ function submitSplit(): void {
     })
     .filter((p) => !Number.isNaN(p.ttl) && p.ttl > 0);
   if (parts.length < 2 || !splitDlg.uplKey) {
-    store.error = 'Нужны uplKey и минимум две доли с ttl';
+    store.error = 'Выберите выгрузку и укажите минимум две доли с суммой';
     return;
   }
   splitDlg.open = false;
@@ -1058,10 +1308,14 @@ function submitSplit(): void {
  */
 function openMerge(): void {
   const slots = store.detail?.slots ?? [];
+  const survivor = slots[0];
   mergeDlg.mode = 'SHARES_ON_UPL';
-  mergeDlg.slotKeysText = slots.map((s) => s.slotKey).join(', ');
-  mergeDlg.survivorSlotKey = slots[0]?.slotKey ?? 0;
-  mergeDlg.uplKey = slots[0]?.values[0]?.uplKey ?? 0;
+  mergeDlg.survivorSlotKey = survivor?.slotKey ?? 0;
+  mergeDlg.slotKeys = slots.slice(1).map((slot) => slot.slotKey);
+  mergeDlg.uplKey = defaultUplKey(survivor);
+  mergeFindInv.value = '';
+  mergeFindCn.value = '';
+  mergeHits.value = [];
   mergeDlg.open = true;
 }
 
@@ -1072,12 +1326,9 @@ function submitMerge(): void {
   if (!store.selectedDbtKey) {
     return;
   }
-  const slotKeys = mergeDlg.slotKeysText
-    .split(/[,;\s]+/)
-    .map((s) => Number(s))
-    .filter((n) => Number.isFinite(n) && n > 0);
+  const slotKeys = mergeDlg.slotKeys.filter((key) => Number.isFinite(key) && key > 0);
   if (!slotKeys.length) {
-    store.error = 'Укажите slotKeys';
+    store.error = 'Выберите слоты';
     return;
   }
   mergeDlg.open = false;
@@ -1089,6 +1340,22 @@ function submitMerge(): void {
     uplKey: mergeDlg.uplKey || null
   });
 }
+
+watch(
+  () => mergeDlg.mode,
+  (mode) => {
+    if (!mergeDlg.open) {
+      return;
+    }
+    if (mode === 'SHARES_ON_UPL') {
+      mergeDlg.slotKeys = (store.detail?.slots ?? [])
+        .map((slot) => slot.slotKey)
+        .filter((key) => key !== mergeDlg.survivorSlotKey);
+      return;
+    }
+    mergeDlg.slotKeys = [];
+  }
+);
 
 watch(
   () => store.selectedDbtKey,

@@ -1,11 +1,11 @@
 # План: экран «Договоры» — вкладка «Счета-фактуры» (T7)
 
 **Дата создания:** 2026-08-26  
-**Последнее обновление:** 2026-08-27  
+**Последнее обновление:** 2026-10-21  
 **Проект:** FEMSQ  
-**Версия плана:** 0.4.0 (P1 ✅: GraphQL `cnInvsByCn` page + индекс `IX_cnInv_ciCn`)  
+**Версия плана:** 0.5.0 (P2 ✅: вкладка СФ `mode=server`; master `cnNumsPage`)  
 **Задача:** [0071](../../../project-development.json) (дерево **02.03.07**) · срез **T7** (S68t)  
-**Статус плана:** 🔄 этапы 1–2 ✅; **P1 ✅**; next — **P2** (`mode=server` на вкладке СФ) / P2a; CRUD после P2  
+**Статус плана:** 🔄 этапы 1–2 ✅; **P1 ✅**; **P2 ✅** (2026-10-21, UAT cn 419 / 877 / 221). **P2a** не нужен: вкладка СФ больше не грузит client-path. CRUD связи проверен созданием и удалением. **P3–P4** счётчик «N из M» закрыт локальной правкой `FemsqTable` (server → `pagination.rowsNumber`), без отдельного релиза lib.  
 **Журнал:** [chat-2026-08-26-001](../../../../journal/project-journal.json)  
 **Карта домена СУДЗ:** [chat-plan-26-0802-sudz.md](./chat-plan-26-0802-sudz.md) · S62 / S64–S65 / S68t / S73  
 **UI Access:** [02-10_contracts-cnNum-access.md](../../UI/02-10_contracts-cnNum-access.md)  
@@ -99,7 +99,7 @@
 | **0** | Документы | Этот план; указатели из 0802 / 0071 / 02-10 / 02-12 | ✅ 2026-08-26 |
 | **1** | Данные списка | `fetchCnInvsByCn` ← `relationExpand('cn.cnInv')` + enrich `iNum` (≤80); store `cnInvs` / `selectedCnInv` | ✅ 2026-08-26 · **client-path**, держать до P2 |
 | **2** | UI раскладка | Вкладка SF: слева FemsqTable `cnInv`, справа `RelationTree` + `contracts-inv`, `root-id` = `ciInv`; lazy load по вкладке | ✅ 2026-08-26 |
-| **2b** | Server page (§7) | GraphQL page + `mode=server`; снять полную выгрузку; без ломки остальных гридов | 🔄 P1 ✅; P2 ☐ |
+| **2b** | Server page (§7) | GraphQL page + `mode=server`; снять полную выгрузку; без ломки остальных гридов | ✅ P2 2026-10-21 |
 | **3** | Actions на JSON | Перенести/добавить `cnInv.link.*` / кнопка «+ связь» + `RecordModal` | ☐ после **2b** |
 | **4** | Убрать interim | SF не на `cn-picker`; дочистить мёртвый CRUD-host после этапа 3 | ☐ частично |
 | **5** | UAT | `cn=2265` + договор с большим `cnInv` (напр. 419/877); CRUD; смена строки → дерево | ☐ |
@@ -183,7 +183,7 @@
 |----|-----|-------------|---------------------|--------|
 | **P0** | FEMSQ док | Этот §7; при старте кода — S-сегмент; опционально строка в 0802 | только доки | ✅ 2026-08-26 |
 | **P1** | FEMSQ backend | Query page `cnInvsByCn` → `{ items, totalCount }`; индекс `ciCn`; решения §7.5 | новый API рядом со старым; этапы 1–2 **не трогать** | ✅ 2026-08-26 |
-| **P2** | FEMSQ frontend | Вкладка СФ: флаг/`mode='server'` + `@request` → P1; `pagination.rowsNumber = totalCount`; **cutover** только списка СФ; убрать полную выгрузку `fetchCnInvsByCn` с вкладки | остальные экраны client; master `cnNum` client; дерево `contracts-inv` без изменений; rollback = вернуть client-path | ☐ |
+| **P2** | FEMSQ frontend | Вкладка СФ: флаг/`mode='server'` + `@request` → P1; `pagination.rowsNumber = totalCount`; **cutover** только списка СФ; убрать полную выгрузку `fetchCnInvsByCn` с вкладки | остальные экраны client; дерево `contracts-inv` без изменений; rollback = вернуть client-path | ✅ 2026-10-21 UAT |
 | **P2a** | FEMSQ предохранитель | До/вместе с P2: если остаётся client — `COUNT` и отказ/баннер при `cnt > порог` (напр. 200), не грузить 73k | не ломает малые договоры | ☐ |
 | **P3** | Exchange → feQuLib | Запрос G polish **в** `feQuLib/docs/agent-exchange-inbox/`; cookbook server + `rowsNumber` + «N из M»; **не** E/F; **не** блокер P1–P2 | lib без ответа не блокирует page API; шара не обязательна | ☐ после или параллельно P1 |
 | **P4** | feQuLib | Реализация G polish; ответ **в inbox** + SHA; registry: вынести G из 0008 или medium | additive; списки без `mode=server` без регрессии | ☐ окно feQuLib |

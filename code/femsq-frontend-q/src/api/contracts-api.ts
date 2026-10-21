@@ -364,6 +364,88 @@ export async function fetchCnNums(): Promise<CnNumDto[]> {
   }
 }
 
+const CN_NUMS_PAGE_QUERY = gql`
+  query CnNumsPage(
+    $page: Int
+    $rowsPerPage: Int
+    $filter: String
+    $columnFilters: CnNumColumnFilters
+    $sortBy: String
+    $descending: Boolean
+  ) {
+    cnNumsPage(
+      page: $page
+      rowsPerPage: $rowsPerPage
+      filter: $filter
+      columnFilters: $columnFilters
+      sortBy: $sortBy
+      descending: $descending
+    ) {
+      totalCount
+      page
+      rowsPerPage
+      items {
+        cnnKey
+        cnnNum
+        cnnCn
+        cnnType
+        cnnTypeName
+        cnnNote
+      }
+    }
+  }
+`;
+
+/** Параметры страницы master-списка номеров. */
+export interface CnNumPageQuery {
+  page: number;
+  rowsPerPage: number;
+  filter: string;
+  /** Непустые фильтры колонок: cnnNum, cnnTypeName. */
+  columnFilters: Record<string, string>;
+  sortBy: string;
+  descending: boolean;
+}
+
+/** Страница номеров договоров. */
+export interface CnNumListPage {
+  items: CnNumDto[];
+  totalCount: number;
+  page: number;
+  rowsPerPage: number;
+}
+
+/**
+ * Страница master-списка {@code cnNum}. Полный {@link fetchCnNums} остаётся для других экранов.
+ *
+ * @param query страница, фильтр и сортировка
+ */
+export async function fetchCnNumPage(query: CnNumPageQuery): Promise<CnNumListPage> {
+  try {
+    const result = await apolloClient.query<{
+      cnNumsPage: CnNumListPage;
+    }>({
+      query: CN_NUMS_PAGE_QUERY,
+      variables: {
+        page: query.page,
+        rowsPerPage: query.rowsPerPage,
+        filter: query.filter,
+        columnFilters: columnFiltersVariable(query.columnFilters),
+        sortBy: query.sortBy,
+        descending: query.descending
+      },
+      fetchPolicy: 'network-only'
+    });
+    const page = result.data?.cnNumsPage;
+    if (!page) {
+      throw new RequestError('Пустой ответ cnNumsPage');
+    }
+    return page;
+  } catch (error) {
+    throw toRequestError(error, 'Не удалось загрузить номера договоров');
+  }
+}
+
 /**
  * Карточка договора по ключу.
  */

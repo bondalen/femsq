@@ -14,6 +14,7 @@ import com.femsq.database.model.sudz.SudzD644Row;
 import com.femsq.database.model.sudz.SudzDbtMergeCommand;
 import com.femsq.database.model.sudz.SudzDbtMergeResult;
 import com.femsq.database.model.sudz.SudzDbtCanonCandidate;
+import com.femsq.database.model.sudz.SudzInvDbtSlotPick;
 import com.femsq.database.model.sudz.SudzDbtCanonDetail;
 import com.femsq.database.model.sudz.SudzDbtCanonSearchFilter;
 import com.femsq.database.model.sudz.SudzDbtSplitCommand;
@@ -41,6 +42,7 @@ import com.femsq.database.model.sudz.SudzDbtUplCnExistCtptNotLoad;
 import com.femsq.database.model.sudz.SudzDbtUplCnNotLoad;
 import com.femsq.database.model.sudz.SudzDbtUplCnNotLoadApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplFile;
+import com.femsq.database.model.sudz.SudzFioDict;
 import com.femsq.database.model.sudz.SudzDbtUplFileSh;
 import com.femsq.database.model.sudz.SudzDbtUplFunnelResult;
 import com.femsq.database.model.sudz.SudzDbtUplFunnelSteps;
@@ -1149,6 +1151,11 @@ public class DefaultSudzService implements SudzService {
     }
 
     @Override
+    public List<SudzInvDbtSlotPick> searchInvDbtSlots(String invNum, String cnNum) {
+        return sudzDao.searchInvDbtSlots(invNum, cnNum);
+    }
+
+    @Override
     public SudzDbtCanonDetail findDbtCanon(int dbtKey) {
         if (dbtKey <= 0) {
             throw new IllegalArgumentException("dbtKey должен быть положительным: " + dbtKey);
@@ -1389,6 +1396,31 @@ public class DefaultSudzService implements SudzService {
             throw new IllegalArgumentException("cnKey должен быть положительным: " + cnKey);
         }
         return sudzDao.linkSfDoubleToCn(ciusKey, invKey, cnKey);
+    }
+
+    @Override
+    public List<String> listFioDictWords() {
+        return sudzDao.listFioDictWords();
+    }
+
+    @Override
+    public List<SudzFioDict> listFioDict() {
+        return sudzDao.listFioDict();
+    }
+
+    @Override
+    public SudzFioDict createFioDict(SudzFioDict row) {
+        return sudzDao.createFioDict(row);
+    }
+
+    @Override
+    public SudzFioDict updateFioDict(SudzFioDict row) {
+        return sudzDao.updateFioDict(row);
+    }
+
+    @Override
+    public boolean deleteFioDict(int fioDictKey) {
+        return sudzDao.deleteFioDict(fioDictKey);
     }
 
     private static String escapeHtml(String value) {

@@ -246,7 +246,7 @@
                     data-test="sudz-progress-operation"
                   />
                 </div>
-                <div v-if="isExportOp" class="col-12 col-md-3">
+                <div v-if="needsAsOf" class="col-12 col-md-3">
                   <QSelect
                     v-model="progress.asOfUpl"
                     :options="yearUplOptions"
@@ -398,7 +398,43 @@
                   v-else
                   class="progress-proto-panel"
                 >
-                  <div v-if="!progress.protoRows.length" class="text-grey-7 q-pa-sm">
+                  <div v-if="isCheckOp" class="q-pa-sm" data-test="sudz-progress-repay">
+                    <pre class="progress-log-pre" data-test="sudz-progress-repay-log">{{ repay.logText }}</pre>
+                    <div v-if="repay.logText && !repay.cases.length" class="text-grey-8 q-mt-sm">
+                      Открытых подозрений нет. Выгрузка этим порогом не закрывается.
+                    </div>
+                    <table
+                      v-if="repay.cases.length"
+                      class="q-mt-sm"
+                      data-test="sudz-progress-repay-cases"
+                    >
+                      <thead>
+                        <tr>
+                          <th>Класс</th>
+                          <th>Долг</th>
+                          <th>Счёт</th>
+                          <th>СФ</th>
+                          <th>Договор</th>
+                          <th>Вид</th>
+                          <th>Погашено</th>
+                          <th>Правило</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="row in repay.cases" :key="row.dbtKey">
+                          <td>{{ row.clazz }}</td>
+                          <td>{{ row.dbtKey }}</td>
+                          <td>{{ row.accountNum }}</td>
+                          <td>{{ row.invNum }}</td>
+                          <td>{{ row.cnNum }}</td>
+                          <td>{{ row.kind }}</td>
+                          <td>{{ row.pogasheno }}</td>
+                          <td>{{ row.reason }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div v-else-if="!progress.protoRows.length" class="text-grey-7 q-pa-sm">
                     Выполните «Rslt … / D644 / Свод · Выгрузить» в режиме «Предпросмотр» —
                     таблица как в Excel (фильтр; у Rslt сбора колонки *_new пустые).
                   </div>
@@ -650,11 +686,12 @@ import {
   downloadSudzRsltExcel,
   getSudzD644,
   getSudzD644Svod,
+  checkSudzRsltRepayments,
   getSudzYrDbtChanges,
   uploadSudzRsltReturn
 } from '@/api/sudz-api';
 import { useSudzPortfolioStore } from '@/stores/sudz-portfolio';
-import type { SudzRsltDebt, SudzYear } from '@/types/sudz';
+import type { SudzRsltDebt, SudzRsltRepaymentCase, SudzYear } from '@/types/sudz';
 import {
   getRememberedDirectoryName,
   EXPORT_FOLDER_MISSING_MESSAGE,
@@ -700,6 +737,7 @@ const exportFolderHint = computed(() => {
 });
 
 type ProgressOperation =
+  | 'rslt_sborn_check'
   | 'rslt_sborn_export'
   | 'rslt_povtor_export'
   | 'rslt_povtor_import'
@@ -737,6 +775,7 @@ const protoCell = reactive({
 const protoScrollFrameEl = ref<HTMLElement | null>(null);
 
 const operationOptions = [
+  { label: 'Rslt сбор · Проверить погашения', value: 'rslt_sborn_check' },
   { label: 'Rslt сбор · Выгрузить', value: 'rslt_sborn_export' },
   { label: 'Rslt повтор · Выгрузить', value: 'rslt_povtor_export' },
   { label: 'Rslt повтор · Загрузить', value: 'rslt_povtor_import' },
@@ -748,6 +787,17 @@ const resultModeOptions = [
   { label: 'Предпросмотр', value: 'proto' },
   { label: 'Excel', value: 'excel' }
 ];
+
+const isCheckOp = computed(() => progress.operation === 'rslt_sborn_check');
+const needsAsOf = computed(() => isExportOp.value || isCheckOp.value);
+
+const repay = reactive({
+  logText: '',
+  cases: [] as SudzRsltRepaymentCase[],
+  suspectCount: 0,
+  yr: null as number | null,
+  asOfUpl: null as number | null
+});
 
 const isExportOp = computed(
   () =>
@@ -790,7 +840,7 @@ const canRunProgress = computed(() => {
   if (isImportOp.value) {
     return progress.cmmGrNewKey != null && progress.returnFile != null;
   }
-  if (isRsltExport.value || isD644OrSvodExport.value) {
+  if (isRsltExport.value || isD644OrSvodExport.value || isCheckOp.value) {
     return progress.asOfUpl != null;
   }
   return false;
@@ -1026,6 +1076,10 @@ async function onRunProgress(): Promise<void> {
   progress.busy = true;
   progress.error = '';
   try {
+    if (isCheckOp.value && progress.asOfUpl != null) {
+      await runRepaymentCheck(yr, progress.asOfUpl);
+      return;
+    }
     if (isImportOp.value) {
       await runImportReturn(yr);
       return;
@@ -1237,12 +1291,55 @@ async function rememberD644Progress(
  * Выгрузка Rslt (предпросмотр или Excel).
  * «Rslt повтор · Выгрузить» заменяет лог протоколом прогона.
  */
+/**
+ * Разбор погашений: лог и таблица suspect/ambiguous, без Excel.
+ */
+async function runRepaymentCheck(yr: number, asOfUpl: number): Promise<void> {
+  const check = await checkSudzRsltRepayments(yr, asOfUpl);
+  repay.logText = check.logText;
+  repay.cases = check.openCases;
+  repay.suspectCount = check.suspectCount;
+  repay.yr = yr;
+  repay.asOfUpl = asOfUpl;
+  progress.subTab = 'proto';
+  $q.notify({
+    type: check.suspectCount > 0 ? 'warning' : 'positive',
+    message:
+      check.suspectCount > 0
+        ? `Подозрений: ${check.suspectCount}. Выгрузка спросит подтверждение.`
+        : `Подозрений нет. Кандидатов: ${check.candidateCount}.`,
+    timeout: 2000
+  });
+}
+
+/**
+ * Подтверждение выгрузки, если на этом срезе остались suspect.
+ */
+function confirmSuspectExport(suspectCount: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    $q.dialog({
+      title: 'Открытые подозрения',
+      message: `Подозрений: ${suspectCount}. Выгрузить сбор всё равно?`,
+      cancel: true,
+      persistent: true
+    })
+      .onOk(() => resolve(true))
+      .onCancel(() => resolve(false));
+  });
+}
+
 async function runRsltExport(yr: number, asOfUpl: number, isPovtor: boolean): Promise<void> {
   if (isPovtor) {
     await runRsltPovtorExport(yr, asOfUpl);
     return;
   }
   const excel = progress.resultMode === 'excel';
+  if (excel && repay.suspectCount > 0 && repay.yr === yr && repay.asOfUpl === asOfUpl) {
+    const proceed = await confirmSuspectExport(repay.suspectCount);
+    if (!proceed) {
+      return;
+    }
+  }
   try {
     const debts = await getSudzYrDbtChanges(yr, asOfUpl);
     const preview = buildSudzRsltPreview(debts, false);

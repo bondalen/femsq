@@ -82,6 +82,7 @@
                     no-caps
                     label="Create слот"
                     :disable="!canCreate"
+                    :title="linkAdvised ? 'Советник предлагает связать, не создавать слот' : ''"
                     :loading="acting"
                     data-test="sudz-inv-dbt-double-create"
                     @click="onCreate"
@@ -128,7 +129,7 @@
                     class="sudz-inv-dbt-messages-body"
                   >{{ messagesText }}</pre>
                   <div v-else class="text-grey-6">
-                    Нет сообщений (rebuild очереди заполнит [queue.build]).
+                    Выберите строку очереди — здесь появится совет.
                   </div>
                 </div>
               </div>
@@ -549,7 +550,6 @@ const oldSumRows = ref<SumOld[]>([]);
 const newSumRows = ref<SumNew[]>([]);
 const selectedOldSum = ref<SumOld[]>([]);
 const selectedNewSum = ref<SumNew[]>([]);
-const liveSelectDetail = ref('');
 const advisor = ref<SudzInvDbtDoubleAdvice | null>(null);
 const timeline = ref<SudzInvDbtSlotTimeline | null>(null);
 const slotsTab = ref<'slots' | 'dynamics'>('slots');
@@ -580,7 +580,7 @@ const linkAdvised = computed(
     advisor.value?.action === 'link' &&
     (advisor.value.confidence === 'high' || advisor.value.confidence === 'medium')
 );
-const canCreate = computed(
+const slotActionReady = computed(
   () =>
     !splitAdvised.value &&
     !!selected.value &&
@@ -588,9 +588,10 @@ const canCreate = computed(
     !!selected.value.ciudIKey &&
     !!selected.value.ciudIdvvKey
 );
-const canLink = computed(
-  () => canCreate.value && !!selectedSlots.value[0]
+const canCreate = computed(
+  () => slotActionReady.value && advisor.value != null && !advisorLoading.value && !linkAdvised.value
 );
+const canLink = computed(() => slotActionReady.value && !!selectedSlots.value[0]);
 const canSplit = computed(() => {
   const adv = advisor.value;
   const row = selected.value;
@@ -624,18 +625,9 @@ const excelDebtLabel = computed(() => {
   return d == null ? '—' : String(d);
 });
 /**
- * Текст панели сообщений: [queue.build] + live [row.select].
+ * Текст панели сообщений: фраза советника без служебных меток очереди.
  */
-const messagesText = computed(() => {
-  const parts: string[] = [];
-  const build = selected.value?.ciudReasonDetail?.trim();
-  if (build) parts.push(build);
-  const live = liveSelectDetail.value.trim();
-  if (live) parts.push(live);
-  const adv = advisor.value?.messageText?.trim();
-  if (adv) parts.push(adv);
-  return parts.join('\n\n');
-});
+const messagesText = computed(() => advisor.value?.messageText?.trim() ?? '');
 
 const timelineRows = computed((): TimelineRow[] => {
   const pts = timeline.value?.points ?? [];
@@ -991,7 +983,6 @@ watch(selected, async (row) => {
   newSumRows.value = [];
   selectedOldSum.value = [];
   selectedNewSum.value = [];
-  liveSelectDetail.value = '';
   advisor.value = null;
   timeline.value = null;
   slotsTab.value = 'slots';
@@ -1027,31 +1018,6 @@ watch(selected, async (row) => {
     }
     advisor.value = await getSudzInvDbtDoubleAdvice(row.ciudKey, sumMatchEpsilon);
     applyAdvisorSlotPick(advisor.value);
-    const slotNotes = slots.value
-      .map((s) => `${s.idKey}${s.idNote ? `(${s.idNote})` : ''}`)
-      .join(', ');
-    const oldCia = oldSumRows.value
-      .map((m) => m.ciaName ?? (m.ciaKey != null ? `cia#${m.ciaKey}` : '—'))
-      .slice(0, 8)
-      .join(', ');
-    const newSlots = newSumRows.value
-      .map((m) => m.dvInvDbt)
-      .filter((v): v is number => v != null)
-      .slice(0, 8)
-      .join(', ');
-    liveSelectDetail.value = [
-      '[row.select]',
-      `ciud=${row.ciudKey} · iKey=${row.ciudIKey ?? '—'} · status=${row.ciudStatus} · reason=${row.ciudReason ?? '—'} · var=${row.ciudIdvvKey ?? '—'}`,
-      `excel debt=${debt ?? '—'} · ε=${sumMatchEpsilon}`,
-      `slots=${slots.value.length}${slotNotes ? `: ${slotNotes}` : ''}`,
-      `oldSums=${oldSumRows.value.length}${oldCia ? ` · ciaName: ${oldCia}` : ''}`,
-      `newSums=${newSumRows.value.length}${newSlots ? ` · invDbt: ${newSlots}` : ''}`,
-      advisor.value?.confidence
-        ? `советник: ${actionRu(advisor.value.action)} · уверенность: ${confidenceRu(advisor.value.confidence)}`
-        : ''
-    ]
-      .filter(Boolean)
-      .join('\n');
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
   } finally {
@@ -1082,50 +1048,6 @@ watch(selectedSlots, async (picked) => {
     timelineLoading.value = false;
   }
 });
-
-/**
- * Действие советника на русском для [row.select].
- *
- * @param action код API
- */
-function actionRu(action: string | null | undefined): string {
-  switch (action) {
-    case 'split':
-      return 'разделить';
-    case 'link':
-      return 'связать';
-    case 'linked':
-      return 'уже связано';
-    case 'create_var':
-      return 'создать var';
-    case 'create_slot':
-      return 'создать слот';
-    case 'manual':
-      return 'вручную';
-    default:
-      return action ?? '—';
-  }
-}
-
-/**
- * Уверенность советника на русском.
- *
- * @param confidence код API
- */
-function confidenceRu(confidence: string | null | undefined): string {
-  switch (confidence) {
-    case 'high':
-      return 'высокая';
-    case 'medium':
-      return 'средняя';
-    case 'low':
-      return 'низкая';
-    case 'none':
-      return 'нет';
-    default:
-      return confidence ?? '—';
-  }
-}
 
 /**
  * Pre-select слота: уже Linked ({@code ciudCreatedIdKey}) или recommendIdKey советника.

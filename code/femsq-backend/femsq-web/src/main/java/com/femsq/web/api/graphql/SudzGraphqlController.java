@@ -10,9 +10,11 @@ import com.femsq.database.model.sudz.SudzInvDbtSlot;
 import com.femsq.database.model.sudz.SudzInvDbtSlotTimeline;
 import com.femsq.database.model.sudz.SudzInvDbtVarCandidates;
 import com.femsq.database.model.sudz.SudzD644Row;
+import com.femsq.database.model.sudz.SudzFioDict;
 import com.femsq.database.model.sudz.SudzDbtMergeCommand;
 import com.femsq.database.model.sudz.SudzDbtMergeResult;
 import com.femsq.database.model.sudz.SudzDbtCanonCandidate;
+import com.femsq.database.model.sudz.SudzInvDbtSlotPick;
 import com.femsq.database.model.sudz.SudzDbtCanonDetail;
 import com.femsq.database.model.sudz.SudzDbtCanonSearchFilter;
 import com.femsq.database.model.sudz.SudzDbtSplitCommand;
@@ -32,6 +34,8 @@ import com.femsq.database.model.sudz.SudzPmtUplExtDiff;
 import com.femsq.database.model.sudz.SudzPmtUplGp;
 import com.femsq.database.model.sudz.SudzPmtUplSum;
 import com.femsq.web.api.sudz.PmtUplExtDiff;
+import com.femsq.web.api.sudz.repay.SudzRsltRepaymentCheck;
+import com.femsq.web.api.sudz.repay.SudzRsltRepaymentChecker;
 import com.femsq.database.model.sudz.SudzPmtUplFile;
 import com.femsq.database.model.sudz.SudzPmtUplInvNot;
 import com.femsq.database.model.sudz.SudzPmtUplTabBadges;
@@ -68,8 +72,13 @@ import com.femsq.web.api.dto.sudz.LinkSudzSfDoubleInput;
 import com.femsq.web.api.dto.sudz.CreateSudzPmUplInput;
 import com.femsq.web.api.dto.sudz.CreateSudzUplInput;
 import com.femsq.web.api.dto.sudz.CreateSudzYearInput;
+import com.femsq.web.api.dto.sudz.CreateSudzFioDictInput;
+import com.femsq.web.api.dto.sudz.PrepareSudzBriefReportInput;
+import com.femsq.web.api.dto.sudz.UpdateSudzFioDictInput;
 import com.femsq.web.api.dto.sudz.RunSudzDbtUplFunnelInput;
 import com.femsq.web.api.dto.sudz.RunSudzPmtUplFunnelInput;
+import com.femsq.web.api.sudz.brief.SudzBriefReportResult;
+import com.femsq.web.api.sudz.brief.SudzBriefReportService;
 import com.femsq.web.api.dto.sudz.SudzDebtCollectionInput;
 import com.femsq.web.api.dto.sudz.CreateSudzDbtUplFileShInput;
 import com.femsq.web.api.dto.sudz.UpdateSudzDbtUplFileInput;
@@ -102,20 +111,24 @@ public class SudzGraphqlController {
     private final SudzService sudzService;
     private final SudzDbtUplFunnelRunner dbtUplFunnelRunner;
     private final SudzPmtUplFunnelRunner pmtUplFunnelRunner;
+    private final SudzBriefReportService briefReportService;
 
     /**
      * @param sudzService сервис СУДЗ
      * @param dbtUplFunnelRunner оркестратор воронки excelToTbl+…
      * @param pmtUplFunnelRunner оркестратор воронки платежей (0074)
+     * @param briefReportService краткий отчёт по своду (1.1.1.0.3.2)
      */
     public SudzGraphqlController(
             SudzService sudzService,
             SudzDbtUplFunnelRunner dbtUplFunnelRunner,
-            SudzPmtUplFunnelRunner pmtUplFunnelRunner
+            SudzPmtUplFunnelRunner pmtUplFunnelRunner,
+            SudzBriefReportService briefReportService
     ) {
         this.sudzService = sudzService;
         this.dbtUplFunnelRunner = dbtUplFunnelRunner;
         this.pmtUplFunnelRunner = pmtUplFunnelRunner;
+        this.briefReportService = briefReportService;
     }
 
     /**
@@ -228,6 +241,30 @@ public class SudzGraphqlController {
     public List<SudzRsltDebt> sudzYrDbtChanges(@Argument int yr, @Argument Integer asOfUpl) {
         try {
             return sudzService.getYrDbtChanges(yr, asOfUpl);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Разбор погашений без выгрузки Excel.
+     *
+     * @param yr год-вариант
+     * @param asOfUpl крайняя выгрузка
+     * @return протокол и открытые строки
+     */
+    @QueryMapping
+    public SudzRsltRepaymentCheck checkSudzRsltRepayments(@Argument int yr, @Argument int asOfUpl) {
+        try {
+            SudzRsltRepaymentCheck check = SudzRsltRepaymentChecker.check(
+                    yr, asOfUpl, sudzService.getYrDbtChanges(yr, asOfUpl));
+            log.info("checkSudzRsltRepayments yr=%d asOf=%d candidates=%d suspect=%d"
+                    .formatted(yr, asOfUpl, check.candidateCount(), check.suspectCount()));
+            return check;
         } catch (IllegalArgumentException exception) {
             throw badRequest(exception);
         } catch (MissingConfigurationException exception) {
@@ -1302,6 +1339,29 @@ public class SudzGraphqlController {
     }
 
     /**
+     * Слоты для привязки: номер СФ и необязательный номер договора.
+     *
+     * @param invNum фрагмент номера СФ
+     * @param cnNum фрагмент номера договора
+     * @return не больше 25 слотов
+     */
+    @QueryMapping
+    public List<SudzInvDbtSlotPick> searchSudzInvDbtSlots(
+            @Argument("invNum") String invNum,
+            @Argument("cnNum") String cnNum
+    ) {
+        try {
+            return sudzService.searchInvDbtSlots(invNum, cnNum);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
      * Карточка канона Dbt (S78).
      *
      * @param dbtKey ключ
@@ -1657,6 +1717,116 @@ public class SudzGraphqlController {
     }
 
     /**
+     * Краткий отчёт по входящему своду (до БД): путь → …_краткий_отчёт.xlsx.
+     *
+     * @param input путь свода и дата asOf
+     * @return путь файла, лог, суммы
+     */
+    @MutationMapping
+    public SudzBriefReportResult prepareSudzBriefReport(@Argument PrepareSudzBriefReportInput input) {
+        try {
+            return briefReportService.prepare(input.svodPath(), input.asOf());
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (IllegalStateException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Список строк словаря FIO ({@code ags.fioDict}).
+     *
+     * @return строки по ключу
+     */
+    @QueryMapping
+    public List<SudzFioDict> sudzFioDict() {
+        try {
+            return sudzService.listFioDict();
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Создать строку словаря FIO.
+     *
+     * @param input поля
+     * @return созданная строка
+     */
+    @MutationMapping
+    public SudzFioDict createSudzFioDict(@Argument CreateSudzFioDictInput input) {
+        try {
+            return sudzService.createFioDict(new SudzFioDict(
+                    0,
+                    input.fdName(),
+                    input.fdNameF(),
+                    input.fdPatrM(),
+                    input.fdPatrM2(),
+                    input.fdPatrF2(),
+                    input.fdPatrF()
+            ));
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Обновить строку словаря FIO.
+     *
+     * @param input ключ + поля
+     * @return актуальная строка
+     */
+    @MutationMapping
+    public SudzFioDict updateSudzFioDict(@Argument UpdateSudzFioDictInput input) {
+        try {
+            return sudzService.updateFioDict(new SudzFioDict(
+                    input.fioDictKey(),
+                    input.fdName(),
+                    input.fdNameF(),
+                    input.fdPatrM(),
+                    input.fdPatrM2(),
+                    input.fdPatrF2(),
+                    input.fdPatrF()
+            ));
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
+     * Удалить строку словаря FIO.
+     *
+     * @param fioDictKey PK
+     * @return true, если удалена
+     */
+    @MutationMapping
+    public boolean deleteSudzFioDict(@Argument int fioDictKey) {
+        try {
+            return sudzService.deleteFioDict(fioDictKey);
+        } catch (IllegalArgumentException exception) {
+            throw badRequest(exception);
+        } catch (MissingConfigurationException exception) {
+            throw unavailable(exception);
+        } catch (DaoException exception) {
+            throw internal(exception);
+        }
+    }
+
+    /**
      * Откат договоров, созданных шагом CnNotLoad с данным {@code cnMark}.
      *
      * @param cnMark метка из лога воронки
@@ -1711,7 +1881,7 @@ public class SudzGraphqlController {
         );
     }
 
-    private ResponseStatusException badRequest(IllegalArgumentException exception) {
+    private ResponseStatusException badRequest(RuntimeException exception) {
         return new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage(), exception);
     }
 

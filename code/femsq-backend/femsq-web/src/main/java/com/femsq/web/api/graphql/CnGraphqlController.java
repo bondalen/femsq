@@ -8,6 +8,8 @@ import com.femsq.database.model.CnInv;
 import com.femsq.database.model.CnInvColumnFilters;
 import com.femsq.database.model.CnInvListItem;
 import com.femsq.database.model.CnInvPage;
+import com.femsq.database.model.CnNumColumnFilters;
+import com.femsq.database.model.CnNumPage;
 import com.femsq.database.model.CnS;
 import com.femsq.database.model.CnSOrg;
 import com.femsq.database.model.CnSOrgSmpl;
@@ -27,6 +29,7 @@ import com.femsq.web.api.dto.CnInvDto;
 import com.femsq.web.api.dto.CnInvPageDto;
 import com.femsq.web.api.dto.CnInvUpdateRequest;
 import com.femsq.web.api.dto.CnNumDto;
+import com.femsq.web.api.dto.CnNumPageDto;
 import com.femsq.web.api.dto.CnNumTypeLookupDto;
 import com.femsq.web.api.dto.CnUpdateRequest;
 import com.femsq.web.api.dto.CnSOrgCreateRequest;
@@ -98,6 +101,33 @@ public class CnGraphqlController {
         } catch (MissingConfigurationException exception) {
             throw unavailable(exception);
         }
+    }
+
+    /**
+     * Страница master-списка номеров (экран «Договоры»).
+     */
+    @QueryMapping
+    public CnNumPageDto cnNumsPage(
+            @Argument("page") Integer page,
+            @Argument("rowsPerPage") Integer rowsPerPage,
+            @Argument("filter") String filter,
+            @Argument("columnFilters") CnNumColumnFilters columnFilters,
+            @Argument("sortBy") String sortBy,
+            @Argument("descending") Boolean descending
+    ) {
+        int safePage = page == null ? 1 : page;
+        int safeRows = rowsPerPage == null ? 25 : rowsPerPage;
+        boolean desc = Boolean.TRUE.equals(descending);
+        log.info(() -> "GraphQL query cnNumsPage page=" + safePage + " rowsPerPage=" + safeRows);
+        return mutate(() -> {
+            CnNumPage result = cnNumService.page(safePage, safeRows, filter, columnFilters, sortBy, desc);
+            return new CnNumPageDto(
+                    cnMapper.toCnNumDto(result.items()),
+                    result.totalCount(),
+                    result.page(),
+                    result.rowsPerPage()
+            );
+        });
     }
 
     @QueryMapping

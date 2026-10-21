@@ -19,6 +19,7 @@ import {
   fetchCn,
   fetchCnContractIdentityMatch,
   fetchCnInvPage,
+  fetchCnNumPage,
   fetchCnNums,
   fetchCnNumsByCn,
   fetchCnNumDuplicateCount,
@@ -30,7 +31,7 @@ import {
   updateCnSOrg,
   updateCnSOrgSmpl
 } from '@/api/contracts-api';
-import type { CnInvPageQuery } from '@/api/contracts-api';
+import type { CnInvPageQuery, CnNumPageQuery } from '@/api/contracts-api';
 import { RequestError } from '@/api/http';
 import { getSudzSfDoubleDomainMatches } from '@/api/sudz-api';
 import type {
@@ -78,6 +79,15 @@ function createEmptyCnInvLookupState(): ContractInvLookupState {
 
 export const useContractsStore = defineStore('contracts', () => {
   const cnNums = ref<CnNumDto[]>([]);
+  const cnNumTotal = ref(0);
+  const cnNumQuery = ref<CnNumPageQuery>({
+    page: 1,
+    rowsPerPage: 25,
+    filter: '',
+    columnFilters: {},
+    sortBy: 'cnnNum',
+    descending: false
+  });
   const selectedCnnKey = ref<number | null>(null);
   const selectedCn = ref<CnDto | null>(null);
   const cnNumsForCn = ref<CnNumDto[]>([]);
@@ -158,30 +168,26 @@ export const useContractsStore = defineStore('contracts', () => {
   });
 
   /**
-   * Загружает master-список номеров.
+   * Страница master-списка номеров. Выбор договора сохраняется, даже если строки нет на странице.
+   *
+   * @param query страница, фильтр и сортировка; пропущенные поля берутся из прошлого запроса
    */
-  async function loadCnNums(): Promise<void> {
+  async function loadCnNums(query?: Partial<CnNumPageQuery>): Promise<void> {
+    const next: CnNumPageQuery = { ...cnNumQuery.value, ...query };
+    cnNumQuery.value = next;
     loadingList.value = true;
     error.value = null;
     try {
-      cnNums.value = await fetchCnNums();
-      if (selectedCnnKey.value != null) {
-        const stillThere = cnNums.value.some((row) => row.cnnKey === selectedCnnKey.value);
-        if (!stillThere) {
-          selectedCnnKey.value = null;
-          selectedCn.value = null;
-          cnNumsForCn.value = [];
-          sides.value = [];
-          cnInvs.value = [];
-          selectedCiKey.value = null;
-        }
-      }
-      if (selectedCnnKey.value == null && cnNums.value.length > 0) {
-        await selectCnNum(cnNums.value[0].cnnKey);
+      const page = await fetchCnNumPage(next);
+      cnNums.value = page.items;
+      cnNumTotal.value = page.totalCount;
+      if (selectedCnnKey.value == null && page.items.length > 0) {
+        await selectCnNum(page.items[0].cnnKey);
       }
     } catch (err) {
       error.value = err instanceof RequestError ? err.message : 'Ошибка загрузки номеров';
       cnNums.value = [];
+      cnNumTotal.value = 0;
     } finally {
       loadingList.value = false;
     }
@@ -405,7 +411,11 @@ export const useContractsStore = defineStore('contracts', () => {
     error.value = null;
     try {
       const created = await createCnContract(input);
-      await loadCnNums();
+      await loadCnNums({
+        page: 1,
+        filter: (input.cnnNum ?? '').trim(),
+        columnFilters: {}
+      });
       await selectCnNum(created.cnnKey);
       return created;
     } catch (err) {
@@ -424,7 +434,11 @@ export const useContractsStore = defineStore('contracts', () => {
     error.value = null;
     try {
       const created = await createCnNum(input);
-      await loadCnNums();
+      await loadCnNums({
+        page: 1,
+        filter: (input.cnnNum ?? '').trim(),
+        columnFilters: {}
+      });
       await selectCnNum(created.cnnKey);
       return created;
     } catch (err) {
@@ -640,6 +654,8 @@ export const useContractsStore = defineStore('contracts', () => {
 
   return {
     cnNums,
+    cnNumTotal,
+    cnNumQuery,
     selectedCnnKey,
     selectedCnNum,
     selectedCn,

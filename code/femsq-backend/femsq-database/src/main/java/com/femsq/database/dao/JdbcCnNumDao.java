@@ -4,7 +4,9 @@ import com.femsq.database.config.DatabaseConfigurationService;
 import com.femsq.database.connection.ConnectionFactory;
 import com.femsq.database.exception.DaoException;
 import com.femsq.database.model.CnNum;
+import com.femsq.database.model.CnNumColumnFilters;
 import com.femsq.database.model.CnNumCreate;
+import com.femsq.database.model.CnNumPage;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -61,6 +63,120 @@ public class JdbcCnNumDao implements CnNumDao {
         String sql = selectSql("");
         log.fine("Executing CnNum.findAll");
         return query(sql, null);
+    }
+
+    @Override
+    public CnNumPage findPage(
+            int page,
+            int rowsPerPage,
+            String filter,
+            CnNumColumnFilters columnFilters,
+            String sortBy,
+            boolean descending
+    ) {
+        int safePage = Math.max(page, 1);
+        int safeRows = rowsPerPage < 1 ? 25 : Math.min(rowsPerPage, 200);
+        int offset = (safePage - 1) * safeRows;
+        String schemaName = schema();
+        String orderColumn = resolveSortColumn(sortBy);
+        String orderDir = descending ? "DESC" : "ASC";
+        StringBuilder where = new StringBuilder();
+        List<String> params = new ArrayList<>();
+        String trimmed = filter == null ? "" : filter.trim();
+        if (!trimmed.isEmpty()) {
+            where.append(" WHERE (n.cnnNum LIKE ? OR t.cnntName LIKE ?"
+                    + " OR CAST(n.cnnKey AS nvarchar(20)) = ? OR CAST(n.cnnCn AS nvarchar(20)) = ?)");
+            String like = "%" + trimmed + "%";
+            params.add(like);
+            params.add(like);
+            params.add(trimmed);
+            params.add(trimmed);
+        }
+        appendLike(where, params, "n.cnnNum", columnFilters == null ? null : columnFilters.cnnNum());
+        appendLike(where, params, "t.cnntName", columnFilters == null ? null : columnFilters.cnnTypeName());
+        String from = " FROM " + schemaName + ".cnNum AS n "
+                + "LEFT JOIN " + schemaName + ".cnNumType AS t ON n.cnnType = t.cnntKey";
+        String countSql = "SELECT COUNT(*)" + from + where;
+        String dataSql = "SELECT n.cnnKey, n.cnnNum, n.cnnCn, n.cnnType, t.cnntName, n.cnnNote"
+                + from + where
+                + " ORDER BY " + orderColumn + " " + orderDir
+                + " OFFSET " + offset + " ROWS FETCH NEXT " + safeRows + " ROWS ONLY";
+        log.log(Level.FINE, "CnNum.findPage page={0} rows={1} filter={2}",
+                new Object[]{safePage, safeRows, trimmed.isEmpty() ? "no" : "yes"});
+        try (Connection connection = connectionFactory.createConnection()) {
+            int total = queryCount(connection, countSql, params);
+            List<CnNum> items = queryPage(connection, dataSql, params);
+            return new CnNumPage(List.copyOf(items), total, safePage, safeRows);
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            log.log(Level.SEVERE, "Failed to page cnNum", exception);
+            throw new DaoException("Не удалось прочитать страницу номеров договоров", exception);
+        }
+    }
+
+    /**
+     * Колонка ORDER BY из белого списка.
+     *
+     * @param sortBy имя колонки экрана
+     * @return выражение SQL
+     */
+    private static String resolveSortColumn(String sortBy) {
+        if ("cnnTypeName".equals(sortBy)) {
+            return "t.cnntName";
+        }
+        if ("cnnKey".equals(sortBy)) {
+            return "n.cnnKey";
+        }
+        if ("cnnCn".equals(sortBy)) {
+            return "n.cnnCn";
+        }
+        return "n.cnnNum";
+    }
+
+    /**
+     * AND подстроки, если значение непустое.
+     *
+     * @param where уже начатый WHERE или пустой буфер
+     * @param params параметры LIKE
+     * @param expression колонка SQL
+     * @param raw текст фильтра
+     */
+    private static void appendLike(StringBuilder where, List<String> params, String expression, String raw) {
+        if (raw == null || raw.isBlank()) {
+            return;
+        }
+        where.append(where.isEmpty() ? " WHERE " : " AND ");
+        where.append(expression).append(" LIKE ?");
+        params.add("%" + raw.trim() + "%");
+    }
+
+    private static int queryCount(Connection connection, String sql, List<String> params) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            bindNvarchar(statement, params);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next() ? resultSet.getInt(1) : 0;
+            }
+        }
+    }
+
+    private static List<CnNum> queryPage(Connection connection, String sql, List<String> params) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            bindNvarchar(statement, params);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                List<CnNum> result = new ArrayList<>();
+                while (resultSet.next()) {
+                    result.add(mapRow(resultSet));
+                }
+                return result;
+            }
+        }
+    }
+
+    private static void bindNvarchar(PreparedStatement statement, List<String> params) throws SQLException {
+        for (int i = 0; i < params.size(); i++) {
+            statement.setNString(i + 1, params.get(i));
+        }
     }
 
     @Override

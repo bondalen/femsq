@@ -12,6 +12,7 @@ import com.femsq.database.model.sudz.SudzD644Row;
 import com.femsq.database.model.sudz.SudzDbtMergeCommand;
 import com.femsq.database.model.sudz.SudzDbtMergeResult;
 import com.femsq.database.model.sudz.SudzDbtCanonCandidate;
+import com.femsq.database.model.sudz.SudzInvDbtSlotPick;
 import com.femsq.database.model.sudz.SudzDbtCanonDetail;
 import com.femsq.database.model.sudz.SudzDbtCanonSearchFilter;
 import com.femsq.database.model.sudz.SudzDbtSplitCommand;
@@ -37,6 +38,7 @@ import com.femsq.database.model.sudz.SudzDbtUplCnExistCtptNotLoad;
 import com.femsq.database.model.sudz.SudzDbtUplCnNotLoad;
 import com.femsq.database.model.sudz.SudzDbtUplCnNotLoadApplyResult;
 import com.femsq.database.model.sudz.SudzDbtUplFile;
+import com.femsq.database.model.sudz.SudzFioDict;
 import com.femsq.database.model.sudz.SudzDbtUplFileSh;
 import com.femsq.database.model.sudz.SudzDbtUplFunnelQueueClearResult;
 import com.femsq.database.model.sudz.SudzDbtUplFunnelResult;
@@ -1029,6 +1031,15 @@ public interface SudzService {
     List<SudzDbtCanonCandidate> searchDbtCanons(SudzDbtCanonSearchFilter filter);
 
     /**
+     * Слоты для привязки к канону: номер СФ и необязательный номер договора.
+     *
+     * @param invNum фрагмент номера СФ
+     * @param cnNum фрагмент номера договора или пусто
+     * @return не больше 25 слотов
+     */
+    List<SudzInvDbtSlotPick> searchInvDbtSlots(String invNum, String cnNum);
+
+    /**
      * Карточка канона (S78).
      *
      * @param dbtKey ключ
@@ -1265,4 +1276,42 @@ public interface SudzService {
      * @return обновлённая строка
      */
     SudzCnInvUplSfDouble linkSfDoubleToCn(int ciusKey, int invKey, int cnKey);
+
+    /**
+     * Слова словаря FIO для краткого отчёта ({@code ags.v_fioDictWord}).
+     *
+     * @return непустые слова
+     */
+    List<String> listFioDictWords();
+
+    /**
+     * Строки {@code ags.fioDict} для вкладки CRUD.
+     *
+     * @return по ключу
+     */
+    List<SudzFioDict> listFioDict();
+
+    /**
+     * Создать строку словаря.
+     *
+     * @param row поля без ключа
+     * @return созданная строка
+     */
+    SudzFioDict createFioDict(SudzFioDict row);
+
+    /**
+     * Обновить строку словаря.
+     *
+     * @param row ключ + поля
+     * @return актуальная строка
+     */
+    SudzFioDict updateFioDict(SudzFioDict row);
+
+    /**
+     * Удалить строку словаря.
+     *
+     * @param fioDictKey PK
+     * @return true, если удалена
+     */
+    boolean deleteFioDict(int fioDictKey);
 }

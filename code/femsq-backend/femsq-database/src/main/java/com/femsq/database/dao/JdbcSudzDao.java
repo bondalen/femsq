@@ -20,6 +20,7 @@ import com.femsq.database.model.sudz.SudzInvDbtVarSideCandidate;
 import com.femsq.database.model.sudz.SudzD644Row;
 import com.femsq.database.model.sudz.SudzDbtCanonCandidate;
 import com.femsq.database.model.sudz.SudzDbtCanonDetail;
+import com.femsq.database.model.sudz.SudzInvDbtSlotPick;
 import com.femsq.database.model.sudz.SudzDbtCanonSearchFilter;
 import com.femsq.database.model.sudz.SudzInvNumFold;
 import com.femsq.database.model.sudz.SudzDbtMergeCommand;
@@ -31,6 +32,7 @@ import com.femsq.database.model.sudz.SudzDbtSplitPart;
 import com.femsq.database.model.sudz.SudzDbtSplitPartResult;
 import com.femsq.database.model.sudz.SudzDbtSplitResult;
 import com.femsq.database.model.sudz.SudzDbtUplFile;
+import com.femsq.database.model.sudz.SudzFioDict;
 import com.femsq.database.model.sudz.SudzDbtUplFileSh;
 import com.femsq.database.model.sudz.SudzDbtUplFunnelQueueClearResult;
 import com.femsq.database.model.sudz.SudzDbtUplInvDouble;
@@ -10955,6 +10957,59 @@ public class JdbcSudzDao implements SudzDao {
     }
 
     @Override
+    public List<SudzInvDbtSlotPick> searchInvDbtSlots(String invNum, String cnNum) {
+        String inv = invNum == null ? "" : invNum.trim();
+        if (inv.isEmpty()) {
+            throw new IllegalArgumentException("Укажите номер СФ");
+        }
+        String cn = cnNum == null ? "" : cnNum.trim();
+        String invDbt = q("invDbt");
+        String invDbtDbt = q("invDbtDbt");
+        String invDbtVar = q("invDbtVar");
+        String bridge = q("invDbtDbtVar");
+        String sql = ""
+                + "SELECT TOP (25) d.idKey AS slotKey, d.idInv AS iKey, d.idNum, "
+                + "       cn.cnnNumNull AS cnNum, inv.inNumNull AS invNum, idd.iddDbt AS dbtKey "
+                + "FROM " + invDbt + " AS d "
+                + "LEFT JOIN " + bridge + " AS b ON b.iddvInvDbt = d.idKey "
+                + "LEFT JOIN " + invDbtVar + " AS v ON v.idvvKey = b.iddvInvDbtVar "
+                + "LEFT JOIN ags.cnNum AS cn ON cn.cnnKey = v.idvvCnNum "
+                + "LEFT JOIN ags.invNum AS inv ON inv.inKey = v.idvvInvNum "
+                + "LEFT JOIN " + invDbtDbt + " AS idd ON idd.iddInvDbt = d.idKey "
+                + "WHERE inv.inNumNull LIKE ? "
+                + "  AND (? = N'' OR cn.cnnNumNull LIKE ?) "
+                + "ORDER BY d.idInv, d.idNum, d.idKey";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            String invLike = "%" + inv + "%";
+            String cnLike = cn.isEmpty() ? "" : "%" + cn + "%";
+            ps.setNString(1, invLike);
+            ps.setNString(2, cn);
+            ps.setNString(3, cnLike);
+            Map<Integer, SudzInvDbtSlotPick> unique = new LinkedHashMap<>();
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int slotKey = rs.getInt("slotKey");
+                    unique.putIfAbsent(slotKey, new SudzInvDbtSlotPick(
+                            slotKey,
+                            rs.getInt("iKey"),
+                            rs.getInt("idNum"),
+                            rs.getNString("invNum"),
+                            rs.getNString("cnNum"),
+                            getInteger(rs, "dbtKey")));
+                }
+            }
+            log.log(Level.FINE, "searchInvDbtSlots inv={0} cn={1} rows={2}",
+                    new Object[]{inv, cn, unique.size()});
+            return List.copyOf(unique.values());
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось найти слоты по СФ «" + inv + "»", exception);
+        }
+    }
+
+    @Override
     public SudzDbtCanonDetail findDbtCanon(int dbtKey) {
         if (dbtKey <= 0) {
             throw new IllegalArgumentException("dbtKey должен быть положительным: " + dbtKey);
@@ -11507,6 +11562,202 @@ public class JdbcSudzDao implements SudzDao {
             throw exception;
         } catch (SQLException exception) {
             throw wrap("Не удалось удалить комментарий " + cmmKey, exception);
+        }
+    }
+
+    @Override
+    public List<String> listFioDictWords() {
+        String sql = "SELECT word FROM ags.v_fioDictWord ORDER BY word";
+        try (Connection connection = connectionFactory.createConnection();
+                PreparedStatement statement = connection.prepareStatement(sql);
+                ResultSet rs = statement.executeQuery()) {
+            List<String> words = new ArrayList<>();
+            while (rs.next()) {
+                String word = rs.getString(1);
+                if (word != null && !word.isBlank()) {
+                    words.add(word.trim());
+                }
+            }
+            log.log(Level.INFO, "listFioDictWords size={0}", words.size());
+            return List.copyOf(words);
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось прочитать ags.v_fioDictWord", exception);
+        }
+    }
+
+    @Override
+    public List<SudzFioDict> listFioDict() {
+        String sql = ""
+                + "SELECT fioDictKey, fdName, fdNameF, fdPatrM, fdPatrM2, fdPatrF2, fdPatrF "
+                + "FROM ags.fioDict ORDER BY fioDictKey";
+        try (Connection connection = connectionFactory.createConnection();
+                PreparedStatement statement = connection.prepareStatement(sql);
+                ResultSet rs = statement.executeQuery()) {
+            List<SudzFioDict> rows = new ArrayList<>();
+            while (rs.next()) {
+                rows.add(mapFioDict(rs));
+            }
+            log.log(Level.INFO, "listFioDict size={0}", rows.size());
+            return List.copyOf(rows);
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось прочитать ags.fioDict", exception);
+        }
+    }
+
+    @Override
+    public SudzFioDict createFioDict(SudzFioDict row) {
+        requireFioDictFields(row);
+        String sql = ""
+                + "INSERT INTO ags.fioDict "
+                + "(fdName, fdNameF, fdPatrM, fdPatrM2, fdPatrF2, fdPatrF) "
+                + "VALUES (?, ?, ?, ?, ?, ?)";
+        try (Connection connection = connectionFactory.createConnection();
+                PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            bindFioDictFields(statement, row);
+            statement.executeUpdate();
+            int key = readGeneratedKey(statement, "Не удалось получить fioDictKey");
+            SudzFioDict created = new SudzFioDict(
+                    key,
+                    blankToNull(row.fdName()),
+                    blankToNull(row.fdNameF()),
+                    blankToNull(row.fdPatrM()),
+                    blankToNull(row.fdPatrM2()),
+                    blankToNull(row.fdPatrF2()),
+                    blankToNull(row.fdPatrF())
+            );
+            log.log(Level.INFO, "createFioDict key={0}", key);
+            return created;
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось создать строку ags.fioDict", exception);
+        }
+    }
+
+    @Override
+    public SudzFioDict updateFioDict(SudzFioDict row) {
+        if (row.fioDictKey() <= 0) {
+            throw new IllegalArgumentException("fioDictKey должен быть положительным: " + row.fioDictKey());
+        }
+        requireFioDictFields(row);
+        String sql = ""
+                + "UPDATE ags.fioDict SET "
+                + "fdName = ?, fdNameF = ?, fdPatrM = ?, fdPatrM2 = ?, fdPatrF2 = ?, fdPatrF = ? "
+                + "WHERE fioDictKey = ?";
+        try (Connection connection = connectionFactory.createConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            bindFioDictFields(statement, row);
+            statement.setInt(7, row.fioDictKey());
+            int updated = statement.executeUpdate();
+            if (updated == 0) {
+                throw new IllegalArgumentException("Строка словаря не найдена: fioDictKey=" + row.fioDictKey());
+            }
+            SudzFioDict saved = new SudzFioDict(
+                    row.fioDictKey(),
+                    blankToNull(row.fdName()),
+                    blankToNull(row.fdNameF()),
+                    blankToNull(row.fdPatrM()),
+                    blankToNull(row.fdPatrM2()),
+                    blankToNull(row.fdPatrF2()),
+                    blankToNull(row.fdPatrF())
+            );
+            log.log(Level.INFO, "updateFioDict key={0}", row.fioDictKey());
+            return saved;
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось обновить ags.fioDict", exception);
+        }
+    }
+
+    @Override
+    public boolean deleteFioDict(int fioDictKey) {
+        if (fioDictKey <= 0) {
+            throw new IllegalArgumentException("fioDictKey должен быть положительным: " + fioDictKey);
+        }
+        String sql = "DELETE FROM ags.fioDict WHERE fioDictKey = ?";
+        try (Connection connection = connectionFactory.createConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, fioDictKey);
+            int deleted = statement.executeUpdate();
+            log.log(Level.INFO, "deleteFioDict key={0} deleted={1}", new Object[]{fioDictKey, deleted});
+            return deleted > 0;
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw wrap("Не удалось удалить строку ags.fioDict", exception);
+        }
+    }
+
+    private static SudzFioDict mapFioDict(ResultSet rs) throws SQLException {
+        return new SudzFioDict(
+                rs.getInt("fioDictKey"),
+                blankToNull(rs.getString("fdName")),
+                blankToNull(rs.getString("fdNameF")),
+                blankToNull(rs.getString("fdPatrM")),
+                blankToNull(rs.getString("fdPatrM2")),
+                blankToNull(rs.getString("fdPatrF2")),
+                blankToNull(rs.getString("fdPatrF"))
+        );
+    }
+
+    private static void bindFioDictFields(PreparedStatement statement, SudzFioDict row) throws SQLException {
+        setNvarcharOrNull(statement, 1, row.fdName());
+        setNvarcharOrNull(statement, 2, row.fdNameF());
+        setNvarcharOrNull(statement, 3, row.fdPatrM());
+        setNvarcharOrNull(statement, 4, row.fdPatrM2());
+        setNvarcharOrNull(statement, 5, row.fdPatrF2());
+        setNvarcharOrNull(statement, 6, row.fdPatrF());
+    }
+
+    private static void requireFioDictFields(SudzFioDict row) {
+        if (row == null) {
+            throw new IllegalArgumentException("Строка словаря обязательна");
+        }
+        boolean any = hasText(row.fdName())
+                || hasText(row.fdNameF())
+                || hasText(row.fdPatrM())
+                || hasText(row.fdPatrM2())
+                || hasText(row.fdPatrF2())
+                || hasText(row.fdPatrF());
+        if (!any) {
+            throw new IllegalArgumentException("Укажите хотя бы одно непустое поле словаря");
+        }
+        requireFioDictLen(row.fdName(), "fdName");
+        requireFioDictLen(row.fdNameF(), "fdNameF");
+        requireFioDictLen(row.fdPatrM(), "fdPatrM");
+        requireFioDictLen(row.fdPatrM2(), "fdPatrM2");
+        requireFioDictLen(row.fdPatrF2(), "fdPatrF2");
+        requireFioDictLen(row.fdPatrF(), "fdPatrF");
+    }
+
+    private static void requireFioDictLen(String value, String field) {
+        if (value != null && value.trim().length() > 50) {
+            throw new IllegalArgumentException(field + " длиннее 50 символов");
+        }
+    }
+
+    private static boolean hasText(String value) {
+        return value != null && !value.isBlank();
+    }
+
+    private static void setNvarcharOrNull(PreparedStatement statement, int index, String value)
+            throws SQLException {
+        String normalized = blankToNull(value);
+        if (normalized == null) {
+            statement.setNull(index, Types.NVARCHAR);
+        } else {
+            statement.setString(index, normalized);
         }
     }
 

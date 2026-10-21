@@ -20,12 +20,21 @@ extend type Query {
   """Lookup выгрузок платежей (cn_inv_pm_name + date)."""
   sudzPmUplLookups: [SudzPmUplLookup!]!
 
+  """Строки словаря FIO (ags.fioDict) для вкладки краткого отчёта."""
+  sudzFioDict: [SudzFioDict!]!
+
   """
   Портфель года в структуре Rslt (зерно dbtKey, срезы по дате выгрузки).
   asOfUpl — опционально: только срезы с upl_date ≤ даты выбранной выгрузки (Rslt сбор).
   Ошибка, если yr не найден.
   """
   sudzYrDbtChanges(yr: Int!, asOfUpl: Int): [SudzRsltDebt!]!
+
+  """
+  Разбор «погашено» (S79). Excel не строится.
+  Порог перед выгрузкой — suspectCount, не очередь P1.
+  """
+  checkSudzRsltRepayments(yr: Int!, asOfUpl: Int!): SudzRsltRepaymentCheck!
 
   """
   Итоговый документ D644 (база года vs текущая выгрузка).
@@ -147,6 +156,8 @@ extend type Query {
   sudzInvDbtSlotTimeline(iKey: Int!, idKey: Int!, ciudKey: Int!): SudzInvDbtSlotTimeline!
   """Поиск канонов Dbt (S78): фильтры по var / idNum / dbtKey."""
   searchSudzDbtCanons(input: SudzDbtCanonSearchInput!): [SudzDbtCanonCandidate!]!
+  """Слоты invDbt по номеру СФ и необязательному номеру договора (привязка к канону)."""
+  searchSudzInvDbtSlots(invNum: String!, cnNum: String): [SudzInvDbtSlotPick!]!
   """Карточка канона Dbt со слотами и Value (S78)."""
   sudzDbtCanon(dbtKey: Int!): SudzDbtCanonDetail!
 }
@@ -229,6 +240,18 @@ extend type Mutation {
   Stub-прогон воронки (S61f): шаги-префикс + flLoad; пишет HTML в лог; домен не меняет.
   """
   runSudzDbtUplFunnel(input: RunSudzDbtUplFunnelInput!): SudzDbtUplFunnelResult!
+
+  """
+  Краткий отчёт по входящему своду (до БД): путь свода → …_краткий_отчёт.xlsx рядом.
+  WBS 1.1.1.0.3.2. Словарь — ags.v_fioDictWord.
+  """
+  prepareSudzBriefReport(input: PrepareSudzBriefReportInput!): SudzBriefReportResult!
+  """Создать строку словаря FIO (ags.fioDict)."""
+  createSudzFioDict(input: CreateSudzFioDictInput!): SudzFioDict!
+  """Обновить строку словаря FIO."""
+  updateSudzFioDict(input: UpdateSudzFioDictInput!): SudzFioDict!
+  """Удалить строку словаря FIO по ключу. true — удалена."""
+  deleteSudzFioDict(fioDictKey: Int!): Boolean!
   """Откат apply CnNotLoad по cnMark (удаляет cn → cnNum → cn_s → …)."""
   rollbackSudzCnNotLoad(cnMark: Int!): Int!
   """Создать новый СФ из строки очереди КСДСФ (статус open → created)."""
@@ -520,6 +543,31 @@ input CreateSudzUplInput {
 input CreateSudzPmUplInput {
   name: String
   date: Date!
+}
+
+"""Протокол проверки погашений."""
+type SudzRsltRepaymentCheck {
+  yrKey: Int!
+  asOfUpl: Int!
+  candidateCount: Int!
+  likelyTrueCount: Int!
+  suspectCount: Int!
+  ambiguousCount: Int!
+  documentedCount: Int!
+  logText: String!
+  openCases: [SudzRsltRepaymentCase!]!
+}
+
+"""Строка подозрения или неоднозначности."""
+type SudzRsltRepaymentCase {
+  dbtKey: Int!
+  accountNum: String
+  invNum: String
+  cnNum: String
+  kind: String!
+  clazz: String!
+  reason: String!
+  pogasheno: Float
 }
 
 """Долг портфеля (витрина Rslt)."""
@@ -859,6 +907,16 @@ input SudzDbtCanonSearchInput {
   idNum: Int
   dbtKey: Int
   limit: Int
+}
+
+"""Слот для привязки к канону."""
+type SudzInvDbtSlotPick {
+  slotKey: Int!
+  iKey: Int!
+  idNum: Int!
+  invNum: String
+  cnNum: String
+  dbtKey: Int
 }
 
 """Кандидат канона в поиске."""
@@ -1485,4 +1543,57 @@ type SudzDbtUplFunnelResult {
   ranSteps: [String!]!
   """true — тело шагов ещё заглушка."""
   stub: Boolean!
+}
+
+"""Вход краткого отчёта по своду (до БД)."""
+input PrepareSudzBriefReportInput {
+  """Путь к файлу общего свода (как в Проводнике или POSIX)."""
+  svodPath: String!
+  """Дата отчёта (L6); для QI 2026_03 — 2026-03-31."""
+  asOf: Date!
+}
+
+"""Результат prepareSudzBriefReport."""
+type SudzBriefReportResult {
+  outputPath: String!
+  logLines: [String!]!
+  fioTransformed: Int!
+  fioSkipWordcount: Int!
+  fioSkipDict: Int!
+  totalDebtH: Float!
+  totalOverdueI: Float!
+  totalNotOverdueK: Float!
+  accountBlocks: [String!]!
+}
+
+"""Строка словаря FIO (ags.fioDict)."""
+type SudzFioDict {
+  fioDictKey: Int!
+  fdName: String
+  fdNameF: String
+  fdPatrM: String
+  fdPatrM2: String
+  fdPatrF2: String
+  fdPatrF: String
+}
+
+"""Вход создания строки словаря FIO."""
+input CreateSudzFioDictInput {
+  fdName: String
+  fdNameF: String
+  fdPatrM: String
+  fdPatrM2: String
+  fdPatrF2: String
+  fdPatrF: String
+}
+
+"""Вход обновления строки словаря FIO."""
+input UpdateSudzFioDictInput {
+  fioDictKey: Int!
+  fdName: String
+  fdNameF: String
+  fdPatrM: String
+  fdPatrM2: String
+  fdPatrF2: String
+  fdPatrF: String
 }
