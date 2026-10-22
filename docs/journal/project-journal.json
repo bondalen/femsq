@@ -3,7 +3,7 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-10-21"
+      "lastUpdated": "2026-10-22"
     },
     "sessions": [
       {
@@ -20263,29 +20263,139 @@
       },
       {
         "chat": {
-          "displayName": "Краткий отчёт 1.1.1.0.3 (active, high). № chat-2026-10-21-001",
+          "displayName": "Краткий отчёт / cutover / QIII gate (active, high). № chat-2026-10-21-001",
           "chat-attributes": {
             "id": "chat-2026-10-21-001",
             "created": "2026-10-21",
-            "lastUpdated": "2026-10-21",
+            "lastUpdated": "2026-10-22",
             "owner": "Александр",
             "status": "active",
             "priority": "high",
             "tags": [
               "sudz",
               "brief-report",
-              "1.1.1.0.3",
-              "fio"
+              "1.1.1.5",
+              "qiii",
+              "cutover"
             ],
             "links": {
               "projectDocsRefs": [],
               "developmentTasks": [],
               "aiRuleRefs": [],
               "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
-              "spec": "docs/development/notes/domain/sudz/03-1_brief-report-pre-load.md"
+              "spec": "docs/development/notes/domain/sudz/03-1_brief-report-pre-load.md",
+              "survey": "docs/development/notes/sql/26-1021-sudz-prod-survey/SURVEY_RESULT.md"
             }
           },
           "entries": [
+            {
+              "log": {
+                "displayName": "1.1.1.5.1 K empty + FIO dict regen (success). № log-2026-10-22-003",
+                "log-attributes": {
+                  "id": "log-2026-10-22-003",
+                  "timestamp": "2026-10-22T16:56:00+03:00",
+                  "level": "success",
+                  "effort": "25m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "brief-report",
+                    "qiii",
+                    "1.1.1.5.1",
+                    "fioDict"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                    "spec": "docs/development/notes/domain/sudz/03-1_brief-report-pre-load.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "A: K пустая при ≈0; B: словарь + regen QIII brief",
+                    "details": "SudzBriefReportBuilder: K только если >1e-9 (строки/ИТОГО/ВСЕГО). JAR 0.1.0.374. UI словарь #221 Мурад+Магомедрасулович, #222 Азмет+Махмудович, #223 Ираида. prepare asOf 2026-09-30: H=439601730857.54 FIO=1522; kZero=0 fullOverdueEmptyK=870; инициалы на Мурад/Азмет/Ираида/Сагит. Zip AES: Downloads/продОбмен/26-1022_12-51/в_Прод/26-1022_16-56_в_Прод_краткий_отчёт.zip. План 0.3.57.",
+                    "outcome": "1.1.1.5.1 дожат до эталона K/FIO. ★ next 1.1.1.5.0.",
+                    "references": [
+                      "/mnt/nb-win-share/femsq/excel/2026-09/debit/Дт Задолженность на 30.09.2026 (Общий свод) -НОВЫЙ_краткий_отчёт.xlsx",
+                      "/home/alex/Downloads/продОбмен/26-1022_12-51/в_Прод/26-1022_16-56_в_Прод_краткий_отчёт.zip",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.1.1.5.1 краткий отчёт QIII (success). № log-2026-10-22-002",
+                "log-attributes": {
+                  "id": "log-2026-10-22-002",
+                  "timestamp": "2026-10-22T14:51:00+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "brief-report",
+                    "qiii",
+                    "1.1.1.5.1"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "prepareSudzBriefReport для свода QIII на шаре",
+                    "details": "JAR 0.1.0.372. asOf=2026-09-30. Путь D:\\…\\2026-09\\debit\\Дт…30.09.2026…-НОВЫЙ.xlsx. Результат рядом: …_краткий_отчёт.xlsx (259 KiB). 12 блоков счетов; лист «767402 нет» пропущен. fio transformed=1515 skip_wordcount=2037 skip_dict=1131. ВСЕГО H≈439.6 млрд I≈30.5 млрд K≈409.1 млрд. БД портфеля не менялась. План 0.3.56.",
+                    "outcome": "1.1.1.5.1 ✅. ★ next 1.1.1.5.0 (901 vs песочница) перед загрузкой свода.",
+                    "references": [
+                      "/mnt/nb-win-share/femsq/excel/2026-09/debit/Дт Задолженность на 30.09.2026 (Общий свод) -НОВЫЙ_краткий_отчёт.xlsx",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "0918 0.3.54: gate QIII, пауза cutover (success). № log-2026-10-22-001",
+                "log-attributes": {
+                  "id": "log-2026-10-22-001",
+                  "timestamp": "2026-10-22T14:40:00+03:00",
+                  "level": "success",
+                  "effort": "25m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "wbs",
+                    "qiii",
+                    "1.1.1.5"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "В план 0918 внесён узел 1.1.1.5 и пауза развёртывания",
+                    "details": "Предложение 1: полный контур B на комплекте QIII (excel/2026-09/debit) до окна H. ★ next 1.1.1.5.0 — решить привязку к году 901 или песочнице. 1.1.2 и 1.2 на паузе. Survey A уже в SURVEY_RESULT.md. Новый план чата не создавался.",
+                    "outcome": "План 0.3.54. Следующий шаг — решение 1.1.1.5.0, затем краткий отчёт 1.1.1.5.1.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                      "/mnt/nb-win-share/femsq/excel/2026-09/debit"
+                    ]
+                  }
+                ]
+              }
+            },
             {
               "log": {
                 "displayName": "1.1.1.0.3.2 backend path→Excel + GraphQL (success). № log-2026-10-21-001",

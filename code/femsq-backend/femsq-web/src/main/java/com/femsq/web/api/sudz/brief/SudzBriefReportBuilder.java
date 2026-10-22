@@ -343,9 +343,13 @@ public final class SudzBriefReportBuilder {
             jCell.setCellValue(days);
             jCell.setCellStyle(styles.dataDays);
         }
-        Cell kCell = dest.createCell(10);
-        kCell.setCellValue(h - i);
-        kCell.setCellStyle(styles.dataMoney);
+        // K = H−I; при нуле (полная просрочка) — пусто, как в 2_ready (не 0.00).
+        double k = h - i;
+        if (k > 1e-9) {
+            Cell kCell = dest.createCell(10);
+            kCell.setCellValue(k);
+            kCell.setCellStyle(styles.dataMoney);
+        }
     }
 
     private void writeItogoRow(
@@ -379,9 +383,11 @@ public final class SudzBriefReportBuilder {
             iCell.setCellValue(i);
             iCell.setCellStyle(styles.itogoMoney);
         }
-        Cell kCell = itogo.getCell(10);
-        kCell.setCellValue(k);
-        kCell.setCellStyle(styles.itogoMoney);
+        if (k > 1e-9) {
+            Cell kCell = itogo.getCell(10);
+            kCell.setCellValue(k);
+            kCell.setCellStyle(styles.itogoMoney);
+        }
     }
 
     private void writeTotalRow(Row totalRow, double sumH, double sumI, double sumK, Styles styles) {
@@ -398,9 +404,11 @@ public final class SudzBriefReportBuilder {
             iCell.setCellValue(sumI);
             iCell.setCellStyle(styles.totalMoney);
         }
-        Cell kCell = totalRow.getCell(10);
-        kCell.setCellValue(sumK);
-        kCell.setCellStyle(styles.totalMoney);
+        if (sumK > 1e-9) {
+            Cell kCell = totalRow.getCell(10);
+            kCell.setCellValue(sumK);
+            kCell.setCellStyle(styles.totalMoney);
+        }
         totalRow.setHeightInPoints(18.75f);
     }
 
