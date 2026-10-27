@@ -1,0 +1,897 @@
+{
+  "generated": "2026-10-27T12:18:05.966Z",
+  "A1": {
+    "ok": true,
+    "current": "/mnt/nb-win-share/femsq/excel/2026-09/debit/ags_Yr_DbtChangesRslt_901_916_2026-10-27_145459.xlsx",
+    "etalon_0505": "/mnt/nb-win-share/femsq/excel/2026_03/debit/ags_Yr_DbtChangesRslt_26-0505.xlsx",
+    "etalon_asOf903": "/home/alex/projects/java/spring/vue/femsq/docs/development/notes/sql/26-0831-sudz-dbt-slot-link/artifacts/ags_Yr_DbtChangesRslt_901_asOf903_s81_cmm_28469fix_26-0916.xlsx",
+    "sizes": {
+      "current": 621174,
+      "e0505": 429112,
+      "e903": 448783
+    }
+  },
+  "A2": {
+    "ok": true,
+    "ref": "A1:BP2381",
+    "headerRow": 1,
+    "dataStart": 3,
+    "dataRows": 2378,
+    "hasIII": true,
+    "hasQIV": true,
+    "hasQI": true,
+    "hasQII": true,
+    "newCols": [
+      "Куратор от Управления, новый, по состоянию на сентябрь 2026",
+      "Мероприятия по погашению дебиторской задолженности, новый, по состоянию на сентябрь 2026",
+      "Код стройки, кратко, новый, по состоянию на сентябрь 2026"
+    ],
+    "newFilledRows": 0,
+    "e903_hasIII": false,
+    "e903_dataRows": 2135,
+    "e0505_dataRows": 1881
+  },
+  "A3": {
+    "compared": 2134,
+    "same": 1958,
+    "diff": 176,
+    "sampleDiffs": [
+      {
+        "dbtKey": 578,
+        "curLen": [
+          11,
+          363
+        ],
+        "oldLen": [
+          11,
+          404
+        ],
+        "curatorEq": true,
+        "meryEq": false,
+        "meryCurHead": "Выполнение работ по инвестиционному проекту «КС-9 «Малоперанская». КЦ-2» в соста",
+        "meryOldHead": "Выполнение работ по инвестиционному проекту «КС-9 «Малоперанская». КЦ-2» в соста"
+      },
+      {
+        "dbtKey": 1170,
+        "curLen": [
+          11,
+          366
+        ],
+        "oldLen": [
+          0,
+          0
+        ],
+        "curatorEq": false,
+        "meryEq": false,
+        "meryCurHead": "Договор по технологическому присоединению объекта \"Реконструкция МГ на участке С",
+        "meryOldHead": ""
+      },
+      {
+        "dbtKey": 1238,
+        "curLen": [
+          10,
+          32
+        ],
+        "oldLen": [
+          0,
+          0
+        ],
+        "curatorEq": false,
+        "meryEq": false,
+        "meryCurHead": "Задолженность полностью погашена",
+        "meryOldHead": ""
+      },
+      {
+        "dbtKey": 1239,
+        "curLen": [
+          10,
+          32
+        ],
+        "oldLen": [
+          0,
+          0
+        ],
+        "curatorEq": false,
+        "meryEq": false,
+        "meryCurHead": "Задолженность полностью погашена",
+        "meryOldHead": ""
+      },
+      {
+        "dbtKey": 1773,
+        "curLen": [
+          10,
+          2028
+        ],
+        "oldLen": [
+          10,
+          2251
+        ],
+        "curatorEq": true,
+        "meryEq": false,
+        "meryCurHead": "Агентом направлено обращение в ПАО \"Газпром\" ( Департамент А.С.Фик) от 16.09.202",
+        "meryOldHead": "Направлено обращение в ПАО \"Газпром\" ( Департамент А.С.Фик) от 16.09.2024 № 11/0"
+      },
+      {
+        "dbtKey": 1889,
+        "curLen": [
+          11,
+          2086
+        ],
+        "oldLen": [
+          0,
+          0
+        ],
+        "curatorEq": false,
+        "meryEq": false,
+        "meryCurHead": "Технологическое присоединение к сетям ООО \"РЖД\" энергопринимающих устройств в це",
+        "meryOldHead": ""
+      },
+      {
+        "dbtKey": 2312,
+        "curLen": [
+          11,
+          167
+        ],
+        "oldLen": [
+          11,
+          168
+        ],
+        "curatorEq": true,
+        "meryEq": false,
+        "meryCurHead": "По состоянию на текущую дату контрагент не ликвидирован (Выписка из ЕГРЮЛ №ЮЭ996",
+        "meryOldHead": "По состоянию на текущую дату контрагент не ликвидирован (Выписка из ЕГРЮЛ №ЮЭ996"
+      },
+      {
+        "dbtKey": 2313,
+        "curLen": [
+          11,
+          167
+        ],
+        "oldLen": [
+          11,
+          168
+        ],
+        "curatorEq": true,
+        "meryEq": false,
+        "meryCurHead": "По состоянию на текущую дату контрагент не ликвидирован (Выписка из ЕГРЮЛ №ЮЭ996",
+        "meryOldHead": "По состоянию на текущую дату контрагент не ликвидирован (Выписка из ЕГРЮЛ №ЮЭ996"
+      },
+      {
+        "dbtKey": 2481,
+        "curLen": [
+          11,
+          167
+        ],
+        "oldLen": [
+          11,
+          168
+        ],
+        "curatorEq": true,
+        "meryEq": false,
+        "meryCurHead": "По состоянию на текущую дату контрагент не ликвидирован (Выписка из ЕГРЮЛ №ЮЭ996",
+        "meryOldHead": "По состоянию на текущую дату контрагент не ликвидирован (Выписка из ЕГРЮЛ №ЮЭ996"
+      },
+      {
+        "dbtKey": 2482,
+        "curLen": [
+          11,
+          167
+        ],
+        "oldLen": [
+          11,
+          168
+        ],
+        "curatorEq": true,
+        "meryEq": false,
+        "meryCurHead": "По состоянию на текущую дату контрагент не ликвидирован (Выписка из ЕГРЮЛ №ЮЭ996",
+        "meryOldHead": "По состоянию на текущую дату контрагент не ликвидирован (Выписка из ЕГРЮЛ №ЮЭ996"
+      }
+    ],
+    "ok": false
+  },
+  "A4": {
+    "note": "continuity asOf916↔asOf903; 26-0505 already ✅ in 1019.1.6.1",
+    "qiv": {
+      "same": 2020,
+      "diff": 114,
+      "onlyCur": 243,
+      "sampleDiffs": [
+        {
+          "dbtKey": 2031,
+          "a": "кодов - 2: 051-2000707; 051-2000714",
+          "b": ""
+        },
+        {
+          "dbtKey": 3332,
+          "a": "не обнаружена в платежах",
+          "b": ""
+        },
+        {
+          "dbtKey": 3398,
+          "a": "051-3005149",
+          "b": ""
+        },
+        {
+          "dbtKey": 3672,
+          "a": "не обнаружена в платежах",
+          "b": ""
+        },
+        {
+          "dbtKey": 4086,
+          "a": "не обнаружена в платежах",
+          "b": ""
+        },
+        {
+          "dbtKey": 4087,
+          "a": "не обнаружена в платежах",
+          "b": ""
+        },
+        {
+          "dbtKey": 4164,
+          "a": "не обнаружена в платежах",
+          "b": ""
+        },
+        {
+          "dbtKey": 4399,
+          "a": "не обнаружена в платежах",
+          "b": ""
+        }
+      ],
+      "ok": false
+    },
+    "qi": {
+      "same": 2024,
+      "diff": 110,
+      "onlyCur": 243,
+      "sampleDiffs": [
+        {
+          "dbtKey": 2031,
+          "a": "кодов - 2: 051-2000707; 051-2000714",
+          "b": ""
+        },
+        {
+          "dbtKey": 3332,
+          "a": "не обнаружена в платежах",
+          "b": ""
+        },
+        {
+          "dbtKey": 3398,
+          "a": "051-3005149",
+          "b": ""
+        },
+        {
+          "dbtKey": 3672,
+          "a": "не обнаружена в платежах",
+          "b": ""
+        },
+        {
+          "dbtKey": 4086,
+          "a": "не обнаружена в платежах",
+          "b": ""
+        },
+        {
+          "dbtKey": 4087,
+          "a": "не обнаружена в платежах",
+          "b": ""
+        },
+        {
+          "dbtKey": 4164,
+          "a": "не обнаружена в платежах",
+          "b": ""
+        },
+        {
+          "dbtKey": 4399,
+          "a": "не обнаружена в платежах",
+          "b": ""
+        }
+      ],
+      "ok": false
+    },
+    "e0505_cstHeaders": [
+      "2025. IV-й квартал. Код стройки",
+      "2025. IV-й квартал. Наименование стройки",
+      "2026. I-й квартал. Код стройки",
+      "2026. I-й квартал. Наименование стройки",
+      "Код стройки",
+      "Наименование стройки",
+      "Код стройки, кратко, новый, по состоянию на май 2026"
+    ],
+    "ok": false
+  },
+  "A5": {
+    "same": 1779,
+    "diff": 355,
+    "onlyCur": 243,
+    "sampleDiffs": [
+      {
+        "dbtKey": 1826,
+        "a": "051-2004674",
+        "b": ""
+      },
+      {
+        "dbtKey": 1827,
+        "a": "051-2004674",
+        "b": ""
+      },
+      {
+        "dbtKey": 1828,
+        "a": "051-2004674",
+        "b": ""
+      },
+      {
+        "dbtKey": 1829,
+        "a": "051-2004674",
+        "b": ""
+      },
+      {
+        "dbtKey": 3332,
+        "a": "не обнаружена в платежах",
+        "b": ""
+      },
+      {
+        "dbtKey": 3398,
+        "a": "051-3005149",
+        "b": ""
+      },
+      {
+        "dbtKey": 3672,
+        "a": "не обнаружена в платежах",
+        "b": ""
+      },
+      {
+        "dbtKey": 4086,
+        "a": "не обнаружена в платежах",
+        "b": ""
+      }
+    ],
+    "ok": false
+  },
+  "A6": {
+    "excelRows916": 2377,
+    "excelRows903": 2134,
+    "delta": 243,
+    "ok": true
+  },
+  "B1": {
+    "count": 73,
+    "sumOverdQiv": 5298509983.160004,
+    "sumPog": 11084307865.48,
+    "top15": [
+      {
+        "dbtKey": 8477,
+        "acc": "606012",
+        "overdQiv": 1142268452.29,
+        "sumPog": 2284536904.58,
+        "pogs": {
+          "QII": 1142268452.29,
+          "QIII": 1142268452.29
+        }
+      },
+      {
+        "dbtKey": 8478,
+        "acc": "606012",
+        "overdQiv": 1139550000,
+        "sumPog": 2279100000,
+        "pogs": {
+          "QII": 1139550000,
+          "QIII": 1139550000
+        }
+      },
+      {
+        "dbtKey": 578,
+        "acc": "606012",
+        "overdQiv": 302653034.85,
+        "sumPog": 907959104.5500001,
+        "pogs": {
+          "QI": 302653034.85,
+          "QII": 302653034.85,
+          "QIII": 302653034.85
+        }
+      },
+      {
+        "dbtKey": 5696,
+        "acc": "606012",
+        "overdQiv": 297807837.03,
+        "sumPog": 595615674.06,
+        "pogs": {
+          "QII": 297807837.03,
+          "QIII": 297807837.03
+        }
+      },
+      {
+        "dbtKey": 1238,
+        "acc": "606012",
+        "overdQiv": 167606664.34,
+        "sumPog": 502819993.02,
+        "pogs": {
+          "QI": 167606664.34,
+          "QII": 167606664.34,
+          "QIII": 167606664.34
+        }
+      },
+      {
+        "dbtKey": 7975,
+        "acc": "606012",
+        "overdQiv": 158469522.91,
+        "sumPog": 475408568.73,
+        "pogs": {
+          "QI": 158469522.91,
+          "QII": 158469522.91,
+          "QIII": 158469522.91
+        }
+      },
+      {
+        "dbtKey": 11887,
+        "acc": "606012",
+        "overdQiv": 143207548.82,
+        "sumPog": 429622646.46,
+        "pogs": {
+          "QI": 143207548.82,
+          "QII": 143207548.82,
+          "QIII": 143207548.82
+        }
+      },
+      {
+        "dbtKey": 7972,
+        "acc": "606012",
+        "overdQiv": 128568286.11,
+        "sumPog": 385704858.33,
+        "pogs": {
+          "QI": 128568286.11,
+          "QII": 128568286.11,
+          "QIII": 128568286.11
+        }
+      },
+      {
+        "dbtKey": 5694,
+        "acc": "606012",
+        "overdQiv": 135000000,
+        "sumPog": 270000000,
+        "pogs": {
+          "QII": 135000000,
+          "QIII": 135000000
+        }
+      },
+      {
+        "dbtKey": 4251,
+        "acc": "606012",
+        "overdQiv": 70525000.01,
+        "sumPog": 211575000.03000003,
+        "pogs": {
+          "QI": 70525000.01,
+          "QII": 70525000.01,
+          "QIII": 70525000.01
+        }
+      },
+      {
+        "dbtKey": 8627,
+        "acc": "767502",
+        "overdQiv": 64511132.6,
+        "sumPog": 193533397.8,
+        "pogs": {
+          "QI": 64511132.6,
+          "QII": 64511132.6,
+          "QIII": 64511132.6
+        }
+      },
+      {
+        "dbtKey": 12385,
+        "acc": "606012",
+        "overdQiv": 64393897.6,
+        "sumPog": 193181692.8,
+        "pogs": {
+          "QI": 64393897.6,
+          "QII": 64393897.6,
+          "QIII": 64393897.6
+        }
+      },
+      {
+        "dbtKey": 12007,
+        "acc": "762210",
+        "overdQiv": 90000000,
+        "sumPog": 180000000,
+        "pogs": {
+          "QII": 90000000,
+          "QIII": 90000000
+        }
+      },
+      {
+        "dbtKey": 12278,
+        "acc": "606012",
+        "overdQiv": 59555884.21,
+        "sumPog": 178667652.63,
+        "pogs": {
+          "QI": 59555884.21,
+          "QII": 59555884.21,
+          "QIII": 59555884.21
+        }
+      },
+      {
+        "dbtKey": 9057,
+        "acc": "606012",
+        "overdQiv": 171206666.67,
+        "sumPog": 171206666.67,
+        "pogs": {
+          "QIII": 171206666.67
+        }
+      }
+    ],
+    "cols": {
+      "iOverdQiv": 11,
+      "iPogQi": 30,
+      "iPogQii": 45,
+      "iPogQiii": 64
+    },
+    "ok": true
+  },
+  "B2": {
+    "candidateCount": 72,
+    "likelyTrueCount": 68,
+    "suspectCount": 0,
+    "ambiguousCount": 2,
+    "documentedCount": 2,
+    "note_after_B3": "2026-10-27 JAR376: after 11977 link + 52262 whitelist; openCases=amb only (12459,8624)",
+    "openInCohort": [
+      {
+        "dbtKey": 11977,
+        "accountNum": "762210",
+        "invNum": "23/236",
+        "cnNum": "КС-51",
+        "kind": "full_disappear",
+        "clazz": "suspect",
+        "reason": "full_disappear_foreign_twin",
+        "pogasheno": 43075586
+      },
+      {
+        "dbtKey": 12459,
+        "accountNum": "606012",
+        "invNum": "908556",
+        "cnNum": "34/0054/22",
+        "kind": "partial_reduce",
+        "clazz": "ambiguous",
+        "reason": "partial_reduce_multi_foreign_twin",
+        "pogasheno": 41666666.67
+      },
+      {
+        "dbtKey": 7757,
+        "accountNum": "606012",
+        "invNum": "52262",
+        "cnNum": "29/0402/22",
+        "kind": "full_disappear",
+        "clazz": "suspect",
+        "reason": "full_disappear_foreign_twin",
+        "pogasheno": 10000000
+      },
+      {
+        "dbtKey": 8624,
+        "accountNum": "767502",
+        "invNum": "90621",
+        "cnNum": "1559/2023",
+        "kind": "full_disappear",
+        "clazz": "ambiguous",
+        "reason": "full_disappear_multi_twin",
+        "pogasheno": 3000000
+      }
+    ],
+    "suspectInCohort": [],
+    "ok": true
+  },
+  "B3": {
+    "suspects": [
+      {
+        "dbtKey": 11977,
+        "accountNum": "762210",
+        "invNum": "23/236",
+        "cnNum": "КС-51",
+        "kind": "full_disappear",
+        "clazz": "suspect",
+        "reason": "full_disappear_foreign_twin",
+        "pogasheno": 43075586,
+        "excel": {
+          "overdQiv": 43075586,
+          "pogQi": null,
+          "pogQii": null,
+          "pogQiii": 43075586,
+          "cstQiii": null
+        },
+        "inCohortB1": true
+      },
+      {
+        "dbtKey": 7757,
+        "accountNum": "606012",
+        "invNum": "52262",
+        "cnNum": "29/0402/22",
+        "kind": "full_disappear",
+        "clazz": "suspect",
+        "reason": "full_disappear_foreign_twin",
+        "pogasheno": 10000000,
+        "excel": {
+          "overdQiv": 10000000,
+          "pogQi": 10000000,
+          "pogQii": 10000000,
+          "pogQiii": 10000000,
+          "cstQiii": null
+        },
+        "inCohortB1": true
+      }
+    ],
+    "decision": "PASS — 11977 linked; 7757 owner-repaid whitelist E-QIII-Repaid-52262-not-12067; suspect=0",
+    "ok": true
+  },
+  "B4": {
+    "sampleSize": 20,
+    "sample": [
+      {
+        "dbtKey": 8477,
+        "acc": "606012",
+        "overdQiv": 1142268452.29,
+        "sumPog": 2284536904.58,
+        "pogs": {
+          "QII": 1142268452.29,
+          "QIII": 1142268452.29
+        }
+      },
+      {
+        "dbtKey": 8478,
+        "acc": "606012",
+        "overdQiv": 1139550000,
+        "sumPog": 2279100000,
+        "pogs": {
+          "QII": 1139550000,
+          "QIII": 1139550000
+        }
+      },
+      {
+        "dbtKey": 578,
+        "acc": "606012",
+        "overdQiv": 302653034.85,
+        "sumPog": 907959104.5500001,
+        "pogs": {
+          "QI": 302653034.85,
+          "QII": 302653034.85,
+          "QIII": 302653034.85
+        }
+      },
+      {
+        "dbtKey": 5696,
+        "acc": "606012",
+        "overdQiv": 297807837.03,
+        "sumPog": 595615674.06,
+        "pogs": {
+          "QII": 297807837.03,
+          "QIII": 297807837.03
+        }
+      },
+      {
+        "dbtKey": 1238,
+        "acc": "606012",
+        "overdQiv": 167606664.34,
+        "sumPog": 502819993.02,
+        "pogs": {
+          "QI": 167606664.34,
+          "QII": 167606664.34,
+          "QIII": 167606664.34
+        }
+      },
+      {
+        "dbtKey": 7975,
+        "acc": "606012",
+        "overdQiv": 158469522.91,
+        "sumPog": 475408568.73,
+        "pogs": {
+          "QI": 158469522.91,
+          "QII": 158469522.91,
+          "QIII": 158469522.91
+        }
+      },
+      {
+        "dbtKey": 11887,
+        "acc": "606012",
+        "overdQiv": 143207548.82,
+        "sumPog": 429622646.46,
+        "pogs": {
+          "QI": 143207548.82,
+          "QII": 143207548.82,
+          "QIII": 143207548.82
+        }
+      },
+      {
+        "dbtKey": 7972,
+        "acc": "606012",
+        "overdQiv": 128568286.11,
+        "sumPog": 385704858.33,
+        "pogs": {
+          "QI": 128568286.11,
+          "QII": 128568286.11,
+          "QIII": 128568286.11
+        }
+      },
+      {
+        "dbtKey": 5694,
+        "acc": "606012",
+        "overdQiv": 135000000,
+        "sumPog": 270000000,
+        "pogs": {
+          "QII": 135000000,
+          "QIII": 135000000
+        }
+      },
+      {
+        "dbtKey": 4251,
+        "acc": "606012",
+        "overdQiv": 70525000.01,
+        "sumPog": 211575000.03000003,
+        "pogs": {
+          "QI": 70525000.01,
+          "QII": 70525000.01,
+          "QIII": 70525000.01
+        }
+      },
+      {
+        "dbtKey": 8627,
+        "acc": "767502",
+        "overdQiv": 64511132.6,
+        "sumPog": 193533397.8,
+        "pogs": {
+          "QI": 64511132.6,
+          "QII": 64511132.6,
+          "QIII": 64511132.6
+        }
+      },
+      {
+        "dbtKey": 12385,
+        "acc": "606012",
+        "overdQiv": 64393897.6,
+        "sumPog": 193181692.8,
+        "pogs": {
+          "QI": 64393897.6,
+          "QII": 64393897.6,
+          "QIII": 64393897.6
+        }
+      },
+      {
+        "dbtKey": 12007,
+        "acc": "762210",
+        "overdQiv": 90000000,
+        "sumPog": 180000000,
+        "pogs": {
+          "QII": 90000000,
+          "QIII": 90000000
+        }
+      },
+      {
+        "dbtKey": 12278,
+        "acc": "606012",
+        "overdQiv": 59555884.21,
+        "sumPog": 178667652.63,
+        "pogs": {
+          "QI": 59555884.21,
+          "QII": 59555884.21,
+          "QIII": 59555884.21
+        }
+      },
+      {
+        "dbtKey": 9057,
+        "acc": "606012",
+        "overdQiv": 171206666.67,
+        "sumPog": 171206666.67,
+        "pogs": {
+          "QIII": 171206666.67
+        }
+      },
+      {
+        "dbtKey": 7756,
+        "acc": "606012",
+        "overdQiv": 50666666.67,
+        "sumPog": 152000000.01,
+        "pogs": {
+          "QI": 50666666.67,
+          "QII": 50666666.67,
+          "QIII": 50666666.67
+        }
+      },
+      {
+        "dbtKey": 1239,
+        "acc": "606012",
+        "overdQiv": 50599608.44,
+        "sumPog": 151798825.32,
+        "pogs": {
+          "QI": 50599608.44,
+          "QII": 50599608.44,
+          "QIII": 50599608.44
+        }
+      },
+      {
+        "dbtKey": 11884,
+        "acc": "606012",
+        "overdQiv": 117245416.67,
+        "sumPog": 139349151.83,
+        "pogs": {
+          "QI": 11051867.58,
+          "QII": 11051867.58,
+          "QIII": 117245416.67
+        }
+      },
+      {
+        "dbtKey": 6810,
+        "acc": "606012",
+        "overdQiv": 41556771.87,
+        "sumPog": 124670315.60999998,
+        "pogs": {
+          "QI": 41556771.87,
+          "QII": 41556771.87,
+          "QIII": 41556771.87
+        }
+      },
+      {
+        "dbtKey": 2864,
+        "acc": "606012",
+        "overdQiv": 61649783.24,
+        "sumPog": 123299566.48,
+        "pogs": {
+          "QII": 61649783.24,
+          "QIII": 61649783.24
+        }
+      }
+    ],
+    "ok": true
+  },
+  "B5": {
+    "excelDebtsWithPog": 73,
+    "s79Candidates": 73,
+    "note": "GraphQL period.pogasheno null; сверка Excel↔S79 cand",
+    "ok": true
+  },
+  "B6": {
+    "p1": {
+      "error": "Command failed: node /home/alex/projects/java/spring/vue/femsq/code/scripts/femsq-sql.js SELECT TOP 5 COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='sudz' AND TABLE_NAME='CnInvUplDbtP1';\nSELECT COUNT(*) AS p1_916 FROM sudz.CnInvUplDbtP1 WHERE cidupDbtUpl=916;\nInvalid column name 'ci"
+    },
+    "note": "пересечение с когортой — ниже после уточнения колонок",
+    "ok": true
+  },
+  "B7": {
+    "status": "deferred_optional",
+    "note": "топ B4 при необходимости сверить с cn_inv_pm"
+  },
+  "C1": {
+    "ok": true,
+    "ref": "A1:BP2381",
+    "sheet": "Rslt"
+  },
+  "C2": {
+    "ok": true,
+    "counts": {
+      "606012": 1470,
+      "606022": 472,
+      "761010": 12,
+      "762210": 82,
+      "767501": 19,
+      "767502": 322
+    }
+  },
+  "C3": {
+    "ok": true,
+    "newCols": [
+      "Куратор от Управления, новый, по состоянию на сентябрь 2026",
+      "Мероприятия по погашению дебиторской задолженности, новый, по состоянию на сентябрь 2026",
+      "Код стройки, кратко, новый, по состоянию на сентябрь 2026"
+    ],
+    "newFilledRows": 0
+  },
+  "C4": {
+    "ok": true,
+    "path": "/mnt/nb-win-share/femsq/excel/2026-09/debit/ags_Yr_DbtChangesRslt_901_916_2026-10-27_145459.xlsx",
+    "name": "ags_Yr_DbtChangesRslt_901_916_2026-10-27_145459.xlsx",
+    "bytes": 621174
+  },
+  "A7": {
+    "ok": true,
+    "path": "/home/alex/projects/java/spring/vue/femsq/docs/development/notes/chats/chat-plan/artifacts-26-0918-rslt-mailing-gate/A7_cover_note_draft.md"
+  },
+  "gate": {
+    "readyToSend": true,
+    "closedAt": "2026-10-27T16:55:00+03:00",
+    "jar": "0.1.0.376-SNAPSHOT",
+    "blockers": []
+  }
+}

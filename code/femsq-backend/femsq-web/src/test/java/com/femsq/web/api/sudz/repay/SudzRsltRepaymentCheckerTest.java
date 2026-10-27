@@ -68,6 +68,20 @@ class SudzRsltRepaymentCheckerTest {
         assertTrue(check.openCases().isEmpty());
     }
 
+    @Test
+    void qiiiParallelTwin52262IsDocumentedNotSuspect() {
+        SudzRsltDebt gone = debt(7757, "606012",
+                period(901, "2026-01-15", "52262", "10000000", "10000000"),
+                period(916, "2026-09-30", "52262", null, null));
+        SudzRsltDebt parallel = debt(12067, "762210",
+                period(901, "2026-01-15", "25/76", "10000000", "10000000"),
+                period(916, "2026-09-30", "25/76", "10000000", "10000000"));
+        SudzRsltRepaymentCheck check = SudzRsltRepaymentChecker.check(901, 916, List.of(gone, parallel));
+        assertEquals(1, check.documentedCount());
+        assertEquals(0, check.suspectCount());
+        assertTrue(check.openCases().stream().noneMatch(c -> c.dbtKey() == 7757));
+    }
+
     private static SudzRsltDebt debt(int key, String account, SudzRsltPeriod... periods) {
         return new SudzRsltDebt(key, account, null, null, null, null, null, null, null, List.of(periods));
     }

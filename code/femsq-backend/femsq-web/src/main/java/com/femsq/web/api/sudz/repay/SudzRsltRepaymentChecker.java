@@ -139,6 +139,14 @@ public final class SudzRsltRepaymentChecker {
         if (inv.contains("А45-19974") || inv.contains("A45-19974")) {
             return "E-Split-A45-19974";
         }
+        /*
+         * QIII asOf916: dbt 7757 (СФ 52262 / 29/0402/22) ушёл из свода; параллельный
+         * 12067 (25/76 / КС-51) с той же суммой 10M жил с QIV отдельно. Link дал бы 20M —
+         * владелец (2026-10-27): считать 7757 погашенным, не сливать с 12067.
+         */
+        if ("52262".equals(inv)) {
+            return "E-QIII-Repaid-52262-not-12067";
+        }
         return null;
     }
 

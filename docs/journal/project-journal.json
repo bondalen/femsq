@@ -20267,7 +20267,7 @@
           "chat-attributes": {
             "id": "chat-2026-10-21-001",
             "created": "2026-10-21",
-            "lastUpdated": "2026-10-22",
+            "lastUpdated": "2026-10-27",
             "owner": "Александр",
             "status": "active",
             "priority": "high",
@@ -20288,6 +20288,411 @@
             }
           },
           "entries": [
+            {
+              "log": {
+                "displayName": "Rslt asOf916 пересобран + zip в_Прод (success). № log-2026-10-27-011",
+                "log-attributes": {
+                  "id": "log-2026-10-27-011",
+                  "timestamp": "2026-10-27T17:20:42+03:00",
+                  "level": "success",
+                  "effort": "10m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "qiii",
+                    "rslt",
+                    "mailing",
+                    "продОбмен"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                    "artifacts": "docs/development/notes/chats/chat-plan/artifacts-26-0918-rslt-mailing-gate/"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Пересобран Rslt сбор 901/916 и упакован AES-zip для прода",
+                    "details": "API rslt-sborn → ags_Yr_DbtChangesRslt_901_916_2026-10-27_172001.xlsx на шару 2026-09/debit. Zip AES: Downloads/продОбмен/26-1027_17-19/в_Прод/26-1027_17-20_в_Прод_Rslt.zip (пароль обмена). После B3 (11977/7757).",
+                    "outcome": "Готов к отправке специалистам / на прод через продОбмен.",
+                    "references": [
+                      "/mnt/nb-win-share/femsq/excel/2026-09/debit/ags_Yr_DbtChangesRslt_901_916_2026-10-27_172001.xlsx",
+                      "/home/alex/Downloads/продОбмен/26-1027_17-19/в_Прод/26-1027_17-20_в_Прод_Rslt.zip",
+                      "docs/development/notes/chats/chat-plan/artifacts-26-0918-rslt-mailing-gate/A7_cover_note_draft.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.1.1.5.7 gate Rslt→рассылка закрыт (success). № log-2026-10-27-010",
+                "log-attributes": {
+                  "id": "log-2026-10-27-010",
+                  "timestamp": "2026-10-27T16:57:40+03:00",
+                  "level": "success",
+                  "effort": "25m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "qiii",
+                    "1.1.1.5.7",
+                    "rslt",
+                    "s79",
+                    "mailing-gate",
+                    "whitelist"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                    "artifacts": "docs/development/notes/chats/chat-plan/artifacts-26-0918-rslt-mailing-gate/"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "7757 принят как погашенный; whitelist S79; gate .7 закрыт",
+                    "details": "Владелец: не link 7757→12067 (иначе 10M+10M). documented('52262')=E-QIII-Repaid-52262-not-12067; P1 33390/33391 deferred; unit test + JAR 376. S79 901/916: cand72/likely68/suspect0/amb2/doc2. 11977 уже linked ранее.",
+                    "outcome": "1.1.1.5.7 ✅; 1.1.1 ✅. ★ next 1.1.2. План 0.3.70.",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/sudz/repay/SudzRsltRepaymentChecker.java",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                      "docs/development/notes/chats/chat-plan/artifacts-26-0918-rslt-mailing-gate/B3_suspect_review.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.1.1.5.7 gate Rslt→рассылка (hold). № log-2026-10-27-009",
+                "log-attributes": {
+                  "id": "log-2026-10-27-009",
+                  "timestamp": "2026-10-27T15:20:00+03:00",
+                  "level": "warning",
+                  "effort": "45m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "qiii",
+                    "1.1.1.5.7",
+                    "rslt",
+                    "s79",
+                    "mailing-gate"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                    "artifacts": "docs/development/notes/chats/chat-plan/artifacts-26-0918-rslt-mailing-gate/"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Внесены и исполнены A/B/C gate готовности Rslt asOf916 к рассылке",
+                    "details": "Файл …Rslt_901_916_2026-10-27_145459.xlsx. A: каркас QIV–III + *_new пустые; стройки conflict0 (empty→filled); долги 2377 vs 2134; cover draft. B: когорта Overd@QIV∩погашено=73 (=S79 cand); suspect2 в когорте: 11977 twin=13427 (P1→23/239), 7757 twin=12067 (P1→25/76) — ложные погашения; likely sample 20; P1 open 615. C smoke OK. Порог suspect=0 не пройден → HOLD.",
+                    "outcome": "1.1.1.5.7 🔶 HOLD. ★ next B3: связать twin/P1 или whitelist/правка погашено, затем пересобрать Rslt. План 0.3.68.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                      "docs/development/notes/chats/chat-plan/artifacts-26-0918-rslt-mailing-gate/SUMMARY.md",
+                      "docs/development/notes/chats/chat-plan/artifacts-26-0918-rslt-mailing-gate/B3_suspect_review.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.1.1.5.6 журнал UI + закрытие QIII gate (success). № log-2026-10-27-008",
+                "log-attributes": {
+                  "id": "log-2026-10-27-008",
+                  "timestamp": "2026-10-27T15:05:00+03:00",
+                  "level": "success",
+                  "effort": "15m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "qiii",
+                    "1.1.1.5.6",
+                    "1.1.1.5",
+                    "ui-defects"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                    "uiDefectsJournal": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-qiii-ui-defects.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Журнал UI-дефектов QIII: блокеров 0; закрытие 1.1.1.5; снятие паузы 1.1.2",
+                    "details": "Файл chat-plan-26-0918-qiii-ui-defects.md: блокеров Progress/КСДСФ/портфель/краткий отчёт/словарь/Rslt/S79/D644 = 0. Наблюдения (не блокеры): N1 таймаут rebuild CstAg ~5м vs Apollo 300с; N2 S79 suspect×2; N3 P1 615; N4 хвосты pm закрыты доменом. Контур B 0→a→b→c→d на yr901/upl916 без Access. План 0.3.66.",
+                    "outcome": "1.1.1.5.6 ✅ / 1.1.1.5 ✅ DEV. ★ next 1.1.2.1 (survey B / MSSQL2012 / окно H) и 1.1.2.3.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-qiii-ui-defects.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.1.1.5.5 D644 smoke yr901/currUpl916 (success). № log-2026-10-27-007",
+                "log-attributes": {
+                  "id": "log-2026-10-27-007",
+                  "timestamp": "2026-10-27T15:01:00+03:00",
+                  "level": "success",
+                  "effort": "10m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "qiii",
+                    "1.1.1.5.5",
+                    "d644"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "D644 · Выгрузить smoke: Excel + GraphQL sudzD644; yr_Progress",
+                    "details": "REST d644.xlsx → /mnt/nb-win-share/femsq/excel/2026-09/debit/ags_Yr_DbtChangesRsltD644_901_916_2026-10-27_150027.xlsx (45 605 байт, A1:R183). Строк 176; счета 606012=74, 762210=63, 767502=39; comment644 пустых 0. d644-svod не выгружали (не Q4). yr_CmmGr/New=1909 без изменений.",
+                    "outcome": "1.1.1.5.5 ✅. ★ next 1.1.1.5.6 журнал UI-дефектов (или пустой) → закрытие 1.1.1.5. План 0.3.65.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                      "/mnt/nb-win-share/femsq/excel/2026-09/debit/ags_Yr_DbtChangesRsltD644_901_916_2026-10-27_150027.xlsx"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.1.1.5.4 Rslt сбор + S79 asOf916 (success). № log-2026-10-27-006",
+                "log-attributes": {
+                  "id": "log-2026-10-27-006",
+                  "timestamp": "2026-10-27T14:55:00+03:00",
+                  "level": "success",
+                  "effort": "20m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "qiii",
+                    "1.1.1.5.4",
+                    "rslt",
+                    "s79"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Rslt Excel yr901 asOf916 + checkSudzRsltRepayments; прогресс yr_Progress",
+                    "details": "REST rslt-sborn.xlsx → /mnt/nb-win-share/femsq/excel/2026-09/debit/ags_Yr_DbtChangesRslt_901_916_2026-10-27_145459.xlsx (621 174 байт, A1:BP2381; колонки «2026. III-й квартал.*»). S79: cand73 / likely68 / suspect2 / amb2 / doc1. Suspect: dbt 11977 (762210/КС-51/23/236 full_disappear_foreign_twin), dbt 7757 (606012/29/0402/22/52262). Ambiguous: 12459, 8624. Раунд комментариев не запускали (не нужен для D644 smoke). 901–903/CmmGr 1909 без изменений.",
+                    "outcome": "1.1.1.5.4 ✅. ★ next 1.1.1.5.5 D644 smoke. План 0.3.64. Suspect×2 — в журнал .5.6 при нужде.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                      "/mnt/nb-win-share/femsq/excel/2026-09/debit/ags_Yr_DbtChangesRslt_901_916_2026-10-27_145459.xlsx"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.1.1.5.3.t gate строк 5/5 + CstAg (success). № log-2026-10-27-005",
+                "log-attributes": {
+                  "id": "log-2026-10-27-005",
+                  "timestamp": "2026-10-27T14:30:00+03:00",
+                  "level": "success",
+                  "effort": "90m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "qiii",
+                    "1.1.1.5.3.t",
+                    "pmt-upl",
+                    "extdiff",
+                    "cstag"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Gate 5/5: no_sf/TwoLoad/unique → InsPm-only → ExtDiff; ExistCtpt 1106510@КС-51; CstAg @916",
+                    "details": "Организации ogKey 586/587; КСДСФ Create (cius 1623,1632–1635,1638–1639 → inv 111694–111700). @63/67 InsPm → ExtDiff ✅. Финал @66: А56-80417/2023×2 — сторона исполнителя БУиРГ 1106510 на cn КС-51 (cn_key 308): csosKey 4952 + cnSOrgKey 4696; InsPm flTbl=false → Tbl/pm 10520. ExtDiff 63–67: 5208/1048/608/10520/339 rowsMatched+sumsMatched. usp_RebuildDbtUplCstAg @916 ~309с, DbtUplCstAg=1715; g_p 23–27 без изменений. Заморозка 901–903/1909.",
+                    "outcome": "1.1.1.5.3.t ✅. ★ next 1.1.1.5.4 Rslt/S79. План 0.3.63.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.1.1.5.3 платежи QIII pm 63–67 + g_p/CstAg (success). № log-2026-10-27-004",
+                "log-attributes": {
+                  "id": "log-2026-10-27-004",
+                  "timestamp": "2026-10-27T13:22:00+03:00",
+                  "level": "success",
+                  "effort": "50m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "qiii",
+                    "1.1.1.5.3",
+                    "pmt-upl",
+                    "g_p",
+                    "cstag"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "UI/batch: пять export_*_26-1022 → cn_inv_pm → g_p@916 → CstAg",
+                    "details": "Хвосты долгов 916 закрыты (Value 1716). Платежи: pm63 606012 Tbl5208/InsPm5203 (gap5); pm64 606022 1048✅; pm65 761010 608✅; pm66 767501 10520/10511; pm67 767502 339/332. g_p keys 23–27→916. usp_RebuildDbtUplCstAg: deleted1599 inserted1715 A1604 B0 C111 (~5м). 901–903 без изменений. JAR 375.",
+                    "outcome": "1.1.1.5.3 ✅. ★ next 1.1.1.5.4 Rslt/S79. Хвосты pm (Sf/TwoLoad/gap) — по мере нужды для Rslt.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.1.1.5.2 хвосты СФ+КСДД upl 916 (success). № log-2026-10-27-003",
+                "log-attributes": {
+                  "id": "log-2026-10-27-003",
+                  "timestamp": "2026-10-27T12:35:00+03:00",
+                  "level": "success",
+                  "effort": "25m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "qiii",
+                    "1.1.1.5.2",
+                    "dbt-upl",
+                    "ui",
+                    "tails"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "UI: закрыть хвосты загрузки долгов 916",
+                    "details": "SfDouble: 5× «Создать СФ по Excel» (102572→108045, 102984→108047, 103020→108048, 60269→108046, 60270→108049). КСДД ciud 4823: советник Create (высокая) → слот 13486 + Value. Повтор воронки flTbl=false: AccSmpl/Var/invDbt +5; Value 1716; InvNot пусто; КСДД/Sf open 0; continuity нет; P1 615 (исчезновения → Rslt). 901/903 без изменений.",
+                    "outcome": "Загрузка долгов 916 операционно полная. ★ next 1.1.1.5.3.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.1.1.5.2 QIII свод → upl 916 UI (success). № log-2026-10-27-002",
+                "log-attributes": {
+                  "id": "log-2026-10-27-002",
+                  "timestamp": "2026-10-27T12:24:00+03:00",
+                  "level": "success",
+                  "effort": "90m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "qiii",
+                    "1.1.1.5.2",
+                    "dbt-upl",
+                    "ui"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "UI Cursor: воронка загрузки свода QIII в upl 916",
+                    "details": "Первый прогон flTbl=true: excelToTbl 1762; invDbtLoad Value 1710; dbtValueLoad завис на #dvTailAmb (повтор того же CTE, 5B+ logical reads / ~1ч) — KILL 75. Фикс JdbcSudzDao.materializeDbtValueLoadWorkset: #dvTailReady один CTE; #dvTailAmb/#dvContinuity из #dvTblCurr. JAR 0.1.0.375. Повтор UI: flLoad=true, flTbl=false, полная+apply*; done 12:23:46 totalMs≈121с; #dvTailReady 6439мс; disappeared 516; P1 615 open; Value 1710; Tbl 1762. Хвосты: 5 СФ InvNot; 1 continuity ambiguous; 1 в очереди двоящих. 901–903/1909 не трогали.",
+                    "outcome": "1.1.1.5.2 ✅. ★ next 1.1.1.5.3 — пять export_*_26-1022.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java",
+                      "/mnt/nb-win-share/femsq/excel/2026-09/debit/Дт Задолженность на 30.09.2026 (Общий свод) -НОВЫЙ.xlsx"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.1.1.5.0 QIII → 901/q=3 upl 916 (success). № log-2026-10-27-001",
+                "log-attributes": {
+                  "id": "log-2026-10-27-001",
+                  "timestamp": "2026-10-27T11:10:00+03:00",
+                  "level": "success",
+                  "effort": "20m",
+                  "status": "completed",
+                  "tags": [
+                    "sudz",
+                    "qiii",
+                    "1.1.1.5.0",
+                    "portfolio"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Закрыть 1.1.1.5.0: решение + upl q=3",
+                    "details": "План 0.3.58: QIII в sudz.yr 901 (не песочница). Заморозка upl 901–903 и yr_CmmGr=1909. createSudzUpl → uplKey 916 (statusOnDate 2026-09-30); addSudzYearUpl(901,916) → yr_upl_p 1017 / q=3. Факты 901/902/903 без изменений (1774/1746/1803); на 916 фактов нет. JAR 0.1.0.374. Уточнение: портфель DEV в схеме sudz (ags.yr — только базовые 1…8).",
+                    "outcome": "1.1.1.5.0 ✅. ★ next 1.1.1.5.2 — загрузка свода в upl 916.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                      "/mnt/nb-win-share/femsq/excel/2026-09/debit/Дт Задолженность на 30.09.2026 (Общий свод) -НОВЫЙ.xlsx"
+                    ]
+                  }
+                ]
+              }
+            },
             {
               "log": {
                 "displayName": "1.1.1.5.1 K empty + FIO dict regen (success). № log-2026-10-22-003",

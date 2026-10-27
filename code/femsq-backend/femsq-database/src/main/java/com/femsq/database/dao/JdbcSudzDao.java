@@ -9408,21 +9408,57 @@ public class JdbcSudzDao implements SudzDao {
                     "SELECT iKey, COUNT(DISTINCT cidutKey) AS rowCnt INTO #tblIKey "
                             + "FROM #dvTblCurr GROUP BY iKey");
             String invDbtVar = q("invDbtVar");
+            // tailReady — один проход тяжёлого CTE (excelRow/OUTER APPLY).
+            // #dvTailAmb / #dvContinuity раньше повторяли тот же CTE ещё дважды:
+            // второй проход (tailAmbiguous) на DEV давал 5B+ logical reads / час+.
+            // Выводим их из #dvTblCurr + #dvTailReady без повторного CTE.
+            long tTail = System.nanoTime();
             statement.executeUpdate(
                     sqlDbtValueLoadTailOnlyCtes(
                             dbtValue, invDbt, invDbtDbt, bridge, invDbtVar, tbl, unloadKey, baseUpl)
                             + "SELECT slotKey, iKey, idvvKey, cidutKey, debt "
                             + "INTO #dvTailReady FROM tailReady");
+            log.log(Level.INFO,
+                    "materialize #dvTailReady unloadKey={0} ms={1}",
+                    new Object[]{unloadKey, (System.nanoTime() - tTail) / 1_000_000L});
             statement.executeUpdate(
-                    sqlDbtValueLoadTailOnlyCtes(
-                            dbtValue, invDbt, invDbtDbt, bridge, invDbtVar, tbl, unloadKey, baseUpl)
-                            + "SELECT cidutKey INTO #dvTailAmb FROM tailAmbiguous");
+                    "SELECT t.cidutKey "
+                            + "INTO #dvTailAmb "
+                            + "FROM #dvTblCurr AS t "
+                            + "WHERE NOT EXISTS ( "
+                            + "  SELECT 1 FROM #dvTailReady AS r WHERE r.cidutKey = t.cidutKey "
+                            + ") "
+                            + "  AND NOT EXISTS ( "
+                            + "    SELECT 1 FROM " + dbtValue + " AS dv "
+                            + "    INNER JOIN " + invDbt + " AS d ON d.idKey = dv.dvInvDbt "
+                            + "    WHERE dv.dvUpl = " + unloadKey + " AND d.idInv = t.iKey "
+                            + "      AND ABS(CAST(dv.dvTtl AS decimal(19,4)) - t.debt) "
+                            + "          <= CAST(0.01 AS decimal(19,4)) "
+                            + "  )");
             statement.executeUpdate(
-                    sqlDbtValueLoadTailOnlyCtes(
-                            dbtValue, invDbt, invDbtDbt, bridge, invDbtVar, tbl, unloadKey, baseUpl)
-                            + "SELECT cidutKey, iKey, debt, cidutCnInv, cidutCnName, slotCnt, "
-                            + "       chosenSlotKey, decision, candidates "
-                            + "INTO #dvContinuity FROM continuityRows");
+                    "SELECT t.cidutKey, t.iKey, t.debt, t.cidutCnInv, t.cidutCnName, "
+                            + "       sc.slotCnt, r.slotKey AS chosenSlotKey, "
+                            + "       CASE "
+                            + "         WHEN r.slotKey IS NOT NULL THEN N'pick_last' "
+                            + "         ELSE N'ambiguous' "
+                            + "       END AS decision, "
+                            + "       CAST(N'' AS nvarchar(400)) AS candidates "
+                            + "INTO #dvContinuity "
+                            + "FROM #dvTblCurr AS t "
+                            + "INNER JOIN ( "
+                            + "  SELECT d.idInv AS iKey, COUNT(*) AS slotCnt "
+                            + "  FROM " + invDbt + " AS d "
+                            + "  GROUP BY d.idInv "
+                            + ") AS sc ON sc.iKey = t.iKey "
+                            + "LEFT JOIN #dvTailReady AS r ON r.cidutKey = t.cidutKey "
+                            + "WHERE sc.slotCnt > 1 "
+                            + "  AND NOT EXISTS ( "
+                            + "    SELECT 1 FROM " + dbtValue + " AS dv "
+                            + "    INNER JOIN " + invDbt + " AS d ON d.idKey = dv.dvInvDbt "
+                            + "    WHERE dv.dvUpl = " + unloadKey + " AND d.idInv = t.iKey "
+                            + "      AND ABS(CAST(dv.dvTtl AS decimal(19,4)) - t.debt) "
+                            + "          <= CAST(0.01 AS decimal(19,4)) "
+                            + "  )");
             logDbtValueLoadTailAmbiguousFromTemp(connection, tbl, unloadKey);
             statement.executeUpdate(
                     "SELECT ms.dbtKey, ms.slotKey, ms.iKey AS baseIKey, ms.matchSum, ms.sumKind, "
