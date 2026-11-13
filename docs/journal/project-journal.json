@@ -3,9 +3,76 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-10-22"
+      "lastUpdated": "2026-11-13"
     },
     "sessions": [
+      {
+        "chat": {
+          "displayName": "Треки развёртывания _2606 и СУДЗ (completed, medium). № chat-2026-11-13-001",
+          "chat-attributes": {
+            "id": "chat-2026-11-13-001",
+            "created": "2026-11-09",
+            "lastUpdated": "2026-11-13",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "medium",
+            "tags": [
+              "deploy",
+              "spMstrg-2606",
+              "sudz",
+              "tracks",
+              "docs"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1113-deploy-tracks-overview.md",
+              "plan2606": "docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606-v2.md",
+              "plan0918": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Зафиксированы треки развёртывания и решения R1–R6 (success). № log-2026-11-13-001",
+                "log-attributes": {
+                  "id": "log-2026-11-13-001",
+                  "timestamp": "2026-11-13T16:40:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": [
+                    "docs",
+                    "deploy",
+                    "spMstrg-2606",
+                    "sudz"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1113-deploy-tracks-overview.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Обзор треков + пометки в планах 0604 / 0918 / 1019",
+                    "details": "Итог обсуждения: ни _2606, ни СУДЗ не срочная замена ежедневного БП. _2606 — минимальный SQL-тест на SQL Server 2012 без 17.5. СУДЗ — текущий квартал на DEV, прод ориентир QIV-26. Big-bang отклонён. Трек замены _2605 п.1–4 — отдельный план при старте.",
+                    "outcome": "Создан chat-plan-26-1113-deploy-tracks-overview.md v0.1.0; 0604→v2.12; 0918→0.3.71; 1019→0.1.23.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1113-deploy-tracks-overview.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606-v2.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1019-qii-pmt-rslt.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
       {
         "chat": {
           "displayName": "Выгрузки платежей и сверка Rslt (pending, medium). № chat-2026-10-19-001",
