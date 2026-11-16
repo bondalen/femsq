@@ -3,36 +3,88 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-11-13"
+      "lastUpdated": "2026-11-16"
     },
     "sessions": [
       {
         "chat": {
-          "displayName": "Треки развёртывания _2606 и СУДЗ (completed, medium). № chat-2026-11-13-001",
+          "displayName": "Треки развёртывания _2606 и СУДЗ (in-progress, high). № chat-2026-11-13-001",
           "chat-attributes": {
             "id": "chat-2026-11-13-001",
             "created": "2026-11-09",
-            "lastUpdated": "2026-11-13",
+            "lastUpdated": "2026-11-16",
             "owner": "Александр",
-            "status": "completed",
-            "priority": "medium",
+            "status": "in-progress",
+            "priority": "high",
             "tags": [
               "deploy",
+              "docs",
+              "docs-sync",
+              "roadmap-r1",
               "spMstrg-2606",
               "sudz",
-              "tracks",
-              "docs"
+              "tracks"
             ],
             "links": {
               "projectDocsRefs": [],
               "developmentTasks": [],
               "aiRuleRefs": [],
-              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1113-deploy-tracks-overview.md",
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-docs-sync.md",
               "plan2606": "docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606-v2.md",
-              "plan0918": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md"
+              "plan0918": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+              "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md",
+              "overview1113": "docs/development/notes/chats/chat-plan/chat-plan-26-1113-deploy-tracks-overview.md"
             }
           },
           "entries": [
+            {
+              "log": {
+                "displayName": "План docs-sync и дорожная карта R1: блоки 1–2 (success). № log-2026-11-16-001",
+                "log-attributes": {
+                  "id": "log-2026-11-16-001",
+                  "timestamp": "2026-11-16T17:50:00+03:00",
+                  "level": "success",
+                  "effort": "6h",
+                  "status": "completed",
+                  "tags": [
+                    "docs",
+                    "docs-sync",
+                    "roadmap-r1",
+                    "spMstrg-2606",
+                    "audit"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-docs-sync.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Аудит JSON и документов против состояния проекта",
+                    "details": "Проверены project-docs.json, project-development.json, project-journal.json, modules.json, документы правил, доменные REST-контроллеры против правила «только GraphQL», выгрузка VBA Access. Решения Д1–Д11 согласованы с владельцем.",
+                    "outcome": "Реестр расхождений Р-01…Р-43 (блок 1) в chat-plan-26-1116-docs-sync.md; дерево блоков 1–14.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1116-docs-sync.md"
+                    ]
+                  },
+                  {
+                    "action": "Дорожная карта R1 (блок 2)",
+                    "details": "Граница тактического планирования — R1: освоение лимитов на _2606 в полном объёме, FEMSQ — единственный инструмент P2 (реестр C1 закрыт, месячный цикл параллельной работы, формы Access отключены). Треки S/A/C/R, выпуски R1.0–R1.3 (JAR 156 выводится на R1.0), СУДЗ на проде — R2. Обзор 1113 помечен историческим; 0604 v2 → v2.13 (трек A, 17.5 → C7); 0918 → 0.3.72 (⏸ R2); 1019 → 0.1.24.",
+                    "outcome": "Создан chat-plan-26-1116-roadmap-r1.md v0.1.0; prod-fisheye дополнен application_server (Linux 23121PC05780077, JAR 0.1.0.156, jdk-23.0.1, /mnt/Общий_(X)).",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1113-deploy-tracks-overview.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606-v2.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1019-qii-pmt-rslt.md",
+                      "docs/project/project-docs.json"
+                    ]
+                  }
+                ]
+              }
+            },
             {
               "log": {
                 "displayName": "Зафиксированы треки развёртывания и решения R1–R6 (success). № log-2026-11-13-001",
