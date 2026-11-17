@@ -43,8 +43,8 @@ dist/
 # DBHub локальная установка (в проекте)
 .cursor/dbhub/node_modules/
 .cursor/dbhub/package-lock.json
-# Ошибочный/дублирующий путь установки под code/
-code/.cursor/
+# Ошибочный/дублирующий путь под code/ (часто symlink → ../.cursor; без / — ловит и symlink)
+code/.cursor
 
 # Environment
 .env
