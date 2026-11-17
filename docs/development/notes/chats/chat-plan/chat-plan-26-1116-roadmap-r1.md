@@ -127,6 +127,7 @@ Smoke после паузы → **21.5** (`05c` в порядок MSSQL2012 / db
 | [1113 обзор треков](./chat-plan-26-1113-deploy-tracks-overview.md) | — | Предшественник этой карты |
 | 0112, 0119, 0310 и другие планы до 2026-04, [0604 v1](./chat-plan-26-0604-spMstrg-2606.md) | — | Архив |
 | [C1 Инвентаризация Access](./chat-plan-26-1117-c1-access-inventory.md) | Трек C1 | ✅ completed (2026-11-17): каталог+карта; R1.1=C2, R1.2=C3 |
+| [1117 FemsqTable legacy-гриды](./chat-plan-26-1117-femsq-table-legacy-grids.md) | UI / feQuLib (фаза C манифеста 02-8) | ✅ completed (2026-11-17): org / цепочки / ревизии → FemsqTable |
 | [Выкладка R1.x](./chat-plan-26-1117-release-r1x.md) | Трек R | Заготовка; работа после предусловий R1.0 |
 
 ---

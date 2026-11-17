@@ -22,28 +22,36 @@
           </QCardSection>
           <QSeparator />
           <QCardSection class="q-pa-none audits-list-scroll">
-            <QList bordered separator>
-              <QItem
-                v-for="audit in sortedAudits"
-                :key="audit.adtKey"
-                clickable
-                :active="selectedAuditId === audit.adtKey"
-                @click="handleSelectAudit(audit.adtKey)"
-                class="audit-list-item"
-              >
-                <QItemSection>
-                  <QItemLabel>{{ audit.adtName }}</QItemLabel>
-                  <QItemLabel caption v-if="audit.adtDate">
-                    {{ formatDate(audit.adtDate) }}
-                  </QItemLabel>
-                </QItemSection>
-              </QItem>
-              <QItem v-if="sortedAudits.length === 0 && !auditsStore.loading" class="text-grey-7">
-                <QItemSection>
-                  <QItemLabel>Ревизии не найдены</QItemLabel>
-                </QItemSection>
-              </QItem>
-            </QList>
+            <FemsqTable
+              class="audits-list-table"
+              root-class="audits-list-table"
+              row-key="adtKey"
+              :rows="sortedAudits"
+              :columns="auditListColumns"
+              :loading="auditsStore.loading"
+              filter-label="Поиск ревизии"
+              filter-test-id="audits-list-filter"
+              v-model:filter="auditsListFilter"
+              selection="single"
+              v-model:selected="selectedAuditRows"
+              :pagination="{ rowsPerPage: 0 }"
+              hide-pagination
+              :show-column-filters="false"
+              data-test="audits-list-table"
+              @row-click="onAuditRowClick"
+            >
+              <template #body-cell-adtName="slotProps">
+                <QTd :props="slotProps" class="audit-list-item">
+                  <div>{{ slotProps.row.adtName }}</div>
+                  <div v-if="slotProps.row.adtDate" class="text-caption text-grey-7">
+                    {{ formatDate(slotProps.row.adtDate) }}
+                  </div>
+                </QTd>
+              </template>
+              <template #no-data>
+                <div class="text-grey-7 q-pa-sm">Ревизии не найдены</div>
+              </template>
+            </FemsqTable>
           </QCardSection>
           <QSeparator />
           <QCardActions>
@@ -284,19 +292,17 @@ import {
   QForm,
   QIcon,
   QInput,
-  QItem,
-  QItemLabel,
-  QItemSection,
-  QList,
   QPage,
   QSelect,
   QSeparator,
   QTab,
   QTabPanel,
   QTabPanels,
-  QTabs
+  QTabs,
+  QTd
 } from 'quasar';
 import { useQuasar, Notify } from 'quasar';
+import { FemsqTable, type FemsqTableColumn } from 'fequlib';
 
 import { useAuditsStore } from '@/stores/audits';
 import { useAuditTypesStore } from '@/stores/lookups/audit-types';
@@ -310,7 +316,38 @@ const auditsStore = useAuditsStore();
 const auditTypesStore = useAuditTypesStore();
 const directoriesStore = useDirectoriesLookupStore();
 
+const auditsListFilter = ref('');
 const selectedAuditId = ref<number | null>(null);
+
+const auditListColumns: FemsqTableColumn<RaADto>[] = [
+  {
+    name: 'adtName',
+    field: 'adtName',
+    label: 'Ревизия',
+    align: 'left',
+    filterValue: (row) => `${row.adtName ?? ''} ${row.adtDate ?? ''}`
+  }
+];
+
+const selectedAuditRows = computed({
+  get: () => {
+    const audit = selectedAuditId.value
+      ? auditsStore.audits.find((a) => a.adtKey === selectedAuditId.value)
+      : null;
+    return audit ? [audit] : [];
+  },
+  set: (rows: RaADto[]) => {
+    if (rows[0]?.adtKey != null) {
+      handleSelectAudit(rows[0].adtKey);
+    }
+  }
+});
+
+function onAuditRowClick(_evt: Event, row: RaADto): void {
+  if (row.adtKey != null) {
+    handleSelectAudit(row.adtKey);
+  }
+}
 const isNewAudit = ref(false);
 const saving = ref(false);
 const errorMessage = ref<string | null>(null);

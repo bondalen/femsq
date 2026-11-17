@@ -8,6 +8,111 @@
     "sessions": [
       {
         "chat": {
+          "displayName": "FemsqTable: legacy-гриды org/цепочки/ревизии (completed, high). № chat-2026-11-17-003",
+          "chat-attributes": {
+            "id": "chat-2026-11-17-003",
+            "created": "2026-11-17",
+            "lastUpdated": "2026-11-17",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "high",
+            "tags": [
+              "fequlib",
+              "FemsqTable",
+              "ui",
+              "organizations",
+              "investment-chains",
+              "audits"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [
+                "0093"
+              ],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1117-femsq-table-legacy-grids.md",
+              "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Миграция org/цепочки/ревизии на FemsqTable (success). № log-2026-11-17-009",
+                "log-attributes": {
+                  "id": "log-2026-11-17-009",
+                  "timestamp": "2026-11-17T16:10:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "tags": [
+                    "fequlib",
+                    "FemsqTable"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0093"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1117-femsq-table-legacy-grids.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Перевод гридов на FemsqTable",
+                    "details": "OrganizationsView (server master + client ids/names/agents), InvestmentChainsView (server master + client relations), AuditsView list + FilesList. Удалён AuditsView.v68.backup. Манифест 02-8 обновлён. vitest 90/90.",
+                    "outcome": "0093 и план 1117 completed",
+                    "references": [
+                      "code/femsq-frontend-q/src/views/organizations/OrganizationsView.vue",
+                      "code/femsq-frontend-q/src/views/investment-chains/InvestmentChainsView.vue",
+                      "code/femsq-frontend-q/src/views/audits/AuditsView.vue",
+                      "code/femsq-frontend-q/src/components/audits/FilesList.vue",
+                      "docs/development/notes/UI/02-8_femsq-table-component.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Старт: задача 0093 и миграция на FemsqTable (info). № log-2026-11-17-008",
+                "log-attributes": {
+                  "id": "log-2026-11-17-008",
+                  "timestamp": "2026-11-17T15:15:00+03:00",
+                  "level": "info",
+                  "effort": "0.2h",
+                  "status": "completed",
+                  "tags": [
+                    "fequlib",
+                    "FemsqTable"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0093"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1117-femsq-table-legacy-grids.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Заведены план и задача 0093",
+                    "details": "Аудит UI после docs-sync блок 5: OrganizationsView, InvestmentChainsView, AuditsView/FilesList без feQuLib. План chat-plan-26-1117-femsq-table-legacy-grids.md; структура 02.02.11; nextTaskId 0094.",
+                    "outcome": "Миграция в работе",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1117-femsq-table-legacy-grids.md",
+                      "docs/development/notes/UI/02-8_femsq-table-component.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
           "displayName": "docs-sync: удаление доменного REST (completed, high). № chat-2026-11-17-002",
           "chat-attributes": {
             "id": "chat-2026-11-17-002",

@@ -18,19 +18,7 @@
         />
       </div>
 
-      <div class="row q-col-gutter-md q-mb-md filters">
-        <div class="col-12 col-md-6 col-lg-4">
-          <QInput
-            v-model="searchTerm"
-            debounce="400"
-            label="Поиск по названию"
-            clearable
-            dense
-            :disable="store.loading"
-            placeholder="Введите часть названия"
-            data-testid="investment-chains-filter"
-          />
-        </div>
+      <div class="row q-col-gutter-md q-mb-md items-end">
         <div class="col-12 col-md-3 col-lg-2">
           <QInput
             v-model.number="yearFilter"
@@ -42,17 +30,6 @@
             :disable="store.loading"
             placeholder="Год"
             data-testid="investment-chains-year-filter"
-          />
-        </div>
-        <div class="col-6 col-md-3 col-lg-2">
-          <QSelect
-            v-model="sortOption"
-            :options="sortOptions"
-            emit-value
-            map-options
-            dense
-            label="Сортировка"
-            :disable="store.loading"
           />
         </div>
       </div>
@@ -78,55 +55,52 @@
 
       <div class="row q-col-gutter-lg">
         <div class="col-12 col-lg-7">
-          <QTable
-            flat
-            bordered
+          <FemsqTable
+            mode="server"
             title="Список цепочек"
+            row-key="chainKey"
             :rows="store.chains"
             :columns="columns"
-            row-key="chainKey"
             :loading="store.loading || stNetworksStore.loading"
+            filter-label="Поиск по названию"
+            filter-test-id="investment-chains-filter"
+            v-model:filter="nameFilter"
             v-model:pagination="tablePagination"
             :rows-per-page-options="rowsPerPageOptionValues"
             selection="single"
             v-model:selected="selectedRows"
-            @request="onRequest"
+            data-test="investment-chains-table"
+            @request="onMasterRequest"
+            @row-click="onMasterRowClick"
           >
             <template #body-cell-stNetName="props">
               <QTd :props="props">
                 <template v-if="stNetworksStore.loading">
                   <QSpinner size="16px" color="primary" />
                 </template>
-                <template v-else>
-                  <template v-if="props.row.stNetKey">
-                    <QChip
-                      :label="getStNetworkName(props.row.stNetKey, props.row.stNetName)"
-                      color="info"
-                      text-color="white"
-                      dense
-                      size="sm"
-                    />
-                  </template>
-                  <template v-else>
-                    <span class="text-grey-6">—</span>
-                  </template>
-                </template>
-              </QTd>
-            </template>
-            <template #body-cell-year="props">
-              <QTd :props="props">
-                <template v-if="props.row.year">
+                <template v-else-if="props.row.stNetKey">
                   <QChip
-                    :label="String(props.row.year)"
-                    color="accent"
+                    :label="getStNetworkName(props.row.stNetKey, props.row.stNetName)"
+                    color="info"
                     text-color="white"
                     dense
                     size="sm"
                   />
                 </template>
-                <template v-else>
-                  <span class="text-grey-6">—</span>
-                </template>
+                <span v-else class="text-grey-6">—</span>
+              </QTd>
+            </template>
+            <template #body-cell-year="props">
+              <QTd :props="props">
+                <QChip
+                  v-if="props.row.year"
+                  :label="String(props.row.year)"
+                  color="accent"
+                  text-color="white"
+                  dense
+                  size="sm"
+                />
+                <span v-else class="text-grey-6">—</span>
               </QTd>
             </template>
             <template #body-cell-relationsCount="props">
@@ -136,18 +110,13 @@
                 </QChip>
               </QTd>
             </template>
-            <template #loading>
-              <QInnerLoading showing>
-                <QSpinner color="primary" size="2.5em" />
-              </QInnerLoading>
-            </template>
             <template #no-data>
               <div class="text-grey-7 q-pa-lg">
-                <span v-if="searchTerm || yearFilter">По указанному фильтру цепочки не найдены.</span>
+                <span v-if="nameFilter || yearFilter">По указанному фильтру цепочки не найдены.</span>
                 <span v-else>Данные отсутствуют.</span>
               </div>
             </template>
-          </QTable>
+          </FemsqTable>
         </div>
 
         <div class="col-12 col-lg-5">
@@ -184,7 +153,12 @@
                   <div class="text-subtitle2">Инвестиционные программы</div>
                   <QSpace />
                   <ObjectsReportsMenu
-                    :items="selectedRelations.map((rel) => ({ objectId: rel.investmentProgramKey ?? rel.relationKey, label: rel.investmentProgramName ?? rel.planGroupName }))"
+                    :items="
+                      selectedRelations.map((rel) => ({
+                        objectId: rel.investmentProgramKey ?? rel.relationKey,
+                        label: rel.investmentProgramName ?? rel.planGroupName
+                      }))
+                    "
                   />
                   <template v-if="store.relationsLoading">
                     <QSpinner size="18px" color="primary" />
@@ -196,33 +170,41 @@
                 <div v-if="!store.relationsLoading && store.relations.length === 0" class="text-caption text-grey-6">
                   Инвестиционные программы не указаны.
                 </div>
-                <QTable
+                <FemsqTable
                   v-if="!store.relationsLoading && store.relations.length > 0"
-                  flat
-                  bordered
-                  :rows="filteredRelations"
-                  :columns="relationColumns"
                   row-key="relationKey"
+                  :rows="store.relations"
+                  :columns="relationColumns"
                   :loading="investmentProgramsStore.loading || planGroupsStore.loading"
-                  :pagination="{ rowsPerPage: 0 }"
-                  hide-pagination
+                  filter-label="Поиск по программе"
+                  filter-test-id="investment-relations-filter"
+                  v-model:filter="relationSearchTerm"
+                  v-model:column-filters="relationColumnFilters"
+                  :show-column-filters="true"
                   selection="multiple"
                   v-model:selected="selectedRelations"
+                  :pagination="{ rowsPerPage: 0 }"
+                  hide-pagination
+                  data-test="investment-relations-table"
                 >
                   <template #body-cell-investmentProgramName="props">
                     <QTd :props="props">
                       <template v-if="investmentProgramsStore.loading">
                         <QSpinner size="16px" color="primary" />
                       </template>
-                      <template v-else>
-                        <QChip
-                          :label="getInvestmentProgramName(props.row.investmentProgramKey, props.row.investmentProgramName)"
-                          color="primary"
-                          text-color="white"
-                          dense
-                          size="sm"
-                        />
-                      </template>
+                      <QChip
+                        v-else
+                        :label="
+                          getInvestmentProgramName(
+                            props.row.investmentProgramKey,
+                            props.row.investmentProgramName
+                          )
+                        "
+                        color="primary"
+                        text-color="white"
+                        dense
+                        size="sm"
+                      />
                     </QTd>
                   </template>
                   <template #body-cell-planGroupName="props">
@@ -230,72 +212,24 @@
                       <template v-if="planGroupsStore.loading">
                         <QSpinner size="16px" color="primary" />
                       </template>
-                      <template v-else>
-                        <template v-if="props.row.planGroupKey">
-                          <QChip
-                            :label="getPlanGroupName(props.row.planGroupKey, props.row.planGroupName)"
-                            color="secondary"
-                            text-color="white"
-                            dense
-                            size="sm"
-                          />
-                        </template>
-                        <template v-else>
-                          <span class="text-grey-6">—</span>
-                        </template>
+                      <template v-else-if="props.row.planGroupKey">
+                        <QChip
+                          :label="getPlanGroupName(props.row.planGroupKey, props.row.planGroupName)"
+                          color="secondary"
+                          text-color="white"
+                          dense
+                          size="sm"
+                        />
                       </template>
+                      <span v-else class="text-grey-6">—</span>
                     </QTd>
                   </template>
                   <template #no-data>
                     <div class="text-grey-7 q-pa-lg text-center">
-                      <template v-if="relationSearchTerm || relationPlanGroupFilter !== null">
-                        <div class="q-mb-sm">
-                          <QIcon name="search_off" size="2em" color="grey-6" />
-                        </div>
-                        <div>По указанным фильтрам программы не найдены.</div>
-                        <div class="text-caption q-mt-xs">
-                          <QBtn
-                            flat
-                            dense
-                            size="sm"
-                            label="Сбросить фильтры"
-                            @click="resetRelationFilters"
-                            color="primary"
-                          />
-                        </div>
-                      </template>
-                      <template v-else>
-                        <div>Программы отсутствуют.</div>
-                      </template>
+                      <div>По фильтру программы не найдены.</div>
                     </div>
                   </template>
-                </QTable>
-                <div v-if="!store.relationsLoading && store.relations.length > 0" class="q-mt-sm">
-                  <div class="row q-col-gutter-sm">
-                    <div class="col-12 col-md-6">
-                      <QInput
-                        v-model="relationSearchTerm"
-                        debounce="300"
-                        label="Поиск по программе"
-                        clearable
-                        dense
-                        placeholder="Введите часть названия программы"
-                      />
-                    </div>
-                    <div class="col-12 col-md-6">
-                      <QSelect
-                        v-model="relationPlanGroupFilter"
-                        :options="planGroupFilterOptions"
-                        emit-value
-                        map-options
-                        label="Фильтр по группе планов"
-                        clearable
-                        dense
-                        placeholder="Все группы"
-                      />
-                    </div>
-                  </div>
-                </div>
+                </FemsqTable>
               </QCardSection>
             </QCard>
           </transition>
@@ -308,11 +242,11 @@
     </div>
   </QPage>
 </template>
+
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import {
   QPage,
-  QTable,
   QTd,
   QBanner,
   QBadge,
@@ -321,14 +255,15 @@ import {
   QBtn,
   QSpace,
   QChip,
-  QInnerLoading,
   QSpinner,
   QSeparator,
-  QInput,
-  QSelect,
-  QIcon
+  QInput
 } from 'quasar';
-import type { QTableColumn } from 'quasar';
+import {
+  FemsqTable,
+  type FemsqTableColumn,
+  type FemsqTableRequest
+} from 'fequlib';
 
 import { useInvestmentChainsStore } from '@/stores/investment-chains';
 import type { InvestmentChain, InvestmentChainRelation } from '@/stores/investment-chains';
@@ -342,17 +277,19 @@ const stNetworksStore = useStNetworksStore();
 const investmentProgramsStore = useInvestmentProgramsStore();
 const planGroupsStore = usePlanGroupsStore();
 
+const nameFilter = ref(store.filters.name);
 const relationSearchTerm = ref('');
-const relationPlanGroupFilter = ref<number | null>(null);
+const relationColumnFilters = ref<Record<string, string>>({});
 const selectedRelations = ref<InvestmentChainRelation[]>([]);
 
-const columns: QTableColumn<InvestmentChain>[] = [
+const columns: FemsqTableColumn<InvestmentChain>[] = [
   { name: 'name', field: 'name', label: 'Название', align: 'left', sortable: true },
   {
     name: 'stNetName',
     label: 'Структура сети',
     field: 'stNetName',
-    align: 'left'
+    align: 'left',
+    filterValue: (row) => getStNetworkName(row.stNetKey, row.stNetName)
   },
   {
     name: 'year',
@@ -360,51 +297,41 @@ const columns: QTableColumn<InvestmentChain>[] = [
     field: 'year',
     align: 'center',
     sortable: true,
-    format: (val: number | null) => (val === null ? '—' : String(val))
+    format: (val: unknown) => (val === null || val === undefined || val === '' ? '—' : String(val))
   },
-  { name: 'relationsCount', field: 'relationsCount', label: 'Программ', align: 'center', sortable: true }
+  {
+    name: 'relationsCount',
+    field: 'relationsCount',
+    label: 'Программ',
+    align: 'center',
+    sortable: true,
+    filterValue: (row) => String(row.relationsCount ?? '')
+  }
 ];
 
-const relationColumns: QTableColumn<InvestmentChainRelation>[] = [
+const relationColumns: FemsqTableColumn<InvestmentChainRelation>[] = [
   {
     name: 'investmentProgramName',
     label: 'Инвестиционная программа',
     field: 'investmentProgramName',
-    align: 'left'
+    align: 'left',
+    filterValue: (row) =>
+      getInvestmentProgramName(row.investmentProgramKey, row.investmentProgramName)
   },
   {
     name: 'planGroupName',
     label: 'Группа планов',
     field: 'planGroupName',
-    align: 'left'
+    align: 'left',
+    filterValue: (row) => getPlanGroupName(row.planGroupKey, row.planGroupName)
   }
 ];
 
-const rowsPerPageOptions = [
-  { label: '5', value: 5 },
-  { label: '10', value: 10 },
-  { label: '25', value: 25 }
-];
-const rowsPerPageOptionValues = rowsPerPageOptions.map((item) => item.value);
-
-const sortOptions = [
-  { label: 'Название ↑', value: 'name,asc' },
-  { label: 'Название ↓', value: 'name,desc' },
-  { label: 'Год ↑', value: 'year,asc' },
-  { label: 'Год ↓', value: 'year,desc' }
-];
-
-const searchTerm = computed({
-  get: () => store.filters.name,
-  set: (value: string) => {
-    void store.updateNameFilter(value);
-  }
-});
+const rowsPerPageOptionValues = [5, 10, 25];
 
 const yearFilter = computed({
   get: () => store.filters.year,
   set: (value: number | null) => {
-    // Валидация: год должен быть в разумных пределах (1900-2100)
     if (value !== null && (value < 1900 || value > 2100)) {
       console.warn('[investment-chains-view] Invalid year filter:', value);
       return;
@@ -413,20 +340,14 @@ const yearFilter = computed({
   }
 });
 
-const sortOption = computed({
-  get: () => store.pagination.sort,
-  set: (value: string) => {
-    void store.setSort(value);
-  }
-});
-
 const tablePagination = ref({
   page: store.pagination.page,
   rowsPerPage: store.pagination.size,
-  rowsNumber: store.pagination.totalElements
+  rowsNumber: store.pagination.totalElements,
+  sortBy: 'ipgcKey' as string | null,
+  descending: false
 });
 
-// Синхронизация tablePagination с store (store → UI)
 watch(
   () => ({ page: store.pagination.page, size: store.pagination.size, total: store.pagination.totalElements }),
   (newVal) => {
@@ -440,6 +361,8 @@ watch(
   () => store.selectedChainKey,
   () => {
     selectedRelations.value = [];
+    relationSearchTerm.value = '';
+    relationColumnFilters.value = {};
   }
 );
 
@@ -450,24 +373,45 @@ watch(
   }
 );
 
-async function onRequest(props: { pagination: { page: number; rowsPerPage: number } }): Promise<void> {
-  const { page, rowsPerPage } = props.pagination;
-  
-  // Обновляем локальную пагинацию
-  tablePagination.value.page = page;
-  tablePagination.value.rowsPerPage = rowsPerPage;
-  
-  const pageChanged = page !== store.pagination.page;
+/**
+ * Server-запрос master-списка цепочек.
+ */
+async function onMasterRequest(request: FemsqTableRequest): Promise<void> {
+  const rowsPerPage = request.rowsPerPage >= 1 ? request.rowsPerPage : 10;
+  const sortBy = request.sortBy || 'ipgcKey';
+  const sortField = sortBy === 'name' ? 'name' : sortBy === 'year' ? 'year' : 'ipgcKey';
+  const sort = `${sortField},${request.descending ? 'desc' : 'asc'}`;
+
+  tablePagination.value = {
+    page: request.page,
+    rowsPerPage,
+    rowsNumber: tablePagination.value.rowsNumber,
+    sortBy,
+    descending: request.descending
+  };
+
+  nameFilter.value = request.filter ?? '';
+
+  const filterChanged = (request.filter ?? '') !== store.filters.name;
+  const sortChanged = sort !== store.pagination.sort;
   const sizeChanged = rowsPerPage !== store.pagination.size;
-  
-  if (sizeChanged) {
+  const pageChanged = request.page !== store.pagination.page;
+
+  if (filterChanged) {
+    await store.updateNameFilter(request.filter ?? '');
+  } else if (sortChanged) {
+    await store.setSort(sort);
+  } else if (sizeChanged) {
     await store.setPageSize(rowsPerPage);
   } else if (pageChanged) {
-    await store.setPage(page);
+    await store.setPage(request.page);
   }
-  
-  // Обновляем rowsNumber после загрузки данных
+
   tablePagination.value.rowsNumber = store.pagination.totalElements;
+}
+
+function onMasterRowClick(_evt: Event, row: InvestmentChain): void {
+  void store.selectChain(row.chainKey);
 }
 
 const selectedRows = computed({
@@ -480,40 +424,6 @@ const selectedRows = computed({
   }
 });
 
-const planGroupFilterOptions = computed(() => {
-  const uniqueGroups = new Map<number, string>();
-  store.relations.forEach((rel) => {
-    if (rel.planGroupKey !== null && rel.planGroupKey !== undefined) {
-      const name = rel.planGroupName ?? planGroupsStore.getPlanGroupName(rel.planGroupKey) ?? `ID: ${rel.planGroupKey}`;
-      uniqueGroups.set(rel.planGroupKey, name);
-    }
-  });
-  return Array.from(uniqueGroups.entries())
-    .map(([key, name]) => ({ label: name, value: key }))
-    .sort((a, b) => a.label.localeCompare(b.label));
-});
-
-const filteredRelations = computed(() => {
-  let filtered = store.relations;
-
-  // Фильтр по группе планов
-  if (relationPlanGroupFilter.value !== null) {
-    filtered = filtered.filter((rel) => rel.planGroupKey === relationPlanGroupFilter.value);
-  }
-
-  // Фильтр по поисковому запросу
-  if (relationSearchTerm.value.trim()) {
-    const search = relationSearchTerm.value.toLowerCase().trim();
-    filtered = filtered.filter((rel) => {
-      const programName = rel.investmentProgramName?.toLowerCase() ?? '';
-      const planGroupName = rel.planGroupName?.toLowerCase() ?? '';
-      return programName.includes(search) || planGroupName.includes(search);
-    });
-  }
-
-  return filtered;
-});
-
 function getStNetworkName(key: number | null | undefined, fallbackName: string | null | undefined): string {
   if (fallbackName) {
     return fallbackName;
@@ -522,7 +432,10 @@ function getStNetworkName(key: number | null | undefined, fallbackName: string |
   return lookupName ?? '—';
 }
 
-function getInvestmentProgramName(key: number | null | undefined, fallbackName: string | null | undefined): string {
+function getInvestmentProgramName(
+  key: number | null | undefined,
+  fallbackName: string | null | undefined
+): string {
   if (fallbackName) {
     return fallbackName;
   }
@@ -544,11 +457,6 @@ function getPlanGroupName(key: number | null | undefined, fallbackName: string |
   return key !== null && key !== undefined ? `ID: ${key}` : '—';
 }
 
-function resetRelationFilters(): void {
-  relationSearchTerm.value = '';
-  relationPlanGroupFilter.value = null;
-}
-
 function handleRefresh(): void {
   void store.fetchChains({ keepSelection: true });
   void stNetworksStore.fetchStNetworks();
@@ -565,13 +473,12 @@ function formatDate(value: string): string {
       dateStyle: 'medium',
       timeStyle: 'short'
     }).format(new Date(value));
-  } catch (error) {
+  } catch {
     return value;
   }
 }
 
 onMounted(async () => {
-  // Загружаем lookup данные
   if (stNetworksStore.stNetworks.length === 0 && !stNetworksStore.loading) {
     await stNetworksStore.fetchStNetworks();
   }
@@ -581,13 +488,13 @@ onMounted(async () => {
   if (planGroupsStore.planGroups.length === 0 && !planGroupsStore.loading) {
     await planGroupsStore.fetchPlanGroups();
   }
-  
-  // Загружаем цепочки
+
   if (!store.hasChains) {
     await store.fetchChains();
   }
 });
 </script>
+
 <style scoped>
 .investment-chains-view {
   background: var(--femsq-bg-page);
@@ -606,9 +513,5 @@ onMounted(async () => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
-}
-
-.filters {
-  align-items: flex-end;
 }
 </style>

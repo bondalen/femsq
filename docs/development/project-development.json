@@ -3,12 +3,12 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2026-11-17T09:15:00+03:00",
+      "lastUpdated": "2026-11-17",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0093",
+      "nextTaskId": "0094",
       "items": {
         "0077": {
           "task": {
@@ -3294,6 +3294,35 @@
               "description": "Прод-пакет MSSQL2012 12–14 → R2."
             }
           }
+        },
+        "0093": {
+          "task": {
+            "displayName": "FemsqTable на legacy-гридах org/цепочки/ревизии (completed, high). № 0093",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "OrganizationsView: master/ids/names/agents на FemsqTable",
+                "InvestmentChainsView: master + relations на FemsqTable",
+                "AuditsView список + FilesList на FemsqTable; AuditsView.v68.backup удалён",
+                "Манифест 02-8 обновлён; vitest по затронутым тестам зелёный"
+              ],
+              "links": {
+                "projectDocsRefs": [
+                  "module:frontend",
+                  "component:frontend.quasar.FemsqTable"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1117-femsq-table-legacy-grids.md",
+                "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+              },
+              "created": "2026-11-17",
+              "lastUpdated": "2026-11-17",
+              "description": "Аудит после docs-sync блок 5: три экрана на сыром QTable/QList; перевод на feQuLib FemsqTable (фаза C манифеста 02-8)."
+            }
+          }
         }
       }
     },
@@ -4007,6 +4036,17 @@
                           "taskId": "0063",
                           "positionInParent": 10,
                           "comment": "GitHub docs-registry + fequlib; docs/; окна Cursor; 0058 разблокирована"
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "✅ FemsqTable на legacy-гридах org/цепочки/ревизии (completed, high). № 02.02.11 → 0093",
+                        "item-attributes": {
+                          "structureId": "02.02.11",
+                          "taskId": "0093",
+                          "positionInParent": 11
                         },
                         "task-items": []
                       }

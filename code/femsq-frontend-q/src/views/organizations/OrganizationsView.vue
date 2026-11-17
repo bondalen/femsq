@@ -11,52 +11,33 @@
         <QBtn flat round dense icon="refresh" :loading="store.loading" @click="handleRefresh" aria-label="Обновить" />
       </div>
 
-      <div class="row q-col-gutter-sm q-mb-xs filters">
-        <div class="col-12 col-md-5">
-          <QInput
-            v-model="searchInput"
-            debounce="400"
-            dense
-            clearable
-            label="Поиск по краткому названию"
-          />
-        </div>
-        <div class="col-6 col-md-3">
-          <QSelect
-            v-model="sortOption"
-            :options="sortOptions"
-            emit-value
-            map-options
-            dense
-            label="Сортировка"
-          />
-        </div>
-      </div>
-
       <QBanner v-if="store.error" dense rounded class="bg-negative text-white q-mb-xs">{{ store.error }}</QBanner>
 
-      <!-- Master: список -->
-      <QTable
-        flat
-        bordered
-        dense
+      <FemsqTable
         class="org-master q-mb-sm"
+        root-class="org-master"
+        mode="server"
+        title="Список"
+        row-key="ogKey"
         :rows="store.organizations"
         :columns="masterColumns"
-        row-key="ogKey"
         :loading="store.loading"
+        filter-label="Поиск по краткому названию"
+        filter-test-id="org-master-filter"
+        v-model:filter="masterFilter"
         v-model:pagination="tablePagination"
         :rows-per-page-options="[5, 10, 25]"
         selection="single"
         v-model:selected="selectedRows"
-        @request="onRequest"
+        data-test="org-master-table"
+        @request="onMasterRequest"
+        @row-click="onMasterRowClick"
       >
         <template #no-data>
           <div class="text-grey-7 q-pa-sm">Нет данных</div>
         </template>
-      </QTable>
+      </FemsqTable>
 
-      <!-- Detail: вкладки -->
       <QCard v-if="store.selectedOrganization" flat bordered class="org-detail">
         <QCardSection class="q-py-xs q-px-sm row items-center">
           <div class="text-subtitle2">{{ store.selectedOrganization.ogName }}</div>
@@ -72,21 +53,20 @@
         </QTabs>
         <QSeparator />
         <QTabPanels v-model="detailTab" animated>
-          <!-- идентификаторы -->
           <QTabPanel name="ids" class="q-pa-sm">
             <QBanner v-if="store.orgIdsError" dense rounded class="bg-warning text-dark q-mb-xs">
               {{ store.orgIdsError }}
             </QBanner>
-            <QTable
-              flat
-              bordered
-              dense
+            <FemsqTable
+              row-key="orgIdKey"
               :rows="idRows"
               :columns="idColumns"
-              row-key="orgIdKey"
               :loading="store.orgIdsLoading"
+              :show-filter="false"
+              :show-column-filters="false"
+              :pagination="{ rowsPerPage: 0 }"
               hide-pagination
-              :rows-per-page-options="[0]"
+              data-test="org-ids-table"
             >
               <template #body-cell-orgIdValueTExt="props">
                 <QTd :props="props">
@@ -107,7 +87,7 @@
               <template #no-data>
                 <div class="text-caption text-grey-6 q-pa-sm">Нет идентификаторов</div>
               </template>
-            </QTable>
+            </FemsqTable>
             <div class="text-caption text-grey-7 q-mt-xs q-mb-xs">
               КПП у существующего ИНН — в ячейке «расширение текстового» (Enter / уход с поля). Либо тип ИНН + ИНН + КПП → Добавить.
             </div>
@@ -166,7 +146,6 @@
             </div>
           </QTabPanel>
 
-          <!-- общее -->
           <QTabPanel name="general" class="q-pa-sm">
             <div class="row q-col-gutter-sm">
               <div class="col-6 col-md-3">
@@ -189,39 +168,55 @@
             <QSeparator class="q-my-sm" />
             <div class="text-subtitle2 q-mb-xs">Контактные лица</div>
             <div v-if="store.agentsLoading"><QSpinner size="16px" /></div>
-            <div v-else-if="store.agents.length === 0" class="text-caption text-grey-6">Не указаны</div>
-            <QList v-else dense bordered>
-              <QItem v-for="a in store.agents" :key="a.ogAgKey" dense>
-                <QItemSection>{{ a.code }} <span class="text-caption text-grey-7">({{ a.ogAgKey }})</span></QItemSection>
-              </QItem>
-            </QList>
+            <FemsqTable
+              v-else
+              row-key="ogAgKey"
+              :rows="store.agents"
+              :columns="agentColumns"
+              :show-filter="false"
+              :show-column-filters="false"
+              :pagination="{ rowsPerPage: 0 }"
+              hide-pagination
+              data-test="org-agents-table"
+            >
+              <template #no-data>
+                <div class="text-caption text-grey-6 q-pa-sm">Не указаны</div>
+              </template>
+            </FemsqTable>
           </QTabPanel>
 
-          <!-- разные имена для ловли (ogNmF) -->
           <QTabPanel name="names" class="q-pa-sm">
             <QBanner v-if="store.nameVariantsError" dense rounded class="bg-warning text-dark q-mb-xs">
               {{ store.nameVariantsError }}
             </QBanner>
-            <QTable
-              flat
-              bordered
-              dense
+            <FemsqTable
+              row-key="onfKey"
               :rows="store.nameVariants"
               :columns="nameColumns"
-              row-key="onfKey"
               :loading="store.nameVariantsLoading"
+              :show-filter="false"
+              :show-column-filters="false"
+              :pagination="{ rowsPerPage: 0 }"
               hide-pagination
-              :rows-per-page-options="[0]"
+              data-test="org-names-table"
             >
               <template #body-cell-actions="props">
                 <QTd :props="props">
-                  <QBtn flat dense round size="sm" icon="delete" color="negative" @click="handleDeleteName(props.row.onfKey)" />
+                  <QBtn
+                    flat
+                    dense
+                    round
+                    size="sm"
+                    icon="delete"
+                    color="negative"
+                    @click="handleDeleteName(props.row.onfKey)"
+                  />
                 </QTd>
               </template>
               <template #no-data>
                 <div class="text-caption text-grey-6 q-pa-sm">Нет вариантов имён</div>
               </template>
-            </QTable>
+            </FemsqTable>
             <div class="row q-col-gutter-xs items-end q-mt-sm">
               <div class="col-4">
                 <QInput v-model="nameForm.onfName" dense label="организация *" :disable="store.saving" />
@@ -288,7 +283,6 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import {
   QPage,
-  QTable,
   QTd,
   QCard,
   QCardSection,
@@ -303,14 +297,16 @@ import {
   QTab,
   QTabPanels,
   QTabPanel,
-  QList,
-  QItem,
-  QItemSection,
   QDialog,
   QSpinner,
   useQuasar
 } from 'quasar';
-import type { QTableColumn } from 'quasar';
+import {
+  FemsqTable,
+  actionsColumn,
+  type FemsqTableColumn,
+  type FemsqTableRequest
+} from 'fequlib';
 
 import { useOrganizationsStore } from '@/stores/organizations';
 import type { Organization } from '@/stores/organizations';
@@ -320,11 +316,8 @@ const store = useOrganizationsStore();
 const $q = useQuasar();
 const detailTab = ref<'ids' | 'general' | 'names'>('ids');
 
-/** Локальный ввод поиска — не блокируется store.loading (иначе теряется фокус). */
-const searchInput = ref(store.filters.ogName);
-watch(searchInput, (value) => {
-  void store.updateNameFilter(value ?? '');
-});
+/** Фильтр master FemsqTable ↔ store.filters.ogName. */
+const masterFilter = ref(store.filters.ogName);
 
 /** Черновики КПП по org_id_key до сохранения. */
 const kppDraft = reactive<Record<number, string>>({});
@@ -365,31 +358,48 @@ async function saveKpp(row: {
   }
 }
 
-const masterColumns: QTableColumn<Organization>[] = [
+const masterColumns: FemsqTableColumn<Organization>[] = [
   { name: 'ogName', field: 'ogName', label: 'название', align: 'left', sortable: true },
   {
     name: 'registrationTaxType',
     label: 'тип (og, sd, ie)',
     field: (row) => row.registrationTaxType ?? '—',
-    align: 'left'
+    align: 'left',
+    sortable: false
   }
 ];
 
-const idColumns: QTableColumn[] = [
+const idColumns: FemsqTableColumn[] = [
   { name: 'orgIdKey', field: 'orgIdKey', label: 'org_id_key', align: 'left' },
   { name: 'typeLabel', field: 'typeLabel', label: 'org_id_type', align: 'left' },
   { name: 'org', field: 'org', label: 'org', align: 'left' },
   { name: 'orgIdValueL', field: 'orgIdValueL', label: 'цифровой ключ', align: 'left' },
   { name: 'orgIdValueT', field: 'orgIdValueT', label: 'текстовый ключ', align: 'left' },
-  { name: 'orgIdValueTExt', field: 'orgIdValueTExt', label: 'расширение текстового', align: 'left' }
+  {
+    name: 'orgIdValueTExt',
+    field: 'orgIdValueTExt',
+    label: 'расширение текстового',
+    align: 'left',
+    filterValue: (row) => String(row.orgIdValueTExt ?? '')
+  }
 ];
 
-const nameColumns: QTableColumn[] = [
+const nameColumns: FemsqTableColumn[] = [
   { name: 'onfName', field: 'onfName', label: 'организация', align: 'left' },
   { name: 'onfNameExt', field: 'onfNameExt', label: 'филиал', align: 'left' },
   { name: 'onfStart', field: 'onfStart', label: 'начало актуальности', align: 'left' },
   { name: 'onfEnd', field: 'onfEnd', label: 'завершение актуальности', align: 'left' },
-  { name: 'actions', label: '', field: 'onfKey', align: 'right' }
+  actionsColumn()
+];
+
+const agentColumns: FemsqTableColumn[] = [
+  {
+    name: 'code',
+    field: 'code',
+    label: 'код',
+    align: 'left',
+    format: (_v, row) => `${row.code ?? ''} (${row.ogAgKey})`
+  }
 ];
 
 const idRows = computed(() =>
@@ -402,10 +412,6 @@ const idRows = computed(() =>
   }))
 );
 
-const sortOptions = [
-  { label: 'Наименование ↑', value: 'ogName,asc' },
-  { label: 'Наименование ↓', value: 'ogName,desc' }
-];
 const taxTypeOptions = [
   { label: 'og', value: 'og' },
   { label: 'sd', value: 'sd' },
@@ -416,18 +422,14 @@ const idTypeOptions = [
   { label: 'ИНН', value: 2 }
 ];
 
-const sortOption = computed({
-  get: () => store.pagination.sort,
-  set: (v: string) => {
-    void store.setSort(v);
-  }
-});
-
 const tablePagination = ref({
   page: store.pagination.page,
   rowsPerPage: store.pagination.size,
-  rowsNumber: store.pagination.totalElements
+  rowsNumber: store.pagination.totalElements,
+  sortBy: 'ogName' as string | null,
+  descending: false
 });
+
 watch(
   () => ({ page: store.pagination.page, size: store.pagination.size, total: store.pagination.totalElements }),
   (v) => {
@@ -437,16 +439,44 @@ watch(
   }
 );
 
-async function onRequest(props: { pagination: { page: number; rowsPerPage: number } }): Promise<void> {
-  const { page, rowsPerPage } = props.pagination;
-  tablePagination.value.page = page;
-  tablePagination.value.rowsPerPage = rowsPerPage;
-  if (rowsPerPage !== store.pagination.size) {
+/**
+ * Server-запрос master-списка: фильтр / sort / page → organizations store.
+ */
+async function onMasterRequest(request: FemsqTableRequest): Promise<void> {
+  const rowsPerPage = request.rowsPerPage >= 1 ? request.rowsPerPage : 10;
+  const sortBy = request.sortBy || 'ogName';
+  const sort = `${sortBy},${request.descending ? 'desc' : 'asc'}`;
+
+  tablePagination.value = {
+    page: request.page,
+    rowsPerPage,
+    rowsNumber: tablePagination.value.rowsNumber,
+    sortBy,
+    descending: request.descending
+  };
+
+  masterFilter.value = request.filter ?? '';
+
+  const filterChanged = (request.filter ?? '') !== store.filters.ogName;
+  const sortChanged = sort !== store.pagination.sort;
+  const sizeChanged = rowsPerPage !== store.pagination.size;
+  const pageChanged = request.page !== store.pagination.page;
+
+  if (filterChanged) {
+    await store.updateNameFilter(request.filter ?? '');
+  } else if (sortChanged) {
+    await store.setSort(sort);
+  } else if (sizeChanged) {
     await store.setPageSize(rowsPerPage);
-  } else if (page !== store.pagination.page) {
-    await store.setPage(page);
+  } else if (pageChanged) {
+    await store.setPage(request.page);
   }
+
   tablePagination.value.rowsNumber = store.pagination.totalElements;
+}
+
+function onMasterRowClick(_evt: Event, row: Organization): void {
+  void store.selectOrganization(row.ogKey);
 }
 
 const selectedRows = computed({
@@ -590,24 +620,7 @@ onMounted(() => {
   min-height: 100%;
 }
 
-.org-master :deep(.q-table th),
-.org-master :deep(.q-table td),
-.org-detail :deep(.q-table th),
-.org-detail :deep(.q-table td) {
-  padding: 2px 6px;
-}
-
-.org-master :deep(.q-table__top),
-.org-master :deep(.q-table__bottom) {
-  padding: 4px 6px;
-  min-height: 32px;
-}
-
 .org-detail :deep(.q-tab-panel) {
   padding-top: 8px;
-}
-
-.filters {
-  align-items: flex-end;
 }
 </style>

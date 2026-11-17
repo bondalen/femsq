@@ -73,6 +73,10 @@ A ✅ → B ✅ → generic Row ✅ (0003) → **visual/sticky 0011 ✅** (v0.1.
 | СУДЗ · портфель / долги / выгрузки | `SudzPortfolioView`, `SudzDebtsView`, `SudzDbtUplView`, `SudzPmtUplView` | A–B / client | ✅ chrome-toggle default |
 | СУДЗ · КСДСФ / КСДД | `SudzSfDoubleView`, `SudzInvDbtDoubleView` | A–B / client | ✅ |
 | Договоры | `ContractsView.vue` | A–B / client | ✅ |
+| Организации | `OrganizationsView.vue` | server master + client detail | ✅ 2026-11-17 (0093) |
+| Инвест. цепочки | `InvestmentChainsView.vue` | server master + client relations | ✅ 2026-11-17 (0093) |
+| Ревизии · список | `AuditsView.vue` | client list | ✅ 2026-11-17 (0093) |
+| Ревизии · файлы | `FilesList.vue` | client | ✅ 2026-11-17 (0093) |
 | СУДЗ · предпросмотр Rslt | `SudzPortfolioView` native grid | **не** FemsqTable до 0012–0014 | ⏳ |
 
 Аудит 2026-09-27: единственный server+columnFilters хост с обязательными полями — канон (`filters-visible`); остальные получают тумблер chrome, фильтры скрыты по умолчанию.
