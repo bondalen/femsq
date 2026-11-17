@@ -3,12 +3,12 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2026-09-30T12:06:22+03:00",
+      "lastUpdated": "2026-11-17T09:15:00+03:00",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0078",
+      "nextTaskId": "0093",
       "items": {
         "0077": {
           "task": {
@@ -2868,6 +2868,429 @@
               "description": "Этап 2b плана 0819 §4.2. G1–G6 ✅ (UAT export_606012 → Tbl 4909, JAR 285). Apply — задача 0076."
             }
           }
+        },
+        "0078": {
+          "task": {
+            "displayName": "Синхронизация документации и правила против рассогласования (docs-sync) (in-progress, high). № 0078",
+            "task-attributes": {
+              "status": "in-progress",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "check-docs: 0 ошибок; хук pre-commit и build-thin-jar.sh в блокирующем режиме",
+                "Реестр расхождений Р-01…Р-44 закрыт по каждой строке",
+                "Доменные REST-контроллеры удалены (блок 5)",
+                "План закрыт по новой процедуре (блок 14)"
+              ],
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.web",
+                  "module:frontend"
+                ],
+                "journalRefs": [
+                  "chat:chat-2026-11-13-001",
+                  "log:log-2026-11-17-003"
+                ],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-docs-sync.md",
+                "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md",
+                "overview1113": "docs/development/notes/chats/chat-plan/chat-plan-26-1113-deploy-tracks-overview.md"
+              },
+              "created": "2026-11-16",
+              "lastUpdated": "2026-11-17",
+              "description": "Трек S дорожной карты R1. Блоки 1–3, 8–9, 12 ✅ (2026-11-17); 6.1 — этой записью."
+            }
+          }
+        },
+        "0079": {
+          "task": {
+            "displayName": "Трек A: SQL-тест _2606 на проде (без JAR) (in-progress, critical). № 0079",
+            "task-attributes": {
+              "status": "in-progress",
+              "priority": "critical",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Smoke run_gate_21_4.sh после паузы",
+                "21.5: 05c в MSSQL2012/README и db-upgrade-spMstrg-2606",
+                "19.7 / 17.2.2b: флешка 26-0616_deploy",
+                "Apply на FishEye + VERIFY; данные о скорости для C4"
+              ],
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.database"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606-v2.md",
+                "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+              },
+              "created": "2026-06-04",
+              "lastUpdated": "2026-11-17",
+              "description": "План 0604 v2 — трек A; хвосты по скорости → 0083 (C4), 17.5 → 0085 (C7)."
+            }
+          }
+        },
+        "0080": {
+          "task": {
+            "displayName": "C1: инвентаризация MS Access по освоению (P2) (pending, critical). № 0080",
+            "task-attributes": {
+              "status": "pending",
+              "priority": "critical",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Повторный ExportAllModules + каталог объектов (MS-ACCESS-OBJECTS-CAPTURE §4.2)",
+                "Реестр функций: решение по каждой строке",
+                "Вопросы В1–В8 закрыты; 03-processes и business-processes обновлены",
+                "Порядок C2/C3 (R1.1, R1.2) в дорожной карте"
+              ],
+              "links": {
+                "projectDocsRefs": [],
+                "journalRefs": [],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1117-c1-access-inventory.md",
+                "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+              },
+              "created": "2026-11-17",
+              "lastUpdated": "2026-11-17",
+              "description": "Владелец запускает VBA-скрипты на копии рабочего файла Access; разбор — агент."
+            }
+          }
+        },
+        "0081": {
+          "task": {
+            "displayName": "C2: ввод ИП, цепочек, планов и лимитов в FEMSQ (pending, high). № 0081",
+            "task-attributes": {
+              "status": "pending",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Экраны ввода ИП/цепочек/планов/лимитов (GraphQL)",
+                "Загрузка уточнённых планов из Excel со сравнением сумм (аналог Form_ipg_gt_LdM_t)",
+                "Справочники P2 1.4 и 2.1.0 — по решению C1",
+                "Выпущено в R1.1 или R1.2"
+              ],
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.web",
+                  "module:frontend"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": [],
+                "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md",
+                "dependsOnTasks": [
+                  "0080",
+                  "0078"
+                ]
+              },
+              "created": "2026-11-17",
+              "lastUpdated": "2026-11-17",
+              "description": "P2 1.1–1.4, 2.1.0. План чата создаётся после C1."
+            }
+          }
+        },
+        "0082": {
+          "task": {
+            "displayName": "C3: факт освоения в FEMSQ (типы 5, 2, ОПИ; повторно 3, 6) (pending, high). № 0082",
+            "task-attributes": {
+              "status": "pending",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Тип 5 — полный переход с Access",
+                "Тип 2 — сверка хранения (205) и ССК (197); CnPrDocReconcileService вместо заглушки",
+                "ОПИ — загрузчик вместо mnrl_imp",
+                "Типы 3 и 6 — повторная проверка на R1.0",
+                "Выпущено в R1.1 или R1.2"
+              ],
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.web",
+                  "module:frontend"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": [],
+                "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md",
+                "phase2": "docs/development/notes/chats/chat-plan/chat-plan-26-0323-reconcile-specific.md",
+                "dependsOnTasks": [
+                  "0080",
+                  "0078"
+                ]
+              },
+              "created": "2026-11-17",
+              "lastUpdated": "2026-11-17",
+              "description": "P2 2.1–2.6. Тип 2 — фаза 2 плана 0323. План чата создаётся после C1."
+            }
+          }
+        },
+        "0083": {
+          "task": {
+            "displayName": "C4: расчёт освоения — скорость _2606 и замена старых расчётов (pending, high). № 0083",
+            "task-attributes": {
+              "status": "pending",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Скорость _2606 на проде принята (по данным трека A)",
+                "Решения по 18.9 и 20.6",
+                "Старые расчёты ipgChRslt*, spIpgChRsltCstUtl3_GP_cst заменены или признаны ненужными (C1)"
+              ],
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.database"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": [],
+                "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md",
+                "dependsOnTasks": [
+                  "0079",
+                  "0080"
+                ]
+              },
+              "created": "2026-11-17",
+              "lastUpdated": "2026-11-17",
+              "description": "P2 3.1–3.2; хвосты 0604 v2: 9б, 10, 10.5, 14.4, 18.7, 19."
+            }
+          }
+        },
+        "0084": {
+          "task": {
+            "displayName": "C5: отчёты освоения — карточки Jasper на _2606 и Excel (pending, high). № 0084",
+            "task-attributes": {
+              "status": "pending",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Карточки Jasper для используемых вариантов mstrgAg_* и ipgOutSide (по C1)",
+                "mstrgAg_23_Branch_q2m_2408_25 переведён с 2408",
+                "Выгрузка в Excel",
+                "Пересмотр REST модуля отчётов (Р-44)"
+              ],
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.reports",
+                  "module:frontend"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": [],
+                "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md",
+                "dependsOnTasks": [
+                  "0079",
+                  "0080"
+                ]
+              },
+              "created": "2026-11-17",
+              "lastUpdated": "2026-11-17",
+              "description": "P2 4.1–4.3."
+            }
+          }
+        },
+        "0085": {
+          "task": {
+            "displayName": "C7: месячный цикл параллельной работы и отключение форм Access (pending, critical). № 0085",
+            "task-attributes": {
+              "status": "pending",
+              "priority": "critical",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Один месячный цикл со сверкой _2605/_2606 (17 дат, LmMn@212 — Решение 22)",
+                "Переключение клиентов (17.5)",
+                "Формы освоения в Access отключены; _2605 — только откат",
+                "R1 достигнут: FEMSQ — единственный инструмент P2"
+              ],
+              "links": {
+                "projectDocsRefs": [],
+                "journalRefs": [],
+                "aiRuleRefs": [],
+                "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md",
+                "dependsOnTasks": [
+                  "0081",
+                  "0082",
+                  "0083",
+                  "0084",
+                  "0086"
+                ]
+              },
+              "created": "2026-11-17",
+              "lastUpdated": "2026-11-17",
+              "description": "Завершает R1 (выпуск R1.3)."
+            }
+          }
+        },
+        "0086": {
+          "task": {
+            "displayName": "Выкладка R1.0–R1.3 на прод («действующий + кандидат») (pending, critical). № 0086",
+            "task-attributes": {
+              "status": "pending",
+              "priority": "critical",
+              "owner": "Александр",
+              "completionCriteria": [
+                "R1.0: старт на прод-схеме без M6 проверен на DEV; ревизии 3/5/6 на кандидате; JAR 156 выведен",
+                "R1.1, R1.2: факт и ввод планов",
+                "R1.3: отчёты, скорость, параллельная работа",
+                "prod-fisheye.application_server актуален после каждого выпуска"
+              ],
+              "links": {
+                "projectDocsRefs": [],
+                "journalRefs": [],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1117-release-r1x.md",
+                "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md",
+                "dependsOnTasks": [
+                  "0078"
+                ]
+              },
+              "created": "2026-11-17",
+              "lastUpdated": "2026-11-17",
+              "description": "Трек R. Правила двух экземпляров — план и .cursorrules."
+            }
+          }
+        },
+        "0087": {
+          "task": {
+            "displayName": "spMstrg_2605: отчётная ветка и пакет на прод (completed, high). № 0087",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Пакет _2605 применён на проде",
+                "_2605 ежедневно используется с Access"
+              ],
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.database"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0508-spMstrg-2605.md",
+                "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+              },
+              "created": "2026-05-08",
+              "lastUpdated": "2026-11-17",
+              "description": "Закрыт 2026-11-17 (docs-sync 12.1). В R1 _2605 — откат для C7."
+            }
+          }
+        },
+        "0088": {
+          "task": {
+            "displayName": "Окружение FEMSQ на asus-kubuntu (completed, medium). № 0088",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "medium",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Этапы 0–6 плана выполнены"
+              ],
+              "links": {
+                "projectDocsRefs": [],
+                "journalRefs": [],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0911-asus-kubuntu-setup.md",
+                "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+              },
+              "created": "2026-09-11",
+              "lastUpdated": "2026-11-17",
+              "description": "Закрыт 2026-09-11."
+            }
+          }
+        },
+        "0089": {
+          "task": {
+            "displayName": "СУДЗ: Rslt на проде и рассылка (контур B) (paused, high). № 0089",
+            "task-attributes": {
+              "status": "paused",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "1.1.1 ✅ (QIII gate 1.1.1.5)",
+                "1.1.2 (M6), 1.2, 1.3, пакет 14g — R2"
+              ],
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.web",
+                  "module:frontend",
+                  "module:backend.database"
+                ],
+                "journalRefs": [],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-sudz-rslt-prod-mailing.md",
+                "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md",
+                "uiDefects": "docs/development/notes/chats/chat-plan/chat-plan-26-0918-qiii-ui-defects.md"
+              },
+              "created": "2026-09-18",
+              "lastUpdated": "2026-11-17",
+              "description": "⏸ R2 по дорожной карте: циклы СУДЗ на DEV. Журнал UI-дефектов gate — 0918-qiii (закрыт)."
+            }
+          }
+        },
+        "0090": {
+          "task": {
+            "displayName": "СУДЗ: эксперимент CstAgExp (dbt upl cst ag) (completed, medium). № 0090",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "medium",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Эксперимент выполнен на DEV; P2 inline"
+              ],
+              "links": {
+                "projectDocsRefs": [],
+                "journalRefs": [],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0921-dbt-upl-cst-ag-exp.md",
+                "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+              },
+              "created": "2026-09-21",
+              "lastUpdated": "2026-11-17",
+              "description": "Прод-пакет → R2 (0918 1.1.1.2.5.p)."
+            }
+          }
+        },
+        "0091": {
+          "task": {
+            "displayName": "СУДЗ: комментарии QII и Д644 (completed, medium). № 0091",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "medium",
+              "owner": "Александр",
+              "completionCriteria": [
+                "Узлы 1–3, 4.1, 4.2, 4.5, 4.6 на DEV"
+              ],
+              "links": {
+                "projectDocsRefs": [],
+                "journalRefs": [],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1012-qii-cmm-d644.md",
+                "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+              },
+              "created": "2026-10-12",
+              "lastUpdated": "2026-11-17",
+              "description": "4.3 (прод-пакет) → R2."
+            }
+          }
+        },
+        "0092": {
+          "task": {
+            "displayName": "СУДЗ: платежи QII и Rslt (completed, medium). № 0092",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "medium",
+              "owner": "Александр",
+              "completionCriteria": [
+                "1.6 ✅ на DEV"
+              ],
+              "links": {
+                "projectDocsRefs": [],
+                "journalRefs": [],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1019-qii-pmt-rslt.md",
+                "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+              },
+              "created": "2026-10-19",
+              "lastUpdated": "2026-11-17",
+              "description": "Прод-пакет MSSQL2012 12–14 → R2."
+            }
+          }
         }
       }
     },
@@ -3738,6 +4161,197 @@
                           "taskId": "0075",
                           "positionInParent": 11,
                           "comment": "S79; шаг 1 Cursor then Progress Проверить/Выгрузить; chat-plan-26-0802 §S79"
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "⏸ СУДЗ: Rslt на проде и рассылка (paused, high). № 02.03.13 → 0089",
+                        "item-attributes": {
+                          "structureId": "02.03.13",
+                          "taskId": "0089",
+                          "positionInParent": 13
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "✅ СУДЗ: эксперимент CstAgExp (completed, medium). № 02.03.14 → 0090",
+                        "item-attributes": {
+                          "structureId": "02.03.14",
+                          "taskId": "0090",
+                          "positionInParent": 14
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "✅ СУДЗ: комментарии QII и Д644 (completed, medium). № 02.03.15 → 0091",
+                        "item-attributes": {
+                          "structureId": "02.03.15",
+                          "taskId": "0091",
+                          "positionInParent": 15
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "✅ СУДЗ: платежи QII и Rslt (completed, medium). № 02.03.16 → 0092",
+                        "item-attributes": {
+                          "structureId": "02.03.16",
+                          "taskId": "0092",
+                          "positionInParent": 16
+                        },
+                        "task-items": []
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "task-item": {
+                  "displayName": "Освоение лимитов P2 — R1 (группировочный). № 02.04",
+                  "item-attributes": {
+                    "structureId": "02.04",
+                    "taskId": null,
+                    "positionInParent": 4,
+                    "comment": "Дорожная карта R1: FEMSQ — единственный инструмент P2"
+                  },
+                  "task-items": [
+                    {
+                      "task-item": {
+                        "displayName": "⏳ C1: инвентаризация MS Access по освоению (pending, critical). № 02.04.01 → 0080",
+                        "item-attributes": {
+                          "structureId": "02.04.01",
+                          "taskId": "0080",
+                          "positionInParent": 1
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "🔄 Трек A: SQL-тест _2606 на проде (in-progress, critical). № 02.04.02 → 0079",
+                        "item-attributes": {
+                          "structureId": "02.04.02",
+                          "taskId": "0079",
+                          "positionInParent": 2
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "⏳ C2: ввод ИП, цепочек, планов и лимитов в FEMSQ (pending, high). № 02.04.03 → 0081",
+                        "item-attributes": {
+                          "structureId": "02.04.03",
+                          "taskId": "0081",
+                          "positionInParent": 3
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "⏳ C3: факт освоения в FEMSQ (pending, high). № 02.04.04 → 0082",
+                        "item-attributes": {
+                          "structureId": "02.04.04",
+                          "taskId": "0082",
+                          "positionInParent": 4
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "⏳ C4: расчёт освоения — скорость _2606 и замена старых расчётов (pending, high). № 02.04.05 → 0083",
+                        "item-attributes": {
+                          "structureId": "02.04.05",
+                          "taskId": "0083",
+                          "positionInParent": 5
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "⏳ C5: отчёты освоения — карточки Jasper на _2606 и Excel (pending, high). № 02.04.06 → 0084",
+                        "item-attributes": {
+                          "structureId": "02.04.06",
+                          "taskId": "0084",
+                          "positionInParent": 6
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "⏳ Выкладка R1.0–R1.3 на прод (pending, critical). № 02.04.07 → 0086",
+                        "item-attributes": {
+                          "structureId": "02.04.07",
+                          "taskId": "0086",
+                          "positionInParent": 7
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "⏳ C7: месячный цикл параллельной работы и отключение форм Access (pending, critical). № 02.04.08 → 0085",
+                        "item-attributes": {
+                          "structureId": "02.04.08",
+                          "taskId": "0085",
+                          "positionInParent": 8
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "✅ spMstrg_2605: отчётная ветка и пакет на прод (completed, high). № 02.04.09 → 0087",
+                        "item-attributes": {
+                          "structureId": "02.04.09",
+                          "taskId": "0087",
+                          "positionInParent": 9
+                        },
+                        "task-items": []
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "task-item": {
+                  "displayName": "Документация и окружение (группировочный). № 02.05",
+                  "item-attributes": {
+                    "structureId": "02.05",
+                    "taskId": null,
+                    "positionInParent": 5,
+                    "comment": "Документация, окружение, качество"
+                  },
+                  "task-items": [
+                    {
+                      "task-item": {
+                        "displayName": "🔄 Синхронизация документации и правила против рассогласования (in-progress, high). № 02.05.01 → 0078",
+                        "item-attributes": {
+                          "structureId": "02.05.01",
+                          "taskId": "0078",
+                          "positionInParent": 1
+                        },
+                        "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "✅ Окружение FEMSQ на asus-kubuntu (completed, medium). № 02.05.02 → 0088",
+                        "item-attributes": {
+                          "structureId": "02.05.02",
+                          "taskId": "0088",
+                          "positionInParent": 2
                         },
                         "task-items": []
                       }

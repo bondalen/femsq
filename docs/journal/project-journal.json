@@ -27,7 +27,12 @@
             ],
             "links": {
               "projectDocsRefs": [],
-              "developmentTasks": [],
+              "developmentTasks": [
+                "0078",
+                "0079",
+                "0080",
+                "0086"
+              ],
               "aiRuleRefs": [],
               "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-docs-sync.md",
               "plan2606": "docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606-v2.md",
@@ -37,6 +42,51 @@
             }
           },
           "entries": [
+            {
+              "log": {
+                "displayName": "Блок 6.1 docs-sync: задачи треков R1 в project-development.json (success). № log-2026-11-17-004",
+                "log-attributes": {
+                  "id": "log-2026-11-17-004",
+                  "timestamp": "2026-11-17T09:15:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": [
+                    "docs",
+                    "docs-sync",
+                    "development-json",
+                    "roadmap-r1"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0078",
+                      "0079",
+                      "0080",
+                      "0081",
+                      "0082",
+                      "0083",
+                      "0084",
+                      "0085",
+                      "0086"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-docs-sync.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Задачи 0078–0092 и группы деревьев",
+                    "details": "Треки R1: 0078 docs-sync (in-progress), 0079 трек A (in-progress), 0080 C1, 0081 C2, 0082 C3, 0083 C4, 0084 C5, 0085 C7, 0086 выкладка R1.x (pending) с зависимостями. Задним числом по Р-01: 0087 _2605, 0088 asus-kubuntu, 0090 0921, 0091 1012, 0092 1019 (completed), 0089 0918 (paused, R2; 0918-qiii — ссылка). Дерево features: 02.04 «Освоение лимитов P2 — R1», 02.05 «Документация и окружение», СУДЗ 02.03.13–16. nextTaskId 0093. Статусы старых задач (0054, 0048, 0069, 0071, 0075, 0077) — блок 6.2.",
+                    "outcome": "Блок 6.1 ✅; Р-01 закрыт.",
+                    "references": [
+                      "docs/development/project-development.json",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                    ]
+                  }
+                ]
+              }
+            },
             {
               "log": {
                 "displayName": "Блок 12 docs-sync: планы чатов закрыты по реестру, заготовки C1 и Выкладка R1.x (success). № log-2026-11-17-003",
