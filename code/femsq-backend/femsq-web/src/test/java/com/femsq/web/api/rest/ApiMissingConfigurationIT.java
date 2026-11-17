@@ -75,13 +75,14 @@ class ApiMissingConfigurationIT {
 
     @Test
     @Order(1)
-    void shouldReturnServiceUnavailableWhenConfigurationMissing() {
-        ResponseEntity<String> response = restTemplate.getForEntity("/api/v1/organizations", String.class);
+    void shouldReportMissingConfigurationOnConnectionStatus() {
+        // Доменный REST удалён (docs-sync блок 5); health/status остаётся допустимым REST.
+        ResponseEntity<String> response = restTemplate.getForEntity("/api/v1/connection/status", String.class);
 
-        assertThat(response.getStatusCode().value()).isEqualTo(503);
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
         assertThat(response.getBody())
-                .as("Ответ должен содержать сообщение о недоступной конфигурации")
-                .contains("Файл конфигурации подключения к базе данных не найден");
+                .as("Ответ status при отсутствии конфигурации")
+                .contains("Конфигурация не найдена");
     }
 
     @Test

@@ -40,8 +40,8 @@ public class SpaController {
    * 
    * <p>Примеры маршрутов, которые НЕ будут обработаны (обрабатываются другими контроллерами):
    * <ul>
-   *   <li>/api/v1/organizations - API-запрос (обрабатывается OgRestController)</li>
-   *   <li>/graphql - GraphQL-запрос (обрабатывается GraphQL контроллером)</li>
+   *   <li>/api/v1/connection/status - допустимый REST (ConnectionController)</li>
+   *   <li>/graphql - GraphQL-запрос (доменные операции)</li>
    *   <li>/assets/index.js - статический файл (обрабатывается ResourceHandler)</li>
    * </ul>
    * 

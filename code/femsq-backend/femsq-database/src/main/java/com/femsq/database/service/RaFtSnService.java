@@ -7,6 +7,8 @@ import java.util.Optional;
 
 /**
  * Сервисный слой для работы с именами источников {@code ags.ra_ft_sn}.
+ *
+ * <p><b>API:</b> без публичного GraphQL/REST до появления потребности (docs-sync Д7).
  */
 public interface RaFtSnService {
 

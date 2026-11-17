@@ -7,6 +7,8 @@ import java.util.Optional;
 
 /**
  * Сервисный слой для работы с типами источников {@code ags.ra_ft_st}.
+ *
+ * <p><b>API:</b> без публичного GraphQL/REST до появления потребности (docs-sync Д7).
  */
 public interface RaFtStService {
 

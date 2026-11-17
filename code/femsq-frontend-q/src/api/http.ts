@@ -18,9 +18,9 @@ const DEFAULT_TIMEOUT = 15_000;
  * В production режиме используем относительные пути, так как frontend встроен в JAR.
  * Если задан VITE_API_BASE_URL - используется он (для кастомных конфигураций).
  * 
- * Базовый URL установлен в '/api', так как контроллеры используют пути вида:
- * - /api/v1/... (старые контроллеры)
- * - /api/ra/... (новые контроллеры ревизий)
+ * Базовый URL '/api' — только для допустимых REST-исключений (.cursorrules):
+ * connection/health, app/version, СУДЗ xlsx/multipart, отчёты PDF/метаданные.
+ * Доменные операции идут через Apollo Client → /graphql.
  */
 const RAW_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)
   ?? '/api';
@@ -123,14 +123,13 @@ function buildUrl(path: string, query?: Record<string, unknown>): string {
   };
 
   // Normalize relative path and avoid duplicating base segment
-  // Обрабатываем пути вида /api/ra/... или /api/v1/...
+  // Допустимые REST: /api/v1/connection|app|sudz|reports…
   let relative = path.replace(/^\//, ''); // Убираем ведущий слеш
   
   // Определяем базовый URL для создания полного URL
   let baseUrl: string;
   
-  // Если путь уже начинается с 'api/', используем корневой URL сервера
-  // Это позволяет работать с обоими паттернами: /api/v1/... и /api/ra/...
+  // Если путь уже начинается с 'api/', используем origin (полный путь от корня)
   if (relative.startsWith('api/')) {
     // Путь уже содержит полный путь от корня, используем origin сервера
     if (typeof window !== 'undefined' && window.location) {

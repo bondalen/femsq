@@ -8,6 +8,71 @@
     "sessions": [
       {
         "chat": {
+          "displayName": "docs-sync: удаление доменного REST (in-progress, high). № chat-2026-11-17-002",
+          "chat-attributes": {
+            "id": "chat-2026-11-17-002",
+            "created": "2026-11-17",
+            "lastUpdated": "2026-11-17",
+            "owner": "Александр",
+            "status": "in-progress",
+            "priority": "high",
+            "tags": [
+              "docs-sync",
+              "graphql",
+              "rest",
+              "block-5"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [
+                "0078"
+              ],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-docs-sync.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Блок 5.1–5.3: удалены 10 доменных REST-контроллеров (success). № log-2026-11-17-006",
+                "log-attributes": {
+                  "id": "log-2026-11-17-006",
+                  "timestamp": "2026-11-17T14:50:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "tags": [
+                    "docs-sync",
+                    "rest",
+                    "graphql"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0078"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-docs-sync.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Удаление доменного REST (Р-33, Р-34)",
+                    "details": "Удалены Og/OgAg/OgLookup/IpgChain/Lookup/RaF/RaFt/RaFtS/RaFtSn/RaFtSt RestController. ApiOrganizationsSuccessIT удалён (есть GraphQL IT). ApiMissingConfigurationIT → /api/v1/connection/status. 9 frontend/Cypress REST-моков удалены. RaFtS* javadoc Д7. SpaController/http.ts комментарии. javac testCompile OK; frontend npm в maven сломан (cache); vitest: 15 pass / 4 fail вне объёма (sudz mocks).",
+                    "outcome": "5.1–5.3 ✅; 5.4 🔶",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/rest/",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1116-docs-sync.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
           "displayName": "C1: инвентаризация Access по освоению P2 (completed, critical). № chat-2026-11-17-001",
           "chat-attributes": {
             "id": "chat-2026-11-17-001",

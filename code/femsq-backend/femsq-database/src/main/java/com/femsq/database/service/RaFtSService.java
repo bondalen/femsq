@@ -7,6 +7,9 @@ import java.util.Optional;
 
 /**
  * Сервисный слой для работы с источниками/листами {@code ags.ra_ft_s}.
+ *
+ * <p><b>API:</b> без публичного GraphQL/REST до появления потребности
+ * (docs-sync Д7; удалён {@code RaFtSRestController}).
  */
 public interface RaFtSService {
 
