@@ -39,10 +39,55 @@
           "entries": [
             {
               "log": {
+                "displayName": "Блок 12 docs-sync: планы чатов закрыты по реестру, заготовки C1 и Выкладка R1.x (success). № log-2026-11-17-003",
+                "log-attributes": {
+                  "id": "log-2026-11-17-003",
+                  "timestamp": "2026-11-17T09:05:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": [
+                    "docs",
+                    "docs-sync",
+                    "chat-plans",
+                    "roadmap-r1"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-docs-sync.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Статусы планов приведены к реестру дорожной карты R1 (12.1–12.3)",
+                    "details": "13 планов закрыты: в шапке строка статуса, прежний статус сохранён, блок «Закрытие» — что не выполнено и куда перенесено (0323 тип 2 → C3; 0508 — _2605 на проде, отчёт 2408_25 → C5; 0707 и 0720 — факт прода: 0054.0–0054.5 и ALTER 26-0720/0721 2026-07-30, hotfix 156 2026-10-15, type 5 и UI → R1.0; 0722, 0725, 0826, 0918-qiii, 0921, 0922, 1012 — хвосты в бэклог; 0802 — ⏸ R2). 20 планов до 2026-04 и 0604 v1 помечены «📦 Архив» без переноса файлов. Дорожная карта 0.1.1: §5 применён, §6 дополнен.",
+                    "outcome": "Блоки 12.1–12.3 ✅; реестр Р-37…Р-41 закрыт.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0707-ralp-reconcile.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0720-agfee-type6.md"
+                    ]
+                  },
+                  {
+                    "action": "Заготовки планов C1 и «Выкладка R1.x» (12.4)",
+                    "details": "chat-plan-26-1117-c1-access-inventory.md: дерево (инструменты → сбор у владельца → разбор → реестр функций → итог), формат реестра, требования к модулю-каталогу (UTF-8, конструктор без сохранения, запуск на копии), вопросы В1–В8. chat-plan-26-1117-release-r1x.md: предусловия R1.0 (блоки 5, 11, 4/13), проверка на копии прод-схемы без M6, правила двух экземпляров. Найдено: FEMSQ-остановка.bat из пакета 156 гасит все процессы femsq-web/JarLauncher — для двух экземпляров не годится; схема приложением не мигрируется (Flyway/Liquibase нет); порт по умолчанию 8080.",
+                    "outcome": "Блок 12.4 ✅.",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1117-c1-access-inventory.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1117-release-r1x.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
                 "displayName": "Блоки 8–9 docs-sync: Этапы пользователя, процесс P2, глоссарий (success). № log-2026-11-17-002",
                 "log-attributes": {
                   "id": "log-2026-11-17-002",
-                  "timestamp": "2026-11-17T10:30:00+03:00",
+                  "timestamp": "2026-11-17T08:54:00+03:00",
                   "level": "success",
                   "effort": "1h",
                   "status": "completed",
@@ -81,7 +126,7 @@
                 "displayName": "Блок 3 docs-sync: правила против рассогласования (success). № log-2026-11-17-001",
                 "log-attributes": {
                   "id": "log-2026-11-17-001",
-                  "timestamp": "2026-11-17T09:40:00+03:00",
+                  "timestamp": "2026-11-17T08:49:00+03:00",
                   "level": "success",
                   "effort": "1.5h",
                   "status": "completed",

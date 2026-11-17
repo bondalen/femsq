@@ -1,11 +1,13 @@
 # План: компонент `FemsqTable` — единая фильтрация/сортировка гридов
 
 **Дата создания:** 2026-07-25  
-**Последнее обновление:** 2026-07-29  
+**Последнее обновление:** 2026-11-17  
 **Проект:** FEMSQ  
 **Версия плана:** 1.5.0 (0058 ✅; §8 визуальный контракт хост↔fequlib)  
 **Задача:** [0059](../../../project-development.json) (completed) · [0061](../../../project-development.json) (completed) · [0060](../../../project-development.json) (completed) · [0063](../../../project-development.json) (completed) · 0058 (completed)  
-**Статус плана:** ✅ функциональный MVP FemsqTable/projectize/0058; 🔄 §8 визуал (fequlib **0011**)  
+**Статус плана:** ✅ закрыт (функциональный MVP; docs-sync 12.1)  
+**Закрытие (2026-11-17):** §8 визуальный контракт (8.2–8.5, feQuLib **0011**) не выполнен → бэклог [дорожная карта R1](./chat-plan-26-1116-roadmap-r1.md) §6.  
+**Статус до закрытия:** ✅ функциональный MVP FemsqTable/projectize/0058; 🔄 §8 визуал (fequlib **0011**)  
 **Компонент:** [02-8_femsq-table-component.md](../../UI/02-8_femsq-table-component.md)
 
 ---

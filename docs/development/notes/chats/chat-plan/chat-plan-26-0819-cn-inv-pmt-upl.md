@@ -1,11 +1,13 @@
 # План: экран загрузки платежей (`CnInvPmtUpl` → FEMSQ)
 
 **Дата создания:** 2026-08-19  
-**Последнее обновление:** 2026-09-21  
+**Последнее обновление:** 2026-11-17  
 **Проект:** FEMSQ  
 **Версия плана:** 0.8.7 (0072–0074 ✅; **0076 ✅** закрыта; H4–H7 ✅; §0a.1–5 ✅)  
 **Задачи:** [0072](../../../project-development.json) ✅ · [0073](../../../project-development.json) ✅ · [0074](../../../project-development.json) ✅ · [0076](../../../project-development.json) ✅  
-**Статус плана:** ✅ **закрыт** (цель чата 2026-09-18): канон 1.1.1.2 → `cn_inv_pm` / `g_p` / Rslt vs Access FAIL=0 (C' 2026-09-20, JAR **304**). Вне scope later: §4 этапы 3–4 (вкладка g_p на C, КСДСФ) → **перенесены** в [0922](./chat-plan-26-0922-pmt-upl-ui-complete.md) / WBS [0918 **1.1.1.2.7**](./chat-plan-26-0918-sudz-rslt-prod-mailing.md) / задача **0077**.  
+**Статус плана:** ✅ закрыт (docs-sync 12.1 — подтверждено)  
+**Закрытие (2026-11-17):** Отметки ☐ ниже (C7, D6, E2, E3, F1, F2, резюме) не выполнены и дальше не ведутся; этапы 3–4 выполнены в [0922](./chat-plan-26-0922-pmt-upl-ui-complete.md).  
+**Статус до закрытия:** ✅ **закрыт** (цель чата 2026-09-18): канон 1.1.1.2 → `cn_inv_pm` / `g_p` / Rslt vs Access FAIL=0 (C' 2026-09-20, JAR **304**). Вне scope later: §4 этапы 3–4 (вкладка g_p на C, КСДСФ) → **перенесены** в [0922](./chat-plan-26-0922-pmt-upl-ui-complete.md) / WBS [0918 **1.1.1.2.7**](./chat-plan-26-0918-sudz-rslt-prod-mailing.md) / задача **0077**.  
 **Эксперимент строек (вне scope этого плана):** [chat-plan-26-0921-dbt-upl-cst-ag-exp.md](./chat-plan-26-0921-dbt-upl-cst-ag-exp.md) · WBS [0918 §1.1.1.2.5](./chat-plan-26-0918-sudz-rslt-prod-mailing.md)  
 **Резюме visual v1:** [chat-resume-26-0819-cn-inv-pmt-upl.md](../chat-resume/chat-resume-26-0819-cn-inv-pmt-upl.md)  
 **Процесс:** [03 §1.1.1.2](../../domain/sudz/03-processes.md)  
