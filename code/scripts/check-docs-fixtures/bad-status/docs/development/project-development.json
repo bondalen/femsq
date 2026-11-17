@@ -1,0 +1,26 @@
+{
+  "development": {
+    "metadata": { "lastUpdated": "2026-11-17" },
+    "tasks": {
+      "nextTaskId": "0002",
+      "items": {
+        "0001": {
+          "task": {
+            "displayName": "bad status",
+            "task-attributes": {
+              "status": "doing",
+              "priority": "low",
+              "owner": "test",
+              "completionCriteria": [],
+              "links": {},
+              "created": "2026-11-17",
+              "lastUpdated": "2026-11-17",
+              "description": "fixture"
+            }
+          }
+        }
+      }
+    },
+    "structure": { "trees": [] }
+  }
+}

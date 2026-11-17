@@ -1,0 +1,54 @@
+{
+  "development": {
+    "metadata": { "lastUpdated": "2026-11-17" },
+    "tasks": {
+      "nextTaskId": "0002",
+      "items": {
+        "0001": {
+          "task": {
+            "displayName": "ok (completed, low). № 0001",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "low",
+              "owner": "test",
+              "completionCriteria": ["done"],
+              "links": {},
+              "created": "2026-11-17",
+              "lastUpdated": "2026-11-17",
+              "description": "fixture"
+            }
+          }
+        }
+      }
+    },
+    "structure": {
+      "trees": [
+        {
+          "tree": {
+            "displayName": "t",
+            "tree-attributes": {
+              "treeNumber": "01",
+              "treeId": "t",
+              "type": "custom",
+              "description": "x",
+              "positionInParent": 1
+            },
+            "task-items": [
+              {
+                "task-item": {
+                  "displayName": "ok",
+                  "item-attributes": {
+                    "structureId": "01.01",
+                    "taskId": "0001",
+                    "positionInParent": 1
+                  },
+                  "task-items": []
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

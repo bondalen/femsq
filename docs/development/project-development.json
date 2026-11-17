@@ -12,9 +12,9 @@
       "items": {
         "0077": {
           "task": {
-            "displayName": "СУДЗ: полный UI экрана D (CstNew / СФ+КСДСФ / Sum_t / g_p) (pending, high). № 0077",
+            "displayName": "СУДЗ: полный UI экрана D (CstNew / СФ+КСДСФ / Sum_t / g_p) (completed, high). № 0077",
             "task-attributes": {
-              "status": "pending",
+              "status": "completed",
               "priority": "high",
               "owner": "Александр",
               "completionCriteria": [
@@ -91,9 +91,9 @@
         },
         "0075": {
           "task": {
-            "displayName": "СУДЗ: gate ложных погашений перед Rslt сбор (pending, high). № 0075",
+            "displayName": "СУДЗ: gate ложных погашений перед Rslt сбор (paused, high). № 0075",
             "task-attributes": {
-              "status": "pending",
+              "status": "paused",
               "priority": "high",
               "owner": "Александр",
               "completionCriteria": [
@@ -606,9 +606,9 @@
         },
         "0001": {
           "task": {
-            "displayName": "Разработка системы FEMSQ (in-progress, critical). № 0001",
+            "displayName": "Разработка системы FEMSQ (completed, critical). № 0001",
             "task-attributes": {
-              "status": "in-progress",
+              "status": "completed",
               "priority": "critical",
               "owner": "Александр",
               "completionCriteria": [
@@ -633,9 +633,9 @@
         },
         "0002": {
           "task": {
-            "displayName": "Backend модуль (in-progress, critical). № 0002",
+            "displayName": "Backend модуль (completed, critical). № 0002",
             "task-attributes": {
-              "status": "in-progress",
+              "status": "completed",
               "priority": "critical",
               "owner": "Александр",
               "completionCriteria": [
@@ -659,9 +659,9 @@
         },
         "0003": {
           "task": {
-            "displayName": "Database модуль (in-progress, critical). № 0003",
+            "displayName": "Database модуль (completed, critical). № 0003",
             "task-attributes": {
-              "status": "in-progress",
+              "status": "completed",
               "priority": "critical",
               "owner": "Александр",
               "completionCriteria": [
@@ -779,9 +779,9 @@
         },
         "0007": {
           "task": {
-            "displayName": "Web API модуль (pending, high). № 0007",
+            "displayName": "Web API модуль (completed, high). № 0007",
             "task-attributes": {
-              "status": "pending",
+              "status": "completed",
               "priority": "high",
               "owner": "Александр",
               "completionCriteria": [
@@ -834,9 +834,9 @@
             }
           },
           "task": {
-            "displayName": "Frontend модуль (pending, medium). № 0008",
+            "displayName": "Frontend модуль (completed, medium). № 0008",
             "task-attributes": {
-              "status": "pending",
+              "status": "completed",
               "priority": "medium",
               "owner": "Александр",
               "completionCriteria": [
@@ -1039,7 +1039,7 @@
           "task": {
             "displayName": "CI пайплайн для DAO (planned, medium). № 0015",
             "task-attributes": {
-              "status": "planned",
+              "status": "pending",
               "priority": "medium",
               "owner": "Александр",
               "completionCriteria": [
@@ -1124,9 +1124,9 @@
         },
         "0018": {
           "task": {
-            "displayName": "Интерфейс просмотра организаций/агентов (in-progress, high). № 0018",
+            "displayName": "Интерфейс просмотра организаций/агентов (completed, high). № 0018",
             "task-attributes": {
-              "status": "in-progress",
+              "status": "completed",
               "priority": "high",
               "owner": "Александр",
               "completionCriteria": [
@@ -1341,9 +1341,9 @@
         },
         "0027": {
           "task": {
-            "displayName": "Создание Maven модуля Reports (pending, critical). № 0027",
+            "displayName": "Создание Maven модуля Reports (completed, critical). № 0027",
             "task-attributes": {
-              "status": "pending",
+              "status": "completed",
               "priority": "critical",
               "owner": "Александр",
               "completionCriteria": [
@@ -1368,9 +1368,9 @@
         },
         "0028": {
           "task": {
-            "displayName": "Реализация ReportDiscoveryService (pending, critical). № 0028",
+            "displayName": "Реализация ReportDiscoveryService (completed, critical). № 0028",
             "task-attributes": {
-              "status": "pending",
+              "status": "completed",
               "priority": "critical",
               "owner": "Александр",
               "completionCriteria": [
@@ -1398,9 +1398,9 @@
         },
         "0029": {
           "task": {
-            "displayName": "Реализация ReportGenerationService (pending, critical). № 0029",
+            "displayName": "Реализация ReportGenerationService (completed, critical). № 0029",
             "task-attributes": {
-              "status": "pending",
+              "status": "completed",
               "priority": "critical",
               "owner": "Александр",
               "completionCriteria": [
@@ -1428,9 +1428,9 @@
         },
         "0030": {
           "task": {
-            "displayName": "Реализация ReportController (pending, high). № 0030",
+            "displayName": "Реализация ReportController (completed, high). № 0030",
             "task-attributes": {
-              "status": "pending",
+              "status": "completed",
               "priority": "high",
               "owner": "Александр",
               "completionCriteria": [
@@ -1458,9 +1458,9 @@
         },
         "0031": {
           "task": {
-            "displayName": "Разработка ReportsCatalog.vue (pending, high). № 0031",
+            "displayName": "Разработка ReportsCatalog.vue (completed, high). № 0031",
             "task-attributes": {
-              "status": "pending",
+              "status": "completed",
               "priority": "high",
               "owner": "Александр",
               "completionCriteria": [
@@ -1490,9 +1490,9 @@
         },
         "0032": {
           "task": {
-            "displayName": "Разработка ReportParametersDialog.vue (pending, high). № 0032",
+            "displayName": "Разработка ReportParametersDialog.vue (completed, high). № 0032",
             "task-attributes": {
-              "status": "pending",
+              "status": "completed",
               "priority": "high",
               "owner": "Александр",
               "completionCriteria": [
@@ -1812,7 +1812,7 @@
           "task": {
             "displayName": "pom.xml (femsq-web) — предупреждение о доступе к директории (planned, low). № 0036.5",
             "task-attributes": {
-              "status": "planned",
+              "status": "pending",
               "priority": "low",
               "owner": "Александр",
               "completionCriteria": [
@@ -1862,7 +1862,7 @@
           "task": {
             "displayName": "pom.xml (femsq-reports) — exec-maven-plugin lifecycle mapping (planned, medium). № 0036.7",
             "task-attributes": {
-              "status": "planned",
+              "status": "pending",
               "priority": "medium",
               "owner": "Александр",
               "completionCriteria": [
@@ -2236,9 +2236,9 @@
         },
         "0054": {
           "task": {
-            "displayName": "Prod bootstrap таблиц ревизий Access → MSSQL для FEMSQ (in-progress, critical). № 0054",
+            "displayName": "Prod bootstrap таблиц ревизий Access → MSSQL для FEMSQ (completed, critical). № 0054",
             "task-attributes": {
-              "status": "in-progress",
+              "status": "completed",
               "priority": "critical",
               "owner": "Александр",
               "completionCriteria": [
@@ -2269,9 +2269,9 @@
         },
         "0048": {
           "task": {
-            "displayName": "Dev/UAT/prod: thin JAR, веб-приёмка ревизий type=5 и type=3 (in-progress, critical). № 0048",
+            "displayName": "Dev/UAT/prod: thin JAR, веб-приёмка ревизий type=5 и type=3 (completed, critical). № 0048",
             "task-attributes": {
-              "status": "in-progress",
+              "status": "completed",
               "priority": "critical",
               "owner": "Александр",
               "completionCriteria": [
@@ -2626,9 +2626,9 @@
         },
         "0069": {
           "task": {
-            "displayName": "СУДЗ: загрузка общего свода → Dbt / DbtValue (pending, high). № 0069",
+            "displayName": "СУДЗ: загрузка общего свода → Dbt / DbtValue (paused, high). № 0069",
             "task-attributes": {
-              "status": "pending",
+              "status": "paused",
               "priority": "high",
               "owner": "Александр",
               "completionCriteria": [
@@ -2712,9 +2712,9 @@
         },
         "0071": {
           "task": {
-            "displayName": "Договоры: экран cnNum / стороны cn_s* (in_progress, high). № 0071",
+            "displayName": "Договоры: экран cnNum / стороны cn_s* (paused, high). № 0071",
             "task-attributes": {
-              "status": "in_progress",
+              "status": "paused",
               "priority": "high",
               "owner": "Александр",
               "completionCriteria": [
@@ -4397,6 +4397,631 @@
                           "positionInParent": 2
                         },
                         "task-items": []
+                      }
+                    },
+                    {
+                      "task-item": {
+                        "displayName": "📦 Задачи вне деревьев — авто (docs-sync 6.3). № 02.05.99 (51)",
+                        "item-attributes": {
+                          "structureId": "02.05.99",
+                          "taskId": null,
+                          "positionInParent": 99,
+                          "comment": "Временный контейнер сирот до ручной раскладки"
+                        },
+                        "task-items": [
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0001",
+                              "item-attributes": {
+                                "structureId": "02.05.99.01",
+                                "taskId": "0001",
+                                "positionInParent": 1,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0022",
+                              "item-attributes": {
+                                "structureId": "02.05.99.02",
+                                "taskId": "0022",
+                                "positionInParent": 2,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0023",
+                              "item-attributes": {
+                                "structureId": "02.05.99.03",
+                                "taskId": "0023",
+                                "positionInParent": 3,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0026",
+                              "item-attributes": {
+                                "structureId": "02.05.99.04",
+                                "taskId": "0026",
+                                "positionInParent": 4,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0027",
+                              "item-attributes": {
+                                "structureId": "02.05.99.05",
+                                "taskId": "0027",
+                                "positionInParent": 5,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0028",
+                              "item-attributes": {
+                                "structureId": "02.05.99.06",
+                                "taskId": "0028",
+                                "positionInParent": 6,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0029",
+                              "item-attributes": {
+                                "structureId": "02.05.99.07",
+                                "taskId": "0029",
+                                "positionInParent": 7,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0030",
+                              "item-attributes": {
+                                "structureId": "02.05.99.08",
+                                "taskId": "0030",
+                                "positionInParent": 8,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0031",
+                              "item-attributes": {
+                                "structureId": "02.05.99.09",
+                                "taskId": "0031",
+                                "positionInParent": 9,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0032",
+                              "item-attributes": {
+                                "structureId": "02.05.99.10",
+                                "taskId": "0032",
+                                "positionInParent": 10,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0035",
+                              "item-attributes": {
+                                "structureId": "02.05.99.11",
+                                "taskId": "0035",
+                                "positionInParent": 11,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0035.1",
+                              "item-attributes": {
+                                "structureId": "02.05.99.12",
+                                "taskId": "0035.1",
+                                "positionInParent": 12,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0035.2",
+                              "item-attributes": {
+                                "structureId": "02.05.99.13",
+                                "taskId": "0035.2",
+                                "positionInParent": 13,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0035.3",
+                              "item-attributes": {
+                                "structureId": "02.05.99.14",
+                                "taskId": "0035.3",
+                                "positionInParent": 14,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0035.4",
+                              "item-attributes": {
+                                "structureId": "02.05.99.15",
+                                "taskId": "0035.4",
+                                "positionInParent": 15,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0035.5",
+                              "item-attributes": {
+                                "structureId": "02.05.99.16",
+                                "taskId": "0035.5",
+                                "positionInParent": 16,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0036",
+                              "item-attributes": {
+                                "structureId": "02.05.99.17",
+                                "taskId": "0036",
+                                "positionInParent": 17,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0036.1",
+                              "item-attributes": {
+                                "structureId": "02.05.99.18",
+                                "taskId": "0036.1",
+                                "positionInParent": 18,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0036.2",
+                              "item-attributes": {
+                                "structureId": "02.05.99.19",
+                                "taskId": "0036.2",
+                                "positionInParent": 19,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0036.3",
+                              "item-attributes": {
+                                "structureId": "02.05.99.20",
+                                "taskId": "0036.3",
+                                "positionInParent": 20,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0036.4",
+                              "item-attributes": {
+                                "structureId": "02.05.99.21",
+                                "taskId": "0036.4",
+                                "positionInParent": 21,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0036.5",
+                              "item-attributes": {
+                                "structureId": "02.05.99.22",
+                                "taskId": "0036.5",
+                                "positionInParent": 22,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0036.6",
+                              "item-attributes": {
+                                "structureId": "02.05.99.23",
+                                "taskId": "0036.6",
+                                "positionInParent": 23,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0036.7",
+                              "item-attributes": {
+                                "structureId": "02.05.99.24",
+                                "taskId": "0036.7",
+                                "positionInParent": 24,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0037",
+                              "item-attributes": {
+                                "structureId": "02.05.99.25",
+                                "taskId": "0037",
+                                "positionInParent": 25,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0037.1",
+                              "item-attributes": {
+                                "structureId": "02.05.99.26",
+                                "taskId": "0037.1",
+                                "positionInParent": 26,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0037.2",
+                              "item-attributes": {
+                                "structureId": "02.05.99.27",
+                                "taskId": "0037.2",
+                                "positionInParent": 27,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0037.3",
+                              "item-attributes": {
+                                "structureId": "02.05.99.28",
+                                "taskId": "0037.3",
+                                "positionInParent": 28,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0037.4",
+                              "item-attributes": {
+                                "structureId": "02.05.99.29",
+                                "taskId": "0037.4",
+                                "positionInParent": 29,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0037.5",
+                              "item-attributes": {
+                                "structureId": "02.05.99.30",
+                                "taskId": "0037.5",
+                                "positionInParent": 30,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0037.6",
+                              "item-attributes": {
+                                "structureId": "02.05.99.31",
+                                "taskId": "0037.6",
+                                "positionInParent": 31,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0039",
+                              "item-attributes": {
+                                "structureId": "02.05.99.32",
+                                "taskId": "0039",
+                                "positionInParent": 32,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0040",
+                              "item-attributes": {
+                                "structureId": "02.05.99.33",
+                                "taskId": "0040",
+                                "positionInParent": 33,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0041",
+                              "item-attributes": {
+                                "structureId": "02.05.99.34",
+                                "taskId": "0041",
+                                "positionInParent": 34,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0042",
+                              "item-attributes": {
+                                "structureId": "02.05.99.35",
+                                "taskId": "0042",
+                                "positionInParent": 35,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0043",
+                              "item-attributes": {
+                                "structureId": "02.05.99.36",
+                                "taskId": "0043",
+                                "positionInParent": 36,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0044",
+                              "item-attributes": {
+                                "structureId": "02.05.99.37",
+                                "taskId": "0044",
+                                "positionInParent": 37,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0045",
+                              "item-attributes": {
+                                "structureId": "02.05.99.38",
+                                "taskId": "0045",
+                                "positionInParent": 38,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0046",
+                              "item-attributes": {
+                                "structureId": "02.05.99.39",
+                                "taskId": "0046",
+                                "positionInParent": 39,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0047",
+                              "item-attributes": {
+                                "structureId": "02.05.99.40",
+                                "taskId": "0047",
+                                "positionInParent": 40,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0048",
+                              "item-attributes": {
+                                "structureId": "02.05.99.41",
+                                "taskId": "0048",
+                                "positionInParent": 41,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0049",
+                              "item-attributes": {
+                                "structureId": "02.05.99.42",
+                                "taskId": "0049",
+                                "positionInParent": 42,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0050",
+                              "item-attributes": {
+                                "structureId": "02.05.99.43",
+                                "taskId": "0050",
+                                "positionInParent": 43,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0051",
+                              "item-attributes": {
+                                "structureId": "02.05.99.44",
+                                "taskId": "0051",
+                                "positionInParent": 44,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0052",
+                              "item-attributes": {
+                                "structureId": "02.05.99.45",
+                                "taskId": "0052",
+                                "positionInParent": 45,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0053",
+                              "item-attributes": {
+                                "structureId": "02.05.99.46",
+                                "taskId": "0053",
+                                "positionInParent": 46,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0054",
+                              "item-attributes": {
+                                "structureId": "02.05.99.47",
+                                "taskId": "0054",
+                                "positionInParent": 47,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0055",
+                              "item-attributes": {
+                                "structureId": "02.05.99.48",
+                                "taskId": "0055",
+                                "positionInParent": 48,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0056",
+                              "item-attributes": {
+                                "structureId": "02.05.99.49",
+                                "taskId": "0056",
+                                "positionInParent": 49,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0064",
+                              "item-attributes": {
+                                "structureId": "02.05.99.50",
+                                "taskId": "0064",
+                                "positionInParent": 50,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "📦 Вне дерева (авто) → 0077",
+                              "item-attributes": {
+                                "structureId": "02.05.99.51",
+                                "taskId": "0077",
+                                "positionInParent": 51,
+                                "comment": "Авторазмещение docs-sync 6.3; перенести в тематическое дерево при удобстве"
+                              },
+                              "task-items": []
+                            }
+                          }
+                        ]
                       }
                     }
                   ]

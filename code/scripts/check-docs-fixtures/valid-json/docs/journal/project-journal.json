@@ -1,0 +1,23 @@
+{
+  "journal": {
+    "metadata": { "lastUpdated": "2026-11-17" },
+    "sessions": [
+      {
+        "chat": {
+          "displayName": "ok (completed, low). № chat-2026-11-17-001",
+          "chat-attributes": {
+            "id": "chat-2026-11-17-001",
+            "created": "2026-11-17",
+            "lastUpdated": "2026-11-17",
+            "owner": "test",
+            "status": "completed",
+            "priority": "low",
+            "tags": [],
+            "links": { "developmentTasks": ["0001"] }
+          },
+          "entries": []
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "journal": {
+    "metadata": { "lastUpdated": "2026-11-17" },
+    "sessions": [
+      {
+        "chat": {
+          "displayName": "dup (completed, low). № chat-2026-11-17-001",
+          "chat-attributes": {
+            "id": "chat-2026-11-17-001",
+            "created": "2026-11-17",
+            "lastUpdated": "2026-11-17",
+            "owner": "test",
+            "status": "completed",
+            "priority": "low",
+            "tags": [],
+            "links": {}
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "a (success). № log-2026-11-17-001",
+                "log-attributes": {
+                  "id": "log-2026-11-17-001",
+                  "timestamp": "2026-11-17T10:00:00+03:00",
+                  "level": "success",
+                  "status": "completed",
+                  "tags": [],
+                  "links": {}
+                },
+                "entries": []
+              }
+            },
+            {
+              "log": {
+                "displayName": "b (success). № log-2026-11-17-001",
+                "log-attributes": {
+                  "id": "log-2026-11-17-001",
+                  "timestamp": "2026-11-17T11:00:00+03:00",
+                  "level": "success",
+                  "status": "completed",
+                  "tags": [],
+                  "links": {}
+                },
+                "entries": []
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
