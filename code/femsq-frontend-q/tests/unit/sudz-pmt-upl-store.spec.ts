@@ -17,8 +17,11 @@ vi.mock('@/api/sudz-api', () => ({
   getSudzPmUplLookups: vi.fn(),
   getSudzPmtUplCstMatch: vi.fn(),
   getSudzPmtUplCstNew: vi.fn(),
+  getSudzPmtUplExtDiff: vi.fn(),
+  getSudzPmtUplGp: vi.fn(),
   getSudzPmtUplInvNot: vi.fn(),
   getSudzPmtUplSfDoubles: vi.fn(),
+  getSudzPmtUplSums: vi.fn(),
   getSudzPmtUplTabBadges: vi.fn(),
   getSudzPmtUplTwoLoad: vi.fn(),
   rebuildSudzPmtUplSfDouble: vi.fn(),
@@ -69,10 +72,11 @@ describe('useSudzPmtUplStore queues', () => {
     vi.mocked(sudzApi.getSudzPmtUplInvNot).mockResolvedValue(invNotRows);
     vi.mocked(sudzApi.getSudzPmtUplTwoLoad).mockResolvedValue(twoLoadRows);
     vi.mocked(sudzApi.rebuildSudzPmtUplSfDouble).mockResolvedValue(2);
-    vi.mocked(sudzApi.getSudzPmtUplSfDoubles)
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([]);
+    vi.mocked(sudzApi.getSudzPmtUplSfDoubles).mockResolvedValue([]);
     vi.mocked(sudzApi.getSudzPmtUplTabBadges).mockResolvedValue(badges);
+    vi.mocked(sudzApi.getSudzPmtUplSums).mockResolvedValue([]);
+    vi.mocked(sudzApi.getSudzPmtUplGp).mockResolvedValue(null);
+    vi.mocked(sudzApi.getSudzPmtUplExtDiff).mockResolvedValue(null);
   });
 
   it('selectUpl грузит лаунчер, очереди и бейджи по pmKey', async () => {
@@ -85,7 +89,9 @@ describe('useSudzPmtUplStore queues', () => {
     expect(sudzApi.getSudzPmtUplTwoLoad).toHaveBeenCalledWith(59);
     expect(sudzApi.rebuildSudzPmtUplSfDouble).toHaveBeenCalledWith(59);
     expect(sudzApi.getSudzPmtUplSfDoubles).toHaveBeenCalledWith(59);
-    expect(sudzApi.getSudzPmtUplSfDoubles).toHaveBeenCalledTimes(2);
+    expect(sudzApi.getSudzPmtUplSfDoubles).toHaveBeenCalledTimes(1);
+    expect(sudzApi.getSudzPmtUplSums).toHaveBeenCalledWith(59);
+    expect(sudzApi.getSudzPmtUplGp).toHaveBeenCalledWith(59);
     expect(sudzApi.getSudzPmtUplTabBadges).toHaveBeenCalledWith(59);
     expect(store.cstNew).toEqual(cstRows);
     expect(store.invNot).toEqual(invNotRows);

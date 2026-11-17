@@ -84,7 +84,8 @@ describe('ContractorReportsMenu', () => {
     const wrapper = mount(ContractorReportsMenu, {
       props: { contractor: null }
     });
-    expect(wrapper.html()).toBe('<!---->');
+    expect(wrapper.find('[data-testid="contractor-reports-btn"]').exists()).toBe(false);
+    expect(wrapper.text()).toBe('');
   });
 });
 
