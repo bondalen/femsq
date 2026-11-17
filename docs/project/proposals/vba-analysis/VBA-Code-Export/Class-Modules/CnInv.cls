@@ -47,7 +47,7 @@ End Property
 ' свойство *родительский объект ~Счёт-фактура~*. 07.02.2023
 ' '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 ' геттер свойства *родительский объект ~Счёт-фактура~*
-Public Property Get invParentObj() As Inv
+Public Property Get invParentObj() As inv
     
     Dim strSql As String, rs As DAO.Recordset
 
@@ -125,7 +125,7 @@ End Sub
 ' реинициализируем объект связи договора и счёта-фактуры через создание новой такой связи для нового
 ' счёта-фактуры и известного ключа договора
 Public Sub riCnInvCreateNewInvNew(invNum As Variant, invDate As Variant, cnKey As Long, db As DAO.Database, strNote As String)
-    Dim invNew As Inv, rsCnInv As DAO.Recordset
+    Dim invNew As inv, rsCnInv As DAO.Recordset
     Const cstrTitle As String _
         = "Процедура *Реинициализируем объект связи договора и счёта-фактуры через создание новой такой связи*."
     '************************************************************************************************************************************************

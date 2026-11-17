@@ -23,7 +23,7 @@ On Error GoTo ErrHandler
 
     Set qd = db.QueryDefs("ags_fnSt")
     strSql = "select * from ags.fnSt(" & Me!stnKey & ", " & Me!stnRoot & ") f Order by f.stNum"
-    qd.SQL = strSql
+    qd.sql = strSql
     
     Me![stNet>fnSt_t].Form.Requery
     
@@ -56,7 +56,7 @@ On Error GoTo ErrHandler
 
     Set qd = db.QueryDefs("ags_fnSt")
     strSql = "select * from ags.fnSt(" & Me!stnKey & ", " & Me!stnRoot & ") f Order by f.stNum"
-    qd.SQL = strSql
+    qd.sql = strSql
     
     Me![stNet>fnSt_t].Form.Requery
     

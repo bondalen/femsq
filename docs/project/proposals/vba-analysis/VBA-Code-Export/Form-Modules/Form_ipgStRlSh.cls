@@ -23,7 +23,7 @@ On Error GoTo ErrHandler
 
     Set qd = db.QueryDefs("ags_fnIpgStNumSm")
     strSql = "select * from ags.fnIpgStNumSm(" & Me![ipgStRlSh>ipg_t].Form.ipgKey & ", " & Me!ipgstrshRoot & ") f Order by f.stNum"
-    qd.SQL = strSql
+    qd.sql = strSql
     'qd.Execute dbFailOnError
     
     Me![ipgStRlSh>fnIpgStNumSm].Form.Requery

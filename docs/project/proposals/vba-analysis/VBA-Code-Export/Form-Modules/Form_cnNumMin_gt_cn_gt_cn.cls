@@ -44,7 +44,7 @@ Else
     InvKey = Me![cnNum>cn>cn>ciNum].Form.iKey
 End If
 
-Me!Inv.Form.Form.Filter = "iKey = " & InvKey
-Me!Inv.Form.Form.FilterOn = True
+Me!inv.Form.Form.Filter = "iKey = " & InvKey
+Me!inv.Form.Form.FilterOn = True
 
 End Sub

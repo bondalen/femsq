@@ -31,7 +31,7 @@ Private Sub btn_obtainUtl_Click()
     'получаем набор записей от сервера
     Set qd = db.CreateQueryDef("")
     qd.Connect = db.TableDefs("ags_yyyy").Connect
-    qd.SQL = "[ags].[spIpgChRsltCstUtl3_GP_cst] " & Me![yyyyM>ipgCh_t].Form!ipgcKey & ", '" _
+    qd.sql = "[ags].[spIpgChRsltCstUtl3_GP_cst] " & Me![yyyyM>ipgCh_t].Form!ipgcKey & ", '" _
         & year(Me!lastDayM) & "-" & Month(Me!lastDayM) & "-" & Day(Me!lastDayM) & "'"
     qd.ReturnsRecords = True
     

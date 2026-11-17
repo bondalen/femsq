@@ -2932,33 +2932,36 @@
         },
         "0080": {
           "task": {
-            "displayName": "C1: инвентаризация MS Access по освоению (P2) (pending, critical). № 0080",
+            "displayName": "C1: инвентаризация MS Access по освоению (P2) (completed, critical). № 0080",
             "task-attributes": {
-              "status": "pending",
+              "status": "completed",
               "priority": "critical",
               "owner": "Александр",
               "completionCriteria": [
-                "Повторный ExportAllModules + каталог объектов (MS-ACCESS-OBJECTS-CAPTURE §4.2)",
-                "Реестр функций: решение по каждой строке",
-                "Вопросы В1–В8 закрыты; 03-processes и business-processes обновлены",
-                "Порядок C2/C3 (R1.1, R1.2) в дорожной карте"
+                "ExportAllModulesC1 + DumpC1MSys (каталог raw/ + VBA UTF-8)",
+                "Карта групп G1–G20 (без априорных migrate-решений)",
+                "03-processes ссылается на актуальный C1-источник",
+                "Порядок R1.1=C2, R1.2=C3 в дорожной карте"
               ],
               "links": {
                 "projectDocsRefs": [],
-                "journalRefs": [],
+                "journalRefs": [
+                  "chat-2026-11-17-001",
+                  "log-2026-11-17-005"
+                ],
                 "aiRuleRefs": [],
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1117-c1-access-inventory.md",
                 "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
               },
               "created": "2026-11-17",
               "lastUpdated": "2026-11-17",
-              "description": "Владелец запускает VBA-скрипты на копии рабочего файла Access; разбор — агент."
+              "description": "Закрыт 2026-11-17. Каталог+карта; migrate и В1–В8 — в ходе C2–C5. Артефакты: c1-inventory/, VBA-Code-Export/."
             }
           }
         },
         "0081": {
           "task": {
-            "displayName": "C2: ввод ИП, цепочек, планов и лимитов в FEMSQ (pending, high). № 0081",
+            "displayName": "C2: ввод ИП, цепочек, планов и лимитов в FEMSQ → R1.1 (pending, high). № 0081",
             "task-attributes": {
               "status": "pending",
               "priority": "high",
@@ -2966,8 +2969,8 @@
               "completionCriteria": [
                 "Экраны ввода ИП/цепочек/планов/лимитов (GraphQL)",
                 "Загрузка уточнённых планов из Excel со сравнением сумм (аналог Form_ipg_gt_LdM_t)",
-                "Справочники P2 1.4 и 2.1.0 — по решению C1",
-                "Выпущено в R1.1 или R1.2"
+                "Справочники P2 1.4 и 2.1.0 — по мере касания (карта C1 G4/G5)",
+                "Выпущено в **R1.1**"
               ],
               "links": {
                 "projectDocsRefs": [
@@ -2984,13 +2987,13 @@
               },
               "created": "2026-11-17",
               "lastUpdated": "2026-11-17",
-              "description": "P2 1.1–1.4, 2.1.0. План чата создаётся после C1."
+              "description": "P2 1.1–1.4, 2.1.0. Выпуск **R1.1**. План чата создаётся при старте C2. Навигация: c1-inventory/registry.md G1–G5."
             }
           }
         },
         "0082": {
           "task": {
-            "displayName": "C3: факт освоения в FEMSQ (типы 5, 2, ОПИ; повторно 3, 6) (pending, high). № 0082",
+            "displayName": "C3: факт освоения в FEMSQ → R1.2 (pending, high). № 0082",
             "task-attributes": {
               "status": "pending",
               "priority": "high",
@@ -3000,7 +3003,7 @@
                 "Тип 2 — сверка хранения (205) и ССК (197); CnPrDocReconcileService вместо заглушки",
                 "ОПИ — загрузчик вместо mnrl_imp",
                 "Типы 3 и 6 — повторная проверка на R1.0",
-                "Выпущено в R1.1 или R1.2"
+                "Выпущено в **R1.2**"
               ],
               "links": {
                 "projectDocsRefs": [
@@ -3018,7 +3021,7 @@
               },
               "created": "2026-11-17",
               "lastUpdated": "2026-11-17",
-              "description": "P2 2.1–2.6. Тип 2 — фаза 2 плана 0323. План чата создаётся после C1."
+              "description": "P2 2.1–2.6. Выпуск **R1.2**. Тип 2 — фаза 2 плана 0323. План чата создаётся при старте C3."
             }
           }
         },
@@ -4224,7 +4227,7 @@
                   "task-items": [
                     {
                       "task-item": {
-                        "displayName": "⏳ C1: инвентаризация MS Access по освоению (pending, critical). № 02.04.01 → 0080",
+                        "displayName": "✅ C1: инвентаризация MS Access по освоению (completed, critical). № 02.04.01 → 0080",
                         "item-attributes": {
                           "structureId": "02.04.01",
                           "taskId": "0080",
@@ -4246,7 +4249,7 @@
                     },
                     {
                       "task-item": {
-                        "displayName": "⏳ C2: ввод ИП, цепочек, планов и лимитов в FEMSQ (pending, high). № 02.04.03 → 0081",
+                        "displayName": "⏳ C2: ввод ИП/планов → R1.1 (pending, high). № 02.04.03 → 0081",
                         "item-attributes": {
                           "structureId": "02.04.03",
                           "taskId": "0081",
@@ -4257,7 +4260,7 @@
                     },
                     {
                       "task-item": {
-                        "displayName": "⏳ C3: факт освоения в FEMSQ (pending, high). № 02.04.04 → 0082",
+                        "displayName": "⏳ C3: факт → R1.2 (pending, high). № 02.04.04 → 0082",
                         "item-attributes": {
                           "structureId": "02.04.04",
                           "taskId": "0082",

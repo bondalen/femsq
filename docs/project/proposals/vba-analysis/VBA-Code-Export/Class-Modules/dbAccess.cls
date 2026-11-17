@@ -416,7 +416,7 @@ Public Function SqlSrvRecordsetBySqlString(ByVal strSql As String, ByRef rstSqlS
     'получаем набор записей от сервера путём создания временного запроса
     Set qd = mdbDb.CreateQueryDef("")
     qd.Connect = mdbDb.TableDefs("ags_yyyy").Connect
-    qd.SQL = strSql
+    qd.sql = strSql
     qd.ReturnsRecords = True
     qd.ODBCTimeout = 600
     

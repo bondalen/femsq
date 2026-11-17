@@ -1,0 +1,6 @@
+﻿-- Access QueryDef: ags_cnInvAccntFishing
+-- Type: 0
+
+SELECT ags_cnInvAccnt.ciaKey, ags_accnt.account_num, ags_cnNum.cnnNumNull, IIf(IsNull([csoCnDate]),#1/1/1900#,[csoCnDate]) AS cnDate, ags_invNum.inNumNull, ags_org_id.org_id_value_l, IIf(IsNull([ciaName]),"NullИлиПусто",[ciaName]) AS invExtName
+FROM ((((((((((ags_cnInvAccntSmpl INNER JOIN ags_cnInvAccnt ON ags_cnInvAccntSmpl.ciasKey = ags_cnInvAccnt.ciaCnInvAccntSmpl) INNER JOIN ags_cn_s_org ON ags_cnInvAccnt.ciaCn_s_org = ags_cn_s_org.cn_s_org_key) INNER JOIN ags_accnt ON ags_cnInvAccntSmpl.ciasAccnt = ags_accnt.account_key) INNER JOIN ags_cn_s_org_smpl ON ags_cn_s_org.csoCn_s_org_smpl = ags_cn_s_org_smpl.csosKey) INNER JOIN ags_cn_s ON ags_cn_s_org_smpl.csosCn_s = ags_cn_s.cn_s_key) INNER JOIN ags_cn ON ags_cn_s.cn_key = ags_cn.cn_key) INNER JOIN ags_cnNum ON ags_cn.cn_key = ags_cnNum.cnnCn) INNER JOIN ags_cnInv ON ags_cnInvAccntSmpl.ciasCnInv = ags_cnInv.ciKey) INNER JOIN ags_inv ON ags_cnInv.ciInv = ags_inv.iKey) INNER JOIN ags_invNum ON ags_inv.iKey = ags_invNum.inInv) INNER JOIN ags_org_id ON ags_cn_s_org_smpl.csosOrgId = ags_org_id.org_id_key
+GROUP BY ags_cnInvAccnt.ciaKey, ags_accnt.account_num, ags_cnNum.cnnNumNull, IIf(IsNull([csoCnDate]),#1/1/1900#,[csoCnDate]), ags_invNum.inNumNull, ags_org_id.org_id_value_l, IIf(IsNull([ciaName]),"NullИлиПусто",[ciaName]);

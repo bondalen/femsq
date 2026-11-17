@@ -1,0 +1,6 @@
+﻿-- Access QueryDef: 25-0929_polikarpov_q
+-- Type: 0
+
+SELECT [25-0929_Polikarpov].cst_code, [25-0929_Polikarpov].cst_name, [25-0929_Polikarpov].cst_lim, ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_2.cstAgPnCode, ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_2.dateRslt, ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_1.ag_lim, ([cst_lim]*1000000)-[ag_lim] AS lim_d, ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_1.ag_acceptedTtlAccum, ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_1.ag_acceptedAccum, ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_1.ag_agFeeAcceptedAccum, ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_1.ag_acceptedRalpAccum, ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_1.ag_storageSumAccum, ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_1.ag_cctSumAccum, ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_1.ag_MnrlSumAccum
+FROM ([25-0929_Polikarpov] LEFT JOIN ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_2 ON [25-0929_Polikarpov].cst_code = ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_2.cstAgPnCode) LEFT JOIN ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_1 ON ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_2.rowNum = ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_1.rowNum
+ORDER BY [25-0929_Polikarpov].cst_code, ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_2.dateRslt;

@@ -1,0 +1,7 @@
+﻿-- Access QueryDef: 24-1028_читалка
+-- Type: 0
+
+SELECT ags_cn_inv_dbt_upl.upl_key, ags_cn_inv_dbt_upl.uplNmCs, ags_accnt.account_num, ags_og.ogNm, ags_cnCs.name AS CnName, ags_invCs.iNum, ags_cn_inv_dbt.dbt_ttl, ags_cn_inv_dbt.dbt_overd, ags_cnInvAccnt.ciaKey, ags_cnInvAccnt.ciaCnInvAccntSmpl, ags_cnInvAccntSmpl.ciasCnInv, ags_cnInvAccntSmpl.ciasAccnt, ags_cnInvAccntSmpl.ciasCn_s_org_smpl, ags_cnInv.ciCn, ags_cnInv.ciInv, ags_cn_s_org_smpl.csosOrgId, ags_org_id.org_id_value_l
+FROM (((((((((ags_cn_inv_dbt_upl INNER JOIN ags_cn_inv_dbt ON ags_cn_inv_dbt_upl.upl_key = ags_cn_inv_dbt.cn_inv_dbt_upl) INNER JOIN ags_cnInvAccnt ON ags_cn_inv_dbt.cidCnInvAccntCtpt = ags_cnInvAccnt.ciaKey) INNER JOIN ags_cnInvAccntSmpl ON ags_cnInvAccnt.ciaCnInvAccntSmpl = ags_cnInvAccntSmpl.ciasKey) INNER JOIN ags_cnInv ON ags_cnInvAccntSmpl.ciasCnInv = ags_cnInv.ciKey) INNER JOIN ags_cnCs ON ags_cnInv.ciCn = ags_cnCs.cn_key) INNER JOIN ags_invCs ON ags_cnInv.ciInv = ags_invCs.iKey) INNER JOIN ags_cn_s_org_smpl ON ags_cnInvAccntSmpl.ciasCn_s_org_smpl = ags_cn_s_org_smpl.csosKey) INNER JOIN ags_org_id ON ags_cn_s_org_smpl.csosOrgId = ags_org_id.org_id_key) INNER JOIN ags_og ON ags_org_id.org = ags_og.ogKey) INNER JOIN ags_accnt ON ags_cnInvAccntSmpl.ciasAccnt = ags_accnt.account_key
+WHERE (((ags_cn_inv_dbt_upl.upl_key)=21) AND ((ags_cn_inv_dbt.dbt_overd)>0))
+ORDER BY ags_accnt.account_num, ags_og.ogNm, ags_cnCs.name, ags_invCs.iNum;

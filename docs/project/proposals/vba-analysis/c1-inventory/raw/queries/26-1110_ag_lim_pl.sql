@@ -1,0 +1,7 @@
+﻿-- Access QueryDef: 26-1110_ag_lim_pl
+-- Type: 0
+
+SELECT ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_2.ogNm AS агент, ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_2.dateRslt AS дата, ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_1.ag_lim AS [лимит АгД], ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_1.ag_Pl AS [план АгД], ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_1.ag_PlAccum AS [план АгД накопленный], ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_1.ag_PlFulfillment AS [план АгД выполнено], ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_1.ag_PlOverFulfillment AS [план ФгД перевыполнено], [ag_PlFulfillment]+[ag_PlOverFulfillment] AS [выполнено и перевыполнено], ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_1.ag_PlOverLimit AS сверхлимит, [ag_PlFulfillment]+[ag_PlOverFulfillment]+[ag_PlOverLimit] AS [выполнено, перевыполнено и сверхлимит], ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_2.np_acceptedTtlAccum AS [вне ИПг]
+FROM ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_1 INNER JOIN ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_2 ON ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_1.rowNum = ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_2.rowNum
+WHERE (((ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_2.ogNm)="Газпром инвест, ООО") AND ((ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_2.branchName) Is Null))
+ORDER BY ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_2.ogNm, ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_2.branchName, ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_2.cstAgPnCode, ags_fnIpgChRsltCstUtlPercentBrn_2408_tbl_part_2.dateRslt;

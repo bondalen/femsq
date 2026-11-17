@@ -368,14 +368,20 @@ On Error GoTo ErrHandler
                 ' -------------------------------------------------------------------------------------------------------------------------
                 ' -------------------------------------------------------------------------------------------------------------------------
                 ' проходим по диапазону отчётов -------------------------------------------------------------------------------------------
+                Dim criteria As Variant, item As Variant
+                criteria = Array("*???????-*", "*???????Е*")
+                
                 With ra_RA
                 
+                    For Each item In criteria ' 01.04.2026 появились отчёты с названими типа "СЗ26-2001314Е1", делаем поиск по массиву значений
+                    
                     ' количество ячеек в диапазоне больше одной?
                     If .count > 1 Then
                         ' да, количество ячеек в диапазоне больше одной ...................................................................
                         ' ищем собственно отчёт
                         ' Set c = .Find(what:="*-???????-*", LookAt:=xlPart) 07.02.2025 меняем формат из за ГИ Ф Надым-Пур-Таз
-                        Set c = .Find(what:="*???????-*", LookAt:=xlPart)
+                        ' Теперь, 01.04.2026 появились отчёты с названими типа "СЗ26-2001314Е1". Пришлось поменять what:="*???????-*" на what:="*???????*"
+                        Set c = .Find(what:=item, LookAt:=xlPart)
                         ' имеется ли имя соответствующее форме имени отчёта?
                         If Not c Is Nothing Then
                             ' да имя соответствующее форме имени отчёта имеется
@@ -432,7 +438,7 @@ On Error GoTo ErrHandler
                     Else
                         ' нет, количество ячеек в диапазоне не больше одной ...............................................................
                         ' ищем собственно отчёт
-                        Set c = .Find(what:="*-???????-*", LookAt:=xlPart)
+                        Set c = .Find(what:=item, LookAt:=xlPart)
                         ' имеется ли имя соответствующее форме имени отчёта?
                         If Not c Is Nothing Then
                             ' да имя соответствующее форме имени отчёта имеется
@@ -463,6 +469,8 @@ On Error GoTo ErrHandler
                         End If
                         ' нет, количество ячеек в диапазоне не больше одной. Окончание ....................................................
                     End If ' здесь проверка на количество ячеек в диапазоне
+                    
+                    Next item ' 01.04.2026 появились отчёты с названими типа "СЗ26-2001314Е1", делаем поиск по массиву значений. Окончание.
                     
     ' метка для продолжения в случае отсутствия отчётов
 NotRA:
@@ -1341,7 +1349,7 @@ Private Sub RaReadOfExcel(ra As String, ra_date As Variant, ra_Row As Integer, C
     Dim arrived_r As String, returned_r As String, sent_r As String, note_r As String
     
     Dim nnn As Integer
-    Dim strErrMessage As String
+    Dim strErrMessage As String, hasError3022 As Boolean
 
     Const cstrTitle As String _
         = "Класс *Ревизия отчётов агента. Проверка файла Отчётов всех агентов* " _
@@ -1371,6 +1379,9 @@ On Error GoTo ErrHandler
         ' открываем набор записей для добавления
         Set rstRa_ImpNewAdd = db.OpenRecordset("ra_ImpNew", dbOpenDynaset, dbFailOnError + dbSeeChanges)
         With rstRa_ImpNewAdd
+        
+            hasError3022 = False
+        
             .AddNew
                 !rainRow = ra_Row
                 !rainSender = ra_org_sender_
@@ -1403,11 +1414,21 @@ On Error GoTo ErrHandler
                 End If
                 !rainSign = ra_type
             .Update
-            .Bookmark = .LastModified
-            raRow = !rainRow
-            paragraph = paragraph & " <font color=""orange"">ОА <b>" & ra_ & "</b> от " & ra_date & _
-            "</font>. Отчёт <font color=""DarkGreen"">внесен в промеж. тбл</font>. ID - " & raRow _
-                & " <font color=""silver"">(номер строки листа Excel)</font>."
+            
+            If hasError3022 Then
+                paragraph = paragraph & " <font color=""orange"">ОА <b>" & ra_ & "</b> от " & ra_date & _
+                "</font>. Отчёт <font color=""mediumVioletRed"">повторно НЕ внесен в промеж. тбл</font>. " & ra_Row _
+                    & " <font color=""silver"">(номер строки листа Excel)</font>."
+            Else
+                .Bookmark = .LastModified
+                raRow = !rainRow
+                paragraph = paragraph & " <font color=""orange"">ОА <b>" & ra_ & "</b> от " & ra_date & _
+                "</font>. Отчёт <font color=""DarkGreen"">внесен в промеж. тбл</font>. ID - " & raRow _
+                    & " <font color=""silver"">(номер строки листа Excel)</font>."
+            End If
+            
+            hasError3022 = False
+            
         End With
         ' закрываем набор записей для добавления
         rstRa_ImpNewAdd.Close: Set rstRa_ImpNewAdd = Nothing
@@ -1424,10 +1445,17 @@ NormalExit:
     Exit Sub
     
 ErrHandler:
-    strErrMessage = "Отчёт: " & ra_ & ", строка: " & ra_Row & "." & vbCrLf _
-        & Err.Description & vbCrLf & "Error number: " & Err.Number & vbCrLf & cstrTitle
-    MsgBox strErrMessage, vbExclamation, cstrTitle
-    Resume NormalExit
+    If Err.Number = 3022 Then
+        ' игнорируем повторяющийся индекс, так как поиск criteria = Array("*???????-*", "*???????Е*", "*???????E*")
+        ' возвращает повторног одни и теже строки для вставки в промежуточную таблицу
+        hasError3022 = True
+        Resume Next
+    Else
+        strErrMessage = "Отчёт: " & ra_ & ", строка: " & ra_Row & "." & vbCrLf _
+            & Err.Description & vbCrLf & "Error number: " & Err.Number & vbCrLf & cstrTitle
+        MsgBox strErrMessage, vbExclamation, cstrTitle
+        Resume NormalExit
+    End If
 
 End Sub
 ' считываем информацию об обнаруженном отчёте агента из Excel. 08.07.2022. Окончание ****************************************************************

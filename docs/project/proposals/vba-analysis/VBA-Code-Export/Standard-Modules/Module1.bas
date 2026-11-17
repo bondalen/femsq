@@ -33,7 +33,7 @@ On Error GoTo ErrHandler
 '                ", ra_org_sender, ogNm, ras_total, ras_work, ras_equip, ras_others" & _
 '                ", ra_arrived, ra_arrived_date, ra_returned, ra_returned_date, ra_sent, ra_sent_date from ags.fnRRcList(" & cstKey & ")"
         
-            qdf.SQL = "select " & _
+            qdf.sql = "select " & _
                 "ra_key, ra_num, ra_date, ra_cac, ra_type, ra_work_type, ra_period, ra_arrived" & _
                 ", ra_arrived_date, ra_arrived_dateFact, ra_returned" & _
                 ", ra_returned_date , ra_returnedReason, ra_sent, ra_sent_date, ra_note_t" & _
@@ -75,7 +75,7 @@ On Error GoTo ErrHandler
     Set db = CurrentDb
     
         Set qdf = db.QueryDefs("ags_fnRRcList")
-            qdf.SQL = "select yyyy, mNum, p" & _
+            qdf.sql = "select yyyy, mNum, p" & _
                 ", cstaKey, cstaAg, cstaCst" & _
                 ", ogaNm, cstapKey, cstapIpgPnN" & _
                 ", ra_key, ra_num, ra_date, ra_type, raChKey, raChNum, raChDate" & _
@@ -85,7 +85,7 @@ On Error GoTo ErrHandler
         Set qdf = Nothing
         
         Set qdf = db.QueryDefs("ags_fnRRcListUtil")
-            qdf.SQL = "select dateRslt, agent, cstapIpgPnN, ra_type, sender, costsType, " & _
+            qdf.sql = "select dateRslt, agent, cstapIpgPnN, ra_type, sender, costsType, " & _
                 "costsSumm, costsSummAccum, sortAgent, sortType from  ags.fnRRcListUtil(" & cstKey & ")"
         qdf.Close
         Set qdf = Nothing
@@ -106,7 +106,7 @@ On Error GoTo ErrHandler
             ' да, освоение имеется
             ' тогда обновляем источник данных для графика
             Set qdf = db.QueryDefs("ags_fnRRcListUtil_Ch")
-            qdf.SQL = "select dateRslt, agent, cstapIpgPnN, ra_type, sender, costsType, " & _
+            qdf.sql = "select dateRslt, agent, cstapIpgPnN, ra_type, sender, costsType, " & _
                 "costsSumm, costsSummAccum, sortAgent, sortType, " & cstKey & "as cst from  ags.fnRRcListUtil(" & cstKey & ")"
             qdf.Close
             Set qdf = Nothing
@@ -156,7 +156,7 @@ On Error GoTo ErrHandler
     If dbKind = "msSql" Then
         ' да, требуется искать в msSql
         Set qdFindSv = db.QueryDefs("ags_PdSdRRcList")
-        qdFindSv.SQL = StringFindSv
+        qdFindSv.sql = StringFindSv
         Set rsFindSv = qdFindSv.OpenRecordset(dbOpenSnapshot)
         ' закрываем запрос
         qdFindSv.Close: Set qdFindSv = Nothing
@@ -224,7 +224,7 @@ On Error GoTo ErrHandler
         ' пробуем отыскать стройку
         Set qdFindSv = db.QueryDefs("ags_PdSdRRcList")
         StringFindSv = "select * from ags.cstAgPn where  cstapIpgPnN = '" & cstCodeStr & "'"
-        qdFindSv.SQL = StringFindSv
+        qdFindSv.sql = StringFindSv
         Set rsFindSv = qdFindSv.OpenRecordset()
         ' имеется ли хотя бы одна запись стройки?
         If rsFindSv.RecordCount > 0 Then
@@ -355,7 +355,7 @@ On Error GoTo Err_Handler
     End If
     Set rs = DBEngine(0)(0).OpenRecordset(strSql, dbOpenDynaset)
     'Determine if the requested field is multi-valued (Type is above 100.)
-    bIsMultiValue = (rs(0).type > 100)
+    bIsMultiValue = (rs(0).Type > 100)
     
     'Loop through the matching records
     Do While Not rs.EOF
@@ -394,15 +394,15 @@ Err_Handler:
 End Function
 
 ' очищаем строку
-Public Function StringClean(ByVal Text As String) As String
+Public Function StringClean(ByVal text As String) As String
 
     Dim strTemp As String
 
-    If Text = "" Then
+    If text = "" Then
         StringClean = ""
     Else
         ' очистим строку
-        strTemp = Replace(Text, vbCr, " ")
+        strTemp = Replace(text, vbCr, " ")
         strTemp = Replace(strTemp, vbLf, " ")
         strTemp = Replace(strTemp, vbTab, " ")
         strTemp = Replace(strTemp, vbVerticalTab, " ")
@@ -602,7 +602,7 @@ End Function
 
 ' получаем дату из строки, Start - давать самую раннюю дату, иначе - самую позднюю
 ' CountDates - показывает сколько дат в строке
-Function ParseDate(ByVal Text As String, Start As Boolean, _
+Function ParseDate(ByVal text As String, Start As Boolean, _
     Optional ByRef ErrDescr As String, Optional ByRef CountDates As Integer) As Variant
 
     ' для разных дат
@@ -617,7 +617,7 @@ On Error GoTo ErrHandler
     ParseDate = Null: ErrDescr = "": CountDates = 0
     
     ' очистим строку
-    strTemp = StringClean(Text)
+    strTemp = StringClean(text)
     
     ' ищем разные даты
     Set RegExp = CreateObject("VBScript.RegExp")

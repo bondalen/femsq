@@ -193,11 +193,11 @@ End Function
 
 ' Inv >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ' формируем счёт-фактуру по известному ключу такого объекта. 06.02.2023.
-Public Function invByKey(ByVal iKey As Long, ByRef db As DAO.Database) As Inv
+Public Function invByKey(ByVal iKey As Long, ByRef db As DAO.Database) As inv
 
-    Dim invNew As Inv, boResult As Boolean
+    Dim invNew As inv, boResult As Boolean
     
-    Set invNew = New Inv
+    Set invNew = New inv
 
     ' реинициализируем объект *Стройка-Агент-Код* по известному ключу такого объекта
     invNew.ReinitialiseByKey iKey, boResult, db
@@ -213,10 +213,10 @@ Public Function invByKey(ByVal iKey As Long, ByRef db As DAO.Database) As Inv
 End Function
 
 ' создаём счёт-фактуру по номеру и дате
-Public Function invCreateNewNumDate(invNum As Variant, invDate As Variant, db As DAO.Database, strNote As String) As Inv
+Public Function invCreateNewNumDate(invNum As Variant, invDate As Variant, db As DAO.Database, strNote As String) As inv
 
-    Dim invNew As Inv
-    Set invNew = New Inv
+    Dim invNew As inv
+    Set invNew = New inv
 
     ' реинициализируем объект счёта-фактуры на основе создания нового по номеру и дате
     invNew.riInvCreateNewNumDate invNum, invDate, db, strNote
@@ -225,10 +225,10 @@ Public Function invCreateNewNumDate(invNum As Variant, invDate As Variant, db As
 End Function
 
 ' создаём счёт-фактуру по дате. Здесь выходит заготовка, без номера.
-Public Function invCreateNewDate(invDate As Variant, db As DAO.Database, strNote As String) As Inv
+Public Function invCreateNewDate(invDate As Variant, db As DAO.Database, strNote As String) As inv
 
-    Dim invNew As Inv
-    Set invNew = New Inv
+    Dim invNew As inv
+    Set invNew = New inv
 
     ' реинициализируем объект счёта-фактуры на основе создания нового по дате
     invNew.riInvCreateNewDate invDate, db, strNote

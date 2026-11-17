@@ -9,7 +9,13 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Compare Database
 
-Private Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
+' Private Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
+
+#If VBA7 Then
+    Private Declare PtrSafe Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
+#Else
+    Private Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
+#End If
 
 ' получаем таблицу результатов варианта года 27.12.2021 09:59 ***************************************************************************************
 Private Sub btnYrResult_Click()
@@ -47,17 +53,17 @@ If IsNull(Me!yr_key) = False Then
     ' очищаем таблицу от временных полей
     Set tb = db.TableDefs("ags_Yr_DbtTbl")
     For Each fl In tb.Fields
-        If Left(fl.name, 6) = "tmpFl_" Then
+        If Left(fl.Name, 6) = "tmpFl_" Then
             'tb.Fields.Delete fl.name
             
-            strDrop = "alter table ags_Yr_DbtTbl drop column [" & fl.name & "]"
+            strDrop = "alter table ags_Yr_DbtTbl drop column [" & fl.Name & "]"
             db.Execute strDrop, dbFailOnError
         End If
     Next
     Set tb = Nothing
     
     ' изменяем запрос к серверу
-    strSql = "exec ags.Yr_Dbt " & Me!yr_key: Set qd = db.QueryDefs("ags_Yr_Dbt"): qd.SQL = strSql
+    strSql = "exec ags.Yr_Dbt " & Me!yr_key: Set qd = db.QueryDefs("ags_Yr_Dbt"): qd.sql = strSql
     qd.Close: Set qd = Nothing
 
     ' заполняем постоянную часть таблицы результатов варианта года
@@ -166,12 +172,12 @@ On Error GoTo ErrHandler
         Set tb = db.TableDefs("ags_Yr_DbtTbl")
         ' проходим по полям, кроме первого
         For i = 1 To nnn - 1
-            Set fl = tb.CreateField("tmpFl_" & FieldName60(rs.Fields(i).name, 6), dbText)
+            Set fl = tb.CreateField("tmpFl_" & FieldName60(rs.Fields(i).Name, 6), dbText)
             'fl.Properties.Append fl.CreateProperty("Description", dbText, rs.Fields(i).name)
             'fl.Properties("description") = rs.Fields(i).name
             tb.Fields.Append fl
             Set fl = Nothing
-            yr_Progress = "<p><font color=""Silver"">" & i & ". Поле: <font color=""DarkGreen"">" & rs.Fields(i).name _
+            yr_Progress = "<p><font color=""Silver"">" & i & ". Поле: <font color=""DarkGreen"">" & rs.Fields(i).Name _
                 & "</font> добавлено в таблицу.</font></p>" & yr_Progress
         Next
         Set tb = Nothing
@@ -197,7 +203,7 @@ On Error GoTo ErrHandler
                         If r3.NoMatch = False Then
                             ' да, совпадения по ключу задолженности имеются
                             r3.Edit
-                                r3.Fields("tmpFl_" & FieldName60(rs.Fields(i).name, 6)).value = rs.Fields(i).value
+                                r3.Fields("tmpFl_" & FieldName60(rs.Fields(i).Name, 6)).value = rs.Fields(i).value
                             r3.Update
                             Else
                             ' нет, совпадения по ключу задолженности отсутствуют
@@ -255,12 +261,12 @@ On Error GoTo ErrHandler
         Set tb = db.TableDefs("ags_Yr_DbtTbl")
         ' проходим по полям, кроме первого FieldName64(rs.Fields(i).name, 6)
         For i = 1 To nnn - 1
-            Set fl = tb.CreateField("tmpFl_" & FieldName60(rs.Fields(i).name, 6), dbCurrency)
+            Set fl = tb.CreateField("tmpFl_" & FieldName60(rs.Fields(i).Name, 6), dbCurrency)
             'fl.Properties.Append fl.CreateProperty("Description", dbText, rs.Fields(i).name)
             'fl.Properties("description") = rs.Fields(i).name
             tb.Fields.Append fl
             Set fl = Nothing
-            yr_Progress = "<p><font color=""Silver"">" & i & ". Поле: <font color=""DarkGreen"">" & rs.Fields(i).name _
+            yr_Progress = "<p><font color=""Silver"">" & i & ". Поле: <font color=""DarkGreen"">" & rs.Fields(i).Name _
                 & "</font> добавлено в таблицу.</font></p>" & yr_Progress
         Next
         Set tb = Nothing
@@ -286,7 +292,7 @@ On Error GoTo ErrHandler
                         If r3.NoMatch = False Then
                             ' да, совпадения по ключу задолженности имеются
                             r3.Edit
-                                r3.Fields("tmpFl_" & FieldName60(rs.Fields(i).name, 6)).value = rs.Fields(i).value
+                                r3.Fields("tmpFl_" & FieldName60(rs.Fields(i).Name, 6)).value = rs.Fields(i).value
                             r3.Update
                             Else
                             ' нет, совпадения по ключу задолженности отсутствуют
@@ -345,12 +351,12 @@ On Error GoTo ErrHandler
         ' проходим по полям, кроме первого
         For i = 1 To nnn - 1
             ' имя поля - не более 64 знаков
-            Set fl = tb.CreateField("tmpFl_" & rs.Fields(i).name, dbDate)
+            Set fl = tb.CreateField("tmpFl_" & rs.Fields(i).Name, dbDate)
             'fl.CreateProperty ("description")
             'fl.Properties("description") = rs.Fields(i).name
             tb.Fields.Append fl
             Set fl = Nothing
-            yr_Progress = "<p><font color=""Silver"">" & i & ". Поле: <font color=""DarkGreen"">" & rs.Fields(i).name _
+            yr_Progress = "<p><font color=""Silver"">" & i & ". Поле: <font color=""DarkGreen"">" & rs.Fields(i).Name _
                 & "</font> добавлено в таблицу.</font></p>" & yr_Progress
         Next
         Set tb = Nothing
@@ -376,7 +382,7 @@ On Error GoTo ErrHandler
                         If r3.NoMatch = False Then
                             ' да, совпадения по ключу задолженности имеются
                             r3.Edit
-                                r3.Fields("tmpFl_" & rs.Fields(i).name).value = rs.Fields(i).value
+                                r3.Fields("tmpFl_" & rs.Fields(i).Name).value = rs.Fields(i).value
                             r3.Update
                             Else
                             ' нет, совпадения по ключу задолженности отсутствуют
@@ -434,12 +440,12 @@ On Error GoTo ErrHandler
         Set tb = db.TableDefs("ags_Yr_DbtTbl")
         ' проходим по полям, кроме первого
         For i = 1 To nnn - 1
-            Set fl = tb.CreateField("tmpFl_" & rs.Fields(i).name, dbText)
+            Set fl = tb.CreateField("tmpFl_" & rs.Fields(i).Name, dbText)
             'fl.CreateProperty ("description")
             'fl.Properties("description") = rs.Fields(i).name
             tb.Fields.Append fl
             Set fl = Nothing
-            yr_Progress = "<p><font color=""Silver"">" & i & ". Поле: <font color=""DarkGreen"">" & rs.Fields(i).name _
+            yr_Progress = "<p><font color=""Silver"">" & i & ". Поле: <font color=""DarkGreen"">" & rs.Fields(i).Name _
                 & "</font> добавлено в таблицу.</font></p>" & yr_Progress
         Next
         Set tb = Nothing
@@ -475,7 +481,7 @@ On Error GoTo ErrHandler
                         If r3.NoMatch = False Then
                             ' да, совпадения по ключу задолженности имеются
                             r3.Edit
-                                r3.Fields("tmpFl_" & rs.Fields(i).name).value = strValue
+                                r3.Fields("tmpFl_" & rs.Fields(i).Name).value = strValue
                             r3.Update
                             Else
                             ' нет, совпадения по ключу задолженности отсутствуют
@@ -533,12 +539,12 @@ On Error GoTo ErrHandler
         Set tb = db.TableDefs("ags_Yr_DbtTbl")
         ' проходим по полям, кроме первого
         For i = 1 To nnn - 1
-            Set fl = tb.CreateField("tmpFl_" & rs.Fields(i).name, dbText)
+            Set fl = tb.CreateField("tmpFl_" & rs.Fields(i).Name, dbText)
             'fl.CreateProperty ("description")
             'fl.Properties("description") = rs.Fields(i).name
             tb.Fields.Append fl
             Set fl = Nothing
-            yr_Progress = "<p><font color=""Silver"">" & i & ". Поле: <font color=""DarkGreen"">" & rs.Fields(i).name _
+            yr_Progress = "<p><font color=""Silver"">" & i & ". Поле: <font color=""DarkGreen"">" & rs.Fields(i).Name _
                 & "</font> добавлено в таблицу.</font></p>" & yr_Progress
         Next
         Set tb = Nothing
@@ -574,7 +580,7 @@ On Error GoTo ErrHandler
                         If r3.NoMatch = False Then
                             ' да, совпадения по ключу задолженности имеются
                             r3.Edit
-                                r3.Fields("tmpFl_" & rs.Fields(i).name).value = strValue
+                                r3.Fields("tmpFl_" & rs.Fields(i).Name).value = strValue
                             r3.Update
                             Else
                             ' нет, совпадения по ключу задолженности отсутствуют
@@ -632,12 +638,12 @@ On Error GoTo ErrHandler
         ' проходим по полям, кроме первого
         For i = 1 To nnn - 1
             'MsgBox (rs.Fields(i).name)
-            Set fl = tb.CreateField("tmpFl_" & rs.Fields(i).name, dbMemo)
+            Set fl = tb.CreateField("tmpFl_" & rs.Fields(i).Name, dbMemo)
             'fl.CreateProperty ("description")
             'fl.Properties("description") = rs.Fields(i).name
             tb.Fields.Append fl
             Set fl = Nothing
-            yr_Progress = "<p><font color=""Silver"">" & i & ". Поле: <font color=""DarkGreen"">" & rs.Fields(i).name _
+            yr_Progress = "<p><font color=""Silver"">" & i & ". Поле: <font color=""DarkGreen"">" & rs.Fields(i).Name _
                 & "</font> добавлено в таблицу.</font></p>" & yr_Progress
         Next
         Set tb = Nothing
@@ -667,7 +673,7 @@ On Error GoTo ErrHandler
                         If r3.NoMatch = False Then
                             ' да, совпадения по ключу задолженности имеются
                             r3.Edit
-                                r3.Fields("tmpFl_" & rs.Fields(i).name).value = strValue
+                                r3.Fields("tmpFl_" & rs.Fields(i).Name).value = strValue
                             r3.Update
                             Else
                             ' нет, совпадения по ключу задолженности отсутствуют

@@ -1,0 +1,5 @@
+﻿-- Access QueryDef: 25-1029_polikarpov_2_q_3
+-- Type: 0
+
+SELECT [25-1029_polikarpov_2_q].Код, [25-1029_polikarpov_2_q].cstAgPn, [25-1029_polikarpov_2_q].cstName, [25-1029_polikarpov_2_q].lkv_25_hy1, ags_fnIpgChRsltCstUtlPercentBrnRepSrc01_2408.lim, ([lkv_25_hy1]*1000000)-[lim] AS ddd, ags_fnIpgChRsltCstUtlPercentBrnRepSrc01_2408.ag_lim, ags_fnIpgChRsltCstUtlPercentBrnRepSrc01_2408.iv_lim, ags_fnIpgChRsltCstUtlPercentBrnRepSrc01_2408.uk_lim, [25-1029_polikarpov_2_q].pl_01_10, ags_fnIpgChRsltCstUtlPercentBrnRepSrc01_2408.ag_PlAccum, [25-1029_polikarpov_2_q_5].ipgpNum, [25-1029_polikarpov_2_q_5].ipgpSmTtl, [25-1029_polikarpov_2_q_5].iuplpM10AccumD, [25-1029_polikarpov_2_q_5].iuplpM11AccumD, [25-1029_polikarpov_2_q_5].iuplpM12AccumD
+FROM ([25-1029_polikarpov_2_q] LEFT JOIN ags_fnIpgChRsltCstUtlPercentBrnRepSrc01_2408 ON [25-1029_polikarpov_2_q].cstAgPn = ags_fnIpgChRsltCstUtlPercentBrnRepSrc01_2408.cstAgPnCode) LEFT JOIN [25-1029_polikarpov_2_q_5] ON [25-1029_polikarpov_2_q].cstAgPn = [25-1029_polikarpov_2_q_5].cstapIpgPnN;

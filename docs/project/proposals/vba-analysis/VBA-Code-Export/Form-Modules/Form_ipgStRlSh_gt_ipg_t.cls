@@ -23,7 +23,7 @@ On Error GoTo ErrHandler
 
     Set qd = db.QueryDefs("ags_fnIpgStNumSm")
     strSql = "select * from ags.fnIpgStNumSm(" & Me!ipgKey & ", " & Me.parent!ipgstrshRoot & ") f Order by f.stNum"
-    qd.SQL = strSql
+    qd.sql = strSql
     'qd.Execute dbFailOnError
     
     'If Me.Parent![ipgStRlSh>fnIpgStNumSm].Form.IsLoaded Then

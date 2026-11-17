@@ -32,6 +32,7 @@
 05_CREATE_FUNCTION_fnIpgChRsltCstUtlPercentBrn_2606.sql
 05a_PATCH_PercentBrn_fnIpgChDats_2606.sql   ← этап 20.2/20.5 (календарь fnIpgChDats_2606, 17 дат)
 05b_PATCH_PercentBrn_ipgChRl_2606.sql        ← этап 21.2 (plan-JOIN gap/gip/gup → ipgChRl_2606)
+05c_PATCH_PercentBrn_plan_LmMn_2606.sql      ← этап 21.4.3 (plan из LmMn@212, Решение 22; после 05b или вместо 05b)
 05b_CREATE_TABLE_spMstrg_2606_ResultSets.sql
 06_CREATE_PROCEDURE_spMstrg_2606.sql
 07_VERIFY_after.sql
@@ -57,10 +58,12 @@
 - [`docs/deployment/sql-flash-drive-packaging.md`](../../../../deployment/sql-flash-drive-packaging.md) — сборка флешки
 - **Флеш-пакет:** `../26-0616_deploy/build_flash_package.sh`
 
-**Обновлено:** 2026-06-30
+**Обновлено:** 2026-11-17 (этап **21.5**: `05c` в порядке применения)
 
 Синхронизация dev→MSSQL2012: `python3 _sync_to_mssql2012.py 03c_*.sql 03b1_*.sql`
 
 **PercentBrn календарь (этап 20.5):** `05a_PATCH_PercentBrn_fnIpgChDats_2606.sql` — зеркало `../05a_*`; применять **после** `05` на prod и dev.
 
-Дополнительно (этап 14.3, 16, 19, 20): `04b`, `05a`, `05b`, `06b`, `03b1b`, `00-perf-indexes-k7.sql`, `10a`–`10d`
+**PercentBrn plan LmMn (этап 21.4.3):** `05c_PATCH_PercentBrn_plan_LmMn_2606.sql` — plan-колонки из `ipgUtPlPnLmMn` @ stCost **212** (Решение 22). Кумулятивно включает правки `05a`/`05b`; на чистом prod после `05` достаточно цепочки `05a` → `05b` → `05c` (или сразу `05c` после `05`, если объект ещё не патчили).
+
+Дополнительно (этап 14.3, 16, 19, 20, 21): `04b`, `05a`, `05b`, `05c`, `06b`, `03b1b`, `00-perf-indexes-k7.sql`, `10a`–`10d`

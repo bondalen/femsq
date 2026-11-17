@@ -1,0 +1,5 @@
+﻿-- Access QueryDef: ags_cn_inv_pm_dbt_upl
+-- Type: 0
+
+SELECT ags_cn_inv_pm.cn_inv_pm_key, ags_cn_inv_pm.cn_inv_key, ags_cn_inv_pm.csoCn_s_org_smpl AS cn_s_agent, ags_cn_inv_pm.cn_inv_doc, ags_cn_inv_pm.constract_code, ags_cn_inv_pm.cn_inv_pm_due, ags_cn_inv_pm.dbt_blns, ags_cn_inv_pm.dbt_blns_overd, ags_cn_inv_pm.dbt_blns_not_overd, ags_cn_inv_pm.cdt_blns, ags_cn_inv_pm.cdt_blns_overd, ags_cn_inv_pm.cdt_blns_not_overd, ags_cn_inv_pm.blns, ags_cn_inv_pm.alignment_date, ags_cn_inv_pm.base_date, ags_cn_inv_pm.storno_reason, ags_cn_inv_pm.storno_doc, ags_cn_inv_pm.cn_inv_pm_upl, ags_cn_inv_pm.number, ags_cn_inv_pm.mark, ags_cn_inv_pm.cnipCstAgPn, ags_cn_inv_pm.cn_inv_doc_date, ags_cn_inv_pm.cn_inv_doc_date_entry, ags_cn_inv_pm.cn_inv_doc_sum, ags_cn_inv_pm.cn_inv_doc_link, ags_cn_inv_pm.cipCnInvAccnt, ags_cn_inv_dbt_upl_g_p.cn_inv_dbt_upl, ags_cn_inv_pm.ciaCnInvAccntSmpl
+FROM ags_cn_inv_pm INNER JOIN ags_cn_inv_dbt_upl_g_p ON ags_cn_inv_pm.cn_inv_pm_upl = ags_cn_inv_dbt_upl_g_p.cn_inv_pm_upl;

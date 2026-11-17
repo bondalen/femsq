@@ -65,16 +65,18 @@ cat > "$OPEN/03_docs/DEV_ACCEPTANCE_SUMMARY.txt" << EOF
 Dev-приёмка spMstrg_2606 (цепь 5) — эталоны
 Сборка флешки: $DEPLOY_ID ($BUILD_DATE)
 
-@MounthEndDate='2022-12-31' (основной эталон prod):
-  RS1 = 14447, RS4 = 916
+@MounthEndDate='2022-12-31' (эталон после этапов 20–21, 17 дат):
+  PercentBrn / RS1 = 15262 (17 дат; ранее 14447 / 16 дат)
   07k RS1 keyDiff = 0
   07f F.3 = 0
+  Gate 21.4: run_gate_21_4.sh PASS @dev 2026-07-06 (incl. 05c LmMn@212)
 
-@MounthEndDate='2022-11-30' (доп. прогон 2026-06-16):
+@MounthEndDate='2022-11-30' (доп. прогон 2026-06-16, до календаря 17 дат):
   RS1 = 14447, RS4 = 905
   07k PASS, 07i/07j PASS
 
-Лог: acceptance_dev_chain5_20221130_20260616_174351.log
+Лог (история): acceptance_dev_chain5_20221130_20260616_174351.log
+Пересборка флешки: этап 21.5 / 19.7 / 17.2.2b (2026-11-17)
 EOF
 
 # --- 04_prod_log ---

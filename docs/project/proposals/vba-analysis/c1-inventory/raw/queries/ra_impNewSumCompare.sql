@@ -1,0 +1,5 @@
+﻿-- Access QueryDef: ra_impNewSumCompare
+-- Type: 0
+
+SELECT x.cstAgPnCode, x.excelPres, x.excelAccp, x.sqlPres, x.sqlAccp, x.diffPres, x.diffAccp, x.ipgChKey, x.diff, c.cstapKey, ags_ipgCh.ipgcIpgLate, ags_ipgCh.ipgcYyyy
+FROM ((SELECT y.cstAgPnCode, y.excelPres, y.excelAccp, y.sqlPres, y.sqlAccp, y.diffPres, y.diffAccp, (select max(q.ipgChKey) from ipgChRsltPlCstSumQu q) AS ipgChKey, y.diff FROM (SELECT z.rainCstAgPnStr AS cstAgPnCode, e.presTtl AS excelPres, e.accpTtl AS excelAccp, s.ag_presentedAccum AS sqlPres, s.ag_acceptedAccum AS sqlAccp, IIf(IsNull([excelPres]),0,[excelPres])-IIf(IsNull([sqlPres]),0,[sqlPres]) AS diffPres, IIf(IsNull([excelAccp]),0,[excelAccp])-IIf(IsNull([sqlAccp]),0,[sqlAccp]) AS diffAccp, [diffPres]<>0 Or [diffAccp]<>0 AS diff FROM ((SELECT e.rainCstAgPnStr FROM ra_ImpNewSum AS e union select s.cstAgPnCode from ipgChRsltPlCstSumQu AS s )  AS z LEFT JOIN ra_ImpNewSum AS e ON z.rainCstAgPnStr = e.rainCstAgPnStr) LEFT JOIN ipgChRsltPlCstSumQu AS s ON z.rainCstAgPnStr = s.cstAgPnCode)  AS y WHERE (((y.diff)=True)))  AS x INNER JOIN ags_cstAgPn AS c ON x.cstAgPnCode = c.cstapIpgPnN) INNER JOIN ags_ipgCh ON x.ipgChKey = ags_ipgCh.ipgcKey;

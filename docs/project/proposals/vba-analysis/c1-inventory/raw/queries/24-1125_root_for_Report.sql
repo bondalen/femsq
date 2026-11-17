@@ -1,0 +1,6 @@
+﻿-- Access QueryDef: 24-1125_root_for_Report
+-- Type: 0
+
+SELECT z.*, b.PrM_ag_acceptedTtl_M, b.PrM_ag_acceptedTtl_M2, b.PrM_ag_Pl_M, b.PrM_ag_Pl_M2, b.PrM_ag_PlAccum, b.PrM_ag_PlAccum2, b.PrM_ag_PlFulfillment, b.PrM_ag_PlFulfillment2, b.PrM_ag_PlFulfillment2All, b.PrM_ag_PlFulfillmentAll, b.PrM_ag_PlFulfillmentAll, b.PrM_ag_PlOverFulfillment, b.PrM_ag_PlOverFulfillment2, b.PrM_ag_PlPercent, b.PrM_ag_PlPercent2, b.PrM_ag_PlPz, b.PrM_ag_PlPz_M, b.PrM_ag_PlPz_M2, b.PrM_ag_PlPz2, b.PrM_mnPrevious, b.PrM_mnPrevious2, z.ipgSh, z.limSort, z.lim
+FROM (SELECT IIf(IsNull([branchName]),IIf(IsNull([ogNm]),"пусто",[ogNm]),"пусто") AS ogNm_hook, IIf(IsNull([branchName]),"пусто",IIf([branchName]=[ogNm],"Центральный офис",[branchName])) AS branchName_hook, a.* FROM ags_fnIpgChRsltCstUtlPercentBrnRepSrc02_2408 AS a)  AS z LEFT JOIN (SELECT IIf(IsNull([branchName]),IIf(IsNull([ogNm]),"пусто",[ogNm]),"пусто") AS ogNm_hook, IIf(IsNull([branchName]),"пусто",IIf([branchName]=[ogNm],"Центральный офис",[branchName])) AS branchName_hook, r.* FROM ags_fnIpgChRsltCstUtlPercentBrnRep02_2408_tbl AS r)  AS b ON (z.ogNm_hook = b.ogNm_hook) AND (z.branchName_hook = b.branchName_hook)
+ORDER BY z.ipgSh, z.limSort DESC , z.lim DESC;

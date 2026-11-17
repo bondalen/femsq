@@ -1,0 +1,5 @@
+﻿-- Access QueryDef: cipuCn_CtptCnOneOld2
+-- Type: 0
+
+SELECT n.CntrPrtNum, n.CntrPrtName, n.CnName, n.org_id_key, n.CountCnKey, n.cn_key, o.cn_s_org_key
+FROM (SELECT m.CntrPrtNum, m.CntrPrtName, m.CnName, m.org_id_key, m.CountCnKey, e.cn_key FROM (SELECT u.CntrPrtNum, u.CntrPrtName, u.CnName, u.org_id_key, count(u.cn_key) AS CountCnKey FROM (SELECT z.CntrPrtNum, z.CntrPrtName, z.CnName, z.org_id_key, e.cn_key FROM (SELECT CntrPrtNum, CntrPrtName, IIf(isnull(a.CnName),"NullИлиПусто",IIf(a.CnName="","NullИлиПусто",a.CnName)) AS CnName, org_id_key FROM cipuCn_Ctpt AS a)  AS z LEFT JOIN agsCnCtptExequtor AS e ON (z.CnName = e.cn_number) AND (z.CntrPrtNum = e.org_id_value_l) GROUP BY z.CntrPrtNum, z.CntrPrtName, z.CnName, z.org_id_key, e.cn_key)  AS u GROUP BY u.CntrPrtNum, u.CntrPrtName, u.CnName, u.org_id_key HAVING (((Count(u.cn_key))=1)))  AS m LEFT JOIN agsCnCtptExequtor AS e ON (m.CntrPrtNum = e.org_id_value_l) AND (m.CnName = e.cn_number) GROUP BY m.CntrPrtNum, m.CntrPrtName, m.CnName, m.org_id_key, m.CountCnKey, e.cn_key)  AS n LEFT JOIN agsCnCtptExequtorOne AS o ON (n.cn_key = o.cn_key) AND (n.CntrPrtNum = o.org_id_value_l);

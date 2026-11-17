@@ -22,7 +22,7 @@ Else
     InvKey = Me![cnNum>cn].Form![cnNum>cn>cn].Form![cnNum>cn>cn>ciNum].Form.iKey
 End If
 
-Me![cnNum>cn].Form![cnNum>cn>cn].Form!Inv.Form.Form.Filter = "iKey = " & InvKey
-Me![cnNum>cn].Form![cnNum>cn>cn].Form!Inv.Form.Form.FilterOn = True
+Me![cnNum>cn].Form![cnNum>cn>cn].Form!inv.Form.Form.Filter = "iKey = " & InvKey
+Me![cnNum>cn].Form![cnNum>cn>cn].Form!inv.Form.Form.FilterOn = True
 
 End Sub

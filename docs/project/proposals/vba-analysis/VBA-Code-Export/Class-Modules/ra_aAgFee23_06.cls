@@ -192,7 +192,7 @@ On Error GoTo ErrHandler
     ' проверяем, что каждому отправителю соответствует только один ключ
     Set qdf = db.CreateQueryDef("")
     qdf.Connect = "ODBC;DSN=FishEye;Trusted_Connection=Yes;APP=Microsoft Office 2013;DATABASE=FishEye;"
-    qdf.SQL = "SELECT * FROM ags.ogAgFeePnTestAgentNo"
+    qdf.sql = "SELECT * FROM ags.ogAgFeePnTestAgentNo"
     qdf.ReturnsRecords = True
     Set rsAgentNo = qdf.OpenRecordset(dbOpenSnapshot)
     If rsAgentNo.RecordCount > 0 Then
@@ -212,7 +212,7 @@ On Error GoTo ErrHandler
     ' вносим ключ отправителя в промежуточную таблицу
     Set qdf = db.CreateQueryDef("")
     qdf.Connect = "ODBC;DSN=FishEye;Trusted_Connection=Yes;APP=Microsoft Office 2013;DATABASE=FishEye;"
-    qdf.SQL = "exec ags.ogAgFeePnTestAgentKey"
+    qdf.sql = "exec ags.ogAgFeePnTestAgentKey"
     qdf.ReturnsRecords = False  ''avoid 3065 error
     qdf.Execute dbFailOnError
     mobjParent.obgRa_aResult = "<P>Ключ отправителя внесен в промежуточную таблицу.</P>" & mobjParent.obgRa_aResult
@@ -222,7 +222,7 @@ On Error GoTo ErrHandler
     ' проверяем наличие актов в БД отсутствующих в источнике
     Set qdf = db.CreateQueryDef("")
     qdf.Connect = "ODBC;DSN=FishEye;Trusted_Connection=Yes;APP=Microsoft Office 2013;DATABASE=FishEye;"
-    qdf.SQL = "SELECT * FROM ags.fnOgAgFeePnTestActDbOnly(" & mobjParent.year(mdbDb) & ") f"
+    qdf.sql = "SELECT * FROM ags.fnOgAgFeePnTestActDbOnly(" & mobjParent.year(mdbDb) & ") f"
     qdf.ReturnsRecords = True
     Set rsAgentNo = qdf.OpenRecordset(dbOpenSnapshot)
     If rsAgentNo.RecordCount > 0 Then
@@ -238,7 +238,7 @@ On Error GoTo ErrHandler
             qdf.Close: Set qdf = Nothing
             Set qdf = db.CreateQueryDef("")
             qdf.Connect = "ODBC;DSN=FishEye;Trusted_Connection=Yes;APP=Microsoft Office 2013;DATABASE=FishEye;"
-            qdf.SQL = "exec ags.ogAgFeePnTestActDbOnlyDel " & mobjParent.year(mdbDb)
+            qdf.sql = "exec ags.ogAgFeePnTestActDbOnlyDel " & mobjParent.year(mdbDb)
             qdf.ReturnsRecords = False  ''avoid 3065 error
             qdf.Execute dbFailOnError
             strTest = strTest & "<P>Акты по агентскому вознаграждению отсутствующие в источнике удалены.</P>"
@@ -257,7 +257,7 @@ On Error GoTo ErrHandler
     ' проверяем наличие Актов в отсутствующих в базе данных
     Set qdf = db.CreateQueryDef("")
     qdf.Connect = "ODBC;DSN=FishEye;Trusted_Connection=Yes;APP=Microsoft Office 2013;DATABASE=FishEye;"
-    qdf.SQL = "SELECT * FROM ags.ogAgFeePnTestActNew order by ogaNm, oafptOafDate, oafptOafName"
+    qdf.sql = "SELECT * FROM ags.ogAgFeePnTestActNew order by ogaNm, oafptOafDate, oafptOafName"
     qdf.ReturnsRecords = True
     Set rsAgentNo = qdf.OpenRecordset(dbOpenSnapshot)
     If rsAgentNo.RecordCount > 0 Then
@@ -274,7 +274,7 @@ On Error GoTo ErrHandler
             qdf.Close: Set qdf = Nothing
             Set qdf = db.CreateQueryDef("")
             qdf.Connect = "ODBC;DSN=FishEye;Trusted_Connection=Yes;APP=Microsoft Office 2013;DATABASE=FishEye;"
-            qdf.SQL = "exec ags.ogAgFeePnTestActAdd"
+            qdf.sql = "exec ags.ogAgFeePnTestActAdd"
             qdf.ReturnsRecords = False  ''avoid 3065 error
             qdf.Execute dbFailOnError
             strTest = strTest & "<P>Акты по агентскому вознаграждению отсутствующие в базе данных добавлены.</P>"
@@ -292,7 +292,7 @@ On Error GoTo ErrHandler
     ' проверяем отсутствие задвоения атрибутов у Актов по агентскому вознаграждениюв источнике
     Set qdf = db.CreateQueryDef("")
     qdf.Connect = "ODBC;DSN=FishEye;Trusted_Connection=Yes;APP=Microsoft Office 2013;DATABASE=FishEye;"
-    qdf.SQL = "SELECT * FROM ags.ogAgFeePnTestActAttr"
+    qdf.sql = "SELECT * FROM ags.ogAgFeePnTestActAttr"
     qdf.ReturnsRecords = True
     Set rsAgentNo = qdf.OpenRecordset(dbOpenSnapshot)
     If rsAgentNo.RecordCount > 0 Then
@@ -316,7 +316,7 @@ On Error GoTo ErrHandler
     ' проверяем соответствие атрибутов в БД и источнике
     Set qdf = db.CreateQueryDef("")
     qdf.Connect = "ODBC;DSN=FishEye;Trusted_Connection=Yes;APP=Microsoft Office 2013;DATABASE=FishEye;"
-    qdf.SQL = "SELECT * FROM ags.ogAgFeePnTestActAttrTrue order by ogaNm, oafNum"
+    qdf.sql = "SELECT * FROM ags.ogAgFeePnTestActAttrTrue order by ogaNm, oafNum"
     qdf.ReturnsRecords = True
     Set rsAgentNo = qdf.OpenRecordset(dbOpenSnapshot)
     If rsAgentNo.RecordCount > 0 Then
@@ -484,7 +484,7 @@ On Error GoTo ErrHandler
     ' проверяем факт наличия в источнике строект отсутствующих в БД
     Set qdf = db.CreateQueryDef("")
     qdf.Connect = "ODBC;DSN=FishEye;Trusted_Connection=Yes;APP=Microsoft Office 2013;DATABASE=FishEye;"
-    qdf.SQL = "SELECT * FROM ags.ogAgFeePnTestCstNo"
+    qdf.sql = "SELECT * FROM ags.ogAgFeePnTestCstNo"
     qdf.ReturnsRecords = True
     Set rsAgentNo = qdf.OpenRecordset(dbOpenSnapshot)
     If rsAgentNo.RecordCount > 0 Then
@@ -506,7 +506,7 @@ On Error GoTo ErrHandler
     ' вносим ключ стройки в промежуточную таблицу
     Set qdf = db.CreateQueryDef("")
     qdf.Connect = "ODBC;DSN=FishEye;Trusted_Connection=Yes;APP=Microsoft Office 2013;DATABASE=FishEye;"
-    qdf.SQL = "exec ags.ogAgFeePnTestCstKey"
+    qdf.sql = "exec ags.ogAgFeePnTestCstKey"
     qdf.ReturnsRecords = False  ''avoid 3065 error
     qdf.Execute dbFailOnError
     mobjParent.obgRa_aResult = "<P>Ключ стройки внесен в промежуточную таблицу.</P>" & mobjParent.obgRa_aResult
@@ -515,7 +515,7 @@ On Error GoTo ErrHandler
     ' проверяем факт наличия в базе данных пунктов Актов агентского вознаграждения, отсутствующих в источнике
     Set qdf = db.CreateQueryDef("")
     qdf.Connect = "ODBC;DSN=FishEye;Trusted_Connection=Yes;APP=Microsoft Office 2013;DATABASE=FishEye;"
-    qdf.SQL = "SELECT * FROM ags.fnOgAgFeePnTestExcNo(" & mobjParent.year(mdbDb) & ") order by oafpOaf, cstapIpgPnN"
+    qdf.sql = "SELECT * FROM ags.fnOgAgFeePnTestExcNo(" & mobjParent.year(mdbDb) & ") order by oafpOaf, cstapIpgPnN"
     qdf.ReturnsRecords = True
     Set rsAgentNo = qdf.OpenRecordset(dbOpenSnapshot)
     If rsAgentNo.RecordCount > 0 Then
@@ -544,7 +544,7 @@ On Error GoTo ErrHandler
 '            qdf.Close: Set qdf = Nothing
             Set qdf = db.CreateQueryDef("")
             qdf.Connect = "ODBC;DSN=FishEye;Trusted_Connection=Yes;APP=Microsoft Office 2013;DATABASE=FishEye;"
-            qdf.SQL = "exec ags.ogAgFeePnTestExcNoDel " & mobjParent.year(mdbDb)
+            qdf.sql = "exec ags.ogAgFeePnTestExcNoDel " & mobjParent.year(mdbDb)
             qdf.ReturnsRecords = False  ''avoid 3065 error
             qdf.Execute dbFailOnError
             strTest = strTest & "<P>Пункты Актов агентского вознаграждения отсутствующие в источнике удалены.</P>"
@@ -562,7 +562,7 @@ On Error GoTo ErrHandler
     ' проверяем наличие пунктов Актов отсутствующих в базе данных
     Set qdf = db.CreateQueryDef("")
     qdf.Connect = "ODBC;DSN=FishEye;Trusted_Connection=Yes;APP=Microsoft Office 2013;DATABASE=FishEye;"
-    qdf.SQL = "SELECT * FROM ags.ogAgFeePnTestDbNo order by oafptOafSender, oafptOafDate, oafptOafName, oafKey"
+    qdf.sql = "SELECT * FROM ags.ogAgFeePnTestDbNo order by oafptOafSender, oafptOafDate, oafptOafName, oafKey"
     qdf.ReturnsRecords = True
     Set rsAgentNo = qdf.OpenRecordset(dbOpenSnapshot)
     If rsAgentNo.RecordCount > 0 Then
@@ -594,7 +594,9 @@ On Error GoTo ErrHandler
             ' добавляем пункты Актов по агентскому вознаграждению отсутствующие в базе данных
             Set qdf = db.CreateQueryDef("")
             qdf.Connect = "ODBC;DSN=FishEye;Trusted_Connection=Yes;APP=Microsoft Office 2013;DATABASE=FishEye;"
-            qdf.SQL = "exec ags.ogAgFeePnTestActPnAdd" ' 24-0619 здесь была ошибка двоящей пары "отчёт-стройка"
+            qdf.sql = "exec ags.ogAgFeePnTestActPnAdd" ' 24-0619 здесь была ошибка двоящей пары "отчёт-стройка"
+            ' Также здесь свалилась 02.12.2025. Это происходит потому что двоят пункты стройки в одном отчёте
+            ' Смотреть ags.ogAgFeePnTestActPnAdd там пытаются засунуть пункты в ags.ogAgFeeP а индекс не даёт
             qdf.ReturnsRecords = False  ''avoid 3065 error
             qdf.Execute dbFailOnError
             strTest = strTest & "<P>Пункты Актов по агентскому вознаграждению отсутствующие в базе данных добавлены.</P>"
@@ -612,7 +614,7 @@ On Error GoTo ErrHandler
     ' работаем с пунктами Актов по агентскому вознаграждению, имеющими разночтения с источником. 10.07.2023
     Set qdf = db.CreateQueryDef("")
     qdf.Connect = "ODBC;DSN=FishEye;Trusted_Connection=Yes;APP=Microsoft Office 2013;DATABASE=FishEye;"
-    qdf.SQL = "SELECT * FROM ags.ogAgFeePnTestActPnNoEq order by oafptOafSender, oafptOafDate, oafptOafName, oafKey, oafptPnCstAgPn"
+    qdf.sql = "SELECT * FROM ags.ogAgFeePnTestActPnNoEq order by oafptOafSender, oafptOafDate, oafptOafName, oafKey, oafptPnCstAgPn"
     qdf.ReturnsRecords = True
     Set rsAgentNo = qdf.OpenRecordset(dbOpenSnapshot)
     If rsAgentNo.RecordCount > 0 Then
@@ -684,13 +686,17 @@ On Error GoTo ErrHandler
         
         Set qdf = db.CreateQueryDef("")
         qdf.Connect = "ODBC;DSN=FishEye;Trusted_Connection=Yes;APP=Microsoft Office 2013;DATABASE=FishEye;"
-        qdf.SQL = "select sum(p.oafpTotal) as smm from ags.ogAgFee a join ags.ogAgFeeP p on a.oafKey = p.oafpOaf " _
+        qdf.sql = "select sum(p.oafpTotal) as smm from ags.ogAgFee a join ags.ogAgFeeP p on a.oafKey = p.oafpOaf " _
             & "where year(a.oafDate) = " & mobjParent.year(mdbDb)
         qdf.ReturnsRecords = True
         Set rsAgentNo = qdf.OpenRecordset(dbOpenSnapshot)
         If rsAgentNo.RecordCount > 0 Then
             rsAgentNo.MoveFirst ': strTest = "В источнике имеются стройки отсутствующие в БД:"
-            rDb = rsAgentNo!smm
+            If Not IsNull(rsAgentNo!smm) Then
+                rDb = rsAgentNo!smm
+            Else
+                rDb = 0
+            End If
             strTest = strTest & " Итого, БД: <b><font color=""Chocolate"">" & Format(rDb, "Currency") _
                 & "</font></b>; Разница: <font color=""Crimson"">" & Format(rSource - rDb, "Currency") & "</font>;"
         Else

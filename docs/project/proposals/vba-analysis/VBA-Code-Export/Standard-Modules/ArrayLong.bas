@@ -459,6 +459,7 @@ Public Sub subMyArrayBrnRep01(ByRef myArrayBrnRep01() As Variant)
     myArrayBrnRep01(42, 1) = "PrM_mnPrevious": myArrayBrnRep01(42, 2) = "PrM_mnPrevious"
     myArrayBrnRep01(43, 1) = "PrM_mnPrevious2": myArrayBrnRep01(43, 2) = "PrM_mnPrevious2"
     myArrayBrnRep01(44, 1) = "uk_lim": myArrayBrnRep01(44, 2) = "uk_lim"
+    myArrayBrnRep01(45, 1) = "rowNum": myArrayBrnRep01(45, 2) = "rowNum"
 
 End Sub
 
@@ -509,12 +510,13 @@ Public Sub subMyArrayBrnRep02(ByRef myArrayBrnRep02() As Variant)
     myArrayBrnRep02(42, 1) = "PrM_mnPrevious": myArrayBrnRep02(42, 2) = "PrM_mnPrevious"
     myArrayBrnRep02(43, 1) = "PrM_mnPrevious2": myArrayBrnRep02(43, 2) = "PrM_mnPrevious2"
     myArrayBrnRep02(44, 1) = "uk_lim": myArrayBrnRep02(44, 2) = "uk_lim"
+    myArrayBrnRep02(45, 1) = "rowNum": myArrayBrnRep02(45, 2) = "rowNum"
 
 End Sub
 
 Public Sub subMyArrayBrnSrcPart1(ByRef myArrayBrnSrcPart1() As Variant)
 
-    ' формируем массив по принципу поле № 1 - откуда, поле № 2 - куда
+    ' формируем массив по принципу поле № 1 - откуда, поле № 2 - куда rowNum
     myArrayBrnSrcPart1(1, 1) = "ogNm": myArrayBrnSrcPart1(1, 2) = "ogNm"
     myArrayBrnSrcPart1(2, 1) = "branchName": myArrayBrnSrcPart1(2, 2) = "branchName"
     myArrayBrnSrcPart1(3, 1) = "cstAgPnCode": myArrayBrnSrcPart1(3, 2) = "cstAgPnCode"
@@ -566,6 +568,7 @@ Public Sub subMyArrayBrnSrcPart1(ByRef myArrayBrnSrcPart1() As Variant)
     myArrayBrnSrcPart1(49, 1) = "np_MnrlSumAccum": myArrayBrnSrcPart1(49, 2) = "np_MnrlSumAccum"
     myArrayBrnSrcPart1(50, 1) = "np_acceptedTtl": myArrayBrnSrcPart1(50, 2) = "np_acceptedTtl"
     myArrayBrnSrcPart1(51, 1) = "np_acceptedTtlAccum": myArrayBrnSrcPart1(51, 2) = "np_acceptedTtlAccum"
+    myArrayBrnSrcPart1(52, 1) = "rowNum": myArrayBrnSrcPart1(52, 2) = "rowNum"
 
 End Sub
 
@@ -622,6 +625,7 @@ Public Sub subMyArrayBrnSrcPart2(ByRef myArrayBrnSrcPart2() As Variant)
     myArrayBrnSrcPart2(49, 1) = "np_MnrlSumAccum": myArrayBrnSrcPart2(49, 2) = "np_MnrlSumAccum"
     myArrayBrnSrcPart2(50, 1) = "np_acceptedTtl": myArrayBrnSrcPart2(50, 2) = "np_acceptedTtl"
     myArrayBrnSrcPart2(51, 1) = "np_acceptedTtlAccum": myArrayBrnSrcPart2(51, 2) = "np_acceptedTtlAccum"
+    myArrayBrnSrcPart2(52, 1) = "rowNum": myArrayBrnSrcPart2(52, 2) = "rowNum"
 
 End Sub
 

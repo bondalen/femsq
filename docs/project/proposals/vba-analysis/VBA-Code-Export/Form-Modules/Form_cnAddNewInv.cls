@@ -35,7 +35,7 @@ If cnKey > 0 Then
                     ' да, дата отсутствует
                     Set cnInvNew = ClassFactory.cnInvCreateNewInvNew _
                         (Null, Null, cnKey, CurrentDb, Trim("по кнопке, без № и даты. " & Me!invNote))
-                    DoCmd.Close acForm, Me.name, acSaveNo
+                    DoCmd.Close acForm, Me.Name, acSaveNo
                     Set cnInvNew = Nothing
                 Else
                     ' нет, дата имеет неверный формат
@@ -47,7 +47,7 @@ If cnKey > 0 Then
             If MsgBox("Отсутствует №! Создать такой счёт-фактуру?", vbOKCancel + vbExclamation) = vbOK Then
                 Set cnInvNew = ClassFactory.cnInvCreateNewInvNew _
                     (Null, Me!invDate, cnKey, CurrentDb, Trim("по кнопке, без №. " & Me!invNote))
-                DoCmd.Close acForm, Me.name, acSaveNo
+                DoCmd.Close acForm, Me.Name, acSaveNo
                 Set cnInvNew = Nothing
             End If
         End If
@@ -63,7 +63,7 @@ If cnKey > 0 Then
                     ' да, дата отсутствует
                     Set cnInvNew = ClassFactory.cnInvCreateNewInvNew _
                         (Me!invNum, Null, cnKey, CurrentDb, Trim("по кнопке, без даты. " & Me!invNote))
-                    DoCmd.Close acForm, Me.name, acSaveNo
+                    DoCmd.Close acForm, Me.Name, acSaveNo
                     Set cnInvNew = Nothing
                 Else
                     ' нет, дата имеет неверный формат
@@ -74,7 +74,7 @@ If cnKey > 0 Then
             ' нет, дата имеется
             Set cnInvNew = ClassFactory.cnInvCreateNewInvNew _
                 (Me!invNum, Me!invDate, cnKey, CurrentDb, Trim("по кнопке. " & Me!invNote))
-            DoCmd.Close acForm, Me.name, acSaveNo
+            DoCmd.Close acForm, Me.Name, acSaveNo
             Set cnInvNew = Nothing
         End If
     End If

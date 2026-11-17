@@ -179,8 +179,8 @@ Private Sub btnMasteringPercent_2408_Click()
     Dim stringError As String
     Dim db As DAO.Database, dbAccessTest As dbAccess
     Dim MyArrayBrnPart1(1 To 179, 1 To 2), myArrayBrnPart2(1 To 220, 1 To 2)
-    Dim myArrayBrnRep01(1 To 44, 1 To 2), myArrayBrnRep02(1 To 44, 1 To 2)
-    Dim myArrayBrnSrcPart1(1 To 51, 1 To 2), myArrayBrnSrcPart2(1 To 51, 1 To 2)
+    Dim myArrayBrnRep01(1 To 45, 1 To 2), myArrayBrnRep02(1 To 45, 1 To 2)
+    Dim myArrayBrnSrcPart1(1 To 52, 1 To 2), myArrayBrnSrcPart2(1 To 52, 1 To 2)
     ' -----------------------------------------------------------------------------------------------------------------------------------------------
     Const cstrTitle As String = "***" & vbCrLf & "Процедура: *Заполняем 6-ть таблиц освоения*." & vbCrLf _
         & "Вариант: #Под алгоритм обработки данных августа 2024-го года#. " & vbCrLf & "Кнопка и её процедура: { btnMasteringPercent_2408_Click }."
@@ -201,7 +201,7 @@ On Error GoTo ErrHandler
        .CommandTimeout = 0
        .ActiveConnection = objConn
        .CommandType = adCmdStoredProc 'Будем выполнять хранимую процедуру
-       .CommandText = "ags.spMstrg_2408" 'Имя функции
+       .CommandText = "ags.spMstrg_2408_ipgSt" 'Имя функции "ags.spMstrg_2408" "ags.spMstrg_2408_ipgSt"
        ' Параметры функции
        .Parameters.Append .CreateParameter("@ipgCh", adBigInt, adParamInput, , Me!ipgcKey)
        .Parameters.Append .CreateParameter("@MounthEndDate", adDate, adParamInput, , dateEndMount)
@@ -646,7 +646,7 @@ Private Sub Кнопка11_Click()
     'strSQL = "EXEC [ags].[ipgChRslt] " & Me.ipgcKey
     Set qd = db.CreateQueryDef("")
     qd.Connect = db.TableDefs("ags_yyyy").Connect
-    qd.SQL = "EXEC [ags].[ipgChRslt] " & Me.ipgcKey
+    qd.sql = "EXEC [ags].[ipgChRslt] " & Me.ipgcKey
     qd.ReturnsRecords = True
     qd.ODBCTimeout = 300
     
@@ -736,7 +736,7 @@ Private Sub Кнопка53_Click()
     'получаем набор записей от сервера
     Set qd = db.CreateQueryDef("")
     qd.Connect = db.TableDefs("ags_yyyy").Connect
-    qd.SQL = "EXEC [ags].[ipgChRsltFull] " & Me.ipgcKey
+    qd.sql = "EXEC [ags].[ipgChRsltFull] " & Me.ipgcKey
     qd.ReturnsRecords = True
     
     Set rstD = qd.OpenRecordset(dbOpenSnapshot)
@@ -837,7 +837,7 @@ Private Sub Кнопка57_Click()
     'получаем набор записей от сервера
     Set qd = db.CreateQueryDef("")
     qd.Connect = db.TableDefs("ags_yyyy").Connect
-    qd.SQL = "EXEC [ags].[spIpgChRsltCstUtl3_GP_2] " & Me.ipgcKey
+    qd.sql = "EXEC [ags].[spIpgChRsltCstUtl3_GP_2] " & Me.ipgcKey
     qd.ReturnsRecords = True
     qd.ODBCTimeout = 300
     

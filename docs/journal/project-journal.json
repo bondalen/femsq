@@ -8,6 +8,85 @@
     "sessions": [
       {
         "chat": {
+          "displayName": "C1: инвентаризация Access по освоению P2 (completed, critical). № chat-2026-11-17-001",
+          "chat-attributes": {
+            "id": "chat-2026-11-17-001",
+            "created": "2026-11-17",
+            "lastUpdated": "2026-11-17",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "critical",
+            "tags": [
+              "C1",
+              "access",
+              "inventory",
+              "P2",
+              "roadmap-r1"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [
+                "0080"
+              ],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1117-c1-access-inventory.md",
+              "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "C1 закрыт: каталог+карта; R1.1=C2, R1.2=C3 (success). № log-2026-11-17-005",
+                "log-attributes": {
+                  "id": "log-2026-11-17-005",
+                  "timestamp": "2026-11-17T14:20:00+03:00",
+                  "level": "success",
+                  "effort": "3h",
+                  "status": "completed",
+                  "tags": [
+                    "C1",
+                    "access",
+                    "VBA",
+                    "roadmap-r1"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0080",
+                      "0081",
+                      "0082"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1117-c1-access-inventory.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Сбор и карта Access",
+                    "details": "ExportAllModulesC1=125 (UTF-8 в VBA-Code-Export/); DumpC1MSys: forms 243, reports 72, queries 342, linked 167 → c1-inventory/raw/. Карта G1–G20 без априорных migrate. Принцип: решения в ходе C2–C5.",
+                    "outcome": "Каталог и карта ✅",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/c1-inventory/",
+                      "docs/project/proposals/vba-analysis/VBA-Code-Export/"
+                    ]
+                  },
+                  {
+                    "action": "Порядок выпусков и закрытие",
+                    "details": "Дорожная карта 0.1.3: R1.1=C2 (ввод планов — первым, т.к. UtPl/stCost нужен _2606), R1.2=C3 (факт). Задача 0080 completed; 0081→R1.1, 0082→R1.2.",
+                    "outcome": "План C1 ✅ completed",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1117-c1-access-inventory.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
           "displayName": "Синхронизация документации и дорожная карта R1 (in-progress, high). № chat-2026-11-13-001",
           "chat-attributes": {
             "id": "chat-2026-11-13-001",

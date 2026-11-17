@@ -11,7 +11,7 @@ Option Compare Database
 
 Private Sub Form_Current()
 
-    Dim raKey As Integer
+    Dim raKey As Long
 
     Const cstrTitle As String _
     = "Процедура *Смена текущей записи формы СТРОЙКИ*"

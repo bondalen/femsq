@@ -1,0 +1,6 @@
+﻿-- Access QueryDef: ciduCnCtptExistInvAll
+-- Type: 0
+
+SELECT f.cidutCntrPrtNum, f.cidutCntrPrtName, f.cidutCnName, f.cidutCnNameNull, f.cidutCnDate, f.cidutCnDateNull, f.cidutCnInv, f.cidutCnInvNull, f.cn_key, f.cn_s_org_key, g.iKey, g.ciKey
+FROM (SELECT h.cidutCntrPrtNum, h.cidutCntrPrtName, h.cidutCnName, h.cidutCnNameNull, h.cidutCnDate, h.cidutCnDateNull, h.cidutCnInv, h.cidutCnInvNull, h.cn_key, h.cn_s_org_key FROM (SELECT u.cidutCntrPrtNum, u.cidutCntrPrtName, u.cidutCntrPrtITN, u.cidutCnName, u.cidutCnNameNull, u.cidutCnDate, u.cidutCnDateNull, u.cn_key, u.cn_s_org_key, t.cidutCnInv, t.cidutCnInvNull, t.cidutAccount FROM ciduCnCtptExistList AS u LEFT JOIN CnInvDbtUplTbl AS t ON (u.cidutCnDateNull = t.cidutCnDateNull) AND (u.cidutCnNameNull = t.cidutCnNameNull) AND (u.cidutCntrPrtNum = t.cidutCntrPrtNum))  AS h GROUP BY h.cidutCntrPrtNum, h.cidutCntrPrtName, h.cidutCnName, h.cidutCnNameNull, h.cidutCnDate, h.cidutCnDateNull, h.cidutCnInv, h.cidutCnInvNull, h.cn_key, h.cn_s_org_key)  AS f LEFT JOIN agsCnInvNumsVariants AS g ON (f.cidutCnDateNull = g.csoCnDateNull) AND (f.cidutCnInvNull = g.inNumNull) AND (f.cn_key = g.cn_key)
+GROUP BY f.cidutCntrPrtNum, f.cidutCntrPrtName, f.cidutCnName, f.cidutCnNameNull, f.cidutCnDate, f.cidutCnDateNull, f.cidutCnInv, f.cidutCnInvNull, f.cn_key, f.cn_s_org_key, g.iKey, g.ciKey;

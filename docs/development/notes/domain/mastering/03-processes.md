@@ -15,7 +15,7 @@
 
 Сейчас процесс выполняется в **MS Access** на стеке **`_2605`**; ревизии актов АВ и аренды земли — в **FEMSQ JAR 156**. Цель R1 — **FEMSQ как единственный инструмент** на стеке `_2606`.
 
-Источник сведений об Access — выгрузка VBA [`VBA-Code-Export/`](../../../../project/proposals/vba-analysis/VBA-Code-Export/) (январь 2026, **устарела**: до перехода на `_2605`). Формы без кода, запросы и макросы в ней не видны — их даст каталог C1 ([MS-ACCESS-OBJECTS-CAPTURE §4](../../../../project/proposals/vba-analysis/MS-ACCESS-OBJECTS-CAPTURE.md)).
+Источник сведений об Access — выгрузка VBA [`VBA-Code-Export/`](../../../../project/proposals/vba-analysis/VBA-Code-Export/) (**2026-11-17**, UTF-8, файл `24-1125_ra_R_26-1113`) и каталог C1 [`c1-inventory/raw/`](../../../../project/proposals/vba-analysis/c1-inventory/raw/) (формы 243, отчёты 72, запросы 342, linked 167). Реестр групп: [`registry.md`](../../../../project/proposals/vba-analysis/c1-inventory/registry.md). Порядок съёма: [MS-ACCESS-OBJECTS-CAPTURE §4](../../../../project/proposals/vba-analysis/MS-ACCESS-OBJECTS-CAPTURE.md).
 
 ---
 

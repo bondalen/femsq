@@ -277,7 +277,7 @@ End Sub
 ' проверяем имеющиеся в БД задолженности, которые более чем одна у счёта-фактуры. 17.01.2022 16:58 **************************************************
 Private Sub invDbtDouble(ByRef db As DAO.Database, ByRef rslt As Object, ByRef RcdCount As Integer)
 
-    Dim strSql As String, rsF As DAO.Recordset, Inv As Inv, rsNumDbtUpl As DAO.Recordset
+    Dim strSql As String, rsF As DAO.Recordset, inv As inv, rsNumDbtUpl As DAO.Recordset
     Dim CiaNm As CiaNm, Accnt As Accnt, maxDate As Date
 
     Const cstrTitle As String _
@@ -303,16 +303,16 @@ On Error GoTo ErrHandler
         rsF.MoveFirst: iii = 1
         Do Until rsF.EOF = True
             ' создаём объект класса *Задолженность*
-            Set Inv = ClassFactory.invByKey(rsF!iKey, db)
+            Set inv = ClassFactory.invByKey(rsF!iKey, db)
             strSql = ""
-            If Not Inv Is Nothing Then
+            If Not inv Is Nothing Then
                 strSql = "<p>" & iii & ". <font color=""silver"">"
-                    strSql = strSql & "Ключ: <font color=""DarkSlateBlue"">" & Inv.iKey & "</font>"
+                    strSql = strSql & "Ключ: <font color=""DarkSlateBlue"">" & inv.iKey & "</font>"
                 ' имеются ли в источнике счёты-фактуры со сходными номерами?
-                If Inv.invNumbersInDebtUpl(db, rsNumDbtUpl) Then
+                If inv.invNumbersInDebtUpl(db, rsNumDbtUpl) Then
                     ' да, в источнике счёты-фактуры со сходными номерами имеются
                     strSql = strSql & ". Совпадения номеров СФ <font color=""DarkOrange""><b>" & _
-                    Inv.strInvName & "</b></font> в истонике : <font color=""DarkOrange"">есть</font>, всего: " & rsNumDbtUpl.RecordCount
+                    inv.strInvName & "</b></font> в истонике : <font color=""DarkOrange"">есть</font>, всего: " & rsNumDbtUpl.RecordCount
                     ' проходим по каждой задолженности
                     ' ... 06.02.2023 17:51 завтра отсюда
                     rsNumDbtUpl.MoveFirst: zzz = 1
@@ -322,7 +322,7 @@ On Error GoTo ErrHandler
                             ' да, имя задолженности имеется
                             strSql = strSql & ".</p><p>  <font color=""Orange"">" & iii & "." & zzz _
                                 & ".</font> Имя: <font color=""CadetBlue"">" & rsNumDbtUpl!cidutCnInvName & "</font>"
-                            Set CiaNm = ClassFactory.ciaNmByInvAndCiaName(Inv.iKey, rsNumDbtUpl!cidutCnInvName, db)
+                            Set CiaNm = ClassFactory.ciaNmByInvAndCiaName(inv.iKey, rsNumDbtUpl!cidutCnInvName, db)
                             ' имеется ли задолженность?
                             If Not CiaNm Is Nothing Then
                                 Set Accnt = ClassFactory.accntByKey(rsNumDbtUpl!cidutAccount, db)
@@ -356,7 +356,7 @@ On Error GoTo ErrHandler
                 Else
                     ' нет, в источнике счёты-фактуры со сходными номерами отсутствуют
                     strSql = strSql & ". Совпадений номеров СФ <font color=""DarkGreen""><b>" & _
-                    Inv.strInvName & "</b></font> в истонике : <font color=""DarkGreen"">нет</font>"
+                    inv.strInvName & "</b></font> в истонике : <font color=""DarkGreen"">нет</font>"
                 End If
                 rsNumDbtUpl.Close: Set rsNumDbtUpl = Nothing
             Else
@@ -364,7 +364,7 @@ On Error GoTo ErrHandler
                     strSql = strSql & "Объект с ключом: <font color=""DarkSlateBlue"">" & rsF!iKey & "</font> отсутствует в БД!"
             End If
             ' удаляем объект класса *Задолженность*
-            Set Inv = Nothing
+            Set inv = Nothing
             strSql = strSql & "</font>.</p>"
             rslt = strSql & rslt
             ' переходим к следующей записи
@@ -1924,7 +1924,7 @@ End Sub
 '****************************************************************************************************************************************************
 ' создаём новый счёт-фактуру для найденного договора. 25.10.2022 ************************************************************************************
 Private Sub btnInvAdd_Click()
-    Dim strInvNum As String, lngCnKey As Long, invNew As Inv, cnInvNew As cnInv
+    Dim strInvNum As String, lngCnKey As Long, invNew As inv, cnInvNew As cnInv
     Const cstrTitle As String = "Процедура *Создаём новый счёт-фактуру для найденного договора*"
     '**************************************************************************************************************************************
 On Error GoTo ErrHandler

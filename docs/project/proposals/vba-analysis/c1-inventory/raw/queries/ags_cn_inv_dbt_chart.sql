@@ -1,0 +1,7 @@
+﻿-- Access QueryDef: ags_cn_inv_dbt_chart
+-- Type: 128
+
+SELECT ags_cn_inv_dbt_upl.upl_date, ags_cnInvAccnt.ciaCnInv, IIf(IsNull([dbt_ttl]),0,[dbt_ttl]) AS ttl, [ags_accnt]![account_num] & " " & [ags_org_id]![org_id_value_l] & " " & [ags_og]![ogNm] & " всего" AS type
+FROM (((((ags_cn_inv_dbt INNER JOIN ags_cn_inv_dbt_upl ON ags_cn_inv_dbt.cn_inv_dbt_upl = ags_cn_inv_dbt_upl.upl_key) INNER JOIN ags_cnInvAccnt ON ags_cn_inv_dbt.cidCnInvAccnt = ags_cnInvAccnt.ciaKey) INNER JOIN ags_accnt ON ags_cnInvAccnt.ciaAccnt = ags_accnt.account_key) INNER JOIN ags_cn_s_org ON ags_cn_inv_dbt.cidCounterParty = ags_cn_s_org.cn_s_org_key) INNER JOIN ags_org_id ON ags_cn_s_org.org_id = ags_org_id.org_id_key) INNER JOIN ags_og ON ags_org_id.org = ags_og.ogKey
+UNION ALL SELECT ags_cn_inv_dbt_upl.upl_date, ags_cnInvAccnt.ciaCnInv, IIf(IsNull([dbt_overd]),0,[dbt_overd]) AS ttl, [ags_accnt]![account_num] & " " & [ags_org_id]![org_id_value_l] & " " & [ags_og]![ogNm] & " просрочено" AS type
+FROM (((((ags_cn_inv_dbt INNER JOIN ags_cn_inv_dbt_upl ON ags_cn_inv_dbt.cn_inv_dbt_upl = ags_cn_inv_dbt_upl.upl_key) INNER JOIN ags_cnInvAccnt ON ags_cn_inv_dbt.cidCnInvAccnt = ags_cnInvAccnt.ciaKey) INNER JOIN ags_accnt ON ags_cnInvAccnt.ciaAccnt = ags_accnt.account_key) INNER JOIN ags_cn_s_org ON ags_cn_inv_dbt.cidCounterParty = ags_cn_s_org.cn_s_org_key) INNER JOIN ags_org_id ON ags_cn_s_org.org_id = ags_org_id.org_id_key) INNER JOIN ags_og ON ags_org_id.org = ags_og.ogKey;

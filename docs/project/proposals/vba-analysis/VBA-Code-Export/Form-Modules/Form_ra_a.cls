@@ -305,7 +305,7 @@ If IsNull(Me!adt_key) = False Then
                                                     Me!adt_results = _
                                                         "<P><B><font color=""navy"">" & DateTime.Now _
                                                         & "</font></B> -  Лист № " & rstSheetsFiltered!ft_s_num & " *<B><font color=""green"">" _
-                                                        & xlS.name & " - обнаружен в книге" _
+                                                        & xlS.Name & " - обнаружен в книге" _
                                                         & "</font></B>*. Тип листа: *" & rstSheetsFiltered!st_name & "*</P>" _
                                                         & Me!adt_results
                                                         
@@ -330,7 +330,7 @@ If IsNull(Me!adt_key) = False Then
                                                                     Me!adt_results = _
                                                                         "<P>" & DateTime.Now _
                                                                         & " -  Лист № " & rstSheetsFiltered!ft_s_num & " *<B><font color=""red"">" _
-                                                                        & xlS.name & " - не имеет соспоставленного отчётного периода" _
+                                                                        & xlS.Name & " - не имеет соспоставленного отчётного периода" _
                                                                         & "</font></B>*. Тип листа: *" & rstSheetsFiltered!st_name & "*</P>" _
                                                                         & Me!adt_results
                                                                 End If
@@ -361,7 +361,7 @@ If IsNull(Me!adt_key) = False Then
                                                                     Me!adt_results = _
                                                                         "<P>" & DateTime.Now _
                                                                         & " -  Лист № " & rstSheetsFiltered!ft_s_num & " *<B><font color=""red"">" _
-                                                                        & xlS.name & " - не имеет соспоставленного месяца и года" _
+                                                                        & xlS.Name & " - не имеет соспоставленного месяца и года" _
                                                                         & "</font></B>*. Тип листа: *" & rstSheetsFiltered!st_name & "*</P>" _
                                                                         & Me!adt_results
                                                                 End If
@@ -909,14 +909,16 @@ On Error GoTo ErrHandler
             ' ***************************************************************************************************************************************
             ' формируем таблицу исходных данных в клиенте БД ****************************************************************************************
             
-            ' очищаем таблицу для хранения перечня пунктов первичного документа из источника
-            strSql = "DELETE * FROM cn_PrDocImp"
+            ' очищаем таблицу для хранения перечня пунктов первичного документа из источника cn_PrDocImp_26
+            ' strSql = "DELETE * FROM cn_PrDocImp"
+            strSql = "DELETE * FROM cn_PrDocImp_26"
             Set qd = db.CreateQueryDef("", strSql)
             qd.Execute dbFailOnError
             qd.Close: Set qd = Nothing
             
             ' открываем набор строк для хранения перечня пунктов первичного документа из источника
-            Set rstCn_PrDocImp = db.OpenRecordset("cn_PrDocImp", dbOpenDynaset)
+            ' Set rstCn_PrDocImp = db.OpenRecordset("cn_PrDocImp", dbOpenDynaset)
+            Set rstCn_PrDocImp = db.OpenRecordset("cn_PrDocImp_26", dbOpenDynaset)
             
             iii = 0: eee = 0
             For Each r In ra_r
@@ -945,7 +947,7 @@ On Error GoTo ErrHandler
                                     ' пробуем отыскать тип первичного документа
                                     Set qdFindSv = db.QueryDefs("ags_PdSdRRcList")
                                     StringFindSv = "select pdtoKey from ags.cn_PrDocT where pdtoCode = '" & r.Offset(0, offsetFindet) & "'"
-                                    qdFindSv.SQL = StringFindSv
+                                    qdFindSv.sql = StringFindSv
                                     Set rsFindSv = qdFindSv.OpenRecordset(dbOpenSnapshot)
                                     If rsFindSv.RecordCount = 1 Then
                                         !cnpdTpOrdKey = rsFindSv!pdtoKey
@@ -2684,7 +2686,7 @@ On Error GoTo ErrHandler
         
         
         RowLastNum = xlS.Cells.SpecialCells(xlCellTypeLastCell).Row
-        lLastRow = Cells(Rows.count, c.Column).End(xlUp).Row
+        lLastRow = xlS.Cells(xlS.Rows.count, c.Column).End(xlUp).Row ' изменил 13.05.2026, добавил xlS к Rows
         
         
         Set ra_r = xlS.Range(c.Offset(1, 0), xlS.Cells(xlS.Cells.SpecialCells(xlCellTypeLastCell).Row, c.Column))
@@ -4221,7 +4223,7 @@ NotRaCh:
                     RegExp.Pattern = strReg
                     ' устанавливаем вместо поиска всех совпадений в строке поиск первого совпадения
                     RegExp.Global = False
-                    Set Match = RegExp.Execute(StringClean(c.Text))
+                    Set Match = RegExp.Execute(StringClean(c.text))
                     ' имеются ли совпадения?
                     If Match.count > 0 Then
                         ' да, совпадения имеются, это изменение
@@ -4236,7 +4238,7 @@ NotRaCh:
                         RegExp.Pattern = strReg
                         ' устанавливаем вместо поиска всех совпадений в строке поиск первого совпадения
                         RegExp.Global = False
-                        Set Match = RegExp.Execute(StringClean(c.Text))
+                        Set Match = RegExp.Execute(StringClean(c.text))
                         ' имеются ли совпадения?
                         If Match.count > 0 Then
                             ' да, совпадения имеются, это отчёт
@@ -4382,7 +4384,7 @@ On Error GoTo ErrHandler
                             ' пробуем отыскать агента
                             Set qdf = db.QueryDefs("ags_PdSdRRcList")
                             qdString = "select * from ags.ogNmF_allVariantsAg where ogNm like '" & AgOrCst & "' and ogaCode = '" & AgOrCstCode & "'"
-                            qdf.SQL = qdString
+                            qdf.sql = qdString
                             Set rsAg = qdf.OpenRecordset()
                                 ' имеется ли хотя бы одна запись агента?
                                 If rsAg.RecordCount > 0 Then
@@ -5567,7 +5569,7 @@ Private Function FindAct(ByVal actNum As String, ByVal actDate As Date, ByVal ag
     qdString = "select * from ags.ogAgFee where oafNum = '" & actNum _
         & "' and oafDate = '" & DateConvertToQuery(actDate, "sql") & "' and cstaAg = " & agKey & " and oafY = " _
         & yearAF & " and oafM = " & monthAF & ";"
-    qdfAct.SQL = qdString
+    qdfAct.sql = qdString
     Set rsAct = qdfAct.OpenRecordset()
         ' имеется ли хотя бы одна запись акта?
         If rsAct.RecordCount > 0 Then
@@ -5689,7 +5691,7 @@ On Error GoTo ErrHandler
         Else
         ' вторая попытка
         ' имеются ли даты в строке?
-        ParseDateResult = ParseDate(Text:=StringValueCl, Start:=False, CountDates:=CountDates)
+        ParseDateResult = ParseDate(text:=StringValueCl, Start:=False, CountDates:=CountDates)
         If IsNull(ParseDateResult) = False Then
             ' да, даты в строке имеются
             ' одна ли дата в строке?
@@ -5771,7 +5773,7 @@ End Function
 'End Function
 
 ' Обрабатываем найденный отчёт агента.
-Private Sub ReportOfAgent(ra As String, ra_date As Variant, Constraction As String, period As Integer, _
+Private Sub ReportOfAgent(ra As String, ra_date As Variant, Constraction As String, period As Long, _
     addRa As Boolean, str As String, db As DAO.Database, _
     total As Variant, work As Variant, equipment As Variant, others As Variant, _
     arrived As String, returned As String, sent As String, note As String, ra_org_sender As Long, _
@@ -6302,7 +6304,7 @@ End Function
 
 ' обрабатываем найденное изменение отчёта
 Private Sub ChangeOfReportOfAgent( _
-    ChRpStr As String, ChRpDate As Date, cst As String, fff As String, db As DAO.Database, period As Integer, addRa As Boolean, _
+    ChRpStr As String, ChRpDate As Date, cst As String, fff As String, db As DAO.Database, period As Long, addRa As Boolean, _
     total As Variant, work As Variant, equipment As Variant, others As Variant, _
     arrived As String, returned As String, sent As String, note As String, ra_org_sender As Long _
     )
@@ -7062,7 +7064,7 @@ End Function
 
 ' получаем дату из строки, Start - давать самую раннюю дату, иначе - самую позднюю
 ' CountDates - показывает сколько дат в строке
-Function ParseDate(ByVal Text As String, Start As Boolean, _
+Function ParseDate(ByVal text As String, Start As Boolean, _
     Optional ByRef ErrDescr As String, Optional ByRef CountDates As Integer) As Variant
 
     ' для разных дат
@@ -7077,7 +7079,7 @@ On Error GoTo ErrHandler
     ParseDate = Null: ErrDescr = "": CountDates = 0
     
     ' очистим строку
-    strTemp = StringClean(Text)
+    strTemp = StringClean(text)
     
     ' ищем разные даты
     Set RegExp = CreateObject("VBScript.RegExp")
@@ -7167,7 +7169,7 @@ End Function
 'End Function
 
 ' отыскиваем сводные значения на листе
-Private Sub TotalValuesFind(WSheetType As String, xlS As Excel.Worksheet, period As Integer, addRa As Boolean, _
+Private Sub TotalValuesFind(WSheetType As String, xlS As Excel.Worksheet, period As Long, addRa As Boolean, _
     fff As Object, db As DAO.Database, ra_org_sender As Long, raColumn As Integer)
     
     Dim c As Range
@@ -7457,7 +7459,7 @@ On Error GoTo ErrHandler
                         ") c " & _
                         "on x.ra_org_sender = c.ra_org_sender and x.ra_period = c.ra_period"
 
-            qdf.SQL = sqlStr
+            qdf.sql = sqlStr
                 
         iii = 0
         

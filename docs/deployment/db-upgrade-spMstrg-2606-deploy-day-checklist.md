@@ -1,7 +1,7 @@
 # Чеклист: день деплоя `spMstrg_2606` на продуктив
 
 **Дата деплоя:** _______________ (пока не назначена)  
-**lastUpdated:** 2026-06-30 (целевые имена Решение 21; этап **21.5** → пересборка флешки)
+**lastUpdated:** 2026-11-17 (этап **21.5**: `05c` в порядке SQL; → пересборка флешки)
 **Ответственный (SQL):** Александр  
 **Среда:** продуктив FishEye, **Windows Authentication**, **SSMS**  
 **Доставка пакета:** флеш-носитель `{YY-MMDD}_deploy/` (см. [`sql-flash-drive-packaging.md`](sql-flash-drive-packaging.md))
@@ -24,7 +24,7 @@ DEPLOY_ARCHIVE_PASSWORD='…' ./build_flash_package.sh --zip-password
 
 | На флешке | Содержимое |
 |-----------|------------|
-| `open/01_MSSQL2012/` | все скрипты 00–08, **09a–09c** (UtPl), 04b, 05b, 06b, 03b1b, 00-perf-indexes* |
+| `open/01_MSSQL2012/` | все скрипты 00–08, **09a–09c** (UtPl), 04b, **05a/05b/05c**, 06b, 03b1b, 10a–10d, 00-perf-indexes* |
 | `open/02_acceptance/` | `07_VERIFY_spMstrg_2606_chain5.sql`, `07_VERIFY_spFn2_schema.sql` |
 | `open/03_docs/` | **PDF** чеклиста + `db-upgrade-spMstrg-2606.md` |
 | `open/04_prod_log/` | шаблоны логов |
@@ -90,8 +90,9 @@ WHERE schema_id = SCHEMA_ID('ags') AND name LIKE 'spMstrg_2408_ResultSet%';
 | A.5 | `04`, `05` | ☐ | fn2 + PercentBrn |
 | A.5a | `05a_PATCH_PercentBrn_fnIpgChDats_2606` | ☐ | календарь 17 дат (этап 20) |
 | A.5b | `05b_PATCH_PercentBrn_ipgChRl_2606` | ☐ | plan-JOIN → `ipgChRl_2606` (**21.2**, после rename **21.1**) |
-| A.6 | `04b`, `05b` (опционально) | ☐ | spFn2 path |
-| A.7 | `05b` (таблицы), `06` или `06b` | ☐ | fn-path рекомендуется до gate |
+| A.5c | `05c_PATCH_PercentBrn_plan_LmMn_2606` | ☐ | plan из LmMn@212 (**21.4.3**, Решение 22; после A.5b) |
+| A.6 | `04b`, sp PercentBrn (опционально) | ☐ | spFn2 path |
+| A.7 | `05b` (таблицы ResultSet), `06` или `06b` | ☐ | fn-path рекомендуется до gate |
 | A.8 | `07_VERIFY_after.sql` | ☐ | |
 | A.9 | `07_VERIFY_spFn2_schema.sql` | ☐ | если A.6 |
 | A.10 | **09 UtPl:** `09a` → `09b` → `09c` | ☐ | аудит `lim<=0` → очистка (с компенсацией SUM) → CHECK `lim>0` |

@@ -344,7 +344,7 @@ Private Sub TabCreateArray()
     Set rs = db.OpenRecordset("ipgChRsltPlCstPercent", dbOpenSnapshot)
 
     For i = 0 To rs.Fields.count - 1
-        strVar = rs.Fields(i).name
+        strVar = rs.Fields(i).Name
 
         oFile.WriteLine "myArray(" & i + 1 & ", 1) = """ & strVar & """: myArray(" & i + 1 & ", 2) = """ & strVar & """"
 
@@ -363,7 +363,7 @@ End Sub
 
 ' инвойс с пустой датой
 Private Sub testInvDateNull()
-Dim db As DAO.Database, invTest As Inv
+Dim db As DAO.Database, invTest As inv
 
 Set db = CurrentDb
 

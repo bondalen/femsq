@@ -413,7 +413,7 @@ Private Sub Кнопка11_Click()
     'strSQL = "EXEC [ags].[ipgChRslt] " & Me.ipgcKey
     Set qd = db.CreateQueryDef("")
     qd.Connect = db.TableDefs("ags_yyyy").Connect
-    qd.SQL = "EXEC [ags].[ipgChRslt] " & Me.ipgcKey
+    qd.sql = "EXEC [ags].[ipgChRslt] " & Me.ipgcKey
     qd.ReturnsRecords = True
     qd.ODBCTimeout = 300
     
@@ -503,7 +503,7 @@ Private Sub Кнопка53_Click()
     'получаем набор записей от сервера
     Set qd = db.CreateQueryDef("")
     qd.Connect = db.TableDefs("ags_yyyy").Connect
-    qd.SQL = "EXEC [ags].[ipgChRsltFull] " & Me.ipgcKey
+    qd.sql = "EXEC [ags].[ipgChRsltFull] " & Me.ipgcKey
     qd.ReturnsRecords = True
     
     Set rstD = qd.OpenRecordset(dbOpenSnapshot)
@@ -604,7 +604,7 @@ Private Sub Кнопка57_Click()
     'получаем набор записей от сервера
     Set qd = db.CreateQueryDef("")
     qd.Connect = db.TableDefs("ags_yyyy").Connect
-    qd.SQL = "EXEC [ags].[spIpgChRsltCstUtl3_GP_2] " & Me.ipgcKey
+    qd.sql = "EXEC [ags].[spIpgChRsltCstUtl3_GP_2] " & Me.ipgcKey
     qd.ReturnsRecords = True
     qd.ODBCTimeout = 300
     

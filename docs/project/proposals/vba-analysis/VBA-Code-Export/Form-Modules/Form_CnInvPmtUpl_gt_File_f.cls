@@ -43,7 +43,7 @@ End Sub
 '****************************************************************************************************************************************************
 ' создаём счёт-фактуру для договора. 03.05.2023
 Private Sub btnInvCreate_Click()
-    Dim strInvNum As String, lngCnKey As Long, invNew As Inv, cnInvNew As cnInv
+    Dim strInvNum As String, lngCnKey As Long, invNew As inv, cnInvNew As cnInv
     Const cstrTitle As String = "Процедура *Создаём новый счёт-фактуру для найденного договора*"
     '**************************************************************************************************************************************
 On Error GoTo ErrHandler
@@ -1778,7 +1778,7 @@ On Error GoTo ErrHandler
             'FieldIns = Trim(CellOut)
         'End If
         ' поле является полем даты?
-        If FieldIns.type = 8 Then
+        If FieldIns.Type = 8 Then
             ' да, поле является полем даты
             ' значение ячейки является датой?
             If IsDate(CellOut) Then
@@ -1787,7 +1787,7 @@ On Error GoTo ErrHandler
                 Else
                 ' нет, значение ячейки не является датой
                 strF = strF & ". <font color=""Goldenrod"">Ошибка внесения <font color=""Salmon""><b>даты</b></font>. В поле: <font color=""Olive"">" _
-                    & FieldIns.name & "</font> вносится " & CellOut.value & "</font>"
+                    & FieldIns.Name & "</font> вносится " & CellOut.value & "</font>"
             End If
             Else
             ' да, поле не является полем даты
@@ -1800,7 +1800,7 @@ NormalExit:
     
 ErrHandler:
     MsgBox Err.Description & vbCrLf _
-        & "Номер ошибки: " & Err.Number & ". Поле: " & FieldIns.name & ". Тип поля: " & FieldIns.type _
+        & "Номер ошибки: " & Err.Number & ". Поле: " & FieldIns.Name & ". Тип поля: " & FieldIns.Type _
         & ". В ячеёке: " & CellOut.value & "." & vbCrLf _
         & cstrTitle, vbExclamation, cstrTitle
     Resume NormalExit

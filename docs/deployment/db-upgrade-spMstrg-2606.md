@@ -2,8 +2,8 @@
 
 **Файл:** `docs/deployment/db-upgrade-spMstrg-2606.md`  
 **Дата:** 2026-06-12  
-**lastUpdated:** 2026-06-30  
-**Версия:** 1.5  
+**lastUpdated:** 2026-11-17  
+**Версия:** 1.6  
 **Автор:** Александр
 
 **Краткий чеклист на день деплоя:** [`db-upgrade-spMstrg-2606-deploy-day-checklist.md`](db-upgrade-spMstrg-2606-deploy-day-checklist.md)
@@ -30,7 +30,7 @@
 | `ipgChRl_2606`, `factDoc`, `factDocCost`, триггеры | CREATE + бэкфилл (`01`) |
 | `stIpgOutLimPn_2606` | CREATE + seed (`10a`–`10c`) |
 | `fnStCost*_2606`, `fnMastering*_2606`, `fn2_2606`, `PercentBrn_2606` | CREATE |
-| `05a` календарь RS1; **`05b` plan-align** (`ipgChRl_2606` в PercentBrn) | PATCH после `05` (этап 20 + **21.2**) |
+| `05a` календарь RS1; **`05b` plan-align** (`ipgChRl_2606`); **`05c` plan LmMn@212** | PATCH после `05` (этапы 20, **21.2**, **21.4.3**) |
 | `spMstrg_2606_ResultSet1..7` | CREATE (схема как `_2408`) |
 | `spMstrg_2606` | CREATE (fn-path: `06`; SP-path: `06b` после gate spFn2) |
 | `_2605`, `_2408`, `spMstrg_2408_ResultSet*` | **не изменяются** |
@@ -70,6 +70,7 @@
 | 5, 5b | PercentBrn fn + **sp** | prod: `05b` (INSERT EXEC spFn2) |
 | 5a | `05a_PATCH_PercentBrn_fnIpgChDats_2606` | календарь 17 дат (этап 20) |
 | 5b | `05b_PATCH_PercentBrn_ipgChRl_2606` | plan-JOIN → `ipgChRl_2606` (этап **21.2**) |
+| 5c | `05c_PATCH_PercentBrn_plan_LmMn_2606` | plan из `ipgUtPlPnLmMn` @212 (этап **21.4.3**, Решение 22) |
 | 5b | `05b_CREATE_TABLE_spMstrg_2606_ResultSets.sql` | ResultSet1..7 |
 | 6, 6b | spMstrg fn-path / **SP-path** | dev: `06`; prod TBD после `07_VERIFY_spFn2_schema` |
 | 6c | `06c_FIX_spMstrg_ROWCOUNT_logging.sql` | Патч лога saveToTables (опционально для `_2605`) |
@@ -94,13 +95,15 @@
 4.  01 … 01d1
 5.  02 … 03d, 03b1 (+ 03b1b CostBase на prod)
 6.  04, 04b (опционально spFn2)
-7.  05, 05b
-8.  05b (таблицы), 06 или 06b
+7.  05 → 05a → 05b (patch) → 05c
+8.  05b (таблицы ResultSet), 06 или 06b
 9.  07_VERIFY_after.sql
-10. 07_VERIFY_spFn2_schema.sql      (если 04b/05b/06b)
+10. 07_VERIFY_spFn2_schema.sql      (если 04b / sp PercentBrn / 06b)
 11. 09a → 09b → 09c                 (UtPl: аудит → очистка → CHECK lim>0)
 12. run_acceptance / 07_VERIFY_spMstrg_2606_chain5 @ 2022-12-31
 ```
+
+**PercentBrn на prod (после базового `05`):** обязательны `05a` (17 дат), `05b` (plan-JOIN → `ipgChRl_2606`), `05c` (plan из LmMn@212). `05c` кумулятивен относительно `05a`/`05b`; на чистом объекте после `05` допустимо применить только `05c`, если не применяли промежуточные патчи.
 
 **Блок 09 (deploy-day, этап 17.3.1):** привести prod-данные UtPl к состоянию, эквивалентному dev после **18.8.3** (sparse, без `lim<=0`), затем включить CHECK. `09a` прерывает цепочку при обнаружении нарушений; `09b` удаляет нули и отрицательные значения с **компенсацией SUM** по `(plPn, stCost)`; `09c` включает `CK_*_gt0` (`lim > 0`).
 
