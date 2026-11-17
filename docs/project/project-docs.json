@@ -900,9 +900,9 @@
         {
           "id": "Q-check-docs",
           "name": "check-docs",
-          "status": "warn-mode",
+          "status": "strict",
           "asOf": "2026-11-17",
-          "detail": "code/scripts/check-docs.sh: ERROR=0, WARN≈147; strict — блок 13 docs-sync"
+          "detail": "ERROR=0; pre-commit и build-thin-jar.sh блокируют по ошибкам (docs-sync блок 13); WARN не блокируют"
         }
       ]
     },

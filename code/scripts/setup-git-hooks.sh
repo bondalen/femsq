@@ -17,4 +17,4 @@ cd "$ROOT"
 git config core.hooksPath .githooks
 echo "OK: core.hooksPath=.githooks"
 echo "Проверка: git config --get core.hooksPath → $(git config --get core.hooksPath)"
-echo "Режим check-docs в pre-commit: CHECK_DOCS_MODE=warn (до блока 13 docs-sync)."
+echo "Режим check-docs в pre-commit: CHECK_DOCS_MODE=strict (блок 13 docs-sync)."

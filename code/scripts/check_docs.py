@@ -17,7 +17,7 @@
   - битые пути в исторических записях
   - задача вне деревьев structure
 
-Режим: CHECK_DOCS_MODE=warn|strict (по умолчанию warn до блока 13).
+Режим: CHECK_DOCS_MODE=warn|strict (по умолчанию strict с блока 13).
 Корень: CHECK_DOCS_ROOT или корень репозитория (два уровня вверх от scripts/).
 """
 
@@ -388,10 +388,10 @@ def check_project_docs(data: dict[str, Any], root: Path) -> None:
 
 
 def main() -> int:
-    mode = os.environ.get("CHECK_DOCS_MODE", "warn").strip().lower()
+    mode = os.environ.get("CHECK_DOCS_MODE", "strict").strip().lower()
     if mode not in {"warn", "strict"}:
-        print(f"Unknown CHECK_DOCS_MODE={mode}, using warn", file=sys.stderr)
-        mode = "warn"
+        print(f"Unknown CHECK_DOCS_MODE={mode}, using strict", file=sys.stderr)
+        mode = "strict"
 
     script_dir = Path(__file__).resolve().parent
     root = Path(os.environ.get("CHECK_DOCS_ROOT", script_dir.parent.parent)).resolve()
@@ -433,7 +433,7 @@ def main() -> int:
         print("Итог: FAIL (strict, есть ошибки)")
         return 1
     if errors and mode == "warn":
-        print("Итог: WARN-MODE (ошибки не блокируют до блока 13)")
+        print("Итог: WARN-MODE (ошибки не блокируют; для отладки)")
         return 0
     print("Итог: OK")
     return 0

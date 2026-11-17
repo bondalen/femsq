@@ -20,6 +20,15 @@ cd "$CODE_ROOT"
 
 echo "Проект: $CODE_ROOT"
 
+# Документация: блокирующий check-docs до bump версии (docs-sync блок 13.3).
+# Предупреждения не останавливают сборку; ошибки — да.
+echo -e "\n${YELLOW}Проверка документации (check-docs, strict)...${NC}"
+if ! CHECK_DOCS_MODE=strict "$SCRIPT_DIR/check-docs.sh"; then
+    echo "Error: check-docs нашёл ошибки — сборка остановлена (блок 13)."
+    echo "         Исправьте документацию или временно: CHECK_DOCS_MODE=warn (не для CI/релиза)."
+    exit 1
+fi
+
 # Локальный feQuLib должен быть синхронизирован с GitHub до bump версии:
 # иначе frontend падает на экспорте (FemsqTree и др.), а номер сборки уже увеличен.
 echo -e "\n${YELLOW}Проверка локального feQuLib...${NC}"

@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# pre-commit: check-docs в режиме warn (docs-sync блок 4.4 → 13).
-# Ошибки печатаются, коммит не блокируется до перевода в strict (блок 13).
+# pre-commit: check-docs в блокирующем режиме (docs-sync блок 13).
+# Ошибки → exit 1 (коммит отклоняется). Предупреждения не блокируют.
+# Обход только осознанно: CHECK_DOCS_MODE=warn git commit …
 
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel)"
-export CHECK_DOCS_MODE="${CHECK_DOCS_MODE:-warn}"
+export CHECK_DOCS_MODE="${CHECK_DOCS_MODE:-strict}"
 
 echo "[pre-commit] check-docs (mode=$CHECK_DOCS_MODE)"
 "$ROOT/code/scripts/check-docs.sh" || {
-  # в warn скрипт сам возвращает 0 при ошибках; strict — 1
-  echo "[pre-commit] check-docs завершился с ошибкой"
+  echo "[pre-commit] check-docs: ошибки — коммит отклонён (блок 13)"
   exit 1
 }

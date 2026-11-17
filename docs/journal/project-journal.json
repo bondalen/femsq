@@ -8,6 +8,72 @@
     "sessions": [
       {
         "chat": {
+          "displayName": "docs-sync: защита check-docs и закрытие (completed, high). № chat-2026-11-17-007",
+          "chat-attributes": {
+            "id": "chat-2026-11-17-007",
+            "created": "2026-11-17",
+            "lastUpdated": "2026-11-17",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "high",
+            "tags": [
+              "docs-sync",
+              "block-13",
+              "block-14",
+              "check-docs"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [
+                "0078"
+              ],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-docs-sync.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Блоки 13–14: strict + закрытие (success). № log-2026-11-17-014",
+                "log-attributes": {
+                  "id": "log-2026-11-17-014",
+                  "timestamp": "2026-11-17T16:55:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": [
+                    "docs-sync",
+                    "block-13",
+                    "block-14"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0078"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-docs-sync.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Включение защиты и закрытие плана",
+                    "details": "check-docs default=strict; pre-commit и build-thin-jar блокируют по ERROR. План docs-sync 1.0.0 / задача 0078 completed.",
+                    "outcome": "Трек S ✅",
+                    "references": [
+                      ".githooks/pre-commit",
+                      "code/scripts/check-docs.sh",
+                      "code/scripts/build-thin-jar.sh"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
           "displayName": "docs-sync: modules.json и манифест сборок (completed, high). № chat-2026-11-17-006",
           "chat-attributes": {
             "id": "chat-2026-11-17-006",
@@ -495,13 +561,13 @@
       },
       {
         "chat": {
-          "displayName": "Синхронизация документации и дорожная карта R1 (in-progress, high). № chat-2026-11-13-001",
+          "displayName": "Синхронизация документации и дорожная карта R1 (completed, high). № chat-2026-11-13-001",
           "chat-attributes": {
             "id": "chat-2026-11-13-001",
             "created": "2026-11-09",
             "lastUpdated": "2026-11-17",
             "owner": "Александр",
-            "status": "in-progress",
+            "status": "completed",
             "priority": "high",
             "tags": [
               "deploy",
@@ -529,6 +595,44 @@
             }
           },
           "entries": [
+            {
+              "log": {
+                "displayName": "Блоки 13–14 docs-sync: защита и закрытие плана (success). № log-2026-11-17-013",
+                "log-attributes": {
+                  "id": "log-2026-11-17-013",
+                  "timestamp": "2026-11-17T16:55:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": [
+                    "docs-sync",
+                    "block-13",
+                    "block-14"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0078"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-docs-sync.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Strict check-docs + закрытие трека S",
+                    "details": "13.1 ERROR=0; 13.2 pre-commit strict; 13.3 build-thin-jar вызывает check-docs до bump. 14: задача 0078 completed, план 1.0.0 completed, реестр дорожной карты.",
+                    "outcome": "План docs-sync ✅",
+                    "references": [
+                      ".githooks/pre-commit",
+                      "code/scripts/build-thin-jar.sh",
+                      "code/scripts/check-docs.sh",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1116-docs-sync.md"
+                    ]
+                  }
+                ]
+              }
+            },
             {
               "log": {
                 "displayName": "Блок 6.1 docs-sync: задачи треков R1 в project-development.json (success). № log-2026-11-17-004",

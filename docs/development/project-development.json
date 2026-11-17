@@ -2871,9 +2871,9 @@
         },
         "0078": {
           "task": {
-            "displayName": "Синхронизация документации и правила против рассогласования (docs-sync) (in-progress, high). № 0078",
+            "displayName": "Синхронизация документации и правила против рассогласования (docs-sync) (completed, high). № 0078",
             "task-attributes": {
-              "status": "in-progress",
+              "status": "completed",
               "priority": "high",
               "owner": "Александр",
               "completionCriteria": [
@@ -2898,7 +2898,7 @@
               },
               "created": "2026-11-16",
               "lastUpdated": "2026-11-17",
-              "description": "Трек S дорожной карты R1. Блоки 1–3, 8–9, 12 ✅ (2026-11-17); 6.1 — этой записью."
+              "description": "Трек S дорожной карты R1. Блоки 1–14 ✅ (2026-11-17); check-docs strict в pre-commit и build-thin-jar."
             }
           }
         },
@@ -4379,7 +4379,7 @@
                   "task-items": [
                     {
                       "task-item": {
-                        "displayName": "🔄 Синхронизация документации и правила против рассогласования (in-progress, high). № 02.05.01 → 0078",
+                        "displayName": "✅ Синхронизация документации и правила против рассогласования (completed, high). № 02.05.01 → 0078",
                         "item-attributes": {
                           "structureId": "02.05.01",
                           "taskId": "0078",
