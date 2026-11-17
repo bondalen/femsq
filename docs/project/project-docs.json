@@ -2,7 +2,7 @@
   "project": {
     "metadata": {
       "name": "FEMSQ",
-      "version": "1.0.0",
+      "version": "1.5.0",
       "description": "Cистема работы с контрагентами и объектами при капитальном строительстве на основе БД MS SQL Server FEMSQ (Fish Eye MS SQL Server)",
       "author": "Александр",
       "created": "2025-10-08",
@@ -15,12 +15,14 @@
         "contractors",
         "management"
       ],
-      "documentationRules": "docs/project-documentation-rules.md"
+      "documentationRules": "docs/project-documentation-rules.md",
+      "updatedBy": "Александр",
+      "updateReason": "docs-sync блок 10 (Р-19…Р-23, Р-25)"
     },
     "architecture": {
       "type": "full-stack",
       "pattern": "modular-monolith",
-      "pattern_decision": "docs/decisions/007-modular-monolith-pattern.md",
+      "pattern_decision": "docs/project/decisions/007-modular-monolith-pattern.md",
       "notes": "Приложение работает с уже существующей БД FishEye; создание или миграция схем выполняется сторонними процедурами (DBA).",
       "backend": {
         "framework": "Spring Boot 3.4.5",
@@ -69,22 +71,24 @@
       },
       "frontend": {
         "framework": "Vue.js 3.4.21",
-        "language": "TypeScript 5.4.0",
-        "ui": "Quasar Framework 2.16.1",
-        "graphql": "Apollo Client",
-        "build": "Vite",
-        "maps": "Leaflet",
-        "routing": "Vue Router",
-        "state": "Pinia",
-        "serving": "Spring Boot Static Resources",
-        "deployment": "Встроен в Spring Boot JAR (единый артефакт)",
-        "component_library": "fequlib (`file:../../../feQuLib`)",
-        "component_library_sync": "Перед сборкой JAR/frontend проверять соседний клон: ./code/scripts/check-fequlib.sh (вызывается из build-thin-jar.sh до increment-version). Не копировать компоненты lib в FEMSQ.",
+        "language": "TypeScript ~5.4.5",
+        "ui": "Quasar Framework ~2.16.11",
+        "graphql": "Apollo Client ~3.14 + @vue/apollo-composable",
+        "build": "Vite ~5.4",
+        "maps": "не используется",
+        "routing": "без Vue Router — навигация через Pinia connection store / TopBar",
+        "state": "Pinia ~2.1",
+        "serving": "Spring Boot static resources",
+        "deployment": "Встроен в thin JAR (frontend-maven-plugin)",
+        "component_library": "fequlib (file:../../../feQuLib)",
+        "component_library_sync": "Перед сборкой JAR/frontend: ./code/scripts/check-fequlib.sh (из build-thin-jar.sh до increment-version). Не копировать компоненты lib в FEMSQ.",
         "tree": {
           "renderer": "FemsqTree (feQuLib 0016)",
           "walker": "RelationTree в FEMSQ; кандидат FemsqWalkTree; Решение 009",
           "notes": "Walker не встраивать в FemsqTree. T4b (inject fetch + JSON to) до второго экрана. Вынос в lib — после T7."
-        }
+        },
+        "charts": "ECharts ~5.6 + vue-echarts",
+        "packageJson": "code/femsq-frontend-q/package.json"
       },
       "reporting": {
         "engine": "JasperReports 7.0.3",
@@ -211,39 +215,50 @@
       }
     },
     "deployment": {
-      "strategy": "Единый JAR-файл с веб-интерфейсом настройки БД",
-      "architecture": {
-        "type": "monolithic",
-        "deployment_type": "fat-jar-corporate-network"
+      "lastUpdated": "2026-11-17",
+      "strategy": "Thin JAR + внешний lib/; на проде допустимы два экземпляра (действующий + кандидат) на общем FishEye",
+      "artifact": {
+        "type": "thin-jar",
+        "build": "./code/scripts/build-thin-jar.sh (+ check-fequlib, +1 к 4-й цифре версии)",
+        "run": "java -jar … с каталогом lib/ (см. run-with-external-libs.sh)"
       },
-      "environments": {
-        "frontend": "http://localhost:8080 (встроенный в JAR, подтверждено 2025-11-14)",
-        "backend": "http://localhost:8080",
-        "api": "http://localhost:8080/api/v1",
-        "graphql": "http://localhost:8080/graphql",
-        "note": "Frontend и backend работают на одном порту (8080), единый JAR-файл"
+      "endpoints": {
+        "app": "http://host:port/",
+        "graphql": "/graphql",
+        "health": "/api/v1/connection/status",
+        "version": "/api/v1/app/version",
+        "note": "Доменные REST /api/og|/api/ra|/api/ipg|/api/lookup удалены (docs-sync блок 5)"
       },
-      "configuration": {
-        "jar_name": "femsq-{version}.jar",
-        "startup_command": "java -jar femsq-{version}.jar"
+      "prod": {
+        "machine": "prod-fisheye",
+        "registry": "project.development.environments.machines.prod-fisheye",
+        "sqlTarget": "SQL Server 2012 SP4 — только скрипты MSSQL2012/",
+        "dualInstance": "См. .cursorrules и план Выкладка R1.x"
       },
       "extensions": [
         "docs/project/extensions/deployment/environments.json"
       ]
     },
     "features": {
+      "lastUpdated": "2026-11-17",
+      "source": "docs/project/business-processes.md",
       "core": [
-        "Управление отношениями с контрагентами",
-        "CRM функциональность",
-        "Документооборот",
-        "Стройки и САК (cst / cstAgPn) — UI в работе (задачи 0057–0058)",
-        "Ревизии (аудит/проверка файлов Excel)",
-        "Управленческий финансовый учет"
+        "P3 НСИ: организации (og), агенты, стройки (cst/cstAgPn), договоры (cn/cnInv) — UI на FemsqTable/GraphQL",
+        "Инвестиционные цепочки (ipgCh) — просмотр и связи с программами",
+        "P2 ревизии Excel: типы af_type 3 (аренда/РАЛП) и 6 (АВ) — на проде JAR 156; тип 5 (RA) — загрузка+сверка в FEMSQ",
+        "P2 типы 2 (хранение/ССК) — частичная загрузка; сверка — трек C3",
+        "Отчёты Jasper (PDF) — REST Blob (исключение архитектуры до C5)"
+      ],
+      "sudz_P1": [
+        "Квартальный цикл просроченной ДЗ: загрузки свода, привязка к стройке, Rslt, возврат/рассылка — DEV готов; прод — R2"
+      ],
+      "mastering_P2_r1": [
+        "Цель R1: FEMSQ — единственный инструмент освоения на _2606",
+        "C1 инвентаризация Access ✅; C2 ввод планов; C3 факт; C4 скорость; C5 отчёты; C7 выкладка"
       ],
       "advanced": [
-        "Автоматическая генерация документов (PDF, Excel, CSV)",
-        "Система отчетности",
-        "Кэширование и оптимизация"
+        "feQuLib: FemsqTable / FemsqTree / FemsqWalkTree / FemsqChart",
+        "СУДЗ UI: портфель, канон долга, выгрузки, сдвоенные СФ/долги"
       ]
     },
     "modules": {
@@ -790,11 +805,8 @@
         "url": "/",
         "title": "FEMSQ - Система работы с контрагентами"
       },
-      "extensions": [
-        "docs/project/extensions/ui/setup-forms.json",
-        "docs/project/extensions/ui/status-pages.json",
-        "docs/project/extensions/ui/user-experience.json"
-      ]
+      "extensions": [],
+      "extensionsNote": "Файлы extensions/ui/ не заводились; раздел краткий. Подробности — в коде и .cursorrules / development.environments."
     },
     "network": {
       "type": "controlled_corporate_network",
@@ -803,10 +815,8 @@
         "trusted_connection",
         "username_password"
       ],
-      "extensions": [
-        "docs/project/extensions/network/corporate-network.json",
-        "docs/project/extensions/network/connection-detection.json"
-      ]
+      "extensions": [],
+      "extensionsNote": "Файлы extensions/network/ не заводились; раздел краткий. Подробности — в коде и .cursorrules / development.environments."
     },
     "security": {
       "scope": "internal_secure_network",
@@ -836,114 +846,61 @@
         "optimization": "v0.1.0.45"
       },
       "backup": "daily-database",
-      "extensions": [
-        "docs/project/extensions/monitoring/logging-config.json",
-        "docs/project/extensions/monitoring/health-checks.json"
-      ]
+      "extensions": [],
+      "extensionsNote": "Файлы extensions/monitoring/ не заводились; раздел краткий. Подробности — в коде и .cursorrules / development.environments."
     },
     "timeline": {
-      "phases": [
+      "lastUpdated": "2026-11-17",
+      "note": "Исторические фазы 2025-01…03 («Phase 1 — 20%», «Система аутентификации») сняты (Р-21, Р-25). Аутентификация пользователей не нужна (1–2 оператора, внутренняя сеть). Горизонт планирования — дорожная карта R1.",
+      "current": {
+        "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md",
+        "docsSync": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-docs-sync.md",
+        "focus": [
+          "R1.0: docs-sync + стек _2606 на DEV/флешка; GraphQL-only доменный API",
+          "R1.1 C2: ввод ИП/планов в FEMSQ",
+          "R1.2 C3: факт (ревизии) — полный переход с Access",
+          "СУДЗ на прод — горизонт R2 (не R1)"
+        ]
+      },
+      "milestonesDone": [
         {
-          "name": "Phase 1: Foundation",
-          "duration": "2 weeks",
-          "startDate": "2025-01-27",
-          "tasks": [
-            "Настройка инфраструктуры",
-            "Базовая архитектура Backend",
-            "Базовая архитектура Frontend",
-            "Настройка БД и миграций",
-            "Создание JSON-документации"
-          ],
-          "status": "in_progress",
-          "progress": 20
+          "when": "2026-08",
+          "what": "Прод: ревизии типов 3 и 6 (JAR 156) на FishEye"
         },
         {
-          "name": "Phase 2: Core Features",
-          "duration": "4 weeks",
-          "startDate": "2025-02-10",
-          "tasks": [
-            "Модуль управления отношениями с контрагентами",
-            "Система аутентификации",
-            "Базовый UI/UX",
-            "API интеграция Frontend-Backend"
-          ],
-          "status": "planned",
-          "progress": 0
+          "when": "2026-11",
+          "what": "docs-sync: GraphQL-only домен; C1 инвентаризация Access; FemsqTable на org/цепочки/ревизии"
         },
         {
-          "name": "Phase 3: Advanced Features",
-          "duration": "3 weeks",
-          "startDate": "2025-03-10",
-          "tasks": [
-            "ГИС-аналитика",
-            "Документооборот",
-            "Система уведомлений",
-            "Интеграции с внешними API"
-          ],
-          "status": "planned",
-          "progress": 0
+          "when": "2026-11",
+          "what": "Трек A: 07u PASS, пакет 21.5/флешка MSSQL2012 с 05c"
         }
       ]
     },
     "quality": {
-      "lastUpdated": "2025-11-17",
-      "checkpoints": [
+      "lastUpdated": "2026-11-17",
+      "note": "Контрольная точка K1 (2025-11) ссылалась на удалённый ApiOrganizationsSuccessIT и REST /organizations — снята. Актуальные проверки ниже.",
+      "checks": [
         {
-          "id": "K1",
-          "name": "Контрольная точка K1 - Backend API",
-          "date": "2025-11-11",
-          "status": "completed",
-          "description": "Backend REST/GraphQL API подтверждён интеграционным тестом ApiOrganizationsSuccessIT и ручной проверкой через временный database.properties.",
-          "verification": {
-            "automatedTests": [
-              "ApiOrganizationsSuccessIT (Spring Boot, JUnit 5)"
-            ],
-            "manualSteps": [
-              "GET /api/v1/organizations",
-              "GET /api/v1/agents",
-              "POST /graphql { organizations { ogKey ogName } }"
-            ]
-          },
-          "links": {
-            "projectDocsRefs": [
-              "module:backend.web",
-              "component:backend.web.api.rest",
-              "component:backend.web.api.graphql"
-            ],
-            "developmentTasks": [
-              "task:0017"
-            ],
-            "journalRefs": [
-              "log:log-2025-11-11-001"
-            ]
-          }
-        }
-      ],
-      "tests": [
+          "id": "Q-graphql-web",
+          "name": "Backend femsq-web tests",
+          "status": "ok",
+          "asOf": "2026-11-17",
+          "detail": "mvn test -pl femsq-backend/femsq-web: 227 run / 0 fail (docs-sync 5.4.3)"
+        },
         {
-          "name": "ApiOrganizationsSuccessIT",
-          "type": "integration",
-          "scope": [
-            "REST /api/v1/organizations",
-            "REST /api/v1/agents",
-            "GraphQL organizations query"
-          ],
-          "environment": "Схема ags_test, временный каталог user.home с database.properties",
-          "automation": "JUnit 5 @SpringBootTest + TestRestTemplate",
-          "manualMode": {
-            "enabled": true,
-            "timeoutMinutes": 3,
-            "stopFile": "/tmp/femsq-api-stop"
-          },
-          "links": {
-            "source": "code/femsq-backend/femsq-web/src/test/java/com/femsq/web/api/rest/ApiOrganizationsSuccessIT.java",
-            "journalRefs": [
-              "log:log-2025-11-11-001"
-            ],
-            "developmentTasks": [
-              "task:0017"
-            ]
-          }
+          "id": "Q-frontend-vitest",
+          "name": "Frontend vitest",
+          "status": "ok",
+          "asOf": "2026-11-17",
+          "detail": "npm test: 90 passed"
+        },
+        {
+          "id": "Q-check-docs",
+          "name": "check-docs",
+          "status": "warn-mode",
+          "asOf": "2026-11-17",
+          "detail": "code/scripts/check-docs.sh: ERROR=0, WARN≈147; strict — блок 13 docs-sync"
         }
       ]
     },
@@ -967,53 +924,25 @@
     ],
     "problems": [
       {
-        "id": "P-2025-11-16-001",
-        "title": "Spring GraphQL: нестабильность интеграционных тестов (404 при запуске всего модуля)",
+        "id": "P-2026-11-17-001",
+        "title": "femsq-reports: сбои Jasper/тестов вне критического пути R1",
         "status": "known_issue",
-        "discovered": "2025-11-15",
-        "lastUpdated": "2025-11-17",
-        "modules": [
-          "femsq-backend/femsq-web"
-        ],
-        "scope": [
-          "Интеграционные тесты GraphQL",
-          "Spring Boot 3.4.5",
-          "Spring GraphQL 1.3.5"
-        ],
-        "description": "GraphQL endpoint стабильно работает в production и при изолированном запуске тестового класса, но при запуске всех интеграционных тестов модуля возвращает 404 (endpoint не регистрируется). Проблема воспроизводится независимо от задержек/ретраев и аннотаций изоляции контекста.",
-        "reproduction": [
-          "mvn -Pintegration -pl femsq-backend/femsq-web verify",
-          "Падает тест GraphQL: 404 после нескольких ретраев"
-        ],
-        "attemptedSolutions": [
-          "@DirtiesContext (BEFORE_CLASS/AFTER_CLASS/AFTER_EACH_TEST_METHOD) — не помогло",
-          "Задержка 2с + 10 ретраев по 1с — не помогло",
-          "Изменение порядка выполнения (имя класса, @Order) — Maven Failsafe игнорирует порядок",
-          "Вынос теста в отдельный класс и модуль — в модуле возникли конфликты зависимостей Spring (BeanFactoryInitializer)"
-        ],
-        "currentWorkaround": "Тесты GraphQL отключены (@Disabled) в модуле femsq-web. Функциональность GraphQL подтверждена вручную и изолированными запусками.",
-        "impact": {
-          "severity": "medium",
-          "areas": [
-            "интеграционные тесты GraphQL"
-          ],
-          "notes": "Не влияет на production, но снижает автоматизированное покрытие GraphQL."
-        },
-        "recommendations": [
-          "Добавить slice-тесты @GraphQlTest для контроллера OgGraphqlController",
-          "Рассмотреть отдельный тестовый модуль только для GraphQL с корректной компоновкой зависимостей",
-          "Отслеживать обновления Spring Boot/GraphQL и перепроверять проблему при следующем обновлении",
-          "Альтернатива: E2E-проверка GraphQL через Playwright на живом приложении"
-        ],
+        "discovered": "2026-11-17",
+        "lastUpdated": "2026-11-17",
+        "description": "При полном прогоне модулей отчёты могут падать; доменный контур femsq-web и GraphQL зелёные. Пересмотр REST отчётов — трек C5.",
+        "impact": "low",
         "links": {
-          "plan": "docs/development/notes/chats/chat-plan/chat-plan-25-1115.md",
-          "tests": [
-            "code/femsq-backend/femsq-web/src/test/java/com/femsq/web/api/rest/ApiOrganizationsSuccessIT.java",
-            "code/femsq-backend/femsq-web/src/test/java/com/femsq/web/api/graphql/AGraphqlOrganizationsIT.java"
-          ],
-          "commits": [],
-          "issues": []
+          "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
         }
+      },
+      {
+        "id": "P-2025-11-16-001",
+        "title": "Исторически: нестабильность GraphQL IT при полном модуле (архив)",
+        "status": "mitigated",
+        "discovered": "2025-11-15",
+        "lastUpdated": "2026-11-17",
+        "description": "Ранее GraphQL IT давали 404 при полном verify. На 2026-11-17 femsq-web IT проходят (227). Запись оставлена как история; ApiOrganizationsSuccessIT удалён вместе с доменным REST.",
+        "impact": "none"
       }
     ],
     "resources": {
@@ -1188,9 +1117,9 @@
     }
   },
   "metadata": {
-    "version": "1.4.0",
-    "lastUpdated": "2026-07-08",
+    "version": "1.5.0",
+    "lastUpdated": "2026-11-17",
     "updatedBy": "Александр",
-    "updateReason": "Документирована схема именования подпапок excel на SMB-шаре (снимки по году данных/состояния/месяцу); smoke март vs июль 2026."
+    "updateReason": "docs-sync блок 10: ссылки, timeline/quality/problems/deployment, frontend, features"
   }
 }

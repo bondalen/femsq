@@ -8,6 +8,70 @@
     "sessions": [
       {
         "chat": {
+          "displayName": "docs-sync: project-docs.json (completed, high). № chat-2026-11-17-005",
+          "chat-attributes": {
+            "id": "chat-2026-11-17-005",
+            "created": "2026-11-17",
+            "lastUpdated": "2026-11-17",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "high",
+            "tags": [
+              "docs-sync",
+              "project-docs",
+              "block-10"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [
+                "0078"
+              ],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-docs-sync.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Блок 10 docs-sync: project-docs.json (success). № log-2026-11-17-011",
+                "log-attributes": {
+                  "id": "log-2026-11-17-011",
+                  "timestamp": "2026-11-17T16:25:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": [
+                    "docs-sync",
+                    "block-10"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0078"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-docs-sync.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Перепись project-docs.json (Р-19…Р-23, Р-25)",
+                    "details": "pattern_decision → docs/project/decisions/007-…; extensions ui/network/monitoring очищены; timeline/quality/problems/deployment кратко под R1; frontend по package.json (без Leaflet/Vue Router, +ECharts/Apollo); features P1 СУДЗ / P2 освоение / ревизии по типам. metadata 1.5.0.",
+                    "outcome": "Блок 10 ✅",
+                    "references": [
+                      "docs/project/project-docs.json",
+                      "docs/project/business-processes.md",
+                      "code/femsq-frontend-q/package.json"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
           "displayName": "docs-sync: check-docs и реестры (completed, high). № chat-2026-11-17-004",
           "chat-attributes": {
             "id": "chat-2026-11-17-004",
