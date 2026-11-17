@@ -39,6 +39,45 @@
           "entries": [
             {
               "log": {
+                "displayName": "Блоки 8–9 docs-sync: Этапы пользователя, процесс P2, глоссарий (success). № log-2026-11-17-002",
+                "log-attributes": {
+                  "id": "log-2026-11-17-002",
+                  "timestamp": "2026-11-17T10:30:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": [
+                    "docs",
+                    "docs-sync",
+                    "business-processes",
+                    "mastering",
+                    "glossary"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-docs-sync.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Сводный документ БП и процесс P2",
+                    "details": "business-processes.md: P1 (дерево S3 без перенумерации), P2 (1 ввод ИП и планов, 2 факт по видам 2.1–2.6 с af_type и stCost, 3 расчёт, 4 отчёты; инструмент прод и состояние FEMSQ, треки R1), P3 НСИ (заготовка). domain/mastering/03-processes.md: объекты Access по выгрузке VBA, таблицы, компоненты FEMSQ, вопросы для C1 (ОПИ raFactMnrl vs cstAgPnMnrl, расчёты ipgChRslt*, используемые mstrgAg_*). Глоссарий 1.10.0: Ревизия с таблицей af_type, Аренда земли (РАЛП), ОПИ. Подтверждено: CnPrDocReconcileService — заглушка.",
+                    "outcome": "Блоки 8–9 ✅; документы зарегистрированы в project-docs.json.",
+                    "references": [
+                      "docs/project/business-processes.md",
+                      "docs/development/notes/domain/mastering/03-processes.md",
+                      "docs/project/glossary.md",
+                      "docs/project/project-docs.json",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1116-docs-sync.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
                 "displayName": "Блок 3 docs-sync: правила против рассогласования (success). № log-2026-11-17-001",
                 "log-attributes": {
                   "id": "log-2026-11-17-001",
