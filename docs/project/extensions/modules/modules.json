@@ -1,8 +1,9 @@
 {
   "modules" : {
-    "version" : "1.0.0",
-    "lastUpdated" : "2026-08-19",
-    "description" : "Структура модулей проекта FEMSQ",
+    "version" : "2.0.0",
+    "lastUpdated" : "2026-11-17",
+    "description" : "Структура модулей FEMSQ на уровне Maven-модулей, Java-пакетов и разделов frontend (без классов; Д2). История сборок — builds-manifest.json (Д3).",
+    "buildsManifest" : "docs/project/extensions/modules/builds-manifest.json",
     "items" : [ {
       "module" : {
         "displayName" : "Backend Module. № 01",
@@ -10,9 +11,9 @@
           "id" : "backend",
           "number" : "01",
           "name" : "Backend Module",
-          "description" : "Основной backend модуль приложения FEMSQ",
-          "purpose" : "Серверная логика, GraphQL API, работа с MS SQL Server",
-          "status" : "planned",
+          "description" : "Основной backend FEMSQ",
+          "purpose" : "Серверная логика, GraphQL API, MS SQL Server",
+          "status" : "completed",
           "artifact" : {
             "location" : "code/femsq-backend/",
             "file_path" : "code/femsq-backend/",
@@ -29,9 +30,9 @@
               "id" : "database",
               "number" : "01.01",
               "name" : "Database Module",
-              "description" : "Модуль работы с базой данных MS SQL Server",
-              "purpose" : "Управление подключением к MS SQL Server, конфигурация, аутентификация",
-              "status" : "planned",
+              "description" : "Работа с MS SQL Server / FishEye",
+              "purpose" : "Подключение, DAO, модели, сервисы",
+              "status" : "completed",
               "artifact" : {
                 "location" : "code/femsq-backend/femsq-database/",
                 "file_path" : "code/femsq-backend/femsq-database/",
@@ -42,234 +43,44 @@
               },
               "dependencies" : [ ],
               "buildHistory" : {
-                "lastUpdated" : "2026-10-27T16:54:14+03:00",
                 "builds" : [ {
-                  "version" : "0.1.0.376-SNAPSHOT",
-                  "sha256" : "a5633e51393ff822525340c620371c96f9b4c91676414891839d9307153880b1",
-                  "buildTimestamp" : "2026-10-27T16:54:14+03:00",
-                  "buildNumber" : "202610271654140",
+                  "version" : "0.1.0.377-SNAPSHOT",
+                  "sha256" : "b67b7fe3b9324f7e2d6a4eb1d7f45e2f91bc2d0adab1926fe20dab31456fb99c",
+                  "buildTimestamp" : "2026-11-17T16:45:27+03:00",
+                  "buildNumber" : "202611171645270",
                   "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.376-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.375-SNAPSHOT",
-                  "sha256" : "1085d1f3cc332bfccd18d39bc6acfb5662d0c4f38cd2b121f863c32d36b3953f",
-                  "buildTimestamp" : "2026-10-27T12:17:34+03:00",
-                  "buildNumber" : "202610271217340",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.375-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.374-SNAPSHOT",
-                  "sha256" : "b8861cef3eaa150347170406605fe0e3c4ee0bc24935d615c6e7abd7d3b50616",
-                  "buildTimestamp" : "2026-10-22T16:52:10+03:00",
-                  "buildNumber" : "202610221652100",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.374-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.372-SNAPSHOT",
-                  "sha256" : "6303e6dc23f90a650873eec192688562b776b6a464d541e78fd89754ec422216",
-                  "buildTimestamp" : "2026-10-21T15:21:38+03:00",
-                  "buildNumber" : "202610211521380",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.372-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.371-SNAPSHOT",
-                  "sha256" : "85b528c56c93db93636b8b18c6ff8104c5ae4a354f8a4e6834140bcbc76faf57",
-                  "buildTimestamp" : "2026-10-21T15:18:39+03:00",
-                  "buildNumber" : "202610211518390",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.371-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.370-SNAPSHOT",
-                  "sha256" : "8ccd0ef558d41dbdf94febb0cff4cae27220be8b3336588031e3578ffbf9218a",
-                  "buildTimestamp" : "2026-10-21T14:59:30+03:00",
-                  "buildNumber" : "202610211459300",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.370-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.369-SNAPSHOT",
-                  "sha256" : "da143fc2a549d796615097a72ffcb06c0710856bf4fcf3e904caf4099ed69b8e",
-                  "buildTimestamp" : "2026-10-21T14:24:58+03:00",
-                  "buildNumber" : "202610211424580",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.369-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.368-SNAPSHOT",
-                  "sha256" : "327b12a66f09dcace1f59873c14aaf844e0276403fe9aec68059528178b6a0c2",
-                  "buildTimestamp" : "2026-10-21T14:15:07+03:00",
-                  "buildNumber" : "202610211415070",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.368-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.367-SNAPSHOT",
-                  "sha256" : "d126083c7b60a8b7c1cae349b560ccb4fe1acd2d4fcdf8ec4cba73caaf02e74c",
-                  "buildTimestamp" : "2026-10-21T13:17:19+03:00",
-                  "buildNumber" : "202610211317190",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.367-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.366-SNAPSHOT",
-                  "sha256" : "05ac3ef0ba0096e2091d73b0f0b1fb82035e3fb245f3009eeabc6a77dcf54211",
-                  "buildTimestamp" : "2026-10-21T11:45:26+03:00",
-                  "buildNumber" : "202610211145260",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.366-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.365-SNAPSHOT",
-                  "sha256" : "3f82a85e3f576e7d7ba52a5e83320f2e3d14b7dc01f53fc85ce2bf9259c06826",
-                  "buildTimestamp" : "2026-10-21T11:26:13+03:00",
-                  "buildNumber" : "202610211126130",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.365-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.364-SNAPSHOT",
-                  "sha256" : "919a78133007349e1c539ee5e005727aebdbd056378f6d11bb6d06bd8e3bb25b",
-                  "buildTimestamp" : "2026-10-21T10:45:39+03:00",
-                  "buildNumber" : "202610211045390",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.364-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.363-SNAPSHOT",
-                  "sha256" : "b6aa830c4148d71f1fc09e047097a177ff7821c8e75f49f0ac6fa79e3c30c1f3",
-                  "buildTimestamp" : "2026-10-21T10:21:02+03:00",
-                  "buildNumber" : "202610211021020",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.363-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.362-SNAPSHOT",
-                  "sha256" : "7fdd76def502e86f05501cd23496369a08b5d1e878445fc7898282fe96079af6",
-                  "buildTimestamp" : "2026-10-20T17:46:11+03:00",
-                  "buildNumber" : "202610201746110",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.362-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.361-SNAPSHOT",
-                  "sha256" : "308ba7aa03abe9568d52bbfc5035322c72b655d9ba886962d5520cbba2291c5d",
-                  "buildTimestamp" : "2026-10-20T11:39:09+03:00",
-                  "buildNumber" : "202610201139090",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.361-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.360-SNAPSHOT",
-                  "sha256" : "82f706c5944f018aeb9e26efdb7157b6437347f5f8459031aa4dd5b06c6e8732",
-                  "buildTimestamp" : "2026-10-20T11:31:06+03:00",
-                  "buildNumber" : "202610201131060",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.360-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.359-SNAPSHOT",
-                  "sha256" : "fc891857f9d5fd68cb4d0d499cc13a455cb2d416e60040582c3dece39f28969a",
-                  "buildTimestamp" : "2026-10-20T11:25:52+03:00",
-                  "buildNumber" : "202610201125520",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.359-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.358-SNAPSHOT",
-                  "sha256" : "bec84d62c6159c4a6cbf0de19f60f72988d55a024b00364db8b23099aa4d3ef8",
-                  "buildTimestamp" : "2026-10-20T11:20:43+03:00",
-                  "buildNumber" : "202610201120430",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.358-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.357-SNAPSHOT",
-                  "sha256" : "b7f3b8da4cb27d21e5bcca15574d743d7e8a28650a8c845f2f5a8481a5c55866",
-                  "buildTimestamp" : "2026-10-20T11:13:18+03:00",
-                  "buildNumber" : "202610201113180",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.357-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.356-SNAPSHOT",
-                  "sha256" : "6791c4e0eec43fc495365bd66f8964a292d49334601ab440f1644112196147c6",
-                  "buildTimestamp" : "2026-10-20T11:08:18+03:00",
-                  "buildNumber" : "202610201108180",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.356-SNAPSHOT.jar"
-                } ]
+                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.377-SNAPSHOT.jar"
+                } ],
+                "lastUpdated" : "2026-11-17T16:45:27+03:00"
               }
             },
             "components" : [ {
               "component" : {
-                "displayName" : "Configuration Management. № 01.01.01",
+                "displayName" : "Database Config. № 01.01.01",
                 "attributes" : {
                   "id" : "config",
                   "number" : "01.01.01",
-                  "name" : "Configuration Management",
-                  "description" : "Управление конфигурацией подключения к БД",
-                  "status" : "planned",
+                  "name" : "Database Config",
+                  "description" : "Конфигурация подключения к MS SQL Server",
+                  "status" : "completed",
                   "artifact" : {
                     "location" : "com.femsq.database.config",
                     "file_path" : "src/main/java/com/femsq/database/config/",
                     "type" : "java-package",
                     "artifact_type" : "directory"
                   },
-                  "responsibilities" : [ "Чтение/запись конфигурации из ~/.femsq/database.properties", "Валидация параметров подключения", "Управление файлами конфигурации" ]
-                },
-                "classes" : [ {
-                  "class" : {
-                    "displayName" : "DatabaseConfigurationService. № 01.01.01.01",
-                    "attributes" : {
-                      "id" : "DatabaseConfigurationService",
-                      "number" : "01.01.01.01",
-                      "name" : "DatabaseConfigurationService",
-                      "description" : "Основной сервис управления конфигурацией БД",
-                      "status" : "planned",
-                      "artifact" : {
-                        "location" : "com.femsq.database.config.DatabaseConfigurationService",
-                        "file_path" : "src/main/java/com/femsq/database/config/DatabaseConfigurationService.java",
-                        "type" : "java-class",
-                        "artifact_type" : "file"
-                      },
-                      "responsibilities" : [ "Загрузка конфигурации из файла", "Сохранение конфигурации в файл", "Валидация параметров подключения" ],
-                      "dependsOn" : [ "ConfigurationFileManager", "ConfigurationValidator" ]
-                    }
-                  }
-                }, {
-                  "class" : {
-                    "displayName" : "ConfigurationFileManager. № 01.01.01.02",
-                    "attributes" : {
-                      "id" : "ConfigurationFileManager",
-                      "number" : "01.01.01.02",
-                      "name" : "ConfigurationFileManager",
-                      "description" : "Менеджер файлов конфигурации",
-                      "status" : "planned",
-                      "artifact" : {
-                        "location" : "com.femsq.database.config.ConfigurationFileManager",
-                        "file_path" : "src/main/java/com/femsq/database/config/ConfigurationFileManager.java",
-                        "type" : "java-class",
-                        "artifact_type" : "file"
-                      },
-                      "responsibilities" : [ "Управление файлами конфигурации", "Создание директорий", "Установка прав доступа (chmod 600)" ],
-                      "dependsOn" : [ ]
-                    }
-                  }
-                }, {
-                  "class" : {
-                    "displayName" : "ConfigurationValidator. № 01.01.01.03",
-                    "attributes" : {
-                      "id" : "ConfigurationValidator",
-                      "number" : "01.01.01.03",
-                      "name" : "ConfigurationValidator",
-                      "description" : "Валидатор параметров конфигурации",
-                      "status" : "planned",
-                      "artifact" : {
-                        "location" : "com.femsq.database.config.ConfigurationValidator",
-                        "file_path" : "src/main/java/com/femsq/database/config/ConfigurationValidator.java",
-                        "type" : "java-class",
-                        "artifact_type" : "file"
-                      },
-                      "responsibilities" : [ "Валидация хоста, порта, имени БД" ],
-                      "dependsOn" : [ ]
-                    }
-                  }
-                } ]
+                  "responsibilities" : [ "Параметры DSN/JDBC", "Профили окружения" ],
+                  "dependsOn" : [ ]
+                }
               }
             }, {
               "component" : {
-                "displayName" : "Connection Management. № 01.01.02",
+                "displayName" : "Database Connection. № 01.01.02",
                 "attributes" : {
                   "id" : "connection",
                   "number" : "01.01.02",
-                  "name" : "Connection Management",
-                  "description" : "Управление подключениями к базе данных",
+                  "name" : "Database Connection",
+                  "description" : "Управление соединением с БД",
                   "status" : "completed",
                   "artifact" : {
                     "location" : "com.femsq.database.connection",
@@ -277,89 +88,18 @@
                     "type" : "java-package",
                     "artifact_type" : "directory"
                   },
-                  "responsibilities" : [ "Создание JDBC подключений", "Управление пулом соединений (HikariCP)", "Выбор стратегии аутентификации через AuthenticationProviderFactory", "Тестирование и проверка подключений" ]
-                },
-                "classes" : [ {
-                  "class" : {
-                    "displayName" : "ConnectionFactory. № 01.01.02.01",
-                    "attributes" : {
-                      "id" : "ConnectionFactory",
-                      "number" : "01.01.02.01",
-                      "name" : "ConnectionFactory",
-                      "description" : "Фабрика подключений к БД",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.database.connection.ConnectionFactory",
-                        "file_path" : "src/main/java/com/femsq/database/connection/ConnectionFactory.java",
-                        "type" : "java-class",
-                        "artifact_type" : "file"
-                      },
-                      "responsibilities" : [ "Создание подключений с учетом режима аутентификации", "Интеграция с AuthenticationProviderFactory", "Проверка соединений и управление ресурсами" ],
-                      "dependsOn" : [ "AuthenticationProviderFactory", "JdbcConnector", "DatabaseConfigurationService" ]
-                    }
-                  }
-                }, {
-                  "class" : {
-                    "displayName" : "JdbcConnector. № 01.01.02.02",
-                    "attributes" : {
-                      "id" : "JdbcConnector",
-                      "number" : "01.01.02.02",
-                      "name" : "JdbcConnector",
-                      "description" : "Абстракция для создания JDBC соединений",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.database.connection.JdbcConnector",
-                        "file_path" : "src/main/java/com/femsq/database/connection/JdbcConnector.java",
-                        "type" : "java-interface",
-                        "artifact_type" : "file"
-                      }
-                    }
-                  }
-                }, {
-                  "class" : {
-                    "displayName" : "HikariJdbcConnector. № 01.01.02.03",
-                    "attributes" : {
-                      "id" : "HikariJdbcConnector",
-                      "number" : "01.01.02.03",
-                      "name" : "HikariJdbcConnector",
-                      "description" : "Реализация JdbcConnector на базе HikariCP",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.database.connection.HikariJdbcConnector",
-                        "file_path" : "src/main/java/com/femsq/database/connection/HikariJdbcConnector.java",
-                        "type" : "java-class",
-                        "artifact_type" : "file"
-                      },
-                      "dependsOn" : [ "JdbcConnector" ]
-                    }
-                  }
-                }, {
-                  "class" : {
-                    "displayName" : "ConnectionFactoryException. № 01.01.02.04",
-                    "attributes" : {
-                      "id" : "ConnectionFactoryException",
-                      "number" : "01.01.02.04",
-                      "name" : "ConnectionFactoryException",
-                      "description" : "Исключение при ошибках подключения",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.database.connection.ConnectionFactoryException",
-                        "file_path" : "src/main/java/com/femsq/database/connection/ConnectionFactoryException.java",
-                        "type" : "java-class",
-                        "artifact_type" : "file"
-                      }
-                    }
-                  }
-                } ]
+                  "responsibilities" : [ "Пул/жизненный цикл соединения", "Проверка доступности" ],
+                  "dependsOn" : [ ]
+                }
               }
             }, {
               "component" : {
-                "displayName" : "Authentication Providers. № 01.01.03",
+                "displayName" : "Database Auth. № 01.01.03",
                 "attributes" : {
                   "id" : "auth",
                   "number" : "01.01.03",
-                  "name" : "Authentication Providers",
-                  "description" : "Провайдеры аутентификации для MS SQL Server",
+                  "name" : "Database Auth",
+                  "description" : "Аутентификация к MS SQL (в т.ч. Windows/Kerberos)",
                   "status" : "completed",
                   "artifact" : {
                     "location" : "com.femsq.database.auth",
@@ -367,449 +107,251 @@
                     "type" : "java-package",
                     "artifact_type" : "directory"
                   },
-                  "responsibilities" : [ "Credentials аутентификация", "Windows Integrated Security", "Kerberos trusted connection", "Фабрика выбора провайдера аутентификации" ]
-                },
-                "classes" : [ {
-                  "class" : {
-                    "displayName" : "AuthenticationProvider. № 01.01.03.01",
-                    "attributes" : {
-                      "id" : "AuthenticationProvider",
-                      "number" : "01.01.03.01",
-                      "name" : "AuthenticationProvider",
-                      "description" : "Интерфейс для провайдеров аутентификации",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.database.auth.AuthenticationProvider",
-                        "file_path" : "src/main/java/com/femsq/database/auth/AuthenticationProvider.java",
-                        "type" : "java-interface",
-                        "artifact_type" : "file"
-                      }
-                    }
-                  }
-                }, {
-                  "class" : {
-                    "displayName" : "CredentialsAuthenticationProvider. № 01.01.03.02",
-                    "attributes" : {
-                      "id" : "CredentialsAuthenticationProvider",
-                      "number" : "01.01.03.02",
-                      "name" : "CredentialsAuthenticationProvider",
-                      "description" : "Провайдер аутентификации по username/password",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.database.auth.CredentialsAuthenticationProvider",
-                        "file_path" : "src/main/java/com/femsq/database/auth/CredentialsAuthenticationProvider.java",
-                        "type" : "java-class",
-                        "artifact_type" : "file"
-                      },
-                      "dependsOn" : [ "AuthenticationProvider" ]
-                    }
-                  }
-                }, {
-                  "class" : {
-                    "displayName" : "WindowsIntegratedAuthenticationProvider. № 01.01.03.03",
-                    "attributes" : {
-                      "id" : "WindowsIntegratedAuthenticationProvider",
-                      "number" : "01.01.03.03",
-                      "name" : "WindowsIntegratedAuthenticationProvider",
-                      "description" : "Провайдер Windows Integrated Security",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.database.auth.WindowsIntegratedAuthenticationProvider",
-                        "file_path" : "src/main/java/com/femsq/database/auth/WindowsIntegratedAuthenticationProvider.java",
-                        "type" : "java-class",
-                        "artifact_type" : "file"
-                      },
-                      "dependsOn" : [ "AuthenticationProvider" ]
-                    }
-                  }
-                }, {
-                  "class" : {
-                    "displayName" : "KerberosAuthenticationProvider. № 01.01.03.04",
-                    "attributes" : {
-                      "id" : "KerberosAuthenticationProvider",
-                      "number" : "01.01.03.04",
-                      "name" : "KerberosAuthenticationProvider",
-                      "description" : "Провайдер Kerberos trusted connection",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.database.auth.KerberosAuthenticationProvider",
-                        "file_path" : "src/main/java/com/femsq/database/auth/KerberosAuthenticationProvider.java",
-                        "type" : "java-class",
-                        "artifact_type" : "file"
-                      },
-                      "dependsOn" : [ "AuthenticationProvider" ]
-                    }
-                  }
-                }, {
-                  "class" : {
-                    "displayName" : "AuthenticationProviderFactory. № 01.01.03.05",
-                    "attributes" : {
-                      "id" : "AuthenticationProviderFactory",
-                      "number" : "01.01.03.05",
-                      "name" : "AuthenticationProviderFactory",
-                      "description" : "Фабрика выбора провайдеров аутентификации",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.database.auth.AuthenticationProviderFactory",
-                        "file_path" : "src/main/java/com/femsq/database/auth/AuthenticationProviderFactory.java",
-                        "type" : "java-class",
-                        "artifact_type" : "file"
-                      },
-                      "dependsOn" : [ "AuthenticationProvider", "CredentialsAuthenticationProvider", "WindowsIntegratedAuthenticationProvider", "KerberosAuthenticationProvider" ]
-                    }
-                  }
-                } ]
+                  "responsibilities" : [ ],
+                  "dependsOn" : [ ]
+                }
               }
             }, {
               "component" : {
-                "displayName" : "Data Access. № 01.01.04",
+                "displayName" : "Data Access (DAO). № 01.01.04",
                 "attributes" : {
-                  "id" : "data-access",
+                  "id" : "dao",
                   "number" : "01.01.04",
-                  "name" : "Data Access",
-                  "description" : "Слой доступа к данным для таблиц ags/ags_test",
-                  "status" : "in-progress",
+                  "name" : "Data Access (DAO)",
+                  "description" : "JDBC DAO к таблицам FishEye",
+                  "status" : "completed",
                   "artifact" : {
                     "location" : "com.femsq.database.dao",
                     "file_path" : "src/main/java/com/femsq/database/dao/",
                     "type" : "java-package",
                     "artifact_type" : "directory"
                   },
-                  "responsibilities" : [ "CRUD-операции для таблиц og и ogAg", "Работа с подготовленными SQL-скриптами и ConnectionFactory", "Поддержка интеграционных тестов на ags_test" ]
-                },
-                "classes" : [ {
-                  "class" : {
-                    "displayName" : "OgDao. № 01.01.04.01",
-                    "attributes" : {
-                      "id" : "OgDao",
-                      "number" : "01.01.04.01",
-                      "name" : "OgDao",
-                      "description" : "DAO для таблицы og",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.database.dao.OgDao",
-                        "file_path" : "src/main/java/com/femsq/database/dao/OgDao.java",
-                        "type" : "java-class",
-                        "artifact_type" : "file"
-                      },
-                      "dependsOn" : [ "ConnectionFactory" ]
-                    }
-                  }
-                }, {
-                  "class" : {
-                    "displayName" : "OgAgDao. № 01.01.04.02",
-                    "attributes" : {
-                      "id" : "OgAgDao",
-                      "number" : "01.01.04.02",
-                      "name" : "OgAgDao",
-                      "description" : "DAO для таблицы ogAg",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.database.dao.OgAgDao",
-                        "file_path" : "src/main/java/com/femsq/database/dao/OgAgDao.java",
-                        "type" : "java-class",
-                        "artifact_type" : "file"
-                      },
-                      "dependsOn" : [ "ConnectionFactory", "OgDao" ]
-                    }
-                  }
-                }, {
-                  "class" : {
-                    "displayName" : "JdbcOgDao. № 01.01.04.03",
-                    "attributes" : {
-                      "id" : "JdbcOgDao",
-                      "number" : "01.01.04.03",
-                      "name" : "JdbcOgDao",
-                      "description" : "JDBC-реализация OgDao",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.database.dao.JdbcOgDao",
-                        "file_path" : "src/main/java/com/femsq/database/dao/JdbcOgDao.java",
-                        "type" : "java-class",
-                        "artifact_type" : "file"
-                      },
-                      "dependsOn" : [ "OgDao", "ConnectionFactory", "Og", "DaoException" ]
-                    }
-                  }
-                }, {
-                  "class" : {
-                    "displayName" : "JdbcOgAgDao. № 01.01.04.04",
-                    "attributes" : {
-                      "id" : "JdbcOgAgDao",
-                      "number" : "01.01.04.04",
-                      "name" : "JdbcOgAgDao",
-                      "description" : "JDBC-реализация OgAgDao",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.database.dao.JdbcOgAgDao",
-                        "file_path" : "src/main/java/com/femsq/database/dao/JdbcOgAgDao.java",
-                        "type" : "java-class",
-                        "artifact_type" : "file"
-                      },
-                      "dependsOn" : [ "OgAgDao", "ConnectionFactory", "OgAg", "DaoException" ]
-                    }
-                  }
-                } ]
+                  "responsibilities" : [ "CRUD и выборки по доменным сущностям" ],
+                  "dependsOn" : [ ]
+                }
               }
             }, {
               "component" : {
-                "displayName" : "Data Models. № 01.01.05",
+                "displayName" : "Domain Model. № 01.01.05",
                 "attributes" : {
                   "id" : "model",
                   "number" : "01.01.05",
-                  "name" : "Data Models",
-                  "description" : "Модели данных для конфигурации и статусов",
-                  "status" : "in-progress",
+                  "name" : "Domain Model",
+                  "description" : "Доменные модели (кроме sudz/relation)",
+                  "status" : "completed",
                   "artifact" : {
                     "location" : "com.femsq.database.model",
                     "file_path" : "src/main/java/com/femsq/database/model/",
                     "type" : "java-package",
                     "artifact_type" : "directory"
-                  }
-                },
-                "classes" : [ {
-                  "class" : {
-                    "displayName" : "Og. № 01.01.05.01",
-                    "attributes" : {
-                      "id" : "Og",
-                      "number" : "01.01.05.01",
-                      "name" : "Og",
-                      "description" : "Java-record для таблицы ags_test.og",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.database.model.Og",
-                        "file_path" : "src/main/java/com/femsq/database/model/Og.java",
-                        "type" : "java-class",
-                        "artifact_type" : "file"
-                      }
-                    }
-                  }
-                }, {
-                  "class" : {
-                    "displayName" : "OgAg. № 01.01.05.02",
-                    "attributes" : {
-                      "id" : "OgAg",
-                      "number" : "01.01.05.02",
-                      "name" : "OgAg",
-                      "description" : "Java-record для таблицы ags_test.ogAg",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.database.model.OgAg",
-                        "file_path" : "src/main/java/com/femsq/database/model/OgAg.java",
-                        "type" : "java-class",
-                        "artifact_type" : "file"
-                      }
-                    }
-                  }
-                } ]
+                  },
+                  "responsibilities" : [ "Сущности Og/Cst/Cn/Ra* и др." ],
+                  "dependsOn" : [ ]
+                }
               }
             }, {
               "component" : {
-                "displayName" : "Exception Handling. № 01.01.06",
+                "displayName" : "СУДЗ Model. № 01.01.06",
                 "attributes" : {
-                  "id" : "exception",
+                  "id" : "model.sudz",
                   "number" : "01.01.06",
-                  "name" : "Exception Handling",
-                  "description" : "Централизованная обработка исключений",
-                  "status" : "in-progress",
+                  "name" : "СУДЗ Model",
+                  "description" : "Модели домена СУДЗ (P1)",
+                  "status" : "completed",
                   "artifact" : {
-                    "location" : "com.femsq.database.exception",
-                    "file_path" : "src/main/java/com/femsq/database/exception/",
+                    "location" : "com.femsq.database.model.sudz",
+                    "file_path" : "src/main/java/com/femsq/database/model/sudz/",
                     "type" : "java-package",
                     "artifact_type" : "directory"
-                  }
-                },
-                "classes" : [ {
-                  "class" : {
-                    "displayName" : "DaoException. № 01.01.06.01",
-                    "attributes" : {
-                      "id" : "DaoException",
-                      "number" : "01.01.06.01",
-                      "name" : "DaoException",
-                      "description" : "Исключение уровня DAO",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.database.exception.DaoException",
-                        "file_path" : "src/main/java/com/femsq/database/exception/DaoException.java",
-                        "type" : "java-class",
-                        "artifact_type" : "file"
-                      },
-                      "dependsOn" : [ ]
-                    }
-                  }
-                } ]
+                  },
+                  "responsibilities" : [ "Сущности СУДЗ (~133 класса)", "Канон Dbt / платежи / КСДСФ" ],
+                  "dependsOn" : [ ]
+                }
               }
             }, {
               "component" : {
-                "displayName" : "Service Layer. № 01.01.07",
+                "displayName" : "Relation Model. № 01.01.07",
+                "attributes" : {
+                  "id" : "model.relation",
+                  "number" : "01.01.07",
+                  "name" : "Relation Model",
+                  "description" : "Модели связей (деревья Relation)",
+                  "status" : "completed",
+                  "artifact" : {
+                    "location" : "com.femsq.database.model.relation",
+                    "file_path" : "src/main/java/com/femsq/database/model/relation/",
+                    "type" : "java-package",
+                    "artifact_type" : "directory"
+                  },
+                  "responsibilities" : [ ],
+                  "dependsOn" : [ ]
+                }
+              }
+            }, {
+              "component" : {
+                "displayName" : "Relation Services. № 01.01.08",
+                "attributes" : {
+                  "id" : "relation",
+                  "number" : "01.01.08",
+                  "name" : "Relation Services",
+                  "description" : "Сервисы обхода связей",
+                  "status" : "completed",
+                  "artifact" : {
+                    "location" : "com.femsq.database.relation",
+                    "file_path" : "src/main/java/com/femsq/database/relation/",
+                    "type" : "java-package",
+                    "artifact_type" : "directory"
+                  },
+                  "responsibilities" : [ ],
+                  "dependsOn" : [ ]
+                }
+              }
+            }, {
+              "component" : {
+                "displayName" : "Database Services. № 01.01.09",
                 "attributes" : {
                   "id" : "service",
-                  "number" : "01.01.07",
-                  "name" : "Service Layer",
-                  "description" : "Бизнес-сервисы для работы с организациями и агентами",
-                  "status" : "in-progress",
+                  "number" : "01.01.09",
+                  "name" : "Database Services",
+                  "description" : "Бизнес-сервисы над DAO",
+                  "status" : "completed",
                   "artifact" : {
                     "location" : "com.femsq.database.service",
                     "file_path" : "src/main/java/com/femsq/database/service/",
                     "type" : "java-package",
                     "artifact_type" : "directory"
                   },
-                  "responsibilities" : [ "Бизнес-валидация данных og и ogAg", "Оркестрация DAO операций", "Подготовка к экспонированию API" ]
-                },
-                "classes" : [ {
-                  "class" : {
-                    "displayName" : "OgService. № 01.01.07.01",
-                    "attributes" : {
-                      "id" : "OgService",
-                      "number" : "01.01.07.01",
-                      "name" : "OgService",
-                      "description" : "Интерфейс сервисного слоя для og",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.database.service.OgService",
-                        "file_path" : "src/main/java/com/femsq/database/service/OgService.java",
-                        "type" : "java-class",
-                        "artifact_type" : "file"
-                      },
-                      "dependsOn" : [ "Og", "DaoException" ]
-                    }
-                  }
-                }, {
-                  "class" : {
-                    "displayName" : "DefaultOgService. № 01.01.07.02",
-                    "attributes" : {
-                      "id" : "DefaultOgService",
-                      "number" : "01.01.07.02",
-                      "name" : "DefaultOgService",
-                      "description" : "Реализация сервисного слоя для og",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.database.service.DefaultOgService",
-                        "file_path" : "src/main/java/com/femsq/database/service/DefaultOgService.java",
-                        "type" : "java-class",
-                        "artifact_type" : "file"
-                      },
-                      "dependsOn" : [ "OgService", "OgDao", "Og" ]
-                    }
-                  }
-                }, {
-                  "class" : {
-                    "displayName" : "OgAgService. № 01.01.07.03",
-                    "attributes" : {
-                      "id" : "OgAgService",
-                      "number" : "01.01.07.03",
-                      "name" : "OgAgService",
-                      "description" : "Интерфейс сервисного слоя для ogAg",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.database.service.OgAgService",
-                        "file_path" : "src/main/java/com/femsq/database/service/OgAgService.java",
-                        "type" : "java-class",
-                        "artifact_type" : "file"
-                      },
-                      "dependsOn" : [ "OgAg", "DaoException" ]
-                    }
-                  }
-                }, {
-                  "class" : {
-                    "displayName" : "DefaultOgAgService. № 01.01.07.04",
-                    "attributes" : {
-                      "id" : "DefaultOgAgService",
-                      "number" : "01.01.07.04",
-                      "name" : "DefaultOgAgService",
-                      "description" : "Реализация сервисного слоя для ogAg",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.database.service.DefaultOgAgService",
-                        "file_path" : "src/main/java/com/femsq/database/service/DefaultOgAgService.java",
-                        "type" : "java-class",
-                        "artifact_type" : "file"
-                      },
-                      "dependsOn" : [ "OgAgService", "OgAgDao", "OgDao", "OgAg" ]
-                    }
-                  }
-                } ]
+                  "responsibilities" : [ "Сервисный слой домена" ],
+                  "dependsOn" : [ ],
+                  "notes" : "RaFtSService / RaFtSnService / RaFtStService — без GraphQL/REST API до появления потребности (Д7, блок 5.2)"
+                }
+              }
+            }, {
+              "component" : {
+                "displayName" : "Database Exceptions. № 01.01.10",
+                "attributes" : {
+                  "id" : "exception",
+                  "number" : "01.01.10",
+                  "name" : "Database Exceptions",
+                  "description" : "Исключения слоя БД",
+                  "status" : "completed",
+                  "artifact" : {
+                    "location" : "com.femsq.database.exception",
+                    "file_path" : "src/main/java/com/femsq/database/exception/",
+                    "type" : "java-package",
+                    "artifact_type" : "directory"
+                  },
+                  "responsibilities" : [ ],
+                  "dependsOn" : [ ]
+                }
+              }
+            }, {
+              "component" : {
+                "displayName" : "Database Util. № 01.01.11",
+                "attributes" : {
+                  "id" : "util",
+                  "number" : "01.01.11",
+                  "name" : "Database Util",
+                  "description" : "Утилиты (JarPathResolver и др.)",
+                  "status" : "completed",
+                  "artifact" : {
+                    "location" : "com.femsq.database.util",
+                    "file_path" : "src/main/java/com/femsq/database/util/",
+                    "type" : "java-package",
+                    "artifact_type" : "directory"
+                  },
+                  "responsibilities" : [ ],
+                  "dependsOn" : [ ]
+                }
               }
             } ]
           }
         }, {
           "module" : {
-            "displayName" : "Web API Module. № 01.02",
+            "displayName" : "Web Module. № 01.02",
             "attributes" : {
               "id" : "web",
               "number" : "01.02",
-              "name" : "Web API Module",
-              "description" : "Модуль веб-API и жизненного цикла приложения",
-              "purpose" : "REST контроллеры, инициализация, health checks",
-              "status" : "planned",
+              "name" : "Web Module",
+              "description" : "Spring Boot web + GraphQL + SPA",
+              "purpose" : "GraphQL-контроллеры, ревизии, СУДЗ API, REST-исключения",
+              "status" : "completed",
               "artifact" : {
                 "location" : "code/femsq-backend/femsq-web/",
                 "file_path" : "code/femsq-backend/femsq-web/",
                 "type" : "maven-submodule",
                 "artifact_type" : "directory",
-                "build_file" : "pom.xml"
+                "build_file" : "pom.xml",
+                "artifactId" : "femsq-web"
               },
               "dependencies" : [ "database" ]
             },
             "components" : [ {
               "component" : {
-                "displayName" : "REST Controllers. № 01.02.01",
+                "displayName" : "GraphQL Controllers. № 01.02.01",
                 "attributes" : {
-                  "id" : "controller",
+                  "id" : "api.graphql",
                   "number" : "01.02.01",
-                  "name" : "REST Controllers",
-                  "description" : "REST контроллеры для API",
-                  "status" : "planned",
+                  "name" : "GraphQL Controllers",
+                  "description" : "Доменный GraphQL API (единственный транспорт)",
+                  "status" : "completed",
                   "artifact" : {
-                    "location" : "com.femsq.web.controller",
-                    "file_path" : "src/main/java/com/femsq/web/controller/",
+                    "location" : "com.femsq.web.api.graphql",
+                    "file_path" : "src/main/java/com/femsq/web/api/graphql/",
                     "type" : "java-package",
                     "artifact_type" : "directory"
-                  }
+                  },
+                  "responsibilities" : [ "@QueryMapping/@MutationMapping", "Og, Cst, Cn, Sudz, Ra, IpgChain, Relation" ],
+                  "dependsOn" : [ "database.service" ]
                 }
               }
             }, {
               "component" : {
-                "displayName" : "Lifecycle Management. № 01.02.02",
+                "displayName" : "REST Exceptions. № 01.02.02",
                 "attributes" : {
-                  "id" : "lifecycle",
+                  "id" : "api.rest",
                   "number" : "01.02.02",
-                  "name" : "Lifecycle Management",
-                  "description" : "Управление жизненным циклом приложения",
-                  "status" : "planned",
+                  "name" : "REST Exceptions",
+                  "description" : "Законные REST-исключения (не доменный CRUD)",
+                  "status" : "completed",
                   "artifact" : {
-                    "location" : "com.femsq.web.lifecycle",
-                    "file_path" : "src/main/java/com/femsq/web/lifecycle/",
+                    "location" : "com.femsq.web.api.rest",
+                    "file_path" : "src/main/java/com/femsq/web/api/rest/",
                     "type" : "java-package",
                     "artifact_type" : "directory"
-                  }
+                  },
+                  "responsibilities" : [ "ConnectionController (health)", "AppInfoController (версия)", "SudzExportRestController (xlsx/multipart)" ],
+                  "dependsOn" : [ ],
+                  "notes" : "Таблица исключений в .cursorrules; новые доменные @RestController запрещены"
                 }
               }
             }, {
               "component" : {
-                "displayName" : "Health Checks. № 01.02.03",
+                "displayName" : "СУДЗ API Services. № 01.02.03",
                 "attributes" : {
-                  "id" : "health",
+                  "id" : "api.sudz",
                   "number" : "01.02.03",
-                  "name" : "Health Checks",
-                  "description" : "Spring Boot Actuator health checks",
-                  "status" : "planned",
+                  "name" : "СУДЗ API Services",
+                  "description" : "Сервисы СУДЗ (brief/repay и др.) для GraphQL",
+                  "status" : "completed",
                   "artifact" : {
-                    "location" : "com.femsq.web.health",
-                    "file_path" : "src/main/java/com/femsq/web/health/",
+                    "location" : "com.femsq.web.api.sudz",
+                    "file_path" : "src/main/java/com/femsq/web/api/sudz/",
                     "type" : "java-package",
                     "artifact_type" : "directory"
-                  }
+                  },
+                  "responsibilities" : [ "Бизнес-логика экранов СУДЗ", "Подпакеты brief, repay" ],
+                  "dependsOn" : [ ]
                 }
               }
             }, {
               "component" : {
-                "displayName" : "DTO Layer. № 01.02.04",
+                "displayName" : "Web DTOs. № 01.02.04",
                 "attributes" : {
-                  "id" : "dto",
+                  "id" : "api.dto",
                   "number" : "01.02.04",
-                  "name" : "DTO Layer",
-                  "description" : "Data Transfer Objects для REST и GraphQL API",
+                  "name" : "Web DTOs",
+                  "description" : "DTO слоя web (кроме sudz)",
                   "status" : "completed",
                   "artifact" : {
                     "location" : "com.femsq.web.api.dto",
@@ -817,126 +359,37 @@
                     "type" : "java-package",
                     "artifact_type" : "directory"
                   },
-                  "responsibilities" : [ "DTO для чтения данных (OgDto, OgAgDto)", "Request DTO для создания и обновления (OgCreateRequest, OgUpdateRequest, OgAgCreateRequest, OgAgUpdateRequest)", "Валидация входных данных через Jakarta Bean Validation" ]
-                },
-                "classes" : [ {
-                  "class" : {
-                    "displayName" : "OgDto. № 01.02.04.01",
-                    "attributes" : {
-                      "id" : "OgDto",
-                      "number" : "01.02.04.01",
-                      "name" : "OgDto",
-                      "description" : "DTO для представления организации в API",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.web.api.dto.OgDto",
-                        "file_path" : "src/main/java/com/femsq/web/api/dto/OgDto.java",
-                        "type" : "java-record",
-                        "artifact_type" : "file"
-                      },
-                      "responsibilities" : [ "Представление организации в REST и GraphQL ответах" ]
-                    }
-                  }
-                }, {
-                  "class" : {
-                    "displayName" : "OgAgDto. № 01.02.04.02",
-                    "attributes" : {
-                      "id" : "OgAgDto",
-                      "number" : "01.02.04.02",
-                      "name" : "OgAgDto",
-                      "description" : "DTO для представления агентской организации в API",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.web.api.dto.OgAgDto",
-                        "file_path" : "src/main/java/com/femsq/web/api/dto/OgAgDto.java",
-                        "type" : "java-record",
-                        "artifact_type" : "file"
-                      },
-                      "responsibilities" : [ "Представление агентской организации в REST и GraphQL ответах" ]
-                    }
-                  }
-                }, {
-                  "class" : {
-                    "displayName" : "OgCreateRequest. № 01.02.04.03",
-                    "attributes" : {
-                      "id" : "OgCreateRequest",
-                      "number" : "01.02.04.03",
-                      "name" : "OgCreateRequest",
-                      "description" : "Request DTO для создания организации",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.web.api.dto.OgCreateRequest",
-                        "file_path" : "src/main/java/com/femsq/web/api/dto/OgCreateRequest.java",
-                        "type" : "java-record",
-                        "artifact_type" : "file"
-                      },
-                      "responsibilities" : [ "Валидация входных данных при создании организации" ]
-                    }
-                  }
-                }, {
-                  "class" : {
-                    "displayName" : "OgUpdateRequest. № 01.02.04.04",
-                    "attributes" : {
-                      "id" : "OgUpdateRequest",
-                      "number" : "01.02.04.04",
-                      "name" : "OgUpdateRequest",
-                      "description" : "Request DTO для обновления организации",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.web.api.dto.OgUpdateRequest",
-                        "file_path" : "src/main/java/com/femsq/web/api/dto/OgUpdateRequest.java",
-                        "type" : "java-record",
-                        "artifact_type" : "file"
-                      },
-                      "responsibilities" : [ "Валидация входных данных при обновлении организации" ]
-                    }
-                  }
-                }, {
-                  "class" : {
-                    "displayName" : "OgAgCreateRequest. № 01.02.04.05",
-                    "attributes" : {
-                      "id" : "OgAgCreateRequest",
-                      "number" : "01.02.04.05",
-                      "name" : "OgAgCreateRequest",
-                      "description" : "Request DTO для создания агентской организации",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.web.api.dto.OgAgCreateRequest",
-                        "file_path" : "src/main/java/com/femsq/web/api/dto/OgAgCreateRequest.java",
-                        "type" : "java-record",
-                        "artifact_type" : "file"
-                      },
-                      "responsibilities" : [ "Валидация входных данных при создании агентской организации" ]
-                    }
-                  }
-                }, {
-                  "class" : {
-                    "displayName" : "OgAgUpdateRequest. № 01.02.04.06",
-                    "attributes" : {
-                      "id" : "OgAgUpdateRequest",
-                      "number" : "01.02.04.06",
-                      "name" : "OgAgUpdateRequest",
-                      "description" : "Request DTO для обновления агентской организации",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.web.api.dto.OgAgUpdateRequest",
-                        "file_path" : "src/main/java/com/femsq/web/api/dto/OgAgUpdateRequest.java",
-                        "type" : "java-record",
-                        "artifact_type" : "file"
-                      },
-                      "responsibilities" : [ "Валидация входных данных при обновлении агентской организации" ]
-                    }
-                  }
-                } ]
+                  "responsibilities" : [ ],
+                  "dependsOn" : [ ]
+                }
               }
             }, {
               "component" : {
-                "displayName" : "Mappers. № 01.02.05",
+                "displayName" : "СУДЗ DTOs. № 01.02.05",
                 "attributes" : {
-                  "id" : "mapper",
+                  "id" : "api.dto.sudz",
                   "number" : "01.02.05",
-                  "name" : "Mappers",
-                  "description" : "Мапперы между доменными моделями и DTO",
+                  "name" : "СУДЗ DTOs",
+                  "description" : "DTO СУДЗ",
+                  "status" : "completed",
+                  "artifact" : {
+                    "location" : "com.femsq.web.api.dto.sudz",
+                    "file_path" : "src/main/java/com/femsq/web/api/dto/sudz/",
+                    "type" : "java-package",
+                    "artifact_type" : "directory"
+                  },
+                  "responsibilities" : [ ],
+                  "dependsOn" : [ ]
+                }
+              }
+            }, {
+              "component" : {
+                "displayName" : "Web Mappers. № 01.02.06",
+                "attributes" : {
+                  "id" : "api.mapper",
+                  "number" : "01.02.06",
+                  "name" : "Web Mappers",
+                  "description" : "Мапперы model ↔ DTO",
                   "status" : "completed",
                   "artifact" : {
                     "location" : "com.femsq.web.api.mapper",
@@ -944,48 +397,123 @@
                     "type" : "java-package",
                     "artifact_type" : "directory"
                   },
-                  "responsibilities" : [ "Преобразование доменных моделей (Og, OgAg) в DTO", "Преобразование Request DTO в доменные модели", "Нормализация данных (например, registrationTaxType)" ],
-                  "dependsOn" : [ "dto", "database.model" ]
-                },
-                "classes" : [ {
-                  "class" : {
-                    "displayName" : "OgMapper. № 01.02.05.01",
-                    "attributes" : {
-                      "id" : "OgMapper",
-                      "number" : "01.02.05.01",
-                      "name" : "OgMapper",
-                      "description" : "Маппер для преобразования между Og и OgDto",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.web.api.mapper.OgMapper",
-                        "file_path" : "src/main/java/com/femsq/web/api/mapper/OgMapper.java",
-                        "type" : "java-class",
-                        "artifact_type" : "file"
-                      },
-                      "responsibilities" : [ "toDto(Og) - преобразование доменной модели в DTO", "toDto(List<Og>) - преобразование списка", "toDomain(OgCreateRequest) - создание доменной модели из запроса", "toDomain(int, OgUpdateRequest) - обновление доменной модели", "Нормализация registrationTaxType" ],
-                      "dependsOn" : [ "OgDto", "OgCreateRequest", "OgUpdateRequest" ]
-                    }
-                  }
-                }, {
-                  "class" : {
-                    "displayName" : "OgAgMapper. № 01.02.05.02",
-                    "attributes" : {
-                      "id" : "OgAgMapper",
-                      "number" : "01.02.05.02",
-                      "name" : "OgAgMapper",
-                      "description" : "Маппер для преобразования между OgAg и OgAgDto",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.web.api.mapper.OgAgMapper",
-                        "file_path" : "src/main/java/com/femsq/web/api/mapper/OgAgMapper.java",
-                        "type" : "java-class",
-                        "artifact_type" : "file"
-                      },
-                      "responsibilities" : [ "toDto(OgAg) - преобразование доменной модели в DTO", "toDto(List<OgAg>) - преобразование списка", "toDomain(OgAgCreateRequest) - создание доменной модели из запроса", "toDomain(int, OgAgUpdateRequest) - обновление доменной модели" ],
-                      "dependsOn" : [ "OgAgDto", "OgAgCreateRequest", "OgAgUpdateRequest" ]
-                    }
-                  }
-                } ]
+                  "responsibilities" : [ ],
+                  "dependsOn" : [ ]
+                }
+              }
+            }, {
+              "component" : {
+                "displayName" : "Audits / Revisions. № 01.02.07",
+                "attributes" : {
+                  "id" : "audit",
+                  "number" : "01.02.07",
+                  "name" : "Audits / Revisions",
+                  "description" : "Движок ревизий (af_type), Excel, reconcile, staging",
+                  "status" : "completed",
+                  "artifact" : {
+                    "location" : "com.femsq.web.audit",
+                    "file_path" : "src/main/java/com/femsq/web/audit/",
+                    "type" : "java-package",
+                    "artifact_type" : "directory"
+                  },
+                  "responsibilities" : [ "Типы ревизий", "Excel import", "reconcile/stage2/staging/runtime" ],
+                  "dependsOn" : [ ]
+                }
+              }
+            }, {
+              "component" : {
+                "displayName" : "Web Config. № 01.02.08",
+                "attributes" : {
+                  "id" : "config",
+                  "number" : "01.02.08",
+                  "name" : "Web Config",
+                  "description" : "Spring/Web/SPA конфигурация",
+                  "status" : "completed",
+                  "artifact" : {
+                    "location" : "com.femsq.web.config",
+                    "file_path" : "src/main/java/com/femsq/web/config/",
+                    "type" : "java-package",
+                    "artifact_type" : "directory"
+                  },
+                  "responsibilities" : [ "SpaController — отдача SPA" ],
+                  "dependsOn" : [ ]
+                }
+              }
+            }, {
+              "component" : {
+                "displayName" : "Web Startup. № 01.02.09",
+                "attributes" : {
+                  "id" : "startup",
+                  "number" : "01.02.09",
+                  "name" : "Web Startup",
+                  "description" : "Стартовые проверки и инициализация",
+                  "status" : "completed",
+                  "artifact" : {
+                    "location" : "com.femsq.web.startup",
+                    "file_path" : "src/main/java/com/femsq/web/startup/",
+                    "type" : "java-package",
+                    "artifact_type" : "directory"
+                  },
+                  "responsibilities" : [ ],
+                  "dependsOn" : [ ]
+                }
+              }
+            }, {
+              "component" : {
+                "displayName" : "Web Build Helpers. № 01.02.10",
+                "attributes" : {
+                  "id" : "build",
+                  "number" : "01.02.10",
+                  "name" : "Web Build Helpers",
+                  "description" : "Вспомогательные классы сборки/манифеста lib",
+                  "status" : "completed",
+                  "artifact" : {
+                    "location" : "com.femsq.web.build",
+                    "file_path" : "src/main/java/com/femsq/web/build/",
+                    "type" : "java-package",
+                    "artifact_type" : "directory"
+                  },
+                  "responsibilities" : [ ],
+                  "dependsOn" : [ ]
+                }
+              }
+            }, {
+              "component" : {
+                "displayName" : "Web Logging. № 01.02.11",
+                "attributes" : {
+                  "id" : "logging",
+                  "number" : "01.02.11",
+                  "name" : "Web Logging",
+                  "description" : "Логирование web-слоя",
+                  "status" : "completed",
+                  "artifact" : {
+                    "location" : "com.femsq.web.logging",
+                    "file_path" : "src/main/java/com/femsq/web/logging/",
+                    "type" : "java-package",
+                    "artifact_type" : "directory"
+                  },
+                  "responsibilities" : [ ],
+                  "dependsOn" : [ ]
+                }
+              }
+            }, {
+              "component" : {
+                "displayName" : "GraphQL Schemas. № 01.02.12",
+                "attributes" : {
+                  "id" : "graphql.schema",
+                  "number" : "01.02.12",
+                  "name" : "GraphQL Schemas",
+                  "description" : "Схемы .graphqls",
+                  "status" : "completed",
+                  "artifact" : {
+                    "location" : "code/femsq-backend/femsq-web/src/main/resources/graphql/",
+                    "file_path" : "code/femsq-backend/femsq-web/src/main/resources/graphql/",
+                    "type" : "resource-directory",
+                    "artifact_type" : "directory"
+                  },
+                  "responsibilities" : [ "cn/cst/og/ra/relation/sudz-schema.graphqls" ],
+                  "dependsOn" : [ ]
+                }
               }
             } ]
           }
@@ -996,9 +524,9 @@
               "id" : "reports",
               "number" : "01.03",
               "name" : "Reports Module",
-              "description" : "Модуль генерации PDF-отчётов на основе JasperReports",
-              "purpose" : "Генерация PDF/Excel/HTML отчётов из данных MS SQL Server",
-              "status" : "planned",
+              "description" : "PDF-отчёты JasperReports",
+              "purpose" : "Каталог и генерация отчётов (Blob REST; пересмотр C5)",
+              "status" : "completed",
               "artifact" : {
                 "location" : "code/femsq-backend/femsq-reports/",
                 "file_path" : "code/femsq-backend/femsq-reports/",
@@ -1008,304 +536,115 @@
                 "artifactId" : "femsq-reports"
               },
               "dependencies" : [ "database", "web" ],
-              "technologies" : [ "JasperReports 7.0.3", "Spring Boot", "JRXML", "Jaspersoft Studio 7.0.3" ],
-              "responsibilities" : [ "Обнаружение и сканирование шаблонов отчётов (.jasper и .jrxml)", "Загрузка предкомпилированных .jasper файлов из JAR", "Fallback на компиляцию .jrxml при отсутствии .jasper", "Генерация PDF отчётов через JRPdfExporter", "Генерация Excel отчётов через JRXlsxExporter", "Генерация HTML отчётов", "Управление метаданными отчётов (JSON)", "REST API для работы с отчётами", "Поддержка внешних отчётов (hot-reload без перезапуска)" ],
+              "technologies" : [ "JasperReports 7.0.3", "Spring Boot" ],
+              "responsibilities" : [ "Обнаружение шаблонов", "PDF/Excel/HTML", "Внешние отчёты hot-reload" ],
+              "documentation" : [ "docs/project/decisions/adr-003-reporting-engine.md", "docs/deployment/reports-deployment-strategy.md" ],
               "buildHistory" : {
-                "lastUpdated" : "2026-10-27T16:54:14+03:00",
                 "builds" : [ {
-                  "version" : "0.1.0.376-SNAPSHOT",
-                  "sha256" : "72293bcec92f847cc1599a1896d986e73b78b3a9c73a117414e83683b51bd03f",
-                  "buildTimestamp" : "2026-10-27T16:54:14+03:00",
-                  "buildNumber" : "202610271654140",
+                  "version" : "0.1.0.377-SNAPSHOT",
+                  "sha256" : "2eca6a06657d0d3ee6b9955069d2f2d701d0aaf9c02bcad16e655eea8bb8e9f0",
+                  "buildTimestamp" : "2026-11-17T16:45:27+03:00",
+                  "buildNumber" : "202611171645270",
                   "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.376-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.375-SNAPSHOT",
-                  "sha256" : "f3dd52a3cac20be0d14eb4efcac4064d441d6406ceab452017cf29f42338a539",
-                  "buildTimestamp" : "2026-10-27T12:17:34+03:00",
-                  "buildNumber" : "202610271217340",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.375-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.374-SNAPSHOT",
-                  "sha256" : "a577e512b10cdd60e8b08a9b285df47c9ed9e676f68cf83fd827591d8942307e",
-                  "buildTimestamp" : "2026-10-22T16:52:10+03:00",
-                  "buildNumber" : "202610221652100",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.374-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.372-SNAPSHOT",
-                  "sha256" : "a18fe95ad6ce906734857d368681509f015bf527f6e8a84320fc40bd48efd534",
-                  "buildTimestamp" : "2026-10-21T15:21:38+03:00",
-                  "buildNumber" : "202610211521380",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.372-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.371-SNAPSHOT",
-                  "sha256" : "14e6e3b43b191782cd246f6cee4040ef527f83181d6587a5f766d8b0843b3e3d",
-                  "buildTimestamp" : "2026-10-21T15:18:39+03:00",
-                  "buildNumber" : "202610211518390",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.371-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.370-SNAPSHOT",
-                  "sha256" : "12e42907a89ca0efb982818a204366e44a3cd325fa70f67cd9d0a2e1954bcbc4",
-                  "buildTimestamp" : "2026-10-21T14:59:30+03:00",
-                  "buildNumber" : "202610211459300",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.370-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.369-SNAPSHOT",
-                  "sha256" : "8b0be3aa3272256c0960c306511854cef07e77d6a12017827cf75fb5707228cb",
-                  "buildTimestamp" : "2026-10-21T14:24:58+03:00",
-                  "buildNumber" : "202610211424580",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.369-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.368-SNAPSHOT",
-                  "sha256" : "3203f31742a6349c7ce15932807ddc036c1c3cb7ad7845cb9717bad52e36d772",
-                  "buildTimestamp" : "2026-10-21T14:15:07+03:00",
-                  "buildNumber" : "202610211415070",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.368-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.367-SNAPSHOT",
-                  "sha256" : "96a863779cbac1c2c22f7c6668d797ca5bae7d885723b8e851826a0c5f82b9a1",
-                  "buildTimestamp" : "2026-10-21T13:17:19+03:00",
-                  "buildNumber" : "202610211317190",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.367-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.366-SNAPSHOT",
-                  "sha256" : "76daa6701062df2c79b1581f849736fea20b24c38f5438c9297b38bb99bb78e3",
-                  "buildTimestamp" : "2026-10-21T11:45:26+03:00",
-                  "buildNumber" : "202610211145260",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.366-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.365-SNAPSHOT",
-                  "sha256" : "fbf2f54945f14bb7a4ad4baa708b9bf06c77fba06e626ab8c7f9ef95700d2b31",
-                  "buildTimestamp" : "2026-10-21T11:26:13+03:00",
-                  "buildNumber" : "202610211126130",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.365-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.364-SNAPSHOT",
-                  "sha256" : "cba6240b6c5f17ce0b4dab571652c326872d892787b7908b7bada1ce2ced2f2a",
-                  "buildTimestamp" : "2026-10-21T10:45:39+03:00",
-                  "buildNumber" : "202610211045390",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.364-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.363-SNAPSHOT",
-                  "sha256" : "f314ee62480929a0c1db7f66b4ec6e740713d08f324775f898b4634652f7376f",
-                  "buildTimestamp" : "2026-10-21T10:21:02+03:00",
-                  "buildNumber" : "202610211021020",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.363-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.362-SNAPSHOT",
-                  "sha256" : "83c41aacf125b8807e8d8f5bd971baeb8de9dfc6514f8e61f5700ebfd41d7798",
-                  "buildTimestamp" : "2026-10-20T17:46:11+03:00",
-                  "buildNumber" : "202610201746110",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.362-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.361-SNAPSHOT",
-                  "sha256" : "751ae4e6d2342311a366c4df14f8f95f0684415ab5632f4e591bcfd8dd16277c",
-                  "buildTimestamp" : "2026-10-20T11:39:09+03:00",
-                  "buildNumber" : "202610201139090",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.361-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.360-SNAPSHOT",
-                  "sha256" : "bbca0d39652dae57bd1aa3e67b8e77f8bba34d2ddaf46d4b5dfc49e60088dacd",
-                  "buildTimestamp" : "2026-10-20T11:31:06+03:00",
-                  "buildNumber" : "202610201131060",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.360-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.359-SNAPSHOT",
-                  "sha256" : "49146714dc9ecb9fb8eb0535a527b77422319e21b2c03c7c99bbf99a898250fd",
-                  "buildTimestamp" : "2026-10-20T11:25:52+03:00",
-                  "buildNumber" : "202610201125520",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.359-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.358-SNAPSHOT",
-                  "sha256" : "1fe489e6d539b31cda7e072c1f7ebe262e5d6d444a1883d2c2981f70a5582090",
-                  "buildTimestamp" : "2026-10-20T11:20:43+03:00",
-                  "buildNumber" : "202610201120430",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.358-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.357-SNAPSHOT",
-                  "sha256" : "4ba7dce1515f5f2fc09f116138821bcd551aecf0752bf62ad0bfebae18327a4f",
-                  "buildTimestamp" : "2026-10-20T11:13:18+03:00",
-                  "buildNumber" : "202610201113180",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.357-SNAPSHOT.jar"
-                }, {
-                  "version" : "0.1.0.356-SNAPSHOT",
-                  "sha256" : "2381ea1afc41b251dc3da34109fcfc60f4a89b89e2d41f427a41b80a840e5934",
-                  "buildTimestamp" : "2026-10-20T11:08:18+03:00",
-                  "buildNumber" : "202610201108180",
-                  "changed" : true,
-                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.356-SNAPSHOT.jar"
-                } ]
-              },
-              "deployment" : {
-                "strategy" : "precompiled-reports",
-                "description" : "Отчёты компилируются в Jaspersoft Studio 7.0.3 и включаются в JAR как .jasper файлы. Исходные .jrxml также включаются для справки и доработки.",
-                "artifacts" : {
-                  "in_jar" : {
-                    "types" : [ ".jasper", ".jrxml", ".json" ],
-                    "location" : "BOOT-INF/classes/reports/embedded/",
-                    "description" : "Стандартные отчёты в поставке приложения"
-                  },
-                  "external" : {
-                    "location" : "./reports/external/",
-                    "description" : "Пользовательские отчёты (приоритет над JAR)"
-                  }
-                },
-                "compilation" : {
-                  "method" : "manual",
-                  "tool" : "Jaspersoft Studio 7.0.3",
-                  "reason" : "Проблемы с компиляцией в Spring Boot nested JAR",
-                  "documentation" : "docs/deployment/reports-deployment-strategy.md"
-                }
-              },
-              "documentation" : [ "docs/project/decisions/adr-003-reporting-engine.md", "docs/development/technical/reports-development-guide.md", "docs/deployment/reports-deployment-strategy.md", "docs/development/jaspersoft-studio-guide.md" ]
+                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.377-SNAPSHOT.jar"
+                } ],
+                "lastUpdated" : "2026-11-17T16:45:27+03:00"
+              }
             },
             "components" : [ {
               "component" : {
-                "displayName" : "Core Component. № 01.03.01",
+                "displayName" : "Reports Core. № 01.03.01",
                 "attributes" : {
                   "id" : "core",
                   "number" : "01.03.01",
                   "name" : "Reports Core",
-                  "description" : "Ядро системы отчётов",
-                  "status" : "planned",
+                  "description" : "Генерация/обнаружение Jasper-отчётов",
+                  "status" : "completed",
                   "artifact" : {
                     "location" : "com.femsq.reports.core",
                     "file_path" : "src/main/java/com/femsq/reports/core/",
                     "type" : "java-package",
                     "artifact_type" : "directory"
                   },
-                  "responsibilities" : [ "Сканирование директорий с отчётами", "Загрузка метаданных из JSON", "Загрузка предкомпилированных .jasper файлов", "Fallback на компиляцию .jrxml при отсутствии .jasper", "Кэширование скомпилированных отчётов", "Приоритет внешних отчётов над встроенными" ]
-                },
-                "classes" : [ {
-                  "class" : {
-                    "displayName" : "ReportGenerationService. № 01.03.01.01",
-                    "attributes" : {
-                      "id" : "ReportGenerationService",
-                      "number" : "01.03.01.01",
-                      "name" : "ReportGenerationService",
-                      "description" : "Основной сервис генерации отчётов",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.reports.core.ReportGenerationService",
-                        "file_path" : "src/main/java/com/femsq/reports/core/ReportGenerationService.java",
-                        "type" : "java-class",
-                        "artifact_type" : "file"
-                      },
-                      "responsibilities" : [ "Загрузка отчётов с приоритетом: внешние → .jasper → .jrxml", "Генерация PDF, Excel, HTML отчётов", "Управление параметрами отчётов", "Обработка подотчётов" ],
-                      "dependsOn" : [ "JasperReportsEngine", "ReportDiscoveryService" ]
-                    }
-                  }
-                }, {
-                  "class" : {
-                    "displayName" : "JasperReportsEngine. № 01.03.01.02",
-                    "attributes" : {
-                      "id" : "JasperReportsEngine",
-                      "number" : "01.03.01.02",
-                      "name" : "JasperReportsEngine",
-                      "description" : "Движок компиляции и кэширования отчётов",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.reports.core.JasperReportsEngine",
-                        "file_path" : "src/main/java/com/femsq/reports/core/JasperReportsEngine.java",
-                        "type" : "java-class",
-                        "artifact_type" : "file"
-                      },
-                      "responsibilities" : [ "Компиляция JRXML в JasperReport", "Кэширование скомпилированных отчётов", "Управление директорией кэша" ],
-                      "dependsOn" : [ ]
-                    }
-                  }
-                }, {
-                  "class" : {
-                    "displayName" : "ReportDiscoveryService. № 01.03.01.03",
-                    "attributes" : {
-                      "id" : "ReportDiscoveryService",
-                      "number" : "01.03.01.03",
-                      "name" : "ReportDiscoveryService",
-                      "description" : "Сервис обнаружения и загрузки метаданных отчётов",
-                      "status" : "completed",
-                      "artifact" : {
-                        "location" : "com.femsq.reports.core.ReportDiscoveryService",
-                        "file_path" : "src/main/java/com/femsq/reports/core/ReportDiscoveryService.java",
-                        "type" : "java-class",
-                        "artifact_type" : "file"
-                      },
-                      "responsibilities" : [ "Сканирование директорий с отчётами", "Загрузка метаданных из JSON", "Hot-reload при изменении файлов" ],
-                      "dependsOn" : [ ]
-                    }
-                  }
-                } ]
+                  "responsibilities" : [ ],
+                  "dependsOn" : [ ]
+                }
               }
             }, {
               "component" : {
-                "displayName" : "API Component. № 01.03.02",
+                "displayName" : "Reports API. № 01.03.02",
                 "attributes" : {
                   "id" : "api",
                   "number" : "01.03.02",
                   "name" : "Reports API",
-                  "description" : "REST API для работы с отчётами",
-                  "status" : "planned",
+                  "description" : "REST каталог/генерация PDF (исключение .cursorrules; пересмотр C5)",
+                  "status" : "completed",
                   "artifact" : {
                     "location" : "com.femsq.reports.api",
                     "file_path" : "src/main/java/com/femsq/reports/api/",
                     "type" : "java-package",
                     "artifact_type" : "directory"
-                  }
-                },
-                "classes" : [ ]
+                  },
+                  "responsibilities" : [ ],
+                  "dependsOn" : [ ]
+                }
               }
             }, {
               "component" : {
-                "displayName" : "Model Component. № 01.03.03",
+                "displayName" : "Reports Model. № 01.03.03",
                 "attributes" : {
                   "id" : "model",
                   "number" : "01.03.03",
                   "name" : "Reports Model",
-                  "description" : "Модели данных для отчётов",
-                  "status" : "planned",
+                  "description" : "Модели метаданных отчётов",
+                  "status" : "completed",
                   "artifact" : {
                     "location" : "com.femsq.reports.model",
                     "file_path" : "src/main/java/com/femsq/reports/model/",
                     "type" : "java-package",
                     "artifact_type" : "directory"
-                  }
-                },
-                "classes" : [ ]
+                  },
+                  "responsibilities" : [ ],
+                  "dependsOn" : [ ]
+                }
               }
             }, {
               "component" : {
-                "displayName" : "Config Component. № 01.03.04",
+                "displayName" : "Reports Config. № 01.03.04",
                 "attributes" : {
                   "id" : "config",
                   "number" : "01.03.04",
-                  "name" : "Reports Configuration",
+                  "name" : "Reports Config",
                   "description" : "Конфигурация модуля отчётов",
-                  "status" : "planned",
+                  "status" : "completed",
                   "artifact" : {
                     "location" : "com.femsq.reports.config",
                     "file_path" : "src/main/java/com/femsq/reports/config/",
                     "type" : "java-package",
                     "artifact_type" : "directory"
-                  }
-                },
-                "classes" : [ ]
+                  },
+                  "responsibilities" : [ ],
+                  "dependsOn" : [ ]
+                }
+              }
+            }, {
+              "component" : {
+                "displayName" : "Reports Build. № 01.03.05",
+                "attributes" : {
+                  "id" : "build",
+                  "number" : "01.03.05",
+                  "name" : "Reports Build",
+                  "description" : "Сборка/встраивание шаблонов",
+                  "status" : "completed",
+                  "artifact" : {
+                    "location" : "com.femsq.reports.build",
+                    "file_path" : "src/main/java/com/femsq/reports/build/",
+                    "type" : "java-package",
+                    "artifact_type" : "directory"
+                  },
+                  "responsibilities" : [ ],
+                  "dependsOn" : [ ]
+                }
               }
             } ]
           }
@@ -1318,9 +657,9 @@
           "id" : "frontend",
           "number" : "02",
           "name" : "Frontend Module",
-          "description" : "Frontend модуль приложения FEMSQ на Vue.js",
-          "purpose" : "Пользовательский интерфейс для работы с контрагентами и объектами",
-          "status" : "planned",
+          "description" : "Vue 3 + Quasar UI",
+          "purpose" : "Экраны P1/P2, Apollo GraphQL, feQuLib",
+          "status" : "completed",
           "artifact" : {
             "location" : "code/femsq-frontend-q/",
             "file_path" : "code/femsq-frontend-q/",
@@ -1332,567 +671,232 @@
         },
         "components" : [ {
           "component" : {
-            "displayName" : "Setup Components. № 02.01",
+            "displayName" : "Organizations View. № 02.01",
             "attributes" : {
-              "id" : "setup",
+              "id" : "views.organizations",
               "number" : "02.01",
-              "name" : "Setup Components",
-              "description" : "Компоненты для настройки подключения к БД",
-              "status" : "planned",
-              "artifact" : {
-                "location" : "src/components/setup/",
-                "file_path" : "src/components/setup/",
-                "type" : "vue-components",
-                "artifact_type" : "directory"
-              },
-              "responsibilities" : [ "Мастер настройки подключения", "Формы ввода параметров", "Тестирование подключения" ]
-            }
-          }
-        }, {
-          "component" : {
-            "displayName" : "API Services. № 02.02",
-            "attributes" : {
-              "id" : "services",
-              "number" : "02.02",
-              "name" : "API Services",
-              "description" : "API клиенты для работы с backend",
-              "status" : "planned",
-              "artifact" : {
-                "location" : "src/services/",
-                "file_path" : "src/services/",
-                "type" : "typescript-modules",
-                "artifact_type" : "directory"
-              }
-            }
-          }
-        }, {
-          "component" : {
-            "displayName" : "Application Layout. № 02.03",
-            "attributes" : {
-              "id" : "layout",
-              "number" : "02.03",
-              "name" : "Application Layout",
-              "description" : "Постоянный каркас приложения с верхней панелью и строкой состояния",
+              "name" : "Organizations View",
+              "description" : "Экран организаций (FemsqTable)",
               "status" : "completed",
               "artifact" : {
-                "location" : "src/components/layout/",
-                "file_path" : "src/components/layout/",
-                "type" : "vue-components",
-                "artifact_type" : "directory"
-              },
-              "responsibilities" : [ "Фиксированная верхняя панель с действиями", "Основная область контента", "Нижняя строка состояния соединения" ],
-              "documentation" : [ "docs/development/notes/UI/02-1-1_app-layout.md" ]
-            }
-          },
-          "classes" : [ {
-            "class" : {
-              "displayName" : "AppLayout.vue. № 02.03.01",
-              "attributes" : {
-                "id" : "AppLayout",
-                "number" : "02.03.01",
-                "name" : "AppLayout",
-                "description" : "Контейнер layout, объединяющий верхнюю панель, основной контент и строку состояния",
-                "status" : "completed",
-                "artifact" : {
-                  "location" : "src/components/layout/AppLayout.vue",
-                  "file_path" : "src/components/layout/AppLayout.vue",
-                  "type" : "vue-component",
-                  "artifact_type" : "file"
-                }
-              }
-            }
-          }, {
-            "class" : {
-              "displayName" : "TopBar.vue. № 02.03.02",
-              "attributes" : {
-                "id" : "TopBar",
-                "number" : "02.03.02",
-                "name" : "TopBar",
-                "description" : "Верхняя панель с кнопками подключения и навигацией",
-                "status" : "completed",
-                "artifact" : {
-                  "location" : "src/components/layout/TopBar.vue",
-                  "file_path" : "src/components/layout/TopBar.vue",
-                  "type" : "vue-component",
-                  "artifact_type" : "file"
-                }
-              }
-            }
-          }, {
-            "class" : {
-              "displayName" : "StatusBar.vue. № 02.03.03",
-              "attributes" : {
-                "id" : "StatusBar",
-                "number" : "02.03.03",
-                "name" : "StatusBar",
-                "description" : "Нижняя строка состояния с отображением текущего статуса подключения",
-                "status" : "completed",
-                "artifact" : {
-                  "location" : "src/components/layout/StatusBar.vue",
-                  "file_path" : "src/components/layout/StatusBar.vue",
-                  "type" : "vue-component",
-                  "artifact_type" : "file"
-                }
-              }
-            }
-          } ]
-        }, {
-          "component" : {
-            "displayName" : "Connection Modal. № 02.04",
-            "attributes" : {
-              "id" : "connectionModal",
-              "number" : "02.04",
-              "name" : "Connection Modal",
-              "description" : "Модальная форма подключения к базе данных",
-              "status" : "completed",
-              "artifact" : {
-                "location" : "src/components/setup/connection-modal/",
-                "file_path" : "src/components/setup/connection-modal/",
-                "type" : "vue-components",
-                "artifact_type" : "directory"
-              },
-              "responsibilities" : [ "Сбор параметров подключения к БД", "Валидация и отображение ошибок", "Инициация процесса подключения и обновление статуса" ],
-              "documentation" : [ "docs/development/notes/UI/02-1-2_connection-modal.md" ]
-            },
-            "classes" : [ {
-              "class" : {
-                "displayName" : "ConnectionModal.vue. № 02.04.01",
-                "attributes" : {
-                  "id" : "ConnectionModal",
-                  "number" : "02.04.01",
-                  "name" : "ConnectionModal",
-                  "description" : "Модальное окно с формой подключения и обработкой статусов",
-                  "status" : "completed",
-                  "artifact" : {
-                    "location" : "src/components/setup/connection-modal/ConnectionModal.vue",
-                    "file_path" : "src/components/setup/connection-modal/ConnectionModal.vue",
-                    "type" : "vue-component",
-                    "artifact_type" : "file"
-                  }
-                }
-              }
-            } ]
-          }
-        }, {
-          "component" : {
-            "displayName" : "Quasar Frontend Module. № 02.06",
-            "attributes" : {
-              "id" : "frontend.quasar",
-              "number" : "02.06",
-              "name" : "Quasar Frontend Module",
-              "description" : "Новый модуль пользовательского интерфейса на основе Quasar",
-              "status" : "completed",
-              "artifact" : {
-                "location" : "code/femsq-frontend-q/",
-                "file_path" : "code/femsq-frontend-q/",
-                "type" : "vue-module",
-                "artifact_type" : "directory"
-              },
-              "responsibilities" : [ "Vite + Quasar конфигурация", "Компоненты layout и системные диалоги", "Экран организаций на компонентах Quasar" ],
-              "documentation" : [ "docs/development/notes/chats/chat-plan/chat-plan-25-1111.md#переход-на-quasar-ui-021q" ]
-            },
-            "classes" : [ {
-              "class" : {
-                "displayName" : "AppLayout.vue (Quasar). № 02.06.01",
-                "attributes" : {
-                  "id" : "frontend.quasar.AppLayout",
-                  "number" : "02.06.01",
-                  "name" : "AppLayout",
-                  "description" : "Контейнер приложения на QLayout",
-                  "status" : "completed",
-                  "artifact" : {
-                    "location" : "src/components/layout/AppLayout.vue",
-                    "file_path" : "code/femsq-frontend-q/src/components/layout/AppLayout.vue",
-                    "type" : "vue-component",
-                    "artifact_type" : "file"
-                  }
-                }
-              }
-            }, {
-              "class" : {
-                "displayName" : "TopBar.vue (Quasar). № 02.06.02",
-                "attributes" : {
-                  "id" : "frontend.quasar.TopBar",
-                  "number" : "02.06.02",
-                  "name" : "TopBar",
-                  "description" : "Верхняя панель на QToolbar с меню",
-                  "status" : "completed",
-                  "artifact" : {
-                    "location" : "src/components/layout/TopBar.vue",
-                    "file_path" : "code/femsq-frontend-q/src/components/layout/TopBar.vue",
-                    "type" : "vue-component",
-                    "artifact_type" : "file"
-                  }
-                }
-              }
-            }, {
-              "class" : {
-                "displayName" : "StatusBar.vue (Quasar). № 02.06.03",
-                "attributes" : {
-                  "id" : "frontend.quasar.StatusBar",
-                  "number" : "02.06.03",
-                  "name" : "StatusBar",
-                  "description" : "Строка состояния на QFooter",
-                  "status" : "completed",
-                  "artifact" : {
-                    "location" : "src/components/layout/StatusBar.vue",
-                    "file_path" : "code/femsq-frontend-q/src/components/layout/StatusBar.vue",
-                    "type" : "vue-component",
-                    "artifact_type" : "file"
-                  }
-                }
-              }
-            }, {
-              "class" : {
-                "displayName" : "ConnectionModal.vue (Quasar). № 02.06.04",
-                "attributes" : {
-                  "id" : "frontend.quasar.ConnectionModal",
-                  "number" : "02.06.04",
-                  "name" : "ConnectionModal",
-                  "description" : "Модальная форма подключения на компонентах Quasar",
-                  "status" : "completed",
-                  "artifact" : {
-                    "location" : "src/components/setup/ConnectionModal.vue",
-                    "file_path" : "code/femsq-frontend-q/src/components/setup/ConnectionModal.vue",
-                    "type" : "vue-component",
-                    "artifact_type" : "file"
-                  }
-                }
-              }
-            }, {
-              "class" : {
-                "displayName" : "OrganizationsView.vue (Quasar). № 02.06.05",
-                "attributes" : {
-                  "id" : "frontend.quasar.OrganizationsView",
-                  "number" : "02.06.05",
-                  "name" : "OrganizationsView",
-                  "description" : "Экран организаций на компонентах Quasar с фильтрами, пагинацией и состояниями загрузки",
-                  "status" : "completed",
-                  "artifact" : {
-                    "location" : "src/views/organizations/OrganizationsView.vue",
-                    "file_path" : "code/femsq-frontend-q/src/views/organizations/OrganizationsView.vue",
-                    "type" : "vue-component",
-                    "artifact_type" : "file"
-                  }
-                }
-              }
-            }, {
-              "class" : {
-                "displayName" : "organizations.ts (Quasar store). № 02.06.06",
-                "attributes" : {
-                  "id" : "frontend.quasar.organizationsStore",
-                  "number" : "02.06.06",
-                  "name" : "useOrganizationsStore",
-                  "description" : "Pinia-стор с интеграцией REST/GraphQL API для организаций и агентов",
-                  "status" : "completed",
-                  "artifact" : {
-                    "location" : "src/stores/organizations.ts",
-                    "file_path" : "code/femsq-frontend-q/src/stores/organizations.ts",
-                    "type" : "ts-module",
-                    "artifact_type" : "file"
-                  }
-                }
-              }
-            }, {
-              "class" : {
-                "displayName" : "http.ts (HTTP-клиент). № 02.06.07",
-                "attributes" : {
-                  "id" : "frontend.quasar.httpClient",
-                  "number" : "02.06.07",
-                  "name" : "api/http",
-                  "description" : "Обертка над fetch с таймаутами и обработкой ошибок для REST/GraphQL запросов",
-                  "status" : "completed",
-                  "artifact" : {
-                    "location" : "src/api/http.ts",
-                    "file_path" : "code/femsq-frontend-q/src/api/http.ts",
-                    "type" : "ts-module",
-                    "artifact_type" : "file"
-                  }
-                }
-              }
-            }, {
-              "class" : {
-                "displayName" : "OrganizationsView.spec.ts (component tests). № 02.06.08",
-                "attributes" : {
-                  "id" : "frontend.quasar.organizationsComponentTests",
-                  "number" : "02.06.08",
-                  "name" : "OrganizationsView Component Tests",
-                  "description" : "Компонентные тесты OrganizationsView с моками API",
-                  "status" : "completed",
-                  "artifact" : {
-                    "location" : "tests/component/OrganizationsView.spec.ts",
-                    "file_path" : "code/femsq-frontend-q/tests/component/OrganizationsView.spec.ts",
-                    "type" : "vitest-spec",
-                    "artifact_type" : "file"
-                  }
-                }
-              }
-            }, {
-              "class" : {
-                "displayName" : "organizations.spec.ts (e2e tests, Playwright). № 02.06.09",
-                "attributes" : {
-                  "id" : "frontend.quasar.organizationsE2ETests",
-                  "number" : "02.06.09",
-                  "name" : "Organizations E2E Tests (Playwright)",
-                  "description" : "E2E-сценарии K2 для OrganizationsView на Playwright (успех, пустая выборка, ошибка API, фильтр/пагинация)",
-                  "status" : "completed",
-                  "artifact" : {
-                    "location" : "tests/e2e/organizations.spec.ts",
-                    "file_path" : "code/femsq-frontend-q/tests/e2e/organizations.spec.ts",
-                    "type" : "playwright-spec",
-                    "artifact_type" : "file"
-                  }
-                }
-              }
-            }, {
-              "class" : {
-                "displayName" : "helpers.ts (e2e test helpers). № 02.06.10",
-                "attributes" : {
-                  "id" : "frontend.quasar.e2eHelpers",
-                  "number" : "02.06.10",
-                  "name" : "E2E Test Helpers",
-                  "description" : "Вспомогательные функции для e2e тестов Playwright (setupConnectionForOrganizations)",
-                  "status" : "completed",
-                  "artifact" : {
-                    "location" : "tests/e2e/helpers.ts",
-                    "file_path" : "code/femsq-frontend-q/tests/e2e/helpers.ts",
-                    "type" : "typescript",
-                    "artifact_type" : "file"
-                  }
-                }
-              }
-            }, {
-              "class" : {
-                "displayName" : "playwright.config.ts (e2e config). № 02.06.11",
-                "attributes" : {
-                  "id" : "frontend.quasar.playwrightConfig",
-                  "number" : "02.06.11",
-                  "name" : "Playwright Configuration",
-                  "description" : "Конфигурация Playwright для e2e тестирования (браузеры, baseURL, webServer)",
-                  "status" : "completed",
-                  "artifact" : {
-                    "location" : "playwright.config.ts",
-                    "file_path" : "code/femsq-frontend-q/playwright.config.ts",
-                    "type" : "typescript-config",
-                    "artifact_type" : "file"
-                  }
-                }
-              }
-            }, {
-              "class" : {
-                "displayName" : "ConstructionSitesView.vue (Quasar). № 02.06.12",
-                "attributes" : {
-                  "id" : "frontend.quasar.ConstructionSitesView",
-                  "number" : "02.06.12",
-                  "name" : "ConstructionSitesView",
-                  "description" : "Экран строек (Access cst): master–detail + вкладка агенты/отчёты; гриды на FemsqTable из fequlib",
-                  "status" : "completed",
-                  "artifact" : {
-                    "location" : "src/views/construction-sites/ConstructionSitesView.vue",
-                    "file_path" : "code/femsq-frontend-q/src/views/construction-sites/ConstructionSitesView.vue",
-                    "type" : "vue-component",
-                    "artifact_type" : "file"
-                  }
-                }
-              }
-            }, {
-              "class" : {
-                "displayName" : "ConstructionSitesByCodeView.vue (Quasar). № 02.06.13",
-                "attributes" : {
-                  "id" : "frontend.quasar.ConstructionSitesByCodeView",
-                  "number" : "02.06.13",
-                  "name" : "ConstructionSitesByCodeView",
-                  "description" : "Режим входа по коду САК (Access cstAgPn)",
-                  "status" : "completed",
-                  "artifact" : {
-                    "location" : "src/views/construction-sites/ConstructionSitesByCodeView.vue",
-                    "file_path" : "code/femsq-frontend-q/src/views/construction-sites/ConstructionSitesByCodeView.vue",
-                    "type" : "vue-component",
-                    "artifact_type" : "file"
-                  }
-                }
-              }
-            }, {
-              "class" : {
-                "displayName" : "CstReportsTab.vue / CstRentReportsTab.vue. № 02.06.14",
-                "attributes" : {
-                  "id" : "frontend.quasar.CstReportsTabs",
-                  "number" : "02.06.14",
-                  "name" : "CstReportsTabs",
-                  "description" : "Вкладки отчётов и отчётов аренды формы cst; FemsqTable из fequlib",
-                  "status" : "completed",
-                  "artifact" : {
-                    "location" : "src/views/construction-sites/",
-                    "file_path" : "code/femsq-frontend-q/src/views/construction-sites/",
-                    "type" : "vue-component",
-                    "artifact_type" : "directory"
-                  }
-                }
-              }
-            }, {
-              "class" : {
-                "displayName" : "construction-sites.ts (Pinia store). № 02.06.15",
-                "attributes" : {
-                  "id" : "frontend.quasar.constructionSitesStore",
-                  "number" : "02.06.15",
-                  "name" : "useConstructionSitesStore",
-                  "description" : "Pinia-стор строек: иерархия cst→агенты→САК→филиалы, отчёты, аренда",
-                  "status" : "completed",
-                  "artifact" : {
-                    "location" : "src/stores/construction-sites.ts",
-                    "file_path" : "code/femsq-frontend-q/src/stores/construction-sites.ts",
-                    "type" : "ts-module",
-                    "artifact_type" : "file"
-                  }
-                }
-              }
-            }, {
-              "class" : {
-                "displayName" : "construction-sites-api.ts (Apollo). № 02.06.16",
-                "attributes" : {
-                  "id" : "frontend.quasar.constructionSitesApi",
-                  "number" : "02.06.16",
-                  "name" : "construction-sites-api",
-                  "description" : "Apollo GraphQL API для строек и связанных сущностей",
-                  "status" : "completed",
-                  "artifact" : {
-                    "location" : "src/api/construction-sites-api.ts",
-                    "file_path" : "code/femsq-frontend-q/src/api/construction-sites-api.ts",
-                    "type" : "ts-module",
-                    "artifact_type" : "file"
-                  }
-                }
-              }
-            }, {
-              "class" : {
-                "displayName" : "ConstructionSitesView.spec.ts (component tests). № 02.06.17",
-                "attributes" : {
-                  "id" : "frontend.quasar.constructionSitesComponentTests",
-                  "number" : "02.06.17",
-                  "name" : "ConstructionSitesView Component Tests",
-                  "description" : "Компонентные тесты ConstructionSitesView: рендер списка, выбор записи, ошибка API",
-                  "status" : "completed",
-                  "artifact" : {
-                    "location" : "tests/component/ConstructionSitesView.spec.ts",
-                    "file_path" : "code/femsq-frontend-q/tests/component/ConstructionSitesView.spec.ts",
-                    "type" : "vitest-spec",
-                    "artifact_type" : "file"
-                  }
-                }
-              }
-            }, {
-              "class" : {
-                "displayName" : "RelationTree.vue (walker). № 02.06.18",
-                "attributes" : {
-                  "id" : "frontend.quasar.RelationTree",
-                  "number" : "02.06.18",
-                  "name" : "RelationTree",
-                  "description" : "Обходник JSON-экземпляра над FemsqTree; кандидат FemsqWalkTree (Решение 009). Хост: relation-api + каталог рёбер. T4b: inject fetch, поле to.",
-                  "status" : "in-progress",
-                  "artifact" : {
-                    "location" : "src/components/relation/RelationTree.vue",
-                    "file_path" : "code/femsq-frontend-q/src/components/relation/RelationTree.vue",
-                    "type" : "vue-component",
-                    "artifact_type" : "file"
-                  },
-                  "documentation" : [ "docs/development/notes/UI/02-12_femsq-tree/relation-tree.md", "docs/project/decisions/009-femsq-walk-tree.md" ]
-                }
-              }
-            } ]
-          }
-        }, {
-          "component" : {
-            "displayName" : "Organizations Screen. № 02.05",
-            "attributes" : {
-              "id" : "organizationsScreen",
-              "number" : "02.05",
-              "name" : "Organizations Screen",
-              "description" : "Экран просмотра организаций и связанных агентов",
-              "status" : "in-progress",
-              "artifact" : {
-                "location" : "src/views/organizations/",
-                "file_path" : "src/views/organizations/",
+                "location" : "code/femsq-frontend-q/src/views/organizations/",
+                "file_path" : "code/femsq-frontend-q/src/views/organizations/",
                 "type" : "vue-views",
                 "artifact_type" : "directory"
               },
-              "responsibilities" : [ "Отображение таблицы организаций", "Показ карточки с деталями", "Список агентов и фильтрация" ],
-              "documentation" : [ "docs/development/notes/UI/02-1-3_organizations-screen.md", "docs/development/notes/UI/02-1-4_connection-to-organizations-flow.md" ]
-            },
-            "classes" : [ {
-              "class" : {
-                "displayName" : "OrganizationsView.vue. № 02.05.01",
-                "attributes" : {
-                  "id" : "OrganizationsView",
-                  "number" : "02.05.01",
-                  "name" : "OrganizationsView",
-                  "description" : "Компонент представления списка организаций с деталями и агентами",
-                  "status" : "in-progress",
-                  "artifact" : {
-                    "location" : "src/views/organizations/OrganizationsView.vue",
-                    "file_path" : "src/views/organizations/OrganizationsView.vue",
-                    "type" : "vue-view",
-                    "artifact_type" : "file"
-                  }
-                }
-              }
-            } ]
+              "responsibilities" : [ ],
+              "dependsOn" : [ ]
+            }
           }
         }, {
           "component" : {
-            "displayName" : "Audits Screen. № 02.07",
+            "displayName" : "Audits View. № 02.02",
             "attributes" : {
-              "id" : "auditsScreen",
+              "id" : "views.audits",
+              "number" : "02.02",
+              "name" : "Audits View",
+              "description" : "Экран ревизий / файлов (FemsqTable)",
+              "status" : "completed",
+              "artifact" : {
+                "location" : "code/femsq-frontend-q/src/views/audits/",
+                "file_path" : "code/femsq-frontend-q/src/views/audits/",
+                "type" : "vue-views",
+                "artifact_type" : "directory"
+              },
+              "responsibilities" : [ ],
+              "dependsOn" : [ ]
+            }
+          }
+        }, {
+          "component" : {
+            "displayName" : "СУДЗ Views. № 02.03",
+            "attributes" : {
+              "id" : "views.sudz",
+              "number" : "02.03",
+              "name" : "СУДЗ Views",
+              "description" : "Экраны СУДЗ (P1)",
+              "status" : "completed",
+              "artifact" : {
+                "location" : "code/femsq-frontend-q/src/views/sudz/",
+                "file_path" : "code/femsq-frontend-q/src/views/sudz/",
+                "type" : "vue-views",
+                "artifact_type" : "directory"
+              },
+              "responsibilities" : [ ],
+              "dependsOn" : [ ]
+            }
+          }
+        }, {
+          "component" : {
+            "displayName" : "Contracts Views. № 02.04",
+            "attributes" : {
+              "id" : "views.contracts",
+              "number" : "02.04",
+              "name" : "Contracts Views",
+              "description" : "Экраны договоров / КСДСФ",
+              "status" : "completed",
+              "artifact" : {
+                "location" : "code/femsq-frontend-q/src/views/contracts/",
+                "file_path" : "code/femsq-frontend-q/src/views/contracts/",
+                "type" : "vue-views",
+                "artifact_type" : "directory"
+              },
+              "responsibilities" : [ ],
+              "dependsOn" : [ ]
+            }
+          }
+        }, {
+          "component" : {
+            "displayName" : "Investment Chains View. № 02.05",
+            "attributes" : {
+              "id" : "views.investment-chains",
+              "number" : "02.05",
+              "name" : "Investment Chains View",
+              "description" : "Инвестиционные цепочки (FemsqTable)",
+              "status" : "completed",
+              "artifact" : {
+                "location" : "code/femsq-frontend-q/src/views/investment-chains/",
+                "file_path" : "code/femsq-frontend-q/src/views/investment-chains/",
+                "type" : "vue-views",
+                "artifact_type" : "directory"
+              },
+              "responsibilities" : [ ],
+              "dependsOn" : [ ]
+            }
+          }
+        }, {
+          "component" : {
+            "displayName" : "Construction Sites Views. № 02.06",
+            "attributes" : {
+              "id" : "views.construction-sites",
+              "number" : "02.06",
+              "name" : "Construction Sites Views",
+              "description" : "Стройки / объекты",
+              "status" : "completed",
+              "artifact" : {
+                "location" : "code/femsq-frontend-q/src/views/construction-sites/",
+                "file_path" : "code/femsq-frontend-q/src/views/construction-sites/",
+                "type" : "vue-views",
+                "artifact_type" : "directory"
+              },
+              "responsibilities" : [ ],
+              "dependsOn" : [ ]
+            }
+          }
+        }, {
+          "component" : {
+            "displayName" : "Frontend API (Apollo). № 02.07",
+            "attributes" : {
+              "id" : "api",
               "number" : "02.07",
-              "name" : "Audits Screen",
-              "description" : "Экран работы с ревизиями (аудит Excel-файлов) с привязкой директории и файлов для проверки",
+              "name" : "Frontend API (Apollo)",
+              "description" : "Клиенты доменного GraphQL + REST-исключения",
               "status" : "completed",
               "artifact" : {
-                "location" : "src/views/audits/AuditsView.vue",
-                "file_path" : "code/femsq-frontend-q/src/views/audits/AuditsView.vue",
-                "type" : "vue-view",
-                "artifact_type" : "file"
+                "location" : "code/femsq-frontend-q/src/api/",
+                "file_path" : "code/femsq-frontend-q/src/api/",
+                "type" : "vue-api",
+                "artifact_type" : "directory"
               },
-              "responsibilities" : [ "Просмотр и выбор ревизий (левая панель)", "Редактирование данных ревизии (правая панель)", "Вкладка 'Файлы для проверки': директория + список файлов", "CRUD операции с файлами для проверки" ],
-              "documentation" : [ "docs/development/notes/chats/chat-plan/chat-plan-26-0119-restore-audits.md", "docs/development/notes/chats/chat-resume/chat-resume-26-0119-restore-audits.md" ]
-            },
-            "classes" : [ {
-              "class" : {
-                "displayName" : "AuditsView.vue. № 02.07.01",
-                "attributes" : {
-                  "id" : "AuditsView",
-                  "number" : "02.07.01",
-                  "name" : "AuditsView",
-                  "description" : "Страница ревизий (основная, финализированная версия)",
-                  "status" : "completed",
-                  "artifact" : {
-                    "location" : "src/views/audits/AuditsView.vue",
-                    "file_path" : "code/femsq-frontend-q/src/views/audits/AuditsView.vue",
-                    "type" : "vue-view",
-                    "artifact_type" : "file"
-                  }
-                }
-              }
-            } ]
+              "responsibilities" : [ "Apollo Client для домена", "REST: connection/app/reports/sudz xlsx" ],
+              "dependsOn" : [ ]
+            }
           }
         }, {
           "component" : {
-            "displayName" : "App Forms IA + Стройки. № 02.08",
+            "displayName" : "Frontend GraphQL Ops. № 02.08",
             "attributes" : {
-              "id" : "appFormsIa",
+              "id" : "graphql",
               "number" : "02.08",
-              "name" : "App Forms IA",
-              "description" : "IA верхней строки меню и экраны Стройки (cst/cstAgPn); MVP закрыт 2026-07-28",
+              "name" : "Frontend GraphQL Ops",
+              "description" : "Именованные операции .graphql / gql",
               "status" : "completed",
               "artifact" : {
-                "location" : "docs/development/notes/UI/02-4_app-forms-ia.md",
-                "file_path" : "docs/development/notes/UI/02-4_app-forms-ia.md",
-                "type" : "documentation",
-                "artifact_type" : "file"
+                "location" : "code/femsq-frontend-q/src/graphql/",
+                "file_path" : "code/femsq-frontend-q/src/graphql/",
+                "type" : "vue-graphql",
+                "artifact_type" : "directory"
               },
-              "responsibilities" : [ "Реестр доменов TopBar (Организации, Стройки, Инвестиции, Договоры, Ревизии, Отчёты, Сервис)", "Карта покрытия Access↔Java", "Общие UX-подходы master–detail / GraphQL / смена текущей записи", "Экраны ConstructionSitesView / ConstructionSitesByCodeView" ],
-              "documentation" : [ "docs/development/notes/UI/02-4_app-forms-ia.md", "docs/development/notes/chats/chat-plan/chat-plan-26-0722-forms-ia-cst.md", "docs/development/notes/chats/chat-resume/chat-resume-26-0722-forms-ia-cst.md" ]
-            },
-            "classes" : [ ]
+              "responsibilities" : [ ],
+              "dependsOn" : [ ]
+            }
+          }
+        }, {
+          "component" : {
+            "displayName" : "Pinia Stores. № 02.09",
+            "attributes" : {
+              "id" : "stores",
+              "number" : "02.09",
+              "name" : "Pinia Stores",
+              "description" : "Состояние экранов",
+              "status" : "completed",
+              "artifact" : {
+                "location" : "code/femsq-frontend-q/src/stores/",
+                "file_path" : "code/femsq-frontend-q/src/stores/",
+                "type" : "vue-stores",
+                "artifact_type" : "directory"
+              },
+              "responsibilities" : [ ],
+              "dependsOn" : [ ]
+            }
+          }
+        }, {
+          "component" : {
+            "displayName" : "Layout. № 02.10",
+            "attributes" : {
+              "id" : "components.layout",
+              "number" : "02.10",
+              "name" : "Layout",
+              "description" : "Каркас UI / навигация",
+              "status" : "completed",
+              "artifact" : {
+                "location" : "code/femsq-frontend-q/src/components/layout/",
+                "file_path" : "code/femsq-frontend-q/src/components/layout/",
+                "type" : "vue-components",
+                "artifact_type" : "directory"
+              },
+              "responsibilities" : [ ],
+              "dependsOn" : [ ]
+            }
+          }
+        }, {
+          "component" : {
+            "displayName" : "Connection Setup. № 02.11",
+            "attributes" : {
+              "id" : "components.setup",
+              "number" : "02.11",
+              "name" : "Connection Setup",
+              "description" : "Мастер/модалка подключения к БД",
+              "status" : "completed",
+              "artifact" : {
+                "location" : "code/femsq-frontend-q/src/components/setup/",
+                "file_path" : "code/femsq-frontend-q/src/components/setup/",
+                "type" : "vue-components",
+                "artifact_type" : "directory"
+              },
+              "responsibilities" : [ ],
+              "dependsOn" : [ ]
+            }
+          }
+        }, {
+          "component" : {
+            "displayName" : "feQuLib (внешний). № 02.12",
+            "attributes" : {
+              "id" : "fequlib",
+              "number" : "02.12",
+              "name" : "feQuLib (внешний)",
+              "description" : "FemsqTable/FemsqTree и др. (file:../../../feQuLib)",
+              "status" : "completed",
+              "artifact" : {
+                "location" : "../feQuLib",
+                "file_path" : "../feQuLib",
+                "type" : "npm-file-dependency",
+                "artifact_type" : "directory"
+              },
+              "responsibilities" : [ ],
+              "dependsOn" : [ ],
+              "notes" : "Не копировать компоненты в FEMSQ — синхронизировать соседний клон (check-fequlib.sh)"
+            }
           }
         } ]
       }

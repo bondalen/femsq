@@ -17,7 +17,7 @@
       ],
       "documentationRules": "docs/project-documentation-rules.md",
       "updatedBy": "Александр",
-      "updateReason": "docs-sync блок 10 (Р-19…Р-23, Р-25)"
+      "updateReason": "docs-sync блок 11: modules.json по пакетам + builds-manifest"
     },
     "architecture": {
       "type": "full-stack",
@@ -262,21 +262,23 @@
       ]
     },
     "modules": {
-      "description": "Структура модулей проекта FEMSQ",
-      "version": "1.0.0",
-      "lastUpdated": "2026-01-27",
+      "description": "Структура модулей FEMSQ (пакеты/разделы; без классов). История сборок — builds-manifest.json.",
+      "version": "2.0.0",
+      "lastUpdated": "2026-11-17",
       "structure": {
         "type": "recursive",
         "entities": [
           "Module",
-          "Component",
-          "Class"
+          "Component"
         ],
         "organization": "single_file",
-        "grouping": "artifact object for physical attributes"
+        "grouping": "artifact object for physical attributes",
+        "classRegistration": false,
+        "buildsManifest": "docs/project/extensions/modules/builds-manifest.json"
       },
       "extensions": [
-        "docs/project/extensions/modules/modules.json"
+        "docs/project/extensions/modules/modules.json",
+        "docs/project/extensions/modules/builds-manifest.json"
       ],
       "diagrams": [
         "docs/project/diagrams/database-module-classes.puml",

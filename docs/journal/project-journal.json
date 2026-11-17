@@ -8,6 +8,74 @@
     "sessions": [
       {
         "chat": {
+          "displayName": "docs-sync: modules.json и манифест сборок (completed, high). № chat-2026-11-17-006",
+          "chat-attributes": {
+            "id": "chat-2026-11-17-006",
+            "created": "2026-11-17",
+            "lastUpdated": "2026-11-17",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "high",
+            "tags": [
+              "docs-sync",
+              "modules",
+              "block-11"
+            ],
+            "links": {
+              "projectDocsRefs": [
+                "module:backend",
+                "module:frontend"
+              ],
+              "developmentTasks": [
+                "0078"
+              ],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-docs-sync.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Блок 11 docs-sync: modules.json + манифест сборок (success). № log-2026-11-17-012",
+                "log-attributes": {
+                  "id": "log-2026-11-17-012",
+                  "timestamp": "2026-11-17T16:50:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "tags": [
+                    "docs-sync",
+                    "block-11"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0078"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-docs-sync.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "modules.json v2 + builds-manifest + DEV-сборка",
+                    "details": "Р-15…Р-18: modules.json без классов, пакеты sudz/audit/graphql/views; статусы completed; buildHistory → builds-manifest.json; build-thin-jar.sh дописывает манифест; сборка 0.1.0.377-SNAPSHOT (fat+thin). Д7: пометка RaFtS* на пакете service.",
+                    "outcome": "Блок 11 ✅",
+                    "references": [
+                      "docs/project/extensions/modules/modules.json",
+                      "docs/project/extensions/modules/builds-manifest.json",
+                      "code/scripts/build-thin-jar.sh",
+                      "docs/project/project-docs.json"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
           "displayName": "docs-sync: project-docs.json (completed, high). № chat-2026-11-17-005",
           "chat-attributes": {
             "id": "chat-2026-11-17-005",

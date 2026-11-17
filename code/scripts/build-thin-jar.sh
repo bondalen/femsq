@@ -128,6 +128,91 @@ rm -rf "$TEMP_DIR"
 FAT_SIZE=$(du -h "$FAT_JAR" | cut -f1)
 THIN_SIZE=$(du -h "$THIN_JAR" | cut -f1)
 
+# История сборок — в builds-manifest.json (не в modules.json; Д3 / блок 11)
+REPO_ROOT="$(cd "$CODE_ROOT/.." && pwd)"
+BUILDS_MANIFEST="$REPO_ROOT/docs/project/extensions/modules/builds-manifest.json"
+echo -e "\n${YELLOW}Обновляем манифест сборок...${NC}"
+python3 - "$BUILDS_MANIFEST" "$NEW_VERSION" "$CODE_ROOT" <<'PY'
+import hashlib, json, sys
+from datetime import datetime, timezone, timedelta
+from pathlib import Path
+
+manifest_path = Path(sys.argv[1])
+version = sys.argv[2]
+code_root = Path(sys.argv[3])
+tz = timezone(timedelta(hours=3))
+now = datetime.now(tz)
+ts = now.strftime("%Y-%m-%dT%H:%M:%S%z")
+ts = ts[:-2] + ":" + ts[-2:]  # +0300 -> +03:00
+build_number = now.strftime("%Y%m%d%H%M%S") + "0"
+
+def sha256_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+def repo_rel(path: Path) -> str:
+    # code_root = .../femsq/code → repo = parent
+    repo = code_root.parent
+    try:
+        return str(path.resolve().relative_to(repo.resolve()))
+    except ValueError:
+        return str(path)
+
+artifacts_spec = [
+    ("femsq-database", "database", code_root / f"femsq-backend/femsq-database/target/femsq-database-{version}.jar",
+     "code/femsq-backend/femsq-database/"),
+    ("femsq-reports", "reports", code_root / f"femsq-backend/femsq-reports/target/femsq-reports-{version}.jar",
+     "code/femsq-backend/femsq-reports/"),
+    ("femsq-web", "web", code_root / f"femsq-backend/femsq-web/target/femsq-web-{version}.jar",
+     "code/femsq-backend/femsq-web/"),
+    ("femsq-web-thin", "web", code_root / f"femsq-backend/femsq-web/target/femsq-web-{version}-thin.jar",
+     "code/femsq-backend/femsq-web/"),
+]
+
+if manifest_path.exists():
+    data = json.loads(manifest_path.read_text(encoding="utf-8"))
+else:
+    data = {"buildsManifest": {"version": "1.0.0", "artifacts": {}}}
+
+bm = data.setdefault("buildsManifest", {})
+arts = bm.setdefault("artifacts", {})
+bm["lastUpdated"] = now.strftime("%Y-%m-%d")
+bm["updatedBy"] = "code/scripts/build-thin-jar.sh"
+
+for artifact_id, module_id, jar_path, location in artifacts_spec:
+    if not jar_path.is_file():
+        print(f"skip missing {jar_path}")
+        continue
+    digest = sha256_file(jar_path)
+    entry = arts.setdefault(artifact_id, {
+        "moduleId": module_id,
+        "artifactId": artifact_id,
+        "location": location,
+        "builds": [],
+    })
+    builds = entry.setdefault("builds", [])
+    prev = builds[0]["sha256"] if builds else None
+    rec = {
+        "version": version,
+        "sha256": digest,
+        "buildTimestamp": ts,
+        "buildNumber": build_number,
+        "changed": prev != digest if prev is not None else True,
+        "jarPath": repo_rel(jar_path),
+    }
+    builds.insert(0, rec)
+    # ограничить историю, чтобы файл не разрастался бесконечно
+    entry["builds"] = builds[:50]
+    entry["lastUpdated"] = ts
+    print(f"recorded {artifact_id} {version} changed={rec['changed']}")
+
+manifest_path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+print(f"updated {manifest_path}")
+PY
+
 echo -e "\n${GREEN}✓ Сборка завершена!${NC}"
 echo "  Fat JAR:  $FAT_SIZE  ($FAT_JAR)"
 echo "  Thin JAR: $THIN_SIZE  ($THIN_JAR)"

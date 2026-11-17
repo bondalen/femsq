@@ -1,6 +1,6 @@
 # Правила ведения файла project-docs.json
 
-**Версия:** 1.4.0  
+**Версия:** 1.4.1  
 **Дата создания:** 2025-10-08  
 **Последнее обновление:** 2026-11-17
 
@@ -21,7 +21,7 @@
 > Сводные правила: [project-documentation-rules.md → «Роли документов и синхронизация»](../project-documentation-rules.md).
 
 - **`modules.json`** ведётся на уровне **модулей Maven, пакетов backend и разделов frontend**; отдельные классы не регистрируются.
-- **История сборок JAR** (sha256, пути) в `modules.json` не хранится — отдельный манифест сборок (вводится в плане docs-sync, блок 11).
+- **История сборок JAR** (sha256, пути) в `modules.json` не хранится — файл [`extensions/modules/builds-manifest.json`](extensions/modules/builds-manifest.json); обновляет `code/scripts/build-thin-jar.sh`.
 - **Прод:** `development.environments.machines.prod-fisheye` описывает и SQL Server (`database`), и сервер приложения (`application_server`: версия JAR, Java, каталог, диск X, политика двух экземпляров). Обновляется при каждой выкладке.
 - **`features`** обновляется при закрытии плана, если появилась пользовательская функция; **`problems`** — для известного технического долга.
 
