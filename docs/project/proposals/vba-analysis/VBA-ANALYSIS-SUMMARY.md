@@ -1,5 +1,7 @@
 # Анализ VBA кода из MS Access базы
 
+> ⚠️ **Исторический документ (2026-01-12).** Описывает частичное извлечение кода из бинарного `.accdb`. Полный код — в [`VBA-Code-Export/`](./VBA-Code-Export/) (экспорт `ExportAllModules`); порядок сбора сведений об объектах Access — [`MS-ACCESS-OBJECTS-CAPTURE.md`](./MS-ACCESS-OBJECTS-CAPTURE.md) §4.
+
 **Дата анализа:** 2026-01-12  
 **Источник:** `/home/alex/femsq-test/26-0112_import_Excel/24-1125_ra_R_25-0207.accdb`  
 **Размер файла:** 183 MB  

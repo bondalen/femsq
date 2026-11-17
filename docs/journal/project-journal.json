@@ -3,16 +3,16 @@
     "metadata": {
       "version": "1.0.0",
       "status": "active",
-      "lastUpdated": "2026-11-16"
+      "lastUpdated": "2026-11-17"
     },
     "sessions": [
       {
         "chat": {
-          "displayName": "Треки развёртывания _2606 и СУДЗ (in-progress, high). № chat-2026-11-13-001",
+          "displayName": "Синхронизация документации и дорожная карта R1 (in-progress, high). № chat-2026-11-13-001",
           "chat-attributes": {
             "id": "chat-2026-11-13-001",
             "created": "2026-11-09",
-            "lastUpdated": "2026-11-16",
+            "lastUpdated": "2026-11-17",
             "owner": "Александр",
             "status": "in-progress",
             "priority": "high",
@@ -37,6 +37,48 @@
             }
           },
           "entries": [
+            {
+              "log": {
+                "displayName": "Блок 3 docs-sync: правила против рассогласования (success). № log-2026-11-17-001",
+                "log-attributes": {
+                  "id": "log-2026-11-17-001",
+                  "timestamp": "2026-11-17T09:40:00+03:00",
+                  "level": "success",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "tags": [
+                    "docs",
+                    "docs-sync",
+                    "rules"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [],
+                    "aiRuleRefs": [
+                      "rule:docs-sync"
+                    ],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-docs-sync.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Правила: роли документов, точки синхронизации, словари, check-docs, REST-исключения, два экземпляра",
+                    "details": "project-documentation-rules.md 2.1.0: раздел «Роли документов и синхронизация», чеклист артефакта на уровне пакета, фактическая структура папок, автоматизация через check-docs. .cursorrules 1.7.0: раздел синхронизации, полный список допустимых @RestController, правила двух экземпляров на проде. .cursor/rules/docs-sync.mdc. Правила JSON ×3: словарь статусов, id логов по всему журналу, журнал новыми вверху. MS-ACCESS-OBJECTS-CAPTURE §4 (ExportAllModules + каталог объектов). Найдено Р-44: REST в модуле отчётов (исключение до C5).",
+                    "outcome": "Блок 3 ✅; реестр Р-26…Р-32, Р-35, Р-44 закрыты в части правил.",
+                    "references": [
+                      "docs/project-documentation-rules.md",
+                      ".cursorrules",
+                      ".cursor/rules/docs-sync.mdc",
+                      "docs/development/project-development-json-rules.md",
+                      "docs/journal/project-journal-json-rules.md",
+                      "docs/project/project-docs-json-rules.md",
+                      "docs/project/proposals/vba-analysis/MS-ACCESS-OBJECTS-CAPTURE.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1116-docs-sync.md"
+                    ]
+                  }
+                ]
+              }
+            },
             {
               "log": {
                 "displayName": "План docs-sync и дорожная карта R1: блоки 1–2 (success). № log-2026-11-16-001",

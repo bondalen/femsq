@@ -123,3 +123,6 @@ code/femsq-backend/femsq-web/temp/
 
 # Local SheetJS tooling for Rslt verify (S79)
 .cursor/rslt-tools/
+
+# Резервные копии JSON документации перед массовой правкой
+docs/**/*.bak-*
