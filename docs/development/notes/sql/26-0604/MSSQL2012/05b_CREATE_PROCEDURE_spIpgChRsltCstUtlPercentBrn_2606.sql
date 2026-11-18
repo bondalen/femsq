@@ -30,10 +30,11 @@ BEGIN
     RETURN;
 END
 
--- Имя и тип объекта
+-- Имя и тип объекта (SQL Server 2012: CREATE PROCEDURE, не CREATE OR ALTER)
 SET @def = REPLACE(@def, N'fnIpgChRsltCstUtlPercentBrn_2606', N'spIpgChRsltCstUtlPercentBrn_2606');
-SET @def = REPLACE(@def, N'CREATE   FUNCTION', N'CREATE OR ALTER PROCEDURE');
-SET @def = REPLACE(@def, N'CREATE FUNCTION', N'CREATE OR ALTER PROCEDURE');
+SET @def = REPLACE(@def, N'CREATE   FUNCTION', N'CREATE PROCEDURE');
+SET @def = REPLACE(@def, N'CREATE FUNCTION', N'CREATE PROCEDURE');
+SET @def = REPLACE(@def, N'CREATE OR ALTER PROCEDURE', N'CREATE PROCEDURE');
 
 -- Удалить RETURNS @TableRslt TABLE ( ... ) — оставить AS BEGIN
 SET @pc = CHARINDEX(N'@stCostKey', @def);
@@ -95,6 +96,9 @@ BEGIN
     RAISERROR(N'ОШИБКА: замены в spPercentBrn_2606 не применились.', 16, 1);
     RETURN;
 END
+
+IF OBJECT_ID(N'ags.spIpgChRsltCstUtlPercentBrn_2606', N'P') IS NOT NULL
+    DROP PROCEDURE ags.spIpgChRsltCstUtlPercentBrn_2606;
 
 EXEC sp_executesql @def;
 GO

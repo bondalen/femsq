@@ -3,9 +3,108 @@
     "metadata": {
       "version": "1.0.0",
       "status": "in-progress",
-      "lastUpdated": "2026-11-17"
+      "lastUpdated": "2026-11-18"
     },
     "sessions": [
+      {
+        "chat": {
+          "displayName": "Трек A: SQL-тест _2606 на проде — окно FishEye (completed, critical). № chat-2026-11-18-001",
+          "chat-attributes": {
+            "id": "chat-2026-11-18-001",
+            "created": "2026-11-18",
+            "lastUpdated": "2026-11-18",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "critical",
+            "tags": [
+              "spMstrg_2606",
+              "prod",
+              "track-A",
+              "FishEye",
+              "продОбмен",
+              "factDoc"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [
+                "0079"
+              ],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606-v2.md",
+              "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md",
+              "transcript": "agent-transcripts/a2238dc6-1fd0-4046-9537-0409688fc80f"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Окно FishEye: DDL/UtPl/VERIFY/smoke P2 — трек A закрыт (success). № log-2026-11-18-001",
+                "log-attributes": {
+                  "id": "log-2026-11-18-001",
+                  "timestamp": "2026-11-18T16:55:00+03:00",
+                  "level": "success",
+                  "effort": "1d",
+                  "status": "completed",
+                  "tags": [
+                    "prod",
+                    "17.3",
+                    "17.4",
+                    "UtPl",
+                    "smoke-P2"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0079",
+                      "0083",
+                      "0085"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606-v2.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Apply пакета _2606 (fn-path) на SPB-05-NV-SQL1",
+                    "details": "продОбмен 26-1117_17-31; SAFETY _bak2606_*_1118; DDL 00→08; hotfix 03c/fnStCostFromFd/05b; UtPl 09a→09b→09c CHECK gt0 trusted. Без 04b/06b, без 17.5, без JAR.",
+                    "outcome": "Объекты _2606 рядом с живым _2605",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/MSSQL2012/",
+                      "docs/development/notes/sql/26-0604/26-0616_deploy/templates/04_prod_log/deploy_log_2026-11-18_prod.md"
+                    ]
+                  },
+                  {
+                    "action": "Приёмка и замер",
+                    "details": "07_VERIFY_after PASS; PercentBrn −17/−16 vs DEV (не блокер). spMstrg_2606 chain5: RS1=15245 RS4=915; ~212/220 с → C4.",
+                    "outcome": "17.4 ✅",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/MSSQL2012/07_VERIFY_after.sql",
+                      "docs/development/notes/sql/26-0604/07_VERIFY_spMstrg_2606_chain5.sql"
+                    ]
+                  },
+                  {
+                    "action": "Smoke P2 + VERIFY 3 RA→factDoc",
+                    "details": "Access RA + JAR 156 type 3/6 без инфр. ошибок (АВ idle Δ=0). ОА 70072/70073: ras_fdKey+factDocCost OK; 70071 без ra_summ — Решение 9 (носитель RaSumm).",
+                    "outcome": "Живой контур _2605 не повреждён; триггер factDoc подтверждён",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/docs/03-design-decisions.md"
+                    ]
+                  },
+                  {
+                    "action": "Закрытие 0079 / docs",
+                    "details": "План v2.17 completed; prod-fisheye applied_date; реестр R1; хвосты → C4/C7.",
+                    "outcome": "Трек A ✅",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606-v2.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
       {
         "chat": {
           "displayName": "docs-sync: защита check-docs и закрытие (completed, high). № chat-2026-11-17-007",
@@ -16554,13 +16653,13 @@
       },
       {
         "chat": {
-          "displayName": "spMstrg_2606: fn2_2606 v7 PASS + анализ производительности. № chat-2026-06-11-001",
+          "displayName": "spMstrg_2606: разработка и DEV-gates (completed, critical). № chat-2026-06-11-001",
           "chat-attributes": {
             "id": "chat-2026-06-11-001",
             "created": "2026-06-11",
-            "lastUpdated": "2026-07-06",
+            "lastUpdated": "2026-11-18",
             "owner": "Александр",
-            "status": "in-progress",
+            "status": "completed",
             "priority": "critical",
             "tags": [
               "sql",

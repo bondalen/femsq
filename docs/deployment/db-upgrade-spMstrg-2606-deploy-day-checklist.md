@@ -83,21 +83,21 @@ WHERE schema_id = SCHEMA_ID('ags') AND name LIKE 'spMstrg_2408_ResultSet%';
 
 | # | Скрипт | ✓ | Результат |
 |---|--------|---|-----------|
-| A.1 | `00_VERIFY_before.sql` | ☐ | _2605 OK |
-| A.2 | `00-perf-indexes.sql`, `00-perf-indexes-k7.sql` | ☐ | |
-| A.3 | `01` … `01d1` | ☐ | work→195 |
-| A.4 | `02` … `03d`, `03b1`, `03b1b` | ☐ | CostBase |
-| A.5 | `04`, `05` | ☐ | fn2 + PercentBrn |
-| A.5a | `05a_PATCH_PercentBrn_fnIpgChDats_2606` | ☐ | календарь 17 дат (этап 20) |
-| A.5b | `05b_PATCH_PercentBrn_ipgChRl_2606` | ☐ | plan-JOIN → `ipgChRl_2606` (**21.2**, после rename **21.1**) |
-| A.5c | `05c_PATCH_PercentBrn_plan_LmMn_2606` | ☐ | plan из LmMn@212 (**21.4.3**, Решение 22; после A.5b) |
-| A.6 | `04b`, sp PercentBrn (опционально) | ☐ | spFn2 path |
-| A.7 | `05b` (таблицы ResultSet), `06` или `06b` | ☐ | fn-path рекомендуется до gate |
-| A.8 | `07_VERIFY_after.sql` | ☐ | |
-| A.9 | `07_VERIFY_spFn2_schema.sql` | ☐ | если A.6 |
-| A.10 | **09 UtPl:** `09a` → `09b` → `09c` | ☐ | аудит `lim<=0` → очистка (с компенсацией SUM) → CHECK `lim>0` |
-| A.11 | `07_VERIFY_spMstrg_2606_chain5.sql` @ `2022-12-31` | ☐ | RS1=____ RS4=____ |
-| A.12 | `08_ROLLBACK.sql` | ☐ | только откат |
+| A.1 | `00_VERIFY_before.sql` | ✅ 2026-11-18 | _2605 OK |
+| A.2 | `00-perf-indexes.sql`, `00-perf-indexes-k7.sql` | ✅ 2026-11-18 | IX_ra_summ после 01b |
+| A.3 | `01` … `01d1` | ✅ 2026-11-18 | work→195; `_bak2606_*_1118` |
+| A.4 | `02` … `03d`, `03b1`, `03b1b` | ✅ 2026-11-18 | hotfix `fnStCostFromFd_2606` |
+| A.5 | `04`, `05` | ✅ 2026-11-18 | fn2 + PercentBrn |
+| A.5a | `05a_PATCH_PercentBrn_fnIpgChDats_2606` | ✅ 2026-11-18 | календарь 17 дат |
+| A.5b | `05b_PATCH_PercentBrn_ipgChRl_2606` | ✅ 2026-11-18 | plan-JOIN |
+| A.5c | `05c_PATCH_PercentBrn_plan_LmMn_2606` | ✅ 2026-11-18 | LmMn@212 |
+| A.6 | `04b`, sp PercentBrn (опционально) | ⏭ | не в fn-path |
+| A.7 | `05b` (таблицы ResultSet), `06` или `06b` | ✅ 2026-11-18 | **06** fn-path; без 06b |
+| A.8 | `07_VERIFY_after.sql` | ✅ 2026-11-18 | PBrn −17/−16 vs DEV (не блокер) |
+| A.9 | `07_VERIFY_spFn2_schema.sql` | ⏭ | нет 04b |
+| A.10 | **09 UtPl:** `09a` → `09b` → `09c` | ✅ 2026-11-18 | CHECK gt0 trusted |
+| A.11 | `07_VERIFY_spMstrg_2606_chain5.sql` @ `2022-12-31` | ✅* 2026-11-18 | RS1=**15245** RS4=**915**; ~212/220 с |
+| A.12 | `08_ROLLBACK.sql` | ☐ | только откат (не применялся) |
 
 **Эталон (цепь 5, `2022-12-31`, dev):**
 

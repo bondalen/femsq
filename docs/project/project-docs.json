@@ -6,7 +6,7 @@
       "description": "Cистема работы с контрагентами и объектами при капитальном строительстве на основе БД MS SQL Server FEMSQ (Fish Eye MS SQL Server)",
       "author": "Александр",
       "created": "2025-10-08",
-      "lastUpdated": "2026-11-17",
+      "lastUpdated": "2026-11-18",
       "status": "in_progress",
       "repository": "https://github.com/bondalen/femsq.git",
       "license": "MIT",
@@ -17,7 +17,7 @@
       ],
       "documentationRules": "docs/project-documentation-rules.md",
       "updatedBy": "Александр",
-      "updateReason": "docs-sync блок 11: modules.json по пакетам + builds-manifest"
+      "updateReason": "Трек A: пакет _2606 на prod FishEye 2026-11-18"
     },
     "architecture": {
       "type": "full-stack",
@@ -713,12 +713,16 @@
               "authentication": "windows",
               "network_from_nb_win": false,
               "deployment": {
-                "method": "offline_usb",
+                "method": "offline_prodobmen",
                 "tool": "SQL Server Management Studio",
                 "executor": "Александр (владелец проекта)",
                 "planned_date": null,
                 "package_path_on_media": "femsq-sql-26-0604/MSSQL2012/",
-                "notes": "Пакет копируется на флешку с nb-win; sqlcmd/DBHub с рабочей станции к prod не используются."
+                "notes": "Канал: продОбмен AES (+SSMS). Пакет MSSQL2012/. sqlcmd/DBHub с рабочей станции к prod не используются.",
+                "applied_date": "2026-11-18",
+                "applied_package": "docs/development/notes/sql/26-0604/MSSQL2012/",
+                "applied_session": "продОбмен/26-1117_17-31",
+                "applied_notes": "spMstrg_2606 fn-path рядом с _2605; UtPl CHECK lim>0; без 04b/06b; без 17.5; JAR 156 без изменений; backup недоступен — _bak2606_*_1118"
               },
               "sql_server_version": "11.0.7507.2",
               "sql_server_name": "Microsoft SQL Server 2012 (SP4-GDR)",
@@ -728,8 +732,8 @@
               "collation": "SQL_Latin1_General_CP1_CI_AS",
               "memory_mb": 32751,
               "processors": 16,
-              "verified_date": "2026-06-16",
-              "verified_by": "SSMS precheck (Этап 17.1), bondale1@ADM-GAZPROM",
+              "verified_date": "2026-11-18",
+              "verified_by": "SSMS окно трека A (bondale1@ADM-GAZPROM); VERIFY_after + smoke P2 + 3RA factDoc",
               "sql_scripts_path": "docs/development/notes/sql/{task}/MSSQL2012/",
               "clients": [
                 "MS Access (Form_ipgChMin → spMstrg_2605; ежедневный процесс освоения P2)",
@@ -738,7 +742,7 @@
                 "legacy: ags.spMstrg_2408 / _SaveToTables"
               ]
             },
-            "notes": "Единственный целевой сервер для DDL-пакетов _2605/_2606. Только MSSQL2012/. Деплой: флешка + SSMS, Windows auth; с nb-win сеть к prod отсутствует. Сервер приложения FEMSQ — application_server (Linux, JAR 156).",
+            "notes": "Единственный целевой сервер для DDL-пакетов _2605/_2606. Только MSSQL2012/. 2026-11-18: пакет 26-0604/_2606 применён (трек A). Клиенты по-прежнему _2605 + JAR 156. Деплой: продОбмен + SSMS, Windows auth; с nb-win сеть к prod отсутствует. Сервер приложения FEMSQ — application_server (Linux, JAR 156).",
             "application_server": {
               "role": "production FEMSQ (thin JAR)",
               "hostname": "23121PC05780077",
@@ -852,13 +856,13 @@
       "extensionsNote": "Файлы extensions/monitoring/ не заводились; раздел краткий. Подробности — в коде и .cursorrules / development.environments."
     },
     "timeline": {
-      "lastUpdated": "2026-11-17",
+      "lastUpdated": "2026-11-18",
       "note": "Исторические фазы 2025-01…03 («Phase 1 — 20%», «Система аутентификации») сняты (Р-21, Р-25). Аутентификация пользователей не нужна (1–2 оператора, внутренняя сеть). Горизонт планирования — дорожная карта R1.",
       "current": {
         "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md",
         "docsSync": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-docs-sync.md",
         "focus": [
-          "R1.0: docs-sync + стек _2606 на DEV/флешка; GraphQL-only доменный API",
+          "R1.0: стек _2606 на prod (SQL ✅ 2026-11-18) + GraphQL-only; кандидат JAR — план выкладки",
           "R1.1 C2: ввод ИП/планов в FEMSQ",
           "R1.2 C3: факт (ревизии) — полный переход с Access",
           "СУДЗ на прод — горизонт R2 (не R1)"
@@ -874,8 +878,8 @@
           "what": "docs-sync: GraphQL-only домен; C1 инвентаризация Access; FemsqTable на org/цепочки/ревизии"
         },
         {
-          "when": "2026-11",
-          "what": "Трек A: 07u PASS, пакет 21.5/флешка MSSQL2012 с 05c"
+          "when": "2026-11-18",
+          "what": "Трек A: пакет _2606 на FishEye (fn-path); _2605 жив; smoke P2 + factDoc PASS"
         }
       ]
     },

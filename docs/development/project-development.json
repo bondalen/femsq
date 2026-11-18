@@ -3,7 +3,7 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2026-11-17",
+      "lastUpdated": "2026-11-18",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     "tasks": {
@@ -2904,29 +2904,34 @@
         },
         "0079": {
           "task": {
-            "displayName": "Трек A: SQL-тест _2606 на проде (без JAR) (in-progress, critical). № 0079",
+            "displayName": "Трек A: SQL-тест _2606 на проде (без JAR) (completed, critical). № 0079",
             "task-attributes": {
-              "status": "in-progress",
+              "status": "completed",
               "priority": "critical",
               "owner": "Александр",
               "completionCriteria": [
-                "Smoke run_gate_21_4.sh после паузы",
+                "Smoke run_gate_21_4 / 07u после паузы (DEV)",
                 "21.5: 05c в MSSQL2012/README и db-upgrade-spMstrg-2606",
-                "19.7 / 17.2.2b: флешка 26-0616_deploy",
-                "Apply на FishEye + VERIFY; данные о скорости для C4"
+                "Пакет на FishEye (fn-path) + 07_VERIFY_after; _2605 жив",
+                "UtPl 09a–09c CHECK lim>0",
+                "Замер spMstrg_2606 chain5 для C4 (~212/220 с)",
+                "Smoke P2 Access+JAR156; VERIFY 3 RA→factDoc PASS"
               ],
               "links": {
                 "projectDocsRefs": [
                   "module:backend.database"
                 ],
-                "journalRefs": [],
+                "journalRefs": [
+                  "chat-2026-11-18-001",
+                  "log-2026-11-18-001"
+                ],
                 "aiRuleRefs": [],
                 "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-0604-spMstrg-2606-v2.md",
                 "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
               },
               "created": "2026-06-04",
-              "lastUpdated": "2026-11-17",
-              "description": "План 0604 v2 — трек A; хвосты по скорости → 0083 (C4), 17.5 → 0085 (C7)."
+              "lastUpdated": "2026-11-18",
+              "description": "План 0604 v2 — трек A ✅ 2026-11-18. Хвосты: скорость/COUNT −17/−16 → 0083 (C4); 17.5 → 0085 (C7); type6 с записью — след. дневной цикл."
             }
           }
         },
@@ -4278,7 +4283,7 @@
                     },
                     {
                       "task-item": {
-                        "displayName": "🔄 Трек A: SQL-тест _2606 на проде (in-progress, critical). № 02.04.02 → 0079",
+                        "displayName": "✅ Трек A: SQL-тест _2606 на проде (completed, critical). № 02.04.02 → 0079",
                         "item-attributes": {
                           "structureId": "02.04.02",
                           "taskId": "0079",

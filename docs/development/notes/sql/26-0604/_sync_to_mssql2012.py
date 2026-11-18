@@ -31,11 +31,16 @@ GO
     m = re.search(r"(PRINT\s|SET ANSI_NULLS)", text)
     body = text[m.start() :] if m else text
 
-    # Вставить DROP перед каждым CREATE FUNCTION, если ещё нет
+    # Вставить DROP перед каждым CREATE FUNCTION, если ещё нет.
+    # Только строки, начинающиеся с CREATE FUNCTION (не внутри PRINT '...').
     def add_drop(match: re.Match) -> str:
         full_name = match.group(1)
         short = full_name.split(".")[-1]
         start = match.start()
+        line_start = body.rfind("\n", 0, start) + 1
+        line_prefix = body[line_start:start].lstrip()
+        if line_prefix.upper().startswith("PRINT"):
+            return match.group(0)
         window = body[max(0, start - 300) : start]
         if f"DROP FUNCTION {short}" in window or f"DROP FUNCTION ags.{short}" in window:
             return match.group(0)

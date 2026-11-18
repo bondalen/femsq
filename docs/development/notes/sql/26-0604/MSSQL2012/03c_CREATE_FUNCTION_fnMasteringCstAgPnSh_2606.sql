@@ -7,16 +7,7 @@ GO
 -- Зеркало dev. Синхронизировано скриптом _sync_to_mssql2012.py
 -- =============================================================================
 
-PRINT '=== 03c: 
-IF OBJECT_ID(N'ags.fnMasteringCstAgPn_2606', N'IF') IS NOT NULL
-    DROP FUNCTION ags.fnMasteringCstAgPn_2606;
-IF OBJECT_ID(N'ags.fnMasteringCstAgPn_2606', N'TF') IS NOT NULL
-    DROP FUNCTION ags.fnMasteringCstAgPn_2606;
-IF OBJECT_ID(N'ags.fnMasteringCstAgPn_2606', N'FN') IS NOT NULL
-    DROP FUNCTION ags.fnMasteringCstAgPn_2606;
-GO
-
-CREATE FUNCTION ags.fnMasteringCstAgPn_2606 ===';
+PRINT '=== 03c: CREATE FUNCTION ags.fnMasteringCstAgPn_2606 ===';
 GO
 
 SET ANSI_NULLS ON;
@@ -429,16 +420,7 @@ BEGIN
 END
 GO
 
-PRINT '=== 03c: 
-IF OBJECT_ID(N'ags.fnMasteringCstAgPnSh_2606', N'IF') IS NOT NULL
-    DROP FUNCTION ags.fnMasteringCstAgPnSh_2606;
-IF OBJECT_ID(N'ags.fnMasteringCstAgPnSh_2606', N'TF') IS NOT NULL
-    DROP FUNCTION ags.fnMasteringCstAgPnSh_2606;
-IF OBJECT_ID(N'ags.fnMasteringCstAgPnSh_2606', N'FN') IS NOT NULL
-    DROP FUNCTION ags.fnMasteringCstAgPnSh_2606;
-GO
-
-CREATE FUNCTION ags.fnMasteringCstAgPnSh_2606 ===';
+PRINT '=== 03c: CREATE FUNCTION ags.fnMasteringCstAgPnSh_2606 ===';
 GO
 
 SET ANSI_NULLS ON;
