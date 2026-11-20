@@ -1,0 +1,5 @@
+# Лёгкий git: сырые выгрузки прода не в репозитории (шара / отПрод).
+from-prod/tsv/
+from-prod/screenshots/
+*.zip
+*.zip.sha256

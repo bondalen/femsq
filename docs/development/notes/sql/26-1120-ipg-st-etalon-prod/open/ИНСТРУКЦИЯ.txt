@@ -1,0 +1,61 @@
+Пакет: C2 / D1.1 — эталон структуры ИПГ (stNet / stIpg / ipg*) с прода
+Сессия: 26-1120_14-45
+Задача: 0081 / план chat-plan-26-1120-c2-d11-ipg-plans.md §2.0d
+Платформа: MS SQL Server 2012 SP4 (SPB-05-NV-SQL1), БД FishEye
+Инструмент: SSMS (предпочтительно SQLCMD Mode) · Windows Authentication
+Архив: AES-ZIP, пароль обмена (как обычно)
+
+НАЗНАЧЕНИЕ
+----------
+Снять с ПРОДА полный снимок таблиц, связанных со структурой
+инвестпрограмм (от связи ИП↔схема stNet до пунктов ipgPn / ipgStPn
+и параллельной структуры затрат stCost).
+
+Данные нужны как ЭТАЛОН для проверки UI FEMSQ на DEV.
+На DEV эти данные НЕ вкатывать (не MERGE / не INSERT в рабочие таблицы).
+
+Только чтение. DDL/DML на прод НЕ выполнять. JAR НЕ выкладывать.
+Полный BACKUP БД НЕ нужен.
+
+СОДЕРЖИМОЕ
+----------
+00_COUNTS_readonly.sql           — identity, наличие объектов, COUNT (уже сделано ✅)
+01c_EXPORT_sqlcmd_mode.sql       — ОСНОВНАЯ выгрузка SELECT * → .tsv через SSMS
+01_EXPORT_bcp.cmd                — запасной путь (нужен bcp.exe; не кликать из проводника)
+01b_EXPORT_powershell.ps1        — запасной путь (SqlClient, без bcp)
+02_SCHEMA_columns_readonly.sql   — порядок колонок (уже сделано ✅)
+RETURN_TEMPLATE.txt              — кратко заполнить при возврате
+
+ТАБЛИЦЫ ВЫГРУЗКИ
+----------------
+ags.stType, ags.st,
+ags.stIpg, ags.stIpgNm,
+ags.stCost, ags.stCostNm,
+ags.stRel, ags.stNet, ags.stNetPn,
+ags.ipg, ags.ipgCh, ags.ipgPn, ags.ipgStPn, ags.ipgSh,
+ags.stIpgOutLimPn_2606 (если выгрузка прошла; иначе можно без файла)
+
+ПОРЯДОК (шаг выгрузки данных — SQLCMD)
+--------------------------------------
+1) На машине с SSMS создайте каталог (без кириллицы), например:
+     C:\Temp\femsq_ipg_st_etalon_20261120
+2) SSMS → SPB-05-NV-SQL1 → БД FishEye (Windows auth).
+3) Откройте 01c_EXPORT_sqlcmd_mode.sql.
+4) Меню Query → включите SQLCMD Mode (должна быть галочка).
+5) При другом пути — поправьте строку :setvar OUTDIR "...".
+6) F5 (весь скрипт). В Messages в конце — «DONE».
+7) В каталоге OUTDIR проверьте файлы *.tsv (ожидаем 14 обязательных;
+   ipgPn ~13k строк, ipgStPn ~11k — это нормально, подождите до конца).
+8) Упакуйте весь каталог *.tsv в AES-ZIP (пароль обмена) →
+   отПрод сессии 26-1120_14-45 (имя вида 15-xx_etalon_tsv.zip).
+
+Почему не BCP: при запуске .cmd из проводника окно закрывается сразу;
+bcp часто отсутствует в PATH. SQLCMD Mode пишет файлы тем же подключением,
+что и обычные скрипты 00/02.
+
+НЕ ДЕЛАТЬ
+---------
+- BACKUP DATABASE / RESTORE
+- Любой DDL/DML / TRUNCATE / INSERT
+- Выкладка JAR / переключение клиентов
+- Заливка полученных файлов в таблицы DEV FishEye / FishEye_prod_noM6

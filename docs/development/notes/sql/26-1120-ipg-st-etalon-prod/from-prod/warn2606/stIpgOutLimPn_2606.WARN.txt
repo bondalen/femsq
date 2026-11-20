@@ -1,0 +1,1 @@
+WARN: stIpgOutLimPn_2606 not exported (table may be absent) 

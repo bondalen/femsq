@@ -8,6 +8,218 @@
     "sessions": [
       {
         "chat": {
+          "displayName": "C2 / D1.1: ввод ИП, цепочек, планов и лимитов в FEMSQ (DEV) (in-progress, high). № chat-2026-11-20-001",
+          "chat-attributes": {
+            "id": "chat-2026-11-20-001",
+            "created": "2026-11-20",
+            "lastUpdated": "2026-11-20",
+            "owner": "Александр",
+            "status": "in-progress",
+            "priority": "high",
+            "tags": [
+              "C2",
+              "D1.1",
+              "P2.1",
+              "UtPl",
+              "ipg",
+              "FishEye_prod_noM6",
+              "DEV"
+            ],
+            "links": {
+              "projectDocsRefs": [
+                "docs/project/business-processes.md",
+                "docs/project/proposals/vba-analysis/c1-inventory/registry.md"
+              ],
+              "developmentTasks": [
+                "0081"
+              ],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md",
+              "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "C2 §2.3: migrate 1.1 — Access семантика, не качество (success). № log-2026-11-20-006",
+                "log-attributes": {
+                  "id": "log-2026-11-20-006",
+                  "timestamp": "2026-11-20T16:40:00+03:00",
+                  "level": "info",
+                  "effort": "20m",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "migrate",
+                    "P2.1.1",
+                    "Structure",
+                    "Leaves"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксировать решение migrate",
+                    "details": "Матрица P/U/A/X; принцип оптимизации vs копирования Access; порядок 2.4a Structure→Leaves→цепи; В1/В4 закрыты для ИПГ",
+                    "outcome": "notes/26-1120-c2-migrate-1-1.md; план 0.7.0; готов старт GraphQL 2.4a",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1120-c2-migrate-1-1.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "C2 §2.2A: VBA/таблицы Structure+Leaves, кандидаты mutations (success). № log-2026-11-20-005",
+                "log-attributes": {
+                  "id": "log-2026-11-20-005",
+                  "timestamp": "2026-11-20T16:35:00+03:00",
+                  "level": "info",
+                  "effort": "40m",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "VBA",
+                    "stNet",
+                    "fnSt",
+                    "GraphQL",
+                    "migrate"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Разобрать запись Structure и Leaves",
+                    "details": "st identity→stIpg non-identity; stRel+stNetPn; fnSt+ags_fnSt rewrite; классы ipg* тонкие; UtPl тормоза = подформы не Form_ipg; список mutations Structure-first",
+                    "outcome": "notes/26-1120-c2-vba-tables-g1-g4.md; план 0.6.0 §2.2 ✅; готовность к 2.3",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1120-c2-vba-tables-g1-g4.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "C2 §2.1: описание Access UI G1 + G4 stIpg (success). № log-2026-11-20-004",
+                "log-attributes": {
+                  "id": "log-2026-11-20-004",
+                  "timestamp": "2026-11-20T16:10:00+03:00",
+                  "level": "info",
+                  "effort": "45m",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "Access",
+                    "UI",
+                    "G1",
+                    "G4",
+                    "stIpg"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/project/proposals/vba-analysis/c1-inventory/registry.md"
+                    ],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Описать Access UI G1/G4 по C1+VBA",
+                    "details": "Карта ipg/ipgMin/ipgMinBranch + Pn_t/Pn_f/StPn; ipgCh/ipgChMin; stNetIpg+fnSt+stIpg*; legacy ipgSt* отмечен вне целевого контура; вопросы владельцу по оболочке ИП и скриншотам",
+                    "outcome": "Заметка notes/26-1120-c2-access-ui-g1-g4-stipg.md; план §2.1 ✅ (с открытыми вопросами UX)",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1120-c2-access-ui-g1-g4-stipg.md"
+                    ]
+                  },
+                  {
+                    "action": "Закрыть §2.0d эталон прода",
+                    "details": "отПрод femsq_ipg_st_etalon_20261120.zip → шара excel/2026-1120/ipg-st-etalon-prod + from-prod/tsv; сверка COUNT; ipgPn multiline в TskCms",
+                    "outcome": "Эталон для приёмки UI на месте; не MERGE в DEV",
+                    "references": [
+                      "docs/development/notes/sql/26-1120-ipg-st-etalon-prod/README.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Старт C2: план, стенд noM6, разведка G1–G5 (success). № log-2026-11-20-003",
+                "log-attributes": {
+                  "id": "log-2026-11-20-003",
+                  "timestamp": "2026-11-20T11:05:00+03:00",
+                  "level": "info",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": [
+                    "start",
+                    "chat-plan",
+                    "G1-G5",
+                    "MVP"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Проверка окружения и стенда",
+                    "details": "MCP DBHub → FishEye_prod_noM6; DBHub npm установлен локально; mcp.json DSN уже noM6; ~/.femsq/database.properties → FishEye (СУДЗ) — для UI C2 нужен prod-noM6; WireGuard/TCP 10.7.0.3 с хоста недоступен (hostname localhost.localdomain)",
+                    "outcome": "Стенд C2 подтверждён через MCP; ipg=18; LmMn@212/195/172/187 наполнены на noM6",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+                    ]
+                  },
+                  {
+                    "action": "Создать план и синхронизировать реестры",
+                    "details": "План chat-plan-26-1120-c2-d11-ipg-plans.md 0.1.0; задача 0081 → in-progress + links.chatPlan; журнал chat-2026-11-20-001; дорожная карта §5 + 0.2.2",
+                    "outcome": "Точка синхронизации «создан план» выполнена",
+                    "references": [
+                      "docs/development/project-development.json",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                    ]
+                  },
+                  {
+                    "action": "Разведка G1–G5 и предложение MVP",
+                    "details": "G3 (LmMn/UtPl) — кратчайший путь к _2606; G2 Excel и полный CRUD G1 — полный D1.1; вопросы В2–В5 владельцу для выбора MVP",
+                    "outcome": "Черновик дерева в плане §2–§4; ждать согласования MVP",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/c1-inventory/registry.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
           "displayName": "R1.0: DEV-гейт на копии прод-схемы без M6; выкладка на прод отменена (paused, critical). № chat-2026-11-19-001",
           "chat-attributes": {
             "id": "chat-2026-11-19-001",

@@ -3,7 +3,7 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2026-11-19",
+      "lastUpdated": "2026-11-20",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     "tasks": {
@@ -2966,33 +2966,36 @@
         },
         "0081": {
           "task": {
-            "displayName": "C2: ввод ИП, цепочек, планов и лимитов в FEMSQ → веха D1.1 на DEV (pending, high). № 0081",
+            "displayName": "C2: ввод ИП, цепочек, планов и лимитов в FEMSQ → веха D1.1 на DEV (in-progress, high). № 0081",
             "task-attributes": {
-              "status": "pending",
+              "status": "in-progress",
               "priority": "high",
               "owner": "Александр",
               "completionCriteria": [
-                "Экраны ввода ИП/цепочек/планов/лимитов (GraphQL)",
-                "Загрузка уточнённых планов из Excel со сравнением сумм (аналог Form_ipg_gt_LdM_t)",
+                "Экраны ввода ИП/цепочек/планов/лимитов (GraphQL) на DEV FishEye_prod_noM6",
+                "Загрузка уточнённых планов из Excel со сравнением сумм (аналог Form_ipg_gt_LdM_t) — в полном D1.1",
                 "Справочники P2 1.4 и 2.1.0 — по мере касания (карта C1 G4/G5)",
-                "Выпущено в **R1.1**"
+                "Приёмка D1.1 на DEV: UtPl@stCost доступен для _2606; прод не изменён"
               ],
               "links": {
                 "projectDocsRefs": [
                   "module:backend.web",
                   "module:frontend"
                 ],
-                "journalRefs": [],
+                "journalRefs": [
+                  "chat-2026-11-20-001"
+                ],
                 "aiRuleRefs": [],
                 "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md",
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md",
                 "dependsOnTasks": [
                   "0080",
                   "0078"
                 ]
               },
               "created": "2026-11-17",
-              "lastUpdated": "2026-11-17",
-              "description": "P2 1.1–1.4, 2.1.0. Веха **D1.1 на DEV** (с 2026-11-20 без отдельной выкладки на прод — дорожная карта 0.2.0). Следующая активная задача R1. План чата создаётся при старте C2. Навигация: c1-inventory/registry.md G1–G5."
+              "lastUpdated": "2026-11-20",
+              "description": "P2 1.1–1.4, 2.1.0. Веха **D1.1 на DEV** (дорожная карта ≥0.2.1). План: chat-plan-26-1120-c2-d11-ipg-plans.md. Стенд: FishEye_prod_noM6. Навигация: c1-inventory/registry.md G1–G5."
             }
           }
         },
@@ -4296,7 +4299,7 @@
                     },
                     {
                       "task-item": {
-                        "displayName": "⏳ C2: ввод ИП/планов → D1.1 DEV (pending, high). № 02.04.03 → 0081",
+                        "displayName": "🔶 C2: ввод ИП/планов → D1.1 DEV (in-progress, high). № 02.04.03 → 0081",
                         "item-attributes": {
                           "structureId": "02.04.03",
                           "taskId": "0081",
