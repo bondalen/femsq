@@ -4,6 +4,7 @@
 **Сервер приложения:** prod FEMSQ (thin **0.1.0.155** → **0.1.0.156**)  
 **БД:** SPB-05-NV-SQL1 / FishEye / SQL Server 2012 SP4  
 **Ветка:** `hotfix/ralp-sql-2100-params-156` (база `1b4bd4b` = 155 / 0054.9)  
+**Исходники прод-сборки:** тег `prod-jar-0.1.0.156` (коммит `7474613`, зафиксирован 2026-11-20; thin sha256 `41316b4fd0a6c048097f98be541f9b814530e1dd77827548ee88c98c930673c5`). Срочные правки прода до переключения R1 — от этого тега  
 **Симптом:** ревизия type=3 FAILED на сверке: `errorCode=8003`,  
 `The incoming request has too many parameters. The server supports a maximum of 2100 parameters.`  
 **Факт на проде:** `SELECT COUNT(*) FROM ags.ralpRa WHERE ralprY = 2026` → **2292**  

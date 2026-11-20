@@ -3,9 +3,698 @@
     "metadata": {
       "version": "1.0.0",
       "status": "in-progress",
-      "lastUpdated": "2026-11-18"
+      "lastUpdated": "2026-11-20"
     },
     "sessions": [
+      {
+        "chat": {
+          "displayName": "R1.0: DEV-гейт на копии прод-схемы без M6; выкладка на прод отменена (paused, critical). № chat-2026-11-19-001",
+          "chat-attributes": {
+            "id": "chat-2026-11-19-001",
+            "created": "2026-11-19",
+            "lastUpdated": "2026-11-20",
+            "owner": "Александр",
+            "status": "paused",
+            "priority": "critical",
+            "tags": [
+              "R1.0",
+              "DEV-gate",
+              "release-r1x",
+              "no-M6",
+              "FishEye_prod_noM6",
+              "PASS-§1",
+              "one-writer-per-function"
+            ],
+            "links": {
+              "projectDocsRefs": [],
+              "developmentTasks": [
+                "0086"
+              ],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1117-release-r1x.md",
+              "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Решение: выкладка R1.0 на прод отменена; перестройка трека R (success). № log-2026-11-20-001",
+                "log-attributes": {
+                  "id": "log-2026-11-20-001",
+                  "timestamp": "2026-11-20T11:00:00+03:00",
+                  "level": "info",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": [
+                    "decision",
+                    "roadmap",
+                    "R1",
+                    "one-writer-per-function"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/development/notes/domain/ra/06-decision-rc-au.md",
+                      "docs/development/notes/domain/ra/05-rc-au-compat-two-instances.md",
+                      "docs/deployment/r1.0-candidate-operator.md"
+                    ],
+                    "developmentTasks": [
+                      "0081",
+                      "0082",
+                      "0083",
+                      "0084",
+                      "0085",
+                      "0086"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1117-release-r1x.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Анализ сомнений владельца по выкладке R1.0",
+                    "details": "Польза на проде нулевая; тип 5 на проде пишет Access — кандидат стал бы вторым писателем (Au + зеркало на ra_change против одного рассмотрения), синхронизации нет; DDL аддитивна и откатывается, записи в ra/ra_change/*_summ — нет",
+                    "outcome": "Решение «один писатель на функцию»: выкладка R1.0 отменена; R1.1–R1.3 → вехи D1.1–D1.3 на DEV; параллельный месяц C7 на DEV; на прод один выпуск — переключение R1",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                    ]
+                  },
+                  {
+                    "action": "Корректировка планов и задач",
+                    "details": "Дорожная карта 0.2.0; release-r1x 0.3.0 paused (§2.4 Решение); 0086 paused; 0081–0085 — вехи DEV; domain/ra/05 §7, 06 §5; инструкция оператору и README ra-change-au — «не применять на прод»; ra_change_au на DEV FishEye оставлена",
+                    "outcome": "Следующая активная задача — C2 (0081)",
+                    "references": [
+                      "docs/development/project-development.json"
+                    ]
+                  },
+                  {
+                    "action": "Зафиксировать исходники JAR 156",
+                    "details": "Исходники 156 были только незакоммиченными изменениями в worktree femsq-hotfix-ralp-156; закоммичены (7474613) в ветку hotfix/ralp-sql-2100-params-156",
+                    "outcome": "Тег prod-jar-0.1.0.156 (thin sha256 41316b4f…73c5) — база для срочных правок прода до переключения",
+                    "references": [
+                      "docs/development/notes/sql/26-1014-ralp-2100-params-hotfix-156/README.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "§2 пакет кандидата R1.0 26-1119 (success). № log-2026-11-19-013",
+                "log-attributes": {
+                  "id": "log-2026-11-19-013",
+                  "timestamp": "2026-11-19T17:10:00+03:00",
+                  "level": "info",
+                  "effort": "45m",
+                  "status": "completed",
+                  "tags": [
+                    "§2",
+                    "candidate-package",
+                    "R1.0",
+                    "380"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/deployment/r1.0-candidate-operator.md"
+                    ],
+                    "developmentTasks": [
+                      "0086"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1117-release-r1x.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Собрать dist/26-1119-R1.0",
+                    "details": "thin 0.1.0.380 + lib/94; SQL ra_change_au+ra_at seed; start/stop по PID; SHA256SUMS; pack-candidate-r1x.sh",
+                    "outcome": "2.1–2.3 ✅",
+                    "references": [
+                      "docs/deployment/r1.0-candidate-operator.md"
+                    ]
+                  },
+                  {
+                    "action": "Критерий вывода 156 (§2.4)",
+                    "details": "Зафиксирован в OPERATOR §5 до выкладки: health, ревизии 3/6/5, smoke _2606, DDL Au, решение владельца.",
+                    "outcome": "2.4 ✅; §3 ждёт согласования",
+                    "references": []
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.4.3–1.4.4 + PASS §1 DEV-гейт (success). № log-2026-11-19-012",
+                "log-attributes": {
+                  "id": "log-2026-11-19-012",
+                  "timestamp": "2026-11-19T16:50:00+03:00",
+                  "level": "info",
+                  "effort": "3h",
+                  "status": "completed",
+                  "tags": [
+                    "1.4.3",
+                    "1.4.4",
+                    "PASS-§1",
+                    "ra_change_au",
+                    "spMstrg_2606",
+                    "UI-smoke"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/development/notes/domain/ra/06-decision-rc-au.md",
+                      "docs/development/notes/sql/26-1119-ra-change-au/"
+                    ],
+                    "developmentTasks": [
+                      "0086"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1117-release-r1x.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "1.4.3: DDL Au на noM6 + apply type=5 JAR 380",
+                    "details": "ra_change_au создана/мигрирована на FishEye_prod_noM6 (3047); dry 1227 / apply 1228 / идемп. 1229; без 2601; au=3380 rc=3378 multi=2; UX уникален.",
+                    "outcome": "Критерий domain/ra/06 §3 PASS",
+                    "references": [
+                      "docs/development/notes/sql/26-1119-ra-change-au/"
+                    ]
+                  },
+                  {
+                    "action": "1.4.4: smoke spMstrg_2606 + UI Cursor browser",
+                    "details": "spMstrg_2606 chain5 saveToTables=1 ~116с RS1=15262 RS4=916 PASS_SMOKE. UI: org/цепочки/стройки/каталог mstrg OK; СУДЗ disabled; список ревизий hang (хвост).",
+                    "outcome": "1.4.4 ✅",
+                    "references": []
+                  },
+                  {
+                    "action": "Вердикт DEV-гейта §1",
+                    "details": "PASS. Пакет кандидата (§2) и прод — только после согласования.",
+                    "outcome": "PASS §1; план 0.2.12",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1117-release-r1x.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.4.2.3–1.4.2.4 совместимость и решение RC Au (success). № log-2026-11-19-011",
+                "log-attributes": {
+                  "id": "log-2026-11-19-011",
+                  "timestamp": "2026-11-19T15:25:00+03:00",
+                  "level": "info",
+                  "effort": "45m",
+                  "status": "completed",
+                  "tags": [
+                    "1.4.2.3",
+                    "1.4.2.4",
+                    "ra_change_au",
+                    "decision"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/development/notes/domain/ra/05-rc-au-compat-two-instances.md",
+                      "docs/development/notes/domain/ra/06-decision-rc-au.md"
+                    ],
+                    "developmentTasks": [
+                      "0086"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1117-release-r1x.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Совместимость A с 156/Access/VIEW",
+                    "details": "Additive DDL безопасен; UX ЗаПериод не трогать; зеркало arrived/sent на ra_change; RRcTimeList-развёртку отложить. B опасен для двух экземпляров.",
+                    "outcome": "1.4.2.3 ✅ A не блокирован",
+                    "references": [
+                      "docs/development/notes/domain/ra/05-rc-au-compat-two-instances.md"
+                    ]
+                  },
+                  {
+                    "action": "Формальное решение A + критерий приёмки type=5",
+                    "details": "Принято A/A1; B/D отклонены; критерий: apply без 2601, 1 rac_key + ≥2 Au на дубли Excel, UX сохранён.",
+                    "outcome": "1.4.2 ✅; следующий 1.4.3",
+                    "references": [
+                      "docs/development/notes/domain/ra/06-decision-rc-au.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.4.2.2 скетч моделей RC A vs B (success). № log-2026-11-19-010",
+                "log-attributes": {
+                  "id": "log-2026-11-19-010",
+                  "timestamp": "2026-11-19T15:20:00+03:00",
+                  "level": "info",
+                  "effort": "40m",
+                  "status": "completed",
+                  "tags": [
+                    "1.4.2.2",
+                    "ra_change_au",
+                    "sketch"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/development/notes/domain/ra/04-rc-model-sketch-a-vs-b.md"
+                    ],
+                    "developmentTasks": [
+                      "0086"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1117-release-r1x.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Скетч A (Au) vs B (расширение UX)",
+                    "details": "A: ra_change логический + ra_change_au представления (зеркало ralpRaAu); A1 сумма на Au. B: расширить UX — ломает смысл № изм., риск для 156. Рекомендация скетча: A; D исключён. Решение — 1.4.2.4 после совместимости 1.4.2.3.",
+                    "outcome": "1.4.2.2 ✅; план 0.2.10",
+                    "references": [
+                      "docs/development/notes/domain/ra/04-rc-model-sketch-a-vs-b.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Справка: РАЛП в освоении vs RC; _2605 вне объёма (success). № log-2026-11-19-009",
+                "log-attributes": {
+                  "id": "log-2026-11-19-009",
+                  "timestamp": "2026-11-19T15:15:00+03:00",
+                  "level": "info",
+                  "effort": "30m",
+                  "status": "completed",
+                  "tags": [
+                    "ralp",
+                    "mastering",
+                    "1.4.2",
+                    "_2605-out-of-scope"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/development/notes/domain/ra/03-ralp-mastering-vs-rc.md"
+                    ],
+                    "developmentTasks": [
+                      "0086"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1117-release-r1x.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Разбор входа РАЛП в расчёт освоения",
+                    "details": "VIEW ags.ralp = ralpRa⋈ralpRaAu; mastering/_2606/fn2 суммируют каждое Au. _2605 — обёртка 2408 без своего кода РАЛП. Для RC multi-presentation эталон — развёртка как у РАЛП; пакет _2605 не дорабатываем.",
+                    "outcome": "Справка 03; граница _2605 зафиксирована перед 1.4.2.2",
+                    "references": [
+                      "docs/development/notes/domain/ra/03-ralp-mastering-vs-rc.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.4.2.1 инвентарь зерна ra_change (success). № log-2026-11-19-008",
+                "log-attributes": {
+                  "id": "log-2026-11-19-008",
+                  "timestamp": "2026-11-19T15:10:00+03:00",
+                  "level": "info",
+                  "effort": "45m",
+                  "status": "completed",
+                  "tags": [
+                    "1.4.2.1",
+                    "ra_change",
+                    "UX",
+                    "RRcTimeList"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/development/notes/domain/ra/02-rc-grain-inventory.md"
+                    ],
+                    "developmentTasks": [
+                      "0086"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1117-release-r1x.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Инвентарь UX/индексов и потребителей зерна RC",
+                    "details": "ЗаПериодЗаОтчётОдинНомер=(period,rac_ra,rac_num); summ версионен (47 multi, max 7); ra_chSmLt/RRcTimeList/fnMasteringRa*=rac_key+latest; жизненный цикл на строке change; ralpRaAu образец (ra,arrived); ключ 2601 — коллизия внутри batch NEW.",
+                    "outcome": "1.4.2.1 ✅; готовность к скетчу A/B",
+                    "references": [
+                      "docs/development/notes/domain/ra/02-rc-grain-inventory.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1117-release-r1x.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Фиксация знаний: ОА-признаки, multi-presentation, oh_ (success). № log-2026-11-19-007",
+                "log-attributes": {
+                  "id": "log-2026-11-19-007",
+                  "timestamp": "2026-11-19T14:30:00+03:00",
+                  "level": "info",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": [
+                    "glossary",
+                    "domain-ra",
+                    "ОА",
+                    "ra_change",
+                    "1.4"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/project/glossary.md",
+                      "docs/development/notes/domain/ra/01-oa-signs-and-presentations.md"
+                    ],
+                    "developmentTasks": [
+                      "0086"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1117-release-r1x.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Глоссарий 1.11.0: сущности ОА / явления / UX",
+                    "details": "Статьи: многократное представление, ОА, ОА прочие, ОА Аренда, ОА изм, ЗаПериодЗаОтчётОдинНомер; шаблон типов статей; правки РАЛП, oh_, ревизия.",
+                    "outcome": "Термины и явление multi-presentation в реестре",
+                    "references": [
+                      "docs/project/glossary.md"
+                    ]
+                  },
+                  {
+                    "action": "Доменный конспект domain/ra/01",
+                    "details": "Матрицы Excel↔домен, блокер UX, изм. к прочим (файл 0 / БД 2), ОА Аренда≡РАЛП, путь oh_ в _2605/_2606, доказательная база 1225/1226.",
+                    "outcome": "Фактура разбора сохранена до выбора фикса RC",
+                    "references": [
+                      "docs/development/notes/domain/ra/01-oa-signs-and-presentations.md"
+                    ]
+                  },
+                  {
+                    "action": "Ссылки в project-docs и плане release-r1x 0.2.6",
+                    "details": "Ключ ra_oa_signs_presentations; блокер §1.4 со ссылкой на конспект.",
+                    "outcome": "Навигация из реестра и плана",
+                    "references": [
+                      "docs/project/project-docs.json",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1117-release-r1x.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.4 ревизии 3/6 PASS, тип 5 apply FAIL (warning). № log-2026-11-19-006",
+                "log-attributes": {
+                  "id": "log-2026-11-19-006",
+                  "timestamp": "2026-11-19T12:00:00+03:00",
+                  "level": "warning",
+                  "effort": "2h",
+                  "status": "completed",
+                  "tags": [
+                    "1.4",
+                    "af_type_3",
+                    "af_type_5",
+                    "af_type_6",
+                    "0.1.0.379",
+                    "2026-1119"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0086"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1117-release-r1x.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Размещение текущих Excel с прода на шару",
+                    "details": "26-1119_current.zip → /mnt/nb-win-share/femsq/excel/2026-1119/ (аренда, акты, ОА, export_Хр_СК=тип 2 вне 1.4).",
+                    "outcome": "Файлы для 1.4 готовы",
+                    "references": [
+                      "/mnt/nb-win-share/femsq/excel/2026-1119/"
+                    ]
+                  },
+                  {
+                    "action": "Dry-run/apply af_type 3 и 6 на FishEye_prod_noM6",
+                    "details": "adt_key=14; exec 1221–1224; JAR 379. Тип 3: +2124 ralpRa / +2136 ralpRaAu. Тип 6: суммы после apply сошлись (разница 0).",
+                    "outcome": "Типы 3 и 6 ✅ на схеме без M6",
+                    "references": [
+                      "logs/r10-gate-379.log"
+                    ]
+                  },
+                  {
+                    "action": "Dry-run/apply af_type 5",
+                    "details": "Dry-run exec 1225 OK (NEW=9288). Apply: BatchUpdateException 2601 duplicate ags.ra_change UX ЗаПериодЗаОтчётОдинНомер key (229, 113328, 2). adtStatus=COMPLETED при ошибке файла.",
+                    "outcome": "Блокер §1; PASS гейта отложен",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1117-release-r1x.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.2 UI + 1.3 изоляция СУДЗ в 379 (success). № log-2026-11-19-005",
+                "log-attributes": {
+                  "id": "log-2026-11-19-005",
+                  "timestamp": "2026-11-19T10:50:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "tags": [
+                    "1.2",
+                    "1.3",
+                    "browser",
+                    "sudzAvailable",
+                    "0.1.0.379"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0086"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1117-release-r1x.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "UI smoke в Cursor browser на FishEye_prod_noM6",
+                    "details": "org/цепочки OK; статус «слой СУДЗ недоступен (без M6)»; меню СУДЗ disabled. audits GraphQL иногда таймаут — хвост 1.4.",
+                    "outcome": "1.2 ✅",
+                    "references": [
+                      "logs/r10-gate-379.log"
+                    ]
+                  },
+                  {
+                    "action": "Изоляция СУДЗ (вариант A)",
+                    "details": "SudzAvailabilityService + status.sudzAvailable; frontend sudzEnabled; GraphQL 503 без M6. JAR 0.1.0.379.",
+                    "outcome": "1.3 ✅; DDL M6 не требуется для R1.0",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/service/SudzAvailabilityService.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.2 smoke JAR 378 на noM6: core OK, СУДЗ fail (success). № log-2026-11-19-004",
+                "log-attributes": {
+                  "id": "log-2026-11-19-004",
+                  "timestamp": "2026-11-19T10:26:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": [
+                    "1.2",
+                    "smoke",
+                    "0.1.0.378",
+                    "sudz.yr"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0086"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1117-release-r1x.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Сборка и старт на FishEye_prod_noM6",
+                    "details": "check-fequlib OK; thin/fat 0.1.0.378; FEMSQ_CONFIG_PATH=database.properties.prod-noM6; :8080.",
+                    "outcome": "Health 200, version 378",
+                    "references": [
+                      "logs/r10-gate-378.log"
+                    ]
+                  },
+                  {
+                    "action": "GraphQL smoke",
+                    "details": "org 432, investmentChains 15, audits 11 OK. СУДЗ sudzYears/sudzD644 → Invalid object name sudz.yr (JdbcSudzDao).",
+                    "outcome": "Блокер СУДЗ зафиксирован → 1.3 изоляция; core без M6 жив",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1117-release-r1x.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.1 PASS: прод-опрос + FishEye_prod_noM6 (success). № log-2026-11-19-003",
+                "log-attributes": {
+                  "id": "log-2026-11-19-003",
+                  "timestamp": "2026-11-19T10:20:00+03:00",
+                  "level": "success",
+                  "effort": "2h",
+                  "status": "completed",
+                  "tags": [
+                    "1.1",
+                    "PASS",
+                    "продОбмен",
+                    "FishEye_prod_noM6"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0086"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1117-release-r1x.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Прод readonly 00/01/02 (сессия 26-1119_09-30)",
+                    "details": "00: m6 PASS; 01: sudz ABSENT; 02: ревизии OK (ralpRa 15352). Формат Results to Text принят.",
+                    "outcome": "Опрос прода PASS",
+                    "references": [
+                      "docs/development/notes/sql/26-1119-r10-dev-gate-noM6/SURVEY_PROD_2026-11-19.md",
+                      "/home/alex/Downloads/продОбмен/26-1119_09-30/"
+                    ]
+                  },
+                  {
+                    "action": "DEV клон + strip sudz",
+                    "details": "BACKUP COPY_ONLY FishEye → RESTORE FishEye_prod_noM6 → DROP объектов/схемы sudz. 12_VERIFY все PASS; рабочий FishEye с sudz сохранён.",
+                    "outcome": "1.1 ✅; план 0.2.2; далее 1.2",
+                    "references": [
+                      "docs/development/notes/sql/26-1119-r10-dev-gate-noM6/"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "1.1 без bak: readonly + клон/strip (success). № log-2026-11-19-002",
+                "log-attributes": {
+                  "id": "log-2026-11-19-002",
+                  "timestamp": "2026-11-19T08:45:00+03:00",
+                  "level": "success",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": [
+                    "1.1",
+                    "no-bak",
+                    "readonly",
+                    "strip-sudz"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0086"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1117-release-r1x.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Снят критерий полного .bak прода",
+                    "details": "Источник схемы — SELECT через продОбмен. Стенд: клон DEV FishEye → FishEye_prod_noM6 + DROP объектов sudz.",
+                    "outcome": "План 0.2.1; пакет 26-1119-r10-dev-gate-noM6 (00–02 prod readonly, 10–12 DEV)",
+                    "references": [
+                      "docs/development/notes/sql/26-1119-r10-dev-gate-noM6/README.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Старт DEV-гейта: окружение + инвентарь 1.1 (success). № log-2026-11-19-001",
+                "log-attributes": {
+                  "id": "log-2026-11-19-001",
+                  "timestamp": "2026-11-19T08:21:00+03:00",
+                  "level": "success",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": [
+                    "1.1",
+                    "inventory",
+                    "asus-kubuntu",
+                    "DBHub"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0086"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1117-release-r1x.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Проверка окружения",
+                    "details": "Машина asus-kubuntu (vps-vpn 10.7.0.2; hostname localhost.localdomain ≠ паттерну). DBHub установлен. SQL 10.7.0.3:1433 OK. mcp.json DSN без изменений.",
+                    "outcome": "Окружение готово к опросу DEV",
+                    "references": [
+                      "docs/project/project-docs.json"
+                    ]
+                  },
+                  {
+                    "action": "Инвентарь DEV vs SURVEY (без M6)",
+                    "details": "На femsq-mssql только БД FishEye; слой M6 в sudz присутствует (Dbt/DbtValue/invDbtDbt/cnicDbt). Объёмы ≠ прод. Отдельной копии прода нет. FishEye.bak на шаре от 2026-03-03 — не прод.",
+                    "outcome": "1.1 🔶 заблокирован до BACKUP/RESTORE → FishEye_prod_noM6",
+                    "references": [
+                      "docs/development/notes/sql/26-1021-sudz-prod-survey/SURVEY_RESULT.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1117-release-r1x.md"
+                    ]
+                  },
+                  {
+                    "action": "Активация документации",
+                    "details": "release-r1x → 0.2.0 in-progress; задача 0086 in-progress; реестр дорожной карты 0.1.6; чат журнала создан.",
+                    "outcome": "Трек R открыт на §2 п.1",
+                    "references": [
+                      "docs/development/project-development.json",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
       {
         "chat": {
           "displayName": "Трек A: SQL-тест _2606 на проде — окно FishEye (completed, critical). № chat-2026-11-18-001",

@@ -44,6 +44,27 @@
               "dependencies" : [ ],
               "buildHistory" : {
                 "builds" : [ {
+                  "version" : "0.1.0.380-SNAPSHOT",
+                  "sha256" : "44d21b9c61ce27d55ee23eb2c19430d8fe0ba4c596cf41f1c46b6d5af52132c7",
+                  "buildTimestamp" : "2026-11-19T15:30:12+03:00",
+                  "buildNumber" : "202611191530120",
+                  "changed" : true,
+                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.380-SNAPSHOT.jar"
+                }, {
+                  "version" : "0.1.0.379-SNAPSHOT",
+                  "sha256" : "2706c1ada0dcf1f020c9c325cc59cf30a499ac3eff20e1de29cabd733c920de1",
+                  "buildTimestamp" : "2026-11-19T10:45:01+03:00",
+                  "buildNumber" : "202611191045010",
+                  "changed" : true,
+                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.379-SNAPSHOT.jar"
+                }, {
+                  "version" : "0.1.0.378-SNAPSHOT",
+                  "sha256" : "621a0e03559fd3a2fbefb5f1c9d21ec1763bc2031bca2da0931fd9cc4d1dd5f7",
+                  "buildTimestamp" : "2026-11-19T10:22:46+03:00",
+                  "buildNumber" : "202611191022460",
+                  "changed" : true,
+                  "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.378-SNAPSHOT.jar"
+                }, {
                   "version" : "0.1.0.377-SNAPSHOT",
                   "sha256" : "b67b7fe3b9324f7e2d6a4eb1d7f45e2f91bc2d0adab1926fe20dab31456fb99c",
                   "buildTimestamp" : "2026-11-17T16:45:27+03:00",
@@ -51,7 +72,7 @@
                   "changed" : true,
                   "jarPath" : "code/femsq-backend/femsq-database/target/femsq-database-0.1.0.377-SNAPSHOT.jar"
                 } ],
-                "lastUpdated" : "2026-11-17T16:45:27+03:00"
+                "lastUpdated" : "2026-11-19T15:30:12+03:00"
               }
             },
             "components" : [ {
@@ -541,6 +562,27 @@
               "documentation" : [ "docs/project/decisions/adr-003-reporting-engine.md", "docs/deployment/reports-deployment-strategy.md" ],
               "buildHistory" : {
                 "builds" : [ {
+                  "version" : "0.1.0.380-SNAPSHOT",
+                  "sha256" : "76473c1b21522d5673bfa779737daa29a365cda8af5a9f6d8a32e0d7da6af9cf",
+                  "buildTimestamp" : "2026-11-19T15:30:12+03:00",
+                  "buildNumber" : "202611191530120",
+                  "changed" : true,
+                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.380-SNAPSHOT.jar"
+                }, {
+                  "version" : "0.1.0.379-SNAPSHOT",
+                  "sha256" : "57c521e2aeb6d660884c45509868a65ef745235aa97ec0e26d53d16e05903915",
+                  "buildTimestamp" : "2026-11-19T10:45:01+03:00",
+                  "buildNumber" : "202611191045010",
+                  "changed" : true,
+                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.379-SNAPSHOT.jar"
+                }, {
+                  "version" : "0.1.0.378-SNAPSHOT",
+                  "sha256" : "c0db9acb9303a78b149abee092daf1e43f42d4398efd3b3e716c76a27a2307dc",
+                  "buildTimestamp" : "2026-11-19T10:22:46+03:00",
+                  "buildNumber" : "202611191022460",
+                  "changed" : true,
+                  "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.378-SNAPSHOT.jar"
+                }, {
                   "version" : "0.1.0.377-SNAPSHOT",
                   "sha256" : "2eca6a06657d0d3ee6b9955069d2f2d701d0aaf9c02bcad16e655eea8bb8e9f0",
                   "buildTimestamp" : "2026-11-17T16:45:27+03:00",
@@ -548,7 +590,7 @@
                   "changed" : true,
                   "jarPath" : "code/femsq-backend/femsq-reports/target/femsq-reports-0.1.0.377-SNAPSHOT.jar"
                 } ],
-                "lastUpdated" : "2026-11-17T16:45:27+03:00"
+                "lastUpdated" : "2026-11-19T15:30:12+03:00"
               }
             },
             "components" : [ {
