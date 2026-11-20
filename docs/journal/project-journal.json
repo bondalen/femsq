@@ -38,6 +38,45 @@
           "entries": [
             {
               "log": {
+                "displayName": "DEV FishEye: откат ra_change_au — СУДЗ без DDL R1 (success). № log-2026-11-20-002",
+                "log-attributes": {
+                  "id": "log-2026-11-20-002",
+                  "timestamp": "2026-11-20T10:35:00+03:00",
+                  "level": "info",
+                  "effort": "15m",
+                  "status": "completed",
+                  "tags": [
+                    "DEV",
+                    "FishEye",
+                    "SUDZ",
+                    "ra_change_au",
+                    "rollback"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/development/notes/sql/26-1119-ra-change-au/README.md"
+                    ],
+                    "developmentTasks": [
+                      "0086"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1117-release-r1x.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Откатить ra_change_au на рабочей DEV FishEye",
+                    "details": "Владелец: DEV обеспечивает СУДЗ в проверенном состоянии; разработку R1 не вести на этой БД. DROP через трёхчастные имена при DSN=FishEye_prod_noM6",
+                    "outcome": "FishEye: Au нет; ra_change 3047; ra_at=1. noM6: Au 3380 без изменений. Правило: СУДЗ→FishEye, R1→FishEye_prod_noM6",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
                 "displayName": "Решение: выкладка R1.0 на прод отменена; перестройка трека R (success). № log-2026-11-20-001",
                 "log-attributes": {
                   "id": "log-2026-11-20-001",
@@ -80,7 +119,7 @@
                   },
                   {
                     "action": "Корректировка планов и задач",
-                    "details": "Дорожная карта 0.2.0; release-r1x 0.3.0 paused (§2.4 Решение); 0086 paused; 0081–0085 — вехи DEV; domain/ra/05 §7, 06 §5; инструкция оператору и README ra-change-au — «не применять на прод»; ra_change_au на DEV FishEye оставлена",
+                    "details": "Дорожная карта 0.2.0; release-r1x 0.3.0 paused (§2.4 Решение); 0086 paused; 0081–0085 — вехи DEV; domain/ra/05 §7, 06 §5; инструкция оператору и README ra-change-au — «не применять на прод»; ra_change_au на DEV FishEye позже откачена (СУДЗ без DDL R1)",
                     "outcome": "Следующая активная задача — C2 (0081)",
                     "references": [
                       "docs/development/project-development.json"
