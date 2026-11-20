@@ -29,6 +29,8 @@ export interface ConnectionStatusResponse {
   database?: string;
   message?: string;
   error?: string;
+  /** Слой СУДЗ ({@code femsq.sudz.schema}.yr); false на прод-схеме без M6 */
+  sudzAvailable?: boolean | null;
 }
 
 export interface ConnectionConfigResponse {

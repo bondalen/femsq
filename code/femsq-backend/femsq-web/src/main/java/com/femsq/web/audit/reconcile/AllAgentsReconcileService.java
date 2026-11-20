@@ -31,6 +31,8 @@ import org.springframework.stereotype.Service;
 
 /**
  * Reconcile для type=5 (AllAgents): ветка RA (ОА / ОА прочие), ветка изменений RC (ОА изм) — read-model по {@code ra_ImpNewQuRa} / {@code ra_ImpNewQuRc}.
+ * <p>RC multi-presentation (1.4.3): логическое {@code ra_change} + {@code ra_change_au} (ключ {@code racAu_rac}+{@code racAu_arrived});
+ * на {@code ra_change} — зеркало актуального Au.
  */
 @Service
 public class AllAgentsReconcileService extends AbstractTransactionalReconcileService {
@@ -1656,30 +1658,35 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
 
         Timestamp now = new Timestamp(System.currentTimeMillis());
         Map<RcNaturalKey, Long> keysByNatural = bulkLoadRacKeysByNatural(connection, newRows);
-        Set<RcNewApplyRow> pendingInsertSet = new HashSet<>();
-        List<RcNewApplyRow> pendingInsert = new ArrayList<>();
+        // Несколько Excel-строк с одним (period, ra, № изм.) — одно ra_change; представления → ra_change_au.
+        LinkedHashMap<RcNaturalKey, RcNewApplyRow> pendingInsertByNatural = new LinkedHashMap<>();
         for (RcNewApplyRow row : newRows) {
             RcNaturalKey naturalKey = toRcNaturalKey(row);
             if (!keysByNatural.containsKey(naturalKey)) {
-                pendingInsert.add(row);
-                pendingInsertSet.add(row);
+                pendingInsertByNatural.putIfAbsent(naturalKey, row);
             }
         }
+        List<RcNewApplyRow> pendingInsert = new ArrayList<>(pendingInsertByNatural.values());
+        Set<RcNaturalKey> pendingInsertKeys = pendingInsertByNatural.keySet();
         int rcChangesInserted = batchInsertNewRcChanges(connection, pendingInsert, keysByNatural, now);
 
         Set<Long> racKeys = new HashSet<>();
         List<RcResolvedApplyRow> resolved = new ArrayList<>(newRows.size());
         boolean rowAudit = emitReconcileRowAudit(context);
         for (RcNewApplyRow row : newRows) {
-            Long racKey = keysByNatural.get(toRcNaturalKey(row));
+            RcNaturalKey naturalKey = toRcNaturalKey(row);
+            Long racKey = keysByNatural.get(naturalKey);
             if (racKey == null) {
                 continue;
             }
-            boolean insertedNewRc = pendingInsertSet.contains(row);
+            boolean insertedNewRc = pendingInsertKeys.contains(naturalKey)
+                    && Objects.equals(pendingInsertByNatural.get(naturalKey), row);
             racKeys.add(racKey);
             resolved.add(new RcResolvedApplyRow(row, racKey, insertedNewRc));
-            if (rowAudit) {
-                appendRcNewCreatedAudit(context, row, racKey, insertedNewRc);
+            if (rowAudit && insertedNewRc) {
+                appendRcNewCreatedAudit(context, row, racKey, true);
+            } else if (rowAudit) {
+                appendRcNewCreatedAudit(context, row, racKey, false);
             }
         }
 
@@ -1692,9 +1699,14 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
 
         int rcSumsInserted = 0;
         int rcSumsSkipped = 0;
+        // Суммы на ra_change_summ — по одному evolve на rac_key (первая строка группы).
+        Set<Long> sumEvolvedRac = new HashSet<>();
         try (PreparedStatement insertSum = connection.prepareStatement(insertSumSql)) {
             for (RcResolvedApplyRow item : resolved) {
                 RcNewApplyRow row = item.row();
+                if (!sumEvolvedRac.add(item.racKey())) {
+                    continue;
+                }
                 RaSummUpsertOutcome sumOutcome = evolveRcSumsWithOutcome(
                         insertSum,
                         item.racKey(),
@@ -1715,6 +1727,9 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             }
             insertSum.executeBatch();
         }
+
+        upsertRcAusFromNewRows(connection, resolved, now);
+        refreshRcMirrors(connection, racKeys);
 
         if (rcChangesInserted != pendingInsert.size()) {
             log.warning(() -> "[Type5] RC insert count mismatch: counter=" + rcChangesInserted
@@ -1963,7 +1978,242 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             insertSum.executeBatch();
         }
 
+        upsertRcAusFromChangedRows(connection, changedRows, now);
+        refreshRcMirrors(connection, racKeys);
+
         return new RcChangeUpdateStats(updated, sumsInserted, sumsUnchangedSkipped);
+    }
+
+    /** Нормализация ключа представления (письмо поступления); пусто → {@code ""}. */
+    private String normalizeRcArrivedKey(String arrived) {
+        String t = trimToNull(arrived);
+        return t == null ? "" : t;
+    }
+
+    private void upsertRcAusFromNewRows(Connection connection, List<RcResolvedApplyRow> resolved, Timestamp now)
+            throws SQLException {
+        List<RcAuApplyRow> auRows = new ArrayList<>(resolved.size());
+        for (RcResolvedApplyRow item : resolved) {
+            RcNewApplyRow row = item.row();
+            auRows.add(new RcAuApplyRow(
+                    item.racKey(),
+                    normalizeRcArrivedKey(row.arrived()),
+                    row.arrivedDate(),
+                    row.arrivedDateFact(),
+                    row.returned(),
+                    row.returnedDate(),
+                    row.returnedReason(),
+                    row.sent(),
+                    row.sentDate(),
+                    row.total(),
+                    row.work(),
+                    row.equip(),
+                    row.others()
+            ));
+        }
+        upsertRcAus(connection, auRows, now);
+    }
+
+    private void upsertRcAusFromChangedRows(Connection connection, List<RcChangedApplyRow> changedRows, Timestamp now)
+            throws SQLException {
+        List<RcAuApplyRow> auRows = new ArrayList<>(changedRows.size());
+        for (RcChangedApplyRow row : changedRows) {
+            auRows.add(new RcAuApplyRow(
+                    row.racKey(),
+                    normalizeRcArrivedKey(row.arrived()),
+                    row.arrivedDate(),
+                    row.arrivedDateFact(),
+                    row.returned(),
+                    row.returnedDate(),
+                    row.returnedReason(),
+                    row.sent(),
+                    row.sentDate(),
+                    row.total(),
+                    row.work(),
+                    row.equip(),
+                    row.others()
+            ));
+        }
+        upsertRcAus(connection, auRows, now);
+    }
+
+    /**
+     * INSERT/UPDATE {@code ags.ra_change_au} по ключу {@code (racAu_rac, racAu_arrived)}.
+     */
+    private void upsertRcAus(Connection connection, List<RcAuApplyRow> auRows, Timestamp now) throws SQLException {
+        if (auRows == null || auRows.isEmpty()) {
+            return;
+        }
+        // Дедуп внутри batch по ключу Au (последняя Excel-строка побеждает).
+        LinkedHashMap<RcAuMatchKey, RcAuApplyRow> unique = new LinkedHashMap<>();
+        for (RcAuApplyRow row : auRows) {
+            unique.put(new RcAuMatchKey(row.racKey(), row.arrivedKey()), row);
+        }
+        List<RcAuApplyRow> rows = new ArrayList<>(unique.values());
+        Map<RcAuMatchKey, Long> existing = loadRacAuKeys(connection, rows);
+
+        String insertSql = """
+                INSERT INTO ags.ra_change_au (
+                    racAu_rac, racAu_arrived, racAu_arrived_date, racAu_arrived_dateFact,
+                    racAu_returned, racAu_returned_date, racAu_returnedReason,
+                    racAu_sent, racAu_sent_date,
+                    racAu_total, racAu_work, racAu_equip, racAu_others, racAu_created
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """;
+        String updateSql = """
+                UPDATE ags.ra_change_au SET
+                    racAu_arrived_date = ?,
+                    racAu_arrived_dateFact = ?,
+                    racAu_returned = ?,
+                    racAu_returned_date = ?,
+                    racAu_returnedReason = ?,
+                    racAu_sent = ?,
+                    racAu_sent_date = ?,
+                    racAu_total = ?,
+                    racAu_work = ?,
+                    racAu_equip = ?,
+                    racAu_others = ?
+                WHERE racAu_key = ?
+                """;
+
+        try (PreparedStatement insertStmt = connection.prepareStatement(insertSql);
+             PreparedStatement updateStmt = connection.prepareStatement(updateSql)) {
+            int insertBatch = 0;
+            int updateBatch = 0;
+            for (RcAuApplyRow row : rows) {
+                RcAuMatchKey key = new RcAuMatchKey(row.racKey(), row.arrivedKey());
+                Long auKey = existing.get(key);
+                if (auKey == null) {
+                    int i = 1;
+                    insertStmt.setLong(i++, row.racKey());
+                    insertStmt.setString(i++, row.arrivedKey());
+                    insertStmt.setObject(i++, row.arrivedDate());
+                    insertStmt.setObject(i++, row.arrivedDateFact());
+                    insertStmt.setString(i++, row.returned());
+                    insertStmt.setObject(i++, row.returnedDate());
+                    insertStmt.setString(i++, row.returnedReason());
+                    insertStmt.setString(i++, row.sent());
+                    insertStmt.setObject(i++, row.sentDate());
+                    insertStmt.setBigDecimal(i++, row.total());
+                    insertStmt.setBigDecimal(i++, row.work());
+                    insertStmt.setBigDecimal(i++, row.equip());
+                    insertStmt.setBigDecimal(i++, row.others());
+                    insertStmt.setTimestamp(i++, now);
+                    insertStmt.addBatch();
+                    insertBatch++;
+                    if (insertBatch >= APPLY_BATCH_SIZE) {
+                        insertStmt.executeBatch();
+                        insertBatch = 0;
+                    }
+                } else {
+                    int i = 1;
+                    updateStmt.setObject(i++, row.arrivedDate());
+                    updateStmt.setObject(i++, row.arrivedDateFact());
+                    updateStmt.setString(i++, row.returned());
+                    updateStmt.setObject(i++, row.returnedDate());
+                    updateStmt.setString(i++, row.returnedReason());
+                    updateStmt.setString(i++, row.sent());
+                    updateStmt.setObject(i++, row.sentDate());
+                    updateStmt.setBigDecimal(i++, row.total());
+                    updateStmt.setBigDecimal(i++, row.work());
+                    updateStmt.setBigDecimal(i++, row.equip());
+                    updateStmt.setBigDecimal(i++, row.others());
+                    updateStmt.setLong(i++, auKey);
+                    updateStmt.addBatch();
+                    updateBatch++;
+                    if (updateBatch >= APPLY_BATCH_SIZE) {
+                        updateStmt.executeBatch();
+                        updateBatch = 0;
+                    }
+                }
+            }
+            if (insertBatch > 0) {
+                insertStmt.executeBatch();
+            }
+            if (updateBatch > 0) {
+                updateStmt.executeBatch();
+            }
+        }
+        log.info(() -> "[Type5] RC Au upsert: rows=" + rows.size());
+    }
+
+    private Map<RcAuMatchKey, Long> loadRacAuKeys(Connection connection, List<RcAuApplyRow> rows) throws SQLException {
+        Map<RcAuMatchKey, Long> out = new HashMap<>();
+        if (rows.isEmpty()) {
+            return out;
+        }
+        Set<Long> racKeys = new HashSet<>();
+        for (RcAuApplyRow row : rows) {
+            racKeys.add(row.racKey());
+        }
+        List<Long> list = new ArrayList<>(racKeys);
+        for (int from = 0; from < list.size(); from += BULK_IN_CHUNK) {
+            int to = Math.min(from + BULK_IN_CHUNK, list.size());
+            List<Long> chunk = list.subList(from, to);
+            String placeholders = String.join(",", Collections.nCopies(chunk.size(), "?"));
+            String sql = "SELECT racAu_key, racAu_rac, racAu_arrived FROM ags.ra_change_au WHERE racAu_rac IN ("
+                    + placeholders + ")";
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                int i = 1;
+                for (Long racKey : chunk) {
+                    ps.setLong(i++, racKey);
+                }
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        out.put(
+                                new RcAuMatchKey(rs.getLong("racAu_rac"), normalizeRcArrivedKey(rs.getString("racAu_arrived"))),
+                                rs.getLong("racAu_key")
+                        );
+                    }
+                }
+            }
+        }
+        return out;
+    }
+
+    /**
+     * Зеркало на {@code ra_change}: поля рассмотрения с Au с максимальной {@code racAu_arrived_date}
+     * (при равенстве — больший {@code racAu_key}).
+     */
+    private void refreshRcMirrors(Connection connection, Set<Long> racKeys) throws SQLException {
+        if (racKeys == null || racKeys.isEmpty()) {
+            return;
+        }
+        List<Long> list = new ArrayList<>(racKeys);
+        String updateSql = """
+                UPDATE c SET
+                    c.ra_arrived = a.racAu_arrived,
+                    c.ra_arrived_date = a.racAu_arrived_date,
+                    c.ra_arrived_dateFact = a.racAu_arrived_dateFact,
+                    c.ra_returned = a.racAu_returned,
+                    c.ra_returned_date = a.racAu_returned_date,
+                    c.ra_returnedReason = a.racAu_returnedReason,
+                    c.ra_sent = a.racAu_sent,
+                    c.ra_sent_date = a.racAu_sent_date
+                FROM ags.ra_change c
+                INNER JOIN ags.ra_change_au a ON a.racAu_key = (
+                    SELECT TOP 1 a2.racAu_key
+                    FROM ags.ra_change_au a2
+                    WHERE a2.racAu_rac = c.rac_key
+                    ORDER BY a2.racAu_arrived_date DESC, a2.racAu_key DESC
+                )
+                WHERE c.rac_key = ?
+                """;
+        try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
+            int batch = 0;
+            for (Long racKey : list) {
+                ps.setLong(1, racKey);
+                ps.addBatch();
+                batch++;
+                if (batch >= APPLY_BATCH_SIZE) {
+                    ps.executeBatch();
+                    batch = 0;
+                }
+            }
+            if (batch > 0) {
+                ps.executeBatch();
+            }
+        }
     }
 
     /**
@@ -2187,11 +2437,15 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             return 0;
         }
         int deleted = 0;
+        String delAus = "DELETE FROM ags.ra_change_au WHERE racAu_rac = ?";
         String delSums = "DELETE FROM ags.ra_change_summ WHERE " + RACS_FK_RAC + " = ?";
         String delRc = "DELETE FROM ags.ra_change WHERE rac_key = ?";
-        try (PreparedStatement psSums = connection.prepareStatement(delSums);
+        try (PreparedStatement psAus = connection.prepareStatement(delAus);
+             PreparedStatement psSums = connection.prepareStatement(delSums);
              PreparedStatement psRc = connection.prepareStatement(delRc)) {
             for (Long racKey : racKeys) {
+                psAus.setLong(1, racKey);
+                psAus.executeUpdate();
                 psSums.setLong(1, racKey);
                 psSums.executeUpdate();
                 psRc.setLong(1, racKey);
@@ -2206,16 +2460,21 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             return 0;
         }
         int deleted = 0;
+        String delAusByRa = "DELETE a FROM ags.ra_change_au a INNER JOIN ags.ra_change c ON a.racAu_rac = c.rac_key WHERE c."
+                + RC_COL_RA_FK + " = ?";
         String delRcSumsByRa = "DELETE s FROM ags.ra_change_summ s INNER JOIN ags.ra_change c ON s."
                 + RACS_FK_RAC + " = c.rac_key WHERE c." + RC_COL_RA_FK + " = ?";
         String delRcByRa = "DELETE FROM ags.ra_change WHERE " + RC_COL_RA_FK + " = ?";
         String delRaSums = "DELETE FROM ags.ra_summ WHERE ras_ra = ?";
         String delRa = "DELETE FROM ags.ra WHERE ra_key = ?";
-        try (PreparedStatement psRcSums = connection.prepareStatement(delRcSumsByRa);
+        try (PreparedStatement psAus = connection.prepareStatement(delAusByRa);
+             PreparedStatement psRcSums = connection.prepareStatement(delRcSumsByRa);
              PreparedStatement psRc = connection.prepareStatement(delRcByRa);
              PreparedStatement psRaSums = connection.prepareStatement(delRaSums);
              PreparedStatement psRa = connection.prepareStatement(delRa)) {
             for (Long raKey : raKeys) {
+                psAus.setLong(1, raKey);
+                psAus.executeUpdate();
                 psRcSums.setLong(1, raKey);
                 psRcSums.executeUpdate();
                 psRc.setLong(1, raKey);
@@ -3762,6 +4021,28 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             LocalDate rcDate,
             int raOrgSender,
             String arrived,
+            LocalDate arrivedDate,
+            LocalDate arrivedDateFact,
+            String returned,
+            LocalDate returnedDate,
+            String returnedReason,
+            String sent,
+            LocalDate sentDate,
+            BigDecimal total,
+            BigDecimal work,
+            BigDecimal equip,
+            BigDecimal others
+    ) {
+    }
+
+    /** Ключ представления RC: изменение + письмо поступления ({@code racAu_arrived}). */
+    private record RcAuMatchKey(long racKey, String arrivedKey) {
+    }
+
+    /** Данные для upsert {@code ags.ra_change_au}. */
+    private record RcAuApplyRow(
+            long racKey,
+            String arrivedKey,
             LocalDate arrivedDate,
             LocalDate arrivedDateFact,
             String returned,

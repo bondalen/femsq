@@ -60,12 +60,14 @@ export const useConnectionStore = defineStore('connection', () => {
   const user = ref<string>('');
   const lastMessage = ref<string>('Ожидает подключения');
   const lastError = ref<string>('');
+  /** Слой СУДЗ доступен (M6); по умолчанию false до ответа /connection/status */
+  const sudzAvailable = ref(false);
   const savedForm = reactive<ConnectionFormValues>({ ...DEFAULT_FORM_VALUES });
 
   const organizationsEnabled = computed(() => status.value === 'connected');
   const constructionSitesEnabled = computed(() => status.value === 'connected');
   const investmentChainsEnabled = computed(() => status.value === 'connected');
-  const sudzEnabled = computed(() => status.value === 'connected');
+  const sudzEnabled = computed(() => status.value === 'connected' && sudzAvailable.value);
   const contractsEnabled = computed(() => status.value === 'connected');
   const reportsEnabled = computed(() => true);
 
@@ -85,7 +87,14 @@ export const useConnectionStore = defineStore('connection', () => {
 
   function setStatus(
     next: ConnectionState,
-    payload?: { schema?: string; database?: string; user?: string; message?: string; error?: string }
+    payload?: {
+      schema?: string;
+      database?: string;
+      user?: string;
+      message?: string;
+      error?: string;
+      sudzAvailable?: boolean | null;
+    }
   ): void {
     console.info('[connection-store] status change', status.value, '→', next, payload);
     status.value = next;
@@ -104,11 +113,15 @@ export const useConnectionStore = defineStore('connection', () => {
     if (payload?.error !== undefined) {
       lastError.value = payload.error;
     }
+    if (payload?.sudzAvailable !== undefined) {
+      sudzAvailable.value = payload.sudzAvailable === true;
+    }
     if (next !== 'connectionError') {
       lastError.value = '';
     }
     if (next === 'connectionError' || next === 'idle') {
       activeView.value = 'home';
+      sudzAvailable.value = false;
     }
   }
 
@@ -125,6 +138,7 @@ export const useConnectionStore = defineStore('connection', () => {
     user.value = '';
     lastMessage.value = 'Ожидает подключения';
     lastError.value = '';
+    sudzAvailable.value = false;
     activeView.value = 'home';
   }
 
@@ -149,6 +163,7 @@ export const useConnectionStore = defineStore('connection', () => {
     user,
     lastMessage,
     lastError,
+    sudzAvailable,
     organizationsEnabled,
     constructionSitesEnabled,
     investmentChainsEnabled,

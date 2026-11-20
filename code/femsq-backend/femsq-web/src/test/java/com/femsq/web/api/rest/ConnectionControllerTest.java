@@ -21,6 +21,7 @@ import com.femsq.web.api.dto.ConnectionConfigResponse;
 import com.femsq.web.api.dto.ConnectionStatusResponse;
 import com.femsq.web.api.dto.ConnectionTestRequest;
 import com.femsq.web.logging.ConnectionAttemptLogger;
+import com.femsq.web.service.SudzAvailabilityService;
 import java.sql.SQLException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,6 +61,9 @@ class ConnectionControllerTest {
     @Mock
     private ConnectionAttemptLogger connectionAttemptLogger;
 
+    @Mock
+    private SudzAvailabilityService sudzAvailabilityService;
+
     private ConnectionController controller;
 
     private DatabaseConfigurationProperties testConfig;
@@ -72,7 +76,8 @@ class ConnectionControllerTest {
                 providerFactory,
                 configurationValidator,
                 connectionManager,
-                connectionAttemptLogger);
+                connectionAttemptLogger,
+                sudzAvailabilityService);
 
         testConfig = new DatabaseConfigurationProperties(
                 "localhost",
@@ -83,6 +88,7 @@ class ConnectionControllerTest {
                 "password",
                 "credentials",
                 null);
+        when(sudzAvailabilityService.isSudzLayerPresent()).thenReturn(true);
     }
 
     @Test
@@ -97,6 +103,7 @@ class ConnectionControllerTest {
         assertThat(response.database()).isEqualTo("FishEye");
         assertThat(response.message()).isEqualTo("Подключение активно");
         assertThat(response.error()).isNull();
+        assertThat(response.sudzAvailable()).isTrue();
     }
 
     @Test
@@ -110,6 +117,7 @@ class ConnectionControllerTest {
         assertThat(response.schema()).isEqualTo("ags_test");
         assertThat(response.database()).isEqualTo("FishEye");
         assertThat(response.message()).isEqualTo("Подключение не установлено");
+        assertThat(response.sudzAvailable()).isFalse();
     }
 
     @Test

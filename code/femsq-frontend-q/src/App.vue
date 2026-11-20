@@ -160,7 +160,8 @@ async function loadConnectionStatus(): Promise<void> {
         connection.setStatus('connected', {
           schema: statusResponse.schema,
           database: statusResponse.database,
-          message: statusResponse.message
+          message: statusResponse.message,
+          sudzAvailable: statusResponse.sudzAvailable
         });
         // Если схема изменилась и мы на экране организаций, перезагружаем данные
         if (statusResponse.schema && statusResponse.schema !== previousSchema && connection.activeView === 'organizations') {
@@ -337,7 +338,8 @@ async function handleSubmit(values: ConnectionFormValues): Promise<void> {
         schema: applyResult.schema,
         database: applyResult.database,
         user: values.authMode === 'windows' ? 'Windows Auth' : values.username || 'sa',
-        message: `Подключено к ${applyResult.schema || applyResult.database}`
+        message: `Подключено к ${applyResult.schema || applyResult.database}`,
+        sudzAvailable: applyResult.sudzAvailable
       });
       connection.updateSavedForm(values);
       void organizationsStore.fetchOrganizations(); // Перезагружаем организации

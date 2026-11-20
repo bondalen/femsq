@@ -87,6 +87,7 @@ import com.femsq.web.api.dto.sudz.UpdateSudzPmUplFileInput;
 import com.femsq.web.api.dto.sudz.UpdateSudzYearInput;
 import com.femsq.web.api.sudz.SudzDbtUplFunnelRunner;
 import com.femsq.web.api.sudz.SudzPmtUplFunnelRunner;
+import com.femsq.web.service.SudzAvailabilityService;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -112,23 +113,27 @@ public class SudzGraphqlController {
     private final SudzDbtUplFunnelRunner dbtUplFunnelRunner;
     private final SudzPmtUplFunnelRunner pmtUplFunnelRunner;
     private final SudzBriefReportService briefReportService;
+    private final SudzAvailabilityService sudzAvailabilityService;
 
     /**
      * @param sudzService сервис СУДЗ
      * @param dbtUplFunnelRunner оркестратор воронки excelToTbl+…
      * @param pmtUplFunnelRunner оркестратор воронки платежей (0074)
      * @param briefReportService краткий отчёт по своду (1.1.1.0.3.2)
+     * @param sudzAvailabilityService проверка слоя СУДЗ (R1.0 без M6)
      */
     public SudzGraphqlController(
             SudzService sudzService,
             SudzDbtUplFunnelRunner dbtUplFunnelRunner,
             SudzPmtUplFunnelRunner pmtUplFunnelRunner,
-            SudzBriefReportService briefReportService
+            SudzBriefReportService briefReportService,
+            SudzAvailabilityService sudzAvailabilityService
     ) {
         this.sudzService = sudzService;
         this.dbtUplFunnelRunner = dbtUplFunnelRunner;
         this.pmtUplFunnelRunner = pmtUplFunnelRunner;
         this.briefReportService = briefReportService;
+        this.sudzAvailabilityService = sudzAvailabilityService;
     }
 
     /**
@@ -1899,6 +1904,13 @@ public class SudzGraphqlController {
     }
 
     private ResponseStatusException internal(DaoException exception) {
+        if (sudzAvailabilityService.isMissingSudzObject(exception)
+                || !sudzAvailabilityService.isSudzLayerPresent()) {
+            String schema = sudzAvailabilityService.sudzSchema();
+            String message = "СУДЗ недоступен: слой " + schema + " не развёрнут (без M6 на этой БД)";
+            log.log(Level.INFO, message);
+            return new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, message, exception);
+        }
         return new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage(), exception);
     }
 }

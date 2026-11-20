@@ -13,6 +13,7 @@ import com.femsq.web.api.dto.ConnectionConfigResponse;
 import com.femsq.web.api.dto.ConnectionStatusResponse;
 import com.femsq.web.api.dto.ConnectionTestRequest;
 import com.femsq.web.logging.ConnectionAttemptLogger;
+import com.femsq.web.service.SudzAvailabilityService;
 import jakarta.validation.Valid;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -39,6 +40,7 @@ public class ConnectionController {
     private final ConfigurationValidator configurationValidator;
     private final ConnectionManager connectionManager;
     private final ConnectionAttemptLogger connectionAttemptLogger;
+    private final SudzAvailabilityService sudzAvailabilityService;
 
     public ConnectionController(
             ConnectionFactory connectionFactory,
@@ -46,13 +48,15 @@ public class ConnectionController {
             AuthenticationProviderFactory providerFactory,
             ConfigurationValidator configurationValidator,
             ConnectionManager connectionManager,
-            ConnectionAttemptLogger connectionAttemptLogger) {
+            ConnectionAttemptLogger connectionAttemptLogger,
+            SudzAvailabilityService sudzAvailabilityService) {
         this.connectionFactory = connectionFactory;
         this.configurationService = configurationService;
         this.providerFactory = providerFactory;
         this.configurationValidator = configurationValidator;
         this.connectionManager = connectionManager;
         this.connectionAttemptLogger = connectionAttemptLogger;
+        this.sudzAvailabilityService = sudzAvailabilityService;
     }
 
     /**
@@ -64,13 +68,20 @@ public class ConnectionController {
         try {
             DatabaseConfigurationProperties config = configurationService.loadConfig();
             boolean connected = connectionFactory.testConnection(5);
-            
+            Boolean sudzAvailable = connected ? sudzAvailabilityService.isSudzLayerPresent() : Boolean.FALSE;
+            String message = connected
+                    ? (Boolean.TRUE.equals(sudzAvailable)
+                    ? "Подключение активно"
+                    : "Подключение активно; слой СУДЗ недоступен (без M6)")
+                    : "Подключение не установлено";
+
             return new ConnectionStatusResponse(
                     connected,
                     config.schema(),
                     config.database(),
-                    connected ? "Подключение активно" : "Подключение не установлено",
-                    null
+                    message,
+                    null,
+                    sudzAvailable
             );
         } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
             return new ConnectionStatusResponse(
@@ -78,7 +89,8 @@ public class ConnectionController {
                     null,
                     null,
                     "Конфигурация не найдена",
-                    exception.getMessage()
+                    exception.getMessage(),
+                    Boolean.FALSE
             );
         } catch (ConnectionFactoryException exception) {
             log.log(Level.WARNING, "Failed to test connection", exception);
@@ -87,7 +99,8 @@ public class ConnectionController {
                     null,
                     null,
                     "Ошибка проверки подключения",
-                    exception.getMessage()
+                    exception.getMessage(),
+                    Boolean.FALSE
             );
         }
     }
@@ -232,12 +245,16 @@ public class ConnectionController {
             connectionAttemptLogger.logAttempt(request, true,
                     "Конфигурация применена и подключение установлено", null);
             
+            boolean sudzAvailable = sudzAvailabilityService.isSudzLayerPresent();
             return new ConnectionStatusResponse(
                     true,
                     newConfig.schema(),
                     newConfig.database(),
-                    "Конфигурация применена и подключение установлено",
-                    null
+                    sudzAvailable
+                            ? "Конфигурация применена и подключение установлено"
+                            : "Конфигурация применена; слой СУДЗ недоступен (без M6)",
+                    null,
+                    sudzAvailable
             );
         } catch (IllegalArgumentException exception) {
             log.log(Level.WARNING, "Invalid configuration for apply", exception);
