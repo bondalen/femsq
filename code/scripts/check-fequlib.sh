@@ -2,7 +2,7 @@
 # Проверка локального клона feQuLib перед сборкой FEMSQ.
 # FEMSQ зависит от fequlib через file:../../../feQuLib — устаревший клон
 # даёт ошибку сборки frontend («FemsqTree is not exported» и аналоги).
-# Проверяемые экспорты: FemsqTree, FemsqChart, FemsqTreeList, FemsqWalkTree.
+# Проверяемые экспорты: FemsqTree, FemsqChart, FemsqTreeList, FemsqWalkTree, FemsqCardStrip.
 #
 # Использование: ./code/scripts/check-fequlib.sh
 # Пропуск (только по явной просьбе): FEQULIB_SKIP_SYNC=1
@@ -78,6 +78,21 @@ if [ ! -f "$WALK_TREE_VUE" ]; then
   exit 1
 fi
 
+CARD_STRIP_VUE="$FEQULIB_DIR/src/components/strip/FemsqCardStrip.vue"
+
+if [ ! -f "$CARD_STRIP_VUE" ]; then
+  echo -e "${RED}ERROR: нет $CARD_STRIP_VUE${NC}"
+  echo "Локальный feQuLib не содержит FemsqCardStrip. Выполнить git pull в $FEQULIB_DIR."
+  echo "Не копировать FemsqCardStrip в FEMSQ."
+  exit 1
+fi
+
+if ! grep -q "export { default as FemsqCardStrip }" "$INDEX_TS"; then
+  echo -e "${RED}ERROR: FemsqCardStrip не экспортируется из $INDEX_TS${NC}"
+  echo "Синхронизировать feQuLib (0.1.19+), не патчить экспорт в FEMSQ."
+  exit 1
+fi
+
 if ! grep -q "export { default as FemsqWalkTree }" "$INDEX_TS"; then
   echo -e "${RED}ERROR: FemsqWalkTree не экспортируется из $INDEX_TS${NC}"
   echo "Синхронизировать feQuLib с origin/main (срез bfbe6fb / пакет 0.1.7), не патчить экспорт в FEMSQ."
@@ -116,4 +131,4 @@ if [ "$AHEAD" -gt 0 ]; then
   echo -e "${YELLOW}⚠ Локальный feQuLib опережает $REMOTE_REF на $AHEAD коммит(ов).${NC}"
 fi
 
-echo -e "${GREEN}✓ feQuLib синхронизирован с GitHub, FemsqTree, FemsqTreeList и FemsqWalkTree экспортируются${NC}"
+echo -e "${GREEN}✓ feQuLib синхронизирован с GitHub, FemsqTree/TreeList/WalkTree/CardStrip экспортируются${NC}"

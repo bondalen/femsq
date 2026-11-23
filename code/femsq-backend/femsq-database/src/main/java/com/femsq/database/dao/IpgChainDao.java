@@ -35,4 +35,21 @@ public interface IpgChainDao {
      * Подсчитывает количество записей с учетом фильтров.
      */
     long count(String nameFilter, Integer yearFilter);
+
+    /**
+     * Создаёт цепочку ({@code ags.ipgCh}); PK — IDENTITY.
+     * <p>Пишется только {@code ipgcName}: {@code ipgcStNetIpg}/{@code ipgcIpgLate}/{@code ipgcYyyy}
+     * — computed от членства ({@code fnIpgChain*}).
+     */
+    IpgChain insert(String name);
+
+    /**
+     * Обновляет наименование цепочки (остальные поля шапки — computed).
+     */
+    IpgChain update(int chainKey, String name);
+
+    /**
+     * Удаляет цепочку (без членства — вызывающий обязан очистить {@code ipgChRl}).
+     */
+    boolean delete(int chainKey);
 }

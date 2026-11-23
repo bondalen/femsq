@@ -74,16 +74,54 @@
       >
         Отчёты
       </button>
-      <button
-        type="button"
-        class="femsq-nav-item"
-        :class="{ 'femsq-nav-item--active': activeView === 'investment-chains' }"
-        :disabled="!investmentChainsEnabled"
-        data-test="nav-investment-chains"
-        @click="handleNavigate('investment-chains')"
+      <QBtn
+        flat
+        dense
+        no-caps
+        class="femsq-nav-item femsq-nav-item--btn"
+        :class="{
+          'femsq-nav-item--active':
+            activeView === 'investment-chains' ||
+            activeView === 'investment-structure' ||
+            activeView === 'investment-programs'
+        }"
+        :disable="!investmentChainsEnabled"
+        label="Инвестиции"
+        icon-right="expand_more"
+        data-test="nav-investments"
       >
-        Инвестиции
-      </button>
+        <QMenu anchor="bottom right" self="top right">
+          <QList dense style="min-width: 200px" role="menu">
+            <QItem
+              clickable
+              v-close-popup
+              :active="activeView === 'investment-structure'"
+              data-test="nav-investment-structure"
+              @click="handleNavigate('investment-structure')"
+            >
+              <QItemSection>Структура ИПГ</QItemSection>
+            </QItem>
+            <QItem
+              clickable
+              v-close-popup
+              :active="activeView === 'investment-programs'"
+              data-test="nav-investment-programs"
+              @click="handleNavigate('investment-programs')"
+            >
+              <QItemSection>Инвестпрограммы</QItemSection>
+            </QItem>
+            <QItem
+              clickable
+              v-close-popup
+              :active="activeView === 'investment-chains'"
+              data-test="nav-investment-chains"
+              @click="handleNavigate('investment-chains')"
+            >
+              <QItemSection>Цепочки</QItemSection>
+            </QItem>
+          </QList>
+        </QMenu>
+      </QBtn>
       <button
         type="button"
         class="femsq-nav-item"
@@ -259,9 +297,28 @@
             clickable
             v-close-popup
             :disable="!investmentChainsEnabled"
+            data-test="nav-mobile-investment-structure"
+            @click="handleNavigate('investment-structure')"
+          >
+            <QItemSection>Инвестиции · Структура ИПГ</QItemSection>
+          </QItem>
+          <QItem
+            clickable
+            v-close-popup
+            :disable="!investmentChainsEnabled"
+            data-test="nav-mobile-investment-programs"
+            @click="handleNavigate('investment-programs')"
+          >
+            <QItemSection>Инвестиции · Инвестпрограммы</QItemSection>
+          </QItem>
+          <QItem
+            clickable
+            v-close-popup
+            :disable="!investmentChainsEnabled"
+            data-test="nav-mobile-investment-chains"
             @click="handleNavigate('investment-chains')"
           >
-            <QItemSection>Инвестиции</QItemSection>
+            <QItemSection>Инвестиции · Цепочки</QItemSection>
           </QItem>
           <QItem clickable v-close-popup @click="handleNavigate('audits')">
             <QItemSection>Ревизии</QItemSection>

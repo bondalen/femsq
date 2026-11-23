@@ -8,6 +8,8 @@ export type ActiveView =
   | 'construction-sites'
   | 'construction-sites-by-code'
   | 'investment-chains'
+  | 'investment-structure'
+  | 'investment-programs'
   | 'reports'
   | 'audits'
   | 'sudz-portfolio'

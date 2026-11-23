@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -228,6 +229,66 @@ public class JdbcIpgChainDao implements IpgChainDao {
         return "%" + normalizedFilter + "%";
     }
 
+    @Override
+    public IpgChain insert(String name) {
+        Objects.requireNonNull(name, "name");
+        if (name.isBlank()) {
+            throw new IllegalArgumentException("Наименование цепочки пустое");
+        }
+        String sql = "INSERT INTO " + getTableName() + " (ipgcName) VALUES (?)";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            statement.setNString(1, name.trim());
+            statement.executeUpdate();
+            int key = readGeneratedKey(statement, "ipgcKey");
+            log.log(Level.INFO, "Created ipgCh {0}", key);
+            return findById(key).orElseThrow(() -> new DaoException("ipgCh исчез после INSERT: " + key));
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw new DaoException("Не удалось создать цепочку", exception);
+        }
+    }
+
+    @Override
+    public IpgChain update(int chainKey, String name) {
+        Objects.requireNonNull(name, "name");
+        if (name.isBlank()) {
+            throw new IllegalArgumentException("Наименование цепочки пустое");
+        }
+        String sql = "UPDATE " + getTableName() + " SET ipgcName = ? WHERE ipgcKey = ?";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setNString(1, name.trim());
+            statement.setInt(2, chainKey);
+            int updated = statement.executeUpdate();
+            if (updated == 0) {
+                throw new DaoException("Цепочка не найдена: " + chainKey);
+            }
+            return findById(chainKey).orElseThrow(() -> new DaoException("ipgCh исчез после UPDATE: " + chainKey));
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw new DaoException("Не удалось обновить цепочку " + chainKey, exception);
+        }
+    }
+
+    @Override
+    public boolean delete(int chainKey) {
+        String sql = "DELETE FROM " + getTableName() + " WHERE ipgcKey = ?";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, chainKey);
+            int deleted = statement.executeUpdate();
+            log.log(Level.INFO, "Deleted ipgCh {0}: rows={1}", new Object[]{chainKey, deleted});
+            return deleted > 0;
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw new DaoException("Не удалось удалить цепочку " + chainKey, exception);
+        }
+    }
+
     private IpgChain mapChain(ResultSet resultSet) throws SQLException {
         return new IpgChain(
                 resultSet.getInt("ipgcKey"),
@@ -236,5 +297,14 @@ public class JdbcIpgChainDao implements IpgChainDao {
                 resultSet.getObject("ipgcIpgLate", Integer.class),
                 resultSet.getObject("ipgcYyyy", Integer.class)
         );
+    }
+
+    private int readGeneratedKey(PreparedStatement statement, String label) throws SQLException {
+        try (ResultSet keys = statement.getGeneratedKeys()) {
+            if (!keys.next()) {
+                throw new DaoException("Не получен IDENTITY для " + label);
+            }
+            return keys.getInt(1);
+        }
     }
 }

@@ -22,6 +22,8 @@
     <ConstructionSitesView v-else-if="connection.activeView === 'construction-sites'" />
     <ConstructionSitesByCodeView v-else-if="connection.activeView === 'construction-sites-by-code'" />
     <InvestmentChainsView v-else-if="connection.activeView === 'investment-chains'" />
+    <InvestmentStructureView v-else-if="connection.activeView === 'investment-structure'" />
+    <InvestmentProgramsView v-else-if="connection.activeView === 'investment-programs'" />
     <ReportsCatalog v-else-if="connection.activeView === 'reports'" />
     <AuditsView v-else-if="connection.activeView === 'audits'" />
     <SudzPortfolioView v-else-if="connection.activeView === 'sudz-portfolio'" />
@@ -100,6 +102,8 @@ import SudzBriefReportView from '@/views/sudz/SudzBriefReportView.vue';
 import SudzDbtUplView from '@/views/sudz/SudzDbtUplView.vue';
 import SudzPmtUplView from '@/views/sudz/SudzPmtUplView.vue';
 import InvestmentChainsView from '@/views/investment-chains/InvestmentChainsView.vue';
+import InvestmentStructureView from '@/views/investment-structure/InvestmentStructureView.vue';
+import InvestmentProgramsView from '@/views/investment-programs/InvestmentProgramsView.vue';
 import ReportsCatalog from '@/modules/reports/views/ReportsCatalog.vue';
 import AuditsView from '@/views/audits/AuditsView.vue';
 import TestGridView from '@/views/TestGridView.vue';

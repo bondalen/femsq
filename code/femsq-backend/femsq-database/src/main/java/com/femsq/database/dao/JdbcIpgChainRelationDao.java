@@ -8,6 +8,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -145,6 +147,109 @@ public class JdbcIpgChainRelationDao implements IpgChainRelationDao {
         }
     }
 
+    @Override
+    public Optional<IpgChainRelation> findByChainAndIpg(int chainKey, int investmentProgramKey) {
+        String sql = "SELECT ipgcrKey, ipgcrChain, ipgcrIpg, ipgcrUtPlGr FROM " + getTableName()
+                + " WHERE ipgcrChain = ? AND ipgcrIpg = ?";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, chainKey);
+            statement.setInt(2, investmentProgramKey);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return Optional.of(mapRelation(resultSet));
+                }
+                return Optional.empty();
+            }
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw new DaoException("Не удалось проверить членство ИП в цепочке", exception);
+        }
+    }
+
+    @Override
+    public IpgChainRelation insert(int chainKey, int investmentProgramKey, Integer planGroupKey) {
+        String sql = "INSERT INTO " + getTableName()
+                + " (ipgcrChain, ipgcrIpg, ipgcrUtPlGr) VALUES (?, ?, ?)";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            statement.setInt(1, chainKey);
+            statement.setInt(2, investmentProgramKey);
+            if (planGroupKey == null) {
+                statement.setNull(3, Types.INTEGER);
+            } else {
+                statement.setInt(3, planGroupKey);
+            }
+            statement.executeUpdate();
+            int key = readGeneratedKey(statement, "ipgcrKey");
+            log.log(Level.INFO, "Created ipgChRl {0} chain={1} ipg={2}", new Object[]{key, chainKey, investmentProgramKey});
+            return findById(key).orElseThrow(() -> new DaoException("ipgChRl исчез после INSERT: " + key));
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw new DaoException("Не удалось добавить ИП в цепочку", exception);
+        }
+    }
+
+    @Override
+    public IpgChainRelation update(int relationKey, int investmentProgramKey, Integer planGroupKey) {
+        String sql = "UPDATE " + getTableName()
+                + " SET ipgcrIpg = ?, ipgcrUtPlGr = ? WHERE ipgcrKey = ?";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, investmentProgramKey);
+            if (planGroupKey == null) {
+                statement.setNull(2, Types.INTEGER);
+            } else {
+                statement.setInt(2, planGroupKey);
+            }
+            statement.setInt(3, relationKey);
+            int updated = statement.executeUpdate();
+            if (updated == 0) {
+                throw new DaoException("Связь цепочки не найдена: " + relationKey);
+            }
+            return findById(relationKey)
+                    .orElseThrow(() -> new DaoException("ipgChRl исчез после UPDATE: " + relationKey));
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw new DaoException("Не удалось обновить связь цепочки " + relationKey, exception);
+        }
+    }
+
+    @Override
+    public boolean delete(int relationKey) {
+        String sql = "DELETE FROM " + getTableName() + " WHERE ipgcrKey = ?";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, relationKey);
+            int deleted = statement.executeUpdate();
+            log.log(Level.INFO, "Deleted ipgChRl {0}: rows={1}", new Object[]{relationKey, deleted});
+            return deleted > 0;
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw new DaoException("Не удалось удалить связь цепочки " + relationKey, exception);
+        }
+    }
+
+    @Override
+    public int deleteByChain(int chainKey) {
+        String sql = "DELETE FROM " + getTableName() + " WHERE ipgcrChain = ?";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, chainKey);
+            int deleted = statement.executeUpdate();
+            log.log(Level.INFO, "Deleted ipgChRl by chain {0}: rows={1}", new Object[]{chainKey, deleted});
+            return deleted;
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw new DaoException("Не удалось очистить членство цепочки " + chainKey, exception);
+        }
+    }
+
     private IpgChainRelation mapRelation(ResultSet resultSet) throws SQLException {
         return new IpgChainRelation(
                 resultSet.getInt("ipgcrKey"),
@@ -152,5 +257,14 @@ public class JdbcIpgChainRelationDao implements IpgChainRelationDao {
                 resultSet.getInt("ipgcrIpg"),
                 resultSet.getObject("ipgcrUtPlGr", Integer.class)
         );
+    }
+
+    private int readGeneratedKey(PreparedStatement statement, String label) throws SQLException {
+        try (ResultSet keys = statement.getGeneratedKeys()) {
+            if (!keys.next()) {
+                throw new DaoException("Не получен IDENTITY для " + label);
+            }
+            return keys.getInt(1);
+        }
     }
 }

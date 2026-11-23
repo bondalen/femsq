@@ -55,6 +55,70 @@ const GET_INVESTMENT_CHAIN_RELATIONS = gql`
   }
 `;
 
+const CREATE_INVESTMENT_CHAIN = gql`
+  mutation CreateInvestmentChain($input: CreateInvestmentChainInput!) {
+    createInvestmentChain(input: $input) {
+      chainKey
+      name
+      stNetKey
+      stNetName
+      latestIpgKey
+      year
+    }
+  }
+`;
+
+const UPDATE_INVESTMENT_CHAIN = gql`
+  mutation UpdateInvestmentChain($id: Int!, $input: UpdateInvestmentChainInput!) {
+    updateInvestmentChain(id: $id, input: $input) {
+      chainKey
+      name
+      stNetKey
+      stNetName
+      latestIpgKey
+      year
+    }
+  }
+`;
+
+const DELETE_INVESTMENT_CHAIN = gql`
+  mutation DeleteInvestmentChain($id: Int!) {
+    deleteInvestmentChain(id: $id)
+  }
+`;
+
+const ADD_IPG_TO_CHAIN = gql`
+  mutation AddIpgToChain($input: AddIpgToChainInput!) {
+    addIpgToChain(input: $input) {
+      relationKey
+      chainKey
+      investmentProgramKey
+      investmentProgramName
+      planGroupKey
+      planGroupName
+    }
+  }
+`;
+
+const UPDATE_CHAIN_RELATION = gql`
+  mutation UpdateChainRelation($id: Int!, $input: UpdateChainRelationInput!) {
+    updateChainRelation(id: $id, input: $input) {
+      relationKey
+      chainKey
+      investmentProgramKey
+      investmentProgramName
+      planGroupKey
+      planGroupName
+    }
+  }
+`;
+
+const REMOVE_IPG_FROM_CHAIN = gql`
+  mutation RemoveIpgFromChain($id: Int!) {
+    removeIpgFromChain(id: $id)
+  }
+`;
+
 function wrapApolloError(error: unknown, operation: string): RequestError {
   const message = error instanceof Error ? error.message : `Ошибка GraphQL операции ${operation}`;
   return new RequestError(message, {
@@ -160,6 +224,119 @@ export async function getInvestmentChainRelations(
     return result.data.investmentChainRelations ?? [];
   } catch (error) {
     throw wrapApolloError(error, 'GetInvestmentChainRelations');
+  }
+}
+
+/** Создать цепочку (только имя; stNet/late/year — computed). */
+export async function createInvestmentChain(name: string): Promise<IpgChainDto> {
+  try {
+    const result = await apolloClient.mutate<{ createInvestmentChain: IpgChainDto }>({
+      mutation: CREATE_INVESTMENT_CHAIN,
+      variables: { input: { name } }
+    });
+    const created = result.data?.createInvestmentChain;
+    if (!created) {
+      throw new Error('createInvestmentChain: пустой ответ');
+    }
+    return created;
+  } catch (error) {
+    throw wrapApolloError(error, 'CreateInvestmentChain');
+  }
+}
+
+/** Переименовать цепочку. */
+export async function updateInvestmentChain(id: number, name: string): Promise<IpgChainDto> {
+  try {
+    const result = await apolloClient.mutate<{ updateInvestmentChain: IpgChainDto }>({
+      mutation: UPDATE_INVESTMENT_CHAIN,
+      variables: { id, input: { name } }
+    });
+    const updated = result.data?.updateInvestmentChain;
+    if (!updated) {
+      throw new Error('updateInvestmentChain: пустой ответ');
+    }
+    return updated;
+  } catch (error) {
+    throw wrapApolloError(error, 'UpdateInvestmentChain');
+  }
+}
+
+/** Удалить цепочку (cascade ipgChRl). */
+export async function deleteInvestmentChain(id: number): Promise<boolean> {
+  try {
+    const result = await apolloClient.mutate<{ deleteInvestmentChain: boolean }>({
+      mutation: DELETE_INVESTMENT_CHAIN,
+      variables: { id }
+    });
+    return Boolean(result.data?.deleteInvestmentChain);
+  } catch (error) {
+    throw wrapApolloError(error, 'DeleteInvestmentChain');
+  }
+}
+
+/** Добавить ИП в цепь. */
+export async function addIpgToChain(input: {
+  chainKey: number;
+  investmentProgramKey: number;
+  planGroupKey?: number | null;
+}): Promise<IpgChainRelationDto> {
+  try {
+    const result = await apolloClient.mutate<{ addIpgToChain: IpgChainRelationDto }>({
+      mutation: ADD_IPG_TO_CHAIN,
+      variables: {
+        input: {
+          chainKey: input.chainKey,
+          investmentProgramKey: input.investmentProgramKey,
+          planGroupKey: input.planGroupKey ?? null
+        }
+      }
+    });
+    const created = result.data?.addIpgToChain;
+    if (!created) {
+      throw new Error('addIpgToChain: пустой ответ');
+    }
+    return created;
+  } catch (error) {
+    throw wrapApolloError(error, 'AddIpgToChain');
+  }
+}
+
+/** Обновить связь (ИП / группа планов). */
+export async function updateChainRelation(
+  id: number,
+  input: { investmentProgramKey: number; planGroupKey?: number | null }
+): Promise<IpgChainRelationDto> {
+  try {
+    const result = await apolloClient.mutate<{ updateChainRelation: IpgChainRelationDto }>({
+      mutation: UPDATE_CHAIN_RELATION,
+      variables: {
+        id,
+        input: {
+          investmentProgramKey: input.investmentProgramKey,
+          planGroupKey: input.planGroupKey ?? null
+        }
+      }
+    });
+    const updated = result.data?.updateChainRelation;
+    if (!updated) {
+      throw new Error('updateChainRelation: пустой ответ');
+    }
+    return updated;
+  } catch (error) {
+    throw wrapApolloError(error, 'UpdateChainRelation');
+  }
+}
+
+/** Убрать ИП из цепи. */
+export async function removeIpgFromChain(id: number): Promise<boolean> {
+  try {
+    const result = await apolloClient.mutate<{ removeIpgFromChain: boolean }>({
+      mutation: REMOVE_IPG_FROM_CHAIN,
+      variables: { id }
+    });
+    return Boolean(result.data?.removeIpgFromChain);
+  } catch (error) {
+    throw wrapApolloError(error, 'RemoveIpgFromChain');
   }
 }
 

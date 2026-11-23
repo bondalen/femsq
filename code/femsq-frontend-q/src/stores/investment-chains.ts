@@ -8,8 +8,14 @@ import type {
   InvestmentChainsQuery
 } from '@/api/investment-chains-api';
 import {
+  addIpgToChain,
+  createInvestmentChain,
+  deleteInvestmentChain,
   getInvestmentChainRelations,
-  getInvestmentChainsPage
+  getInvestmentChainsPage,
+  removeIpgFromChain,
+  updateChainRelation,
+  updateInvestmentChain
 } from '@/api/investment-chains-api';
 
 export interface InvestmentChain {
@@ -65,6 +71,7 @@ export const useInvestmentChainsStore = defineStore('investmentChains', () => {
 
   const loading = ref(false);
   const relationsLoading = ref(false);
+  const mutating = ref(false);
   const error = ref<string | null>(null);
   const relationsError = ref<string | null>(null);
   const lastUpdatedAt = ref<string>('');
@@ -259,12 +266,143 @@ export const useInvestmentChainsStore = defineStore('investmentChains', () => {
     await fetchChains({ keepSelection: false });
   }
 
+  /**
+   * Создаёт цепочку по имени и выбирает её.
+   */
+  async function createChain(name: string): Promise<void> {
+    mutating.value = true;
+    error.value = null;
+    try {
+      const created = await createInvestmentChain(name.trim());
+      await fetchChains({ keepSelection: false });
+      selectedChainKey.value = created.chainKey;
+      await fetchRelationsFor(created.chainKey, { force: true });
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : String(err);
+      throw err;
+    } finally {
+      mutating.value = false;
+    }
+  }
+
+  /**
+   * Переименовывает выбранную / указанную цепочку.
+   */
+  async function renameChain(chainKey: number, name: string): Promise<void> {
+    mutating.value = true;
+    error.value = null;
+    try {
+      await updateInvestmentChain(chainKey, name.trim());
+      await fetchChains({ keepSelection: true });
+      selectedChainKey.value = chainKey;
+      await fetchRelationsFor(chainKey, { force: true });
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : String(err);
+      throw err;
+    } finally {
+      mutating.value = false;
+    }
+  }
+
+  /**
+   * Удаляет цепочку вместе с членством.
+   */
+  async function removeChain(chainKey: number): Promise<void> {
+    mutating.value = true;
+    error.value = null;
+    try {
+      await deleteInvestmentChain(chainKey);
+      if (selectedChainKey.value === chainKey) {
+        selectedChainKey.value = null;
+        relations.value = [];
+      }
+      await fetchChains({ keepSelection: false });
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : String(err);
+      throw err;
+    } finally {
+      mutating.value = false;
+    }
+  }
+
+  /**
+   * Добавляет ИП в выбранную цепь.
+   */
+  async function addProgramToChain(
+    chainKey: number,
+    investmentProgramKey: number,
+    planGroupKey?: number | null
+  ): Promise<void> {
+    mutating.value = true;
+    relationsError.value = null;
+    try {
+      await addIpgToChain({ chainKey, investmentProgramKey, planGroupKey });
+      await fetchChains({ keepSelection: true });
+      selectedChainKey.value = chainKey;
+      await fetchRelationsFor(chainKey, { force: true });
+    } catch (err) {
+      relationsError.value = err instanceof Error ? err.message : String(err);
+      throw err;
+    } finally {
+      mutating.value = false;
+    }
+  }
+
+  /**
+   * Обновляет группу планов / ИП у связи.
+   */
+  async function saveChainRelation(
+    relationKey: number,
+    investmentProgramKey: number,
+    planGroupKey?: number | null
+  ): Promise<void> {
+    const chainKey = selectedChainKey.value;
+    if (chainKey == null) {
+      throw new Error('Цепочка не выбрана');
+    }
+    mutating.value = true;
+    relationsError.value = null;
+    try {
+      await updateChainRelation(relationKey, { investmentProgramKey, planGroupKey });
+      await fetchRelationsFor(chainKey, { force: true });
+    } catch (err) {
+      relationsError.value = err instanceof Error ? err.message : String(err);
+      throw err;
+    } finally {
+      mutating.value = false;
+    }
+  }
+
+  /**
+   * Убирает связь из цепи.
+   */
+  async function removeProgramFromChain(relationKey: number): Promise<void> {
+    const chainKey = selectedChainKey.value;
+    if (chainKey == null) {
+      throw new Error('Цепочка не выбрана');
+    }
+    mutating.value = true;
+    relationsError.value = null;
+    try {
+      await removeIpgFromChain(relationKey);
+      await fetchChains({ keepSelection: true });
+      selectedChainKey.value = chainKey;
+      await fetchRelationsFor(chainKey, { force: true });
+    } catch (err) {
+      relationsError.value = err instanceof Error ? err.message : String(err);
+      throw err;
+    } finally {
+      mutating.value = false;
+    }
+  }
+
   function reset(): void {
     chains.value = [];
     selectedChainKey.value = null;
     relations.value = [];
     loading.value = false;
     relationsLoading.value = false;
+    mutating.value = false;
     error.value = null;
     relationsError.value = null;
     lastUpdatedAt.value = '';
@@ -284,6 +422,7 @@ export const useInvestmentChainsStore = defineStore('investmentChains', () => {
     relations,
     loading,
     relationsLoading,
+    mutating,
     error,
     relationsError,
     lastUpdatedAt,
@@ -298,6 +437,12 @@ export const useInvestmentChainsStore = defineStore('investmentChains', () => {
     setSort,
     updateNameFilter,
     updateYearFilter,
+    createChain,
+    renameChain,
+    removeChain,
+    addProgramToChain,
+    saveChainRelation,
+    removeProgramFromChain,
     reset
   };
 });

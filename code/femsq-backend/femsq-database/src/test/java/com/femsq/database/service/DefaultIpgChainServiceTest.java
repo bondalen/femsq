@@ -3,7 +3,10 @@ package com.femsq.database.service;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.femsq.database.dao.IpgChainDao;
+import com.femsq.database.dao.IpgChainRelationDao;
 import com.femsq.database.model.IpgChain;
+import com.femsq.database.model.IpgChainRelation;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,7 +20,7 @@ class DefaultIpgChainServiceTest {
     @BeforeEach
     void setUp() {
         stubDao = new StubIpgChainDao();
-        service = new DefaultIpgChainService(stubDao);
+        service = new DefaultIpgChainService(stubDao, new StubIpgChainRelationDao());
     }
 
     @Test
@@ -112,6 +115,68 @@ class DefaultIpgChainServiceTest {
             lastCountNameFilter = nameFilter;
             lastCountYearFilter = yearFilter;
             return nextCount;
+        }
+
+        @Override
+        public IpgChain insert(String name) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public IpgChain update(int chainKey, String name) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean delete(int chainKey) {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    private static final class StubIpgChainRelationDao implements IpgChainRelationDao {
+        @Override
+        public Optional<IpgChainRelation> findById(int relationKey) {
+            return Optional.empty();
+        }
+
+        @Override
+        public List<IpgChainRelation> findByChain(int chainKey) {
+            return List.of();
+        }
+
+        @Override
+        public List<IpgChainRelation> findByChains(Collection<Integer> chainKeys) {
+            return List.of();
+        }
+
+        @Override
+        public List<IpgChainRelation> findAll() {
+            return List.of();
+        }
+
+        @Override
+        public Optional<IpgChainRelation> findByChainAndIpg(int chainKey, int investmentProgramKey) {
+            return Optional.empty();
+        }
+
+        @Override
+        public IpgChainRelation insert(int chainKey, int investmentProgramKey, Integer planGroupKey) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public IpgChainRelation update(int relationKey, int investmentProgramKey, Integer planGroupKey) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean delete(int relationKey) {
+            return false;
+        }
+
+        @Override
+        public int deleteByChain(int chainKey) {
+            return 0;
         }
     }
 }

@@ -3,7 +3,7 @@
     "metadata": {
       "version": "1.0.0",
       "status": "in-progress",
-      "lastUpdated": "2026-11-20"
+      "lastUpdated": "2026-11-23"
     },
     "sessions": [
       {
@@ -12,7 +12,7 @@
           "chat-attributes": {
             "id": "chat-2026-11-20-001",
             "created": "2026-11-20",
-            "lastUpdated": "2026-11-20",
+            "lastUpdated": "2026-11-23",
             "owner": "Александр",
             "status": "in-progress",
             "priority": "high",
@@ -41,6 +41,506 @@
           "entries": [
             {
               "log": {
+                "displayName": "Structure UI: FemsqCardStrip + TreeList (success). № log-2026-11-23-013",
+                "log-attributes": {
+                  "id": "log-2026-11-23-013",
+                  "timestamp": "2026-11-23T17:12:00+03:00",
+                  "level": "info",
+                  "effort": "0.8h",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "O1",
+                    "feQuLib",
+                    "FemsqCardStrip",
+                    "FemsqTreeList"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "feQuLib FemsqCardStrip + Structure layout",
+                    "details": "feQuLib 0.1.19: FemsqCardStrip (гориз. полоса карточек). FEMSQ Structure: схемы сверху в CardStrip, дерево → FemsqTreeList (колонки Nm/stNum/sti/parent/stpnN/pnL). check-fequlib проверяет CardStrip. План 0.10.4",
+                    "outcome": "Переиспользуемая полоса готова; Structure ближе к Access stNetIpg. Next §3.1.5 / сборка JAR для UI-smoke",
+                    "references": [
+                      "/home/alex/projects/java/spring/vue/feQuLib/docs/components/FemsqCardStrip.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "C2 O1 §3.1 UI-smoke Structure + createChild fix (success). № log-2026-11-23-012",
+                "log-attributes": {
+                  "id": "log-2026-11-23-012",
+                  "timestamp": "2026-11-23T16:45:00+03:00",
+                  "level": "info",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "O1",
+                    "UI-smoke",
+                    "stIpg",
+                    "createChild"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Browser Cursor AI smoke Structure на noM6",
+                    "details": "JAR 383→385→387. ✅ alias UI (sti 57, stin 99). ❌ createChild: stiType computed + INSTEAD OF ags.stIpg_insert — прямой INSERT st+stIpg рассинхронизировал ключи. Фикс: только INSERT stIpg(stiNote=token) → select stiKey. ✅ createChild/move GraphQL; ✅ UI Дочерний (263); ✅ move/detach/attach store. Smoke net stNet=4.",
+                    "outcome": "§3.1.3–3.1.4 закрыты UI-smoke. Next §3.1.5 map Excel. План 0.10.3",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcStIpgStructureDao.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "C2 O1 §3.1: ipgSh=4 + Structure alias/attach/move (success). № log-2026-11-23-011",
+                "log-attributes": {
+                  "id": "log-2026-11-23-011",
+                  "timestamp": "2026-11-23T15:50:00+03:00",
+                  "level": "info",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "O1",
+                    "ipgSh",
+                    "stNet",
+                    "GraphQL"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Structure API/UI для diff после clone",
+                    "details": "ipgSh=4 на noM6 + sql/26-1123-ipgsh-4; GraphQL stIpgNodeNames/addStIpgNodeName/attachStIpgEdge/moveStIpgEdge; UI кнопки; clone уже был. mvn compile OK. План 0.10.2",
+                    "outcome": "Можно clone→ручной diff (move/attach/alias). Next — UI map Excel-разделов / парсер (3.1.5→3.2)",
+                    "references": [
+                      "docs/development/notes/sql/26-1123-ipgsh-4/README.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "C2 O1: решения Q1–Q3 ipgpSh/clone/имена (success). № log-2026-11-23-010",
+                "log-attributes": {
+                  "id": "log-2026-11-23-010",
+                  "timestamp": "2026-11-23T15:30:00+03:00",
+                  "level": "info",
+                  "effort": "0.3h",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "O1",
+                    "ipgSh",
+                    "stNet",
+                    "decisions"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Закрытие В7–В9",
+                    "details": "ipgpSh: Excel не даёт схему; prev-IP иначе 4; дубли cstAgPn→разные схемы/ERR; истина=помесячный план. Сеть: clone затем ручной diff. Имена: все aliases для ловли; UI map/create. План 0.10.1; notes §5.2/§8",
+                    "outcome": "Next код: ipgSh=4 на DEV + cloneStNet + UI unresolved sections",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1123-c2-o1-prod-delta-requirements.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "C2 O1 §3.0: дельта прод/Excel → требования (success). № log-2026-11-23-009",
+                "log-attributes": {
+                  "id": "log-2026-11-23-009",
+                  "timestamp": "2026-11-23T14:55:00+03:00",
+                  "level": "info",
+                  "effort": "2h",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "O1",
+                    "etalon",
+                    "excel",
+                    "stNet"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Анализ дельты структуры ИПГ 2026",
+                    "details": "Прод vs noM6: stNet 4/5; sti 255–263 + alias «Добыча»; ИП 30/31→net4, 33/34→net5; Excel sql_0↔4, sql_ii/iii↔5; ipgpSh на проде ≈2 (не 4). Заметка requirements + raw JSON; план 0.10.0",
+                    "outcome": "Требования O1.1/O1.2 зафиксированы; next — clone net + парсер; открыты Q ipgpSh/clone UX",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1123-c2-o1-prod-delta-requirements.md",
+                      "docs/development/notes/chats/chat-plan/notes/26-1123-c2-o1-prod-delta-raw.json"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "C2/R1: ось оператора O1→O2 в планах (success). № log-2026-11-23-008",
+                "log-attributes": {
+                  "id": "log-2026-11-23-008",
+                  "timestamp": "2026-11-23T14:35:00+03:00",
+                  "level": "info",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "roadmap",
+                    "O1",
+                    "docs"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Уточнение планов под эксплуатацию",
+                    "details": "План C2 0.9.9: дерево O1 годовая ИП перед O2 планами; LdM отделён от §2.0.1; дорожная карта 0.2.3 — сшивка O1–O4 ↔ C2/C3/C5; 0081 description обновлён",
+                    "outcome": "Next = блок 3 (O1.1 структура из Excel → O1.2 пункты); не 1.4 и не LdM",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "C2 §2.6: приёмка 1.1 на noM6 (success). № log-2026-11-23-007",
+                "log-attributes": {
+                  "id": "log-2026-11-23-007",
+                  "timestamp": "2026-11-23T14:10:00+03:00",
+                  "level": "info",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "accept",
+                    "noM6",
+                    "1.1",
+                    "etalon"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Приёмка 1.1 (2.6)",
+                    "details": "JAR 0.1.0.382; COUNTS noM6≠прод (ожидаемо, без MERGE); GraphQL Structure/Leaves/цепи + computed membership OK; UI Цепочки с Create; заметка 26-1123-c2-accept-1-1-nom6.md; план 0.9.8; блок 2.* ✅",
+                    "outcome": "Контур P2 1.1 закрыт на DEV; следующий — этап 3 (1.4) или 4 (1.3) по приоритету; хвост 2.5.2a FemsqTreeList",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1123-c2-accept-1-1-nom6.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "C2 §2.5.3: UI write цепочек (success). № log-2026-11-23-006",
+                "log-attributes": {
+                  "id": "log-2026-11-23-006",
+                  "timestamp": "2026-11-23T13:50:00+03:00",
+                  "level": "info",
+                  "effort": "1h",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "цепи",
+                    "UI",
+                    "ipgCh",
+                    "ipgChRl"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "UI Цепочки write (2.5.3)",
+                    "details": "Apollo mutations + store CRUD; InvestmentChainsView: создать/переименовать/удалить цепь, добавить/убрать ИП; stNet/year/late — read-only computed; план 0.9.7",
+                    "outcome": "Контур 1.1 Structure→Leaves→цепи закрыт по GraphQL+UI; хвост 2.5.2a FemsqTreeList; следующий — 2.6 приёмка или сборка JAR с FE",
+                    "references": [
+                      "code/femsq-frontend-q/src/views/investment-chains/InvestmentChainsView.vue",
+                      "code/femsq-frontend-q/src/api/investment-chains-api.ts"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "C2 §2.4.3: GraphQL CRUD цепей ipgCh/ipgChRl (success). № log-2026-11-23-005",
+                "log-attributes": {
+                  "id": "log-2026-11-23-005",
+                  "timestamp": "2026-11-23T13:45:00+03:00",
+                  "level": "info",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "цепи",
+                    "GraphQL",
+                    "ipgCh",
+                    "ipgChRl"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "GraphQL цепи CRUD (2.4.3)",
+                    "details": "create/update/deleteInvestmentChain; add/update/remove ipgChRl; на noM6 шапка пишет только ipgcName (stNet/late/yyyy = fnIpgChain* computed); smoke create→add→computed→remove→delete OK; план 0.9.6 + хвост 2.5.2a FemsqTreeList",
+                    "outcome": "Следующий — 2.5.3 UI write на экран Цепочки",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/graphql/IpgChainGraphqlController.java",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcIpgChainDao.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "C2 §2.5.2 smoke UI Leaves на noM6 (success). № log-2026-11-23-004",
+                "log-attributes": {
+                  "id": "log-2026-11-23-004",
+                  "timestamp": "2026-11-23T13:28:00+03:00",
+                  "level": "info",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "Leaves",
+                    "smoke",
+                    "noM6",
+                    "UI"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Smoke A Leaves UI в браузере Cursor",
+                    "details": "JAR 0.1.0.381; FishEye_prod_noM6; GraphQL 18 ИП / 661 пунктов ipgKey=25; UI: список, шапка, дерево (Структура/Планы/Лимиты), detail ipgp=11107 + stiKey=4 bind; filter год=2025",
+                    "outcome": "Smoke OK; UX: 661 корней без виртуализации — тяжёлый scroll; detail ниже fold на узком layout; следующий — 2.4.3 цепи",
+                    "references": [
+                      "code/femsq-frontend-q/src/views/investment-programs/InvestmentProgramsView.vue"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "C2 §2.5.2: Leaves UI InvestmentProgramsView (success). № log-2026-11-23-003",
+                "log-attributes": {
+                  "id": "log-2026-11-23-003",
+                  "timestamp": "2026-11-23T13:25:00+03:00",
+                  "level": "info",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "Leaves",
+                    "UI",
+                    "FemsqTree",
+                    "ipg",
+                    "ipgPn"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "UI Leaves (2.5.2)",
+                    "details": "Apollo ipg-leaves-api + Pinia ipg-leaves (buildLeavesTree: ipgPn→Structure/Планы/Лимиты stub); InvestmentProgramsView; nav Инвестиции→Инвестпрограммы; CRUD шапки/пунктов/ipgStPn; UtPl lazy вне экрана",
+                    "outcome": "Экран готов к smoke на noM6; VPN/SQL на этой машине недоступны — ручная проверка отложена; следующий — 2.4.3/2.5.3 цепи",
+                    "references": [
+                      "code/femsq-frontend-q/src/views/investment-programs/InvestmentProgramsView.vue",
+                      "code/femsq-frontend-q/src/stores/ipg-leaves.ts",
+                      "code/femsq-frontend-q/src/api/ipg-leaves-api.ts"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "C2 §2.4.2: Leaves GraphQL ipg/ipgPn/ipgStPn (success). № log-2026-11-23-002",
+                "log-attributes": {
+                  "id": "log-2026-11-23-002",
+                  "timestamp": "2026-11-23T12:25:00+03:00",
+                  "level": "info",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "Leaves",
+                    "GraphQL",
+                    "ipg",
+                    "ipgPn",
+                    "ipgStPn"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "GraphQL Leaves CRUD",
+                    "details": "DAO/service/controller; queries investmentProgramFull/Points/Structure + ipgSchemes; mutations create/update ipg, create/update/delete ipgPn (forbid UtPl/Lim), add/remove/set ipgStPn; unique (ipg,cstAgPn,sh); ipgStRlSh→stNet",
+                    "outcome": "compile OK; план 0.9.0; следующий — 2.5.2 UI карточки ИП",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcIpgLeavesDao.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/graphql/IpgLeavesGraphqlController.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "C2 §2.4.1/2.5.1: Structure GraphQL + UI FemsqTree (success). № log-2026-11-23-001",
+                "log-attributes": {
+                  "id": "log-2026-11-23-001",
+                  "timestamp": "2026-11-23T12:15:00+03:00",
+                  "level": "info",
+                  "effort": "2h",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "Structure",
+                    "GraphQL",
+                    "FemsqTree",
+                    "stNet",
+                    "fnSt"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Реализовать GraphQL Structure (2.4.1)",
+                    "details": "DAO/service/controller; queries stIpgNetworks/Tree; mutations create/rename/clone net, create/rename/detach/delete node; дерево через ags.fnSt; compile BE OK",
+                    "outcome": "og-schema + beans DatabaseModuleConfiguration; стенд noM6: 2 схемы type=1, fnSt работает",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcStIpgStructureDao.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/graphql/StIpgStructureGraphqlController.java"
+                    ]
+                  },
+                  {
+                    "action": "UI Structure (2.5.1)",
+                    "details": "API Apollo + Pinia + InvestmentStructureView (FemsqTree); nav «Инвестиции» → Структура / Цепочки",
+                    "outcome": "Экран готов к ручному smoke на noM6; следующий шаг — 2.4.2 Leaves",
+                    "references": [
+                      "code/femsq-frontend-q/src/views/investment-structure/InvestmentStructureView.vue"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
                 "displayName": "C2 §2.3: migrate 1.1 — Access семантика, не качество (success). № log-2026-11-20-006",
                 "log-attributes": {
                   "id": "log-2026-11-20-006",
@@ -67,8 +567,8 @@
                 "entries": [
                   {
                     "action": "Зафиксировать решение migrate",
-                    "details": "Матрица P/U/A/X; принцип оптимизации vs копирования Access; порядок 2.4a Structure→Leaves→цепи; В1/В4 закрыты для ИПГ",
-                    "outcome": "notes/26-1120-c2-migrate-1-1.md; план 0.7.0; готов старт GraphQL 2.4a",
+                    "details": "Матрица P/U/A/X; принцип оптимизации vs копирования Access; порядок 2.4.1 Structure→Leaves→цепи; В1/В4 закрыты для ИПГ",
+                    "outcome": "notes/26-1120-c2-migrate-1-1.md; план 0.7.0; готов старт GraphQL 2.4.1",
                     "references": [
                       "docs/development/notes/chats/chat-plan/notes/26-1120-c2-migrate-1-1.md"
                     ]
@@ -152,7 +652,7 @@
                     ]
                   },
                   {
-                    "action": "Закрыть §2.0d эталон прода",
+                    "action": "Закрыть §2.0.4 эталон прода",
                     "details": "отПрод femsq_ipg_st_etalon_20261120.zip → шара excel/2026-1120/ipg-st-etalon-prod + from-prod/tsv; сверка COUNT; ipgPn multiline в TskCms",
                     "outcome": "Эталон для приёмки UI на месте; не MERGE в DEV",
                     "references": [
@@ -4744,7 +5244,7 @@
             },
             {
               "log": {
-                "displayName": "4.2.5a Walk-back привязки cmm (success). № log-2026-10-15-003",
+                "displayName": "4.2.5.1 Walk-back привязки cmm (success). № log-2026-10-15-003",
                 "log-attributes": {
                   "id": "log-2026-10-15-003",
                   "timestamp": "2026-10-15T16:55:00+03:00",
@@ -4770,7 +5270,7 @@
                   {
                     "action": "Walk-back записи/чтения cmm; migrate 1909; filled Д644 = 176",
                     "details": "Диагноз 4.2.5: 33 пустых — Acc type1 без Value на 903 (есть на базе 901); cmm_span=curr скрывал Acc. DAO: findValueBindOnYearWalkBack + findValueKeysForDbtOnGroupUpl walk-back; SudzRsltReturnImportResult (boundExtreme/WalkBack/Acc) в протоколе. Yr_DbtChangesD644: dvKey на base; COALESCE(cmd_curr, cmd_base, cma); _cmm_span по фактическому якорю — применено на DEV. Rslt Excel/preview: *_new = walkBackPeriods. Миграция 07_MIGRATE_cmm_Dv_group_1909_walkback: cmm 350 with_dv / Acc 0. Smoke GraphQL sudzD644 901/903: 176 строк, filled 176, счета 74/63/39, 11897 две×18000. IT CmmDvWalkBackIT. 08 §7 и план v0.4.6.",
-                    "outcome": "4.2.5a ✅; критерий комментариев снят → следующий 4.2.6 (OK), не 4.2.7.",
+                    "outcome": "4.2.5.1 ✅; критерий комментариев снят → следующий 4.2.6 (OK), не 4.2.7.",
                     "references": [
                       "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcSudzDao.java",
                       "docs/development/notes/sql/26-0807-sudz-target-schema/19_CREATE_Yr_DbtChangesD644_S44.sql",

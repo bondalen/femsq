@@ -23,4 +23,19 @@ public interface IpgChainRelationDao {
 
     /** Возвращает все связи без фильтров. */
     List<IpgChainRelation> findAll();
+
+    /** Связь цепи+ИП, если уже есть (для forbid дубля). */
+    Optional<IpgChainRelation> findByChainAndIpg(int chainKey, int investmentProgramKey);
+
+    /** Добавляет членство ИП в цепь. */
+    IpgChainRelation insert(int chainKey, int investmentProgramKey, Integer planGroupKey);
+
+    /** Обновляет группу планов (и при необходимости ИП) у связи. */
+    IpgChainRelation update(int relationKey, int investmentProgramKey, Integer planGroupKey);
+
+    /** Удаляет одну связь. */
+    boolean delete(int relationKey);
+
+    /** Удаляет все связи цепочки. */
+    int deleteByChain(int chainKey);
 }

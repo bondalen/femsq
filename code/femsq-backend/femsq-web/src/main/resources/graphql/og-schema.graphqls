@@ -21,9 +21,55 @@ type Query {
   stNetworks: [StNetwork!]!
   investmentPrograms: [InvestmentProgramLookup!]!
   investmentPlanGroups: [InvestmentPlanGroupLookup!]!
+  """Схемы структуры ИПГ (stNet.stnType = 1)."""
+  stIpgNetworks: [StIpgNetwork!]!
+  stIpgNetwork(id: Int!): StIpgNetwork
+  """Дерево схемы через ags.fnSt (root по умолчанию = stnRoot)."""
+  stIpgNetworkTree(stNetKey: Int!, rootKey: Int): [StIpgTreeNode!]!
+  """Все имена узла (aliases для ловли из Excel)."""
+  stIpgNodeNames(stiKey: Int!): [StIpgNm!]!
+  """Полные карточки ИП (Leaves), не lookup."""
+  investmentProgramsFull(year: Int, ogKey: Int, name: String): [IpgFull!]!
+  investmentProgramFull(id: Int!): IpgFull
+  investmentProgramPoints(ipgKey: Int!): [IpgPn!]!
+  investmentProgramPoint(id: Int!): IpgPn
+  ipgPnStructure(ipgpKey: Int!): [IpgStPn!]!
+  """Справочник схем реализации пункта (ags.ipgSh)."""
+  ipgSchemes: [IpgSh!]!
 }
 
 type Mutation {
+  createStIpgNetwork(name: String!, rootKey: Int!): StIpgNetwork!
+  renameStIpgNetwork(id: Int!, name: String!): StIpgNetwork!
+  """Клон схемы: новый stNet + копия stNetPn (узлы shared)."""
+  cloneStIpgNetwork(sourceId: Int!, newName: String!): StIpgNetwork!
+  createStIpgChildNode(stNetKey: Int!, parentKey: Int!, name: String!, stpnNum: Int): StIpgTreeNode!
+  renameStIpgNode(stiKey: Int!, name: String!): Boolean!
+  """Добавить alias-имя узла (не затирая существующие)."""
+  addStIpgNodeName(stiKey: Int!, name: String!): StIpgNm!
+  """Привязать существующий узел как ребёнка parent в схеме."""
+  attachStIpgEdge(stNetKey: Int!, parentKey: Int!, childKey: Int!, stpnNum: Int): Boolean!
+  """Перенос ребёнка в схеме (detach+attach)."""
+  moveStIpgEdge(stNetKey: Int!, childKey: Int!, fromParentKey: Int!, toParentKey: Int!, stpnNum: Int): Boolean!
+  detachStIpgEdge(stNetKey: Int!, parentKey: Int!, childKey: Int!): Boolean!
+  deleteStIpgNode(stNetKey: Int!, stiKey: Int!): Boolean!
+  """Leaves: карточка ИП / пункты / привязка к stiKey."""
+  createInvestmentProgram(input: CreateIpgInput!): IpgFull!
+  updateInvestmentProgram(id: Int!, input: UpdateIpgInput!): IpgFull!
+  createIpgPn(input: CreateIpgPnInput!): IpgPn!
+  updateIpgPn(id: Int!, input: UpdateIpgPnInput!): IpgPn!
+  """Удаление пункта: cascade ipgStPn; forbid при UtPl/Lim."""
+  deleteIpgPn(id: Int!): Boolean!
+  addIpgPnStructure(ipgpKey: Int!, stiKey: Int!): IpgStPn!
+  removeIpgPnStructure(ipgspKey: Int!): Boolean!
+  setIpgPnStructure(ipgpKey: Int!, stiKeys: [Int!]!): [IpgStPn!]!
+  """Цепи: шапка ipgCh + членство ipgChRl (без mastering / ipgChRl_2606)."""
+  createInvestmentChain(input: CreateInvestmentChainInput!): InvestmentChain!
+  updateInvestmentChain(id: Int!, input: UpdateInvestmentChainInput!): InvestmentChain!
+  deleteInvestmentChain(id: Int!): Boolean!
+  addIpgToChain(input: AddIpgToChainInput!): InvestmentChainRelation!
+  updateChainRelation(id: Int!, input: UpdateChainRelationInput!): InvestmentChainRelation!
+  removeIpgFromChain(id: Int!): Boolean!
   createOrganization(input: OgCreateRequest!): Organization!
   """Создать og + опционально org_id type=1 (БУиРГ) и/или type=2 (ИНН). ИНН только в org_id."""
   createOrganizationWithIds(input: CreateOrganizationWithIdsInput!): Organization!
@@ -185,9 +231,157 @@ type InvestmentChainRelation {
   planGroupName: String
 }
 
+"""Пишется только name: stNet/late/year на noM6 — computed (fnIpgChain*)."""
+input CreateInvestmentChainInput {
+  name: String!
+}
+
+input UpdateInvestmentChainInput {
+  name: String!
+}
+
+input AddIpgToChainInput {
+  chainKey: Int!
+  investmentProgramKey: Int!
+  planGroupKey: Int
+}
+
+input UpdateChainRelationInput {
+  investmentProgramKey: Int!
+  planGroupKey: Int
+}
+
 type StNetwork {
   stNetKey: Int!
   name: String!
+}
+
+type StIpgNetwork {
+  stNetKey: Int!
+  stNetType: Int!
+  name: String!
+  rootKey: Int!
+}
+
+type StIpgTreeNode {
+  childKey: Int!
+  parentKey: Int
+  stpnNum: Int
+  pnLevel: Int
+  stNum: String
+  name: String
+  stRelKey: Int
+  stNetPnKey: Int
+}
+
+"""Имя/alias узла структуры ИПГ (ags.stIpgNm)."""
+type StIpgNm {
+  stinKey: Int!
+  stiKey: Int!
+  name: String!
+}
+
+"""Полная карточка ИП (ags.ipg). ipgStRlSh → stNet."""
+type IpgFull {
+  ipgKey: Int!
+  ipgOg: Int!
+  ogName: String
+  ipgNm: String!
+  """Ключ года (ags.yyyy.yKey)."""
+  ipgYy: Int!
+  """Календарный год из yyyy."""
+  year: Int
+  ipgNum: Int!
+  ipgStr: Date!
+  ipgEnd: Date
+  ipgRepl: Int
+  ipgStRlSh: Int!
+  stNetName: String
+  ipgYyYear: Int
+}
+
+type IpgPn {
+  ipgpKey: Int!
+  ipgpIpg: Int!
+  ipgpNum: Int
+  ipgpCstAgPn: Int!
+  cstAgPnCode: String
+  ipgpSmTtl: Float
+  ipgpSmWrk: Float
+  ipgpSmEqu: Float
+  ipgpSmOth: Float
+  ipgpSmAgFee: Float
+  ipgpCostAdjust: Float
+  ipgpSmReserv: Float
+  ipgpTskCms: String
+  ipgpSh: Int!
+  ipgpShName: String
+}
+
+type IpgStPn {
+  ipgspKey: Int!
+  ipgspPn: Int!
+  ipgspSt: Int!
+  stName: String
+}
+
+type IpgSh {
+  ipgsKey: Int!
+  ipgsNm: String!
+}
+
+input CreateIpgInput {
+  ipgOg: Int!
+  ipgNm: String!
+  ipgYy: Int!
+  ipgNum: Int!
+  ipgStr: Date!
+  ipgEnd: Date
+  ipgRepl: Int
+  """FK на stNet (обязателен)."""
+  ipgStRlSh: Int!
+  ipgYyYear: Int
+}
+
+input UpdateIpgInput {
+  ipgNm: String!
+  ipgYy: Int!
+  ipgNum: Int!
+  ipgStr: Date!
+  ipgEnd: Date
+  ipgRepl: Int
+  ipgStRlSh: Int!
+  ipgYyYear: Int
+}
+
+input CreateIpgPnInput {
+  ipgpIpg: Int!
+  ipgpNum: Int
+  ipgpCstAgPn: Int!
+  """Схема реализации; на noM6 есть 1..3 (исторический default 4 — если есть в ipgSh)."""
+  ipgpSh: Int!
+  ipgpSmTtl: Float
+  ipgpSmWrk: Float
+  ipgpSmEqu: Float
+  ipgpSmOth: Float
+  ipgpSmAgFee: Float
+  ipgpCostAdjust: Float
+  ipgpSmReserv: Float
+  ipgpTskCms: String
+}
+
+input UpdateIpgPnInput {
+  ipgpNum: Int
+  ipgpCstAgPn: Int!
+  ipgpSh: Int!
+  ipgpSmTtl: Float
+  ipgpSmWrk: Float
+  ipgpSmEqu: Float
+  ipgpSmOth: Float
+  ipgpSmAgFee: Float
+  ipgpCostAdjust: Float
+  ipgpSmReserv: Float
+  ipgpTskCms: String
 }
 
 type InvestmentProgramLookup {

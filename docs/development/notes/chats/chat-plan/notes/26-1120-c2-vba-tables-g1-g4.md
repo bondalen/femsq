@@ -4,7 +4,7 @@
 **План:** [chat-plan-26-1120-c2-d11-ipg-plans.md](../chat-plan-26-1120-c2-d11-ipg-plans.md) §2.2  
 **Задача:** 0081  
 **Метод:** сначала Structure (`stNetIpg` / `stIpg*` / `fnSt`), затем кратко Leaves (`ipg*` / цепи).  
-**Связано:** [UI 2.1](./26-1120-c2-access-ui-g1-g4-stipg.md) · [§2.0b в плане](../chat-plan-26-1120-c2-d11-ipg-plans.md) · [01-schema-analysis](../../../sql/26-0604/docs/01-schema-analysis.md)
+**Связано:** [UI 2.1](./26-1120-c2-access-ui-g1-g4-stipg.md) · [§2.0.2 в плане](../chat-plan-26-1120-c2-d11-ipg-plans.md) · [01-schema-analysis](../../../sql/26-0604/docs/01-schema-analysis.md)
 
 ---
 
@@ -150,7 +150,7 @@ Access QueryDef `ags_fnSt` в выгрузке — заглушка `fnSt(4,1)`;
 | `createInvestmentChain` / `updateInvestmentChain` | Mutation | `ipgCh` |
 | `addIpgToChain` / `updateChainRelation` / `removeIpgFromChain` | Mutation | `ipgChRl` — заменить ручной SSMS |
 
-Загрузка Excel → staging → bulk `ipgPn`+`ipgStPn` — отдельный трек (§2.0a / этап 1.2), не смешивать с точечным CRUD.
+Загрузка Excel → staging → bulk `ipgPn`+`ipgStPn` — отдельный трек (§2.0.1 / этап 1.2), не смешивать с точечным CRUD.
 
 ---
 

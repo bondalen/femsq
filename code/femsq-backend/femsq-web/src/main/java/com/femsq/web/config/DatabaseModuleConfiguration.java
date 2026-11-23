@@ -65,6 +65,9 @@ import com.femsq.database.dao.JdbcRaFtSnDao;
 import com.femsq.database.dao.JdbcRaFtStDao;
 import com.femsq.database.dao.JdbcRaColMapDao;
 import com.femsq.database.dao.JdbcRaSheetConfDao;
+import com.femsq.database.dao.IpgLeavesDao;
+import com.femsq.database.dao.JdbcIpgLeavesDao;
+import com.femsq.database.dao.JdbcStIpgStructureDao;
 import com.femsq.database.dao.JdbcStNetworkDao;
 import com.femsq.database.dao.OgAgDao;
 import com.femsq.database.dao.OgDao;
@@ -81,6 +84,7 @@ import com.femsq.database.dao.RaFtSnDao;
 import com.femsq.database.dao.RaFtStDao;
 import com.femsq.database.dao.RaColMapDao;
 import com.femsq.database.dao.RaSheetConfDao;
+import com.femsq.database.dao.StIpgStructureDao;
 import com.femsq.database.dao.StNetworkDao;
 import com.femsq.database.dao.RelationDao;
 import com.femsq.database.dao.SudzDao;
@@ -153,9 +157,12 @@ import com.femsq.database.service.DefaultRaFtSnService;
 import com.femsq.database.service.DefaultRaFtStService;
 import com.femsq.database.service.DefaultRaColMapService;
 import com.femsq.database.service.DefaultRaSheetConfService;
+import com.femsq.database.service.DefaultIpgLeavesService;
+import com.femsq.database.service.DefaultStIpgStructureService;
 import com.femsq.database.service.DefaultStNetworkService;
 import com.femsq.database.service.IpgChainRelationService;
 import com.femsq.database.service.IpgChainService;
+import com.femsq.database.service.IpgLeavesService;
 import com.femsq.database.service.InvestmentPlanGroupService;
 import com.femsq.database.service.InvestmentProgramService;
 import com.femsq.database.service.RaAService;
@@ -169,6 +176,7 @@ import com.femsq.database.service.RaFtSnService;
 import com.femsq.database.service.RaFtStService;
 import com.femsq.database.service.RaColMapService;
 import com.femsq.database.service.RaSheetConfService;
+import com.femsq.database.service.StIpgStructureService;
 import com.femsq.database.service.StNetworkService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -604,6 +612,20 @@ public class DatabaseModuleConfiguration {
     }
 
     @Bean
+    public StIpgStructureDao stIpgStructureDao(
+            ConnectionFactory connectionFactory,
+            DatabaseConfigurationService configurationService) {
+        return new JdbcStIpgStructureDao(connectionFactory, configurationService);
+    }
+
+    @Bean
+    public IpgLeavesDao ipgLeavesDao(
+            ConnectionFactory connectionFactory,
+            DatabaseConfigurationService configurationService) {
+        return new JdbcIpgLeavesDao(connectionFactory, configurationService);
+    }
+
+    @Bean
     public InvestmentProgramDao investmentProgramDao(ConnectionFactory connectionFactory, DatabaseConfigurationService configurationService) {
         return new JdbcInvestmentProgramDao(connectionFactory, configurationService);
     }
@@ -614,18 +636,29 @@ public class DatabaseModuleConfiguration {
     }
 
     @Bean
-    public IpgChainService ipgChainService(IpgChainDao ipgChainDao) {
-        return new DefaultIpgChainService(ipgChainDao);
+    public IpgChainService ipgChainService(IpgChainDao ipgChainDao, IpgChainRelationDao ipgChainRelationDao) {
+        return new DefaultIpgChainService(ipgChainDao, ipgChainRelationDao);
     }
 
     @Bean
-    public IpgChainRelationService ipgChainRelationService(IpgChainRelationDao ipgChainRelationDao) {
-        return new DefaultIpgChainRelationService(ipgChainRelationDao);
+    public IpgChainRelationService ipgChainRelationService(
+            IpgChainRelationDao ipgChainRelationDao, IpgChainDao ipgChainDao) {
+        return new DefaultIpgChainRelationService(ipgChainRelationDao, ipgChainDao);
     }
 
     @Bean
     public StNetworkService stNetworkService(StNetworkDao stNetworkDao) {
         return new DefaultStNetworkService(stNetworkDao);
+    }
+
+    @Bean
+    public StIpgStructureService stIpgStructureService(StIpgStructureDao stIpgStructureDao) {
+        return new DefaultStIpgStructureService(stIpgStructureDao);
+    }
+
+    @Bean
+    public IpgLeavesService ipgLeavesService(IpgLeavesDao ipgLeavesDao) {
+        return new DefaultIpgLeavesService(ipgLeavesDao);
     }
 
     @Bean

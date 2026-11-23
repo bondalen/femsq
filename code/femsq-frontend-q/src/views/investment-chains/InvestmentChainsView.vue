@@ -4,15 +4,27 @@
       <div class="row items-center q-gutter-md q-mb-md">
         <div>
           <div class="text-h5">Цепочки инвестиционных программ</div>
-          <div class="text-caption text-grey-7">Список цепочек и связанные инвестиционные программы</div>
+          <div class="text-caption text-grey-7">
+            Список цепочек и членство ИП (stNet / late / год — computed от ipgChRl)
+          </div>
         </div>
         <QSpace />
+        <QBtn
+          flat
+          dense
+          no-caps
+          icon="add"
+          label="Создать"
+          :disable="store.loading || store.mutating"
+          data-test="investment-chains-create"
+          @click="openCreateChain"
+        />
         <QBtn
           flat
           round
           icon="refresh"
           :loading="store.loading"
-          :disable="store.loading"
+          :disable="store.loading || store.mutating"
           @click="handleRefresh"
           aria-label="Обновить"
         />
@@ -123,14 +135,39 @@
           <transition name="fade">
             <QCard v-if="store.selectedChain" class="chain-card" flat bordered>
               <QCardSection>
-                <div class="text-h6 q-mb-xs">{{ store.selectedChain.name }}</div>
-                <div class="text-caption text-grey-7">Ключ: {{ store.selectedChain.chainKey }}</div>
+                <div class="row items-start">
+                  <div class="col">
+                    <div class="text-h6 q-mb-xs">{{ store.selectedChain.name }}</div>
+                    <div class="text-caption text-grey-7">Ключ: {{ store.selectedChain.chainKey }}</div>
+                  </div>
+                  <div class="col-auto row q-gutter-xs">
+                    <QBtn
+                      flat
+                      dense
+                      no-caps
+                      label="Переименовать"
+                      :disable="store.mutating"
+                      data-test="investment-chains-rename"
+                      @click="openRenameChain"
+                    />
+                    <QBtn
+                      flat
+                      dense
+                      no-caps
+                      color="negative"
+                      label="Удалить"
+                      :disable="store.mutating"
+                      data-test="investment-chains-delete"
+                      @click="onDeleteChain"
+                    />
+                  </div>
+                </div>
               </QCardSection>
               <QSeparator />
               <QCardSection>
                 <div class="row q-col-gutter-md">
-                  <div class="col-12 col-sm-6">
-                    <div class="text-caption text-grey-7">Структура сети</div>
+                  <div class="col-12 col-sm-4">
+                    <div class="text-caption text-grey-7">Структура сети (computed)</div>
                     <div class="text-body2">
                       <template v-if="stNetworksStore.loading">
                         <QSpinner size="16px" color="primary" />
@@ -140,9 +177,13 @@
                       </template>
                     </div>
                   </div>
-                  <div class="col-12 col-sm-6">
-                    <div class="text-caption text-grey-7">Год</div>
+                  <div class="col-12 col-sm-4">
+                    <div class="text-caption text-grey-7">Год (computed)</div>
                     <div class="text-body2">{{ store.selectedChain.year ?? '—' }}</div>
+                  </div>
+                  <div class="col-12 col-sm-4">
+                    <div class="text-caption text-grey-7">Late ИП (computed)</div>
+                    <div class="text-body2">{{ store.selectedChain.latestIpgKey ?? '—' }}</div>
                   </div>
                 </div>
               </QCardSection>
@@ -152,6 +193,16 @@
                 <div class="row items-center q-mb-sm q-col-gutter-sm">
                   <div class="text-subtitle2">Инвестиционные программы</div>
                   <QSpace />
+                  <QBtn
+                    flat
+                    dense
+                    no-caps
+                    icon="add"
+                    label="Добавить ИП"
+                    :disable="store.mutating || store.relationsLoading"
+                    data-test="investment-chains-add-ipg"
+                    @click="openAddIpg"
+                  />
                   <ObjectsReportsMenu
                     :items="
                       selectedRelations.map((rel) => ({
@@ -224,6 +275,21 @@
                       <span v-else class="text-grey-6">—</span>
                     </QTd>
                   </template>
+                  <template #body-cell-actions="props">
+                    <QTd :props="props">
+                      <QBtn
+                        flat
+                        dense
+                        round
+                        icon="delete"
+                        color="negative"
+                        size="sm"
+                        :disable="store.mutating"
+                        aria-label="Убрать из цепи"
+                        @click.stop="onRemoveRelation(props.row)"
+                      />
+                    </QTd>
+                  </template>
                   <template #no-data>
                     <div class="text-grey-7 q-pa-lg text-center">
                       <div>По фильтру программы не найдены.</div>
@@ -240,6 +306,78 @@
         </div>
       </div>
     </div>
+
+    <QDialog v-model="chainDialogOpen" persistent>
+      <QCard style="min-width: 360px">
+        <QCardSection class="text-h6">{{ chainDialogTitle }}</QCardSection>
+        <QCardSection>
+          <QInput
+            v-model="chainDialogName"
+            dense
+            autofocus
+            label="Наименование"
+            data-test="investment-chains-dialog-name"
+            @keyup.enter="submitChainDialog"
+          />
+        </QCardSection>
+        <QCardActions align="right">
+          <QBtn flat no-caps label="Отмена" v-close-popup :disable="store.mutating" />
+          <QBtn
+            color="primary"
+            unelevated
+            no-caps
+            label="OK"
+            :loading="store.mutating"
+            data-test="investment-chains-dialog-ok"
+            @click="submitChainDialog"
+          />
+        </QCardActions>
+      </QCard>
+    </QDialog>
+
+    <QDialog v-model="addIpgOpen" persistent>
+      <QCard style="min-width: 420px">
+        <QCardSection class="text-h6">Добавить ИП в цепь</QCardSection>
+        <QCardSection class="q-gutter-md">
+          <QSelect
+            v-model="addIpgKey"
+            dense
+            emit-value
+            map-options
+            use-input
+            fill-input
+            hide-selected
+            input-debounce="200"
+            :options="ipgOptions"
+            label="Инвестиционная программа"
+            data-test="investment-chains-add-ipg-select"
+            @filter="filterIpgOptions"
+          />
+          <QSelect
+            v-model="addPlanGroupKey"
+            dense
+            emit-value
+            map-options
+            clearable
+            :options="planGroupOptions"
+            label="Группа планов (опц.)"
+          />
+        </QCardSection>
+        <QCardActions align="right">
+          <QBtn flat no-caps label="Отмена" v-close-popup :disable="store.mutating" />
+          <QBtn
+            color="primary"
+            unelevated
+            no-caps
+            label="Добавить"
+            :loading="store.mutating"
+            :disable="!addIpgKey"
+            data-test="investment-chains-add-ipg-ok"
+            @click="submitAddIpg"
+          />
+        </QCardActions>
+      </QCard>
+    </QDialog>
   </QPage>
 </template>
 
@@ -252,12 +390,16 @@ import {
   QBadge,
   QCard,
   QCardSection,
+  QCardActions,
   QBtn,
   QSpace,
   QChip,
   QSpinner,
   QSeparator,
-  QInput
+  QInput,
+  QDialog,
+  QSelect,
+  useQuasar
 } from 'quasar';
 import {
   FemsqTable,
@@ -276,11 +418,31 @@ const store = useInvestmentChainsStore();
 const stNetworksStore = useStNetworksStore();
 const investmentProgramsStore = useInvestmentProgramsStore();
 const planGroupsStore = usePlanGroupsStore();
+const $q = useQuasar();
 
 const nameFilter = ref(store.filters.name);
 const relationSearchTerm = ref('');
 const relationColumnFilters = ref<Record<string, string>>({});
 const selectedRelations = ref<InvestmentChainRelation[]>([]);
+
+const chainDialogOpen = ref(false);
+const chainDialogMode = ref<'create' | 'rename'>('create');
+const chainDialogName = ref('');
+const addIpgOpen = ref(false);
+const addIpgKey = ref<number | null>(null);
+const addPlanGroupKey = ref<number | null>(null);
+const ipgOptions = ref<{ label: string; value: number }[]>([]);
+
+const chainDialogTitle = computed(() =>
+  chainDialogMode.value === 'create' ? 'Новая цепочка' : 'Переименовать цепочку'
+);
+
+const planGroupOptions = computed(() =>
+  planGroupsStore.planGroups.map((g) => ({
+    label: g.name,
+    value: g.planGroupKey
+  }))
+);
 
 const columns: FemsqTableColumn<InvestmentChain>[] = [
   { name: 'name', field: 'name', label: 'Название', align: 'left', sortable: true },
@@ -324,6 +486,13 @@ const relationColumns: FemsqTableColumn<InvestmentChainRelation>[] = [
     field: 'planGroupName',
     align: 'left',
     filterValue: (row) => getPlanGroupName(row.planGroupKey, row.planGroupName)
+  },
+  {
+    name: 'actions',
+    label: '',
+    field: 'relationKey',
+    align: 'right',
+    sortable: false
   }
 ];
 
@@ -462,6 +631,113 @@ function handleRefresh(): void {
   void stNetworksStore.fetchStNetworks();
   void investmentProgramsStore.fetchInvestmentPrograms();
   void planGroupsStore.fetchPlanGroups();
+}
+
+function rebuildIpgOptions(filter = ''): void {
+  const q = filter.trim().toLowerCase();
+  const all = investmentProgramsStore.investmentPrograms.map((p) => ({
+    label: `${p.ipgKey} · ${p.name}`,
+    value: p.ipgKey
+  }));
+  ipgOptions.value = q
+    ? all.filter((o) => o.label.toLowerCase().includes(q))
+    : all;
+}
+
+function filterIpgOptions(val: string, update: (fn: () => void) => void): void {
+  update(() => rebuildIpgOptions(val));
+}
+
+function openCreateChain(): void {
+  chainDialogMode.value = 'create';
+  chainDialogName.value = '';
+  chainDialogOpen.value = true;
+}
+
+function openRenameChain(): void {
+  if (!store.selectedChain) {
+    return;
+  }
+  chainDialogMode.value = 'rename';
+  chainDialogName.value = store.selectedChain.name;
+  chainDialogOpen.value = true;
+}
+
+async function submitChainDialog(): Promise<void> {
+  const name = chainDialogName.value.trim();
+  if (!name) {
+    $q.notify({ type: 'warning', message: 'Укажите наименование' });
+    return;
+  }
+  try {
+    if (chainDialogMode.value === 'create') {
+      await store.createChain(name);
+      $q.notify({ type: 'positive', message: 'Цепочка создана' });
+    } else if (store.selectedChain) {
+      await store.renameChain(store.selectedChain.chainKey, name);
+      $q.notify({ type: 'positive', message: 'Цепочка переименована' });
+    }
+    chainDialogOpen.value = false;
+  } catch (err) {
+    $q.notify({ type: 'negative', message: err instanceof Error ? err.message : String(err) });
+  }
+}
+
+function onDeleteChain(): void {
+  if (!store.selectedChain) {
+    return;
+  }
+  const key = store.selectedChain.chainKey;
+  const name = store.selectedChain.name;
+  $q.dialog({
+    title: 'Удалить цепочку?',
+    message: `«${name}» и все строки членства ipgChRl будут удалены.`,
+    cancel: true,
+    persistent: true
+  }).onOk(async () => {
+    try {
+      await store.removeChain(key);
+      $q.notify({ type: 'positive', message: 'Цепочка удалена' });
+    } catch (err) {
+      $q.notify({ type: 'negative', message: err instanceof Error ? err.message : String(err) });
+    }
+  });
+}
+
+function openAddIpg(): void {
+  addIpgKey.value = null;
+  addPlanGroupKey.value = null;
+  rebuildIpgOptions();
+  addIpgOpen.value = true;
+}
+
+async function submitAddIpg(): Promise<void> {
+  if (!store.selectedChain || !addIpgKey.value) {
+    return;
+  }
+  try {
+    await store.addProgramToChain(store.selectedChain.chainKey, addIpgKey.value, addPlanGroupKey.value);
+    addIpgOpen.value = false;
+    $q.notify({ type: 'positive', message: 'ИП добавлена в цепь' });
+  } catch (err) {
+    $q.notify({ type: 'negative', message: err instanceof Error ? err.message : String(err) });
+  }
+}
+
+function onRemoveRelation(row: InvestmentChainRelation): void {
+  $q.dialog({
+    title: 'Убрать ИП из цепи?',
+    message: getInvestmentProgramName(row.investmentProgramKey, row.investmentProgramName),
+    cancel: true,
+    persistent: true
+  }).onOk(async () => {
+    try {
+      await store.removeProgramFromChain(row.relationKey);
+      $q.notify({ type: 'positive', message: 'Связь удалена' });
+    } catch (err) {
+      $q.notify({ type: 'negative', message: err instanceof Error ? err.message : String(err) });
+    }
+  });
 }
 
 function formatDate(value: string): string {

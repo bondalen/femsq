@@ -3,7 +3,7 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2026-11-20",
+      "lastUpdated": "2026-11-23",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     "tasks": {
@@ -2973,9 +2973,10 @@
               "owner": "Александр",
               "completionCriteria": [
                 "Экраны ввода ИП/цепочек/планов/лимитов (GraphQL) на DEV FishEye_prod_noM6",
-                "Загрузка уточнённых планов из Excel со сравнением сумм (аналог Form_ipg_gt_LdM_t) — в полном D1.1",
+                "O1: загрузка годовой ИП из Excel (структура→пункты, §2.0.1) на noM6 — отдельно от LdM",
+                "O2: UtPl@stCost доступен для _2606; затем LdM (аналог Form_ipg_gt_LdM_t) со сравнением сумм",
                 "Справочники P2 1.4 и 2.1.0 — по мере касания (карта C1 G4/G5)",
-                "Приёмка D1.1 на DEV: UtPl@stCost доступен для _2606; прод не изменён"
+                "Приёмка D1.1 на DEV; прод не изменён"
               ],
               "links": {
                 "projectDocsRefs": [
@@ -2994,8 +2995,8 @@
                 ]
               },
               "created": "2026-11-17",
-              "lastUpdated": "2026-11-20",
-              "description": "P2 1.1–1.4, 2.1.0. Веха **D1.1 на DEV** (дорожная карта ≥0.2.1). План: chat-plan-26-1120-c2-d11-ipg-plans.md. Стенд: FishEye_prod_noM6. Навигация: c1-inventory/registry.md G1–G5."
+              "lastUpdated": "2026-11-23",
+              "description": "P2 1.1–1.4, 2.1.0. Веха **D1.1 на DEV**. План 0.10.2: O1 ipgSh=4 ✅; Structure clone/alias/attach/move ✅; next Excel map/парсер. Стенд: FishEye_prod_noM6."
             }
           }
         },
