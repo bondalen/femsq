@@ -4,12 +4,14 @@
 **Последнее обновление:** 2026-11-24  
 **Образцы загрузки ИП:** `/mnt/nb-win-share/femsq/excel/2026-1120/ipg-sql-load/` (README там же)  
 **Проект:** FEMSQ  
-**Версия плана:** 0.11.0  
-**Статус плана:** 🔶 in-progress — контракт O1 Excel load ✅; next §3.1.5 реализация  
+**Версия плана:** 0.11.13  
+**Статус плана:** 🔶 in-progress — next §3.2.2 Наследование stiKey L←S  
 
 
 **O1 дельта/требования:** [notes/26-1123-c2-o1-prod-delta-requirements.md](./notes/26-1123-c2-o1-prod-delta-requirements.md)  
 **O1 контракт загрузки (вердикт):** [notes/26-1124-c2-o1-excel-load-contract.md](./notes/26-1124-c2-o1-excel-load-contract.md)  
+**Пилот Structure 2026:** [notes/26-1124-c2-o1-structure-pilot-2026.md](./notes/26-1124-c2-o1-structure-pilot-2026.md)  
+**Prep пунктов §3.2.0:** [notes/26-1124-c2-o1-points-prep-320.md](./notes/26-1124-c2-o1-points-prep-320.md)  
 **Дорожная карта:** [chat-plan-26-1116-roadmap-r1.md](./chat-plan-26-1116-roadmap-r1.md) — веха **D1.1** = трек **C2**  
 **Задача:** 0081  
 **Автор:** Александр  
@@ -139,20 +141,60 @@
 │  ├─ 3.0 Дельта прод↔DEV + Excel 2026 → требования O1         ✅ 2026-11-23
 │  │      notes/26-1123-c2-o1-prod-delta-requirements.md
 │  │      сети 4/5; sti 255–263; ИП 30/31/33/34; ipgSh=4
-│  ├─ 3.1 Структура: clone + alias + attach/move + сверка      🔶
+│  ├─ 3.1 Структура: clone + alias + attach/move + сверка      ✅ 2026-11-24
 │  │  ├─ 3.1.1 ipgSh=4 на noM6 + SQL-пакет 26-1123-ipgsh-4     ✅ 2026-11-23
 │  │  ├─ 3.1.2 cloneStIpgNetwork (BE/FE уже было) подтверждено ✅
 │  │  ├─ 3.1.3 addStIpgNodeName / stIpgNodeNames + UI           ✅ UI-smoke 383/387
 │  │  ├─ 3.1.4 attach/move/createChild + UI                     ✅ UI-smoke 387; createChild через stIpg_insert
 │  │  ├─ 3.1.5 Контракт сверки/ПТСФ/impIpgLoad (вердикт)       ✅ 2026-11-24 notes/26-1124-…
-│  │  └─ 3.1.6 Реализация: парсер+сверка UI + impIpgLoad min   ☐ next
-│  │         CardStrip/TreeList «+»; вкладка «не сопоставлено»;
-│  │         ручной stiKey; alias-кнопка; warn truncate
-│  ├─ 3.2 Пункты: gate → impIpg → ipgPn + ipgStPn              ☐
-│  │      ipgpSh: prev-IP → else 4; дубли cstAgPn → схемы/ERR  ☐
-│  │      каждый ipgPn обязан stiKey (ERROR иначе)
+│  │  └─ 3.1.6 Реализация сверки (вертикальный срез)           ✅ 2026-11-24
+│  │     ├─ 3.1.6.1 DDL + GraphQL impIpgLoad / impIpg (каркас) ✅ 2026-11-24 noM6 + BE compile
+│  │     ├─ 3.1.6.2 Парсер разделов → impIpg (ПТСФ)            ✅ 2026-11-24 sql_0/sql_iii smoke
+│  │     └─ 3.1.6.3 Сверка UI Structure («+», вкладка, map)    ✅ 2026-11-24 reconcile+UI
+│  │            CardStrip/TreeList «+»; вкладка «не сопоставлено»;
+│  │            ручной stiKey; alias-кнопка; warn truncate
+│  ├─ 3.1.7 Пилот Structure UI — 4 ИП 2026 (оператор в browser) ✅ 2026-11-24
+│  │      notes/26-1124-c2-o1-structure-pilot-2026.md
+│  │      Прод = шпаргалка (не MERGE). ID на DEV свои → реестр.
+│  │      Режим: UI Cursor browser ≈ оператор; баг→fix→пересборка.
+│  │  ├─ 3.1.7.0 Prep: thin JAR+FE §3.1.6.*; app up; шара JVM   ✅ 2026-11-24
+│  │  │      JAR 0.1.0.389; UI http://127.0.0.1:8080/; шара OK; stNet2 OK
+│  │  ├─ 3.1.7.1 Сеть U + ИП A (sql_0) — «утверждённая»         ✅ 2026-11-24
+│  │  │      stNet U=5; ipg A=27; load=8; ПТСФ open=0 (39 S);
+│  │  │      JAR 393; map/alias/move; баг-лог §6 notes pilot
+│  │  ├─ 3.1.7.2 ИП B (sql_i) на сети U                         ✅ 2026-11-24
+│  │  │      ipg B=28; load=9; open=0 (50 S); узлы 266–269;
+│  │  │      JAR 395: parser #6 fixed; UI Cursor smoke ✓
+│  │  ├─ 3.1.7.3 Сеть R + ИП C (sql_ii) — разблокировка         ✅ 2026-11-24
+│  │  │      R=6; unlock 270–276; ipg C=29; load=10; open=0;
+│  │  │      edge≡etalon5 (remap); JAR 396
+│  │  ├─ 3.1.7.4 ИП D (sql_iii) на сети R                       ✅ 2026-11-24
+│  │  │      ipg D=30; load=11; open=0 (54 S); UI ✓
+│  │  └─ 3.1.7.5 Реестр DEV↔прод ключей + UX/баг-лог пилота    ✅ 2026-11-24
+│  │         DoD: 2 stNet + 4 ipg + ПТСФ×4 open=0
+│  ├─ 3.2 Пункты: gate → impIpg → ipgPn + ipgStPn              🔶 next=3.2.2
+│  │      Пилот apply — **только ИП A** (load8/sql_0); B–D → §3.4
+│  │      notes: …/26-1124-c2-o1-points-prep-320.md + контракт §5.7
+│  │  ├─ 3.2.0 Prep: колонки L, маппинг Excel→ipgPn, Leaves API ✅ 2026-11-24
+│  │  │      load8: 398 L, sti-ready 398; cstAgPn exact 306/398;
+│  │  │      gaps G1–G7 в notes prep-320
+│  │  ├─ 3.2.1 Gate: ПТСФ open=0 + ipg.ipgStRlSh иначе ERROR   ✅ 2026-11-24
+│  │  │      ImpIpgPointsGateService + query impIpgPointsGate;
+│  │  │      JAR 397; load8 ready=true; unit ✓
+│  │  ├─ 3.2.2 Наследование stiKey: L ← закрытый родитель S     ☐ next
+│  │  │      превью листьев без sti; дыры = ERROR при apply
+│  │  ├─ 3.2.3 ipgpSh: prev-IP → else 4; дубли cstAgPn→схемы/ERR ☐
+│  │  │      unit по notes O1 §5.2; без записи в домен
+│  │  ├─ 3.2.4 Bulk apply: транзакция ipgPn + ipgStPn           ☐
+│  │  │      unique Ipg_CstAgPn_Sh; без stiKey = ERROR
+│  │  ├─ 3.2.5 UI: «Загрузить пункты» в контексте load + отчёт  ☐
+│  │  │      Structure/Leaves; не второй мастер
+│  │  └─ 3.2.6 Smoke ИП A (sql_0/load8): apply + выборочная     ☐
+│  │         сверка COUNT/unique vs эталон; DoD §3.2
 │  ├─ 3.3 Цикл Access→migrate по касанию (только O1)           ☐
-│  └─ 3.4 Приёмка O1 на noM6 (сценарии sql_0→net4, sql_iii→net5) ☐
+│  │      если apply упрётся в правило/поле Access
+│  └─ 3.4 Приёмка O1 на noM6 (пункты/цепи vs эталон)           ☐
+│         структура уже в 3.1.7; здесь ipgPn×A–D / unique / ipgpSh
 │
 ├─ 4. O2 — P2 1.3: помесячные планы и лимиты UtPl@stCost       ☐
 │  ├─ 4.0 UI структуры затрат (stNetCost/stCost) — минимум     ☐
@@ -413,7 +455,7 @@ Access уже даёт этот UI (bound-формы + вкладки child/pare
 | В3 | Лимиты/UtPl: вручную или из файла; stCost | ☐ блок 4 (O2) | Также этап (б) уточнения `ipgSh` после планов агентов |
 | В4 | Справочники: ввод или статичны | ✅ для ИПГ | ИПГ-DAG — **P** в FEMSQ; **stCost** — к O2; эталон прода — сверка |
 | В5 | Периоды RA / sender | ☐ блок 7 | В вехе D1.1 после планов |
-| В6 | Годовая ИП: парсер/staging/маппинг (§2.0.1) | 🔶 блок 3 (O1) | Контракт ✅ 3.1.5 / notes 26-1124; next реализация 3.1.6→3.2; DoD = 3.4 |
+| В6 | Годовая ИП: парсер/staging/маппинг (§2.0.1) | 🔶 блок 3 (O1) | §3.2.0 ✅; next gate→bulk на A; gap cstAgPn 92/398 на noM6; DoD O1 = §3.4 |
 | В7 | `ipgpSh` при загрузке | ✅ 2026-11-23 | Prev-IP → else 4; дубли cstAgPn → разные схемы/ERR; истина = план O2; эталон sh≈2 = после пост-обработки |
 | В8 | UX сети | ✅ 2026-11-23 | Сначала **программный clone**, затем ручная модификация |
 | В9 | Multi-`stIpgNm` / ловля из Excel | ✅ 2026-11-23 | Сырой пул + нормализация для поиска; map→alias (кнопка) или create; «+» только на закрытых |
@@ -437,6 +479,19 @@ Access уже даёт этот UI (bound-формы + вкладки child/pare
 
 | Дата | Версия | Что изменили |
 |------|--------|----------------|
+| 2026-11-24 | 0.11.9 | Баг #6 parser fixed (JAR 395); UI Cursor smoke §3.1.7.1–.2 open=0; next 3.1.7.3 R+C |
+| 2026-11-24 | 0.11.13 | §3.2.1 ✅ Gate: ImpIpgPointsGateService + GraphQL; JAR 397; load8 ready; next 3.2.2 |
+| 2026-11-24 | 0.11.12 | §3.2.0 ✅ Prep пунктов (notes …-points-prep-320); gap cstAgPn 92/398; next 3.2.1 Gate |
+| 2026-11-24 | 0.11.11 | §3.2 → дети 3.2.0–.6 (gate/sti/ipgpSh/bulk/UI/smoke A); B–D→§3.4; next 3.2.0 |
+| 2026-11-24 | 0.11.10 | §3.1.7 пилот ✅: R=6, ipg C/D=29/30, ПТСФ×4 open=0, edge≡etalon U/R; next §3.2 |
+| 2026-11-24 | 0.11.8 | §3.1.7.2 ✅ B=ipg28 · load9 · sql_i open=0 (50); JAR 394 MANUAL=inPool; next 3.1.7.3 R+C |
+| 2026-11-24 | 0.11.7 | §3.1.7.1 ✅ U=stNet5 · A=ipg27 · load8 · sql_0 open=0; JAR 393; next 3.1.7.2 B/sql_i |
+| 2026-11-24 | 0.11.6 | §3.1.7.0 ✅ Prep: JAR 389 thin+FE; app :8080; шара sql_*; noM6+stNet2; next 3.1.7.1 U+A |
+| 2026-11-24 | 0.11.5 | §3.1.7 пилот Structure UI ×4 ИП 2026 (оператор в Cursor browser); notes pilot; §3.2/3.4 сдвинуты после пилота; next 3.1.7.0 |
+| 2026-11-24 | 0.11.4 | §3.1.6.3 ✅ сверка: ImpIpgReconcileService + GraphQL; Structure UI parse/сверить/«не сопоставлено»/+/map/alias; smoke sql_0→stNet2; next §3.2 |
+| 2026-11-24 | 0.11.3 | §3.1.6.2 ✅ парсер основного листа → impIpg (S/L, path в iiCtx); mutation parseImpIpgLoad; smoke sql_0=39S/398L, sql_iii; next 3.1.6.3 UI |
+| 2026-11-24 | 0.11.2 | §3.1.6.1 ✅ DDL noM6 + GraphQL/DAO/service каркас; SQL `26-1124-imp-ipg-load`; next 3.1.6.2 парсер |
+| 2026-11-24 | 0.11.1 | §3.1.6 → дети 3.1.6.1 каркас / 3.1.6.2 парсер / 3.1.6.3 сверка UI; next 3.1.6.1 |
 | 2026-11-24 | 0.11.0 | Вердикт O1→контракт notes/26-1124; §3.1.5✅ / next 3.1.6 реализация; В10–В12; дерево 3.2/4/6 уточнены; §2.0.1 B |
 | 2026-11-23 | 0.10.4 | Structure UI: feQuLib `FemsqCardStrip` 0.1.19 + `FemsqTreeList` вместо sidebar/FemsqTree; next 3.1.5 |
 | 2026-11-23 | 0.10.3 | UI-smoke Structure на JAR 387: alias/createChild/move/detach/attach; фикс createChild под INSTEAD OF `stIpg_insert`; next 3.1.5 |

@@ -142,9 +142,10 @@ public class JdbcIpgLeavesDao implements IpgLeavesDao {
         if (ipgNm.isBlank()) {
             throw new IllegalArgumentException("Наименование ИП пустое");
         }
+        // ipgYyYear — computed ([ags].[fnYyyyYear]([ipgYy])); в INSERT не писать.
         String sql = "INSERT INTO " + q("ipg")
-                + " (ipgOg, ipgNm, ipgYy, ipgNum, ipgStr, ipgEnd, ipgRepl, ipgStRlSh, ipgYyYear) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + " (ipgOg, ipgNm, ipgYy, ipgNum, ipgStr, ipgEnd, ipgRepl, ipgStRlSh) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = connectionFactory.createConnection();
              PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             statement.setInt(1, ipgOg);
@@ -163,11 +164,6 @@ public class JdbcIpgLeavesDao implements IpgLeavesDao {
                 statement.setInt(7, ipgRepl);
             }
             statement.setInt(8, ipgStRlSh);
-            if (ipgYyYear == null) {
-                statement.setNull(9, Types.INTEGER);
-            } else {
-                statement.setInt(9, ipgYyYear);
-            }
             statement.executeUpdate();
             int key = readGeneratedKey(statement, "ipgKey");
             log.log(Level.INFO, "Created ipg {0}", key);
@@ -195,8 +191,9 @@ public class JdbcIpgLeavesDao implements IpgLeavesDao {
         if (ipgNm.isBlank()) {
             throw new IllegalArgumentException("Наименование ИП пустое");
         }
+        // ipgYyYear — computed; год меняется через ipgYy.
         String sql = "UPDATE " + q("ipg")
-                + " SET ipgNm=?, ipgYy=?, ipgNum=?, ipgStr=?, ipgEnd=?, ipgRepl=?, ipgStRlSh=?, ipgYyYear=? "
+                + " SET ipgNm=?, ipgYy=?, ipgNum=?, ipgStr=?, ipgEnd=?, ipgRepl=?, ipgStRlSh=? "
                 + "WHERE ipgKey=?";
         try (Connection connection = connectionFactory.createConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -215,12 +212,7 @@ public class JdbcIpgLeavesDao implements IpgLeavesDao {
                 statement.setInt(6, ipgRepl);
             }
             statement.setInt(7, ipgStRlSh);
-            if (ipgYyYear == null) {
-                statement.setNull(8, Types.INTEGER);
-            } else {
-                statement.setInt(8, ipgYyYear);
-            }
-            statement.setInt(9, ipgKey);
+            statement.setInt(8, ipgKey);
             if (statement.executeUpdate() == 0) {
                 throw new DaoException("ipg не найден: " + ipgKey);
             }

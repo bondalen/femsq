@@ -2996,7 +2996,7 @@
               },
               "created": "2026-11-17",
               "lastUpdated": "2026-11-24",
-              "description": "P2 1.1–1.4, 2.1.0. Веха **D1.1 на DEV**. План 0.11.0: O1 Structure CRUD ✅; контракт Excel load/ПТСФ/impIpgLoad ✅ (notes/26-1124); next §3.1.6 реализация сверки → §3.2 пункты. Стенд: FishEye_prod_noM6."
+              "description": "P2 1.1–1.4, 2.1.0. Веха **D1.1 на DEV**. План 0.11.13: §3.2.1 ✅ Gate пунктов (JAR 397, load8 ready); next §3.2.2 sti L←S. Стенд: FishEye_prod_noM6."
             }
           }
         },

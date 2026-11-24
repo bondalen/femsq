@@ -1,191 +1,353 @@
 <template>
-  <QPage class="investment-structure-view q-pa-lg" data-test="investment-structure-view">
-    <div class="row items-center q-gutter-md q-mb-md">
-      <div>
-        <div class="text-h5">Структура ИПГ</div>
-        <div class="text-caption text-grey-7">
-          Схемы stNet (type=1) и дерево разделов через fnSt
+  <QPage class="investment-structure-view q-pa-none" data-test="investment-structure-view">
+    <div class="absolute-full q-pa-lg column no-wrap investment-structure-inner">
+      <div class="row items-center q-gutter-md q-mb-md shrink-0">
+        <div>
+          <div class="text-h5">Структура ИПГ</div>
+          <div class="text-caption text-grey-7">
+            Схемы stNet (type=1) и дерево разделов через fnSt
+          </div>
         </div>
+        <QSpace />
+        <QBtn
+          flat
+          round
+          icon="refresh"
+          :loading="store.loadingNetworks || store.loadingTree"
+          :disable="store.mutating"
+          aria-label="Обновить"
+          data-test="investment-structure-refresh"
+          @click="onRefresh"
+        />
       </div>
-      <QSpace />
-      <QBtn
-        flat
-        round
-        icon="refresh"
-        :loading="store.loadingNetworks || store.loadingTree"
-        :disable="store.mutating"
-        aria-label="Обновить"
-        data-test="investment-structure-refresh"
-        @click="onRefresh"
-      />
-    </div>
 
-    <QBanner v-if="store.error" class="bg-negative text-white q-mb-md" rounded>
-      {{ store.error }}
-    </QBanner>
+      <QBanner v-if="store.error" class="bg-negative text-white q-mb-md shrink-0" rounded>
+        {{ store.error }}
+      </QBanner>
 
-    <div class="row items-center q-mb-sm">
-      <div class="text-subtitle1">Схемы</div>
-      <QSpace />
-      <QBtn
-        flat
-        dense
-        no-caps
-        label="Переименовать"
-        :disable="!store.selectedNetwork || store.mutating"
-        data-test="investment-structure-rename-net"
-        @click="openRenameNetwork"
-      />
-      <QBtn
-        flat
-        dense
-        no-caps
-        label="Клонировать"
-        :disable="!store.selectedNetwork || store.mutating"
-        data-test="investment-structure-clone-net"
-        @click="openCloneNetwork"
-      />
-    </div>
-
-    <FemsqCardStrip
-      class="q-mb-md"
-      :items="store.networks"
-      item-key="stNetKey"
-      :selected-key="store.selectedNetworkKey"
-      :loading="store.loadingNetworks"
-      :disabled="store.mutating"
-      dense
-      test-id-prefix="investment-structure-net"
-      data-test="investment-structure-networks"
-      @update:selected-key="onSelectNetworkKey"
-    >
-      <template #item="{ item }">
-        <div class="text-weight-medium">{{ item.name }}</div>
-        <div class="text-caption text-grey-7">
-          stNet={{ item.stNetKey }} · root={{ item.rootKey }}
-        </div>
-      </template>
-      <template #empty>Схемы не найдены</template>
-      <template #trailing>
+      <div class="row items-center q-mb-sm shrink-0">
+        <div class="text-subtitle1">Схемы</div>
+        <QSpace />
         <QBtn
           flat
           dense
           no-caps
-          icon="add"
-          label="Создать"
-          :disable="store.mutating"
-          data-test="investment-structure-create-net"
-          @click="openCreateNetwork"
+          label="Переименовать"
+          :disable="!store.selectedNetwork || store.mutating"
+          data-test="investment-structure-rename-net"
+          @click="openRenameNetwork"
         />
-      </template>
-    </FemsqCardStrip>
-
-    <div class="row items-center q-mb-sm q-gutter-xs">
-      <div class="text-subtitle1 q-mr-sm">Структура</div>
-      <QSpace />
-      <QBtn
-        flat
-        dense
-        no-caps
-        icon="add"
-        label="Дочерний"
-        :disable="!store.selectedNodeKey || store.mutating"
-        data-test="investment-structure-add-child"
-        @click="openCreateChild"
-      />
-      <QBtn
-        flat
-        dense
-        no-caps
-        label="Переименовать узел"
-        :disable="!store.selectedNodeKey || store.mutating"
-        data-test="investment-structure-rename-node"
-        @click="openRenameNode"
-      />
-      <QBtn
-        flat
-        dense
-        no-caps
-        label="Добавить имя"
-        :disable="!store.selectedNodeKey || store.mutating"
-        data-test="investment-structure-add-name"
-        @click="openAddName"
-      />
-      <QBtn
-        flat
-        dense
-        no-caps
-        label="Привязать sti"
-        :disable="!store.selectedNodeKey || store.mutating"
-        data-test="investment-structure-attach"
-        @click="openAttach"
-      />
-      <QBtn
-        flat
-        dense
-        no-caps
-        label="Перенести к…"
-        :disable="!canDetach || store.mutating"
-        data-test="investment-structure-move"
-        @click="openMove"
-      />
-      <QBtn
-        flat
-        dense
-        no-caps
-        color="warning"
-        label="Отсоединить"
-        :disable="!canDetach || store.mutating"
-        data-test="investment-structure-detach"
-        @click="onDetach"
-      />
-      <QBtn
-        flat
-        dense
-        no-caps
-        color="negative"
-        label="Удалить узел"
-        :disable="!store.selectedNodeKey || store.mutating"
-        data-test="investment-structure-delete-node"
-        @click="onDeleteNode"
-      />
-    </div>
-
-    <div
-      v-if="store.loadingTree"
-      class="text-grey-7 q-pa-md investment-structure-tree"
-      data-test="investment-structure-tree-loading"
-    >
-      Загрузка дерева…
-    </div>
-    <FemsqTreeList
-      v-else
-      class="investment-structure-tree"
-      :nodes="store.treeNodes"
-      node-key="key"
-      children-key="children"
-      leaf-key="leaf"
-      :columns="treeColumns"
-      expand-on-click
-      fill
-      v-model:selected-key="selectedKeyModel"
-      data-test="investment-structure-tree"
-    >
-      <template #empty>Нет узлов в схеме</template>
-    </FemsqTreeList>
-
-    <div v-if="store.selectedFlatNode" class="text-caption text-grey-7 q-mt-md">
-      Выбран: stiKey={{ store.selectedFlatNode.childKey }}, parent={{
-        store.selectedFlatNode.parentKey ?? '—'
-      }}, stRel={{ store.selectedFlatNode.stRelKey ?? '—' }}
-      <div v-if="store.loadingNames" class="q-mt-xs">Имена…</div>
-      <div v-else-if="store.selectedNodeNames.length" class="q-mt-xs">
-        Имена:
-        <span
-          v-for="(nm, idx) in store.selectedNodeNames"
-          :key="nm.stinKey"
-        >{{ idx ? '; ' : '' }}{{ nm.name }}</span>
+        <QBtn
+          flat
+          dense
+          no-caps
+          label="Клонировать"
+          :disable="!store.selectedNetwork || store.mutating"
+          data-test="investment-structure-clone-net"
+          @click="openCloneNetwork"
+        />
       </div>
+
+      <FemsqCardStrip
+        class="q-mb-sm shrink-0"
+        :items="store.networks"
+        item-key="stNetKey"
+        :selected-key="store.selectedNetworkKey"
+        :loading="store.loadingNetworks"
+        :disabled="store.mutating"
+        dense
+        test-id-prefix="investment-structure-net"
+        data-test="investment-structure-networks"
+        @update:selected-key="onSelectNetworkKey"
+      >
+        <template #item="{ item }">
+          <div class="text-weight-medium">{{ item.name }}</div>
+          <div class="text-caption text-grey-7">
+            stNet={{ item.stNetKey }} · root={{ item.rootKey }}
+          </div>
+        </template>
+        <template #empty>Схемы не найдены</template>
+        <template #trailing>
+          <QBtn
+            flat
+            dense
+            no-caps
+            icon="add"
+            label="Создать"
+            :disable="store.mutating"
+            data-test="investment-structure-create-net"
+            @click="openCreateNetwork"
+          />
+        </template>
+      </FemsqCardStrip>
+
+      <QSplitter
+        v-model="mainSplit"
+        horizontal
+        :limits="[25, 80]"
+        separator-class="investment-structure-split-sep"
+        class="col investment-structure-splitter"
+        data-test="investment-structure-splitter"
+      >
+        <template #before>
+          <div class="column fill-pane no-wrap q-pr-xs">
+            <div class="row items-center q-mb-sm q-gutter-xs shrink-0">
+              <div class="text-subtitle1 q-mr-sm">Структура</div>
+              <QSpace />
+              <QBtn
+                flat
+                dense
+                no-caps
+                icon="add"
+                label="Дочерний"
+                :disable="!store.selectedNodeKey || store.mutating"
+                data-test="investment-structure-add-child"
+                @click="openCreateChild"
+              />
+              <QBtn
+                flat
+                dense
+                no-caps
+                label="Переименовать узел"
+                :disable="!store.selectedNodeKey || store.mutating"
+                data-test="investment-structure-rename-node"
+                @click="openRenameNode"
+              />
+              <QBtn
+                flat
+                dense
+                no-caps
+                label="Добавить имя"
+                :disable="!store.selectedNodeKey || store.mutating"
+                data-test="investment-structure-add-name"
+                @click="openAddName"
+              />
+              <QBtn
+                flat
+                dense
+                no-caps
+                label="Привязать sti"
+                :disable="!store.selectedNodeKey || store.mutating"
+                data-test="investment-structure-attach"
+                @click="openAttach"
+              />
+              <QBtn
+                flat
+                dense
+                no-caps
+                label="Перенести к…"
+                :disable="!canDetach || store.mutating"
+                data-test="investment-structure-move"
+                @click="openMove"
+              />
+              <QBtn
+                flat
+                dense
+                no-caps
+                color="warning"
+                label="Отсоединить"
+                :disable="!canDetach || store.mutating"
+                data-test="investment-structure-detach"
+                @click="onDetach"
+              />
+              <QBtn
+                flat
+                dense
+                no-caps
+                color="negative"
+                label="Удалить узел"
+                :disable="!store.selectedNodeKey || store.mutating"
+                data-test="investment-structure-delete-node"
+                @click="onDeleteNode"
+              />
+            </div>
+
+            <div
+              v-if="store.loadingTree"
+              class="text-grey-7 q-pa-md investment-structure-tree col"
+              data-test="investment-structure-tree-loading"
+            >
+              Загрузка дерева…
+            </div>
+            <FemsqTreeList
+              v-else
+              class="investment-structure-tree col"
+              :nodes="store.treeNodes"
+              node-key="key"
+              children-key="children"
+              leaf-key="leaf"
+              :columns="treeColumns"
+              expand-on-click
+              fill
+              v-model:selected-key="selectedKeyModel"
+              data-test="investment-structure-tree"
+            >
+              <template #empty>Нет узлов в схеме</template>
+              <template #actions="{ node }">
+                <QBtn
+                  v-if="store.closedStiKeys.has(Number(node.key))"
+                  flat
+                  dense
+                  round
+                  size="sm"
+                  icon="add"
+                  color="positive"
+                  :title="'ПТСФ закрыт для sti=' + node.key"
+                  data-test="investment-structure-tree-plus"
+                />
+              </template>
+            </FemsqTreeList>
+
+            <div v-if="store.selectedFlatNode" class="text-caption text-grey-7 q-mt-sm shrink-0">
+              Выбран: stiKey={{ store.selectedFlatNode.childKey }}, parent={{
+                store.selectedFlatNode.parentKey ?? '—'
+              }}, stRel={{ store.selectedFlatNode.stRelKey ?? '—' }}
+              <div v-if="store.loadingNames" class="q-mt-xs">Имена…</div>
+              <div v-else-if="store.selectedNodeNames.length" class="q-mt-xs">
+                Имена:
+                <span
+                  v-for="(nm, idx) in store.selectedNodeNames"
+                  :key="nm.stinKey"
+                >{{ idx ? '; ' : '' }}{{ nm.name }}</span>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <template #after>
+          <div class="column fill-pane no-wrap q-pt-sm">
+            <div class="text-subtitle1 q-mb-sm shrink-0">Сверка Excel (ПТСФ)</div>
+            <div class="row q-col-gutter-sm items-end q-mb-sm shrink-0">
+              <div class="col-12 col-md-3">
+                <QSelect
+                  v-model="ipgModel"
+                  dense
+                  outlined
+                  emit-value
+                  map-options
+                  clearable
+                  label="ИП (ipg)"
+                  :options="ipgSelectOptions"
+                  :loading="store.loadingLoads"
+                  data-test="investment-structure-ipg"
+                />
+              </div>
+              <div class="col-12 col-md-3">
+                <QSelect
+                  v-model="loadModel"
+                  dense
+                  outlined
+                  emit-value
+                  map-options
+                  clearable
+                  label="Сессия load"
+                  :options="loadSelectOptions"
+                  :disable="store.selectedIpgKey == null"
+                  data-test="investment-structure-load"
+                />
+              </div>
+              <div class="col-12 col-md-4">
+                <QInput
+                  v-model="store.excelFilePath"
+                  dense
+                  outlined
+                  label="Путь к Excel"
+                  data-test="investment-structure-excel-path"
+                />
+              </div>
+              <div class="col-12 col-md-2 row q-gutter-xs">
+                <QBtn
+                  unelevated
+                  color="primary"
+                  no-caps
+                  label="Разобрать"
+                  :loading="store.reconciling"
+                  :disable="!canParse || store.mutating"
+                  data-test="investment-structure-parse"
+                  @click="onParseExcel"
+                />
+                <QBtn
+                  outline
+                  color="primary"
+                  no-caps
+                  label="Сверить"
+                  :loading="store.reconciling"
+                  :disable="!canReconcile || store.mutating"
+                  data-test="investment-structure-reconcile"
+                  @click="onReconcile"
+                />
+              </div>
+            </div>
+            <div
+              v-if="store.reconcileResult"
+              class="text-caption text-grey-7 q-mb-sm shrink-0"
+              data-test="investment-structure-reconcile-summary"
+            >
+              Закрыто {{ store.reconcileResult.matched }} · открыто {{ store.reconcileResult.open }}
+              (load={{ store.reconcileResult.loadKey }}, stNet={{ store.reconcileResult.stNetKey }})
+            </div>
+
+            <QTabs
+              v-model="bottomTab"
+              dense
+              class="text-primary shrink-0"
+              data-test="investment-structure-bottom-tabs"
+            >
+              <QTab
+                name="unmatched"
+                :label="'не сопоставлено (' + store.unmatchedRows.length + ')'"
+                data-test="investment-structure-tab-unmatched"
+              />
+            </QTabs>
+            <QTabPanels v-model="bottomTab" animated class="bg-transparent col">
+              <QTabPanel name="unmatched" class="q-pa-none column fill-pane no-wrap">
+                <QTable
+                  flat
+                  dense
+                  bordered
+                  class="col investment-structure-unmatched-table"
+                  row-key="rowId"
+                  :rows="store.unmatchedRows"
+                  :columns="unmatchedColumns"
+                  :pagination="{ rowsPerPage: 0 }"
+                  no-data-label="Нет открытых строк ПТСФ (или сверка ещё не запускалась)"
+                  data-test="investment-structure-unmatched-table"
+                >
+                  <template #body-cell-actions="props">
+                    <QTd :props="props">
+                      <QBtn
+                        v-if="
+                          props.row.stiKey != null
+                            && !props.row.nameInPool
+                            && (props.row.status === 'NEEDS_ALIAS' || props.row.status === 'MANUAL')
+                        "
+                        flat
+                        dense
+                        no-caps
+                        size="sm"
+                        label="alias"
+                        :disable="store.mutating"
+                        data-test="investment-structure-unmatched-alias"
+                        @click="onAddAlias(props.row)"
+                      />
+                      <QBtn
+                        flat
+                        dense
+                        no-caps
+                        size="sm"
+                        label="map"
+                        :disable="store.mutating"
+                        data-test="investment-structure-unmatched-map"
+                        @click="openMapRow(props.row)"
+                      />
+                    </QTd>
+                  </template>
+                </QTable>
+              </QTabPanel>
+            </QTabPanels>
+          </div>
+        </template>
+      </QSplitter>
     </div>
 
     <QDialog v-model="dialogOpen" persistent>
@@ -193,7 +355,7 @@
         <QCardSection class="text-h6">{{ dialogTitle }}</QCardSection>
         <QCardSection>
           <QInput
-            v-if="dialogMode !== 'attach' && dialogMode !== 'move'"
+            v-if="dialogMode !== 'attach' && dialogMode !== 'move' && dialogMode !== 'map-row'"
             v-model="dialogName"
             dense
             autofocus
@@ -201,34 +363,73 @@
             data-test="investment-structure-dialog-name"
             @keyup.enter="submitDialog"
           />
-          <QInput
+          <QSelect
             v-if="dialogMode === 'create-net'"
-            v-model.number="dialogRootKey"
+            v-model="dialogRootKey"
             class="q-mt-md"
             dense
-            type="number"
-            label="rootKey (stiKey корня)"
+            outlined
+            emit-value
+            map-options
+            use-input
+            fill-input
+            hide-selected
+            input-debounce="0"
+            label="Корень схемы (имя · id)"
+            :options="filteredNodeOptions"
             data-test="investment-structure-dialog-root"
+            @filter="filterNodeOptions"
           />
-          <QInput
+          <QSelect
             v-if="dialogMode === 'attach'"
-            v-model.number="dialogChildKey"
+            v-model="dialogChildKey"
             dense
+            outlined
             autofocus
-            type="number"
-            label="stiKey существующего узла"
+            emit-value
+            map-options
+            use-input
+            fill-input
+            hide-selected
+            input-debounce="0"
+            label="Существующий узел (имя · id)"
+            :options="filteredNodeOptions"
             data-test="investment-structure-dialog-child"
-            @keyup.enter="submitDialog"
+            @filter="filterNodeOptions"
           />
-          <QInput
+          <QSelect
             v-if="dialogMode === 'move'"
-            v-model.number="dialogToParentKey"
+            v-model="dialogToParentKey"
             dense
+            outlined
             autofocus
-            type="number"
-            label="stiKey нового родителя"
+            emit-value
+            map-options
+            use-input
+            fill-input
+            hide-selected
+            input-debounce="0"
+            label="Новый родитель (имя · id)"
+            :options="filteredNodeOptions"
             data-test="investment-structure-dialog-to-parent"
-            @keyup.enter="submitDialog"
+            @filter="filterNodeOptions"
+          />
+          <QSelect
+            v-if="dialogMode === 'map-row'"
+            v-model="dialogChildKey"
+            dense
+            outlined
+            autofocus
+            emit-value
+            map-options
+            use-input
+            fill-input
+            hide-selected
+            input-debounce="0"
+            label="Узел структуры для строки ПТСФ (имя · id)"
+            :options="filteredNodeOptions"
+            data-test="investment-structure-dialog-map-sti"
+            @filter="filterNodeOptions"
           />
         </QCardSection>
         <QCardActions align="right">
@@ -262,8 +463,17 @@ import {
   QDialog,
   QInput,
   QPage,
+  QSelect,
   QSpace,
-  useQuasar
+  QSplitter,
+  QTab,
+  QTable,
+  QTabPanel,
+  QTabPanels,
+  QTabs,
+  QTd,
+  useQuasar,
+  type QTableColumn
 } from 'quasar';
 import {
   FemsqCardStrip,
@@ -272,6 +482,7 @@ import {
   type FemsqTreeListColumn
 } from 'fequlib';
 
+import type { ImpIpgReconcileRowDto } from '@/api/imp-ipg-load-api';
 import {
   useStIpgStructureStore,
   type StIpgStructureTreeNode
@@ -279,6 +490,9 @@ import {
 
 const store = useStIpgStructureStore();
 const $q = useQuasar();
+const bottomTab = ref('unmatched');
+/** Доля верхней панели (дерево), % высоты сплиттера. */
+const mainSplit = ref(58);
 
 const treeColumns: FemsqTreeListColumn<StIpgStructureTreeNode>[] = [
   { name: 'label', label: 'Раздел', field: 'label' },
@@ -299,11 +513,124 @@ const dialogMode = ref<
   | 'add-name'
   | 'attach'
   | 'move'
+  | 'map-row'
 >('create-net');
 const dialogName = ref('');
 const dialogRootKey = ref(1);
 const dialogChildKey = ref<number | null>(null);
 const dialogToParentKey = ref<number | null>(null);
+const mapRowId = ref<number | null>(null);
+/** Кандидаты сверки — поднимаем в начало списка комбобокса map. */
+const mapCandidateKeys = ref<number[]>([]);
+const nodeOptionsFilter = ref('');
+
+interface NodeSelectOption {
+  label: string;
+  value: number;
+  name: string;
+}
+
+/**
+ * Опции узлов текущей схемы: «Имя · id=N» (id для омонимов).
+ * Для map-row кандидаты сверки идут первыми.
+ */
+const nodeSelectOptions = computed((): NodeSelectOption[] => {
+  const byKey = new Map<number, NodeSelectOption>();
+  for (const node of store.flatTree) {
+    const name = (node.name ?? '').trim() || `sti ${node.childKey}`;
+    byKey.set(node.childKey, {
+      value: node.childKey,
+      name,
+      label: `${name} · id=${node.childKey}`
+    });
+  }
+  if (byKey.size === 0) {
+    byKey.set(1, { value: 1, name: 'Вся инвестпрограмма', label: 'Вся инвестпрограмма · id=1' });
+  }
+  const preferred: NodeSelectOption[] = [];
+  for (const key of mapCandidateKeys.value) {
+    const opt = byKey.get(key);
+    if (opt) {
+      preferred.push({ ...opt, label: `★ ${opt.label}` });
+      byKey.delete(key);
+    }
+  }
+  const rest = [...byKey.values()].sort((a, b) =>
+    a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' })
+  );
+  return preferred.length > 0 ? [...preferred, ...rest] : rest;
+});
+
+const filteredNodeOptions = ref<NodeSelectOption[]>([]);
+
+function filterNodeOptions(val: string, update: (fn: () => void) => void): void {
+  update(() => {
+    const needle = val.trim().toLowerCase();
+    nodeOptionsFilter.value = needle;
+    if (!needle) {
+      filteredNodeOptions.value = nodeSelectOptions.value;
+      return;
+    }
+    filteredNodeOptions.value = nodeSelectOptions.value.filter((opt) => {
+      const hay = `${opt.label} ${opt.value}`.toLowerCase();
+      return hay.includes(needle);
+    });
+  });
+}
+
+const ipgSelectOptions = computed(() =>
+  store.ipgOptions.map((item) => ({
+    label: `${item.ipgKey}: ${item.name}`,
+    value: item.ipgKey
+  }))
+);
+const loadSelectOptions = computed(() =>
+  store.loads.map((item) => ({
+    label: `${item.id}: ${item.name}`,
+    value: item.id
+  }))
+);
+const ipgModel = computed({
+  get: () => store.selectedIpgKey,
+  set: (value: number | null) => {
+    void store.selectIpg(value);
+  }
+});
+const loadModel = computed({
+  get: () => store.selectedLoadKey,
+  set: (value: number | null) => {
+    store.selectLoad(value);
+  }
+});
+const canParse = computed(
+  () => store.selectedIpgKey != null && store.excelFilePath.trim().length > 0
+);
+const canReconcile = computed(
+  () => store.selectedLoadKey != null && store.selectedNetworkKey != null
+);
+
+const unmatchedColumns: QTableColumn[] = [
+  { name: 'rowNo', label: 'стр.', field: 'rowNo', align: 'right', style: 'width: 56px' },
+  { name: 'text', label: 'Раздел Excel', field: 'text', align: 'left' },
+  { name: 'status', label: 'статус', field: 'status', align: 'left', style: 'width: 140px' },
+  {
+    name: 'stiKey',
+    label: 'sti',
+    field: 'stiKey',
+    align: 'right',
+    style: 'width: 72px',
+    format: (v: number | null | undefined) => (v == null ? '—' : String(v))
+  },
+  {
+    name: 'candidates',
+    label: 'кандидаты',
+    field: 'candidateStiKeys',
+    align: 'left',
+    style: 'width: 120px',
+    format: (v: number[]) => (v?.length ? v.join(', ') : '—')
+  },
+  { name: 'actions', label: '', field: 'rowId', align: 'right', style: 'width: 140px' }
+];
 
 const selectedKeyModel = computed({
   get: () => store.selectedNodeKey,
@@ -338,6 +665,8 @@ const dialogTitle = computed(() => {
       return 'Привязать существующий узел';
     case 'move':
       return 'Перенести узел к другому родителю';
+    case 'map-row':
+      return 'Ручной map ПТСФ → узел структуры';
     default:
       return '';
   }
@@ -372,6 +701,8 @@ async function onSelectNetworkKey(key: FemsqTreeKey | null): Promise<void> {
 function openCreateNetwork(): void {
   dialogMode.value = 'create-net';
   dialogName.value = '';
+  mapCandidateKeys.value = [];
+  filteredNodeOptions.value = nodeSelectOptions.value;
   dialogRootKey.value = store.selectedNetwork?.rootKey ?? 1;
   dialogOpen.value = true;
 }
@@ -426,6 +757,8 @@ function openAttach(): void {
     return;
   }
   dialogMode.value = 'attach';
+  mapCandidateKeys.value = [];
+  filteredNodeOptions.value = nodeSelectOptions.value;
   dialogChildKey.value = null;
   dialogOpen.value = true;
 }
@@ -435,16 +768,91 @@ function openMove(): void {
     return;
   }
   dialogMode.value = 'move';
+  mapCandidateKeys.value = [];
+  filteredNodeOptions.value = nodeSelectOptions.value;
   dialogToParentKey.value = null;
   dialogOpen.value = true;
 }
 
+function openMapRow(row: ImpIpgReconcileRowDto): void {
+  dialogMode.value = 'map-row';
+  mapRowId.value = row.rowId;
+  mapCandidateKeys.value = [...(row.candidateStiKeys ?? [])];
+  filteredNodeOptions.value = nodeSelectOptions.value;
+  dialogChildKey.value = row.stiKey ?? row.candidateStiKeys[0] ?? store.selectedNodeKey;
+  dialogOpen.value = true;
+}
+
+async function onParseExcel(): Promise<void> {
+  const run = async () => {
+    try {
+      await store.parseSelectedLoad();
+      $q.notify({ type: 'positive', message: 'Excel разобран в staging' });
+    } catch (err) {
+      $q.notify({
+        type: 'negative',
+        message: err instanceof Error ? err.message : String(err)
+      });
+    }
+  };
+  if (store.selectedLoadKey != null) {
+    $q.dialog({
+      title: 'Перезаписать staging?',
+      message: 'Текущие строки impIpg сессии будут удалены и заменены разбором Excel.',
+      cancel: true,
+      persistent: true
+    }).onOk(() => {
+      void run();
+    });
+    return;
+  }
+  await run();
+}
+
+async function onReconcile(): Promise<void> {
+  try {
+    const result = await store.reconcileSelected();
+    $q.notify({
+      type: 'positive',
+      message: `Сверка: закрыто ${result.matched}, открыто ${result.open}`
+    });
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: err instanceof Error ? err.message : String(err)
+    });
+  }
+}
+
+async function onAddAlias(row: ImpIpgReconcileRowDto): Promise<void> {
+  try {
+    await store.addAliasFromRow(row);
+    $q.notify({ type: 'positive', message: 'Имя добавлено в stIpgNm' });
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: err instanceof Error ? err.message : String(err)
+    });
+  }
+}
+
 async function submitDialog(): Promise<void> {
   try {
+    if (dialogMode.value === 'map-row') {
+      const sti = Number(dialogChildKey.value);
+      if (!Number.isFinite(sti) || sti <= 0 || mapRowId.value == null) {
+        $q.notify({ type: 'warning', message: 'Выберите узел структуры' });
+        return;
+      }
+      await store.mapUnmatchedRow(mapRowId.value, sti);
+      dialogOpen.value = false;
+      $q.notify({ type: 'positive', message: 'Узел записан, сверка обновлена' });
+      return;
+    }
     if (dialogMode.value === 'attach') {
       const childKey = Number(dialogChildKey.value);
       if (!Number.isFinite(childKey) || childKey <= 0) {
-        $q.notify({ type: 'warning', message: 'Укажите stiKey ребёнка' });
+        $q.notify({ type: 'warning', message: 'Выберите существующий узел' });
         return;
       }
       if (store.selectedNodeKey != null) {
@@ -457,7 +865,7 @@ async function submitDialog(): Promise<void> {
     if (dialogMode.value === 'move') {
       const toParent = Number(dialogToParentKey.value);
       if (!Number.isFinite(toParent) || toParent <= 0) {
-        $q.notify({ type: 'warning', message: 'Укажите stiKey нового родителя' });
+        $q.notify({ type: 'warning', message: 'Выберите нового родителя' });
         return;
       }
       await store.moveSelectedToParent(toParent);
@@ -544,15 +952,43 @@ async function onDeleteNode(): Promise<void> {
 
 onMounted(() => {
   void store.fetchNetworks();
+  void store.fetchIpgOptions();
 });
 </script>
 
 <style scoped>
+.investment-structure-inner {
+  min-height: 0;
+}
+
+.investment-structure-splitter {
+  min-height: 0;
+}
+
+.fill-pane {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .investment-structure-tree {
-  min-height: 420px;
-  height: calc(100vh - 320px);
+  min-height: 120px;
   border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 4px;
   overflow: hidden;
+}
+
+.investment-structure-unmatched-table {
+  min-height: 0;
+  overflow: auto;
+}
+
+:deep(.investment-structure-split-sep) {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+:deep(.investment-structure-split-sep:hover),
+:deep(.investment-structure-split-sep:active) {
+  background: rgba(25, 118, 210, 0.35);
 }
 </style>

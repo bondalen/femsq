@@ -36,6 +36,16 @@ type Query {
   ipgPnStructure(ipgpKey: Int!): [IpgStPn!]!
   """Справочник схем реализации пункта (ags.ipgSh)."""
   ipgSchemes: [IpgSh!]!
+  """Сессии загрузки Excel годовой ИП (ags.impIpgLoad) под карточкой ipg."""
+  impIpgLoads(ipgKey: Int!): [ImpIpgLoad!]!
+  impIpgLoad(id: Int!): ImpIpgLoad
+  """Строки staging ags.impIpg; structureOnly=true — только ПТСФ (разделы)."""
+  impIpgRows(loadKey: Int!, structureOnly: Boolean): [ImpIpgRow!]!
+  impIpgRow(id: Int!): ImpIpgRow
+  """Сверка ПТСФ сессии со схемой stNet (без записи stiKey)."""
+  impIpgStructureReconcile(loadKey: Int!, stNetKey: Int!): ImpIpgReconcileResult!
+  """Gate загрузки пунктов: ПТСФ open=0 на ipg.ipgStRlSh (§3.2.1)."""
+  impIpgPointsGate(loadKey: Int!): ImpIpgPointsGateResult!
 }
 
 type Mutation {
@@ -70,6 +80,21 @@ type Mutation {
   addIpgToChain(input: AddIpgToChainInput!): InvestmentChainRelation!
   updateChainRelation(id: Int!, input: UpdateChainRelationInput!): InvestmentChainRelation!
   removeIpgFromChain(id: Int!): Boolean!
+  """Каркас загрузки годовой ИП (impIpgLoad / impIpg), C2 §3.1.6.1."""
+  createImpIpgLoad(input: CreateImpIpgLoadInput!): ImpIpgLoad!
+  updateImpIpgLoad(id: Int!, input: UpdateImpIpgLoadInput!): ImpIpgLoad!
+  deleteImpIpgLoad(id: Int!): Boolean!
+  createImpIpgRow(input: CreateImpIpgRowInput!): ImpIpgRow!
+  updateImpIpgRow(id: Int!, input: UpdateImpIpgRowInput!): ImpIpgRow!
+  deleteImpIpgRow(id: Int!): Boolean!
+  """Очистить staging сессии (перед повторным парсом); cascade parent null."""
+  clearImpIpgRows(loadKey: Int!): Int!
+  """Разбор основного листа приложения Excel → ags.impIpg (разделы S + листья L)."""
+  parseImpIpgLoad(id: Int!, filePath: String): ImpIpgParseResult!
+  """Сверка ПТСФ → stiKey; persistMatches=true записывает уникальные совпадения."""
+  reconcileImpIpgStructure(loadKey: Int!, stNetKey: Int!, persistMatches: Boolean): ImpIpgReconcileResult!
+  """Ручной map раздела ПТСФ на stiKey (clearStiKey сбрасывает)."""
+  mapImpIpgRowSti(id: Int!, stiKey: Int, clearStiKey: Boolean): ImpIpgRow!
   createOrganization(input: OgCreateRequest!): Organization!
   """Создать og + опционально org_id type=1 (БУиРГ) и/или type=2 (ИНН). ИНН только в org_id."""
   createOrganizationWithIds(input: CreateOrganizationWithIdsInput!): Organization!
@@ -392,4 +417,108 @@ type InvestmentProgramLookup {
 type InvestmentPlanGroupLookup {
   planGroupKey: Int!
   name: String!
+}
+
+"""Сессия загрузки Excel годовой ИП (ags.impIpgLoad)."""
+type ImpIpgLoad {
+  id: Int!
+  ipgKey: Int!
+  name: String!
+  filePath: String
+  note: String
+  """ISO local datetime."""
+  created: String
+}
+
+"""Строка staging разбора Excel (ags.impIpg). rowKind: S=раздел, L=стройка."""
+type ImpIpgRow {
+  id: Int!
+  loadKey: Int!
+  rowNo: Int!
+  rowKind: String!
+  text: String
+  parentKey: Int
+  stiKey: Int
+  ctx: String
+}
+
+input CreateImpIpgLoadInput {
+  ipgKey: Int!
+  name: String!
+  filePath: String
+  note: String
+}
+
+input UpdateImpIpgLoadInput {
+  name: String!
+  filePath: String
+  note: String
+}
+
+input CreateImpIpgRowInput {
+  loadKey: Int!
+  rowNo: Int!
+  """S | L"""
+  rowKind: String!
+  text: String
+  parentKey: Int
+  stiKey: Int
+  ctx: String
+}
+
+input UpdateImpIpgRowInput {
+  rowNo: Int
+  rowKind: String
+  text: String
+  parentKey: Int
+  stiKey: Int
+  """Сбросить stiKey в NULL (игнорировать stiKey)."""
+  clearStiKey: Boolean
+  ctx: String
+}
+
+"""Итог парсера Excel годовой ИП → staging."""
+type ImpIpgParseResult {
+  loadKey: Int!
+  sheetName: String!
+  filePath: String!
+  sectionCount: Int!
+  leafCount: Int!
+  totalRows: Int!
+}
+
+"""Строка ПТСФ после сверки со схемой."""
+type ImpIpgReconcileRow {
+  rowId: Int!
+  rowNo: Int!
+  text: String
+  stiKey: Int
+  """MATCHED | NEEDS_ALIAS | PATH_MISMATCH | HOMONYM | UNMATCHED | MANUAL"""
+  status: String!
+  candidateStiKeys: [Int!]!
+  pathMatched: Boolean!
+  nameInPool: Boolean!
+  """Готово к «+» / можно убрать из вкладки «не сопоставлено»."""
+  closed: Boolean!
+}
+
+"""Итог сверки ПТСФ."""
+type ImpIpgReconcileResult {
+  loadKey: Int!
+  stNetKey: Int!
+  matched: Int!
+  open: Int!
+  rows: [ImpIpgReconcileRow!]!
+}
+
+"""Gate перед bulk пунктов: ready=true только при закрытом ПТСФ и заданном ipgStRlSh."""
+type ImpIpgPointsGateResult {
+  loadKey: Int!
+  ipgKey: Int!
+  stNetKey: Int
+  sectionCount: Int!
+  openCount: Int!
+  ready: Boolean!
+  errors: [String!]!
+  openRowIds: [Int!]!
 }

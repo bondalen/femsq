@@ -66,7 +66,9 @@ import com.femsq.database.dao.JdbcRaFtStDao;
 import com.femsq.database.dao.JdbcRaColMapDao;
 import com.femsq.database.dao.JdbcRaSheetConfDao;
 import com.femsq.database.dao.IpgLeavesDao;
+import com.femsq.database.dao.ImpIpgLoadDao;
 import com.femsq.database.dao.JdbcIpgLeavesDao;
+import com.femsq.database.dao.JdbcImpIpgLoadDao;
 import com.femsq.database.dao.JdbcStIpgStructureDao;
 import com.femsq.database.dao.JdbcStNetworkDao;
 import com.femsq.database.dao.OgAgDao;
@@ -157,11 +159,17 @@ import com.femsq.database.service.DefaultRaFtSnService;
 import com.femsq.database.service.DefaultRaFtStService;
 import com.femsq.database.service.DefaultRaColMapService;
 import com.femsq.database.service.DefaultRaSheetConfService;
+import com.femsq.database.service.DefaultImpIpgLoadService;
+import com.femsq.database.service.DefaultImpIpgPointsGateService;
+import com.femsq.database.service.DefaultImpIpgReconcileService;
 import com.femsq.database.service.DefaultIpgLeavesService;
 import com.femsq.database.service.DefaultStIpgStructureService;
 import com.femsq.database.service.DefaultStNetworkService;
 import com.femsq.database.service.IpgChainRelationService;
 import com.femsq.database.service.IpgChainService;
+import com.femsq.database.service.ImpIpgLoadService;
+import com.femsq.database.service.ImpIpgPointsGateService;
+import com.femsq.database.service.ImpIpgReconcileService;
 import com.femsq.database.service.IpgLeavesService;
 import com.femsq.database.service.InvestmentPlanGroupService;
 import com.femsq.database.service.InvestmentProgramService;
@@ -626,6 +634,13 @@ public class DatabaseModuleConfiguration {
     }
 
     @Bean
+    public ImpIpgLoadDao impIpgLoadDao(
+            ConnectionFactory connectionFactory,
+            DatabaseConfigurationService configurationService) {
+        return new JdbcImpIpgLoadDao(connectionFactory, configurationService);
+    }
+
+    @Bean
     public InvestmentProgramDao investmentProgramDao(ConnectionFactory connectionFactory, DatabaseConfigurationService configurationService) {
         return new JdbcInvestmentProgramDao(connectionFactory, configurationService);
     }
@@ -659,6 +674,29 @@ public class DatabaseModuleConfiguration {
     @Bean
     public IpgLeavesService ipgLeavesService(IpgLeavesDao ipgLeavesDao) {
         return new DefaultIpgLeavesService(ipgLeavesDao);
+    }
+
+    @Bean
+    public ImpIpgLoadService impIpgLoadService(ImpIpgLoadDao impIpgLoadDao) {
+        return new DefaultImpIpgLoadService(impIpgLoadDao);
+    }
+
+    @Bean
+    public ImpIpgReconcileService impIpgReconcileService(
+            ImpIpgLoadDao impIpgLoadDao,
+            StIpgStructureDao stIpgStructureDao) {
+        return new DefaultImpIpgReconcileService(impIpgLoadDao, stIpgStructureDao);
+    }
+
+    /**
+     * Gate загрузки пунктов из staging (§3.2.1).
+     */
+    @Bean
+    public ImpIpgPointsGateService impIpgPointsGateService(
+            ImpIpgLoadDao impIpgLoadDao,
+            IpgLeavesDao ipgLeavesDao,
+            ImpIpgReconcileService impIpgReconcileService) {
+        return new DefaultImpIpgPointsGateService(impIpgLoadDao, ipgLeavesDao, impIpgReconcileService);
     }
 
     @Bean
