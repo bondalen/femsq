@@ -3,7 +3,7 @@
     "metadata": {
       "version": "1.0.0",
       "status": "in-progress",
-      "lastUpdated": "2026-11-23"
+      "lastUpdated": "2026-11-24"
     },
     "sessions": [
       {
@@ -12,7 +12,7 @@
           "chat-attributes": {
             "id": "chat-2026-11-20-001",
             "created": "2026-11-20",
-            "lastUpdated": "2026-11-23",
+            "lastUpdated": "2026-11-24",
             "owner": "Александр",
             "status": "in-progress",
             "priority": "high",
@@ -39,6 +39,48 @@
             }
           },
           "entries": [
+            {
+              "log": {
+                "displayName": "C2 O1: контракт Excel load / ПТСФ / impIpgLoad (success). № log-2026-11-24-001",
+                "log-attributes": {
+                  "id": "log-2026-11-24-001",
+                  "timestamp": "2026-11-24T13:45:00+03:00",
+                  "level": "info",
+                  "effort": "2.5h",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "O1",
+                    "impIpgLoad",
+                    "ПТСФ",
+                    "вердикт"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/project/business-processes.md",
+                      "docs/project/glossary.md"
+                    ],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Зафиксирован вердикт O1 Excel load в документации",
+                    "details": "Контракт notes/26-1124-c2-o1-excel-load-contract.md: impIpgLoad/impIpg/ПТСФ; stNet только ipg.ipgStRlSh; сверка имя+OR путь; gate; этап 2 Monf→UtPl; В10–В12. План C2 0.11.0 (§3.1.5✅ → next 3.1.6). Roadmap 0.2.5. BP P2 1.1/1.2; глоссарий; Q4 ERROR без stiKey.",
+                    "outcome": "Документация синхронизирована; код сверки не начат. Next §3.1.6 реализация",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1124-c2-o1-excel-load-contract.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+                    ]
+                  }
+                ]
+              }
+            },
             {
               "log": {
                 "displayName": "Structure UI: FemsqCardStrip + TreeList (success). № log-2026-11-23-013",
