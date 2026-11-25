@@ -18,6 +18,13 @@ public interface CstAgPnDao {
     Optional<CstAgPn> findById(int cstapKey);
 
     /**
+     * Точный lookup по коду {@code cstapIpgPnN} (для bulk apply пунктов ИП).
+     *
+     * @param code код САК из Excel / staging
+     */
+    Optional<CstAgPn> findByCodeExact(String code);
+
+    /**
      * Возвращает САК для агента на стройке, упорядоченные по коду.
      */
     List<CstAgPn> findByCstAg(int cstaKey);

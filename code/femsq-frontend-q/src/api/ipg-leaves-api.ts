@@ -24,13 +24,15 @@ export interface IpgFullDto {
   ipgYyYear: number | null;
 }
 
-/** Пункт ИП. */
+/** Пункт ИП (+ код / стройка / агент из САК). */
 export interface IpgPnDto {
   ipgpKey: number;
   ipgpIpg: number;
   ipgpNum: number | null;
   ipgpCstAgPn: number;
   cstAgPnCode: string | null;
+  cstAgPnCstName: string | null;
+  cstAgPnOgName: string | null;
   ipgpSmTtl: number | null;
   ipgpSmWrk: number | null;
   ipgpSmEqu: number | null;
@@ -119,6 +121,8 @@ const IPG_PN_FIELDS = `
   ipgpNum
   ipgpCstAgPn
   cstAgPnCode
+  cstAgPnCstName
+  cstAgPnOgName
   ipgpSmTtl
   ipgpSmWrk
   ipgpSmEqu

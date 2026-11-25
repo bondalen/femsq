@@ -160,7 +160,10 @@ import com.femsq.database.service.DefaultRaFtStService;
 import com.femsq.database.service.DefaultRaColMapService;
 import com.femsq.database.service.DefaultRaSheetConfService;
 import com.femsq.database.service.DefaultImpIpgLoadService;
+import com.femsq.database.service.DefaultImpIpgPointsApplyService;
 import com.femsq.database.service.DefaultImpIpgPointsGateService;
+import com.femsq.database.service.DefaultImpIpgShResolveService;
+import com.femsq.database.service.DefaultImpIpgStiInheritService;
 import com.femsq.database.service.DefaultImpIpgReconcileService;
 import com.femsq.database.service.DefaultIpgLeavesService;
 import com.femsq.database.service.DefaultStIpgStructureService;
@@ -168,7 +171,10 @@ import com.femsq.database.service.DefaultStNetworkService;
 import com.femsq.database.service.IpgChainRelationService;
 import com.femsq.database.service.IpgChainService;
 import com.femsq.database.service.ImpIpgLoadService;
+import com.femsq.database.service.ImpIpgPointsApplyService;
 import com.femsq.database.service.ImpIpgPointsGateService;
+import com.femsq.database.service.ImpIpgShResolveService;
+import com.femsq.database.service.ImpIpgStiInheritService;
 import com.femsq.database.service.ImpIpgReconcileService;
 import com.femsq.database.service.IpgLeavesService;
 import com.femsq.database.service.InvestmentPlanGroupService;
@@ -697,6 +703,44 @@ public class DatabaseModuleConfiguration {
             IpgLeavesDao ipgLeavesDao,
             ImpIpgReconcileService impIpgReconcileService) {
         return new DefaultImpIpgPointsGateService(impIpgLoadDao, ipgLeavesDao, impIpgReconcileService);
+    }
+
+    /**
+     * Наследование stiKey листьев от родителя-раздела (§3.2.2).
+     */
+    @Bean
+    public ImpIpgStiInheritService impIpgStiInheritService(ImpIpgLoadDao impIpgLoadDao) {
+        return new DefaultImpIpgStiInheritService(impIpgLoadDao);
+    }
+
+    /**
+     * Резолв ipgpSh: prev-IP / else 4 / дубли (§3.2.3).
+     */
+    @Bean
+    public ImpIpgShResolveService impIpgShResolveService(
+            ImpIpgLoadDao impIpgLoadDao,
+            IpgLeavesDao ipgLeavesDao) {
+        return new DefaultImpIpgShResolveService(impIpgLoadDao, ipgLeavesDao);
+    }
+
+    /**
+     * Bulk apply пунктов из staging → ipgPn+ipgStPn (§3.2.4).
+     */
+    @Bean
+    public ImpIpgPointsApplyService impIpgPointsApplyService(
+            ImpIpgLoadDao impIpgLoadDao,
+            IpgLeavesDao ipgLeavesDao,
+            CstAgPnDao cstAgPnDao,
+            ImpIpgPointsGateService impIpgPointsGateService,
+            ImpIpgStiInheritService impIpgStiInheritService,
+            ImpIpgShResolveService impIpgShResolveService) {
+        return new DefaultImpIpgPointsApplyService(
+                impIpgLoadDao,
+                ipgLeavesDao,
+                cstAgPnDao,
+                impIpgPointsGateService,
+                impIpgStiInheritService,
+                impIpgShResolveService);
     }
 
     @Bean

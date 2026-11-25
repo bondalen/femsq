@@ -1,0 +1,6 @@
+Сессия: 26-1125_11-32
+Сервер/БД:
+ProductVersion:
+need_cnt / found_cnt / missing_on_prod_cnt:
+Файлы TSV (имена):
+Комментарий:

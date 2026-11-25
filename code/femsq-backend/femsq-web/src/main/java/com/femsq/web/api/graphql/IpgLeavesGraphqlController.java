@@ -187,6 +187,8 @@ public class IpgLeavesGraphqlController {
                 pn.ipgpNum(),
                 pn.ipgpCstAgPn(),
                 pn.cstAgPnCode(),
+                pn.cstAgPnCstName(),
+                pn.cstAgPnOgName(),
                 pn.ipgpSmTtl(),
                 pn.ipgpSmWrk(),
                 pn.ipgpSmEqu(),

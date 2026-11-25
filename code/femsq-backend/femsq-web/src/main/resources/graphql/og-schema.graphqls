@@ -46,6 +46,10 @@ type Query {
   impIpgStructureReconcile(loadKey: Int!, stNetKey: Int!): ImpIpgReconcileResult!
   """Gate загрузки пунктов: ПТСФ open=0 на ipg.ipgStRlSh (§3.2.1)."""
   impIpgPointsGate(loadKey: Int!): ImpIpgPointsGateResult!
+  """Наследование stiKey листьев от родителя-раздела; дыры без записи (§3.2.2)."""
+  impIpgStiInherit(loadKey: Int!): ImpIpgStiInheritResult!
+  """Резолв ipgpSh: prev-IP / else 4 / дубли→схемы; без записи (§3.2.3)."""
+  impIpgShResolve(loadKey: Int!, previousIpgKey: Int): ImpIpgShResolveResult!
 }
 
 type Mutation {
@@ -95,6 +99,8 @@ type Mutation {
   reconcileImpIpgStructure(loadKey: Int!, stNetKey: Int!, persistMatches: Boolean): ImpIpgReconcileResult!
   """Ручной map раздела ПТСФ на stiKey (clearStiKey сбрасывает)."""
   mapImpIpgRowSti(id: Int!, stiKey: Int, clearStiKey: Boolean): ImpIpgRow!
+  """Bulk apply листьев → ipgPn+ipgStPn (§3.2.4). dryRun=true — только валидация."""
+  applyImpIpgPoints(loadKey: Int!, previousIpgKey: Int, dryRun: Boolean): ImpIpgPointsApplyResult!
   createOrganization(input: OgCreateRequest!): Organization!
   """Создать og + опционально org_id type=1 (БУиРГ) и/или type=2 (ИНН). ИНН только в org_id."""
   createOrganizationWithIds(input: CreateOrganizationWithIdsInput!): Organization!
@@ -330,7 +336,12 @@ type IpgPn {
   ipgpIpg: Int!
   ipgpNum: Int
   ipgpCstAgPn: Int!
+  """Код САК (cstapIpgPnN)."""
   cstAgPnCode: String
+  """Наименование стройки (cstapCstName)."""
+  cstAgPnCstName: String
+  """Агент (cstapOgName)."""
+  cstAgPnOgName: String
   ipgpSmTtl: Float
   ipgpSmWrk: Float
   ipgpSmEqu: Float
@@ -521,4 +532,72 @@ type ImpIpgPointsGateResult {
   ready: Boolean!
   errors: [String!]!
   openRowIds: [Int!]!
+}
+
+"""Лист без резолвленного sti родителя (дыра §3.2.2)."""
+type ImpIpgStiInheritLeaf {
+  rowId: Int!
+  rowNo: Int!
+  text: String
+  parentKey: Int
+  resolvedStiKey: Int
+  """NO_PARENT | PARENT_MISSING | PARENT_NOT_SECTION | PARENT_STI_MISSING"""
+  holeReason: String
+}
+
+"""Превью наследования sti L←S: ready при leafCount>0 и holeCount=0; без записи staging/домена."""
+type ImpIpgStiInheritResult {
+  loadKey: Int!
+  ipgKey: Int!
+  leafCount: Int!
+  readyCount: Int!
+  holeCount: Int!
+  ready: Boolean!
+  errors: [String!]!
+  holes: [ImpIpgStiInheritLeaf!]!
+}
+
+"""Лист с ошибкой или (в будущем) деталью резолва ipgpSh."""
+type ImpIpgShResolveLeaf {
+  rowId: Int!
+  rowNo: Int!
+  text: String
+  cstAgPnCode: String
+  resolvedSh: Int
+  """FROM_PREV | DEFAULT_4 | FREE_POOL"""
+  source: String
+  """MISSING_CSTAGPN | NO_FREE_SCHEMES | UNIQUE_CSTAGPN_SH"""
+  errorReason: String
+}
+
+"""Итог apply пунктов из staging (§3.2.4 / §3.2.7 partial)."""
+type ImpIpgPointsApplyResult {
+  loadKey: Int!
+  ipgKey: Int!
+  previousIpgKey: Int
+  dryRun: Boolean!
+  leafCount: Int!
+  appliedCount: Int!
+  """Уже были в домене (unique) — не ошибка (§3.2.7)."""
+  skippedAlreadyCount: Int!
+  ready: Boolean!
+  errors: [String!]!
+  problemRowIds: [Int!]!
+  createdPnKeys: [Int!]!
+}
+
+"""Превью ipgpSh (§5.2): ready при errorCount=0; без записи в домен."""
+type ImpIpgShResolveResult {
+  loadKey: Int!
+  ipgKey: Int!
+  previousIpgKey: Int
+  leafCount: Int!
+  resolvedCount: Int!
+  errorCount: Int!
+  fromPrevCount: Int!
+  default4Count: Int!
+  freePoolCount: Int!
+  ready: Boolean!
+  errors: [String!]!
+  problemLeaves: [ImpIpgShResolveLeaf!]!
 }

@@ -135,7 +135,7 @@ Apply на FishEye (fn-path) + UtPl CHECK + VERIFY + замер `spMstrg_2606` (
 | [1113 обзор треков](./chat-plan-26-1113-deploy-tracks-overview.md) | — | Предшественник этой карты |
 | 0112, 0119, 0310 и другие планы до 2026-04, [0604 v1](./chat-plan-26-0604-spMstrg-2606.md) | — | Архив |
 | [C1 Инвентаризация Access](./chat-plan-26-1117-c1-access-inventory.md) | Трек C1 | ✅ completed (2026-11-17): каталог+карта; R1.1=C2, R1.2=C3 |
-| [C2 / D1.1 ввод ИП и планов](./chat-plan-26-1120-c2-d11-ipg-plans.md) | Трек C2 · веха D1.1 | 🔶 in-progress (0.11.0): O1 Structure CRUD✅; контракт load/ПТСФ/impIpgLoad ✅; next §3.1.6→3.2; затем O2 / LdM |
+| [C2 / D1.1 ввод ИП и планов](./chat-plan-26-1120-c2-d11-ipg-plans.md) | Трек C2 · веха D1.1 | 🔶 in-progress (0.11.25): §3.2.8 UX ✅ TreeList; next §3.4 приёмка O1 |
 | [1117 FemsqTable legacy-гриды](./chat-plan-26-1117-femsq-table-legacy-grids.md) | UI / feQuLib (фаза C манифеста 02-8) | ✅ completed (2026-11-17): org / цепочки / ревизии → FemsqTable |
 | [Выкладка R1.x](./chat-plan-26-1117-release-r1x.md) | Трек R | ⏸ paused (2026-11-20): §1 PASS, §2 пакет ✅ (проба процедуры, на прод не везти); §3–5 → план «Переключение R1» |
 

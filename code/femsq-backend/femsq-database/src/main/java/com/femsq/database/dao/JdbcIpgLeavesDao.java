@@ -5,6 +5,7 @@ import com.femsq.database.connection.ConnectionFactory;
 import com.femsq.database.exception.DaoException;
 import com.femsq.database.model.IpgFull;
 import com.femsq.database.model.IpgPn;
+import com.femsq.database.model.IpgPnBulkDraft;
 import com.femsq.database.model.IpgSh;
 import com.femsq.database.model.IpgStPn;
 import java.math.BigDecimal;
@@ -226,6 +227,7 @@ public class JdbcIpgLeavesDao implements IpgLeavesDao {
 
     private static final String PN_SELECT = ""
             + "SELECT p.ipgpKey, p.ipgpIpg, p.ipgpNum, p.ipgpCstAgPn, c.cstapIpgPnN, "
+            + "  c.cstapCstName, c.cstapOgName, "
             + "  p.ipgpSmTtl, p.ipgpSmWrk, p.ipgpSmEqu, p.ipgpSmOth, p.ipgpSmAgFee, "
             + "  p.ipgpCostAdjust, p.ipgpSmReserv, p.ipgpTskCms, p.ipgpSh, s.ipgsNm "
             + "FROM %s p "
@@ -324,6 +326,105 @@ public class JdbcIpgLeavesDao implements IpgLeavesDao {
             }
             throw new DaoException("Не удалось создать ipgPn", exception);
         }
+    }
+
+    @Override
+    public List<Integer> bulkCreatePnsWithSt(int ipgKey, List<IpgPnBulkDraft> drafts) {
+        Objects.requireNonNull(drafts, "drafts");
+        if (drafts.isEmpty()) {
+            return List.of();
+        }
+        String insertPn = "INSERT INTO " + q("ipgPn")
+                + " (ipgpIpg, ipgpNum, ipgpCstAgPn, ipgpSmTtl, ipgpSmWrk, ipgpSmEqu, ipgpSmOth, "
+                + "  ipgpSmAgFee, ipgpCostAdjust, ipgpSmReserv, ipgpTskCms, ipgpSh) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String insertSt = "INSERT INTO " + q("ipgStPn") + " (ipgspSt, ipgspPn) VALUES (?, ?)";
+        String checkUnique = "SELECT ipgpKey FROM " + q("ipgPn")
+                + " WHERE ipgpIpg=? AND ipgpCstAgPn=? AND ipgpSh=?";
+        List<Integer> created = new ArrayList<>(drafts.size());
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                for (IpgPnBulkDraft draft : drafts) {
+                    try (PreparedStatement check = connection.prepareStatement(checkUnique)) {
+                        check.setInt(1, ipgKey);
+                        check.setInt(2, draft.cstAgPnKey());
+                        check.setInt(3, draft.ipgpSh());
+                        try (ResultSet rs = check.executeQuery()) {
+                            if (rs.next()) {
+                                throw new IllegalStateException(
+                                        "Дубликат unique (ipg,cstAgPn,sh): уже ipgpKey="
+                                                + rs.getInt(1)
+                                                + " (stagingRow=" + draft.stagingRowId() + ")");
+                            }
+                        }
+                    }
+                    ensureStIpgExists(connection, draft.stiKey());
+                    int pnKey;
+                    try (PreparedStatement statement = connection.prepareStatement(
+                            insertPn, Statement.RETURN_GENERATED_KEYS)) {
+                        bindPnParams(
+                                statement,
+                                ipgKey,
+                                draft.ipgpNum(),
+                                draft.cstAgPnKey(),
+                                draft.ipgpSmTtl(),
+                                draft.ipgpSmWrk(),
+                                draft.ipgpSmEqu(),
+                                draft.ipgpSmOth(),
+                                null,
+                                null,
+                                null,
+                                draft.ipgpTskCms(),
+                                draft.ipgpSh());
+                        statement.executeUpdate();
+                        pnKey = readGeneratedKey(statement, "ipgpKey");
+                    }
+                    try (PreparedStatement statement = connection.prepareStatement(insertSt)) {
+                        statement.setInt(1, draft.stiKey());
+                        statement.setInt(2, pnKey);
+                        statement.executeUpdate();
+                    }
+                    created.add(pnKey);
+                }
+                connection.commit();
+                log.log(Level.INFO, "bulkCreatePnsWithSt ipg={0} created={1}",
+                        new Object[]{ipgKey, created.size()});
+                return List.copyOf(created);
+            } catch (Exception exception) {
+                connection.rollback();
+                if (exception instanceof IllegalStateException illegalStateException) {
+                    throw illegalStateException;
+                }
+                if (exception instanceof RuntimeException runtimeException) {
+                    throw runtimeException;
+                }
+                if (exception instanceof SQLException sqlException && isUniqueViolation(sqlException)) {
+                    throw new IllegalStateException(
+                            "Нарушение unique (ipg,cstAgPn,sh) при bulk apply",
+                            sqlException);
+                }
+                throw new DaoException("Не удалось выполнить bulk apply ipgPn+ipgStPn для ipg=" + ipgKey,
+                        exception);
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw new DaoException("Не удалось выполнить bulk apply ipgPn+ipgStPn для ipg=" + ipgKey,
+                    exception);
+        }
+    }
+
+    @Override
+    public int createPnWithSt(int ipgKey, IpgPnBulkDraft draft) {
+        Objects.requireNonNull(draft, "draft");
+        List<Integer> keys = bulkCreatePnsWithSt(ipgKey, List.of(draft));
+        if (keys.isEmpty()) {
+            throw new DaoException("createPnWithSt: пустой результат для stagingRow=" + draft.stagingRowId());
+        }
+        return keys.get(0);
     }
 
     @Override
@@ -690,6 +791,8 @@ public class JdbcIpgLeavesDao implements IpgLeavesDao {
                 resultSet.getObject("ipgpNum") == null ? null : resultSet.getInt("ipgpNum"),
                 resultSet.getInt("ipgpCstAgPn"),
                 resultSet.getNString("cstapIpgPnN"),
+                resultSet.getNString("cstapCstName"),
+                resultSet.getNString("cstapOgName"),
                 resultSet.getBigDecimal("ipgpSmTtl"),
                 resultSet.getBigDecimal("ipgpSmWrk"),
                 resultSet.getBigDecimal("ipgpSmEqu"),

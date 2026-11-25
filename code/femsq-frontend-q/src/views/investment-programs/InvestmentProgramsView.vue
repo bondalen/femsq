@@ -1,56 +1,69 @@
 <template>
-  <QPage class="investment-programs-view q-pa-md" data-test="investment-programs-view">
-    <div class="row items-center q-gutter-md q-mb-md">
-      <div>
-        <div class="text-h5">Инвестпрограммы</div>
-        <div class="text-caption text-grey-7">
-          Leaves: шапка ИП · пункты как корни дерева · Structure; Планы/Лимиты — позже (1.3)
-        </div>
+  <QPage class="investment-programs-view q-pa-none" data-test="investment-programs-view">
+    <div class="absolute-full q-px-md q-pt-sm q-pb-sm column no-wrap investment-programs-inner">
+      <div class="row items-center q-gutter-sm q-mb-xs shrink-0 no-wrap">
+        <div class="text-subtitle1 text-weight-medium ellipsis">Инвестпрограммы</div>
+        <QInput
+          v-model.number="yearFilterModel"
+          dense
+          outlined
+          type="number"
+          label="Год"
+          clearable
+          class="investment-programs-filter-year"
+          data-test="investment-programs-year"
+          @keyup.enter="onRefresh"
+        />
+        <QInput
+          v-model="store.nameFilter"
+          dense
+          outlined
+          label="Имя"
+          clearable
+          class="investment-programs-filter-name"
+          data-test="investment-programs-name"
+          @keyup.enter="onRefresh"
+        />
+        <QSpace />
+        <QBtn
+          flat
+          dense
+          round
+          icon="refresh"
+          :loading="store.loadingPrograms || store.loadingPoints"
+          :disable="store.mutating"
+          aria-label="Обновить"
+          data-test="investment-programs-refresh"
+          @click="onRefresh"
+        />
       </div>
-      <QSpace />
-      <QBtn
-        flat
-        round
-        icon="refresh"
-        :loading="store.loadingPrograms || store.loadingPoints"
-        :disable="store.mutating"
-        aria-label="Обновить"
-        data-test="investment-programs-refresh"
-        @click="onRefresh"
-      />
-    </div>
 
-    <QBanner v-if="store.error" class="bg-negative text-white q-mb-md" rounded>
-      {{ store.error }}
-    </QBanner>
+      <QBanner v-if="store.error" class="bg-negative text-white q-mb-xs shrink-0" rounded>
+        {{ store.error }}
+      </QBanner>
 
-    <div class="row q-col-gutter-md">
-      <!-- Список ИП -->
-      <div class="col-12 col-md-3">
-        <div class="row q-gutter-sm q-mb-sm items-end">
-          <QInput
-            v-model.number="yearFilterModel"
-            dense
-            type="number"
-            label="Год"
-            clearable
-            class="col"
-            data-test="investment-programs-year"
-            @keyup.enter="onRefresh"
-          />
-          <QInput
-            v-model="store.nameFilter"
-            dense
-            label="Имя"
-            clearable
-            class="col"
-            data-test="investment-programs-name"
-            @keyup.enter="onRefresh"
-          />
-        </div>
-        <div class="row items-center q-mb-sm">
-          <div class="text-subtitle2">ИП</div>
-          <QSpace />
+      <FemsqCardStrip
+        class="q-mb-xs shrink-0"
+        :items="store.programs"
+        item-key="ipgKey"
+        :selected-key="store.selectedIpgKey"
+        :loading="store.loadingPrograms"
+        :disabled="store.mutating"
+        dense
+        test-id-prefix="investment-programs-card"
+        data-test="investment-programs-strip"
+        @update:selected-key="onSelectNetworkKey"
+      >
+        <template #item="{ item }">
+          <div class="text-weight-medium">
+            {{ item.year ?? '?' }} №{{ item.ipgNum }} · {{ item.ipgNm }}
+          </div>
+          <div class="text-caption investment-programs-muted">
+            {{ item.ogName || `og=${item.ipgOg}` }} · {{ item.stNetName || `stNet=${item.ipgStRlSh}` }}
+          </div>
+        </template>
+        <template #empty>Нет ИП — измените фильтр или создайте</template>
+        <template #trailing>
           <QBtn
             flat
             dense
@@ -61,97 +74,145 @@
             data-test="investment-programs-create"
             @click="openCreateProgram"
           />
-        </div>
-        <QList bordered class="rounded-borders programs-list" data-test="investment-programs-list">
-          <QItem
-            v-for="p in store.programs"
-            :key="p.ipgKey"
-            clickable
-            :active="p.ipgKey === store.selectedIpgKey"
-            @click="onSelectProgram(p.ipgKey)"
-          >
-            <QItemSection>
-              <QItemLabel>{{ p.year ?? '?' }} №{{ p.ipgNum }} · {{ p.ipgNm }}</QItemLabel>
-              <QItemLabel caption>
-                {{ p.ogName || `og=${p.ipgOg}` }} · {{ p.stNetName || `stNet=${p.ipgStRlSh}` }}
-              </QItemLabel>
-            </QItemSection>
-          </QItem>
-          <QItem v-if="!store.loadingPrograms && store.programs.length === 0">
-            <QItemSection class="text-grey-7">Нет ИП</QItemSection>
-          </QItem>
-        </QList>
-      </div>
+        </template>
+      </FemsqCardStrip>
 
-      <!-- Шапка + дерево + detail -->
-      <div class="col-12 col-md-9">
-        <template v-if="store.selectedProgram">
-          <div class="text-subtitle1 q-mb-sm">Шапка ИП {{ store.selectedProgram.ipgKey }}</div>
-          <div class="row q-col-gutter-sm q-mb-md">
-            <div class="col-12 col-sm-4">
-              <QInput v-model="headerForm.ipgNm" dense label="Наименование" :disable="store.mutating" />
-            </div>
-            <div class="col-6 col-sm-2">
-              <QInput
-                v-model.number="headerForm.ipgNum"
-                dense
-                type="number"
-                label="№"
-                :disable="store.mutating"
-              />
-            </div>
-            <div class="col-6 col-sm-2">
-              <QInput
-                v-model.number="headerForm.ipgYy"
-                dense
-                type="number"
-                label="yKey (год)"
-                :hint="store.selectedProgram.year ? `год ${store.selectedProgram.year}` : undefined"
-                :disable="store.mutating"
-              />
-            </div>
-            <div class="col-6 col-sm-2">
-              <QInput v-model="headerForm.ipgStr" dense type="date" label="Начало" :disable="store.mutating" />
-            </div>
-            <div class="col-6 col-sm-2">
-              <QInput
-                v-model="headerForm.ipgEnd"
-                dense
-                type="date"
-                label="Окончание"
-                clearable
-                :disable="store.mutating"
-              />
-            </div>
-            <div class="col-12 col-sm-6">
-              <QSelect
-                v-model="headerForm.ipgStRlSh"
-                dense
-                emit-value
-                map-options
-                :options="stNetOptions"
-                label="Структура (stNet)"
-                :disable="store.mutating"
-              />
-            </div>
-            <div class="col-12 col-sm-6 row items-center q-gutter-sm">
-              <QBtn
-                color="primary"
-                unelevated
-                no-caps
-                label="Сохранить шапку"
-                :loading="store.mutating"
-                data-test="investment-programs-save-header"
-                @click="onSaveHeader"
-              />
-            </div>
-          </div>
+      <template v-if="store.selectedProgram">
+        <QTabs
+          v-model="mainTab"
+          dense
+          class="text-primary shrink-0"
+          data-test="investment-programs-tabs"
+        >
+          <QTab name="general" label="Общее" data-test="investment-programs-tab-general" />
+          <QTab name="points" label="Пункты" data-test="investment-programs-tab-points" />
+          <QTab
+            name="load-points"
+            label="Загрузка пунктов"
+            data-test="investment-programs-tab-load-points"
+          />
+          <QTab
+            name="plan-groups"
+            label="Группы планов"
+            data-test="investment-programs-tab-plan-groups"
+          />
+          <QTab name="plans" label="Планы" data-test="investment-programs-tab-plans" />
+          <QTab
+            name="load-utpl"
+            label="Загрузка ут. планов"
+            data-test="investment-programs-tab-load-utpl"
+          />
+        </QTabs>
 
-          <div class="row q-col-gutter-md">
-            <div class="col-12 col-lg-6">
-              <div class="row items-center q-mb-sm">
-                <div class="text-subtitle2">Пункты (дерево)</div>
-                <QSpace />
+        <QTabPanels v-model="mainTab" animated class="bg-transparent col investment-programs-panels">
+          <!-- Общее: шапка ИП -->
+          <QTabPanel name="general" class="q-pa-none column fill-pane">
+            <div class="text-subtitle2 q-mb-sm">
+              Шапка ИП {{ store.selectedProgram.ipgKey }}
+            </div>
+            <div class="row q-col-gutter-sm">
+              <div class="col-12 col-sm-4">
+                <QInput
+                  v-model="headerForm.ipgNm"
+                  dense
+                  outlined
+                  label="Наименование"
+                  :disable="store.mutating"
+                />
+              </div>
+              <div class="col-6 col-sm-2">
+                <QInput
+                  v-model.number="headerForm.ipgNum"
+                  dense
+                  outlined
+                  type="number"
+                  label="№"
+                  :disable="store.mutating"
+                />
+              </div>
+              <div class="col-6 col-sm-2">
+                <QInput
+                  v-model.number="headerForm.ipgYy"
+                  dense
+                  outlined
+                  type="number"
+                  label="yKey (год)"
+                  :hint="store.selectedProgram.year ? `год ${store.selectedProgram.year}` : undefined"
+                  :disable="store.mutating"
+                />
+              </div>
+              <div class="col-6 col-sm-2">
+                <QInput
+                  v-model="headerForm.ipgStr"
+                  dense
+                  outlined
+                  type="date"
+                  label="Начало"
+                  :disable="store.mutating"
+                />
+              </div>
+              <div class="col-6 col-sm-2">
+                <QInput
+                  v-model="headerForm.ipgEnd"
+                  dense
+                  outlined
+                  type="date"
+                  label="Окончание"
+                  clearable
+                  :disable="store.mutating"
+                />
+              </div>
+              <div class="col-12 col-sm-6">
+                <QSelect
+                  v-model="headerForm.ipgStRlSh"
+                  dense
+                  outlined
+                  emit-value
+                  map-options
+                  :options="stNetOptions"
+                  label="Структура (stNet)"
+                  :disable="store.mutating"
+                />
+              </div>
+              <div class="col-12 col-sm-6 row items-center q-gutter-sm">
+                <QBtn
+                  color="primary"
+                  unelevated
+                  no-caps
+                  label="Сохранить шапку"
+                  :loading="store.mutating"
+                  data-test="investment-programs-save-header"
+                  @click="onSaveHeader"
+                />
+              </div>
+            </div>
+          </QTabPanel>
+
+          <!-- Пункты: FemsqTreeList + контекстная панель (§3.2.8.4) -->
+          <QTabPanel name="points" class="q-pa-none column fill-pane" data-test="investment-programs-points-panel">
+            <div v-if="store.loadingPoints" class="text-grey-7 q-pa-sm col">Загрузка пунктов…</div>
+            <FemsqTreeList
+              v-else
+              class="leaves-tree col"
+              title="Пункты"
+              :nodes="store.treeNodes"
+              node-key="key"
+              children-key="children"
+              leaf-key="leaf"
+              header-level="pn"
+              :column-sets="leavesColumnSets"
+              expand-on-click
+              fill
+              filter-mode="roots"
+              v-model:filter="pointFilterModel"
+              v-model:column-filters="pointColumnFilters"
+              v-model:filters-visible="pointFiltersVisible"
+              v-model:selected-key="selectedKeyModel"
+              v-model:expanded-keys="expandedKeys"
+              @toggle="onTreeToggle"
+              data-test="investment-programs-tree"
+            >
+              <template #actions>
                 <QBtn
                   flat
                   dense
@@ -162,142 +223,205 @@
                   data-test="investment-programs-add-point"
                   @click="openCreatePoint"
                 />
+              </template>
+              <template #empty>Нет пунктов</template>
+            </FemsqTreeList>
+
+            <div
+              v-if="showPointContext"
+              class="investment-programs-context q-mt-xs shrink-0"
+              data-test="investment-programs-point-context"
+            >
+              <div class="row items-center q-mb-xs">
+                <div class="text-subtitle2">
+                  Пункт ipgpKey={{ store.selectedPoint?.ipgpKey }}
+                </div>
+                <QSpace />
+                <QBtn
+                  color="primary"
+                  unelevated
+                  dense
+                  no-caps
+                  label="Сохранить"
+                  :loading="store.mutating"
+                  data-test="investment-programs-save-point"
+                  @click="onSavePoint"
+                />
+                <QBtn
+                  flat
+                  dense
+                  no-caps
+                  color="negative"
+                  label="Удалить"
+                  :disable="store.mutating"
+                  data-test="investment-programs-delete-point"
+                  @click="onDeletePoint"
+                />
+                <QBtn
+                  flat
+                  dense
+                  round
+                  icon="close"
+                  aria-label="Снять выбор"
+                  data-test="investment-programs-context-close"
+                  @click="clearTreeSelection"
+                />
               </div>
-              <QInput
-                v-model="store.pointFilter"
-                dense
-                clearable
-                class="q-mb-sm"
-                label="Фильтр пунктов"
-                data-test="investment-programs-point-filter"
-              />
-              <div v-if="store.loadingPoints" class="text-grey-7 q-pa-sm">Загрузка пунктов…</div>
-              <FemsqTree
-                v-else
-                class="leaves-tree"
-                :nodes="store.treeNodes"
-                node-key="key"
-                children-key="children"
-                leaf-key="leaf"
-                expand-on-click
-                fill
-                v-model:selected-key="selectedKeyModel"
-                v-model:expanded-keys="expandedKeys"
-                @toggle="onTreeToggle"
-                data-test="investment-programs-tree"
-              >
-                <template #header="{ node }">
-                  <span>{{ node.label }}</span>
-                  <span v-if="node.kind === 'pn'" class="text-caption text-grey-6 q-ml-sm">
-                    ipgp={{ node.ipgpKey }}
-                  </span>
-                </template>
-                <template #empty>Нет пунктов</template>
-              </FemsqTree>
-            </div>
-
-            <div class="col-12 col-lg-6">
-              <div class="text-subtitle2 q-mb-sm">Деталь</div>
-              <template v-if="store.selectedPoint">
-                <div class="text-caption text-grey-7 q-mb-sm">
-                  Пункт ipgpKey={{ store.selectedPoint.ipgpKey }} ·
-                  {{ store.selectedPoint.ipgpShName || `sh=${store.selectedPoint.ipgpSh}` }}
-                </div>
-                <div class="row q-col-gutter-sm">
-                  <div class="col-4">
-                    <QInput
-                      v-model.number="pointForm.ipgpNum"
-                      dense
-                      type="number"
-                      label="№"
-                      clearable
-                      :disable="store.mutating"
-                    />
-                  </div>
-                  <div class="col-8">
-                    <QInput
-                      v-model.number="pointForm.ipgpCstAgPn"
-                      dense
-                      type="number"
-                      label="cstAgPn (ключ САК)"
-                      :hint="store.selectedPoint.cstAgPnCode || undefined"
-                      :disable="store.mutating"
-                    />
-                  </div>
-                  <div class="col-6">
-                    <QSelect
-                      v-model="pointForm.ipgpSh"
-                      dense
-                      emit-value
-                      map-options
-                      :options="shOptions"
-                      label="Схема реализации"
-                      :disable="store.mutating"
-                    />
-                  </div>
-                  <div class="col-6">
-                    <QInput
-                      v-model="pointForm.ipgpTskCms"
-                      dense
-                      label="Комментарий / мощность"
-                      :disable="store.mutating"
-                    />
-                  </div>
-                  <div class="col-4">
-                    <QInput
-                      v-model.number="pointForm.ipgpSmTtl"
-                      dense
-                      type="number"
-                      label="Итого"
-                      :disable="store.mutating"
-                    />
-                  </div>
-                  <div class="col-4">
-                    <QInput
-                      v-model.number="pointForm.ipgpSmWrk"
-                      dense
-                      type="number"
-                      label="СМР"
-                      :disable="store.mutating"
-                    />
-                  </div>
-                  <div class="col-4">
-                    <QInput
-                      v-model.number="pointForm.ipgpSmEqu"
-                      dense
-                      type="number"
-                      label="Оборуд."
-                      :disable="store.mutating"
-                    />
-                  </div>
-                </div>
-                <div class="row q-gutter-sm q-mt-md">
-                  <QBtn
-                    color="primary"
-                    unelevated
-                    no-caps
-                    label="Сохранить пункт"
-                    :loading="store.mutating"
-                    data-test="investment-programs-save-point"
-                    @click="onSavePoint"
-                  />
-                  <QBtn
-                    flat
-                    no-caps
-                    color="negative"
-                    label="Удалить"
+              <!-- Как Access ipgMin: код / стройка / агент — раздельно; суммы полного набора -->
+              <div class="row q-col-gutter-sm">
+                <div class="col-3 col-sm-1">
+                  <QInput
+                    v-model.number="pointForm.ipgpNum"
+                    dense
+                    outlined
+                    type="number"
+                    label="№"
+                    clearable
                     :disable="store.mutating"
-                    data-test="investment-programs-delete-point"
-                    @click="onDeletePoint"
                   />
                 </div>
-
-                <div class="q-mt-lg">
-                  <div class="text-subtitle2 q-mb-sm">Привязка к структуре (stiKey)</div>
+                <div class="col-9 col-sm-2">
+                  <QInput
+                    :model-value="store.selectedPoint?.cstAgPnCode || ''"
+                    dense
+                    outlined
+                    readonly
+                    label="Код"
+                    data-test="investment-programs-cst-code"
+                  />
+                </div>
+                <div class="col-12 col-sm-5">
+                  <QInput
+                    :model-value="store.selectedPoint?.cstAgPnCstName || ''"
+                    dense
+                    outlined
+                    readonly
+                    label="Наименование стройки"
+                    data-test="investment-programs-cst-name"
+                  />
+                </div>
+                <div class="col-12 col-sm-4">
+                  <QInput
+                    :model-value="store.selectedPoint?.cstAgPnOgName || ''"
+                    dense
+                    outlined
+                    readonly
+                    label="Агент"
+                    data-test="investment-programs-cst-agent"
+                  />
+                </div>
+                <div class="col-6 col-sm-2">
+                  <QInput
+                    v-model.number="pointForm.ipgpCstAgPn"
+                    dense
+                    outlined
+                    type="number"
+                    label="cstAgPn (ключ)"
+                    :disable="store.mutating"
+                  />
+                </div>
+                <div class="col-6 col-sm-3">
+                  <QSelect
+                    v-model="pointForm.ipgpSh"
+                    dense
+                    outlined
+                    emit-value
+                    map-options
+                    :options="shOptions"
+                    label="Схема (ipgpSh)"
+                    :disable="store.mutating"
+                  />
+                </div>
+                <div class="col-12 col-sm-7">
+                  <QInput
+                    v-model="pointForm.ipgpTskCms"
+                    dense
+                    outlined
+                    label="Комментарий / мощность (ipgpTskCms)"
+                    :disable="store.mutating"
+                  />
+                </div>
+                <div class="col-4 col-sm-2">
+                  <QInput
+                    v-model.number="pointForm.ipgpSmTtl"
+                    dense
+                    outlined
+                    type="number"
+                    label="Итого"
+                    :disable="store.mutating"
+                  />
+                </div>
+                <div class="col-4 col-sm-2">
+                  <QInput
+                    v-model.number="pointForm.ipgpSmWrk"
+                    dense
+                    outlined
+                    type="number"
+                    label="СМР"
+                    :disable="store.mutating"
+                  />
+                </div>
+                <div class="col-4 col-sm-2">
+                  <QInput
+                    v-model.number="pointForm.ipgpSmEqu"
+                    dense
+                    outlined
+                    type="number"
+                    label="Оборуд."
+                    :disable="store.mutating"
+                  />
+                </div>
+                <div class="col-4 col-sm-2">
+                  <QInput
+                    v-model.number="pointForm.ipgpSmOth"
+                    dense
+                    outlined
+                    type="number"
+                    label="Прочее"
+                    :disable="store.mutating"
+                  />
+                </div>
+                <div class="col-4 col-sm-2">
+                  <QInput
+                    v-model.number="pointForm.ipgpSmAgFee"
+                    dense
+                    outlined
+                    type="number"
+                    label="Аг.вознагр."
+                    :disable="store.mutating"
+                  />
+                </div>
+                <div class="col-4 col-sm-2">
+                  <QInput
+                    v-model.number="pointForm.ipgpCostAdjust"
+                    dense
+                    outlined
+                    type="number"
+                    label="Корр.стоим."
+                    :disable="store.mutating"
+                  />
+                </div>
+                <div class="col-4 col-sm-2">
+                  <QInput
+                    v-model.number="pointForm.ipgpSmReserv"
+                    dense
+                    outlined
+                    type="number"
+                    label="Резерв"
+                    :disable="store.mutating"
+                  />
+                </div>
+              </div>
+              <div class="row q-col-gutter-sm items-end q-mt-xs">
+                <div class="col-12 col-md-6">
+                  <div class="text-caption investment-programs-muted q-mb-xs">
+                    Привязка к структуре (ipgStPn → stiKey)
+                  </div>
                   <div class="row q-gutter-sm items-end">
                     <QInput
                       v-model.number="bindStiKey"
                       dense
+                      outlined
                       type="number"
                       label="stiKey"
                       class="col"
@@ -306,6 +430,7 @@
                     />
                     <QBtn
                       unelevated
+                      dense
                       no-caps
                       color="primary"
                       label="Добавить"
@@ -314,14 +439,13 @@
                       @click="onAddBind"
                     />
                   </div>
-                  <QList dense bordered class="q-mt-sm rounded-borders">
-                    <QItem
-                      v-for="b in structureRows"
-                      :key="b.ipgspKey"
-                    >
+                </div>
+                <div class="col-12 col-md-6">
+                  <QList dense bordered class="rounded-borders investment-programs-bind-list">
+                    <QItem v-for="b in structureRows" :key="b.ipgspKey">
                       <QItemSection>
                         <QItemLabel>{{ b.stName || 'узел' }}</QItemLabel>
-                        <QItemLabel caption>stiKey={{ b.ipgspSt }} · ipgsp={{ b.ipgspKey }}</QItemLabel>
+                        <QItemLabel caption>sti={{ b.ipgspSt }} · ipgsp={{ b.ipgspKey }}</QItemLabel>
                       </QItemSection>
                       <QItemSection side>
                         <QBtn
@@ -336,40 +460,187 @@
                       </QItemSection>
                     </QItem>
                     <QItem v-if="structureRows.length === 0">
-                      <QItemSection class="text-grey-7">Нет привязок</QItemSection>
+                      <QItemSection class="investment-programs-muted">Нет привязок</QItemSection>
                     </QItem>
                   </QList>
                 </div>
-              </template>
-              <div v-else class="text-grey-7">Выберите пункт в дереве</div>
+              </div>
             </div>
-          </div>
-        </template>
-        <div v-else class="text-grey-7">Выберите инвестпрограмму слева</div>
-      </div>
+
+            <div
+              v-else-if="selectedBind"
+              class="investment-programs-context q-mt-xs shrink-0"
+              data-test="investment-programs-bind-context"
+            >
+              <div class="row items-center">
+                <div class="text-subtitle2">
+                  Привязка sti={{ selectedBind.stiKey }} · {{ selectedBind.label }}
+                </div>
+                <QSpace />
+                <QBtn
+                  flat
+                  dense
+                  no-caps
+                  color="negative"
+                  label="Удалить привязку"
+                  :disable="store.mutating || selectedBind.ipgspKey == null"
+                  data-test="investment-programs-remove-st"
+                  @click="selectedBind.ipgspKey != null && onRemoveBind(selectedBind.ipgspKey)"
+                />
+                <QBtn
+                  flat
+                  dense
+                  round
+                  icon="close"
+                  aria-label="Снять выбор"
+                  @click="clearTreeSelection"
+                />
+              </div>
+            </div>
+          </QTabPanel>
+
+          <!-- Загрузка пунктов: apply из staging (§3.2.8.3); parse/сверка — Structure -->
+          <QTabPanel name="load-points" class="q-pa-md column" data-test="investment-programs-load-points-panel">
+            <div class="text-subtitle2 q-mb-sm">Загрузка пунктов</div>
+            <div class="investment-programs-muted q-mb-md">
+              Разбор Excel и сверка ПТСФ — на экране «Структура ИПГ». Здесь — apply листьев staging → пункты
+              ИП <strong>{{ store.selectedProgram.ipgKey }}</strong>
+              · {{ store.selectedProgram.ipgNm }}.
+            </div>
+            <div class="row q-col-gutter-sm items-end q-mb-sm">
+              <div class="col-12 col-sm-5">
+                <QSelect
+                  v-model="loadModel"
+                  dense
+                  outlined
+                  emit-value
+                  map-options
+                  clearable
+                  label="Сессия load"
+                  :options="loadSelectOptions"
+                  :loading="store.loadingLoads"
+                  data-test="investment-programs-load"
+                />
+              </div>
+              <div class="col-12 col-sm-3">
+                <QInput
+                  v-model="previousIpgModel"
+                  dense
+                  outlined
+                  type="number"
+                  clearable
+                  label="prev ИП (ipgpSh)"
+                  hint="пусто → схема 4"
+                  data-test="investment-programs-previous-ipg"
+                />
+              </div>
+              <div class="col-12 col-sm-4 row q-gutter-xs items-center">
+                <QBtn
+                  outline
+                  color="secondary"
+                  no-caps
+                  label="Проверить"
+                  :loading="store.applyingPoints"
+                  :disable="!canApplyPoints || store.mutating"
+                  data-test="investment-programs-apply-points-dry"
+                  @click="onApplyPointsDryRun"
+                />
+                <QBtn
+                  unelevated
+                  color="secondary"
+                  no-caps
+                  label="Загрузить пункты"
+                  :loading="store.applyingPoints"
+                  :disable="!canApplyPoints || store.mutating"
+                  data-test="investment-programs-apply-points"
+                  @click="onApplyPoints"
+                />
+              </div>
+            </div>
+            <div
+              v-if="store.selectedLoad"
+              class="text-caption investment-programs-muted q-mb-sm"
+              data-test="investment-programs-load-meta"
+            >
+              load={{ store.selectedLoad.id }}
+              · файл {{ store.selectedLoad.filePath || '—' }}
+              · {{ store.selectedLoad.name }}
+            </div>
+            <div
+              v-if="store.applyResult"
+              class="q-mb-sm investment-programs-apply-log"
+              data-test="investment-programs-apply-summary"
+            >
+              <div class="text-caption" :class="applyLogToneClass">
+                Пункты ({{ store.applyResult.dryRun ? 'проверка' : 'запись' }}):
+                листьев {{ store.applyResult.leafCount }}
+                · применено {{ store.applyResult.appliedCount }}
+                · уже было {{ store.applyResult.skippedAlreadyCount ?? 0 }}
+                · ошибок {{ store.applyResult.errors.length }}
+                · ready={{ store.applyResult.ready }}
+              </div>
+              <div
+                v-if="store.applyResult.errors.length"
+                class="investment-programs-apply-errors q-mt-xs"
+                data-test="investment-programs-apply-errors"
+              >
+                <div
+                  v-for="(errLine, errIdx) in store.applyResult.errors"
+                  :key="'apply-err-' + errIdx"
+                  class="text-caption text-negative"
+                >
+                  {{ errLine }}
+                </div>
+              </div>
+            </div>
+          </QTabPanel>
+
+          <QTabPanel name="plan-groups" class="q-pa-md">
+            <div class="text-subtitle2 q-mb-sm">Группы планов</div>
+            <div class="investment-programs-muted">{{ STUB_O2 }}</div>
+          </QTabPanel>
+
+          <QTabPanel name="plans" class="q-pa-md">
+            <div class="text-subtitle2 q-mb-sm">Планы</div>
+            <div class="investment-programs-muted">{{ STUB_O2 }}</div>
+          </QTabPanel>
+
+          <QTabPanel name="load-utpl" class="q-pa-md">
+            <div class="text-subtitle2 q-mb-sm">Загрузка уточнённых планов</div>
+            <div class="investment-programs-muted">{{ STUB_LDM }}</div>
+          </QTabPanel>
+        </QTabPanels>
+      </template>
+      <div v-else class="investment-programs-muted q-mt-md">Выберите инвестпрограмму в полосе карточек</div>
     </div>
 
-    <!-- Диалог создания ИП -->
     <QDialog v-model="createProgramOpen" persistent>
       <QCard style="min-width: 420px">
         <QCardSection class="text-h6">Новая ИП</QCardSection>
         <QCardSection class="row q-col-gutter-sm">
           <div class="col-12">
-            <QInput v-model="createProgramForm.ipgNm" dense label="Наименование" autofocus />
+            <QInput v-model="createProgramForm.ipgNm" dense outlined label="Наименование" autofocus />
           </div>
           <div class="col-6">
-            <QInput v-model.number="createProgramForm.ipgOg" dense type="number" label="ogKey" />
+            <QInput v-model.number="createProgramForm.ipgOg" dense outlined type="number" label="ogKey" />
           </div>
           <div class="col-6">
-            <QInput v-model.number="createProgramForm.ipgYy" dense type="number" label="yKey (ags.yyyy)" />
+            <QInput
+              v-model.number="createProgramForm.ipgYy"
+              dense
+              outlined
+              type="number"
+              label="yKey (ags.yyyy)"
+            />
           </div>
           <div class="col-6">
-            <QInput v-model.number="createProgramForm.ipgNum" dense type="number" label="№" />
+            <QInput v-model.number="createProgramForm.ipgNum" dense outlined type="number" label="№" />
           </div>
           <div class="col-6">
             <QSelect
               v-model="createProgramForm.ipgStRlSh"
               dense
+              outlined
               emit-value
               map-options
               :options="stNetOptions"
@@ -377,31 +648,52 @@
             />
           </div>
           <div class="col-6">
-            <QInput v-model="createProgramForm.ipgStr" dense type="date" label="Начало" />
+            <QInput v-model="createProgramForm.ipgStr" dense outlined type="date" label="Начало" />
           </div>
           <div class="col-6">
-            <QInput v-model="createProgramForm.ipgEnd" dense type="date" label="Окончание" clearable />
+            <QInput
+              v-model="createProgramForm.ipgEnd"
+              dense
+              outlined
+              type="date"
+              label="Окончание"
+              clearable
+            />
           </div>
         </QCardSection>
         <QCardActions align="right">
           <QBtn flat no-caps label="Отмена" v-close-popup :disable="store.mutating" />
-          <QBtn color="primary" unelevated no-caps label="Создать" :loading="store.mutating" @click="submitCreateProgram" />
+          <QBtn
+            color="primary"
+            unelevated
+            no-caps
+            label="Создать"
+            :loading="store.mutating"
+            @click="submitCreateProgram"
+          />
         </QCardActions>
       </QCard>
     </QDialog>
 
-    <!-- Диалог создания пункта -->
     <QDialog v-model="createPointOpen" persistent>
       <QCard style="min-width: 400px">
         <QCardSection class="text-h6">Новый пункт</QCardSection>
         <QCardSection class="row q-col-gutter-sm">
           <div class="col-6">
-            <QInput v-model.number="createPointForm.ipgpCstAgPn" dense type="number" label="cstAgPn" autofocus />
+            <QInput
+              v-model.number="createPointForm.ipgpCstAgPn"
+              dense
+              outlined
+              type="number"
+              label="cstAgPn"
+              autofocus
+            />
           </div>
           <div class="col-6">
             <QSelect
               v-model="createPointForm.ipgpSh"
               dense
+              outlined
               emit-value
               map-options
               :options="shOptions"
@@ -409,15 +701,29 @@
             />
           </div>
           <div class="col-6">
-            <QInput v-model.number="createPointForm.ipgpNum" dense type="number" label="№" clearable />
+            <QInput
+              v-model.number="createPointForm.ipgpNum"
+              dense
+              outlined
+              type="number"
+              label="№"
+              clearable
+            />
           </div>
           <div class="col-12">
-            <QInput v-model="createPointForm.ipgpTskCms" dense label="Комментарий" />
+            <QInput v-model="createPointForm.ipgpTskCms" dense outlined label="Комментарий" />
           </div>
         </QCardSection>
         <QCardActions align="right">
           <QBtn flat no-caps label="Отмена" v-close-popup :disable="store.mutating" />
-          <QBtn color="primary" unelevated no-caps label="Создать" :loading="store.mutating" @click="submitCreatePoint" />
+          <QBtn
+            color="primary"
+            unelevated
+            no-caps
+            label="Создать"
+            :loading="store.mutating"
+            @click="submitCreatePoint"
+          />
         </QCardActions>
       </QCard>
     </QDialog>
@@ -425,6 +731,9 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * Экран Leaves (§2.5.2 / §3.2.8): полоса ИП + вкладки; Пункты — FemsqTreeList.
+ */
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import {
   QBanner,
@@ -441,17 +750,39 @@ import {
   QPage,
   QSelect,
   QSpace,
+  QTab,
+  QTabPanel,
+  QTabPanels,
+  QTabs,
   useQuasar
 } from 'quasar';
-import { FemsqTree } from 'fequlib';
+import {
+  FemsqCardStrip,
+  FemsqTreeList,
+  type FemsqTreeListColumnSet
+} from 'fequlib';
 
 import { getStIpgNetworks } from '@/api/st-ipg-structure-api';
-import { useIpgLeavesStore } from '@/stores/ipg-leaves';
+import {
+  useIpgLeavesStore,
+  type LeavesTreeNode
+} from '@/stores/ipg-leaves';
+
+const STUB_O2 = 'Заглушка до O2 (блок 4): группы / UtPl@stCost.';
+const STUB_LDM = 'Заглушка до LdM (блок 6): загрузка уточнённых планов из Excel.';
 
 const store = useIpgLeavesStore();
 const $q = useQuasar();
 
+/** Вкладка master: general | points | load-points | stubs. */
+const mainTab = ref<'general' | 'points' | 'load-points' | 'plan-groups' | 'plans' | 'load-utpl'>(
+  'points'
+);
 const expandedKeys = ref<string[]>([]);
+/** §3.2.9.3: фильтр в FemsqTreeList (не host QInput). */
+const pointFilterModel = ref('');
+const pointColumnFilters = ref<Record<string, string>>({});
+const pointFiltersVisible = ref(false);
 const bindStiKey = ref<number | null>(null);
 const createProgramOpen = ref(false);
 const createPointOpen = ref(false);
@@ -475,7 +806,11 @@ const pointForm = reactive({
   ipgpTskCms: '',
   ipgpSmTtl: null as number | null,
   ipgpSmWrk: null as number | null,
-  ipgpSmEqu: null as number | null
+  ipgpSmEqu: null as number | null,
+  ipgpSmOth: null as number | null,
+  ipgpSmAgFee: null as number | null,
+  ipgpCostAdjust: null as number | null,
+  ipgpSmReserv: null as number | null
 });
 
 const createProgramForm = reactive({
@@ -506,6 +841,48 @@ const yearFilterModel = computed({
   }
 });
 
+const loadSelectOptions = computed(() =>
+  store.loads.map((item) => ({
+    label: `${item.id}: ${item.name}`,
+    value: item.id
+  }))
+);
+
+const loadModel = computed({
+  get: () => store.selectedLoadKey,
+  set: (value: number | null) => {
+    store.selectLoad(value);
+  }
+});
+
+const previousIpgModel = computed({
+  get: () => store.previousIpgKeyForApply,
+  set: (value: number | string | null) => {
+    if (value === null || value === '' || Number.isNaN(Number(value))) {
+      store.previousIpgKeyForApply = null;
+      return;
+    }
+    store.previousIpgKeyForApply = Number(value);
+  }
+});
+
+const canApplyPoints = computed(() => store.selectedLoadKey != null);
+
+/** Тон итога apply: полный OK / частичный / полный провал. */
+const applyLogToneClass = computed(() => {
+  const result = store.applyResult;
+  if (result == null) {
+    return '';
+  }
+  if (result.ready) {
+    return 'text-positive';
+  }
+  if (result.appliedCount > 0 || (result.skippedAlreadyCount ?? 0) > 0) {
+    return 'text-warning';
+  }
+  return 'text-negative';
+});
+
 const selectedKeyModel = computed({
   get: () => store.selectedTreeKey,
   set: (value: string | number | null) => {
@@ -524,6 +901,148 @@ const structureRows = computed(() => {
   }
   return store.structureByPn[key] ? [...store.structureByPn[key]] : [];
 });
+
+function formatSum(value: unknown): string {
+  if (value == null || value === '') {
+    return '—';
+  }
+  const n = Number(value);
+  return Number.isFinite(n) ? String(n) : String(value);
+}
+
+/** columnSets: корни pn + папки-оси + привязки / stub (§3.2.8.4). */
+const leavesColumnSets: FemsqTreeListColumnSet<LeavesTreeNode>[] = [
+  {
+    level: 'pn',
+    columns: [
+      { name: 'label', label: 'САК', field: 'label' },
+      // §3.2.8.5: узкие data-колонки (~САК); ellipsis + session-resize
+      { name: 'cstName', label: 'Стройка', field: 'cstName', width: '110px' },
+      { name: 'ogName', label: 'Агент', field: 'ogName', width: '110px' },
+      { name: 'num', label: '№', field: 'num', width: '56px', align: 'right' },
+      { name: 'sh', label: 'Схема', field: 'shName', width: '120px' },
+      {
+        name: 'ttl',
+        label: 'Итого',
+        field: 'smTtl',
+        width: '96px',
+        align: 'right',
+        format: formatSum,
+        filterable: false
+      },
+      {
+        name: 'wrk',
+        label: 'СМР',
+        field: 'smWrk',
+        width: '96px',
+        align: 'right',
+        format: formatSum,
+        filterable: false
+      },
+      {
+        name: 'equ',
+        label: 'Оборуд.',
+        field: 'smEqu',
+        width: '88px',
+        align: 'right',
+        format: formatSum,
+        filterable: false
+      },
+      {
+        name: 'oth',
+        label: 'Прочее',
+        field: 'smOth',
+        width: '88px',
+        align: 'right',
+        format: formatSum,
+        filterable: false
+      },
+      {
+        name: 'agFee',
+        label: 'Аг.возн.',
+        field: 'smAgFee',
+        width: '88px',
+        align: 'right',
+        format: formatSum,
+        filterable: false
+      },
+      {
+        name: 'adj',
+        label: 'Корр.',
+        field: 'costAdjust',
+        width: '80px',
+        align: 'right',
+        format: formatSum,
+        filterable: false
+      },
+      {
+        name: 'reserv',
+        label: 'Резерв',
+        field: 'smReserv',
+        width: '80px',
+        align: 'right',
+        format: formatSum,
+        filterable: false
+      },
+      { name: 'cms', label: 'Мощность', field: 'note', width: '140px' }
+    ]
+  },
+  {
+    level: 'axis',
+    columns: [{ name: 'label', label: 'Ось', field: 'label' }]
+  },
+  {
+    level: 'bind',
+    columns: [
+      { name: 'label', label: 'Раздел', field: 'label' },
+      { name: 'sti', label: 'sti', field: 'stiKey', width: '72px', align: 'right' }
+    ]
+  },
+  {
+    level: 'stub',
+    columns: [{ name: 'label', label: '…', field: 'label' }]
+  }
+];
+
+/** Контекст пункта: выбран pn или папка/дети с ipgpKey (не голый bind). */
+const showPointContext = computed(() => {
+  const key = store.selectedTreeKey;
+  if (key == null || store.selectedPoint == null) {
+    return false;
+  }
+  if (key.startsWith('st:')) {
+    return false;
+  }
+  return true;
+});
+
+const selectedBind = computed(() => {
+  const key = store.selectedTreeKey;
+  if (key == null || !key.startsWith('st:')) {
+    return null;
+  }
+  const node = findTreeNode(store.treeNodes, key);
+  return node?.domainKind === 'stBind' ? node : null;
+});
+
+function findTreeNode(nodes: LeavesTreeNode[], key: string): LeavesTreeNode | null {
+  for (const node of nodes) {
+    if (node.key === key) {
+      return node;
+    }
+    if (node.children?.length) {
+      const found = findTreeNode(node.children, key);
+      if (found) {
+        return found;
+      }
+    }
+  }
+  return null;
+}
+
+function clearTreeSelection(): void {
+  store.selectTreeNode(null);
+}
 
 function syncHeaderForm(): void {
   const p = store.selectedProgram;
@@ -552,6 +1071,10 @@ function syncPointForm(): void {
   pointForm.ipgpSmTtl = p.ipgpSmTtl;
   pointForm.ipgpSmWrk = p.ipgpSmWrk;
   pointForm.ipgpSmEqu = p.ipgpSmEqu;
+  pointForm.ipgpSmOth = p.ipgpSmOth;
+  pointForm.ipgpSmAgFee = p.ipgpSmAgFee;
+  pointForm.ipgpCostAdjust = p.ipgpCostAdjust;
+  pointForm.ipgpSmReserv = p.ipgpSmReserv;
 }
 
 watch(
@@ -562,6 +1085,12 @@ watch(
 
 watch(
   () => store.selectedPoint,
+  () => syncPointForm(),
+  { immediate: true }
+);
+
+watch(
+  () => store.selectedIpgpKey,
   () => syncPointForm()
 );
 
@@ -582,6 +1111,83 @@ async function loadStNets(): Promise<void> {
 
 async function onRefresh(): Promise<void> {
   await store.fetchPrograms(store.selectedIpgKey);
+}
+
+/**
+ * §3.2.8.3: dryRun без записи — «Проверить».
+ */
+async function onApplyPointsDryRun(): Promise<void> {
+  try {
+    const preview = await store.applySelectedPoints(true);
+    notifyApplyResult(preview);
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: err instanceof Error ? err.message : String(err)
+    });
+  }
+}
+
+/**
+ * §3.2.8.3: commit partial; лог на панели.
+ */
+async function onApplyPoints(): Promise<void> {
+  try {
+    const committed = await store.applySelectedPoints(false);
+    notifyApplyResult(committed);
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: err instanceof Error ? err.message : String(err)
+    });
+  }
+}
+
+/**
+ * Notify по итогу apply: partial — warning, полный успех — positive.
+ */
+function notifyApplyResult(result: {
+  dryRun: boolean;
+  appliedCount: number;
+  skippedAlreadyCount?: number;
+  errors: string[];
+  ready: boolean;
+}): void {
+  const skipped = result.skippedAlreadyCount ?? 0;
+  const mode = result.dryRun ? 'Проверка' : 'Загрузка';
+  const summary =
+    `${mode}: применено ${result.appliedCount}, уже было ${skipped}, ошибок ${result.errors.length}`;
+  if (result.ready) {
+    $q.notify({ type: 'positive', message: summary });
+    return;
+  }
+  if (result.appliedCount > 0 || skipped > 0) {
+    $q.notify({
+      type: 'warning',
+      message: `${summary} — см. лог`,
+      timeout: 8000
+    });
+    return;
+  }
+  $q.notify({
+    type: 'negative',
+    message: result.errors[0] ?? summary,
+    timeout: 8000
+  });
+}
+
+/**
+ * Выбор ИП из CardStrip (ключ = ipgKey).
+ */
+async function onSelectNetworkKey(key: string | number | null): Promise<void> {
+  if (key == null || key === '') {
+    return;
+  }
+  const ipgKey = Number(key);
+  if (Number.isNaN(ipgKey)) {
+    return;
+  }
+  await onSelectProgram(ipgKey);
 }
 
 async function onSelectProgram(ipgKey: number): Promise<void> {
@@ -700,7 +1306,11 @@ async function onSavePoint(): Promise<void> {
       ipgpTskCms: pointForm.ipgpTskCms || null,
       ipgpSmTtl: pointForm.ipgpSmTtl,
       ipgpSmWrk: pointForm.ipgpSmWrk,
-      ipgpSmEqu: pointForm.ipgpSmEqu
+      ipgpSmEqu: pointForm.ipgpSmEqu,
+      ipgpSmOth: pointForm.ipgpSmOth,
+      ipgpSmAgFee: pointForm.ipgpSmAgFee,
+      ipgpCostAdjust: pointForm.ipgpCostAdjust,
+      ipgpSmReserv: pointForm.ipgpSmReserv
     });
     $q.notify({ type: 'positive', message: 'Пункт сохранён' });
   } catch (err) {
@@ -760,15 +1370,85 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.programs-list {
-  max-height: 70vh;
-  overflow: auto;
+.investment-programs-inner {
+  min-height: 0;
 }
+
+.investment-programs-filter-year {
+  width: 5.5rem;
+  max-width: 5.5rem;
+  flex: 0 0 auto;
+}
+
+.investment-programs-filter-name {
+  width: 12rem;
+  max-width: 12rem;
+  flex: 0 0 auto;
+}
+
+.fill-pane {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.investment-programs-panels {
+  min-height: 0;
+}
+
+.investment-programs-muted {
+  color: var(--femsq-text-muted, rgba(0, 0, 0, 0.54));
+}
+
 .leaves-tree {
-  min-height: 360px;
-  max-height: 70vh;
-  border: 1px solid rgba(0, 0, 0, 0.12);
+  min-height: 200px;
+  border: 1px solid var(--femsq-border, rgba(0, 0, 0, 0.12));
   border-radius: 4px;
-  padding: 8px;
+  overflow: hidden;
+}
+
+.investment-programs-context {
+  max-height: 42%;
+  overflow: auto;
+  border: 1px solid var(--femsq-border);
+  border-radius: 4px;
+  padding: 8px 10px;
+  background: var(--femsq-bg-elevated);
+  color: var(--femsq-text);
+}
+
+.investment-programs-context :deep(.q-field__native),
+.investment-programs-context :deep(.q-field__label),
+.investment-programs-context :deep(.q-field__marginal),
+.investment-programs-context :deep(.q-placeholder) {
+  color: var(--femsq-text);
+}
+
+.investment-programs-context :deep(.q-field--outlined .q-field__control) {
+  background: var(--femsq-field-filled-bg, var(--femsq-bg-surface));
+}
+
+.investment-programs-context :deep(.q-field--outlined .q-field__control::before) {
+  border-color: var(--femsq-border);
+}
+
+.investment-programs-context :deep(.q-item) {
+  color: var(--femsq-text);
+}
+
+.investment-programs-bind-list {
+  max-height: 7rem;
+  overflow: auto;
+  background: var(--femsq-bg-surface);
+  border-color: var(--femsq-border) !important;
+}
+
+.investment-programs-apply-errors {
+  max-height: 9rem;
+  overflow: auto;
+  border: 1px solid rgba(193, 0, 21, 0.25);
+  border-radius: 4px;
+  padding: 0.35rem 0.5rem;
+  background: rgba(193, 0, 21, 0.04);
 }
 </style>

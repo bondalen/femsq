@@ -56,6 +56,21 @@ export interface ImpIpgRowDto {
   ctx?: string | null;
 }
 
+/** Итог bulk apply пунктов (§3.2.4 / §3.2.5). */
+export interface ImpIpgPointsApplyResultDto {
+  loadKey: number;
+  ipgKey: number;
+  previousIpgKey?: number | null;
+  dryRun: boolean;
+  leafCount: number;
+  appliedCount: number;
+  skippedAlreadyCount: number;
+  ready: boolean;
+  errors: string[];
+  problemRowIds: number[];
+  createdPnKeys: number[];
+}
+
 const IMP_IPG_LOADS = gql`
   query ImpIpgLoads($ipgKey: Int!) {
     impIpgLoads(ipgKey: $ipgKey) {
@@ -136,6 +151,24 @@ const MAP_IMP_IPG_ROW_STI = gql`
       parentKey
       stiKey
       ctx
+    }
+  }
+`;
+
+const APPLY_IMP_IPG_POINTS = gql`
+  mutation ApplyImpIpgPoints($loadKey: Int!, $previousIpgKey: Int, $dryRun: Boolean) {
+    applyImpIpgPoints(loadKey: $loadKey, previousIpgKey: $previousIpgKey, dryRun: $dryRun) {
+      loadKey
+      ipgKey
+      previousIpgKey
+      dryRun
+      leafCount
+      appliedCount
+      skippedAlreadyCount
+      ready
+      errors
+      problemRowIds
+      createdPnKeys
     }
   }
 `;
@@ -243,5 +276,35 @@ export async function mapImpIpgRowSti(
     return result.data.mapImpIpgRowSti;
   } catch (error) {
     throw wrapApolloError(error, 'MapImpIpgRowSti');
+  }
+}
+
+/**
+ * Bulk apply листьев staging → ipgPn+ipgStPn (§3.2.4).
+ *
+ * @param dryRun true — только валидация и счётчики
+ */
+export async function applyImpIpgPoints(
+  loadKey: number,
+  previousIpgKey: number | null = null,
+  dryRun = false
+): Promise<ImpIpgPointsApplyResultDto> {
+  try {
+    const result = await apolloClient.mutate<{
+      applyImpIpgPoints: ImpIpgPointsApplyResultDto;
+    }>({
+      mutation: APPLY_IMP_IPG_POINTS,
+      variables: {
+        loadKey,
+        previousIpgKey,
+        dryRun
+      }
+    });
+    if (!result.data?.applyImpIpgPoints) {
+      throw new Error('applyImpIpgPoints: пустой ответ');
+    }
+    return result.data.applyImpIpgPoints;
+  } catch (error) {
+    throw wrapApolloError(error, 'ApplyImpIpgPoints');
   }
 }

@@ -42,6 +42,13 @@ html[data-femsq-theme='kimbie-dark'] {
   /* fequlib FemsqTable sticky header (0011) */
   --fequlib-table-header-bg: var(--femsq-bg-elevated);
   --fequlib-table-header-color: var(--femsq-text);
+  /* fequlib FemsqCardStrip (§3.2.8.1) */
+  --fequlib-card-strip-bg: var(--femsq-bg-elevated);
+  --fequlib-card-strip-border: 1px solid var(--femsq-border);
+  --fequlib-card-strip-selected-border: 2px solid var(--femsq-primary);
+  --fequlib-card-strip-selected-bg: var(--femsq-item-active-bg);
+  --fequlib-card-strip-muted: var(--femsq-text-muted);
+  --fequlib-card-strip-hover-filter: brightness(1.1);
   --femsq-banner-warning-bg: rgba(229, 192, 123, 0.16);
   --femsq-banner-warning-text: #e5c07b;
   --femsq-banner-error-bg: rgba(244, 71, 71, 0.12);
@@ -119,6 +126,13 @@ html[data-femsq-theme='vs-light'] {
   /* fequlib FemsqTable sticky header — surface for max contrast with dark text */
   --fequlib-table-header-bg: var(--femsq-bg-surface);
   --fequlib-table-header-color: var(--femsq-text);
+  /* fequlib FemsqCardStrip (§3.2.8.1) */
+  --fequlib-card-strip-bg: var(--femsq-bg-surface);
+  --fequlib-card-strip-border: 1px solid var(--femsq-border);
+  --fequlib-card-strip-selected-border: 2px solid var(--femsq-primary);
+  --fequlib-card-strip-selected-bg: var(--femsq-item-active-bg);
+  --fequlib-card-strip-muted: var(--femsq-text-muted);
+  --fequlib-card-strip-hover-filter: brightness(0.98);
   --femsq-banner-warning-bg: #fff4ce;
   --femsq-banner-warning-text: #5c4b00;
   --femsq-banner-error-bg: #fde7e9;

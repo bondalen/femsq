@@ -2,19 +2,32 @@ package com.femsq.web.api.graphql;
 
 import com.femsq.database.model.ImpIpgLoad;
 import com.femsq.database.model.ImpIpgParseResult;
+import com.femsq.database.model.ImpIpgPointsApplyResult;
 import com.femsq.database.model.ImpIpgPointsGateResult;
 import com.femsq.database.model.ImpIpgReconcileResult;
 import com.femsq.database.model.ImpIpgReconcileRow;
 import com.femsq.database.model.ImpIpgRow;
+import com.femsq.database.model.ImpIpgShResolveLeaf;
+import com.femsq.database.model.ImpIpgShResolveResult;
+import com.femsq.database.model.ImpIpgStiInheritLeaf;
+import com.femsq.database.model.ImpIpgStiInheritResult;
 import com.femsq.database.service.ImpIpgLoadService;
+import com.femsq.database.service.ImpIpgPointsApplyService;
 import com.femsq.database.service.ImpIpgPointsGateService;
 import com.femsq.database.service.ImpIpgReconcileService;
+import com.femsq.database.service.ImpIpgShResolveService;
+import com.femsq.database.service.ImpIpgStiInheritService;
 import com.femsq.web.api.dto.ImpIpgLoadDto;
 import com.femsq.web.api.dto.ImpIpgParseResultDto;
+import com.femsq.web.api.dto.ImpIpgPointsApplyResultDto;
 import com.femsq.web.api.dto.ImpIpgPointsGateResultDto;
 import com.femsq.web.api.dto.ImpIpgReconcileResultDto;
 import com.femsq.web.api.dto.ImpIpgReconcileRowDto;
 import com.femsq.web.api.dto.ImpIpgRowDto;
+import com.femsq.web.api.dto.ImpIpgShResolveLeafDto;
+import com.femsq.web.api.dto.ImpIpgShResolveResultDto;
+import com.femsq.web.api.dto.ImpIpgStiInheritLeafDto;
+import com.femsq.web.api.dto.ImpIpgStiInheritResultDto;
 import com.femsq.web.ipg.excel.ImpIpgExcelParseService;
 import java.util.List;
 import java.util.logging.Logger;
@@ -25,7 +38,7 @@ import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.stereotype.Controller;
 
 /**
- * GraphQL загрузки годовой ИП: каркас, парсер, сверка ПТСФ, gate пунктов (§3.1.6 / §3.2.1).
+ * GraphQL загрузки годовой ИП: каркас, парсер, сверка, gate / sti / ipgpSh / apply (§3.1.6 / §3.2.1–.4).
  */
 @Controller
 public class ImpIpgLoadGraphqlController {
@@ -36,16 +49,25 @@ public class ImpIpgLoadGraphqlController {
     private final ImpIpgExcelParseService parseService;
     private final ImpIpgReconcileService reconcileService;
     private final ImpIpgPointsGateService pointsGateService;
+    private final ImpIpgStiInheritService stiInheritService;
+    private final ImpIpgShResolveService shResolveService;
+    private final ImpIpgPointsApplyService pointsApplyService;
 
     public ImpIpgLoadGraphqlController(
             ImpIpgLoadService loadService,
             ImpIpgExcelParseService parseService,
             ImpIpgReconcileService reconcileService,
-            ImpIpgPointsGateService pointsGateService) {
+            ImpIpgPointsGateService pointsGateService,
+            ImpIpgStiInheritService stiInheritService,
+            ImpIpgShResolveService shResolveService,
+            ImpIpgPointsApplyService pointsApplyService) {
         this.loadService = loadService;
         this.parseService = parseService;
         this.reconcileService = reconcileService;
         this.pointsGateService = pointsGateService;
+        this.stiInheritService = stiInheritService;
+        this.shResolveService = shResolveService;
+        this.pointsApplyService = pointsApplyService;
     }
 
     @QueryMapping
@@ -159,6 +181,26 @@ public class ImpIpgLoadGraphqlController {
         return toGateDto(pointsGateService.evaluate(loadKey));
     }
 
+    /**
+     * §3.2.2: превью наследования sti L←S (дыры без записи).
+     */
+    @QueryMapping
+    public ImpIpgStiInheritResultDto impIpgStiInherit(@Argument("loadKey") int loadKey) {
+        log.info(() -> "impIpgStiInherit load=" + loadKey);
+        return toStiInheritDto(stiInheritService.evaluate(loadKey));
+    }
+
+    /**
+     * §3.2.3: превью резолва {@code ipgpSh} (без записи в домен).
+     */
+    @QueryMapping
+    public ImpIpgShResolveResultDto impIpgShResolve(
+            @Argument("loadKey") int loadKey,
+            @Argument("previousIpgKey") Integer previousIpgKey) {
+        log.info(() -> "impIpgShResolve load=" + loadKey + " prev=" + previousIpgKey);
+        return toShResolveDto(shResolveService.evaluate(loadKey, previousIpgKey));
+    }
+
     @MutationMapping
     public ImpIpgReconcileResultDto reconcileImpIpgStructure(
             @Argument("loadKey") int loadKey,
@@ -179,6 +221,34 @@ public class ImpIpgLoadGraphqlController {
         return toRowDto(loadService.updateRow(id, null, null, null, null, stiKey, clear, null));
     }
 
+    /**
+     * §3.2.4: bulk apply листьев → ipgPn+ipgStPn. {@code dryRun} по умолчанию false.
+     */
+    @MutationMapping
+    public ImpIpgPointsApplyResultDto applyImpIpgPoints(
+            @Argument("loadKey") int loadKey,
+            @Argument("previousIpgKey") Integer previousIpgKey,
+            @Argument("dryRun") Boolean dryRun) {
+        boolean dry = Boolean.TRUE.equals(dryRun);
+        log.info(() -> "applyImpIpgPoints load=" + loadKey + " prev=" + previousIpgKey + " dryRun=" + dry);
+        return toApplyDto(pointsApplyService.apply(loadKey, previousIpgKey, dry));
+    }
+
+    private ImpIpgPointsApplyResultDto toApplyDto(ImpIpgPointsApplyResult result) {
+        return new ImpIpgPointsApplyResultDto(
+                result.loadKey(),
+                result.ipgKey(),
+                result.previousIpgKey(),
+                result.dryRun(),
+                result.leafCount(),
+                result.appliedCount(),
+                result.skippedAlreadyCount(),
+                result.ready(),
+                result.errors(),
+                result.problemRowIds(),
+                result.createdPnKeys());
+    }
+
     private ImpIpgPointsGateResultDto toGateDto(ImpIpgPointsGateResult result) {
         return new ImpIpgPointsGateResultDto(
                 result.loadKey(),
@@ -189,6 +259,61 @@ public class ImpIpgLoadGraphqlController {
                 result.ready(),
                 result.errors(),
                 result.openRowIds());
+    }
+
+    private ImpIpgStiInheritResultDto toStiInheritDto(ImpIpgStiInheritResult result) {
+        List<ImpIpgStiInheritLeafDto> holes = result.holes().stream()
+                .map(this::toStiInheritLeafDto)
+                .collect(Collectors.toList());
+        return new ImpIpgStiInheritResultDto(
+                result.loadKey(),
+                result.ipgKey(),
+                result.leafCount(),
+                result.readyCount(),
+                result.holeCount(),
+                result.ready(),
+                result.errors(),
+                holes);
+    }
+
+    private ImpIpgStiInheritLeafDto toStiInheritLeafDto(ImpIpgStiInheritLeaf leaf) {
+        return new ImpIpgStiInheritLeafDto(
+                leaf.rowId(),
+                leaf.rowNo(),
+                leaf.text(),
+                leaf.parentKey(),
+                leaf.resolvedStiKey(),
+                leaf.holeReason());
+    }
+
+    private ImpIpgShResolveResultDto toShResolveDto(ImpIpgShResolveResult result) {
+        List<ImpIpgShResolveLeafDto> problems = result.problemLeaves().stream()
+                .map(this::toShResolveLeafDto)
+                .collect(Collectors.toList());
+        return new ImpIpgShResolveResultDto(
+                result.loadKey(),
+                result.ipgKey(),
+                result.previousIpgKey(),
+                result.leafCount(),
+                result.resolvedCount(),
+                result.errorCount(),
+                result.fromPrevCount(),
+                result.default4Count(),
+                result.freePoolCount(),
+                result.ready(),
+                result.errors(),
+                problems);
+    }
+
+    private ImpIpgShResolveLeafDto toShResolveLeafDto(ImpIpgShResolveLeaf leaf) {
+        return new ImpIpgShResolveLeafDto(
+                leaf.rowId(),
+                leaf.rowNo(),
+                leaf.text(),
+                leaf.cstAgPnCode(),
+                leaf.resolvedSh(),
+                leaf.source() == null ? null : leaf.source().name(),
+                leaf.errorReason());
     }
 
     private ImpIpgReconcileResultDto toReconcileDto(ImpIpgReconcileResult result) {

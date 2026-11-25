@@ -6,6 +6,12 @@ import { computed, ref } from 'vue';
 import { defineStore } from 'pinia';
 
 import {
+  applyImpIpgPoints,
+  getImpIpgLoads,
+  type ImpIpgLoadDto,
+  type ImpIpgPointsApplyResultDto
+} from '@/api/imp-ipg-load-api';
+import {
   addIpgPnStructure,
   createIpgPn,
   createInvestmentProgram,
@@ -27,7 +33,9 @@ import {
   type UpdateIpgPnInput
 } from '@/api/ipg-leaves-api';
 
-/** Вид узла FemsqTree Leaves. */
+/**
+ * Доменный вид узла Leaves (не путать с FemsqTreeList `kind` record/folder).
+ */
 export type LeavesTreeKind =
   | 'pn'
   | 'folderStruct'
@@ -36,14 +44,35 @@ export type LeavesTreeKind =
   | 'stBind'
   | 'stub';
 
-/** Узел дерева пунктов. */
+/** Уровень columnSets FemsqTreeList (§3.2.8.4). */
+export type LeavesTreeLevel = 'pn' | 'axis' | 'bind' | 'stub';
+
+/** Узел колоночного дерева пунктов. */
 export interface LeavesTreeNode {
   key: string;
-  kind: LeavesTreeKind;
+  /** FemsqTreeList: запись / папка. */
+  kind: 'record' | 'folder';
+  /** Комплект колонок. */
+  level: LeavesTreeLevel;
+  /** Доменная семантика (selection / CRUD). */
+  domainKind: LeavesTreeKind;
   label: string;
   ipgpKey?: number;
   ipgspKey?: number;
   stiKey?: number;
+  num?: number | null;
+  code?: string | null;
+  shName?: string | null;
+  smTtl?: number | null;
+  smWrk?: number | null;
+  smEqu?: number | null;
+  smOth?: number | null;
+  smAgFee?: number | null;
+  costAdjust?: number | null;
+  smReserv?: number | null;
+  cstName?: string | null;
+  ogName?: string | null;
+  note?: string | null;
   leaf?: boolean;
   children?: LeavesTreeNode[];
 }
@@ -51,37 +80,23 @@ export interface LeavesTreeNode {
 const STUB_LATER = 'Загрузка в этапе 1.3 (UtPl / stCost)';
 
 /**
- * Собирает дерево: корень = ipgPn, папки Structure/Планы/Лимиты.
+ * Дерево пунктов (корни ipgPn, оси Structure/Планы/Лимиты).
+ * Фильтрация корней — в FemsqTreeList (L6 / §3.2.9), не здесь.
  */
 export function buildLeavesTree(
   points: IpgPnDto[],
-  structureByPn: Record<number, IpgStPnDto[]>,
-  filter: string
+  structureByPn: Record<number, IpgStPnDto[]>
 ): LeavesTreeNode[] {
-  const q = filter.trim().toLowerCase();
-  const filtered = q
-    ? points.filter((pn) => {
-        const hay = [
-          String(pn.ipgpKey),
-          String(pn.ipgpNum ?? ''),
-          pn.cstAgPnCode ?? '',
-          pn.ipgpTskCms ?? '',
-          pn.ipgpShName ?? ''
-        ]
-          .join(' ')
-          .toLowerCase();
-        return hay.includes(q);
-      })
-    : points;
-
-  return filtered.map((pn) => {
+  return points.map((pn) => {
     const binds = structureByPn[pn.ipgpKey] ?? [];
     const structChildren: LeavesTreeNode[] =
       binds.length === 0
         ? [
             {
               key: `stub-struct-${pn.ipgpKey}`,
-              kind: 'stub',
+              kind: 'record',
+              level: 'stub',
+              domainKind: 'stub',
               label: 'Нет привязок — добавьте stiKey',
               ipgpKey: pn.ipgpKey,
               leaf: true
@@ -89,8 +104,10 @@ export function buildLeavesTree(
           ]
         : binds.map((b) => ({
             key: `st:${b.ipgspKey}`,
-            kind: 'stBind' as const,
-            label: `${b.stName?.trim() || 'узел'} · stiKey=${b.ipgspSt}`,
+            kind: 'record' as const,
+            level: 'bind' as const,
+            domainKind: 'stBind' as const,
+            label: b.stName?.trim() || `sti=${b.ipgspSt}`,
             ipgpKey: pn.ipgpKey,
             ipgspKey: b.ipgspKey,
             stiKey: b.ipgspSt,
@@ -98,17 +115,33 @@ export function buildLeavesTree(
           }));
 
     const code = pn.cstAgPnCode?.trim() || `cstAgPn=${pn.ipgpCstAgPn}`;
-    const num = pn.ipgpNum != null ? `#${pn.ipgpNum}` : '';
     return {
       key: `pn:${pn.ipgpKey}`,
-      kind: 'pn' as const,
-      label: `${num} ${code}`.trim(),
+      kind: 'record' as const,
+      level: 'pn' as const,
+      domainKind: 'pn' as const,
+      label: code,
       ipgpKey: pn.ipgpKey,
+      num: pn.ipgpNum,
+      code,
+      cstName: pn.cstAgPnCstName,
+      ogName: pn.cstAgPnOgName,
+      shName: pn.ipgpShName,
+      smTtl: pn.ipgpSmTtl,
+      smWrk: pn.ipgpSmWrk,
+      smEqu: pn.ipgpSmEqu,
+      smOth: pn.ipgpSmOth,
+      smAgFee: pn.ipgpSmAgFee,
+      costAdjust: pn.ipgpCostAdjust,
+      smReserv: pn.ipgpSmReserv,
+      note: pn.ipgpTskCms,
       leaf: false,
       children: [
         {
           key: `folder:${pn.ipgpKey}:struct`,
-          kind: 'folderStruct' as const,
+          kind: 'folder' as const,
+          level: 'axis' as const,
+          domainKind: 'folderStruct' as const,
           label: 'Структура ИПГ',
           ipgpKey: pn.ipgpKey,
           leaf: false,
@@ -116,14 +149,18 @@ export function buildLeavesTree(
         },
         {
           key: `folder:${pn.ipgpKey}:plans`,
-          kind: 'folderPlans' as const,
+          kind: 'folder' as const,
+          level: 'axis' as const,
+          domainKind: 'folderPlans' as const,
           label: 'Планы',
           ipgpKey: pn.ipgpKey,
           leaf: false,
           children: [
             {
               key: `stub-plans-${pn.ipgpKey}`,
-              kind: 'stub' as const,
+              kind: 'record' as const,
+              level: 'stub' as const,
+              domainKind: 'stub' as const,
               label: STUB_LATER,
               ipgpKey: pn.ipgpKey,
               leaf: true
@@ -132,14 +169,18 @@ export function buildLeavesTree(
         },
         {
           key: `folder:${pn.ipgpKey}:limits`,
-          kind: 'folderLimits' as const,
+          kind: 'folder' as const,
+          level: 'axis' as const,
+          domainKind: 'folderLimits' as const,
           label: 'Лимиты',
           ipgpKey: pn.ipgpKey,
           leaf: false,
           children: [
             {
               key: `stub-limits-${pn.ipgpKey}`,
-              kind: 'stub' as const,
+              kind: 'record' as const,
+              level: 'stub' as const,
+              domainKind: 'stub' as const,
               label: STUB_LATER,
               ipgpKey: pn.ipgpKey,
               leaf: true
@@ -157,7 +198,6 @@ export const useIpgLeavesStore = defineStore('ipgLeaves', () => {
   const points = ref<IpgPnDto[]>([]);
   const structureByPn = ref<Record<number, IpgStPnDto[]>>({});
   const schemes = ref<IpgShDto[]>([]);
-  const pointFilter = ref('');
   const selectedTreeKey = ref<string | null>(null);
   const selectedIpgpKey = ref<number | null>(null);
 
@@ -170,17 +210,27 @@ export const useIpgLeavesStore = defineStore('ipgLeaves', () => {
   const mutating = ref(false);
   const error = ref<string | null>(null);
 
+  /** Сессии load текущей ИП — вкладка «Загрузка пунктов» (§3.2.8.3). */
+  const loads = ref<ImpIpgLoadDto[]>([]);
+  const selectedLoadKey = ref<number | null>(null);
+  const previousIpgKeyForApply = ref<number | null>(null);
+  const applyResult = ref<ImpIpgPointsApplyResultDto | null>(null);
+  const loadingLoads = ref(false);
+  const applyingPoints = ref(false);
+
   const selectedProgram = computed(
     () => programs.value.find((p) => p.ipgKey === selectedIpgKey.value) ?? null
+  );
+
+  const selectedLoad = computed(
+    () => loads.value.find((item) => item.id === selectedLoadKey.value) ?? null
   );
 
   const selectedPoint = computed(
     () => points.value.find((p) => p.ipgpKey === selectedIpgpKey.value) ?? null
   );
 
-  const treeNodes = computed(() =>
-    buildLeavesTree(points.value, structureByPn.value, pointFilter.value)
-  );
+  const treeNodes = computed(() => buildLeavesTree(points.value, structureByPn.value));
 
   /**
    * Загружает список ИП.
@@ -207,6 +257,11 @@ export const useIpgLeavesStore = defineStore('ipgLeaves', () => {
       }
       if (selectedIpgKey.value != null) {
         await fetchPoints(selectedIpgKey.value);
+        await fetchLoads(selectedIpgKey.value);
+      } else {
+        loads.value = [];
+        selectedLoadKey.value = null;
+        applyResult.value = null;
       }
     } catch (err) {
       error.value = err instanceof Error ? err.message : String(err);
@@ -242,13 +297,81 @@ export const useIpgLeavesStore = defineStore('ipgLeaves', () => {
   }
 
   /**
-   * Выбрать ИП и загрузить пункты.
+   * Выбрать ИП и загрузить пункты + сессии load.
    */
   async function selectProgram(ipgKey: number): Promise<void> {
     selectedIpgKey.value = ipgKey;
     selectedIpgpKey.value = null;
     selectedTreeKey.value = null;
+    applyResult.value = null;
     await fetchPoints(ipgKey);
+    await fetchLoads(ipgKey);
+  }
+
+  /**
+   * Сессии load выбранной ИП (parse — на Structure; apply — здесь).
+   */
+  async function fetchLoads(ipgKey: number): Promise<void> {
+    loadingLoads.value = true;
+    try {
+      loads.value = await getImpIpgLoads(ipgKey);
+      if (loads.value.length > 0) {
+        const keep = selectedLoadKey.value;
+        selectedLoadKey.value =
+          keep != null && loads.value.some((l) => l.id === keep)
+            ? keep
+            : loads.value[0].id;
+      } else {
+        selectedLoadKey.value = null;
+      }
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : String(err);
+      loads.value = [];
+      selectedLoadKey.value = null;
+      console.error('[ipg-leaves] fetchLoads failed', err);
+    } finally {
+      loadingLoads.value = false;
+    }
+  }
+
+  /**
+   * Выбор сессии load для apply.
+   */
+  function selectLoad(loadKey: number | null): void {
+    selectedLoadKey.value = loadKey;
+    applyResult.value = null;
+  }
+
+  /**
+   * Apply пунктов из staging (§3.2.8.3): Проверить=dryRun / Загрузить=commit.
+   *
+   * @param dryRun true — превью без записи
+   */
+  async function applySelectedPoints(dryRun: boolean): Promise<ImpIpgPointsApplyResultDto> {
+    const loadKey = selectedLoadKey.value;
+    if (loadKey == null) {
+      throw new Error('Выберите сессию загрузки');
+    }
+    applyingPoints.value = true;
+    error.value = null;
+    try {
+      const result = await applyImpIpgPoints(
+        loadKey,
+        previousIpgKeyForApply.value,
+        dryRun
+      );
+      applyResult.value = result;
+      console.info('[ipg-leaves] applyPoints', result);
+      if (!dryRun && result.appliedCount > 0 && selectedIpgKey.value != null) {
+        await fetchPoints(selectedIpgKey.value);
+      }
+      return result;
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : String(err);
+      throw err;
+    } finally {
+      applyingPoints.value = false;
+    }
   }
 
   /**
@@ -436,7 +559,6 @@ export const useIpgLeavesStore = defineStore('ipgLeaves', () => {
     points,
     structureByPn,
     schemes,
-    pointFilter,
     selectedTreeKey,
     selectedIpgpKey,
     selectedPoint,
@@ -448,9 +570,19 @@ export const useIpgLeavesStore = defineStore('ipgLeaves', () => {
     loadingStructure,
     mutating,
     error,
+    loads,
+    selectedLoadKey,
+    selectedLoad,
+    previousIpgKeyForApply,
+    applyResult,
+    loadingLoads,
+    applyingPoints,
     fetchPrograms,
     fetchPoints,
     selectProgram,
+    fetchLoads,
+    selectLoad,
+    applySelectedPoints,
     ensureStructure,
     selectTreeNode,
     loadSchemes,

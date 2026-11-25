@@ -1,11 +1,13 @@
 # План: C2 / D1.1 — ввод ИП, цепочек, планов и лимитов в FEMSQ (DEV)
 
 **Дата создания:** 2026-11-20  
-**Последнее обновление:** 2026-11-24  
+**Последнее обновление:** 2026-11-25  
 **Образцы загрузки ИП:** `/mnt/nb-win-share/femsq/excel/2026-1120/ipg-sql-load/` (README там же)  
 **Проект:** FEMSQ  
-**Версия плана:** 0.11.13  
-**Статус плана:** 🔶 in-progress — next §3.2.2 Наследование stiKey L←S  
+**Версия плана:** 0.11.31  
+**Статус плана:** 🔶 in-progress — §3.4 UI+цепи ✅; next G5-BCD отПрод → re-apply B–D  
+**Фильтр Leaves:** [notes/26-1125-c2-treelist-filter-parity-b.md](./notes/26-1125-c2-treelist-filter-parity-b.md) (В13 = B)  
+**Приёмка O1 §3.4:** [notes/26-1125-c2-o1-acceptance-34.md](./notes/26-1125-c2-o1-acceptance-34.md)
 
 
 **O1 дельта/требования:** [notes/26-1123-c2-o1-prod-delta-requirements.md](./notes/26-1123-c2-o1-prod-delta-requirements.md)  
@@ -111,7 +113,7 @@
 │
 ├─ 2. O1-foundation — ручной CRUD P2 1.1 (Structure/Leaves/цепи) ✅ 2026-11-23
 │     Каркас для O1; **не** = «оператор ввёл год с Excel».
-│     (хвост UX Leaves FemsqTreeList — §2.5.2a, не блокирует O1)
+│     (хвост UX Leaves FemsqTreeList — §2.5.2a / §3.2.8.4 ✅)
 │  ├─ 2.0 Образцы Excel+staging на шаре (2026)                 ✅ 2026-11-20
 │  │  │   excel/2026-1120/ipg-sql-load/ (sql_0…iii, tbl.txt)
 │  │  ├─ 2.0.1 Процесс загрузки ИП (владелец) → §2.0.1         ✅ 2026-11-20
@@ -131,13 +133,14 @@
 │  ├─ 2.5 UI FEMSQ: структура → ipg/ipgPn → цепи               ✅ 2026-11-23
 │  │  ├─ 2.5.1 Structure UI                                    ✅ 2026-11-23
 │  │  ├─ 2.5.2 Leaves UI (UtPl lazy)                           ✅ 2026-11-23
-│  │  │       хвост UX: FemsqTreeList (пункты+оси) → §2.5.2a   ☐
+│  │  │       хвост UX FemsqTreeList → §2.5.2a / **§3.2.8.4**  ✅
 │  │  └─ 2.5.3 Цепи UI                                         ✅ 2026-11-23
 │  └─ 2.6 Приёмка foundation 1.1 на noM6 (эталон прода)        ✅ 2026-11-23
 │         notes/26-1123-c2-accept-1-1-nom6.md · JAR 0.1.0.382
 │
 ├─ 3. O1 — загрузка годовой ИП (_2606, §2.0.1)                 🔶
 │     Не путать с LdM (блок 6). DoD: оператор ввёл год с Excel на noM6.
+│     Порядок: Structure (ПТСФ) → Leaves (загрузка пунктов → пункты).
 │  ├─ 3.0 Дельта прод↔DEV + Excel 2026 → требования O1         ✅ 2026-11-23
 │  │      notes/26-1123-c2-o1-prod-delta-requirements.md
 │  │      сети 4/5; sti 255–263; ИП 30/31/33/34; ipgSh=4
@@ -172,29 +175,70 @@
 │  │  │      ipg D=30; load=11; open=0 (54 S); UI ✓
 │  │  └─ 3.1.7.5 Реестр DEV↔прод ключей + UX/баг-лог пилота    ✅ 2026-11-24
 │  │         DoD: 2 stNet + 4 ipg + ПТСФ×4 open=0
-│  ├─ 3.2 Пункты: gate → impIpg → ipgPn + ipgStPn              🔶 next=3.2.2
-│  │      Пилот apply — **только ИП A** (load8/sql_0); B–D → §3.4
-│  │      notes: …/26-1124-c2-o1-points-prep-320.md + контракт §5.7
+│  ├─ 3.2 Пункты: gate → impIpg → ipgPn + ipgStPn              ✅ 2026-11-25
+│  │      A=398; B partial 576/621 (45 CSTAGPN); partial UX ✅
+│  │      notes: …-points-prep-320 + контракт §5.7–5.8 + smoke-3274
 │  │  ├─ 3.2.0 Prep: колонки L, маппинг Excel→ipgPn, Leaves API ✅ 2026-11-24
 │  │  │      load8: 398 L, sti-ready 398; cstAgPn exact 306/398;
 │  │  │      gaps G1–G7 в notes prep-320
 │  │  ├─ 3.2.1 Gate: ПТСФ open=0 + ipg.ipgStRlSh иначе ERROR   ✅ 2026-11-24
 │  │  │      ImpIpgPointsGateService + query impIpgPointsGate;
 │  │  │      JAR 397; load8 ready=true; unit ✓
-│  │  ├─ 3.2.2 Наследование stiKey: L ← закрытый родитель S     ☐ next
-│  │  │      превью листьев без sti; дыры = ERROR при apply
-│  │  ├─ 3.2.3 ipgpSh: prev-IP → else 4; дубли cstAgPn→схемы/ERR ☐
-│  │  │      unit по notes O1 §5.2; без записи в домен
-│  │  ├─ 3.2.4 Bulk apply: транзакция ipgPn + ipgStPn           ☐
-│  │  │      unique Ipg_CstAgPn_Sh; без stiKey = ERROR
-│  │  ├─ 3.2.5 UI: «Загрузить пункты» в контексте load + отчёт  ☐
-│  │  │      Structure/Leaves; не второй мастер
-│  │  └─ 3.2.6 Smoke ИП A (sql_0/load8): apply + выборочная     ☐
-│  │         сверка COUNT/unique vs эталон; DoD §3.2
+│  │  ├─ 3.2.2 Наследование stiKey: L ← закрытый родитель S     ✅ 2026-11-25
+│  │  │      ImpIpgStiInheritService + query impIpgStiInherit;
+│  │  │      load8 398/398 hole=0; unit ✓; без записи staging/домена
+│  │  ├─ 3.2.3 ipgpSh: prev-IP → else 4; дубли cstAgPn→схемы/ERR ✅ 2026-11-25
+│  │  │      ImpIpgShResolveService + query impIpgShResolve;
+│  │  │      load8 no-prev: 398×4; vs ipg17: 202/196; unit ✓
+│  │  ├─ 3.2.4 Bulk apply: транзакция ipgPn + ipgStPn           ✅ 2026-11-25
+│  │  │      fail-closed пилот A; см. 3.2.7 → partial
+│  │  │      load8→ipg27: 398 pn+398 stPn; sh=4; unique=0; unit ✓
+│  │  ├─ 3.2.5 UI: «Загрузить пункты» в контексте load + отчёт  ✅ 2026-11-25
+│  │  │      временно на Structure; перенос → §3.2.8.3
+│  │  ├─ 3.2.6 Smoke ИП A (sql_0/load8): apply + выборочная     ✅ 2026-11-25
+│  │  │      398/398 unique=0 sh=4 ttl match; note smoke-a-326
+│  │  ├─ 3.2.7 Partial apply + идемпотентный повтор + лог       ✅ 2026-11-25
+│  │  │      ├─ 3.2.7.1 Контракт/сервис: skip → лог; TX/лист   ✅ 2026-11-25
+│  │  │      ├─ 3.2.7.2 Идемпотентность unique→skip OK         ✅ 2026-11-25
+│  │  │      ├─ 3.2.7.3 UI один клик + панель лога             ✅ 2026-11-25
+│  │  │      └─ 3.2.7.4 Smoke A повтор / B partial             ✅ 2026-11-25
+│  │  │             A skipped=398; B 576/45; UI browser ✓
+│  │  └─ 3.2.8 UX: Structure≠Leaves; вкладки ИП; TreeList      ✅ 2026-11-25
+│  │         Решения владельца 2026-11-25 (чат):
+│  │         (1) шапка ИП → вкладка «Общее»; (2) «цели» отложить;
+│  │         (3) parse/сверка только Structure; apply — Leaves.
+│  │         notes: …-leaves-tree-ui.md §2/§4.6; Access ipg/ipgMin.
+│  │     ├─ 3.2.8.1 Тема FemsqCardStrip (Structure + Leaves)   ✅ 2026-11-25
+│  │     │         --fequlib-card-strip-* ← femsq-theme; feQuLib 0.1.20
+│  │     ├─ 3.2.8.2 Leaves: strip ИП сверху + QTabs             ✅ 2026-11-25
+│  │     │         Общее | Пункты | Загрузка пунктов |
+│  │     │         Группы планов* | Планы* | Загрузка ут.* (*stub)
+│  │     │         без вкладки «цели»; apply-панель — placeholder
+│  │     ├─ 3.2.8.3 Перенос apply UI → «Загрузка пунктов»      ✅ 2026-11-25
+│  │     │         Structure: только ПТСФ; Leaves: load/prev/
+│  │     │         Проверить/Загрузить + лог; UI smoke ✓
+│  │     ├─ 3.2.8.4 §2.5.2a FemsqTreeList на вкладке Пункты    ✅ 2026-11-25
+│  │     │         корни ipgPn; оси; columnSets; контекст
+│  │     │         по selection (не постоянный detail)
+│  │     │         + контекст ≈ Access ipgMin (код/стройка/агент;
+│  │     │           SmOth/AgFee/CostAdjust/Reserv)
+│  │     └─ 3.2.8.5 TreeList: колонки Стройка/Агент (узкие)    ✅ 2026-11-25
+│  │                ~110px, ellipsis, session-resize; после §3.2.9
+│  ├─ 3.2.9 Фильтр TreeList ≈ FemsqTable — вариант **B**       ✅ 2026-11-25
+│  │      Решение В13; notes/26-1125-c2-treelist-filter-parity-b.md
+│  │      Порядок: **3.2.9 → 3.2.8.5 → 3.4**
+│  │  ├─ 3.2.9.1 feQuLib L6: API filter/columnFilters/chrome   ✅ 2026-11-25
+│  │  │         feQuLib 0.1.21; unit ✓; ellipsis title
+│  │  ├─ 3.2.9.2 Локальный пакет file:feQuLib (check-fequlib)  ✅ 2026-11-25
+│  │  │         origin publish — по желанию владельца feQuLib
+│  │  └─ 3.2.9.3 FEMSQ Leaves: TreeList chrome; без QInput     ✅ 2026-11-25
+│  │             один путь фильтра; суммы filterable:false
 │  ├─ 3.3 Цикл Access→migrate по касанию (только O1)           ☐
 │  │      если apply упрётся в правило/поле Access
-│  └─ 3.4 Приёмка O1 на noM6 (пункты/цепи vs эталон)           ☐
-│         структура уже в 3.1.7; здесь ipgPn×A–D / unique / ipgpSh
+│  └─ 3.4 Приёмка O1 на noM6 (пункты/цепи vs эталон)           🔶
+│         notes/26-1125-c2-o1-acceptance-34.md · JAR 411
+│         A–D counts/unique/UI Leaves ✅ · цепи 507–510 ✅
+│         ⏸ 73 CSTAGPN (отПрод пуст) → re-apply 9–11
 │
 ├─ 4. O2 — P2 1.3: помесячные планы и лимиты UtPl@stCost       ☐
 │  ├─ 4.0 UI структуры затрат (stNetCost/stCost) — минимум     ☐
@@ -263,13 +307,14 @@ ipg (ipgStRlSh = единственный выбор stNet)
 | # | Решение | Следствие |
 |---|---------|-----------|
 | 1 | Импорт staging — **FEMSQ** с основного листа, не SSMS+лист sql | Парсер «Приложение № 1» / аналог; превью несопоставленных |
-| 2 | Домен после gate: только **① ipgPn + ② ipgStPn** | Без `stiKey` — ERROR |
+| 2 | Домен после gate: только **① ipgPn + ② ipgStPn** | Без `stiKey` — **не пишем** пункт (ERROR в логе строки); пакет не валим |
 | 3 | `ipgSh`: Excel не даёт схему. Загрузка: **из предшествующей ИП** по `cstAgPn`, иначе **4**; дубли cstAgPn → разные схемы / ERROR; истина — помесячный план (O2) | notes O1 §5.2; ipgSh=4 на noM6 ✅ |
 | 4 | **Суррогат не грузим** | `importIpgSt_*` — вне объёма C2 |
 | 5 | Ручной CRUD `ipg` / `ipgPn` | Карточки UI как Access |
 | 6 | Excel шире исторического `sql` | Маппинг колонок на экране **ipg** → полный `ipgPn` |
 | 7 | Корень процесса — **`impIpgLoad`**; тело — **`impIpg`** | Несколько load на ipg OK; stNet только на `ipg` |
 | 8 | Помесячные — этап 2: `impIpgLoadMonf`→`ipgUtPl`; группа на цепи | Не блокирует и не пишет этап 1 |
+| 9 | Apply пунктов — **partial + идемпотентный повтор** (решение 2026-11-25) | Ошибка строки → лог, остальные грузятся; повтор догружает дыры; «готово» = лог без ошибок. Контракт §5.8 · план §3.2.7 |
 
 ### Исторические колонки листа `sql` (справочно)
 
@@ -455,13 +500,14 @@ Access уже даёт этот UI (bound-формы + вкладки child/pare
 | В3 | Лимиты/UtPl: вручную или из файла; stCost | ☐ блок 4 (O2) | Также этап (б) уточнения `ipgSh` после планов агентов |
 | В4 | Справочники: ввод или статичны | ✅ для ИПГ | ИПГ-DAG — **P** в FEMSQ; **stCost** — к O2; эталон прода — сверка |
 | В5 | Периоды RA / sender | ☐ блок 7 | В вехе D1.1 после планов |
-| В6 | Годовая ИП: парсер/staging/маппинг (§2.0.1) | 🔶 блок 3 (O1) | §3.2.0 ✅; next gate→bulk на A; gap cstAgPn 92/398 на noM6; DoD O1 = §3.4 |
+| В6 | Годовая ИП: парсер/staging/маппинг (§2.0.1) | 🔶 блок 3 (O1) | §3.2 ✅ UX; §3.4 partial A–D; gap 73 CSTAGPN BCD → отПрод; DoD O1 = §3.4 |
 | В7 | `ipgpSh` при загрузке | ✅ 2026-11-23 | Prev-IP → else 4; дубли cstAgPn → разные схемы/ERR; истина = план O2; эталон sh≈2 = после пост-обработки |
 | В8 | UX сети | ✅ 2026-11-23 | Сначала **программный clone**, затем ручная модификация |
 | В9 | Multi-`stIpgNm` / ловля из Excel | ✅ 2026-11-23 | Сырой пул + нормализация для поиска; map→alias (кнопка) или create; «+» только на закрытых |
 | В10 | Корень загрузки / ПТСФ / gate | ✅ 2026-11-24 | `impIpgLoad`+`impIpg`; stNet только `ipg.ipgStRlSh`; OR путей; омонимы→ручной stiKey; несколько load на ipg |
 | В11 | Помесячные vs этап 1 | ✅ 2026-11-24 | Сначала ipgPn; затем UtPlGr/UtPl + `impIpgLoadMonf`→UtPl; комбо UtPl по `iuplIpg`; даты `_2606` сразу |
 | В12 | Structure UI низ | ✅ 2026-11-24 | Вкладки; сейчас только «не сопоставлено»; смена stNet при данных — warn |
+| В13 | Фильтр на Leaves / TreeList | ✅ 2026-11-25 | **B** (паритет с FemsqTable в feQuLib). A/C отклонены. Контракт: [notes/26-1125-…](./notes/26-1125-c2-treelist-filter-parity-b.md). Порядок: **§3.2.9 → §3.2.8.5 → §3.4** |
 
 ---
 
@@ -479,6 +525,26 @@ Access уже даёт этот UI (bound-формы + вкладки child/pare
 
 | Дата | Версия | Что изменили |
 |------|--------|----------------|
+| 2026-11-25 | 0.11.31 | §3.4: UI Leaves smoke 411 + цепи 507–510 (A–D); остался отПрод 73 |
+| 2026-11-25 | 0.11.30 | §3.4 🔶: apply C/D + recheck A/B; note acceptance-34; блокер отПрод 73 кодов |
+| 2026-11-25 | 0.11.29 | §3.2.9 ✅ feQuLib 0.1.21 L6 + Leaves consume; §3.2.8.5 ✅; next §3.4 |
+| 2026-11-25 | 0.11.28 | Порядок UX: §3.2.9 → §3.2.8.5 → §3.4 (3.4 ждёт фильтра+колонок) |
+| 2026-11-25 | 0.11.27 | В13=B: §3.2.8.5 колонки; §3.2.9 filter TreeList≈Table; note 26-1125 |
+| 2026-11-25 | 0.11.26 | Контекст пункта ≈ Access ipgMin: код/стройка/агент раздельно + SmOth/AgFee/CostAdjust/Reserv; JAR 409 |
+| 2026-11-25 | 0.11.25 | §3.2.8.4 ✅ FemsqTreeList на Пункты; §3.2.8 UX закрыт; next §3.4 |
+| 2026-11-25 | 0.11.24 | §3.2.8.3 ✅ apply → Leaves «Загрузка пунктов»; Structure=ПТСФ; next 3.2.8.4 |
+| 2026-11-25 | 0.11.23 | §3.2.8.2 ✅ Leaves: FemsqCardStrip ИП + вкладки Общее/Пункты/Загрузка…; next 3.2.8.3 |
+| 2026-11-25 | 0.11.22 | §3.2.8.A–D→.1–.4; §3.2.8.1 ✅ тема CardStrip (токены + feQuLib 0.1.20); next 3.2.8.2 |
+| 2026-11-25 | 0.11.21 | §3.2.8 UX: Structure=ПТСФ; Leaves=вкладки+Загрузка пунктов+TreeList (§2.5.2a→.4); решения владельца; next 3.2.8.1 |
+| 2026-11-25 | 0.11.20 | §3.2.7.3–.4 ✅ UI один клик+лог; smoke A skipped=398; B 576/45 CSTAGPN; §3.2 закрыт; next 3.4 |
+| 2026-11-25 | 0.11.19 | §3.2.7.1–.2 ✅ partial+idempotent apply: createPnWithSt, skippedAlreadyCount, unit; next 3.2.7.3 UI лог |
+| 2026-11-25 | 0.11.18 | Целевой UX apply: partial + идемпотентный повтор + лог (§3.2.7, контракт §5.8); G5-BCD не блокер первого клика; next 3.2.7 |
+| 2026-11-25 | 0.11.17 | §3.2.5–.6 ✅ UI + smoke A; G5-BCD пакет 73 кодов `26-1125_11-32`; next был §3.4 |
+| 2026-11-25 | 0.11.16 | §3.2.4 ✅ bulk apply: ImpIpgPointsApplyService + applyImpIpgPoints; load8→ipg27 398/398; next 3.2.5 |
+| 2026-11-25 | 0.11.15b | G5 ✅: отПрод TSV → noM6 import (+3 cst, +24 cstAg, +92 cstAgPn); load8 398/398; next §3.2.4 |
+| 2026-11-25 | 0.11.15a | G5 prep: продОбмен `26-1125_09-50` AES `…_CSTAGPN_MISSING.zip` (92 кода load8); ждём отПрод |
+| 2026-11-25 | 0.11.15 | §3.2.3 ✅ ipgpSh: ImpIpgShResolveService + query impIpgShResolve; load8 398×4 / vs17 202+196; next 3.2.4 |
+| 2026-11-25 | 0.11.14 | §3.2.2 ✅ sti L←S: ImpIpgStiInheritService + query impIpgStiInherit; load8 398/0; next 3.2.3 |
 | 2026-11-24 | 0.11.9 | Баг #6 parser fixed (JAR 395); UI Cursor smoke §3.1.7.1–.2 open=0; next 3.1.7.3 R+C |
 | 2026-11-24 | 0.11.13 | §3.2.1 ✅ Gate: ImpIpgPointsGateService + GraphQL; JAR 397; load8 ready; next 3.2.2 |
 | 2026-11-24 | 0.11.12 | §3.2.0 ✅ Prep пунктов (notes …-points-prep-320); gap cstAgPn 92/398; next 3.2.1 Gate |

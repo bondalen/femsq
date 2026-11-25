@@ -1,32 +1,8 @@
 <template>
   <QPage class="investment-structure-view q-pa-none" data-test="investment-structure-view">
-    <div class="absolute-full q-pa-lg column no-wrap investment-structure-inner">
-      <div class="row items-center q-gutter-md q-mb-md shrink-0">
-        <div>
-          <div class="text-h5">Структура ИПГ</div>
-          <div class="text-caption text-grey-7">
-            Схемы stNet (type=1) и дерево разделов через fnSt
-          </div>
-        </div>
-        <QSpace />
-        <QBtn
-          flat
-          round
-          icon="refresh"
-          :loading="store.loadingNetworks || store.loadingTree"
-          :disable="store.mutating"
-          aria-label="Обновить"
-          data-test="investment-structure-refresh"
-          @click="onRefresh"
-        />
-      </div>
-
-      <QBanner v-if="store.error" class="bg-negative text-white q-mb-md shrink-0" rounded>
-        {{ store.error }}
-      </QBanner>
-
-      <div class="row items-center q-mb-sm shrink-0">
-        <div class="text-subtitle1">Схемы</div>
+    <div class="absolute-full q-px-md q-pt-sm q-pb-sm column no-wrap investment-structure-inner">
+      <div class="row items-center q-gutter-sm q-mb-xs shrink-0 no-wrap">
+        <div class="text-subtitle1 text-weight-medium ellipsis">Структура ИПГ</div>
         <QSpace />
         <QBtn
           flat
@@ -46,10 +22,25 @@
           data-test="investment-structure-clone-net"
           @click="openCloneNetwork"
         />
+        <QBtn
+          flat
+          dense
+          round
+          icon="refresh"
+          :loading="store.loadingNetworks || store.loadingTree"
+          :disable="store.mutating"
+          aria-label="Обновить"
+          data-test="investment-structure-refresh"
+          @click="onRefresh"
+        />
       </div>
 
+      <QBanner v-if="store.error" class="bg-negative text-white q-mb-xs shrink-0" rounded>
+        {{ store.error }}
+      </QBanner>
+
       <FemsqCardStrip
-        class="q-mb-sm shrink-0"
+        class="q-mb-xs shrink-0"
         :items="store.networks"
         item-key="stNetKey"
         :selected-key="store.selectedNetworkKey"
@@ -62,7 +53,7 @@
       >
         <template #item="{ item }">
           <div class="text-weight-medium">{{ item.name }}</div>
-          <div class="text-caption text-grey-7">
+          <div class="text-caption investment-structure-net-meta">
             stNet={{ item.stNetKey }} · root={{ item.rootKey }}
           </div>
         </template>
@@ -246,7 +237,7 @@
                   data-test="investment-structure-load"
                 />
               </div>
-              <div class="col-12 col-md-4">
+              <div class="col-12 col-md-3">
                 <QInput
                   v-model="store.excelFilePath"
                   dense
@@ -255,7 +246,7 @@
                   data-test="investment-structure-excel-path"
                 />
               </div>
-              <div class="col-12 col-md-2 row q-gutter-xs">
+              <div class="col-12 col-md-4 row q-gutter-xs items-center">
                 <QBtn
                   unelevated
                   color="primary"
@@ -277,6 +268,9 @@
                   @click="onReconcile"
                 />
               </div>
+            </div>
+            <div class="text-caption text-grey-7 q-mb-xs shrink-0">
+              Apply пунктов — экран «Инвестпрограммы» → вкладка «Загрузка пунктов».
             </div>
             <div
               v-if="store.reconcileResult"
@@ -981,6 +975,10 @@ onMounted(() => {
 .investment-structure-unmatched-table {
   min-height: 0;
   overflow: auto;
+}
+
+.investment-structure-net-meta {
+  color: var(--femsq-text-muted, rgba(0, 0, 0, 0.54));
 }
 
 :deep(.investment-structure-split-sep) {

@@ -1,0 +1,21 @@
+Пакет: C2 / O1 — недостающие коды САК (cstAgPn) для ИП B–D (loads 9/10/11)
+Сессия: 26-1125_11-32
+Задача: 0081 / план chat-plan-26-1120 §3.4 prep (G5-BCD)
+Платформа: MS SQL Server 2012 SP4 (SPB-05-NV-SQL1), БД FishEye
+Инструмент: SSMS (SQLCMD Mode) · Windows Authentication
+Архив: AES-ZIP, пароль обмена (как обычно)
+
+НАЗНАЧЕНИЕ
+----------
+На DEV (FishEye_prod_noM6) для ИП B/C/D не хватает 73 кодов в ags.cstAgPn.
+Пилот A (load8) уже закрыт.
+
+Только чтение. DDL/DML на прод НЕ выполнять.
+
+ПОРЯДОК
+-------
+1) Каталог: C:\Temp\femsq_cstagpn_missing_bcd_20261125
+2) SSMS → SPB-05-NV-SQL1 → FishEye
+3) 00_COUNTS_readonly.sql → RETURN
+4) 01c_EXPORT_sqlcmd_mode.sql + SQLCMD Mode → F5
+5) AES-ZIP *.tsv → отПрод сессии 26-1125_11-32

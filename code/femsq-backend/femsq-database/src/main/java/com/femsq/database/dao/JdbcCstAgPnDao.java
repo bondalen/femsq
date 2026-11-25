@@ -85,6 +85,26 @@ public class JdbcCstAgPnDao implements CstAgPnDao {
     }
 
     @Override
+    public Optional<CstAgPn> findByCodeExact(String code) {
+        Objects.requireNonNull(code, "code");
+        String sql = "SELECT " + COLUMNS + " FROM " + getTableName() + " WHERE cstapIpgPnN = ?";
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setNString(1, code);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return Optional.of(mapRow(resultSet));
+                }
+                return Optional.empty();
+            }
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw new DaoException("Не удалось найти САК по коду " + code, exception);
+        }
+    }
+
+    @Override
     public List<CstAgPn> findByCstAg(int cstaKey) {
         String sql = "SELECT " + COLUMNS + " FROM " + getTableName() + " WHERE cstapCsta = ? ORDER BY cstapIpgPnN";
         log.log(Level.FINE, "Executing findByCstAg for cstaKey={0}", cstaKey);

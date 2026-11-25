@@ -17,6 +17,7 @@ import com.femsq.database.model.ImpIpgRow;
 import com.femsq.database.model.ImpIpgStagingDraft;
 import com.femsq.database.model.IpgFull;
 import com.femsq.database.model.IpgPn;
+import com.femsq.database.model.IpgPnBulkDraft;
 import com.femsq.database.model.IpgSh;
 import com.femsq.database.model.IpgStPn;
 import java.math.BigDecimal;
@@ -258,6 +259,16 @@ class DefaultImpIpgPointsGateServiceTest {
                 BigDecimal ipgpSmTtl, BigDecimal ipgpSmWrk, BigDecimal ipgpSmEqu,
                 BigDecimal ipgpSmOth, BigDecimal ipgpSmAgFee, BigDecimal ipgpCostAdjust,
                 BigDecimal ipgpSmReserv, String ipgpTskCms) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public List<Integer> bulkCreatePnsWithSt(int ipgKey, List<IpgPnBulkDraft> drafts) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public int createPnWithSt(int ipgKey, IpgPnBulkDraft draft) {
             throw new UnsupportedOperationException();
         }
 

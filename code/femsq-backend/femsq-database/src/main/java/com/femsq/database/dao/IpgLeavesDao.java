@@ -2,6 +2,7 @@ package com.femsq.database.dao;
 
 import com.femsq.database.model.IpgFull;
 import com.femsq.database.model.IpgPn;
+import com.femsq.database.model.IpgPnBulkDraft;
 import com.femsq.database.model.IpgSh;
 import com.femsq.database.model.IpgStPn;
 import java.math.BigDecimal;
@@ -57,6 +58,29 @@ public interface IpgLeavesDao {
             BigDecimal ipgpCostAdjust,
             BigDecimal ipgpSmReserv,
             String ipgpTskCms);
+
+    /**
+     * Bulk apply: в одной транзакции создаёт {@code ipgPn} и {@code ipgStPn} для каждого черновика.
+     *
+     * <p>При любой ошибке — полный rollback. Возвращает сгенерированные {@code ipgpKey}
+     * в порядке входного списка.
+     *
+     * <p>Для partial apply (§3.2.7) предпочтителен {@link #createPnWithSt}.
+     *
+     * @param ipgKey целевая ИП
+     * @param drafts черновики (cstAgPnKey, sh, sti, суммы)
+     * @return ключи созданных пунктов
+     */
+    List<Integer> bulkCreatePnsWithSt(int ipgKey, List<IpgPnBulkDraft> drafts);
+
+    /**
+     * Создаёт один пункт + {@code ipgStPn} в одной короткой транзакции (§3.2.7).
+     *
+     * @param ipgKey целевая ИП
+     * @param draft  черновик
+     * @return {@code ipgpKey}
+     */
+    int createPnWithSt(int ipgKey, IpgPnBulkDraft draft);
 
     IpgPn updatePn(
             int ipgpKey,

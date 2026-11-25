@@ -3,7 +3,7 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2026-11-24",
+      "lastUpdated": "2026-11-25",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     "tasks": {
@@ -2995,8 +2995,8 @@
                 ]
               },
               "created": "2026-11-17",
-              "lastUpdated": "2026-11-24",
-              "description": "P2 1.1–1.4, 2.1.0. Веха **D1.1 на DEV**. План 0.11.13: §3.2.1 ✅ Gate пунктов (JAR 397, load8 ready); next §3.2.2 sti L←S. Стенд: FishEye_prod_noM6."
+              "lastUpdated": "2026-11-25",
+              "description": "P2 1.1–1.4, 2.1.0. Веха **D1.1 на DEV**. План 0.11.31: §3.4 UI+цепи ✅; JAR 411; блокер отПрод 73 CSTAGPN. Стенд: FishEye_prod_noM6."
             }
           }
         },
