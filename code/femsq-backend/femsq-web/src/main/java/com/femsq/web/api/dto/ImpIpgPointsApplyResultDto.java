@@ -16,6 +16,8 @@ public record ImpIpgPointsApplyResultDto(
         boolean ready,
         List<String> errors,
         List<Integer> problemRowIds,
-        List<Integer> createdPnKeys
+        List<Integer> createdPnKeys,
+        /** Накопительный HTML-лог «Ход загрузки» (C2 §3.5.4). */
+        String logHtml
 ) {
 }

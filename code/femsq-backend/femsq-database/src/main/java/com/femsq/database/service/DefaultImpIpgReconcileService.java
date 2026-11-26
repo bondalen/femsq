@@ -3,6 +3,12 @@ package com.femsq.database.service;
 import com.femsq.database.dao.ImpIpgLoadDao;
 import com.femsq.database.dao.StIpgStructureDao;
 import com.femsq.database.exception.DaoException;
+import com.femsq.database.ipglog.ImpIpgLoadLogCodes;
+import com.femsq.database.ipglog.ImpIpgLoadLogContext;
+import com.femsq.database.ipglog.ImpIpgLoadLogLevel;
+import com.femsq.database.ipglog.ImpIpgLoadLogScope;
+import com.femsq.database.ipglog.ImpIpgLoadLogSupport;
+import com.femsq.database.model.ImpIpgLoad;
 import com.femsq.database.model.ImpIpgReconcileResult;
 import com.femsq.database.model.ImpIpgReconcileRow;
 import com.femsq.database.model.ImpIpgReconcileStatus;
@@ -41,13 +47,50 @@ public class DefaultImpIpgReconcileService implements ImpIpgReconcileService {
         this.structureDao = Objects.requireNonNull(structureDao, "structureDao");
     }
 
+    /**
+     * Сверка ПТСФ. При {@code persistMatches=true} (мутация) ведёт накопительный лог «Ход загрузки»
+     * в {@code iilResults}; при {@code false} (превью-запрос) лог не строится ({@code logHtml=null}).
+     */
     @Override
     public ImpIpgReconcileResult reconcile(int loadKey, int stNetKey, boolean persistMatches) {
-        if (loadDao.findLoadByKey(loadKey).isEmpty()) {
-            throw new DaoException("impIpgLoad не найден: " + loadKey);
+        ImpIpgLoad load = loadDao.findLoadByKey(loadKey)
+                .orElseThrow(() -> new DaoException("impIpgLoad не найден: " + loadKey));
+        if (!persistMatches) {
+            return doReconcile(loadKey, stNetKey, false, null);
         }
+        ImpIpgLoadLogContext logCtx = new ImpIpgLoadLogContext(loadKey);
+        String previousHtml = load.iilResults();
+        String loadSpan = logCtx.beginSpan(ImpIpgLoadLogLevel.INFO, ImpIpgLoadLogScope.LOAD,
+                ImpIpgLoadLogCodes.IPG_LOAD_START,
+                "<b>Загрузка ИП</b>: сверка ПТСФ, сессия " + loadKey + ", схема stNet " + stNetKey);
+        try {
+            ImpIpgReconcileResult result = doReconcile(loadKey, stNetKey, true, logCtx);
+            boolean hasOpen = result.open() > 0;
+            logCtx.endSpan(loadSpan, hasOpen ? ImpIpgLoadLogLevel.WARNING : ImpIpgLoadLogLevel.SUCCESS,
+                    ImpIpgLoadLogScope.LOAD, ImpIpgLoadLogCodes.IPG_LOAD_END, "Сверка завершена");
+            String html = ImpIpgLoadLogSupport.finishAndPersist(
+                    logCtx, previousHtml, true, loadDao::updateLoadResults, loadKey, log);
+            return new ImpIpgReconcileResult(
+                    result.loadKey(), result.stNetKey(), result.matched(), result.open(), result.rows(), html);
+        } catch (RuntimeException ex) {
+            logCtx.append(ImpIpgLoadLogLevel.ERROR, ImpIpgLoadLogScope.RECONCILE,
+                    ImpIpgLoadLogCodes.IPG_LOAD_ERROR, ImpIpgLoadLogContext.esc(String.valueOf(ex.getMessage())));
+            logCtx.endSpan(loadSpan, ImpIpgLoadLogLevel.ERROR, ImpIpgLoadLogScope.LOAD,
+                    ImpIpgLoadLogCodes.IPG_LOAD_ERROR, "Сверка прервана");
+            ImpIpgLoadLogSupport.finishAndPersist(
+                    logCtx, previousHtml, true, loadDao::updateLoadResults, loadKey, log);
+            throw ex;
+        }
+    }
+
+    private ImpIpgReconcileResult doReconcile(
+            int loadKey, int stNetKey, boolean persistMatches, ImpIpgLoadLogContext logCtx) {
         StNetworkFull network = structureDao.findNetworkByKey(stNetKey)
                 .orElseThrow(() -> new DaoException("stNet не найден: " + stNetKey));
+
+        String reconcileSpan = logCtx == null ? null : logCtx.beginSpan(
+                ImpIpgLoadLogLevel.INFO, ImpIpgLoadLogScope.RECONCILE,
+                ImpIpgLoadLogCodes.RECONCILE_START, "Сверка разделов ПТСФ со схемой");
 
         List<ImpIpgRow> sections = loadDao.findStructureRowsByLoad(loadKey);
         List<StIpgTreeNode> tree = structureDao.findTree(stNetKey, network.stnRoot());
@@ -82,7 +125,50 @@ public class DefaultImpIpgReconcileService implements ImpIpgReconcileService {
                 open++;
             }
         }
+        if (logCtx != null) {
+            logReconcileOutcome(logCtx, reconcileSpan, sections.size(), matched, open, rows);
+        }
         return new ImpIpgReconcileResult(loadKey, stNetKey, matched, open, List.copyOf(rows));
+    }
+
+    /**
+     * Пишет в лог открытые разделы (первые {@link ImpIpgLoadLogSupport#MAX_ERROR_SAMPLES}) и итоги сверки.
+     */
+    private static void logReconcileOutcome(
+            ImpIpgLoadLogContext logCtx,
+            String reconcileSpan,
+            int sectionCount,
+            int matched,
+            int open,
+            List<ImpIpgReconcileRow> rows) {
+        int shown = 0;
+        int openTotal = 0;
+        for (ImpIpgReconcileRow row : rows) {
+            if (row.closed()) {
+                continue;
+            }
+            openTotal++;
+            if (shown < ImpIpgLoadLogSupport.MAX_ERROR_SAMPLES) {
+                shown++;
+                logCtx.append(ImpIpgLoadLogLevel.WARNING, ImpIpgLoadLogScope.RECONCILE,
+                        ImpIpgLoadLogCodes.RECONCILE_ROW_OPEN,
+                        "стр. " + row.rowNo() + " «" + ImpIpgLoadLogContext.esc(row.text()) + "» — "
+                                + row.status().name(),
+                        Map.of("rowId", String.valueOf(row.rowId()), "status", row.status().name()));
+            }
+        }
+        if (openTotal > shown) {
+            logCtx.append(ImpIpgLoadLogLevel.WARNING, ImpIpgLoadLogScope.RECONCILE,
+                    ImpIpgLoadLogCodes.RECONCILE_ROW_OPEN, "… ещё открытых разделов: " + (openTotal - shown));
+        }
+        logCtx.append(ImpIpgLoadLogLevel.SUMMARY, ImpIpgLoadLogScope.SUMMARY,
+                ImpIpgLoadLogCodes.RECONCILE_STATS,
+                "разделов " + sectionCount + ", сопоставлено " + matched + ", открыто " + open,
+                Map.of("sections", String.valueOf(sectionCount), "matched", String.valueOf(matched),
+                        "open", String.valueOf(open)));
+        logCtx.endSpan(reconcileSpan,
+                open > 0 ? ImpIpgLoadLogLevel.WARNING : ImpIpgLoadLogLevel.SUCCESS,
+                ImpIpgLoadLogScope.RECONCILE, ImpIpgLoadLogCodes.RECONCILE_END, "Сверка ПТСФ завершена");
     }
 
     private ImpIpgReconcileRow matchSection(ImpIpgRow section, Index index) {

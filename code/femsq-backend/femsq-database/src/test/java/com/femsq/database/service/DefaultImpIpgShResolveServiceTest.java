@@ -63,17 +63,17 @@ class DefaultImpIpgShResolveServiceTest {
     }
 
     @Test
-    void singleOccurrenceDefaultsTo4WhenPrevAmbiguousOrEmpty() {
+    void singleOccurrenceDefaultsTo2WhenPrevAmbiguousOrEmpty() {
         loadDao.load = sampleLoad(8, 27);
         loadDao.rows = List.of(leaf(1, 10, "051-1"));
         ipgDao.prevPns = List.of(pn(100, 17, "051-1", 1), pn(101, 17, "051-1", 2));
 
         ImpIpgShResolveResult ambiguous = service.evaluate(8, 17);
-        assertEquals(4, ambiguous.resolvedLeaves().get(0).resolvedSh());
+        assertEquals(2, ambiguous.resolvedLeaves().get(0).resolvedSh());
         assertEquals(ImpIpgShResolveSource.DEFAULT_4, ambiguous.resolvedLeaves().get(0).source());
 
         ImpIpgShResolveResult noPrev = service.evaluate(8, null);
-        assertEquals(4, noPrev.resolvedLeaves().get(0).resolvedSh());
+        assertEquals(2, noPrev.resolvedLeaves().get(0).resolvedSh());
         assertEquals(1, noPrev.default4Count());
     }
 
@@ -190,6 +190,11 @@ class DefaultImpIpgShResolveServiceTest {
         @Override
         public ImpIpgLoad updateLoad(int iilKey, String name, String filePath, String note) {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void updateLoadResults(int iilKey, String html) {
+            // лог не проверяется в этом тесте
         }
 
         @Override

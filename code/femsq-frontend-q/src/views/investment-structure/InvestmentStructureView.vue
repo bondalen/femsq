@@ -292,6 +292,11 @@
                 :label="'не сопоставлено (' + store.unmatchedRows.length + ')'"
                 data-test="investment-structure-tab-unmatched"
               />
+              <QTab
+                name="log"
+                label="Ход загрузки"
+                data-test="investment-structure-tab-log"
+              />
             </QTabs>
             <QTabPanels v-model="bottomTab" animated class="bg-transparent col">
               <QTabPanel name="unmatched" class="q-pa-none column fill-pane no-wrap">
@@ -337,6 +342,20 @@
                     </QTd>
                   </template>
                 </QTable>
+              </QTabPanel>
+              <QTabPanel name="log" class="q-pa-none column fill-pane no-wrap">
+                <div class="col scroll investment-structure-load-log" data-test="investment-structure-load-log">
+                  <div class="audit-log-surface">
+                    <div
+                      v-if="store.loadLogHtml"
+                      class="audit-log-html"
+                      v-html="store.loadLogHtml"
+                    />
+                    <div v-else class="audit-log-empty text-body2">
+                      Журнал загрузки появится после «Разобрать» или «Сверить» для выбранной сессии.
+                    </div>
+                  </div>
+                </div>
               </QTabPanel>
             </QTabPanels>
           </div>
@@ -957,6 +976,12 @@ onMounted(() => {
 
 .investment-structure-splitter {
   min-height: 0;
+}
+
+.investment-structure-load-log {
+  min-height: 0;
+  overflow: auto;
+  padding: 4px;
 }
 
 .fill-pane {

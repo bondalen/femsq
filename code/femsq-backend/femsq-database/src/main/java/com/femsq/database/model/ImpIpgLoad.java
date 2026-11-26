@@ -14,7 +14,11 @@ public final class ImpIpgLoad {
     private final String iilFilePath;
     private final String iilNote;
     private final LocalDateTime iilCreated;
+    private final String iilResults;
 
+    /**
+     * Конструктор без лога ({@code iilResults = null}).
+     */
     public ImpIpgLoad(
             int iilKey,
             int iilIpg,
@@ -22,12 +26,27 @@ public final class ImpIpgLoad {
             String iilFilePath,
             String iilNote,
             LocalDateTime iilCreated) {
+        this(iilKey, iilIpg, iilNm, iilFilePath, iilNote, iilCreated, null);
+    }
+
+    /**
+     * @param iilResults накопительный HTML-лог загрузки (C2 §3.5.4), nullable
+     */
+    public ImpIpgLoad(
+            int iilKey,
+            int iilIpg,
+            String iilNm,
+            String iilFilePath,
+            String iilNote,
+            LocalDateTime iilCreated,
+            String iilResults) {
         this.iilKey = iilKey;
         this.iilIpg = iilIpg;
         this.iilNm = Objects.requireNonNull(iilNm, "iilNm");
         this.iilFilePath = iilFilePath;
         this.iilNote = iilNote;
         this.iilCreated = iilCreated;
+        this.iilResults = iilResults;
     }
 
     public int iilKey() {
@@ -52,5 +71,10 @@ public final class ImpIpgLoad {
 
     public LocalDateTime iilCreated() {
         return iilCreated;
+    }
+
+    /** Накопительный HTML-лог загрузки ({@code iilResults}) или null. */
+    public String iilResults() {
+        return iilResults;
     }
 }

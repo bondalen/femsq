@@ -1,11 +1,11 @@
 # §3.4 Приёмка O1 — пункты A–D (partial) на noM6
 
 **Дата:** 2026-11-25  
-**lastUpdated:** 2026-11-25  
-**Задача:** 0081 · план C2 **§3.4**  
+**lastUpdated:** 2026-11-26  
+**Задача:** 0081 · план C2 **§3.4** (+ хвост САК → **§3.5.1**)  
 **Стенд:** `FishEye_prod_noM6` · JAR **0.1.0.411-SNAPSHOT** · `http://127.0.0.1:8080/`  
 **Сервис:** `ImpIpgPointsApplySmokeMain` · partial apply (§5.8)  
-**Связано:** [smoke §3.2.7.4](./26-1125-c2-o1-points-smoke-3274.md) · [контракт](./26-1124-c2-o1-excel-load-contract.md) · G5-BCD `~/Downloads/продОбмен/26-1125_11-32/` · эталон `ipgCh.tsv`
+**Связано:** [smoke §3.2.7.4](./26-1125-c2-o1-points-smoke-3274.md) · [контракт](./26-1124-c2-o1-excel-load-contract.md) · G5-BCD `~/Downloads/продОбмен/26-1125_11-32/` · full-diff `~/Downloads/продОбмен/26-1126_09-31/` · эталон `ipgCh.tsv`
 
 ## 1. Ключи DEV
 
@@ -43,10 +43,22 @@ ImpIpgPointsApplySmokeMain 8|9|10|11 none commit
 
 | | |
 |--|--|
-| Union кодов B∪C∪D | **73** (= пакет G5-BCD) |
-| Пакет в_Прод | `26-1125_11-32_в_Прод_CSTAGPN_MISSING_BCD.zip` |
-| **отПрод** | **пусто** |
-| После импорта | re-apply loads **9 / 10 / 11** → errors→0 |
+| Union кодов B∪C∪D | **73** (покрывается full-diff §3.5.1 шире) |
+| Пакет G5-BCD | `26-1125_11-32` · отПрод пусто |
+| Пакет full-diff §3.5.1 | `26-1126_09-31` ✅ · вариант **B** на noM6 ✅ |
+| `cstAgPn` noM6 | **4559** (= прод) |
+| Re-apply 9/10/11 (2026-11-26) | C/D **ready errors=0**; B: applied+25, **20** `CSTAGPN_NOT_FOUND` |
+| Residual 20 | `801-*`/`901-*`/`905-*` — разделы ИП **вне рабочего контура** (финвложения/приобретения); **нет на прод** `cstAgPn` (не дыра sync). **Решение владельца (2026-11-26):** оставить в Excel; **не чинить** в C2/O2. Список кодов+имён — CSV `missing_codes_loads_9_10_11.csv` (строки load=9) и таблица ниже |
+
+### 4.1 Двадцать кодов вне скоупа (load B / sql_i)
+
+| Pref | n | Характер |
+|------|--:|----------|
+| `801-` | 12 | вклады в УК, освоение/заём, акции |
+| `901-` | 7 | приобретения (ЗУ, ГТС, ПД/РД, имущество, Falcon) |
+| `905-` | 1 | приобретение ГО/ГРС у МРГ |
+
+Полные имена: `docs/development/notes/sql/26-1125-cstagpn-missing-bcd/open/missing_codes_loads_9_10_11.csv`.
 
 ## 5. Цепи 2026 (✅ 2026-11-25)
 
@@ -81,7 +93,8 @@ ImpIpgPointsApplySmokeMain 8|9|10|11 none commit
 | unique / ipgStPn / ipgpSh на записанных | ✅ |
 | UI Leaves (filter + колонки + counts A–D) | ✅ |
 | Цепи 2026 vs эталон (имена / stNet / late / Rl) | ✅ |
-| Полный ready A–D (0 CSTAGPN errors) | ⏸ ждёт отПрод G5-BCD |
+| Полный ready A–D (0 CSTAGPN errors) | 🔶 C/D ✅; A ✅; B: **20**×`801/901/905` **accepted residual** (§6 плана) |
 
-**§3.4 = 🔶 in-progress** (остался только справочник САК).  
-**Next:** отПрод → импорт 73 → re-apply 9–11 → закрытие §3.4.
+**§3.4 = ✅** (данные/UI; ready B с оговоркой §4.1).  
+**§3.5.1 = ✅** (sync B; 20 кодов вне скоупа — §6 плана).  
+**Next:** O2 (§4).

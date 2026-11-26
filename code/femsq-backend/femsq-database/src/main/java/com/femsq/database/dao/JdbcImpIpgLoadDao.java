@@ -57,21 +57,24 @@ public class JdbcImpIpgLoadDao implements ImpIpgLoadDao {
         return schema() + "." + table;
     }
 
+    /** Колонка {@code iilResults} отсутствует в БД (DDL §3.5.4 не применён) — читаем без неё. */
+    private volatile boolean resultsColumnMissing;
+
+    private String loadSelect() {
+        return "SELECT iilKey, iilIpg, iilNm, iilFilePath, iilNote, iilCreated"
+                + (resultsColumnMissing ? "" : ", iilResults")
+                + " FROM " + q("impIpgLoad");
+    }
+
+    private static boolean isMissingResultsColumn(SQLException exception) {
+        String message = exception.getMessage();
+        return message != null && message.contains("iilResults");
+    }
+
     @Override
     public Optional<ImpIpgLoad> findLoadByKey(int iilKey) {
-        String sql = "SELECT iilKey, iilIpg, iilNm, iilFilePath, iilNote, iilCreated FROM "
-                + q("impIpgLoad") + " WHERE iilKey = ?";
-        try (Connection connection = connectionFactory.createConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, iilKey);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (!resultSet.next()) {
-                    return Optional.empty();
-                }
-                return Optional.of(mapLoad(resultSet));
-            }
-        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
-            throw exception;
+        try {
+            return queryLoads(" WHERE iilKey = ?", iilKey).stream().findFirst();
         } catch (SQLException exception) {
             throw new DaoException("Не удалось прочитать impIpgLoad=" + iilKey, exception);
         }
@@ -79,22 +82,66 @@ public class JdbcImpIpgLoadDao implements ImpIpgLoadDao {
 
     @Override
     public List<ImpIpgLoad> findLoadsByIpg(int ipgKey) {
-        String sql = "SELECT iilKey, iilIpg, iilNm, iilFilePath, iilNote, iilCreated FROM "
-                + q("impIpgLoad") + " WHERE iilIpg = ? ORDER BY iilKey DESC";
+        try {
+            return queryLoads(" WHERE iilIpg = ? ORDER BY iilKey DESC", ipgKey);
+        } catch (SQLException exception) {
+            throw new DaoException("Не удалось прочитать impIpgLoad по ipg=" + ipgKey, exception);
+        }
+    }
+
+    /**
+     * Выполняет выборку сессий; при отсутствии колонки {@code iilResults} один раз переключается
+     * на выборку без неё (graceful degradation до применения DDL).
+     */
+    private List<ImpIpgLoad> queryLoads(String whereAndOrder, int param) throws SQLException {
+        for (int attempt = 0; ; attempt++) {
+            boolean withResults = !resultsColumnMissing;
+            String sql = loadSelect() + whereAndOrder;
+            try (Connection connection = connectionFactory.createConnection();
+                 PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setInt(1, param);
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    List<ImpIpgLoad> rows = new ArrayList<>();
+                    while (resultSet.next()) {
+                        rows.add(mapLoad(resultSet, withResults));
+                    }
+                    return List.copyOf(rows);
+                }
+            } catch (SQLException exception) {
+                if (withResults && attempt == 0 && isMissingResultsColumn(exception)) {
+                    log.warning("impIpgLoad.iilResults отсутствует — применить DDL 26-1126-impipg-iilresults");
+                    resultsColumnMissing = true;
+                    continue;
+                }
+                throw exception;
+            }
+        }
+    }
+
+    @Override
+    public void updateLoadResults(int iilKey, String html) {
+        if (resultsColumnMissing) {
+            log.warning("updateLoadResults пропущен: нет колонки iilResults, load=" + iilKey);
+            return;
+        }
+        String sql = "UPDATE " + q("impIpgLoad") + " SET iilResults = ? WHERE iilKey = ?";
         try (Connection connection = connectionFactory.createConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, ipgKey);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                List<ImpIpgLoad> rows = new ArrayList<>();
-                while (resultSet.next()) {
-                    rows.add(mapLoad(resultSet));
-                }
-                return List.copyOf(rows);
+            setNullableString(statement, 1, html);
+            statement.setInt(2, iilKey);
+            int updated = statement.executeUpdate();
+            if (updated == 0) {
+                throw new DaoException("impIpgLoad не найден: " + iilKey);
             }
         } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
             throw exception;
         } catch (SQLException exception) {
-            throw new DaoException("Не удалось прочитать impIpgLoad по ipg=" + ipgKey, exception);
+            if (isMissingResultsColumn(exception)) {
+                log.warning("impIpgLoad.iilResults отсутствует — запись лога пропущена, load=" + iilKey);
+                resultsColumnMissing = true;
+                return;
+            }
+            throw new DaoException("Не удалось сохранить iilResults для impIpgLoad=" + iilKey, exception);
         }
     }
 
@@ -386,7 +433,7 @@ public class JdbcImpIpgLoadDao implements ImpIpgLoadDao {
                 + q("impIpg");
     }
 
-    private static ImpIpgLoad mapLoad(ResultSet resultSet) throws SQLException {
+    private static ImpIpgLoad mapLoad(ResultSet resultSet, boolean withResults) throws SQLException {
         Timestamp created = resultSet.getTimestamp("iilCreated");
         LocalDateTime createdAt = created != null ? created.toLocalDateTime() : null;
         return new ImpIpgLoad(
@@ -395,7 +442,8 @@ public class JdbcImpIpgLoadDao implements ImpIpgLoadDao {
                 resultSet.getString("iilNm"),
                 resultSet.getString("iilFilePath"),
                 resultSet.getString("iilNote"),
-                createdAt);
+                createdAt,
+                withResults ? resultSet.getString("iilResults") : null);
     }
 
     private static ImpIpgRow mapRow(ResultSet resultSet) throws SQLException {

@@ -20,6 +20,14 @@ public interface ImpIpgLoadDao {
     ImpIpgLoad updateLoad(int iilKey, String name, String filePath, String note);
 
     /**
+     * Сохраняет накопительный HTML-лог сессии в {@code iilResults} (C2 §3.5.4).
+     *
+     * @param iilKey ключ сессии
+     * @param html   полный HTML лога (или null — очистить)
+     */
+    void updateLoadResults(int iilKey, String html);
+
+    /**
      * Удаляет сессию и все строки {@code impIpg} этой сессии.
      */
     boolean deleteLoad(int iilKey);

@@ -5,6 +5,8 @@ import com.femsq.database.model.IpgFull;
 import com.femsq.database.model.IpgPn;
 import com.femsq.database.model.IpgSh;
 import com.femsq.database.model.IpgStPn;
+import com.femsq.database.util.AggAxis;
+import com.femsq.database.util.AggAxisResult;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -91,15 +93,16 @@ public class DefaultIpgLeavesService implements IpgLeavesService {
             BigDecimal ipgpSmReserv,
             String ipgpTskCms) {
         log.info(() -> "createPn ipg=" + ipgpIpg + " cstAgPn=" + ipgpCstAgPn + " sh=" + ipgpSh);
+        var agg = requireAggWritable(ipgpSmTtl, ipgpSmWrk, ipgpSmEqu, ipgpSmOth);
         return leavesDao.createPn(
                 ipgpIpg,
                 ipgpNum,
                 ipgpCstAgPn,
                 ipgpSh,
-                ipgpSmTtl,
-                ipgpSmWrk,
-                ipgpSmEqu,
-                ipgpSmOth,
+                agg.ttl(),
+                agg.wrk(),
+                agg.equ(),
+                agg.oth(),
                 ipgpSmAgFee,
                 ipgpCostAdjust,
                 ipgpSmReserv,
@@ -120,19 +123,34 @@ public class DefaultIpgLeavesService implements IpgLeavesService {
             BigDecimal ipgpCostAdjust,
             BigDecimal ipgpSmReserv,
             String ipgpTskCms) {
+        var agg = requireAggWritable(ipgpSmTtl, ipgpSmWrk, ipgpSmEqu, ipgpSmOth);
         return leavesDao.updatePn(
                 ipgpKey,
                 ipgpNum,
                 ipgpCstAgPn,
                 ipgpSh,
-                ipgpSmTtl,
-                ipgpSmWrk,
-                ipgpSmEqu,
-                ipgpSmOth,
+                agg.ttl(),
+                agg.wrk(),
+                agg.equ(),
+                agg.oth(),
                 ipgpSmAgFee,
                 ipgpCostAdjust,
                 ipgpSmReserv,
                 ipgpTskCms);
+    }
+
+    /**
+     * R-MONEY-AGG: round + Q/A fix; BLOCK → отказ записи.
+     */
+    private static AggAxisResult requireAggWritable(
+            BigDecimal ttl, BigDecimal wrk, BigDecimal equ, BigDecimal oth) {
+        AggAxisResult agg = AggAxis.reconcileMln(ttl, wrk, equ, oth);
+        if (!agg.writable()) {
+            throw new IllegalArgumentException(
+                    "AGG_BLOCK: Ttl≠Wrk+Equ+Oth (δ=" + agg.deltaBefore()
+                            + "). Исправьте суммы или уменьшите расхождение.");
+        }
+        return agg;
     }
 
     @Override

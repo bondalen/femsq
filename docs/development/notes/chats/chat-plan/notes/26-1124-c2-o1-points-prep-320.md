@@ -47,7 +47,7 @@
 | `ipgpIpg` | ✅ | load→`ipg` (A=27) |
 | `ipgpNum` | ✅ optional | `iiCtx.nnn` |
 | `ipgpCstAgPn` | ✅ **int FK** | lookup `cstAgPn.cstapIpgPnN` = `iiCtx.cstAgPn` |
-| `ipgpSh` | ✅ | §3.2.3 (prev-IP / else **4**) |
+| `ipgpSh` | ✅ | §3.2.3 / §3.7 (prev-IP / else **2**) |
 | `ipgpSmTtl/Wrk/Equ/Oth` | ✅ | `iiCtx.ttl/work/equip/others` |
 | `ipgpTskCms` | ✅ | `iiCtx.commissioning` |
 | `ipgpSmAgFee` | ✅ | **нет в годовом листе** → null |
@@ -124,7 +124,7 @@ CRUD пункта: `createIpgPn` / update / delete (cascade StPn; forbid UtPl).
 ### §3.2.3 Резолв ipgpSh (2026-11-25)
 
 - `DefaultImpIpgShResolveService.evaluate` / `assertReady` — notes O1 §5.2; **без** записи в `ipgPn`
-- 1× код: ровно 1 схема в prev → её (`FROM_PREV`); иначе → **4** (`DEFAULT_4`)
+- 1× код: ровно 1 схема в prev → её (`FROM_PREV`); иначе → **2** (`DEFAULT_4` в API = default, ключ 2; §3.7)
 - N>1: N различных схем (prev, затем свободные `ipgSh`); нехватка → `NO_FREE_SCHEMES`
 - Ошибки: `MISSING_CSTAGPN`, `UNIQUE_CSTAGPN_SH`
 - GraphQL query `impIpgShResolve(loadKey, previousIpgKey)`

@@ -10,5 +10,7 @@ public record ImpIpgReconcileResultDto(
         int stNetKey,
         int matched,
         int open,
-        List<ImpIpgReconcileRowDto> rows) {
+        List<ImpIpgReconcileRowDto> rows,
+        /** Накопительный HTML-лог «Ход загрузки» (C2 §3.5.4). */
+        String logHtml) {
 }

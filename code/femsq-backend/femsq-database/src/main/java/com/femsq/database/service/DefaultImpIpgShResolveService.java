@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
  * Алгоритм {@code ipgpSh} (§3.2.3 / notes O1 §5.2).
  *
  * <ul>
- *   <li>код 1 раз в файле: ровно 1 схема в prev → её; иначе → 4;</li>
+ *   <li>код 1 раз в файле: ровно 1 схема в prev → её; иначе → 2 (Агентская);</li>
  *   <li>код N&gt;1 раз: N различных схем (сначала prev, затем свободные {@code ipgSh}); иначе ERROR;</li>
  *   <li>unique в пакете: (cstAgPn, sh) не дублируется.</li>
  * </ul>
@@ -38,8 +38,11 @@ public class DefaultImpIpgShResolveService implements ImpIpgShResolveService {
 
     private static final Logger log = Logger.getLogger(DefaultImpIpgShResolveService.class.getName());
 
-    /** Ключ «Не определена». */
-    public static final int DEFAULT_UNDEFINED_SH = 4;
+    /**
+     * Хвост шага 2 без однозначного prev: {@code ipgpSh=2} (Агентская).
+     * Ключ 4 («Не определена») больше не оставляем до O2 — иначе PercentBrn не даёт {@code ag_*}.
+     */
+    public static final int DEFAULT_UNDEFINED_SH = 2;
 
     static final String ERR_MISSING_CODE = "MISSING_CSTAGPN";
     static final String ERR_NO_SCHEMES = "NO_FREE_SCHEMES";
@@ -90,7 +93,7 @@ public class DefaultImpIpgShResolveService implements ImpIpgShResolveService {
                 .sorted()
                 .collect(Collectors.toList());
         if (!allShKeys.contains(DEFAULT_UNDEFINED_SH)) {
-            errors.add("В справочнике ipgSh нет ключа " + DEFAULT_UNDEFINED_SH + " («Не определена»)");
+            errors.add("В справочнике ipgSh нет ключа " + DEFAULT_UNDEFINED_SH + " (Агентская, default хвоста)");
         }
 
         Map<String, List<ImpIpgRow>> byCode = new LinkedHashMap<>();

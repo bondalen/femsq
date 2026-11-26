@@ -162,7 +162,8 @@ public class ImpIpgLoadGraphqlController {
                 result.filePath(),
                 result.sectionCount(),
                 result.leafCount(),
-                result.totalRows());
+                result.totalRows(),
+                result.logHtml());
     }
 
     @QueryMapping
@@ -246,7 +247,8 @@ public class ImpIpgLoadGraphqlController {
                 result.ready(),
                 result.errors(),
                 result.problemRowIds(),
-                result.createdPnKeys());
+                result.createdPnKeys(),
+                result.logHtml());
     }
 
     private ImpIpgPointsGateResultDto toGateDto(ImpIpgPointsGateResult result) {
@@ -325,7 +327,8 @@ public class ImpIpgLoadGraphqlController {
                 result.stNetKey(),
                 result.matched(),
                 result.open(),
-                rows);
+                rows,
+                result.logHtml());
     }
 
     private ImpIpgReconcileRowDto toReconcileRowDto(ImpIpgReconcileRow row) {
@@ -348,7 +351,8 @@ public class ImpIpgLoadGraphqlController {
                 load.iilNm(),
                 load.iilFilePath(),
                 load.iilNote(),
-                load.iilCreated() != null ? load.iilCreated().toString() : null);
+                load.iilCreated() != null ? load.iilCreated().toString() : null,
+                load.iilResults());
     }
 
     private ImpIpgRowDto toRowDto(ImpIpgRow row) {

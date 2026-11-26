@@ -1,6 +1,9 @@
 package com.femsq.web.audit.reconcile;
 
 import com.femsq.database.connection.ConnectionFactory;
+import com.femsq.database.util.AggAxis;
+import com.femsq.database.util.AggAxisKind;
+import com.femsq.database.util.AggAxisResult;
 import com.femsq.web.audit.AuditExecutionContext;
 import com.femsq.web.audit.AuditLogLevel;
 import com.femsq.web.audit.AuditLogScope;
@@ -26,6 +29,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.springframework.stereotype.Service;
 
@@ -1036,18 +1040,23 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         BigDecimal dbWork = hasLatest ? latest.work() : null;
         BigDecimal dbEquip = hasLatest ? latest.equip() : null;
         BigDecimal dbOthers = hasLatest ? latest.others() : null;
+        Optional<MoneyAxisRub> axis = moneyAxisRub("ra_summ", raKey, source.ttl(), source.work(), source.equip(), source.others());
+        if (axis.isEmpty()) {
+            return new RaSummUpsertOutcome(false, hasLatest, dbTotal, dbWork, dbEquip, dbOthers);
+        }
+        MoneyAxisRub amounts = axis.get();
         if (hasLatest
-                && sameAmount(dbTotal, source.ttl())
-                && sameAmount(dbWork, source.work())
-                && sameAmount(dbEquip, source.equip())
-                && sameAmount(dbOthers, source.others())) {
+                && sameAmount(dbTotal, amounts.total())
+                && sameAmount(dbWork, amounts.work())
+                && sameAmount(dbEquip, amounts.equip())
+                && sameAmount(dbOthers, amounts.others())) {
             return new RaSummUpsertOutcome(false, true, dbTotal, dbWork, dbEquip, dbOthers);
         }
         insertStatement.setLong(1, raKey);
-        setNullableMoney(insertStatement, 2, source.ttl());
-        setNullableMoney(insertStatement, 3, source.work());
-        setNullableMoney(insertStatement, 4, source.equip());
-        setNullableMoney(insertStatement, 5, source.others());
+        setNullableMoney(insertStatement, 2, amounts.total());
+        setNullableMoney(insertStatement, 3, amounts.work());
+        setNullableMoney(insertStatement, 4, amounts.equip());
+        setNullableMoney(insertStatement, 5, amounts.others());
         insertStatement.setTimestamp(6, now);
         insertStatement.addBatch();
         return new RaSummUpsertOutcome(true, hasLatest, dbTotal, dbWork, dbEquip, dbOthers);
@@ -1085,10 +1094,16 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         if (latest == null) {
             return false;
         }
-        return sameAmount(latest.total(), source.ttl())
-                && sameAmount(latest.work(), source.work())
-                && sameAmount(latest.equip(), source.equip())
-                && sameAmount(latest.others(), source.others());
+        Optional<MoneyAxisRub> axis = moneyAxisRub(
+                "ra_summ", -1L, source.ttl(), source.work(), source.equip(), source.others());
+        if (axis.isEmpty()) {
+            return false;
+        }
+        MoneyAxisRub amounts = axis.get();
+        return sameAmount(latest.total(), amounts.total())
+                && sameAmount(latest.work(), amounts.work())
+                && sameAmount(latest.equip(), amounts.equip())
+                && sameAmount(latest.others(), amounts.others());
     }
 
     private boolean hasSameLatestSum(Connection connection, long raKey, StagingRaRow source) throws SQLException {
@@ -2081,6 +2096,12 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
             int insertBatch = 0;
             int updateBatch = 0;
             for (RcAuApplyRow row : rows) {
+                Optional<MoneyAxisRub> axis = moneyAxisRub(
+                        "ra_change_au", row.racKey(), row.total(), row.work(), row.equip(), row.others());
+                if (axis.isEmpty()) {
+                    continue;
+                }
+                MoneyAxisRub amounts = axis.get();
                 RcAuMatchKey key = new RcAuMatchKey(row.racKey(), row.arrivedKey());
                 Long auKey = existing.get(key);
                 if (auKey == null) {
@@ -2094,10 +2115,10 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                     insertStmt.setString(i++, row.returnedReason());
                     insertStmt.setString(i++, row.sent());
                     insertStmt.setObject(i++, row.sentDate());
-                    insertStmt.setBigDecimal(i++, row.total());
-                    insertStmt.setBigDecimal(i++, row.work());
-                    insertStmt.setBigDecimal(i++, row.equip());
-                    insertStmt.setBigDecimal(i++, row.others());
+                    insertStmt.setBigDecimal(i++, amounts.total());
+                    insertStmt.setBigDecimal(i++, amounts.work());
+                    insertStmt.setBigDecimal(i++, amounts.equip());
+                    insertStmt.setBigDecimal(i++, amounts.others());
                     insertStmt.setTimestamp(i++, now);
                     insertStmt.addBatch();
                     insertBatch++;
@@ -2114,10 +2135,10 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
                     updateStmt.setString(i++, row.returnedReason());
                     updateStmt.setString(i++, row.sent());
                     updateStmt.setObject(i++, row.sentDate());
-                    updateStmt.setBigDecimal(i++, row.total());
-                    updateStmt.setBigDecimal(i++, row.work());
-                    updateStmt.setBigDecimal(i++, row.equip());
-                    updateStmt.setBigDecimal(i++, row.others());
+                    updateStmt.setBigDecimal(i++, amounts.total());
+                    updateStmt.setBigDecimal(i++, amounts.work());
+                    updateStmt.setBigDecimal(i++, amounts.equip());
+                    updateStmt.setBigDecimal(i++, amounts.others());
                     updateStmt.setLong(i++, auKey);
                     updateStmt.addBatch();
                     updateBatch++;
@@ -2261,19 +2282,24 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         BigDecimal dbWork = hasLatest ? latest.work() : null;
         BigDecimal dbEquip = hasLatest ? latest.equip() : null;
         BigDecimal dbOthers = hasLatest ? latest.others() : null;
+        Optional<MoneyAxisRub> axis = moneyAxisRub("ra_change_summ", racKey, total, work, equip, others);
+        if (axis.isEmpty()) {
+            return new RaSummUpsertOutcome(false, hasLatest, dbTotal, dbWork, dbEquip, dbOthers);
+        }
+        MoneyAxisRub amounts = axis.get();
         if (hasLatest
-                && sameAmount(dbTotal, total)
-                && sameAmount(dbWork, work)
-                && sameAmount(dbEquip, equip)
-                && sameAmount(dbOthers, others)) {
+                && sameAmount(dbTotal, amounts.total())
+                && sameAmount(dbWork, amounts.work())
+                && sameAmount(dbEquip, amounts.equip())
+                && sameAmount(dbOthers, amounts.others())) {
             return new RaSummUpsertOutcome(false, true, dbTotal, dbWork, dbEquip, dbOthers);
         }
         try (PreparedStatement insertSum = connection.prepareStatement(insertSumSql)) {
             insertSum.setLong(1, racKey);
-            setNullableMoney(insertSum, 2, total);
-            setNullableMoney(insertSum, 3, work);
-            setNullableMoney(insertSum, 4, equip);
-            setNullableMoney(insertSum, 5, others);
+            setNullableMoney(insertSum, 2, amounts.total());
+            setNullableMoney(insertSum, 3, amounts.work());
+            setNullableMoney(insertSum, 4, amounts.equip());
+            setNullableMoney(insertSum, 5, amounts.others());
             insertSum.setTimestamp(6, now);
             insertSum.executeUpdate();
             return new RaSummUpsertOutcome(true, hasLatest, dbTotal, dbWork, dbEquip, dbOthers);
@@ -2295,21 +2321,58 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
         BigDecimal dbWork = hasLatest ? preloadedLatest.work() : null;
         BigDecimal dbEquip = hasLatest ? preloadedLatest.equip() : null;
         BigDecimal dbOthers = hasLatest ? preloadedLatest.others() : null;
+        Optional<MoneyAxisRub> axis = moneyAxisRub("ra_change_summ", racKey, total, work, equip, others);
+        if (axis.isEmpty()) {
+            return new RaSummUpsertOutcome(false, hasLatest, dbTotal, dbWork, dbEquip, dbOthers);
+        }
+        MoneyAxisRub amounts = axis.get();
         if (hasLatest
-                && sameAmount(dbTotal, total)
-                && sameAmount(dbWork, work)
-                && sameAmount(dbEquip, equip)
-                && sameAmount(dbOthers, others)) {
+                && sameAmount(dbTotal, amounts.total())
+                && sameAmount(dbWork, amounts.work())
+                && sameAmount(dbEquip, amounts.equip())
+                && sameAmount(dbOthers, amounts.others())) {
             return new RaSummUpsertOutcome(false, true, dbTotal, dbWork, dbEquip, dbOthers);
         }
         insertSum.setLong(1, racKey);
-        setNullableMoney(insertSum, 2, total);
-        setNullableMoney(insertSum, 3, work);
-        setNullableMoney(insertSum, 4, equip);
-        setNullableMoney(insertSum, 5, others);
+        setNullableMoney(insertSum, 2, amounts.total());
+        setNullableMoney(insertSum, 3, amounts.work());
+        setNullableMoney(insertSum, 4, amounts.equip());
+        setNullableMoney(insertSum, 5, amounts.others());
         insertSum.setTimestamp(6, now);
         insertSum.addBatch();
         return new RaSummUpsertOutcome(true, hasLatest, dbTotal, dbWork, dbEquip, dbOthers);
+    }
+
+    /**
+     * Round + AggAxis для оси Ttl/Wrk/Equ/Oth в ₽ (ADR 012). A-hard → empty (без INSERT).
+     *
+     * @param tableLabel метка таблицы в логе ({@code ra_summ} / {@code ra_change_summ})
+     * @param rowKey     ra_key / rac_key (−1 если неизвестен)
+     */
+    private Optional<MoneyAxisRub> moneyAxisRub(
+            String tableLabel,
+            long rowKey,
+            BigDecimal total,
+            BigDecimal work,
+            BigDecimal equip,
+            BigDecimal others
+    ) {
+        AggAxisResult agg = AggAxis.reconcileRub(total, work, equip, others);
+        if (!agg.writable()) {
+            log.log(Level.WARNING,
+                    "AGG_BLOCK {0} key={1} δ={2} ttl={3} work={4} equip={5} others={6}",
+                    new Object[]{tableLabel, rowKey, agg.deltaBefore(), agg.ttl(), agg.wrk(), agg.equ(), agg.oth()});
+            return Optional.empty();
+        }
+        if (agg.kind() == AggAxisKind.QUANTUM_FIX || agg.kind() == AggAxisKind.AUTHOR_FIX) {
+            log.log(Level.INFO,
+                    "{0} {1} key={2} δ={3} → ttl={4} work={5} equip={6} others={7}",
+                    new Object[]{
+                            agg.logCode(), tableLabel, rowKey, agg.deltaBefore(),
+                            agg.ttl(), agg.wrk(), agg.equ(), agg.oth()
+                    });
+        }
+        return Optional.of(new MoneyAxisRub(agg.ttl(), agg.wrk(), agg.equ(), agg.oth()));
     }
 
     /**
@@ -4260,6 +4323,17 @@ public class AllAgentsReconcileService extends AbstractTransactionalReconcileSer
     private record SumEvolutionStats(
             int inserted,
             int unchangedSkipped
+    ) {
+    }
+
+    /**
+     * Согласованная ось сумм в ₽ после {@link AggAxis#reconcileRub}.
+     */
+    private record MoneyAxisRub(
+            BigDecimal total,
+            BigDecimal work,
+            BigDecimal equip,
+            BigDecimal others
     ) {
     }
 

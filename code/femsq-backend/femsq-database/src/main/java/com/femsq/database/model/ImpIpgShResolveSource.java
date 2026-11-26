@@ -6,7 +6,10 @@ package com.femsq.database.model;
 public enum ImpIpgShResolveSource {
     /** Единственная (или взятая из списка) схема предшествующей ИП. */
     FROM_PREV,
-    /** База «Не определена» (ключ 4). */
+    /**
+     * Хвост без однозначного prev: сейчас {@code ipgpSh=2} (Агентская).
+     * Имя {@code DEFAULT_4} сохранено в API/GraphQL (источник «default»), значение ключа — не 4.
+     */
     DEFAULT_4,
     /** Добор из свободных ключей {@code ipgSh} при N&gt;1 вхождений кода. */
     FREE_POOL

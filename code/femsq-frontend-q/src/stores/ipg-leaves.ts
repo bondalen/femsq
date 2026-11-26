@@ -226,6 +226,14 @@ export const useIpgLeavesStore = defineStore('ipgLeaves', () => {
     () => loads.value.find((item) => item.id === selectedLoadKey.value) ?? null
   );
 
+  /**
+   * HTML «Ход загрузки» (C2 §3.5.4): последний ответ apply (в т.ч. dry-run) либо сохранённый
+   * {@code iilResults} выбранной сессии.
+   */
+  const loadLogHtml = computed(
+    () => applyResult.value?.logHtml ?? selectedLoad.value?.logHtml ?? null
+  );
+
   const selectedPoint = computed(
     () => points.value.find((p) => p.ipgpKey === selectedIpgpKey.value) ?? null
   );
@@ -361,6 +369,12 @@ export const useIpgLeavesStore = defineStore('ipgLeaves', () => {
         dryRun
       );
       applyResult.value = result;
+      if (!dryRun && result.logHtml != null) {
+        // commit сохранил лог в сессии — синхронизируем кэш сессий
+        loads.value = loads.value.map((item) =>
+          item.id === loadKey ? { ...item, logHtml: result.logHtml } : item
+        );
+      }
       console.info('[ipg-leaves] applyPoints', result);
       if (!dryRun && result.appliedCount > 0 && selectedIpgKey.value != null) {
         await fetchPoints(selectedIpgKey.value);
@@ -573,6 +587,7 @@ export const useIpgLeavesStore = defineStore('ipgLeaves', () => {
     loads,
     selectedLoadKey,
     selectedLoad,
+    loadLogHtml,
     previousIpgKeyForApply,
     applyResult,
     loadingLoads,

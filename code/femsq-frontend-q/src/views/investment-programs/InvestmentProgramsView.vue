@@ -593,6 +593,21 @@
                 </div>
               </div>
             </div>
+            <div class="q-mt-sm" data-test="investment-programs-load-log">
+              <div class="text-subtitle2 q-mb-xs">Ход загрузки</div>
+              <div class="investment-programs-load-log">
+                <div class="audit-log-surface">
+                  <div
+                    v-if="store.loadLogHtml"
+                    class="audit-log-html"
+                    v-html="store.loadLogHtml"
+                  />
+                  <div v-else class="audit-log-empty text-body2">
+                    Журнал загрузки появится после «Проверить» / «Загрузить» (и разбора на Structure).
+                  </div>
+                </div>
+              </div>
+            </div>
           </QTabPanel>
 
           <QTabPanel name="plan-groups" class="q-pa-md">
@@ -1441,6 +1456,11 @@ onMounted(async () => {
   overflow: auto;
   background: var(--femsq-bg-surface);
   border-color: var(--femsq-border) !important;
+}
+
+.investment-programs-load-log {
+  max-height: 24rem;
+  overflow: auto;
 }
 
 .investment-programs-apply-errors {

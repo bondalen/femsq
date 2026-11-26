@@ -47,6 +47,11 @@ public class DefaultImpIpgLoadService implements ImpIpgLoadService {
     }
 
     @Override
+    public void updateLoadResults(int iilKey, String html) {
+        dao.updateLoadResults(iilKey, html);
+    }
+
+    @Override
     public boolean deleteLoad(int iilKey) {
         log.info(() -> "deleteLoad iilKey=" + iilKey);
         return dao.deleteLoad(iilKey);

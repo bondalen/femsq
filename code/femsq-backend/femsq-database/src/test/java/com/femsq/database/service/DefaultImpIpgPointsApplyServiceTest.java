@@ -2,6 +2,8 @@ package com.femsq.database.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.femsq.database.dao.CstAgPnDao;
@@ -88,7 +90,21 @@ class DefaultImpIpgPointsApplyServiceTest {
         assertEquals(4, draft.ipgpSh());
         assertEquals(55, draft.stiKey());
         assertEquals(1, draft.ipgpNum());
-        assertEquals(new BigDecimal("10.5"), draft.ipgpSmTtl());
+        assertEquals(0, new BigDecimal("10.5").compareTo(draft.ipgpSmTtl()));
+        assertNotNull(result.logHtml());
+        assertTrue(result.logHtml().contains("femsq-auditlog"));
+        assertTrue(result.logHtml().contains("APPLY") || result.logHtml().contains("Применение"));
+        assertEquals(result.logHtml(), loadDao.savedResults);
+    }
+
+    @Test
+    void dryRunReturnsLogButDoesNotPersist() {
+        prepareHappyPath();
+
+        ImpIpgPointsApplyResult result = service.apply(8, null, true);
+
+        assertNotNull(result.logHtml());
+        assertNull(loadDao.savedResults);
     }
 
     @Test
@@ -120,6 +136,8 @@ class DefaultImpIpgPointsApplyServiceTest {
                         && e.contains("051-2")));
         assertEquals(1, ipgDao.created.size());
         assertEquals(1001, ipgDao.created.get(0).cstAgPnKey());
+        assertTrue(result.logHtml().contains("lvl-error"));
+        assertTrue(result.logHtml().contains(DefaultImpIpgPointsApplyService.ERR_CSTAGPN_MISSING));
     }
 
     @Test
@@ -131,6 +149,7 @@ class DefaultImpIpgPointsApplyServiceTest {
 
         assertTrue(result.ready());
         assertEquals(1, result.appliedCount());
+        assertTrue(result.logHtml().contains("lvl-warning"));
     }
 
     @Test
@@ -295,6 +314,7 @@ class DefaultImpIpgPointsApplyServiceTest {
 
     private static final class StubLoadDao implements ImpIpgLoadDao {
         ImpIpgLoad load;
+        String savedResults;
         List<ImpIpgRow> rows = List.of();
 
         @Override
@@ -315,6 +335,11 @@ class DefaultImpIpgPointsApplyServiceTest {
         @Override
         public ImpIpgLoad updateLoad(int iilKey, String name, String filePath, String note) {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void updateLoadResults(int iilKey, String html) {
+            savedResults = html;
         }
 
         @Override

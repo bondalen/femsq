@@ -3,16 +3,486 @@
     "metadata": {
       "version": "1.0.0",
       "status": "in-progress",
-      "lastUpdated": "2026-11-25"
+      "lastUpdated": "2026-11-26"
     },
     "sessions": [
+      {
+        "chat": {
+          "displayName": "R-MONEY-AGG: квант и оси агрегации Excel/UI (completed, high). № chat-2026-11-26-002",
+          "chat-attributes": {
+            "id": "chat-2026-11-26-002",
+            "created": "2026-11-26",
+            "lastUpdated": "2026-11-26",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "high",
+            "tags": [
+              "R-MONEY-AGG",
+              "ImpIpg",
+              "ipgPnLim",
+              "RA",
+              "stCost"
+            ],
+            "links": {
+              "projectDocsRefs": [
+                "docs/project/decisions/012-money-agg-axes.md"
+              ],
+              "developmentTasks": [
+                "0095"
+              ],
+              "aiRuleRefs": [
+                "rule:money-agg-axes"
+              ],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1126-money-agg-axes.md",
+              "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Закрытие 0095 / план money-agg-axes (completed). № log-2026-11-26-012",
+                "log-attributes": {
+                  "id": "log-2026-11-26-012",
+                  "timestamp": "2026-11-26T16:18:00+03:00",
+                  "level": "info",
+                  "effort": "0.1h",
+                  "status": "completed",
+                  "tags": [
+                    "0095",
+                    "plan-closed",
+                    "R-MONEY-AGG"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/project/decisions/012-money-agg-axes.md"
+                    ],
+                    "developmentTasks": [
+                      "0095"
+                    ],
+                    "aiRuleRefs": [
+                      "rule:money-agg-axes"
+                    ],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1126-money-agg-axes.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Точка синхронизации «закрыт план»",
+                    "details": "ImpIpg+leaves+oneshot+RA ✅; HARD13@ipg21 backlog; UtPl Round(8)+AggAxis — с O2",
+                    "outcome": "0095/чат completed; активный C2 → O2",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1126-money-agg-axes.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "RA: roundRub + AggAxis reconcile (completed). № log-2026-11-26-011",
+                "log-attributes": {
+                  "id": "log-2026-11-26-011",
+                  "timestamp": "2026-11-26T16:17:00+03:00",
+                  "level": "info",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": [
+                    "0095",
+                    "RA",
+                    "AggAxis",
+                    "ra_summ"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/project/decisions/012-money-agg-axes.md"
+                    ],
+                    "developmentTasks": [
+                      "0095"
+                    ],
+                    "aiRuleRefs": [
+                      "rule:money-agg-axes"
+                    ],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1126-money-agg-axes.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Проводка R-MONEY-AGG в RA",
+                    "details": "AuditExcelCellReader.roundRub; AllAgentsReconcileService AggAxis на ra_summ/ra_change_summ/ra_change_au; JdbcRaSummDao BLOCK→DaoException; A-hard skip INSERT",
+                    "outcome": "§5 плана ✅; next закрытие 0095 (§6 UtPl с O2)",
+                    "references": [
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/excel/AuditExcelCellReader.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/audit/reconcile/AllAgentsReconcileService.java",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcRaSummDao.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "One-shot Sm/lim repair + 07k1 EXACT (completed). № log-2026-11-26-010",
+                "log-attributes": {
+                  "id": "log-2026-11-26-010",
+                  "timestamp": "2026-11-26T16:10:00+03:00",
+                  "level": "info",
+                  "effort": "0.4h",
+                  "status": "completed",
+                  "tags": [
+                    "0095",
+                    "one-shot",
+                    "FishEye_prod_noM6",
+                    "07k1"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0095"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1126-money-agg-axes.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Ремонт Q/A + приёмка lim RS",
+                    "details": "Q25 Oth+=δ; A4 Ttl:=parts; lim resync; HARD13 @ipg21 skip. 3555 δ=0; 07k1 DECIMAL_EXACT",
+                    "outcome": "Контур 507 lim аддитивен exact; next RA",
+                    "references": [
+                      "docs/development/notes/sql/26-1126/01_REPAIR_sm_agg_axes_R_MONEY_AGG.sql",
+                      "docs/development/notes/chats/chat-plan/notes/26-1126-money-agg-oneshot-repair.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Фаза 1: FemsqMoney + ImpIpg/leaves (completed). № log-2026-11-26-009",
+                "log-attributes": {
+                  "id": "log-2026-11-26-009",
+                  "timestamp": "2026-11-26T16:05:00+03:00",
+                  "level": "info",
+                  "effort": "1.0h",
+                  "status": "completed",
+                  "tags": [
+                    "0095",
+                    "FemsqMoney",
+                    "ImpIpg",
+                    "ipgPnLim"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/project/decisions/012-money-agg-axes.md"
+                    ],
+                    "developmentTasks": [
+                      "0095"
+                    ],
+                    "aiRuleRefs": [
+                      "rule:money-agg-axes"
+                    ],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1126-money-agg-axes.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Util + проводка ввода",
+                    "details": "AggAxis Q/A/S/BLOCK; apply log AGG_*; seed ipgPnLim; parser roundMln; leaves GraphQL; unit AggAxisTest+apply OK",
+                    "outcome": "Next: one-shot Sm@стенд + RA reconcile",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/util/AggAxis.java",
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/service/DefaultImpIpgPointsApplyService.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Создан план R-MONEY-AGG / ADR 012 (completed). № log-2026-11-26-008",
+                "log-attributes": {
+                  "id": "log-2026-11-26-008",
+                  "timestamp": "2026-11-26T15:52:00+03:00",
+                  "level": "info",
+                  "effort": "0.3h",
+                  "status": "completed",
+                  "tags": [
+                    "plan-created",
+                    "0095",
+                    "ADR-012"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/project/decisions/012-money-agg-axes.md"
+                    ],
+                    "developmentTasks": [
+                      "0095"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1126-money-agg-axes.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Точка синхронизации «создан план»",
+                    "details": "Классы Q/A/A-hard/S; канон A=части→Ttl; A-hard block; ε_block=max(1млн,1%Ttl)",
+                    "outcome": "Чат pending до старта реализации util/ImpIpg",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1126-fn2-stcost-fact-rs.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "chat": {
+          "displayName": "C4a: fn2 / RS — факт освоения по stCost (completed, high). № chat-2026-11-26-001",
+          "chat-attributes": {
+            "id": "chat-2026-11-26-001",
+            "created": "2026-11-26",
+            "lastUpdated": "2026-11-26",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "high",
+            "tags": [
+              "C4",
+              "fn2",
+              "stCost",
+              "PercentBrn",
+              "spMstrg_2606",
+              "FishEye_prod_noM6"
+            ],
+            "links": {
+              "projectDocsRefs": [
+                "docs/development/notes/sql/26-0604/docs/03-design-decisions.md",
+                "docs/project/decisions/012-money-agg-axes.md"
+              ],
+              "developmentTasks": [
+                "0094",
+                "0095"
+              ],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1126-fn2-stcost-fact-rs.md",
+              "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "Закрытие 0094 + ADR 012 / задача 0095 (completed). № log-2026-11-26-007",
+                "log-attributes": {
+                  "id": "log-2026-11-26-007",
+                  "timestamp": "2026-11-26T15:50:00+03:00",
+                  "level": "info",
+                  "effort": "0.4h",
+                  "status": "completed",
+                  "tags": [
+                    "0094",
+                    "0095",
+                    "ADR-012",
+                    "R-MONEY-AGG"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/project/decisions/012-money-agg-axes.md"
+                    ],
+                    "developmentTasks": [
+                      "0094",
+                      "0095"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1126-fn2-stcost-fact-rs.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "§4 закрытие + норма денег",
+                    "details": "0094 completed (07k PASS). lim δ≈0.01 = Sm ulp@3555. Согласованы D1/D2'/D2''/D3/D6/D7; ADR 012; план/задача 0095 pending",
+                    "outcome": "Хвост R-MONEY-AGG вынесен в 0095",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1126-money-agg-axes.md",
+                      "docs/development/notes/chats/chat-plan/notes/26-1126-fn2-stcost-fact-rs-accept-23.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "§2–§3 патч fn2 A + RS matrix PASS (completed). № log-2026-11-26-006",
+                "log-attributes": {
+                  "id": "log-2026-11-26-006",
+                  "timestamp": "2026-11-26T15:25:00+03:00",
+                  "level": "info",
+                  "effort": "0.7h",
+                  "status": "completed",
+                  "tags": [
+                    "0094",
+                    "C4",
+                    "fn2",
+                    "spMstrg_2606",
+                    "accept"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/development/notes/sql/26-0604/04_CREATE_FUNCTION_fnIpgChRsltCstUtl2_2606.sql",
+                      "docs/development/notes/sql/26-0604/07k_COMPARE_stCost_fact_RS_chain507.sql"
+                    ],
+                    "developmentTasks": [
+                      "0094"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1126-fn2-stcost-fact-rs.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Патч + приёмка RS @507",
+                    "details": "IIF agency+NULL→rf else mstr; apply FishEye_prod_noM6; 07k lim/pres/accp/NULL all PASS (δ≈0)",
+                    "outcome": "Канон аддитива факта в RS закрыт; next §4 docs/закрытие 0094",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1126-fn2-stcost-fact-rs-accept-23.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "§0–§1 контракт A + factDocCost @507 (completed). № log-2026-11-26-005",
+                "log-attributes": {
+                  "id": "log-2026-11-26-005",
+                  "timestamp": "2026-11-26T15:20:00+03:00",
+                  "level": "info",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": [
+                    "0094",
+                    "C4",
+                    "ADR-23",
+                    "factDocCost"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/development/notes/sql/26-0604/docs/03-design-decisions.md",
+                      "docs/development/notes/sql/26-0604/docs/09-scheme-cascade-mastering.md"
+                    ],
+                    "developmentTasks": [
+                      "0094"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1126-fn2-stcost-fact-rs.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Контракт + аудит данных",
+                    "details": "Решение 23 (NULL=RRc, NOT NULL=mstr); 09 §B.2; 6825/6825 fd; parts additive; PresRa режется по stCost (δ@403 заметна). Риск «mastering=0» снят",
+                    "outcome": "Готовность к §2 патчу fn2",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1126-fn2-stcost-fact-rs-contract-01.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Старт чата 0094: окружение и контур 507 (completed). № log-2026-11-26-004",
+                "log-attributes": {
+                  "id": "log-2026-11-26-004",
+                  "timestamp": "2026-11-26T15:10:00+03:00",
+                  "level": "info",
+                  "effort": "0.3h",
+                  "status": "completed",
+                  "tags": [
+                    "env-check",
+                    "0094",
+                    "C4",
+                    "FishEye_prod_noM6"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0094"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1126-fn2-stcost-fact-rs.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "п.1–2 первого промпта",
+                    "details": "Машина asus-kubuntu; DBHub установлен заново; SQL 10.7.0.3:1433 OK; DSN FishEye_prod_noM6; план/0094/чат → in-progress. Контур 507: sh4=0, lim Sm=Lim δ=0, 195+172+187≈212; ag_* по C2 §3.7 remaster (пересъём RS — в §3)",
+                    "outcome": "Готовность к §0–§1",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1126-c2-o1-ipgpsh-step2-37.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Создан план fn2-stCost-fact-rs (completed). № log-2026-11-26-002",
+                "log-attributes": {
+                  "id": "log-2026-11-26-002",
+                  "timestamp": "2026-11-26T15:05:00+03:00",
+                  "level": "info",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": [
+                    "plan-created",
+                    "0094",
+                    "C4"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0094"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1126-fn2-stcost-fact-rs.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Спин-офф из C2 §3.7",
+                    "details": "План 0.1.0; решение A (NULL=RRc, NOT NULL=mastering); первый промпт notes/26-1126-fn2-stcost-fact-rs-first-prompt.md; реестр roadmap 0.2.6",
+                    "outcome": "Точка синхронизации «создан план» выполнена; чат pending до старта",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1126-fn2-stcost-fact-rs.md",
+                      "docs/development/notes/chats/chat-plan/notes/26-1126-fn2-stcost-fact-rs-first-prompt.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
       {
         "chat": {
           "displayName": "C2 / D1.1: ввод ИП, цепочек, планов и лимитов в FEMSQ (DEV) (in-progress, high). № chat-2026-11-20-001",
           "chat-attributes": {
             "id": "chat-2026-11-20-001",
             "created": "2026-11-20",
-            "lastUpdated": "2026-11-25",
+            "lastUpdated": "2026-11-26",
             "owner": "Александр",
             "status": "in-progress",
             "priority": "high",
@@ -39,6 +509,114 @@
             }
           },
           "entries": [
+            {
+              "log": {
+                "displayName": "Хвост факт×stCost RS вынесен в 0094 (completed). № log-2026-11-26-003",
+                "log-attributes": {
+                  "id": "log-2026-11-26-003",
+                  "timestamp": "2026-11-26T15:05:00+03:00",
+                  "level": "info",
+                  "effort": "0.3h",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "§3.7",
+                    "спин-офф",
+                    "0094"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0081",
+                      "0094"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "C2 0.12.9: ссылка на fn2-план",
+                    "details": "Факт-аддитив RS не чиним в C2; план chat-plan-26-1126-fn2-stcost-fact-rs.md + first-prompt; next C2 = O2",
+                    "outcome": "Хвост передан в 0094",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1126-fn2-stcost-fact-rs.md",
+                      "docs/development/notes/chats/chat-plan/notes/26-1126-fn2-stcost-fact-rs-first-prompt.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "C2 O1 §3.5 prep перед O2 (in-progress). № log-2026-11-26-001",
+                "log-attributes": {
+                  "id": "log-2026-11-26-001",
+                  "timestamp": "2026-11-26T10:15:00+03:00",
+                  "level": "info",
+                  "effort": "2.5h",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "O1",
+                    "§3.5",
+                    "cstAgPn",
+                    "_2606",
+                    "ipg-load-log"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "План 0.12.0: §3.5 перед O2",
+                    "details": "full-diff cstAgPn; ipgChRl_2606 даты; smoke _2606 без UtPl; лог загрузки ≈ ревизии (iilResults). Контракт notes/26-1126-c2-o1-ipg-load-log-contract.md.",
+                    "outcome": "§3.5 🔶 в работе",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md",
+                      "docs/development/notes/chats/chat-plan/notes/26-1126-c2-o1-ipg-load-log-contract.md"
+                    ]
+                  },
+                  {
+                    "action": "§3.5 выполнен (пакет/даты/smoke/лог)",
+                    "details": "full-diff zip в_Прод (import ⏸ отПрод); ipgChRl_2606 507–510; smoke spMstrg_2606 @507 UtPl=0 OK; iilResults+logHtml UI Structure/Leaves.",
+                    "outcome": "§3.5 ✅ (хвост import САК); можно стартовать O2",
+                    "references": [
+                      "docs/development/notes/sql/26-1126-cstagpn-full-diff/README.md",
+                      "docs/development/notes/chats/chat-plan/notes/26-1126-c2-spmstrg-2606-smoke.md",
+                      "docs/development/notes/chats/chat-plan/notes/26-1126-c2-ipg-load-log-contract.md"
+                    ]
+                  },
+                  {
+                    "action": "§3.5.1 B ✅; 20×801/901/905 вне скоупа",
+                    "details": "Remap+import cstAgPn=4559; re-apply 9/10/11: C/D ready; B 20 ERR на разделах ИП (финвложения/приобретения), которых нет в прод cstAgPn. Решение: оставить в Excel, не чинить в C2/O2.",
+                    "outcome": "§3.5.1 закрыт; next O2; план 0.12.4 §6",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md",
+                      "docs/development/notes/chats/chat-plan/notes/26-1125-c2-o1-acceptance-34.md",
+                      "docs/development/notes/sql/26-1126-cstagpn-full-diff/open/RUNBOOK_B.md"
+                    ]
+                  },
+                  {
+                    "action": "§3.6 осуществимость _2606 после sync",
+                    "details": "JAR 411; UI/GraphQL ревизии adt 15/16/17 (type 5/6/3, dir 15) COMPLETED; spMstrg_2606 @507 ×5 stCost EXIT=0; лим ipgPn 195+172+187=212 PASS; RS1 ag_* NULL на 507 — факт-аддитив из RS отложен.",
+                    "outcome": "§3.6 🔶; план 0.12.6; next O2 или разбор ag_*",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1126-c2-o1-2606-feasibility-36.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+                    ]
+                  }
+                ]
+              }
+            },
             {
               "log": {
                 "displayName": "C2 O1 §3.4 UI Leaves + цепи 2026 (in-progress). № log-2026-11-25-018",

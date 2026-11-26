@@ -134,6 +134,19 @@ export const useStIpgStructureStore = defineStore('stIpgStructure', () => {
     () => loads.value.find((item) => item.id === selectedLoadKey.value) ?? null
   );
 
+  /** Накопительный HTML «Ход загрузки» выбранной сессии (iilResults), C2 §3.5.4. */
+  const loadLogHtml = computed(() => selectedLoad.value?.logHtml ?? null);
+
+  /** Подставляет свежий logHtml из ответа мутации в кэш сессий (без повторного запроса). */
+  function applyLoadLog(loadKey: number, html: string | null | undefined): void {
+    if (html == null) {
+      return;
+    }
+    loads.value = loads.value.map((item) =>
+      item.id === loadKey ? { ...item, logHtml: html } : item
+    );
+  }
+
   /** Открытые строки ПТСФ для вкладки «не сопоставлено». */
   const unmatchedRows = computed(() =>
     (reconcileResult.value?.rows ?? []).filter((row) => !row.closed)
@@ -498,6 +511,7 @@ export const useStIpgStructureStore = defineStore('stIpgStructure', () => {
       if (selectedIpgKey.value != null) {
         loads.value = await getImpIpgLoads(selectedIpgKey.value);
       }
+      applyLoadLog(loadKey, parsed.logHtml);
       reconcileResult.value = null;
     } catch (err) {
       error.value = err instanceof Error ? err.message : String(err);
@@ -525,6 +539,7 @@ export const useStIpgStructureStore = defineStore('stIpgStructure', () => {
     try {
       const result = await reconcileImpIpgStructure(loadKey, stNetKey, true);
       reconcileResult.value = result;
+      applyLoadLog(loadKey, result.logHtml);
       return result;
     } catch (err) {
       error.value = err instanceof Error ? err.message : String(err);
@@ -603,6 +618,7 @@ export const useStIpgStructureStore = defineStore('stIpgStructure', () => {
     loads,
     selectedLoadKey,
     selectedLoad,
+    loadLogHtml,
     excelFilePath,
     reconcileResult,
     unmatchedRows,

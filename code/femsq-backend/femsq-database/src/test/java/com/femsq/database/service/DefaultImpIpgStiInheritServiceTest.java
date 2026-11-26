@@ -182,6 +182,11 @@ class DefaultImpIpgStiInheritServiceTest {
         }
 
         @Override
+        public void updateLoadResults(int iilKey, String html) {
+            // лог не проверяется в этом тесте
+        }
+
+        @Override
         public boolean deleteLoad(int iilKey) {
             return false;
         }

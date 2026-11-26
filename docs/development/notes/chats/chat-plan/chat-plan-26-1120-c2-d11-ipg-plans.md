@@ -1,11 +1,19 @@
 # План: C2 / D1.1 — ввод ИП, цепочек, планов и лимитов в FEMSQ (DEV)
 
 **Дата создания:** 2026-11-20  
-**Последнее обновление:** 2026-11-25  
+**Последнее обновление:** 2026-11-26  
 **Образцы загрузки ИП:** `/mnt/nb-win-share/femsq/excel/2026-1120/ipg-sql-load/` (README там же)  
 **Проект:** FEMSQ  
-**Версия плана:** 0.11.31  
-**Статус плана:** 🔶 in-progress — §3.4 UI+цепи ✅; next G5-BCD отПрод → re-apply B–D  
+**Версия плана:** 0.12.9  
+**Статус плана:** 🔶 in-progress — §3.7 ✅; next O2 UtPl / O1→`ipgPnLim`  
+**§3.6 note:** [notes/26-1126-c2-o1-2606-feasibility-36.md](./notes/26-1126-c2-o1-2606-feasibility-36.md)  
+**§3.7 note:** [notes/26-1126-c2-o1-ipgpsh-step2-37.md](./notes/26-1126-c2-o1-ipgpsh-step2-37.md)  
+**Хвост факт×stCost в RS:** → [fn2-stcost-fact-rs](./chat-plan-26-1126-fn2-stcost-fact-rs.md) (**0094** ✅)  
+**Хвост денег/осей Excel:** [money-agg-axes](./chat-plan-26-1126-money-agg-axes.md) (**0095** ✅ · [ADR 012](../../../../project/decisions/012-money-agg-axes.md)); O2 UtPl — Round(8)+AggAxis с первого дня  
+
+
+
+ 
 **Фильтр Leaves:** [notes/26-1125-c2-treelist-filter-parity-b.md](./notes/26-1125-c2-treelist-filter-parity-b.md) (В13 = B)  
 **Приёмка O1 §3.4:** [notes/26-1125-c2-o1-acceptance-34.md](./notes/26-1125-c2-o1-acceptance-34.md)
 
@@ -238,7 +246,78 @@
 │  └─ 3.4 Приёмка O1 на noM6 (пункты/цепи vs эталон)           🔶
 │         notes/26-1125-c2-o1-acceptance-34.md · JAR 411
 │         A–D counts/unique/UI Leaves ✅ · цепи 507–510 ✅
-│         ⏸ 73 CSTAGPN (отПрод пуст) → re-apply 9–11
+│         residual CSTAGPN → закрывается в §3.5.1 (full-diff)
+│  └─ 3.5 Prep перед O2 / smoke _2606                          ✅ 2026-11-26
+│         chat-plan §3.5; notes sql + log contract
+│     ├─ 3.5.1 G5 full-diff cstAgPn (продОбмен) + sync noM6   ✅ 2026-11-26
+│     │         отПрод + вариант **B** (remap/insert/verify/re-apply)
+│     │         **Выбран вариант B** (выровнять key+code с прод):
+│     │   ├─ 3.5.1.prep Подготовка SQL-пакета B (snapshot/     ✅
+│     │   │         remap/update/import/verify + RUNBOOK)
+│     │   │         `docs/.../sql/26-1126-cstagpn-full-diff/`
+│     │   ├─ 3.5.1.0 Снимок `00b_SNAPSHOT_…`                   ✅ 2026-11-26
+│     │   │         ags._bak_cstagpn_B_20261126_*
+│     │   ├─ 3.5.1.1 Remap 7: `03_REMAP_…` (temp-code +        ✅ 2026-11-26
+│     │   │         INSERT prod_key + FK; без DELETE DEV_key)
+│     │   │         INSERT без computed-колонок имён
+│     │   ├─ 3.5.1.2 UPDATE displaced: `04_UPDATE_…`          ✅ 2026-11-26
+│     │   │         ключи 4577/4583–88 ← коды прод с TSV
+│     │   ├─ 3.5.1.3 ключ 3804 / код `051-1002605`             ✅
+│     │   │         опечатка на прод (`1002605`) исправлена
+│     │   │         владельцем → `05_UPDATE_3804` **не выполнять**
+│     │   ├─ 3.5.1.4 INSERT ~72: `02_IMPORT_…` + родители      ✅ 2026-11-26
+│     │   │         cstAgPn=4559 (=прод)
+│     │   ├─ 3.5.1.5 Verify: `06_VERIFY_…`                     ✅ 2026-11-26
+│     │   │         4559 / remap0 / dup0 / 15 контрольных OK
+│     │   └─ 3.5.1.6 Re-apply loads 9|10|11                    ✅ 2026-11-26
+│     │         C/D ready errors=0; B: +25 applied, **20** ERR
+│     │         `801/901/905` — разделы ИП вне рабочего контура
+│     │         (нет в прод cstAgPn; **оставить в Excel**, не чинить)
+│     │         Runbook: `open/RUNBOOK_B.md`
+│     │         Отклонены: A · C · D
+│     │         §3.5.1 sync B **закрыт**
+│     ├─ 3.5.2 ipgChRl_2606 даты на цепях 507–510 (+ хвост UI) ✅
+│     │         DEV SQL applied; хвост UI/GraphQL дат — бэклог
+│     ├─ 3.5.3 Smoke spMstrg_2606 без UtPl (цепь A)            ✅
+│     │         SQL @507 stCost=NULL; без ревизий с шары
+│     │         notes/26-1126-c2-spmstrg-2606-smoke.md
+│     └─ 3.5.4 Структурированный лог загрузки ИП ≈ ревизии     ✅
+│               код+DDL DEV+UI; прод DDL — при выкладке
+│
+│  └─ 3.6 Повтор _2606 после sync САК (без UtPl)               🔶 2026-11-26
+│         notes/26-1126-c2-o1-2606-feasibility-36.md
+│         Цель: осуществимость освоения на O1-данных + факт
+│         с шары; закрытый контур stCost; **не** O2 (планов нет)
+│     ├─ 3.6.0 Prep: JAR 411 · UI Cursor · шара · dir=15        ✅
+│     │         `/mnt/nb-win-share/femsq/excel/2026-1119/` key **15**
+│     ├─ 3.6.1 UI Audits: type=5 ОА                             ✅
+│     │         adt **15** · exec **1230** COMPLETED ~848 с
+│     ├─ 3.6.2 UI Audits: type=6 АВ + type=3 аренда             ✅
+│     │         adt **16**/1231 · adt **17**/1232 COMPLETED
+│     │         (execute 16/17: GraphQL — hang fetchAudits UI)
+│     ├─ 3.6.3 SQL smoke `spMstrg_2606` @507 · saveToTables=1   ✅
+│     │         `@stCostKey` NULL/212/195/172/187 — **EXIT=0** ×5
+│     ├─ 3.6.4 Аддитивность (закрытый контур)                   ✅
+│     │         **лим** `ipgPn`/`ipgPnLim` + RS `ag_lim` — PASS
+│     │         **план** ≈0 (UtPl=0) — OK
+│     │         **факт** `ag_*` ожил (§3.7); аддитив stCost в RS →
+│     │         [fn2-stcost-fact-rs](./chat-plan-26-1126-fn2-stcost-fact-rs.md)
+│     └─ 3.6.5 (опц.) @508–510 — smoke-only, не блокер O2      ☐
+│
+│  └─ 3.7 Шаг 2 контракта ipgpSh → ag_* / §3.6.4               ✅
+│         note: [26-1126-…-37](notes/26-1126-c2-o1-ipgpsh-step2-37.md)
+│     ├─ 3.7.0 Note: диагноз + политика хвоста «нет в prev → 2» ✅
+│     ├─ 3.7.1 prev ИП = **26** (2025 Д644)                     ✅
+│     ├─ 3.7.2 UPDATE sh A–D + seed `ipgPnLim`←Sm*              ✅
+│     │         COUNT(sh=4)=0; lim helper >0
+│     ├─ 3.7.3 Повтор spMstrg_2606 @507; gate ag_* NN           ✅
+│     ├─ 3.7.4 Аддитив лим из RS ✅; факт×stCost → 0094 ✅     ✅
+│     ├─ 3.7.5 Контракт/код: default хвоста = **2**             ✅
+│     │         DEFAULT_UNDEFINED_SH=2; §5.2 обновлён
+│     └─ 3.7.6 Шаг 3 ipgpSh — только O2 (планы)                 ☐
+│
+│  (спин-офф) факт RS × stCost — НЕ в C2:
+│     [chat-plan-26-1126-fn2-stcost-fact-rs.md](./chat-plan-26-1126-fn2-stcost-fact-rs.md)
 │
 ├─ 4. O2 — P2 1.3: помесячные планы и лимиты UtPl@stCost       ☐
 │  ├─ 4.0 UI структуры затрат (stNetCost/stCost) — минимум     ☐
@@ -498,10 +577,12 @@ Access уже даёт этот UI (bound-формы + вкладки child/pare
 | В1 | Какие формы ИП/цепей/планов правят данные | ✅ | [migrate 2.3](./notes/26-1120-c2-migrate-1-1.md): P/U/X; эталон полной `ipg`+`stNetIpg`; Access≠качество |
 | В2 | Excel LdM: формат, частота, сравнение сумм | ☐ блок 6 | После O2; не путать с **годовой ИП** (O1 / §2.0.1) |
 | В3 | Лимиты/UtPl: вручную или из файла; stCost | ☐ блок 4 (O2) | Также этап (б) уточнения `ipgSh` после планов агентов |
+| В15 | Аддитив stCost до O2 | ✅ лим; факт→0094 | лим `ipgPn`+RS ✅; `ag_*` ✅; **факт×stCost в RS** → [fn2-plan](./chat-plan-26-1126-fn2-stcost-fact-rs.md) |
 | В4 | Справочники: ввод или статичны | ✅ для ИПГ | ИПГ-DAG — **P** в FEMSQ; **stCost** — к O2; эталон прода — сверка |
 | В5 | Периоды RA / sender | ☐ блок 7 | В вехе D1.1 после планов |
-| В6 | Годовая ИП: парсер/staging/маппинг (§2.0.1) | 🔶 блок 3 (O1) | §3.2 ✅ UX; §3.4 partial A–D; gap 73 CSTAGPN BCD → отПрод; DoD O1 = §3.4 |
-| В7 | `ipgpSh` при загрузке | ✅ 2026-11-23 | Prev-IP → else 4; дубли cstAgPn → разные схемы/ERR; истина = план O2; эталон sh≈2 = после пост-обработки |
+| В6 | Годовая ИП: парсер/staging/маппинг (§2.0.1) | ✅ блок 3 (O1) | §3.5.1 **B** ✅; C/D ready; B: 20×`801/901/905` — вне скоупа (§6) |
+| В14 | Лог загрузки годовой ИП | ✅ §3.5.4 (2026-11-26) | Spans/HTML ≈ «Ход ревизии»; `iilResults` на `impIpgLoad`; [контракт](notes/26-1126-c2-ipg-load-log-contract.md). DDL на прод — при выкладке |
+| В7 | `ipgpSh` при загрузке | ✅ 2026-11-26 §3.7 | Prev-IP → else **2** (не 4); дубли→схемы/ERR; истина = план O2; O1 также → `ipgPnLim`←Sm* |
 | В8 | UX сети | ✅ 2026-11-23 | Сначала **программный clone**, затем ручная модификация |
 | В9 | Multi-`stIpgNm` / ловля из Excel | ✅ 2026-11-23 | Сырой пул + нормализация для поиска; map→alias (кнопка) или create; «+» только на закрытых |
 | В10 | Корень загрузки / ПТСФ / gate | ✅ 2026-11-24 | `impIpgLoad`+`impIpg`; stNet только `ipg.ipgStRlSh`; OR путей; омонимы→ручной stiKey; несколько load на ipg |
@@ -518,6 +599,7 @@ Access уже даёт этот UI (bound-формы + вкладки child/pare
 - План «Переключение R1» (создавать перед D1.3, не здесь).
 - Доработка Access; СУДЗ/M6; полный семантический разбор C1.
 - Хвосты R1.0 (hang audits, COMPLETED при ошибке файла) — только если мешают C2.
+- **20 кодов Excel load B (`801-*` / `901-*` / `905-*`):** отдельные разделы инвестпрограммы (финвложения / приобретения / вклады в УК), с которыми в FEMSQ практически не работаем. На прод `cstAgPn` их нет → после sync нет и на DEV → `CSTAGPN_NOT_FOUND` при apply. **Оставить в Excel как есть; в cstAgPn / apply / O2 не чинить**, пока владелец явно не расширит скоуп. Список: [acceptance-34 §4](./notes/26-1125-c2-o1-acceptance-34.md).
 
 ---
 
@@ -525,6 +607,16 @@ Access уже даёт этот UI (bound-формы + вкладки child/pare
 
 | Дата | Версия | Что изменили |
 |------|--------|----------------|
+| 2026-11-26 | 0.12.9 | Хвост факт×stCost RS → план [fn2-stcost-fact-rs](./chat-plan-26-1126-fn2-stcost-fact-rs.md) (0094); C2 next = O2 |
+| 2026-11-26 | 0.12.8 | §3.7 ✅: sh remap+`ipgPnLim`←Sm*; ag_* NN; лим RS δ≈0; default sh=2; факт-аддитив stCost RS 🔶 |
+| 2026-11-26 | 0.12.7 | §3.7: шаг 2 ipgpSh (FROM_PREV \| else **2**, без хвоста 4) → оживить ag_* / §3.6.4 |
+| 2026-11-26 | 0.12.6 | §3.6 🔶: ревизии 15–17 ✅; smoke stCost EXIT=0; лим-аддитив ✅; факт RS пуст на 507 |
+| 2026-11-26 | 0.12.5 | §3.6 перед O2: UI ревизии 3/5/6 (dir 15) + smoke stCost + **аддитив 195+172+187=212** (лим/факт; план≈0) |
+| 2026-11-26 | 0.12.4 | §3.5.1 ✅; 20×`801/901/905` → §6 вне объёма (оставить в Excel); next O2 |
+| 2026-11-26 | 0.12.3 | §3.5.1.prep ✅: пакет B (00a/03/04/05/02/06 + RUNBOOK); исполнение ☐ |
+| 2026-11-26 | 0.12.2 | §3.5.1: выбран вариант **B** (remap 7 + UPDATE + insert 72 + verify + re-apply); без исполнения |
+| 2026-11-26 | 0.12.1 | §3.5 ✅: даты `_2606`+smoke A; лог iilResults; full-diff пакет (import ⏸ отПрод) → O2 |
+| 2026-11-26 | 0.12.0 | §3.5 prep перед O2: full-diff cstAgPn · даты `_2606` · smoke · лог загрузки |
 | 2026-11-25 | 0.11.31 | §3.4: UI Leaves smoke 411 + цепи 507–510 (A–D); остался отПрод 73 |
 | 2026-11-25 | 0.11.30 | §3.4 🔶: apply C/D + recheck A/B; note acceptance-34; блокер отПрод 73 кодов |
 | 2026-11-25 | 0.11.29 | §3.2.9 ✅ feQuLib 0.1.21 L6 + Leaves consume; §3.2.8.5 ✅; next §3.4 |

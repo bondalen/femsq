@@ -439,6 +439,8 @@ type ImpIpgLoad {
   note: String
   """ISO local datetime."""
   created: String
+  """Накопительный HTML-лог «Ход загрузки» (ags.impIpgLoad.iilResults); как adt_results у ревизий."""
+  logHtml: String
 }
 
 """Строка staging разбора Excel (ags.impIpg). rowKind: S=раздел, L=стройка."""
@@ -496,6 +498,8 @@ type ImpIpgParseResult {
   sectionCount: Int!
   leafCount: Int!
   totalRows: Int!
+  """Накопительный HTML-лог «Ход загрузки» сессии."""
+  logHtml: String
 }
 
 """Строка ПТСФ после сверки со схемой."""
@@ -520,6 +524,8 @@ type ImpIpgReconcileResult {
   matched: Int!
   open: Int!
   rows: [ImpIpgReconcileRow!]!
+  """Накопительный HTML-лог «Ход загрузки» (только мутация reconcile с persistMatches)."""
+  logHtml: String
 }
 
 """Gate перед bulk пунктов: ready=true только при закрытом ПТСФ и заданном ipgStRlSh."""
@@ -564,7 +570,7 @@ type ImpIpgShResolveLeaf {
   text: String
   cstAgPnCode: String
   resolvedSh: Int
-  """FROM_PREV | DEFAULT_4 | FREE_POOL"""
+  """FROM_PREV | DEFAULT_4 (хвост → ipgpSh=2 Агентская) | FREE_POOL"""
   source: String
   """MISSING_CSTAGPN | NO_FREE_SCHEMES | UNIQUE_CSTAGPN_SH"""
   errorReason: String
@@ -584,6 +590,8 @@ type ImpIpgPointsApplyResult {
   errors: [String!]!
   problemRowIds: [Int!]!
   createdPnKeys: [Int!]!
+  """Накопительный HTML-лог «Ход загрузки» (dry-run — без записи в сессию)."""
+  logHtml: String
 }
 
 """Превью ipgpSh (§5.2): ready при errorCount=0; без записи в домен."""

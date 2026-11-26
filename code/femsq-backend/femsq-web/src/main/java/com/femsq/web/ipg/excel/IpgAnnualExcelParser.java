@@ -1,6 +1,7 @@
 package com.femsq.web.ipg.excel;
 
 import com.femsq.database.model.ImpIpgStagingDraft;
+import com.femsq.database.util.FemsqMoney;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -248,7 +249,10 @@ public class IpgAnnualExcelParser {
             if (value == Math.rint(value) && Math.abs(value) < 1_000_000_000d) {
                 return Long.toString((long) value);
             }
-            return BigDecimal.valueOf(value).stripTrailingZeros().toPlainString();
+            // R-MONEY-AGG: квант млн ₽ = scale 8 (ADR 012); целые уже выше
+            return FemsqMoney.roundMln(BigDecimal.valueOf(value))
+                    .stripTrailingZeros()
+                    .toPlainString();
         }
         return formatter.formatCellValue(cell, evaluator);
     }

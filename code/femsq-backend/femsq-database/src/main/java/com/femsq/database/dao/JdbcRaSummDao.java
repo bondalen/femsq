@@ -4,6 +4,8 @@ import com.femsq.database.config.DatabaseConfigurationService;
 import com.femsq.database.connection.ConnectionFactory;
 import com.femsq.database.exception.DaoException;
 import com.femsq.database.model.RaSumm;
+import com.femsq.database.util.AggAxis;
+import com.femsq.database.util.AggAxisResult;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -96,16 +98,18 @@ public class JdbcRaSummDao implements RaSummDao {
 
     @Override
     public RaSumm create(RaSumm summ) {
+        AggAxisResult axis = requireWritableRubAxis(summ);
         String sql = "INSERT INTO " + table()
                 + " (ras_ra, ras_total, ras_work, ras_equip, ras_others, ras_date) VALUES (?, ?, ?, ?, ?, ?)";
-        log.log(Level.INFO, "Creating ra_summ for ras_ra={0}", summ.rasRa());
+        log.log(Level.INFO, "Creating ra_summ for ras_ra={0} agg={1}",
+                new Object[]{summ.rasRa(), axis.logCode()});
         try (Connection connection = connectionFactory.createConnection();
              PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             statement.setInt(1, summ.rasRa());
-            setMoney(statement, 2, summ.rasTotal());
-            setMoney(statement, 3, summ.rasWork());
-            setMoney(statement, 4, summ.rasEquip());
-            setMoney(statement, 5, summ.rasOthers());
+            setMoney(statement, 2, axis.ttl());
+            setMoney(statement, 3, axis.wrk());
+            setMoney(statement, 4, axis.equ());
+            setMoney(statement, 5, axis.oth());
             LocalDateTime rasDate = summ.rasDate() != null ? summ.rasDate() : LocalDateTime.now();
             statement.setTimestamp(6, Timestamp.valueOf(rasDate));
             statement.executeUpdate();
@@ -125,17 +129,19 @@ public class JdbcRaSummDao implements RaSummDao {
     @Override
     public RaSumm update(RaSumm summ) {
         Objects.requireNonNull(summ.rasKey(), "rasKey");
+        AggAxisResult axis = requireWritableRubAxis(summ);
         String sql = "UPDATE " + table()
                 + " SET ras_ra = ?, ras_total = ?, ras_work = ?, ras_equip = ?, ras_others = ?, ras_date = ? "
                 + "WHERE ras_key = ?";
-        log.log(Level.INFO, "Updating ras_key={0}", summ.rasKey());
+        log.log(Level.INFO, "Updating ras_key={0} agg={1}",
+                new Object[]{summ.rasKey(), axis.logCode()});
         try (Connection connection = connectionFactory.createConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, summ.rasRa());
-            setMoney(statement, 2, summ.rasTotal());
-            setMoney(statement, 3, summ.rasWork());
-            setMoney(statement, 4, summ.rasEquip());
-            setMoney(statement, 5, summ.rasOthers());
+            setMoney(statement, 2, axis.ttl());
+            setMoney(statement, 3, axis.wrk());
+            setMoney(statement, 4, axis.equ());
+            setMoney(statement, 5, axis.oth());
             LocalDateTime rasDate = summ.rasDate() != null ? summ.rasDate() : LocalDateTime.now();
             statement.setTimestamp(6, Timestamp.valueOf(rasDate));
             statement.setInt(7, summ.rasKey());
@@ -197,5 +203,22 @@ public class JdbcRaSummDao implements RaSummDao {
         } else {
             statement.setBigDecimal(index, value);
         }
+    }
+
+    /**
+     * Round + AggAxis (R-MONEY-AGG); A-hard → {@link DaoException}.
+     */
+    private static AggAxisResult requireWritableRubAxis(RaSumm summ) {
+        AggAxisResult axis = AggAxis.reconcileRub(
+                summ.rasTotal(), summ.rasWork(), summ.rasEquip(), summ.rasOthers());
+        if (!axis.writable()) {
+            throw new DaoException("AGG_BLOCK ra_summ ras_ra=" + summ.rasRa()
+                    + " δ=" + axis.deltaBefore()
+                    + " ttl=" + axis.ttl()
+                    + " work=" + axis.wrk()
+                    + " equip=" + axis.equ()
+                    + " others=" + axis.oth());
+        }
+        return axis;
     }
 }

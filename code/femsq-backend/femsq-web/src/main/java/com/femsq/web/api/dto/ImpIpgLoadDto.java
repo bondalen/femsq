@@ -10,5 +10,7 @@ public record ImpIpgLoadDto(
         String filePath,
         String note,
         /** ISO-8601 local datetime или null. */
-        String created) {
+        String created,
+        /** Накопительный HTML-лог «Ход загрузки» ({@code iilResults}) или null. */
+        String logHtml) {
 }

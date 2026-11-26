@@ -3,12 +3,12 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2026-11-25",
+      "lastUpdated": "2026-11-26",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0094",
+      "nextTaskId": "0096",
       "items": {
         "0077": {
           "task": {
@@ -2995,8 +2995,8 @@
                 ]
               },
               "created": "2026-11-17",
-              "lastUpdated": "2026-11-25",
-              "description": "P2 1.1–1.4, 2.1.0. Веха **D1.1 на DEV**. План 0.11.31: §3.4 UI+цепи ✅; JAR 411; блокер отПрод 73 CSTAGPN. Стенд: FishEye_prod_noM6."
+              "lastUpdated": "2026-11-26",
+              "description": "P2 1.1–1.4, 2.1.0. Веха **D1.1 на DEV**. План 0.12.1: §3.5 prep ✅ (full-diff пакет, _2606 даты+smoke, лог iilResults); import САК ⏸ отПрод. Next: O2 UtPl. Стенд: FishEye_prod_noM6."
             }
           }
         },
@@ -3332,6 +3332,90 @@
               "created": "2026-11-17",
               "lastUpdated": "2026-11-17",
               "description": "Аудит после docs-sync блок 5: три экрана на сыром QTable/QList; перевод на feQuLib FemsqTable (фаза C манифеста 02-8)."
+            }
+          }
+        },
+        "0094": {
+          "task": {
+            "displayName": "C4a: fn2 / RS — факт освоения по stCost (195+172+187=212) (completed, high). № 0094",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "При @stCostKey NOT NULL agency-факт в RS _2606 аддитивен: presented/accepted 195+172+187=212 на цепи 507",
+                "@stCostKey=NULL — без регресса полного факта (RRc)",
+                "Пакет SQL 04 + MSSQL2012/04 применён на FishEye_prod_noM6; note/ADR",
+                "Ссылки в C2 §3.6.4 и roadmap §5 актуализированы при закрытии"
+              ],
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.database",
+                  "docs/development/notes/sql/26-0604/docs/03-design-decisions.md",
+                  "docs/project/decisions/012-money-agg-axes.md"
+                ],
+                "journalRefs": [
+                  "chat-2026-11-26-001"
+                ],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1126-fn2-stcost-fact-rs.md",
+                "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md",
+                "dependsOnTasks": [
+                  "0079",
+                  "0081"
+                ],
+                "relatedTasks": [
+                  "0083",
+                  "0084",
+                  "0095"
+                ]
+              },
+              "created": "2026-11-26",
+              "lastUpdated": "2026-11-26",
+              "description": "Ранний gate C4 (спин-офф C2 §3.7): в fnIpgChRsltCstUtl2_2606 при @stCostKey≠NULL agency-факт из mastering, не RRc; иначе отчёты C5 бесполезны (факт≈3×212)."
+            }
+          }
+        },
+        "0095": {
+          "task": {
+            "displayName": "R-MONEY-AGG: квант денег и оси агрегации при вводе Excel/UI (completed, high). № 0095",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "high",
+              "owner": "Александр",
+              "completionCriteria": [
+                "ADR 012 принят; FemsqMoney/AggAxis + тесты Q/A/S/A-hard",
+                "ImpIpg + leaves: round 8, AggCheck/Fix, seed ipgPnLim; A-hard block",
+                "One-shot стенд: ulp/Q и A по канону; 07k1 lim δ=0",
+                "RA: round money + rebalance total/parts до INSERT",
+                "Ссылки в C2 O1/UtPl O2 и roadmap актуализированы"
+              ],
+              "links": {
+                "projectDocsRefs": [
+                  "docs/project/decisions/012-money-agg-axes.md",
+                  "module:backend.database",
+                  "module:backend.web"
+                ],
+                "journalRefs": [
+                  "chat-2026-11-26-002"
+                ],
+                "aiRuleRefs": [
+                  "rule:money-agg-axes"
+                ],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1126-money-agg-axes.md",
+                "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md",
+                "dependsOnTasks": [
+                  "0081",
+                  "0094"
+                ],
+                "relatedTasks": [
+                  "0082",
+                  "0083"
+                ]
+              },
+              "created": "2026-11-26",
+              "lastUpdated": "2026-11-26",
+              "description": "Норма R-MONEY-AGG: Excel субкопейки + арифметика автора по осям; round+detect+fix (Q/A) / block (A-hard); util для ImpIpg, leaves, RA, UtPl O2."
             }
           }
         }
@@ -4306,7 +4390,19 @@
                           "taskId": "0081",
                           "positionInParent": 3
                         },
-                        "task-items": []
+                        "task-items": [
+                          {
+                            "task-item": {
+                              "displayName": "✅ R-MONEY-AGG: квант и оси агрегации Excel/UI (completed, high). № 02.04.03.01 → 0095",
+                              "item-attributes": {
+                                "structureId": "02.04.03.01",
+                                "taskId": "0095",
+                                "positionInParent": 1
+                              },
+                              "task-items": []
+                            }
+                          }
+                        ]
                       }
                     },
                     {
@@ -4328,7 +4424,19 @@
                           "taskId": "0083",
                           "positionInParent": 5
                         },
-                        "task-items": []
+                        "task-items": [
+                          {
+                            "task-item": {
+                              "displayName": "✅ C4a: fn2 / RS факт × stCost (completed, high). № 02.04.05.01 → 0094",
+                              "item-attributes": {
+                                "structureId": "02.04.05.01",
+                                "taskId": "0094",
+                                "positionInParent": 1
+                              },
+                              "task-items": []
+                            }
+                          }
+                        ]
                       }
                     },
                     {

@@ -1,5 +1,6 @@
 package com.femsq.web.audit.excel;
 
+import com.femsq.database.util.FemsqMoney;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component;
 /**
  * Унифицированное чтение значений ячеек Excel с преобразованием в нужные типы.
  * Поддерживает formula cells, русское форматирование чисел и типичные российские форматы дат.
+ * <p>Десятичные суммы приводятся к кванту ₽ ({@link FemsqMoney#roundRub}) — ADR 012 / R-MONEY-AGG.</p>
  */
 @Component
 public class AuditExcelCellReader {
@@ -188,6 +190,7 @@ public class AuditExcelCellReader {
 
     /**
      * Возвращает decimal-значение из ячейки; при ошибке формата — {@link CellReadResult#parseError()}, без исключения.
+     * Успешное значение округляется до scale 4 (квант ₽ / {@code money}).
      */
     public CellReadResult<BigDecimal> readDecimalResult(Cell cell) {
         String asString = readString(cell);
@@ -199,13 +202,14 @@ public class AuditExcelCellReader {
         }
         try {
             if (cell != null && isNumericCell(cell) && !DateUtil.isCellDateFormatted(cell)) {
-                return CellReadResult.success(BigDecimal.valueOf(cell.getNumericCellValue()), asString);
+                return CellReadResult.success(
+                        FemsqMoney.roundRub(BigDecimal.valueOf(cell.getNumericCellValue())), asString);
             }
             String cleaned = normalizeDecimalString(stripUnicodeSpaceSeparators(asString));
             if (cleaned == null || cleaned.isEmpty() || "-".equals(cleaned)) {
                 return CellReadResult.success(null, asString);
             }
-            return CellReadResult.success(new BigDecimal(cleaned), asString);
+            return CellReadResult.success(FemsqMoney.roundRub(new BigDecimal(cleaned)), asString);
         } catch (NumberFormatException exception) {
             return CellReadResult.failure(asString,
                     "Failed to parse Decimal from cell value: " + asString,

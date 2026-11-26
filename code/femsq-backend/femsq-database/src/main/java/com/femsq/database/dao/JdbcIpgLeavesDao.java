@@ -314,6 +314,7 @@ public class JdbcIpgLeavesDao implements IpgLeavesDao {
                     ipgpSh);
             statement.executeUpdate();
             int key = readGeneratedKey(statement, "ipgpKey");
+            seedIpgPnLim(connection, key, ipgpSmTtl, ipgpSmWrk, ipgpSmEqu, ipgpSmOth);
             log.log(Level.INFO, "Created ipgPn {0} for ipg {1}", new Object[]{key, ipgpIpg});
             return findPnByKey(key).orElseThrow(() -> new DaoException("ipgPn исчез после INSERT: " + key));
         } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
@@ -385,6 +386,8 @@ public class JdbcIpgLeavesDao implements IpgLeavesDao {
                         statement.setInt(2, pnKey);
                         statement.executeUpdate();
                     }
+                    seedIpgPnLim(connection, pnKey,
+                            draft.ipgpSmTtl(), draft.ipgpSmWrk(), draft.ipgpSmEqu(), draft.ipgpSmOth());
                     created.add(pnKey);
                 }
                 connection.commit();
@@ -474,6 +477,7 @@ public class JdbcIpgLeavesDao implements IpgLeavesDao {
             if (statement.executeUpdate() == 0) {
                 throw new DaoException("ipgPn не найден: " + ipgpKey);
             }
+            replaceIpgPnLim(connection, ipgpKey, ipgpSmTtl, ipgpSmWrk, ipgpSmEqu, ipgpSmOth);
         } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
             throw exception;
         } catch (SQLException exception) {
@@ -812,6 +816,51 @@ public class JdbcIpgLeavesDao implements IpgLeavesDao {
             statement.setNull(index, Types.DECIMAL);
         } else {
             statement.setBigDecimal(index, value);
+        }
+    }
+
+    /**
+     * Seed {@code ipgPnLim} ← Sm* (212/195/172/187), только ненулевые (ADR 012 / O1 хвост).
+     */
+    private void seedIpgPnLim(
+            Connection connection,
+            int ipgpKey,
+            BigDecimal ttl,
+            BigDecimal wrk,
+            BigDecimal equ,
+            BigDecimal oth) throws SQLException {
+        insertLimIfNonZero(connection, ipgpKey, 212, ttl);
+        insertLimIfNonZero(connection, ipgpKey, 195, wrk);
+        insertLimIfNonZero(connection, ipgpKey, 172, equ);
+        insertLimIfNonZero(connection, ipgpKey, 187, oth);
+    }
+
+    private void replaceIpgPnLim(
+            Connection connection,
+            int ipgpKey,
+            BigDecimal ttl,
+            BigDecimal wrk,
+            BigDecimal equ,
+            BigDecimal oth) throws SQLException {
+        try (PreparedStatement del = connection.prepareStatement(
+                "DELETE FROM " + q("ipgPnLim") + " WHERE ipgplPn=? AND ipgplStCost IN (212,195,172,187)")) {
+            del.setInt(1, ipgpKey);
+            del.executeUpdate();
+        }
+        seedIpgPnLim(connection, ipgpKey, ttl, wrk, equ, oth);
+    }
+
+    private void insertLimIfNonZero(Connection connection, int ipgpKey, int stCost, BigDecimal lim)
+            throws SQLException {
+        if (lim == null || lim.compareTo(BigDecimal.ZERO) == 0) {
+            return;
+        }
+        String sql = "INSERT INTO " + q("ipgPnLim") + " (ipgplPn, ipgplStCost, ipgplLim) VALUES (?, ?, ?)";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, ipgpKey);
+            statement.setInt(2, stCost);
+            statement.setBigDecimal(3, lim);
+            statement.executeUpdate();
         }
     }
 

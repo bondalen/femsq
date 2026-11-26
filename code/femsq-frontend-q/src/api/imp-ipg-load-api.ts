@@ -14,6 +14,8 @@ export interface ImpIpgLoadDto {
   filePath?: string | null;
   note?: string | null;
   created?: string | null;
+  /** Накопительный HTML-лог «Ход загрузки» (iilResults). */
+  logHtml?: string | null;
 }
 
 export interface ImpIpgParseResultDto {
@@ -23,6 +25,8 @@ export interface ImpIpgParseResultDto {
   sectionCount: number;
   leafCount: number;
   totalRows: number;
+  /** Накопительный HTML-лог «Ход загрузки». */
+  logHtml?: string | null;
 }
 
 export interface ImpIpgReconcileRowDto {
@@ -43,6 +47,8 @@ export interface ImpIpgReconcileResultDto {
   matched: number;
   open: number;
   rows: ImpIpgReconcileRowDto[];
+  /** Накопительный HTML-лог «Ход загрузки». */
+  logHtml?: string | null;
 }
 
 export interface ImpIpgRowDto {
@@ -69,6 +75,8 @@ export interface ImpIpgPointsApplyResultDto {
   errors: string[];
   problemRowIds: number[];
   createdPnKeys: number[];
+  /** Накопительный HTML-лог «Ход загрузки» (dry-run — без записи в сессию). */
+  logHtml?: string | null;
 }
 
 const IMP_IPG_LOADS = gql`
@@ -80,6 +88,7 @@ const IMP_IPG_LOADS = gql`
       filePath
       note
       created
+      logHtml
     }
   }
 `;
@@ -93,6 +102,7 @@ const CREATE_IMP_IPG_LOAD = gql`
       filePath
       note
       created
+      logHtml
     }
   }
 `;
@@ -106,6 +116,7 @@ const PARSE_IMP_IPG_LOAD = gql`
       sectionCount
       leafCount
       totalRows
+      logHtml
     }
   }
 `;
@@ -136,6 +147,7 @@ const RECONCILE_IMP_IPG_STRUCTURE = gql`
         nameInPool
         closed
       }
+      logHtml
     }
   }
 `;
@@ -169,6 +181,7 @@ const APPLY_IMP_IPG_POINTS = gql`
       errors
       problemRowIds
       createdPnKeys
+      logHtml
     }
   }
 `;

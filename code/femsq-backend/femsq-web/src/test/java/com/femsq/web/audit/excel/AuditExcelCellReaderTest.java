@@ -74,6 +74,17 @@ class AuditExcelCellReaderTest {
     }
 
     @Test
+    void readDecimalResult_numeric_roundsToRubScale4() {
+        Cell cell = numericDouble(12.3456789d);
+
+        CellReadResult<java.math.BigDecimal> result = reader.readDecimalResult(cell);
+
+        assertTrue(result.ok());
+        assertEquals(0, new java.math.BigDecimal("12.3457").compareTo(result.value()));
+        assertEquals(4, result.value().scale());
+    }
+
+    @Test
     void readInt_strictMode_stillThrows() {
         Cell cell = stringCell("в электронном виде");
 

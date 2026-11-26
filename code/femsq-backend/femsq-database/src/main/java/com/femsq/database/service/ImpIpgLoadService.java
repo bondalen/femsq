@@ -21,6 +21,11 @@ public interface ImpIpgLoadService {
 
     boolean deleteLoad(int iilKey);
 
+    /**
+     * Сохраняет накопительный HTML-лог загрузки в {@code iilResults} (C2 §3.5.4).
+     */
+    void updateLoadResults(int iilKey, String html);
+
     Optional<ImpIpgRow> getRow(int iiKey);
 
     List<ImpIpgRow> listRows(int iilKey);
