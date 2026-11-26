@@ -162,12 +162,15 @@ SELECT ipgpIpg, ipgpCstAgPn, 2 FROM ipgPn WHERE ipgpSh = 1  -- только в �
 
 | `iShKey` | Источник presented / accepted (RA) |
 |----------|-------------------------------------|
-| 2 (агентская) | `raFact2408` / `RRcTimeList` напрямую по `cstAgPnKey` |
-| 1, 3 | `mstrPresented` / `mstrAccepted` из mastering (`fnMasteringCstAgPnSh`) |
+| 2 (агентская), `@stCostKey IS NULL` | `raFact2408` / `RRcTimeList` напрямую по `cstAgPnKey` |
+| 2 (агентская), `@stCostKey IS NOT NULL` | **`mstrPresented` / `mstrAccepted`** (mastering / factDocCost) — **Решение 23** |
+| 1, 3 | `mstrPresented` / `mstrAccepted` из mastering (`fnMasteringCstAgPnSh` / StIpg) |
 
-Условие для RA на агентской строке: `iShKey = 2 AND shShow = 'true'`.
+Условие для RA на агентской строке (ветка RRc): `iShKey = 2 AND shShow = 'true'` **и** `@stCostKey IS NULL`.
 
-На агентской строке (`iShKey = 2`) RA-факт берётся из `RRcTimeList` **для каждой ИПГ отдельно** (одни и те же суммы по контракту повторяются на строках всех ИПГ, где есть агентская или синтетическая схема — как в `fn_2408`). Освоение инвестиционной строки в отчёте подавляется, если в **этой ИПГ** есть агентский пункт (`fnMasteringShShow`).
+На агентской строке (`iShKey = 2`) при **NULL** stCost RA-факт берётся из `RRcTimeList` **для каждой ИПГ отдельно** (одни и те же суммы по контракту повторяются на строках всех ИПГ, где есть агентская или синтетическая схема — как в `fn_2408`). При **заданном** stCost — из mastering (иначе срез 195/172/187 не изолируется). Освоение инвестиционной строки в отчёте подавляется, если в **этой ИПГ** есть агентский пункт (`fnMasteringShShow`).
+
+См. также: `03-design-decisions.md` Решение 23; план `chat-plan-26-1126-fn2-stcost-fact-rs.md`.
 
 #### B.3. `fnMasteringShShow` — каскад внутри одной ИПГ
 

@@ -1,0 +1,4 @@
+1. SQLCMD Mode в SSMS на прод FishEye.
+2. Выполнить 01c_EXPORT_sqlcmd_mode.sql (OUTDIR см. в скрипте).
+3. Упаковать OUTDIR в AES zip паролем канала → отПрод сессии 26-1126_09-31.
+4. На noM6: сгенерировать INSERT IF NOT EXISTS → применить.

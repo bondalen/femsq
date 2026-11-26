@@ -4,7 +4,7 @@ GO
 -- =============================================================================
 -- Файл:    MSSQL2012/04_CREATE_FUNCTION_fnIpgChRsltCstUtl2_2606.sql
 -- Пакет:   docs/development/notes/sql/26-0604/
--- Зеркало dev v19.3. Совместимость: SQL Server 2012 SP4. Без CREATE OR ALTER.
+-- Зеркало dev (Решение 23 agency×stCost). Совместимость: SQL Server 2012 SP4. Без CREATE OR ALTER.
 -- =============================================================================
 
 PRINT N'=== 04 MSSQL2012: CREATE fnIpgChRsltCstUtl2_2606 ===';
@@ -546,8 +546,9 @@ BEGIN
             cap.cstapIpgPnN AS cstAgPnCode, u.ipgpCstAgPn AS cstAgPnKey,
             IIF(u.iShKey = 2 AND u.shShow = N'true', rf.presentedAll, NULL) AS presentedAll,
             IIF(u.iShKey = 2 AND u.shShow = N'true', rf.presentedAllModul, NULL) AS presentedAllModul,
-            IIF(u.iShKey = 2 AND u.shShow = N'true', rf.presented, u.mstrPresented) AS presented,
-            IIF(u.iShKey = 2 AND u.shShow = N'true', rf.accepted, u.mstrAccepted) AS accepted,
+            -- Решение 23: agency + @stCostKey NOT NULL → mastering (factDocCost), иначе RRc
+            IIF(u.iShKey = 2 AND u.shShow = N'true' AND @stCostKey IS NULL, rf.presented, u.mstrPresented) AS presented,
+            IIF(u.iShKey = 2 AND u.shShow = N'true' AND @stCostKey IS NULL, rf.accepted, u.mstrAccepted) AS accepted,
             IIF(u.iShKey = 2 AND u.shShow = N'true', rf.returned, NULL) AS returned,
             IIF(u.iShKey = 2 AND u.shShow = N'true', rf.inProcess, NULL) AS inProcess,
             IIF(u.iShKey = 2 AND u.shShow = N'true', rf.notArrived, NULL) AS notArrived,

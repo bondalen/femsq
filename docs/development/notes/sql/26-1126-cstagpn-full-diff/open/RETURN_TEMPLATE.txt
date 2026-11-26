@@ -1,0 +1,4 @@
+C2 §3.5.1 — возврат FULL cstAgPn (+parents) с прода (readonly)
+Сессия: 26-1126_09-31
+Ожидаемые файлы в отПрод zip:
+  00_counts.tsv, cstAgPn.tsv, cstAg.tsv, cst.tsv, ogAg.tsv

@@ -5,9 +5,9 @@ GO
 -- Файл:    04_CREATE_FUNCTION_fnIpgChRsltCstUtl2_2606.sql
 -- Пакет:   docs/development/notes/sql/26-0604/
 -- Назначение: Результаты по стройкам для цепи ИПГ (_2606).
---   Факт RA (presented/accepted/статусы) — агрегат RRcTimeList как в _2408 (_2605).
+--   Факт RA agency: @stCostKey NULL → RRcTimeList (паритет _2408); NOT NULL → mastering/factDocCost (Решение 23).
 --   Лимиты и прочий факт (АВ, РАЛП, хранение…) — mastering + ipgChRl_2606.
--- Автор:   Александр | Дата: 2026-06-09 | Обновлено: 2026-06-29 (v19.3: фильтр ipgChContracts по fnIpgChContractsForStIpg_2606)
+-- Автор:   Александр | Дата: 2026-06-09 | Обновлено: 2026-11-26 (agency×stCost: NOT NULL → mstr*)
 -- =============================================================================
 
 PRINT '=== 04: CREATE FUNCTION ags.fnIpgChRsltCstUtl2_2606 ===';
@@ -544,8 +544,9 @@ BEGIN
             cap.cstapIpgPnN AS cstAgPnCode, u.ipgpCstAgPn AS cstAgPnKey,
             IIF(u.iShKey = 2 AND u.shShow = N'true', rf.presentedAll, NULL) AS presentedAll,
             IIF(u.iShKey = 2 AND u.shShow = N'true', rf.presentedAllModul, NULL) AS presentedAllModul,
-            IIF(u.iShKey = 2 AND u.shShow = N'true', rf.presented, u.mstrPresented) AS presented,
-            IIF(u.iShKey = 2 AND u.shShow = N'true', rf.accepted, u.mstrAccepted) AS accepted,
+            -- Решение 23: agency + @stCostKey NOT NULL → mastering (factDocCost), иначе RRc
+            IIF(u.iShKey = 2 AND u.shShow = N'true' AND @stCostKey IS NULL, rf.presented, u.mstrPresented) AS presented,
+            IIF(u.iShKey = 2 AND u.shShow = N'true' AND @stCostKey IS NULL, rf.accepted, u.mstrAccepted) AS accepted,
             IIF(u.iShKey = 2 AND u.shShow = N'true', rf.returned, NULL) AS returned,
             IIF(u.iShKey = 2 AND u.shShow = N'true', rf.inProcess, NULL) AS inProcess,
             IIF(u.iShKey = 2 AND u.shShow = N'true', rf.notArrived, NULL) AS notArrived,
