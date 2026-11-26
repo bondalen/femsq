@@ -4,8 +4,8 @@
 **Последнее обновление:** 2026-11-26  
 **Образцы загрузки ИП:** `/mnt/nb-win-share/femsq/excel/2026-1120/ipg-sql-load/` (README там же)  
 **Проект:** FEMSQ  
-**Версия плана:** 0.12.9  
-**Статус плана:** 🔶 in-progress — §3.7 ✅; next O2 UtPl / O1→`ipgPnLim`  
+**Версия плана:** 0.13.2  
+**Статус плана:** 🔶 in-progress — §3.5.6 ✅; next O2 UtPl / O1→`ipgPnLim`  
 **§3.6 note:** [notes/26-1126-c2-o1-2606-feasibility-36.md](./notes/26-1126-c2-o1-2606-feasibility-36.md)  
 **§3.7 note:** [notes/26-1126-c2-o1-ipgpsh-step2-37.md](./notes/26-1126-c2-o1-ipgpsh-step2-37.md)  
 **Хвост факт×stCost в RS:** → [fn2-stcost-fact-rs](./chat-plan-26-1126-fn2-stcost-fact-rs.md) (**0094** ✅)  
@@ -283,6 +283,22 @@
 │     │         notes/26-1126-c2-spmstrg-2606-smoke.md
 │     └─ 3.5.4 Структурированный лог загрузки ИП ≈ ревизии     ✅
 │               код+DDL DEV+UI; прод DDL — при выкладке
+│     └─ 3.5.5 UI-smoke C: лог на новой SMOKE_LOG_* ИП         ✅ 2026-11-26
+│               Cursor browser ≈ оператор; **не** трогать load 9–11
+│               note: [26-1126-…-355](notes/26-1126-c2-o1-ipg-load-log-ui-smoke-355.md)
+│               JAR **412**; ipg31/load12 → cleanup; loads 9–11 целы
+│        ├─ 3.5.5.0 Prep: JAR с ipglog · :8080 · шара Excel     ✅
+│        ├─ 3.5.5.1 Создать ИП `SMOKE_LOG_261126` (+ stNet)    ✅
+│        ├─ 3.5.5.2 Создать load + путь Excel (копия/sql_*)    ✅
+│        ├─ 3.5.5.3 Разобрать → вкладка «Ход загрузки»         ✅
+│        ├─ 3.5.5.4 Сверить → накопление лога (Parse+Reconcile) ✅
+│        ├─ 3.5.5.5 Проверить (dryRun) + Загрузить пункты      ✅
+│        ├─ 3.5.5.6 Чеклист: фазы / вложенность / уровни       ✅
+│        └─ 3.5.5.7 Cleanup: ipgPn → deleteImpIpgLoad → SQL ipg ✅
+│                  (+ цепь/сеть только если создавали)
+│     └─ 3.5.6 UX «Загрузка пунктов»: один лог + toolbar A     ✅ 2026-11-26
+│               без дубля errors[]; лог на всю высоту; JAR **413**
+│               note: [26-1126-…-356](notes/26-1126-c2-o1-load-points-ux-356.md)
 │
 │  └─ 3.6 Повтор _2606 после sync САК (без UtPl)               🔶 2026-11-26
 │         notes/26-1126-c2-o1-2606-feasibility-36.md
@@ -581,7 +597,7 @@ Access уже даёт этот UI (bound-формы + вкладки child/pare
 | В4 | Справочники: ввод или статичны | ✅ для ИПГ | ИПГ-DAG — **P** в FEMSQ; **stCost** — к O2; эталон прода — сверка |
 | В5 | Периоды RA / sender | ☐ блок 7 | В вехе D1.1 после планов |
 | В6 | Годовая ИП: парсер/staging/маппинг (§2.0.1) | ✅ блок 3 (O1) | §3.5.1 **B** ✅; C/D ready; B: 20×`801/901/905` — вне скоупа (§6) |
-| В14 | Лог загрузки годовой ИП | ✅ §3.5.4 (2026-11-26) | Spans/HTML ≈ «Ход ревизии»; `iilResults` на `impIpgLoad`; [контракт](notes/26-1126-c2-ipg-load-log-contract.md). DDL на прод — при выкладке |
+| В14 | Лог загрузки годовой ИП | ✅ §3.5.4 + UI-smoke §3.5.5 (2026-11-26) | Spans/HTML ≈ «Ход ревизии»; `iilResults`; [контракт](notes/26-1126-c2-ipg-load-log-contract.md); smoke [355](notes/26-1126-c2-o1-ipg-load-log-ui-smoke-355.md). DDL на прод — при выкладке |
 | В7 | `ipgpSh` при загрузке | ✅ 2026-11-26 §3.7 | Prev-IP → else **2** (не 4); дубли→схемы/ERR; истина = план O2; O1 также → `ipgPnLim`←Sm* |
 | В8 | UX сети | ✅ 2026-11-23 | Сначала **программный clone**, затем ручная модификация |
 | В9 | Multi-`stIpgNm` / ловля из Excel | ✅ 2026-11-23 | Сырой пул + нормализация для поиска; map→alias (кнопка) или create; «+» только на закрытых |
@@ -607,6 +623,9 @@ Access уже даёт этот UI (bound-формы + вкладки child/pare
 
 | Дата | Версия | Что изменили |
 |------|--------|----------------|
+| 2026-11-26 | 0.13.2 | §3.5.6 UX load-points: один «Ход загрузки»; toolbar A; лог на всю высоту |
+| 2026-11-26 | 0.13.1 | §3.5.5 ✅ UI-smoke C: JAR412 · ipg31/load12 Parse→Reconcile→Apply · cleanup; 9–11 целы |
+| 2026-11-26 | 0.13.0 | §3.5.5 UI-smoke C лог: новая `SMOKE_LOG_*` ИП + cleanup; без load 9–11 |
 | 2026-11-26 | 0.12.9 | Хвост факт×stCost RS → план [fn2-stcost-fact-rs](./chat-plan-26-1126-fn2-stcost-fact-rs.md) (0094); C2 next = O2 |
 | 2026-11-26 | 0.12.8 | §3.7 ✅: sh remap+`ipgPnLim`←Sm*; ag_* NN; лим RS δ≈0; default sh=2; факт-аддитив stCost RS 🔶 |
 | 2026-11-26 | 0.12.7 | §3.7: шаг 2 ipgpSh (FROM_PREV \| else **2**, без хвоста 4) → оживить ag_* / §3.6.4 |

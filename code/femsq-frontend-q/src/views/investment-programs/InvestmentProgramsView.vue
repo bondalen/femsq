@@ -499,16 +499,24 @@
             </div>
           </QTabPanel>
 
-          <!-- Загрузка пунктов: apply из staging (§3.2.8.3); parse/сверка — Structure -->
-          <QTabPanel name="load-points" class="q-pa-md column" data-test="investment-programs-load-points-panel">
-            <div class="text-subtitle2 q-mb-sm">Загрузка пунктов</div>
-            <div class="investment-programs-muted q-mb-md">
+          <!-- Загрузка пунктов: apply из staging (§3.2.8.3); детали ошибок — только в «Ход загрузки» (§3.5.6) -->
+          <QTabPanel
+            name="load-points"
+            class="q-pa-md column fill-pane no-wrap"
+            data-test="investment-programs-load-points-panel"
+          >
+            <div class="text-subtitle2 shrink-0">Загрузка пунктов</div>
+            <div class="investment-programs-muted text-caption q-mb-sm shrink-0">
               Разбор Excel и сверка ПТСФ — на экране «Структура ИПГ». Здесь — apply листьев staging → пункты
               ИП <strong>{{ store.selectedProgram.ipgKey }}</strong>
               · {{ store.selectedProgram.ipgNm }}.
             </div>
-            <div class="row q-col-gutter-sm items-end q-mb-sm">
-              <div class="col-12 col-sm-5">
+            <!-- Фикс. toolbar: одна строка, без hint-прыжка (§3.5.6 A) -->
+            <div
+              class="row items-center q-col-gutter-sm no-wrap shrink-0 q-mb-xs investment-programs-load-toolbar"
+              data-test="investment-programs-load-toolbar"
+            >
+              <div class="col">
                 <QSelect
                   v-model="loadModel"
                   dense
@@ -522,7 +530,7 @@
                   data-test="investment-programs-load"
                 />
               </div>
-              <div class="col-12 col-sm-3">
+              <div class="col-auto investment-programs-prev-ipg">
                 <QInput
                   v-model="previousIpgModel"
                   dense
@@ -530,11 +538,12 @@
                   type="number"
                   clearable
                   label="prev ИП (ipgpSh)"
-                  hint="пусто → схема 4"
                   data-test="investment-programs-previous-ipg"
-                />
+                >
+                  <QTooltip>Пусто → схема 4 (неопределённая). Иначе ipgpSh из prev ИП.</QTooltip>
+                </QInput>
               </div>
-              <div class="col-12 col-sm-4 row q-gutter-xs items-center">
+              <div class="col-auto row no-wrap q-gutter-xs items-center">
                 <QBtn
                   outline
                   color="secondary"
@@ -558,44 +567,37 @@
               </div>
             </div>
             <div
-              v-if="store.selectedLoad"
-              class="text-caption investment-programs-muted q-mb-sm"
+              class="text-caption investment-programs-muted ellipsis shrink-0 investment-programs-load-meta"
               data-test="investment-programs-load-meta"
             >
-              load={{ store.selectedLoad.id }}
-              · файл {{ store.selectedLoad.filePath || '—' }}
-              · {{ store.selectedLoad.name }}
+              <template v-if="store.selectedLoad">
+                load={{ store.selectedLoad.id }}
+                · файл {{ store.selectedLoad.filePath || '—' }}
+                · {{ store.selectedLoad.name }}
+              </template>
+              <template v-else>Выберите сессию load</template>
             </div>
             <div
-              v-if="store.applyResult"
-              class="q-mb-sm investment-programs-apply-log"
+              class="text-caption shrink-0 ellipsis investment-programs-apply-summary"
+              :class="applyLogToneClass"
               data-test="investment-programs-apply-summary"
             >
-              <div class="text-caption" :class="applyLogToneClass">
+              <template v-if="store.applyResult">
                 Пункты ({{ store.applyResult.dryRun ? 'проверка' : 'запись' }}):
                 листьев {{ store.applyResult.leafCount }}
                 · применено {{ store.applyResult.appliedCount }}
                 · уже было {{ store.applyResult.skippedAlreadyCount ?? 0 }}
                 · ошибок {{ store.applyResult.errors.length }}
                 · ready={{ store.applyResult.ready }}
-              </div>
-              <div
-                v-if="store.applyResult.errors.length"
-                class="investment-programs-apply-errors q-mt-xs"
-                data-test="investment-programs-apply-errors"
-              >
-                <div
-                  v-for="(errLine, errIdx) in store.applyResult.errors"
-                  :key="'apply-err-' + errIdx"
-                  class="text-caption text-negative"
-                >
-                  {{ errLine }}
-                </div>
-              </div>
+              </template>
+              <template v-else>&nbsp;</template>
             </div>
-            <div class="q-mt-sm" data-test="investment-programs-load-log">
-              <div class="text-subtitle2 q-mb-xs">Ход загрузки</div>
-              <div class="investment-programs-load-log">
+            <div
+              class="col column no-wrap q-mt-xs investment-programs-load-log-wrap"
+              data-test="investment-programs-load-log"
+            >
+              <div class="text-subtitle2 q-mb-xs shrink-0">Ход загрузки</div>
+              <div class="col scroll investment-programs-load-log">
                 <div class="audit-log-surface">
                   <div
                     v-if="store.loadLogHtml"
@@ -769,6 +771,7 @@ import {
   QTabPanel,
   QTabPanels,
   QTabs,
+  QTooltip,
   useQuasar
 } from 'quasar';
 import {
@@ -1409,6 +1412,19 @@ onMounted(async () => {
 
 .investment-programs-panels {
   min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.investment-programs-panels :deep(.q-panel-parent),
+.investment-programs-panels :deep(.q-tab-panel) {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .investment-programs-muted {
@@ -1458,17 +1474,31 @@ onMounted(async () => {
   border-color: var(--femsq-border) !important;
 }
 
-.investment-programs-load-log {
-  max-height: 24rem;
-  overflow: auto;
+.investment-programs-load-toolbar {
+  min-height: 40px;
 }
 
-.investment-programs-apply-errors {
-  max-height: 9rem;
+.investment-programs-prev-ipg {
+  flex: 0 0 9rem;
+  width: 9rem;
+  max-width: 9rem;
+}
+
+.investment-programs-load-meta,
+.investment-programs-apply-summary {
+  min-height: 1.25rem;
+  line-height: 1.25rem;
+}
+
+.investment-programs-load-log-wrap {
+  min-height: 0;
+}
+
+.investment-programs-load-log {
+  min-height: 0;
   overflow: auto;
-  border: 1px solid rgba(193, 0, 21, 0.25);
+  border: 1px solid var(--femsq-border, rgba(0, 0, 0, 0.12));
   border-radius: 4px;
-  padding: 0.35rem 0.5rem;
-  background: rgba(193, 0, 21, 0.04);
+  padding: 4px;
 }
 </style>

@@ -47,5 +47,5 @@ Scopes: `LOAD · FILE · PARSE · RECONCILE · GATE · STI · SH · APPLY · SUM
 ## Хвосты
 
 - DDL `MSSQL2012/01_ALTER_impIpgLoad_iilResults.sql` на прод — при выкладке (DEV `FishEye_prod_noM6`: применён 2026-11-26).
-- UI-smoke в браузере (parse → reconcile → apply на реальной сессии) не выполнялся в рамках пакета.
+- UI-smoke parse → reconcile → apply: ✅ §3.5.5 (2026-11-26) на `SMOKE_LOG_261126` / load12; note [26-1126-c2-o1-ipg-load-log-ui-smoke-355.md](26-1126-c2-o1-ipg-load-log-ui-smoke-355.md).
 - GATE/STI/SH-эндпоинты-превью (`impIpgPointsGate`, …) лог не пишут — только внутри apply.
