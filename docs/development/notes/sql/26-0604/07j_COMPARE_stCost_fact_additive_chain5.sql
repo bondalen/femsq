@@ -18,7 +18,12 @@ DECLARE @ipgCh   int   = 5;
 DECLARE @stIpg   int   = 61;   -- <<< МЕНЯЙ: 61, 46, NULL
 DECLARE @epsilon money = 0.01;
 
-DECLARE @stNet int = (SELECT ipgcStNetIpg FROM ags.ipgCh WHERE ipgcKey = @ipgCh);
+-- H1+H2/0096: @stNet здесь = cost-net (stnType=2), не ipgcStNetIpg
+DECLARE @stNet int = (
+    SELECT TOP (1) n.stnKey FROM ags.stNet n
+    WHERE n.stnType = 2
+    ORDER BY CASE WHEN n.stnName = N'Стандартная' THEN 0 ELSE 1 END, n.stnKey
+);
 DECLARE @ipgRoot int = ISNULL(@stIpg, 1);
 
 DECLARE @msg nvarchar(400);

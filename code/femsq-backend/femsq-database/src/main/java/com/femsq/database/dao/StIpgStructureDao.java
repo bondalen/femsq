@@ -1,5 +1,6 @@
 package com.femsq.database.dao;
 
+import com.femsq.database.model.StCostNm;
 import com.femsq.database.model.StIpgNm;
 import com.femsq.database.model.StIpgTreeNode;
 import com.femsq.database.model.StNetworkFull;
@@ -7,7 +8,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * DAO структуры ИПГ: схемы {@code stNet}, дерево {@code fnSt}, узлы/рёбра.
+ * DAO структуры ИПГ / затрат: схемы {@code stNet}, дерево {@code fnSt}, узлы/рёбра.
+ * {@code stnType=1} → {@code stIpg}/{@code stIpgNm}; {@code stnType=2} → {@code stCost}/{@code stCostNm}.
  */
 public interface StIpgStructureDao {
 
@@ -42,28 +44,40 @@ public interface StIpgStructureDao {
     StNetworkFull cloneNetwork(int sourceKey, String newName);
 
     /**
-     * Создать узел ИПГ под родителем в схеме (транзакция st+stIpg+Nm+Rel+NetPn).
+     * Создать узел под родителем в схеме ({@code stnType=1|2}).
      *
-     * @return ключ нового узла ({@code stKey}/{@code stiKey})
+     * @return ключ нового узла ({@code stKey}/{@code stiKey}/{@code stcKey})
      */
     int createChildNode(int stNetKey, int parentKey, String name, Integer stpnNum);
 
     /**
-     * Переименовать узел (обновить/вставить первичное {@code stIpgNm}).
+     * Переименовать узел (первичное {@code stIpgNm} или {@code stCostNm} по {@code st.stType}).
      */
     void renameNode(int stiKey, String name);
 
     /**
-     * Все имена узла ({@code stIpgNm}), для ловли из Excel.
+     * Все имена узла ИПГ ({@code stIpgNm}).
      */
     List<StIpgNm> findNodeNames(int stiKey);
 
     /**
-     * Добавить alias-имя узла (не затирая существующие).
+     * Все имена узла затрат ({@code stCostNm}).
+     */
+    List<StCostNm> findCostNodeNames(int stcKey);
+
+    /**
+     * Добавить alias-имя узла ИПГ (не затирая существующие).
      *
      * @return ключ новой строки {@code stinKey}
      */
     int addNodeName(int stiKey, String name);
+
+    /**
+     * Добавить alias-имя узла затрат.
+     *
+     * @return ключ новой строки {@code stcnKey}
+     */
+    int addCostNodeName(int stcKey, String name);
 
     /**
      * Включить существующий узел как ребёнка parent в схеме (findOrCreate stRel + stNetPn).

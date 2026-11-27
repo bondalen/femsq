@@ -20,7 +20,12 @@ DECLARE @fromRn  int = NULL;  -- <<< с какой стройки (1-based), NUL
 DECLARE @toRn    int = NULL;  -- <<< по какую, NULL = все
 DECLARE @slowMs  int = 1000;  -- порог медленной стройки
 
-DECLARE @stNet int = (SELECT c.ipgcStNetIpg FROM ags.ipgCh c WHERE c.ipgcKey = @ipgCh);
+-- H1+H2/0096: @stNet здесь = cost-net (stnType=2), не ipgcStNetIpg
+DECLARE @stNet int = (
+    SELECT TOP (1) n.stnKey FROM ags.stNet n
+    WHERE n.stnType = 2
+    ORDER BY CASE WHEN n.stnName = N'Стандартная' THEN 0 ELSE 1 END, n.stnKey
+);
 
 IF OBJECT_ID('tempdb..#contracts') IS NOT NULL DROP TABLE #contracts;
 CREATE TABLE #contracts (

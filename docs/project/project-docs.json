@@ -6,7 +6,7 @@
       "description": "Cистема работы с контрагентами и объектами при капитальном строительстве на основе БД MS SQL Server FEMSQ (Fish Eye MS SQL Server)",
       "author": "Александр",
       "created": "2025-10-08",
-      "lastUpdated": "2026-11-25",
+      "lastUpdated": "2026-11-27",
       "status": "in_progress",
       "repository": "https://github.com/bondalen/femsq.git",
       "license": "MIT",
@@ -17,7 +17,7 @@
       ],
       "documentationRules": "docs/project-documentation-rules.md",
       "updatedBy": "Александр",
-      "updateReason": "asus-kubuntu: hostname_pattern после переустановки (localhost.localdomain); проверка VPN/SQL 2026-11-25"
+      "updateReason": "0096 completed: P-2026-11-27-002 resolved; C2 O2 unblocked"
     },
     "architecture": {
       "type": "full-stack",
@@ -935,6 +935,39 @@
       }
     ],
     "problems": [
+      {
+        "id": "P-2026-11-27-002",
+        "title": "_2606: @stCostNet ошибочно получает IPG-net (ipgcStNetIpg), не cost-net",
+        "status": "resolved",
+        "discovered": "2026-11-27",
+        "lastUpdated": "2026-11-27",
+        "resolved": "2026-11-27",
+        "description": "В fnMasteringStIpgStCost_2606 один @stNet шёл и в DAG разделов ИПГ, и в cost-rollup. Исправлено (0096 / Решение 24): @stNet = IPG-net; в CstAgPnSh — cost-net stnType=2. Приёмка 07w/07x.",
+        "impact": "high",
+        "workaround": "n/a (исправлено на noM6/FishEye)",
+        "links": {
+          "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1127-c4-2606-costnet-correctness.md",
+          "task": "0096",
+          "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md",
+          "spinOff": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+        }
+      },
+      {
+        "id": "P-2026-11-27-001",
+        "title": "UtPl / _2606: нет параллельного сплита лимита пункта ИП на >1 филиал",
+        "status": "known_issue",
+        "discovered": "2026-11-27",
+        "lastUpdated": "2026-11-27",
+        "description": "Лимит и помесячный план одного ipgPn нельзя разнести на несколько филиалов сразу: нет оси branch в lim/UtPl, Access LdM филиал не читает, _2606 атрибутирует филиал только через календарь cstAgPnBranch. Встречается в Excel 051 (двоящуры). Решение 013: вне O2; обход — суммировать к филиалу с большей суммой. Полная поддержка — отдельная задача загрузка+_2606/_2***.",
+        "impact": "medium",
+        "workaround": "При подготовке помесячного Excel суммировать доли multi-филиала к филиалу с большей суммой (один носитель на пункт).",
+        "links": {
+          "decision": "docs/project/decisions/013-utpl-branch-multi-defer.md",
+          "glossary": "docs/project/glossary.md",
+          "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md",
+          "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+        }
+      },
       {
         "id": "P-2026-11-17-001",
         "title": "femsq-reports: сбои Jasper/тестов вне критического пути R1",

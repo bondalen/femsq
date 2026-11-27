@@ -1,9 +1,10 @@
 # План: R-MONEY-AGG — квант денег и оси агрегации при вводе
 
 **Дата создания:** 2026-11-26  
-**Последнее обновление:** 2026-11-26  
-**Версия плана:** 0.1.4  
-**Статус плана:** ✅ completed — §1–5+7 ✅; §6 → обязательство O2 (C2)  
+**Последнее обновление:** 2026-11-27  
+**Версия плана:** 0.1.5  
+**Статус плана:** ✅ completed — §1–5+7 ✅; §6 → обязательство O2 (DoD A/B/G-agg+G-ip зафиксирован)  
+
 
 
 
@@ -37,9 +38,12 @@ Excel несёт субкопеечные доли и арифметически
 │     Q25+A4 fixed; HARD13 @ipg21 skipped; 07k1 DECIMAL_EXACT
 ├─ 5. RA: AuditExcelCellReader + reconcile ra_summ             ✅
 │     roundRub; AggAxis на ra_summ / ra_change_summ / ra_change_au / JdbcRaSummDao
-├─ 6. UtPl O2 — Round(8) + оси с первого дня                   ☐ (с O2)
+├─ 6. UtPl O2 — Round(8) + оси с первого дня                   🔶 DoD зафиксирован 2026-11-27
+│     A/B/G-agg → §4.2; G-ip → §4.3/LdM; ось T: Q δ→M12
+│     контракт: notes/26-1127-c2-o2-utpl-lim-contract.md
 └─ 7. Gate 07k1 @507 после repair                              ✅
 ```
+
 
 ---
 
@@ -62,3 +66,4 @@ Excel несёт субкопеечные доли и арифметически
 | 2026-11-26 | 0.1.2 | One-shot Sm/lim: Q25+A4; 07k1 EXACT; HARD13 @ipg21 в бэклог |
 | 2026-11-26 | 0.1.3 | RA: roundRub + AggAxis на reconcile/DAO; BLOCK skip INSERT |
 | 2026-11-26 | 0.1.4 | План/0095 закрыты; UtPl Round(8)+AggAxis — с первого дня O2 |
+| 2026-11-27 | 0.1.5 | §6 DoD: A/B/G-agg + G-ip; ось T Q→M12 (контракт O2; без новой ADR) |

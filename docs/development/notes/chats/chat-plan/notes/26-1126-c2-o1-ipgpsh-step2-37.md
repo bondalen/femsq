@@ -70,4 +70,5 @@ Gate **`ag_*` ожил** (раньше 0 NN).
 **§3.7 = ✅** по целям шага 2 (sh без 4, lim→`ag_*`, лим-аддитив из RS).  
 Факт-аддитив из RS по stCost — **закрыт** в [fn2-stcost-fact-rs](../chat-plan-26-1126-fn2-stcost-fact-rs.md) (**0094** ✅).  
 lim δ≈0.01 @3555 → норма [R-MONEY-AGG / 0095](../chat-plan-26-1126-money-agg-axes.md) ([ADR 012](../../../../../project/decisions/012-money-agg-axes.md)).  
-**Next (C2):** O2 UtPl; O1 apply — `ipgPnLim` + R-MONEY-AGG; шаг 3 sh — только из планов.
+**Next (C2):** O2 UtPl ([26-1127-c2-o2-utpl-lim-contract.md](./26-1127-c2-o2-utpl-lim-contract.md)); O1 apply — `ipgPnLim` + R-MONEY-AGG.  
+**Шаг 3 ipgpSh** (из помесячных планов) — **§4.2.x O2**, не хвост §3.7 (без UtPl схемы из планов нет).

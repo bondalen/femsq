@@ -23,6 +23,7 @@
     <ConstructionSitesByCodeView v-else-if="connection.activeView === 'construction-sites-by-code'" />
     <InvestmentChainsView v-else-if="connection.activeView === 'investment-chains'" />
     <InvestmentStructureView v-else-if="connection.activeView === 'investment-structure'" />
+    <CostStructureView v-else-if="connection.activeView === 'cost-structure'" />
     <InvestmentProgramsView v-else-if="connection.activeView === 'investment-programs'" />
     <ReportsCatalog v-else-if="connection.activeView === 'reports'" />
     <AuditsView v-else-if="connection.activeView === 'audits'" />
@@ -103,6 +104,7 @@ import SudzDbtUplView from '@/views/sudz/SudzDbtUplView.vue';
 import SudzPmtUplView from '@/views/sudz/SudzPmtUplView.vue';
 import InvestmentChainsView from '@/views/investment-chains/InvestmentChainsView.vue';
 import InvestmentStructureView from '@/views/investment-structure/InvestmentStructureView.vue';
+import CostStructureView from '@/views/cost-structure/CostStructureView.vue';
 import InvestmentProgramsView from '@/views/investment-programs/InvestmentProgramsView.vue';
 import ReportsCatalog from '@/modules/reports/views/ReportsCatalog.vue';
 import AuditsView from '@/views/audits/AuditsView.vue';

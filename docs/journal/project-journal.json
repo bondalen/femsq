@@ -3,9 +3,201 @@
     "metadata": {
       "version": "1.0.0",
       "status": "in-progress",
-      "lastUpdated": "2026-11-26"
+      "lastUpdated": "2026-11-27"
     },
     "sessions": [
+      {
+        "chat": {
+          "displayName": "C4b: _2606 cost-net correctness (completed, critical). № chat-2026-11-27-001",
+          "chat-attributes": {
+            "id": "chat-2026-11-27-001",
+            "created": "2026-11-27",
+            "lastUpdated": "2026-11-27",
+            "owner": "Александр",
+            "status": "completed",
+            "priority": "critical",
+            "tags": [
+              "C4",
+              "0096",
+              "_2606",
+              "stCostNet",
+              "cost-net"
+            ],
+            "links": {
+              "projectDocsRefs": [
+                "docs/development/notes/sql/26-0604/docs/03-design-decisions.md"
+              ],
+              "developmentTasks": [
+                "0096"
+              ],
+              "aiRuleRefs": [],
+              "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1127-c4-2606-costnet-correctness.md",
+              "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+            }
+          },
+          "entries": [
+            {
+              "log": {
+                "displayName": "§3–§6: 07x + закрытие 0096 (completed). № log-2026-11-27-006",
+                "log-attributes": {
+                  "id": "log-2026-11-27-006",
+                  "timestamp": "2026-11-27T14:45:00+03:00",
+                  "level": "info",
+                  "effort": "0.8h",
+                  "status": "completed",
+                  "tags": [
+                    "0096",
+                    "C4",
+                    "cost-net",
+                    "07x",
+                    "plan-closed"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/project/glossary.md",
+                      "docs/development/notes/sql/26-0604/docs/03-design-decisions.md"
+                    ],
+                    "developmentTasks": [
+                      "0096",
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1127-c4-2606-costnet-correctness.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Multi-net T1–T6 + закрытие плана",
+                    "details": "07x PASS (225k vs 450k); glossary; хвосты C4 deferred; P-002 resolved; C2 O2 §4.0.1+ разблок.",
+                    "outcome": "0096 completed; next C2 §4.0.1",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/07x_costnet_multinet_capability_0096.sql",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "§1–§2 H1+H2 + 07w PASS (completed). № log-2026-11-27-005",
+                "log-attributes": {
+                  "id": "log-2026-11-27-005",
+                  "timestamp": "2026-11-27T14:35:00+03:00",
+                  "level": "info",
+                  "effort": "1.2h",
+                  "status": "completed",
+                  "tags": [
+                    "0096",
+                    "C4",
+                    "cost-net",
+                    "07w"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/development/notes/sql/26-0604/docs/03-design-decisions.md"
+                    ],
+                    "developmentTasks": [
+                      "0096"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1127-c4-2606-costnet-correctness.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Патч 03d + 07* defaults + Решение 24 + 07w",
+                    "details": "StIpg: cost-net=stnType=2 (4p); 07w G-leaf/G-stipg/G-rs @507 PASS (δlim≈0, δpres≈0, 402с). Capability через leaf/CstAgPnSh.",
+                    "outcome": "§1–§2 ✅; следующий §3 multi-net T1–T6",
+                    "references": [
+                      "docs/development/notes/sql/26-0604/07w_costnet_correctness_0096.sql",
+                      "docs/development/notes/sql/26-0604/MSSQL2012/03d_CREATE_FUNCTION_fnMasteringStIpgStCost_2606.sql"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Старт 0096: §0 аудит cost-net (completed). № log-2026-11-27-004",
+                "log-attributes": {
+                  "id": "log-2026-11-27-004",
+                  "timestamp": "2026-11-27T14:05:00+03:00",
+                  "level": "info",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": [
+                    "0096",
+                    "C4",
+                    "cost-net",
+                    "audit"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0096"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1127-c4-2606-costnet-correctness.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Окружение + §0 repro/аудит",
+                    "details": "asus-kubuntu; DBHub OK; FishEye_prod_noM6; repro 7226 net2=0/net3≠0; note audit; задача/чат in-progress.",
+                    "outcome": "§0 ✅; переход к §1 патч H1+H2",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c4-2606-costnet-audit.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1127-c4-2606-costnet-correctness.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "Создан план C4b cost-net correctness (completed). № log-2026-11-27-003",
+                "log-attributes": {
+                  "id": "log-2026-11-27-003",
+                  "timestamp": "2026-11-27T13:58:00+03:00",
+                  "level": "info",
+                  "effort": "0.4h",
+                  "status": "completed",
+                  "tags": [
+                    "plan-created",
+                    "0096",
+                    "C4"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0096"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1127-c4-2606-costnet-correctness.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Точка синхронизации «создан план»",
+                    "details": "План 0.1.0; задача 0096; P-2026-11-27-002; C2 O2 ⏸; first-prompt; реестр roadmap 0.2.11; дерево 02.04.05.02.",
+                    "outcome": "Готовность к §0–§1 в новом чате",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1127-c4-2606-costnet-correctness.md",
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c4-2606-costnet-first-prompt.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
       {
         "chat": {
           "displayName": "R-MONEY-AGG: квант и оси агрегации Excel/UI (completed, high). № chat-2026-11-26-002",
@@ -482,7 +674,7 @@
           "chat-attributes": {
             "id": "chat-2026-11-20-001",
             "created": "2026-11-20",
-            "lastUpdated": "2026-11-26",
+            "lastUpdated": "2026-11-27",
             "owner": "Александр",
             "status": "in-progress",
             "priority": "high",
@@ -498,7 +690,9 @@
             "links": {
               "projectDocsRefs": [
                 "docs/project/business-processes.md",
-                "docs/project/proposals/vba-analysis/c1-inventory/registry.md"
+                "docs/project/proposals/vba-analysis/c1-inventory/registry.md",
+                "docs/project/decisions/013-utpl-branch-multi-defer.md",
+                "docs/project/glossary.md"
               ],
               "developmentTasks": [
                 "0081"
@@ -509,6 +703,668 @@
             }
           },
           "entries": [
+            {
+              "log": {
+                "displayName": "C2 §6.6 LdM Monf apply UtPlP/LmMn (completed). № log-2026-11-27-017",
+                "log-attributes": {
+                  "id": "log-2026-11-27-017",
+                  "timestamp": "2026-11-27T16:40:00+03:00",
+                  "level": "info",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "§6.6",
+                    "LdM",
+                    "apply",
+                    "UtPl"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o6-ldm-monf.md"
+                    ],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Apply Monf → UtPlP + LmMn@212",
+                    "details": "applyImpIpgLoadMonf; матч код+SmTtl / fallback unique code; applyTotalMonths212 (STRUCT, без PART). Smoke utPl=205@ipg30: 32/32, UtPlP=16, LmMn@212=106.",
+                    "outcome": "§6.6 ✅; next §6.7 compare; план 0.16.4",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o6-ldm-monf.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "C2 §6.5 LdM Monf parse skeleton (completed). № log-2026-11-27-016",
+                "log-attributes": {
+                  "id": "log-2026-11-27-016",
+                  "timestamp": "2026-11-27T16:15:00+03:00",
+                  "level": "info",
+                  "effort": "1.2h",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "§6.5",
+                    "LdM",
+                    "parse",
+                    "POI"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o6-ldm-monf.md"
+                    ],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Parse skeleton по якорям Access + UI «Разобрать»",
+                    "details": "IpgMonfExcelParser; mutation parseImpIpgLoadMonf; staging в ответе + iilmResults. Smoke 014/2026_sql: hits=301 loaded=32 skipped=269 (limColumn=по итогам, sumFirst=2).",
+                    "outcome": "§6.5 ✅; next §6.6 apply; план 0.16.3",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o6-ldm-monf.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "C2 §6.1–6.4 LdM Monf каркас (completed). № log-2026-11-27-015",
+                "log-attributes": {
+                  "id": "log-2026-11-27-015",
+                  "timestamp": "2026-11-27T16:05:00+03:00",
+                  "level": "info",
+                  "effort": "1.5h",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "§6",
+                    "LdM",
+                    "impIpgLoadMonf",
+                    "GraphQL"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o6-ldm-monf.md",
+                      "docs/development/notes/sql/26-1127-imp-ipg-load-monf/"
+                    ],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "DDL + GraphQL CRUD + UI вкладка load-utpl",
+                    "details": "ags.impIpgLoadMonf на noM6; DAO/service/GraphQL; FE api/store; smoke create/update/delete @load=11. Парсер/apply отложены на §6.5+.",
+                    "outcome": "§6 каркас ✅; next §6.5 parse; план 0.16.2",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o6-ldm-monf.md",
+                      "docs/development/notes/sql/26-1127-imp-ipg-load-monf/"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "C2 §5 P2 1.4 dict tails triage (completed). № log-2026-11-27-014",
+                "log-attributes": {
+                  "id": "log-2026-11-27-014",
+                  "timestamp": "2026-11-27T15:47:46+03:00",
+                  "level": "info",
+                  "effort": "0.4h",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "§5",
+                    "P2.1.4",
+                    "справочники",
+                    "триаж"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-p14-dict-tails-5.md"
+                    ],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Триаж хвостов справочников vs O1/O2",
+                    "details": "Блокеров нет (ipgSh=4, cstAgPn, stIpg/stCost CRUD уже ✅). Residuals→backlog/§6/§8.1. План 0.16.1; roadmap 0.2.19.",
+                    "outcome": "§5 ✅; next §6 LdM",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-p14-dict-tails-5.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "C2 O2 §4.3 G-ip + spMstrg_2606 @507 (completed). № log-2026-11-27-013",
+                "log-attributes": {
+                  "id": "log-2026-11-27-013",
+                  "timestamp": "2026-11-27T15:42:45+03:00",
+                  "level": "info",
+                  "effort": "1.0h",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "O2",
+                    "§4.3",
+                    "G-ip",
+                    "_2606",
+                    "UtPl",
+                    "accept"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o2-gip-2606-43.md",
+                      "docs/development/notes/sql/26-1127-c2-o2-gip-2606-43/"
+                    ],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Seed UtPl@507 + G-ip + remaster _2606",
+                    "details": "Fixture FEMSQ_O2_43 pl204/gr21 · 3 пилота; G-ip 3/3 δ=0; spMstrg_2606@507×212 EXIT=0 ~38s ag_Pl_nz=8. План 0.16.0; roadmap 0.2.18; O2 закрыт.",
+                    "outcome": "§4.3 ✅ / O2 ✅; next §5/§6",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o2-gip-2606-43.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "C2 O2 §4.2 GraphQL+UI LmMn/UtPlP (completed). № log-2026-11-27-012",
+                "log-attributes": {
+                  "id": "log-2026-11-27-012",
+                  "timestamp": "2026-11-27T15:35:10+03:00",
+                  "level": "info",
+                  "effort": "2.0h",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "O2",
+                    "§4.2",
+                    "UtPl",
+                    "LmMn",
+                    "GraphQL",
+                    "AggAxis",
+                    "G-agg"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o2-utpl-lmmn-42.md"
+                    ],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "MVP UtPl/LmMn GraphQL+DAO+UI + smoke",
+                    "details": "JdbcIpgUtPlDao/Service; upsert месяц AggAxis+sync M/Lim; Leaves tab Планы; IpgUtPlLmMnSmokeMain PASS @ipg11. План 0.15.9; roadmap 0.2.17.",
+                    "outcome": "§4.2 ✅; next §4.3 G-ip/_2606",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o2-utpl-lmmn-42.md",
+                      "code/femsq-backend/femsq-database/src/test/java/com/femsq/database/service/IpgUtPlLmMnSmokeMain.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "C2 O2 §4.1 Access G3 UtPl inventory→migrate (completed). № log-2026-11-27-011",
+                "log-attributes": {
+                  "id": "log-2026-11-27-011",
+                  "timestamp": "2026-11-27T15:22:07+03:00",
+                  "level": "info",
+                  "effort": "0.8h",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "O2",
+                    "§4.1",
+                    "UtPl",
+                    "Access",
+                    "G3",
+                    "migrate"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o2-g3-utpl-access-41.md"
+                    ],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Инвентарь Access G3 + VBA + матрица migrate",
+                    "details": "Формы UtPl/Lm*/Lim/Gr; VBA=Filter Current+класс ipgPnLim; канон LmMn×stCost; migrate P/U/A/X. План 0.15.8; roadmap 0.2.16.",
+                    "outcome": "§4.1 ✅; next §4.2 GraphQL+UI LmMn",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o2-g3-utpl-access-41.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "C2 O2 §4.0 UI-browser accept Structure затрат (completed). № log-2026-11-27-010",
+                "log-attributes": {
+                  "id": "log-2026-11-27-010",
+                  "timestamp": "2026-11-27T15:14:31+03:00",
+                  "level": "info",
+                  "effort": "0.5h",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "O2",
+                    "§4.0",
+                    "stCost",
+                    "UI",
+                    "browser",
+                    "accept"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o2-stcost-structure-40-accept.md"
+                    ],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Операторский UI-прогон до §4.1",
+                    "details": "Vite:5175+boot:8080; nav→Структура затрат; канон полный; create under 187 + confirm; delete 279 + cleanup; tree 88. План 0.15.7.",
+                    "outcome": "UI accept ✅; next §4.1",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o2-stcost-structure-40-accept.md#2a-ui-приёмка-браузером-операторский-сценарий-2026-11-27"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "C2 O2 §4.0.3 приёмка Structure затрат (completed). № log-2026-11-27-009",
+                "log-attributes": {
+                  "id": "log-2026-11-27-009",
+                  "timestamp": "2026-11-27T15:04:28+03:00",
+                  "level": "info",
+                  "effort": "0.4h",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "O2",
+                    "§4.0.3",
+                    "stCost",
+                    "accept",
+                    "smoke"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o2-stcost-structure-40-accept.md"
+                    ],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "§4.0.3 accept + закрытие §4.0",
+                    "details": "fnSt(3,214)=88; канон 212→195/172/187; MIN-имена; StCostStructureSmokeMain PASS (CRUD+cleanup). План 0.15.6; roadmap 0.2.15.",
+                    "outcome": "§4.0 ✅; next §4.1",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o2-stcost-structure-40-accept.md",
+                      "code/femsq-backend/femsq-database/src/test/java/com/femsq/database/service/StCostStructureSmokeMain.java"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "C2 O2 §4.0.2 UI Structure затрат + канон (completed). № log-2026-11-27-008",
+                "log-attributes": {
+                  "id": "log-2026-11-27-008",
+                  "timestamp": "2026-11-27T14:59:46+03:00",
+                  "level": "info",
+                  "effort": "1.0h",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "O2",
+                    "§4.0.2",
+                    "stCost",
+                    "UI",
+                    "canon"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o2-stcost-structure-40.md"
+                    ],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "§4.0.2 UI + охрана канона Σ частей",
+                    "details": "CostStructureView/nav; st-cost-structure API/store; canon satisfied=212+≥1 часть; confirm при break. План 0.15.5; roadmap 0.2.14.",
+                    "outcome": "§4.0.2 ✅; next §4.0.3",
+                    "references": [
+                      "code/femsq-frontend-q/src/views/cost-structure/CostStructureView.vue",
+                      "code/femsq-frontend-q/src/domain/cost-structure-canon.ts",
+                      "code/femsq-frontend-q/src/api/st-cost-structure-api.ts",
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o2-stcost-structure-40.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "C2 O2 §4.0.1 GraphQL+DAO stCost* (completed). № log-2026-11-27-007",
+                "log-attributes": {
+                  "id": "log-2026-11-27-007",
+                  "timestamp": "2026-11-27T14:53:00+03:00",
+                  "level": "info",
+                  "effort": "1.0h",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "O2",
+                    "§4.0.1",
+                    "stCost",
+                    "GraphQL",
+                    "DAO"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o2-stcost-structure-40.md"
+                    ],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "§4.0.1 DAO+GraphQL stnType=2",
+                    "details": "JdbcStIpgStructureDao: ветка stCost/stCostNm; stCost_insert; attach/move/delete для type 1|2. GraphQL stCost* + StCostStructureGraphqlController. План 0.15.4; roadmap 0.2.13.",
+                    "outcome": "§4.0.1 ✅; next §4.0.2 UI",
+                    "references": [
+                      "code/femsq-backend/femsq-database/src/main/java/com/femsq/database/dao/JdbcStIpgStructureDao.java",
+                      "code/femsq-backend/femsq-web/src/main/java/com/femsq/web/api/graphql/StCostStructureGraphqlController.java",
+                      "code/femsq-backend/femsq-web/src/main/resources/graphql/og-schema.graphqls",
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o2-stcost-structure-40.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "C2 O2 §4.00 шаблон UtPl + Scope (in-progress). № log-2026-11-27-002",
+                "log-attributes": {
+                  "id": "log-2026-11-27-002",
+                  "timestamp": "2026-11-27T10:40:00+03:00",
+                  "level": "info",
+                  "effort": "1.0h",
+                  "status": "in-progress",
+                  "tags": [
+                    "C2",
+                    "O2",
+                    "§4.00",
+                    "UtPl",
+                    "template",
+                    "филиал"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [
+                      "docs/project/decisions/013-utpl-branch-multi-defer.md",
+                      "docs/project/glossary.md"
+                    ],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "O2 ⏸: спин-офф 0096 cost-net",
+                    "details": "Обнаружен дефект @stCostNet←ipgcStNetIpg (P-2026-11-27-002). План C4b; §4.0.1+ paused до DoD 0096. План C2 0.15.2.",
+                    "outcome": "O2 paused",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1127-c4-2606-costnet-correctness.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+                    ]
+                  },
+                  {
+                    "action": "§4.0.0 prep Structure затрат CRUD",
+                    "details": "Процесс A vs B; net=3/214; канон 212→195/172/187; CRUD паритет O1. Note stcost-structure-40; план 0.15.1; next был §4.0.1.",
+                    "outcome": "§4.0.0 ✅",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o2-stcost-structure-40.md",
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o2-utpl-lim-contract.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+                    ]
+                  },
+                  {
+                    "action": "§4.00.5 канон-зерно → контракт O2",
+                    "details": "S×C×T×M зерно, рёбра агрегации, роли строк, шире Access (+LmMn@stCost). §4.00 ✅; план 0.15.0; next §4.0.",
+                    "outcome": "§4.00.5 ✅",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o2-utpl-lim-contract.md",
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o2-utpl-template-study.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+                    ]
+                  },
+                  {
+                    "action": "§4.00.4 копейки: DoD A/B/G-agg + G-ip",
+                    "details": "ADR 012 без новой ADR; ось T Q→M12; G-agg=§4.2 DoD; G-ip=§4.3/LdM. Контракт O2; glossary UtPl; money-agg 0.1.5; план C2 0.14.9.",
+                    "outcome": "§4.00.4 ✅",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o2-utpl-lim-contract.md",
+                      "docs/project/decisions/012-money-agg-axes.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1126-money-agg-axes.md",
+                      "docs/project/glossary.md"
+                    ]
+                  },
+                  {
+                    "action": "Решение 013: филиал multi вне O2",
+                    "details": "Параллельный сплит lim на >1 филиал не в _2606/LdM. Обход — сумма к филиалу с большей суммой. Glossary 1.15; P-2026-11-27-001; план 0.14.8; backlog roadmap §6.",
+                    "outcome": "документировано",
+                    "references": [
+                      "docs/project/decisions/013-utpl-branch-multi-defer.md",
+                      "docs/project/glossary.md",
+                      "docs/project/project-docs.json",
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o2-utpl-template-study.md",
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o2-utpl-lim-contract.md"
+                    ]
+                  },
+                  {
+                    "action": "09-30.zip → шара ipg-utpl-26-III",
+                    "details": "AES отПрод; 000 шаблон + 014/051/060 планы агентов ИП 26-III.",
+                    "outcome": "§4.00.0 ✅",
+                    "references": [
+                      "/mnt/nb-win-share/femsq/excel/2026-1127/ipg-utpl-26-III/"
+                    ]
+                  },
+                  {
+                    "action": "§4.00 в плане; Scope-сегмент зафиксирован",
+                    "details": "Агент→итого АД|ИД→объекты; note template-study; план 0.14.1.",
+                    "outcome": "§4.00.1 черновик",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o2-utpl-template-study.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+                    ]
+                  },
+                  {
+                    "action": "Стройки/ПИР = разделы stIpg, не группы файла",
+                    "details": "Пакет Excel = раздел Стройки; Excel ПИР — §4.00.1a. План 0.14.2.",
+                    "outcome": "§4.00.1 черновик узлов",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o2-utpl-template-study.md"
+                    ]
+                  },
+                  {
+                    "action": "«Стройки» = sti 51; узел 2 шире (⊃ ПИР 45)",
+                    "details": "Glossary 1.13.0 черновик дерева 2→51/45.",
+                    "outcome": "уточнено DBHub",
+                    "references": [
+                      "docs/project/glossary.md"
+                    ]
+                  },
+                  {
+                    "action": "DBHub: 45⊂2; 51 не child of 2",
+                    "details": "Промежуточная правка; уточнено владельцем: 52/53.",
+                    "outcome": "superseded",
+                    "references": [
+                      "docs/project/glossary.md"
+                    ]
+                  },
+                  {
+                    "action": "52 виды vs 53 цели; 56 Стройки; 51 OutLim",
+                    "details": "Выгрузка ipg-st-26-III; Excel ИП=цели. Glossary 1.14.0; план 0.14.5.",
+                    "outcome": "модель разделов ✅",
+                    "references": [
+                      "docs/project/glossary.md",
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o2-utpl-template-study.md"
+                    ]
+                  },
+                  {
+                    "action": "§4.00.2–3 оси T/C; минимум vs шаблон",
+                    "details": "T/C + open филиал/копейки. План 0.14.6.",
+                    "outcome": "§4.00.2–3 ✅",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o2-utpl-template-study.md"
+                    ]
+                  },
+                  {
+                    "action": "§4.00.4a разбор Access LdM Excel→БД",
+                    "details": "Form_ipg>LdM_t: Find Код/ldmfLimColumn; fSh схемы; ???-???????; Round8; → ipgUtPlP M/Q/Lim (212). CostItsNm=skip; филиал/LmMn нет. План 0.14.7.",
+                    "outcome": "карта полей ✅",
+                    "references": [
+                      "docs/project/proposals/vba-analysis/VBA-Code-Export/Form-Modules/Form_ipg_gt_LdM_t.cls",
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o2-utpl-template-study.md"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "log": {
+                "displayName": "C2 §3.6.5 B–D + старт O2 контракт (completed). № log-2026-11-27-001",
+                "log-attributes": {
+                  "id": "log-2026-11-27-001",
+                  "timestamp": "2026-11-27T09:35:00+03:00",
+                  "level": "info",
+                  "effort": "1.2h",
+                  "status": "completed",
+                  "tags": [
+                    "C2",
+                    "§3.6.5",
+                    "O2",
+                    "spMstrg_2606"
+                  ],
+                  "links": {
+                    "projectDocsRefs": [],
+                    "developmentTasks": [
+                      "0081"
+                    ],
+                    "aiRuleRefs": [],
+                    "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md",
+                    "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md"
+                  }
+                },
+                "entries": [
+                  {
+                    "action": "Smoke spMstrg_2606 @508–510 × stCost",
+                    "details": "EXIT=0 ×15; agNN>0 на всех цепях; лим spot @28 δ≈0. §3.6 полностью ✅.",
+                    "outcome": "§3.6.5 ✅",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1126-c2-o1-2606-feasibility-36.md"
+                    ]
+                  },
+                  {
+                    "action": "§3.7.6 перенесён в O2; контракт UtPl/Lim",
+                    "details": "Шаг 3 ipgpSh → §4.2.x; note 26-1127-c2-o2-utpl-lim-contract; план 0.14.0; next §4.0.0 Prep.",
+                    "outcome": "O2 🔶 старт",
+                    "references": [
+                      "docs/development/notes/chats/chat-plan/notes/26-1127-c2-o2-utpl-lim-contract.md",
+                      "docs/development/notes/chats/chat-plan/chat-plan-26-1120-c2-d11-ipg-plans.md"
+                    ]
+                  }
+                ]
+              }
+            },
             {
               "log": {
                 "displayName": "C2 §3.5.6 UX Загрузка пунктов (completed). № log-2026-11-26-014",

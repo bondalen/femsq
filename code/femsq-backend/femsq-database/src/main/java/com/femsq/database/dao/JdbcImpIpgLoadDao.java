@@ -193,6 +193,7 @@ public class JdbcImpIpgLoadDao implements ImpIpgLoadDao {
         try (Connection connection = connectionFactory.createConnection()) {
             connection.setAutoCommit(false);
             try {
+                deleteMonfByLoad(connection, iilKey);
                 deleteRowsByLoad(connection, iilKey);
                 String sql = "DELETE FROM " + q("impIpgLoad") + " WHERE iilKey = ?";
                 try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -425,6 +426,20 @@ public class JdbcImpIpgLoadDao implements ImpIpgLoadDao {
         try (PreparedStatement statement = connection.prepareStatement(delete)) {
             statement.setInt(1, iilKey);
             return statement.executeUpdate();
+        }
+    }
+
+    /**
+     * Удаляет дочерние {@code impIpgLoadMonf} перед удалением сессии (FK без CASCADE).
+     */
+    private void deleteMonfByLoad(Connection connection, int iilKey) throws SQLException {
+        String delete = "DELETE FROM " + q("impIpgLoadMonf") + " WHERE iilmLoad = ?";
+        try (PreparedStatement statement = connection.prepareStatement(delete)) {
+            statement.setInt(1, iilKey);
+            int deleted = statement.executeUpdate();
+            if (deleted > 0) {
+                log.info(() -> "deleteMonfByLoad load=" + iilKey + " deleted=" + deleted);
+            }
         }
     }
 

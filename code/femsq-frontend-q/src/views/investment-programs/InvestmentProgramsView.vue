@@ -617,14 +617,364 @@
             <div class="investment-programs-muted">{{ STUB_O2 }}</div>
           </QTabPanel>
 
-          <QTabPanel name="plans" class="q-pa-md">
-            <div class="text-subtitle2 q-mb-sm">Планы</div>
-            <div class="investment-programs-muted">{{ STUB_O2 }}</div>
+          <QTabPanel name="plans" class="q-pa-md column q-gutter-sm" data-test="investment-programs-plans-panel">
+            <div class="row items-center q-gutter-sm">
+              <div class="text-subtitle2">Планы (UtPl @ stCost)</div>
+              <QSpace />
+              <QBadge
+                v-if="utPlStore.grid"
+                :color="utPlStore.grid.gAggOk ? 'positive' : 'negative'"
+                :label="utPlStore.grid.gAggOk ? 'G-agg OK' : 'G-agg FAIL'"
+              />
+              <QBtn
+                dense
+                flat
+                no-caps
+                icon="refresh"
+                label="Обновить"
+                :loading="utPlStore.loading"
+                data-test="investment-programs-plans-refresh"
+                @click="onRefreshUtPl"
+              />
+              <QBtn
+                dense
+                unelevated
+                color="primary"
+                no-caps
+                label="Новый план"
+                data-test="investment-programs-plans-create"
+                @click="createUtPlOpen = true"
+              />
+            </div>
+            <div class="row q-col-gutter-sm">
+              <div class="col-5">
+                <QSelect
+                  :model-value="utPlStore.selectedPlKey"
+                  dense
+                  outlined
+                  emit-value
+                  map-options
+                  clearable
+                  :options="utPlPlanOptions"
+                  label="План агента (iuplIpg=текущая)"
+                  data-test="investment-programs-plans-select"
+                  @update:model-value="onSelectUtPl"
+                />
+              </div>
+              <div class="col-7">
+                <QSelect
+                  :model-value="utPlStore.selectedIpgpKey"
+                  dense
+                  outlined
+                  emit-value
+                  map-options
+                  clearable
+                  :options="utPlPointOptions"
+                  label="Пункт ИП"
+                  data-test="investment-programs-plans-point"
+                  @update:model-value="onSelectUtPlPoint"
+                />
+              </div>
+            </div>
+            <div v-if="utPlStore.error" class="text-negative text-body2">{{ utPlStore.error }}</div>
+            <div
+              v-if="utPlStore.grid"
+              class="text-caption text-grey-7"
+            >
+              UtPlP={{ utPlStore.grid.plPnKey }} · limYear(212)={{ utPlStore.grid.limYear ?? '—' }}
+            </div>
+            <div v-if="utPlStore.grid" class="col scroll">
+              <table class="utpl-lmmn-table" data-test="investment-programs-plans-grid">
+                <thead>
+                  <tr>
+                    <th>М</th>
+                    <th>212</th>
+                    <th>195</th>
+                    <th>172</th>
+                    <th>187</th>
+                    <th>agg</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="row in utPlEditRows" :key="row.month">
+                    <td>{{ row.month }}</td>
+                    <td>
+                      <QInput
+                        v-model.number="row.lim212"
+                        dense
+                        outlined
+                        type="number"
+                        step="any"
+                        input-class="text-right"
+                      />
+                    </td>
+                    <td>
+                      <QInput
+                        v-model.number="row.lim195"
+                        dense
+                        outlined
+                        type="number"
+                        step="any"
+                        input-class="text-right"
+                      />
+                    </td>
+                    <td>
+                      <QInput
+                        v-model.number="row.lim172"
+                        dense
+                        outlined
+                        type="number"
+                        step="any"
+                        input-class="text-right"
+                      />
+                    </td>
+                    <td>
+                      <QInput
+                        v-model.number="row.lim187"
+                        dense
+                        outlined
+                        type="number"
+                        step="any"
+                        input-class="text-right"
+                      />
+                    </td>
+                    <td class="text-caption">{{ row.aggCode }}</td>
+                    <td>
+                      <QBtn
+                        dense
+                        flat
+                        no-caps
+                        color="primary"
+                        label="Сохранить"
+                        :loading="utPlStore.mutating"
+                        :data-test="`investment-programs-plans-save-m${row.month}`"
+                        @click="onSaveUtPlMonth(row)"
+                      />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div v-else class="investment-programs-muted">
+              Выберите план агента и пункт — откроется грид месяц × stCost.
+            </div>
           </QTabPanel>
 
-          <QTabPanel name="load-utpl" class="q-pa-md">
-            <div class="text-subtitle2 q-mb-sm">Загрузка уточнённых планов</div>
-            <div class="investment-programs-muted">{{ STUB_LDM }}</div>
+          <QTabPanel
+            name="load-utpl"
+            class="q-pa-md column q-gutter-sm"
+            data-test="investment-programs-load-utpl-panel"
+          >
+            <div class="row items-center q-gutter-sm">
+              <div class="text-subtitle2">Загрузка уточнённых планов (LdM / Monf)</div>
+              <QSpace />
+              <QBtn
+                dense
+                flat
+                no-caps
+                icon="refresh"
+                label="Обновить"
+                :loading="monfStore.loading"
+                data-test="investment-programs-monf-refresh"
+                @click="onRefreshMonf"
+              />
+              <QBtn
+                dense
+                unelevated
+                color="primary"
+                no-caps
+                label="Новая строка"
+                :disable="store.selectedLoadKey == null"
+                data-test="investment-programs-monf-create"
+                @click="openCreateMonf"
+              />
+            </div>
+            <div class="investment-programs-muted text-caption">
+              LdM Monf: «Разобрать» (§6.5) → «Применить» (§6.6, UtPlP + LmMn@212). Нужны сессия load и
+              план UtPl.
+            </div>
+            <div class="row q-col-gutter-sm">
+              <div class="col-5">
+                <QSelect
+                  v-model="monfLoadFilterModel"
+                  dense
+                  outlined
+                  emit-value
+                  map-options
+                  clearable
+                  label="Сессия load"
+                  :options="loadSelectOptions"
+                  :loading="store.loadingLoads"
+                  data-test="investment-programs-monf-load"
+                />
+              </div>
+              <div class="col-7">
+                <QSelect
+                  :model-value="monfStore.selectedId"
+                  dense
+                  outlined
+                  emit-value
+                  map-options
+                  clearable
+                  label="Строка Monf"
+                  :options="monfRowOptions"
+                  :loading="monfStore.loading"
+                  data-test="investment-programs-monf-select"
+                  @update:model-value="onSelectMonf"
+                />
+              </div>
+            </div>
+            <div v-if="monfStore.error" class="text-negative text-body2">{{ monfStore.error }}</div>
+            <div v-if="monfStore.selected" class="row q-col-gutter-sm">
+              <div class="col-6">
+                <QInput v-model="monfForm.name" dense outlined label="Наименование" />
+              </div>
+              <div class="col-6">
+                <QSelect
+                  v-model="monfForm.utPlKey"
+                  dense
+                  outlined
+                  emit-value
+                  map-options
+                  clearable
+                  label="План UtPl"
+                  :options="utPlPlanOptions"
+                />
+              </div>
+              <div class="col-12">
+                <QInput v-model="monfForm.filePath" dense outlined label="Путь Excel" />
+              </div>
+              <div class="col-4">
+                <QInput v-model="monfForm.sheet" dense outlined label="Лист" />
+              </div>
+              <div class="col-4">
+                <QInput v-model="monfForm.limColumn" dense outlined label="Якорь колонки лимита" />
+              </div>
+              <div class="col-2">
+                <QInput
+                  v-model.number="monfForm.sumFirst"
+                  dense
+                  outlined
+                  type="number"
+                  label="SumFirst"
+                />
+              </div>
+              <div class="col-2 flex items-center">
+                <QBtn
+                  dense
+                  outline
+                  no-caps
+                  :color="monfForm.quarter ? 'primary' : 'grey'"
+                  :label="monfForm.quarter ? 'Q+M (16)' : '12 M'"
+                  data-test="investment-programs-monf-quarter"
+                  @click="monfForm.quarter = !monfForm.quarter"
+                />
+              </div>
+              <div class="col-12">
+                <QInput v-model="monfForm.note" dense outlined type="textarea" autogrow label="Заметка" />
+              </div>
+              <div class="col-12 row q-gutter-sm items-center">
+                <QBtn
+                  unelevated
+                  color="primary"
+                  no-caps
+                  label="Сохранить"
+                  :loading="monfStore.mutating"
+                  data-test="investment-programs-monf-save"
+                  @click="onSaveMonf"
+                />
+                <QBtn
+                  unelevated
+                  color="secondary"
+                  no-caps
+                  label="Разобрать"
+                  :loading="monfStore.parsing"
+                  :disable="!monfForm.filePath || monfStore.applying"
+                  data-test="investment-programs-monf-parse"
+                  @click="onParseMonf"
+                />
+                <QBtn
+                  outline
+                  color="secondary"
+                  no-caps
+                  label="Проверить"
+                  :loading="monfStore.applying"
+                  :disable="monfForm.utPlKey == null || monfStore.parsing"
+                  data-test="investment-programs-monf-apply-dry"
+                  @click="onApplyMonfDry"
+                />
+                <QBtn
+                  unelevated
+                  color="secondary"
+                  no-caps
+                  label="Применить"
+                  :loading="monfStore.applying"
+                  :disable="monfForm.utPlKey == null || monfStore.parsing"
+                  data-test="investment-programs-monf-apply"
+                  @click="onApplyMonf"
+                />
+                <QBtn
+                  outline
+                  color="negative"
+                  no-caps
+                  label="Удалить"
+                  :loading="monfStore.mutating"
+                  data-test="investment-programs-monf-delete"
+                  @click="onDeleteMonf"
+                />
+                <div
+                  v-if="monfStore.parseResult"
+                  class="text-caption text-grey-7"
+                  data-test="investment-programs-monf-parse-summary"
+                >
+                  hits={{ monfStore.parseResult.codeHits }} · loaded={{ monfStore.parseResult.loadedCount }}
+                  · skipped={{ monfStore.parseResult.skippedCount }} · лист
+                  «{{ monfStore.parseResult.sheetName }}»
+                </div>
+                <div
+                  v-if="monfStore.applyResult"
+                  class="text-caption"
+                  :class="monfStore.applyResult.errorCount ? 'text-negative' : 'text-grey-7'"
+                  data-test="investment-programs-monf-apply-summary"
+                >
+                  apply{{ monfStore.applyResult.dryRun ? ' (dry)' : '' }}:
+                  {{ monfStore.applyResult.appliedCount }}/{{ monfStore.applyResult.parsedCount }}
+                  · unmatched={{ monfStore.applyResult.unmatchedCount }}
+                  · ambig={{ monfStore.applyResult.ambiguousCount }}
+                  · err={{ monfStore.applyResult.errorCount }}
+                </div>
+              </div>
+              <div
+                class="col-12"
+                v-if="
+                  monfStore.selected.logHtml ||
+                  monfStore.applyResult?.logHtml ||
+                  monfStore.parseResult?.logHtml
+                "
+              >
+                <div class="text-subtitle2 q-mb-xs">Ход (logHtml)</div>
+                <div class="audit-log-surface">
+                  <div
+                    class="audit-log-html"
+                    v-html="
+                      monfStore.applyResult?.logHtml ||
+                      monfStore.parseResult?.logHtml ||
+                      monfStore.selected.logHtml
+                    "
+                  />
+                </div>
+              </div>
+            </div>
+            <div v-else class="investment-programs-muted">
+              Выберите или создайте строку Monf (нужна сессия load).
+            </div>
+            <div v-if="monfStore.filteredRows.length" class="text-caption text-grey-7">
+              Строк: {{ monfStore.filteredRows.length }}
+              <template v-if="monfStore.filterLoadKey != null">
+                · load={{ monfStore.filterLoadKey }}
+              </template>
+            </div>
           </QTabPanel>
         </QTabPanels>
       </template>
@@ -744,6 +1094,39 @@
         </QCardActions>
       </QCard>
     </QDialog>
+
+    <QDialog v-model="createUtPlOpen" persistent>
+      <QCard style="min-width: 360px">
+        <QCardSection class="text-h6">Новый план агента</QCardSection>
+        <QCardSection class="row q-col-gutter-sm">
+          <div class="col-6">
+            <QInput
+              v-model.number="createUtPlForm.agKey"
+              dense
+              outlined
+              type="number"
+              label="agKey (ogAg)"
+              autofocus
+            />
+          </div>
+          <div class="col-12">
+            <QInput v-model="createUtPlForm.name" dense outlined label="Наименование" />
+          </div>
+        </QCardSection>
+        <QCardActions align="right">
+          <QBtn flat no-caps label="Отмена" v-close-popup :disable="utPlStore.mutating" />
+          <QBtn
+            color="primary"
+            unelevated
+            no-caps
+            label="Создать"
+            :loading="utPlStore.mutating"
+            data-test="investment-programs-plans-create-submit"
+            @click="submitCreateUtPl"
+          />
+        </QCardActions>
+      </QCard>
+    </QDialog>
   </QPage>
 </template>
 
@@ -753,6 +1136,7 @@
  */
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import {
+  QBadge,
   QBanner,
   QBtn,
   QCard,
@@ -785,12 +1169,41 @@ import {
   useIpgLeavesStore,
   type LeavesTreeNode
 } from '@/stores/ipg-leaves';
+import { useImpIpgLoadMonfStore } from '@/stores/imp-ipg-load-monf';
+import { useIpgUtPlStore } from '@/stores/ipg-utpl';
 
-const STUB_O2 = 'Заглушка до O2 (блок 4): группы / UtPl@stCost.';
-const STUB_LDM = 'Заглушка до LdM (блок 6): загрузка уточнённых планов из Excel.';
+const STUB_O2 = 'Заглушка до O2 (блок 4): группы планов (UtPlGr) — вторичный экран.';
 
 const store = useIpgLeavesStore();
+const utPlStore = useIpgUtPlStore();
+const monfStore = useImpIpgLoadMonfStore();
 const $q = useQuasar();
+const createUtPlOpen = ref(false);
+const monfForm = reactive({
+  name: '',
+  filePath: '',
+  sheet: '',
+  limColumn: '',
+  quarter: true,
+  sumFirst: null as number | null,
+  utPlKey: null as number | null,
+  note: ''
+});
+const createUtPlForm = reactive({
+  agKey: 1,
+  name: ''
+});
+/** Локальные редактируемые строки грида (не мутировать store напрямую). */
+const utPlEditRows = ref<
+  {
+    month: number;
+    lim212: number | null;
+    lim195: number | null;
+    lim172: number | null;
+    lim187: number | null;
+    aggCode: string;
+  }[]
+>([]);
 
 /** Вкладка master: general | points | load-points | stubs. */
 const mainTab = ref<'general' | 'points' | 'load-points' | 'plan-groups' | 'plans' | 'load-utpl'>(
@@ -1095,11 +1508,330 @@ function syncPointForm(): void {
   pointForm.ipgpSmReserv = p.ipgpSmReserv;
 }
 
+const utPlPlanOptions = computed(() =>
+  utPlStore.plans.map((p) => ({
+    label: `${p.iuplKey} · ${p.iuplNm || '—'} · ag=${p.iuplAg}`,
+    value: p.iuplKey
+  }))
+);
+
+const utPlPointOptions = computed(() =>
+  store.points.map((p) => ({
+    label: `${p.ipgpKey} · №${p.ipgpNum ?? '—'} · ${p.cstAgPnCode || p.cstAgPnCstName || '—'}`,
+    value: p.ipgpKey
+  }))
+);
+
+function syncUtPlEditRows(): void {
+  const months = utPlStore.grid?.months ?? [];
+  utPlEditRows.value = months.map((m) => ({
+    month: m.month,
+    lim212: m.lim212,
+    lim195: m.lim195,
+    lim172: m.lim172,
+    lim187: m.lim187,
+    aggCode: m.aggCode
+  }));
+}
+
+async function onRefreshUtPl(): Promise<void> {
+  if (store.selectedIpgKey == null) {
+    return;
+  }
+  await utPlStore.loadPlans(store.selectedIpgKey);
+  if (utPlStore.selectedPlKey != null && utPlStore.selectedIpgpKey != null) {
+    await utPlStore.loadGrid();
+  }
+}
+
+async function onSelectUtPl(plKey: number | null): Promise<void> {
+  utPlStore.selectPlan(plKey);
+  if (plKey != null && utPlStore.selectedIpgpKey != null) {
+    await utPlStore.loadGrid();
+  }
+}
+
+async function onSelectUtPlPoint(ipgpKey: number | null): Promise<void> {
+  await utPlStore.selectPoint(ipgpKey);
+}
+
+async function onSaveUtPlMonth(row: {
+  month: number;
+  lim212: number | null;
+  lim195: number | null;
+  lim172: number | null;
+  lim187: number | null;
+  aggCode: string;
+}): Promise<void> {
+  const ok = await utPlStore.saveMonth({
+    plPnKey: utPlStore.grid?.plPnKey ?? 0,
+    month: row.month,
+    lim212: row.lim212,
+    lim195: row.lim195,
+    lim172: row.lim172,
+    lim187: row.lim187,
+    aggCode: row.aggCode
+  });
+  if (ok) {
+    $q.notify({ type: 'positive', message: `Месяц ${row.month} сохранён` });
+  } else if (utPlStore.error) {
+    $q.notify({ type: 'negative', message: utPlStore.error });
+  }
+}
+
+async function submitCreateUtPl(): Promise<void> {
+  if (store.selectedIpgKey == null || !createUtPlForm.agKey) {
+    $q.notify({ type: 'warning', message: 'Нужны ИП и agKey' });
+    return;
+  }
+  const created = await utPlStore.createPlan({
+    ipgKey: store.selectedIpgKey,
+    agKey: Number(createUtPlForm.agKey),
+    name: createUtPlForm.name.trim() || null
+  });
+  if (created) {
+    createUtPlOpen.value = false;
+    createUtPlForm.name = '';
+    $q.notify({ type: 'positive', message: `План ${created.iuplKey} создан` });
+  } else if (utPlStore.error) {
+    $q.notify({ type: 'negative', message: utPlStore.error });
+  }
+}
+
+const monfLoadFilterModel = computed({
+  get: () => monfStore.filterLoadKey,
+  set: (value: number | null) => {
+    monfStore.setLoadFilter(value);
+    if (value != null) {
+      store.selectLoad(value);
+    }
+  }
+});
+
+const monfRowOptions = computed(() =>
+  monfStore.filteredRows.map((r) => ({
+    label: `${r.id}: ${r.name}${r.filePath ? ' · ' + r.filePath : ''}`,
+    value: r.id
+  }))
+);
+
+function syncMonfForm(): void {
+  const row = monfStore.selected;
+  if (row == null) {
+    monfForm.name = '';
+    monfForm.filePath = '';
+    monfForm.sheet = '';
+    monfForm.limColumn = '';
+    monfForm.quarter = true;
+    monfForm.sumFirst = null;
+    monfForm.utPlKey = null;
+    monfForm.note = '';
+    return;
+  }
+  monfForm.name = row.name ?? '';
+  monfForm.filePath = row.filePath ?? '';
+  monfForm.sheet = row.sheet ?? '';
+  monfForm.limColumn = row.limColumn ?? '';
+  monfForm.quarter = row.quarter !== false;
+  monfForm.sumFirst = row.sumFirst ?? null;
+  monfForm.utPlKey = row.utPlKey ?? null;
+  monfForm.note = row.note ?? '';
+}
+
+async function onRefreshMonf(): Promise<void> {
+  if (store.selectedIpgKey == null) {
+    return;
+  }
+  if (store.loads.length === 0) {
+    await store.fetchLoads(store.selectedIpgKey);
+  }
+  await monfStore.loadForIpg(store.selectedIpgKey);
+  syncMonfForm();
+}
+
+function onSelectMonf(id: number | null): void {
+  monfStore.select(id);
+  syncMonfForm();
+}
+
+async function openCreateMonf(): Promise<void> {
+  const loadKey = monfStore.filterLoadKey ?? store.selectedLoadKey;
+  if (loadKey == null) {
+    $q.notify({ type: 'warning', message: 'Выберите сессию load' });
+    return;
+  }
+  try {
+    const created = await monfStore.create({
+      loadKey,
+      name: `Monf ${new Date().toISOString().slice(0, 16)}`,
+      quarter: true,
+      limColumn: 'лимит'
+    });
+    syncMonfForm();
+    $q.notify({ type: 'positive', message: `Monf ${created.id} создан` });
+  } catch {
+    $q.notify({ type: 'negative', message: monfStore.error || 'Ошибка создания Monf' });
+  }
+}
+
+async function onSaveMonf(): Promise<void> {
+  if (monfStore.selectedId == null) {
+    return;
+  }
+  if (!monfForm.name.trim()) {
+    $q.notify({ type: 'warning', message: 'Наименование обязательно' });
+    return;
+  }
+  try {
+    await monfStore.update(monfStore.selectedId, {
+      name: monfForm.name.trim(),
+      filePath: monfForm.filePath || null,
+      sheet: monfForm.sheet || null,
+      limColumn: monfForm.limColumn || null,
+      quarter: monfForm.quarter,
+      sumFirst: monfForm.sumFirst,
+      utPlKey: monfForm.utPlKey,
+      note: monfForm.note || null
+    });
+    syncMonfForm();
+    $q.notify({ type: 'positive', message: 'Monf сохранён' });
+  } catch {
+    $q.notify({ type: 'negative', message: monfStore.error || 'Ошибка сохранения Monf' });
+  }
+}
+
+async function onDeleteMonf(): Promise<void> {
+  if (monfStore.selectedId == null) {
+    return;
+  }
+  try {
+    const id = monfStore.selectedId;
+    await monfStore.remove(id);
+    syncMonfForm();
+    $q.notify({ type: 'positive', message: `Monf ${id} удалён` });
+  } catch {
+    $q.notify({ type: 'negative', message: monfStore.error || 'Ошибка удаления Monf' });
+  }
+}
+
+/**
+ * §6.5: parse skeleton — якоря → staging + HTML-лог.
+ */
+async function onParseMonf(): Promise<void> {
+  if (monfStore.selectedId == null) {
+    return;
+  }
+  if (!monfForm.filePath.trim()) {
+    $q.notify({ type: 'warning', message: 'Укажите путь Excel' });
+    return;
+  }
+  try {
+    await saveMonfForm();
+    const result = await monfStore.parse(monfForm.filePath);
+    syncMonfForm();
+    if (result) {
+      $q.notify({
+        type: 'positive',
+        message: `Разбор: loaded=${result.loadedCount}, skipped=${result.skippedCount}`
+      });
+    }
+  } catch {
+    $q.notify({ type: 'negative', message: monfStore.error || 'Ошибка разбора Monf' });
+  }
+}
+
+async function saveMonfForm(): Promise<void> {
+  if (monfStore.selectedId == null) {
+    return;
+  }
+  await monfStore.update(monfStore.selectedId, {
+    name: monfForm.name.trim() || 'Monf',
+    filePath: monfForm.filePath || null,
+    sheet: monfForm.sheet || null,
+    limColumn: monfForm.limColumn || null,
+    quarter: monfForm.quarter,
+    sumFirst: monfForm.sumFirst,
+    utPlKey: monfForm.utPlKey,
+    note: monfForm.note || null
+  });
+}
+
+/**
+ * §6.6 dryRun: сверка матчей код+SmTtl без записи.
+ */
+async function onApplyMonfDry(): Promise<void> {
+  await runApplyMonf(true);
+}
+
+/**
+ * §6.6: запись UtPlP / LmMn@212.
+ */
+async function onApplyMonf(): Promise<void> {
+  await runApplyMonf(false);
+}
+
+async function runApplyMonf(dryRun: boolean): Promise<void> {
+  if (monfStore.selectedId == null) {
+    return;
+  }
+  if (monfForm.utPlKey == null) {
+    $q.notify({ type: 'warning', message: 'Выберите план UtPl' });
+    return;
+  }
+  try {
+    await saveMonfForm();
+    const result = await monfStore.apply(dryRun);
+    syncMonfForm();
+    if (result) {
+      $q.notify({
+        type: result.errorCount > 0 ? 'warning' : 'positive',
+        message: `${dryRun ? 'Проверка' : 'Применение'}: ${result.appliedCount}/${result.parsedCount}, unmatched=${result.unmatchedCount}`
+      });
+    }
+  } catch {
+    $q.notify({ type: 'negative', message: monfStore.error || 'Ошибка apply Monf' });
+  }
+}
+
 watch(
   () => store.selectedProgram,
-  () => syncHeaderForm(),
+  async (program) => {
+    syncHeaderForm();
+    utPlStore.reset();
+    monfStore.reset();
+    syncMonfForm();
+    if (program != null) {
+      await utPlStore.loadPlans(program.ipgKey);
+      if (store.selectedIpgpKey != null) {
+        await utPlStore.selectPoint(store.selectedIpgpKey);
+      }
+      if (mainTab.value === 'load-utpl') {
+        await monfStore.loadForIpg(program.ipgKey);
+      }
+    }
+  },
   { immediate: true }
 );
+
+watch(
+  () => utPlStore.grid,
+  () => syncUtPlEditRows()
+);
+
+watch(mainTab, async (tab) => {
+  if (tab === 'plans' && store.selectedIpgKey != null && utPlStore.plans.length === 0) {
+    await utPlStore.loadPlans(store.selectedIpgKey);
+  }
+  if (tab === 'load-utpl' && store.selectedIpgKey != null) {
+    if (store.loads.length === 0) {
+      await store.fetchLoads(store.selectedIpgKey);
+    }
+    await monfStore.loadForIpg(store.selectedIpgKey);
+    if (store.selectedLoadKey != null && monfStore.filterLoadKey == null) {
+      monfStore.setLoadFilter(store.selectedLoadKey);
+    }
+  }
+});
 
 watch(
   () => store.selectedPoint,
@@ -1429,6 +2161,24 @@ onMounted(async () => {
 
 .investment-programs-muted {
   color: var(--femsq-text-muted, rgba(0, 0, 0, 0.54));
+}
+
+.utpl-lmmn-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.utpl-lmmn-table th,
+.utpl-lmmn-table td {
+  padding: 0.25rem 0.35rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  vertical-align: middle;
+}
+
+.utpl-lmmn-table th {
+  text-align: left;
+  font-weight: 600;
 }
 
 .leaves-tree {

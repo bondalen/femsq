@@ -66,9 +66,13 @@ import com.femsq.database.dao.JdbcRaFtStDao;
 import com.femsq.database.dao.JdbcRaColMapDao;
 import com.femsq.database.dao.JdbcRaSheetConfDao;
 import com.femsq.database.dao.IpgLeavesDao;
+import com.femsq.database.dao.IpgUtPlDao;
 import com.femsq.database.dao.ImpIpgLoadDao;
+import com.femsq.database.dao.ImpIpgLoadMonfDao;
 import com.femsq.database.dao.JdbcIpgLeavesDao;
+import com.femsq.database.dao.JdbcIpgUtPlDao;
 import com.femsq.database.dao.JdbcImpIpgLoadDao;
+import com.femsq.database.dao.JdbcImpIpgLoadMonfDao;
 import com.femsq.database.dao.JdbcStIpgStructureDao;
 import com.femsq.database.dao.JdbcStNetworkDao;
 import com.femsq.database.dao.OgAgDao;
@@ -159,6 +163,7 @@ import com.femsq.database.service.DefaultRaFtSnService;
 import com.femsq.database.service.DefaultRaFtStService;
 import com.femsq.database.service.DefaultRaColMapService;
 import com.femsq.database.service.DefaultRaSheetConfService;
+import com.femsq.database.service.DefaultImpIpgLoadMonfService;
 import com.femsq.database.service.DefaultImpIpgLoadService;
 import com.femsq.database.service.DefaultImpIpgPointsApplyService;
 import com.femsq.database.service.DefaultImpIpgPointsGateService;
@@ -166,10 +171,13 @@ import com.femsq.database.service.DefaultImpIpgShResolveService;
 import com.femsq.database.service.DefaultImpIpgStiInheritService;
 import com.femsq.database.service.DefaultImpIpgReconcileService;
 import com.femsq.database.service.DefaultIpgLeavesService;
+import com.femsq.database.service.DefaultIpgUtPlService;
 import com.femsq.database.service.DefaultStIpgStructureService;
+import com.femsq.database.service.IpgUtPlService;
 import com.femsq.database.service.DefaultStNetworkService;
 import com.femsq.database.service.IpgChainRelationService;
 import com.femsq.database.service.IpgChainService;
+import com.femsq.database.service.ImpIpgLoadMonfService;
 import com.femsq.database.service.ImpIpgLoadService;
 import com.femsq.database.service.ImpIpgPointsApplyService;
 import com.femsq.database.service.ImpIpgPointsGateService;
@@ -640,10 +648,24 @@ public class DatabaseModuleConfiguration {
     }
 
     @Bean
+    public IpgUtPlDao ipgUtPlDao(
+            ConnectionFactory connectionFactory,
+            DatabaseConfigurationService configurationService) {
+        return new JdbcIpgUtPlDao(connectionFactory, configurationService);
+    }
+
+    @Bean
     public ImpIpgLoadDao impIpgLoadDao(
             ConnectionFactory connectionFactory,
             DatabaseConfigurationService configurationService) {
         return new JdbcImpIpgLoadDao(connectionFactory, configurationService);
+    }
+
+    @Bean
+    public ImpIpgLoadMonfDao impIpgLoadMonfDao(
+            ConnectionFactory connectionFactory,
+            DatabaseConfigurationService configurationService) {
+        return new JdbcImpIpgLoadMonfDao(connectionFactory, configurationService);
     }
 
     @Bean
@@ -683,8 +705,20 @@ public class DatabaseModuleConfiguration {
     }
 
     @Bean
+    public IpgUtPlService ipgUtPlService(IpgUtPlDao ipgUtPlDao) {
+        return new DefaultIpgUtPlService(ipgUtPlDao);
+    }
+
+    @Bean
     public ImpIpgLoadService impIpgLoadService(ImpIpgLoadDao impIpgLoadDao) {
         return new DefaultImpIpgLoadService(impIpgLoadDao);
+    }
+
+    @Bean
+    public ImpIpgLoadMonfService impIpgLoadMonfService(
+            ImpIpgLoadMonfDao impIpgLoadMonfDao,
+            ImpIpgLoadDao impIpgLoadDao) {
+        return new DefaultImpIpgLoadMonfService(impIpgLoadMonfDao, impIpgLoadDao);
     }
 
     @Bean

@@ -5,6 +5,9 @@ GO
 -- Файл:    MSSQL2012/03d_CREATE_FUNCTION_fnMasteringStIpgStCost_2606.sql
 -- Пакет:   docs/development/notes/sql/26-0604/
 -- Совместимость: SQL Server 2012 SP4. Без CREATE OR ALTER.
+-- H1+H2 (0096 / P-2026-11-27-002): @stNet = IPG-net; cost-net = stnType=2 (не ipgcStNetIpg).
+-- Сигнатура 4 param сохранена (TVF не допускает omit default в FROM).
+-- Явный @stCostNet — через fnMasteringCstAgPnSh / leaf fnStCost* (capability §3).
 -- =============================================================================
 
 PRINT '=== 03d MSSQL2012: CREATE fnMasteringStIpgStCost_2606 ===';
@@ -158,7 +161,15 @@ RETURN
             @ipgCh,
             y.ipgpCstAgPn,
             ISNULL(@stCostKey, 212),
-            ISNULL(@stNet, (SELECT c.ipgcStNetIpg FROM ags.ipgCh c WHERE c.ipgcKey = @ipgCh)),
+            /* cost-net: боевая stnType=2 (H1+H2); НЕ ipgcStNetIpg */
+            (
+                SELECT TOP (1) n.stnKey
+                FROM ags.stNet n
+                WHERE n.stnType = 2
+                ORDER BY
+                    CASE WHEN n.stnName = N'Стандартная' THEN 0 ELSE 1 END,
+                    n.stnKey
+            ),
             ISNULL(@ipgStKey, 1)
         ) m
     GROUP BY

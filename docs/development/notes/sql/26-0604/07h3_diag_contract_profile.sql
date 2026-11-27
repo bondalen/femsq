@@ -13,7 +13,12 @@ DECLARE @stIpg  int = 46;
 DECLARE @stCost int = 212;
 DECLARE @cacSlow int = 371;   -- 051-2002246, ~6897 ms
 DECLARE @cacFast int = 338;   -- 051-2002380, ~626 ms
-DECLARE @stNet int = (SELECT c.ipgcStNetIpg FROM ags.ipgCh c WHERE c.ipgcKey = @ipgCh);
+-- H1+H2/0096: @stNet здесь = cost-net (stnType=2), не ipgcStNetIpg
+DECLARE @stNet int = (
+    SELECT TOP (1) n.stnKey FROM ags.stNet n
+    WHERE n.stnType = 2
+    ORDER BY CASE WHEN n.stnName = N'Стандартная' THEN 0 ELSE 1 END, n.stnKey
+);
 DECLARE @d0 date = '2022-09-30';
 
 DECLARE @cac int;

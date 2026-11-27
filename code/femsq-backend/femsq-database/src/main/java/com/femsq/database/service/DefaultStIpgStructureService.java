@@ -1,6 +1,7 @@
 package com.femsq.database.service;
 
 import com.femsq.database.dao.StIpgStructureDao;
+import com.femsq.database.model.StCostNm;
 import com.femsq.database.model.StIpgNm;
 import com.femsq.database.model.StIpgTreeNode;
 import com.femsq.database.model.StNetworkFull;
@@ -16,6 +17,7 @@ public class DefaultStIpgStructureService implements StIpgStructureService {
 
     private static final Logger log = Logger.getLogger(DefaultStIpgStructureService.class.getName());
     private static final int ST_TYPE_IPG = 1;
+    private static final int ST_TYPE_COST = 2;
 
     private final StIpgStructureDao structureDao;
 
@@ -26,6 +28,11 @@ public class DefaultStIpgStructureService implements StIpgStructureService {
     @Override
     public List<StNetworkFull> listIpgNetworks() {
         return structureDao.findNetworksByType(ST_TYPE_IPG);
+    }
+
+    @Override
+    public List<StNetworkFull> listCostNetworks() {
+        return structureDao.findNetworksByType(ST_TYPE_COST);
     }
 
     @Override
@@ -45,6 +52,11 @@ public class DefaultStIpgStructureService implements StIpgStructureService {
     @Override
     public StNetworkFull createIpgNetwork(String name, int rootKey) {
         return structureDao.createNetwork(ST_TYPE_IPG, name, rootKey);
+    }
+
+    @Override
+    public StNetworkFull createCostNetwork(String name, int rootKey) {
+        return structureDao.createNetwork(ST_TYPE_COST, name, rootKey);
     }
 
     @Override
@@ -73,8 +85,18 @@ public class DefaultStIpgStructureService implements StIpgStructureService {
     }
 
     @Override
+    public List<StCostNm> listCostNodeNames(int stcKey) {
+        return structureDao.findCostNodeNames(stcKey);
+    }
+
+    @Override
     public int addNodeName(int stiKey, String name) {
         return structureDao.addNodeName(stiKey, name);
+    }
+
+    @Override
+    public int addCostNodeName(int stcKey, String name) {
+        return structureDao.addCostNodeName(stcKey, name);
     }
 
     @Override

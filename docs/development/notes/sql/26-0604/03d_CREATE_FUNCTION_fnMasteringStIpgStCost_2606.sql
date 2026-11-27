@@ -5,12 +5,14 @@ GO
 -- Файл:    03d_CREATE_FUNCTION_fnMasteringStIpgStCost_2606.sql
 -- Пакет:   docs/development/notes/sql/26-0604/
 -- Назначение: Освоение по разделу ИПГ и статье затрат с раскрытием по стройкам (_2606).
---   Фикс Деф.А: ipgChRl_2606 вместо ipgChRl; stNet из ipgCh (не max по цепи).
---   @ipgStKey / @stCostKey / @stNet — nullable (NULL = без фильтра / из ipgCh).
+--   Фикс Деф.А: ipgChRl_2606 вместо ipgChRl; @stNet = IPG-net из ipgCh (не max по цепи).
+--   H1+H2 (0096 / P-2026-11-27-002): @stNet только для разделов ИП;
+--   cost-net в CstAgPnSh = боевая stnType=2 (не ipgcStNetIpg). Сигнатура 4 param (TVF).
+--   Явный @stCostNet — через fnMasteringCstAgPnSh / leaf (capability §3).
 -- Предусловия: 03c (fnMasteringCstAgPnSh_2606).
 -- Прототип: ags.fnMasteringStIpgStCost (legacy, не изменяется).
 -- Автор:   Александр
--- Дата:    2026-06-09
+-- Дата:    2026-06-09; H1+H2 2026-11-27
 -- =============================================================================
 
 PRINT '=== 03d: CREATE FUNCTION ags.fnMasteringStIpgStCost_2606 ===';
@@ -26,7 +28,7 @@ CREATE OR ALTER FUNCTION ags.fnMasteringStIpgStCost_2606
     @ipgStKey  int, -- узел stIpg (NULL = все разделы цепи)
     @ipgCh     int, -- цепь инвестпрограмм
     @stCostKey int, -- пункт stCost (NULL = корень 212, все статьи)
-    @stNet     int  -- схема stCost/stIpg (NULL = ipgCh.ipgcStNetIpg)
+    @stNet     int  -- IPG-net разделов (NULL = ipgCh.ipgcStNetIpg); НЕ cost-net
 )
 RETURNS TABLE
 AS
@@ -160,7 +162,15 @@ RETURN
             @ipgCh,
             y.ipgpCstAgPn,
             ISNULL(@stCostKey, 212),
-            ISNULL(@stNet, (SELECT c.ipgcStNetIpg FROM ags.ipgCh c WHERE c.ipgcKey = @ipgCh)),
+            /* cost-net: боевая stnType=2 (H1+H2); НЕ ipgcStNetIpg */
+            (
+                SELECT TOP (1) n.stnKey
+                FROM ags.stNet n
+                WHERE n.stnType = 2
+                ORDER BY
+                    CASE WHEN n.stnName = N'Стандартная' THEN 0 ELSE 1 END,
+                    n.stnKey
+            ),
             ISNULL(@ipgStKey, 1)
         ) m
     GROUP BY
@@ -176,13 +186,13 @@ IF NOT EXISTS (
 )
     EXEC sys.sp_addextendedproperty
         @name = N'MS_Description',
-        @value = N'Освоение по разделу ИПГ и статье затрат (_2606). ipgChRl_2606, nullable @ipgStKey/@stCostKey.',
+        @value = N'Освоение по разделу ИПГ и статье затрат (_2606). @stNet=IPG-net; cost-net=stnType=2 (H1+H2/0096).',
         @level0type = N'SCHEMA', @level0name = N'ags',
         @level1type = N'FUNCTION', @level1name = N'fnMasteringStIpgStCost_2606';
 ELSE
     EXEC sys.sp_updateextendedproperty
         @name = N'MS_Description',
-        @value = N'Освоение по разделу ИПГ и статье затрат (_2606). ipgChRl_2606, nullable @ipgStKey/@stCostKey.',
+        @value = N'Освоение по разделу ИПГ и статье затрат (_2606). @stNet=IPG-net; cost-net=stnType=2 (H1+H2/0096).',
         @level0type = N'SCHEMA', @level0name = N'ags',
         @level1type = N'FUNCTION', @level1name = N'fnMasteringStIpgStCost_2606';
 GO

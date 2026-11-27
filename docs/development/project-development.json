@@ -3,12 +3,12 @@
     "metadata": {
       "version": "2.0.0",
       "created": "2025-10-08",
-      "lastUpdated": "2026-11-26",
+      "lastUpdated": "2026-11-27",
       "description": "Реальные задачи разработки FEMSQ с DAG-структурой"
     },
     "tasks": {
       "description": "Словарь всех задач проекта (единственный источник истины)",
-      "nextTaskId": "0096",
+      "nextTaskId": "0097",
       "items": {
         "0077": {
           "task": {
@@ -2992,11 +2992,16 @@
                 "dependsOnTasks": [
                   "0080",
                   "0078"
+                ],
+                "relatedTasks": [
+                  "0096",
+                  "0094",
+                  "0095"
                 ]
               },
               "created": "2026-11-17",
-              "lastUpdated": "2026-11-26",
-              "description": "P2 1.1–1.4, 2.1.0. Веха **D1.1 на DEV**. План 0.12.1: §3.5 prep ✅ (full-diff пакет, _2606 даты+smoke, лог iilResults); import САК ⏸ отПрод. Next: O2 UtPl. Стенд: FishEye_prod_noM6."
+              "lastUpdated": "2026-11-27",
+              "description": "P2 1.1–1.4, 2.1.0. Веха **D1.1 на DEV**. O1/O2/§5 ✅; §6.1–6.6 LdM Monf (parse+apply 014) ✅; next §6.7 compare. Стенд: FishEye_prod_noM6."
             }
           }
         },
@@ -3416,6 +3421,47 @@
               "created": "2026-11-26",
               "lastUpdated": "2026-11-26",
               "description": "Норма R-MONEY-AGG: Excel субкопейки + арифметика автора по осям; round+detect+fix (Q/A) / block (A-hard); util для ImpIpg, leaves, RA, UtPl O2."
+            }
+          }
+        },
+        "0096": {
+          "task": {
+            "displayName": "C4b: _2606 — разведение cost-net и IPG-net + capability multi-net (completed, critical). № 0096",
+            "task-attributes": {
+              "status": "completed",
+              "priority": "critical",
+              "owner": "Александр",
+              "completionCriteria": [
+                "@stNetIpg и @stCostNet разведены; default cost-net = боевая stnType=2 (сейчас 3)",
+                "Rollup plan (класс 7226) и smoke @507 × stCost keys PASS",
+                "Capability: временная 2-я cost-сеть проверена (T1–T6) и артефакты удалены",
+                "Хвосты §5 плана — fixed/accepted/deferred; C2 O2 снят с паузы"
+              ],
+              "links": {
+                "projectDocsRefs": [
+                  "module:backend.database",
+                  "docs/development/notes/sql/26-0604/docs/03-design-decisions.md"
+                ],
+                "journalRefs": [
+                  "chat-2026-11-27-001"
+                ],
+                "aiRuleRefs": [],
+                "chatPlan": "docs/development/notes/chats/chat-plan/chat-plan-26-1127-c4-2606-costnet-correctness.md",
+                "roadmap": "docs/development/notes/chats/chat-plan/chat-plan-26-1116-roadmap-r1.md",
+                "dependsOnTasks": [
+                  "0079",
+                  "0094"
+                ],
+                "relatedTasks": [
+                  "0081",
+                  "0083",
+                  "0084"
+                ]
+              },
+              "created": "2026-11-27",
+              "lastUpdated": "2026-11-27",
+              "description": "Ранний gate C4 ✅: cost-net=stnType=2 в StIpg; 07w/07x PASS; P-002 resolved; C2 O2 разблок.",
+              "completed": "2026-11-27"
             }
           }
         }
@@ -4432,6 +4478,17 @@
                                 "structureId": "02.04.05.01",
                                 "taskId": "0094",
                                 "positionInParent": 1
+                              },
+                              "task-items": []
+                            }
+                          },
+                          {
+                            "task-item": {
+                              "displayName": "✅ C4b: _2606 cost-net correctness (completed, critical). № 02.04.05.02 → 0096",
+                              "item-attributes": {
+                                "structureId": "02.04.05.02",
+                                "taskId": "0096",
+                                "positionInParent": 2
                               },
                               "task-items": []
                             }

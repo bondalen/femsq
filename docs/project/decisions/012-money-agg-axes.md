@@ -75,6 +75,17 @@ Excel/UI → round(квант) → AggCheck → Q/A fix или BLOCK/STRUCT → 
 6. UtPl O2 — с первого дня  
 7. Gate: после fix `COUNT(δ≠0)=0` на целевом контуре (07k1-класс)
 
+### Уточнение UtPl O2 (2026-11-27, без новой ADR)
+
+Зафиксировано в контракте O2 (`26-1127-c2-o2-utpl-lim-contract.md`):
+
+| | |
+|--|--|
+| **A** | DoD записи: `roundMln` + `AggAxis` C/Sm; G-agg |
+| **B** | ось T: `ΣM ≟ limYear`; при Q δ → **M12**; A → год из суммы месяцев |
+| **C** | G-ip (Σ UtPl@212 ≈ `ipgPnLim`/Sm) — §4.3 / LdM; без тихого fix Excel |
+| **D** | FEMSQ LdM — тот же util; лист Excel `копейки` не парсить |
+
 ---
 
 ## Последствия
@@ -90,5 +101,7 @@ Excel/UI → round(квант) → AggCheck → Q/A fix или BLOCK/STRUCT → 
 
 - `docs/development/notes/chats/chat-plan/notes/26-1126-fn2-stcost-fact-rs-accept-23.md` — природа δ=0.01 @3555  
 - `docs/development/notes/chats/chat-plan/chat-plan-26-1126-money-agg-axes.md` — план 0095  
+- `docs/development/notes/chats/chat-plan/notes/26-1127-c2-o2-utpl-lim-contract.md` — DoD UtPl A/B/G-agg + G-ip  
 - sql `03-design-decisions.md` Решение 12 (212=195+172+187), Решение 23 (fn2 agency×stCost)  
 - Хвост C2 O1: apply → `ipgPnLim`  
+

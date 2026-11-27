@@ -83,6 +83,7 @@
           'femsq-nav-item--active':
             activeView === 'investment-chains' ||
             activeView === 'investment-structure' ||
+            activeView === 'cost-structure' ||
             activeView === 'investment-programs'
         }"
         :disable="!investmentChainsEnabled"
@@ -100,6 +101,15 @@
               @click="handleNavigate('investment-structure')"
             >
               <QItemSection>Структура ИПГ</QItemSection>
+            </QItem>
+            <QItem
+              clickable
+              v-close-popup
+              :active="activeView === 'cost-structure'"
+              data-test="nav-cost-structure"
+              @click="handleNavigate('cost-structure')"
+            >
+              <QItemSection>Структура затрат</QItemSection>
             </QItem>
             <QItem
               clickable
@@ -301,6 +311,15 @@
             @click="handleNavigate('investment-structure')"
           >
             <QItemSection>Инвестиции · Структура ИПГ</QItemSection>
+          </QItem>
+          <QItem
+            clickable
+            v-close-popup
+            :disable="!investmentChainsEnabled"
+            data-test="nav-mobile-cost-structure"
+            @click="handleNavigate('cost-structure')"
+          >
+            <QItemSection>Инвестиции · Структура затрат</QItemSection>
           </QItem>
           <QItem
             clickable

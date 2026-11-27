@@ -9,6 +9,7 @@ export type ActiveView =
   | 'construction-sites-by-code'
   | 'investment-chains'
   | 'investment-structure'
+  | 'cost-structure'
   | 'investment-programs'
   | 'reports'
   | 'audits'

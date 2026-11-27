@@ -35,15 +35,19 @@ DECLARE @flat195Mismatch int;
 DECLARE @flat195Pairs int;
 DECLARE @fail bit;
 
-SELECT @stNet = c.ipgcStNetIpg FROM ags.ipgCh c WHERE c.ipgcKey = 5;
+-- H1+H2/0096: cost-net (stnType=2), не ipgcStNetIpg
+SELECT TOP (1) @stNet = n.stnKey
+FROM ags.stNet n
+WHERE n.stnType = 2
+ORDER BY CASE WHEN n.stnName = N'Стандартная' THEN 0 ELSE 1 END, n.stnKey;
 
 IF @stNet IS NULL
 BEGIN
-    RAISERROR(N'ipgCh 5 не найдена — невозможно определить @stNet', 16, 1);
+    RAISERROR(N'Нет сети stnType=2 (cost-net) — невозможно определить @stNet', 16, 1);
     RETURN;
 END
 
-PRINT N'@stNet (ipgcStNetIpg цепи 5) = ' + CAST(@stNet AS nvarchar(10));
+PRINT N'@stNet (cost-net stnType=2) = ' + CAST(@stNet AS nvarchar(10));
 
 -- Пары (носитель, stcKey) с Ct на последней сумме RA
 IF OBJECT_ID(N'tempdb..#RaCtPairs', N'U') IS NOT NULL DROP TABLE #RaCtPairs;

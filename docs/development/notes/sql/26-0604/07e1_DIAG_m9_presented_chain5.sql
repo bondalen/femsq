@@ -19,7 +19,12 @@ PRINT N'=== 07e1: DIAG presented m9 — chain 5 ===';
 PRINT N'';
 
 DECLARE @ipgCh int = 5;
-DECLARE @stNet int = (SELECT ipgcStNetIpg FROM ags.ipgCh WHERE ipgcKey = @ipgCh);
+-- H1+H2/0096: @stNet здесь = cost-net (stnType=2), не ipgcStNetIpg
+DECLARE @stNet int = (
+    SELECT TOP (1) n.stnKey FROM ags.stNet n
+    WHERE n.stnType = 2
+    ORDER BY CASE WHEN n.stnName = N'Стандартная' THEN 0 ELSE 1 END, n.stnKey
+);
 DECLARE @dSep date = '2022-09-30';
 DECLARE @dMar date = '2022-03-31';
 

@@ -1,13 +1,29 @@
 # План: C2 / D1.1 — ввод ИП, цепочек, планов и лимитов в FEMSQ (DEV)
 
 **Дата создания:** 2026-11-20  
-**Последнее обновление:** 2026-11-26  
+**Последнее обновление:** 2026-11-27  
 **Образцы загрузки ИП:** `/mnt/nb-win-share/femsq/excel/2026-1120/ipg-sql-load/` (README там же)  
 **Проект:** FEMSQ  
-**Версия плана:** 0.13.2  
-**Статус плана:** 🔶 in-progress — §3.5.6 ✅; next O2 UtPl / O1→`ipgPnLim`  
+**Версия плана:** 0.16.4  
+**Статус плана:** 🔶 in-progress — O1/**O2 ✅** · **§5 ✅** · **§6.1–6.6 ✅**; next **§6.7** compare  
+**§6 LdM note:** [notes/26-1127-c2-o6-ldm-monf.md](./notes/26-1127-c2-o6-ldm-monf.md) · SQL `26-1127-imp-ipg-load-monf/`  
+**Блокер O2:** снят — [C4b cost-net](./chat-plan-26-1127-c4-2606-costnet-correctness.md) (**0096** completed)  
+**Хвост филиал multi:** вне O2 — [Решение 013](../../../../project/decisions/013-utpl-branch-multi-defer.md) · `P-2026-11-27-001`  
+**O2 контракт агрегаций:** [§1 канон-зерно](./notes/26-1127-c2-o2-utpl-lim-contract.md#1-канон-зерно-4005-) · деньги A/B/G-agg · G-ip  
+**§4.0 Structure затрат:** [stcost-structure-40](./notes/26-1127-c2-o2-stcost-structure-40.md) — процесс A, **CRUD**; планы = только `stcKey`  
+**§4.1 Access G3 UtPl:** [g3-utpl-access-41](./notes/26-1127-c2-o2-g3-utpl-access-41.md) — inventory+VBA+migrate ✅  
+**§4.2 GraphQL+UI LmMn:** [utpl-lmmn-42](./notes/26-1127-c2-o2-utpl-lmmn-42.md) — DoD A+B+G-agg ✅  
+**§4.3 G-ip/_2606:** [gip-2606-43](./notes/26-1127-c2-o2-gip-2606-43.md) — @507×212 + G-ip 3/3 ✅  
+**§5 P2 1.4 хвосты:** [p14-dict-tails-5](./notes/26-1127-c2-p14-dict-tails-5.md) — блокеров нет ✅  
+
+
+
+
 **§3.6 note:** [notes/26-1126-c2-o1-2606-feasibility-36.md](./notes/26-1126-c2-o1-2606-feasibility-36.md)  
 **§3.7 note:** [notes/26-1126-c2-o1-ipgpsh-step2-37.md](./notes/26-1126-c2-o1-ipgpsh-step2-37.md)  
+**O2 контракт:** [notes/26-1127-c2-o2-utpl-lim-contract.md](./notes/26-1127-c2-o2-utpl-lim-contract.md)  
+**O2 шаблон/примеры:** [notes/26-1127-c2-o2-utpl-template-study.md](./notes/26-1127-c2-o2-utpl-template-study.md) · шара `excel/2026-1127/ipg-utpl-26-III/`  
+ 
 **Хвост факт×stCost в RS:** → [fn2-stcost-fact-rs](./chat-plan-26-1126-fn2-stcost-fact-rs.md) (**0094** ✅)  
 **Хвост денег/осей Excel:** [money-agg-axes](./chat-plan-26-1126-money-agg-axes.md) (**0095** ✅ · [ADR 012](../../../../project/decisions/012-money-agg-axes.md)); O2 UtPl — Round(8)+AggAxis с первого дня  
 
@@ -97,7 +113,7 @@
 | **G1** | 1.1 | `ipg`, `ipgMin`, `ipgMinBranch`, `ipgCh`, `ipgChMin` + подформы; классы `ipg`/`ipgCh`/`ipgPn` | Карточки ИП, пунктов, цепей и связей (`ags.ipg`, `ipgPn`, `ipgCh`, `ipgChRl*`). Много подформ **без кода** (bound forms) | Цепи — **read-only**; вкладки ИП на стройках — disable |
 | **G2** | 1.2 | `ipg>LdM_*`, `ipgCh>impNewSumCompare` | Excel → staging Access `ipgLdM*` → `UPDATE ags.ipgPn` / `ags.ipgUtPlP`; сравнение сумм | нет |
 | **G3** | 1.3 | `ipg>Pn_*`, `ipg>UtPl*`, `…UtPlPnLm*`, класс `ipgPnLim` | Помесячные планы (`ipgUtPlP` M01…M12), лимиты по stCost (`ipgUtPlPnLmMn`), `ipgPnLim` | нет (на DEV есть fixture К-12/К-13) |
-| **G4** | 1.4 | `stNet*`, `stCost*`, `stIpg*`, `ipgSt*`, `ipgStRlSh*` | Справочники сетей/статей/связей разделов ИП | lookups — **read-only** |
+| **G4** | 1.4 | `stNet*`, `stCost*`, `stIpg*`, `ipgSt*`, `ipgStRlSh*` | Справочники сетей/статей/связей разделов ИП | **CRUD** stIpg/stCost (+ cstAgPn); `ipgSh` lookup; §5 ✅ |
 | **G5** | 2.1.0 | `yyyy>ra_period*`, `…>sender`, `yyyy_ra_period_f*` | Периоды RA (`ags.ra_period`) и отправители — подготовка к типу 5 | нет |
 | **G19** | опора | классы `ipg*`, `stCost`, … | Семантика полей при реализации | разбор по касанию |
 
@@ -146,7 +162,7 @@
 │  └─ 2.6 Приёмка foundation 1.1 на noM6 (эталон прода)        ✅ 2026-11-23
 │         notes/26-1123-c2-accept-1-1-nom6.md · JAR 0.1.0.382
 │
-├─ 3. O1 — загрузка годовой ИП (_2606, §2.0.1)                 🔶
+├─ 3. O1 — загрузка годовой ИП (_2606, §2.0.1)                 🔶 (§3.6–3.7 ✅; хвост §3.4)
 │     Не путать с LdM (блок 6). DoD: оператор ввёл год с Excel на noM6.
 │     Порядок: Structure (ПТСФ) → Leaves (загрузка пунктов → пункты).
 │  ├─ 3.0 Дельта прод↔DEV + Excel 2026 → требования O1         ✅ 2026-11-23
@@ -300,7 +316,7 @@
 │               без дубля errors[]; лог на всю высоту; JAR **413**
 │               note: [26-1126-…-356](notes/26-1126-c2-o1-load-points-ux-356.md)
 │
-│  └─ 3.6 Повтор _2606 после sync САК (без UtPl)               🔶 2026-11-26
+│  └─ 3.6 Повтор _2606 после sync САК (без UtPl)               ✅ 2026-11-27
 │         notes/26-1126-c2-o1-2606-feasibility-36.md
 │         Цель: осуществимость освоения на O1-данных + факт
 │         с шары; закрытый контур stCost; **не** O2 (планов нет)
@@ -318,7 +334,8 @@
 │     │         **план** ≈0 (UtPl=0) — OK
 │     │         **факт** `ag_*` ожил (§3.7); аддитив stCost в RS →
 │     │         [fn2-stcost-fact-rs](./chat-plan-26-1126-fn2-stcost-fact-rs.md)
-│     └─ 3.6.5 (опц.) @508–510 — smoke-only, не блокер O2      ☐
+│     └─ 3.6.5 Smoke B–D `@508–510` × stCost                   ✅ 2026-11-27
+│               EXIT=0 ×15; agNN>0 на всех; §3.6 закрыт
 │
 │  └─ 3.7 Шаг 2 контракта ipgpSh → ag_* / §3.6.4               ✅
 │         note: [26-1126-…-37](notes/26-1126-c2-o1-ipgpsh-step2-37.md)
@@ -330,25 +347,58 @@
 │     ├─ 3.7.4 Аддитив лим из RS ✅; факт×stCost → 0094 ✅     ✅
 │     ├─ 3.7.5 Контракт/код: default хвоста = **2**             ✅
 │     │         DEFAULT_UNDEFINED_SH=2; §5.2 обновлён
-│     └─ 3.7.6 Шаг 3 ipgpSh — только O2 (планы)                 ☐
+│     └─ (шаг 3 ipgpSh из планов — **не здесь**) → §4.2.x / O2
 │
 │  (спин-офф) факт RS × stCost — НЕ в C2:
 │     [chat-plan-26-1126-fn2-stcost-fact-rs.md](./chat-plan-26-1126-fn2-stcost-fact-rs.md)
 │
-├─ 4. O2 — P2 1.3: помесячные планы и лимиты UtPl@stCost       ☐
-│  ├─ 4.0 UI структуры затрат (stNetCost/stCost) — минимум     ☐
-│  │      (§2.0.3 п.4)                                         ☐
-│  ├─ 4.1 Access UI→VBA (G3) → migrate                         ☐
-│  ├─ 4.2 GraphQL + UI LmMn / UtPlP                            ☐
-│  │      комбо UtPl фильтр iuplIpg=текущая ipg (контракт §6)  ☐
-│  └─ 4.3 Приёмка: данные видны для _2606                      ☐
+├─ 4. O2 — P2 1.3: помесячные планы и лимиты UtPl@stCost       🔶 2026-11-27
+│     контракт: [26-1127-c2-o2-utpl-lim-contract.md](./notes/26-1127-c2-o2-utpl-lim-contract.md)
+│  ├─ 4.00 Изучение шаблона Прил.1 + примеры 26-III            ✅
+│  │      note: [26-1127-…-template-study](./notes/26-1127-c2-o2-utpl-template-study.md)
+│  │      шара: `/mnt/nb-win-share/femsq/excel/2026-1127/ipg-utpl-26-III/`
+│  │  ├─ 4.00.0 Артефакты на шаре (000/014/051/060)           ✅
+│  │  ├─ 4.00.1 Scope: 52 виды / 53 цели; Стройки=**56**;     ✅
+│  │  │         ПИР=**45**×2; **51**=фильтр _2606 (не в сетях)
+│  │  │         Excel ИП = ветка **53**; ПИР-файл — 4.00.1a ☐
+│  │  │         выгрузка: `excel/2026-1127/ipg-st-26-III/`
+│  │  ├─ 4.00.2 Ось T (M→Q; limYear; минимум 12 мес.)         ✅
+│  │  ├─ 4.00.3 Ось C (идеал vs минимум 212=195+172+187)      ✅
+│  │  ├─ 4.00.4 Сверка; филиал 013; копейки A–C (ADR 012)     ✅
+│  │  ├─ 4.00.4a Access LdM: поля Excel→ipgUtPlP (не LmMn)    ✅
+│  │  └─ 4.00.5 Схема агрегаций → контракт O2                 ✅
+│  ├─ 4.0 UI структуры затрат (процесс A, CRUD)                ✅
+│  │      note: [26-1127-…-stcost-structure-40](./notes/26-1127-c2-o2-stcost-structure-40.md)
+│  │      accept: […-40-accept](./notes/26-1127-c2-o2-stcost-structure-40-accept.md)
+│  │  ├─ 4.0.0 Prep: инвентарь + scope CRUD                    ✅
+│  │  ├─ 4.0.1 GraphQL+DAO stnType=2 (CRUD, stCostNm)         ✅
+│  │  ├─ 4.0.2 UI клон Structure + охрана канона 212/195…     ✅
+│  │  └─ 4.0.3 Приёмка справочника (fnSt(3,214))              ✅
+│  ├─ 4.1 Access UI→VBA (G3 UtPl) → migrate                    ✅
+│  │      note: [26-1127-…-g3-utpl-access-41](./notes/26-1127-c2-o2-g3-utpl-access-41.md)
+│  ├─ 4.2 GraphQL + UI LmMn / UtPlP; DoD A+B+G-agg            ✅
+│  │      note: [26-1127-…-utpl-lmmn-42](./notes/26-1127-c2-o2-utpl-lmmn-42.md)
+│  │      комбо UtPl фильтр iuplIpg=текущая ipg (контракт)     ✅
+│  │  └─ 4.2.x Шаг 3 ipgpSh из помесячных планов (бывш. 3.7.6) ☐
+│  └─ 4.3 Приёмка _2606 + gate G-ip                            ✅
+│         note: [26-1127-…-gip-2606-43](./notes/26-1127-c2-o2-gip-2606-43.md)
 │
-├─ 5. P2 1.4 — хвосты справочников (не закрытые в O1/O2)       ☐
-│     Только то, без чего ломаются O1/O2 (ipgSh=4, cstAgPn, …)
+├─ 5. P2 1.4 — хвосты справочников (не закрытые в O1/O2)       ✅
+│     note: [26-1127-…-p14-dict-tails-5](./notes/26-1127-c2-p14-dict-tails-5.md)
+│     блокеров нет; residuals → backlog / §6 / §8.1
 │
-├─ 6. LdM — уточнение планов из Excel + сравнение сумм (G2)    ☐
+├─ 6. LdM — уточнение планов из Excel + сравнение сумм (G2)    🔶
+│     note: [26-1127-…-o6-ldm-monf](./notes/26-1127-c2-o6-ldm-monf.md)
 │     После O2; **не** годовая ИП. `impIpgLoadMonf`→`ipgUtPl`;
 │     группа планов только на цепи. Аналог Form_ipg_gt_LdM_t.
+│  ├─ 6.1 Inventory Access + migrate                          ✅
+│  ├─ 6.2 Контракт Monf + non-goals                           ✅
+│  ├─ 6.3 DDL `ags.impIpgLoadMonf` (DEV + MSSQL2012)          ✅
+│  ├─ 6.4 GraphQL CRUD + UI «Загрузка ут. планов»             ✅
+│  ├─ 6.5 Parse skeleton (якоря/лист/quarter)                 ✅ 014
+│  ├─ 6.6 Apply → UtPlP + LmMn@212                            ✅ 32/32
+│  ├─ 6.7 Sum compare / G-ip                                  ☐ ← next
+│  └─ 6.8 HTML-лог + polish UI                                ☐
 │
 ├─ 7. P2 2.1.0 — периоды RA и отправители (G5)                 ☐
 │
@@ -532,7 +582,9 @@ Access уже даёт этот UI (bound-формы + вкладки child/pare
 | **B. Тонкий read-only раньше** | Параллельно с ИПГ-DAG: только просмотр `stNet=3` / дерева `stCost` | Дешёвый паритет «видеть как Access»; сверка с эталоном | Не закрывает распознавание при планах |
 | **C. Полный CRUD затрат сразу с ИПГ** | Вместе с 2.4–2.5 | Один «движок DAG» на оба `stType` | Дольше до первой загрузки ИП; затраты на DEV редко меняются до UtPl |
 
-**Предложение:** **A + опционально B**. Общий каркас DAG (узлы/рёбра/`stNet`/имена) проектировать с заделом на `stType=1|2`, но экраны правки **затрат** и распознавание из Excel/планов — **к старту 1.3** (п.4.0 в дереве). Полный CRUD затрат раньше — только если при разборе Access/эталона прода выяснится, что без него нельзя принять структуру ИПГ.
+**Предложение (историческое, до O2):** **A + опционально B**.  
+
+**Принято 2026-11-27 (старт §4.0):** полный **CRUD** справочника затрат (`stnType=2`) в §4.0 — процесс A; загрузка UtPl (процесс B) пишет только `stcKey`, **без** выбора сетки. Prep: [notes/26-1127-c2-o2-stcost-structure-40.md](./notes/26-1127-c2-o2-stcost-structure-40.md).
 
 ### Эталон прода — пакет 2.0.4 (2026-11-20)
 
@@ -591,8 +643,8 @@ Access уже даёт этот UI (bound-формы + вкладки child/pare
 | # | Вопрос | Статус | Решение |
 |---|--------|--------|---------|
 | В1 | Какие формы ИП/цепей/планов правят данные | ✅ | [migrate 2.3](./notes/26-1120-c2-migrate-1-1.md): P/U/X; эталон полной `ipg`+`stNetIpg`; Access≠качество |
-| В2 | Excel LdM: формат, частота, сравнение сумм | ☐ блок 6 | После O2; не путать с **годовой ИП** (O1 / §2.0.1) |
-| В3 | Лимиты/UtPl: вручную или из файла; stCost | ☐ блок 4 (O2) | Также этап (б) уточнения `ipgSh` после планов агентов |
+| В2 | Excel LdM: формат, частота, сравнение сумм | 🔶 §6.1–6.6 | Apply 014 ✅; compare → §6.7 |
+| В3 | Лимиты/UtPl: вручную или из файла; stCost | ✅ O2 §4 | UI LmMn + G-ip/_2606; Excel LdM → §6; `ipgpSh` из планов → §4.2.x |
 | В15 | Аддитив stCost до O2 | ✅ лим; факт→0094 | лим `ipgPn`+RS ✅; `ag_*` ✅; **факт×stCost в RS** → [fn2-plan](./chat-plan-26-1126-fn2-stcost-fact-rs.md) |
 | В4 | Справочники: ввод или статичны | ✅ для ИПГ | ИПГ-DAG — **P** в FEMSQ; **stCost** — к O2; эталон прода — сверка |
 | В5 | Периоды RA / sender | ☐ блок 7 | В вехе D1.1 после планов |
@@ -623,6 +675,31 @@ Access уже даёт этот UI (bound-формы + вкладки child/pare
 
 | Дата | Версия | Что изменили |
 |------|--------|----------------|
+| 2026-11-27 | 0.16.4 | §6.6 ✅: apply Monf→UtPlP/LmMn@212 (32/32 @utPl205); next §6.7 |
+| 2026-11-27 | 0.16.3 | §6.5 ✅: parse Monf 014 (hits=301/loaded=32); next §6.6 apply |
+| 2026-11-27 | 0.16.2 | §6.1–6.4 ✅: DDL/GraphQL/UI `impIpgLoadMonf`; next §6.5 parse |
+| 2026-11-27 | 0.16.1 | §5 ✅: триаж 1.4 — блокеров O1/O2 нет; residuals→backlog; next §6 LdM |
+| 2026-11-27 | 0.16.0 | §4.3 ✅ / **O2 закрыт**: G-ip 3/3 + `_2606`@507×212 ag_Pl≠0; next §5/§6 |
+| 2026-11-27 | 0.15.9 | §4.2 ✅: GraphQL+UI LmMn/UtPlP + AggAxis/G-agg; smoke PASS; next §4.3 |
+| 2026-11-27 | 0.15.8 | §4.1 ✅: Access G3 inventory+VBA+migrate; next §4.2 GraphQL+UI LmMn |
+| 2026-11-27 | 0.15.7 | §4.0 UI-browser accept ✅ (nav/канон/CRUD create+delete); next §4.1 |
+| 2026-11-27 | 0.15.6 | §4.0.3 ✅ / **§4.0 закрыт**: smoke fnSt(3,214)+CRUD; next §4.1 |
+| 2026-11-27 | 0.15.5 | §4.0.2 ✅: UI «Структура затрат» + канон 212=Σ(присутствующих частей); next §4.0.3 |
+| 2026-11-27 | 0.15.4 | §4.0.1 ✅: GraphQL/DAO `stCost*` (stnType=2, stCostNm); next §4.0.2 UI |
+| 2026-11-27 | 0.15.3 | O2 §4.0.1+ **разблок**: 0096 ✅; next §4.0.1 CRUD stCost |
+| 2026-11-27 | 0.15.2 | O2 §4.0.1+ ⏸: спин-офф **0096** cost-net correctness; P-2026-11-27-002 |
+| 2026-11-27 | 0.15.1 | §4.0.0 ✅: процесс A CRUD stCost; планы=пункты; инвентарь net=3; WBS 4.0.1–3 |
+| 2026-11-27 | 0.15.0 | §4.00.5 ✅ канон-зерно S×C×T×M → контракт O2 §1; §4.00 ✅; next §4.0 |
+| 2026-11-27 | 0.14.9 | §4.00.4 ✅ копейки: DoD A/B/G-agg + G-ip (ADR 012); ось T δ→M12; контракт O2 |
+| 2026-11-27 | 0.14.8 | Филиал multi вне O2: Решение 013 + обход «к большему филиалу»; glossary 1.15; P-2026-11-27-001 |
+| 2026-11-27 | 0.14.7 | §4.00.4a Access LdM: якоря Код/лимит, схемы из fSh, M/Q→iuplpM*; C@stCost и филиал не грузятся |
+| 2026-11-27 | 0.14.6 | §4.00.2–3 ✅ T/C; минимум схем+12M+тройках; open филиал/копейки |
+| 2026-11-27 | 0.14.5 | 52 виды vs 53 цели; Стройки=**56**; **51**=OutLim; Excel=53; glossary 1.14 |
+| 2026-11-27 | 0.14.4 | DBHub: 45 потомок 2; 51 без рёбер stRel |
+| 2026-11-27 | 0.14.3 | «Стройки» = sti **51** (не 2); glossary |
+| 2026-11-27 | 0.14.2 | §4.00.1: Стройки/ПИР = разделы stIpg; пакет Excel = Стройки; ПИР-файл позже |
+| 2026-11-27 | 0.14.1 | §4.00 изучение шаблона+примеров; Scope агент/АД\|ИД; note template-study |
+| 2026-11-27 | 0.14.0 | §3.6.5 ✅ B–D @508–510; §3.6 закрыт; §3.7.6 → O2 §4.2.x; старт O2 + note UtPl/Lim |
 | 2026-11-26 | 0.13.2 | §3.5.6 UX load-points: один «Ход загрузки»; toolbar A; лог на всю высоту |
 | 2026-11-26 | 0.13.1 | §3.5.5 ✅ UI-smoke C: JAR412 · ipg31/load12 Parse→Reconcile→Apply · cleanup; 9–11 целы |
 | 2026-11-26 | 0.13.0 | §3.5.5 UI-smoke C лог: новая `SMOKE_LOG_*` ИП + cleanup; без load 9–11 |

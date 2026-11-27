@@ -28,6 +28,13 @@ type Query {
   stIpgNetworkTree(stNetKey: Int!, rootKey: Int): [StIpgTreeNode!]!
   """Все имена узла (aliases для ловли из Excel)."""
   stIpgNodeNames(stiKey: Int!): [StIpgNm!]!
+  """Схемы структуры затрат (stNet.stnType = 2). C2 O2 §4.0.1."""
+  stCostNetworks: [StIpgNetwork!]!
+  stCostNetwork(id: Int!): StIpgNetwork
+  """Дерево схемы затрат через ags.fnSt (root по умолчанию = stnRoot)."""
+  stCostNetworkTree(stNetKey: Int!, rootKey: Int): [StIpgTreeNode!]!
+  """Все имена узла затрат (ags.stCostNm)."""
+  stCostNodeNames(stcKey: Int!): [StCostNm!]!
   """Полные карточки ИП (Leaves), не lookup."""
   investmentProgramsFull(year: Int, ogKey: Int, name: String): [IpgFull!]!
   investmentProgramFull(id: Int!): IpgFull
@@ -39,6 +46,11 @@ type Query {
   """Сессии загрузки Excel годовой ИП (ags.impIpgLoad) под карточкой ipg."""
   impIpgLoads(ipgKey: Int!): [ImpIpgLoad!]!
   impIpgLoad(id: Int!): ImpIpgLoad
+  """Помесячные Excel агентов (ags.impIpgLoadMonf) текущей ИП. C2 §6.4."""
+  impIpgLoadMonfs(ipgKey: Int!): [ImpIpgLoadMonf!]!
+  """Monf-строки одной сессии load."""
+  impIpgLoadMonfsByLoad(loadKey: Int!): [ImpIpgLoadMonf!]!
+  impIpgLoadMonf(id: Int!): ImpIpgLoadMonf
   """Строки staging ags.impIpg; structureOnly=true — только ПТСФ (разделы)."""
   impIpgRows(loadKey: Int!, structureOnly: Boolean): [ImpIpgRow!]!
   impIpgRow(id: Int!): ImpIpgRow
@@ -50,6 +62,12 @@ type Query {
   impIpgStiInherit(loadKey: Int!): ImpIpgStiInheritResult!
   """Резолв ipgpSh: prev-IP / else 4 / дубли→схемы; без записи (§3.2.3)."""
   impIpgShResolve(loadKey: Int!, previousIpgKey: Int): ImpIpgShResolveResult!
+  """Планы агента текущей ИП (ags.ipgUtPl WHERE iuplIpg). C2 O2 §4.2."""
+  ipgUtPlByIpg(ipgKey: Int!): [IpgUtPl!]!
+  """Заголовки UtPlP плана."""
+  ipgUtPlPByPlan(plKey: Int!): [IpgUtPlP!]!
+  """Грид LmMn (месяц×stCost) для плана+пункта; создаёт UtPlP при отсутствии."""
+  ipgUtPlPnLmMnGrid(plKey: Int!, ipgpKey: Int!): IpgUtPlPnLmMnGrid!
 }
 
 type Mutation {
@@ -67,6 +85,17 @@ type Mutation {
   moveStIpgEdge(stNetKey: Int!, childKey: Int!, fromParentKey: Int!, toParentKey: Int!, stpnNum: Int): Boolean!
   detachStIpgEdge(stNetKey: Int!, parentKey: Int!, childKey: Int!): Boolean!
   deleteStIpgNode(stNetKey: Int!, stiKey: Int!): Boolean!
+  """Структура затрат (stnType=2): CRUD паритет stIpg*. C2 O2 §4.0.1."""
+  createStCostNetwork(name: String!, rootKey: Int!): StIpgNetwork!
+  renameStCostNetwork(id: Int!, name: String!): StIpgNetwork!
+  cloneStCostNetwork(sourceId: Int!, newName: String!): StIpgNetwork!
+  createStCostChildNode(stNetKey: Int!, parentKey: Int!, name: String!, stpnNum: Int): StIpgTreeNode!
+  renameStCostNode(stcKey: Int!, name: String!): Boolean!
+  addStCostNodeName(stcKey: Int!, name: String!): StCostNm!
+  attachStCostEdge(stNetKey: Int!, parentKey: Int!, childKey: Int!, stpnNum: Int): Boolean!
+  moveStCostEdge(stNetKey: Int!, childKey: Int!, fromParentKey: Int!, toParentKey: Int!, stpnNum: Int): Boolean!
+  detachStCostEdge(stNetKey: Int!, parentKey: Int!, childKey: Int!): Boolean!
+  deleteStCostNode(stNetKey: Int!, stcKey: Int!): Boolean!
   """Leaves: карточка ИП / пункты / привязка к stiKey."""
   createInvestmentProgram(input: CreateIpgInput!): IpgFull!
   updateInvestmentProgram(id: Int!, input: UpdateIpgInput!): IpgFull!
@@ -88,6 +117,14 @@ type Mutation {
   createImpIpgLoad(input: CreateImpIpgLoadInput!): ImpIpgLoad!
   updateImpIpgLoad(id: Int!, input: UpdateImpIpgLoadInput!): ImpIpgLoad!
   deleteImpIpgLoad(id: Int!): Boolean!
+  """Каркас LdM: строка помесячного Excel (impIpgLoadMonf). C2 §6.4."""
+  createImpIpgLoadMonf(input: CreateImpIpgLoadMonfInput!): ImpIpgLoadMonf!
+  updateImpIpgLoadMonf(id: Int!, input: UpdateImpIpgLoadMonfInput!): ImpIpgLoadMonf!
+  deleteImpIpgLoadMonf(id: Int!): Boolean!
+  """§6.5: parse skeleton Monf → staging в ответе + iilmResults (без apply)."""
+  parseImpIpgLoadMonf(id: Int!, filePath: String): ImpIpgMonfParseResult!
+  """§6.6: parse+apply → UtPlP / LmMn@212. dryRun=true — только сверка матчей."""
+  applyImpIpgLoadMonf(id: Int!, dryRun: Boolean): ImpIpgMonfApplyResult!
   createImpIpgRow(input: CreateImpIpgRowInput!): ImpIpgRow!
   updateImpIpgRow(id: Int!, input: UpdateImpIpgRowInput!): ImpIpgRow!
   deleteImpIpgRow(id: Int!): Boolean!
@@ -101,6 +138,12 @@ type Mutation {
   mapImpIpgRowSti(id: Int!, stiKey: Int, clearStiKey: Boolean): ImpIpgRow!
   """Bulk apply листьев → ipgPn+ipgStPn (§3.2.4). dryRun=true — только валидация."""
   applyImpIpgPoints(loadKey: Int!, previousIpgKey: Int, dryRun: Boolean): ImpIpgPointsApplyResult!
+  """UtPl: создать план агента на текущей ИП. C2 O2 §4.2."""
+  createIpgUtPl(input: CreateIpgUtPlInput!): IpgUtPl!
+  """Найти или создать заголовок UtPlP (pl, pn)."""
+  ensureIpgUtPlP(plKey: Int!, ipgpKey: Int!): IpgUtPlP!
+  """Upsert оси C месяца (212/195/172/187) + sync Mxx/Lim + G-agg."""
+  upsertIpgUtPlPnLmMnMonth(input: UpsertIpgUtPlPnLmMnMonthInput!): IpgUtPlPnLmMnGrid!
   createOrganization(input: OgCreateRequest!): Organization!
   """Создать og + опционально org_id type=1 (БУиРГ) и/или type=2 (ИНН). ИНН только в org_id."""
   createOrganizationWithIds(input: CreateOrganizationWithIdsInput!): Organization!
@@ -312,6 +355,13 @@ type StIpgNm {
   name: String!
 }
 
+"""Имя/alias узла структуры затрат (ags.stCostNm)."""
+type StCostNm {
+  stcnKey: Int!
+  stcKey: Int!
+  name: String!
+}
+
 """Полная карточка ИП (ags.ipg). ipgStRlSh → stNet."""
 type IpgFull {
   ipgKey: Int!
@@ -440,6 +490,93 @@ type ImpIpgLoad {
   """ISO local datetime."""
   created: String
   """Накопительный HTML-лог «Ход загрузки» (ags.impIpgLoad.iilResults); как adt_results у ревизий."""
+  logHtml: String
+}
+
+"""Помесячный Excel агента (ags.impIpgLoadMonf). C2 §6 LdM."""
+type ImpIpgLoadMonf {
+  id: Int!
+  loadKey: Int!
+  utPlKey: Int
+  name: String!
+  filePath: String
+  sheet: String
+  limColumn: String
+  """true = Q+M (16 чисел), false = 12 M."""
+  quarter: Boolean!
+  sumFirst: Int
+  note: String
+  """ISO local datetime."""
+  created: String
+  logHtml: String
+}
+
+input CreateImpIpgLoadMonfInput {
+  loadKey: Int!
+  utPlKey: Int
+  name: String!
+  filePath: String
+  sheet: String
+  limColumn: String
+  """По умолчанию true (16 чисел)."""
+  quarter: Boolean
+  sumFirst: Int
+  note: String
+}
+
+input UpdateImpIpgLoadMonfInput {
+  utPlKey: Int
+  name: String!
+  filePath: String
+  sheet: String
+  limColumn: String
+  quarter: Boolean
+  sumFirst: Int
+  note: String
+}
+
+"""Итог parse skeleton Monf (C2 §6.5). Staging только в ответе."""
+type ImpIpgMonfParseResult {
+  monfKey: Int!
+  sheetName: String!
+  filePath: String!
+  codeColumn: Int!
+  limColumn: Int!
+  quarter: Boolean!
+  sumFirst: Int!
+  codeHits: Int!
+  loadedCount: Int!
+  skippedCount: Int!
+  rows: [ImpIpgMonfParseRow!]!
+  logHtml: String
+}
+
+"""Строка staging Monf (код + lim + M/Q)."""
+type ImpIpgMonfParseRow {
+  rowNo: Int!
+  cstCode: String!
+  name: String
+  limYear: Float
+  """Q1..Q4 (пусто если quarter=false)."""
+  quarters: [Float]
+  """M01..M12."""
+  months: [Float]
+  skipped: Boolean!
+  skipReason: String
+}
+
+"""Итог apply Monf → UtPlP / LmMn@212 (C2 §6.6)."""
+type ImpIpgMonfApplyResult {
+  monfKey: Int!
+  utPlKey: Int!
+  ipgKey: Int!
+  dryRun: Boolean!
+  parsedCount: Int!
+  appliedCount: Int!
+  unmatchedCount: Int!
+  ambiguousCount: Int!
+  errorCount: Int!
+  problems: [String!]!
   logHtml: String
 }
 
@@ -608,4 +745,68 @@ type ImpIpgShResolveResult {
   ready: Boolean!
   errors: [String!]!
   problemLeaves: [ImpIpgShResolveLeaf!]!
+}
+
+"""План агента на ИП (ags.ipgUtPl). C2 O2 §4.2."""
+type IpgUtPl {
+  iuplKey: Int!
+  iuplNm: String
+  iuplDate: Date
+  iuplAg: Int!
+  iuplIpg: Int!
+}
+
+"""Заголовок уточнённого плана по пункту (ags.ipgUtPlP)."""
+type IpgUtPlP {
+  iuplpKey: Int!
+  iuplpPl: Int!
+  iuplpIpgPn: Int!
+  iuplpLim: Float
+  iuplpSubAg: Int
+}
+
+"""Ячейка канона месяц × stCost (ags.ipgUtPlPnLmMn)."""
+type IpgUtPlPnLmMnCell {
+  iuplpmKey: Int!
+  iuplpmPlPn: Int!
+  iuplpmStCost: Int!
+  iuplpmMn: Int!
+  iuplpmLim: Float!
+}
+
+"""Ось C одного месяца после AggAxis."""
+type IpgUtPlPnLmMnMonth {
+  plPnKey: Int!
+  month: Int!
+  lim212: Float
+  lim195: Float
+  lim172: Float
+  lim187: Float
+  aggCode: String!
+}
+
+"""Грид LmMn + gate G-agg."""
+type IpgUtPlPnLmMnGrid {
+  plPnKey: Int!
+  limYear: Float
+  months: [IpgUtPlPnLmMnMonth!]!
+  cells: [IpgUtPlPnLmMnCell!]!
+  gAggOk: Boolean!
+}
+
+input CreateIpgUtPlInput {
+  ipgKey: Int!
+  agKey: Int!
+  name: String
+  date: Date
+}
+
+input UpsertIpgUtPlPnLmMnMonthInput {
+  plKey: Int!
+  ipgpKey: Int!
+  month: Int!
+  lim212: Float
+  lim195: Float
+  lim172: Float
+  lim187: Float
 }

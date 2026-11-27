@@ -3,6 +3,7 @@ package com.femsq.database.dao;
 import com.femsq.database.config.DatabaseConfigurationService;
 import com.femsq.database.connection.ConnectionFactory;
 import com.femsq.database.exception.DaoException;
+import com.femsq.database.model.StCostNm;
 import com.femsq.database.model.StIpgNm;
 import com.femsq.database.model.StIpgTreeNode;
 import com.femsq.database.model.StNetworkFull;
@@ -21,12 +22,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * JDBC-реализация {@link StIpgStructureDao} для Structure CRUD (C2 §2.4.1).
+ * JDBC-реализация {@link StIpgStructureDao} для Structure CRUD (C2 §2.4.1 / O2 §4.0.1).
  */
 public class JdbcStIpgStructureDao implements StIpgStructureDao {
 
     private static final Logger log = Logger.getLogger(JdbcStIpgStructureDao.class.getName());
     private static final int ST_TYPE_IPG = 1;
+    private static final int ST_TYPE_COST = 2;
 
     private final ConnectionFactory connectionFactory;
     private final DatabaseConfigurationService configurationService;
@@ -240,42 +242,75 @@ public class JdbcStIpgStructureDao implements StIpgStructureDao {
             try {
                 StNetworkFull network = findNetworkOn(connection, stNetKey)
                         .orElseThrow(() -> new DaoException("stNet не найден: " + stNetKey));
-                if (network.stnType() != ST_TYPE_IPG) {
-                    throw new IllegalArgumentException("Создание узла ИПГ только для stnType=1");
+                int stnType = network.stnType();
+                if (stnType != ST_TYPE_IPG && stnType != ST_TYPE_COST) {
+                    throw new IllegalArgumentException(
+                            "Создание узла только для stnType=1|2, получено: " + stnType);
                 }
-                ensureNodeExists(connection, parentKey);
+                ensureNodeOfType(connection, parentKey, stnType);
                 Timestamp now = Timestamp.from(Instant.now());
-                // ags.stIpg_insert (INSTEAD OF): сам создаёт ags.st + строку stIpg.
-                // Прямой INSERT в st + INSERT stIpg(stiKey=…) даёт рассинхрон ключей.
                 String token = "femsq-create-" + java.util.UUID.randomUUID();
-                String insertIpg = "INSERT INTO " + q("stIpg") + " (stiLim, stiNote) VALUES (NULL, ?)";
-                try (PreparedStatement statement = connection.prepareStatement(insertIpg)) {
-                    statement.setNString(1, token);
-                    statement.executeUpdate();
-                }
                 int stKey;
-                String selectKey = "SELECT stiKey FROM " + q("stIpg") + " WHERE stiNote = ?";
-                try (PreparedStatement statement = connection.prepareStatement(selectKey)) {
-                    statement.setNString(1, token);
-                    try (ResultSet resultSet = statement.executeQuery()) {
-                        if (!resultSet.next()) {
-                            throw new DaoException("Триггер stIpg_insert не вернул stiKey для токена");
-                        }
-                        stKey = resultSet.getInt(1);
+                if (stnType == ST_TYPE_IPG) {
+                    // ags.stIpg_insert (INSTEAD OF): сам создаёт ags.st + строку stIpg.
+                    String insertIpg = "INSERT INTO " + q("stIpg") + " (stiLim, stiNote) VALUES (NULL, ?)";
+                    try (PreparedStatement statement = connection.prepareStatement(insertIpg)) {
+                        statement.setNString(1, token);
+                        statement.executeUpdate();
                     }
-                }
-                String clearNote = "UPDATE " + q("stIpg") + " SET stiNote = NULL WHERE stiKey = ?";
-                try (PreparedStatement statement = connection.prepareStatement(clearNote)) {
-                    statement.setInt(1, stKey);
-                    statement.executeUpdate();
-                }
-                String insertNm = "INSERT INTO " + q("stIpgNm")
-                        + " (stinIpg, stinNm, stinNote, stinTimeOfEntry) VALUES (?, ?, NULL, ?)";
-                try (PreparedStatement statement = connection.prepareStatement(insertNm)) {
-                    statement.setInt(1, stKey);
-                    statement.setNString(2, name.trim());
-                    statement.setTimestamp(3, now);
-                    statement.executeUpdate();
+                    String selectKey = "SELECT stiKey FROM " + q("stIpg") + " WHERE stiNote = ?";
+                    try (PreparedStatement statement = connection.prepareStatement(selectKey)) {
+                        statement.setNString(1, token);
+                        try (ResultSet resultSet = statement.executeQuery()) {
+                            if (!resultSet.next()) {
+                                throw new DaoException("Триггер stIpg_insert не вернул stiKey для токена");
+                            }
+                            stKey = resultSet.getInt(1);
+                        }
+                    }
+                    String clearNote = "UPDATE " + q("stIpg") + " SET stiNote = NULL WHERE stiKey = ?";
+                    try (PreparedStatement statement = connection.prepareStatement(clearNote)) {
+                        statement.setInt(1, stKey);
+                        statement.executeUpdate();
+                    }
+                    String insertNm = "INSERT INTO " + q("stIpgNm")
+                            + " (stinIpg, stinNm, stinNote, stinTimeOfEntry) VALUES (?, ?, NULL, ?)";
+                    try (PreparedStatement statement = connection.prepareStatement(insertNm)) {
+                        statement.setInt(1, stKey);
+                        statement.setNString(2, name.trim());
+                        statement.setTimestamp(3, now);
+                        statement.executeUpdate();
+                    }
+                } else {
+                    // ags.stCost_insert (INSTEAD OF): сам создаёт ags.st(stType=2) + stCost.
+                    String insertCost = "INSERT INTO " + q("stCost") + " (stcNote) VALUES (?)";
+                    try (PreparedStatement statement = connection.prepareStatement(insertCost)) {
+                        statement.setNString(1, token);
+                        statement.executeUpdate();
+                    }
+                    String selectKey = "SELECT stcKey FROM " + q("stCost") + " WHERE stcNote = ?";
+                    try (PreparedStatement statement = connection.prepareStatement(selectKey)) {
+                        statement.setNString(1, token);
+                        try (ResultSet resultSet = statement.executeQuery()) {
+                            if (!resultSet.next()) {
+                                throw new DaoException("Триггер stCost_insert не вернул stcKey для токена");
+                            }
+                            stKey = resultSet.getInt(1);
+                        }
+                    }
+                    String clearNote = "UPDATE " + q("stCost") + " SET stcNote = NULL WHERE stcKey = ?";
+                    try (PreparedStatement statement = connection.prepareStatement(clearNote)) {
+                        statement.setInt(1, stKey);
+                        statement.executeUpdate();
+                    }
+                    String insertNm = "INSERT INTO " + q("stCostNm")
+                            + " (stcnCost, stcnNm, stcnNote, stcnTimeOfEntry) VALUES (?, ?, NULL, ?)";
+                    try (PreparedStatement statement = connection.prepareStatement(insertNm)) {
+                        statement.setInt(1, stKey);
+                        statement.setNString(2, name.trim());
+                        statement.setTimestamp(3, now);
+                        statement.executeUpdate();
+                    }
                 }
                 int relKey = findOrCreateRel(connection, parentKey, stKey);
                 int num = stpnNum != null ? stpnNum : nextSiblingNum(connection, stNetKey, parentKey);
@@ -288,8 +323,8 @@ public class JdbcStIpgStructureDao implements StIpgStructureDao {
                     statement.executeUpdate();
                 }
                 connection.commit();
-                log.log(Level.INFO, "Created stIpg node {0} under {1} in net {2}",
-                        new Object[]{stKey, parentKey, stNetKey});
+                log.log(Level.INFO, "Created stType={0} node {1} under {2} in net {3}",
+                        new Object[]{stnType, stKey, parentKey, stNetKey});
                 return stKey;
             } catch (Exception exception) {
                 connection.rollback();
@@ -316,24 +351,49 @@ public class JdbcStIpgStructureDao implements StIpgStructureDao {
         try (Connection connection = connectionFactory.createConnection()) {
             connection.setAutoCommit(false);
             try {
-                ensureNodeExists(connection, stiKey);
-                String update = "UPDATE " + q("stIpgNm")
-                        + " SET stinNm = ? WHERE stinKey = ("
-                        + "SELECT MIN(stinKey) FROM " + q("stIpgNm") + " WHERE stinIpg = ?)";
-                try (PreparedStatement statement = connection.prepareStatement(update)) {
-                    statement.setNString(1, name.trim());
-                    statement.setInt(2, stiKey);
-                    int updated = statement.executeUpdate();
-                    if (updated == 0) {
-                        String insert = "INSERT INTO " + q("stIpgNm")
-                                + " (stinIpg, stinNm, stinNote, stinTimeOfEntry) VALUES (?, ?, NULL, ?)";
-                        try (PreparedStatement insertStatement = connection.prepareStatement(insert)) {
-                            insertStatement.setInt(1, stiKey);
-                            insertStatement.setNString(2, name.trim());
-                            insertStatement.setTimestamp(3, Timestamp.from(Instant.now()));
-                            insertStatement.executeUpdate();
+                int stType = readStType(connection, stiKey);
+                Timestamp now = Timestamp.from(Instant.now());
+                if (stType == ST_TYPE_COST) {
+                    String update = "UPDATE " + q("stCostNm")
+                            + " SET stcnNm = ? WHERE stcnKey = ("
+                            + "SELECT MIN(stcnKey) FROM " + q("stCostNm") + " WHERE stcnCost = ?)";
+                    try (PreparedStatement statement = connection.prepareStatement(update)) {
+                        statement.setNString(1, name.trim());
+                        statement.setInt(2, stiKey);
+                        int updated = statement.executeUpdate();
+                        if (updated == 0) {
+                            String insert = "INSERT INTO " + q("stCostNm")
+                                    + " (stcnCost, stcnNm, stcnNote, stcnTimeOfEntry) VALUES (?, ?, NULL, ?)";
+                            try (PreparedStatement insertStatement = connection.prepareStatement(insert)) {
+                                insertStatement.setInt(1, stiKey);
+                                insertStatement.setNString(2, name.trim());
+                                insertStatement.setTimestamp(3, now);
+                                insertStatement.executeUpdate();
+                            }
                         }
                     }
+                } else if (stType == ST_TYPE_IPG) {
+                    String update = "UPDATE " + q("stIpgNm")
+                            + " SET stinNm = ? WHERE stinKey = ("
+                            + "SELECT MIN(stinKey) FROM " + q("stIpgNm") + " WHERE stinIpg = ?)";
+                    try (PreparedStatement statement = connection.prepareStatement(update)) {
+                        statement.setNString(1, name.trim());
+                        statement.setInt(2, stiKey);
+                        int updated = statement.executeUpdate();
+                        if (updated == 0) {
+                            String insert = "INSERT INTO " + q("stIpgNm")
+                                    + " (stinIpg, stinNm, stinNote, stinTimeOfEntry) VALUES (?, ?, NULL, ?)";
+                            try (PreparedStatement insertStatement = connection.prepareStatement(insert)) {
+                                insertStatement.setInt(1, stiKey);
+                                insertStatement.setNString(2, name.trim());
+                                insertStatement.setTimestamp(3, now);
+                                insertStatement.executeUpdate();
+                            }
+                        }
+                    }
+                } else {
+                    throw new IllegalArgumentException(
+                            "Переименование только для stType=1|2, получено: " + stType);
                 }
                 connection.commit();
             } catch (Exception exception) {
@@ -378,6 +438,31 @@ public class JdbcStIpgStructureDao implements StIpgStructureDao {
     }
 
     @Override
+    public List<StCostNm> findCostNodeNames(int stcKey) {
+        String sql = "SELECT stcnKey, stcnCost, stcnNm FROM " + q("stCostNm")
+                + " WHERE stcnCost = ? ORDER BY stcnKey";
+        List<StCostNm> rows = new ArrayList<>();
+        try (Connection connection = connectionFactory.createConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, stcKey);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    rows.add(new StCostNm(
+                            resultSet.getInt("stcnKey"),
+                            resultSet.getInt("stcnCost"),
+                            resultSet.getNString("stcnNm")
+                    ));
+                }
+            }
+            return rows;
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw new DaoException("Не удалось прочитать имена узла затрат " + stcKey, exception);
+        }
+    }
+
+    @Override
     public int addNodeName(int stiKey, String name) {
         Objects.requireNonNull(name, "name");
         if (name.isBlank()) {
@@ -387,7 +472,7 @@ public class JdbcStIpgStructureDao implements StIpgStructureDao {
         try (Connection connection = connectionFactory.createConnection()) {
             connection.setAutoCommit(false);
             try {
-                ensureNodeExists(connection, stiKey);
+                ensureNodeOfType(connection, stiKey, ST_TYPE_IPG);
                 String dup = "SELECT 1 FROM " + q("stIpgNm") + " WHERE stinIpg = ? AND stinNm = ?";
                 try (PreparedStatement statement = connection.prepareStatement(dup)) {
                     statement.setInt(1, stiKey);
@@ -430,6 +515,58 @@ public class JdbcStIpgStructureDao implements StIpgStructureDao {
     }
 
     @Override
+    public int addCostNodeName(int stcKey, String name) {
+        Objects.requireNonNull(name, "name");
+        if (name.isBlank()) {
+            throw new IllegalArgumentException("Имя узла пустое");
+        }
+        String trimmed = name.trim();
+        try (Connection connection = connectionFactory.createConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                ensureNodeOfType(connection, stcKey, ST_TYPE_COST);
+                String dup = "SELECT 1 FROM " + q("stCostNm") + " WHERE stcnCost = ? AND stcnNm = ?";
+                try (PreparedStatement statement = connection.prepareStatement(dup)) {
+                    statement.setInt(1, stcKey);
+                    statement.setNString(2, trimmed);
+                    try (ResultSet resultSet = statement.executeQuery()) {
+                        if (resultSet.next()) {
+                            throw new IllegalArgumentException(
+                                    "Имя уже есть у узла затрат " + stcKey + ": " + trimmed);
+                        }
+                    }
+                }
+                int stcnKey;
+                String insert = "INSERT INTO " + q("stCostNm")
+                        + " (stcnCost, stcnNm, stcnNote, stcnTimeOfEntry) VALUES (?, ?, NULL, ?)";
+                try (PreparedStatement statement =
+                             connection.prepareStatement(insert, Statement.RETURN_GENERATED_KEYS)) {
+                    statement.setInt(1, stcKey);
+                    statement.setNString(2, trimmed);
+                    statement.setTimestamp(3, Timestamp.from(Instant.now()));
+                    statement.executeUpdate();
+                    stcnKey = readGeneratedKey(statement, "stcnKey");
+                }
+                connection.commit();
+                log.log(Level.INFO, "Added stCostNm {0} for stc={1}", new Object[]{stcnKey, stcKey});
+                return stcnKey;
+            } catch (Exception exception) {
+                connection.rollback();
+                if (exception instanceof RuntimeException runtimeException) {
+                    throw runtimeException;
+                }
+                throw new DaoException("Не удалось добавить имя узла затрат " + stcKey, exception);
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (DatabaseConfigurationService.MissingConfigurationException exception) {
+            throw exception;
+        } catch (SQLException exception) {
+            throw new DaoException("Не удалось добавить имя узла затрат " + stcKey, exception);
+        }
+    }
+
+    @Override
     public void attachEdgeToNetwork(int stNetKey, int parentKey, int childKey, Integer stpnNum) {
         if (parentKey == childKey) {
             throw new IllegalArgumentException("parent и child совпадают");
@@ -439,11 +576,13 @@ public class JdbcStIpgStructureDao implements StIpgStructureDao {
             try {
                 StNetworkFull network = findNetworkOn(connection, stNetKey)
                         .orElseThrow(() -> new DaoException("stNet не найден: " + stNetKey));
-                if (network.stnType() != ST_TYPE_IPG) {
-                    throw new IllegalArgumentException("attach только для stnType=1");
+                int stnType = network.stnType();
+                if (stnType != ST_TYPE_IPG && stnType != ST_TYPE_COST) {
+                    throw new IllegalArgumentException(
+                            "attach только для stnType=1|2, получено: " + stnType);
                 }
-                ensureNodeExists(connection, parentKey);
-                ensureNodeExists(connection, childKey);
+                ensureNodeOfType(connection, parentKey, stnType);
+                ensureNodeOfType(connection, childKey, stnType);
                 int relKey = findOrCreateRel(connection, parentKey, childKey);
                 if (relInNetwork(connection, stNetKey, relKey)) {
                     throw new IllegalStateException(
@@ -486,9 +625,16 @@ public class JdbcStIpgStructureDao implements StIpgStructureDao {
         try (Connection connection = connectionFactory.createConnection()) {
             connection.setAutoCommit(false);
             try {
-                ensureNodeExists(connection, childKey);
-                ensureNodeExists(connection, fromParentKey);
-                ensureNodeExists(connection, toParentKey);
+                StNetworkFull network = findNetworkOn(connection, stNetKey)
+                        .orElseThrow(() -> new DaoException("stNet не найден: " + stNetKey));
+                int stnType = network.stnType();
+                if (stnType != ST_TYPE_IPG && stnType != ST_TYPE_COST) {
+                    throw new IllegalArgumentException(
+                            "move только для stnType=1|2, получено: " + stnType);
+                }
+                ensureNodeOfType(connection, childKey, stnType);
+                ensureNodeOfType(connection, fromParentKey, stnType);
+                ensureNodeOfType(connection, toParentKey, stnType);
                 Integer fromRel = findRelKey(connection, fromParentKey, childKey);
                 if (fromRel == null || !relInNetwork(connection, stNetKey, fromRel)) {
                     throw new DaoException(
@@ -590,10 +736,20 @@ public class JdbcStIpgStructureDao implements StIpgStructureDao {
         try (Connection connection = connectionFactory.createConnection()) {
             connection.setAutoCommit(false);
             try {
-                ensureNodeExists(connection, stiKey);
-                if (hasIpgStPn(connection, stiKey)) {
-                    throw new IllegalStateException(
-                            "Узел связан с пунктами ИП (ipgStPn) — удаление запрещено: " + stiKey);
+                int stType = readStType(connection, stiKey);
+                if (stType == ST_TYPE_IPG) {
+                    if (hasIpgStPn(connection, stiKey)) {
+                        throw new IllegalStateException(
+                                "Узел связан с пунктами ИП (ipgStPn) — удаление запрещено: " + stiKey);
+                    }
+                } else if (stType == ST_TYPE_COST) {
+                    if (hasCostRefs(connection, stiKey)) {
+                        throw new IllegalStateException(
+                                "Узел затрат связан с lim/UtPl — удаление запрещено: " + stiKey);
+                    }
+                } else {
+                    throw new IllegalArgumentException(
+                            "Удаление только для stType=1|2, получено: " + stType);
                 }
                 if (usedInOtherNetworks(connection, stiKey, stNetKey)) {
                     throw new IllegalStateException(
@@ -603,7 +759,6 @@ public class JdbcStIpgStructureDao implements StIpgStructureDao {
                     throw new IllegalStateException(
                             "У узла есть потомки в схеме — сначала отсоедините детей: " + stiKey);
                 }
-                // удалить вхождения рёбер узла в этой схеме
                 String deletePn = ""
                         + "DELETE p FROM " + q("stNetPn") + " p "
                         + "JOIN " + q("stRel") + " r ON r.strKey = p.stnpStRel "
@@ -614,7 +769,6 @@ public class JdbcStIpgStructureDao implements StIpgStructureDao {
                     statement.setInt(3, stiKey);
                     statement.executeUpdate();
                 }
-                // orphan stRel
                 String deleteRel = ""
                         + "DELETE FROM " + q("stRel") + " "
                         + "WHERE (strChild = ? OR strParent = ?) "
@@ -624,15 +778,28 @@ public class JdbcStIpgStructureDao implements StIpgStructureDao {
                     statement.setInt(2, stiKey);
                     statement.executeUpdate();
                 }
-                String deleteNm = "DELETE FROM " + q("stIpgNm") + " WHERE stinIpg = ?";
-                try (PreparedStatement statement = connection.prepareStatement(deleteNm)) {
-                    statement.setInt(1, stiKey);
-                    statement.executeUpdate();
-                }
-                String deleteIpg = "DELETE FROM " + q("stIpg") + " WHERE stiKey = ?";
-                try (PreparedStatement statement = connection.prepareStatement(deleteIpg)) {
-                    statement.setInt(1, stiKey);
-                    statement.executeUpdate();
+                if (stType == ST_TYPE_COST) {
+                    String deleteNm = "DELETE FROM " + q("stCostNm") + " WHERE stcnCost = ?";
+                    try (PreparedStatement statement = connection.prepareStatement(deleteNm)) {
+                        statement.setInt(1, stiKey);
+                        statement.executeUpdate();
+                    }
+                    String deleteCost = "DELETE FROM " + q("stCost") + " WHERE stcKey = ?";
+                    try (PreparedStatement statement = connection.prepareStatement(deleteCost)) {
+                        statement.setInt(1, stiKey);
+                        statement.executeUpdate();
+                    }
+                } else {
+                    String deleteNm = "DELETE FROM " + q("stIpgNm") + " WHERE stinIpg = ?";
+                    try (PreparedStatement statement = connection.prepareStatement(deleteNm)) {
+                        statement.setInt(1, stiKey);
+                        statement.executeUpdate();
+                    }
+                    String deleteIpg = "DELETE FROM " + q("stIpg") + " WHERE stiKey = ?";
+                    try (PreparedStatement statement = connection.prepareStatement(deleteIpg)) {
+                        statement.setInt(1, stiKey);
+                        statement.executeUpdate();
+                    }
                 }
                 String deleteSt = "DELETE FROM " + q("st") + " WHERE stKey = ?";
                 try (PreparedStatement statement = connection.prepareStatement(deleteSt)) {
@@ -678,14 +845,48 @@ public class JdbcStIpgStructureDao implements StIpgStructureDao {
         }
     }
 
-    private void ensureNodeExists(Connection connection, int stiKey) throws SQLException {
-        String sql = "SELECT 1 FROM " + q("stIpg") + " WHERE stiKey = ?";
+    /**
+     * Читает {@code st.stType}; бросает, если ключ отсутствует.
+     */
+    private int readStType(Connection connection, int stKey) throws SQLException {
+        String sql = "SELECT stType FROM " + q("st") + " WHERE stKey = ?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, stiKey);
+            statement.setInt(1, stKey);
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (!resultSet.next()) {
-                    throw new DaoException("Узел stIpg не найден: " + stiKey);
+                    throw new DaoException("Узел st не найден: " + stKey);
                 }
+                return resultSet.getInt(1);
+            }
+        }
+    }
+
+    /**
+     * Проверяет существование узла с ожидаемым {@code stType} (1=ИПГ, 2=затраты).
+     */
+    private void ensureNodeOfType(Connection connection, int stKey, int expectedType) throws SQLException {
+        int actual = readStType(connection, stKey);
+        if (actual != expectedType) {
+            throw new DaoException(
+                    "Узел " + stKey + " имеет stType=" + actual + ", ожидался " + expectedType);
+        }
+    }
+
+    /**
+     * Запрет удаления узла затрат при ссылках из lim / UtPl.
+     */
+    private boolean hasCostRefs(Connection connection, int stcKey) throws SQLException {
+        String sql = ""
+                + "SELECT 1 WHERE EXISTS ("
+                + "  SELECT 1 FROM " + q("ipgPnLim") + " WHERE ipgplStCost = ?"
+                + ") OR EXISTS ("
+                + "  SELECT 1 FROM " + q("ipgUtPlPnLmMn") + " WHERE iuplpmStCost = ?"
+                + ")";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, stcKey);
+            statement.setInt(2, stcKey);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
             }
         }
     }

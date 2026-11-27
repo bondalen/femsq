@@ -1,5 +1,6 @@
 package com.femsq.database.service;
 
+import com.femsq.database.model.StCostNm;
 import com.femsq.database.model.StIpgNm;
 import com.femsq.database.model.StIpgTreeNode;
 import com.femsq.database.model.StNetworkFull;
@@ -7,17 +8,23 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Сервис структуры ИПГ (схемы / дерево / CRUD узлов).
+ * Сервис структуры ИПГ / затрат (схемы / дерево / CRUD узлов).
  */
 public interface StIpgStructureService {
 
     List<StNetworkFull> listIpgNetworks();
+
+    /** Схемы структуры затрат ({@code stnType=2}). */
+    List<StNetworkFull> listCostNetworks();
 
     Optional<StNetworkFull> getNetwork(int stnKey);
 
     List<StIpgTreeNode> getTree(int stNetKey, Integer rootKey);
 
     StNetworkFull createIpgNetwork(String name, int rootKey);
+
+    /** Создать схему затрат ({@code stnType=2}). */
+    StNetworkFull createCostNetwork(String name, int rootKey);
 
     StNetworkFull renameNetwork(int stnKey, String name);
 
@@ -29,7 +36,11 @@ public interface StIpgStructureService {
 
     List<StIpgNm> listNodeNames(int stiKey);
 
+    List<StCostNm> listCostNodeNames(int stcKey);
+
     int addNodeName(int stiKey, String name);
+
+    int addCostNodeName(int stcKey, String name);
 
     void attachEdge(int stNetKey, int parentKey, int childKey, Integer stpnNum);
 
